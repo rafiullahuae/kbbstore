@@ -1918,14 +1918,14 @@ function paintUpdates(msg, err){
   const d = UPD;
   const p = d.pending;
 
-  const banner = msg ? `<div class="card" style="padding:14px 18px;border-color:#b7e2c6;background:#f2fbf5;margin-bottom:16px">${escHtml(msg)}</div>` : '';
+  const banner = msg ? `<div class="card" style="padding:14px 18px;border-color:#b7e2c6;background:#f2fbf5;margin-bottom:16px">${msg}</div>` : '';
   const errors = err && err.length ? `<div class="card" style="padding:14px 18px;border-color:#f0c2c2;background:#fdf3f3;margin-bottom:16px">
-      <b>Nothing was changed.</b><ul style="margin:8px 0 0 18px">${err.map(e=>`<li>${escHtml(e)}</li>`).join('')}</ul></div>` : '';
+      <b>Nothing was changed.</b><ul style="margin:8px 0 0 18px">${err.map(e=>`<li>${e}</li>`).join('')}</ul></div>` : '';
 
   const upload = p ? `
     <div class="card" style="padding:22px;border-color:#b7e2c6">
-      <div class="between"><div><b style="font-size:15px">${escHtml(p.name)} ${escHtml(p.version)}</b>
-        <div class="mdesc" style="margin-top:4px">${escHtml(p.notes||'')}</div></div>
+      <div class="between"><div><b style="font-size:15px">${p.name} ${p.version}</b>
+        <div class="mdesc" style="margin-top:4px">${p.notes||''}</div></div>
         <span class="pill green">Ready to apply</span></div>
       <p style="margin:14px 0 6px"><b>${p.changes.length} files</b> will change.
         ${p.migrations ? 'This update also changes the database — a full dump is taken first.' : ''}</p>
@@ -1955,16 +1955,14 @@ function paintUpdates(msg, err){
     <div class="sec-title">History</div>
     <div class="card" style="padding:0;overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr>${['Version','Status','Files','When',''].map(h=>`<th style="text-align:left;padding:10px 14px;background:#f8fafc;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#64748b">${h}</th>`).join('')}</tr></thead>
+        <thead><tr>${['Version','Status','Files','When'].map(h=>`<th style="text-align:left;padding:10px 14px;background:#f8fafc;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#64748b">${h}</th>`).join('')}</tr></thead>
         <tbody>${d.releases.length ? d.releases.map(r=>`<tr style="border-top:1px solid #eef2f7">
-          <td style="padding:10px 14px"><b>${escHtml(r.version)}</b><div class="mdesc">${escHtml(r.name)}</div>
-            ${r.superseded_by?`<div class="mdesc" style="color:#b45309">⚠ Superseded by ${escHtml(r.superseded_by)} — see that version's notes</div>`:''}</td>
-          <td style="padding:10px 14px"><span class="pill ${r.status==='applied'?'green':'grey'}">${escHtml(r.status.replace('_',' '))}</span>
-            ${r.error?`<div class="mdesc" style="max-width:520px">${escHtml(r.error)}</div>`:''}</td>
+          <td style="padding:10px 14px"><b>${r.version}</b><div class="mdesc">${r.name}</div></td>
+          <td style="padding:10px 14px"><span class="pill ${r.status==='applied'?'green':'grey'}">${r.status.replace('_',' ')}</span>
+            ${r.error?`<div class="mdesc" style="max-width:520px">${r.error}</div>`:''}</td>
           <td style="padding:10px 14px">${r.files}</td>
-          <td style="padding:10px 14px" class="mdesc">${r.when||''}</td>
-          <td style="padding:10px 14px">${r.has_archive?`<a href="${uBase()}/${r.id}/download" class="btn small">Download</a>`:''}</td></tr>`).join('')
-          : `<tr><td colspan="5" style="padding:14px" class="mdesc">No updates yet.</td></tr>`}</tbody>
+          <td style="padding:10px 14px" class="mdesc">${r.when||''}</td></tr>`).join('')
+          : `<tr><td colspan="4" style="padding:14px" class="mdesc">No updates yet.</td></tr>`}</tbody>
       </table>
     </div>`;
 

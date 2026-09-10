@@ -33,13 +33,6 @@ final class UpdatePackage
         private UpdateGuard $guard,
     ) {}
 
-    /** The uploaded package's own path, needed to archive it after a
-     *  successful apply — everything else here is about its contents. */
-    public function zipPath(): string
-    {
-        return $this->zipPath;
-    }
-
     public function verify(): bool
     {
         return $this->extract()

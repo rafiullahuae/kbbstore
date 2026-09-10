@@ -70,9 +70,6 @@ class ShopController extends Controller
             'curorder' => Facets::sort(),
             'buckets' => Facets::BUCKETS,
             'title' => $title,
-            'seoCtx' => [
-                'description' => $this->seoDescription($category, (string) $request->query('s', ''), $total),
-            ],
             'sub' => $sub,
             'crumb' => $crumb,
             'clearUrl' => $category ? $category->url() : Facets::clearUrl(),
@@ -146,36 +143,9 @@ class ShopController extends Controller
         };
     }
 
-    /**
-     * A real, page-specific meta description instead of falling back to one
-     * sitewide default everywhere — every category, search, and the general
-     * shop page gets its own, distinct text. Duplicate meta descriptions
-     * across a catalogue's category pages is flagged as a real quality
-     * signal problem, not just a missed opportunity, so this isn't
-     * cosmetic. Kept deliberately short (under ~130 characters) rather than
-     * padded out to the full 160-character budget — accurate and concise
-     * reads better than stretched, and Google truncates hard past 155-160
-     * on desktop and roughly 120 on mobile regardless.
-     */
-    private function seoDescription(?Category $category, string $search, int $total): string
+    private function heading(?Category $category, string $search): array
     {
         if ($category) {
-            $count = $total ? "{$total} authentic Korean skincare picks" : 'authentic Korean skincare';
-
-            return "Shop {$category->name} at K-Beauty Bliss — {$count}, next-day UAE delivery.";
-        }
-
-        if ($search !== '') {
-            $result = $total === 1 ? 'result' : 'results';
-
-            return "\"{$search}\" — {$total} {$result} at K-Beauty Bliss, authentic Korean skincare with next-day UAE delivery.";
-        }
-
-        return "Browse every K-Beauty Bliss product — {$total} authentic Korean skincare picks, from serums to beauty devices, next-day UAE delivery.";
-    }
-
-    private function heading(?Category $category, string $search): array
-    {        if ($category) {
             return [
                 $category->name,
                 $category->description ?: 'Authentic Korean skincare, curated for the UAE.',

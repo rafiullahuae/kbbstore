@@ -298,7 +298,6 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::post('/updates/apply',             [\App\Http\Controllers\Admin\UpdateApiController::class, 'apply']);
         Route::post('/updates/cancel',            [\App\Http\Controllers\Admin\UpdateApiController::class, 'cancel']);
         Route::post('/updates/restore/{backup}',  [\App\Http\Controllers\Admin\UpdateApiController::class, 'restore']);
-        Route::get('/updates/{release}/download', [\App\Http\Controllers\Admin\UpdateApiController::class, 'download']);
         Route::post('/updates/admin-path',        [\App\Http\Controllers\Admin\UpdateApiController::class, 'adminPath']);
 
         Route::get('/stats',                 [AdminController::class, 'stats']);
@@ -386,9 +385,7 @@ Route::middleware(['auth:admin'])->prefix($adminPath)->group(function () use ($a
     })->name('admin.updates');
     Route::post('/updates/upload', [UpdateController::class, 'upload'])->name('admin.updates.upload');
     Route::post('/updates/apply', [UpdateController::class, 'apply'])->name('admin.updates.apply');
-    Route::post('/updates/cancel', [UpdateController::class, 'cancel'])->name('admin.updates.cancel');
     Route::post('/updates/{release}/rollback', [UpdateController::class, 'rollback'])->name('admin.updates.rollback');
-    Route::get('/updates/{release}/download', [UpdateController::class, 'download'])->name('admin.updates.download');
     Route::post('/admin-path', [\App\Http\Controllers\Admin\AdminPathController::class, 'update'])->name('admin.path.update');
 });
 

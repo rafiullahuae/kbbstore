@@ -1,0 +1,11 @@
+UNZIP THIS INTO:  public_html/kbb-upgrade/
+
+One file. Nothing to edit — the security token is already set.
+
+EMERGENCY RECOVERY URL (save this somewhere safe):
+
+https://easywebsol.com/kbb-upgrade/kbb-recover.php?token=b2708bbeb964a31445b33634e3916b3875eba7a792094c23
+
+Use it if an update ever breaks the site. It does not need Laravel to
+work, so it still runs when nothing else does. It lists every backup;
+add &restore=<id> to undo one.

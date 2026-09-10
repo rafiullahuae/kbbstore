@@ -181,11 +181,7 @@ code{background:#0f1720;padding:1px 5px;border-radius:4px;font-size:12px}
         <tbody>
         @forelse ($releases as $release)
             <tr>
-                <td><b>{{ $release->version }}</b><br><span class="muted small">{{ $release->name }}</span>
-                    @if ($release->superseded_by)
-                        <br><span class="muted small" style="color:#b45309">⚠ Superseded by {{ $release->superseded_by }} — see that version's notes</span>
-                    @endif
-                </td>
+                <td><b>{{ $release->version }}</b><br><span class="muted small">{{ $release->name }}</span></td>
                 <td><span class="status {{ $release->status }}">{{ str_replace('_', ' ', $release->status) }}</span>
                     @if ($release->error)<br><span class="muted small">{{ $release->error }}</span>@endif
                 </td>
@@ -198,9 +194,6 @@ code{background:#0f1720;padding:1px 5px;border-radius:4px;font-size:12px}
                             <input type="password" name="password" placeholder="password" required style="min-width:130px">
                             <button type="submit" class="btn small">Roll back</button>
                         </form>
-                    @endif
-                    @if ($release->archive_path)
-                        <a href="{{ route('admin.updates.download', $release) }}" class="btn small" style="margin-top:6px;display:inline-block">Download package</a>
                     @endif
                 </td>
             </tr>

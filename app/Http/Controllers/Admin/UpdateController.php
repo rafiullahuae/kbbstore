@@ -50,21 +50,10 @@ class UpdateController extends Controller
      * is definitionally stale, whatever caused it to survive; this catches
      * that regardless of cause; kept here too since this fallback exists
      * specifically for when the other one isn't reachable.
-     *
-     * Also checks the main console's own session key (kbb_update_pending_api)
-     * when this page's own key is empty. The two screens were writing to
-     * completely separate session keys — a package uploaded through one was
-     * invisible to the other. In practice that meant this fallback page,
-     * built specifically for when the main console is broken, could show an
-     * empty upload form while a real package sat stuck and pending in the
-     * other screen's own state, with no way to see or clear it from here.
-     * Confirmed the two arrays share an identical shape (zip, scratch, name,
-     * version, notes, migrations, changes) before relying on this.
      */
     private function currentPending(Request $request): ?array
     {
-        $pending = $request->session()->get('kbb_update_pending')
-            ?? $request->session()->get('kbb_update_pending_api');
+        $pending = $request->session()->get('kbb_update_pending');
 
         if (! $pending) {
             return null;
@@ -78,36 +67,11 @@ class UpdateController extends Controller
             @unlink(\Illuminate\Support\Facades\Storage::disk('local')->path($pending['zip']));
             $this->deleteTree($pending['scratch']);
             $request->session()->forget('kbb_update_pending');
-            $request->session()->forget('kbb_update_pending_api');
 
             return null;
         }
 
         return $pending;
-    }
-
-    /**
-     * Discards whatever is pending, from either screen's session key, and
-     * cleans up its uploaded zip and scratch directory. This screen never
-     * had this at all before — its apply() comments referenced Cancel as
-     * the expected way out of a failed re-verify, but no such button, form,
-     * or route existed on this page. That gap is what left an admin with no
-     * way to clear a stuck pending package and no way to upload anything
-     * else, on the one page meant to work when everything else doesn't.
-     */
-    public function cancel(Request $request): RedirectResponse
-    {
-        $pending = $this->currentPending($request);
-
-        if ($pending) {
-            @unlink(\Illuminate\Support\Facades\Storage::disk('local')->path($pending['zip']));
-            $this->deleteTree($pending['scratch']);
-        }
-
-        $request->session()->forget('kbb_update_pending');
-        $request->session()->forget('kbb_update_pending_api');
-
-        return back()->with('kbb_update_message', 'Package discarded.');
     }
 
     /** Step 1 — verify only. Nothing on the site changes. */
@@ -184,7 +148,6 @@ class UpdateController extends Controller
             @unlink(\Illuminate\Support\Facades\Storage::disk('local')->path($pending['zip']));
             $this->deleteTree($pending['scratch']);
             $request->session()->forget('kbb_update_pending');
-            $request->session()->forget('kbb_update_pending_api');
 
             return back()->with('kbb_update_errors', $package->errors);
         }
@@ -205,7 +168,6 @@ class UpdateController extends Controller
         @unlink(\Illuminate\Support\Facades\Storage::disk('local')->path($pending['zip']));
         $this->deleteTree($pending['scratch']);
         $request->session()->forget('kbb_update_pending');
-        $request->session()->forget('kbb_update_pending_api');
 
         $message = match ($release->status) {
             'applied' => "Update {$release->version} applied successfully.",
@@ -263,20 +225,6 @@ class UpdateController extends Controller
         }
 
         RateLimiter::hit($signature, 600);
-    }
-
-    /**
-     * Same purpose as UpdateApiController::download() — this page exists
-     * for when that one isn't reachable, so it needs its own copy of
-     * everything that matters, not a dependency on the other screen.
-     */
-    public function download(UpdateRelease $release)
-    {
-        if (! $release->archive_path || ! \Illuminate\Support\Facades\Storage::disk('local')->exists($release->archive_path)) {
-            abort(404, 'This release has no archived package on this server.');
-        }
-
-        return \Illuminate\Support\Facades\Storage::disk('local')->download($release->archive_path, $release->version . '.zip');
     }
 
     private function deleteTree(string $dir): void
