@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<meta name="color-scheme" content="light only">
+<title>KBB Storefront — Project Progress</title>
+<style>
+html,body{background:#fff !important;color:#2A2228;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0}
+.wrap{max-width:880px;margin:0 auto;padding:36px 28px 60px}
+.header{margin-bottom:8px}
+h1{font-size:26px;margin:0 0 4px;background:linear-gradient(90deg,#E0567B,#C13E63);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+.subtitle{color:#8C828A;font-size:14px;margin:0 0 32px}
+
+.overall-card{background:linear-gradient(135deg,#FFF8F5,#FFF0F4);border:1.5px solid #F3E9EC;border-radius:20px;padding:28px 30px;margin-bottom:36px}
+.overall-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.overall-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C13E63}
+.overall-pct{font-size:42px;font-weight:800;color:#2A2228;line-height:1}
+.overall-track{height:22px;background:#fff;border-radius:99px;overflow:hidden;border:1px solid #F0E4E9;box-shadow:inset 0 1px 3px rgba(0,0,0,.06)}
+.overall-fill{height:100%;background:linear-gradient(90deg,#E0567B,#C13E63);border-radius:99px;transition:width 1s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:10px}
+.overall-fill-label{color:#fff;font-size:11px;font-weight:700}
+.overall-meta{display:flex;gap:20px;margin-top:14px;font-size:12.5px;color:#5E545A}
+.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+.phases-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8C828A;margin:32px 0 14px}
+.phase-row{display:grid;grid-template-columns:200px 1fr 140px;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #F5F0F1}
+.phase-row:last-child{border-bottom:none}
+.phase-label{display:flex;flex-direction:column}
+.phase-title{font-size:13.5px;font-weight:600;color:#2A2228}
+.phase-note{font-size:10.5px;color:#B0B5BD;font-style:italic;margin-top:1px}
+.phase-bar-track{height:10px;background:#F5F0F1;border-radius:99px;overflow:hidden}
+.phase-bar-fill{height:100%;border-radius:99px;transition:width .6s ease}
+.phase-stats{text-align:right}
+.stat-pct{font-size:15px;font-weight:800;display:block}
+.stat-detail{font-size:10.5px;color:#8C828A}
+
+.footer-note{margin-top:36px;padding-top:20px;border-top:1px solid #F0E4E9;font-size:12px;color:#B0B5BD}
+</style>
+</head><body>
+<div class="wrap">
+  <div class="header">
+    <h1>KBB Storefront</h1>
+    <p class="subtitle">Live progress, computed directly from the checkboxes in KBB-Master-Plan.md — not a separate, hand-kept number</p>
+  </div>
+
+  <div class="overall-card">
+    <div class="overall-top">
+      <span class="overall-label">Overall project progress</span>
+      <span class="overall-pct">58%</span>
+    </div>
+    <div class="overall-track">
+      <div class="overall-fill" style="width:58%">
+        <span class="overall-fill-label">46 of 81 items</span>
+      </div>
+    </div>
+    <div class="overall-meta">
+      <span><span class="legend-dot" style="background:#22A65A"></span>46 done</span>
+      <span><span class="legend-dot" style="background:#E8A93B"></span>2 partial</span>
+      <span><span class="legend-dot" style="background:#B0B5BD"></span>33 open</span>
+    </div>
+  </div>
+
+  <div class="phases-title">By phase</div>
+  
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 1 — Foundation</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:100%;background:#0EA5A0"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#0EA5A0">100%</span>
+        <span class="stat-detail">4 done</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 2 — Storefront chrome</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:100%;background:#0EA5A0"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#0EA5A0">100%</span>
+        <span class="stat-detail">7 done</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 3 — Module framework</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:87%;background:#22A65A"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#22A65A">87%</span>
+        <span class="stat-detail">13 done · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 4 — Search</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:69%;background:#E8A93B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E8A93B">69%</span>
+        <span class="stat-detail">5 done · 1 partial · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 5 — Product cards and grids</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:50%;background:#E8A93B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E8A93B">50%</span>
+        <span class="stat-detail">2 done · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 6 — Product page</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:50%;background:#E8A93B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E8A93B">50%</span>
+        <span class="stat-detail">2 done · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 7 — Account area</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:33%;background:#E8A93B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E8A93B">33%</span>
+        <span class="stat-detail">2 done · 4 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 8 — Cart and checkout</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:40%;background:#E8A93B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E8A93B">40%</span>
+        <span class="stat-detail">2 done · 3 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 9 — Content pages</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:33%;background:#E8A93B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E8A93B">33%</span>
+        <span class="stat-detail">2 done · 4 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 10 — Build my routine</span>
+        <span class="phase-note">designed, not built</span>
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#B0B5BD">0%</span>
+        <span class="stat-detail">0 done · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 11 — Payments</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#B0B5BD">0%</span>
+        <span class="stat-detail">0 done · 1 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 12 — Performance and SEO</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:17%;background:#E0567B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E0567B">17%</span>
+        <span class="stat-detail">0 done · 1 partial · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 13 — Data migration</span>
+        <span class="phase-note">one-time, idempotent Artisan command</span>
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#B0B5BD">0%</span>
+        <span class="stat-detail">0 done · 4 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 14 — Licensing console</span>
+        <span class="phase-note">separate application</span>
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#B0B5BD">0%</span>
+        <span class="stat-detail">0 done · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 15 — Page builder</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#B0B5BD">0%</span>
+        <span class="stat-detail">0 done · 1 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 16 — Growth &amp; Marketing</span>
+        
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:33%;background:#E8A93B"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#E8A93B">33%</span>
+        <span class="stat-detail">1 done · 2 open</span>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-label">
+        <span class="phase-title">Phase 17 — Dead interface</span>
+        <span class="phase-note">new — found by `hooks_bound`</span>
+      </div>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:100%;background:#0EA5A0"></div>
+      </div>
+      <div class="phase-stats">
+        <span class="stat-pct" style="color:#0EA5A0">100%</span>
+        <span class="stat-detail">6 done</span>
+      </div>
+    </div>
+
+  <div class="footer-note">
+    Recomputed each time the master plan is regenerated — this file is a view onto that document,
+    not a separate source of truth. See KBB-Master-Plan.md itself for the reasoning behind every
+    number here.
+  </div>
+</div>
+</body></html>
