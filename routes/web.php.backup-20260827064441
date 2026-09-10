@@ -1,0 +1,116 @@
+<?php
+
+use App\Http\Controllers\Store\PageController;
+use App\Http\Controllers\Store\SeoFilesController;
+use Illuminate\Support\Facades\Route;
+
+// Storefront — each page is your finalized design, served verbatim.
+Route::get('/sitemap.xml', [SeoFilesController::class, 'sitemap']);
+Route::get('/robots.txt',  [SeoFilesController::class, 'robots']);
+Route::get('/',            [PageController::class, 'home'])->name('home');
+Route::get('/shop',        [PageController::class, 'shop'])->name('shop');
+Route::get('/category/{slug?}', [PageController::class, 'category'])->name('category');
+Route::get('/product',          [PageController::class, 'product'])->name('product');       // storefront links use /product?slug=
+Route::get('/product/{slug}',   [PageController::class, 'product']);                          // also accept a pretty path (renders same view)
+Route::get('/checkout',    [PageController::class, 'checkout'])->name('checkout');
+Route::get('/skin-quiz',   [PageController::class, 'skinQuiz'])->name('skin-quiz');
+Route::get('/reviews',     [PageController::class, 'reviewWall'])->name('review-wall');
+Route::get('/blog',        [PageController::class, 'blog'])->name('blog');
+Route::get('/post/{slug?}',[PageController::class, 'post'])->name('post');
+Route::get('/app',         [PageController::class, 'app'])->name('app');
+
+// ---------------------------------------------------------------------------
+// Store back-office (admin). Session-guarded; API lives under /admin-api in the
+// same web-session context (not api.php), so the admin guard is applied.
+// ---------------------------------------------------------------------------
+use App\Http\Controllers\Admin\PageController as AdminPage;
+use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminController;
+
+Route::get('/admin/login',  [AdminAuthController::class, 'showLogin'])->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.post');
+Route::post('/admin/logout',[AdminAuthController::class, 'logout'])->name('admin.logout');
+
+Route::middleware('auth:admin')->group(function () {
+    Route::get('/admin', [AdminPage::class, 'app'])->name('admin');
+
+    Route::prefix('admin-api')->group(function () {
+        Route::get('/stats',                 [AdminController::class, 'stats']);
+        Route::get('/products',              [AdminController::class, 'products']);
+        Route::get('/products/{id}',         [AdminController::class, 'getProduct']);
+        Route::put('/products/{id}',         [AdminController::class, 'updateProduct']);
+        Route::post('/inventory',            [AdminController::class, 'saveInventory']);
+        Route::get('/analytics',             [AdminController::class, 'analytics']);
+        Route::get('/users',                 [AdminController::class, 'users']);
+        Route::post('/users',                [AdminController::class, 'createUser']);
+        Route::put('/users/{id}',            [AdminController::class, 'updateUser']);
+        Route::delete('/users/{id}',         [AdminController::class, 'deleteUser']);
+        Route::get('/settings',              [AdminController::class, 'settings']);
+        Route::put('/settings',              [AdminController::class, 'updateSettings']);
+        Route::get('/reviews',               [AdminController::class, 'reviews']);
+        Route::put('/reviews/{id}',          [AdminController::class, 'updateReview']);
+        Route::post('/reviews/bulk',         [AdminController::class, 'bulkReviews']);
+        Route::get('/customers',             [AdminController::class, 'customers']);
+        Route::get('/quiz-leads',            [AdminController::class, 'quizLeads']);
+        Route::get('/orders',                [AdminController::class, 'orders']);
+        Route::get('/orders/{id}',           [AdminController::class, 'order']);
+        Route::put('/orders/{id}/status',    [AdminController::class, 'updateOrderStatus']);
+    });
+});
+
+/*
+|------------------------------------------------------------------------------
+| KBB Phase 0 + Phase 1
+|------------------------------------------------------------------------------
+*/
+
+use App\Http\Controllers\Store\CustomerAuthController;
+use App\Http\Controllers\Store\DesignCheckController;
+
+// Temporary: the Phase 1 design check. Delete when Phase 2 lands.
+Route::get('/_design-check', DesignCheckController::class);
+
+// Customer accounts. Paths match the live site exactly so no existing link,
+// bookmark or email breaks at cutover.
+Route::middleware('guest:customer')->group(function () {
+    Route::post('/my-account/login', [CustomerAuthController::class, 'login'])->name('customer.login');
+    Route::post('/my-account/register', [CustomerAuthController::class, 'register'])->name('customer.register');
+});
+
+Route::post('/my-account/logout', [CustomerAuthController::class, 'logout'])
+    ->middleware('auth:customer')
+    ->name('customer.logout');
+
+/*
+|------------------------------------------------------------------------------
+| In-app updater
+|------------------------------------------------------------------------------
+|
+| The health endpoint is public but token-guarded: the update runner calls it
+| over HTTP from a separate process to check the site still boots. It reveals
+| nothing beyond "yes, I started".
+|
+*/
+
+use App\Http\Controllers\Admin\UpdateController;
+
+Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
+    Route::get('/updates', [UpdateController::class, 'index'])->name('admin.updates');
+    Route::post('/updates/upload', [UpdateController::class, 'upload'])->name('admin.updates.upload');
+    Route::post('/updates/apply', [UpdateController::class, 'apply'])->name('admin.updates.apply');
+    Route::post('/updates/{release}/rollback', [UpdateController::class, 'rollback'])->name('admin.updates.rollback');
+});
+
+Route::get('/_kbb-health', function () {
+    $token = (string) config('kbb.health_token', '');
+
+    abort_if($token === '' || ! hash_equals($token, (string) request('token')), 404);
+
+    try {
+        \Illuminate\Support\Facades\DB::select('SELECT 1');
+    } catch (\Throwable $e) {
+        return response()->json(['ok' => false, 'reason' => 'database'], 500);
+    }
+
+    return response()->json(['ok' => true, 'version' => config('kbb.version')]);
+})->name('kbb.health');
