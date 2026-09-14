@@ -290,6 +290,7 @@
    up yet. Published here rather than added to the layout's route list, which
    belongs to every page on the site and not just this one. */
 window.KBB.routes.checkoutLine = @json(Url::to('/checkout/line'));
+window.KBB.routes.checkoutCoupon = @json(Url::to('/checkout/coupon'));
 
 (function () {
   var box = document.getElementById('create_account');

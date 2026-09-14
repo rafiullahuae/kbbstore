@@ -105,14 +105,14 @@ export function initCheckout() {
         if (event.target.closest('#kbb_apply_coupon')) {
             event.preventDefault();
             const field = document.getElementById('kbb_coupon_code');
-            if (field?.value.trim()) await post('/coupon', { code: field.value.trim() });
+            if (field?.value.trim()) await changeCoupon(field.value.trim(), false);
             return;
         }
 
         const hint = event.target.closest('.hint [data-code]');
         if (hint) {
             event.preventDefault();
-            await post('/coupon', { code: hint.dataset.code });
+            await changeCoupon(hint.dataset.code, false);
         }
     });
 
@@ -326,6 +326,7 @@ export function initCheckout() {
        never builds a path, so a subdirectory install cannot produce one that
        escapes the app. */
     const lineUrl = () => window.KBB?.routes?.checkoutLine || '';
+    const couponUrl = () => window.KBB?.routes?.checkoutCoupon || '';
 
     /* One line at a time. Two presses of + in quick succession are two writes
        in the order they were made, not a race the server has to referee, and
@@ -395,6 +396,54 @@ export function initCheckout() {
             // nothing.
             btn.disabled = false;
             btn.removeAttribute('aria-busy');
+        }
+    }
+
+    /* Same shape as changeLine: the server returns this page's own fragments,
+       so applying a code repaints in place instead of reloading and throwing
+       away every field already typed. Falls back to the old reload-based path
+       when the route is not published (an older cached layout). */
+    async function changeCoupon(code, remove) {
+        const url = couponUrl();
+        if (!url) return post('/coupon', remove ? { remove: true } : { code });
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.KBB.csrf,
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                    code: code || '',
+                    remove: !!remove,
+                    country: document.getElementById('billing_country')?.value || '',
+                    state: document.getElementById('billing_state')?.value || '',
+                    payment_method: document.querySelector('input[name="payment_method"]:checked')?.value || '',
+                }),
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!data) {
+                window.kbbToast?.('Could not apply that code — please try again.');
+                return;
+            }
+
+            // A rejected code still carries fragments, rendered from the
+            // unchanged totals, so the error is shown beside current figures.
+            // orderHtml is the one region fragments() always returns.
+            if (typeof data.orderHtml === 'string') applyFragments(data);
+
+            if (data.ok !== true) {
+                window.kbbToast?.(data.error || 'That code could not be applied.');
+                return;
+            }
+
+            if (data.message) window.kbbToast?.(data.message);
+        } catch {
+            window.kbbToast?.('No connection — please try again.');
         }
     }
 

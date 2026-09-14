@@ -52,6 +52,7 @@ class CheckoutController extends Controller
         private CartService $carts,
         private ShippingService $shipping,
         private SettingsService $settings,
+        private \App\Services\CouponService $coupons,
     ) {}
 
     public function page(Request $request): View|RedirectResponse
@@ -932,6 +933,72 @@ class CheckoutController extends Controller
 
         return response()->json(
             ['ok' => true, 'empty' => false, 'itemId' => (int) $data['item_id']]
+            + $this->fragments($request, $cart, $data)
+        );
+    }
+
+    /**
+     * Applying or removing a coupon from the checkout page, in place.
+     *
+     * The stepper got its own endpoint because /api/cart/coupon renders the
+     * mini-cart and the cart page — neither of which is on screen here — so the
+     * only way to show new figures was a full reload, which threw away every
+     * field already typed. A coupon moves exactly the regions a quantity change
+     * moves (line discounts, totals, the free-delivery bar, and which payment
+     * methods the order total still qualifies for), so it shares fragments()
+     * with the stepper rather than growing a second copy that can drift.
+     *
+     * The discount itself is never taken from the request: validate() reads the
+     * coupon from the database and checks it against this cart, exactly as the
+     * cart page's own endpoint does. The browser sends a code, never an amount.
+     */
+    public function couponUpdate(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['nullable', 'string', 'max:60'],
+            'remove' => ['nullable', 'boolean'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+            'payment_method' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Your bag is empty — please start again from the cart.',
+            ], 422);
+        }
+
+        if ($request->boolean('remove')) {
+            $cart->forceFill(['coupon_id' => null])->save();
+            $message = 'Coupon removed';
+        } else {
+            $result = $this->coupons->validate(
+                (string) ($data['code'] ?? ''),
+                $cart,
+                $request->user('customer')?->email
+            );
+
+            // A rejected code leaves the cart exactly as it was. The page is
+            // still repainted from the unchanged totals so the shopper sees the
+            // error beside figures that are current, not stale.
+            if (! $result['ok']) {
+                return response()->json(
+                    ['ok' => false, 'error' => $result['error']]
+                    + $this->fragments($request, $cart, $data)
+                );
+            }
+
+            $cart->forceFill(['coupon_id' => $result['coupon']->id])->save();
+            $message = 'Coupon applied';
+        }
+
+        $cart = $this->loadCart($request);
+
+        return response()->json(
+            ['ok' => true, 'message' => $message]
             + $this->fragments($request, $cart, $data)
         );
     }

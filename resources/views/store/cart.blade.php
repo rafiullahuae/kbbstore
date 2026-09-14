@@ -11,7 +11,7 @@
 {{-- Wrapper matches the theme's cart page shell (kbb-cart.css .kbb-cartpage). --}}
 <div class="kbb-cartpage" id="cartPage">
     <div class="wrap">
-        <a class="back" href="{{ Url::to('/shop/') }}">← Continue shopping</a>
+        <a class="backlink" href="{{ Url::to('/shop/') }}">← Continue shopping</a>
         {{-- The count sits in the heading rather than on a line of its own.
 
              The class is `cart-count`, NOT `lead`. `.lead` in kbb.css is the

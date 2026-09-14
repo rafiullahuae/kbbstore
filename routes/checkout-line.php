@@ -39,3 +39,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/checkout/line', [CheckoutController::class, 'lineUpdate'])
     ->name('checkout.lineUpdate');
+
+/*
+ * The coupon box on the same page, for the same reason: /api/cart/coupon
+ * renders the mini-cart and the cart page, neither of which is on screen at
+ * checkout, so applying a code could only be shown by reloading — which threw
+ * away every field the shopper had already filled in. Same group, same
+ * middleware: a shopper posts it, so it needs the session and CSRF.
+ */
+Route::post('/checkout/coupon', [CheckoutController::class, 'couponUpdate'])
+    ->name('checkout.couponUpdate');
