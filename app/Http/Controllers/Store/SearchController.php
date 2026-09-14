@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\HeaderSettings;
 use App\Services\SettingsService;
 use App\Support\Money;
+use App\Support\SearchTerms;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -188,8 +189,10 @@ class SearchController extends Controller
                 ->where('brand_id', $brand->id);
 
             if ($rest !== '') {
-                $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $rest) . '%';
-                $ownQuery->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like));
+                $ownQuery->where(function ($w) use ($rest) {
+                    SearchTerms::orWhereLike($w, 'products.name', $rest);
+                    SearchTerms::orWhereLike($w, 'products.sku', $rest);
+                });
             }
 
             $own = $ownQuery->orderByDesc('total_sales')->limit($n)->get();
@@ -217,14 +220,15 @@ class SearchController extends Controller
             // Brand + word, widening on: the same word, matched against every
             // other brand too, filling whatever room is left.
             if ($rest !== '' && $broaden && $products->count() < $n) {
-                $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $rest) . '%';
-
                 $others = Product::query()
                     ->select(self::CARD_COLUMNS)
                     ->visible()
                     ->with('brand:id,name,slug')
                     ->where('brand_id', '!=', $brand->id)
-                    ->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like))
+                    ->where(function ($w) use ($rest) {
+                        SearchTerms::orWhereLike($w, 'products.name', $rest);
+                        SearchTerms::orWhereLike($w, 'products.sku', $rest);
+                    })
                     ->whereNotIn('id', $products->pluck('id')->all() ?: [0])
                     ->orderByDesc('total_sales')
                     ->limit($n - $products->count())
@@ -252,9 +256,9 @@ class SearchController extends Controller
 
         // Categories, unaffected by which brand was recognised.
         if ($rest !== '' && ($n = (int) $this->header->get('search_limit_categories'))) {
-            $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $rest) . '%';
-            $cats = Category::query()->select('id', 'name', 'slug')
-                ->where('name', 'like', $like)
+            $cats = SearchTerms::whereLike(
+                Category::query()->select('id', 'name', 'slug'), 'categories.name', $rest
+            )
                 ->withCount(['products' => fn ($w) => $w->visible()])
                 ->groupBy('categories.id', 'categories.name', 'categories.slug')
                 ->having('products_count', '>', 0)
@@ -291,7 +295,6 @@ class SearchController extends Controller
     private function buildGeneral(string $q): array
     {
         $groups = [];
-        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $q) . '%';
 
         // The results page has expanded synonyms since 2.60.77; the dropdown
         // did not, so typing "moisturiser" showed nothing here and then found
@@ -306,10 +309,9 @@ class SearchController extends Controller
                 ->with('brand:id,name,slug')
                 ->where(function ($w) use ($terms) {
                     foreach ($terms as $term) {
-                        $t = \App\Support\SearchTerms::like($term);
-                        $w->orWhere('name', 'like', $t)
-                            ->orWhere('sku', 'like', $t)
-                            ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $t));
+                        SearchTerms::orWhereLike($w, 'products.name', $term);
+                        SearchTerms::orWhereLike($w, 'products.sku', $term);
+                        $w->orWhereHas('brand', fn ($b) => SearchTerms::whereLike($b, 'brands.name', $term));
                     }
                 })
                 // A name match beats a brand or SKU match, so the obvious
@@ -368,8 +370,9 @@ class SearchController extends Controller
         }
 
         if ($n = (int) $this->header->get('search_limit_categories')) {
-            $cats = Category::query()->select('id', 'name', 'slug')
-                ->where('name', 'like', $like)
+            $cats = SearchTerms::whereLike(
+                Category::query()->select('id', 'name', 'slug'), 'categories.name', $q
+            )
                 ->withCount(['products' => fn ($w) => $w->visible()])
                 ->groupBy('categories.id', 'categories.name', 'categories.slug')
                 ->having('products_count', '>', 0)
@@ -393,8 +396,9 @@ class SearchController extends Controller
         }
 
         if ($n = (int) $this->header->get('search_limit_brands')) {
-            $brands = Brand::query()->select('id', 'name', 'slug')
-                ->where('name', 'like', $like)
+            $brands = SearchTerms::whereLike(
+                Brand::query()->select('id', 'name', 'slug'), 'brands.name', $q
+            )
                 ->withCount(['products' => fn ($w) => $w->visible()])
                 ->groupBy('brands.id', 'brands.name', 'brands.slug')
                 ->having('products_count', '>', 0)

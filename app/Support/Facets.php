@@ -96,6 +96,21 @@ final class Facets
         return self::$memo = $out;
     }
 
+    /**
+     * Drop the memo so the next active() re-reads the current request.
+     *
+     * The memo is a process-level static, the same shape as the Setting::map()
+     * trap the working notes call out. One request per process under PHP-FPM
+     * hides it completely; anything that serves two requests from one process
+     * -- the test suite, a queue worker, Octane -- gets the first request's
+     * filters applied to the second, silently. ShopController::index() calls
+     * this before reading any facet.
+     */
+    public static function reset(): void
+    {
+        self::$memo = null;
+    }
+
     /** Multi-select values arrive either as cat[]=a&cat[]=b or cat=a,b. */
     private static function listParam(string $key): array
     {
