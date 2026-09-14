@@ -47,6 +47,11 @@ class BuildPackage extends Command
         // no extension -- and the server does not read it anyway: the installed
         // version is the newest applied row in update_releases.
         'VERSION',
+        // UpdateGuard forbids bootstrap/ outright, and rightly: a bad
+        // bootstrap/app.php stops the application booting at all, which would
+        // leave the updater unable to roll itself back. Changes there reach the
+        // server by hand, not by package.
+        'bootstrap/',
     ];
 
     public function handle(): int
