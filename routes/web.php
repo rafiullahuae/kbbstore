@@ -287,6 +287,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';
 
+        // Mail settings and the test-send. Inside this group deliberately: an
+        // unauthenticated endpoint that sends mail to a caller-supplied address
+        // is an open relay.
+        require __DIR__.'/mail-admin.php';
+
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
