@@ -114,6 +114,11 @@ class SettingsService
         // the original page controllers. Clearing one without the other leaves
         // half the site on the old value.
         Setting::flushMap();
+
+        // Money resolves the currency once per container and holds it, so a
+        // symbol or decimals change written mid-request would otherwise not be
+        // visible until the next one.
+        \App\Support\Money::forgetConfig();
     }
 
     /**

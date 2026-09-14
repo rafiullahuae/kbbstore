@@ -382,6 +382,11 @@ class AdminController extends Controller
         // money keys — free_ship, delivery_flat, cod_fee — are already in fils, converted UI-side).
         $allowed = [
             'store_name', 'currency', 'vat_rate',
+            // Currency display (Store -> Business Details -> Currency).
+            // Every one of these has to be here or Save reports success and
+            // writes nothing — the loop below skips unknown keys silently.
+            'currency_symbol', 'currency_position', 'currency_decimals',
+            'currency_symbol_render',
             'free_ship', 'delivery_flat', 'cod_fee',
             'meta_pixel', 'ga', 'google_site_verification', 'bing_site_verification', 'seo_json',
             // Search appearance

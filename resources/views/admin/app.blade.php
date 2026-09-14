@@ -8302,23 +8302,59 @@ buildNav();
   function money2aed(k){ var v=SETTINGS[k]; return (v==null||v==='')?'':(parseInt(v,10)/100); }
   async function loadSettings(){ try{ var d=await api('/admin-api/settings'); SETTINGS=d.settings||{}; }catch(e){ SETTINGS={}; } return SETTINGS; }
 
+  /* The currency table, rendered from app/Support/Currencies.php so a symbol or
+     a decimal count is never restated here. Curated, not all ~135 Stripe
+     currencies — see the comment in that file. */
+@endverbatim
+  var KBB_CURRENCIES = @json(\App\Support\Currencies::forSelect());
+@verbatim
+  function curFind(code){ code=String(code||'').toUpperCase(); for(var i=0;i<KBB_CURRENCIES.length;i++){ if(KBB_CURRENCIES[i].code===code) return KBB_CURRENCIES[i]; } return null; }
+  function curSymbol(){ var s=SETTINGS.currency_symbol; if(s!=null&&String(s).trim()!=='') return String(s); var c=curFind(SETTINGS.currency||'AED'); return c?c.symbol:''; }
+  function curSelect(){
+    var cur=String(SETTINGS.currency||'AED').toUpperCase(), seen=false;
+    var out=KBB_CURRENCIES.map(function(c){ if(c.code===cur) seen=true; return '<option value="'+sesc(c.code)+'"'+(c.code===cur?' selected':'')+'>'+sesc(c.code+' — '+c.name)+'</option>'; }).join('');
+    if(!seen&&cur) out='<option value="'+sesc(cur)+'" selected>'+sesc(cur)+'</option>'+out;
+    return '<select class="inp" id="set_currency" style="width:100%">'+out+'</select>';
+  }
+
   async function renderStoreSettings(){
     await loadSettings();
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Business Details</h2><p>Core store configuration. These values drive the storefront and checkout totals.</p></div>'+
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Store</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Store name</label><input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'"></div>'+
-      '<div class="fld"><label>Currency</label><input id="set_currency" value="'+sesc(SETTINGS.currency||'AED')+'"></div></div>'+
+      '<div class="fld"><label>Currency</label>'+curSelect()+'</div></div>'+
       '<div class="fld" style="max-width:220px"><label>VAT rate (%)</label><input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'"></div></div>'+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Currency display</b>'+
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">How prices are printed everywhere on the storefront. Choosing a currency above fills in its symbol and decimals — you can still override the symbol.</p>'+
+      '<div class="g2"><div class="fld"><label>Symbol</label><input id="set_currency_symbol" value="'+sesc(SETTINGS.currency_symbol)+'" placeholder="'+sesc(curSymbol())+'">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Leave blank to use the selected currency’s own symbol.</p></div>'+
+      '<div class="fld"><label>Symbol rendering</label>'+seoSel('set_currency_symbol_render',SETTINGS.currency_symbol_render,[['unicode','Unicode character — correct, may show an empty box'],['svg','Drawn glyph (SVG) — always renders']],'unicode')+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">The dirham sign “⃃” was accepted by Unicode in July 2025 and ships in Unicode 18.0 (September 2026), so most devices have no font glyph for it yet and draw an empty box instead. <b>Unicode</b> is the default because it puts the real character in the page — right for copy-paste, screen readers and search engines. If the empty box bothers you, switch to <b>Drawn glyph</b>: the storefront then draws the symbol itself and it always renders.</p></div></div>'+
+      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Symbol position</label>'+seoSel('set_currency_position',SETTINGS.currency_position,[['before','Before the number — '+sesc(curSymbol())+'199'],['before_space','Before, with a space — '+sesc(curSymbol())+' 199'],['after','After the number — 199'+sesc(curSymbol())],['after_space','After, with a space — 199 '+sesc(curSymbol())]],'before')+'</div>'+
+      '<div class="fld"><label>Decimal places</label><input id="set_currency_decimals" type="number" min="0" max="4" step="1" value="'+sesc(SETTINGS.currency_decimals)+'" placeholder="blank — whole numbers">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Drives both what is printed and how stored amounts are read back (2 = hundredths, which is how every amount already in the database is stored). Leave blank to keep the current whole-dirham display.</p></div></div></div>'+
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Shipping &amp; COD</b>'+
       '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">All amounts in AED. Free shipping applies when the cart subtotal reaches the threshold.</p>'+
       '<div class="g2"><div class="fld"><label>Free-shipping threshold (AED)</label><input id="set_free_ship" type="number" step="1" value="'+money2aed('free_ship')+'"></div>'+
       '<div class="fld"><label>Flat delivery fee (AED)</label><input id="set_delivery" type="number" step="1" value="'+money2aed('delivery_flat')+'"></div></div>'+
       '<div class="fld" style="max-width:220px"><label>COD fee (AED)</label><input id="set_cod" type="number" step="1" value="'+money2aed('cod_fee')+'"></div></div>'+
       '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_biz">Save changes</button></div></div>';
+    /* Picking a currency fills in its symbol and decimals; both stay editable. */
+    var curSel=document.getElementById('set_currency');
+    if(curSel) curSel.onchange=function(){
+      var c=curFind(curSel.value); if(!c) return;
+      var symEl=document.getElementById('set_currency_symbol'), decEl=document.getElementById('set_currency_decimals');
+      if(symEl){ symEl.value=c.symbol; symEl.placeholder=c.symbol; }
+      if(decEl) decEl.value=String(c.decimals);
+    };
     document.getElementById('set_save_biz').onclick=async function(){
       var payload={
         store_name: sval('set_store_name'), currency: sval('set_currency'), vat_rate: sval('set_vat'),
+        currency_symbol: sval('set_currency_symbol'),
+        currency_symbol_render: sval('set_currency_symbol_render'),
+        currency_position: sval('set_currency_position'),
+        currency_decimals: sval('set_currency_decimals'),
         free_ship: String(Math.round((parseFloat(sval('set_free_ship'))||0)*100)),
         delivery_flat: String(Math.round((parseFloat(sval('set_delivery'))||0)*100)),
         cod_fee: String(Math.round((parseFloat(sval('set_cod'))||0)*100))
