@@ -6,18 +6,34 @@ use App\Support\Url;
  * fully built for some time — the screen saves real settings, the class
  * reads and formats every one of them correctly (title template, meta
  * description, Open Graph, Twitter cards, JSON-LD). Neither had ever been
- * connected to an actual page: this was a bare <title> tag and nothing
- * else. title_is_final passes through whatever a page already computes via
- * @section('title', ...) untouched, so no page's visible title changes here
- * — this only adds what was missing around it. A page can still hand in its
- * own richer context (product data, a specific image, an explicit type) via
- * a $seoCtx array before this layout renders.
+ * connected to an actual page: this was a bare <title> tag and nothing else.
+ *
+ * Two corrections to how that connection was first made:
+ *
+ *   - title_is_final was set unconditionally here, which is the one flag that
+ *     tells Seo::render() to skip the title template. Every page therefore
+ *     took that branch, and seo_title_template / seo_separator / the whole
+ *     Search-appearance block were saved by the admin and read by nothing. It
+ *     is now left off, so the configured template applies; a page that really
+ *     has computed its own final title (a per-product SEO override) still sets
+ *     it through $seoCtx. Seo::render() drops the {sitename} token when the
+ *     page title already carries the brand, so the titles the views build
+ *     ("Cart · K-Beauty Bliss") do not gain a second copy of it.
+ *
+ *   - Nothing ever passed type => 'home', so seo_home_title and
+ *     seo_home_description were unreachable settings. The home page is the one
+ *     the router serves at "/", which is exactly what is testable here.
+ *
+ * A page can still hand in its own richer context (product data, a specific
+ * image, an explicit type) via a $seoCtx array before this layout renders.
  */
-$kbbRawTitle = trim(strip_tags($__env->yieldContent('title', $kbbSettings->get('store_name', 'K-Beauty Bliss'))));
+$kbbPath = request()->getPathInfo() ?: '/';
+$kbbIsHome = trim($kbbPath, '/') === '';
+$kbbRawTitle = trim(strip_tags($__env->yieldContent('title', '')));
 $kbbSeoCtx = array_merge([
+    'type' => $kbbIsHome ? 'home' : 'website',
     'title' => $kbbRawTitle,
-    'title_is_final' => true,
-    'url' => Url::to(request()->getPathInfo() ?: '/'),
+    'url' => Url::to($kbbPath),
 ], $seoCtx ?? []);
 @endphp
 <!DOCTYPE html>

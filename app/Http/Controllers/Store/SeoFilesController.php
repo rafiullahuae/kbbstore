@@ -3,23 +3,39 @@
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
+use App\Services\Seo\SeoSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class SeoFilesController extends Controller
 {
+    /**
+     * The absolute base every URL in these files is built on.
+     *
+     * Was `$s['site_url'] ?? config('app.url') ?? url('/')`. The SEO screen
+     * posts site_url on every save, so an admin who never filled it in has
+     * '' stored there -- which ?? happily accepts, because '' is not null.
+     * The result was a sitemap of relative <loc> values (rejected outright by
+     * Search Console) and a robots.txt advertising "Sitemap: /sitemap.xml".
+     * SeoSettings::firstFilled() takes the first candidate that is usable
+     * rather than the first that exists.
+     */
     private function base(): string
     {
-        $s = Setting::map();
-        return rtrim($s['site_url'] ?? config('app.url') ?? url('/'), '/');
+        $s = SeoSettings::map();
+
+        return rtrim(SeoSettings::firstFilled(
+            $s['site_url'] ?? null,
+            (string) config('app.url'),
+            url('/')
+        ), '/');
     }
 
     /** GET /sitemap.xml — dynamic sitemap of indexable URLs. */
     public function sitemap()
     {
-        $s = Setting::map();
-        if (($s['sitemap_enabled'] ?? '1') === '0') {
+        $s = SeoSettings::map();
+        if (SeoSettings::from($s, 'sitemap_enabled') === '0') {
             return response('Sitemap disabled', 404);
         }
 
@@ -141,15 +157,20 @@ class SeoFilesController extends Controller
     /** GET /llms.txt — a plain-text summary for AI crawlers/agents, not a sitemap replacement. */
     public function llms()
     {
-        $s = Setting::map();
+        $s = SeoSettings::map();
 
-        if (($s['llms_enabled'] ?? '1') !== '1') {
+        if (SeoSettings::from($s, 'llms_enabled') !== '1') {
             return response('Not enabled', 404);
         }
 
         $base = $this->base();
-        $name = $s['seo_site_name'] ?? ($s['store_name'] ?? 'K-Beauty Bliss');
-        $desc = trim((string) ($s['seo_default_description'] ?? ''));
+        $name = SeoSettings::firstFilled(
+            $s['seo_site_name'] ?? null,
+            $s['store_name'] ?? null,
+            (string) config('app.name'),
+            'K-Beauty Bliss'
+        );
+        $desc = SeoSettings::from($s, 'seo_default_description', '');
 
         $lines = [
             "# {$name}",
@@ -168,9 +189,10 @@ class SeoFilesController extends Controller
 
     public function robots()
     {
-        $s = Setting::map();
-        if (!empty($s['robots_txt'])) {
-            return response($s['robots_txt'], 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+        $s = SeoSettings::map();
+        $custom = SeoSettings::from($s, 'robots_txt', '');
+        if ($custom !== '') {
+            return response($custom, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
         }
         $base = $this->base();
         $body = "User-agent: *\nAllow: /\n"
