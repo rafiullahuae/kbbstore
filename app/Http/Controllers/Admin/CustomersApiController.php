@@ -630,9 +630,41 @@ class CustomersApiController extends Controller
      * screen already runs five statements and each one on this host is a round
      * trip over a socket shared with the storefront.
      */
+    /**
+     * The same filtered set, but as an aggregate-only query.
+     *
+     * selectRaw() APPENDS to the select list, it does not replace it. A
+     * "(clone $base)->toBase()->selectRaw('COUNT(*) ...')" therefore keeps all
+     * 22 allowlisted columns from rowQuery() and adds an aggregate after them,
+     * with no GROUP BY on the outer query. SQLite permits that and picks an
+     * arbitrary row for the bare columns; MySQL refuses it outright:
+     *
+     *   SQLSTATE[42000] 1140 Mixing of GROUP columns (MIN(),MAX(),COUNT(),...)
+     *   with no GROUP columns is illegal if there is no GROUP BY clause
+     *
+     * which is what the live Customers screen returned while every test here
+     * passed. The joins and the WHERE have to survive — the counts describe the
+     * filtered set and read oa.* — so only the columns are discarded.
+     *
+     * The select BINDINGS go with them. rowQuery() adds four to the select slot
+     * for the last_active_at CASE expression; dropping the columns removes
+     * those four placeholders, and leaving the bindings behind would send the
+     * driver more values than the statement has markers.
+     */
+    private function aggregate(Builder $query, string $expression): ?object
+    {
+        $base = (clone $query)->toBase();
+
+        $base->columns = null;
+        $base->bindings['select'] = [];
+
+        return $base->selectRaw($expression)->first();
+    }
+
     private function segmentCounts(Builder $base, Request $request): array
     {
-        $row = (clone $base)->toBase()->selectRaw(
+        $row = $this->aggregate(
+            $base,
             'COUNT(*) as c_all,
              SUM(CASE WHEN COALESCE(oa.paid_orders, 0) > 0 THEN 1 ELSE 0 END) as c_ordered,
              SUM(CASE WHEN COALESCE(oa.paid_orders, 0) = 0 THEN 1 ELSE 0 END) as c_never,
@@ -641,7 +673,7 @@ class CustomersApiController extends Controller
              SUM(CASE WHEN customers.password IS NULL AND customers.legacy_password IS NULL THEN 1 ELSE 0 END) as c_guest,
              SUM(CASE WHEN customers.email_verified_at IS NOT NULL THEN 1 ELSE 0 END) as c_verified,
              SUM(CASE WHEN customers.email_verified_at IS NULL THEN 1 ELSE 0 END) as c_unverified'
-        )->first();
+        );
 
         $trashed = $this->applySegment($this->baseQuery($request), 'trashed')
             ->toBase()
@@ -669,11 +701,12 @@ class CustomersApiController extends Controller
      */
     private function summaryFor(Builder $query): array
     {
-        $row = (clone $query)->toBase()->selectRaw(
+        $row = $this->aggregate(
+            $query,
             'COUNT(*) as customers,
              COALESCE(SUM(COALESCE(oa.paid_orders, 0)), 0) as orders,
              COALESCE(SUM(COALESCE(oa.spend_fils, 0)), 0) as spend'
-        )->first();
+        );
 
         $customers = (int) ($row->customers ?? 0);
         $orders = (int) ($row->orders ?? 0);
