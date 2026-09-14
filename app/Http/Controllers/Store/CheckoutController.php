@@ -241,7 +241,14 @@ class CheckoutController extends Controller
         // it always did, never a figure from the request.
         $fee = $giftFee + $gateway->feeFils((int) ($totals['total'] ?? 0));
 
-        $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $request) {
+        // $giftFee is in this use list because the closure writes it to the
+        // order's gift_fee column. It was missing, and a PHP closure inherits
+        // nothing it is not handed -- so every call reached "Undefined
+        // variable $giftFee", which Laravel's error handler turns into an
+        // ErrorException. That is thrown from inside DB::transaction, so the
+        // order rolled back: the storefront checkout could not place an order
+        // at all. Found by the first test to POST to this endpoint.
+        $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request) {
             $customer = $request->user('customer') ?? Customer::firstOrCreate(
                 ['email' => mb_strtolower($data['billing_email'])],
                 ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
