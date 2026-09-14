@@ -601,6 +601,13 @@ require __DIR__.'/auth-customer.php';
 require __DIR__.'/checkout-browsed.php';
 
 /*
+ * Changing a line's quantity from the checkout summary, in place. Same group
+ * and the same reasoning as the file above: posted by a shopper, so it needs
+ * the session and CSRF, and it must come before the Phase 9 catch-all.
+ */
+require __DIR__.'/checkout-line.php';
+
+/*
  * Required last, and that placement is load-bearing. The final route in this
  * file matches a single path segment at the site root -- the shape of every
  * storefront URL there is -- so registration order is what keeps /cart reaching
