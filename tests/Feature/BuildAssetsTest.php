@@ -60,3 +60,108 @@ it('ships a bundle containing the quick-view handler', function () {
 
     expect($found)->toBeTrue('No committed bundle contains the quick-view handler — resources/js changed without rebuilding public/build.');
 });
+
+/** Byte offsets of every occurrence of $needle in $haystack. */
+function positionsOf(string $haystack, string $needle): array
+{
+    $at = [];
+    $from = 0;
+    while (($pos = strpos($haystack, $needle, $from)) !== false) {
+        $at[] = $pos;
+        $from = $pos + 1;
+    }
+
+    return $at;
+}
+
+/** Every committed bundle under public/build/assets, as git has it. */
+function trackedBundles(): array
+{
+    $files = preg_split('/\R/', (string) shell_exec(
+        'git -C '.escapeshellarg(base_path()).' ls-files public/build/assets 2>/dev/null'
+    )) ?: [];
+
+    $out = [];
+    foreach ($files as $file) {
+        if ($file !== '' && str_ends_with($file, '.js')) {
+            $out[$file] = (string) tracked($file);
+        }
+    }
+
+    return $out;
+}
+
+it('ships a bundle containing the mobile summary and Browsed handlers', function () {
+    // "View full summary" and the Browsed pill are the checkout's two mobile
+    // controls, and both live in resources/js/kbb/checkout.js. Same reasoning
+    // as the quick-view case above: the built bundle is what the server serves.
+    $needles = [
+        'kbbSummary' => 'the mobile "View full summary" toggle',
+        'data-stab' => 'the Order summary / Browsed pill tabs',
+    ];
+
+    foreach ($needles as $needle => $what) {
+        $found = false;
+        foreach (trackedBundles() as $source) {
+            if (str_contains($source, $needle)) {
+                $found = true;
+                break;
+            }
+        }
+
+        expect($found)->toBeTrue(
+            "No committed bundle contains {$needle} — {$what} shipped without rebuilding public/build."
+        );
+    }
+});
+
+it('toggles the summary open class on the element the checkout CSS selects', function () {
+    /*
+     * The bug this pins was not a missing listener. Both handlers existed, in
+     * resources/js AND in the shipped bundle — the expander simply put `open`
+     * on #kbbPanels while every rule that implements the expansion is written
+     * against the summary:
+     *
+     *     .kbb-checkout .summary.open .panels   { max-height:1600px }
+     *     .kbb-checkout .summary.open .peekfade { display:none }
+     *
+     * So the class landed on an element no selector matches, the panel stayed
+     * clipped at its 148px peek, and both mobile controls read as dead: the
+     * Browsed tab swaps panels inside that same clipped box, so it could only
+     * ever show the first item and a half of the list.
+     *
+     * Asserting the two halves agree is the point. A handler that toggles a
+     * class nothing styles passes every "is it wired up" check there is.
+     */
+    $css = (string) tracked('resources/css/kbb/kbb-checkout.css');
+    $js = (string) tracked('resources/js/kbb/checkout.js');
+    $blade = (string) tracked('resources/views/store/checkout.blade.php');
+
+    expect(str_contains($css, '.summary.open .panels'))->toBeTrue(
+        'The checkout CSS no longer keys the expansion off .summary.open — this test and the JS need to move with it.');
+
+    // The element carrying the class has to be the .summary aside itself.
+    expect(str_contains($blade, '<aside class="summary" id="kbbSummary">'))->toBeTrue(
+        'The summary aside is no longer #kbbSummary, so the toggle target has drifted from the CSS.');
+
+    expect((bool) preg_match("/getElementById\('kbbSummary'\)\??\.classList\.toggle\('open'\)/", $js))->toBeTrue(
+        'The mobile expander must toggle `open` on #kbbSummary — the CSS selects .summary.open, so toggling it anywhere else (it used to be #kbbPanels) is a live handler with no visible effect.');
+
+    /*
+     * The committed bundle has to agree, not just the source. Matched by
+     * proximity rather than by an exact string: the minifier renames locals and
+     * lowers `?.` differently between versions, but the toggle stays within a
+     * few dozen characters of the id it looks up.
+     */
+    $inBundle = false;
+    foreach (trackedBundles() as $source) {
+        foreach (positionsOf($source, 'kbbSummary') as $at) {
+            if (str_contains(substr($source, $at, 140), 'classList.toggle("open")')) {
+                $inBundle = true;
+                break 2;
+            }
+        }
+    }
+
+    expect($inBundle)->toBeTrue('No committed bundle toggles `open` on #kbbSummary — the fix is in resources/js but public/build was not rebuilt.');
+});

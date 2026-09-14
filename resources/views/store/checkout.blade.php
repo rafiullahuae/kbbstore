@@ -218,7 +218,7 @@
                 </div>
 
                 <!-- mobile: expand/collapse the summary -->
-                <button type="button" class="viewfull" id="kbbViewItems">View full summary ▾</button>
+                <button type="button" class="viewfull" id="kbbViewItems" aria-controls="kbbPanels" aria-expanded="false">View full summary ▾</button>
             </aside>
 
         </div>
