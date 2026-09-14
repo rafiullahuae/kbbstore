@@ -614,9 +614,26 @@ arsort($byDir);
 foreach ($byDir as $d => $n) { printf("%-24s %d\n", $d, $n); }
 if (! $byDir) { echo "(none)\n"; }
 
-echo "\n== MISSING HERE (in repo, absent on this server) ==\n";
-foreach ($missing as $p) { echo $p."\n"; }
-if (! $missing) { echo "(none)\n"; }
+/* Repo paths that are not expected in the application root: documentation and
+ * the plan (repo-only, never shipped in a package), the public-web-root/ copies
+ * (they live in public_html/kbb-upgrade, a different folder), the shared-hosting
+ * deploy tooling, and build assets superseded by content-hashed successors. */
+$expectedMissing = [
+    '.gitignore', 'KBB-Master-Plan.md', 'KBB-Progress-Dashboard.html', 'README.md',
+    'VERSION', 'docs/CHANGELOG.md', 'docs/REPO-STATE.md', 'docs/STATUS-2.60.107.md',
+    'env.staging.txt', 'kbb-finish.php', 'run-composer.php', 'tools/kbb-manifest.php',
+    'public-web-root/READ-ME.txt', 'public-web-root/favicon.ico', 'public-web-root/index.php',
+    'public-web-root/kbb-doctor.php', 'public-web-root/kbb-recover.php',
+    'public/build/assets/app-BZ780Rcq.js', 'public/build/assets/kbb-Dtn0wKY-.css',
+];
+$missUnexpected = array_values(array_diff($missing, $expectedMissing));
+$missExpected   = array_values(array_intersect($missing, $expectedMissing));
+
+echo "\n== MISSING HERE, unexpected (in repo, absent here) ==\n";
+foreach ($missUnexpected as $p) { echo $p."\n"; }
+if (! $missUnexpected) { echo "(none)\n"; }
+echo "\n(".count($missExpected)." further missing paths are documentation, web-root"
+   ." copies, deploy tooling or superseded build assets — expected, not listed.)\n";
 
 if (($_GET['full'] ?? '') === '1') {
     echo "\n== IDENTICAL ==\n";
