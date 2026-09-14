@@ -39,3 +39,6 @@ app/*.zip
 
 # Test database
 /database/testing.sqlite
+
+# Agent worktrees — transient checkouts created per lane, never committed
+/.claude/worktrees/
