@@ -855,6 +855,102 @@ class CheckoutController extends Controller
 
         $cart = $this->loadCart($request);
 
+        return response()->json(
+            ['ok' => true, 'productId' => $product->id] + $this->fragments($request, $cart, $data)
+        );
+    }
+
+    /**
+     * A quantity change, or a removal, made from the checkout's order summary.
+     *
+     * The controls were already live and already correct; what they did with
+     * the answer was `window.location.reload()`. The cart endpoints in
+     * CartController return the DRAWER and the cart page, neither of which is
+     * on screen here, so there was nothing this page could swap in and a full
+     * navigation was the only way to show the new figures. Reloading throws
+     * away every field already typed into the form above, scrolls back to the
+     * top and re-runs page()'s country detection over the shopper's own
+     * choice — an expensive way to change a number by one.
+     *
+     * This is the same shape as browsedAdd: one write, then every region that
+     * write moves, rendered here and swapped in. Money never crosses the wire
+     * as anything but a formatted string the server produced.
+     */
+    public function lineUpdate(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_id' => ['required', 'integer'],
+            // 0 removes the line — the ✕ beside the stepper is the same change
+            // with a different number, not a second endpoint.
+            'quantity' => ['required', 'integer', 'min:0', 'max:99'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+            'payment_method' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Your bag is empty — please start again from the cart.',
+            ], 422);
+        }
+
+        /*
+         * The line has to be one of THIS cart's own.
+         *
+         * CartService::updateQuantity() already scopes its lookup to the cart,
+         * so an id belonging to someone else's basket matches nothing and
+         * changes nothing. Saying so is the difference between a stepper that
+         * refuses and one that silently reports success for a change that never
+         * happened.
+         */
+        if (! $cart->items->contains('id', (int) $data['item_id'])) {
+            return response()->json(['ok' => false, 'error' => 'That item is no longer in your bag.'], 404);
+        }
+
+        $this->carts->updateQuantity($cart, (int) $data['item_id'], (int) $data['quantity']);
+
+        $cart = $this->loadCart($request);
+
+        /*
+         * Removing the last line is the one change that legitimately leaves
+         * this page: page() itself redirects an empty bag to /cart/, so there
+         * is no checkout left to repaint. The destination is named here rather
+         * than guessed in the browser, so it carries the deployment's base
+         * path like every other link.
+         */
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => true,
+                'empty' => true,
+                'count' => 0,
+                'redirect' => Url::to('/cart/'),
+            ]);
+        }
+
+        return response()->json(
+            ['ok' => true, 'empty' => false, 'itemId' => (int) $data['item_id']]
+            + $this->fragments($request, $cart, $data)
+        );
+    }
+
+    /**
+     * Every region of the checkout that a change to the cart moves, rendered
+     * once from one set of totals so they cannot disagree with each other.
+     *
+     * Shared by the Browsed one-tap add and the summary's quantity steppers:
+     * both change what is in the bag, and both change the same four regions.
+     * A second copy of this is how the add and the stepper would drift apart.
+     *
+     * $posted carries the shopper's current payment choice — a choice, never an
+     * amount. PayShipRules measures its Cash-on-delivery window against the
+     * order total, so a quantity change in either direction can withdraw or
+     * restore the method they have selected.
+     */
+    private function fragments(Request $request, $cart, array $data): array
+    {
         // Only a country the shopper's own selector offers. Anything else
         // falls back to the store's country rather than being taken on trust.
         $country = strtoupper((string) ($data['country'] ?? ''));
@@ -871,9 +967,9 @@ class CheckoutController extends Controller
         $gateways = $this->gateways($totalFils, $country);
         $codHidden = app(\App\Services\PayShipRules::class)->codHiddenReason($totalFils);
 
-        // Did this add cost them the method they had selected? Said out loud,
-        // with what is selected instead — a radio quietly moving under the
-        // cursor is the confusion this feature exists to remove.
+        // Did this change cost them the method they had selected? Said out
+        // loud, with what is selected instead — a radio quietly moving under
+        // the cursor is the confusion this feature exists to remove.
         $posted = trim((string) ($data['payment_method'] ?? ''));
         $offeredIds = array_column($gateways, 'id');
         $dropped = $posted !== '' && ! in_array($posted, $offeredIds, true);
@@ -894,9 +990,7 @@ class CheckoutController extends Controller
             'totals' => $totals,
         ];
 
-        return response()->json([
-            'ok' => true,
-            'productId' => $product->id,
+        return [
             'count' => (int) ($totals['item_count'] ?? 0),
             'itemsHtml' => view('partials.checkout.summary-items', $view)->render(),
             'orderHtml' => view('partials.checkout.order-block', $view + [
@@ -916,7 +1010,7 @@ class CheckoutController extends Controller
             // outside every slot above. Formatted here like everything else.
             'total' => \App\Support\Money::format($totalFils + $this->giftFee($request)),
             'payNotice' => $payNotice,
-        ]);
+        ];
     }
 
     private function countries(): array

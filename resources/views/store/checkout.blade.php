@@ -283,6 +283,14 @@
 .kbb-checkout .kbb-gift-count{display:block;margin-top:5px;font-size:11px;color:var(--muted);text-align:right}
 </style>
 <script>
+/* The order summary's quantity endpoint, prefixed for this deployment.
+   Url::to() rather than route(): the route lives in routes/checkout-line.php,
+   which the integrator wires into routes/web.php, and a page that 500s because
+   a route name is not registered yet is worse than a stepper that is not wired
+   up yet. Published here rather than added to the layout's route list, which
+   belongs to every page on the site and not just this one. */
+window.KBB.routes.checkoutLine = @json(Url::to('/checkout/line'));
+
 (function () {
   var box = document.getElementById('create_account');
   var wrap = document.getElementById('account_password_wrap');

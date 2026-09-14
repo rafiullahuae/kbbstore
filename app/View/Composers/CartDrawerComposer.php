@@ -23,6 +23,12 @@ use Illuminate\View\View;
  */
 class CartDrawerComposer
 {
+    /**
+     * Set by whoever renders this partial with a payload of its own, to say
+     * "the drawer's data is already here — do not fill it in again".
+     */
+    public const SUPPLIED = 'drawerSupplied';
+
     private const LINE_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'type',
@@ -36,6 +42,30 @@ class CartDrawerComposer
 
     public function compose(View $view): void
     {
+        /*
+         * A composer runs AFTER the data handed to the view and overwrites it,
+         * so anything set here replaces what the caller already worked out.
+         *
+         * CartController renders this same partial with a payload of its own on
+         * every add, quantity change and drawer refresh. Filling it in a second
+         * time from a fresh look at the request is not a harmless duplicate: on
+         * the first add of a session it wrote the EMPTY state over a correct
+         * one (the panel opened blank until a second product was added), and on
+         * every add after that it swapped the controller's Browsed list for
+         * this one, which drops a product from the list the moment it enters
+         * the bag — the reason the Browsed tab's Add appeared to work exactly
+         * once.
+         *
+         * The flag is the test, not the presence of `items` or `totals`:
+         * @include hands the whole parent scope down, and both the cart page
+         * and the checkout carry variables of those names that have nothing to
+         * do with this panel. Only CartController sets this one, and only on
+         * the renders where it has supplied the drawer's own payload.
+         */
+        if ($view->offsetExists(self::SUPPLIED)) {
+            return;
+        }
+
         $empty = [
             'item_count' => 0, 'subtotal' => 0, 'discount' => 0, 'total' => 0,
             'coupon_code' => null, 'shipping' => 0,
@@ -43,13 +73,24 @@ class CartDrawerComposer
             'free_shipping_percent' => 0, 'free_shipping_unlocked' => false,
         ];
 
-        if (! $this->request->hasCookie(CartService::COOKIE)) {
+        /*
+         * Rule 27: when there is nothing to show, no query runs at all — every
+         * first visit and every crawler.
+         *
+         * The cookie alone is the wrong test for that. It is issued on the
+         * RESPONSE that creates the cart, so a request which creates one still
+         * carries no cookie; asking the service what it has already resolved
+         * covers that case, and costs nothing when it has resolved nothing.
+         */
+        $cart = $this->carts->resolved();
+
+        if ($cart === null && ! $this->request->hasCookie(CartService::COOKIE)) {
             $view->with(['items' => collect(), 'totals' => $empty, 'promo' => '', 'browsed' => collect()]);
 
             return;
         }
 
-        $cart = $this->carts->current($this->request, create: false)?->load([
+        $cart = ($cart ?? $this->carts->current($this->request, create: false))?->load([
             'items' => fn ($q) => $q->orderBy('id'),
             'items.product' => fn ($q) => $q->select(self::LINE_COLUMNS),
             'items.product.brand:id,name,slug',
