@@ -27,4 +27,19 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create()
-    ->usePublicPath('/home/u815237650/domains/easywebsol.com/public_html/kbb-upgrade');
+    /*
+     * The web root is a different directory from the application root on the
+     * production host, so Laravel has to be told where it is. The literal stays
+     * the default, so production behaviour is unchanged and nothing needs to be
+     * set there -- but hard-coding it alone made the app unservable anywhere
+     * else: `artisan serve` died trying to include a front controller at a path
+     * that exists on one machine in the world, which is why no page could be
+     * previewed before shipping a package.
+     *
+     * getenv(), not env(): this runs while the Application is being
+     * constructed, before LoadEnvironmentVariables has read .env, so env()
+     * would always return the default here. The override therefore has to come
+     * from the real process environment, which is what a preview or a CI job
+     * can set and what production simply leaves unset.
+     */
+    ->usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/u815237650/domains/easywebsol.com/public_html/kbb-upgrade');
