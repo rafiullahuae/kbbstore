@@ -96,7 +96,7 @@ class CheckoutController extends Controller
             'totals' => $totals,
             'rates' => $rates,
             'chosenRate' => $chosen,
-            'gateways' => $this->gateways((int) ($totals['total'] ?? 0)),
+            'gateways' => $this->gateways((int) ($totals['total'] ?? 0), $country),
             // Set when Payment & Shipping Rules has hidden Cash on delivery, so
             // the page can say why rather than the option simply not being there.
             'codHidden' => app(\App\Services\PayShipRules::class)
@@ -195,17 +195,34 @@ class CheckoutController extends Controller
         // now also whether Store → Ecommerce → Checkout has it switched on at
         // all — a toggle that only hid the option from the page without also
         // being enforced here would not really be a switch.
+        $offered = $this->gateways((int) ($totals['total'] ?? 0), $data['billing_country']);
+
         if ($data['payment_method'] === 'cod') {
             $reason = app(\App\Services\PayShipRules::class)
                 ->codHiddenReason((int) ($totals['total'] ?? 0));
 
+            // Kept as its own branch purely for the wording: the window has a
+            // specific sentence to say ("available on orders over X"), which
+            // the generic check below cannot produce.
             if ($reason !== null) {
                 return back()->withInput()->withErrors($reason);
             }
+        }
 
-            if (! collect($this->gateways((int) ($totals['total'] ?? 0)))->contains('id', 'cod')) {
-                return back()->withInput()->withErrors('Cash on delivery is not available.');
-            }
+        // Generalised from the COD-only check that stood here. The reasoning
+        // never depended on the method: the list is only what the page
+        // offered, and a posted method is whatever the shopper sent. An
+        // unconfigured Stripe, a Tabby switched off an hour ago, and a gateway
+        // id this build has no code for are all the same answer — it was not
+        // on offer, so it is not accepted.
+        if (! collect($offered)->contains('id', $data['payment_method'])) {
+            return back()->withInput()->withErrors('That payment method is not available.');
+        }
+
+        $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find($data['payment_method']);
+
+        if ($gateway === null) {
+            return back()->withInput()->withErrors('That payment method is not available.');
         }
 
         // Gift fee is read from settings, never from the request. The form
@@ -218,9 +235,11 @@ class CheckoutController extends Controller
 
         $request->session()->forget('kbb_gift');
 
-        $fee = $giftFee + ($data['payment_method'] === 'cod'
-            ? (int) $this->settings->get('cod_fee', 0)
-            : 0);
+        // The gateway's own surcharge, asked of the gateway rather than
+        // inferred from its id. Still read server-side -- COD is the only one
+        // that charges anything today and it reads the same `cod_fee` setting
+        // it always did, never a figure from the request.
+        $fee = $giftFee + $gateway->feeFils((int) ($totals['total'] ?? 0));
 
         $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $request) {
             $customer = $request->user('customer') ?? Customer::firstOrCreate(
@@ -331,6 +350,35 @@ class CheckoutController extends Controller
         // if they revisited their own success page a moment later.
         session(['kbb_last_order' => $order->order_number]);
 
+        // Hand off to the gateway. The order row exists and is `pending`
+        // before this runs, so a hosted session that is started and then
+        // abandoned leaves a real order to reconcile rather than nothing at
+        // all — and the webhook that eventually arrives has something to match
+        // its reference against.
+        //
+        // Deliberately outside the transaction above: this is a network call
+        // to a third party, and holding a database transaction open across one
+        // is how a slow provider becomes a locked table.
+        $start = $gateway->start($order);
+
+        if (! $start->ok()) {
+            // The order stays, marked failed, so the shopper can retry and
+            // support can see what happened. $start->message is written for a
+            // shopper — gateways never put an API error body in it.
+            $order->forceFill(['status' => 'failed'])->save();
+
+            return back()->withInput()->withErrors(
+                $start->message ?? 'We could not start that payment. Please try another method.'
+            );
+        }
+
+        if ($start->redirectUrl !== null) {
+            // Away to the provider's hosted page. Not Url::redirect(), which
+            // prefixes our own base path — this is an absolute URL on somebody
+            // else's domain.
+            return redirect()->away($start->redirectUrl);
+        }
+
         return redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number);
     }
 
@@ -375,38 +423,33 @@ class CheckoutController extends Controller
         return [$first, implode(' ', $parts)];
     }
 
-    private function gateways(int $totalFils = 0): array
+    /**
+     * The payment options this basket may use.
+     *
+     * The array shape is unchanged — id / title / description / fee_html /
+     * fee_fils, exactly what store.checkout has always iterated — but the list
+     * is now built by GatewayRegistry rather than assembled from provider rows
+     * here. That moves three things out of this method that never belonged to
+     * it: whether a gateway's credentials are present, what its fee is, and
+     * what its description says. Each gateway answers for itself, so adding
+     * Stripe did not mean adding another `$p->id === 'stripe'` arm to a chain
+     * of them.
+     *
+     * Payment & Shipping Rules still decides the COD window. It is called from
+     * CashOnDelivery::availableFor(), which is the same PayShipRules instance
+     * the other three call sites use — one rule, one definition.
+     */
+    private function gateways(int $totalFils = 0, ?string $country = null): array
     {
-        $cod = (int) $this->settings->get('cod_fee', 0);
-
-        // Payment & Shipping Rules: Cash on delivery is dropped outside the
-        // configured order-value window. Every other gateway is untouched.
-        $codAllowed = app(\App\Services\PayShipRules::class)->codAllowed($totalFils);
-
-        $list = PaymentProvider::query()
-            ->where('enabled', true)
-            ->orderBy('position')
-            ->get()
-            ->reject(fn ($p) => $p->id === 'cod' && ! $codAllowed)
-            ->map(fn ($p) => [
-                'id' => $p->id,
-                'title' => $p->title,
-                'description' => $p->id === 'cod' && $cod > 0
-                    ? 'Pay in cash to the courier. A small ' . \App\Support\Money::format($cod) . ' handling fee applies.'
-                    : null,
-                // Shown right on the option itself, not only in the
-                // paragraph beneath it — a fee should be visible at the point
-                // of choosing, not discovered after.
-                'fee_html' => $p->id === 'cod' && $cod > 0
-                    ? '+' . \App\Support\Money::format($cod)
-                    : null,
-                'fee_fils' => $p->id === 'cod' ? $cod : 0,
-            ])
-            ->all();
+        $list = app(\App\Services\Payments\GatewayRegistry::class)
+            ->checkoutList($totalFils, $country);
 
         if ($list !== []) {
             return $list;
         }
+
+        $cod = (int) $this->settings->get('cod_fee', 0);
+        $codAllowed = app(\App\Services\PayShipRules::class)->codAllowed($totalFils);
 
         // A store with nothing configured at all would render an empty
         // payment section; COD is the safe floor for that case. But once a
