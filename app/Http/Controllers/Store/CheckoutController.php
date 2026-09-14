@@ -777,6 +777,138 @@ class CheckoutController extends Controller
         ]);
     }
 
+    /**
+     * One tap on Add in the checkout's Browsed tab.
+     *
+     * Silent by design: no drawer, no jump back to Order summary. The page
+     * stays exactly where it is and the regions the new line actually changes
+     * are re-rendered HERE and swapped in, so the browser is never asked to
+     * work out a price. Money stays integer fils on this side of the wire.
+     *
+     * Four regions change on a single add, and all four come out of this one
+     * request so they cannot disagree with each other:
+     *
+     *   1. the Order summary lines and the totals block (which opens with the
+     *      free-delivery bar, so that moves with them);
+     *   2. the payment options — PayShipRules measures its Cash-on-delivery
+     *      window against the order total, so one more product can withdraw
+     *      the method the shopper has already selected. Leaving the list
+     *      alone would hand them a method place() refuses at the last step;
+     *   3. the mobile bag strip — thumbnails, "N items", and its own copy of
+     *      the free-delivery bar;
+     *   4. the Browsed list itself and its count badge, both rendered from
+     *      the same collection so the row leaves the list only because the
+     *      server says it is in the bag.
+     *
+     * The cart drawer and badge are the one thing NOT rendered here: the count
+     * comes back with this response for the badge, and the panel body is
+     * refreshed through the drawer endpoint that already exists, rather than a
+     * second copy of CartController's drawer payload growing in this class.
+     */
+    public function browsedAdd(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+            // What the shopper currently has selected. A choice, never an
+            // amount — the same rule the rest of this controller follows.
+            'payment_method' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        // Nothing is ever removed from the page on a failure; each of these
+        // returns a sentence the row can show, in words.
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Your bag is empty — please start again from the cart.',
+            ], 422);
+        }
+
+        $product = Product::query()->select(self::LINE_COLUMNS)->visible()->find($data['product_id']);
+
+        if (! $product) {
+            return response()->json(['ok' => false, 'error' => 'That product is no longer available.'], 404);
+        }
+
+        if ($product->stock_status !== 'instock') {
+            return response()->json(['ok' => false, 'error' => 'That product is sold out.'], 422);
+        }
+
+        // Adding the same product again increments the line rather than
+        // duplicating it — CartService::add() matches on product and variant
+        // and reprices the whole line, because a bundle rate depends on the
+        // final quantity.
+        $this->carts->add($cart, $product, 1);
+
+        $cart = $this->loadCart($request);
+
+        // Only a country the shopper's own selector offers. Anything else
+        // falls back to the store's country rather than being taken on trust.
+        $country = strtoupper((string) ($data['country'] ?? ''));
+
+        if (! isset($this->countries()[$country])) {
+            $country = (string) $this->settings->get('store_country', 'AE');
+        }
+
+        $state = $data['state'] ?? null;
+
+        [, , $totals] = $this->rateContext($cart, $country, $state);
+
+        $totalFils = (int) ($totals['total'] ?? 0);
+        $gateways = $this->gateways($totalFils, $country);
+        $codHidden = app(\App\Services\PayShipRules::class)->codHiddenReason($totalFils);
+
+        // Did this add cost them the method they had selected? Said out loud,
+        // with what is selected instead — a radio quietly moving under the
+        // cursor is the confusion this feature exists to remove.
+        $posted = trim((string) ($data['payment_method'] ?? ''));
+        $offeredIds = array_column($gateways, 'id');
+        $dropped = $posted !== '' && ! in_array($posted, $offeredIds, true);
+        $payNotice = null;
+
+        if ($dropped) {
+            $payNotice = ($gateways === [])
+                ? 'No payment method is available for this order total.'
+                : 'Your payment method is no longer available for this order — '
+                    . $gateways[0]['title'] . ' is selected instead.';
+        }
+
+        $browsed = $this->browsed($request, $cart);
+
+        $view = [
+            'settings' => $this->settings,
+            'items' => $cart->items,
+            'totals' => $totals,
+        ];
+
+        return response()->json([
+            'ok' => true,
+            'productId' => $product->id,
+            'count' => (int) ($totals['item_count'] ?? 0),
+            'itemsHtml' => view('partials.checkout.summary-items', $view)->render(),
+            'orderHtml' => view('partials.checkout.order-block', $view + [
+                'withActions' => true,
+                'deliveryText' => $this->deliveryText($country),
+            ])->render(),
+            'thumbsHtml' => view('partials.checkout.thumbs', $view)->render(),
+            'paymentHtml' => view('partials.checkout.payment-methods', [
+                'gateways' => $gateways,
+                'codHidden' => $codHidden,
+                'selectedMethod' => $dropped ? null : ($posted !== '' ? $posted : null),
+                'payNotice' => $payNotice,
+            ])->render(),
+            'browsedHtml' => view('partials.checkout.browsed-list', ['browsed' => $browsed])->render(),
+            'browsedCount' => $browsed->count(),
+            // For the optional sticky bar, which carries a .js-total of its own
+            // outside every slot above. Formatted here like everything else.
+            'total' => \App\Support\Money::format($totalFils + $this->giftFee($request)),
+            'payNotice' => $payNotice,
+        ]);
+    }
+
     private function countries(): array
     {
         $zoneCountries = $this->shipping->coveredCountries();

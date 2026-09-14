@@ -165,3 +165,69 @@ it('toggles the summary open class on the element the checkout CSS selects', fun
 
     expect($inBundle)->toBeTrue('No committed bundle toggles `open` on #kbbSummary — the fix is in resources/js but public/build was not rebuilt.');
 });
+
+it('ships a bundle that adds from the checkout Browsed tab without opening the drawer', function () {
+    /*
+     * Same reasoning as the two above, and the same bug one turn further on.
+     *
+     * checkout.js used to look for `.badd` with `data-add`. The markup has
+     * always rendered `.baddbtn` with `data-kbb-add`, so that branch never ran
+     * once; what actually added the product was cart.js's global listener,
+     * which opens the cart drawer. Correct on a product card, wrong on the
+     * checkout, and indistinguishable from a dead handler in every test that
+     * only asks whether a listener exists somewhere.
+     *
+     * Three strings, because all three have to be in the SHIPPED bundle for a
+     * tap to do anything at all:
+     *
+     *   - the attribute checkout.js now binds;
+     *   - the id of the Browsed list, which carries the endpoint URL and is
+     *     also what cart.js checks before declining to open the drawer;
+     *   - one of the slots the response is swapped into — a handler that fires
+     *     and repaints nothing is precisely the failure being pinned.
+     */
+    $needles = [
+        'data-kbb-checkout-add' => 'the checkout Browsed add handler',
+        'kbbBrowsedList' => 'the Browsed list id (the endpoint URL, and cart.js declining the drawer)',
+        'kbb-order-slot' => 'the totals/free-delivery region the response is swapped into',
+    ];
+
+    foreach ($needles as $needle => $what) {
+        $found = false;
+        foreach (trackedBundles() as $source) {
+            if (str_contains($source, $needle)) {
+                $found = true;
+                break;
+            }
+        }
+
+        expect($found)->toBeTrue(
+            "No committed bundle contains {$needle} — {$what} shipped without rebuilding public/build."
+        );
+    }
+});
+
+it('leaves the drawer alone for every add outside the checkout Browsed list', function () {
+    /*
+     * The scope of the change, pinned from the other side. cart.js still has to
+     * open the drawer for product cards, the shop grid, quick view and the PDP;
+     * only #kbbBrowsedList is declined. If that guard is ever widened — to
+     * `[data-kbb-add]` generally, say — adding to the cart goes silent across
+     * the whole site and nothing else in this suite would notice.
+     */
+    $js = (string) tracked('resources/js/kbb/cart.js');
+
+    expect($js)->toContain("add.closest('#kbbBrowsedList')");
+
+    // The guard must sit inside the data-kbb-add branch and before the drawer
+    // is opened, or it declines nothing.
+    $branch = strpos($js, "closest('[data-kbb-add]')");
+    $guard = strpos($js, "add.closest('#kbbBrowsedList')");
+    $opens = strpos($js, 'const data = await addToCart(');
+
+    expect($branch)->not->toBeFalse()
+        ->and($guard)->not->toBeFalse()
+        ->and($opens)->not->toBeFalse()
+        ->and($guard)->toBeGreaterThan($branch)
+        ->and($guard)->toBeLessThan($opens);
+});

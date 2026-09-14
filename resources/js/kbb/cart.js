@@ -64,6 +64,32 @@ const send = async (path, body) => {
     }
 };
 
+/**
+ * The cart count, everywhere it is shown.
+ *
+ * There are two badges, not one: #cartCt in the desktop header and #tabCartCt
+ * in the mobile tab bar. Only the first was ever updated, so on a phone the
+ * number beside the cart icon kept whatever it had been when the page loaded —
+ * after every add, on every page. Exported because the checkout's one-tap add
+ * needs the same two elements and must not grow its own copy of this.
+ *
+ * Each is rendered only when the count is above zero (`@if` in the Blade), so a
+ * missing element is normal and not an error.
+ */
+export const setCartCount = (count) => {
+    const n = Number(count) || 0;
+
+    ['cartCt', 'tabCartCt'].forEach((id) => {
+        const badge = document.getElementById(id);
+        if (!badge) return;
+
+        badge.textContent = String(n);
+        // The header badge lays out as a grid; the tab-bar one does not, so
+        // only the thing that was hidden is given its display back.
+        badge.style.display = n ? (id === 'cartCt' ? 'grid' : '') : 'none';
+    });
+};
+
 /** Swap in whatever the server sent back. */
 /* A cheap placeholder using the drawer's own classes, so the panel has real
    structure the instant it opens rather than flashing empty. */
@@ -134,11 +160,7 @@ const apply = (data) => {
     const inner = document.getElementById('cartInner');
     if (inner && data.page) inner.innerHTML = data.page;   // null off the cart page
 
-    const badge = document.getElementById('cartCt');
-    if (badge) {
-        badge.textContent = data.count ?? 0;
-        badge.style.display = data.count ? 'grid' : 'none';
-    }
+    setCartCount(data.count);
 
     // Same wording and brackets as the Blade, or the heading changes shape the
     // first time a quantity is touched.
@@ -177,6 +199,21 @@ export function initCart() {
         // Add to cart — product cards, and later the product page.
         const add = event.target.closest('[data-kbb-add]');
         if (add) {
+            /* The checkout's Browsed tab is the one place an Add must be
+               silent: no drawer, no jump back to Order summary, just the line
+               appearing in the summary already on screen. checkout.js owns that
+               and binds data-kbb-checkout-add on the same button.
+
+               Declining here is what makes that possible. app.js boots
+               initCart() before initCheckout(), so this listener is registered
+               first on document; stopPropagation() over there runs too late to
+               stop it, and stopImmediatePropagation() only silences listeners
+               added after. The scope has to be refused at this end.
+
+               Nothing else changes: product cards, the shop grid, quick view,
+               the PDP and the search fragment all still open the drawer. */
+            if (add.closest('#kbbBrowsedList')) return;
+
             event.preventDefault();
             add.disabled = true;
 
@@ -279,8 +316,7 @@ export function initCart() {
             const d = await r.json();
             const frag = fragment();
             if (frag && d.html) frag.outerHTML = d.html;
-            const badge = document.getElementById('cartCt');
-            if (badge) { badge.textContent = d.count ?? 0; badge.style.display = d.count ? 'grid' : 'none'; }
+            setCartCount(d.count);
         } catch { /* a stale badge is not worth breaking the page over */ }
     };
 }

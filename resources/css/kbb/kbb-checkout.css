@@ -452,8 +452,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .pac-item:hover,.pac-item-selected{background:var(--pink-soft)}
 
 /* browsed list (design .bhead / .bitem) */
-.kbb-checkout .bhead{font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600}
-.kbb-checkout .bitem{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}
+/* position:relative + the right-hand gutter are what let .baddnote below sit
+   in this heading without taking any height of its own. */
+.kbb-checkout .bhead{font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600;position:relative;padding-right:58px;min-height:16px}
+/* flex-wrap so a .berr appended to a row drops onto its own line instead of
+   squeezing the thumbnail, the name and the button into what is left. */
+.kbb-checkout .bitem{display:flex;flex-wrap:wrap;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-2)}
 .kbb-checkout .bth{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:9px;text-align:center;flex-shrink:0;background-size:cover;background-position:center;text-decoration:none}
 .kbb-checkout .binfo{flex:1;min-width:0}
 .kbb-checkout .binfo .bb{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
@@ -463,6 +467,35 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .baddbtn:hover{background:var(--pink-soft)}
 .kbb-checkout .baddbtn.added{background:var(--green);border-color:var(--green);color:#fff}
 .kbb-checkout .baddbtn:disabled{opacity:.6;cursor:default}
+.kbb-checkout .baddbtn[aria-busy="true"]{opacity:.6}
+
+/* ---- one-tap add from Browsed: confirmation, failure, empty state ---- */
+
+/* The "Added" note. Absolutely positioned inside .bhead, so it appears and
+   disappears without the list under it moving a pixel — the whole point of a
+   confirmation that is not a modal. Pinned to the heading rather than to the
+   row because a successful add re-renders the list and would take a note
+   living on the row with it. */
+.kbb-checkout .baddnote{position:absolute;right:0;top:-1px;pointer-events:none;
+  font-size:10.5px;font-weight:700;line-height:1.5;color:#1F7D52;
+  background:#EEF8F1;border:1px solid #C9E7D5;border-radius:99px;padding:0 8px;
+  opacity:0;transform:translateY(-3px);
+  transition:opacity .18s var(--ease),transform .18s var(--ease)}
+.kbb-checkout .baddnote.on{opacity:1;transform:none}
+
+/* A refusal, on the row that was tapped, in words. The row itself stays. */
+.kbb-checkout .berr{flex:0 0 100%;margin:0;font-size:11px;font-weight:600;color:var(--sale);line-height:1.35}
+
+/* Added the last one: the tab keeps its shape instead of collapsing to an
+   empty box, and .bcount goes to 0 alongside it. */
+.kbb-checkout .bempty{font-size:12px;color:var(--muted);margin:0;padding:12px 0 4px;line-height:1.5}
+
+/* Said when the new total withdrew the method that was selected. */
+.kbb-checkout .pay-moved{margin-bottom:8px}
+
+@media(prefers-reduced-motion:reduce){
+  .kbb-checkout .baddnote{transition:none;transform:none}
+}
 
 /* hidden WooCommerce totals table = data source (kbb.js mirrors it into .sumrow) */
 .kbb-checkout #order_review{display:none}

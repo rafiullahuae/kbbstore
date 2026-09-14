@@ -157,32 +157,15 @@
                             </div>
                             <div class="ordiv">or pay with</div>
 
-                        <div id="payment" class="woocommerce-checkout-payment">
-            <ul class="wc_payment_methods payment_methods methods">
-            @if (!empty($codHidden))<p class="pay-note">{{ $codHidden }}</p>@endif
-            @foreach ($gateways as $g)
-            <li class="wc_payment_method payment_method_{{ $g['id'] }}">
-    <input id="payment_method_{{ $g['id'] }}" type="radio" class="input-radio" name="payment_method" value="{{ $g['id'] }}" @checked($loop->first) data-order_button_text="" />
-
-    <label for="payment_method_{{ $g['id'] }}">
-        {{ $g['title'] }}
-        {{-- The fee, right on the option — not only in the paragraph below,
-             which is easy to miss until after it has already been chosen. --}}
-        @if (!empty($g['fee_html']))<span class="codfee">{!! $g['fee_html'] !!}</span>@endif
-    </label>
-            @if ($g['description'])
-            {{-- Shown purely by :has() on .kbb-checkout below, matching how
-                 the selected-option highlight on this same list already
-                 works — no JS, and correct for whichever option is checked
-                 rather than only ever the first one. --}}
-            <div class="payment_box payment_method_{{ $g['id'] }}">
-            <p>{!! $g['description'] !!}</p>
-        </div>
-            @endif
-    </li>
-            @endforeach
-        </ul>
-                        </div>
+                        {{-- The list itself lives in its own partial: adding a
+                             product from Browsed can move the order total
+                             across the Cash-on-delivery window, and the refresh
+                             has to render THIS markup rather than a second copy
+                             of it. old('payment_method') is honoured for the
+                             same reason it is on every other field here — a
+                             rejected Place order should not silently reset the
+                             choice. --}}
+                        <div id="payment" class="woocommerce-checkout-payment">@include('partials.checkout.payment-methods', ['selectedMethod' => old('payment_method')])</div>
                     </div>
 
                     @include('partials.checkout.reassurance')                </div>
@@ -203,14 +186,23 @@
                         <div class="co-items">
                             @include('partials.checkout.summary-items')                        </div>
 
-                        @include('partials.checkout.order-block', ['withActions' => true])                    </div>
+                        {{-- A stable container round the order block, for the
+                             same reason .kbb-freeship-slot inside it has one:
+                             the block is rendered twice (here and in the mobile
+                             box), so it cannot carry an id, and the one-tap add
+                             swaps every copy of it in one go. --}}
+                        <div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>                    </div>
 
                     @if ($showBrowsed)
                     <!-- Browsed panel -->
                     <div class="spanel" data-spanel="browsed">
-                        <p class="bhead">Recently browsed — add in one tap</p>
-                        <div id="kbbBrowsedList">
-                            @foreach ($browsed as $bp)@include('partials.checkout.browsed-item', ['bp' => $bp])@endforeach                        </div>
+                        {{-- The "Added" confirmation is pinned to this heading,
+                             not to the row: a successful add replaces the list
+                             below, which would take a note living on the row
+                             with it. It is absolutely positioned so appearing
+                             costs no height — nothing on the page moves. --}}
+                        <p class="bhead">Recently browsed — add in one tap<span class="baddnote" id="kbbBrowsedNote" role="status" aria-live="polite"></span></p>
+                        <div id="kbbBrowsedList" data-add-url="{{ Url::to('/checkout/browsed-add') }}">@include('partials.checkout.browsed-list')</div>
                     </div>
                     @endif
 
@@ -224,8 +216,15 @@
         </div>
 
         <!-- mobile-only: full on-page Place order box (sticky bar is optional) -->
+        {{-- The mobile bag strip — "Your bag · N items", the round thumbnails
+             with their ×n badges — and, immediately under it, the order block
+             whose first element is the free-delivery progress bar. Both are in
+             their own slots: a one-tap add from Browsed has to bring a new
+             thumbnail, a new count and a moved progress bar with it, and a bar
+             still reading 80% while the summary says "Free" is worse than one
+             that never moved at all. --}}
         <div class="kbb-mobile-order">
-            @include('partials.checkout.thumbs')            @include('partials.checkout.order-block', ['withActions' => true])        </div>
+            <div class="kbb-thumbs-slot">@include('partials.checkout.thumbs')</div><div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>        </div>
     </form>
 
     @if ($settings->get('mobile_sticky_bar', false))

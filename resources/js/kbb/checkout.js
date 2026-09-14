@@ -5,6 +5,8 @@
  * the destination actually changes — not on every keystroke in the address.
  */
 
+import { setCartCount } from './cart.js';
+
 export function initCheckout() {
     const form = document.getElementById('kbbCheckoutForm');
     if (!form) return;
@@ -72,11 +74,19 @@ export function initCheckout() {
             return;
         }
 
-        // One-tap add from the Browsed panel.
-        const add = event.target.closest('.badd');
-        if (add) {
+        /*
+         * One-tap add from the Browsed panel.
+         *
+         * This branch used to read `.badd` with `data-add`. The markup has
+         * always rendered `.baddbtn` with `data-kbb-add`, so the selector
+         * matched nothing and the handler never ran even once — what actually
+         * added the product was cart.js's global listener, which opens the
+         * drawer. That is right everywhere else on the site and wrong here.
+         */
+        const badd = event.target.closest('[data-kbb-checkout-add]');
+        if (badd) {
             event.preventDefault();
-            await post('/add', { product_id: Number(add.dataset.add), quantity: 1 });
+            await addBrowsed(badd);
             return;
         }
 
@@ -176,6 +186,172 @@ export function initCheckout() {
             if (slot) slot.innerHTML = '<div class="kbb-delivery-loading">Loading delivery options…</div>';
         }
     });
+
+    /* ------------------------------------------------------------------ *
+     * Browsed → bag, without moving anything the shopper is looking at.
+     * ------------------------------------------------------------------ */
+
+    /* Product ids with a request in flight. A second tap on the same row is
+       ignored rather than queued: the intent of a double tap on "Add" is one
+       product, not two, and the button is disabled for the round trip anyway —
+       this covers the keyboard, the synthetic click and the impatient thumb
+       that lands before `disabled` is painted. */
+    const adding = new Set();
+
+    let noteTimer = null;
+
+    const addUrl = () => document.getElementById('kbbBrowsedList')?.dataset.addUrl || '';
+
+    /* A failure is never silent and never costs the row. The message goes on
+       the row itself, in words, and the product stays listed so the tap can be
+       made again. */
+    const rowError = (btn, message) => {
+        const row = btn.closest('.bitem');
+
+        if (!row) {
+            window.kbbToast?.(message);
+            return;
+        }
+
+        let err = row.querySelector('.berr');
+
+        if (!err) {
+            err = document.createElement('p');
+            err.className = 'berr';
+            err.setAttribute('role', 'alert');
+            row.appendChild(err);
+        }
+
+        err.textContent = message;
+    };
+
+    const clearRowError = (btn) => { btn.closest('.bitem')?.querySelector('.berr')?.remove(); };
+
+    /* Small, brief, and it costs no height — .baddnote is absolutely positioned
+       in the Browsed heading, so nothing on the page moves when it appears.
+       Writing into a role=status/aria-live=polite element is what announces it
+       to a screen reader; the fade is CSS, and the CSS drops it under
+       prefers-reduced-motion. */
+    const noteAdded = () => {
+        const note = document.getElementById('kbbBrowsedNote');
+        if (!note) return;
+
+        note.textContent = 'Added';
+        note.classList.add('on');
+
+        clearTimeout(noteTimer);
+        noteTimer = setTimeout(() => {
+            note.classList.remove('on');
+            note.textContent = '';
+        }, 1600);
+    };
+
+    /* Everything here is a string the server rendered or an integer it counted.
+       No price is read out of the DOM and nothing is added up. */
+    const applyBrowsedAdd = (data) => {
+        // The Browsed list and its badge come from one server-side collection,
+        // so the row leaves only because the server put the product in the bag.
+        const list = document.getElementById('kbbBrowsedList');
+        if (list && typeof data.browsedHtml === 'string') list.innerHTML = data.browsedHtml;
+
+        if (typeof data.browsedCount === 'number') {
+            document.querySelectorAll('.bcount').forEach((el) => { el.textContent = String(data.browsedCount); });
+        }
+
+        const items = document.querySelector('#kbbSummary .co-items');
+        if (items && data.itemsHtml) items.innerHTML = data.itemsHtml;
+
+        // Both copies — the desktop summary and the mobile place-order box.
+        // The order block opens with the free-delivery bar, so the bar, the
+        // subtotal, the delivery line and every total move together.
+        if (data.orderHtml) {
+            document.querySelectorAll('.kbb-order-slot').forEach((el) => { el.innerHTML = data.orderHtml; });
+        }
+
+        // The mobile bag strip: a new thumbnail, a new ×n badge, a new count.
+        if (typeof data.thumbsHtml === 'string') {
+            document.querySelectorAll('.kbb-thumbs-slot').forEach((el) => { el.innerHTML = data.thumbsHtml; });
+        }
+
+        // The payment options, re-rendered against the new total by the same
+        // request. Cash on delivery can leave or return as the total crosses
+        // the PayShipRules window, and the selection is carried across when the
+        // method is still offered.
+        const payment = document.getElementById('payment');
+        if (payment && data.paymentHtml) payment.innerHTML = data.paymentHtml;
+
+        // The optional sticky bar keeps a total of its own, outside every slot.
+        if (data.total) {
+            document.querySelectorAll('.mpbar .js-total').forEach((el) => { el.innerHTML = data.total; });
+        }
+
+        // Both badges — the header one and the mobile tab bar's, which is the
+        // only one a phone can see.
+        setCartCount(data.count);
+
+        // The panel body itself, through the drawer endpoint that already
+        // exists — one renderer for the drawer rather than a second copy of
+        // CartController's payload growing in the checkout controller. It is
+        // closed while this runs, so the swap is invisible; it simply must not
+        // be stale the next time the header cart is opened.
+        window.kbbRefreshCart?.();
+
+        noteAdded();
+    };
+
+    async function addBrowsed(btn) {
+        const id = Number(btn.dataset.kbbCheckoutAdd);
+        if (!id || btn.disabled || adding.has(id)) return;
+
+        const url = addUrl();
+        if (!url) return;
+
+        adding.add(id);
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+        clearRowError(btn);
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.KBB.csrf,
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: id,
+                    country: document.getElementById('billing_country')?.value || '',
+                    state: document.getElementById('billing_state')?.value || '',
+                    // A choice, not an amount. The server decides whether it is
+                    // still on offer at the new total.
+                    payment_method: document.querySelector('input[name="payment_method"]:checked')?.value || '',
+                }),
+            });
+
+            // A 419 from an expired session, a 500, or anything else that is
+            // not JSON: still a sentence on the row rather than a dead button.
+            const data = await response.json().catch(() => null);
+
+            if (!data || data.ok !== true) {
+                rowError(btn, (data && data.error)
+                    || (response.status === 419
+                        ? 'Your session expired — please reload the page.'
+                        : 'Could not add that just now — please try again.'));
+                return;
+            }
+
+            applyBrowsedAdd(data);
+        } catch {
+            rowError(btn, 'No connection — please try again.');
+        } finally {
+            adding.delete(id);
+            // On success this button has already been replaced with the rest of
+            // the list, so this lands on a detached node and costs nothing.
+            btn.disabled = false;
+            btn.removeAttribute('aria-busy');
+        }
+    }
 
     async function post(path, body) {
         try {
