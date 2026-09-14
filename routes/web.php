@@ -283,6 +283,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // world-readable.
         require __DIR__.'/payments-admin.php';
 
+        // Brand CRUD and the directory display mode. Same group: it writes
+        // catalogue records and accepts an uploaded logo path.
+        require __DIR__.'/brands-admin.php';
+
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
