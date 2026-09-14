@@ -1756,7 +1756,7 @@ const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
   {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings]]},
   {sec:'Safety',items:[['debug','Debug & Monitor',I.debug,'live'],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
-  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['catalog','Catalog',I.catalog],['import','Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['blog','Blog','<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],['posts','Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>'],['p-content','Content & Pages',I.content,'lock']]},
+  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['catalog','Catalog',I.catalog],['import','Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['blog','Blog','<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],['posts','Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],['mail','Mail','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>'],['p-content','Content & Pages',I.content,'lock']]},
   {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
   {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
@@ -1795,7 +1795,7 @@ function syncNavOpen(id){
   });
 }
 
-const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
+const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
 let cur='dash';
 function go(id){
   if(FRAME_SRC[id])return renderFrame(id);
@@ -1807,7 +1807,7 @@ function go(id){
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
   const t=TITLES[id]||['Platform',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
   $('#content').innerHTML='';
-  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
+  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,mail:renderMail,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
@@ -7272,6 +7272,162 @@ function renderConsole(){
   $$('#content .tog[data-pref]').forEach(t=>t.onclick=()=>{t.classList.toggle('on');consolePrefs[t.dataset.pref]=t.classList.contains('on');toast('Saved (preview)');});
   $$('#content select.inp').forEach(s=>s.onchange=()=>{consolePrefs[s.dataset.pref]=s.value;toast('Saved (preview)');});
 }
+
+/* ===== LANE J · Store · Mail — BEGIN =========================================
+   Self-contained. Nothing above or below this marker is referenced except the
+   shared helpers ($, $$, escHtml, escAttr, toast, uToken) and the three
+   registry lines noted in the PR body.
+
+   The screen exists for one question — can this server send email — so the
+   answer is the loudest thing on it, and it is never softened. A failed send
+   prints the transport's own words verbatim, because "535 Incorrect
+   authentication data" and "Connection could not be established" send the
+   owner to two completely different places and a tidy "Could not send" sends
+   them nowhere.
+
+   The password box renders EMPTY always. The API does not return the stored
+   value (it cannot — it is encrypted in mail_credentials and show() sends an
+   empty string with has_value), so there is nothing to render, and blank on
+   save means unchanged. */
+let MAILCFG=null;
+
+function mailBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/mail'; }
+
+async function renderMail(){
+  $('#content').innerHTML=`<div class="wrap"><div class="page-head"><h2>Mail</h2><p>Loading…</p></div></div>`;
+  try{
+    const r=await fetch(mailBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
+    if(!r.ok) throw new Error(r.status);
+    MAILCFG=await r.json();
+  }catch(e){
+    const why=String(e.message||e);
+    const hint = why==='404'
+      ? 'The admin route is not registered — the cache-clearing migration for this release may not have run.'
+      : why==='500' ? 'The server errored. Check storage/logs/laravel.log.' : 'The request did not complete.';
+    $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">
+      <b>Could not load the mail settings.</b>
+      <p style="margin:6px 0 12px;color:#7b8697;font-size:12.5px">${escHtml(hint)} <code>${escHtml(why)}</code></p>
+      <button class="btn small" onclick="renderMail()">Retry</button></div></div>`;
+    return;
+  }
+  paintMail();
+}
+
+function mailField(f){
+  const lbl=`<div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>`;
+  if(f.options)
+    return `<div class="mmrow">${lbl}<select class="inp" data-mail="${escAttr(f.key)}">${
+      f.options.map(o=>`<option value="${escAttr(o)}"${o===f.value?' selected':''}>${escHtml(o)}</option>`).join('')}</select></div>`;
+  if(f.type==='secret')
+    return `<div class="mmrow">${lbl}<input type="password" autocomplete="new-password" data-mail="${escAttr(f.key)}"
+      placeholder="${f.has_value?'Stored — leave blank to keep it':'Not set'}"></div>`;
+  return `<div class="mmrow">${lbl}<input type="text" value="${escAttr(String(f.value??''))}" data-mail="${escAttr(f.key)}"></div>`;
+}
+
+/* The outcome of the last test, kept server-side so it outlives the tab that
+   pressed the button. */
+function mailLastTest(){
+  const t=MAILCFG.last_test;
+  if(!t) return `<p style="margin:0;color:#7b8697;font-size:12.5px">No test has ever been run on this server.</p>`;
+  const when=(()=>{ try{ return new Date(t.at).toLocaleString(); }catch(e){ return t.at; } })();
+  return `<div style="border-left:3px solid ${t.ok?'#1f9d55':'#d64545'};padding:8px 12px">
+    <b>${t.ok?'Last test succeeded':'Last test failed'}</b>
+    <div style="color:#7b8697;font-size:12.5px;margin-top:2px">${escHtml(when)} → ${escHtml(String(t.to||''))}</div>
+    <div style="margin-top:6px;font-size:12.5px;white-space:pre-wrap;word-break:break-word">${escHtml(String(t.message||''))}</div>
+  </div>`;
+}
+
+function paintMail(){
+  const warn = MAILCFG.configured ? '' :
+    `<div class="banner" style="margin-bottom:14px"><div>This store cannot send email yet. Still needed: <b>${
+      escHtml(MAILCFG.missing.join(', '))}</b>. Password reset, email verification and newsletter confirmation stay off until a test-send succeeds.</div></div>`;
+  const logNote = MAILCFG.transport==='log'
+    ? `<div class="banner" style="margin-bottom:14px"><div><b>Nothing is being sent.</b> Mail is going to the Laravel log. Set <b>Send using</b> to <code>smtp</code> for real delivery.</div></div>`
+    : '';
+
+  $('#content').innerHTML=`<div class="wrap">
+    <div class="page-head"><h2>Mail</h2><p>The mailbox this store sends from. Settings come from the hosting control panel; the password is stored encrypted and is never shown again.</p></div>
+    ${warn}${logNote}
+    <div class="sec-title">Outgoing mail server</div>
+    <div class="card mmcard"><div class="mmbody">${MAILCFG.fields.map(mailField).join('')}</div></div>
+    <div class="ecsave">
+      <span class="ecdirty" id="mlDirty" style="visibility:hidden">Unsaved changes</span>
+      <button class="btn primary" id="mlSave">Save changes</button>
+    </div>
+
+    <div class="sec-title">Send a test</div>
+    <div class="card pad">
+      <div class="mmrow"><div class="mmlbl"><b>Send a test message to</b><span>Save first. The send happens while you wait — the result below is what the mail server actually said, not a queued job.</span></div>
+        <input type="email" id="mlTo" placeholder="you@example.com"></div>
+      <div style="margin-top:10px"><button class="btn primary" id="mlTest">Send test message</button></div>
+      <div id="mlResult" style="margin-top:14px">${mailLastTest()}</div>
+    </div>
+  </div>`;
+  bindMail();
+}
+
+function bindMail(){
+  const dirty=()=>{ const d=$('#mlDirty'); if(d) d.style.visibility='visible'; };
+  $$('#content [data-mail]').forEach(el=>{ el.oninput=dirty; el.onchange=dirty; });
+
+  const collect=()=>{
+    const out={};
+    $$('#content [data-mail]').forEach(el=>{
+      // A blank password box means "unchanged", so it is not sent at all —
+      // sending '' would be harmless today but only because the service
+      // happens to treat it that way. Do not rely on that from here.
+      if(el.type==='password' && el.value==='') return;
+      out[el.dataset.mail]=el.value;
+    });
+    return out;
+  };
+
+  const save=$('#mlSave');
+  if(save) save.onclick=async()=>{
+    save.disabled=true;
+    try{
+      const r=await fetch(mailBase(),{method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+        body:JSON.stringify({settings:collect()})});
+      const d=await r.json();
+      if(!r.ok||!d.ok) throw new Error(d.error||r.status);
+      toast('Mail settings saved');
+      renderMail();
+    }catch(e){ toast('Could not save: '+e.message); }
+    finally{ save.disabled=false; }
+  };
+
+  const test=$('#mlTest');
+  if(test) test.onclick=async()=>{
+    const to=($('#mlTo').value||'').trim();
+    if(!to){ toast('Enter an address to send to'); return; }
+    const box=$('#mlResult');
+    test.disabled=true;
+    box.innerHTML=`<p style="margin:0;color:#7b8697;font-size:12.5px">Connecting to the mail server…</p>`;
+    try{
+      const r=await fetch(mailBase()+'/test',{method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+        body:JSON.stringify({to})});
+      if(r.status===429){
+        box.innerHTML=`<div style="border-left:3px solid #d64545;padding:8px 12px"><b>Too many attempts</b>
+          <div style="font-size:12.5px;margin-top:4px">The test-send is rate limited. Wait a minute and try again.</div></div>`;
+        return;
+      }
+      const d=await r.json();
+      // Verbatim. A summary here would throw away the only useful part.
+      box.innerHTML=`<div style="border-left:3px solid ${d.ok?'#1f9d55':'#d64545'};padding:8px 12px">
+        <b>${d.ok?(d.status==='sent'?'The mail server accepted it':'Written to the log — nothing sent'):'Send failed'}</b>
+        <div style="margin-top:6px;font-size:12.5px;white-space:pre-wrap;word-break:break-word">${escHtml(String(d.message||''))}</div>
+        ${d.error?`<div style="margin-top:6px;font-size:12px;color:#7b8697;white-space:pre-wrap;word-break:break-word"><code>${escHtml(String(d.error))}</code></div>`:''}
+      </div>`;
+    }catch(e){
+      box.innerHTML=`<div style="border-left:3px solid #d64545;padding:8px 12px"><b>The request did not complete</b>
+        <div style="font-size:12.5px;margin-top:4px">${escHtml(String(e.message||e))}</div></div>`;
+    }
+    finally{ test.disabled=false; }
+  };
+}
+/* ===== LANE J · Store · Mail — END ========================================= */
 
 $('.side-pin .nav-item').onclick=()=>go('console');
 buildNav();
