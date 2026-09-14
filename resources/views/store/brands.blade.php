@@ -1,37 +1,93 @@
+{{--
+    Brands — the directory at /korean-skincare-brands/, and a single brand's
+    landing page at /korean-skincare-brands/{slug}/.
+
+    One view, two modes, keyed on $brand. They share the breadcrumb, the
+    heading block and the stylesheet below, and splitting them into two files
+    would mean maintaining that CSS twice.
+
+    URL Contract U-05: neither mode is a brand *archive*. The filterable
+    product listing stays at /shop/?filter_brands={slug} — Brand::url() — and
+    both modes link to it rather than reproducing it.
+--}}
 @extends('layouts.store')
-@section('title', 'All brands')
+@section('title', $brand ? $brand->name : 'All brands')
 
 @section('content')
 @php use App\Support\Url; @endphp
 
 <div class="brw">
-    <nav class="brw-crumb" aria-label="Breadcrumb">
-        <a href="{{ Url::to('/') }}">Home</a> <span>&rsaquo;</span> <span aria-current="page">Brands</span>
-    </nav>
+    @if ($brand)
+        <nav class="brw-crumb" aria-label="Breadcrumb">
+            <a href="{{ Url::to('/') }}">Home</a> <span>&rsaquo;</span>
+            <a href="{{ Url::to('/korean-skincare-brands/') }}">Brands</a> <span>&rsaquo;</span>
+            <span aria-current="page">{{ $brand->name }}</span>
+        </nav>
 
-    <h1 class="brw-h1">All brands</h1>
-    <p class="brw-sub">{{ $brands->count() }} brands, {{ $stocked }} with products in the shop right now.</p>
-
-    @if ($brands->isEmpty())
-        <p class="brw-empty">No brands have been added yet.</p>
-    @else
-        <div class="brw-grid">
-            @foreach ($brands as $brand)
-                @php $n = (int) $brand->products_count; @endphp
-                <a class="brw-card{{ $n === 0 ? ' is-empty' : '' }}"
-                   href="{{ $n > 0 ? $brand->url() : Url::to('/shop/') }}">
-                    <span class="brw-logo">
-                        @if ($brand->logo)
-                            <img src="{{ $brand->logo }}" alt="{{ $brand->name }}" loading="lazy" decoding="async">
-                        @else
-                            <span class="brw-initial">{{ mb_strtoupper(mb_substr($brand->name, 0, 1)) }}</span>
-                        @endif
-                    </span>
-                    <span class="brw-name">{{ $brand->name }}</span>
-                    <span class="brw-count">{{ $n > 0 ? $n . ' ' . \Illuminate\Support\Str::plural('product', $n) : 'Coming soon' }}</span>
-                </a>
-            @endforeach
+        <div class="brw-hero">
+            <span class="brw-logo brw-logo--lg">
+                @if ($brand->logo)
+                    <img src="{{ $brand->logo }}" alt="{{ $brand->name }}" decoding="async">
+                @else
+                    <span class="brw-initial">{{ mb_strtoupper(mb_substr($brand->name, 0, 1)) }}</span>
+                @endif
+            </span>
+            <div class="brw-hero-txt">
+                <h1 class="brw-h1">{{ $brand->name }}</h1>
+                @if ($brand->description)
+                    <p class="brw-sub">{{ strip_tags($brand->description) }}</p>
+                @endif
+                {{--
+                    The listing, not a second archive. Built from Brand::url()
+                    so this link and the directory's tiles can never drift
+                    apart, and so U-05 has exactly one place to change.
+                --}}
+                <a class="brw-cta" href="{{ $brand->url() }}">Shop all {{ $brand->name }}</a>
+            </div>
         </div>
+
+        @if ($products->isEmpty())
+            <p class="brw-empty">Nothing from this brand is in the shop right now.</p>
+        @else
+            <x-product-grid :products="$products" heading="Popular right now"
+                            :more-url="$brand->url()" more-label="View all" />
+        @endif
+    @else
+        <nav class="brw-crumb" aria-label="Breadcrumb">
+            <a href="{{ Url::to('/') }}">Home</a> <span>&rsaquo;</span> <span aria-current="page">Brands</span>
+        </nav>
+
+        <h1 class="brw-h1">All brands</h1>
+        <p class="brw-sub">{{ $brands->count() }} brands, {{ $stocked }} with products in the shop right now.</p>
+
+        @if ($brands->isEmpty())
+            <p class="brw-empty">No brands have been added yet.</p>
+        @else
+            <div class="brw-grid">
+                @foreach ($brands as $item)
+                    @php $n = (int) $item->products_count; @endphp
+                    {{--
+                        Every tile goes to the brand's own page now, including
+                        the empty ones: the landing page still has the brand's
+                        name, logo and description on it, which is more use
+                        than the bare /shop/ the empty tiles used to fall back
+                        to.
+                    --}}
+                    <a class="brw-card{{ $n === 0 ? ' is-empty' : '' }}"
+                       href="{{ Url::to('/korean-skincare-brands/' . $item->slug . '/') }}">
+                        <span class="brw-logo">
+                            @if ($item->logo)
+                                <img src="{{ $item->logo }}" alt="{{ $item->name }}" loading="lazy" decoding="async">
+                            @else
+                                <span class="brw-initial">{{ mb_strtoupper(mb_substr($item->name, 0, 1)) }}</span>
+                            @endif
+                        </span>
+                        <span class="brw-name">{{ $item->name }}</span>
+                        <span class="brw-count">{{ $n > 0 ? $n . ' ' . \Illuminate\Support\Str::plural('product', $n) : 'Coming soon' }}</span>
+                    </a>
+                @endforeach
+            </div>
+        @endif
     @endif
 </div>
 
@@ -50,14 +106,24 @@
   text-decoration:none;transition:border-color .16s,transform .16s}
 .brw-card:hover{border-color:var(--blush);transform:translateY(-2px)}
 .brw-card.is-empty{opacity:.55}
-.brw-logo{width:62px;height:62px;border-radius:50%;background:var(--cream);display:grid;place-items:center;overflow:hidden}
+.brw-logo{width:62px;height:62px;border-radius:50%;background:var(--cream);display:grid;place-items:center;overflow:hidden;flex:none}
 .brw-logo img{width:100%;height:100%;object-fit:contain;padding:7px}
+.brw-logo--lg{width:96px;height:96px}
 .brw-initial{font-size:22px;color:var(--pink)}
+.brw-logo--lg .brw-initial{font-size:34px}
 .brw-name{font-size:13.5px;color:var(--ink);line-height:1.35}
 .brw-count{font-size:11px;color:var(--muted)}
+.brw-hero{display:flex;align-items:center;gap:20px;margin-bottom:28px}
+.brw-hero .brw-h1{margin-bottom:7px}
+.brw-hero .brw-sub{margin-bottom:14px;max-width:62ch}
+.brw-cta{display:inline-block;padding:10px 20px;border-radius:999px;background:var(--pink);
+  color:#fff;font-size:13px;text-decoration:none}
+.brw-cta:hover{filter:brightness(.94)}
 @media (max-width:520px){
   .brw-grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
   .brw-logo{width:52px;height:52px}
+  .brw-logo--lg{width:72px;height:72px}
+  .brw-hero{flex-direction:column;align-items:flex-start;gap:14px}
 }
 </style>
 @endpush

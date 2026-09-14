@@ -93,7 +93,11 @@
   <div class="abody">{!! $post->body ?: '<p>' . e($post->excerpt) . '</p>' !!}</div>
   @verbatim
 </article>
-<div class="backrow"><a href="/blog">← Back to the Journal</a></div>
+@endverbatim
+{{-- Straight to the index. "/blog" only 301s here, and a hardcoded root path
+     drops the base prefix the staging subdirectory needs. --}}
+<div class="backrow"><a href="{{ \App\Support\Url::to('/skincare-guide/') }}">&larr; Back to the Journal</a></div>
+@verbatim
 
 <div class="wrap">
 @endverbatim
@@ -104,7 +108,7 @@
     <div class="mgrid" id="mgrid">
   @endverbatim
   @foreach($related as $r)
-    <a class="mcard" href="{{ \App\Support\Url::to('/skincare-guide/' . $r->slug . '/') }}">
+    <a class="mcard" href="{{ \App\Support\Url::to('/' . $r->slug . '/') }}">
       <div class="mcover" style="{{ $r->cover && (str_contains($r->cover, 'gradient') || str_contains($r->cover, '#') || str_contains($r->cover, 'url')) ? 'background:' . $r->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$r->tag] ?? '✨' }}
       </div>
