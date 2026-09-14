@@ -327,3 +327,18 @@ it('keeps the cart debug endpoint behind the admin guard', function () {
     expect($route)->not->toBeNull()
         ->and($route->gatherMiddleware())->toContain('auth:admin');
 });
+
+/**
+ * /skin-quiz and /reviews both 500'd: routes/web.php pointed at
+ * PageController::skinQuiz and ::reviewWall, neither of which existed. The
+ * Blade views were present the whole time, so nothing in the tree looked
+ * broken. Found by Lane P while hardening the quiz API — the page that feeds
+ * that API could not be reached at all.
+ */
+it('serves the skin quiz page', function () {
+    $this->get('/skin-quiz')->assertOk()->assertSee('quiz', false);
+});
+
+it('serves the review wall page', function () {
+    $this->get('/reviews')->assertOk();
+});

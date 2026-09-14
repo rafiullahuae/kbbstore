@@ -112,6 +112,58 @@ class PageController extends Controller
     }
 
     /**
+     * The skin quiz page.
+     *
+     * routes/web.php has pointed /skin-quiz at this method since the route was
+     * written, and the method did not exist — so the page 500'd on every visit.
+     * The Blade view was there the whole time; only the controller half was
+     * missing, which is why nothing looked obviously broken in the tree.
+     *
+     * The quiz itself is client-side and posts to /api/quiz, so there is
+     * nothing to fetch here: the page needs its <head> and nothing else.
+     */
+    public function skinQuiz()
+    {
+        $base = self::siteBase();
+
+        return view('store.skin-quiz', [
+            'seo' => Seo::render([
+                'type' => 'website',
+                'title' => 'Skin Quiz',
+                'description' => 'Answer a few questions and get a K-beauty routine matched to your skin type, concerns and the UAE climate.',
+                'url' => $base . '/skin-quiz/',
+                'breadcrumb' => [
+                    ['name' => 'Home', 'url' => $base . '/'],
+                    ['name' => 'Skin Quiz', 'url' => $base . '/skin-quiz/'],
+                ],
+            ]),
+            'settings' => $this->settings,
+        ]);
+    }
+
+    /**
+     * The review wall. Same missing-method 500 as skinQuiz() above.
+     */
+    public function reviewWall()
+    {
+        $base = self::siteBase();
+
+        return view('store.review-wall', [
+            'seo' => Seo::render([
+                'type' => 'website',
+                'title' => 'Customer Reviews',
+                'description' => 'What customers say about the K-beauty products they bought from us.',
+                'url' => $base . '/reviews/',
+                'breadcrumb' => [
+                    ['name' => 'Home', 'url' => $base . '/'],
+                    ['name' => 'Reviews', 'url' => $base . '/reviews/'],
+                ],
+            ]),
+            'settings' => $this->settings,
+        ]);
+    }
+
+    /**
      * The blog listing — same missing-method 500 as post() below, and the
      * same root cause: the view fetched a nonexistent /api/posts endpoint
      * and silently fell back to three hardcoded demo posts regardless of
