@@ -52,7 +52,7 @@ it('renders exactly what it rendered before when no currency settings exist', fu
     // Same wrapper classes, same order, same number.
     expect(Money::format(19900))->toBe(
         '<span class="woocommerce-Price-amount amount" dir="ltr">'
-        . '<span class="woocommerce-Price-currencySymbol" dir="auto">' . Currencies::AED_SIGN . '</span>'
+        . '<span class="woocommerce-Price-currencySymbol" dir="auto">' . Currencies::AED_SYMBOL . '</span> '
         . '199</span>'
     );
 
@@ -80,14 +80,22 @@ it('keeps the deprecated toAed/fromAed aliases working for the existing call sit
 // 2. The symbol.
 // ---------------------------------------------------------------------------
 
-it('uses the real U+20C3 dirham sign by default, not the Arabic letters', function () {
-    expect(Money::symbol())->toBe("\u{20C3}")
+/*
+ * The default was U+20C3 briefly. It was tried on a real device and drew as an
+ * empty box -- no shipped font has the glyph before Unicode 18.0 -- so the
+ * default is the three letters every device can already render. The sign stays
+ * available as a constant, as a value for the Symbol field, and through the
+ * drawn-glyph rendering mode.
+ */
+it('defaults to the letters AED, which every device can render', function () {
+    expect(Money::symbol())->toBe('AED')
+        ->and(Currencies::AED_SYMBOL)->toBe('AED')
         ->and(Currencies::AED_SIGN)->toBe("\u{20C3}")
-        ->and(Money::plain(19900))->toContain("\u{20C3}")
-        ->and(Money::format(19900))->toContain("\u{20C3}");
+        ->and(Money::plain(19900))->toBe('AED 199')
+        ->and(Money::format(19900))->toContain('AED');
 
     // The constant survives as the documented last-resort fallback.
-    expect(Money::SYMBOL)->toBe('د.إ');
+    expect(Money::SYMBOL)->toBe('AED');
 });
 
 it('falls back to the legacy constant for a currency it has never heard of', function () {
@@ -100,8 +108,9 @@ it('falls back to the legacy constant for a currency it has never heard of', fun
 it('lets the operator override the symbol for any currency', function () {
     setCurrency(['currency' => 'AED', 'currency_symbol' => 'AED']);
 
+    // A letter-based symbol takes a space with no explicit position set.
     expect(Money::symbol())->toBe('AED')
-        ->and(Money::plain(19900))->toBe('AED199');
+        ->and(Money::plain(19900))->toBe('AED 199');
 });
 
 // ---------------------------------------------------------------------------
@@ -263,7 +272,12 @@ it('escapes a symbol that tries to break out of an attribute', function () {
 // ---------------------------------------------------------------------------
 
 it('draws the dirham sign as an inline SVG when the operator asks for it', function () {
-    setCurrency(['currency_symbol_render' => 'svg']);
+    // svg only ever applies to U+20C3 -- no other symbol needs drawing -- and
+    // that is no longer the default, so it has to be selected explicitly.
+    setCurrency([
+        'currency_symbol' => Currencies::AED_SIGN,
+        'currency_symbol_render' => 'svg',
+    ]);
 
     $html = Money::format(19900);
 
@@ -299,7 +313,7 @@ it('keeps plain() free of markup and invisible control characters', function () 
     // pdp.js reads this back out of a data-price attribute and re-injects it,
     // and SearchController puts it in JSON. Anything invisible in here would
     // survive into both.
-    expect($plain)->toBe('د.إ199')
+    expect($plain)->toBe('د.إ 199')
         ->and($plain)->not->toContain('<')
         ->and($plain)->not->toContain("\u{2068}")
         ->and($plain)->not->toContain("\u{2069}")

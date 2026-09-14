@@ -49,6 +49,22 @@ final class Currencies
      * Money::symbolRender() is the pressure valve: switch it to `svg` and the
      * storefront draws the glyph instead of asking the font for it.
      */
+    /*
+     * Plain 'AED' rather than the U+20C3 dirham sign.
+     *
+     * U+20C3 is the correct character and ships in Unicode 18.0, but it was
+     * tried on a real device and drew as an empty box: no installed font has
+     * the glyph yet. A currency symbol that renders as tofu on a storefront is
+     * worse than no symbol at all, so the default is the three letters every
+     * device can already draw.
+     *
+     * The sign is still reachable -- AED_SIGN below, the Symbol field on Store
+     * → Business Details, and the drawn-glyph rendering option -- so this flips
+     * back to a single character the moment fonts catch up.
+     */
+    public const AED_SYMBOL = 'AED';
+
+    /** The dirham sign itself, U+20C3, for when device fonts support it. */
     public const AED_SIGN = "\u{20C3}";
 
     /**
@@ -59,7 +75,7 @@ final class Currencies
      */
     public const LIST = [
         // --- GCC ---------------------------------------------------------
-        'AED' => ['name' => 'UAE Dirham',        'symbol' => self::AED_SIGN, 'decimals' => 2],
+        'AED' => ['name' => 'UAE Dirham',        'symbol' => self::AED_SYMBOL, 'decimals' => 2],
         'SAR' => ['name' => 'Saudi Riyal',       'symbol' => "\u{FDFC}",     'decimals' => 2],
         'QAR' => ['name' => 'Qatari Riyal',      'symbol' => "\u{FDFC}",     'decimals' => 2],
         'KWD' => ['name' => 'Kuwaiti Dinar',     'symbol' => 'د.ك',          'decimals' => 3],

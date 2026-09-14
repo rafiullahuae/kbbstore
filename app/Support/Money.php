@@ -62,7 +62,16 @@ final class Money
      * the configured currency is not in the Currencies table and no symbol has
      * been set, and removing it would break anything still reading it.
      */
-    public const SYMBOL = 'د.إ';
+    /*
+     * 'AED' rather than the Arabic 'د.إ' this shipped with, and rather than the
+     * U+20C3 dirham sign.
+     *
+     * The Arabic form reordered around digits inside English sentences -- the
+     * delivery bar read "199|د.إ" -- and U+20C3 draws as an empty box on every
+     * device whose fonts predate Unicode 18.0, which today is almost all of
+     * them. Three Latin letters have neither problem.
+     */
+    public const SYMBOL = 'AED';
 
     /** Used when no `currency` row is set. */
     public const DEFAULT_CURRENCY = 'AED';
@@ -411,9 +420,17 @@ final class Money
             $symbol = Currencies::symbolFor($code, self::SYMBOL);
         }
 
+        /*
+         * With no explicit choice, the space depends on the symbol rather than
+         * being fixed. A letter-based symbol needs one -- 'AED199' is wrong and
+         * 'AED 199' is how the live WooCommerce site reads -- while a glyph does
+         * not: '$ 199' would be equally wrong. The test is the last character,
+         * so 'AED', 'CHF' and 'kr' get a space and '$', '£', '⃃' do not.
+         */
         $position = trim((string) ($map['currency_position'] ?? ''));
         if (! in_array($position, self::POSITIONS, true)) {
-            $position = 'before';
+            $lastChar = mb_substr($symbol, -1);
+            $position = preg_match('/[\p{L}\p{N}]/u', $lastChar) === 1 ? 'before_space' : 'before';
         }
 
         $render = trim((string) ($map['currency_symbol_render'] ?? ''));
