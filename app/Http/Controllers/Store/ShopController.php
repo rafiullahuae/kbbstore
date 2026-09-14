@@ -166,8 +166,39 @@ class ShopController extends Controller
             'date' => $query->orderByDesc('created_at'),
             'name' => $query->orderBy('name'),
             // "Featured" is the curated order the Sorting module maintains.
-            default => $query->orderByDesc('featured')->orderBy('position')->orderBy('name'),
+            default => $this->applyDefaultSort($query),
         };
+    }
+
+    /**
+     * "Featured" — the shop's default sort, and the one surface the
+     * `product_sorting` module actually governs.
+     *
+     * The curated order lives in `products.position`, written by Store →
+     * Catalog → Reorder (CatalogReorderApiController). This is the plugin's
+     * own idea: WordPress's `menu_order` baked into WooCommerce's "Default
+     * sorting". Off, the column is simply not consulted and the default view
+     * falls back to featured-first, then alphabetical — which is exactly what
+     * this query did before a curated order existed at all.
+     *
+     * This gate is the whole module. Before it, `position` was in the ORDER BY
+     * unconditionally and the switch on Store → Modules changed nothing
+     * whatsoever, while the registry advertised it as `live`.
+     *
+     * Deliberately NOT gated: the `menu_order` option of the [kbb_products]
+     * shortcode (App\Support\Shortcodes). That is an explicit, per-shortcode
+     * request for the curated order, not the default sort the module is about,
+     * and silently ignoring an author's explicit choice is a different bug.
+     */
+    private function applyDefaultSort($query)
+    {
+        $query->orderByDesc('featured');
+
+        if ($this->settings->moduleEnabled('product_sorting', false)) {
+            $query->orderBy('position');
+        }
+
+        return $query->orderBy('name');
     }
 
     /**

@@ -16,9 +16,67 @@ use App\Services\Seo\TitleTemplate;
  */
 class Seo
 {
+    /**
+     * Is the SEO Engine module switched on?
+     *
+     * Store → Modules → SEO → SEO Engine. Until this check existed the whole
+     * engine ran unconditionally: the registry advertised `seo_engine` as
+     * `live`, meaning "something on the storefront reads moduleEnabled() for
+     * this key", and nothing did. The switch saved and was never read — the
+     * same fault as `single_name` before 2.53.0.
+     *
+     * The check lives here rather than in the layout so no caller can route
+     * around it. Seo::inspect() is deliberately NOT gated: the admin's Schema
+     * Inspector exists to show what the engine would emit, and a tool that
+     * goes blank when the thing it inspects is off is useless for deciding
+     * whether to turn it on.
+     *
+     * Where the switch stops, deliberately: sitemap.xml, robots.txt and
+     * llms.txt (SeoFilesController) each already have their own on/off field on
+     * the SEO screen — `sitemap_enabled`, `llms_enabled`. Two switches for one
+     * thing is how a control ends up half working, which is the reason the
+     * registry has an `elsewhere` status at all, so those keep the single
+     * switch they already had. Redirects and the 404 log are not gated either:
+     * a redirect is a promise made to a URL somebody already published, and
+     * silently dropping it because an SEO toggle moved would break live links.
+     */
+    private static function engineOn(): bool
+    {
+        return app(\App\Services\SettingsService::class)->moduleEnabled('seo_engine', true);
+    }
+
+    /**
+     * What the <head> was before the engine was ever connected to a page: a
+     * bare <title> and nothing else. That is the honest "off" state — the
+     * layout's own comment records it as the exact previous behaviour.
+     *
+     * No template, no separator, no site-name append: those are engine
+     * features. A page that has no title of its own still gets the store
+     * name, because a blank <title> is never an acceptable output.
+     */
+    private static function bareHead(array $ctx): string
+    {
+        $s = SeoSettings::map();
+        $title = trim((string) ($ctx['title'] ?? ''));
+
+        if ($title === '') {
+            $title = SeoSettings::firstFilled(
+                $s['store_name'] ?? null,
+                (string) config('app.name'),
+                'K-Beauty Bliss'
+            );
+        }
+
+        return "\n" . '<title>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>' . "\n";
+    }
+
     /** @param array $ctx type,title,description,image,url,noindex,product,article,breadcrumb */
     public static function render(array $ctx = []): string
     {
+        if (! self::engineOn()) {
+            return self::bareHead($ctx);
+        }
+
         $s = SeoSettings::map();
         $siteName = SeoSettings::firstFilled(
             $s['seo_site_name'] ?? null,
