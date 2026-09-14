@@ -25,17 +25,26 @@ use Illuminate\View\View;
 class ShopController extends Controller
 {
     /** Only the columns the card renders. The row also carries description,
-     *  seo, meta_feed and images — several KB each, never used here. */
+     *  seo, meta_feed and images — several KB each, never used here.
+     *  `created_at` is in the list because ProductLabels reads it for the
+     *  "New" badge — while it was missing that badge could never fire on a
+     *  listing, only on the product page. */
     private const CARD_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
         'rating', 'review_count', 'featured', 'position', 'type', 'total_sales',
+        'created_at',
     ];
 
     public function __construct(private SettingsService $settings) {}
 
     public function index(Request $request, ?string $categorySlug = null): View
     {
+        // Facets::active() memoises in a process-level static. Under PHP-FPM
+        // that is one request and harmless; in the test suite, a queue worker
+        // or Octane it would hand this request the previous one's filters.
+        Facets::reset();
+
         $active = Facets::active();
         $page = Facets::page();
         $perPage = (int) $this->settings->get('products_per_page', 24);
@@ -116,11 +125,9 @@ class ShopController extends Controller
 
             $query->where(function ($q) use ($terms) {
                 foreach ($terms as $term) {
-                    $like = \App\Support\SearchTerms::like($term);
-
-                    $q->orWhere('name', 'like', $like)
-                        ->orWhere('sku', 'like', $like)
-                        ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like));
+                    \App\Support\SearchTerms::orWhereLike($q, 'products.name', $term);
+                    \App\Support\SearchTerms::orWhereLike($q, 'products.sku', $term);
+                    $q->orWhereHas('brand', fn ($b) => \App\Support\SearchTerms::whereLike($b, 'brands.name', $term));
                 }
             });
         }
@@ -242,18 +249,32 @@ class ShopController extends Controller
         return ['Shop all', 'Authentic Korean skincare, curated for the UAE.', 'Shop'];
     }
 
-    /** Removable chips for whatever is currently applied. */
+    /**
+     * Removable chips for whatever is currently applied.
+     *
+     * The two lookups are batched. Selecting eight brands used to mean eight
+     * separate `select name from brands where slug = ?` round trips just to
+     * label the chips above the grid.
+     */
     private function chips(array $active): array
     {
         $chips = [];
 
+        $catNames = $active['cat']
+            ? Category::whereIn('slug', $active['cat'])->pluck('name', 'slug')
+            : collect();
+
+        $brandNames = $active['brand']
+            ? Brand::whereIn('slug', $active['brand'])->pluck('name', 'slug')
+            : collect();
+
         foreach ($active['cat'] as $slug) {
-            $name = Category::where('slug', $slug)->value('name');
+            $name = $catNames[$slug] ?? null;
             if ($name) { $chips[] = ['key' => 'cat', 'value' => $slug, 'label' => $name]; }
         }
 
         foreach ($active['brand'] as $slug) {
-            $name = Brand::where('slug', $slug)->value('name');
+            $name = $brandNames[$slug] ?? null;
             if ($name) { $chips[] = ['key' => 'brand', 'value' => $slug, 'label' => $name]; }
         }
 

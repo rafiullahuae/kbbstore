@@ -185,11 +185,75 @@ final class SearchTerms
     }
 
     /**
+     * The LIKE escape character.
+     *
+     * Deliberately not a backslash. Backslash is MySQL's *default* LIKE escape
+     * but means nothing to SQLite, so `\%` was a real pattern on MySQL and a
+     * literal backslash on SQLite -- the same search returned different rows
+     * on the test database and in production, which is exactly the kind of
+     * divergence that lets a bug through CI.
+     *
+     * Saying `ESCAPE` explicitly fixes that, but the character has to survive
+     * being written as a SQL string literal in both dialects, and a backslash
+     * does not: MySQL reads `'\'` as an escaped quote and fails to parse,
+     * while SQLite reads `'\\'` as two characters and rejects it for being
+     * longer than one. `!` is ordinary in both and needs no doubling.
+     */
+    public const ESCAPE = '!';
+
+    /**
      * Escape the LIKE wildcards `%` and `_` so a query containing them is
      * matched literally rather than acting as a pattern.
+     *
+     * Must be paired with an `ESCAPE` clause -- use whereLike()/orWhereLike()
+     * rather than passing this to a bare `where(..., 'like', ...)`, which
+     * would leave the escape character sitting in the pattern as a literal.
      */
     public static function like(string $term): string
     {
-        return '%' . str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $term) . '%';
+        $e = self::ESCAPE;
+
+        // The escape character itself goes first, or it would double-escape
+        // the sequences introduced for % and _.
+        return '%' . str_replace([$e, '%', '_'], [$e . $e, $e . '%', $e . '_'], $term) . '%';
+    }
+
+    /**
+     * `AND <column> LIKE <pattern> ESCAPE '!'`, with the pattern bound.
+     *
+     * The column is never shopper-supplied -- every caller passes a literal
+     * from its own class -- and the term is always a binding, so the raw
+     * fragment carries no user input at all.
+     */
+    public static function whereLike($query, string $column, string $term)
+    {
+        return $query->whereRaw(
+            self::clause($query, $column),
+            [self::like($term)]
+        );
+    }
+
+    /** As whereLike(), joined with OR. */
+    public static function orWhereLike($query, string $column, string $term)
+    {
+        return $query->orWhereRaw(
+            self::clause($query, $column),
+            [self::like($term)]
+        );
+    }
+
+    /** `"name" like ? escape '!'`, with the column quoted for the dialect. */
+    private static function clause($query, string $column): string
+    {
+        // Eloquent builders, relation builders and plain query builders all
+        // reach this; only the first two wrap an underlying query builder.
+        $base = method_exists($query, 'getQuery') ? $query->getQuery() : $query;
+
+        // A relation builder's getQuery() is itself an Eloquent builder.
+        if (method_exists($base, 'getQuery')) {
+            $base = $base->getQuery();
+        }
+
+        return $base->getGrammar()->wrap($column) . " like ? escape '" . self::ESCAPE . "'";
     }
 }
