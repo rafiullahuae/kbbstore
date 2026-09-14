@@ -138,3 +138,28 @@ it('refuses to checkout a product that is not visible', function () {
         'items' => [['slug' => $draft->slug, 'qty' => 1]],
     ])->assertStatus(422);
 });
+
+/**
+ * /api/cart/debug returned the five most recently active carts SITE-WIDE —
+ * their ids, customer_ids and token prefixes — to anyone who opened the URL,
+ * while its own doc comment said "nothing sensitive". It was live.
+ *
+ * The guard lives on the route rather than in the handler so an edit to
+ * CartController cannot quietly drop it; this test pins the route.
+ */
+it('does not serve the cart debug endpoint to the public', function () {
+    $response = $this->get('/api/cart/debug');
+
+    expect($response->status())->not->toBe(200);
+
+    // And nothing resembling the leaked payload comes back on the way out.
+    expect($response->getContent())->not->toContain('recent_active_carts');
+});
+
+it('keeps the cart debug endpoint behind the admin guard', function () {
+    $route = collect(app('router')->getRoutes()->getRoutes())
+        ->first(fn ($r) => $r->uri() === 'api/cart/debug');
+
+    expect($route)->not->toBeNull()
+        ->and($route->gatherMiddleware())->toContain('auth:admin');
+});

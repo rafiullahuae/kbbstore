@@ -108,9 +108,15 @@ Route::get('/product', function (\Illuminate\Http\Request $request) {
 Route::get('/cart', [\App\Http\Controllers\Store\CartController::class, 'page'])->name('cart');
 
 Route::prefix('api/cart')->group(function () {
-    // Read-only. Open it in the browser to see exactly what the server thinks
-    // is in the cart — cookie, cart id, line count. No writes, no uploads.
-    Route::get('/debug', [\App\Http\Controllers\Store\CartController::class, 'debug']);
+    // Read-only diagnostic: cookie, cart id, line count. ADMIN ONLY, and it
+    // has to be. Its own doc comment used to say "nothing sensitive" while the
+    // handler returned the five most recently active carts SITE-WIDE — their
+    // ids, customer_ids and token prefixes — to anyone who opened the URL.
+    // That is a cross-customer leak and an account-enumeration oracle, and it
+    // was live. The guard goes here rather than in the handler so that it
+    // cannot be lost again by an edit to the controller.
+    Route::get('/debug', [\App\Http\Controllers\Store\CartController::class, 'debug'])
+        ->middleware('auth:admin');
     Route::get('/drawer',  [\App\Http\Controllers\Store\CartController::class, 'drawer']);
     Route::post('/add',    [\App\Http\Controllers\Store\CartController::class, 'add']);
     Route::post('/update', [\App\Http\Controllers\Store\CartController::class, 'update']);
