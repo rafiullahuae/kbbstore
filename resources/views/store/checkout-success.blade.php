@@ -27,13 +27,14 @@
 .kbb-checkout .co-act{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;font-weight:700;color:var(--ink);transition:.15s var(--ease)}
 .kbb-checkout .co-act:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
 .kbb-checkout .co-act svg{width:18px;height:18px;flex-shrink:0;color:var(--pink-deep)}
-.kbb-checkout .co-act .t{flex:1;min-width:0}
-.kbb-checkout .co-act .s{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
-.kbb-checkout .co-act .go{color:var(--muted);font-weight:700}
+.kbb-checkout .co-act .co-t{flex:1;min-width:0}
+.kbb-checkout .co-brand{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
+.kbb-checkout .co-act .co-s{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
+.kbb-checkout .co-act .co-go{color:var(--muted);font-weight:700}
 .kbb-checkout .co-act--primary{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 14px 26px -16px rgba(193,62,99,.65)}
 .kbb-checkout .co-act--primary:hover{background:var(--pink-deep);border-color:var(--pink-deep);color:#fff}
-.kbb-checkout .co-act--primary svg,.kbb-checkout .co-act--primary .go{color:#fff}
-.kbb-checkout .co-act--primary .s{color:rgba(255,255,255,.82)}
+.kbb-checkout .co-act--primary svg,.kbb-checkout .co-act--primary .co-go{color:#fff}
+.kbb-checkout .co-act--primary .co-s{color:rgba(255,255,255,.82)}
 .kbb-checkout .co-lines{margin-bottom:12px}
 .kbb-checkout .co-lines .ci:first-child{padding-top:0}
 .kbb-checkout .co-linemeta{font-size:11.5px;color:var(--muted);font-weight:600}
@@ -106,27 +107,27 @@
                         @if ($signedIn)
                             <a class="co-act co-act--primary" href="{{ Url::to('/my-account/orders/') }}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4M20 12H4M20 17H4"/></svg>
-                                <span class="t">Your orders<span class="s">Every order on your account, including this one</span></span>
-                                <span class="go">›</span>
+                                <span class="co-t">Your orders<span class="co-s">Every order on your account, including this one</span></span>
+                                <span class="co-go">›</span>
                             </a>
                         @else
                             <a class="co-act co-act--primary" href="{{ Url::to('/my-account/') }}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <span class="t">Sign in to your account<span class="s">See this order and everything you have ordered before</span></span>
-                                <span class="go">›</span>
+                                <span class="co-t">Sign in to your account<span class="co-s">See this order and everything you have ordered before</span></span>
+                                <span class="co-go">›</span>
                             </a>
                         @endif
 
                         <a class="co-act" href="{{ Url::to('/track-my-order/') }}?order={{ urlencode((string) $order->order_number) }}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                            <span class="t">Track your order<span class="s">Order #{{ $order->order_number }} — we will ask for your email to confirm it is you</span></span>
-                            <span class="go">›</span>
+                            <span class="co-t">Track your order<span class="co-s">Order #{{ $order->order_number }} — we will ask for your email to confirm it is you</span></span>
+                            <span class="co-go">›</span>
                         </a>
 
                         <a class="co-act" href="{{ Url::to('/') }}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-                            <span class="t">Go to home<span class="s">Back to the shop front</span></span>
-                            <span class="go">›</span>
+                            <span class="co-t">Go to home<span class="co-s">Back to the shop front</span></span>
+                            <span class="co-go">›</span>
                         </a>
                     </div>
                 </div>

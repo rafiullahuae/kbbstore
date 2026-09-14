@@ -24,7 +24,7 @@
 <div class="ci">
     <div class="cth" style="{{ $thumb }}"><span class="qb">{{ (int) $item->quantity }}</span></div>
     <div class="cinfo">
-        @if ($item->brand)<div class="b">{{ $item->brand }}</div>@endif
+        @if ($item->brand)<div class="co-brand">{{ $item->brand }}</div>@endif
         <div class="n">{{ $item->name }}</div>
         <div class="co-linemeta">
             {{ (int) $item->quantity }} × {!! Money::format((int) $item->unit_price) !!}@if ($variant !== '') <span>· {{ $variant }}</span>@endif
