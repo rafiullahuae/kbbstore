@@ -135,12 +135,33 @@ class BuildPackage extends Command
          * kept to exactly these six because the HMAC, when signing is turned
          * back on, is computed over this payload with `signature` removed; an
          * extra key here would change the digest and reject every package. */
+        $hasMigrations = false;
+        foreach (array_keys($manifest) as $path) {
+            if (str_starts_with($path, 'database/migrations/')) {
+                $hasMigrations = true;
+                break;
+            }
+        }
+
         $zip->addFromString('update.json', (string) json_encode([
             'name' => 'KBB Storefront',
             'version' => $version,
             'requires_php' => '8.2',
             'notes' => (string) ($this->option('notes') ?? ''),
             'files' => $manifest,
+            /*
+             * UpdateRunner only runs migrations when this flag is truthy --
+             * hasMigrations() reads the manifest, it does not look at the
+             * files. No package ever set it, so `php artisan migrate` had
+             * never run through the updater: migration files were copied to
+             * disk and left there.
+             *
+             * That is why the orders table was missing is_gift. The migration
+             * that adds it shipped in 2.60.85, arrived on the server, and was
+             * never executed -- and why two migration-only packages sent to
+             * fix it changed nothing at all.
+             */
+            'migrations' => $hasMigrations,
             'signature' => '',
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
