@@ -56,9 +56,15 @@
 .kbb-checkout .co-gift{background:var(--pink-soft);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:12.5px;line-height:1.5;color:var(--ink-2)}
 .kbb-checkout .co-gift b{display:block;color:var(--ink);margin-bottom:3px}
 .kbb-checkout .co-acct{margin-top:2px}
-.kbb-checkout .co-acct .crow{display:flex;gap:9px;margin-top:9px;flex-wrap:wrap}
-.kbb-checkout .co-acct input{flex:1;min-width:180px;border:1.6px solid var(--line);border-radius:10px;padding:12px 14px;font-family:inherit;font-size:14px;background:#fff}
-.kbb-checkout .co-acct button{background:var(--ink);color:#fff;border-radius:10px;padding:12px 18px;font-weight:700;font-size:13.5px}
+/* One row, and it stays one row. The field had min-width:180px and the row
+   was allowed to wrap, so on a phone the button dropped underneath and looked
+   like a separate step. min-width:0 lets the field shrink instead. */
+.kbb-checkout .co-acct .crow{display:flex;gap:8px;margin-top:9px;flex-wrap:nowrap;align-items:stretch}
+.kbb-checkout .co-acct input{flex:1 1 auto;min-width:0;border:1.6px solid var(--line);border-radius:10px;padding:12px 14px;font-family:inherit;font-size:14px;background:#fff}
+.kbb-checkout .co-acct button{flex:0 0 auto;white-space:nowrap;background:var(--ink);color:#fff;border-radius:10px;padding:12px 16px;font-weight:700;font-size:13.5px}
+/* The username, stated before the field rather than explained after it. */
+.kbb-checkout .co-user{display:flex;align-items:center;gap:7px;background:#EEF8F1;border:1px solid #BFE0CD;border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:600;color:#1F7D52;overflow-wrap:anywhere}
+.kbb-checkout .co-user svg{width:15px;height:15px;flex-shrink:0}
 .kbb-checkout .co-acct button:hover{background:var(--pink-deep)}
 .kbb-checkout .co-acct .kbb-acct-err{display:block;margin-top:7px;font-size:12px;font-weight:600;color:var(--sale,#c0392b)}
 .kbb-checkout .co-done{background:#EEF8F1;border:1px solid #BFE0CD;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:600;color:#1F7D52}
@@ -67,6 +73,7 @@
   /* The four facts stay two-up on a phone -- they are short values, and one
      column pushed everything below them off the first screen. */
   .kbb-checkout .co-facts{gap:10px 14px}
+  .kbb-checkout .co-acct button{padding:12px 13px;font-size:13px}
 }
 </style>
 @endpush
@@ -160,15 +167,19 @@
                     @unless (session('kbb_account_done'))
                     <div class="sec co-acct">
                         <h2><span class="n">+</span> Finish your account</h2>
-                            <p class="co-lead" style="margin-bottom:0">Choose a password and next time your details are already filled in.</p>
+                            <div class="co-user">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity=".0"/><path d="M22 6l-10 7L2 6"/><path d="M2 6h20v12H2z"/></svg>
+                                <span>{{ $order->email }} is your username</span>
+                            </div>
+                            <p class="co-lead" style="margin:7px 0 0">Set a password to finish.</p>
                             <form method="post" action="{{ Url::to('/checkout/claim-account') }}">
                                 @csrf
                                 <input type="hidden" name="order" value="{{ $order->order_number }}">
                                 <div class="crow">
-                                    <input type="password" name="account_password" aria-label="Choose a password"
-                                           placeholder="Choose a password (8 characters or more)"
+                                    <input type="password" name="account_password" aria-label="Set a password"
+                                           placeholder="Password (8+ characters)"
                                            autocomplete="new-password" minlength="8" required>
-                                    <button type="submit">Create account</button>
+                                    <button type="submit">Save</button>
                                 </div>
                                 @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
                             </form>

@@ -438,3 +438,33 @@ it('escapes a gift note and an address rather than rendering them', function () 
         ->not->toContain('<img src=x onerror=alert(2)>')
         ->toContain('&lt;script&gt;');
 });
+
+/*
+ * The account row is one row. It previously had min-width:180px on the field
+ * and flex-wrap on the row, so on a phone the button dropped underneath and
+ * read as a separate step. Asserted as CSS rather than pixels because that is
+ * what actually decides it, and the same class of bug -- a rule that does not
+ * match what the markup does -- has already cost this project two releases.
+ */
+it('keeps the password field and its button on one row', function () {
+    $page = file_get_contents(resource_path('views/store/checkout-success.blade.php'));
+
+    expect($page)->toContain('.co-acct .crow{display:flex')
+        ->toContain('flex-wrap:nowrap')
+        ->toContain('.co-acct input{flex:1 1 auto;min-width:0')
+        ->toContain('.co-acct button{flex:0 0 auto;white-space:nowrap');
+});
+
+it('names the username before asking for a password', function () {
+    $order = receivedOrder();
+
+    $html = receivedPage($order)->assertOk()->getContent();
+
+    // The shopper is told what they will sign in with, rather than left to
+    // guess after the fact.
+    expect($html)->toContain($order->email.' is your username')
+        ->toContain('Set a password to finish');
+
+    // And it is the green confirmation styling, not a warning.
+    expect($html)->toContain('class="co-user"');
+});
