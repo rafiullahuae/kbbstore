@@ -7735,6 +7735,7 @@ buildNav();
     }).join('');
 
     var refundedLine = o.refunded_total_aed>0 ? '<div class="between" style="color:var(--sale,#c0392b)"><span>Refunded</span><span>-AED '+o.refunded_total_aed+'</span></div>' : '';
+    var capturedLine = (o.settlement && o.settlement.captured) ? '<div class="between" style="color:var(--ink-soft)"><span>Captured</span><span>AED '+o.settlement.captured_total_aed+'</span></div>' : '';
     var vatLine = o.vat ? '<div class="between" style="color:var(--ink-faint);font-size:11.5px;padding-top:4px"><span>'+sesc(o.vat.label)+'</span><span>AED '+o.vat.amount_aed+'</span></div>' : '';
 
     var addProductBlock = editable
@@ -7754,15 +7755,73 @@ buildNav();
       (o.fee_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Fees</span><span>AED '+o.fee_total_aed+'</span></div>':'')+
       '<div class="between" style="font-weight:800;font-size:14px;border-top:1px solid var(--border);padding-top:8px"><span>Order total</span><span>AED '+o.total_aed+'</span></div>'+
       vatLine+
+      capturedLine+
       refundedLine+
       '</div>'+
+      odCapturePanel(o)+
       '<div class="row" style="margin-top:16px;gap:10px;align-items:center">'+
       '<button class="btn ghost sm" id="odRefundToggle">Refund</button>'+
       '<div id="odRefundForm" style="display:none;gap:8px;align-items:center" class="row">'+
         '<input class="odinp" id="odRefundAmt" type="number" step="0.01" placeholder="Amount AED" style="width:120px">'+
         '<input class="odinp" id="odRefundReason" placeholder="Reason (optional)" style="width:200px">'+
-        '<button class="btn sm" id="odRefundGo">Confirm refund</button></div></div>'+
+        /*
+         * The double-click guard, and it lives here rather than on the button
+         * because the server's own guard is a UNIQUE index on this value. One
+         * key per form render means two clicks send the same key and collide
+         * in the database; a successful refund re-renders the page and gets a
+         * fresh one, so a second, deliberate refund of the same amount is
+         * still allowed. A disabled button would only stop the clicks this
+         * browser makes.
+         */
+        '<input type="hidden" id="odRefundKey" value="'+sesc(odNewKey())+'">'+
+        '<button class="btn sm" id="odRefundGo">Confirm refund</button></div>'+
+      (o.refundable_aed!=null ? '<span style="font-size:11.5px;color:var(--ink-faint)">AED '+o.refundable_aed+' still refundable</span>' : '')+
+      '</div>'+
       '</div></div>';
+  }
+
+  /* A fresh idempotency key. randomUUID is not available on http:// origins in
+   * older browsers, so there is a fallback rather than an undefined key. */
+  function odNewKey(){
+    try{ if(window.crypto && crypto.randomUUID) return 'ui:'+crypto.randomUUID(); }catch(e){}
+    return 'ui:'+Date.now()+'-'+Math.random().toString(36).slice(2,12);
+  }
+
+  /*
+   * Capture.
+   *
+   * The reason this panel exists at all: Tabby and Tamara AUTHORISE at
+   * checkout and auto-void an authorisation that is never captured. An order
+   * that reads "paid" and was never captured is one the merchant does not get
+   * paid for, so the state is shown on the order rather than left to be
+   * discovered in a provider dashboard, and it shouts when the window is
+   * nearly up.
+   */
+  function odCapturePanel(o){
+    var s = o.settlement;
+    if(!s || !s.supported) return '';
+
+    if(s.captured){
+      return '<div style="margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--ink-soft)">'+
+        '<b style="color:var(--ink)">Captured</b> \u00b7 AED '+s.captured_total_aed+
+        (s.captured_at?' on '+fmtDT(s.captured_at):'')+
+        (s.capture_ref?' \u00b7 ref '+sesc(s.capture_ref):'')+'</div>';
+    }
+
+    if(!s.capturable){
+      return '<div style="margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--ink-faint)">'+
+        'Not capturable yet \u2014 this order has not been authorised by the payment provider.</div>';
+    }
+
+    var urgent = !!s.expiring;
+    var left = (s.days_left!=null)
+      ? (s.days_left>0 ? s.days_left+' day'+(s.days_left===1?'':'s')+' left to capture.' : 'The capture window has run out. Try anyway \u2014 the provider decides.')
+      : '';
+
+    return '<div style="margin-top:14px;padding:12px;border:1px solid '+(urgent?'var(--sale,#c0392b)':'var(--border)')+';border-radius:8px">'+
+      '<div style="font-size:12.5px;color:'+(urgent?'var(--sale,#c0392b)':'var(--ink-soft)')+';margin-bottom:8px">'+
+      '<b style="color:'+(urgent?'var(--sale,#c0392b)':'var(--ink)')+'">Not captured.</b> '+sesc(left)+' '+sesc(s.window||'')+'</div>'+
+      '<button class="btn sm" id="odCaptureGo">Capture AED '+o.total_aed+'</button></div>';
   }
 
   function odNotesCard(o){
@@ -7966,15 +8025,39 @@ buildNav();
       var amt = parseFloat(document.getElementById('odRefundAmt').value);
       if(!amt || amt<=0){ toast('Enter a refund amount.'); return; }
       var reason = document.getElementById('odRefundReason').value;
+      var btn = this;
+      // Cosmetic only. The guard that counts is the idempotency key below,
+      // which the server has a unique index on -- a disabled button does
+      // nothing about a retried request or a second tab.
+      btn.disabled = true;
       try{
         var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/refund'),{method:'POST',credentials:'same-origin',
           headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
-          body:JSON.stringify({amount_aed:amt, reason:reason})});
+          body:JSON.stringify({amount_aed:amt, reason:reason, idempotency_key:document.getElementById('odRefundKey').value})});
         var j = await r.json();
-        if(!r.ok || j.ok===false){ toast(j.message||'Could not process that refund.'); return; }
-        toast('Refund recorded'); renderOrderDetail(id);
-      }catch(e){ toast('Could not process that refund.'); }
+        if(!r.ok || j.ok===false){ btn.disabled = false; toast(j.message||'Could not process that refund.'); return; }
+        // The server's own words: "refunded through Tabby" and "recorded --
+        // return the money by hand" are different facts and the admin needs
+        // to be told which one happened.
+        toast(j.message||'Refund recorded'); renderOrderDetail(id);
+      }catch(e){ btn.disabled = false; toast('Could not process that refund.'); }
     };
+
+    // Capture. Present only when the order is capturable -- see odCapturePanel.
+    var captureBtn = document.getElementById('odCaptureGo');
+    if(captureBtn){
+      captureBtn.onclick = async function(){
+        captureBtn.disabled = true;
+        try{
+          var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/capture'),{method:'POST',credentials:'same-origin',
+            headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+            body:'{}'});
+          var j = await r.json();
+          if(!r.ok || j.ok===false){ captureBtn.disabled = false; toast(j.message||'Could not capture that payment.'); return; }
+          toast(j.message||'Captured'); renderOrderDetail(id);
+        }catch(e){ captureBtn.disabled = false; toast('Could not capture that payment.'); }
+      };
+    }
 
     // Add note.
     document.getElementById('odNoteGo').onclick = async function(){
