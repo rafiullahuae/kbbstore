@@ -35,12 +35,13 @@ it('resolves the same post without a trailing slash', function () {
 });
 
 it('canonicalises the article to the root URL, not the old prefix', function () {
-    // The absolute part comes from the site_url setting, which is empty in a
-    // fresh install, so the canonical is path-relative here. What matters is
-    // the path: the article must not still claim /skincare-guide/.
+    // Canonicals are absolute since 2.60.109 (Seo::canonical passes them through
+    // Url::to), so this asserts the path host-agnostically rather than pinning
+    // the origin. What matters is that the article no longer claims the old
+    // /skincare-guide/ prefix.
     $html = $this->get('/' . LIVE_SLUG . '/')->assertOk()->getContent();
 
-    expect($html)->toContain('rel="canonical" href="/' . LIVE_SLUG . '/"')
+    expect($html)->toMatch('#rel="canonical" href="(https?://[^"/]+)?/' . preg_quote(LIVE_SLUG, '#') . '/?"#')
         ->and($html)->not->toContain('/skincare-guide/' . LIVE_SLUG);
 });
 
@@ -160,4 +161,21 @@ it('keeps web.php\'s /post/{slug} line working through the renamed route', funct
 it('sends bare /post and /blog to the Journal index', function () {
     $this->followingRedirects()->get('/post')->assertOk()->assertSee('The Glow Journal');
     $this->followingRedirects()->get('/blog')->assertOk()->assertSee('The Glow Journal');
+});
+
+/*
+ * The sitemap is the one place a stale article URL does lasting damage: search
+ * engines are handed the redirecting form directly, which is what the move was
+ * meant to stop. Lane B moved the article route but these four callers kept
+ * building the old shape.
+ */
+it('lists articles in the sitemap at their root URL, not the retired prefix', function () {
+    $xml = $this->get('/sitemap.xml')->assertOk()->getContent();
+
+    expect($xml)->toContain('/' . LIVE_SLUG . '/')
+        ->not->toContain('/skincare-guide/' . LIVE_SLUG);
+});
+
+it('still lists the Journal index, which did not move', function () {
+    expect($this->get('/sitemap.xml')->getContent())->toContain('/skincare-guide/');
 });

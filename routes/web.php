@@ -132,8 +132,9 @@ Route::get('/reviews',     [PageController::class, 'reviewWall'])->name('review-
 // 404s. Meanwhile canonical tags and IndexNow were submitting /post/{slug},
 // which the site never linked. Published URL and canonical URL now agree.
 Route::get('/skincare-guide/', [PageController::class, 'blog'])->name('blog');
-Route::get('/skincare-guide/{slug}/', [PageController::class, 'post'])
-    ->where('slug', '[A-Za-z0-9\-_]+')->name('post');
+// The article URL moved to the site root in 2.60.109, matching the live
+// WordPress addresses the owner supplied. The legacy route and the `post` name
+// now live in routes/kbb-brands-blog.php, required at the end of this file.
 
 // The Laravel-era addresses, kept as 301s so existing links and anything
 // already indexed survive.
@@ -513,10 +514,9 @@ Route::get('/_kbb-health', function () {
 // becomes the real page because the homepage already treated it as one; the
 // other two 301 to it and to the filtered listing respectively, so the same
 // catalogue is not served under three addresses.
-Route::get('/brands/', [\App\Http\Controllers\Store\BrandController::class, 'index'])->name('brands.index');
-Route::get('/korean-skincare-brands/', [\App\Http\Controllers\Store\BrandController::class, 'legacyIndex']);
-Route::get('/brand/{slug}/', [\App\Http\Controllers\Store\BrandController::class, 'legacyShow'])
-    ->where('slug', '[A-Za-z0-9\-_]+');
+// Superseded in 2.60.109: the owner confirmed /korean-skincare-brands/ is the
+// live address, so it became the directory and /brands/ became the redirect.
+// Both, plus the per-brand page, are in routes/kbb-brands-blog.php.
 
 // Gift wrapping toggle. Writes the choice to the session and returns fresh
 // totals, so every path that recomputes them -- this, the rates endpoint, a
@@ -541,3 +541,14 @@ Route::fallback(function () {
     abort(404);
 });
 
+/*
+ * Required last, and that placement is load-bearing. The final route in this
+ * file matches a single path segment at the site root -- the shape of every
+ * storefront URL there is -- so registration order is what keeps /cart reaching
+ * CartController instead of being read as an article called "cart".
+ *
+ * PageController::slugPattern() refuses reserved first segments independently,
+ * so the guard does not rest on order alone. RootSlugCollisionTest walks the
+ * router as actually registered and fails on any unreserved static segment.
+ */
+require __DIR__ . '/kbb-brands-blog.php';

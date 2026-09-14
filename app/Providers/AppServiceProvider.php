@@ -119,7 +119,7 @@ class AppServiceProvider extends ServiceProvider
             if (($post->status ?? null) === 'published' && $post->slug) {
                 $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
                 if ($base !== '') {
-                    \App\Services\Seo\IndexNow::submitOne($base . '/skincare-guide/' . $post->slug . '/');
+                    \App\Services\Seo\IndexNow::submitOne($base . '/' . $post->slug . '/');
                 }
             }
         });
@@ -152,7 +152,7 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
-            \App\Support\RedirectManager::autoCreate('/skincare-guide/' . $oldSlug . '/', '/skincare-guide/' . $post->slug . '/');
+            \App\Support\RedirectManager::autoCreate('/' . $oldSlug . '/', '/' . $post->slug . '/');
         });
     }
 }

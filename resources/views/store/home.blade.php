@@ -194,7 +194,7 @@
     <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">All articles</a></div>
   <div class="blog">
     @foreach ($posts as $post)
-      <a class="bl" href="{{ Url::to('/skincare-guide/' . $post->slug . '/') }}">
+      <a class="bl" href="{{ Url::to('/' . $post->slug . '/') }}">
         <div class="im" style="background:{{ $post->image ? "#fff url('" . e($post->image) . "') center/cover" : Gradient::for($post->title) }}">
           @if ($post->category)<span class="chip">{{ $post->category }}</span>@endif</div>
         <h3>{{ $post->title }}</h3>

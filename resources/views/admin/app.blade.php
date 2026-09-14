@@ -7418,7 +7418,7 @@ buildNav();
           '<td>'+sesc(p.author||'')+'</td>'+
           '<td><span class="pill '+statusColor(p.status)+'"><span class="d"></span>'+sesc(p.status)+'</span></td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(p.published_at?p.published_at.slice(0,10):'\u2014')+'</td>'+
-          '<td><a class="btn ghost sm" href="'+appRoot()+'/skincare-guide/'+encodeURIComponent(p.slug)+'/'+'" target="_blank" rel="noopener">Preview</a></td></tr>';
+          '<td><a class="btn ghost sm" href="'+appRoot()+'/'+encodeURIComponent(p.slug)+'/'+'" target="_blank" rel="noopener">Preview</a></td></tr>';
       }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No posts yet.</td></tr>')+
       '</tbody></table></div></div>';
   }

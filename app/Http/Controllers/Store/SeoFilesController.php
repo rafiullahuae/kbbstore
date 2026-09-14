@@ -107,7 +107,9 @@ class SeoFilesController extends Controller
             }
         }
 
-        // Blog posts. /post/{slug} 301s to the canonical /skincare-guide/{slug}/
+        // Articles live at the site root since 2.60.109; /post/{slug} and
+        // /skincare-guide/{slug}/ both 301 to /{slug}/, so only the canonical
+        // form belongs in the sitemap.
         // as of 2.60.93, so the redirect target is listed directly.
         if (Schema::hasTable('posts')) {
             $q = DB::table('posts')->select('slug', 'updated_at');
@@ -118,7 +120,7 @@ class SeoFilesController extends Controller
 
             foreach ($q->get() as $post) {
                 if (empty($post->slug)) continue;
-                $add($base . '/skincare-guide/' . $post->slug . '/', $post->updated_at ?? null, '0.6', 'monthly');
+                $add($base . '/' . $post->slug . '/', $post->updated_at ?? null, '0.6', 'monthly');
             }
         }
 

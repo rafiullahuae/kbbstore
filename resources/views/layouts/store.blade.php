@@ -30,10 +30,22 @@ use App\Support\Url;
 $kbbPath = request()->getPathInfo() ?: '/';
 $kbbIsHome = trim($kbbPath, '/') === '';
 $kbbRawTitle = trim(strip_tags($__env->yieldContent('title', '')));
+/*
+ * Url::to() trims a trailing slash (UrlGenerator::format does), but every
+ * storefront route is declared with one and every internal link carries one.
+ * Left alone, the page served at /korean-skincare-brands/ canonicalises to
+ * /korean-skincare-brands, pointing search engines at a URL one redirect away
+ * from the page they are already on. Put the slash back.
+ */
+$kbbCanonical = Url::to($kbbPath);
+if ($kbbPath !== '/' && str_ends_with($kbbPath, '/') && ! str_ends_with($kbbCanonical, '/')) {
+    $kbbCanonical .= '/';
+}
+
 $kbbSeoCtx = array_merge([
     'type' => $kbbIsHome ? 'home' : 'website',
     'title' => $kbbRawTitle,
-    'url' => Url::to($kbbPath),
+    'url' => $kbbCanonical,
 ], $seoCtx ?? []);
 @endphp
 <!DOCTYPE html>
