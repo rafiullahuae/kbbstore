@@ -8856,6 +8856,293 @@ buildNav();
     };
   }
 
+  /* ---------- Store → Payments (gateway credentials) ----------
+     The real screen for /admin-api/payments (Admin\PaymentsApiController),
+     replacing the kbb-admin-payments.html mock frame. Four gateways shipped
+     with working webhooks and no way to enter a credential; this is that way.
+
+     Everything is built from what the endpoint actually returns — id, title,
+     enabled, mode, configured, fields[] (key/type/label/help/value/has_value)
+     and webhook_url — so a gateway added to GatewayRegistry appears here with
+     no edit to this file.
+
+     No stored secret is ever rendered. The endpoint returns every `secret`
+     field as an empty string with a `has_value` flag, so the box is drawn
+     blank with "stored" beside it, and a blank box posts back as "leave the
+     stored one alone". The one stored secret that reaches the page is the
+     random tail of webhook_url — the owner cannot obtain it any other way and
+     has to paste it into the provider, which is the whole point of showing
+     it. It appears on this screen and nowhere else. */
+  var PAYG=[];
+
+  /* The URL secret is generated on first save, never typed. Drawing it as an
+     empty password box would only invite someone to overwrite it; it is shown
+     as part of the webhook URL instead, with a Regenerate button. */
+  var PAY_HIDDEN_FIELDS={webhook_secret:1};
+
+  /* Only Tamara switches API host on this flag (GatewayCredentials::live()).
+     Saying so beats a switch that looks like it does more than it does. */
+  var PAY_MODE_HELP={
+    tamara:'Sandbox talks to Tamara’s sandbox API, live to the production one. This switch is the only thing that decides which.',
+    stripe:'A label for your own records. Stripe itself decides test or live from the keys you paste — pk_test_/sk_test_ against pk_live_/sk_live_.',
+    tabby:'A label for your own records. Tabby itself decides test or live from the keys you paste.'
+  };
+
+  function payStatus(g){
+    if(!g.configured) return ['amber','Not configured'];
+    return g.enabled ? ['green','Offered at checkout'] : ['grey','Switched off'];
+  }
+
+  function payStatusLine(g){
+    if(!g.configured) return 'Not set up. Its credentials are missing, so it reports itself unavailable and shoppers never see it — checkout does not fail, the option simply is not there. Fill in the fields below and save.';
+    if(!g.enabled) return 'Set up, but switched off. Turn it on to offer it at checkout.';
+    return 'Set up and switched on. Shoppers see this option at checkout.';
+  }
+
+  function payField(gid,f){
+    var id='pay_'+gid+'_'+f.key;
+    var head='<div class="ecl"><label for="'+sesc(id)+'">'+sesc(f.label)+'</label>'+
+      (f.type==='secret'
+        ? (f.has_value?'<span class="pill green">stored</span>':'<span class="pill amber">not set</span>')
+        : '')+'</div>'+
+      (f.help?'<div class="echelp">'+sesc(f.help)+'</div>':'');
+
+    if(f.type==='secret'){
+      return '<div class="ecopt wide"><div class="ecom">'+head+
+        '<div class="echelp">'+(f.has_value
+          ? 'Already stored. Leave this blank to keep it — type a new value only to replace it. The stored value is never sent back to this page.'
+          : 'Nothing stored yet.')+'</div></div>'+
+        '<div class="ecctl"><input type="password" class="inp" id="'+sesc(id)+'" data-payg="'+sesc(gid)+'" data-payf="'+sesc(f.key)+'"'+
+        ' autocomplete="new-password" spellcheck="false" value="" placeholder="'+
+        (f.has_value?'••••••••  unchanged':'paste the key here')+'"></div></div>';
+    }
+
+    return '<div class="ecopt wide"><div class="ecom">'+head+'</div>'+
+      '<div class="ecctl"><input type="text" class="inp" id="'+sesc(id)+'" data-payg="'+sesc(gid)+'" data-payf="'+sesc(f.key)+'"'+
+      ' spellcheck="false" value="'+sesc(f.value)+'"></div></div>';
+  }
+
+  /* The URL the owner has to paste into the provider dashboard. It cannot be
+     guessed or assembled by hand, so it is shown in full with a copy button. */
+  function payWebhook(g){
+    var hasHook=false;
+    for(var i=0;i<g.fields.length;i++){ if(g.fields[i].key==='webhook_secret') hasHook=true; }
+    if(!hasHook) return '';
+
+    if(!g.webhook_url){
+      return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Webhook URL</label>'+
+        '<span class="pill amber">not generated yet</span></div>'+
+        '<div class="echelp">Save this gateway once and its webhook URL appears here. Until it is generated and pasted into the provider dashboard, '+sesc(g.title)+' cannot tell this store that a payment succeeded.</div>'+
+        '</div></div>';
+    }
+
+    return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Webhook URL</label>'+
+      '<span class="pill green">ready to paste</span></div>'+
+      '<div class="echelp">Paste this into the provider dashboard as the endpoint for payment events. The random tail is this gateway’s own URL secret, which is what makes the endpoint unguessable — treat the whole URL as confidential and keep it off any public page.</div></div>'+
+      '<div class="ecctl" style="display:block;width:100%">'+
+      '<input type="text" class="inp" readonly id="pay_hook_'+sesc(g.id)+'" data-payhook="'+sesc(g.id)+'" value="'+sesc(g.webhook_url)+'" style="max-width:none">'+
+      '<div class="row" style="gap:8px;margin-top:8px">'+
+      '<button type="button" class="btn ghost sm" data-paycopy="'+sesc(g.id)+'">Copy URL</button>'+
+      '<button type="button" class="btn ghost sm" data-payregen="'+sesc(g.id)+'">Regenerate</button>'+
+      '<span class="echelp" id="pay_copied_'+sesc(g.id)+'" style="margin:0"></span></div></div></div>';
+  }
+
+  function payCard(g){
+    var st=payStatus(g);
+    var creds=g.fields.filter(function(f){ return !PAY_HIDDEN_FIELDS[f.key]; });
+    var hasCreds=g.fields.length>0;
+
+    return '<div class="card mmcard" data-paycard="'+sesc(g.id)+'">'+
+      '<div class="mmhd" style="display:flex;align-items:center;gap:10px">'+
+      '<b style="flex:1">'+sesc(g.title)+'</b>'+
+      '<span class="pill '+st[0]+'"><span class="d"></span>'+sesc(st[1])+'</span></div>'+
+      '<div class="mmbody">'+
+      '<p class="echelp" style="margin:10px 0 2px;max-width:none">'+sesc(payStatusLine(g))+'</p>'+
+
+      '<div class="ecopt istog"><div class="ecom"><div class="ecl"><label>Offer this at checkout</label></div>'+
+      '<div class="echelp">A gateway that is on but not configured stays hidden rather than failing at the till.</div></div>'+
+      '<div class="ecctl"><span class="ectog'+(g.enabled?' on':'')+'" data-payen="'+sesc(g.id)+'" role="switch" aria-checked="'+(g.enabled?'true':'false')+'" tabindex="0"></span></div></div>'+
+
+      '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_title_'+sesc(g.id)+'">Label shown to shoppers</label></div>'+
+      '<div class="echelp">The wording on the checkout radio list.</div></div>'+
+      '<div class="ecctl"><input type="text" class="inp" id="pay_title_'+sesc(g.id)+'" data-paytitle="'+sesc(g.id)+'" maxlength="120" value="'+sesc(g.title)+'"></div></div>'+
+
+      (hasCreds
+        ? '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_mode_'+sesc(g.id)+'">Mode</label></div>'+
+          '<div class="echelp">'+sesc(PAY_MODE_HELP[g.id]||'Sandbox or live.')+'</div></div>'+
+          '<div class="ecctl"><select class="inp" id="pay_mode_'+sesc(g.id)+'" data-paymode="'+sesc(g.id)+'">'+
+          '<option value="test"'+(g.mode==='live'?'':' selected')+'>Sandbox / test</option>'+
+          '<option value="live"'+(g.mode==='live'?' selected':'')+'>Live</option></select></div></div>'
+        : '')+
+
+      (creds.length
+        ? creds.map(function(f){ return payField(g.id,f); }).join('')
+        : '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Credentials</label></div>'+
+          '<div class="echelp">None — cash on delivery needs no account with anyone, so there is nothing to enter and it is ready as soon as it is switched on.</div></div></div>')+
+
+      payWebhook(g)+
+
+      '<div class="row" style="justify-content:flex-end;gap:10px;padding:12px 0 4px">'+
+      '<span class="echelp" id="pay_msg_'+sesc(g.id)+'" style="margin:0;margin-right:auto"></span>'+
+      '<button type="button" class="btn" data-paysave="'+sesc(g.id)+'">Save '+sesc(g.title)+'</button></div>'+
+      '</div></div>';
+  }
+
+  function paintPayments(){
+    var unconfigured=PAYG.filter(function(g){ return g.enabled && !g.configured; });
+    var ready=PAYG.filter(function(g){ return g.enabled && g.configured; });
+
+    document.querySelector('#content').innerHTML=
+      '<div class="wrap ecwrap mmwrap">'+
+      '<div class="page-head"><h2>Payments</h2>'+
+      '<p>Credentials for each payment method. A gateway is offered at checkout only when it is switched on <i>and</i> its credentials are stored — an unconfigured one reports itself unavailable rather than failing on the shopper.</p></div>'+
+
+      (ready.length===0
+        ? '<div class="nlwarn">No payment method is both configured and switched on, so checkout currently has nothing to offer.</div>'
+        : '')+
+      (unconfigured.length
+        ? '<div class="nlwarn">'+unconfigured.length+' gateway'+(unconfigured.length===1?' is':'s are')+
+          ' switched on but missing credentials — '+sesc(unconfigured.map(function(g){ return g.title; }).join(', '))+
+          '. '+(unconfigured.length===1?'It is':'They are')+' hidden at checkout until the fields below are filled in.</div>'
+        : '')+
+
+      PAYG.map(payCard).join('')+
+      '</div>';
+
+    bindPayments();
+  }
+
+  function payMsg(id,text){
+    var el=document.getElementById('pay_msg_'+id);
+    if(el) el.textContent=text||'';
+  }
+
+  async function renderPayments(){
+    var body=document.querySelector('#content');
+    if(!body) return;
+    body.innerHTML='<div class="wrap"><div class="page-head"><h2>Payments</h2><p>Loading gateways…</p></div></div>';
+    try{
+      var d=await api('/admin-api/payments');
+      PAYG=d.gateways||[];
+    }catch(e){
+      // 404 here means the admin route is not registered — on this host that
+      // is the cache-clearing migration for the release not having run.
+      body.innerHTML='<div class="wrap"><div class="card pad"><b>Could not load the payment gateways.</b>'+
+        '<p style="margin:6px 0 12px;color:var(--ink-soft);font-size:12.5px">'+sesc(e.message)+'</p>'+
+        '<button type="button" class="btn sm" id="pay_retry">Retry</button></div></div>';
+      var rb=document.getElementById('pay_retry');
+      if(rb) rb.onclick=function(){ renderPayments(); };
+      return;
+    }
+    paintPayments();
+  }
+
+  async function paySave(id,settingsOverride,note){
+    var g=PAYG.filter(function(x){ return x.id===id; })[0];
+    if(!g) return;
+
+    var settings=settingsOverride;
+    if(!settings){
+      settings={};
+      document.querySelectorAll('[data-payg="'+id+'"]').forEach(function(el){
+        // A blank secret box posts back blank, which the controller reads as
+        // "leave the stored one alone" — so an edit to the label alone can
+        // never wipe the keys.
+        settings[el.dataset.payf]=el.value;
+      });
+    }
+
+    var tog=document.querySelector('[data-payen="'+id+'"]');
+    var titleEl=document.getElementById('pay_title_'+id);
+    var modeEl=document.getElementById('pay_mode_'+id);
+
+    var payload={
+      id:id,
+      enabled:tog?tog.classList.contains('on'):!!g.enabled,
+      title:titleEl?titleEl.value:g.title,
+      mode:modeEl?modeEl.value:g.mode,
+      settings:settings
+    };
+
+    var btn=document.querySelector('[data-paysave="'+id+'"]');
+    if(btn) btn.disabled=true;
+    payMsg(id,'Saving…');
+    try{
+      // Not api(): a 422 here carries the controller's own sentence — "Unknown
+      // setting: x", "Unknown payment gateway." — and api() throws away the
+      // body, leaving the operator with a status code and no idea why.
+      var r=await fetch(fixAdminApiUrl('/admin-api/payments'),{
+        method:'POST',credentials:'same-origin',
+        headers:{'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+        body:JSON.stringify(payload)
+      });
+      var d={}; try{ d=await r.json(); }catch(pe){}
+      if(!r.ok||d.ok===false){
+        var why=d.error||'';
+        if(d.errors){ why=Object.keys(d.errors).map(function(k){ return d.errors[k][0]; }).join(' '); }
+        throw new Error(why||('Request failed ('+r.status+')'));
+      }
+      toast(note||(g.title+' saved'));
+      await renderPayments();
+    }catch(e){
+      payMsg(id,'');
+      toast('Could not save — '+e.message);
+      if(btn) btn.disabled=false;
+    }
+  }
+
+  function bindPayments(){
+    document.querySelectorAll('[data-payen]').forEach(function(el){
+      var flip=function(){
+        var on=!el.classList.contains('on');
+        el.classList.toggle('on',on);
+        el.setAttribute('aria-checked',on?'true':'false');
+        payMsg(el.dataset.payen,'Unsaved change');
+      };
+      el.onclick=flip;
+      el.onkeydown=function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); } };
+    });
+
+    document.querySelectorAll('[data-paysave]').forEach(function(b){
+      b.onclick=function(){ paySave(b.dataset.paysave,null,null); };
+    });
+
+    document.querySelectorAll('[data-payhook]').forEach(function(el){
+      el.onclick=function(){ el.select(); };
+    });
+
+    document.querySelectorAll('[data-paycopy]').forEach(function(b){
+      b.onclick=async function(){
+        var id=b.dataset.paycopy;
+        var input=document.getElementById('pay_hook_'+id);
+        if(!input) return;
+        try{ await navigator.clipboard.writeText(input.value); }
+        catch(err){ input.select(); try{ document.execCommand('copy'); }catch(e2){} }
+        var ok=document.getElementById('pay_copied_'+id);
+        if(ok){ ok.textContent='Copied'; setTimeout(function(){ ok.textContent=''; },1800); }
+      };
+    });
+
+    document.querySelectorAll('[data-payregen]').forEach(function(b){
+      b.onclick=function(){
+        var id=b.dataset.payregen;
+        var g=PAYG.filter(function(x){ return x.id===id; })[0];
+        if(!g) return;
+        openModal('<div class="modal-h"><b>Regenerate webhook URL</b><button class="x" onclick="closeModal()">✕</button></div>'+
+          '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">A new URL is generated for <b>'+sesc(g.title)+'</b> and the current one stops working at once. Any payment confirmation sent to the old URL is rejected until the new one is pasted into the provider dashboard.</p>'+
+          '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+          '<button class="btn" id="pay_regen_yes">Regenerate</button></div></div>');
+        var yes=document.getElementById('pay_regen_yes');
+        if(yes) yes.onclick=function(){
+          closeModal();
+          // null clears the stored key; the controller then finds it empty and
+          // mints a fresh one on the same save.
+          paySave(id,{webhook_secret:null},'New webhook URL generated — paste it into '+g.title);
+        };
+      };
+    });
+  }
+
   /* ---------- Route interception: hydrate dash, render new screens ---------- */
   var _go = window.go;
   window.go = function(id){
@@ -8864,6 +9151,7 @@ buildNav();
     if(id==='quiz-leads'){ _go(id); return renderQuizLeads(); }
     if(id==='rev-all'){ _go(id); return renderReviews(); }
     if(id==='store-settings'){ _go(id); return renderStoreSettings(); }
+    if(id==='payments'){ _go(id); return renderPayments(); }
     if(id==='seo'){ _go(id); return renderSeo(); }
     if(id==='analytics'){ _go(id); return renderAnalytics(); }
     if(id==='blog'||id==='posts'){ _go(id); return renderPosts(); }

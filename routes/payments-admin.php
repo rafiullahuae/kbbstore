@@ -7,14 +7,14 @@ declare(strict_types=1);
 | Payments admin API — Phase 11 (Lane D)
 |------------------------------------------------------------------------------
 |
-| NOT LOADED YET. CLAUDE.md forbids this lane from editing routes/web.php, so
-| the integrator wires it up. One line, inside the EXISTING admin-api group in
-| routes/web.php — the one that already carries `auth:admin` and
-| NoStoreAdminApi, right beside the pay-ship-rules pair at around line 277:
+| WIRED. The integrator mounted this from routes/web.php, inside the EXISTING
+| admin-api group — the one that already carries `auth:admin` and
+| NoStoreAdminApi, beside the pay-ship-rules pair:
 |
-|     require __DIR__ . '/payments-admin.php';
+|     require __DIR__.'/payments-admin.php';
 |
-| It must go inside that group. These routes read and write live payment
+| It must stay inside that group, and nothing may be added to this file that
+| would be mounted anywhere else. These routes read and write live payment
 | credentials, so they need the admin session guard; mounted anywhere else they
 | would be a public endpoint for configuring the store's Stripe keys.
 |

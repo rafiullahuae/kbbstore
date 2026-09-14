@@ -49,7 +49,26 @@ class PaymentsApiController extends Controller
 
     public function show(): JsonResponse
     {
-        $gateways = $this->registry->all()->map(function (PaymentGateway $gateway) {
+        /*
+         * Read the rows, not a memo.
+         *
+         * GatewayCredentials caches per instance, and a controller instance
+         * outlives one request wherever the process does: a queue worker,
+         * Octane, or a test, where Route::getController() caches the
+         * controller it built and GET and POST are separate Route objects
+         * with separate instances. This screen then paints "not configured"
+         * over credentials saved through the sibling POST a moment earlier.
+         * Same shape as the Setting::map() trap in CLAUDE.md, and the same
+         * fix: forget before reading.
+         *
+         * The registry is re-resolved for the same reason -- each gateway
+         * class holds its own GatewayCredentials, which configured() reads,
+         * and this controller cannot reach those from here.
+         */
+        $this->credentials->forget();
+        $registry = app(GatewayRegistry::class);
+
+        $gateways = $registry->all()->map(function (PaymentGateway $gateway) {
             $row = PaymentProvider::find($gateway->id());
             $schema = $gateway->configSchema();
 
