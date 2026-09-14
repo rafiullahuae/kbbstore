@@ -19,9 +19,27 @@ export function initCheckout() {
             return;
         }
 
-        // Mobile: expand the collapsed summary.
-        if (event.target.closest('#kbbViewItems')) {
-            document.getElementById('kbbPanels')?.classList.toggle('open');
+        /*
+         * Mobile: expand the collapsed summary.
+         *
+         * The class belongs on .summary, not on .panels. Both rules that
+         * actually implement the expansion are written against the summary --
+         * `.summary.open .panels{max-height:1600px}` and
+         * `.summary.open .peekfade{display:none}` -- so toggling `open` on
+         * #kbbPanels set a class no selector matches. The button was live and
+         * this handler did run; the panel simply stayed clipped at its 148px
+         * peek under the fade, which is indistinguishable from a dead control.
+         *
+         * It took the Browsed tab down with it. That tab swaps panels inside
+         * this same clipped box, so tapping it moved the pill and then showed
+         * a list cut off after the first item and a half, with no way to open
+         * the rest.
+         */
+        const viewToggle = event.target.closest('#kbbViewItems');
+        if (viewToggle) {
+            const opened = document.getElementById('kbbSummary')?.classList.toggle('open') ?? false;
+            viewToggle.textContent = opened ? 'Hide full summary ▴' : 'View full summary ▾';
+            viewToggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
             return;
         }
 
