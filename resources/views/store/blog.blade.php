@@ -88,7 +88,9 @@
 <div class="wrap"><div class="grid" id="grid">
 @endverbatim
 @forelse($posts as $p)
-  <a class="post" data-tag="{{ $p->tag }}" href="{{ \App\Support\Url::to('/skincare-guide/' . $p->slug . '/') }}">
+  {{-- Posts live at the site root, one slug per post — the Phase 9 decision.
+       The /skincare-guide/{slug}/ form this app used is now a 301. --}}
+  <a class="post" data-tag="{{ $p->tag }}" href="{{ \App\Support\Url::to('/' . $p->slug . '/') }}">
     <div class="cover" style="{{ $p->cover && (str_contains($p->cover, 'gradient') || str_contains($p->cover, '#') || str_contains($p->cover, 'url')) ? 'background:' . $p->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
       @if(!$p->cover || !(str_contains($p->cover, 'url') || str_contains($p->cover, 'http')))
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}
