@@ -283,6 +283,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // world-readable.
         require __DIR__.'/payments-admin.php';
 
+        // Capture and refund settlement. Same group, same reason, only more
+        // so: these endpoints move money. Capture takes a customer's funds;
+        // the settlement read exposes what an authorisation is still worth.
+        require __DIR__.'/payments-settlement.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';
