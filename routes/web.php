@@ -576,6 +576,13 @@ require __DIR__.'/order-received.php';
 require __DIR__.'/auth-customer.php';
 
 /*
+ * Adding a browsed product from the checkout page. Web group: it is posted by a
+ * shopper and needs the session and CSRF. Before the Phase 9 file, which ends in
+ * a catch-all root-segment route.
+ */
+require __DIR__.'/checkout-browsed.php';
+
+/*
  * Required last, and that placement is load-bearing. The final route in this
  * file matches a single path segment at the site root -- the shape of every
  * storefront URL there is -- so registration order is what keeps /cart reaching
