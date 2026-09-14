@@ -568,6 +568,14 @@ Route::fallback(function () {
 require __DIR__.'/order-received.php';
 
 /*
+ * Customer password reset and email verification. Top level, in the web group:
+ * these are storefront forms needing the session and CSRF, not the admin guard.
+ * Before the Phase 9 file for the same reason as the line above — that one ends
+ * in a catch-all root-segment route.
+ */
+require __DIR__.'/auth-customer.php';
+
+/*
  * Required last, and that placement is load-bearing. The final route in this
  * file matches a single path segment at the site root -- the shape of every
  * storefront URL there is -- so registration order is what keeps /cart reaching
