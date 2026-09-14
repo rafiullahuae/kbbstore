@@ -7,8 +7,17 @@
 .kbb-cartpage .backlink:hover{color:var(--pink-deep)}
 .kbb-cartpage h1{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:20px}
 /* Now a span inside the h1 rather than a paragraph under it: no block margin,
-   and a lighter weight so it reads as a count and not part of the title. */
-.kbb-cartpage .lead{font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-left:6px}
+   and a lighter weight so it reads as a count and not part of the title.
+
+   Named `cart-count`, not `lead`. kbb.css:2378 gives `.lead` the form-field
+   leading-icon treatment — `position:absolute;top:50%;left:13px;
+   transform:translateY(-50%)` — so the old `.kbb-cartpage .lead` rule, which
+   only set type and colour, could never win: it never reset `position`, and
+   specificity on `position` was decided by the one rule that declares it. The
+   count was therefore lifted out of the heading and pinned to the page.
+   Renaming the class removes the collision instead of layering another
+   override on top of it. */
+.kbb-cartpage .cart-count{display:inline;position:static;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-left:6px;white-space:nowrap}
 
 .kbb-cartpage .grid{display:grid;grid-template-columns:1fr 372px;gap:26px;align-items:start}
 @media(max-width:860px){.kbb-cartpage .grid{grid-template-columns:1fr}}

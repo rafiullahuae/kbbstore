@@ -79,6 +79,28 @@ class ModuleRegistry
         // ── Cart & mini-cart ──
         'minicart_promo' => ['cart', 'Mini-cart promo', 'Editable promo line in the cart drawer.', true, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'bottom', 'The promo line above the subtotal in the cart panel.', 'live'],
         'back_to_cart' => ['cart', '“Go back to cart” link', 'Return-to-cart control beside the Checkout heading.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'top', 'A return-to-cart link beside the Checkout heading.', 'live'],
+        /*
+         * The cart page's own discount-code box, and only that one.
+         *
+         * Not to be confused with `coupon_hint`, which governs the clickable
+         * promo-code SUGGESTION printed under the box; the box itself has never
+         * had a switch. Turning this off hides the input and the Apply button
+         * on /cart/ and, with them, the hint that only makes sense beside them.
+         * The checkout page keeps its own coupon box — that is a separate
+         * surface and is not gated here.
+         *
+         * Off by default, which is the plugin-style default for anything this
+         * registry adds: a fresh install shows no cart-page coupon box until
+         * the owner asks for one. Existing installs are unaffected either way,
+         * because a store that has explicitly saved Store → Modules already has
+         * a `module_toggles` row and moduleEnabled() returns that row rather
+         * than this default. No migration writes a value for this key, so no
+         * store's decision is overwritten.
+         *
+         * Nothing is removed: coupons still apply, an already-applied coupon
+         * still shows and can still be removed, and /cart/coupon still works.
+         */
+        'cart_coupon_field' => ['cart', 'Cart-page discount code box', 'The “Discount code” input and Apply button in the cart page order summary. Off by default; the checkout page has its own box and is not affected.', false, 'No settings screen', '', 'cartpage', 'mid', 'The discount code box in the order summary on the cart page.', 'live'],
         // ── Store & content ──
         'banners' => ['store', 'Banners', 'Drives the homepage hero slider — headline, eyebrow, buttons, floating product pods and the offer badge — using the theme’s own .heroslider markup. Supports scheduling. Off by default.', false, 'Appearance → Homepage', '', 'home', 'top', 'The homepage hero slider — headline, buttons and product pods.', 'elsewhere'],
         'mega_menu' => ['store', 'Mega Menu', 'Drives the header mega panels from the admin using the theme\'s own design — category columns, brands and editor\'s picks — plus a mobile slide-in overlay. Off by default.', false, 'Store → Mega Menu', 'megamenu', 'header', 'nav', 'The panels that drop from the category bar, and the phone overlay.', 'live'],

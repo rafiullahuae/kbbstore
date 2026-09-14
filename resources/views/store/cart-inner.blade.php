@@ -6,6 +6,19 @@
 @php
     use App\Support\Gradient;
     use App\Support\Url;
+
+    /*
+     * Cart & mini-cart -> "Cart-page discount code box" (module key
+     * cart_coupon_field), default OFF.
+     *
+     * Read here rather than passed in from CartController because that
+     * controller belongs to another lane, and because this is already how a
+     * dozen storefront views resolve a module (see product-card.blade.php and
+     * partials/checkout/*.blade.php). moduleEnabled() returns the stored
+     * module_toggles row when one exists, so an install that has chosen a value
+     * keeps it; only an install with no row at all gets the default.
+     */
+    $kbbCartCoupon = app(\App\Services\SettingsService::class)->moduleEnabled('cart_coupon_field', false);
 @endphp
 
 @if ($items->isEmpty())
@@ -78,12 +91,17 @@
                 <div class="appliedcoupon"><span>✓ {{ strtoupper($totals['coupon_code']) }}</span><a data-kcpremovecoupon="{{ $totals['coupon_code'] }}">Remove</a></div>
             @endif
 
-            <div class="coupon">
-                <input type="text" id="kbbCartCoupon" placeholder="Discount code" autocomplete="off">
-                <button type="button" data-kcpcoupon>Apply</button>
-            </div>
-            @if ($couponHint)
-                <div class="cohint"><span>🎁</span><div>{!! $couponHint !!}</div></div>
+            {{-- The entry UI only. The applied-coupon row above stays visible
+                 whatever this is set to: hiding it would leave a shopper with a
+                 discount they can see on the total and no way to take it off. --}}
+            @if ($kbbCartCoupon)
+                <div class="coupon">
+                    <input type="text" id="kbbCartCoupon" placeholder="Discount code" autocomplete="off">
+                    <button type="button" data-kcpcoupon>Apply</button>
+                </div>
+                @if ($couponHint)
+                    <div class="cohint"><span>🎁</span><div>{!! $couponHint !!}</div></div>
+                @endif
             @endif
 
             <div class="srow tot"><span>Total</span><span>{!! \App\Support\Money::format($totals['total']) !!}</span></div>
