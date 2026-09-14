@@ -5510,6 +5510,9 @@ const CAT_DRAFT=new Set(['SK1-CEN','ISN-SUN']);
 const CAT_CATEGORIES=[['Beauty Devices',11],['Cleansers',38],['Toners',26],['Essences',19],['Serums',64],['Ampoules',12],['Moisturisers',41],['Sun Care',23],['Masks',31],['Eye Care',9],['Sets & Bundles',15]];
 const CAT_BRANDS=[['Anua',42],['COSRX',58],['Beauty of Joseon',37],['Medicube',29],['Torriden',18],['Numbuzin',21],['Some By Mi',24],['SKIN1004',16],['Isntree',14],['MEDIHEAL',26],['Round Lab',12],["Dr.Althea",9],['Shark',6]];
 const PE_CATS=['Beauty Devices','Hair Care Silk','Hair Tools','Medicube','Makeup','Best Sellers','Under AED 54','Cleansers','Toners','Serums','Sun Care','Masks','Uncategorized'];
+/* Still feeding the product editor's Variations panel (peBox, further down),
+   which is a different preview and a different lane's to fix. The Attributes
+   TAB no longer reads it — see the Lane N region. */
 const CAT_ATTRS=[['Skin Type',['Dry','Oily','Combination','Sensitive','Normal']],['Concern',['Hydration','Brightening','Acne','Anti-aging','Soothing','Pores']],['Size',['30ml','50ml','100ml','150ml','200ml']],['Finish',['Dewy','Matte','Natural']]];
 const TCOL=['#15a85a','#3f6fe0','#7b6cf0','#e0922f','#e0567b','#2bb3a3','#c13e63','#4b5a72'];
 const tcol=s=>TCOL[[...s].reduce((a,c)=>a+c.charCodeAt(0),0)%TCOL.length];
@@ -5674,20 +5677,26 @@ function pCellFor(k,p){
     default:return '<td></td>';
   }
 }
-function catCategories(){
-  $('#catBody').innerHTML=`<div class="between" style="margin-bottom:12px"><span class="pill grey">${CAT_CATEGORIES.length} categories</span><button class="btn sm" onclick="toast('Add category (preview)')">${ic('<path d="M12 5v14M5 12h14"/>')} Add category</button></div>
-  <div class="card"><table><thead><tr><th>Category</th><th>Products</th><th>Slug</th><th></th></tr></thead><tbody>
-  ${CAT_CATEGORIES.map(c=>`<tr><td><b>${c[0]}</b></td><td>${c[1]}</td><td style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)">/${c[0].toLowerCase().replace(/[^a-z]+/g,'-')}</td><td><button class="btn ghost sm" onclick="toast('Edit category (preview)')">Edit</button></td></tr>`).join('')}
-  </tbody></table></div>`;
-}
+/* ===== LANE N · Catalog · Categories & Attributes fallbacks — BEGIN =====
+   What used to sit here was the defect: eleven invented category rows out of
+   CAT_CATEGORIES with slugs made up in JavaScript, and four invented
+   attributes out of CAT_ATTRS — "Skin Type", "Concern", "Finish" — none of
+   which exist in this database, behind buttons that raised a "(preview)"
+   toast. Two screens that looked like they worked.
+
+   The real ones are the window.catCategories / window.catAttributes
+   assignments in the Lane N region of the live-wiring script at the bottom of
+   this file, which replace these the same way window.catBrands replaces
+   catBrands below. These declarations stay only so renderCatalog's dispatch
+   table is never undefined, and what is left of them is an honest message —
+   not a convincing one. ===== */
+function catCategories(){ $('#catBody').innerHTML='<p style="padding:24px;color:var(--ink-soft)">Categories could not be loaded — the admin script did not finish starting up. Reload the page.</p>'; }
 function catBrands(){
   $('#catBody').innerHTML=`<div class="between" style="margin-bottom:12px"><span class="pill grey">${CAT_BRANDS.length}+ brands</span><button class="btn sm" onclick="toast('Add brand (preview)')">${ic('<path d="M12 5v14M5 12h14"/>')} Add brand</button></div>
   <div class="mod-grid">${CAT_BRANDS.map(b=>`<div class="mod"><span class="pthumb" style="background:${tcol(b[0])};width:40px;height:40px">${initials(b[0])}</span><div><div class="mname">${b[0]}</div><div class="mdesc">${b[1]} products</div></div><div class="mod-r"><button class="btn ghost sm" onclick="toast('Edit brand (preview)')">Edit</button></div></div>`).join('')}</div>`;
 }
-function catAttributes(){
-  $('#catBody').innerHTML=`<div class="between" style="margin-bottom:12px"><span class="pill grey">${CAT_ATTRS.length} attributes</span><button class="btn sm" onclick="toast('Add attribute (preview)')">${ic('<path d="M12 5v14M5 12h14"/>')} Add attribute</button></div>
-  ${CAT_ATTRS.map(a=>`<div class="card pad" style="margin-bottom:12px"><div class="between"><b style="font-size:13.5px">${a[0]}</b><button class="btn ghost sm" onclick="toast('Edit terms (preview)')">Edit terms</button></div><div class="tagchips" style="margin-top:11px">${a[1].map(t=>`<span class="tagchip">${t}</span>`).join('')}</div></div>`).join('')}`;
-}
+function catAttributes(){ $('#catBody').innerHTML='<p style="padding:24px;color:var(--ink-soft)">Attributes could not be loaded — the admin script did not finish starting up. Reload the page.</p>'; }
+/* ===== LANE N · Catalog · Categories & Attributes fallbacks — END ===== */
 let invFilter='all',invSearch='',invDraft={};
 const invStatus=q=>q===0?'out':q<=15?'low':'in';
 const invDirty=()=>Object.keys(invDraft).filter(k=>invDraft[k]!==CAT_PRODUCTS[k][6]).length;
@@ -9011,6 +9020,437 @@ buildNav();
       }catch(e){ toast(e.message); }
     };
   }
+
+  /* ===== LANE N · Catalog · Categories & Attributes — BEGIN ==================
+     The two tabs that were still hard-coded HTML previews. Above, catCategories
+     drew eleven invented rows out of CAT_CATEGORIES with slugs made up in
+     JavaScript, and catAttributes drew four invented attributes out of
+     CAT_ATTRS — "Skin Type", "Concern", "Finish", none of which exist in this
+     database — behind buttons that raised a "(preview)" toast. Both are
+     replaced here, whole, the same way the Brands tab above was: real data from
+     /admin-api/categories and /admin-api/attributes, real forms, real deletes.
+
+     Every operator-supplied string — a category name, a term name, a slug, an
+     error message that quotes one back — goes through sesc() before it reaches
+     innerHTML. This region is inside @verbatim, so Blade's {{ }} does not apply
+     to it; sesc() is this file's equivalent and the reason it exists.
+
+     Written to match the Brands block above rather than to any fresh design:
+     same fetch wrapper shape, same 422 handling, same refuse-then-confirm
+     delete flow, same modal furniture. Two tabs that sit next to each other
+     behaving differently would be the surprise. ======================= */
+
+  /* Shared fetch wrapper. Same contract as brandWrite: throws on !ok with the
+     operator-facing message already unpacked, so each call site is a try/catch
+     around one line rather than a status-code ladder. 422 carries either
+     Laravel's `errors` bag (duplicate slug, bad image URL, a parent that would
+     make a loop) or the controller's own `message` (still in use). Both are
+     written for the operator, so both are shown. */
+  async function catalogWrite(path, method, body){
+    var r = await fetch(fixAdminApiUrl('/admin-api'+path), {
+      method: method,
+      credentials: 'same-origin',
+      headers: {'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var j={}; try{ j=await r.json(); }catch(e){}
+    if(!r.ok){
+      var msg = j.message || '';
+      if(j.errors){ msg = Object.keys(j.errors).map(function(k){ return j.errors[k][0]; }).join(' '); }
+      var err = new Error(msg || ('Request failed ('+r.status+')'));
+      err.payload = j; err.status = r.status;
+      throw err;
+    }
+    return j;
+  }
+
+  /* toast() assigns its argument into innerHTML, so anything that can contain a
+     category or term name — every message this region raises — is escaped on
+     the way in. */
+  function catToast(msg){ toast(sesc(msg)); }
+
+  /* ---------- Catalog → Categories (real CRUD, replacing the preview table) */
+  var CATEGORIES=[];
+
+  window.catCategories = async function(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading categories…</p>';
+    try{
+      var d=await catalogWrite('/categories','GET',null); CATEGORIES=d.categories||[];
+    }catch(e){ CATEGORIES=[]; }
+    catCatPaint();
+  };
+
+  /** Children of one parent, in the order the server sorted them. */
+  function catKids(parentId){
+    return CATEGORIES.filter(function(c){
+      var p = c.parent_id==null ? null : +c.parent_id;
+      return p===parentId;
+    });
+  }
+
+  /** Flat render list, depth-first, so a nested tree draws as indented rows. */
+  function catTreeRows(parentId, depth, out){
+    catKids(parentId).forEach(function(c){
+      out.push({cat:c, depth:depth});
+      catTreeRows(+c.id, depth+1, out);
+    });
+    return out;
+  }
+
+  /** Ids of a category and everything under it — what a parent select must not offer. */
+  function catSubtreeIds(id){
+    var ids=[id];
+    catKids(id).forEach(function(k){ ids = ids.concat(catSubtreeIds(+k.id)); });
+    return ids;
+  }
+
+  function catCatPaint(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+
+    /* Rows the tree walk never reached: a row whose parent_id points at a
+       category that is not in the list. It cannot happen through this screen —
+       parent_id is a real FK — but an import can leave one, and silently not
+       drawing a category the owner can see in the database is exactly the kind
+       of "looks like it works" this screen exists to stop. */
+    var rows=catTreeRows(null,0,[]);
+    var drawn={}; rows.forEach(function(r){ drawn[r.cat.id]=1; });
+    CATEGORIES.forEach(function(c){ if(!drawn[c.id]) rows.push({cat:c, depth:0, orphan:true}); });
+
+    body.innerHTML=
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:13px">Categories are the archive pages at /product-category/…/ and the shop filter. Nesting is real — a sub-category’s URL is its whole chain of slugs, rebuilt whenever you rename or move one.</p>'+
+      '<div class="between" style="margin-bottom:12px"><span class="pill grey">'+CATEGORIES.length+' categor'+(CATEGORIES.length===1?'y':'ies')+'</span>'+
+      '<button class="btn sm" id="cat_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add category</button></div>'+
+      (rows.length?
+        '<div class="card" style="overflow:auto"><table><thead><tr><th>Category</th><th>Products</th><th>URL path</th><th style="width:150px"></th></tr></thead><tbody>'+
+        rows.map(function(r){
+          var c=r.cat;
+          var pad = r.depth*18;
+          var total = (+c.products_count||0);
+          var primary = (+c.primary_count||0);
+          var kids = (+c.children_count||0);
+          var counts = total+' filed'+(primary?' · '+primary+' primary':'')+(kids?' · '+kids+' sub':'');
+          return '<tr>'+
+            '<td><div class="row" style="gap:8px;min-width:0">'+
+              (pad?'<span style="display:inline-block;width:'+pad+'px"></span><span style="color:var(--ink-faint)">└</span>':'')+
+              '<b>'+sesc(c.name)+'</b>'+
+              (r.orphan?'<span class="pill amber" style="margin-left:6px">parent missing</span>':'')+
+            '</div></td>'+
+            '<td style="font-size:12px;color:var(--ink-soft)">'+sesc(counts)+'</td>'+
+            '<td style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)">/'+sesc(c.path||c.slug)+'/</td>'+
+            '<td><div class="row" style="gap:4px;justify-content:flex-end">'+
+              '<button class="btn ghost sm" data-cup="'+(+c.id)+'" title="Move up">▲</button>'+
+              '<button class="btn ghost sm" data-cdn="'+(+c.id)+'" title="Move down">▼</button>'+
+              '<button class="btn ghost sm" data-cedit="'+(+c.id)+'">Edit</button>'+
+              '<button class="btn ghost sm" data-cdel="'+(+c.id)+'">Delete</button>'+
+            '</div></td></tr>';
+        }).join('')+
+        '</tbody></table></div>'
+        : '<p style="padding:24px;color:var(--ink-soft)">No categories yet — add the first one.</p>');
+
+    document.getElementById('cat_add').onclick=function(){ catCatEditor(null); };
+    document.querySelectorAll('#catBody [data-cedit]').forEach(function(b){
+      b.onclick=function(){ catCatEditor(catById(+b.dataset.cedit)); };
+    });
+    document.querySelectorAll('#catBody [data-cdel]').forEach(function(b){
+      b.onclick=function(){ catCatDelete(catById(+b.dataset.cdel)); };
+    });
+    document.querySelectorAll('#catBody [data-cup]').forEach(function(b){
+      b.onclick=function(){ catCatMove(+b.dataset.cup, -1); };
+    });
+    document.querySelectorAll('#catBody [data-cdn]').forEach(function(b){
+      b.onclick=function(){ catCatMove(+b.dataset.cdn, 1); };
+    });
+  }
+
+  function catById(id){ return CATEGORIES.filter(function(c){ return +c.id===id; })[0]; }
+
+  /* Reorder is per sibling group: only the row's own siblings are sent, so a
+     move never renumbers a branch the operator is not looking at. */
+  async function catCatMove(id, delta){
+    var cat=catById(id); if(!cat) return;
+    var sibs=catKids(cat.parent_id==null?null:+cat.parent_id);
+    var at=-1; sibs.forEach(function(s,i){ if(+s.id===id) at=i; });
+    var to=at+delta;
+    if(at<0 || to<0 || to>=sibs.length) return;
+    var order=sibs.map(function(s){ return +s.id; });
+    order.splice(to,0,order.splice(at,1)[0]);
+    try{
+      await catalogWrite('/categories/reorder','POST',{order:order});
+      window.catCategories();
+    }catch(e){ catToast(e.message); }
+  }
+
+  function catCatEditor(cat){
+    var isNew=!cat;
+    cat=cat||{name:'',slug:'',parent_id:null,description:'',image:'',position:0};
+    var banned = isNew ? [] : catSubtreeIds(+cat.id);
+    var opts='<option value="">— top level —</option>'+
+      catTreeRows(null,0,[]).filter(function(r){ return banned.indexOf(+r.cat.id)===-1; })
+        .map(function(r){
+          var sel = (cat.parent_id!=null && +cat.parent_id===+r.cat.id) ? ' selected' : '';
+          return '<option value="'+(+r.cat.id)+'"'+sel+'>'+sesc(new Array(r.depth+1).join('   ')+r.cat.name)+'</option>';
+        }).join('');
+
+    openModal('<div class="modal-h"><b>'+(isNew?'Add category':'Edit category')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="cat_name" value="'+sesc(cat.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="cat_slug" value="'+sesc(cat.slug)+'" placeholder="left blank, made from the name">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">One segment of /product-category/…/. Lower case, hyphens. The full path is built from the parents.</p></div>'+
+      '<div class="fld"><label>Parent</label><select class="inp" id="cat_parent" style="width:100%">'+opts+'</select>'+
+      (isNew?'':'<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">This category and anything under it are not offered — a category cannot sit inside itself.</p>')+'</div>'+
+      imgUploadField('cat_image', cat.image||'', 'Image', 'categories')+
+      '<div class="fld"><label>Description</label><textarea id="cat_desc" class="inp" rows="3">'+sesc(cat.description)+'</textarea></div>'+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="cat_pos" type="number" min="0" value="'+sesc(cat.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="cat_save">'+(isNew?'Create category':'Save category')+'</button></div></div>');
+    wireImgUpload('cat_image','categories');
+
+    document.getElementById('cat_save').onclick=async function(){
+      var parent=sval('cat_parent');
+      var payload={
+        name: sval('cat_name'), slug: sval('cat_slug'),
+        parent_id: parent===''?null:parseInt(parent,10),
+        description: sval('cat_desc'), image: sval('cat_image'),
+        position: parseInt(sval('cat_pos'),10)||0
+      };
+      if(!payload.name){ catToast('A category needs a name'); return; }
+      try{
+        await (isNew ? catalogWrite('/categories','POST',payload)
+                     : catalogWrite('/categories/'+(+cat.id),'PUT',payload));
+        catToast(isNew?'Category created':'Category saved'); closeModal(); window.catCategories();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  async function catCatDelete(cat){
+    if(!cat) return;
+    var filed=(+cat.products_count||0), primary=(+cat.primary_count||0), kids=(+cat.children_count||0);
+    var warn;
+    if(filed||primary||kids){
+      var bits=[];
+      if(filed) bits.push('<b>'+filed+'</b> product'+(filed===1?' is':'s are')+' filed under it');
+      if(primary) bits.push('<b>'+primary+'</b> product'+(primary===1?' has':'s have')+' it as their primary category');
+      if(kids) bits.push('<b>'+kids+'</b> sub-categor'+(kids===1?'y sits':'ies sit')+' under it');
+      warn='<p style="font-size:13px;color:var(--ink-2)">'+bits.join(', ')+'. Deleting <b>'+sesc(cat.name)+
+        '</b> empties its archive page and moves any sub-category up a level. <b>No product is deleted</b> — only the link to this category.</p>';
+    } else {
+      warn='<p style="font-size:13px;color:var(--ink-2)">Delete <b>'+sesc(cat.name)+'</b>? Nothing is attached to it. This cannot be undone.</p>';
+    }
+    openModal('<div class="modal-h"><b>Delete category</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="cat_del_yes">Delete</button></div></div>');
+    document.getElementById('cat_del_yes').onclick=async function(){
+      try{
+        // force is what the operator just confirmed: without it the API refuses
+        // to detach products and re-parent children behind their back.
+        await catalogWrite('/categories/'+(+cat.id)+'?force=1','DELETE',null);
+        catToast('Category deleted'); closeModal(); window.catCategories();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  /* ---------- Catalog → Attributes (real CRUD, replacing the preview cards)
+     An attribute is a global list of terms; nothing joins a product to the
+     attribute itself. Products join to its VALUES through
+     product_attribute_value (which terms a product offers — what the shop
+     filter matches), and variants join to them through
+     product_variant_attribute_value (which terms define one purchasable
+     variant). So the counts on screen are per-term counts rolled up, and the
+     delete warnings talk about variants for a reason: a variant that loses the
+     term defining it stays on sale with nothing left to say what it is. */
+  var ATTRIBUTES=[];
+
+  window.catAttributes = async function(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading attributes…</p>';
+    try{
+      var d=await catalogWrite('/attributes','GET',null); ATTRIBUTES=d.attributes||[];
+    }catch(e){ ATTRIBUTES=[]; }
+    catAttrPaint();
+  };
+
+  function attrById(id){ return ATTRIBUTES.filter(function(a){ return +a.id===id; })[0]; }
+
+  function attrValueById(attr, id){
+    return (attr.values||[]).filter(function(v){ return +v.id===id; })[0];
+  }
+
+  function catAttrPaint(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+
+    body.innerHTML=
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:13px">A global attribute is a named list of terms. Products carry the terms they offer; a variable product’s variants are each pinned to one term per axis. Turning an attribute into a variation axis is what lets variants be built from it; making it filterable is what puts it in the storefront filter panel.</p>'+
+      '<div class="between" style="margin-bottom:12px"><span class="pill grey">'+ATTRIBUTES.length+' attribute'+(ATTRIBUTES.length===1?'':'s')+'</span>'+
+      '<button class="btn sm" id="attr_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add attribute</button></div>'+
+      (ATTRIBUTES.length?
+        ATTRIBUTES.map(function(a){
+          var vals=a.values||[];
+          return '<div class="card pad" style="margin-bottom:12px">'+
+            '<div class="between"><div><b style="font-size:13.5px">'+sesc(a.name)+'</b>'+
+              '<span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-left:8px">'+sesc(a.slug)+'</span>'+
+              (a.is_variation_axis?'<span class="pill green" style="margin-left:8px">variation axis</span>':'')+
+              (a.is_filterable?'<span class="pill grey" style="margin-left:6px">filterable as '+sesc(a.query_var||('filter_'+a.slug))+'</span>':'')+
+            '</div>'+
+            '<div class="row" style="gap:4px">'+
+              '<button class="btn ghost sm" data-avadd="'+(+a.id)+'">Add term</button>'+
+              '<button class="btn ghost sm" data-aedit="'+(+a.id)+'">Edit</button>'+
+              '<button class="btn ghost sm" data-adel="'+(+a.id)+'">Delete</button>'+
+            '</div></div>'+
+            '<p style="font-size:11.5px;color:var(--ink-soft);margin:6px 0 0">'+
+              vals.length+' term'+(vals.length===1?'':'s')+' · '+
+              (+a.products_count||0)+' product'+((+a.products_count||0)===1?'':'s')+' · '+
+              (+a.variants_count||0)+' variant'+((+a.variants_count||0)===1?'':'s')+'</p>'+
+            (vals.length?
+              '<div class="tagchips" style="margin-top:11px">'+vals.map(function(v){
+                var swatch = v.swatch_color
+                  ? '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+sesc(v.swatch_color)+';margin-right:5px;vertical-align:middle"></span>'
+                  : '';
+                return '<span class="tagchip">'+swatch+sesc(v.name)+
+                  '<span style="color:var(--ink-faint);margin-left:5px">'+(+v.products_count||0)+'/'+(+v.variants_count||0)+'</span>'+
+                  '<button class="btn ghost sm" style="margin-left:6px;padding:0 5px" data-avedit="'+(+a.id)+':'+(+v.id)+'" title="Edit term">✎</button>'+
+                  '<button class="btn ghost sm" style="padding:0 5px" data-avdel="'+(+a.id)+':'+(+v.id)+'" title="Delete term">✕</button>'+
+                '</span>';
+              }).join('')+'</div>'+
+              '<p style="font-size:11px;color:var(--ink-faint);margin:8px 0 0">The two numbers on each term are products / variants using it.</p>'
+              : '<p style="font-size:12px;color:var(--ink-soft);margin:11px 0 0">No terms yet — add the first one.</p>')+
+          '</div>';
+        }).join('')
+        : '<p style="padding:24px;color:var(--ink-soft)">No attributes yet — add the first one.</p>');
+
+    document.getElementById('attr_add').onclick=function(){ catAttrEditor(null); };
+    document.querySelectorAll('#catBody [data-aedit]').forEach(function(b){
+      b.onclick=function(){ catAttrEditor(attrById(+b.dataset.aedit)); };
+    });
+    document.querySelectorAll('#catBody [data-adel]').forEach(function(b){
+      b.onclick=function(){ catAttrDelete(attrById(+b.dataset.adel)); };
+    });
+    document.querySelectorAll('#catBody [data-avadd]').forEach(function(b){
+      b.onclick=function(){ catValEditor(attrById(+b.dataset.avadd), null); };
+    });
+    document.querySelectorAll('#catBody [data-avedit]').forEach(function(b){
+      b.onclick=function(){
+        var p=b.dataset.avedit.split(':'), a=attrById(+p[0]);
+        catValEditor(a, attrValueById(a, +p[1]));
+      };
+    });
+    document.querySelectorAll('#catBody [data-avdel]').forEach(function(b){
+      b.onclick=function(){
+        var p=b.dataset.avdel.split(':'), a=attrById(+p[0]);
+        catValDelete(a, attrValueById(a, +p[1]));
+      };
+    });
+  }
+
+  function catAttrEditor(attr){
+    var isNew=!attr;
+    attr=attr||{name:'',slug:'',query_var:'',is_variation_axis:false,is_filterable:true,position:0};
+    openModal('<div class="modal-h"><b>'+(isNew?'Add attribute':'Edit attribute')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="atr_name" value="'+sesc(attr.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="atr_slug" value="'+sesc(attr.slug)+'" placeholder="left blank, made from the name"></div>'+
+      '<div class="fld"><label>Filter parameter</label><input id="atr_qv" value="'+sesc(attr.query_var||'')+'" placeholder="filter_color">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">The query string this attribute filters on. Existing links use the imported value — changing it breaks them. Leave blank and filter_{slug} is used.</p></div>'+
+      '<div class="fld"><label><input type="checkbox" id="atr_axis"'+(attr.is_variation_axis?' checked':'')+'> Use as a variation axis</label>'+
+      '<p class="description" style="margin:4px 0 0;font-size:11.5px;color:var(--ink-soft)">Variants of a variable product can be built from this attribute’s terms.</p></div>'+
+      '<div class="fld"><label><input type="checkbox" id="atr_filt"'+(attr.is_filterable?' checked':'')+'> Show in the storefront filter panel</label></div>'+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="atr_pos" type="number" min="0" value="'+sesc(attr.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="atr_save">'+(isNew?'Create attribute':'Save attribute')+'</button></div></div>');
+
+    document.getElementById('atr_save').onclick=async function(){
+      var payload={
+        name: sval('atr_name'), slug: sval('atr_slug'), query_var: sval('atr_qv'),
+        is_variation_axis: document.getElementById('atr_axis').checked,
+        is_filterable: document.getElementById('atr_filt').checked,
+        position: parseInt(sval('atr_pos'),10)||0
+      };
+      if(!payload.name){ catToast('An attribute needs a name'); return; }
+      try{
+        await (isNew ? catalogWrite('/attributes','POST',payload)
+                     : catalogWrite('/attributes/'+(+attr.id),'PUT',payload));
+        catToast(isNew?'Attribute created':'Attribute saved'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  async function catAttrDelete(attr){
+    if(!attr) return;
+    var p=(+attr.products_count||0), v=(+attr.variants_count||0), n=(attr.values||[]).length;
+    var warn = (p||v)
+      ? '<p style="font-size:13px;color:var(--ink-2)">The '+n+' term'+(n===1?'':'s')+' of <b>'+sesc(attr.name)+'</b> '+
+        (n===1?'is':'are')+' still used by <b>'+p+'</b> product'+(p===1?'':'s')+' and <b>'+v+'</b> variant'+(v===1?'':'s')+
+        '. Deleting the attribute strips those terms from them. <b>No product and no variant is deleted</b>'+
+        (v?' — but a variant that loses the term defining it stays on sale with nothing left to say what it is.':'.')+'</p>'
+      : '<p style="font-size:13px;color:var(--ink-2)">Delete <b>'+sesc(attr.name)+'</b> and its '+n+' term'+(n===1?'':'s')+'? Nothing is using them. This cannot be undone.</p>';
+    openModal('<div class="modal-h"><b>Delete attribute</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="atr_del_yes">Delete</button></div></div>');
+    document.getElementById('atr_del_yes').onclick=async function(){
+      try{
+        await catalogWrite('/attributes/'+(+attr.id)+'?force=1','DELETE',null);
+        catToast('Attribute deleted'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  function catValEditor(attr, val){
+    if(!attr) return;
+    var isNew=!val;
+    val=val||{name:'',slug:'',swatch_color:'',swatch_image:'',position:0};
+    openModal('<div class="modal-h"><b>'+(isNew?'Add term':'Edit term')+' · '+sesc(attr.name)+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="atv_name" value="'+sesc(val.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="atv_slug" value="'+sesc(val.slug)+'" placeholder="left blank, made from the name">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Unique within this attribute only — “large” may exist under Size and under Shades.</p></div>'+
+      '<div class="fld" style="max-width:200px"><label>Swatch colour</label><input id="atv_color" value="'+sesc(val.swatch_color||'')+'" placeholder="#E0567B"></div>'+
+      imgUploadField('atv_image', val.swatch_image||'', 'Swatch image', 'attributes')+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="atv_pos" type="number" min="0" value="'+sesc(val.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="atv_save">'+(isNew?'Create term':'Save term')+'</button></div></div>');
+    wireImgUpload('atv_image','attributes');
+
+    document.getElementById('atv_save').onclick=async function(){
+      var payload={
+        name: sval('atv_name'), slug: sval('atv_slug'),
+        swatch_color: sval('atv_color'), swatch_image: sval('atv_image'),
+        position: parseInt(sval('atv_pos'),10)||0
+      };
+      if(!payload.name){ catToast('A term needs a name'); return; }
+      try{
+        await (isNew ? catalogWrite('/attributes/'+(+attr.id)+'/values','POST',payload)
+                     : catalogWrite('/attributes/'+(+attr.id)+'/values/'+(+val.id),'PUT',payload));
+        catToast(isNew?'Term created':'Term saved'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  async function catValDelete(attr, val){
+    if(!attr || !val) return;
+    var p=(+val.products_count||0), v=(+val.variants_count||0);
+    var warn = (p||v)
+      ? '<p style="font-size:13px;color:var(--ink-2)"><b>'+sesc(val.name)+'</b> is still used by <b>'+p+'</b> product'+(p===1?'':'s')+
+        ' and <b>'+v+'</b> variant'+(v===1?'':'s')+'. Removing it strips the term from them. <b>No product and no variant is deleted</b>'+
+        (v?' — but a variant that loses the term defining it stays on sale with nothing left to say what it is.':'.')+'</p>'
+      : '<p style="font-size:13px;color:var(--ink-2)">Delete the term <b>'+sesc(val.name)+'</b>? Nothing is using it. This cannot be undone.</p>';
+    openModal('<div class="modal-h"><b>Delete term</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="atv_del_yes">Delete</button></div></div>');
+    document.getElementById('atv_del_yes').onclick=async function(){
+      try{
+        await catalogWrite('/attributes/'+(+attr.id)+'/values/'+(+val.id)+'?force=1','DELETE',null);
+        catToast('Term deleted'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+  /* ===== LANE N · Catalog · Categories & Attributes — END ================== */
 
   /* ---------- Store → Payments (gateway credentials) ----------
      The real screen for /admin-api/payments (Admin\PaymentsApiController),
