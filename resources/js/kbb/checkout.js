@@ -53,24 +53,35 @@ export function initCheckout() {
             return;
         }
 
-        // Quantity steppers inside the summary.
+        /*
+         * Quantity steppers inside the summary.
+         *
+         * These used to post to the cart API and then reload the whole page.
+         * That endpoint returns the drawer and the cart page — neither of which
+         * is on screen here — so there was nothing to swap in, and a full
+         * navigation was the only way to show the new figures. It cost every
+         * field already typed into the form, the scroll position, and the
+         * country the shopper had chosen.
+         *
+         * /checkout/line returns exactly the regions this page shows, so the
+         * number changes where it was pressed and nothing else moves.
+         */
         const q = event.target.closest('.co-q');
         if (q) {
             event.preventDefault();
             const row = q.closest('.ci');
             const current = Number(row?.querySelector('.qty span')?.textContent || 1);
-            await post('/update', { item_id: Number(q.dataset.key), quantity: current + Number(q.dataset.d) });
+            await changeLine(q, Number(q.dataset.key), current + Number(q.dataset.d));
             return;
         }
 
-        // Remove a line entirely. Same endpoint and reload-after pattern as
-        // the quantity steppers above — one convention for every change that
-        // touches the cart on this page. If this was the last item, page()
-        // itself redirects to /cart/ on reload; nothing extra to handle here.
+        // Remove a line entirely — the same change with a quantity of zero,
+        // through the same endpoint. If this was the last item there is no
+        // checkout left to repaint, and the server names /cart/ as where to go.
         const rm = event.target.closest('.co-rm');
         if (rm) {
             event.preventDefault();
-            await post('/remove', { item_id: Number(rm.dataset.key) });
+            await changeLine(rm, Number(rm.dataset.key), 0);
             return;
         }
 
@@ -247,8 +258,12 @@ export function initCheckout() {
     };
 
     /* Everything here is a string the server rendered or an integer it counted.
-       No price is read out of the DOM and nothing is added up. */
-    const applyBrowsedAdd = (data) => {
+       No price is read out of the DOM and nothing is added up.
+
+       Shared by the Browsed one-tap add and the summary's quantity steppers:
+       both change what is in the bag, and both move the same regions. One
+       applier, so the two cannot drift apart. */
+    const applyFragments = (data) => {
         // The Browsed list and its badge come from one server-side collection,
         // so the row leaves only because the server put the product in the bag.
         const list = document.getElementById('kbbBrowsedList');
@@ -295,9 +310,93 @@ export function initCheckout() {
         // closed while this runs, so the swap is invisible; it simply must not
         // be stale the next time the header cart is opened.
         window.kbbRefreshCart?.();
+    };
 
+    const applyBrowsedAdd = (data) => {
+        applyFragments(data);
         noteAdded();
     };
+
+    /* ------------------------------------------------------------------ *
+     * Quantity and remove, in place.
+     * ------------------------------------------------------------------ */
+
+    /* The endpoint, already prefixed for this deployment — published by the
+       page itself, the same way the Browsed list publishes its own. The script
+       never builds a path, so a subdirectory install cannot produce one that
+       escapes the app. */
+    const lineUrl = () => window.KBB?.routes?.checkoutLine || '';
+
+    /* One line at a time. Two presses of + in quick succession are two writes
+       in the order they were made, not a race the server has to referee, and
+       the second lands against the quantity the first returned rather than the
+       one still painted on screen. */
+    let lineChain = Promise.resolve();
+
+    async function sendLine(itemId, quantity) {
+        const url = lineUrl();
+        if (!url) return null;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.KBB.csrf,
+                Accept: 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                quantity: Math.max(0, Math.min(99, quantity)),
+                country: document.getElementById('billing_country')?.value || '',
+                state: document.getElementById('billing_state')?.value || '',
+                // A choice, not an amount. Crossing the Cash-on-delivery window
+                // in either direction is the server's call, not the browser's.
+                payment_method: document.querySelector('input[name="payment_method"]:checked')?.value || '',
+            }),
+        });
+
+        // A 419 from an expired session, a 500, or anything else that is not
+        // JSON: a sentence, not a dead button.
+        return response.json().catch(() => null) ?? null;
+    }
+
+    async function changeLine(btn, itemId, quantity) {
+        if (!itemId || btn.disabled) return;
+
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+
+        const run = lineChain.then(() => sendLine(itemId, quantity));
+        lineChain = run.catch(() => {});
+
+        try {
+            const data = await run;
+
+            if (!data || data.ok !== true) {
+                window.kbbToast?.((data && data.error) || 'Could not update your bag — please try again.');
+                return;
+            }
+
+            // The last line has gone, so there is no checkout left to show.
+            // The server names where to go; this is the only navigation that
+            // remains, and it is a real change of page rather than a repaint.
+            if (data.empty) {
+                setCartCount(0);
+                if (data.redirect) window.location.assign(data.redirect);
+                return;
+            }
+
+            applyFragments(data);
+        } catch {
+            window.kbbToast?.('No connection — please try again.');
+        } finally {
+            // On success this button has already been replaced along with the
+            // rest of the summary, so this lands on a detached node and costs
+            // nothing.
+            btn.disabled = false;
+            btn.removeAttribute('aria-busy');
+        }
+    }
 
     async function addBrowsed(btn) {
         const id = Number(btn.dataset.kbbCheckoutAdd);
@@ -366,8 +465,11 @@ export function initCheckout() {
             });
             const data = await response.json();
             if (data.error) { window.kbbToast?.(data.error); return; }
-            // The summary, totals and mobile box all come from the server, so a
-            // reload is the honest way to keep every copy in step.
+            /* Coupons only, now that the steppers have an endpoint that returns
+               this page's own fragments. A coupon changes the line discounts,
+               the totals, the free-delivery bar and which payment methods are
+               offered, and /api/cart/coupon renders none of those — so until it
+               does, a reload is the honest way to keep every copy in step. */
             window.location.reload();
         } catch {
             window.kbbToast?.('Something went wrong — please try again.');
