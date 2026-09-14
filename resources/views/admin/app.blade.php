@@ -8685,6 +8685,141 @@ buildNav();
       issueCard('Short description too thin', 'Under 15 words \u2014 not necessarily wrong, but too little for a real fallback SEO description or a useful product page.', 'thin_short_description');
   }
 
+  /* ---------- Catalog → Brands (real CRUD, replacing the preview grid) ----------
+     The tab above renders a hard-coded CAT_BRANDS array with "(preview)"
+     buttons. This replaces the whole tab: the brand list comes from
+     /admin-api/brands, Add/Edit open a real form, and the logo field posts
+     through the same /admin-api/media/upload every other image field uses.
+     The display-mode select at the top writes `brands_display` through
+     /admin-api/settings, which is what the storefront directory reads. */
+  var BRANDS=[];
+  var BRAND_DISPLAY_OPTS=[
+    ['auto','Logo when the brand has one, name otherwise (default)'],
+    ['logos','Logos only'],
+    ['names','Names only']
+  ];
+
+  async function brandWrite(path, method, body){
+    var r = await fetch(fixAdminApiUrl('/admin-api/brands'+(path||'')), {
+      method: method,
+      credentials: 'same-origin',
+      headers: {'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var j={}; try{ j=await r.json(); }catch(e){}
+    if(!r.ok){
+      // 422 carries either Laravel's `errors` bag (duplicate slug, bad logo
+      // URL) or this controller's own `message` (brand still in use). Both
+      // are meant for the operator, so both are shown rather than swallowed
+      // into a generic "save failed".
+      var msg = j.message || '';
+      if(j.errors){ msg = Object.keys(j.errors).map(function(k){ return j.errors[k][0]; }).join(' '); }
+      var err = new Error(msg || ('Request failed ('+r.status+')'));
+      err.payload = j; err.status = r.status;
+      throw err;
+    }
+    return j;
+  }
+
+  window.catBrands = async function(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading brands…</p>';
+    try{
+      var d=await brandWrite('','GET',null); BRANDS=d.brands||[];
+    }catch(e){ BRANDS=[]; }
+    await loadSettings();
+    brandPaint();
+  };
+
+  function brandPaint(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    var mode=SETTINGS.brands_display||'auto';
+    body.innerHTML=
+      '<div class="card pad" style="margin-bottom:14px"><b style="font-size:13px">Directory display</b>'+
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">How each tile is drawn on the storefront brands page (/korean-skincare-brands/). Brands with no logo always fall back to their name, so “Logos only” can never leave an empty tile.</p>'+
+      '<div class="fld" style="max-width:420px;margin:0"><label>Show</label>'+
+      '<select class="inp" id="brd_display" style="width:100%">'+BRAND_DISPLAY_OPTS.map(function(o){
+        return '<option value="'+o[0]+'"'+(o[0]===mode?' selected':'')+'>'+o[1]+'</option>';
+      }).join('')+'</select></div>'+
+      '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="brd_display_save">Save display</button></div></div>'+
+      '<div class="between" style="margin-bottom:12px"><span class="pill grey">'+BRANDS.length+' brand'+(BRANDS.length===1?'':'s')+'</span>'+
+      '<button class="btn sm" id="brd_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add brand</button></div>'+
+      (BRANDS.length?
+        '<div class="mod-grid">'+BRANDS.map(function(b){
+          var thumb = b.logo
+            ? '<span class="pthumb" style="width:40px;height:40px;background:var(--bg);overflow:hidden"><img src="'+sesc(b.logo)+'" alt="'+sesc(b.name)+'" style="width:100%;height:100%;object-fit:contain"></span>'
+            : '<span class="pthumb" style="background:'+sesc(tcol(b.name))+';width:40px;height:40px">'+sesc(initials(b.name))+'</span>';
+          return '<div class="mod">'+thumb+
+            '<div><div class="mname">'+sesc(b.name)+'</div>'+
+            '<div class="mdesc">'+b.products_count+' product'+(b.products_count===1?'':'s')+' · /'+sesc(b.slug)+(b.logo?'':' · no logo')+'</div></div>'+
+            '<div class="mod-r"><button class="btn ghost sm" data-bedit="'+b.id+'">Edit</button>'+
+            '<button class="btn ghost sm" data-bdel="'+b.id+'">Delete</button></div></div>';
+        }).join('')+'</div>'
+        : '<p style="padding:24px;color:var(--ink-soft)">No brands yet — add the first one.</p>');
+
+    document.getElementById('brd_display_save').onclick=async function(){
+      var payload={brands_display: sval('brd_display')};
+      try{
+        await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})});
+        Object.assign(SETTINGS,payload); toast('Brand display saved');
+      }catch(e){ toast('Save failed — check connection'); }
+    };
+    document.getElementById('brd_add').onclick=function(){ brandEditor(null); };
+    document.querySelectorAll('#catBody [data-bedit]').forEach(function(b){
+      b.onclick=function(){ brandEditor(BRANDS.filter(function(x){return x.id===+b.dataset.bedit;})[0]); };
+    });
+    document.querySelectorAll('#catBody [data-bdel]').forEach(function(b){
+      b.onclick=function(){ brandDelete(BRANDS.filter(function(x){return x.id===+b.dataset.bdel;})[0]); };
+    });
+  }
+
+  function brandEditor(brand){
+    var isNew=!brand; brand=brand||{name:'',slug:'',logo:'',description:'',position:0};
+    openModal('<div class="modal-h"><b>'+(isNew?'Add brand':'Edit brand')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="brd_name" value="'+sesc(brand.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="brd_slug" value="'+sesc(brand.slug)+'" placeholder="left blank, made from the name">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Used in /korean-skincare-brands/{slug}/ and the shop filter. Lower case, hyphens.</p></div>'+
+      imgUploadField('brd_logo', brand.logo||'', 'Logo', 'brands')+
+      '<div class="fld"><label>Description</label><textarea id="brd_desc" class="inp" rows="3">'+sesc(brand.description)+'</textarea></div>'+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="brd_pos" type="number" min="0" value="'+sesc(brand.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="brd_save">'+(isNew?'Create brand':'Save brand')+'</button></div></div>');
+    wireImgUpload('brd_logo','brands');
+    document.getElementById('brd_save').onclick=async function(){
+      var payload={
+        name: sval('brd_name'), slug: sval('brd_slug'), logo: sval('brd_logo'),
+        description: sval('brd_desc'), position: parseInt(sval('brd_pos'),10)||0
+      };
+      if(!payload.name){ toast('A brand needs a name'); return; }
+      try{
+        await (isNew ? brandWrite('','POST',payload) : brandWrite('/'+brand.id,'PUT',payload));
+        toast(isNew?'Brand created':'Brand saved'); closeModal(); window.catBrands();
+      }catch(e){ toast(e.message); }
+    };
+  }
+
+  async function brandDelete(brand){
+    if(!brand) return;
+    var warn = brand.products_count>0
+      ? '<p style="font-size:13px;color:var(--ink-2)"><b>'+brand.products_count+'</b> product'+(brand.products_count===1?'':'s')+' still belong'+(brand.products_count===1?'s':'')+' to <b>'+sesc(brand.name)+'</b>. Deleting the brand leaves them with no brand — the products themselves are kept.</p>'
+      : '<p style="font-size:13px;color:var(--ink-2)">Delete <b>'+sesc(brand.name)+'</b>? This cannot be undone.</p>';
+    openModal('<div class="modal-h"><b>Delete brand</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="brd_del_yes">Delete</button></div></div>');
+    document.getElementById('brd_del_yes').onclick=async function(){
+      try{
+        // force is what the operator just confirmed: without it the API
+        // refuses to unbrand products behind their back.
+        await brandWrite('/'+brand.id+'?force=1','DELETE',null);
+        toast('Brand deleted'); closeModal(); window.catBrands();
+      }catch(e){ toast(e.message); }
+    };
+  }
+
   /* ---------- Route interception: hydrate dash, render new screens ---------- */
   var _go = window.go;
   window.go = function(id){

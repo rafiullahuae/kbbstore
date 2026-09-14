@@ -48,7 +48,57 @@ class BrandController extends Controller
     /** A landing page is a taster. The shop listing does the paging. */
     private const PREVIEW_LIMIT = 12;
 
+    /**
+     * How the directory draws a brand tile. Set in the admin under
+     * Catalog → Brands; the key is `brands_display`.
+     *
+     *   auto  — logo when the brand has one, its initial otherwise, name
+     *           underneath either way. What the directory has always done,
+     *           and the default, so an existing site looks unchanged.
+     *   logos — the logo alone. A brand with no logo still shows its name
+     *           rather than an empty tile; on day one most brands have no
+     *           logo, so that fallback is the common case, not the edge one.
+     *   names — the name alone: no logo, no initial circle.
+     */
+    public const DISPLAY_MODES = ['auto', 'logos', 'names'];
+
+    public const DISPLAY_DEFAULT = 'auto';
+
+    /**
+     * The `minmax()` floor the tile grid is built from, in px, chosen from how
+     * many brands there are.
+     *
+     * The grid is `repeat(auto-fill, minmax(<this>, 1fr))`, so this number is
+     * the only thing that decides the column count: the browser fits as many
+     * tracks of at least this width as the row has room for. Two failure modes
+     * it exists to avoid — a shop with four brands laying them out as four
+     * postage stamps with a wide empty gutter, and a shop with ninety-three
+     * laying them out as a single endless column.
+     *
+     * Deliberately CSS, not JavaScript: the count is known at render time and
+     * the reflow between phone and desktop then costs nothing and needs no
+     * script to run first.
+     */
+    public static function gridMinimum(int $count): int
+    {
+        return match (true) {
+            $count <= 3 => 240,
+            $count <= 6 => 210,
+            $count <= 12 => 186,
+            $count <= 30 => 166,
+            default => 148,
+        };
+    }
+
     public function __construct(private SettingsService $settings) {}
+
+    /** The configured mode, with anything unrecognised falling back to `auto`. */
+    private function displayMode(): string
+    {
+        $mode = (string) $this->settings->get('brands_display', self::DISPLAY_DEFAULT);
+
+        return in_array($mode, self::DISPLAY_MODES, true) ? $mode : self::DISPLAY_DEFAULT;
+    }
 
     public function index(): View
     {
@@ -70,6 +120,8 @@ class BrandController extends Controller
             'brand' => null,
             'brands' => $brands,
             'products' => collect(),
+            'display' => $this->displayMode(),
+            'gridMin' => self::gridMinimum($brands->count()),
             // Empty brands are listed but muted rather than hidden: a brand
             // with nothing in stock today is still a brand the shop carries,
             // and silently dropping it makes the A-Z look wrong.
@@ -96,6 +148,12 @@ class BrandController extends Controller
             'brands' => collect(),
             'products' => $products,
             'stocked' => 0,
+            // The landing page shows one brand's hero, which always wants the
+            // logo and the name together; the directory's modes do not apply
+            // to it. Passed anyway so the shared view never reads an undefined
+            // variable.
+            'display' => self::DISPLAY_DEFAULT,
+            'gridMin' => self::gridMinimum(0),
         ]);
     }
 

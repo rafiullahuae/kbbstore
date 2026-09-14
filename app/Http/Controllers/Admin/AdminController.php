@@ -408,6 +408,9 @@ class AdminController extends Controller
             'pinterest_site_verification', 'baidu_site_verification',
             // Crawling and discovery toggles.
             'indexnow_on', 'llms_enabled', 'crawl_clean',
+            // Brand directory display mode: auto | logos | names. Read by
+            // BrandController and rendered by store/brands.blade.php.
+            'brands_display',
             // Google Merchant listing block.
             'enable_merchant', 'merchant_condition', 'merchant_ship_country',
             'merchant_ship_cost', 'merchant_ship_free_over', 'merchant_return_days',

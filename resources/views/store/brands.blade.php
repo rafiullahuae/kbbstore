@@ -63,9 +63,32 @@
         @if ($brands->isEmpty())
             <p class="brw-empty">No brands have been added yet.</p>
         @else
-            <div class="brw-grid">
+            {{--
+                The count-derived numbers the grid is built from — see
+                BrandController::gridMinimum(). --brw-count-min is the
+                minmax() floor, which is the only thing deciding the column
+                count: four brands get wide tiles across one tidy row,
+                ninety-three get narrow ones. --brw-count-cap stops a handful
+                of brands from being stretched across the whole 1180px
+                container with an empty tail.
+
+                They are named apart from the --brw-min/--brw-cap the rule
+                actually reads, on purpose. An inline custom property beats
+                every stylesheet declaration of the same name, media query
+                included, so setting --brw-min here directly would make the
+                phone breakpoint below a dead rule.
+            --}}
+            <div class="brw-grid" style="--brw-count-min:{{ (int) $gridMin }}px;--brw-count-cap:{{ $brands->count() * ((int) $gridMin + 12) }}px">
                 @foreach ($brands as $item)
-                    @php $n = (int) $item->products_count; @endphp
+                    @php
+                        $n = (int) $item->products_count;
+                        // logos falls back to the name rather than rendering
+                        // an empty tile, which is the ordinary case until the
+                        // operator has uploaded ninety-three logos.
+                        $showLogo = $display !== 'names' && $item->logo;
+                        $showInitial = $display === 'auto' && ! $item->logo;
+                        $showName = $display !== 'logos' || ! $item->logo;
+                    @endphp
                     {{--
                         Every tile goes to the brand's own page now, including
                         the empty ones: the landing page still has the brand's
@@ -75,14 +98,18 @@
                     --}}
                     <a class="brw-card{{ $n === 0 ? ' is-empty' : '' }}"
                        href="{{ Url::to('/korean-skincare-brands/' . $item->slug . '/') }}">
-                        <span class="brw-logo">
-                            @if ($item->logo)
-                                <img src="{{ $item->logo }}" alt="{{ $item->name }}" loading="lazy" decoding="async">
-                            @else
-                                <span class="brw-initial">{{ mb_strtoupper(mb_substr($item->name, 0, 1)) }}</span>
-                            @endif
-                        </span>
-                        <span class="brw-name">{{ $item->name }}</span>
+                        @if ($showLogo || $showInitial)
+                            <span class="brw-logo">
+                                @if ($showLogo)
+                                    <img src="{{ $item->logo }}" alt="{{ $item->name }}" loading="lazy" decoding="async">
+                                @else
+                                    <span class="brw-initial">{{ mb_strtoupper(mb_substr($item->name, 0, 1)) }}</span>
+                                @endif
+                            </span>
+                        @endif
+                        @if ($showName)
+                            <span class="brw-name">{{ $item->name }}</span>
+                        @endif
                         <span class="brw-count">{{ $n > 0 ? $n . ' ' . \Illuminate\Support\Str::plural('product', $n) : 'Coming soon' }}</span>
                     </a>
                 @endforeach
@@ -100,7 +127,11 @@
 .brw-h1{font-size:26px;margin:0 0 5px;color:var(--ink)}
 .brw-sub{font-size:13px;color:var(--muted);margin:0 0 24px}
 .brw-empty{font-size:14px;color:var(--muted)}
-.brw-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr))}
+.brw-grid{display:grid;gap:12px;
+  --brw-min:var(--brw-count-min,158px);
+  --brw-cap:var(--brw-count-cap,100%);
+  grid-template-columns:repeat(auto-fill,minmax(min(var(--brw-min),100%),1fr));
+  max-width:min(100%,var(--brw-cap))}
 .brw-card{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;
   padding:20px 14px 16px;border:1px solid var(--line);border-radius:12px;background:#fff;
   text-decoration:none;transition:border-color .16s,transform .16s}
@@ -120,7 +151,11 @@
   color:#fff;font-size:13px;text-decoration:none}
 .brw-cta:hover{filter:brightness(.94)}
 @media (max-width:520px){
-  .brw-grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+  /* Below this the count-derived floor stops helping: a 240px tile on a
+     375px screen is one column of very tall cards. Two columns of 132px is
+     the sane phone layout at every brand count, so the phone overrides both
+     the floor and the cap rather than the whole rule. */
+  .brw-grid{--brw-min:132px;--brw-cap:100%;gap:10px}
   .brw-logo{width:52px;height:52px}
   .brw-logo--lg{width:72px;height:72px}
   .brw-hero{flex-direction:column;align-items:flex-start;gap:14px}
