@@ -56,7 +56,8 @@
 </div>
 
 <div class="co-totals">
-    <div class="sumrow"><span>Subtotal</span><span>{!! Money::format((int) $order->subtotal) !!}</span></div>
+    {{-- Subtotal removed at the owner's request: the line items above already
+         show it, and on a phone it pushed the total further down for no gain. --}}
 
     @if ((int) $order->discount_total > 0)
         <div class="sumrow disc">

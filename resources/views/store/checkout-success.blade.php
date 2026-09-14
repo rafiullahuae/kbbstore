@@ -23,6 +23,10 @@
 <style>
 /* Scoped to this page. Everything else on it is an existing checkout class. */
 .kbb-checkout .co-received{max-width:640px;margin:0 auto;padding:28px 20px 60px}
+/* The confirmation heading is the one green moment on the page: the order
+   succeeded, and green says so faster than any wording. */
+.kbb-checkout .sec.co-ok > h2{background:#EEF8F1;border-left-color:#2E9E68;color:#1F7D52}
+.kbb-checkout .sec.co-ok > h2 .n{background:#2E9E68;color:#fff}
 .kbb-checkout .co-acts{display:grid;gap:9px;margin-top:4px}
 .kbb-checkout .co-act{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;font-weight:700;color:var(--ink);transition:.15s var(--ease)}
 .kbb-checkout .co-act:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
@@ -60,7 +64,9 @@
 .kbb-checkout .co-done{background:#EEF8F1;border:1px solid #BFE0CD;border-radius:12px;padding:12px 14px;font-size:12.5px;font-weight:600;color:#1F7D52}
 @media (max-width:560px){
   .kbb-checkout .co-received{padding:20px 14px 48px}
-  .kbb-checkout .co-facts{grid-template-columns:1fr}
+  /* The four facts stay two-up on a phone -- they are short values, and one
+     column pushed everything below them off the first screen. */
+  .kbb-checkout .co-facts{gap:10px 14px}
 }
 </style>
 @endpush
@@ -87,7 +93,7 @@
             @endphp
 
             <div class="formbox">
-                <div class="sec">
+                <div class="sec co-ok">
                     <h2><span class="n">✓</span> Thank you</h2>
                     <p class="co-lead">Your order <b>#{{ $order->order_number }}</b> is confirmed. A copy is on its way to {{ $order->email }}.</p>
 
@@ -104,16 +110,30 @@
                 <div class="sec">
                     <h2><span class="n">→</span> What next</h2>
                     <div class="co-acts">
+                        @php
+                            /* Sign in is offered only when signing in is possible.
+                             * A guest who has not chosen a password yet cannot sign
+                             * in, so the card would send them to a form they cannot
+                             * complete; they get the password step below instead, and
+                             * this card appears the moment they finish it.
+                             *
+                             * Driven by the session, never by whether the email
+                             * already has an account -- that lookup is the
+                             * enumeration oracle the silent decline exists to avoid.
+                             * claim-account answers identically either way, so
+                             * "your account is ready" is true in both cases. */
+                            $accountReady = $signedIn || session('kbb_account_done');
+                        @endphp
                         @if ($signedIn)
                             <a class="co-act co-act--primary" href="{{ Url::to('/my-account/orders/') }}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4M20 12H4M20 17H4"/></svg>
                                 <span class="co-t">Your orders<span class="co-s">Every order on your account, including this one</span></span>
                                 <span class="co-go">›</span>
                             </a>
-                        @else
+                        @elseif ($accountReady)
                             <a class="co-act co-act--primary" href="{{ Url::to('/my-account/') }}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <span class="co-t">Sign in to your account<span class="co-s">See this order and everything you have ordered before</span></span>
+                                <span class="co-t">Sign in to your account<span class="co-s">Your account is ready — use {{ $order->email }}</span></span>
                                 <span class="co-go">›</span>
                             </a>
                         @endif
@@ -137,11 +157,9 @@
                          email already has an account — that condition is exactly
                          the enumeration oracle the silent decline exists to
                          avoid. The endpoint answers the same either way. --}}
+                    @unless (session('kbb_account_done'))
                     <div class="sec co-acct">
                         <h2><span class="n">+</span> Finish your account</h2>
-                        @if (session('kbb_account_done'))
-                            <div class="co-done">All set — you can sign in with {{ $order->email }} from now on.</div>
-                        @else
                             <p class="co-lead" style="margin-bottom:0">Choose a password and next time your details are already filled in.</p>
                             <form method="post" action="{{ Url::to('/checkout/claim-account') }}">
                                 @csrf
@@ -154,8 +172,8 @@
                                 </div>
                                 @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
                             </form>
-                        @endif
                     </div>
+                    @endunless
                 @endguest
 
                 <div class="sec">

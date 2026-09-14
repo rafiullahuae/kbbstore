@@ -172,7 +172,9 @@ it('shows every line item, and the discount, delivery and total', function () {
         ->assertSee('Line Product 1')
         ->assertSee('Line Product 2')
         ->assertSee('GLOW10')
-        ->assertSee('Subtotal')
+        // Subtotal was removed at the owner's request: the line items above
+        // already show it, and it pushed the total down the phone screen.
+        ->assertDontSee('Subtotal')
         ->assertSee('Delivery')
         ->assertSee('Total');
 
@@ -249,10 +251,33 @@ it('sends a signed-in customer to their account rather than a sign-in link', fun
         ->assertDontSee('Finish your account');
 });
 
-it('offers a guest the sign-in link and the finish-your-account box', function () {
+/*
+ * A guest who has not chosen a password cannot sign in, so offering the link
+ * sends them to a form they cannot complete. They get the password step, and
+ * the sign-in card appears the moment they finish it -- driven by the session,
+ * never by whether the email already has an account, because that lookup is the
+ * enumeration oracle the silent decline exists to avoid.
+ */
+it('offers a guest the password step, not a sign-in link they cannot use', function () {
     receivedPage(receivedOrder())->assertOk()
+        ->assertSee('Finish your account')
+        ->assertDontSee('Sign in to your account');
+});
+
+it('swaps the password step for the sign-in card once the account is claimed', function () {
+    $order = receivedOrder();
+
+    // Both keys together: the access grant the placer's browser carries, plus
+    // the marker claim-account leaves behind. Replacing the session with only
+    // the second one loses access and renders the not-found panel instead.
+    $response = $this->withSession([
+        'kbb_last_order' => $order->order_number,
+        'kbb_account_done' => true,
+    ])->get('/checkout/success?order='.$order->order_number);
+
+    $response->assertOk()
         ->assertSee('Sign in to your account')
-        ->assertSee('Finish your account');
+        ->assertDontSee('Finish your account');
 });
 
 /* ----------------------------------------------------------------- actions */
