@@ -292,6 +292,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // is an open relay.
         require __DIR__.'/mail-admin.php';
 
+        // Categories and attributes. Same guarded group: these write catalogue
+        // records and accept an uploaded image.
+        require __DIR__.'/catalog-admin.php';
+
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
