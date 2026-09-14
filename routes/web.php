@@ -305,6 +305,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';
 
+        // The Customers screen: list, detail, export. Inside this group because
+        // every row is personal data — name, email, phone, address and what the
+        // person has spent. Outside it, the whole customer table is public.
+        require __DIR__.'/customers-admin.php';
+
         // Mail settings and the test-send. Inside this group deliberately: an
         // unauthenticated endpoint that sends mail to a caller-supplied address
         // is an open relay.
