@@ -1,0 +1,140 @@
+<?php
+
+/**
+ * Regression tests for the public /api surface.
+ *
+ * Every case here is a bug that actually shipped and was fixed in
+ * 2.60.95/.96/.105/.106. They are pinned because the repo has already proved
+ * it can lose this work: packages 2.60.102-.106 were built against a stale
+ * tree and reverted three files on the live server.
+ *
+ * These endpoints are unauthenticated. A failure here is a data leak, not a
+ * broken page, so each test asserts the absence of a specific field or row
+ * rather than the shape of a response.
+ */
+
+use App\Models\Post;
+use App\Models\Product;
+use App\Models\Review;
+use App\Models\Setting;
+
+function product(array $overrides = []): Product
+{
+    return Product::create(array_merge([
+        'slug' => 'test-serum-'.uniqid(),
+        'name' => 'Test Serum',
+        'status' => 'publish',
+        'is_visible' => true,
+        'price' => 25.00,
+        'stock_status' => 'instock',
+    ], $overrides));
+}
+
+it('hides unpublished products from the index', function () {
+    product(['name' => 'Live one']);
+    product(['name' => 'Draft one', 'status' => 'draft']);
+    product(['name' => 'Hidden one', 'is_visible' => false]);
+
+    $body = $this->getJson('/api/products')->assertOk()->json();
+    $names = collect($body['data'] ?? $body)->pluck('name');
+
+    expect($names)->toContain('Live one')
+        ->not->toContain('Draft one')
+        ->not->toContain('Hidden one');
+});
+
+it('404s a draft product addressed by slug', function () {
+    $draft = product(['slug' => 'secret-launch', 'status' => 'draft']);
+
+    $this->getJson("/api/products/{$draft->slug}")->assertNotFound();
+});
+
+it('404s a product hidden from the storefront', function () {
+    $hidden = product(['slug' => 'hidden-item', 'is_visible' => false]);
+
+    $this->getJson("/api/products/{$hidden->slug}")->assertNotFound();
+});
+
+it('never exposes reviewer email or ip', function () {
+    Review::create([
+        'product_id' => product()->id,
+        'author_name' => 'Someone',
+        'author_email' => 'private@example.com',
+        'ip' => '203.0.113.9',
+        'rating' => 5,
+        'content' => 'Lovely',
+        'status' => 'approved',
+    ]);
+
+    $raw = $this->getJson('/api/reviews')->assertOk()->getContent();
+
+    expect($raw)->not->toContain('private@example.com')
+        ->not->toContain('203.0.113.9')
+        ->not->toContain('author_email');
+});
+
+it('returns only approved reviews, whatever status is asked for', function () {
+    $p = product();
+    Review::create(['product_id' => $p->id, 'author_name' => 'A', 'rating' => 5, 'content' => 'Approved one', 'status' => 'approved']);
+    Review::create(['product_id' => $p->id, 'author_name' => 'B', 'rating' => 1, 'content' => 'Pending spam', 'status' => 'pending']);
+
+    foreach (['/api/reviews', '/api/reviews?status=pending', '/api/reviews?status='] as $url) {
+        $raw = $this->getJson($url)->assertOk()->getContent();
+        expect($raw)->not->toContain('Pending spam');
+    }
+});
+
+it('never exposes admin_path or indexnow_key through settings', function () {
+    // Setting::map() memoises in a process-level static, so a second HTTP call
+    // inside one test process cannot see rows written after the first. The
+    // protection being tested is the controller's allowlist, so assert on that
+    // directly as well as on a response.
+    $keys = (new ReflectionClass(App\Http\Controllers\Api\SettingController::class))
+        ->getConstant('PUBLIC_KEYS');
+
+    expect($keys)->toBeArray()
+        ->not->toContain('admin_path')
+        ->not->toContain('indexnow_key');
+
+    Setting::updateOrCreate(['key' => 'admin_path'], ['value' => 'super-secret-admin']);
+    Setting::updateOrCreate(['key' => 'indexnow_key'], ['value' => 'abc123indexnowkey']);
+
+    $raw = $this->getJson('/api/settings')->assertOk()->getContent();
+
+    expect($raw)->not->toContain('super-secret-admin')
+        ->not->toContain('abc123indexnowkey')
+        ->not->toContain('admin_path')
+        ->not->toContain('indexnow_key');
+});
+
+it('serves the product api without leaking internal fields', function () {
+    product(['slug' => 'visible-serum', 'name' => 'Visible Serum', 'sku' => 'INTERNAL-SKU-1']);
+
+    $raw = $this->getJson('/api/products')->assertOk()->getContent();
+
+    expect($raw)->toContain('Visible Serum')
+        ->not->toContain('INTERNAL-SKU-1')
+        ->not->toContain('total_sales')
+        ->not->toContain('wc_id');
+
+    $this->getJson('/api/products/visible-serum')->assertOk()
+        ->assertJsonMissing(['sku' => 'INTERNAL-SKU-1']);
+});
+
+it('hides draft posts from the feed and by slug', function () {
+    Post::create(['slug' => 'live-post', 'title' => 'Live post', 'status' => 'published']);
+    Post::create(['slug' => 'draft-post', 'title' => 'Unreleased draft', 'status' => 'draft']);
+
+    $raw = $this->getJson('/api/posts')->assertOk()->getContent();
+    expect($raw)->toContain('Live post')->not->toContain('Unreleased draft');
+
+    $this->getJson('/api/posts/draft-post')->assertNotFound();
+});
+
+it('refuses to checkout a product that is not visible', function () {
+    $draft = product(['slug' => 'not-for-sale', 'status' => 'draft']);
+
+    $this->postJson('/api/checkout/session', [
+        'items' => [['slug' => $draft->slug, 'qty' => 1]],
+    ])->assertStatus(422);
+});

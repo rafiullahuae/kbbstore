@@ -36,3 +36,6 @@ Thumbs.db
 *.backup-*
 *.before-patch-*
 app/*.zip
+
+# Test database
+/database/testing.sqlite
