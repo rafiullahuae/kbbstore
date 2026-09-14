@@ -42,9 +42,19 @@ it('keeps gateway credentials behind the admin guard', function () {
 });
 
 it('does not expose any gateway secret through the public settings endpoint', function () {
-    PaymentProvider::query()->where('code', 'stripe')->update([
-        'config' => ['secret_key' => 'sk_live_LEAKCANARY', 'webhook_secret' => 'whsec_LEAKCANARY'],
-    ]);
+    // The primary key is `id`, not `code`. An earlier version of this test
+    // filtered on `code`, matched nothing, wrote nothing, and then "proved" no
+    // secret leaked -- a test that could never fail. Create the row outright.
+    PaymentProvider::query()->updateOrCreate(
+        ['id' => 'stripe'],
+        [
+            'title' => 'Stripe',
+            'enabled' => true,
+            'config' => ['secret_key' => 'sk_live_LEAKCANARY', 'webhook_secret' => 'whsec_LEAKCANARY'],
+        ],
+    );
+
+    expect(PaymentProvider::whereKey('stripe')->exists())->toBeTrue();
 
     $body = $this->getJson('/api/settings')->assertOk()->getContent();
 
