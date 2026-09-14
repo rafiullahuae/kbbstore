@@ -89,6 +89,7 @@ class BuildPackage extends Command
         }
 
         $manifest = [];
+        $sizes = [];
         foreach ($kept as $path) {
             $contents = $this->gitShow($ref, $path);
             if ($contents === null) {
@@ -100,20 +101,23 @@ class BuildPackage extends Command
             }
 
             $zip->addFromString('files/'.$path, $contents);
-            $manifest[] = [
-                'path' => $path,
-                'bytes' => strlen($contents),
-                'sha256' => hash('sha256', $contents),
-            ];
+            $manifest[$path] = hash('sha256', $contents);
+            $sizes[$path] = strlen($contents);
         }
 
+        /* Shape fixed by UpdatePackage: `files` is a path => sha256 map, not a
+         * list, and `signature` must be present even when empty -- an unsigned
+         * package is accepted only while KBB_UPDATE_SECRET is unset. Keys are
+         * kept to exactly these six because the HMAC, when signing is turned
+         * back on, is computed over this payload with `signature` removed; an
+         * extra key here would change the digest and reject every package. */
         $zip->addFromString('update.json', (string) json_encode([
             'name' => 'KBB Storefront',
             'version' => $version,
             'requires_php' => '8.2',
             'notes' => (string) ($this->option('notes') ?? ''),
-            'built_from' => trim((string) shell_exec('git rev-parse '.escapeshellarg($ref).' 2>/dev/null')),
             'files' => $manifest,
+            'signature' => '',
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         $zip->close();
@@ -123,8 +127,8 @@ class BuildPackage extends Command
         $this->newLine();
         $this->info("Built {$zipPath}");
         $this->line('  '.count($manifest).' files, '.number_format(filesize($zipPath) / 1024, 1).' KB');
-        foreach ($manifest as $m) {
-            $this->line(sprintf('  %-60s %6d B', $m['path'], $m['bytes']));
+        foreach ($manifest as $path => $sha) {
+            $this->line(sprintf('  %-60s %6d B', $path, $sizes[$path]));
         }
 
         return self::SUCCESS;
@@ -179,11 +183,11 @@ class BuildPackage extends Command
     {
         $zip = new ZipArchive();
         $zip->open($zipPath);
-        foreach ($manifest as $m) {
-            $actual = hash('sha256', (string) $zip->getFromName('files/'.$m['path']));
-            if ($actual !== $m['sha256']) {
+        foreach ($manifest as $path => $sha) {
+            $actual = hash('sha256', (string) $zip->getFromName('files/'.$path));
+            if ($actual !== $sha) {
                 $zip->close();
-                throw new \RuntimeException("Checksum mismatch after write: {$m['path']}");
+                throw new \RuntimeException("Checksum mismatch after write: {$path}");
             }
         }
         $zip->close();
