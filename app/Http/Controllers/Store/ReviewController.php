@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 /**
  * The review submission form's backend — the one piece the plugin's own
@@ -24,6 +25,7 @@ class ReviewController extends Controller
 {
     private const MAX_PHOTOS = 6;
     private const CAPTCHA_TTL_MINUTES = 15;
+    private const MAX_VOTES_PER_HOUR = 60;
 
     /**
      * A simple arithmetic question, answer carried in a signed, encrypted
@@ -79,7 +81,20 @@ class ReviewController extends Controller
         }
 
         $validated = $request->validate([
-            'product_id' => ['required', 'integer', 'exists:products,id'],
+            // Visible products only, not `exists:products,id`. A bare exists
+            // accepted any row in the table, so a draft or hidden product --
+            // one with no page and no review form -- could be reviewed by
+            // posting its id here, and the accept/reject split told the caller
+            // which unpublished ids were real. The refusal is the ordinary 422
+            // either way, so a product that does not exist and one that is not
+            // published are answered the same.
+            'product_id' => [
+                'required',
+                'integer',
+                Rule::exists('products', 'id')->where(
+                    fn ($q) => $q->where('status', 'publish')->where('is_visible', true)
+                ),
+            ],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'author_name' => ['required', 'string', 'max:100'],
             'author_email' => ['required', 'email', 'max:120'],
@@ -141,20 +156,58 @@ class ReviewController extends Controller
      * One vote per browser, not per click — a cookie carrying the set of
      * review IDs already voted on, so the count cannot be inflated by
      * clicking the same button repeatedly.
+     *
+     * The cookie is the whole of that protection and it is the caller's to
+     * throw away, so it is a convenience, not a limit: a script that simply
+     * does not send it could increment any counter as often as it liked. The
+     * per-IP ceiling below is the limit.
+     *
+     * Approved rows only, looked up by hand rather than route-model bound.
+     * Bound, this took any Review: a pending or spam row answered 200 with its
+     * vote count while an id that did not exist answered 404, so the endpoint
+     * doubled as a directory of unmoderated reviews — and let anyone vote them
+     * up while they waited for a moderator. Not approved and not there are now
+     * the same 404, byte for byte, because they are the same return.
+     *
+     * Typed string, not int. The route puts no numeric constraint on {review}
+     * and this file declares strict_types, so an int parameter turns
+     * /reviews/abc/helpful into a TypeError and a 500 — where the route-model
+     * binding it replaces would have answered 404. Cast here instead, so
+     * anything that is not a row is the one 404 above.
      */
-    public function helpful(Request $request, Review $review): JsonResponse
+    public function helpful(Request $request, string $review): JsonResponse
     {
-        $voted = array_filter(explode(',', (string) $request->cookie('kbb_sr_voted', '')));
+        $key = 'review-helpful:' . $request->ip();
 
-        if (in_array((string) $review->id, $voted, true)) {
-            return response()->json(['ok' => true, 'helpful' => $review->helpful, 'already' => true]);
+        if (RateLimiter::tooManyAttempts($key, self::MAX_VOTES_PER_HOUR)) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Too many votes — please try again later.',
+            ], 429);
         }
 
-        $review->increment('helpful');
-        $voted[] = (string) $review->id;
+        $row = Review::query()->approved()->whereKey((int) $review)->first();
+
+        if ($row === null) {
+            return response()->json(['ok' => false, 'error' => 'not_found'], 404);
+        }
+
+        $voted = array_filter(explode(',', (string) $request->cookie('kbb_sr_voted', '')));
+
+        if (in_array((string) $row->id, $voted, true)) {
+            return response()->json(['ok' => true, 'helpful' => $row->helpful, 'already' => true]);
+        }
+
+        // Counted against the budget only when it actually writes, so a
+        // shopper reloading a page of reviews they have already voted on does
+        // not spend the allowance.
+        RateLimiter::hit($key, 3600);
+
+        $row->increment('helpful');
+        $voted[] = (string) $row->id;
 
         return response()
-            ->json(['ok' => true, 'helpful' => $review->fresh()->helpful])
+            ->json(['ok' => true, 'helpful' => $row->fresh()->helpful])
             ->cookie('kbb_sr_voted', implode(',', $voted), 60 * 24 * 365);
     }
 

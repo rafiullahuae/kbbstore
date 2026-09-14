@@ -139,6 +139,170 @@ it('refuses to checkout a product that is not visible', function () {
     ])->assertStatus(422);
 });
 
+/*
+|------------------------------------------------------------------------------
+| Second sweep — the rest of the unauthenticated surface
+|------------------------------------------------------------------------------
+|
+| Same rule as above: every case here was live in this tree, and each one was
+| written to fail against the code as it stood before its fix.
+|
+| The two questions the first sweep did not ask are asked here. Can a public
+| endpoint ACT on a record that is not the caller's, and does it answer
+| differently for "there is no such record" than for "that one is not yours"?
+| The second is the quieter of the two: an endpoint that refuses correctly but
+| refuses distinguishably is still a directory of everything in the table.
+*/
+
+it('refuses an expert request addressed by a bare lead id', function () {
+    // The known gap, exactly as CLAUDE.md recorded it: {id} was the primary
+    // key, so counting upwards reached every customer's quiz submission.
+    $victim = App\Models\QuizSubmission::create([
+        'status' => 'new',
+        'name' => 'Victim',
+        'email' => 'victim@example.com',
+    ]);
+
+    $this->postJson("/api/quiz/{$victim->id}/expert-request", ['message' => 'walked in'])
+        ->assertNotFound();
+
+    $row = App\Models\QuizSubmission::find($victim->id);
+
+    expect($row->status)->toBe('new')
+        ->and($row->expert_message)->toBeNull()
+        ->and((bool) $row->expert_requested)->toBeFalse();
+});
+
+it('answers an unissued lead handle and a lead that does not exist identically', function () {
+    $victim = App\Models\QuizSubmission::create(['status' => 'new', 'name' => 'Victim']);
+
+    $guessed = $this->postJson("/api/quiz/{$victim->id}/expert-request", ['message' => 'x']);
+    $absent  = $this->postJson('/api/quiz/987654/expert-request', ['message' => 'x']);
+    $forged  = $this->postJson("/api/quiz/{$victim->id}-00000000000000000000000000000000/expert-request", ['message' => 'x']);
+
+    // Body as well as status: a differing message is the oracle.
+    expect($guessed->status())->toBe($absent->status())
+        ->and($guessed->getContent())->toBe($absent->getContent())
+        ->and($forged->status())->toBe($absent->status())
+        ->and($forged->getContent())->toBe($absent->getContent());
+});
+
+it('still lets the browser that filed the quiz send its own expert request', function () {
+    // The storefront flow, verbatim: skin-quiz.blade.php POSTs /api/quiz, keeps
+    // the `id` it gets back and puts it straight into the expert-request URL.
+    // If this breaks, the quiz's expert callback stops recording and says
+    // nothing about it — the page swallows the error.
+    $created = $this->postJson('/api/quiz', [
+        'skin_type' => 'dry',
+        'name' => 'Real Shopper',
+        'email' => 'shopper@example.com',
+        'consent' => true,
+    ])->assertCreated()->json();
+
+    $this->postJson("/api/quiz/{$created['id']}/expert-request", ['message' => 'please call'])
+        ->assertOk()
+        ->assertJson(['ok' => true]);
+
+    $row = App\Models\QuizSubmission::latest('id')->first();
+
+    expect($row->status)->toBe('expert_requested')
+        ->and($row->expert_message)->toBe('please call')
+        ->and((bool) $row->expert_requested)->toBeTrue();
+});
+
+it('never hands a stored review row back from the public submit endpoint', function () {
+    $p = product(['slug' => 'submit-target']);
+
+    $raw = $this->postJson("/api/products/{$p->slug}/reviews", [
+        'author' => 'Shopper',
+        'rating' => 5,
+        'title' => 'Great',
+        'body' => 'Really great',
+    ])->assertCreated()->getContent();
+
+    // This endpoint died on the INSERT — `author`, `body` and `likes` are not
+    // columns on `reviews` — so the whole-model response below it had never
+    // once run. Repairing the insert without this would switch the leak on.
+    expect($raw)->not->toContain('author_email')
+        ->not->toContain('"ip"')
+        ->not->toContain('status')
+        ->not->toContain('customer_id');
+
+    $review = Review::latest('id')->first();
+
+    expect($review->author_name)->toBe('Shopper')
+        ->and($review->content)->toBe('Really great')
+        ->and($review->status)->toBe('pending');
+});
+
+it('will not vote up a review that is not approved, or admit that it exists', function () {
+    $p = product();
+
+    $pending = Review::create([
+        'product_id' => $p->id, 'author_name' => 'A', 'rating' => 1,
+        'content' => 'held for moderation', 'status' => 'pending', 'helpful' => 3,
+    ]);
+    $spam = Review::create([
+        'product_id' => $p->id, 'author_name' => 'B', 'rating' => 5,
+        'content' => 'buy pills', 'status' => 'spam', 'helpful' => 0,
+    ]);
+
+    $onPending = $this->postJson("/reviews/{$pending->id}/helpful");
+    $onSpam    = $this->postJson("/reviews/{$spam->id}/helpful");
+    $onAbsent  = $this->postJson('/reviews/999999/helpful');
+
+    expect($onPending->status())->toBe($onAbsent->status())
+        ->and($onPending->getContent())->toBe($onAbsent->getContent())
+        ->and($onSpam->getContent())->toBe($onAbsent->getContent())
+        ->and($pending->fresh()->helpful)->toBe(3)
+        ->and($spam->fresh()->helpful)->toBe(0);
+});
+
+it('answers a junk id on either write endpoint without a 500', function () {
+    // Neither route constrains its parameter to digits, and both controllers
+    // declare strict_types, so a scalar int parameter would turn a typo into a
+    // TypeError — a 500 that is both a worse answer than 404 and, with
+    // APP_DEBUG on, a stack trace.
+    $this->postJson('/reviews/not-a-number/helpful')->assertNotFound();
+    $this->postJson('/api/quiz/not-a-number/expert-request', ['message' => 'x'])->assertNotFound();
+});
+
+it('caps helpful votes per IP, because the cookie is the caller to discard', function () {
+    $review = Review::create([
+        'product_id' => product()->id, 'author_name' => 'A', 'rating' => 5,
+        'content' => 'Lovely', 'status' => 'approved', 'helpful' => 0,
+    ]);
+
+    // The cookie is never sent back, which is exactly what a script would do.
+    $statuses = [];
+
+    for ($i = 0; $i < 70; $i++) {
+        $statuses[] = $this->postJson("/reviews/{$review->id}/helpful")->status();
+    }
+
+    expect($statuses)->toContain(429)
+        ->and($review->fresh()->helpful)->toBeLessThanOrEqual(60);
+});
+
+it('refuses a storefront review for a product with no storefront page', function () {
+    $draft = product(['slug' => 'unlaunched', 'status' => 'draft']);
+
+    $captcha = $this->getJson('/reviews/captcha')->assertOk()->json();
+    [$a, , $b] = explode(' ', $captcha['question']);
+
+    $this->postJson('/reviews/submit', [
+        'captcha_token' => $captcha['token'],
+        'captcha' => (int) $a + (int) $b,
+        'product_id' => $draft->id,
+        'rating' => 5,
+        'author_name' => 'Someone',
+        'author_email' => 'someone@example.com',
+        'content' => 'Reviewing something that is not for sale yet',
+    ])->assertStatus(422);
+
+    expect(Review::where('product_id', $draft->id)->count())->toBe(0);
+});
+
 /**
  * /api/cart/debug returned the five most recently active carts SITE-WIDE —
  * their ids, customer_ids and token prefixes — to anyone who opened the URL,

@@ -104,20 +104,29 @@ class ProductController extends Controller
             return response()->json(['error' => 'not_found'], 404);
         }
 
-        $review = Review::create([
-            // Same column fault on the write path: every submission through
-            // this endpoint failed at the insert.
-            'product_id' => $product->id,
-            'author'       => $data['author'],
-            'rating'       => $data['rating'],
-            'title'        => $data['title'] ?? '',
-            'body'         => $data['body'] ?? '',
-            'verified'     => 0,
-            'likes'        => 0,
-            'status'       => 'pending', // held for moderation in the admin Reviews screen
-            'created_at'   => now()->toISOString(),
+        // `author`, `body` and `likes` are not columns on `reviews` -- the
+        // table calls them author_name, content and helpful -- so every
+        // submission through this endpoint died on the INSERT with SQLSTATE
+        // HY000. The broken-filter lesson again: because nothing ever reached
+        // the response, nobody noticed the response handed back the whole
+        // Review model, and a Review carries author_email and ip. Fixing the
+        // insert alone would have switched that leak on.
+        Review::create([
+            'product_id'  => $product->id,
+            'author_name' => strip_tags($data['author']),
+            'rating'      => $data['rating'],
+            'title'       => strip_tags($data['title'] ?? ''),
+            'content'     => strip_tags($data['body'] ?? ''),
+            'verified'    => 0,
+            'helpful'     => 0,
+            'status'      => 'pending', // held for moderation in the admin Reviews screen
+            'ip'          => (string) $request->ip(),
         ]);
 
-        return response()->json($review, 201);
+        // Nothing but an acknowledgement. Named rather than the model, so a
+        // column added to `reviews` later is private by default -- and
+        // identical to what the honeypot branch above answers, so the response
+        // does not tell a bot which of the two branches it landed in.
+        return response()->json(['ok' => true], 201);
     }
 }
