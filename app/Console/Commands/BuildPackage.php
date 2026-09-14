@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Services\Update\UpdateGuard;
 use Illuminate\Console\Command;
 use ZipArchive;
 
@@ -42,6 +43,10 @@ class BuildPackage extends Command
         'CLAUDE.md', 'README.md', 'KBB-Master-Plan.md', 'KBB-Progress-Dashboard.html',
         'env.staging.txt', 'package.json', 'package-lock.json', 'composer.lock',
         'public-web-root/', 'vendor/', 'node_modules/', '.env',
+        // Repo-only. UpdateGuard rejects it twice over -- no allowed prefix and
+        // no extension -- and the server does not read it anyway: the installed
+        // version is the newest applied row in update_releases.
+        'VERSION',
     ];
 
     public function handle(): int
@@ -68,6 +73,20 @@ class BuildPackage extends Command
         }
         if ($kept === []) {
             $this->error('Every selected file is on the never-ship list.');
+
+            return self::FAILURE;
+        }
+
+        /* The same guard the server runs, rather than a copy of its rules.
+         * A package that fails here would have been rejected at upload with
+         * "Path outside the permitted areas", after the operator had already
+         * downloaded it -- so fail now, with the whole list at once. */
+        $verdict = app(UpdateGuard::class)->check($kept);
+        if (! ($verdict['ok'] ?? false)) {
+            $this->error('UpdateGuard would reject this package:');
+            foreach ((array) ($verdict['errors'] ?? []) as $e) {
+                $this->line('  '.$e);
+            }
 
             return self::FAILURE;
         }
