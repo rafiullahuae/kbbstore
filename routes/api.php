@@ -43,4 +43,13 @@ Route::post('/quiz/{id}/expert-request', [QuizController::class, 'expertRequest'
 Route::post('/checkout/session', [CheckoutController::class, 'session'])
     ->middleware('throttle:30,60');
 
+/*
+ * Payment webhooks. In the api group deliberately: a provider's server carries
+ * no session and no CSRF token, so these cannot live in the web group without
+ * an exemption in bootstrap/app.php. Each route carries a per-gateway URL
+ * secret, and the handler verifies the provider's own signature on top -- the
+ * secret only keeps unsigned noise off the handler.
+ */
+require __DIR__.'/payments-webhooks.php';
+
 });

@@ -278,6 +278,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::get('/pay-ship-rules',  [\App\Http\Controllers\Admin\PayShipRulesApiController::class, 'show']);
         Route::post('/pay-ship-rules', [\App\Http\Controllers\Admin\PayShipRulesApiController::class, 'save']);
 
+        // Gateway credentials. Inside this group because it reads and writes
+        // encrypted Stripe/Tabby/Tamara secrets; outside it, they would be
+        // world-readable.
+        require __DIR__.'/payments-admin.php';
+
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
