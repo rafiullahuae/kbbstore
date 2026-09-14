@@ -592,9 +592,27 @@ echo "== DIFFER (in both, different content) ==\n";
 foreach ($differ as $p) { printf("%s\t%d\t%s\n", $p, $actual[$p]['size'], substr($actual[$p]['sha'], 0, 16)); }
 if (! $differ) { echo "(none)\n"; }
 
-echo "\n== SERVER-ONLY (not in the repo at all) ==\n";
-foreach ($serverOnly as $p) { printf("%s\t%d\t%s\n", $p, $actual[$p]['size'], substr($actual[$p]['sha'], 0, 16)); }
-if (! $serverOnly) { echo "(none)\n"; }
+/* Server-only splits in two. Under the source paths a stray file is a hand
+ * patch and is listed in full; everywhere else it is generated or runtime
+ * output, so only a count per top-level directory is useful. */
+$srcPrefix = ['app/', 'resources/', 'routes/', 'config/', 'database/', 'bootstrap/', 'public/build/'];
+$srcOnly = $otherOnly = [];
+foreach ($serverOnly as $p) {
+    $isSrc = false;
+    foreach ($srcPrefix as $pre) { if (str_starts_with($p, $pre)) { $isSrc = true; break; } }
+    if ($isSrc) { $srcOnly[] = $p; } else { $otherOnly[] = $p; }
+}
+
+echo "\n== SERVER-ONLY under source paths (possible hand patches) ==\n";
+foreach ($srcOnly as $p) { printf("%s\t%d\t%s\n", $p, $actual[$p]['size'], substr($actual[$p]['sha'], 0, 16)); }
+if (! $srcOnly) { echo "(none)\n"; }
+
+echo "\n== SERVER-ONLY elsewhere, counted by folder ==\n";
+$byDir = [];
+foreach ($otherOnly as $p) { $d = strpos($p, '/') === false ? '(root files)' : substr($p, 0, strpos($p, '/')); $byDir[$d] = ($byDir[$d] ?? 0) + 1; }
+arsort($byDir);
+foreach ($byDir as $d => $n) { printf("%-24s %d\n", $d, $n); }
+if (! $byDir) { echo "(none)\n"; }
 
 echo "\n== MISSING HERE (in repo, absent on this server) ==\n";
 foreach ($missing as $p) { echo $p."\n"; }
