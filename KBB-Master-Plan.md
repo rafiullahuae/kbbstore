@@ -313,6 +313,23 @@ something half-right.
   response, only the safely-echoed input the visitor typed; an empty, unsubmitted form
   shows no error — *2.60.57*
 
+- [x] **Account area repaired** — `/my-account/` was serving the **login form to signed-in
+      customers**: both controllers resolved the shopper through `auth()->guard()`, the
+      *default* guard, which is `web` (the admin users table). Inside the `auth:customer` group
+      it resolved correctly by accident, because Laravel's middleware calls `shouldUse()` on the
+      guard it matched; `/my-account` carries no middleware, so there it did not. `actingAs()`
+      masks this exactly, which is why no test caught it. Order detail also printed address keys
+      checkout never writes, so the **recipient's name was blank on every order**, and read
+      orders through the query builder, so a trashed order was still served. Track order was an
+      order-number oracle — unthrottled, with distinguishable answers — *2.60.116*
+- [x] **Password reset and email verification** — the forgot form had been posting to a route
+      that did not exist for as long as the view has existed. A reset clears `legacy_password`
+      in the same save, without which the leaked WordPress password keeps working. The customers
+      broker pointed at a table keyed by email alone, so a customer and an admin sharing an
+      address could redeem each other's token. Both open Laravel advisories are mitigated rather
+      than relied on: the public form does not use the `email` rule, and links carry an HMAC over
+      a claim containing no URL instead of a Laravel signed URL — *2.60.116*
+
 ## Admin — Order detail page  *(new — built from Rafi's own WooCommerce reference screenshot)*
 
 - [x] **Status list expanded** to `draft`/`pending`/`processing`/`onhold`/`shipped`/
@@ -609,18 +626,22 @@ something half-right.
       server and left on disk for this project's entire history. Repaired across all nine
       tables that a broken `->after()` chain could have left incomplete, and the builder now
       sets the flag — *2.60.111 → .114*. First confirmed live order: **#10009**
-- [ ] **Order-received page — full redesign.** It currently shows only order number, total,
-      payment method and delivery. Owner wants it to carry the next actions and the detail a
-      shopper looks for: **Sign in to your account** (and account creation for a guest who
-      did not tick it at checkout), **Go to home**, **Track your order**, and a **complete
-      order summary** — line items with images, quantities, prices, the discount, shipping,
-      any gift fee and the total — with **show/hide** so a long order does not bury the
-      actions below the fold. Applies to `resources/views/store/checkout-success.blade.php`
-- [ ] **Mobile checkout: "View full summary" does not open the summary.** The control is
-      present on the mobile checkout and does nothing when tapped. The **Browsed** tab has
-      the same fault. Both are the pattern this project keeps finding — markup and styling
-      present, nothing listening — so check the handler is bound and reachable in the shipped
-      bundle, not only in `resources/js`
+- [x] **Order-received page — full redesign** — sign in or your orders, track the order, go
+      home, and the full itemised summary with show/hide past three lines (a plain `<details>`,
+      so the toggle cannot break). A guest is asked to set a password rather than offered a
+      sign-in they cannot use, and the card replaces that step once they finish — driven by the
+      session, never by whether the address already has an account, which would be an
+      enumeration oracle. Rebuilding it also closed a live leak: the page looked orders up by
+      number from the query string with **no ownership check at all**, and numbers are
+      sequential — *2.60.115*
+- [x] **Mobile checkout: "View full summary" and the Browsed tab** — both dead. The handler set
+      `open` on `#kbbPanels` while the CSS keys the expansion off `.summary.open`, so the class
+      landed on an element no rule matches and the panel stayed clamped at its 148px peek. One
+      root cause for both — *2.60.115*
+- [x] **Add from Browsed, silently** — no drawer, no tab switch, a small confirmation, and the
+      row goes. Summary, payment options, mobile bag strip with its free-delivery bar, and the
+      browsed count all update from one request, because `PayShipRules` measures its COD window
+      against the total and a single add can withdraw the selected method — *2.60.116*
 
 ## Phase 9 — Content pages
 
