@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Models\Address;
+use App\Models\Customer;
 use App\Services\SettingsService;
 use App\Support\Countries;
 use Illuminate\Contracts\View\View;
@@ -128,9 +129,25 @@ class AddressController extends Controller
         ]);
     }
 
-    private function customer()
+    /**
+     * The signed-in shopper.
+     *
+     * `auth('customer')`, not `auth()->guard()`: the default guard is `web`
+     * (the admin-side `users` table). The bare call resolved correctly here
+     * only because the `auth:customer` middleware calls shouldUse() on the
+     * guard it matched — a coincidence of route wiring, and it had already
+     * failed on the account routes that carry no middleware. Named guard, no
+     * coincidence. A 404 rather than a fatal if it is ever reached unguarded;
+     * the ownership model below is `$customer->addresses()` and it needs a
+     * customer to be a model.
+     */
+    private function customer(): Customer
     {
-        return auth()->guard()->user();
+        $customer = auth('customer')->user();
+
+        abort_unless($customer instanceof Customer, 404);
+
+        return $customer;
     }
 
     private function find(int $id): Address
