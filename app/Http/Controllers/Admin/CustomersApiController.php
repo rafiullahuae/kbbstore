@@ -96,6 +96,34 @@ class CustomersApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        /*
+         * A database error here is reported, not swallowed.
+         *
+         * This screen returned a bare 500 "Server Error" on the live server
+         * while answering 200 in every test, and with APP_DEBUG off there was
+         * nothing to go on — the reason took a round trip through the owner and
+         * a diagnostic release to even name. The endpoint is inside the
+         * auth:admin group, so the person reading this is already the store
+         * owner: telling them "Unknown column 'customers.notes'" costs nothing
+         * and saves that round trip.
+         *
+         * Only the driver's message is returned, never the SQL and never the
+         * bindings — bindings carry the search term and the operator's filters.
+         */
+        try {
+            return $this->listing($request);
+        } catch (\Illuminate\Database\QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'The customer list could not be read from the database.',
+                'db_error' => $e->getPrevious()?->getMessage() ?? $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function listing(Request $request): JsonResponse
+    {
         $page = max(1, (int) $request->query('page', 1));
         $perPage = $this->clampPerPage((int) $request->query('per_page', self::PER_PAGE_DEFAULT));
         $segment = $this->segment($request);
