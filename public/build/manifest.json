@@ -1,0 +1,51 @@
+{
+  "resources/css/kbb/kbb-account.css": {
+    "file": "assets/kbb-account-BmOMWAW7.css",
+    "src": "resources/css/kbb/kbb-account.css",
+    "isEntry": true
+  },
+  "resources/css/kbb/kbb-cart.css": {
+    "file": "assets/kbb-cart-B2UMZnZO.css",
+    "src": "resources/css/kbb/kbb-cart.css",
+    "isEntry": true
+  },
+  "resources/css/kbb/kbb-checkout.css": {
+    "file": "assets/kbb-checkout-BfZSZoCh.css",
+    "src": "resources/css/kbb/kbb-checkout.css",
+    "isEntry": true
+  },
+  "resources/css/kbb/kbb-grid-skins.css": {
+    "file": "assets/kbb-grid-skins-BYV5y8gk.css",
+    "src": "resources/css/kbb/kbb-grid-skins.css",
+    "isEntry": true
+  },
+  "resources/css/kbb/kbb-product.css": {
+    "file": "assets/kbb-product-BBXNeOsS.css",
+    "src": "resources/css/kbb/kbb-product.css",
+    "isEntry": true
+  },
+  "resources/css/kbb/kbb-shop.css": {
+    "file": "assets/kbb-shop-CZHTSe0x.css",
+    "src": "resources/css/kbb/kbb-shop.css",
+    "isEntry": true
+  },
+  "resources/css/kbb/kbb.css": {
+    "file": "assets/kbb-RnaO7aY8.css",
+    "src": "resources/css/kbb/kbb.css",
+    "isEntry": true
+  },
+  "resources/css/kbb/sorina-reviews.css": {
+    "file": "assets/sorina-reviews-C75lcdnj.css",
+    "src": "resources/css/kbb/sorina-reviews.css",
+    "isEntry": true
+  },
+  "resources/js/kbb/app.js": {
+    "file": "assets/app-DAPcbx-2.js",
+    "name": "app",
+    "src": "resources/js/kbb/app.js",
+    "isEntry": true,
+    "css": [
+      "assets/kbb-RnaO7aY8.css"
+    ]
+  }
+}
