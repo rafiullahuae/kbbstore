@@ -601,6 +601,26 @@ something half-right.
       amended**, and to be tested against a real order
 - [x] Coupons and gift notes end to end — coupons were already complete including removal (`CartController::coupon` handles both paths) and never ticked. Gift notes added with their own column, a priced gift-wrap option controlled at Store → Delivery & Shipping → Gift wrapping, and the dead `customer_note` path wired at both ends — *coupons verified 2.60.91, gift notes 2.60.78, pricing 2.60.82*
 - [x] Guest checkout → account creation — checkout already made a `Customer` row for every guest; it had no password. An optional tick sets one, written only into a blank and never over an existing password, with `legacy_password` counting as set so the 3,712 imported customers cannot be trampled. Declines silently to avoid an enumeration oracle. No email, so it does not wait on the mail decision — *2.60.76*
+- [x] **Placing an order works again** — it had not since 2.60.85. The `orders` table was
+      missing `is_gift`, `gift_note` and `gift_fee`, so every submission failed on the insert
+      with a 500. The columns were missing because **no update package has ever run a
+      migration**: `UpdateRunner` gates them on a `migrations` flag in `update.json` that
+      `hasMigrations()` reads and nothing ever set, so migration files were copied to the
+      server and left on disk for this project's entire history. Repaired across all nine
+      tables that a broken `->after()` chain could have left incomplete, and the builder now
+      sets the flag — *2.60.111 → .114*. First confirmed live order: **#10009**
+- [ ] **Order-received page — full redesign.** It currently shows only order number, total,
+      payment method and delivery. Owner wants it to carry the next actions and the detail a
+      shopper looks for: **Sign in to your account** (and account creation for a guest who
+      did not tick it at checkout), **Go to home**, **Track your order**, and a **complete
+      order summary** — line items with images, quantities, prices, the discount, shipping,
+      any gift fee and the total — with **show/hide** so a long order does not bury the
+      actions below the fold. Applies to `resources/views/store/checkout-success.blade.php`
+- [ ] **Mobile checkout: "View full summary" does not open the summary.** The control is
+      present on the mobile checkout and does nothing when tapped. The **Browsed** tab has
+      the same fault. Both are the pattern this project keeps finding — markup and styling
+      present, nothing listening — so check the handler is bound and reachable in the shipped
+      bundle, not only in `resources/js`
 
 ## Phase 9 — Content pages
 
