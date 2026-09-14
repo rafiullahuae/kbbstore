@@ -551,6 +551,14 @@ Route::fallback(function () {
 });
 
 /*
+ * The order-received page's "finish your account" form. Top level, inside the
+ * web group: it is posted by a shopper, so it needs the session and the CSRF
+ * token, not the admin-api guard. Registered before the Phase 9 file because
+ * that one ends in a catch-all root-segment route.
+ */
+require __DIR__.'/order-received.php';
+
+/*
  * Required last, and that placement is load-bearing. The final route in this
  * file matches a single path segment at the site root -- the shape of every
  * storefront URL there is -- so registration order is what keeps /cart reaching
