@@ -92,20 +92,50 @@ class ProductController extends Controller
             'reviewsCss' => $this->reviewsCss(),
             'bundle' => $this->bundle($product),
             'vatLine' => $this->vatLine(),
-            'seoCtx' => [
-                'type' => 'product',
-                'description' => $product->short_description ?? null,
-                'image' => $product->image,
-                'product' => [
-                    'name' => $product->name,
-                    'brand' => $product->brand?->name,
-                    'sku' => $product->sku,
-                    'price_aed' => \App\Support\Money::toAed($product->effectivePrice()),
-                    'stock' => $product->stock_status === 'instock' ? 1 : 0,
-                    'rating' => $summary['average'] ?: null,
-                    'reviews' => $summary['total'] ?: null,
-                ],
-            ],
+            // $summary is built at the top of this method but was never
+            // imported here, so the two review lines below referenced a
+            // variable that does not exist inside the closure. PHP 8 raises
+            // a warning, Laravel promotes it to an ErrorException, and every
+            // product page returned 500.
+            'seoCtx' => (function () use ($product, $summary) {
+                $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+                // Per-product SEO overrides — the `seo` json column already
+                // existed on this table, commented "Yoast import target"
+                // from the original schema, but nothing had ever read from
+                // it: not the Yoast importer (not built yet), not this
+                // controller. Wiring it in now means the storage is
+                // immediately useful the moment anything writes to it —
+                // by hand, by a future importer, or by the eventual
+                // per-product editor — rather than sitting inert until an
+                // editor UI exists to justify reading it.
+                $override = is_array($product->seo) ? $product->seo : [];
+
+                $ctx = [
+                    'type' => 'product',
+                    'description' => $override['desc'] ?? $product->short_description ?? null,
+                    'image' => $override['og_image'] ?? $product->image,
+                    'url' => !empty($override['canonical']) ? $override['canonical'] : ($base . $product->url()),
+                    'breadcrumb' => $this->breadcrumbTrail($product),
+                    'noindex' => !empty($override['noindex']),
+                    'product' => [
+                        'name' => $product->name,
+                        'brand' => $product->brand?->name,
+                        'sku' => $product->sku,
+                        'price_aed' => \App\Support\Money::toAed($product->effectivePrice()),
+                        'stock' => $product->stock_status === 'instock' ? 1 : 0,
+                        'sale_ends_at' => $product->sale_ends_at?->toDateString(),
+                        'rating' => $summary['average'] ?: null,
+                        'reviews' => $summary['total'] ?: null,
+                    ],
+                ];
+
+                if (!empty($override['title'])) {
+                    $ctx['title'] = $override['title'];
+                    $ctx['title_is_final'] = true;
+                }
+
+                return $ctx;
+            })(),
         ]);
     }
 
@@ -117,6 +147,32 @@ class ProductController extends Controller
      * demo content is on, labelled placeholders top it up so the strip can be
      * seen — never replacing a real image.
      */
+    /**
+     * Home → Shop → [Category, if the product has one] → Product name.
+     * `categories` is already eager-loaded on the product query above, so
+     * this costs nothing extra — the first assigned category is used
+     * rather than every one, since a breadcrumb showing multiple parallel
+     * parents doesn't map to how BreadcrumbList is meant to be read.
+     */
+    private function breadcrumbTrail(Product $product): array
+    {
+        $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+        $trail = [
+            ['name' => 'Home', 'url' => $base . '/'],
+            ['name' => 'Shop', 'url' => $base . '/shop/'],
+        ];
+
+        $category = $product->categories->first();
+
+        if ($category) {
+            $trail[] = ['name' => $category->name, 'url' => $base . $category->url()];
+        }
+
+        $trail[] = ['name' => $product->name, 'url' => $base . $product->url()];
+
+        return $trail;
+    }
+
     private function gallery(Product $product): array
     {
         $images = array_values(array_unique(array_filter(array_merge(

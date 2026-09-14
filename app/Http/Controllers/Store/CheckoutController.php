@@ -140,6 +140,16 @@ class CheckoutController extends Controller
 
         $data = $request->validate([
             'billing_email' => ['required', 'email', 'max:160'],
+            // Guest checkout -> account. Both optional: leaving them alone
+            // keeps the existing guest flow byte-for-byte unchanged.
+            'create_account' => ['nullable', 'boolean'],
+            'account_password' => ['nullable', 'required_if:create_account,1', 'string', 'min:8', 'max:72'],
+            // Order note and gift message. Both optional; 600 characters is
+            // generous for a gift card and short enough that a paste of an
+            // entire email does not end up printed on one.
+            'customer_note' => ['nullable', 'string', 'max:600'],
+            'is_gift' => ['nullable', 'boolean'],
+            'gift_note' => ['nullable', 'string', 'max:600'],
             // Optional, matching the live checkout where Phone is marked
             // (optional). Requiring it here would reject a valid order.
             'billing_phone' => ['nullable', 'string', 'max:40'],
@@ -198,15 +208,48 @@ class CheckoutController extends Controller
             }
         }
 
-        $fee = $data['payment_method'] === 'cod'
-            ? (int) $this->settings->get('cod_fee', 0)
+        // Gift fee is read from settings, never from the request. The form
+        // posts whether the shopper wants wrapping; how much that costs is the
+        // merchant's to decide, and a posted amount would be a price the
+        // browser got to choose.
+        $giftFee = ($request->boolean('is_gift') && $this->settings->get('gift_enabled', '1'))
+            ? (int) $this->settings->get('gift_fee', '1500')
             : 0;
+
+        $request->session()->forget('kbb_gift');
+
+        $fee = $giftFee + ($data['payment_method'] === 'cod'
+            ? (int) $this->settings->get('cod_fee', 0)
+            : 0);
 
         $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $request) {
             $customer = $request->user('customer') ?? Customer::firstOrCreate(
                 ['email' => mb_strtolower($data['billing_email'])],
                 ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
             );
+
+            // A guest who asked for an account gets a usable password on the
+            // row firstOrCreate already made for them. `password` is cast
+            // `hashed`, so assigning the plain value hashes it.
+            //
+            // The guard matters more than the feature. Without it, typing a
+            // stranger's email into checkout would overwrite their password
+            // and hand over their account -- so this only ever fills a blank,
+            // never replaces one, and legacy_password counts as set: those
+            // 3,712 imported customers have a real WordPress password waiting
+            // to be upgraded on first login, and must not be trampled.
+            //
+            // Silent when it declines. Telling the person at checkout that an
+            // account already exists for an address they typed is an account
+            // enumeration oracle, and the order itself is fine either way.
+            if (! $request->user('customer')
+                && $request->boolean('create_account')
+                && ($data['account_password'] ?? '') !== ''
+                && $customer->password === null
+                && $customer->legacy_password === null
+            ) {
+                $customer->forceFill(['password' => $data['account_password']])->save();
+            }
 
             $address = [
                 'first_name' => $first, 'last_name' => $last,
@@ -222,6 +265,21 @@ class CheckoutController extends Controller
                 'phone' => $data['billing_phone'] ?? null,
                 'status' => 'pending',
                 'currency' => 'AED',
+                // customer_note has existed on this table from the start, but
+                // nothing ever wrote to it and the admin never showed it, so
+                // the column was dead at both ends. Wired here and rendered on
+                // the order screen in the same package.
+                'customer_note' => $data['customer_note'] ?? null,
+                'is_gift' => $request->boolean('is_gift'),
+                // The amount charged, not the amount configured. Recomputing
+                // this later from the setting would misreport every past order
+                // the first time the price changes.
+                'gift_fee' => $giftFee,
+                // Only kept when the gift box is actually ticked -- otherwise
+                // an untouched-but-populated field (browser autofill, a
+                // shopper changing their mind) would print a gift card nobody
+                // asked for.
+                'gift_note' => $request->boolean('is_gift') ? ($data['gift_note'] ?? null) : null,
                 'billing_address' => $address,
                 'shipping_address' => $address,
                 'subtotal' => $totals['subtotal'],
@@ -234,6 +292,7 @@ class CheckoutController extends Controller
                 'payment_method' => $data['payment_method'],
                 'coupon_code' => $totals['coupon_code'],
                 'whatsapp_optin' => $request->boolean('billing_kbb_whatsapp'),
+                'ip_address' => $request->ip(),
             ]);
 
             foreach ($cart->items as $item) {
@@ -383,6 +442,57 @@ class CheckoutController extends Controller
      *
      * @return array{0: array, 1: ?string, 2: array}
      */
+    /**
+     * Gift wrapping on or off, then fresh totals.
+     *
+     * The choice is kept in the session rather than posted with every
+     * subsequent request, because two other paths recompute these totals --
+     * the country-change refresh and an ordinary reload -- and neither sends
+     * the checkbox. Holding it server-side means all three agree instead of
+     * the fee disappearing the moment someone changes emirate.
+     */
+    public function gift(Request $request): JsonResponse
+    {
+        $request->validate(['is_gift' => ['nullable', 'boolean']]);
+
+        if (! $this->settings->get('gift_enabled', '1')) {
+            return response()->json(['ok' => false, 'error' => 'Gift wrapping is not available.'], 422);
+        }
+
+        $on = $request->boolean('is_gift');
+        $on ? $request->session()->put('kbb_gift', true) : $request->session()->forget('kbb_gift');
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json(['ok' => false, 'error' => 'Your bag is empty.'], 422);
+        }
+
+        $country = (string) ($request->input('country') ?: 'AE');
+        [, , $totals] = $this->rateContext($cart, $country, $request->input('state'));
+
+        $gift = $on ? (int) $this->settings->get('gift_fee', '1500') : 0;
+        $cod = (int) $this->settings->get('cod_fee', 0);
+
+        return response()->json([
+            'ok' => true,
+            'on' => $on,
+            'giftFee' => \App\Support\Money::format($gift),
+            'total' => \App\Support\Money::format((int) $totals['total'] + $gift),
+            'totalWithFee' => $cod > 0
+                ? \App\Support\Money::format((int) $totals['total'] + $cod + $gift)
+                : null,
+        ]);
+    }
+
+    /** Gift fee in fils for this request, or zero. Settings are the price. */
+    private function giftFee(Request $request): int
+    {
+        return ($request->session()->get('kbb_gift') && $this->settings->get('gift_enabled', '1'))
+            ? (int) $this->settings->get('gift_fee', '1500')
+            : 0;
+    }
+
     private function rateContext($cart, ?string $country, ?string $state): array
     {
         $rates = $this->shipping->ratesFor($country, $state,
@@ -444,15 +554,18 @@ class CheckoutController extends Controller
             'shipping' => $totals['shipping'] > 0
                 ? \App\Support\Money::format((int) $totals['shipping'])
                 : '<span style="color:var(--green);font-weight:700">Free</span>',
-            'total' => \App\Support\Money::format((int) $totals['total']),
+            'total' => \App\Support\Money::format((int) $totals['total'] + $this->giftFee($request)),
             // The COD-fee-inclusive total, kept in step with the country so
             // it is never wrong after switching country while Cash on
             // delivery happens to be selected. The fee itself is flat and
             // never changes; only the total under it does.
-            'totalWithFee' => (function () use ($totals) {
+            'totalWithFee' => (function () use ($totals, $request) {
                 $fee = (int) $this->settings->get('cod_fee', 0);
+                $gift = $this->giftFee($request);
 
-                return $fee > 0 ? \App\Support\Money::format((int) $totals['total'] + $fee) : null;
+                return $fee > 0
+                    ? \App\Support\Money::format((int) $totals['total'] + $fee + $gift)
+                    : null;
             })(),
             'vat' => $totals['vat'] ? ['label' => $totals['vat']['label'], 'formatted' => $totals['vat']['formatted']] : null,
         ]);

@@ -11,9 +11,9 @@
     @else
         <div class="acw-orders">
             @foreach ($orders as $order)
-                <div class="acw-order"><b>#{{ $order->number ?? $order->id }}</b>
+                <a class="acw-order" href="{{ Url::to('/my-account/orders/' . $order->id) }}"><b>#{{ $order->order_number ?? $order->id }}</b>
                     <span>{{ $order->created_at ?? '' }}</span>
-                    <span class="acw-status">{{ ucfirst((string) ($order->status ?? 'pending')) }}</span></div>
+                    <span class="acw-status">{{ ucfirst((string) ($order->status ?? 'pending')) }}</span></a>
             @endforeach
         </div>
     @endif

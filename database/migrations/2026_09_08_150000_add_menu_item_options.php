@@ -19,9 +19,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('menu_items', function (Blueprint $t) {
-            $t->string('highlight_color', 9)->nullable()->after('badge');
-            $t->string('visibility', 10)->default('always')->after('highlight_color');
-            $t->boolean('new_tab')->default(false)->after('visibility');
+            if (! Schema::hasColumn('menu_items', 'highlight_color')) {
+                $t->string('highlight_color', 9)->nullable()->after('badge');
+            }
+            if (! Schema::hasColumn('menu_items', 'visibility')) {
+                $t->string('visibility', 10)->default('always')->after('highlight_color');
+            }
+            if (! Schema::hasColumn('menu_items', 'new_tab')) {
+                $t->boolean('new_tab')->default(false)->after('visibility');
+            }
         });
     }
 

@@ -17,8 +17,11 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminController extends Controller
 {
-    // statuses that count as real revenue (mirror the storefront's derived-value rule)
-    private const REVENUE_STATUSES = ['processing', 'onhold', 'completed'];
+    // Kept here as an alias so nothing else in this file needs touching —
+    // the actual definition now lives on Order::REAL_STATUSES, shared with
+    // Catalog → Reorder / Products' order-count. See that constant's own
+    // comment for why.
+    private const REVENUE_STATUSES = \App\Models\Order::REAL_STATUSES;
 
     /** GET /admin-api/stats — dashboard KPIs + recent orders. */
     public function stats()
@@ -64,12 +67,16 @@ class AdminController extends Controller
     /** GET /admin-api/products — full catalog for the admin table. */
     public function products()
     {
-        $rows = Product::orderBy('position')->orderBy('id')->get()->map(fn (Product $p) => [
+        // Eager-loaded. `brand` and `category` are belongsTo relations, not
+        // columns -- reading them per row without this fires two extra queries
+        // each, which on 671 products is over 1,300 queries for one screen.
+        $rows = Product::with(['brand:id,name', 'category:id,name'])
+            ->orderBy('position')->orderBy('id')->get()->map(fn (Product $p) => [
             'id'         => $p->id,
             'name'       => $p->name,
-            'brand'      => $p->brand,
+            'brand'      => $p->brand?->name,
             'sku'        => $p->sku,
-            'category'   => $p->category,
+            'category'   => $p->category?->name,
             'price_aed'  => $p->price !== null ? (int) round($p->price / 100) : null,
             'sale_aed'   => $p->sale_price !== null ? (int) round($p->sale_price / 100) : null,
             'stock'      => $p->stock,
@@ -77,14 +84,34 @@ class AdminController extends Controller
             'slug'       => $p->slug,
         ]);
 
-        // category + brand rollups the Catalog tabs display
-        $categories = Product::select('category', DB::raw('count(*) as n'))
-            ->whereNotNull('category')->groupBy('category')->orderBy('category')->get()
-            ->map(fn ($r) => ['name' => $r->category, 'count' => (int) $r->n]);
+        // Category and brand rollups for the Catalog tabs.
+        //
+        // These selected flat `category` and `brand` columns that have never
+        // existed on this table -- the schema has always used brand_id and
+        // category_id foreign keys -- so every request raised
+        // SQLSTATE[42S22] and the whole endpoint 500'd. Counted through the
+        // joins instead.
+        //
+        // Counts follow the primary category_id, which is what the `category`
+        // value on each row above shows. The many-to-many in `category_product`
+        // would give a larger number that does not reconcile with the table.
+        $categories = DB::table('categories')
+            ->join('products', 'products.category_id', '=', 'categories.id')
+            ->whereNull('products.deleted_at')
+            ->select('categories.name', DB::raw('count(*) as n'))
+            ->groupBy('categories.id', 'categories.name')
+            ->orderBy('categories.name')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'count' => (int) $r->n]);
 
-        $brands = Product::select('brand', DB::raw('count(*) as n'))
-            ->whereNotNull('brand')->groupBy('brand')->orderByDesc('n')->get()
-            ->map(fn ($r) => ['name' => $r->brand, 'count' => (int) $r->n]);
+        $brands = DB::table('brands')
+            ->join('products', 'products.brand_id', '=', 'brands.id')
+            ->whereNull('products.deleted_at')
+            ->select('brands.name', DB::raw('count(*) as n'))
+            ->groupBy('brands.id', 'brands.name')
+            ->orderByDesc('n')
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'count' => (int) $r->n]);
 
         return response()->json([
             'products'   => $rows,
@@ -367,19 +394,44 @@ class AdminController extends Controller
             'org_name', 'org_logo', 'org_type',
             // Sitemap / robots
             'sitemap_enabled', 'robots_txt',
+            // Gift wrapping (Store -> Delivery & Shipping -> Gift wrapping).
+            // Absent from this list, Save reported success and wrote nothing:
+            // the loop below skips unknown keys and returns ok regardless.
+            'gift_enabled', 'gift_fee',
         ];
 
         $incoming = $request->input('settings', []);
         if (!is_array($incoming)) return response()->json(['error' => 'invalid'], 422);
 
         $saved = 0;
+        $rejected = [];
+
+        // Through SettingsService::set() rather than Setting::updateOrCreate().
+        // all() is a rememberForever cache and Setting::map() keeps a second
+        // one; writing the row directly left both holding the old value, so
+        // every setting on this screen -- COD fee, VAT rate, the free-shipping
+        // threshold -- reached the database and was then ignored by the
+        // storefront until something else happened to flush them. set() clears
+        // both caches.
+        $settings = app(\App\Services\SettingsService::class);
+
         foreach ($incoming as $key => $value) {
-            if (!in_array($key, $allowed, true)) continue;
-            \App\Models\Setting::updateOrCreate(['key' => $key], ['value' => (string) $value]);
+            if (! in_array($key, $allowed, true)) {
+                $rejected[] = $key;
+                continue;
+            }
+
+            $settings->set($key, (string) $value);
             $saved++;
         }
 
-        return response()->json(['ok' => true, 'saved' => $saved]);
+        // Reported rather than swallowed: a silent skip is how an unlisted key
+        // can look saved for days.
+        return response()->json(array_filter([
+            'ok' => true,
+            'saved' => $saved,
+            'rejected' => $rejected ?: null,
+        ], static fn ($v) => $v !== null));
     }
 
     /** GET /admin-api/reviews?status= — moderation list (all, or by status). */
@@ -388,20 +440,23 @@ class AdminController extends Controller
         $q = \App\Models\Review::query();
         if ($request->filled('status')) $q->where('status', $request->query('status'));
 
-        // product-name lookup by slug (reviews key on product_slug)
-        $names = Product::pluck('name', 'slug');
-
-        $rows = $q->orderByDesc('id')->get()->map(function ($r) use ($names) {
+        // Four of the fields below were reading columns that do not exist on
+        // `reviews`: product_slug, author, body and likes. Eloquent returns
+        // null for a missing attribute rather than raising, so the screen did
+        // not error -- it just showed a blank author, blank text and no
+        // product name against every review. The real columns are product_id
+        // (a relation), author_name, content and helpful.
+        $rows = $q->with('product:id,name,slug')->orderByDesc('id')->get()->map(function ($r) {
             return [
                 'id'           => $r->id,
-                'product_slug' => $r->product_slug,
-                'product'      => $names[$r->product_slug] ?? $r->product_slug,
-                'author'       => $r->author,
+                'product_slug' => $r->product?->slug,
+                'product'      => $r->product?->name ?? '—',
+                'author'       => $r->author_name,
                 'rating'       => (int) $r->rating,
                 'title'        => $r->title,
-                'body'         => $r->body,
+                'body'         => $r->content,
                 'verified'     => (bool) $r->verified,
-                'likes'        => (int) $r->likes,
+                'likes'        => (int) $r->helpful,
                 'reply'        => $r->reply,
                 'status'       => $r->status,
                 'created_at'   => $r->created_at,
@@ -520,7 +575,7 @@ class AdminController extends Controller
         if (!$o) return response()->json(['error' => 'not_found'], 404);
 
         $data = $request->validate([
-            'status' => 'required|string|in:pending,processing,onhold,completed,cancelled,refunded,failed',
+            'status' => 'required|string|in:draft,pending,processing,onhold,shipped,completed,cancelled,refunded,failed',
         ]);
 
         $o->status = $data['status'];

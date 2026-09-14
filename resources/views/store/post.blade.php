@@ -6,7 +6,6 @@
 @endverbatim
 {!! $seo ?? '' !!}
 @verbatim
-<meta name="description" id="metaDesc" content="Skincare tips from K-Beauty Bliss.">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#fff;--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#E0567B;--pink-deep:#C13E63;
@@ -81,74 +80,49 @@
 </nav>
 
 <article id="article">
-  <div class="crumb"><a href="/">Home</a> / <a href="/blog">Journal</a></div>
-  <div id="head"></div>
+  @endverbatim
+  <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">Home</a> / <a href="{{ \App\Support\Url::to('/skincare-guide/') }}">Journal</a></div>
+  @if($post->tag)<span class="atag">{{ $post->tag }}</span>@endif
+  <h1>{{ $post->title }}</h1>
+  <div class="ameta"><span>{{ $post->author ?: 'K-Beauty Bliss' }}</span> · <span>{{ optional($post->published_at)->format('j F Y') }}</span></div>
+  <div class="cover" style="{{ $post->cover && (str_contains($post->cover, 'gradient') || str_contains($post->cover, '#') || str_contains($post->cover, 'url')) ? 'background:' . $post->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
+    @if(!$post->cover || !(str_contains($post->cover, 'url') || str_contains($post->cover, 'http')))
+      {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$post->tag] ?? '✨' }}
+    @endif
+  </div>
+  <div class="abody">{!! $post->body ?: '<p>' . e($post->excerpt) . '</p>' !!}</div>
+  @verbatim
 </article>
 <div class="backrow"><a href="/blog">← Back to the Journal</a></div>
 
-<div class="wrap"><div class="more" id="more" style="display:none">
-  <h2>More from the Journal</h2>
-  <div class="mgrid" id="mgrid"></div>
-</div></div>
+<div class="wrap">
+@endverbatim
+@unless($related->isEmpty())
+  @verbatim
+  <div class="more" id="more">
+    <h2>More from the Journal</h2>
+    <div class="mgrid" id="mgrid">
+  @endverbatim
+  @foreach($related as $r)
+    <a class="mcard" href="{{ \App\Support\Url::to('/skincare-guide/' . $r->slug . '/') }}">
+      <div class="mcover" style="{{ $r->cover && (str_contains($r->cover, 'gradient') || str_contains($r->cover, '#') || str_contains($r->cover, 'url')) ? 'background:' . $r->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
+        {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$r->tag] ?? '✨' }}
+      </div>
+      <div class="mc"><div class="mtag">{{ $r->tag }}</div><div class="mt">{{ $r->title }}</div></div>
+    </a>
+  @endforeach
+  @verbatim
+    </div>
+  </div>
+  @endverbatim
+@endunless
+@verbatim
+</div>
 
 <footer><div class="wrap fin">
   <div>© K-Beauty Bliss · Authentic Korean beauty in the UAE</div>
   <div><a href="/shop">Shop</a> · <a href="/skin-quiz">Skin Quiz</a> · <a href="/blog">Journal</a></div>
 </div></footer>
-
-<script>
-  const $=s=>document.querySelector(s);
-  const API='';
-  const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
-  const fmt=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});};
-  const EMO={Routine:'✍️',Ingredients:'🌿',SPF:'☀️',News:'📰'};
-  const coverStyle=c=>/gradient|#|url/.test(c||'')?`background:${c}`:'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)';
-  const SEED={
-    'ten-step-routine-simplified-uae-heat':{slug:'ten-step-routine-simplified-uae-heat',title:'The 10-step routine, simplified for UAE heat',tag:'Routine',author:'K-Beauty Bliss',cover:'linear-gradient(135deg,#FFF0F4,#FCE0E8)',created_at:'2026-06-29',excerpt:'The lightweight version that actually works.',body:'<p>The famous Korean 10-step routine was never meant to be ten steps every day — especially not in Gulf heat.</p><h3>The non-negotiables</h3><p>Cleanse, hydrate, protect. A gentle low-pH cleanser, a hydrating toner, a lightweight moisturiser, and SPF are enough for most people here.</p>'}
-  };
-  const slugify=s=>(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  function applySEO(p){
-    const SITE='https://kbeautybliss.com', url=SITE+'/blog/'+encodeURIComponent(p.slug);
-    document.title=p.title+' · The Glow Journal';
-    const desc=(p.excerpt||'').slice(0,155);
-    let md=$('#metaDesc'); md.setAttribute('content',desc);
-    let c=document.head.querySelector('link[rel="canonical"]');if(!c){c=document.createElement('link');c.rel='canonical';document.head.appendChild(c);}c.href=url;
-    const upm=(a,k,v)=>{let m=document.head.querySelector(`meta[${a}="${k}"]`);if(!m){m=document.createElement('meta');m.setAttribute(a,k);document.head.appendChild(m);}m.setAttribute('content',v);};
-    upm('property','og:type','article');upm('property','og:title',p.title);upm('property','og:description',desc);upm('property','og:url',url);upm('name','twitter:card','summary_large_image');
-    const ld={"@context":"https://schema.org","@type":"BlogPosting","headline":p.title,"description":desc,"datePublished":p.created_at,"dateModified":p.updated_at||p.created_at,"author":{"@type":"Organization","name":p.author||"K-Beauty Bliss"},"publisher":{"@type":"Organization","name":"K-Beauty Bliss"},"mainEntityOfPage":url,"articleSection":p.tag||undefined};
-    let s=document.getElementById('ld-post');if(!s){s=document.createElement('script');s.type='application/ld+json';s.id='ld-post';document.head.appendChild(s);}
-    s.textContent=JSON.stringify(ld);
-  }
-  function renderPost(p){
-    applySEO(p);
-    $('#head').innerHTML=`
-      ${p.tag?`<span class="atag">${esc(p.tag)}</span>`:''}
-      <h1>${esc(p.title)}</h1>
-      <div class="ameta"><span>${esc(p.author||'K-Beauty Bliss')}</span> · <span>${fmt(p.created_at)}</span></div>
-      <div class="cover" style="${coverStyle(p.cover)}">${/url\(|http/.test(p.cover||'')?'':(EMO[p.tag]||'✨')}</div>
-      <div class="abody">${p.body||'<p>'+esc(p.excerpt||'')+'</p>'}</div>`;
-  }
-  async function renderMore(slug){
-    try{
-      const r=await fetch(API+'/api/posts'); if(!r.ok)return;
-      const all=(await r.json()).filter(x=>x.slug!==slug).slice(0,3);
-      if(!all.length)return;
-      $('#mgrid').innerHTML=all.map(p=>`<a class="mcard" href="/post?slug=${encodeURIComponent(p.slug)}"><div class="mcover" style="${coverStyle(p.cover)}">${EMO[p.tag]||'✨'}</div><div class="mc"><div class="mtag">${esc(p.tag||'')}</div><div class="mt">${esc(p.title)}</div></div></a>`).join('');
-      $('#more').style.display='';
-    }catch(e){}
-  }
-  (async()=>{
-    const slug=new URLSearchParams(location.search).get('slug')||'';
-    try{
-      const r=await fetch(API+'/api/posts/'+encodeURIComponent(slug));
-      if(r.ok){const p=await r.json();renderPost(p);renderMore(slug);return;}
-      throw 0;
-    }catch(e){
-      const p=SEED[slug]||Object.values(SEED)[0];
-      if(p)renderPost(p);
-    }
-  })();
-</script>
 </body>
 </html>
 

@@ -33,6 +33,13 @@ final class UpdatePackage
         private UpdateGuard $guard,
     ) {}
 
+    /** The uploaded package's own path, needed to archive it after a
+     *  successful apply — everything else here is about its contents. */
+    public function zipPath(): string
+    {
+        return $this->zipPath;
+    }
+
     public function verify(): bool
     {
         return $this->extract()
@@ -132,7 +139,11 @@ final class UpdatePackage
         }
 
         $requiresVersion = $this->manifest['requires_version'] ?? null;
-        $current = (string) config('kbb.version', '0.0.0');
+        // The installed version, read from update_releases rather than from
+        // env('KBB_VERSION') — which is unset here, so this compared against
+        // '1.0.0' and would have refused any package declaring a prerequisite
+        // the server already met.
+        $current = InstalledVersion::get();
 
         if ($requiresVersion && version_compare($current, (string) $requiresVersion, '<')) {
             $this->errors[] = sprintf(

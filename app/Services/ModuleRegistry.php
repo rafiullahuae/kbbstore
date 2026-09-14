@@ -87,7 +87,7 @@ class ModuleRegistry
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],
         // ── Catalogue ──
-        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'todo'],
+        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'live'],
         'brands' => ['catalogue', 'Brands', 'Brand taxonomy with logos, brand pages and a [kbb_brands] directory. Works with WooCommerce’s native brand taxonomy. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Brand pages, logos and the brand directory.', 'todo'],
         'wishlist' => ['catalogue', 'Wishlist', 'Lets shoppers save products (works for guests too, via cookie). Heart button on cards/product pages plus a [kbb_wishlist] page. Off by default.', false, 'Its own screen', '', 'grid', 'card', 'The heart on every product card, and the wishlist page.', 'live'],
         'recently_viewed' => ['catalogue', 'Recently Viewed', 'Shows each shopper the products they just looked at (cookie-based, guests included). Auto-placed on product/cart pages plus a [kbb_recently_viewed] shortcode. Off by default.', false, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'mid', 'The Browsed tab in the cart panel, and a rail on the product page.', 'elsewhere'],
@@ -103,11 +103,13 @@ class ModuleRegistry
         // Not in the plugin. They are real module_toggles keys the storefront
         // already reads, so leaving them off this screen would make them the one
         // pair nobody can switch.
+        'quick_view' => ['extra', 'Quick view', 'A Quick view button on product cards opening a modal with price, stock, short description and add-to-cart, so a shopper does not lose a filtered listing. Hidden on touch devices, where hover has no meaning.', true, 'No settings screen', '', 'grid', 'card', 'The Quick view button revealed on hover over every product card.', 'live'],
+        'address_book' => ['extra', 'Address book', 'The saved-addresses screen at /my-account/edit-address: add, edit, delete and set a default per type. Turning this off hides the dashboard card and makes the page itself 404, not just the link.', true, 'Appearance → Login / Register panel → Links', 'acctpanel', 'site', 'all', 'The Addresses screen inside a signed-in customer account.', 'live'],
         'quantity_bundles' => ['extra', 'Quantity bundles', 'Buy-more-save-more tiers on the product page, generated from the price rather than authored.', true, 'Appearance → Quantity bundles', 'bundles', 'product', 'mid', 'The bundle tiles under the price on the product page.', 'live'],
         'dispatch_cutoff' => ['extra', 'Dispatch cutoff', 'The “order within X for dispatch today” line, counting down to your cutoff time.', true, 'Store → Ecommerce', 'ecommerce', 'product', 'mid', 'A line under the Add to cart button on the product page.', 'live'],
 
         // ── SEO ──
-        'seo_engine' => ['seo', 'SEO Engine', 'Meta titles & descriptions (with per-page overrides), Open Graph / Twitter cards, canonical, robots and Product / Organization schema. Defers automatically if Yoast or Rank Math is active. Off by default.', false, 'Its own screen', '', 'site', 'all', 'Titles, descriptions and structured data. Nothing visible on the page.', 'todo'],
+        'seo_engine' => ['seo', 'SEO Engine', 'Meta titles & descriptions (with per-page overrides), Open Graph / Twitter cards, canonical, robots and Product / Organization schema. Defers automatically if Yoast or Rank Math is active. Off by default.', false, 'Its own screen', '', 'site', 'all', 'Titles, descriptions and structured data. Nothing visible on the page.', 'live'],
         // ── Unknown ──
         // ── install flag ──
         // ── Carts started ──

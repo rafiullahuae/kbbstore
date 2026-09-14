@@ -293,14 +293,25 @@ class SearchController extends Controller
         $groups = [];
         $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $q) . '%';
 
+        // The results page has expanded synonyms since 2.60.77; the dropdown
+        // did not, so typing "moisturiser" showed nothing here and then found
+        // products the moment you pressed enter. Same SearchTerms, so the two
+        // agree.
+        $terms = \App\Support\SearchTerms::expand($q);
+
         if ($n = (int) $this->header->get('search_results_max')) {
             $products = Product::query()
                 ->select(self::CARD_COLUMNS)
                 ->visible()
                 ->with('brand:id,name,slug')
-                ->where(fn ($w) => $w->where('name', 'like', $like)
-                    ->orWhere('sku', 'like', $like)
-                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like)))
+                ->where(function ($w) use ($terms) {
+                    foreach ($terms as $term) {
+                        $t = \App\Support\SearchTerms::like($term);
+                        $w->orWhere('name', 'like', $t)
+                            ->orWhere('sku', 'like', $t)
+                            ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $t));
+                    }
+                })
                 // A name match beats a brand or SKU match, so the obvious
                 // result is not buried under an incidental one.
                 ->orderByRaw('CASE WHEN name LIKE ? THEN 0 ELSE 1 END', [$q . '%'])

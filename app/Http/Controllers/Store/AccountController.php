@@ -49,6 +49,33 @@ class AccountController extends Controller
         ]);
     }
 
+    /**
+     * A customer's own order — line items and status. Scoped to the
+     * logged-in customer's own orders only; someone else's order id
+     * 404s rather than leaking whether that id even exists.
+     */
+    public function orderDetail(int $id): View
+    {
+        $customerId = auth()->guard()->id();
+
+        $order = \Illuminate\Support\Facades\DB::table('orders')
+            ->where('id', $id)
+            ->where('customer_id', $customerId)
+            ->first();
+
+        abort_if($order === null, 404);
+
+        $items = \Illuminate\Support\Facades\DB::table('order_items')
+            ->where('order_id', $order->id)
+            ->get();
+
+        return view('store.account.order-detail', [
+            'customer' => auth()->guard()->user(),
+            'order' => $order,
+            'items' => $items,
+        ]);
+    }
+
     public function addresses(): View
     {
         return view('store.account.addresses', ['customer' => auth()->guard()->user()]);
@@ -59,9 +86,33 @@ class AccountController extends Controller
         return view('store.account.forgot');
     }
 
+    /**
+     * Looks up a real order by number + email — no login required, since
+     * this is the path for a guest checkout order too. Deliberately
+     * requires both fields to match together (never order number alone),
+     * so this can't be used to enumerate other customers' order statuses
+     * by guessing sequential numbers.
+     */
     public function track(): View
     {
-        return view('store.account.track');
+        $number = trim((string) request('order', ''));
+        $email = trim((string) request('email', ''));
+        $order = null;
+        $notFound = false;
+
+        if ($number !== '' && $email !== '') {
+            $order = \Illuminate\Support\Facades\DB::table('orders')
+                ->where('order_number', $number)
+                ->where('email', $email)
+                ->first();
+
+            $notFound = $order === null;
+        }
+
+        return view('store.account.track', [
+            'order' => $order,
+            'notFound' => $notFound,
+        ]);
     }
 
     /**

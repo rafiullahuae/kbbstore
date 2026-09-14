@@ -49,14 +49,37 @@ class CheckoutController extends Controller
             $subtotal = 0;
             $lines = [];
             foreach ($data['items'] as $it) {
-                $p = Product::where('slug', $it['slug'])->first();
-                if (!$p) abort(422, "Unknown product: {$it['slug']}");
-                $unit = $p->sale_price ?? $p->price ?? 0;
+                // visible(), not a bare slug lookup. Without it a draft,
+                // private or hidden product could be ordered through this
+                // endpoint by anyone who knew its slug -- and unlike the read
+                // endpoints fixed in 2.60.95, this one creates a real order
+                // against it.
+                $p = Product::visible()->with('brand:id,name')->where('slug', $it['slug'])->first();
+
+                if (! $p) {
+                    abort(422, "Unknown product: {$it['slug']}");
+                }
+
+                // Out of stock is refused rather than sold. The storefront
+                // checkout will not offer it; this path would have taken the
+                // order and left someone to explain it afterwards.
+                if (($p->stock_status ?? 'instock') === 'outofstock') {
+                    abort(422, "Out of stock: {$p->name}");
+                }
+
+                // effectivePrice(), not sale_price ?? price. The raw column
+                // ignores sale_starts_at and sale_ends_at, so an expired sale
+                // kept selling at the sale price and a future one sold early.
+                // Money, quietly, in both directions.
+                $unit = $p->effectivePrice();
+
                 $subtotal += $unit * $it['qty'];
                 $lines[] = [
                     'product_id' => $p->id,
                     'name'       => $p->name,
-                    'brand'      => $p->brand,
+                    // brand is a belongsTo relation; writing it raw put a model
+                    // (or null) where the line expects a name.
+                    'brand'      => $p->brand?->name,
                     'qty'        => $it['qty'],
                     'unit_price' => $unit,
                 ];

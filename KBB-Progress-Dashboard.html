@@ -1,290 +1,129 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<meta name="color-scheme" content="light only">
-<title>KBB Storefront — Project Progress</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KBB Progress Dashboard &mdash; 2.60.91</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-html,body{background:#fff !important;color:#2A2228;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0}
-.wrap{max-width:880px;margin:0 auto;padding:36px 28px 60px}
-.header{margin-bottom:8px}
-h1{font-size:26px;margin:0 0 4px;background:linear-gradient(90deg,#E0567B,#C13E63);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
-.subtitle{color:#8C828A;font-size:14px;margin:0 0 32px}
-
-.overall-card{background:linear-gradient(135deg,#FFF8F5,#FFF0F4);border:1.5px solid #F3E9EC;border-radius:20px;padding:28px 30px;margin-bottom:36px}
-.overall-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
-.overall-label{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C13E63}
-.overall-pct{font-size:42px;font-weight:800;color:#2A2228;line-height:1}
-.overall-track{height:22px;background:#fff;border-radius:99px;overflow:hidden;border:1px solid #F0E4E9;box-shadow:inset 0 1px 3px rgba(0,0,0,.06)}
-.overall-fill{height:100%;background:linear-gradient(90deg,#E0567B,#C13E63);border-radius:99px;transition:width 1s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:10px}
-.overall-fill-label{color:#fff;font-size:11px;font-weight:700}
-.overall-meta{display:flex;gap:20px;margin-top:14px;font-size:12.5px;color:#5E545A}
-.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
-
-.phases-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#8C828A;margin:32px 0 14px}
-.phase-row{display:grid;grid-template-columns:200px 1fr 140px;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #F5F0F1}
-.phase-row:last-child{border-bottom:none}
-.phase-label{display:flex;flex-direction:column}
-.phase-title{font-size:13.5px;font-weight:600;color:#2A2228}
-.phase-note{font-size:10.5px;color:#B0B5BD;font-style:italic;margin-top:1px}
-.phase-bar-track{height:10px;background:#F5F0F1;border-radius:99px;overflow:hidden}
-.phase-bar-fill{height:100%;border-radius:99px;transition:width .6s ease}
-.phase-stats{text-align:right}
-.stat-pct{font-size:15px;font-weight:800;display:block}
-.stat-detail{font-size:10.5px;color:#8C828A}
-
-.footer-note{margin-top:36px;padding-top:20px;border-top:1px solid #F0E4E9;font-size:12px;color:#B0B5BD}
-</style>
-</head><body>
-<div class="wrap">
-  <div class="header">
-    <h1>KBB Storefront</h1>
-    <p class="subtitle">Live progress, computed directly from the checkboxes in KBB-Master-Plan.md — not a separate, hand-kept number</p>
-  </div>
-
-  <div class="overall-card">
-    <div class="overall-top">
-      <span class="overall-label">Overall project progress</span>
-      <span class="overall-pct">58%</span>
-    </div>
-    <div class="overall-track">
-      <div class="overall-fill" style="width:58%">
-        <span class="overall-fill-label">46 of 81 items</span>
-      </div>
-    </div>
-    <div class="overall-meta">
-      <span><span class="legend-dot" style="background:#22A65A"></span>46 done</span>
-      <span><span class="legend-dot" style="background:#E8A93B"></span>2 partial</span>
-      <span><span class="legend-dot" style="background:#B0B5BD"></span>33 open</span>
-    </div>
-  </div>
-
-  <div class="phases-title">By phase</div>
-  
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 1 — Foundation</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:100%;background:#0EA5A0"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#0EA5A0">100%</span>
-        <span class="stat-detail">4 done</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 2 — Storefront chrome</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:100%;background:#0EA5A0"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#0EA5A0">100%</span>
-        <span class="stat-detail">7 done</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 3 — Module framework</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:87%;background:#22A65A"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#22A65A">87%</span>
-        <span class="stat-detail">13 done · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 4 — Search</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:69%;background:#E8A93B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E8A93B">69%</span>
-        <span class="stat-detail">5 done · 1 partial · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 5 — Product cards and grids</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:50%;background:#E8A93B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E8A93B">50%</span>
-        <span class="stat-detail">2 done · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 6 — Product page</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:50%;background:#E8A93B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E8A93B">50%</span>
-        <span class="stat-detail">2 done · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 7 — Account area</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:33%;background:#E8A93B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E8A93B">33%</span>
-        <span class="stat-detail">2 done · 4 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 8 — Cart and checkout</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:40%;background:#E8A93B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E8A93B">40%</span>
-        <span class="stat-detail">2 done · 3 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 9 — Content pages</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:33%;background:#E8A93B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E8A93B">33%</span>
-        <span class="stat-detail">2 done · 4 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 10 — Build my routine</span>
-        <span class="phase-note">designed, not built</span>
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#B0B5BD">0%</span>
-        <span class="stat-detail">0 done · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 11 — Payments</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#B0B5BD">0%</span>
-        <span class="stat-detail">0 done · 1 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 12 — Performance and SEO</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:17%;background:#E0567B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E0567B">17%</span>
-        <span class="stat-detail">0 done · 1 partial · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 13 — Data migration</span>
-        <span class="phase-note">one-time, idempotent Artisan command</span>
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#B0B5BD">0%</span>
-        <span class="stat-detail">0 done · 4 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 14 — Licensing console</span>
-        <span class="phase-note">separate application</span>
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#B0B5BD">0%</span>
-        <span class="stat-detail">0 done · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 15 — Page builder</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:0%;background:#B0B5BD"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#B0B5BD">0%</span>
-        <span class="stat-detail">0 done · 1 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 16 — Growth &amp; Marketing</span>
-        
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:33%;background:#E8A93B"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#E8A93B">33%</span>
-        <span class="stat-detail">1 done · 2 open</span>
-      </div>
-    </div>
-    <div class="phase-row">
-      <div class="phase-label">
-        <span class="phase-title">Phase 17 — Dead interface</span>
-        <span class="phase-note">new — found by `hooks_bound`</span>
-      </div>
-      <div class="phase-bar-track">
-        <div class="phase-bar-fill" style="width:100%;background:#0EA5A0"></div>
-      </div>
-      <div class="phase-stats">
-        <span class="stat-pct" style="color:#0EA5A0">100%</span>
-        <span class="stat-detail">6 done</span>
-      </div>
-    </div>
-
-  <div class="footer-note">
-    Recomputed each time the master plan is regenerated — this file is a view onto that document,
-    not a separate source of truth. See KBB-Master-Plan.md itself for the reasoning behind every
-    number here.
-  </div>
+:root{--pg:#f7f9f8;--card:#fff;--ink:#1e2a24;--mut:#6f8077;--line:#e4ece8;--ok:#15a85a;--warn:#c98a3c;--warnbg:#fdf5ea;--okbg:#eaf7ef;--code:#f1f5f3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pg:#131715;--card:#1c2220;--ink:#e8f0ec;--mut:#93a49b;--line:#2b3531;--okbg:#15271d;--warnbg:#2a2216;--code:#222a27}}
+:root[data-theme="dark"]{--pg:#131715;--card:#1c2220;--ink:#e8f0ec;--mut:#93a49b;--line:#2b3531;--okbg:#15271d;--warnbg:#2a2216;--code:#222a27}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--ink);font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:30px 18px 70px}
+h1{font-size:20px;margin:0 0 4px;font-weight:600}
+.sub{font-size:12.5px;color:var(--mut);margin:0 0 20px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:8px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi b{display:block;font-size:24px;font-weight:700;line-height:1.1}
+.kpi span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.total{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:16px 0 26px}
+.total i{display:block;height:100%;background:var(--ok);width:78%}
+.ph{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.phh{width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;background:none;border:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.pn{flex:1;font-size:13.5px;font-weight:500}
+.pc{font-size:11.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.bar{width:90px;height:6px;border-radius:99px;background:var(--line);overflow:hidden;flex:none}
+.bar i{display:block;height:100%;background:var(--ok)}
+.pl{list-style:none;margin:0;padding:0;display:none;border-top:1px solid var(--line)}
+.phh[aria-expanded="true"]+.pl{display:block}
+.pl li{display:flex;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.55}
+.pl li:last-child{border-bottom:0}
+.m{flex:none;width:16px;text-align:center;font-size:12px}
+li.done .m{color:var(--ok)} li.done .t{color:var(--mut)}
+li.blocked{background:var(--warnbg)} li.blocked .m{color:var(--warn)}
+li.open .m{color:var(--mut)}
+.v{margin-left:7px;font-size:10.5px;background:var(--code);border-radius:4px;padding:1px 6px;color:var(--mut);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.note{font-size:12px;color:var(--mut);line-height:1.65;margin-top:22px}
+.note b{color:var(--ink);font-weight:500}
+</style></head><body><div class="wrap">
+<h1>KBB Progress Dashboard</h1>
+<p class="sub">Generated from KBB-Master-Plan.md at version 2.60.91 &middot; 2026-09-13</p>
+<div class="kpis">
+  <div class="kpi"><b>86</b><span>Done</span></div>
+  <div class="kpi"><b>24</b><span>Open</span></div>
+  <div class="kpi"><b>5</b><span>Blocked</span></div>
+  <div class="kpi"><b>78%</b><span>Complete</span></div>
 </div>
+<div class="total"><i></i></div>
+<section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 1 — Foundation</span>
+    <span class="pc">4/4</span>
+    <span class="bar"><i style="width:100%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Laravel skeleton, routing, layouts · versioned ZIP updater · settings service pattern</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Demo content system — 2.19.0<span class="v">2.19.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Build gate suite — 21 gates — ongoing</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Admin console never cached — 2.42.2<span class="v">2.42.2</span></span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 2 — Storefront chrome</span>
+    <span class="pc">7/7</span>
+    <span class="bar"><i style="width:100%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Header, 58 settings, 7 tabs — 2.27.0 → 2.34.0<span class="v">2.34.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Mobile header: spacing, search field, divider — 21 settings — 2.42.0 → 2.43.1<span class="v">2.43.1</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Mobile menu sheet, 26 settings · footer · menu icon</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Announcement bar — exists; to be registered as notification_bar</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Mega menu — NavigationService renders it correctly; registered as mega_menu</span></li><li class="done"><span class="m">&#10003;</span><span class="t">header.blade.php was never actually wired to the real nav-bar partial it looked like</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Desktop mega panel: manual or automatic column count per item (roughly 10 rows per</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 3 — Module framework ← in progress</span>
+    <span class="pc">13/15</span>
+    <span class="bar"><i style="width:87%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Module registry — 31 modules (29 plugin + 2 native), 9 groups — 2.44.0<span class="v">2.44.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Per-module on/off and per-device visibility — 2.44.0<span class="v">2.44.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Admin screen: Store → Modules, filter, bulk actions, two-column layout — 2.44.0 → 2.44.2<span class="v">2.44.2</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Rewired onto the pre-existing module_toggles table instead of a parallel store — 2.45.0<span class="v">2.45.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Status per module (live / elsewhere / todo) so the screen never offers a dead switch — 2.46.0<span class="v">2.46.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Eye-hover preview: which page, which strip, in one sentence, per module — 2.44.1<span class="v">2.44.1</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Direct link from a module row to its settings screen — 2.44.3<span class="v">2.44.3</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Product Labels ported — sold-out/sale/new/bestseller, precedence order — 2.47.0<span class="v">2.47.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Payment &amp; Shipping Rules ported — COD window, enforced at 3 entry points — 2.48.0<span class="v">2.48.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Delivery &amp; Shipping screen for the zone charges — 2.49.0<span class="v">2.49.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Extended delivery — per-country rates + detection, off by default — 2.50.0 → 2.50.1<span class="v">2.50.1</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">vat_line, cod_fee, single_name wired to Store → Ecommerce → Checkout — 2.53.0.<span class="v">2.53.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">marketing_pixels ported — Meta Pixel, GA4, TikTok, all four hook sites (page load, product</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Port the remaining 10 todo modules — see the list in §2 below</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Per-module settings schema shared with the admin renderer, for the modules that own theirs</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 4 — Search</span>
+    <span class="pc">7/7</span>
+    <span class="bar"><i style="width:100%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Suggestion panel, three layouts, trending, term counting, density</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Panel close no longer clicks what is underneath — 2.43.2<span class="v">2.43.2</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Fixed a real bug in the panel&#x27;s two-column layout: the right-hand column (Trending /</span></li><li class="done"><span class="m">&#10003;</span><span class="t">iOS Safari auto-zoom on focusing the mobile search field — was 13.5px, under the 16px</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Extended Search Results — recognises a real brand name in the query and narrows or</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Filters and sorting on the results page — was already built and never ticked. SearchController::page() delegates to ShopController::index(), so the results page is the shop page: Facets handles cat, brand, price, sale, instock and orderby, and shop.blade.php renders the sidebar, chips and sort control — verified 2.60.91<span class="v">2.60.91</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Synonyms and misspelling tolerance — App\Support\SearchTerms expands a query before matching, on the results page and in the autocomplete dropdown. Narrow by design: spacing, hyphens, a plural trim, no edit distance, and nothing under four characters is expanded to — 2.60.77, autocomplete 2.60.90. Partially covered by Extended Search&#x27;s brand<span class="v">2.60.90</span></span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 5 — Product cards and grids</span>
+    <span class="pc">4/4</span>
+    <span class="bar"><i style="width:100%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">28 skins · 34 settings · columns per device · shortcode builder</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Full product titles — 2.40.3<span class="v">2.40.3</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Card skin preview inside the shortcode builder — was already built and never ticked. #scPrev renders skinCard(SC.skin ?? grid_skin) under a &quot;Card style used&quot; note — verified 2.60.91<span class="v">2.60.91</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Quick view — modal from any grid card with image, brand, price including sale rules, stock, short description and add-to-cart. Server-rendered fragment so money formatting cannot drift from the card; hidden on touch devices — 2.60.72, module switch 2.60.73<span class="v">2.60.73</span></span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 6 — Product page</span>
+    <span class="pc">4/4</span>
+    <span class="bar"><i style="width:100%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Gallery, tabs, badges, price, bundles, 17 sections</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Sticky add-to-cart — 2.38.0 → 2.39.0<span class="v">2.39.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Reviews submit flow — stale note, already fully built and working. Checked</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Related and recently viewed — was already registered and never ticked. Present in ModuleRegistry, settings at Appearance → Cart panel — verified 2.60.91<span class="v">2.60.91</span></span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 7 — Account area</span>
+    <span class="pc">5/6</span>
+    <span class="bar"><i style="width:83%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Sign in, register, dashboard, orders, addresses, forgot, track order</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Field component, password strength, autofill, sum guard, account panel</span></li><li class="open"><span class="m">&#9675;</span><span class="t">▲ Password reset actually sends an email. No outbound mail has been</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Address book: add, edit, delete, default — the addresses table, the model and Customer::addresses() already existed; the page was a 12-line stub that printed &quot;No addresses saved yet&quot; without ever querying. One default per type, enforced in two statements; deleting a default hands it on — 2.60.72, module switch 2.60.73<span class="v">2.60.73</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Order detail page with line items and status history — plus a much bigger find</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Track-my-order against real orders — was a pure stub: the form existed and</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Admin — Order detail page  (new — built from Rafi&#x27;s own WooCommerce reference screenshot)</span>
+    <span class="pc">16/19</span>
+    <span class="bar"><i style="width:84%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Status list expanded to draft/pending/processing/onhold/shipped/</span></li><li class="done"><span class="m">&#10003;</span><span class="t">The detailed order page itself. A genuinely important discovery mid-build: a</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Downloadable-product permissions — deliberately skipped, not relevant to a</span></li><li class="blocked"><span class="m">&#9888;</span><span class="t">Order source/device/session-page-view tracking — deliberately deferred; the panel</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Real PDF generation for Invoice/Packing slip/Delivery note/Shipping Label/</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Visual revision, requested after first review — billing and shipping split</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Layout — final direction chosen and shipped live. Went through several real</span></li><li class="done"><span class="m">&#10003;</span><span class="t">VAT line added to the order summary — inclusive, display-only, matching</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Checked the checkout page for anything missing from the order summary.</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Edit order — add products, adjust pricing, partial refund, admin status</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Alignment fixes — Items and Order notes specifically, exactly as reported.</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Demo Content — a new Safety screen for testing with real, working sample</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Fixed: every Import button failed with &quot;Could not import that&quot; on the</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Fixed: 2.60.65&#x27;s improved error message correctly revealed the real<span class="v">2.60.65</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Resolved — see the entry below. This line is a step in the diagnosis, not an outstanding task; the [x] beneath it closes it. Left ticked open, it read as a live bug for weeks — verified 2.60.91. Rafi<span class="v">2.60.91</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Found and fixed the real root cause. Rafi&#x27;s diagnostic-page result was</span></li><li class="done"><span class="m">&#10003;</span><span class="t">The subdirectory-path bug was bigger than Demo Content — it was the</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Fixed: Demo Blog Posts 404&#x27;d on the actual public blog. Checked the</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Found and fixed a completely separate, pre-existing issue — the</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 8 — Cart and checkout</span>
+    <span class="pc">4/5</span>
+    <span class="bar"><i style="width:80%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Cart drawer, live throughout — 2.39.x → 2.40.1<span class="v">2.40.1</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Cart page: quantity, remove, coupon, totals — 2.39.x</span></li><li class="blocked"><span class="m">&#9888;</span><span class="t">▲ Checkout styling — agreed to move checkout to &lt;x-field&gt;, requires D-35</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Coupons and gift notes end to end — coupons were already complete including removal (CartController::coupon handles both paths) and never ticked. Gift notes added with their own column, a priced gift-wrap option controlled at Store → Delivery &amp; Shipping → Gift wrapping, and the dead customer_note path wired at both ends — coupons verified 2.60.91, gift notes 2.60.78, pricing 2.60.82<span class="v">2.60.82</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Guest checkout → account creation — checkout already made a Customer row for every guest; it had no password. An optional tick sets one, written only into a blank and never over an existing password, with legacy_password counting as set so the 3,712 imported customers cannot be trampled. Declines silently to avoid an enumeration oracle. No email, so it does not wait on the mail decision — 2.60.76<span class="v">2.60.76</span></span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 9 — Content pages</span>
+    <span class="pc">4/6</span>
+    <span class="bar"><i style="width:67%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Privacy, terms, New In, Best Sellers, Super Sale, Under 54 AED, Wishlist</span></li><li class="done"><span class="m">&#10003;</span><span class="t">/subscribe — 2.38.0<span class="v">2.38.0</span></span></li><li class="open"><span class="m">&#9675;</span><span class="t">▲ /brands/ — URL conflict: the homepage uses /brands/, MenuDemo uses</span></li><li class="open"><span class="m">&#9675;</span><span class="t">▲ /skincare-guide/ — a permalink structure, not one page: the homepage builds</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Blog — was a complete, silent outage. Checked directly rather than assuming</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Desktop nav drops the base path — checked directly rather than trusting the old</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 10 — Build my routine  (designed, not built)</span>
+    <span class="pc">0/2</span>
+    <span class="bar"><i style="width:0%"></i></span></button>
+  <ul class="pl"><li class="open"><span class="m">&#9675;</span><span class="t">Routines by concern · manual selection · front-end list · offer strip</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Open: fixed steps or a free list? One offer strip or one per routine?</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 11 — Payments</span>
+    <span class="pc">0/1</span>
+    <span class="bar"><i style="width:0%"></i></span></button>
+  <ul class="pl"><li class="open"><span class="m">&#9675;</span><span class="t">COD → Tabby → Tamara → Stripe (order per D-39)</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 12 — Performance and SEO</span>
+    <span class="pc">11/14</span>
+    <span class="bar"><i style="width:79%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Site-wide SEO settings admin screen — already real, found on inspection (was</span></li><li class="done"><span class="m">&#10003;</span><span class="t">XML sitemap (/sitemap.xml) — already real, same correction as above. Covers</span></li><li class="done"><span class="m">&#10003;</span><span class="t">robots.txt — already real, sensible default + admin override</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Missing verification fields — Pinterest, Baidu — 2.60.50<span class="v">2.60.50</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">IndexNow — auto-submit new/updated URLs to Bing/Yandex/Naver/Seznam/Yep on</span></li><li class="done"><span class="m">&#10003;</span><span class="t">llms.txt for AI crawlers — 2.60.50<span class="v">2.60.50</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Real image upload for the share-image/logo fields — the upload endpoint already</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Social profile links (Facebook/Instagram/TikTok/Pinterest/LinkedIn/YouTube) →</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Crawl-budget cleanup — researched current (2026) guidance directly before building</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Redirects &amp; 404 manager — manual 301/302s (from the SEO &amp; Meta screen&#x27;s new</span></li><li class="blocked"><span class="m">&#9888;</span><span class="t">Per-product SEO editor ▲ blocked on the product edit page — focus keyphrase,</span></li><li class="done"><span class="m">&#10003;</span><span class="t">Site-wide audit tooling — Catalogue Audit tab: scans every visible product,</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Yoast data importer — field-by-field mapping (_yoast_wpseo_ → the seo column</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Image pipeline · cache strategy</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 13 — Data migration  (one-time, idempotent Artisan command)</span>
+    <span class="pc">0/4</span>
+    <span class="bar"><i style="width:0%"></i></span></button>
+  <ul class="pl"><li class="open"><span class="m">&#9675;</span><span class="t">Products 671 · Orders 4,159 · Customers 3,712</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Count-based verification after each bucket</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Three-bucket classification: migrate / discard / ask — Rafi approves any discard list</span></li><li class="blocked"><span class="m">&#9888;</span><span class="t">Media and image paths · URL redirect map — needs the two URL decisions in Phase 9</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 14 — Licensing console  (separate application)</span>
+    <span class="pc">0/2</span>
+    <span class="bar"><i style="width:0%"></i></span></button>
+  <ul class="pl"><li class="open"><span class="m">&#9675;</span><span class="t">22 items · offline token verification · plan-gated modules</span></li><li class="open"><span class="m">&#9675;</span><span class="t">A licence must never take a shop offline</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 15 — Page builder</span>
+    <span class="pc">0/1</span>
+    <span class="bar"><i style="width:0%"></i></span></button>
+  <ul class="pl"><li class="open"><span class="m">&#9675;</span><span class="t">Live editing of homepage sections, reusing the settings schemas</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 16 — Growth &amp; Marketing</span>
+    <span class="pc">1/3</span>
+    <span class="bar"><i style="width:33%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">Newsletter screen, subscribers table, CSV export — 2.39.0 → 2.41.1<span class="v">2.41.1</span></span></li><li class="blocked"><span class="m">&#9888;</span><span class="t">Newsletter double opt-in — waits on outbound mail</span></li><li class="open"><span class="m">&#9675;</span><span class="t">Product Labels · Meta &amp; Facebook — existing screens, not yet checked for parity</span></li></ul></section><section class="ph">
+  <button class="phh" aria-expanded="false"><span class="pn">Phase 17 — Dead interface  (new — found by hooks_bound)</span>
+    <span class="pc">6/6</span>
+    <span class="bar"><i style="width:100%"></i></span></button>
+  <ul class="pl"><li class="done"><span class="m">&#10003;</span><span class="t">▲ Reviews: 10 hooks, no JavaScript, no submit endpoint — 2.60.0, corrected in<span class="v">2.60.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Wishlist heart on every product card — routes exist, no click handler — 2.58.0,<span class="v">2.58.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Checkout browsed-item &quot;Add&quot; button — 2.59.0. Carried data-product-id, an<span class="v">2.59.0</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Review badge → section link — 2.60.5. The star-rating badge near the top of<span class="v">2.60.5</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">Reviews verified at real scale — 2.60.6. Proposed as a follow-up after<span class="v">2.60.6</span></span></li><li class="done"><span class="m">&#10003;</span><span class="t">hooks_bound re-run at 2.60.0: 21 → 2, and both remaining are false positives,<span class="v">2.60.0</span></span></li></ul></section>
+<p class="note"><b>Blocked</b> items are amber: they wait on the kbb-theme source, a Google Places key, the D-35 amendment, or the two Phase&nbsp;9 URL conflicts. <b>Mail-dependent work is deferred by decision</b> and is not counted as blocking. Regenerate this file whenever the plan changes, or the two drift apart again.</p>
+</div>
+<script>
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('.phh'); if (!b) return;
+  b.setAttribute('aria-expanded', b.getAttribute('aria-expanded') === 'true' ? 'false' : 'true');
+});
+</script>
 </body></html>

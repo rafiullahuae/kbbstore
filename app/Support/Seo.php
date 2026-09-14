@@ -43,7 +43,7 @@ class Seo
         if (mb_strlen($desc) > 300) $desc = mb_substr($desc, 0, 297) . '…';
 
         $url    = $ctx['url'] ?? ($base ?: null);
-        $image  = $ctx['image'] ?? ($s['og_default_image'] ?? null);
+        $image  = self::absolute($ctx['image'] ?? ($s['og_default_image'] ?? null), $base);
         $robots = !empty($ctx['noindex'])
             ? 'noindex, nofollow'
             : (($s['robots_index'] ?? 'index') . ', ' . ($s['robots_follow'] ?? 'follow'));
@@ -89,6 +89,50 @@ class Seo
         return "\n" . implode("\n", $out) . "\n";
     }
 
+    /**
+     * Thin public wrapper around the same JSON-LD builder every real page
+     * already uses — the Schema Inspector needs to show an admin exactly
+     * what would actually be sent for a given page, not a reimplementation
+     * of the logic that could quietly drift from what jsonLd() itself does.
+     */
+    public static function inspect(array $ctx): array
+    {
+        $s = Setting::map();
+        $siteName = $s['seo_site_name'] ?? ($s['store_name'] ?? 'K-Beauty Bliss');
+        $base = rtrim($s['site_url'] ?? config('app.url') ?? '', '/');
+        $title = $ctx['title'] ?? $siteName;
+        $desc = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($ctx['description'] ?? ''))));
+        $url = $ctx['url'] ?? ($base ?: null);
+        $image = self::absolute($ctx['image'] ?? ($s['og_default_image'] ?? null), $base);
+
+        return self::jsonLd($ctx, $s, $siteName, $base, $title, $desc, $url, $image);
+    }
+
+    /**
+     * An absolute URL, or null.
+     *
+     * Url::media() returns a root-relative path -- correct for an <img> on the
+     * page, and invalid everywhere this file puts it. og:image, twitter:image
+     * and schema.org's image all require a full URL: Facebook and Twitter drop
+     * a relative one silently, so every share of a product showed no picture,
+     * and Google reports it as an invalid image field on the Product.
+     *
+     * Left alone if it already carries a scheme or is protocol-relative, so a
+     * CDN or an absolute og_default_image still works.
+     */
+    private static function absolute(?string $path, string $base): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        if (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path) === 1) {
+            return $path;
+        }
+
+        return rtrim($base, '/') . '/' . ltrim($path, '/');
+    }
+
     private static function jsonLd(array $ctx, array $s, string $siteName, string $base, string $title, string $desc, ?string $url, ?string $image): array
     {
         $nodes = [];
@@ -97,6 +141,20 @@ class Seo
         $org = ['@context' => 'https://schema.org', '@type' => $s['org_type'] ?? 'Organization', 'name' => $s['org_name'] ?? $siteName];
         if ($base) $org['url'] = $base;
         if (!empty($s['org_logo'])) $org['logo'] = $s['org_logo'];
+
+        // sameAs: official social profiles, confirming to Google these
+        // really are the same business — helps Knowledge Panel and brand
+        // search results. Only genuinely-filled-in ones are included.
+        $sameAs = array_values(array_filter([
+            $s['social_facebook'] ?? null,
+            $s['social_instagram'] ?? null,
+            $s['social_tiktok'] ?? null,
+            $s['social_pinterest'] ?? null,
+            $s['social_linkedin'] ?? null,
+            $s['social_youtube'] ?? null,
+        ]));
+        if (!empty($sameAs)) $org['sameAs'] = $sameAs;
+
         $nodes[] = $org;
 
         if ($base) {
@@ -123,12 +181,55 @@ class Seo
             if ($image)                    $node['image'] = $image;
             if (!empty($p['sku']))         $node['sku'] = $p['sku'];
             if (isset($p['price_aed'])) {
-                $node['offers'] = [
+                $offer = [
                     '@type' => 'Offer', 'priceCurrency' => 'AED',
                     'price' => number_format((float) $p['price_aed'], 2, '.', ''),
                     'availability' => (($p['stock'] ?? 1) > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                     'url' => $url,
                 ];
+
+                // Google reports a missing priceValidUntil on every Offer. A
+                // live sale gives a real date; otherwise a rolling year ahead,
+                // which is what the field is for -- a statement that the price
+                // is not stale, not a commitment to a date.
+                $offer['priceValidUntil'] = ! empty($p['sale_ends_at'])
+                    ? substr((string) $p['sale_ends_at'], 0, 10)
+                    : date('Y-m-d', strtotime('+1 year'));
+
+                // Merchant listing: brand/GTIN/condition/shipping/returns on
+                // the Offer itself — what actually unlocks price + star
+                // ratings showing directly in Google, and eligibility for
+                // AI Shopping surfaces. Off by default (enable_merchant),
+                // since shipping/return terms entered wrong is worse than
+                // not shown at all — an admin has to deliberately confirm
+                // these are accurate before they go out to search engines.
+                if (($s['enable_merchant'] ?? '') === '1') {
+                    $offer['itemCondition'] = 'https://schema.org/' . ($s['merchant_condition'] ?? 'NewCondition');
+
+                    $shipCost = (float) ($s['merchant_ship_cost'] ?? 0);
+                    $freeOver = (float) ($s['merchant_ship_free_over'] ?? 0);
+                    $actualShipCost = ($freeOver > 0 && (float) $p['price_aed'] >= $freeOver) ? 0 : $shipCost;
+
+                    $offer['shippingDetails'] = [
+                        '@type' => 'OfferShippingDetails',
+                        'shippingRate' => ['@type' => 'MonetaryAmount', 'value' => (string) $actualShipCost, 'currency' => 'AED'],
+                        'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => $s['merchant_ship_country'] ?? 'AE'],
+                    ];
+
+                    $returnDays = (int) ($s['merchant_return_days'] ?? 0);
+                    if ($returnDays > 0) {
+                        $offer['hasMerchantReturnPolicy'] = [
+                            '@type' => 'MerchantReturnPolicy',
+                            'applicableCountry' => $s['merchant_ship_country'] ?? 'AE',
+                            'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
+                            'merchantReturnDays' => $returnDays,
+                            'returnMethod' => 'https://schema.org/ReturnByMail',
+                            'returnFees' => 'https://schema.org/FreeReturn',
+                        ];
+                    }
+                }
+
+                $node['offers'] = $offer;
             }
             if (!empty($p['rating']) && !empty($p['reviews'])) {
                 $node['aggregateRating'] = ['@type' => 'AggregateRating', 'ratingValue' => (string) $p['rating'], 'reviewCount' => (int) $p['reviews']];

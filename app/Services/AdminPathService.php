@@ -94,6 +94,13 @@ class AdminPathService
         Cache::forget(self::CACHE_KEY);
         self::$memo = null;
 
+        // admin_path is an autoloaded settings row, so it also sits inside
+        // SettingsService::all()'s rememberForever payload and inside
+        // Setting::map(). Writing through DB::table here bypasses both, and
+        // rememberForever means stale means forever.
+        Cache::forget('kbb.settings');
+        \App\Models\Setting::flushMap();
+
         // Route caching would freeze the old path in place.
         foreach (glob(base_path('bootstrap/cache/routes*.php')) ?: [] as $file) {
             @unlink($file);

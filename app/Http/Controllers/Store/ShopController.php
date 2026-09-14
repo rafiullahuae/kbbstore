@@ -70,6 +70,11 @@ class ShopController extends Controller
             'curorder' => Facets::sort(),
             'buckets' => Facets::BUCKETS,
             'title' => $title,
+            'seoCtx' => [
+                'description' => $this->seoDescription($category, (string) $request->query('s', ''), $total),
+                'url' => Facets::canonicalUrl($this->absoluteListingUrl($category)),
+                'breadcrumb' => $this->breadcrumbTrail($category),
+            ],
             'sub' => $sub,
             'crumb' => $crumb,
             'clearUrl' => $category ? $category->url() : Facets::clearUrl(),
@@ -98,10 +103,25 @@ class ShopController extends Controller
     private function applyFacets($query, array $active, string $search): void
     {
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', "%{$search}%"));
+            // Expanded before matching: "moisturiser" has to reach a product
+            // labelled "Moisturizer", and "sun cream" has to reach "sunscreen".
+            // Matching the raw string returns nothing and the shopper concludes
+            // the shop does not stock it.
+            //
+            // Also note the escaping. The old code interpolated the term
+            // straight into the pattern, so a shopper typing "50%" searched for
+            // "anything, then 50, then anything" -- not a SQL injection, since
+            // the value is still bound, but wrong results all the same.
+            $terms = \App\Support\SearchTerms::expand($search);
+
+            $query->where(function ($q) use ($terms) {
+                foreach ($terms as $term) {
+                    $like = \App\Support\SearchTerms::like($term);
+
+                    $q->orWhere('name', 'like', $like)
+                        ->orWhere('sku', 'like', $like)
+                        ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like));
+                }
             });
         }
 
@@ -143,9 +163,71 @@ class ShopController extends Controller
         };
     }
 
-    private function heading(?Category $category, string $search): array
+    /**
+     * A real, page-specific meta description instead of falling back to one
+     * sitewide default everywhere — every category, search, and the general
+     * shop page gets its own, distinct text. Duplicate meta descriptions
+     * across a catalogue's category pages is flagged as a real quality
+     * signal problem, not just a missed opportunity, so this isn't
+     * cosmetic. Kept deliberately short (under ~130 characters) rather than
+     * padded out to the full 160-character budget — accurate and concise
+     * reads better than stretched, and Google truncates hard past 155-160
+     * on desktop and roughly 120 on mobile regardless.
+     */
+    /**
+     * BreadcrumbList schema's own trail, not the single visual label
+     * `heading()` returns — search-engine breadcrumb schema needs the
+     * real ancestor chain with URLs (Home → Shop → Category), which
+     * nothing in this controller was building until now; the schema
+     * renderer itself (Seo::jsonLd()) has accepted a 'breadcrumb' context
+     * key from the start, but no controller ever actually supplied one.
+     */
+    private function breadcrumbTrail(?Category $category): array
+    {
+        $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+        $trail = [
+            ['name' => 'Home', 'url' => $base . '/'],
+            ['name' => 'Shop', 'url' => $base . '/shop/'],
+        ];
+
+        if ($category) {
+            $trail[] = ['name' => $category->name, 'url' => $base . $category->url()];
+        }
+
+        return $trail;
+    }
+
+    /**
+     * Category::url() (like Product::url()) is deliberately root-relative
+     * for <a href> links — a canonical tag needs the real, absolute URL,
+     * so site_url is prepended by hand here rather than reused as-is.
+     */
+    private function absoluteListingUrl(?Category $category): string
+    {
+        $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+
+        return $base . ($category ? $category->url() : '/shop/');
+    }
+
+    private function seoDescription(?Category $category, string $search, int $total): string
     {
         if ($category) {
+            $count = $total ? "{$total} authentic Korean skincare picks" : 'authentic Korean skincare';
+
+            return "Shop {$category->name} at K-Beauty Bliss — {$count}, next-day UAE delivery.";
+        }
+
+        if ($search !== '') {
+            $result = $total === 1 ? 'result' : 'results';
+
+            return "\"{$search}\" — {$total} {$result} at K-Beauty Bliss, authentic Korean skincare with next-day UAE delivery.";
+        }
+
+        return "Browse every K-Beauty Bliss product — {$total} authentic Korean skincare picks, from serums to beauty devices, next-day UAE delivery.";
+    }
+
+    private function heading(?Category $category, string $search): array
+    {        if ($category) {
             return [
                 $category->name,
                 $category->description ?: 'Authentic Korean skincare, curated for the UAE.',

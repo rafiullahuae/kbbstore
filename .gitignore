@@ -31,3 +31,8 @@
 .DS_Store
 Thumbs.db
 *.orig
+
+# Editor and patch-system leftovers — see docs/REPO-STATE.md
+*.backup-*
+*.before-patch-*
+app/*.zip

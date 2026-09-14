@@ -61,6 +61,22 @@
                         <h2><span class="n">1</span> Contact</h2>
                         <div class="row2">
                             <p class="form-row form-row-wide validate-required validate-email" id="billing_email_field" data-priority="1"><label for="billing_email" class="required_field">Email address&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="email" class="input-text " name="billing_email" id="billing_email" placeholder="you@email.com"  value="{{ old('billing_email', $prefill['email'] ?? '') }}" aria-required="true" autocomplete="section-billing billing email" /></span></p>                            <p class="form-row form-row-wide validate-phone" id="billing_phone_field" data-priority="100"><label for="billing_phone" class="">Phone&nbsp;<span class="optional">(optional)</span></label><span class="woocommerce-input-wrapper"><input type="tel" class="input-text " name="billing_phone" id="billing_phone" placeholder="+971 5x xxx xxxx"  value="{{ old('billing_phone', $prefill['phone'] ?? '') }}" autocomplete="section-billing billing tel" /></span></p>                        </div>
+@guest('customer')
+                            <p class="form-row form-row-wide kbb-acct" id="create_account_field">
+                                <label for="create_account" class="kbb-acct-opt">
+                                    <input type="checkbox" name="create_account" id="create_account" value="1" @checked(old('create_account'))>
+                                    <span>Create an account for faster checkout next time</span>
+                                </label>
+                                <span class="woocommerce-input-wrapper kbb-acct-pw" id="account_password_wrap" hidden>
+                                    <input type="password" class="input-text" name="account_password" id="account_password"
+                                           placeholder="Choose a password (8 characters or more)" autocomplete="new-password" minlength="8">
+                                </span>
+                                @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
+                            </p>
+@endguest
+
+
+
                         <div class="co-note ok" id="kbbReturning" style="display:none"></div>
                             <div class="kbb-wa"><p class="form-row form-row-wide" id="billing_kbb_whatsapp_field" data-priority="25"><span class="woocommerce-input-wrapper"><label class="checkbox " ><input type="checkbox" name="billing_kbb_whatsapp" id="billing_kbb_whatsapp" value="1" class="input-checkbox " @checked(old('billing_kbb_whatsapp', true)) /> Send order updates on WhatsApp — confirmation, dispatch &amp; delivery alerts.&nbsp;<span class="optional">(optional)</span></label></span></p></div>
                     </div>
@@ -102,6 +118,33 @@
                         <div id="kbbDeliverySlot" class="kbb-delivery">
                             @include('partials.checkout.delivery-options')
                         </div>
+                            <p class="form-row form-row-wide kbb-note" id="customer_note_field">
+                                <label for="customer_note">Delivery notes <span class="optional">(optional)</span></label>
+                                <span class="woocommerce-input-wrapper">
+                                    <textarea name="customer_note" id="customer_note" class="input-text" rows="2" maxlength="600"
+                                              placeholder="Delivery instructions, a landmark, a preferred time">{{ old('customer_note') }}</textarea>
+                                </span>
+                            </p>
+                            @if (app(\App\Services\SettingsService::class)->get('gift_enabled', '1'))
+                            <p class="form-row form-row-wide kbb-gift" id="gift_field">
+                                @php
+                                    $giftOn = app(\App\Services\SettingsService::class)->get('gift_enabled', '1');
+                                    $giftFee = (int) app(\App\Services\SettingsService::class)->get('gift_fee', '1500');
+                                @endphp
+                                <label class="kbb-gift-opt" for="is_gift">
+                                    <input type="checkbox" name="is_gift" id="is_gift" value="1" @checked(old('is_gift', session('kbb_gift')))>
+                                    <span>This order is a gift</span>
+                                    @if ($giftFee > 0)
+                                        <b class="kbb-gift-fee">+{!! \App\Support\Money::format($giftFee) !!}</b>
+                                    @endif
+                                </label>
+                                <span class="woocommerce-input-wrapper kbb-gift-msg" id="gift_note_wrap" hidden>
+                                    <textarea name="gift_note" id="gift_note" class="input-text" rows="3" maxlength="600"
+                                              placeholder="Your message, printed on the gift card">{{ old('gift_note') }}</textarea>
+                                    <span class="kbb-gift-count"><span id="gift_left">600</span> characters left</span>
+                                </span>
+                            </p>
+                            @endif
                     </div>
 
                     <!-- 4 · Payment -->
@@ -197,5 +240,123 @@
 
 @push('scripts')
 {!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
+@endpush
+
+@push('scripts')
+<style>
+/* Scoped to .kbb-checkout and built from the sheet's own tokens, so these
+   rows inherit the same palette as every other field.
+
+   Checkbox metrics copied from .kbb-wa rather than guessed: 17px box,
+   margin-top 1px, flex-shrink 0, align-items flex-start. That row already
+   sits correctly against a label that wraps to two lines, so matching it
+   keeps every tick on this page on the same optical line instead of each
+   one being a slightly different hand-tuned number.
+
+   None of these may go inside .row2 -- that is a two-column grid, and a
+   .form-row dropped into it becomes a grid child and interleaves with Email
+   and Phone. */
+.kbb-checkout .kbb-acct,
+.kbb-checkout .kbb-gift,
+.kbb-checkout .kbb-note{margin-top:10px}
+/* label.<class>, not just .<class>: the sheet's own
+   `.kbb-checkout .form-row label{display:block}` scores 0,2,1 and beat a bare
+   0,2,0 selector, so display:flex never applied and the box sat inline on the
+   text baseline -- which is why align-items did nothing at all. */
+.kbb-checkout .form-row label.kbb-acct-opt,
+.kbb-checkout .form-row label.kbb-gift-opt{display:flex;align-items:center;gap:9px;cursor:pointer;
+  font-size:12px;font-weight:500;color:var(--ink-2);margin:0;line-height:1.45}
+/* `.kbb-checkout .sumrow{display:flex}` also outranks the browser's own
+   [hidden]{display:none}, so the Gift wrapping row stayed visible at 0 even
+   when marked hidden. */
+.kbb-checkout .sumrow[hidden]{display:none}
+.kbb-checkout .kbb-acct-opt input[type="checkbox"],
+.kbb-checkout .kbb-gift-opt input[type="checkbox"]{width:17px;height:17px;margin-top:1px;
+  accent-color:var(--pink);flex-shrink:0;margin-top:0}
+.kbb-checkout .kbb-gift-fee{margin-left:7px;font-weight:700;color:var(--pink)}
+.kbb-checkout .kbb-acct-pw,
+.kbb-checkout .kbb-gift-msg{display:block;margin-top:9px}
+.kbb-checkout .kbb-acct-pw[hidden],
+.kbb-checkout .kbb-gift-msg[hidden]{display:none}
+.kbb-checkout .kbb-acct-err{display:block;margin-top:6px;font-size:12px;color:var(--pink)}
+.kbb-checkout .kbb-note textarea,
+.kbb-checkout .kbb-gift textarea{resize:vertical;min-height:62px}
+.kbb-checkout .kbb-gift-count{display:block;margin-top:5px;font-size:11px;color:var(--muted);text-align:right}
+</style>
+<script>
+(function () {
+  var box = document.getElementById('create_account');
+  var wrap = document.getElementById('account_password_wrap');
+  if (!box || !wrap) return;
+  function sync() {
+    wrap.hidden = !box.checked;
+    // Only required while the box is ticked, so an untouched checkout still
+    // submits -- the server applies the same rule with required_if.
+    var pw = document.getElementById('account_password');
+    if (pw) { pw.required = box.checked; if (!box.checked) pw.value = ''; }
+  }
+  box.addEventListener('change', sync);
+  sync();
+})();
+
+(function () {
+  var gift = document.getElementById('is_gift');
+  var wrap = document.getElementById('gift_note_wrap');
+  var msg = document.getElementById('gift_note');
+  var left = document.getElementById('gift_left');
+  if (!gift || !wrap) return;
+  function sync() {
+    wrap.hidden = !gift.checked;
+    // Cleared rather than merely hidden. The server drops it too when the box
+    // is unticked, but a field the shopper cannot see should not still be
+    // carrying their words.
+    if (!gift.checked && msg) { msg.value = ''; }
+    count();
+  }
+  function count() {
+    if (msg && left) { left.textContent = String(600 - msg.value.length); }
+  }
+  gift.addEventListener('change', function () { sync(); price(); });
+  if (msg) { msg.addEventListener('input', count); }
+
+  // The fee comes back from the server, never added up here. The browser is
+  // told what wrapping costs; it does not get to decide.
+  var busy = false;
+  function price() {
+    if (busy) return;
+    busy = true;
+    var country = document.getElementById('billing_country');
+    var state = document.getElementById('billing_state');
+    fetch(@json(route('checkout.gift')), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': window.KBB.csrf,
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        is_gift: gift.checked ? 1 : 0,
+        country: country ? country.value : 'AE',
+        state: state ? state.value : ''
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { window.kbbToast && window.kbbToast(d.error || 'Could not update the total.'); return; }
+        document.querySelectorAll('.js-gift-row').forEach(function (el) { el.hidden = !d.on; });
+        document.querySelectorAll('.js-gift').forEach(function (el) { el.innerHTML = d.giftFee; });
+        // Two copies of the totals exist -- summary column and mobile box.
+        document.querySelectorAll('.js-total').forEach(function (el) { el.innerHTML = d.total; });
+        if (d.totalWithFee) {
+          document.querySelectorAll('.js-total-fee').forEach(function (el) { el.innerHTML = d.totalWithFee; });
+        }
+      })
+      .catch(function () { window.kbbToast && window.kbbToast('Could not update the total.'); })
+      .finally(function () { busy = false; });
+  }
+
+  sync();
+})();
+</script>
 @endpush
 @endsection

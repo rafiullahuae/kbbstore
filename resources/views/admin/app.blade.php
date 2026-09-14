@@ -92,8 +92,18 @@ svg{display:block}
 .nav-gh .gh-name{flex:1}
 .nav-gh .chev{width:13px;height:13px;color:var(--ink-soft);transition:transform .22s var(--ease);flex-shrink:0}
 .nav-gh .gh-badge{font-size:10px;font-weight:700;background:var(--accent);color:#fff;border-radius:99px;padding:1px 7px;min-width:18px;text-align:center}
-.nav-sub{overflow:hidden;max-height:0;transition:max-height .26s var(--ease)}
-.nav-group:hover .nav-sub,.nav-group.open .nav-sub{max-height:560px}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .34s var(--ease)}
+/* 560px fitted about 15 rows. Store has 20, so Business Details, Customers,
+   Quiz Leads and Content & Pages were cut off by overflow:hidden with no way
+   to reach them -- the group looked complete and simply ended at Media
+   Library. Raised well clear of the longest group so new entries do not
+   silently disappear the same way.
+
+   max-height has to stay a fixed number for the transition to animate, so
+   this is headroom rather than a true fit. The outer .nav already scrolls
+   (flex:1 + overflow-y:auto), which is what carries the overflow once a group
+   is taller than the sidebar. */
+.nav-group:hover .nav-sub,.nav-group.open .nav-sub{max-height:1600px}
 .nav-group:hover .chev,.nav-group.open .chev{transform:rotate(90deg)}
 .nav-group.open .nav-gh{color:var(--ink)}
 .nav-group.open .gh-badge,.nav-group:hover .gh-badge{display:none}
@@ -123,6 +133,10 @@ svg{display:block}
 .iconbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--ink-soft);transition:.15s;position:relative}
 .iconbtn:hover{color:var(--ink);border-color:#d6dbe7}
 .iconbtn svg{width:18px;height:18px}
+.dciconbox svg{width:20px;height:20px}
+.dcokicon svg{width:13px;height:13px}
+.dcgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1000px){.dcgrid{grid-template-columns:1fr 1fr}}
 .iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid #fff}
 .userchip{display:flex;align-items:center;gap:9px;padding:5px 7px 5px 5px;border:1px solid var(--border);border-radius:99px;background:#fff}
 .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7b6cf0,#3f6fe0);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
@@ -147,6 +161,7 @@ body[data-env="sandbox"] .envbar{display:flex}
 .page-head p{font-size:13px;color:var(--ink-soft);margin-top:3px;max-width:680px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-s)}
 .card.pad{padding:20px}
+.odcard .pad{padding:20px 22px}
 .sec-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);margin:26px 0 12px}
 .sec-title:first-child{margin-top:0}
 
@@ -374,6 +389,37 @@ input.inp[type=file]{padding:6px 9px}
 .fld input:focus,.fld textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .fld textarea{resize:vertical;min-height:78px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.odgrid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.odmain{min-width:0}
+.odside{min-width:0}
+.odcard{background:#fff;border:1px solid var(--border);border-radius:13px;box-shadow:0 1px 2px rgba(18,21,31,.04),0 1px 10px rgba(18,21,31,.03);overflow:hidden}
+.odgiftfee{display:inline-block;margin-left:8px;font-size:11px;color:var(--ink-soft)}
+.odgiftflag{display:inline-block;background:#fff0f4;color:#b4517a;border-radius:99px;padding:3px 11px;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.odgiftmsg,.odcustnote{margin-bottom:12px}
+.odgiftmsg:last-child,.odcustnote:last-child{margin-bottom:0}
+.odgiftmsg b,.odcustnote b{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
+.odgiftmsg p,.odcustnote p{margin:0;font-size:13.5px;line-height:1.6;white-space:pre-wrap}
+.odgiftmsg p{padding:10px 12px;background:#fff7fa;border:1px solid #f0dde4;border-radius:8px}
+.odcardhead{background:#FFF8EC;color:#92600A;padding:13px 22px;font-weight:700;font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
+.odchev{display:flex;gap:4px}
+.odtoggle{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:.75;cursor:pointer}
+.odtoggle:hover{opacity:1;background:rgba(0,0,0,.06)}
+.odcols3{display:grid;grid-template-columns:1fr 1fr 1fr}
+.odcolcell{padding:20px 22px}
+.odcolcell.odcolmid{border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.odcols2{display:grid;grid-template-columns:1fr 1fr;gap:28px;padding:20px 22px}
+.odcollabel{font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:.06em;margin-bottom:14px;display:flex;justify-content:space-between}
+.odcollabel a{font-weight:600;font-size:11px;color:#E08A1A;text-decoration:none;letter-spacing:0}
+.odfld{margin-bottom:13px}
+.odfld label{display:block;font-size:10.5px;color:var(--ink-2);margin-bottom:6px;font-weight:600}
+.odinp,.odcard select{width:100%;padding:10px 12px;border:1.5px solid #D8DCE3;border-radius:8px;font-size:12.5px;color:var(--ink);background:#FAFBFC;font-family:inherit;font-weight:500;box-shadow:inset 0 1px 2px rgba(18,21,31,.03)}
+.odinp:focus,.odcard select:focus{outline:none;border-color:#E08A1A;background:#fff;box-shadow:0 0 0 3px #FFF3E0}
+.odtimegrid{display:grid;grid-template-columns:1.3fr .7fr .7fr;gap:7px}
+.odaddr{font-size:11.5px;line-height:1.8;color:var(--ink-2)}
+.odaddr a{color:#E08A1A;text-decoration:none;font-weight:500}
+.odaddr .odname{font-weight:700;color:var(--ink)}
+.odcustchip{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid #D8DCE3;border-radius:8px;font-size:12px;font-weight:600;background:#FAFBFC;box-shadow:inset 0 1px 2px rgba(18,21,31,.03)}
+@media(max-width:1100px){.odgrid{grid-template-columns:1fr}.odcols3{grid-template-columns:1fr}.odcols2{grid-template-columns:1fr}.odcolcell.odcolmid{border-left:none;border-right:none;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}}
 .imgdrop{border:1.5px dashed var(--border);border-radius:12px;padding:22px;text-align:center;color:var(--ink-soft);font-size:12.5px}
 .imgrow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .imgrow .ph2{width:54px;height:54px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-faint);font-size:10px}
@@ -1709,7 +1755,7 @@ const ADMIN_BASE = window.location.pathname.replace(/\/+$/, '');
 const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
   {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings]]},
-  {sec:'Safety',items:[['debug','Debug & Monitor',I.debug,'live'],['sandbox','Sandbox & Deploy',I.sandbox]]},
+  {sec:'Safety',items:[['debug','Debug & Monitor',I.debug,'live'],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
   {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['catalog','Catalog',I.catalog],['import','Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['blog','Blog','<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],['posts','Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>'],['p-content','Content & Pages',I.content,'lock']]},
   {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
@@ -1749,7 +1795,7 @@ function syncNavOpen(id){
   });
 }
 
-const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
+const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
 let cur='dash';
 function go(id){
   if(FRAME_SRC[id])return renderFrame(id);
@@ -1761,7 +1807,7 @@ function go(id){
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
   const t=TITLES[id]||['Platform',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
   $('#content').innerHTML='';
-  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters}[id]||renderDash)();
+  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
@@ -1918,14 +1964,14 @@ function paintUpdates(msg, err){
   const d = UPD;
   const p = d.pending;
 
-  const banner = msg ? `<div class="card" style="padding:14px 18px;border-color:#b7e2c6;background:#f2fbf5;margin-bottom:16px">${msg}</div>` : '';
+  const banner = msg ? `<div class="card" style="padding:14px 18px;border-color:#b7e2c6;background:#f2fbf5;margin-bottom:16px">${escHtml(msg)}</div>` : '';
   const errors = err && err.length ? `<div class="card" style="padding:14px 18px;border-color:#f0c2c2;background:#fdf3f3;margin-bottom:16px">
-      <b>Nothing was changed.</b><ul style="margin:8px 0 0 18px">${err.map(e=>`<li>${e}</li>`).join('')}</ul></div>` : '';
+      <b>Nothing was changed.</b><ul style="margin:8px 0 0 18px">${err.map(e=>`<li>${escHtml(e)}</li>`).join('')}</ul></div>` : '';
 
   const upload = p ? `
     <div class="card" style="padding:22px;border-color:#b7e2c6">
-      <div class="between"><div><b style="font-size:15px">${p.name} ${p.version}</b>
-        <div class="mdesc" style="margin-top:4px">${p.notes||''}</div></div>
+      <div class="between"><div><b style="font-size:15px">${escHtml(p.name)} ${escHtml(p.version)}</b>
+        <div class="mdesc" style="margin-top:4px">${escHtml(p.notes||'')}</div></div>
         <span class="pill green">Ready to apply</span></div>
       <p style="margin:14px 0 6px"><b>${p.changes.length} files</b> will change.
         ${p.migrations ? 'This update also changes the database — a full dump is taken first.' : ''}</p>
@@ -1955,14 +2001,16 @@ function paintUpdates(msg, err){
     <div class="sec-title">History</div>
     <div class="card" style="padding:0;overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr>${['Version','Status','Files','When'].map(h=>`<th style="text-align:left;padding:10px 14px;background:#f8fafc;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#64748b">${h}</th>`).join('')}</tr></thead>
+        <thead><tr>${['Version','Status','Files','When',''].map(h=>`<th style="text-align:left;padding:10px 14px;background:#f8fafc;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#64748b">${h}</th>`).join('')}</tr></thead>
         <tbody>${d.releases.length ? d.releases.map(r=>`<tr style="border-top:1px solid #eef2f7">
-          <td style="padding:10px 14px"><b>${r.version}</b><div class="mdesc">${r.name}</div></td>
-          <td style="padding:10px 14px"><span class="pill ${r.status==='applied'?'green':'grey'}">${r.status.replace('_',' ')}</span>
-            ${r.error?`<div class="mdesc" style="max-width:520px">${r.error}</div>`:''}</td>
+          <td style="padding:10px 14px"><b>${escHtml(r.version)}</b><div class="mdesc">${escHtml(r.name)}</div>
+            ${r.superseded_by?`<div class="mdesc" style="color:#b45309">⚠ Superseded by ${escHtml(r.superseded_by)} — see that version's notes</div>`:''}</td>
+          <td style="padding:10px 14px"><span class="pill ${r.status==='applied'?'green':'grey'}">${escHtml(r.status.replace('_',' '))}</span>
+            ${r.error?`<div class="mdesc" style="max-width:520px">${escHtml(r.error)}</div>`:''}</td>
           <td style="padding:10px 14px">${r.files}</td>
-          <td style="padding:10px 14px" class="mdesc">${r.when||''}</td></tr>`).join('')
-          : `<tr><td colspan="4" style="padding:14px" class="mdesc">No updates yet.</td></tr>`}</tbody>
+          <td style="padding:10px 14px" class="mdesc">${r.when||''}</td>
+          <td style="padding:10px 14px">${r.has_archive?`<a href="${uBase()}/${r.id}/download" class="btn small">Download</a>`:''}</td></tr>`).join('')
+          : `<tr><td colspan="5" style="padding:14px" class="mdesc">No updates yet.</td></tr>`}</tbody>
       </table>
     </div>`;
 
@@ -5470,82 +5518,161 @@ const stockPill=n=>n===0?`<span class="pill red"><span class="d"></span>Out</spa
 
 let catTab='products',catFilter='all',catSel=new Set();
 let catSOopen=false,catPerPage=250;
-const COLDEF=[['image','Image'],['sku','SKU'],['stock','Stock'],['price','Price'],['categories','Categories'],['tags','Tags'],['featured','Featured'],['date','Date'],['stats','Stats'],['meta','Synced to Meta catalog'],['seo','SEO score'],['read','Readability score'],['seotitle','SEO Title'],['metadesc','Meta Desc.'],['keyphrase','Keyphrase'],['brands','Brands'],['outlinks','Outgoing internal links'],['inlinks','Received internal links']];
-const catCols={image:true,sku:false,stock:true,price:true,categories:true,tags:false,featured:true,date:true,stats:false,meta:true,seo:true,read:true,seotitle:false,metadesc:false,keyphrase:false,brands:true,outlinks:false,inlinks:false};
-const invDate=i=>'Jun '+(((i*5)%26)+2)+', 2026';
-const seoDot=l=>{const m={good:['green','Good'],ok:['amber','OK'],bad:['red','Poor']}[l];return `<span class="pill ${m[0]}"><span class="d"></span>${m[1]}</span>`;};
-function cellFor(k,p,idx){const[n,b,sku,cat,price,sale,stock]=p;
-  switch(k){
-   case 'sku':return `<td style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">${sku}</td>`;
-   case 'stock':return `<td>${stockPill(stock)}</td>`;
-   case 'price':return `<td class="price">${sale?`<b>AED ${sale}</b><s>AED ${price}</s>`:`<b>AED ${price}</b>`}</td>`;
-   case 'categories':return `<td>${cat}</td>`;
-   case 'tags':return `<td><span class="tagchip" style="font-size:10px">k-beauty</span></td>`;
-   case 'featured':return `<td style="font-size:15px;color:${idx%4===0?'#e0a11e':'var(--border)'}">${idx%4===0?'★':'☆'}</td>`;
-   case 'date':return `<td style="font-size:11.5px;color:var(--ink-soft)">${invDate(idx)}</td>`;
-   case 'stats':return `<td style="font-size:11.5px;color:var(--ink-soft)">${idx*137+420} views</td>`;
-   case 'meta':return `<td>${idx%5===0?'<span class="pill grey">Not synced</span>':'<span class="pill green"><span class="d"></span>Synced</span>'}</td>`;
-   case 'seo':return `<td>${seoDot(['good','ok','good','bad'][idx%4])}</td>`;
-   case 'read':return `<td>${seoDot(['good','good','ok'][idx%3])}</td>`;
-   case 'seotitle':return `<td style="font-size:11px;color:var(--ink-soft);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n} | KBB</td>`;
-   case 'metadesc':return `<td style="font-size:11px;color:var(--ink-soft);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Shop ${n} at K-Beauty Bliss…</td>`;
-   case 'keyphrase':return `<td style="font-size:11.5px;color:var(--ink-soft)">${b.toLowerCase()} ${cat.toLowerCase()}</td>`;
-   case 'brands':return `<td>${b}</td>`;
-   case 'outlinks':return `<td>${idx%3}</td>`;
-   case 'inlinks':return `<td>${(idx%4)+1}</td>`;
-   default:return '';
-  }
-}
-function catSOToggle(){catSOopen=!catSOopen;renderCatalog();}
-function catApplySO(){$$('#catBody .so-col .cbx[data-col]').forEach(c=>catCols[c.dataset.col]=c.classList.contains('on'));const v=parseInt($('#soPer').value,10);if(v>0)catPerPage=v;catSOopen=false;renderCatalog();toast('Columns & pagination applied');}
 function renderCatalog(){
   const tabs=['products','categories','brands','attributes','inventory','reorder'];
   const lbl={products:'Products',categories:'Categories',brands:'Brands',attributes:'Attributes',inventory:'Inventory',reorder:'Reorder'};
   $('#content').innerHTML=`<div class="wrap">
     <div class="between" style="margin-bottom:8px"><div class="page-head" style="margin:0"><h2>Catalog</h2><p>Your products and how they're organised. Reorder works inside any category.</p></div>
-      <div class="row" style="gap:8px">${catTab==='products'?`<button class="btn ghost" onclick="catSOToggle()">${ic('<path d="M4 6h16M7 12h10M10 18h4"/>')} Screen Options ${catSOopen?'▴':'▾'}</button><button class="btn" onclick="openProduct(-1)">${ic('<path d="M12 5v14M5 12h14"/>')} Add product</button>`:''}</div></div>
+      <div class="row" style="gap:8px">${catTab==='products'?`<button class="btn" onclick="openProduct(-1)">${ic('<path d="M12 5v14M5 12h14"/>')} Add product</button>`:''}</div></div>
     <div class="subtabs">${tabs.map(t=>`<button class="subtab${t===catTab?' on':''}" data-t="${t}">${lbl[t]}</button>`).join('')}</div>
     <div id="catBody"></div></div>`;
   $$('#content .subtab').forEach(b=>b.onclick=()=>{catTab=b.dataset.t;renderCatalog();});
   ({products:catProducts,categories:catCategories,brands:catBrands,attributes:catAttributes,inventory:catInventory,reorder:catReorder}[catTab])();
 }
-function catProducts(){
-  const filt=p=>{const stock=p[6],draft=CAT_DRAFT.has(p[2]);if(catFilter==='pub')return!draft;if(catFilter==='draft')return draft;if(catFilter==='low')return stock>0&&stock<=15;if(catFilter==='out')return stock===0;return true;};
-  const list=CAT_PRODUCTS.filter(filt);const allOn=list.length&&list.every(p=>catSel.has(CAT_PRODUCTS.indexOf(p)));
-  const cols=COLDEF.filter(c=>c[0]!=='image'&&catCols[c[0]]);
-  const page=list.slice(0,catPerPage);
-  $('#catBody').innerHTML=`
+const PCOLDEF=[['image','Image'],['sku','SKU'],['stock','Stock'],['price','Price'],['categories','Categories'],['featured','Featured'],['date','Date added'],['brand','Brand'],['orders','Orders']];
+const pcColsDefault={image:true,sku:true,stock:true,price:true,categories:true,featured:true,date:true,brand:true,orders:true};
+let pCols=JSON.parse(localStorage.getItem('kbb_pcols')||'null')||{...pcColsDefault};
+function catSOToggle(){catSOopen=!catSOopen;pPaint();}
+let pTab=null,pScopes=null,pData=null,pLocal=null,pPage=1,pSearch='',pFilter='all',pSort='newest',pSel=new Set(),pBusy=false,pPerPage=+(localStorage.getItem('kbb_products_pp')||50),pPpCustomMode=false;
+const PP_PRESETS=[25,50,100,200];
+function pApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalog/products'; }
+function redirectsApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/redirects'; }
+function schemaInspectApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/schema-inspect'; }
+function catalogueAuditApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalogue-audit'; }
+function pFmtMoney(n){ return n==null ? '' : 'AED '+(Math.round(n*100)/100).toLocaleString(); }
+
+async function catProducts(){
+  const body=$('#catBody');
+  body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading products…</p>`;
+  await pLoad();
+}
+
+async function pLoad(){
+  const body=$('#catBody');
+  const listArea=$('#pListArea');
+  if(listArea) listArea.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading…</p>`;
+  try{
+    const q=new URLSearchParams({page:pPage, search:pSearch, filter:pFilter, sort:pSort, per_page:pPerPage});
+    const r=await fetch(pApiBase()+'?'+q,{credentials:'same-origin',headers:{Accept:'application/json'}});
+    pData=await r.json();
+  }catch(e){ body.innerHTML=`<p style="padding:24px;color:var(--sale)">Could not load products — ${escHtml(e.message)}</p>`; return; }
+  pPerPage=pData.per_page;
+  pPaint();
+}
+
+function pPaint(){
+  const body=$('#catBody');
+  const d=pData;
+  const cols=PCOLDEF.filter(c=>c[0]!=='image'&&pCols[c[0]]);
+  const ppIsPreset=PP_PRESETS.includes(pPerPage) && !pPpCustomMode;
+  const filters=[['all','All',d.counts.all],['published','Published',d.counts.published],['draft','Draft',d.counts.draft],['low','Low stock',d.counts.low],['out','Out of stock',d.counts.out]];
+
+  body.innerHTML=`
     ${catSOopen?`<div class="card pad" style="margin-bottom:14px">
       <div class="pe-h" style="margin-bottom:11px">Columns</div>
-      <div class="so-cols">${COLDEF.map(c=>`<label class="so-col"><span class="cbx${catCols[c[0]]?' on':''}" data-col="${c[0]}">${ic(I.check)}</span> ${c[1]}</label>`).join('')}</div>
-      <div class="pe-h" style="margin:18px 0 9px">Pagination</div>
-      <div class="row" style="gap:10px;align-items:center"><span style="font-size:12.5px;color:var(--ink-2)">Number of items per page</span><input class="inp" id="soPer" style="width:88px" value="${catPerPage}"></div>
-      <button class="btn" style="margin-top:14px" onclick="catApplySO()">Apply</button>
+      <div class="so-cols">${PCOLDEF.map(c=>`<label class="so-col"><span class="cbx${pCols[c[0]]?' on':''}" data-pcol="${c[0]}">${ic(I.check)}</span> ${c[1]}</label>`).join('')}</div>
+      <div style="margin-top:14px"><button class="btn ghost sm" id="pColsReset">Reset to default</button></div>
     </div>`:''}
-    <div class="toolbar"><div class="search">${ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>')}<input placeholder="Search ${CAT_PRODUCTS.length} products by name, brand or SKU…"></div>
-      <select class="inp"><option>Sort: Newest</option><option>Name A–Z</option><option>Price high→low</option><option>Stock low→high</option></select></div>
-    <div class="chips" style="margin-bottom:14px">${[['all','All'],['pub','Published'],['draft','Draft'],['low','Low stock'],['out','Out of stock']].map(c=>`<button class="chip${catFilter===c[0]?' on':''}" data-f="${c[0]}">${c[1]}</button>`).join('')}</div>
-    <div id="bulkWrap"></div>
-    <div class="card" style="overflow:auto"><table>
-      <thead><tr><th style="width:30px"><span class="cbx${allOn?' on':''}" id="cbAll">${ic(I.check)}</span></th><th>Product</th>${cols.map(c=>`<th>${c[1]}</th>`).join('')}<th>Status</th><th></th></tr></thead>
-      <tbody>${page.map(p=>{const idx=CAT_PRODUCTS.indexOf(p);const[n,b,sku]=p;const draft=CAT_DRAFT.has(sku);
-        return `<tr><td><span class="cbx${catSel.has(idx)?' on':''}" data-sel="${idx}">${ic(I.check)}</span></td>
-        <td><div class="row">${catCols.image?`<span class="pthumb" style="background:${tcol(b)}">${initials(b)}</span>`:''}<div><div class="pname">${n}</div><div class="pbrand">${b}</div></div></div></td>
-        ${cols.map(c=>cellFor(c[0],p,idx)).join('')}
-        <td><span class="pill ${draft?'grey':'green'}">${draft?'Draft':'Published'}</span></td>
-        <td><button class="btn ghost sm" onclick="openProduct(${idx})">Edit</button></td></tr>`;}).join('')}</tbody>
-    </table></div>
-    <div class="pager"><span>Showing ${page.length} of ${list.length} · ${catPerPage}/page</span><div class="pagebtns"><button class="on">1</button><button>2</button><button>3</button><button>›</button></div></div>`;
-  if(catSOopen)$$('#catBody .so-col .cbx').forEach(c=>c.onclick=()=>c.classList.toggle('on'));
-  $$('#catBody .chip').forEach(c=>c.onclick=()=>{catFilter=c.dataset.f;catProducts();});
-  $$('#catBody .cbx[data-sel]').forEach(c=>c.onclick=()=>{const i=+c.dataset.sel;catSel.has(i)?catSel.delete(i):catSel.add(i);catProducts();});
-  $('#cbAll').onclick=()=>{if(allOn)catSel.clear();else list.forEach(p=>catSel.add(CAT_PRODUCTS.indexOf(p)));catProducts();};
-  const w=$('#bulkWrap');
-  if(catSel.size)w.innerHTML=`<div class="bulkbar"><span class="cbx on" onclick="clearSel()">${ic(I.check)}</span> ${catSel.size} selected <div style="flex:1"></div>
-    <button class="btn ghost sm" onclick="toast('Published ${catSel.size} (preview)')">Publish</button>
-    <button class="btn ghost sm" onclick="toast('Set to draft (preview)')">Draft</button>
-    <button class="btn ghost sm" onclick="toast('Bulk price edit (preview)')">Edit price</button>
-    <button class="btn ghost sm" onclick="toast('Deleted (preview)')">Delete</button></div>`;
+    <div class="toolbar" style="flex-wrap:wrap;gap:10px">
+      <button class="btn ghost" id="pScreenOpts">${ic('<path d="M4 6h16M7 12h10M10 18h4"/>')} Screen Options ${catSOopen?'▴':'▾'}</button>
+      <div class="search" style="min-width:220px">${ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>')}<input id="pSearch" placeholder="Search ${d.total} products by name, brand or SKU…" value="${escHtml(pSearch)}"></div>
+      <select class="inp" id="pSort">
+        <option value="newest"${pSort==='newest'?' selected':''}>Sort: Newest</option>
+        <option value="name"${pSort==='name'?' selected':''}>Name A–Z</option>
+        <option value="price_desc"${pSort==='price_desc'?' selected':''}>Price high→low</option>
+        <option value="stock_asc"${pSort==='stock_asc'?' selected':''}>Stock low→high</option>
+      </select>
+    </div>
+    <div class="chips" style="margin-bottom:6px">${filters.map(c=>`<button class="chip${pFilter===c[0]?' on':''}" data-pf="${c[0]}">${c[1]} <span style="opacity:.6">${c[2]}</span></button>`).join('')}</div>
+    <div class="toolbar" style="margin-bottom:10px">
+      <span style="font-size:12.5px;color:var(--ink-soft)">Show</span>
+      <select class="inp" id="pPerPage" style="width:100px">
+        ${PP_PRESETS.map(n=>`<option value="${n}"${n===pPerPage&&ppIsPreset?' selected':''}>${n} per page</option>`).join('')}
+        <option value="custom"${ppIsPreset?'':' selected'}>Custom…</option>
+      </select>
+      ${ppIsPreset?'':`<input class="inp" id="pPerPageCustom" type="number" min="10" max="500" value="${pPerPage}" style="width:80px" placeholder="10–500">`}
+      <span style="font-size:11px;color:var(--ink-soft)">10–500</span>
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:var(--ink-soft)">${d.total} products · page ${d.page} of ${d.last_page}</span>
+    </div>
+    <div id="pBulkWrap"></div>
+    <div id="pListArea">${pRenderTable(d.products, cols)}</div>
+    <div class="pager" style="margin-top:14px">
+      <span>Showing ${d.products.length ? ((d.page-1)*d.per_page+1) : 0}–${(d.page-1)*d.per_page+d.products.length} of ${d.total}</span>
+      <div class="row" style="gap:8px;align-items:center">
+        <button class="btn ghost sm" style="white-space:nowrap" ${d.page<=1?'disabled':''} id="pPrev">‹ Prev</button>
+        <button class="btn ghost sm" style="white-space:nowrap" ${d.page>=d.last_page?'disabled':''} id="pNext">Next ›</button>
+      </div>
+    </div>`;
+
+  $('#pScreenOpts').onclick=catSOToggle;
+  if(catSOopen){
+    $$('#catBody .so-col .cbx[data-pcol]').forEach(c=>c.onclick=()=>{
+      const k=c.dataset.pcol; pCols[k]=!pCols[k]; localStorage.setItem('kbb_pcols', JSON.stringify(pCols)); pPaint();
+    });
+    const resetBtn=$('#pColsReset'); if(resetBtn) resetBtn.onclick=()=>{ pCols={...pcColsDefault}; localStorage.setItem('kbb_pcols', JSON.stringify(pCols)); pPaint(); };
+  }
+  let searchT;$('#pSearch').oninput=e=>{clearTimeout(searchT);const v=e.target.value;searchT=setTimeout(()=>{pSearch=v;pPage=1;pLoad();},300);};
+  $('#pSort').onchange=e=>{pSort=e.target.value;pPage=1;pLoad();};
+  $$('#catBody .chip[data-pf]').forEach(c=>c.onclick=()=>{pFilter=c.dataset.pf;pPage=1;pLoad();});
+  $('#pPerPage').onchange=e=>{
+    if(e.target.value==='custom'){ pPpCustomMode=true; pPaint(); setTimeout(()=>$('#pPerPageCustom')?.focus(),0); return; }
+    pPpCustomMode=false; pPerPage=+e.target.value; localStorage.setItem('kbb_products_pp', pPerPage); pPage=1; pLoad();
+  };
+  const ppCustom=$('#pPerPageCustom');
+  if(ppCustom){
+    const applyCustom=()=>{
+      let v=parseInt(ppCustom.value,10);
+      if(!v||v<10) v=10; if(v>500) v=500;
+      pPerPage=v; localStorage.setItem('kbb_products_pp', v); pPage=1; pLoad();
+    };
+    ppCustom.onkeydown=e=>{ if(e.key==='Enter'){ applyCustom(); } };
+    ppCustom.onblur=applyCustom;
+  }
+  $('#pPrev').onclick=()=>{ if(d.page>1){pPage--;pLoad();} };
+  $('#pNext').onclick=()=>{ if(d.page<d.last_page){pPage++;pLoad();} };
+  $$('#catBody [data-pfeat]').forEach(el=>el.onclick=async()=>{
+    const id=+el.dataset.pfeat;
+    try{
+      const r=await fetch(pApiBase()+'/'+id+'/toggle-featured',{method:'POST',credentials:'same-origin',
+        headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
+      const j=await r.json();
+      if(j.ok){ el.textContent=j.featured?'★':'☆'; el.style.color=j.featured?'#e0a11e':'var(--border)'; }
+    }catch(e){ toast('Could not update — check your connection.'); }
+  });
+  $$('#catBody [data-pedit]').forEach(b=>b.onclick=()=>toast('Product editing isn\'t built yet — this list is real, editing is next.'));
+}
+
+function pRenderTable(products, cols){
+  if(!products.length) return `<p style="padding:24px;color:var(--ink-soft)">No products match this view.</p>`;
+  return `<div class="card" style="overflow:auto"><table style="table-layout:fixed;width:100%">
+    <colgroup><col style="width:34%"><col style="width:12%">${cols.map(c=>{
+      const w={sku:'10%',stock:'11%',price:'12%',categories:'14%',featured:'8%',date:'11%',brand:'12%',orders:'9%'}[c[0]]||'10%';
+      return `<col style="width:${w}">`;
+    }).join('')}<col style="width:9%"></colgroup>
+    <thead><tr><th>Product</th><th>Status</th>${cols.map(c=>`<th style="${['price','stock','orders'].includes(c[0])?'text-align:right':''}">${c[1]}</th>`).join('')}<th></th></tr></thead>
+    <tbody>${products.map(p=>`<tr>
+      <td><div class="row" style="min-width:0">${pCols.image?`<span class="pthumb" style="background:${tcol(p.brand||p.name)};flex-shrink:0">${initials(p.brand||p.name)}</span>`:''}
+        <div style="min-width:0"><div class="pname" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div><div class="pbrand">${escHtml(p.brand||'')}</div></div></div></td>
+      <td><span class="pill ${p.status==='publish'?'green':'grey'}">${p.status==='publish'?'Published':(p.status==='draft'?'Draft':'Private')}</span></td>
+      ${cols.map(c=>pCellFor(c[0],p)).join('')}
+      <td><button class="btn ghost sm" data-pedit="${p.id}">Edit</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function pCellFor(k,p){
+  switch(k){
+    case 'sku':return `<td style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.sku||'')}</td>`;
+    case 'stock':return `<td style="text-align:right">${p.stock==null?`<span class="pill ${p.stock_status==='outofstock'?'red':'green'}">${p.stock_status==='outofstock'?'Out':'In stock'}</span>`:stockPill(p.stock)}</td>`;
+    case 'price':return `<td class="price" style="text-align:right">${p.sale_price!=null?`<b>${pFmtMoney(p.sale_price)}</b><br><s style="color:var(--ink-soft);font-size:11px">${pFmtMoney(p.price)}</s>`:`<b>${pFmtMoney(p.price)}</b>`}</td>`;
+    case 'categories':return `<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.categories.join(', '))||'<span style="color:var(--ink-soft)">—</span>'}</td>`;
+    case 'featured':return `<td style="font-size:15px;color:${p.featured?'#e0a11e':'var(--border)'};cursor:pointer" data-pfeat="${p.id}">${p.featured?'★':'☆'}</td>`;
+    case 'date':return `<td style="font-size:11.5px;color:var(--ink-soft)">${p.date||''}</td>`;
+    case 'brand':return `<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.brand||'')}</td>`;
+    case 'orders':return `<td style="text-align:right;font-size:11.5px;color:var(--ink-soft)">${p.orders_count}</td>`;
+    default:return '<td></td>';
+  }
 }
 function catCategories(){
   $('#catBody').innerHTML=`<div class="between" style="margin-bottom:12px"><span class="pill grey">${CAT_CATEGORIES.length} categories</span><button class="btn sm" onclick="toast('Add category (preview)')">${ic('<path d="M12 5v14M5 12h14"/>')} Add category</button></div>
@@ -5597,16 +5724,264 @@ function catInventory(){
   $$('#catBody .invq').forEach(inp=>inp.oninput=()=>{const i=+inp.dataset.i;const v=inp.value===''?0:Math.max(0,parseInt(inp.value,10)||0);invDraft[i]=v;const tr=inp.closest('tr');tr.classList.toggle('invdirty',v!==CAT_PRODUCTS[i][6]);tr.querySelector('.invstat').innerHTML=stockPill(v);renderInvSaveBar();});
   renderInvSaveBar();
 }
-let reorderCat='Serums',reorderList=null;
-function catReorder(){
-  const cats=[...new Set(CAT_PRODUCTS.map(p=>p[3]))];
-  if(!reorderList)reorderList=CAT_PRODUCTS.filter(p=>p[3]===reorderCat).map(p=>p[0]);
-  $('#catBody').innerHTML=`<div class="toolbar"><div class="row"><span style="font-size:13px;font-weight:600">Category</span><select class="inp" id="reCat">${cats.map(c=>`<option${c===reorderCat?' selected':''}>${c}</option>`).join('')}</select></div><div style="flex:1"></div><button class="btn sm" onclick="toast('Order saved (preview)')">Save order</button></div>
-  <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">Drag the handle or use the arrows to set how products appear in <b>${reorderCat}</b> on the storefront.</p>
-  <div class="rlist" id="rlist">${reorderList.map((nm,i)=>{const p=CAT_PRODUCTS.find(x=>x[0]===nm);return `<div class="ritem" draggable="true" data-i="${i}"><span class="grip">${ic('<circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>')}</span><span class="ord">${i+1}</span><span class="pthumb" style="background:${tcol(p[1])};width:32px;height:32px;font-size:10px">${initials(p[1])}</span><div><div class="pname" style="font-size:12.5px">${nm}</div><div class="pbrand">${p[1]}</div></div><div class="mv"><button data-mv="up" data-i="${i}">${ic('<path d="m6 15 6-6 6 6"/>')}</button><button data-mv="down" data-i="${i}">${ic('<path d="m6 9 6 6 6-6"/>')}</button></div></div>`;}).join('')}</div>`;
-  $('#reCat').onchange=e=>{reorderCat=e.target.value;reorderList=null;catReorder();};
-  $$('#rlist .mv button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,j=b.dataset.mv==='up'?i-1:i+1;if(j<0||j>=reorderList.length)return;[reorderList[i],reorderList[j]]=[reorderList[j],reorderList[i]];catReorder();});
-  let dragI=null;$$('#rlist .ritem').forEach(it=>{it.ondragstart=()=>dragI=+it.dataset.i;it.ondragover=e=>e.preventDefault();it.ondrop=()=>{const to=+it.dataset.i;if(dragI===null||dragI===to)return;const m=reorderList.splice(dragI,1)[0];reorderList.splice(to,0,m);dragI=null;catReorder();};});
+let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false;
+function reorderApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalog/reorder'; }
+function reorderFmtMoney(n){ return n==null ? '' : 'AED '+(Math.round(n*100)/100).toLocaleString(); }
+
+async function catReorder(){
+  const body=$('#catBody');
+  if(!reorderScopes){
+    body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading…</p>`;
+    try{
+      const r=await fetch(reorderApiBase()+'/scopes?type='+reorderType,{credentials:'same-origin',headers:{Accept:'application/json'}});
+      reorderScopes=(await r.json()).scopes||[];
+    }catch(e){ body.innerHTML=`<p style="padding:24px;color:var(--sale)">Could not load — ${escHtml(e.message)}</p>`; return; }
+    if(!reorderScopes.length){ body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Nothing with visible products yet.</p>`; return; }
+    if(!reorderScopeId){
+      const first=reorderScopes[0];
+      reorderScopeId=first.id; reorderScopeName=first.name;
+    }
+  }
+  await reorderLoadProducts();
+}
+
+function reorderConfirmDiscard(){
+  if(!reorderDirty) return true;
+  return confirm('You have unsaved reorder changes on this page. Discard them?');
+}
+
+function reorderScopeOptions(){
+  if(reorderType==='brand') return reorderScopes.map(b=>`<option value="${b.id}"${b.id===reorderScopeId?' selected':''}>${escHtml(b.name)}</option>`).join('');
+  const opts=[];
+  reorderScopes.forEach(c=>{
+    opts.push(`<option value="${c.id}"${c.id===reorderScopeId?' selected':''}>${escHtml(c.name)}</option>`);
+    (c.children||[]).forEach(k=>opts.push(`<option value="${k.id}"${k.id===reorderScopeId?' selected':''}>&nbsp;&nbsp;&nbsp;&nbsp;↳ ${escHtml(k.name)}</option>`));
+  });
+  return opts.join('');
+}
+
+const REORDER_PP_PRESETS=[25,50,100,200];
+
+async function reorderLoadProducts(){
+  const body=$('#catBody');
+  const listArea=$('#reListArea');
+  if(listArea) listArea.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading…</p>`;
+  else body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading products…</p>`;
+  try{
+    const q=new URLSearchParams({page:reorderPage, search:reorderSearch, per_page:reorderPerPage});
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/products?'+q,{credentials:'same-origin',headers:{Accept:'application/json'}});
+    reorderData=await r.json();
+  }catch(e){ body.innerHTML=`<p style="padding:24px;color:var(--sale)">Could not load products — ${escHtml(e.message)}</p>`; return; }
+  reorderPerPage=reorderData.per_page;
+  reorderLocal=reorderData.products.map(p=>({...p}));
+  reorderDirty=false;
+  reorderSelected.clear();
+  reorderPaint();
+}
+
+function reorderPaint(){
+  const body=$('#catBody');
+  const d=reorderData;
+  const list=reorderLocal;
+  const ppIsPreset=REORDER_PP_PRESETS.includes(reorderPerPage) && !reorderPpCustomMode;
+  body.innerHTML=`
+  <div class="toolbar" style="flex-wrap:wrap;gap:10px">
+    <div class="row" style="gap:6px">
+      <button class="chip${reorderType==='category'?' on':''}" id="reTypeCat">Categories</button>
+      <button class="chip${reorderType==='brand'?' on':''}" id="reTypeBrand">Brands</button>
+    </div>
+    <div class="row" style="gap:8px"><span style="font-size:13px;font-weight:600">${reorderType==='brand'?'Brand':'Category'}</span>
+      <select class="inp" id="reCat" style="min-width:190px">${reorderScopeOptions()}</select></div>
+    <div class="search" style="min-width:180px"><input id="reSearch" placeholder="Find a product…" value="${escHtml(reorderSearch)}"></div>
+    <div class="row" style="gap:6px"><span style="font-size:12.5px;color:var(--ink-soft)">Start from</span>
+      <select class="inp" id="reAutoSort" style="width:140px">
+        <option value="">Auto-sort…</option>
+        <option value="bestselling">Best selling</option>
+        <option value="newest">Newest</option>
+        <option value="price">Price: low to high</option>
+        <option value="name">Name A–Z</option>
+      </select></div>
+    <div style="flex:1"></div>
+    <span style="font-size:12px;color:var(--ink-soft)">${d.total} products · page ${d.page} of ${d.last_page}</span>
+  </div>
+  <div class="toolbar" style="margin-top:2px">
+    <span style="font-size:12.5px;color:var(--ink-soft)">Show</span>
+    <select class="inp" id="rePerPage" style="width:100px">
+      ${REORDER_PP_PRESETS.map(n=>`<option value="${n}"${n===reorderPerPage&&ppIsPreset?' selected':''}>${n} per page</option>`).join('')}
+      <option value="custom"${ppIsPreset?'':' selected'}>Custom…</option>
+    </select>
+    ${ppIsPreset?'':`<input class="inp" id="rePerPageCustom" type="number" min="10" max="500" value="${reorderPerPage}" style="width:80px" placeholder="10–500">`}
+    <span style="font-size:11px;color:var(--ink-soft)">10–500</span>
+  </div>
+  <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 12px">
+    This is the product's real, global sort order — the same one the shop's default view uses — edited here one ${reorderType} at a time. A product shared across more than one moves everywhere it appears, matching how the live storefront's own "menu order" always worked.
+  </p>
+  <div id="reBulkBar" style="${reorderSelected.size?'':'display:none'};background:var(--pink-soft,#fff0f4);border:1px solid var(--accent,#E0567B);border-radius:10px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:12.5px;font-weight:600">${reorderSelected.size} selected</span>
+    <button class="btn ghost sm" id="reBulkTop">Move to top of this page</button>
+    <button class="btn ghost sm" id="reBulkClear">Clear selection</button>
+  </div>
+  <div id="reListArea">${reorderRenderList(list)}</div>
+  <div class="pager" style="margin-top:14px">
+    <span>Showing ${list.length ? ((d.page-1)*d.per_page+1) : 0}–${(d.page-1)*d.per_page+list.length} of ${d.total}</span>
+    <div class="row" style="gap:8px;align-items:center">
+      <button class="btn ghost sm" style="white-space:nowrap" ${d.page<=1?'disabled':''} id="rePrev">‹ Prev</button>
+      <button class="btn ghost sm" style="white-space:nowrap" ${d.page>=d.last_page?'disabled':''} id="reNext">Next ›</button>
+    </div>
+  </div>
+  <div class="between" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+    <span style="font-size:12.5px;color:${reorderDirty?'var(--sale)':'var(--ink-soft)'}">${reorderDirty?'Unsaved changes on this page':'No changes to save'}</span>
+    <button class="btn primary" id="reSave" ${reorderDirty?'':'disabled'}>Save changes</button>
+  </div>`;
+
+  $('#reTypeCat').onclick=()=>{ if(reorderType==='category'||!reorderConfirmDiscard())return; reorderType='category'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reTypeBrand').onclick=()=>{ if(reorderType==='brand'||!reorderConfirmDiscard())return; reorderType='brand'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reCat').onchange=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderScopeId;return;} reorderScopeId=+e.target.value;const opt=e.target.selectedOptions[0];reorderScopeName=opt.textContent.replace(/^[\s↳]+/,'');reorderPage=1;reorderSearch='';reorderLoadProducts(); };
+  let searchT;$('#reSearch').oninput=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderSearch;return;} clearTimeout(searchT);const v=e.target.value;searchT=setTimeout(()=>{reorderSearch=v;reorderPage=1;reorderLoadProducts();},300); };
+  $('#reAutoSort').onchange=async e=>{
+    const by=e.target.value; if(!by) return;
+    if(!confirm(`Re-sort the whole ${reorderType} (${d.total} products) by ${e.target.selectedOptions[0].textContent}? This saves immediately and can't be undone by a Save button — you can still fine-tune afterward.`)){e.target.value='';return;}
+    reorderBusy=true;
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/auto-sort',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify({by})});
+    const j=await r.json();
+    reorderBusy=false;
+    if(j.ok){toast(`Sorted ${j.sorted} products — fine-tune below`);reorderPage=1;reorderLoadProducts();}
+    else{toast('Could not auto-sort.');}
+  };
+  $('#rePerPage').onchange=e=>{
+    if(!reorderConfirmDiscard()){ reorderPaint(); return; }
+    if(e.target.value==='custom'){ reorderPpCustomMode=true; reorderPaint(); setTimeout(()=>$('#rePerPageCustom')?.focus(),0); return; }
+    reorderPpCustomMode=false; reorderPerPage=+e.target.value; localStorage.setItem('kbb_reorder_pp', reorderPerPage); reorderPage=1; reorderLoadProducts();
+  };
+  const ppCustom=$('#rePerPageCustom');
+  if(ppCustom){
+    const applyCustom=()=>{
+      let v=parseInt(ppCustom.value,10);
+      if(!v || v<10) v=10; if(v>500) v=500;
+      reorderPerPage=v; localStorage.setItem('kbb_reorder_pp', v); reorderPage=1;
+      if(!reorderConfirmDiscard()) return;
+      reorderLoadProducts();
+    };
+    ppCustom.onkeydown=e=>{ if(e.key==='Enter'){ applyCustom(); } };
+    ppCustom.onblur=applyCustom;
+  }
+  $('#rePrev').onclick=()=>{ if(d.page>1 && reorderConfirmDiscard()){reorderPage--;reorderLoadProducts();} };
+  $('#reNext').onclick=()=>{ if(d.page<d.last_page && reorderConfirmDiscard()){reorderPage++;reorderLoadProducts();} };
+  const bulkTop=$('#reBulkTop'); if(bulkTop) bulkTop.onclick=reorderBulkTopOfPage;
+  const bulkClear=$('#reBulkClear'); if(bulkClear) bulkClear.onclick=()=>{reorderSelected.clear();reorderPaint();};
+  $('#reSave').onclick=reorderSave;
+  reorderWireList();
+}
+
+function reorderRenderList(list){
+  if(!list.length) return reorderSearch
+    ? `<p style="padding:24px;color:var(--ink-soft)">No products match "${escHtml(reorderSearch)}".</p>`
+    : `<p style="padding:24px;color:var(--ink-soft)">No visible products here.</p>`;
+  return `<div class="rlist" id="rlist">${list.map((p,i)=>`
+    <div class="ritem" draggable="true" data-i="${i}" data-id="${p.id}">
+      <span class="cbx${reorderSelected.has(p.id)?' on':''}" data-rsel="${p.id}">${ic(I.check)}</span>
+      <span class="grip">${ic('<circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>')}</span>
+      <input class="inp" id="rerank-${p.id}" value="${(reorderData.page-1)*reorderData.per_page+i+1}" style="width:50px;text-align:center;padding:5px 4px;font-size:12px" data-rankinput="${p.id}">
+      <span class="pthumb" style="background:${tcol(p.brand||p.name)};width:32px;height:32px;font-size:10px">${initials(p.brand||p.name)}</span>
+      <div style="flex:1;min-width:0"><div class="pname" style="font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div><div class="pbrand" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.brand||'')}${p.sku?' · '+escHtml(p.sku):''}</div></div>
+      <div style="text-align:right;flex:0 0 88px">
+        ${p.sale_price!=null
+          ? `<div style="font-size:12.5px;font-weight:700;color:var(--sale)">${reorderFmtMoney(p.sale_price)}</div><div style="font-size:10.5px;color:var(--ink-soft);text-decoration:line-through">${reorderFmtMoney(p.price)}</div>`
+          : `<div style="font-size:12.5px;font-weight:700">${reorderFmtMoney(p.price)}</div>`}
+      </div>
+      <div style="text-align:right;flex:0 0 76px;font-size:11px;color:var(--ink-soft)" title="Distinct orders this product has appeared in">${p.orders_count} order${p.orders_count===1?'':'s'}</div>
+      <div class="mv" style="flex:0 0 auto;flex-direction:row;gap:4px">
+        <button data-rtop="${p.id}" title="Move to top of this page">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
+        <button data-rbottom="${p.id}" title="Move to bottom of this page">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function reorderWireList(){
+  $$('#rlist .cbx[data-rsel]').forEach(c=>c.onclick=()=>{
+    const id=+c.dataset.rsel;
+    reorderSelected.has(id)?reorderSelected.delete(id):reorderSelected.add(id);
+    reorderPaint();
+  });
+  $$('#rlist [data-rankinput]').forEach(inp=>{
+    inp.onkeydown=e=>{ if(e.key==='Enter'){ e.target.blur(); } };
+    inp.onblur=e=>{
+      const id=+e.target.dataset.rankinput;
+      const rank=parseInt(e.target.value,10);
+      if(!rank || rank<1){ e.target.value=e.target.defaultValue; return; }
+      reorderJumpToRank(id, rank);
+    };
+  });
+  $$('#rlist [data-rtop]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rtop, 0));
+  $$('#rlist [data-rbottom]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rbottom, reorderLocal.length-1));
+  let dragI=null;
+  $$('#rlist .ritem').forEach(it=>{
+    it.ondragstart=e=>{ if(e.target.closest('[data-rankinput],[data-rsel]')){e.preventDefault();return;} dragI=+it.dataset.i; };
+    it.ondragover=e=>e.preventDefault();
+    it.ondrop=()=>{
+      const to=+it.dataset.i;
+      if(dragI===null||dragI===to) return;
+      const i=dragI; dragI=null;
+      reorderLocalMove(reorderLocal[i].id, to);
+    };
+  });
+}
+
+function reorderLocalMove(productId, toIndex){
+  const from=reorderLocal.findIndex(p=>p.id===productId);
+  if(from===-1) return;
+  const [moved]=reorderLocal.splice(from,1);
+  reorderLocal.splice(Math.min(toIndex,reorderLocal.length),0,moved);
+  reorderDirty=true;
+  reorderPaint();
+}
+
+function reorderBulkTopOfPage(){
+  if(!reorderSelected.size) return;
+  const selected=reorderLocal.filter(p=>reorderSelected.has(p.id));
+  const rest=reorderLocal.filter(p=>!reorderSelected.has(p.id));
+  reorderLocal=[...selected,...rest];
+  reorderDirty=true;
+  reorderPaint();
+}
+
+async function reorderJumpToRank(productId, rank){
+  const pageStart=(reorderData.page-1)*reorderData.per_page+1;
+  const pageEnd=pageStart+reorderLocal.length-1;
+  if(rank>=pageStart && rank<=pageEnd){
+    reorderLocalMove(productId, rank-pageStart);
+    return;
+  }
+  if(reorderDirty && !confirm('Moving to a position outside this page saves immediately, including any unsaved changes already made on this page. Continue?')) {
+    reorderPaint();
+    return;
+  }
+  reorderBusy=true;
+  try{
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/move',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+      body:JSON.stringify({product_id:productId, to:rank-1})});
+    const j=await r.json();
+    if(j.ok){ toast('Moved and saved'); await reorderLoadProducts(); }
+    else{ toast(j.message||'Could not move that product.'); }
+  }catch(e){ toast('Could not save — check your connection.'); }
+  reorderBusy=false;
+}
+
+async function reorderSave(){
+  if(reorderBusy || !reorderDirty) return;
+  reorderBusy=true;
+  const btn=$('#reSave'); if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/save-page',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+      body:JSON.stringify({page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)})});
+    const j=await r.json();
+    if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; await reorderLoadProducts(); }
+    else{ toast(j.message||'Could not save — reload and try again.'); }
+  }catch(e){ toast('Could not save — check your connection.'); }
+  reorderBusy=false;
 }
 let pdTab='general',reyTab='misc',yoastTab='seo',pageTab='general',peCtx={};
 const ICO={img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',ring:'<circle cx="12" cy="12" r="9"/>'};
@@ -5967,6 +6342,7 @@ function shIntro(){
 
 function paintShipping(){
   if(SHTAB==='extended'){ paintExtended(); return; }
+  if(SHTAB==='gift'){ paintGift(); return; }
   $('#content').innerHTML=`<div class="wrap ecwrap">
     <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Delivery &amp; Shipping</h2>
       ${shIntro()}</div>
@@ -6049,8 +6425,118 @@ function shTabs(){
   return `<div class="ectabs">
     <button class="ectab${SHTAB==='zones'?' on':''}" data-shtab="zones">Zones</button>
     <button class="ectab${SHTAB==='extended'?' on':''}" data-shtab="extended">Extended${XD&&XD.on?'<span class="ecn">on</span>':''}</button>
+    <button class="ectab${SHTAB==='gift'?' on':''}" data-shtab="gift">Gift wrapping${GIFT&&GIFT.gift_enabled==='1'?'<span class="ecn">on</span>':''}</button>
   </div>
-  <p class="ectabs-hint">${SHTAB==='zones'?'Your current delivery charges — including the Gulf countries — are the cards below.':'Countries added here on top of your zones.'}</p>`;
+  <p class="ectabs-hint">${SHTAB==='zones'?'Your current delivery charges — including the Gulf countries — are the cards below.':SHTAB==='gift'?'An optional gift-wrap tick at checkout, and what it costs.':'Countries added here on top of your zones.'}</p>`;
+}
+
+/* ---------- Store · Delivery & Shipping · Gift wrapping ----------
+ *
+ * Lives here rather than on Business Details because it is a fulfilment
+ * charge: it rides the same order total as delivery, and the field it
+ * controls sits in the Delivery step of checkout.
+ *
+ * Self-contained on purpose. SETTINGS, sval() and loadSettings() belong to
+ * the Business Details block, which is a different script scope -- reaching
+ * for them from here throws a ReferenceError and takes the whole Delivery &
+ * Shipping screen down with it. This block talks to /admin-api/settings
+ * directly, the same way loadExtended() talks to its own endpoint.
+ */
+let GIFT=null;
+
+function giftBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/settings'; }
+
+function giftCookie(name){
+  var m = document.cookie.match(new RegExp('(^| )'+name+'=([^;]+)'));
+  return m ? decodeURIComponent(m[2]) : '';
+}
+
+async function loadGift(){
+  try{
+    const r = await fetch(giftBase(), {credentials:'same-origin', headers:{Accept:'application/json'}});
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    GIFT = d.settings || {};
+  }catch(e){ GIFT = {}; }
+  return GIFT;
+}
+
+async function paintGift(){
+  if(!GIFT) await loadGift();
+
+  // Read straight from the stored value -- no default guessed here. A
+  // migration seeds the row, so this screen and the storefront are looking at
+  // the same string. Guessing a default in two places is what made the tab
+  // read Off above a checkout that was showing the tick.
+  const on = GIFT.gift_enabled === '1';
+  const fee = GIFT.gift_fee ? (parseInt(GIFT.gift_fee, 10) / 100) : 0;
+
+  $('#content').innerHTML=`<div class="wrap ecwrap">
+    <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Delivery &amp; Shipping</h2>
+      ${shIntro()}</div>
+    ${shTabs()}
+    <div class="card mdcard">
+      <div class="mmhd"><b>Gift wrapping</b><span>Shown in the Delivery step at checkout</span></div>
+      <div style="padding:16px 18px 18px">
+        <p class="mdesc" style="margin:0 0 14px">With this on, shoppers see a <b>This order is a gift</b> tick and a
+          600-character message printed on the card. The fee below is added to the order total, alongside any
+          cash-on-delivery fee. Set it to 0 to offer wrapping free.</p>
+        <div class="g2">
+          <div class="fld"><label>Offer gift wrapping</label>
+            <select id="gf_on"><option value="0"${on?'':' selected'}>Off</option><option value="1"${on?' selected':''}>On</option></select>
+          </div>
+          <div class="fld"><label>Gift wrapping fee (AED)</label>
+            <input id="gf_fee" type="number" step="1" min="0" value="${fee}">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ecsave">
+      <span class="ecdirty" id="gfDirty" style="visibility:hidden">Unsaved changes</span>
+      <button class="btn primary" id="gfSave">Save changes</button>
+    </div>
+  </div>`;
+
+  bindShTabs();
+
+  const dirty=()=>{ const d=document.getElementById('gfDirty'); if(d) d.style.visibility='visible'; };
+  ['gf_on','gf_fee'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onchange=dirty; });
+
+  document.getElementById('gfSave').onclick=async function(){
+    const val=id=>{ const el=document.getElementById(id); return el?el.value:''; };
+    const payload={
+      gift_enabled: val('gf_on'),
+      // fils, like cod_fee and delivery_flat, so Money::format handles it and
+      // no screen has to remember which unit this one uses.
+      gift_fee: String(Math.round((parseFloat(val('gf_fee'))||0)*100))
+    };
+    try{
+      const r = await fetch(giftBase(), {
+        method:'PUT',
+        credentials:'same-origin',
+        headers:{
+          'Accept':'application/json',
+          'Content-Type':'application/json',
+          'X-XSRF-TOKEN': giftCookie('XSRF-TOKEN')
+        },
+        body: JSON.stringify({settings: payload})
+      });
+      if(!r.ok) throw new Error(r.status);
+      const res = await r.json().catch(()=>({}));
+      // The endpoint answers ok even when it skipped every key, which is how
+      // this screen reported success while writing nothing. Trust the counts.
+      if(res.rejected && res.rejected.length){
+        toast('Not saved: '+res.rejected.join(', ')+' \u2014 the server rejected these keys');
+        return;
+      }
+      if(res.saved === 0){ toast('Nothing was saved \u2014 check the server log'); return; }
+      Object.assign(GIFT, payload);
+      const d=document.getElementById('gfDirty'); if(d) d.style.visibility='hidden';
+      toast('Gift wrapping saved');
+      GIFT = null;
+      paintGift();
+    }catch(e){ toast('Save failed \u2014 check connection'); }
+  };
 }
 
 async function loadExtended(){
@@ -6648,6 +7134,122 @@ function tpv(th){const[,,,bg,sf,ac,ln,ink,as]=th;
 }
 const segHTML=(opts,cur,pref)=>`<div class="seg" data-pref="${pref}">${opts.map(o=>`<button data-v="${o[0]}" class="${o[0]===cur?'on':''}">${o[1]}</button>`).join('')}</div>`;
 const optHTML=(o,cur)=>Object.entries(o).map(([v,l])=>`<option value="${v}"${v===cur?' selected':''}>${l}</option>`).join('');
+/* ---------- Demo Content ---------- */
+const DEMO_CONTENT_TYPES=[
+  ['orders','Demo Orders','Sample orders across every status — processing, shipped, refunded — so you can try the order detail page, refunds, and status changes on something real.','<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/>','#4F46E5','#EEF2FF'],
+  ['customers','Demo Customers','Sample customer accounts, for testing account pages, the customer history panel, and order lookups.','<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>','#2563EB','#EFF6FF'],
+  ['products','Demo Products','Sample products with brands, categories and pricing already filled in — including a few on sale.','<path d="M21 8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/>','#059669','#ECFDF5'],
+  ['pages','Demo Pages','A few sample static pages — About, Shipping, Returns — to preview the page layout before writing the real ones.','<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>','#7C3AED','#F5F3FF'],
+  ['posts','Demo Blog Posts','Sample Journal articles, so the blog is not empty while you plan out real content.','<path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>','#D97706','#FFFBEB'],
+  ['reviews','Demo Reviews','Sample product reviews at a mix of ratings, for testing the review moderation queue and star display.','<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>','#E0567B','#FDF2F6'],
+  ['menu','Demo Mega Menu','A ready-made navigation menu with brand and category dropdowns already wired up and set live.','<path d="M3 12h18M3 6h18M3 18h18"/>','#0891B2','#ECFEFF'],
+];
+/**
+ * Computes the admin-api base the same way pApiBase() does — from the
+ * current page's own path, not a hardcoded leading slash. A hardcoded
+ * '/admin-api/...' resolves against the domain root; on a subdirectory
+ * deployment (the live site runs at easywebsol.com/kbb-upgrade/) that
+ * silently points at a URL with no matching route at all, which is
+ * exactly the "route could not be found" this shape of bug produces.
+ */
+function dcApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api'; }
+async function dcApi(path, opts){
+  var o = Object.assign({credentials:'same-origin', headers:{}}, opts||{});
+  o.headers = Object.assign({'X-XSRF-TOKEN':uToken(), 'Accept':'application/json'}, o.headers);
+  var r = await fetch(dcApiBase()+path, o);
+  var text = await r.text();
+  var data;
+  try{ data = JSON.parse(text); }
+  catch(e){
+    // A non-JSON body means an error page (a 419 CSRF page, a 404, a raw
+    // 500), not a real API response. Surface a short, real snippet instead
+    // of a silent "could not import" that hides what actually happened.
+    throw new Error('HTTP '+r.status+': '+text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160));
+  }
+  if(!r.ok || data.ok===false) throw new Error(data.message||('HTTP '+r.status));
+  return data;
+}
+async function renderDemoContent(){
+  $('#content').innerHTML='<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading…</p></div>';
+  var counts={};
+  try{ counts=(await dcApi('/demo-content')).counts||{}; }catch(e){}
+
+  $('#content').innerHTML=`<div class="wrap">
+    <div class="page-head"><h2>Demo Content</h2><p>Sample data so you can try every part of the admin without needing real customer information yet. Import what you need, remove it whenever you are ready to go live.</p></div>
+
+    <div class="card pad" style="margin:18px 0 22px;background:linear-gradient(120deg,#FFF8EC,#FFFBF5);border-color:#F5E1BC">
+      <div class="between" style="flex-wrap:wrap;gap:14px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="color:#B36A0E;flex-shrink:0;margin-top:2px">${ic('<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>')}</div>
+          <div>
+            <b style="font-size:13.5px">This is sample data, clearly separate from anything real</b>
+            <p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:520px">Every demo record is tracked, so removing it never touches your real orders, customers, or products. Safe to import and remove as many times as you like.</p>
+          </div>
+        </div>
+        <div class="row" style="gap:10px;flex-shrink:0">
+          <button class="btn ghost" id="dcRemoveAll" style="border-color:#c0392b;color:#c0392b;gap:7px">${ic('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>')} Remove All Demo Content</button>
+          <button class="btn" id="dcImportAll" style="gap:7px">${ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>')} Import All Demo Content</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dcgrid" id="dcGrid">${DEMO_CONTENT_TYPES.map(t=>dcCard(t,counts[t[0]]||0)).join('')}</div>
+  </div>`;
+
+  wireDemoContent();
+}
+function dcCard([key,title,desc,icon,color,tint],count){
+  var imported=count>0;
+  var status=imported
+    ? `<span style="display:inline-flex;align-items:center;gap:5px;color:#0EA968;font-size:11.5px;font-weight:700" class="dcokicon">${ic('<path d="M20 6L9 17l-5-5"/>')} ${count} imported</span>`
+    : `<span style="color:#94A3B8;font-size:11.5px;font-weight:600">Not imported yet</span>`;
+  return `<div class="card pad dccard" data-type="${key}" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="dciconbox" style="width:42px;height:42px;border-radius:11px;background:${tint};color:${color};display:flex;align-items:center;justify-content:center">${ic(icon)}</div>
+      <span class="dcstatus">${status}</span>
+    </div>
+    <div><b style="font-size:14px">${title}</b><p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;line-height:1.55">${desc}</p></div>
+    <div class="row" style="gap:8px;margin-top:auto;padding-top:4px">
+      <button class="btn ghost sm dcimport" style="flex:1;gap:6px">${ic('<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>')} Import</button>
+      <button class="btn ghost sm dcremove" style="color:#c0392b;gap:6px" ${imported?'':'disabled style="opacity:.4;cursor:not-allowed"'}>${ic('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>')} Remove</button>
+    </div>
+  </div>`;
+}
+function wireDemoContent(){
+  document.querySelectorAll('.dccard').forEach(card=>{
+    var type=card.dataset.type;
+    card.querySelector('.dcimport').onclick=async function(btn){
+      var b=card.querySelector('.dcimport');
+      b.disabled=true;
+      try{
+        var r=await dcApi('/demo-content/'+type+'/import',{method:'POST'});
+        toast(r.already?'Already imported':'Imported');
+        renderDemoContent();
+      }catch(e){ toast('Could not import: '+e.message); b.disabled=false; }
+    };
+    card.querySelector('.dcremove').onclick=async function(){
+      if(card.querySelector('.dcremove').disabled)return;
+      if(!confirm('Remove this demo content? This cannot be undone.'))return;
+      try{
+        await dcApi('/demo-content/'+type+'/remove',{method:'POST'});
+        toast('Removed');
+        renderDemoContent();
+      }catch(e){ toast('Could not remove: '+e.message); }
+    };
+  });
+  document.getElementById('dcImportAll').onclick=async function(){
+    this.disabled=true;
+    try{ await dcApi('/demo-content/import-all',{method:'POST'}); toast('All demo content imported'); renderDemoContent(); }
+    catch(e){ toast('Could not import all: '+e.message); this.disabled=false; }
+  };
+  document.getElementById('dcRemoveAll').onclick=async function(){
+    if(!confirm('Remove ALL demo content? This cannot be undone.'))return;
+    this.disabled=true;
+    try{ await dcApi('/demo-content/remove-all',{method:'POST'}); toast('All demo content removed'); renderDemoContent(); }
+    catch(e){ toast('Could not remove all: '+e.message); this.disabled=false; }
+  };
+}
+
 function renderConsole(){
   $('#content').innerHTML=`<div class="wrap">
     <div class="page-head"><h2>Console</h2><p>Preferences for this admin console — yours and your team's. Separate from store settings; new console options will keep landing here.</p></div>
@@ -6697,12 +7299,32 @@ buildNav();
       return k===name ? decodeURIComponent(c.slice(i+1)) : r;
     },'');
   }
+  /**
+   * A URL written as '/admin-api/...' assumes the app lives at the domain
+   * root. On a subdirectory deployment (the live site runs at
+   * easywebsol.com/kbb-upgrade/) that silently resolves to a URL with no
+   * matching route at all. Shared by api() and every raw fetch() call in
+   * this file that still builds its own URL by hand, so the fix lives in
+   * one place rather than being repeated at each call site.
+   */
+  function fixAdminApiUrl(url){
+    if(url.indexOf('/admin-api/')===0){
+      return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + url;
+    }
+    return url;
+  }
   async function api(url, opts){
     opts = opts || {};
+    url = fixAdminApiUrl(url);
     opts.headers = Object.assign({'Accept':'application/json'}, opts.headers||{});
     if(opts.method && opts.method!=='GET'){
       opts.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
-      opts.headers['Content-Type'] = opts.headers['Content-Type'] || 'application/json';
+      // FormData bodies (file uploads) must NOT have Content-Type set here —
+      // the browser has to generate its own multipart boundary, which it
+      // only does when the header is left unset entirely.
+      if(!(opts.body instanceof FormData)){
+        opts.headers['Content-Type'] = opts.headers['Content-Type'] || 'application/json';
+      }
     }
     opts.credentials = 'same-origin';
     var r = await fetch(url, opts);
@@ -6756,18 +7378,51 @@ buildNav();
       var feed = feedCard.querySelector('div:last-child');
       if(feed) feed.innerHTML = s.recent.map(function(o){
         var dot = o.status==='completed'?'green':(o.status==='cancelled'||o.status==='failed'?'red':'amber');
-        return '<div class="row" style="padding:11px 0;border-bottom:1px solid var(--border-2)"><span class="hd '+dot+'" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600">Order #'+o.id+' \u00b7 '+o.customer+'</div><div style="font-size:11.5px;color:var(--ink-soft)">AED '+o.total_aed.toLocaleString()+' \u00b7 '+o.status+'</div></div><small style="margin-left:auto;font-size:11px;color:var(--ink-faint)">'+(o.created_at||'').slice(0,10)+'</small></div>';
+        return '<div class="row" style="padding:11px 0;border-bottom:1px solid var(--border-2)"><span class="hd '+dot+'" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600">Order #'+o.id+' \u00b7 '+sesc(o.customer)+'</div><div style="font-size:11.5px;color:var(--ink-soft)">AED '+o.total_aed.toLocaleString()+' \u00b7 '+sesc(o.status)+'</div></div><small style="margin-left:auto;font-size:11px;color:var(--ink-faint)">'+(o.created_at||'').slice(0,10)+'</small></div>';
       }).join('');
     }
   }
 
   /* ---------- Orders screen (new; built from the admin's own tokens) ---------- */
-  var ORDER_STATUSES=['pending','processing','onhold','completed','cancelled','refunded','failed'];
+  var ORDER_STATUSES=['draft','pending','processing','onhold','shipped','completed','cancelled','refunded','failed'];
   var ORD=[], ordFilter='all';
   function statusPill(s){
-    var m={completed:'green',processing:'amber',onhold:'amber',pending:'grey',cancelled:'red',refunded:'red',failed:'red'}[s]||'grey';
+    var m={completed:'green',processing:'amber',onhold:'amber',shipped:'blue',pending:'grey',draft:'grey',cancelled:'red',refunded:'red',failed:'red'}[s]||'grey';
     return '<span class="pill '+m+'"><span class="d"></span>'+s+'</span>';
   }
+  /**
+   * Replaces the sidebar's "Blog" and "Posts" links, which previously
+   * loaded an iframe pointing at a standalone file that was never built.
+   * Read-only for now — listing and a real preview link on the live site
+   * is what was actually missing; a full editor is separate, larger scope.
+   */
+  function appRoot(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,''); }
+  async function renderPosts(){
+    var posts;
+    try{ posts = (await api('/admin-api/posts')).posts; }catch(e){ posts = null; }
+
+    if(posts === null){
+      document.querySelector('#content').innerHTML = '<div class="wrap"><div class="page-head"><h2>Posts</h2></div>'+
+        '<p style="padding:24px;color:var(--sale,#c0392b)">Could not load posts.</p></div>';
+      return;
+    }
+
+    var statusColor = function(s){ return s==='published' ? 'green' : 'grey'; };
+
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap"><div class="page-head"><h2>Posts</h2><p>Every article on the Journal blog. Editing happens on the real page for now — click Preview to open it.</p></div>'+
+      '<div class="card" style="overflow:auto"><table><thead><tr><th>Title</th><th>Tag</th><th>Author</th><th>Status</th><th>Published</th><th></th></tr></thead><tbody>'+
+      (posts.length ? posts.map(function(p){
+        return '<tr><td><b>'+sesc(p.title)+'</b></td>'+
+          '<td>'+(p.tag?sesc(p.tag):'<span style="color:var(--ink-faint)">\u2014</span>')+'</td>'+
+          '<td>'+sesc(p.author||'')+'</td>'+
+          '<td><span class="pill '+statusColor(p.status)+'"><span class="d"></span>'+sesc(p.status)+'</span></td>'+
+          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(p.published_at?p.published_at.slice(0,10):'\u2014')+'</td>'+
+          '<td><a class="btn ghost sm" href="'+appRoot()+'/skincare-guide/'+encodeURIComponent(p.slug)+'/'+'" target="_blank" rel="noopener">Preview</a></td></tr>';
+      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No posts yet.</td></tr>')+
+      '</tbody></table></div></div>';
+  }
+
   async function renderOrders(){
     try{ var d=await api('/admin-api/orders'); ORD=d.orders; }catch(e){ ORD=[]; }
     var counts={all:ORD.length};
@@ -6782,8 +7437,8 @@ buildNav();
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>'+
       (list.length? list.map(function(o){
         return '<tr><td><b>#'+o.id+'</b></td>'+
-          '<td><div class="pname">'+o.customer+'</div><div class="pbrand">'+(o.email||'')+'</div></td>'+
-          '<td>'+o.items+'</td>'+
+          '<td><div class="pname">'+sesc(o.customer)+'</div><div class="pbrand">'+sesc(o.email||'')+'</div></td>'+
+          '<td>'+sesc(o.items)+'</td>'+
           '<td class="price"><b>AED '+o.total_aed.toLocaleString()+'</b></td>'+
           '<td>'+statusPill(o.status)+'</td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(o.created_at||'').slice(0,10)+'</td>'+
@@ -6791,14 +7446,405 @@ buildNav();
       }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:34px">No orders yet.</td></tr>')+
       '</tbody></table></div><div class="pager"><span>Showing '+list.length+' of '+ORD.length+'</span></div></div>';
     document.querySelectorAll('#content .chip[data-of]').forEach(function(c){ c.onclick=function(){ ordFilter=c.dataset.of; renderOrders(); }; });
-    document.querySelectorAll('#content [data-view]').forEach(function(b){ b.onclick=function(){ openOrder(+b.dataset.view); }; });
+    document.querySelectorAll('#content [data-view]').forEach(function(b){ b.onclick=function(){ renderOrderDetail(+b.dataset.view); }; });
+  }
+
+  /**
+   * The detailed order page, built from Rafi's own WooCommerce reference
+   * screenshot. Card-stack layout, every section open by default (his
+   * choice) rather than collapsed — the ^v▲ controls just toggle a
+   * section shut for anyone who wants to tidy the page, they don't start
+   * that way. Talks to AdminOrderController, which already existed fully
+   * built and tested by the time this page was written — this is the
+   * missing other half, not a rebuild of that work.
+   */
+  async function renderOrderDetail(id){
+    document.querySelector('#content').innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading order…</p></div>';
+    var o;
+    try{ o = await api('/admin-api/orders/'+id+'/detail'); }
+    catch(e){ document.querySelector('#content').innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--sale)">Could not load this order.</p></div>'; return; }
+
+    var paidLine = o.payment_method_title
+      ? 'Payment via '+sesc(o.payment_method_title)+'.'+(o.transaction_id?' ('+sesc(o.transaction_id)+').':'')+(o.paid_at?' Paid on '+fmtDT(o.paid_at)+'.':'')+(o.ip_address?' Customer IP: '+sesc(o.ip_address)+'.':'')
+      : 'No payment recorded yet.';
+
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap">'+
+      '<p style="margin-bottom:10px"><a href="#" id="ordBack" style="font-size:12.5px;color:var(--pink-deep,#c0392b);text-decoration:none">\u2190 Back to Orders</a></p>'+
+      '<div class="page-head" style="margin-bottom:4px"><h2>Order #'+sesc(o.order_number)+'</h2></div>'+
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px">'+paidLine+'</p>'+
+      '<div class="odgrid">'+
+      '<div class="odmain">'+odOverviewAddressesCard(o)+odCustomerNoteCard(o)+odItemsCard(o)+odNotesCard(o)+'</div>'+
+      '<div class="odside">'+odAttributionCard(o)+odActionsCard(o)+odHistoryCard(o)+odInvoiceCard(o)+'</div>'+
+      '</div></div>';
+
+    document.getElementById('ordBack').onclick = function(e){ e.preventDefault(); renderOrders(); };
+    wireOrderDetail(o);
+  }
+
+  function odCardHead(title){
+    return '<div class="odcardhead"><b>'+title+'</b><div class="odchev">'+
+      '<span class="odtoggle" data-odsec="1">'+ic('<path d="M18 15l-6-6-6 6"/>')+'</span>'+
+      '<span class="odtoggle">'+ic('<path d="M6 9l6 6 6-6"/>')+'</span></div></div>';
+  }
+
+  /*
+   * What the shopper wrote, as opposed to odNotesCard which is the internal
+   * thread staff add to. Two different audiences, so two different cards --
+   * a gift message read as an internal note is how the wrong words end up
+   * on a card in the box.
+   *
+   * customer_note has been on the orders table and in this endpoint's payload
+   * since the beginning, but nothing captured it at checkout and nothing
+   * rendered it here. Both halves land together.
+   */
+  function odCustomerNoteCard(o){
+    var note = (o.customer_note||'').trim();
+    var gift = (o.gift_note||'').trim();
+    if(!note && !gift && !o.is_gift) return '';
+    var body = '';
+    if(o.is_gift){
+      body += '<p style="margin:0 0 10px"><span class="odgiftflag">Gift order</span>'+
+        (o.gift_fee_aed>0?'<span class="odgiftfee">AED '+o.gift_fee_aed+' charged</span>':'<span class="odgiftfee">no charge</span>')+
+        '</p>';
+    }
+    if(gift){
+      body += '<div class="odgiftmsg"><b>Message for the gift card</b><p>'+sesc(gift).replace(/\n/g,'<br>')+'</p></div>';
+    }
+    if(note){
+      body += '<div class="odcustnote"><b>Delivery notes from the customer</b><p>'+sesc(note).replace(/\n/g,'<br>')+'</p></div>';
+    }
+    return '<div class="odcard">'+odCardHead('Customer note')+'<div class="odcardbody">'+body+'</div></div>';
+  }
+
+  function odOverviewAddressesCard(o){
+    var c = o.customer||{};
+    var b = o.billing_address||{}, s = o.shipping_address||{};
+    var addrLines = function(a){
+      return [a.line1, a.line2, [a.city,a.emirate].filter(Boolean).join(', ')].filter(Boolean).map(sesc).join('<br>');
+    };
+    return '<div class="odcard" style="margin-bottom:16px" id="odGeneral">'+
+      '<div class="odcols3">'+
+      '<div class="odcolcell">'+
+        '<div class="odcollabel">GENERAL</div>'+
+        '<div class="odfld"><label>Date created</label>'+
+        '<div class="odtimegrid"><input class="odinp" id="odDateCreated" value="'+sesc((o.created_at||'').slice(0,10))+'"><input class="odinp" id="odTimeH" value="'+sesc((o.created_at||'').slice(11,13))+'"><input class="odinp" id="odTimeM" value="'+sesc((o.created_at||'').slice(14,16))+'"></div></div>'+
+        '<div class="odfld"><label>Status</label>'+seoSel2('odStatusSel', o.status, ORDER_STATUSES.map(function(s){return [s, s.charAt(0).toUpperCase()+s.slice(1)];}))+'</div>'+
+        '<div class="odfld" style="margin-bottom:0"><label>Customer'+(c.id?' &middot; <a href="#" id="odCustHist" style="color:#E08A1A;font-weight:600">Order history</a>':'')+'</label>'+
+        (c.id ? '<div class="odcustchip"><span>'+sesc(c.name)+'</span></div>' : '<div class="odcustchip"><span style="color:var(--ink-faint)">Guest checkout</span></div>')+
+        '</div>'+
+      '</div>'+
+      '<div class="odcolcell odcolmid">'+
+        '<div class="odcollabel">BILLING <a href="#">Edit</a></div>'+
+        '<div class="odaddr"><span class="odname">'+sesc(b.name||o.customer&&o.customer.name||'')+'</span><br>'+(addrLines(b)||'\u2014')+'</div>'+
+        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Email address</label>'+(o.email?'<a href="mailto:'+sesc(o.email)+'" style="font-size:11.5px">'+sesc(o.email)+'</a>':'\u2014')+'</div>'+
+        '<div class="odfld" style="margin-top:10px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'\u2014')+'</div>'+
+      '</div>'+
+      '<div class="odcolcell">'+
+        '<div class="odcollabel">SHIPPING <span class="odedit" data-odedit="shipping" style="cursor:pointer;color:#E08A1A;font-weight:600">Edit</span></div>'+
+        '<div class="odaddr" id="odShipView"><span class="odname">'+sesc(s.name||'')+'</span><br>'+(addrLines(s)||'\u2014')+'</div>'+
+        '<div id="odShipEdit" style="display:none;margin-top:10px">'+
+          '<textarea class="odinp" id="odShipJson" rows="4" style="font-size:11px;font-family:monospace">'+sesc(JSON.stringify(s||{}, null, 2))+'</textarea>'+
+          '<button class="btn sm" id="odShipSave" style="margin-top:8px">Save</button></div>'+
+        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'\u2014')+'</div>'+
+      '</div>'+
+      '</div></div>';
+  }
+
+  function odItemsCard(o){
+    var editable = !!o.editable;
+    var rows = o.items.map(function(it){
+      var qtyCell = editable
+        ? '<input class="odinp odqty" data-itemid="'+it.id+'" type="number" min="1" value="'+it.quantity+'" style="width:60px;padding:6px 7px">'
+        : '\u00d7 '+it.quantity;
+      var priceCell = editable
+        ? '<input class="odinp odprice" data-itemid="'+it.id+'" type="number" step="0.01" min="0" value="'+it.unit_price_aed+'" style="width:84px;padding:6px 7px">'
+        : 'AED '+it.unit_price_aed;
+      var removeCell = editable
+        ? '<button class="btn ghost sm oditemdel" data-itemid="'+it.id+'" style="color:var(--sale,#c0392b);padding:4px 9px">Remove</button>'
+        : '';
+      return '<tr><td style="width:44px"><div style="width:36px;height:36px;border-radius:8px;background:var(--surface-2);overflow:hidden">'+
+        (it.image?'<img src="'+sesc(it.image)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div></td>'+
+        '<td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc(it.brand||'')+'</div></td>'+
+        '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
+    }).join('');
+
+    var refundedLine = o.refunded_total_aed>0 ? '<div class="between" style="color:var(--sale,#c0392b)"><span>Refunded</span><span>-AED '+o.refunded_total_aed+'</span></div>' : '';
+    var vatLine = o.vat ? '<div class="between" style="color:var(--ink-faint);font-size:11.5px;padding-top:4px"><span>'+sesc(o.vat.label)+'</span><span>AED '+o.vat.amount_aed+'</span></div>' : '';
+
+    var addProductBlock = editable
+      ? '<div style="margin-top:14px;position:relative"><input class="odinp" id="odAddProductSearch" placeholder="Search products to add\u2026" style="width:280px">'+
+        '<div id="odAddProductResults" style="display:none;position:absolute;z-index:20;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.08);width:340px;max-height:280px;overflow:auto;margin-top:4px"></div></div>'
+      : '<p style="font-size:12px;color:var(--ink-faint);margin-top:12px;display:flex;align-items:center;gap:6px">'+ic('<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round"/>')+'This order is no longer editable \u2014 it has already shipped or been closed out.</p>';
+
+    return '<div class="odcard" id="odItems">'+odCardHead('Items')+
+      '<div class="pad">'+
+      '<div style="overflow:auto"><table><thead><tr><th></th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th>'+(editable?'<th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      addProductBlock+
+      (o.shipping_method?'<p style="font-size:12px;color:var(--ink-soft);margin-top:10px">Shipping: '+sesc(o.shipping_method)+'</p>':'')+
+      '<div style="margin-top:14px;max-width:280px;margin-left:auto;'+(editable?'margin-right:140px;':'')+'display:flex;flex-direction:column;gap:5px;font-size:13px">'+
+      '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
+      (o.discount_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Discount'+(o.coupon_code?' ('+sesc(o.coupon_code)+')':'')+'</span><span>-AED '+o.discount_total_aed+'</span></div>':'')+
+      '<div class="between"><span style="color:var(--ink-soft)">Shipping</span><span>AED '+o.shipping_total_aed+'</span></div>'+
+      (o.fee_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Fees</span><span>AED '+o.fee_total_aed+'</span></div>':'')+
+      '<div class="between" style="font-weight:800;font-size:14px;border-top:1px solid var(--border);padding-top:8px"><span>Order total</span><span>AED '+o.total_aed+'</span></div>'+
+      vatLine+
+      refundedLine+
+      '</div>'+
+      '<div class="row" style="margin-top:16px;gap:10px;align-items:center">'+
+      '<button class="btn ghost sm" id="odRefundToggle">Refund</button>'+
+      '<div id="odRefundForm" style="display:none;gap:8px;align-items:center" class="row">'+
+        '<input class="odinp" id="odRefundAmt" type="number" step="0.01" placeholder="Amount AED" style="width:120px">'+
+        '<input class="odinp" id="odRefundReason" placeholder="Reason (optional)" style="width:200px">'+
+        '<button class="btn sm" id="odRefundGo">Confirm refund</button></div></div>'+
+      '</div></div>';
+  }
+
+  function odNotesCard(o){
+    var rows = o.notes.map(function(n){
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:12.5px">'+sesc(n.content)+'</div>'+
+        '<div style="font-size:11px;color:var(--ink-soft);margin-top:3px">'+sesc(n.author||'Admin')+' \u00b7 '+fmtDT(n.created_at)+'</div></div>';
+    }).join('');
+
+    return '<div class="odcard" id="odNotes">'+odCardHead('Order notes')+'<div class="pad">'+
+      (rows || '<p style="font-size:12.5px;color:var(--ink-soft)">No notes yet.</p>')+
+      '<div class="row" style="margin-top:12px;gap:8px"><textarea class="odinp" id="odNoteText" rows="2" placeholder="Add a note for other admins…" style="flex:1"></textarea>'+
+      '<button class="btn sm" id="odNoteGo" style="align-self:flex-end">Add</button></div></div></div>';
+  }
+
+  function odAttributionCard(o){
+    var a = o.attribution||{};
+    var na = '<span style="color:var(--ink-faint)">Not tracked yet</span>';
+    return '<div class="odcard" style="margin-bottom:14px" id="odAttr">'+odCardHead('Order attribution')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">SOURCE</label><div style="font-size:13px">'+(a.origin?sesc(a.origin):na)+'</div></div>'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">DEVICE TYPE</label><div style="font-size:13px">'+(a.device_type?sesc(a.device_type):na)+'</div></div>'+
+      '<div class="odfld" style="margin-bottom:0"><label style="font-weight:700;color:var(--ink-faint)">SESSION PAGE VIEWS</label><div style="font-size:13px">'+(a.session_page_views!=null?a.session_page_views:na)+'</div></div>'+
+      '</div></div>';
+  }
+
+  function odActionsCard(o){
+    var real = (o.actions&&o.actions.real)||[], ph = (o.actions&&o.actions.placeholder)||[];
+    var labels = {cancel:'Cancel order', duplicate:'Duplicate order', resend_confirmation:'Resend confirmation email', email_invoice:'Email invoice'};
+    var opts = real.concat(ph).map(function(a){ return '<option value="'+a+'">'+(labels[a]||a)+(ph.indexOf(a)>-1?' (not available yet)':'')+'</option>'; }).join('');
+    return '<div class="odcard" style="margin-bottom:14px" id="odActions">'+odCardHead('Order actions')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="row" style="gap:8px;margin-bottom:14px"><select class="odinp" id="odActionSel" style="flex:1"><option value="">Choose an action\u2026</option>'+opts+'</select>'+
+      '<button class="btn sm" id="odActionGo" style="background:#FFF3E0;color:#B36A0E;border:1.5px solid transparent">'+ic('<path d="M9 6l6 6-6 6"/>')+'</button></div>'+
+      '<div class="between"><a href="#" id="odTrash" style="color:var(--sale,#c0392b);font-size:12.5px;font-weight:600;text-decoration:none">Move to trash</a><button class="btn" id="odUpdate" style="background:#E08A1A;color:#fff">Update</button></div></div></div>';
+  }
+
+  function odHistoryCard(o){
+    var h = o.customer_history||{};
+    return '<div class="odcard" style="margin-bottom:14px" id="odHist">'+odCardHead('Customer history')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">TOTAL ORDERS</label><div style="font-size:17px;font-weight:800">'+(h.total_orders||0)+'</div></div>'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">TOTAL REVENUE</label><div style="font-size:17px;font-weight:800">AED '+(h.total_revenue_aed||0)+'</div></div>'+
+      '<div class="odfld" style="margin-bottom:0"><label style="font-weight:700;color:var(--ink-faint)">AVERAGE ORDER VALUE</label><div style="font-size:17px;font-weight:800">AED '+(h.average_order_value_aed||0)+'</div></div>'+
+      '</div></div>';
+  }
+
+  function odInvoiceCard(o){
+    var docs = ['Invoice','Packing slip','Delivery note','Shipping Label','Dispatch Label'];
+    return '<div class="odcard" id="odInvoice">'+odCardHead('Invoice / Packing')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">INVOICE NUMBER</label><div style="font-size:13px">'+(o.invoice_number?sesc(String(o.invoice_number)):'<span style="color:var(--ink-faint)">Not yet invoiced</span>')+'</div></div>'+
+      '<label style="font-size:10.5px;font-weight:700;color:var(--ink-faint)">PRINT / DOWNLOAD</label>'+
+      '<div style="margin-top:8px">'+docs.map(function(d){
+        return '<div class="between" style="padding:8px 0;border-bottom:1px solid var(--line-2,var(--border))"><span style="font-size:12.5px;font-weight:500">'+d+'</span><button class="btn ghost sm" data-oddoc="'+d+'" style="padding:5px 9px">'+ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>')+'</button></div>';
+      }).join('')+'</div></div></div>';
+  }
+
+  function seoSel2(id, cur, opts){
+    return '<select class="inp" id="'+id+'" style="width:100%">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===cur?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';
+  }
+
+  function fmtDT(iso){
+    if(!iso) return '\u2014';
+    var d = new Date(iso);
+    if(isNaN(d)) return sesc(iso);
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' at '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  function wireOrderDetail(o){
+    var id = o.id;
+
+    // Collapse/expand — sections start open (Rafi's choice); this just toggles.
+    document.querySelectorAll('#content .odtoggle').forEach(function(t){
+      t.onclick = function(){
+        var card = t.closest('.card');
+        var body = card.querySelectorAll(':scope > *:not(.between)');
+        var hidden = body[0] && body[0].style.display==='none';
+        body.forEach(function(el){ el.style.display = hidden ? '' : 'none'; });
+        t.textContent = hidden ? 'Hide' : 'Show';
+      };
+    });
+
+    document.getElementById('odUpdate').onclick = async function(){
+      var status = document.getElementById('odStatusSel').value;
+      try{ await api('/admin-api/orders/'+id+'/status',{method:'PUT',body:JSON.stringify({status:status})});
+        toast('Order updated'); renderOrderDetail(id);
+      }catch(e){ toast('Update failed'); }
+    };
+
+    document.getElementById('odTrash').onclick = async function(){
+      if(!confirm('Move this order to trash?')) return;
+      try{ await api('/admin-api/orders/'+id,{method:'DELETE'}); toast('Order moved to trash'); renderOrders(); }
+      catch(e){ toast('Could not trash this order.'); }
+    };
+
+    var custHist = document.getElementById('odCustHist');
+    if(custHist) custHist.onclick = function(e){ e.preventDefault(); go('customers'); };
+
+    // Shipping address inline edit.
+    document.getElementById('odShipEdit') && (function(){
+      document.querySelector('[data-odedit="shipping"]').onclick = function(){
+        var view=document.getElementById('odShipView'), edit=document.getElementById('odShipEdit');
+        var open = edit.style.display==='none'; view.style.display = open?'none':''; edit.style.display = open?'':'none';
+      };
+      document.getElementById('odShipSave').onclick = async function(){
+        var raw = document.getElementById('odShipJson').value;
+        var parsed; try{ parsed = JSON.parse(raw); }catch(e){ toast('That is not valid JSON.'); return; }
+        try{
+          var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/address'),{method:'PUT',credentials:'same-origin',
+            headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+            body:JSON.stringify({type:'shipping',address:parsed})});
+          if(!r.ok) throw 0;
+          toast('Shipping address updated'); renderOrderDetail(id);
+        }catch(e){ toast('Could not save the address.'); }
+      };
+    })();
+
+    // Item editing: quantity, price, remove, add product — only rendered when o.editable.
+    if(o.editable){
+      document.querySelectorAll('#content .odqty').forEach(function(inp){
+        inp.onchange = async function(){
+          var qty = parseInt(inp.value, 10);
+          if(!qty || qty<1){ toast('Quantity must be at least 1.'); renderOrderDetail(id); return; }
+          try{
+            var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+inp.dataset.itemid),{method:'PUT',credentials:'same-origin',
+              headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+              body:JSON.stringify({quantity:qty})});
+            var j = await r.json();
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
+            toast('Quantity updated'); renderOrderDetail(id);
+          }catch(e){ toast('Could not update that item.'); }
+        };
+      });
+      document.querySelectorAll('#content .odprice').forEach(function(inp){
+        inp.onchange = async function(){
+          var price = parseFloat(inp.value);
+          if(price==null || isNaN(price) || price<0){ toast('Enter a valid price.'); renderOrderDetail(id); return; }
+          try{
+            var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+inp.dataset.itemid),{method:'PUT',credentials:'same-origin',
+              headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+              body:JSON.stringify({unit_price_aed:price})});
+            var j = await r.json();
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
+            toast('Price updated'); renderOrderDetail(id);
+          }catch(e){ toast('Could not update that item.'); }
+        };
+      });
+      document.querySelectorAll('#content .oditemdel').forEach(function(btn){
+        btn.onclick = async function(){
+          if(!confirm('Remove this item from the order?')) return;
+          try{
+            var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+btn.dataset.itemid),{method:'DELETE',credentials:'same-origin',
+              headers:{'X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'}});
+            var j = await r.json();
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not remove that item.'); return; }
+            toast('Item removed'); renderOrderDetail(id);
+          }catch(e){ toast('Could not remove that item.'); }
+        };
+      });
+
+      var searchInp = document.getElementById('odAddProductSearch');
+      var resultsBox = document.getElementById('odAddProductResults');
+      var searchT;
+      if(searchInp){
+        searchInp.oninput = function(){
+          clearTimeout(searchT);
+          var q = searchInp.value.trim();
+          if(q.length<2){ resultsBox.style.display='none'; return; }
+          searchT = setTimeout(async function(){
+            try{
+              var data = await api('/admin-api/catalog/products?search='+encodeURIComponent(q)+'&per_page=8');
+              var list = data.products||[];
+              resultsBox.innerHTML = list.length ? list.map(function(p){
+                return '<div class="odaddrow" data-pid="'+p.id+'" style="padding:9px 12px;cursor:pointer;font-size:12.5px;border-bottom:1px solid var(--border)">'+
+                  '<b>'+sesc(p.name)+'</b><div style="color:var(--ink-faint);font-size:11px">'+sesc(p.brand||'')+' \u00b7 AED '+(p.sale_price||p.price)+'</div></div>';
+              }).join('') : '<div style="padding:12px;color:var(--ink-faint);font-size:12.5px">No products found.</div>';
+              resultsBox.style.display='block';
+              document.querySelectorAll('#content .odaddrow').forEach(function(row){
+                row.onclick = async function(){
+                  try{
+                    var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items'),{method:'POST',credentials:'same-origin',
+                      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+                      body:JSON.stringify({product_id:parseInt(row.dataset.pid,10), quantity:1})});
+                    var j = await r.json();
+                    if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.'); return; }
+                    toast('Product added'); renderOrderDetail(id);
+                  }catch(e){ toast('Could not add that product.'); }
+                };
+              });
+            }catch(e){ resultsBox.style.display='none'; }
+          }, 300);
+        };
+        document.addEventListener('click', function(e){
+          if(!resultsBox.contains(e.target) && e.target!==searchInp) resultsBox.style.display='none';
+        });
+      }
+    }
+
+    // Refund.
+    document.getElementById('odRefundToggle').onclick = function(){
+      var f = document.getElementById('odRefundForm');
+      f.style.display = f.style.display==='none' ? 'flex' : 'none';
+    };
+    document.getElementById('odRefundGo').onclick = async function(){
+      var amt = parseFloat(document.getElementById('odRefundAmt').value);
+      if(!amt || amt<=0){ toast('Enter a refund amount.'); return; }
+      var reason = document.getElementById('odRefundReason').value;
+      try{
+        var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/refund'),{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+          body:JSON.stringify({amount_aed:amt, reason:reason})});
+        var j = await r.json();
+        if(!r.ok || j.ok===false){ toast(j.message||'Could not process that refund.'); return; }
+        toast('Refund recorded'); renderOrderDetail(id);
+      }catch(e){ toast('Could not process that refund.'); }
+    };
+
+    // Add note.
+    document.getElementById('odNoteGo').onclick = async function(){
+      var content = document.getElementById('odNoteText').value.trim();
+      if(!content){ toast('Write a note first.'); return; }
+      try{ await api('/admin-api/orders/'+id+'/notes',{method:'POST',body:JSON.stringify({content:content})});
+        toast('Note added'); renderOrderDetail(id);
+      }catch(e){ toast('Could not save that note.'); }
+    };
+
+    // Actions dropdown.
+    document.getElementById('odActionGo').onclick = async function(){
+      var action = document.getElementById('odActionSel').value;
+      if(!action){ toast('Choose an action first.'); return; }
+      try{
+        var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/action'),{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+          body:JSON.stringify({action:action})});
+        var j = await r.json();
+        if(!r.ok || j.ok===false){ toast(j.message||'That action could not be completed.'); return; }
+        toast('Done'); renderOrderDetail(id);
+      }catch(e){ toast('That action could not be completed.'); }
+    };
+
+    // Invoice/Packing placeholders — visible, honest about not being wired yet.
+    document.querySelectorAll('#content [data-oddoc]').forEach(function(b){
+      b.onclick = function(){ toast(b.dataset.oddoc+' generation is not built yet — this is a placeholder.'); };
+    });
   }
 
   async function openOrder(id){
     var o; try{ o=await api('/admin-api/orders/'+id); }catch(e){ toast('Could not load order'); return; }
     var opts=ORDER_STATUSES.map(function(s){return '<option value="'+s+'"'+(s===o.status?' selected':'')+'>'+s+'</option>';}).join('');
     var c=o.customer||{};
-    var addr=[c.name,c.email,c.phone,((c.emirate||'')+(c.address?(' \u00b7 '+c.address):''))].filter(Boolean).join('<br>');
+    var addr=[sesc(c.name),sesc(c.email),sesc(c.phone),sesc((c.emirate||'')+(c.address?(' \u00b7 '+c.address):''))].filter(Boolean).join('<br>');
     openModal(
       '<div class="modal-h"><b>Order #'+o.id+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
       '<div class="modal-b">'+
@@ -6807,7 +7853,7 @@ buildNav();
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+it.name+'</b><div class="pbrand">'+(it.brand||'')+'</div></td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div></td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
@@ -6849,8 +7895,8 @@ buildNav();
       '<div class="wrap"><div class="page-head"><h2>Customers</h2><p>Everyone who has placed an order through the storefront.</p></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Customer</th><th>Contact</th><th>Emirate</th><th>Orders</th><th>Spent</th><th>Joined</th></tr></thead><tbody>'+
       (CUST.length? CUST.map(function(c){
-        return '<tr><td><div class="row"><span class="pthumb" style="background:'+tcol(c.name||'KB')+';width:30px;height:30px;font-size:10px">'+initials(c.name||'KB')+'</span><b style="font-size:12.5px">'+(c.name||'Guest')+'</b></div></td>'+
-          '<td><div class="pname">'+(c.email||'')+'</div><div class="pbrand">'+(c.phone||'')+'</div></td>'+
+        return '<tr><td><div class="row"><span class="pthumb" style="background:'+sesc(tcol(c.name||'KB'))+';width:30px;height:30px;font-size:10px">'+sesc(initials(c.name||'KB'))+'</span><b style="font-size:12.5px">'+sesc((c.name||'Guest'))+'</b></div></td>'+
+          '<td><div class="pname">'+sesc((c.email||''))+'</div><div class="pbrand">'+sesc((c.phone||''))+'</div></td>'+
           '<td>'+(c.emirate||'\u2014')+'</td><td>'+c.orders+'</td>'+
           '<td class="price"><b>AED '+c.spent_aed.toLocaleString()+'</b></td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(c.created_at||'').slice(0,10)+'</td></tr>';
@@ -6869,8 +7915,8 @@ buildNav();
       '<div class="chips" style="margin:12px 0 14px">'+[['all','All \u00b7 '+LEADS.length],['expert','Expert requests \u00b7 '+expertN]].map(function(c){return '<button class="chip'+(leadFilter===c[0]?' on':'')+'" data-lf="'+c[0]+'">'+c[1]+'</button>';}).join('')+'</div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Lead</th><th>Skin type</th><th>Concerns</th><th>Recommended</th><th>Expert</th><th>Date</th></tr></thead><tbody>'+
       (list.length? list.map(function(l){
-        return '<tr><td><div class="pname">'+(l.name||'Anonymous')+'</div><div class="pbrand">'+(l.email||l.phone||'')+'</div></td>'+
-          '<td>'+(l.skin_type||'\u2014')+'</td>'+
+        return '<tr><td><div class="pname">'+sesc((l.name||'Anonymous'))+'</div><div class="pbrand">'+sesc((l.email||l.phone||''))+'</div></td>'+
+          '<td>'+sesc((l.skin_type||'\u2014'))+'</td>'+
           '<td>'+(l.concerns&&l.concerns.length? l.concerns.map(function(x){return '<span class="tagchip" style="font-size:10px">'+x+'</span>';}).join(' ') : '\u2014')+'</td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(l.recommended&&l.recommended.length? l.recommended.join(', ') : '\u2014')+'</td>'+
           '<td>'+(l.expert? '<span class="pill amber"><span class="d"></span>Requested</span>':'<span class="pill grey">\u2014</span>')+'</td>'+
@@ -7109,9 +8155,9 @@ buildNav();
       '<div class="card" style="overflow:auto"><table><thead><tr><th style="width:30px"></th><th>Product</th><th>Author</th><th>Review</th><th>Status</th><th></th></tr></thead><tbody>'+
       (REV.length? REV.map(function(r){
         return '<tr><td><span class="cbx'+(revSel.has(r.id)?' on':'')+'" data-rsel="'+r.id+'">'+ic(I.check)+'</span></td>'+
-          '<td style="font-size:12px">'+r.product+'</td>'+
-          '<td><div class="pname">'+r.author+(r.verified?' <span class="pill green" style="font-size:9px;padding:1px 6px">Verified</span>':'')+'</div>'+revStars(r.rating)+'</td>'+
-          '<td style="max-width:320px"><b style="font-size:12.5px">'+(r.title||'')+'</b><div class="pbrand" style="white-space:normal">'+(r.body||'').slice(0,140)+((r.body||'').length>140?'\u2026':'')+'</div>'+(r.reply?('<div style="margin-top:5px;font-size:11.5px;color:var(--accent-strong)">\u21b3 '+r.reply.slice(0,120)+'</div>'):'')+'</td>'+
+          '<td style="font-size:12px">'+sesc(r.product)+'</td>'+
+          '<td><div class="pname">'+sesc(r.author)+(r.verified?' <span class="pill green" style="font-size:9px;padding:1px 6px">Verified</span>':'')+'</div>'+revStars(r.rating)+'</td>'+
+          '<td style="max-width:320px"><b style="font-size:12.5px">'+sesc((r.title||''))+'</b><div class="pbrand" style="white-space:normal">'+sesc((r.body||'').slice(0,140))+((r.body||'').length>140?'\u2026':'')+'</div>'+(r.reply?('<div style="margin-top:5px;font-size:11.5px;color:var(--accent-strong)">\u21b3 '+r.reply.slice(0,120)+'</div>'):'')+'</td>'+
           '<td>'+revStatusPill(r.status)+'</td>'+
           '<td><div class="row" style="gap:5px">'+
             (r.status!=='approved'?'<button class="btn ghost sm" data-rapp="'+r.id+'">Approve</button>':'')+
@@ -7133,9 +8179,9 @@ buildNav();
   async function bulkModerate(action){ var ids=Array.prototype.slice.call(revSel); if(!ids.length)return; try{ await api('/admin-api/reviews/bulk',{method:'POST',body:JSON.stringify({action:action,ids:ids})}); toast(action+'d '+ids.length); revSel.clear(); renderReviews(); }catch(e){ toast('Bulk action failed'); } }
   function replyReview(id){
     var r=REV.filter(function(x){return x.id===id;})[0]; if(!r)return;
-    openModal('<div class="modal-h"><b>Reply to '+r.author+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
-      '<div class="modal-b"><div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">'+revStars(r.rating)+' \u00b7 '+(r.title||'')+'</div>'+
-      '<textarea class="inp" id="revReplyTxt" style="width:100%;min-height:96px" placeholder="Public reply shown under the review\u2026">'+(r.reply||'')+'</textarea>'+
+    openModal('<div class="modal-h"><b>Reply to '+sesc(r.author)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
+      '<div class="modal-b"><div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">'+revStars(r.rating)+' \u00b7 '+sesc(r.title||'')+'</div>'+
+      '<textarea class="inp" id="revReplyTxt" style="width:100%;min-height:96px" placeholder="Public reply shown under the review\u2026">'+sesc((r.reply||''))+'</textarea>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="revReplySave">Save reply</button></div></div>');
     document.getElementById('revReplySave').onclick=async function(){
       var txt=document.getElementById('revReplyTxt').value;
@@ -7156,7 +8202,7 @@ buildNav();
     var sb=a.status_breakdown||{};
     var statusHtml=Object.keys(sb).map(function(k){ var m={completed:'green',processing:'amber',onhold:'amber',pending:'grey',cancelled:'red',refunded:'red',failed:'red'}[k]||'grey'; return '<span class="pill '+m+'" style="margin:2px"><span class="d"></span>'+k+': '+sb[k]+'</span>'; }).join('');
     var tp=a.top_products||[];
-    var rows=tp.length? tp.map(function(p){ return '<tr><td><div class="pname">'+p.name+'</div><div class="pbrand">'+(p.brand||'')+'</div></td><td>'+p.units+'</td><td class="price"><b>AED '+p.revenue_aed.toLocaleString()+'</b></td></tr>'; }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--ink-soft);padding:24px">No sales yet.</td></tr>';
+    var rows=tp.length? tp.map(function(p){ return '<tr><td><div class="pname">'+sesc(p.name)+'</div><div class="pbrand">'+sesc((p.brand||''))+'</div></td><td>'+p.units+'</td><td class="price"><b>AED '+p.revenue_aed.toLocaleString()+'</b></td></tr>'; }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--ink-soft);padding:24px">No sales yet.</td></tr>';
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Analytics</h2><p>Sales performance from real orders. Revenue counts processing, on-hold and completed orders.</p></div>'+
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">'+
@@ -7184,8 +8230,8 @@ buildNav();
       '<button class="btn" id="usr_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add user</button></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Added</th><th></th></tr></thead><tbody>'+
       (ADMINS.length? ADMINS.map(function(u){
-        return '<tr><td><div class="row"><span class="pthumb" style="background:'+tcol(u.name||u.email)+';width:30px;height:30px;font-size:10px">'+initials(u.name||u.email)+'</span><b style="font-size:12.5px">'+(u.name||'\u2014')+(u.is_self?' <span class="pbrand" style="display:inline">(you)</span>':'')+'</b></div></td>'+
-          '<td style="font-size:12px">'+u.email+'</td>'+
+        return '<tr><td><div class="row"><span class="pthumb" style="background:'+sesc(tcol(u.name||u.email))+';width:30px;height:30px;font-size:10px">'+sesc(initials(u.name||u.email))+'</span><b style="font-size:12.5px">'+sesc((u.name||'\u2014'))+(u.is_self?' <span class="pbrand" style="display:inline">(you)</span>':'')+'</b></div></td>'+
+          '<td style="font-size:12px">'+sesc(u.email)+'</td>'+
           '<td>'+roleBadge(u.role)+'</td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(u.created_at||'').slice(0,10)+'</td>'+
           '<td><div class="row" style="gap:5px"><button class="btn ghost sm" data-uedit="'+u.id+'">Edit</button>'+
@@ -7218,7 +8264,7 @@ buildNav();
   }
   function editUser(id){
     var u=ADMINS.filter(function(x){return x.id===id;})[0]; if(!u)return;
-    openModal('<div class="modal-h"><b>Edit '+(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
+    openModal('<div class="modal-h"><b>Edit '+sesc(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
       '<div class="modal-b"><div class="fld"><label>Name</label><input id="eu_name" value="'+sesc(u.name)+'"></div>'+
       '<div class="fld"><label>Role</label>'+roleSelect('eu_role',u.role)+'</div>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="eu_save">Save</button></div></div>');
@@ -7229,7 +8275,7 @@ buildNav();
   }
   function resetUserPassword(id){
     var u=ADMINS.filter(function(x){return x.id===id;})[0]; if(!u)return;
-    openModal('<div class="modal-h"><b>Reset password \u2014 '+(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
+    openModal('<div class="modal-h"><b>Reset password \u2014 '+sesc(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
       '<div class="modal-b"><div class="fld"><label>New password</label><input id="rp_pass" type="text" placeholder="min 8 characters"></div>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="rp_save">Set password</button></div></div>');
     document.getElementById('rp_save').onclick=async function(){
@@ -7241,7 +8287,7 @@ buildNav();
   async function deleteUser(id){
     var u=ADMINS.filter(function(x){return x.id===id;})[0]; if(!u)return;
     openModal('<div class="modal-h"><b>Delete user</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
-      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Remove <b>'+(u.name||u.email)+'</b>? This cannot be undone.</p>'+
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Remove <b>'+sesc((u.name||u.email))+'</b>? This cannot be undone.</p>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" style="background:var(--danger,#d6455a)" id="du_yes">Delete</button></div></div>');
     document.getElementById('du_yes').onclick=async function(){
       try{ await api('/admin-api/users/'+id,{method:'DELETE'}); toast('User deleted'); closeModal(); renderUsers(); }
@@ -7276,6 +8322,7 @@ buildNav();
         free_ship: String(Math.round((parseFloat(sval('set_free_ship'))||0)*100)),
         delivery_flat: String(Math.round((parseFloat(sval('set_delivery'))||0)*100)),
         cod_fee: String(Math.round((parseFloat(sval('set_cod'))||0)*100))
+
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('Business details saved'); }
       catch(e){ toast('Save failed \u2014 check connection'); }
@@ -7283,11 +8330,78 @@ buildNav();
   }
 
   function seoSel(id,cur,opts,dflt){ cur=(cur==null||cur==='')?dflt:cur; return '<select class="inp" id="'+id+'" style="width:100%">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===cur?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'; }
+
+  /**
+   * A real upload widget — click-to-browse (or drag a file onto it) with a
+   * live preview — replacing a raw "paste a URL" text field so a
+   * non-technical store owner never has to know how to host an image
+   * somewhere else first. Falls back to a plain URL input underneath for
+   * anyone who already has one.
+   */
+  function imgUploadField(id,curUrl,label,folder){
+    var hasImg = curUrl && curUrl.trim()!=='';
+    return '<div class="fld"><label>'+label+'</label>'+
+      '<div class="imgup" id="'+id+'_zone" style="border:1.5px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;position:relative">'+
+      '<input type="file" id="'+id+'_file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" style="position:absolute;inset:0;opacity:0;cursor:pointer">'+
+      '<div id="'+id+'_preview" style="'+(hasImg?'':'display:none')+';margin-bottom:8px"><img src="'+sesc(curUrl)+'" style="max-height:70px;max-width:100%;border-radius:6px;display:'+(hasImg?'block':'none')+';margin:0 auto"></div>'+
+      '<div id="'+id+'_prompt" style="font-size:12px;color:var(--ink-soft)">'+(hasImg?'Click to replace':'Click to upload, or drag an image here')+'</div>'+
+      '<div id="'+id+'_status" style="font-size:11.5px;color:var(--ink-soft);margin-top:4px"></div>'+
+      '</div>'+
+      '<input type="hidden" id="'+id+'" value="'+sesc(curUrl)+'">'+
+      '<p class="description" style="margin:6px 0 0"><a href="#" id="'+id+'_manual" style="font-size:11.5px">or paste a URL directly</a></p>'+
+      '<input id="'+id+'_url" class="inp" style="display:none;margin-top:6px" value="'+sesc(curUrl)+'" placeholder="https://…"></div>';
+  }
+
+  function wireImgUpload(id,folder){
+    var zone=document.getElementById(id+'_zone'), fileInput=document.getElementById(id+'_file'),
+        hidden=document.getElementById(id), preview=document.getElementById(id+'_preview'),
+        img=preview?preview.querySelector('img'):null, prompt=document.getElementById(id+'_prompt'),
+        status=document.getElementById(id+'_status'), manualLink=document.getElementById(id+'_manual'),
+        urlInput=document.getElementById(id+'_url');
+    if(!zone) return;
+
+    async function doUpload(file){
+      if(!file) return;
+      status.textContent='Uploading…';
+      try{
+        var fd=new FormData(); fd.append('file',file); fd.append('folder',folder||'seo');
+        var res=await api('/admin-api/media/upload',{method:'POST',body:fd});
+        hidden.value=res.url; urlInput.value=res.url;
+        img.src=res.url; img.style.display='block'; preview.style.display='block';
+        prompt.textContent='Click to replace'; status.textContent='Uploaded';
+        setTimeout(function(){status.textContent='';},1800);
+      }catch(e){ status.textContent='Upload failed — check connection'; }
+    }
+
+    fileInput.onchange=function(){ doUpload(fileInput.files[0]); };
+    zone.ondragover=function(e){ e.preventDefault(); zone.style.borderColor='var(--accent)'; };
+    zone.ondragleave=function(){ zone.style.borderColor='var(--border)'; };
+    zone.ondrop=function(e){ e.preventDefault(); zone.style.borderColor='var(--border)'; if(e.dataTransfer.files[0]) doUpload(e.dataTransfer.files[0]); };
+    manualLink.onclick=function(e){
+      e.preventDefault();
+      urlInput.style.display = urlInput.style.display==='none' ? 'block' : 'none';
+    };
+    urlInput.oninput=function(){ hidden.value=urlInput.value; if(urlInput.value){ img.src=urlInput.value; img.style.display='block'; preview.style.display='block'; } };
+  }
+
+  let seoTab='settings';
+
   async function renderSeo(){
-    await loadSettings(); var S=SETTINGS;
-    var base=(location.origin||'');
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>SEO &amp; Meta</h2><p>Site-wide search-engine settings. These render into every storefront page\u2019s &lt;head&gt; and power the sitemap, robots.txt and structured data.</p></div>'+
+      '<div class="subtabs"><button class="subtab'+(seoTab==='settings'?' on':'')+'" data-st="settings">Settings</button><button class="subtab'+(seoTab==='redirects'?' on':'')+'" data-st="redirects">Redirects &amp; 404s</button><button class="subtab'+(seoTab==='schema'?' on':'')+'" data-st="schema">Schema Inspector</button><button class="subtab'+(seoTab==='audit'?' on':'')+'" data-st="audit">Catalogue Audit</button></div>'+
+      '<div id="seoTabBody"></div></div>';
+    $$('#content .subtab').forEach(function(b){ b.onclick=function(){ seoTab=b.dataset.st; renderSeo(); }; });
+    if(seoTab==='redirects') return renderSeoRedirects();
+    if(seoTab==='schema') return renderSchemaInspector();
+    if(seoTab==='audit') return renderCatalogueAudit();
+    return renderSeoSettings();
+  }
+
+  async function renderSeoSettings(){
+    await loadSettings(); var S=SETTINGS;
+    var base=(location.origin||'');
+    document.getElementById('seoTabBody').innerHTML =
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Search appearance</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Site URL (canonical base)</label><input id="seo_site_url" value="'+sesc(S.site_url)+'" placeholder="https://kbeautybliss.com"></div>'+
@@ -7301,26 +8415,61 @@ buildNav();
       '<div class="fld"><label>Follow links</label>'+seoSel('seo_robots_f',S.robots_follow,[['follow','Follow'],['nofollow','Nofollow']],'follow')+'</div></div></div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Social (Open Graph &amp; Twitter)</b>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Default share image URL (1200\u00d7630)</label><input id="seo_og_img" value="'+sesc(S.og_default_image)+'" placeholder="https://\u2026/og.jpg"></div>'+
+      '<p class="description" style="margin:4px 0 0">The share image and title/description below apply everywhere a link is shared \u2014 Facebook, LinkedIn, WhatsApp, Pinterest, iMessage \u2014 they all read the same Open Graph tags. Twitter/X alone uses its own separate card format, which is why it gets its own field just below.</p>'+
+      '<div class="g2" style="margin-top:12px">'+imgUploadField('seo_og_img',S.og_default_image,'Default share image (1200\u00d7630)','seo')+
       '<div class="fld"><label>Twitter / X handle</label><input id="seo_tw" value="'+sesc(S.twitter_handle)+'" placeholder="@kbeautybliss"></div></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Social profile links</b>'+
+      '<p class="description" style="margin:4px 0 0">Linked into your Organization schema below (as <code>sameAs</code>) so Google can confirm these are genuinely your official profiles \u2014 helps your Knowledge Panel and brand search results. Leave any blank you do not have.</p>'+
+      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Facebook</label><input id="seo_soc_fb" value="'+sesc(S.social_facebook)+'" placeholder="https://facebook.com/kbeautybliss"></div>'+
+      '<div class="fld"><label>Instagram</label><input id="seo_soc_ig" value="'+sesc(S.social_instagram)+'" placeholder="https://instagram.com/kbeautybliss"></div></div>'+
+      '<div class="g2"><div class="fld"><label>TikTok</label><input id="seo_soc_tt" value="'+sesc(S.social_tiktok)+'" placeholder="https://tiktok.com/@kbeautybliss"></div>'+
+      '<div class="fld"><label>Pinterest</label><input id="seo_soc_pin" value="'+sesc(S.social_pinterest)+'" placeholder="https://pinterest.com/kbeautybliss"></div></div>'+
+      '<div class="g2"><div class="fld"><label>LinkedIn</label><input id="seo_soc_li" value="'+sesc(S.social_linkedin)+'" placeholder="https://linkedin.com/company/kbeautybliss"></div>'+
+      '<div class="fld"><label>YouTube</label><input id="seo_soc_yt" value="'+sesc(S.social_youtube)+'" placeholder="https://youtube.com/@kbeautybliss"></div></div></div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Organization (schema.org)</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Organization name</label><input id="seo_org_name" value="'+sesc(S.org_name||S.store_name)+'"></div>'+
       '<div class="fld"><label>Type</label>'+seoSel('seo_org_type',S.org_type,[['Organization','Organization'],['OnlineStore','OnlineStore'],['Store','Store'],['LocalBusiness','LocalBusiness']],'Organization')+'</div></div>'+
-      '<div class="fld"><label>Logo URL</label><input id="seo_org_logo" value="'+sesc(S.org_logo)+'" placeholder="https://\u2026/logo.png"></div></div>'+
+      imgUploadField('seo_org_logo',S.org_logo,'Logo','seo')+'</div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Verification &amp; tracking</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Google Search Console</label><input id="seo_gsv" value="'+sesc(S.google_site_verification)+'" placeholder="verification token"></div>'+
       '<div class="fld"><label>Bing Webmaster</label><input id="seo_bing" value="'+sesc(S.bing_site_verification)+'" placeholder="verification token"></div></div>'+
+      '<div class="g2"><div class="fld"><label>Pinterest</label><input id="seo_pin" value="'+sesc(S.pinterest_site_verification)+'" placeholder="verification token"></div>'+
+      '<div class="fld"><label>Baidu</label><input id="seo_baidu" value="'+sesc(S.baidu_site_verification)+'" placeholder="verification token"></div></div>'+
       '<div class="g2"><div class="fld"><label>Google Analytics ID</label><input id="seo_ga" value="'+sesc(S.ga)+'" placeholder="G-XXXXXXXXXX"></div>'+
       '<div class="fld"><label>Meta (Facebook) Pixel</label><input id="seo_pixel" value="'+sesc(S.meta_pixel)+'" placeholder="123456789012345"></div></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Merchant listing (rich product results)</b>'+
+      '<p class="description" style="margin:4px 0 12px">Adds brand, condition, shipping and return policy to every product schema \u2014 what actually unlocks price and star ratings showing directly in Google, and eligibility for AI Shopping. Off by default: wrong shipping or return terms going out to search engines is worse than none at all, so this only turns on once you have confirmed the numbers below are accurate.</p>'+
+      '<div class="fld"><label><span class="cbx'+(String(S.enable_merchant)==='1'?' on':'')+'" id="seo_merchant_cbx">'+ic(I.check)+'</span> Enable merchant listing on every product</label></div>'+
+      '<div class="g2" style="margin-top:10px"><div class="fld"><label>Condition</label>'+seoSel('seo_merch_cond',S.merchant_condition,[['NewCondition','New'],['UsedCondition','Used'],['RefurbishedCondition','Refurbished']],'NewCondition')+'</div>'+
+      '<div class="fld"><label>Ship-to country</label><input id="seo_merch_country" value="'+sesc(S.merchant_ship_country||'AE')+'" maxlength="2" style="max-width:100px;text-transform:uppercase"></div></div>'+
+      '<div class="g2"><div class="fld"><label>Shipping cost (AED)</label><input id="seo_merch_cost" type="number" step="0.01" value="'+sesc(S.merchant_ship_cost||'0')+'"></div>'+
+      '<div class="fld"><label>Free shipping over (AED, 0 = never)</label><input id="seo_merch_freeover" type="number" step="1" value="'+sesc(S.merchant_ship_free_over||'0')+'"></div></div>'+
+      '<div class="fld" style="margin-bottom:0;max-width:220px"><label>Return window (days, 0 = no policy shown)</label><input id="seo_merch_returndays" type="number" value="'+sesc(S.merchant_return_days||'0')+'"></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Search-engine support</b>'+
+      '<div class="fld" style="margin-top:12px"><label><span class="cbx'+(String(S.indexnow_on)==='1'?' on':'')+'" id="seo_indexnow_cbx">'+ic(I.check)+'</span> Instant indexing (IndexNow)</label>'+
+      '<p class="description" style="margin:6px 0 0">Auto-submits new/updated product and blog URLs to Bing, Yandex, Naver, Seznam &amp; Yep the moment they publish. Google is not part of IndexNow \u2014 it uses your sitemap instead.'+(String(S.indexnow_on)==='1'?(' Key file: <a href="'+base+'/'+sesc(S.indexnow_key||'')+'.txt" target="_blank">'+sesc(S.indexnow_key||'(generated on first use)')+'.txt \u2197</a>'):'')+'</p></div>'+
+      '<div class="fld"><label><span class="cbx'+(String(S.llms_enabled)!=='0'?' on':'')+'" id="seo_llms_cbx">'+ic(I.check)+'</span> Publish <a href="'+base+'/llms.txt" target="_blank">/llms.txt</a> for AI crawlers</label></div>'+
+      '<div class="fld" style="margin-bottom:0"><label><span class="cbx'+(String(S.crawl_clean)!=='0'?' on':'')+'" id="seo_crawlclean_cbx">'+ic(I.check)+'</span> Crawl-budget cleanup</label>'+
+      '<p class="description" style="margin:6px 0 0">Filtered and sorted views of the shop (by brand, price, in-stock, sort order) point their canonical tag back at the clean category URL, so search engines consolidate ranking signals there instead of treating every filter combination as a separate page. Paginated pages keep their own canonical \u2014 only filters and sort collapse, page 2 onward still index normally.</p></div></div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Sitemap &amp; robots</b>'+
       '<div class="row" style="gap:8px;margin:10px 0 12px"><a class="btn ghost sm" href="'+base+'/sitemap.xml" target="_blank">View sitemap.xml</a><a class="btn ghost sm" href="'+base+'/robots.txt" target="_blank">View robots.txt</a></div>'+
       '<div class="fld"><label>XML sitemap</label>'+seoSel('seo_sitemap',S.sitemap_enabled,[['1','Enabled'],['0','Disabled']],'1')+'</div>'+
       '<div class="fld" style="margin:0"><label>robots.txt (leave blank for the smart default)</label><textarea id="seo_robots_txt" class="inp" style="width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12px" placeholder="User-agent: *\nAllow: /">'+sesc(S.robots_txt)+'</textarea></div></div>'+
 
-      '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_seo">Save SEO settings</button></div></div>';
+      '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_seo">Save SEO settings</button></div>';
+
+    document.getElementById('seo_indexnow_cbx').onclick=function(){ this.classList.toggle('on'); };
+    document.getElementById('seo_llms_cbx').onclick=function(){ this.classList.toggle('on'); };
+    document.getElementById('seo_crawlclean_cbx').onclick=function(){ this.classList.toggle('on'); };
+    document.getElementById('seo_merchant_cbx').onclick=function(){ this.classList.toggle('on'); };
+    wireImgUpload('seo_og_img','seo');
+    wireImgUpload('seo_org_logo','seo');
 
     document.getElementById('set_save_seo').onclick=async function(){
       var payload={
@@ -7328,13 +8477,212 @@ buildNav();
         seo_home_title:sval('seo_home_t'), seo_home_description:sval('seo_home_d'), seo_default_description:sval('seo_def_d'),
         robots_index:sval('seo_robots_i'), robots_follow:sval('seo_robots_f'),
         og_default_image:sval('seo_og_img'), twitter_handle:sval('seo_tw'),
+        social_facebook:sval('seo_soc_fb'), social_instagram:sval('seo_soc_ig'), social_tiktok:sval('seo_soc_tt'),
+        social_pinterest:sval('seo_soc_pin'), social_linkedin:sval('seo_soc_li'), social_youtube:sval('seo_soc_yt'),
         org_name:sval('seo_org_name'), org_type:sval('seo_org_type'), org_logo:sval('seo_org_logo'),
-        google_site_verification:sval('seo_gsv'), bing_site_verification:sval('seo_bing'), ga:sval('seo_ga'), meta_pixel:sval('seo_pixel'),
-        sitemap_enabled:sval('seo_sitemap'), robots_txt:sval('seo_robots_txt')
+        google_site_verification:sval('seo_gsv'), bing_site_verification:sval('seo_bing'),
+        pinterest_site_verification:sval('seo_pin'), baidu_site_verification:sval('seo_baidu'),
+        ga:sval('seo_ga'), meta_pixel:sval('seo_pixel'),
+        sitemap_enabled:sval('seo_sitemap'), robots_txt:sval('seo_robots_txt'),
+        indexnow_on:document.getElementById('seo_indexnow_cbx').classList.contains('on')?'1':'0',
+        llms_enabled:document.getElementById('seo_llms_cbx').classList.contains('on')?'1':'0',
+        crawl_clean:document.getElementById('seo_crawlclean_cbx').classList.contains('on')?'1':'0',
+        enable_merchant:document.getElementById('seo_merchant_cbx').classList.contains('on')?'1':'0',
+        merchant_condition:sval('seo_merch_cond'), merchant_ship_country:sval('seo_merch_country'),
+        merchant_ship_cost:sval('seo_merch_cost'), merchant_ship_free_over:sval('seo_merch_freeover'),
+        merchant_return_days:sval('seo_merch_returndays')
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('SEO settings saved'); }
       catch(e){ toast('Save failed \u2014 check connection'); }
     };
+  }
+
+  /**
+   * Redirects created automatically (on a published product/post's slug
+   * changing) sit in the same list as ones an admin added by hand — same
+   * table, same effect on a visitor's request either way — marked with an
+   * "auto" badge only so it is clear where each one came from, not
+   * separated into two different screens for what is the same feature.
+   */
+  async function renderSeoRedirects(){
+    var body=document.getElementById('seoTabBody');
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading\u2026</p>';
+    var data;
+    try{
+      var res=await fetch(redirectsApiBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
+      data=await res.json();
+    }catch(e){ body.innerHTML='<p style="padding:24px;color:var(--sale)">Could not load \u2014 '+sesc(e.message)+'</p>'; return; }
+
+    var reds=data.redirects||[], nf=data.not_found||[];
+
+    body.innerHTML =
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Add a redirect</b>'+
+      '<p class="description" style="margin:4px 0 0">Best for pages that are actually gone \u2014 a removed product, an old WordPress URL that no longer exists. Redirecting a page that still works and still loads normally is not supported yet.</p>'+
+      '<div class="g2" style="margin-top:12px"><div class="fld"><label>From (path on this site)</label><input id="rd_source" placeholder="/old-page/"></div>'+
+      '<div class="fld"><label>To (path or full URL)</label><input id="rd_target" placeholder="/new-page/ or https://\u2026"></div></div>'+
+      '<div class="row" style="gap:10px;align-items:flex-end"><div class="fld" style="max-width:160px;margin:0"><label>Type</label>'+seoSel('rd_code','301',[['301','301 (permanent)'],['302','302 (temporary)']],'301')+'</div>'+
+      '<button class="btn" id="rd_add" style="margin-top:9px">Add redirect</button></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Redirects</b> <span style="font-size:11.5px;color:var(--ink-soft)">'+reds.length+'</span>'+
+      '<div style="margin-top:12px" id="rd_list">'+(reds.length?reds.map(redirectRow).join(''):'<p style="color:var(--ink-soft);font-size:12.5px">No redirects yet.</p>')+'</div></div>'+
+
+      '<div class="card pad"><b style="font-size:13px">Recent 404s</b> <span style="font-size:11.5px;color:var(--ink-soft)">'+nf.length+' \u2014 broken links people have actually hit, most-hit first</span>'+
+      '<div style="margin-top:12px" id="nf_list">'+(nf.length?nf.map(notFoundRow).join(''):'<p style="color:var(--ink-soft);font-size:12.5px">No broken links logged.</p>')+'</div></div>';
+
+    document.getElementById('rd_add').onclick=async function(){
+      var source=sval('rd_source').trim(), target=sval('rd_target').trim(), code=sval('rd_code');
+      if(!source||!target){ toast('Enter both a from and to path'); return; }
+      try{
+        var res=await fetch(redirectsApiBase(),{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+          body:JSON.stringify({source:source,target:target,code:+code})});
+        var j=await res.json();
+        if(j.ok){ toast('Redirect added'); renderSeoRedirects(); }
+        else{ toast(j.message||'Could not add that redirect.'); }
+      }catch(e){ toast('Could not save \u2014 check your connection.'); }
+    };
+    wireRedirectRows();
+    wireNotFoundRows();
+  }
+
+  function redirectRow(r){
+    return '<div class="row" style="gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(r.source)+'</div>'+
+      '<div style="font-size:11px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\u2192 '+sesc(r.target)+'</div></div>'+
+      '<span class="pill '+sesc((r.code===301?'green':'amber'))+'" style="flex:0 0 auto">'+sesc(r.code)+'</span>'+
+      (r.auto_created?'<span class="pill" style="flex:0 0 auto;background:var(--surface-2)">auto</span>':'')+
+      '<span style="flex:0 0 60px;font-size:11px;color:var(--ink-soft);text-align:right">'+r.hits+' hit'+(r.hits===1?'':'s')+'</span>'+
+      '<span class="cbx'+(r.enabled?' on':'')+'" data-rdtoggle="'+r.id+'" style="flex:0 0 auto" title="Enabled">'+ic(I.check)+'</span>'+
+      '<button class="btn ghost sm" data-rddel="'+r.id+'" style="flex:0 0 auto">Delete</button></div>';
+  }
+
+  function notFoundRow(n){
+    return '<div class="row" style="gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)" id="nf_row_'+n.id+'">'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(n.path)+'</div>'+
+      (n.referer?'<div style="font-size:10.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">from '+sesc(n.referer)+'</div>':'')+'</div>'+
+      '<span style="flex:0 0 60px;font-size:11px;color:var(--ink-soft);text-align:right">'+n.hits+' hit'+(n.hits===1?'':'s')+'</span>'+
+      '<input id="nf_target_'+n.id+'" class="inp" style="flex:0 0 160px;display:none;font-size:12px" placeholder="/redirect-to/">'+
+      '<button class="btn ghost sm" data-nfresolve="'+n.id+'" style="flex:0 0 auto">Resolve</button>'+
+      '<button class="btn ghost sm" data-nfdismiss="'+n.id+'" style="flex:0 0 auto">Dismiss</button></div>';
+  }
+
+  function wireRedirectRows(){
+    $$('#rd_list [data-rdtoggle]').forEach(function(el){ el.onclick=async function(){
+      try{
+        var res=await fetch(redirectsApiBase()+'/'+el.dataset.rdtoggle+'/toggle',{method:'POST',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
+        var j=await res.json();
+        if(j.ok){ el.classList.toggle('on', j.enabled); }
+      }catch(e){ toast('Could not update \u2014 check your connection.'); }
+    };});
+    $$('#rd_list [data-rddel]').forEach(function(b){ b.onclick=async function(){
+      if(!confirm('Delete this redirect?')) return;
+      try{
+        await fetch(redirectsApiBase()+'/'+b.dataset.rddel,{method:'DELETE',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
+        toast('Redirect deleted'); renderSeoRedirects();
+      }catch(e){ toast('Could not delete \u2014 check your connection.'); }
+    };});
+  }
+
+  function wireNotFoundRows(){
+    $$('#nf_list [data-nfresolve]').forEach(function(b){ b.onclick=async function(){
+      var id=b.dataset.nfresolve, input=document.getElementById('nf_target_'+id);
+      if(input.style.display==='none'){ input.style.display='inline-block'; input.focus(); return; }
+      var target=input.value.trim();
+      if(!target){ toast('Enter where this should redirect to'); return; }
+      try{
+        var res=await fetch(redirectsApiBase()+'/not-found/'+id+'/resolve',{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify({target:target,code:301})});
+        var j=await res.json();
+        if(j.ok){ toast('Redirect created'); renderSeoRedirects(); }
+        else{ toast(j.message||'Could not resolve that.'); }
+      }catch(e){ toast('Could not save \u2014 check your connection.'); }
+    };});
+    $$('#nf_list [data-nfdismiss]').forEach(function(b){ b.onclick=async function(){
+      try{
+        await fetch(redirectsApiBase()+'/not-found/'+b.dataset.nfdismiss,{method:'DELETE',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
+        renderSeoRedirects();
+      }catch(e){ toast('Could not dismiss \u2014 check your connection.'); }
+    };});
+  }
+
+  /**
+   * Shows an admin the real JSON-LD a page would actually output — builds
+   * the exact same context the real storefront controllers do (see
+   * SchemaInspectorApiController), so nothing shown here can drift from
+   * what a real page actually ships.
+   */
+  function renderSchemaInspector(){
+    var body=document.getElementById('seoTabBody');
+    body.innerHTML =
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Inspect a page\u2019s structured data</b>'+
+      '<p class="description" style="margin:4px 0 12px">Shows the exact JSON-LD a page would send to search engines right now \u2014 the same renderer every real page uses, not a preview.</p>'+
+      '<div class="row" style="gap:10px;align-items:flex-end"><div class="fld" style="max-width:160px;margin:0"><label>Page type</label>'+seoSel('si_type','product',[['product','Product'],['category','Category'],['shop','Shop (all)'],['home','Homepage']],'product')+'</div>'+
+      '<div class="fld" id="si_slug_wrap" style="margin:0;flex:1"><label>Slug</label><input id="si_slug" placeholder="e.g. relief-sun-rice-probiotics-spf50"></div>'+
+      '<button class="btn" id="si_go" style="margin-bottom:0">Inspect</button></div></div>'+
+      '<div id="si_result"></div>';
+
+    var typeSel=document.getElementById('si_type');
+    var slugWrap=document.getElementById('si_slug_wrap');
+    function syncSlugVisibility(){ slugWrap.style.display=(typeSel.value==='shop'||typeSel.value==='home')?'none':''; }
+    typeSel.onchange=syncSlugVisibility;
+    syncSlugVisibility();
+
+    document.getElementById('si_go').onclick=async function(){
+      var type=typeSel.value, slug=sval('si_slug').trim();
+      var result=document.getElementById('si_result');
+      result.innerHTML='<p style="padding:16px;color:var(--ink-soft)">Checking\u2026</p>';
+      try{
+        var q=new URLSearchParams({type:type, slug:slug});
+        var res=await fetch(schemaInspectApiBase()+'?'+q,{credentials:'same-origin',headers:{Accept:'application/json'}});
+        var j=await res.json();
+        if(!j.ok){ result.innerHTML='<div class="card pad"><p style="color:var(--sale);margin:0">'+sesc(j.message||'Could not inspect that page.')+'</p></div>'; return; }
+        var warningsHtml=j.warnings&&j.warnings.length
+          ? '<div class="card pad" style="margin-bottom:16px;border-color:var(--amber)"><b style="font-size:13px">Worth a look</b><ul style="margin:8px 0 0;padding-left:20px">'+j.warnings.map(function(w){return '<li style="font-size:12.5px;margin-bottom:4px">'+sesc(w)+'</li>';}).join('')+'</ul></div>'
+          : '<div class="card pad" style="margin-bottom:16px"><p style="margin:0;font-size:12.5px;color:var(--ink-soft)">No issues found.</p></div>';
+        var nodesHtml=j.nodes.map(function(n){
+          return '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">'+sesc(n['@type']||'?')+'</b>'+
+            '<pre style="margin:8px 0 0;font-size:11px;background:var(--surface-2);padding:10px;border-radius:8px;overflow:auto;white-space:pre-wrap">'+sesc(JSON.stringify(n,null,2))+'</pre></div>';
+        }).join('');
+        result.innerHTML=warningsHtml+nodesHtml;
+      }catch(e){ result.innerHTML='<div class="card pad"><p style="color:var(--sale);margin:0">Could not check \u2014 check your connection.</p></div>'; }
+    };
+  }
+
+  /**
+   * Reports, doesn't fix — scans every visible product for the handful of
+   * gaps that actually matter (missing meta description, missing image, a
+   * short description too thin to build a real fallback from) and shows
+   * counts plus the worst offenders. Reads the same `seo` column
+   * ProductController now actually renders from, so a product this
+   * reports as fixed genuinely is.
+   */
+  async function renderCatalogueAudit(){
+    var body=document.getElementById('seoTabBody');
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Scanning catalogue\u2026</p>';
+    var data;
+    try{
+      var res=await fetch(catalogueAuditApiBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
+      data=await res.json();
+    }catch(e){ body.innerHTML='<p style="padding:24px;color:var(--sale)">Could not scan \u2014 '+sesc(e.message)+'</p>'; return; }
+
+    function issueCard(title, desc, key){
+      var list=data.issues[key]||[], count=data.counts[key]||0;
+      var rows=list.map(function(p){
+        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px">'+
+          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(p.name)+'</span>'+
+          (p.words!==undefined?'<span style="color:var(--ink-soft)">'+p.words+' words</span>':'')+'</div>';
+      }).join('');
+      var more=count>list.length?'<p class="description" style="margin:8px 0 0">+ '+(count-list.length)+' more, not shown.</p>':'';
+      return '<div class="card pad" style="margin-bottom:16px"><div class="between"><b style="font-size:13px">'+title+'</b><span class="pill '+(count===0?'green':'amber')+'">'+count+'</span></div>'+
+        '<p class="description" style="margin:4px 0 12px">'+desc+'</p>'+
+        (list.length?rows:'<p style="font-size:12.5px;color:var(--ink-soft)">None \u2014 every visible product has one.</p>')+more+'</div>';
+    }
+
+    body.innerHTML =
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">'+data.total+' visible products scanned</b></div>'+
+      issueCard('Missing meta description', 'No per-product SEO description set, and the short description is too thin (under 15 words) to build a real fallback from.', 'no_description')+
+      issueCard('Missing image', 'No image at all \u2014 affects search results, social shares, and Product schema.', 'no_image')+
+      issueCard('Short description too thin', 'Under 15 words \u2014 not necessarily wrong, but too little for a real fallback SEO description or a useful product page.', 'thin_short_description');
   }
 
   /* ---------- Route interception: hydrate dash, render new screens ---------- */
@@ -7347,6 +8695,7 @@ buildNav();
     if(id==='store-settings'){ _go(id); return renderStoreSettings(); }
     if(id==='seo'){ _go(id); return renderSeo(); }
     if(id==='analytics'){ _go(id); return renderAnalytics(); }
+    if(id==='blog'||id==='posts'){ _go(id); return renderPosts(); }
     _go(id);
     if(id==='dash') hydrateDash();
   };

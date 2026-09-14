@@ -11,6 +11,17 @@ class Review extends Model
 
     protected $guarded = [];
 
+    /**
+     * Never serialised to JSON.
+     *
+     * A review carries the reviewer's email address and the IP they submitted
+     * from. Both are needed for moderation and neither is anyone else's
+     * business. Put here rather than only in the controllers because the
+     * endpoints returned whole models, and the next one to do so will inherit
+     * this instead of repeating the mistake.
+     */
+    protected $hidden = ['author_email', 'ip'];
+
     protected function casts(): array
     {
         return ['images' => 'array', 'verified' => 'bool', 'rating' => 'int', 'helpful' => 'int'];

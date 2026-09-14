@@ -23,15 +23,30 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Backfill only runs the first time these columns are actually
+        // added — if it ran unconditionally on every migrate, and an
+        // admin had since deliberately turned a menu's display off again
+        // through the real UI, this would silently turn it back on and
+        // undo that.
+        $isFirstRun = ! Schema::hasColumn('menus', 'show_desktop');
+
         Schema::table('menus', function (Blueprint $t) {
-            $t->boolean('show_desktop')->default(false)->after('location');
-            $t->boolean('show_mobile')->default(false)->after('show_desktop');
-            $t->boolean('show_footer')->default(false)->after('show_mobile');
+            if (! Schema::hasColumn('menus', 'show_desktop')) {
+                $t->boolean('show_desktop')->default(false)->after('location');
+            }
+            if (! Schema::hasColumn('menus', 'show_mobile')) {
+                $t->boolean('show_mobile')->default(false)->after('show_desktop');
+            }
+            if (! Schema::hasColumn('menus', 'show_footer')) {
+                $t->boolean('show_footer')->default(false)->after('show_mobile');
+            }
         });
 
-        \Illuminate\Support\Facades\DB::table('menus')->where('location', 'primary')->update(['show_desktop' => true]);
-        \Illuminate\Support\Facades\DB::table('menus')->where('location', 'mobile')->update(['show_mobile' => true]);
-        \Illuminate\Support\Facades\DB::table('menus')->where('location', 'footer')->update(['show_footer' => true]);
+        if ($isFirstRun) {
+            \Illuminate\Support\Facades\DB::table('menus')->where('location', 'primary')->update(['show_desktop' => true]);
+            \Illuminate\Support\Facades\DB::table('menus')->where('location', 'mobile')->update(['show_mobile' => true]);
+            \Illuminate\Support\Facades\DB::table('menus')->where('location', 'footer')->update(['show_footer' => true]);
+        }
     }
 
     public function down(): void

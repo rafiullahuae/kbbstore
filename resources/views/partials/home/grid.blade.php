@@ -28,7 +28,7 @@
                 <div class="cn">@if ($brand)<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span> @endif{{ $p->name }}</div>
                 <div class="kbb-card-rate"><span class="kbb-crate">@for ($s = 1; $s <= 5; $s++)<span class="kbb-cstar{{ $s <= $stars ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ (int) $p->review_count }})</span></div>
                 <div class="cp">@if ($off)<span class="kbb-card-reg">{!! Money::format($reg) !!}</span> @endif<span class="kbb-card-price">{!! Money::format($sale) !!}</span></div>
-                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}">Add to cart</span>
+                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">Add to cart</span>
             </div>
         </a>
     @endforeach

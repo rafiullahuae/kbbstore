@@ -171,6 +171,61 @@ final class Facets
         return Url::to('/shop/');
     }
 
+    /**
+     * The canonical URL for the current listing view, given the page's own
+     * clean base (the category's URL, or /shop/ for the general listing).
+     *
+     * Gated by the crawl_clean setting rather than unconditional, since
+     * this specific decision — collapsing every filter/sort combination
+     * onto one canonical — is an opinionated SEO strategy choice, not a
+     * correctness fix the way having *some* real canonical at all is.
+     * When off, every filtered/sorted/paginated URL self-references
+     * itself in full, same as if this feature didn't exist.
+     *
+     * When on: any real filter (category, brand, price, sale, in-stock)
+     * or a non-default sort collapses the canonical to the clean base —
+     * research consistently recommends this as the lowest-risk signal
+     * (Google still crawls and can still discover products through the
+     * filtered view; ranking signals just consolidate onto the one clean
+     * URL rather than fragmenting across every combination). Pagination
+     * alone, with no other filter active, keeps its own self-referencing
+     * canonical including the page number — current guidance is that
+     * collapsing every paginated page onto page 1 risks Google simply
+     * not discovering products that only appear on later pages, which is
+     * a worse outcome than the crawl-budget cost of indexing them.
+     */
+    public static function canonicalUrl(string $cleanBaseUrl): string
+    {
+        if ((\App\Models\Setting::map()['crawl_clean'] ?? '1') !== '1') {
+            // An absolute URL, built from site_url directly — Url::to() is
+            // deliberately root-relative (correct for <a href> links, the
+            // one thing it exists for), which would make a canonical tag
+            // built from it a broken, domain-less URL. Matches the same
+            // absolute-URL pattern Seo::render() itself already uses for
+            // its own default canonical.
+            $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+
+            return $base . Request::getRequestUri();
+        }
+
+        $active = self::active();
+        $hasFilter = !empty($active['cat']) || !empty($active['brand'])
+            || $active['price'] !== null || $active['sale'] !== null || $active['instock'] !== null;
+        $hasSort = self::sort() !== 'featured';
+
+        if ($hasFilter || $hasSort) {
+            return $cleanBaseUrl;
+        }
+
+        $page = self::page();
+
+        if ($page > 1) {
+            return $cleanBaseUrl . '?paged=' . $page;
+        }
+
+        return $cleanBaseUrl;
+    }
+
     private static function currentParams(): array
     {
         $a = self::active();
