@@ -277,3 +277,55 @@ it('places an order when the numbers are far ahead of the ids', function () {
     expect($new)->not->toBeNull()
         ->and((int) $new->order_number)->toBeGreaterThan(48231);
 });
+
+/**
+ * The order pages print the payment method at the customer. Nothing in the app
+ * ever wrote payment_method_title except the demo seeder, so every real order
+ * fell back to the raw id and the account order page read "cod".
+ */
+it('snapshots the payment wording the shopper saw onto the order', function () {
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Pay the courier in cash', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+
+    place(cartWithItem(20000), checkoutForm());
+
+    $order = Order::latest('id')->first();
+
+    // The merchant's own wording, not the gateway default and not the id.
+    expect($order->payment_method)->toBe('cod')
+        ->and($order->payment_method_title)->toBe('Pay the courier in cash')
+        ->and($order->paymentLabel())->toBe('Pay the courier in cash');
+});
+
+it('renames nothing on an order already placed when the merchant retitles the gateway', function () {
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Pay the courier in cash', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+
+    place(cartWithItem(20000), checkoutForm());
+    $order = Order::latest('id')->first();
+
+    PaymentProvider::find('cod')->update(['title' => 'Cash only']);
+
+    expect($order->fresh()->paymentLabel())->toBe('Pay the courier in cash');
+});
+
+/** Orders placed before the snapshot existed carry a null title. */
+it('falls back to the gateway title rather than the raw id on an older order', function () {
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+
+    place(cartWithItem(20000), checkoutForm());
+
+    $order = Order::latest('id')->first();
+    $order->forceFill(['payment_method_title' => null])->save();
+
+    expect($order->fresh()->paymentLabel())->toBe('Cash on delivery');
+});
+
+it('humanises a gateway id this build no longer carries code for', function () {
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+
+    place(cartWithItem(20000), checkoutForm());
+
+    $order = Order::latest('id')->first();
+    $order->forceFill(['payment_method_title' => null, 'payment_method' => 'old_wallet'])->save();
+
+    expect($order->fresh()->paymentLabel())->toBe('Old wallet');
+});

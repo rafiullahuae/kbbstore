@@ -76,7 +76,7 @@
     @endif
 
     @if ($paymentFee > 0)
-        <div class="sumrow"><span>{{ $order->payment_method_title ?: 'Payment' }} fee</span><span>{!! Money::format($paymentFee) !!}</span></div>
+        <div class="sumrow"><span>{{ $order->paymentLabel() }} fee</span><span>{!! Money::format($paymentFee) !!}</span></div>
     @endif
 
     <div class="sumrow tot"><span>Total</span><span>{!! Money::format((int) $order->total) !!}</span></div>

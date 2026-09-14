@@ -107,7 +107,7 @@
                     <dl class="co-facts">
                         <div class="co-fact"><dt>Order number</dt><dd>#{{ $order->order_number }}</dd></div>
                         <div class="co-fact"><dt>Total paid</dt><dd>{!! Money::format((int) $order->total) !!}</dd></div>
-                        <div class="co-fact"><dt>Payment</dt><dd>{{ $order->payment_method_title ?: $order->payment_method }}</dd></div>
+                        <div class="co-fact"><dt>Payment</dt><dd>{{ $order->paymentLabel() }}</dd></div>
                         <div class="co-fact"><dt>Delivery</dt><dd>{{ $order->shipping_method }}</dd></div>
                     </dl>
                 </div>

@@ -168,7 +168,7 @@
           <div class="kbbod-row"><span>Gift wrapping</span><span>{!! Money::format((int) $order->gift_fee) !!}</span></div>
         @endif
         @if ($paymentFee > 0)
-          <div class="kbbod-row"><span>{{ $order->payment_method_title ?: 'Payment' }} fee</span><span>{!! Money::format($paymentFee) !!}</span></div>
+          <div class="kbbod-row"><span>{{ $order->paymentLabel() }} fee</span><span>{!! Money::format($paymentFee) !!}</span></div>
         @endif
         <div class="kbbod-row is-total"><span>Total</span><span>{!! Money::format((int) $order->total) !!}</span></div>
       </div>
@@ -190,7 +190,7 @@
         <div class="kbbod-fact">
           <dt>Payment</dt>
           <dd>
-            {{ $order->payment_method_title ?: ($order->payment_method ?: 'Not recorded') }}
+            {{ $order->paymentLabel() }}
             @if ($order->email)<br>{{ $order->email }}@endif
           </dd>
         </div>

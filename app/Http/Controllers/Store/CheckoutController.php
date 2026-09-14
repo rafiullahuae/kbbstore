@@ -227,6 +227,15 @@ class CheckoutController extends Controller
             return back()->withInput()->withErrors('That payment method is not available.');
         }
 
+        // The wording the shopper actually saw on the checkout page. It is
+        // snapshotted onto the order for the same reason order_items snapshot
+        // name and price: the merchant can rename a gateway in Store →
+        // Payments tomorrow, and an old order must still say what it said on
+        // the day. Without this the order pages fall back to the raw id and
+        // print "cod" at the customer.
+        $paymentTitle = (string) (collect($offered)
+            ->firstWhere('id', $data['payment_method'])['title'] ?? '');
+
         $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find($data['payment_method']);
 
         if ($gateway === null) {
@@ -256,7 +265,7 @@ class CheckoutController extends Controller
         // ErrorException. That is thrown from inside DB::transaction, so the
         // order rolled back: the storefront checkout could not place an order
         // at all. Found by the first test to POST to this endpoint.
-        $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request) {
+        $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle) {
             $customer = $request->user('customer') ?? Customer::firstOrCreate(
                 ['email' => mb_strtolower($data['billing_email'])],
                 ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
@@ -321,6 +330,7 @@ class CheckoutController extends Controller
                 'total' => $totals['total'] + $fee,
                 'shipping_method' => $rate['title'],
                 'payment_method' => $data['payment_method'],
+                'payment_method_title' => $paymentTitle !== '' ? $paymentTitle : null,
                 'coupon_code' => $totals['coupon_code'],
                 'whatsapp_optin' => $request->boolean('billing_kbb_whatsapp'),
                 'ip_address' => $request->ip(),
