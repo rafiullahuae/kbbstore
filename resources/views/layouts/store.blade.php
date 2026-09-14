@@ -2,30 +2,58 @@
 use App\Support\Url;
 
 /*
- * The SEO & Meta admin screen and App\Support\Seo::render() have both been
- * fully built for some time — the screen saves real settings, the class
- * reads and formats every one of them correctly (title template, meta
- * description, Open Graph, Twitter cards, JSON-LD). Neither had ever been
- * connected to an actual page: this was a bare <title> tag and nothing
- * else. title_is_final passes through whatever a page already computes via
- * @section('title', ...) untouched, so no page's visible title changes here
- * — this only adds what was missing around it. A page can still hand in its
- * own richer context (product data, a specific image, an explicit type) via
- * a $seoCtx array before this layout renders.
+ * The <head> SEO block. Every value here comes from the "SEO & Meta" admin
+ * screen by way of App\Support\Seo.
+ *
+ * The screen and the class were both finished long ago; what was missing was
+ * this. The layout previously emitted the block with title_is_final set on
+ * every page, which is the one flag that skips the title template — so
+ * seo_title_template, the separator and the homepage title were saved,
+ * displayed back in the admin, and never read by anything. That flag now
+ * belongs to pages that genuinely compute their own complete title, and is
+ * passed in through $seoCtx rather than forced here.
+ *
+ * A page can hand in richer context (product data, a specific image, an
+ * explicit type, noindex) via $seoCtx before this layout renders; anything it
+ * does not set falls back to the defaults below.
  */
-$kbbRawTitle = trim(strip_tags($__env->yieldContent('title', $kbbSettings->get('store_name', 'K-Beauty Bliss'))));
+$kbbRawTitle = trim(strip_tags((string) $__env->yieldContent('title', $kbbSettings->get('store_name', 'K-Beauty Bliss'))));
 $kbbSeoCtx = array_merge([
+    // routeIs(), not the path: the site is served under a base path in
+    // staging, so "/" is not reliably the homepage's path info.
+    'type' => request()->routeIs('home') ? 'home' : 'website',
     'title' => $kbbRawTitle,
-    'title_is_final' => true,
     'url' => Url::to(request()->getPathInfo() ?: '/'),
 ], $seoCtx ?? []);
+$kbbSeo = \App\Support\Seo::tags($kbbSeoCtx);
 @endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-{!! \App\Support\Seo::render($kbbSeoCtx) !!}
+{{-- Printed here rather than returned as a ready-made HTML string: these are
+     database values that land inside attributes, so every one of them goes
+     through Blade's {{ }} and a setting of `"><script>` stays inert text.
+     The JSON-LD below is the one block that must not be entity-escaped, so it
+     is encoded with JSON_HEX_TAG instead: a closing script tag inside a
+     setting comes out as < and cannot close the element. --}}
+<title>{{ $kbbSeo['title'] }}</title>
+@foreach ($kbbSeo['meta'] as $kbbTag)
+<meta {{ $kbbTag['attr'] }}="{{ $kbbTag['key'] }}" content="{{ $kbbTag['content'] }}">
+@endforeach
+@if ($kbbSeo['canonical'])
+<link rel="canonical" href="{{ $kbbSeo['canonical'] }}">
+@endif
+@foreach ($kbbSeo['jsonld'] as $kbbNode)
+<script type="application/ld+json">@json($kbbNode, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE)</script>
+@endforeach
+@if ($kbbSeo['ga'])
+{{-- Only ever a validated measurement id (G-/UA-/AW-/GTM-/DC- plus
+     alphanumerics), because HTML escaping does not protect a JS string. --}}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ $kbbSeo['ga'] }}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ $kbbSeo['ga'] }}');</script>
+@endif
 @stack('head')
 
 {{-- Poppins 400-800, matching the theme exactly (T-BOOT-10). --}}

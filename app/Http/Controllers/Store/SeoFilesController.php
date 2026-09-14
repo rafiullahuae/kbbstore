@@ -3,23 +3,33 @@
 namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
+use App\Services\Seo\SeoSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class SeoFilesController extends Controller
 {
+    /**
+     * The absolute base every URL in these files is written against.
+     *
+     * Read through SeoSettings because the admin screen saves an unfilled Site
+     * URL as '', and `$s['site_url'] ?? config('app.url')` kept the empty
+     * string — which produced a sitemap of relative "/shop" entries and a
+     * robots.txt pointing at "/sitemap.xml". Both files are consumed by
+     * crawlers that have no base to resolve against.
+     */
     private function base(): string
     {
-        $s = Setting::map();
-        return rtrim($s['site_url'] ?? config('app.url') ?? url('/'), '/');
+        $s = new SeoSettings;
+
+        return rtrim($s->get('site_url') ?? (string) (config('app.url') ?: url('/')), '/');
     }
 
     /** GET /sitemap.xml — dynamic sitemap of indexable URLs. */
     public function sitemap()
     {
-        $s = Setting::map();
-        if (($s['sitemap_enabled'] ?? '1') === '0') {
+        $s = new SeoSettings;
+        if ($s->get('sitemap_enabled', '1') === '0') {
             return response('Sitemap disabled', 404);
         }
 
@@ -83,9 +93,10 @@ class SeoFilesController extends Controller
     /** GET /robots.txt — crawl rules + sitemap pointer. */
     public function robots()
     {
-        $s = Setting::map();
-        if (!empty($s['robots_txt'])) {
-            return response($s['robots_txt'], 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+        $s = new SeoSettings;
+        $custom = $s->get('robots_txt');
+        if ($custom !== null) {
+            return response($custom, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
         }
         $base = $this->base();
         $body = "User-agent: *\nAllow: /\n"
