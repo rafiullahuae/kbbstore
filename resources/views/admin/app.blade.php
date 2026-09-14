@@ -8188,7 +8188,7 @@ buildNav();
     perPage: +(localStorage.getItem('kbb_cust_pp') || 50),
     search: '', filter: 'all', sort: 'newest',
     spendMin: '', spendMax: '', from: '', to: '', country: '', city: '',
-    adv: false, cols: null, data: null, sel: {}, busy: false
+    adv: false, cols: null, data: null, err: null, sel: {}, busy: false
   };
 
   var CU_COLDEF = [
@@ -8291,8 +8291,23 @@ buildNav();
     try{
       CU.data = await api('/admin-api/customers/list?' + cuParams(false));
       CU.perPage = CU.data.per_page;
+      CU.err = null;
     }catch(e){
       CU.data = null;
+      /* Say WHAT failed, not what might have. The first version of this screen
+         guessed "the route may not be wired up", which was wrong on a server
+         where it was wired and something else broke — and a wrong guess sends
+         whoever is reading it looking in the wrong place. Fetch the same URL
+         again plainly so the status and the server's own message can be shown. */
+      CU.err = {status:0, body:''};
+      try{
+        var probe = await fetch(fixAdminApiUrl('/admin-api/customers/list?' + cuParams(false)),
+          {credentials:'same-origin', headers:{'Accept':'application/json'}});
+        CU.err.status = probe.status;
+        CU.err.body = (await probe.text() || '').slice(0, 400);
+      }catch(e2){
+        CU.err.body = String(e2 && e2.message || e);
+      }
     }
     CU.busy = false;
     cuPaint();
@@ -8307,6 +8322,17 @@ buildNav();
     await cuLoad();
   };
 
+  /* Turn the HTTP status into the thing to actually go and check. */
+  function cuWhy(){
+    var st = CU.err ? CU.err.status : 0;
+    if(st === 404) return 'The server returned 404 — this build\u2019s routes are not live yet. The compiled route cache needs clearing (Store \u2192 Core Updates does this on every apply).';
+    if(st === 401 || st === 403) return 'The server returned ' + st + ' — the admin session was refused. Sign out and back in.';
+    if(st === 419) return 'The server returned 419 — the admin session expired. Reload the page.';
+    if(st === 500) return 'The server returned 500 — the request reached the code and the code threw. The exception is in storage/logs/laravel.log; the text below is what the server sent back.';
+    if(st === 0)   return 'The request never completed — the browser could not reach the server at all.';
+    return 'The server returned ' + st + '. The text below is what it sent back.';
+  }
+
   function cuPaint(){
     var el = document.querySelector('#content');
     var d = CU.data;
@@ -8314,7 +8340,8 @@ buildNav();
     if(!d){
       el.innerHTML = '<div class="wrap"><div class="page-head"><h2>Customers</h2></div>' +
         '<div class="card pad"><p style="font-size:13px;color:var(--red)">Customers could not be loaded.</p>' +
-        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">The screen is real and the endpoint is guarded — if this persists the route may not be wired up on this server yet.</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">' + cuWhy() + '</p>' +
+        (CU.err && CU.err.body ? '<pre style="margin-top:10px;padding:10px;background:var(--bg-soft,#f6f6f7);border-radius:8px;font-size:11.5px;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto">' + sesc(CU.err.body) + '</pre>' : '') +
         '<div style="margin-top:12px"><button class="btn ghost sm" id="cuRetry">Try again</button></div></div></div>';
       var retry = document.getElementById('cuRetry');
       if(retry) retry.onclick = function(){ cuLoad(); };

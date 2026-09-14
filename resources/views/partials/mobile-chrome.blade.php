@@ -72,6 +72,25 @@
     @endif
 </nav>
 
+@php
+    /*
+     * Store & content -> "Floating bottom menu (mobile)" (module key
+     * mobile_tabbar), default OFF.
+     *
+     * Read here rather than passed in, the same way cart-inner.blade.php and a
+     * dozen other storefront views resolve a module. moduleEnabled() returns
+     * the stored module_toggles row when one exists, so an install that has
+     * chosen a value keeps its choice; only an install with no row at all gets
+     * the default.
+     *
+     * Nothing else depends on this bar: the header carries its own cart icon
+     * and count, and the mobile menu above is a separate nav. Hiding it removes
+     * a floating overlay, not a route.
+     */
+    $kbbTabbar = app(\App\Services\SettingsService::class)->moduleEnabled('mobile_tabbar', false);
+@endphp
+
+@if ($kbbTabbar)
 <nav class="tabbar" aria-label="Quick navigation">
     <a href="{{ Url::to('/') }}" @class(['on' => '/' === request()->path()])>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>Home</span></a>
@@ -85,3 +104,4 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg><span>Bag</span>
         @if (($kbbCartCount ?? 0) > 0)<i id="tabCartCt">{{ $kbbCartCount }}</i>@endif</a>
 </nav>
+@endif

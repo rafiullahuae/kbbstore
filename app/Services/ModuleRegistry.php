@@ -100,6 +100,7 @@ class ModuleRegistry
          * Nothing is removed: coupons still apply, an already-applied coupon
          * still shows and can still be removed, and /cart/coupon still works.
          */
+        'mobile_tabbar' => ['store', 'Floating bottom menu (mobile)', 'The floating bar pinned to the bottom of the screen on phones — Home, Shop, Quiz, Saved and Bag. Off by default; the header, its cart icon and the mobile menu all keep working without it.', false, 'No settings screen', '', 'mobile', 'mid', 'The floating Home / Shop / Quiz / Saved / Bag bar at the bottom of every page on a phone.', 'live'],
         'cart_coupon_field' => ['cart', 'Cart-page discount code box', 'The “Discount code” input and Apply button in the cart page order summary. Off by default; the checkout page has its own box and is not affected.', false, 'No settings screen', '', 'cartpage', 'mid', 'The discount code box in the order summary on the cart page.', 'live'],
         // ── Store & content ──
         'banners' => ['store', 'Banners', 'Drives the homepage hero slider — headline, eyebrow, buttons, floating product pods and the offer badge — using the theme’s own .heroslider markup. Supports scheduling. Off by default.', false, 'Appearance → Homepage', '', 'home', 'top', 'The homepage hero slider — headline, buttons and product pods.', 'elsewhere'],
