@@ -5474,7 +5474,12 @@ function renderPlaceholder(id){
 }
 
 /* ---------- Store screens that load as standalone files (iframe) ---------- */
-const FRAME_SRC={'orders':'kbb-admin-orders.html','payments':'kbb-admin-payments.html','analytics':'kbb-admin-analytics.html','store-settings':'kbb-admin-settings.html','customers':'kbb-admin-customers.html','quiz-leads':'kbb-admin-quiz-leads.html','seo':'kbb-admin-seo.html','blog':'kbb-admin-blog.html','posts':'kbb-admin-blog.html','htmlblocks':'kbb-admin-blocks.html','media':'kbb-admin-media.html'};
+/* 'customers' is deliberately NOT in here any more — see the Lane T region.
+   These entries load a standalone HTML file that this repo does not ship, so
+   go('customers') from a bookmark used to render an iframe pointing at a 404
+   before the live wiring replaced it. The Customers screen is rendered in this
+   document now, so it does not need, and must not get, a frame. */
+const FRAME_SRC={'orders':'kbb-admin-orders.html','payments':'kbb-admin-payments.html','analytics':'kbb-admin-analytics.html','store-settings':'kbb-admin-settings.html','quiz-leads':'kbb-admin-quiz-leads.html','seo':'kbb-admin-seo.html','blog':'kbb-admin-blog.html','posts':'kbb-admin-blog.html','htmlblocks':'kbb-admin-blocks.html','media':'kbb-admin-media.html'};
 function renderFrame(id,query){
   cur=id;
   const t=TITLES[id]||['Store',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
@@ -8062,22 +8067,688 @@ buildNav();
     };
   }
 
-  /* ---------- Customers screen (new) ---------- */
-  var CUST=[];
-  async function renderCustomers(){
-    try{ var d=await api('/admin-api/customers'); CUST=d.customers||[]; }catch(e){ CUST=[]; }
-    document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Customers</h2><p>Everyone who has placed an order through the storefront.</p></div>'+
-      '<div class="card" style="overflow:auto"><table><thead><tr><th>Customer</th><th>Contact</th><th>Emirate</th><th>Orders</th><th>Spent</th><th>Joined</th></tr></thead><tbody>'+
-      (CUST.length? CUST.map(function(c){
-        return '<tr><td><div class="row"><span class="pthumb" style="background:'+sesc(tcol(c.name||'KB'))+';width:30px;height:30px;font-size:10px">'+sesc(initials(c.name||'KB'))+'</span><b style="font-size:12.5px">'+sesc((c.name||'Guest'))+'</b></div></td>'+
-          '<td><div class="pname">'+sesc((c.email||''))+'</div><div class="pbrand">'+sesc((c.phone||''))+'</div></td>'+
-          '<td>'+(c.emirate||'\u2014')+'</td><td>'+c.orders+'</td>'+
-          '<td class="price"><b>AED '+c.spent_aed.toLocaleString()+'</b></td>'+
-          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(c.created_at||'').slice(0,10)+'</td></tr>';
-      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No customers yet.</td></tr>')+
-      '</tbody></table></div><div class="pager"><span>'+CUST.length+' customer'+(CUST.length===1?'':'s')+'</span></div></div>';
+  /* ===== LANE T · Store · Customers — BEGIN =====
+
+     WHAT THIS REPLACED. Six columns off a single unpaginated fetch of
+     /admin-api/customers, one of which — "Emirate" — read c.emirate, and
+     `emirate` is not a column on the customers table and never has been. It
+     was blank on every install and no one had cause to notice, because the
+     screen otherwise looked finished. Pointed at the 5,312 customers the
+     WooCommerce import will bring across, that fetch is one response
+     containing the entire customer database and no way to find anybody in it.
+
+     WHAT IT IS NOW. A paginated, sortable, filterable list off
+     /admin-api/customers/list — inside the guarded admin-api group, which is
+     the only reason it is allowed to carry email, phone and home city at all
+     — plus a per-customer page, a private note, a reversible trash and a CSV
+     of whatever the screen is currently showing.
+
+     EVERY FIGURE IS AGGREGATED IN SQL. Orders, lifetime spend, average order
+     value, last order and last activity all arrive with the row. Nothing on
+     this screen loops over customers fetching anything, which is the mistake
+     that made /shop run 390 queries for four products.
+
+     EVERYTHING WRITTEN INTO THE PAGE GOES THROUGH sesc(). Customer names,
+     emails, cities and phone numbers are typed by the public at checkout and
+     land in innerHTML; an unescaped one is stored XSS on the owner's own
+     back-office. Server messages go through it too — a message can carry a
+     customer name.
+
+     BLANKS ARE EXPECTED, NOT EXCEPTIONAL. An imported customer can have no
+     name, no phone, no address and no registration date; the owner's own
+     reference screenshot shows exactly that. Every cell falls back to an em
+     dash instead of printing "undefined" or throwing.
+  */
+
+  var CU = {
+    page: 1,
+    perPage: +(localStorage.getItem('kbb_cust_pp') || 50),
+    search: '', filter: 'all', sort: 'newest',
+    spendMin: '', spendMax: '', from: '', to: '', country: '', city: '',
+    adv: false, cols: null, data: null, sel: {}, busy: false
+  };
+
+  var CU_COLDEF = [
+    ['contact', 'Phone'], ['type', 'Type'], ['orders', 'Orders'], ['spend', 'Total spend'],
+    ['aov', 'AOV'], ['last_order', 'Last order'], ['last_active', 'Last active'],
+    ['location', 'Country / City'], ['registered', 'Registered'], ['wp', 'Woo ID']
+  ];
+  /* Last active and the Woo ID are off by default and one click away in
+     Columns: last-active repeats last-order for anybody who has bought, and
+     the ten columns that are on already fill a 1032px content area. Woo's own
+     screen shows both; this one lets the owner choose without paying for them
+     on every page load. */
+  var CU_COLS_DEFAULT = {
+    contact: true, type: true, orders: true, spend: true, aov: true,
+    last_order: true, last_active: false, location: true, registered: true, wp: false
+  };
+  /* Which column each sortable header maps to, so the header caret and the
+     Sort menu can never disagree about what the list is ordered by. */
+  var CU_COLSORT = {
+    orders: 'orders_desc', spend: 'spend_desc', aov: 'aov_desc',
+    last_order: 'last_order_desc', last_active: 'last_active_desc'
+  };
+  var CU_SORTS = [
+    ['newest', 'Newest first'], ['oldest', 'Oldest first'], ['name', 'Name A–Z'],
+    ['spend_desc', 'Total spend, high to low'], ['spend_asc', 'Total spend, low to high'],
+    ['orders_desc', 'Most orders'], ['aov_desc', 'Highest average order'],
+    ['last_order_desc', 'Ordered most recently'], ['last_active_desc', 'Active most recently']
+  ];
+  var CU_CHIPS = [
+    ['all', 'All'], ['ordered', 'Has ordered'], ['never', 'Never ordered'],
+    ['repeat', 'Repeat buyers'], ['account', 'Has an account'], ['guest', 'Guest checkout'],
+    ['verified', 'Email verified'], ['unverified', 'Not verified'], ['trashed', 'Trash']
+  ];
+  /* Bands in whole dirhams; the server converts with Money::fromMajor, so the
+     comparison happens in fils and nothing here ever holds a money float. */
+  var CU_BANDS = [
+    ['', '', 'Any spend'], ['0', '0', 'Nothing yet'], ['1', '499', 'Under AED 500'],
+    ['500', '1999', 'AED 500 – 1,999'], ['2000', '', 'AED 2,000 and over']
+  ];
+
+  function cuCols(){
+    if(CU.cols) return CU.cols;
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('kbb_cust_cols') || 'null'); }catch(e){ saved = null; }
+    CU.cols = Object.assign({}, CU_COLS_DEFAULT, saved || {});
+    return CU.cols;
   }
+  function cuSaveCols(){ try{ localStorage.setItem('kbb_cust_cols', JSON.stringify(CU.cols)); }catch(e){} }
+
+  function cuParams(forExport){
+    var p = new URLSearchParams();
+    if(!forExport){ p.set('page', CU.page); p.set('per_page', CU.perPage); }
+    if(CU.search) p.set('search', CU.search);
+    if(CU.filter && CU.filter !== 'all') p.set('filter', CU.filter);
+    if(CU.sort && CU.sort !== 'newest') p.set('sort', CU.sort);
+    if(CU.spendMin !== '') p.set('spend_min', CU.spendMin);
+    if(CU.spendMax !== '') p.set('spend_max', CU.spendMax);
+    if(CU.from) p.set('from', CU.from);
+    if(CU.to) p.set('to', CU.to);
+    if(CU.country) p.set('country', CU.country);
+    if(CU.city) p.set('city', CU.city);
+    return p.toString();
+  }
+
+  function cuDate(iso){
+    if(!iso) return '<span style="color:var(--ink-faint)">—</span>';
+    var d = new Date(iso);
+    if(isNaN(d)) return '<span style="color:var(--ink-faint)">—</span>';
+    return sesc(d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}));
+  }
+  /* "3 days ago" under the date. A shop owner reads recency faster than a
+     date, and a customer who last did anything in 2019 should look like it. */
+  function cuAgo(iso){
+    if(!iso) return '';
+    var d = new Date(iso); if(isNaN(d)) return '';
+    var days = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if(days < 0) return '';
+    if(days === 0) return 'today';
+    if(days === 1) return 'yesterday';
+    if(days < 31) return days + ' days ago';
+    if(days < 365){ var m = Math.max(1, Math.round(days / 30)); return m + (m === 1 ? ' month ago' : ' months ago'); }
+    var years = Math.floor(days / 365);
+    return (years < 2 ? 'over a year ago' : years + ' years ago');
+  }
+  function cuLabel(c){ return c.name || c.email || ('Customer #' + c.id); }
+  function cuDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
+  function cuToast(msg){ toast(sesc(msg)); }
+
+  function cuTypePill(c){
+    var badge = c.account_type === 'account'
+      ? '<span class="pill blue">Account</span>'
+      : '<span class="pill grey">Guest</span>';
+    if(c.email_verified) badge += ' <span class="pill green" title="Email verified">✓</span>';
+    return badge;
+  }
+
+  async function cuLoad(){
+    if(CU.busy) return;
+    CU.busy = true;
+    try{
+      CU.data = await api('/admin-api/customers/list?' + cuParams(false));
+      CU.perPage = CU.data.per_page;
+    }catch(e){
+      CU.data = null;
+    }
+    CU.busy = false;
+    cuPaint();
+  }
+
+  window.renderCustomers = async function(){
+    CU.page = 1; CU.sel = {};
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap"><div class="page-head"><h2>Customers</h2>' +
+      '<p>Everyone with a record on the store — shoppers who checked out as guests as well as people with an account.</p></div>' +
+      '<p style="padding:24px;color:var(--ink-soft)">Loading customers…</p></div>';
+    await cuLoad();
+  };
+
+  function cuPaint(){
+    var el = document.querySelector('#content');
+    var d = CU.data;
+
+    if(!d){
+      el.innerHTML = '<div class="wrap"><div class="page-head"><h2>Customers</h2></div>' +
+        '<div class="card pad"><p style="font-size:13px;color:var(--red)">Customers could not be loaded.</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">The screen is real and the endpoint is guarded — if this persists the route may not be wired up on this server yet.</p>' +
+        '<div style="margin-top:12px"><button class="btn ghost sm" id="cuRetry">Try again</button></div></div></div>';
+      var retry = document.getElementById('cuRetry');
+      if(retry) retry.onclick = function(){ cuLoad(); };
+      return;
+    }
+
+    var cols = CU_COLDEF.filter(function(c){ return cuCols()[c[0]]; });
+    var selected = Object.keys(CU.sel).filter(function(k){ return CU.sel[k]; });
+    var s = d.summary || {customers:0, orders:0, spend_display:'', aov_display:''};
+
+    el.innerHTML =
+      '<div class="wrap">' +
+      '<div class="between" style="margin-bottom:8px;flex-wrap:wrap;gap:12px">' +
+        '<div class="page-head" style="margin:0"><h2>Customers</h2>' +
+        '<p>Everyone with a record on the store — shoppers who checked out as guests as well as people with an account. Orders and spend count paid, processing, shipped and completed orders.</p></div>' +
+        '<div class="row" style="gap:8px">' +
+          '<button class="btn ghost" id="cuColsBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Columns</button>' +
+          '<button class="btn" id="cuExport">' + ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + ' Export CSV</button>' +
+        '</div>' +
+      '</div>' +
+
+      (d.unlinked_orders ?
+        '<div class="card pad" style="margin-bottom:14px;border-color:#f0dcae;background:var(--amber-soft)">' +
+        '<b style="font-size:12.5px">' + d.unlinked_orders + ' order' + (d.unlinked_orders === 1 ? ' is' : 's are') + ' not linked to any customer.</b>' +
+        '<p style="font-size:12px;color:var(--ink-2);margin-top:4px">Their revenue is real but it cannot appear against anybody in this list. This is what an import of WooCommerce guest orders without matching customer records looks like.</p>' +
+        '</div>' : '') +
+
+      '<div class="kpis" style="margin-bottom:16px">' +
+        cuKpi('Customers in this view', (s.customers || 0).toLocaleString(), d.total === s.customers ? 'matching the filters' : '') +
+        cuKpi('Orders', (s.orders || 0).toLocaleString(), 'paid and fulfilled') +
+        cuKpi('Lifetime revenue', sesc(s.spend_display || ''), 'from these customers') +
+        cuKpi('Average order', sesc(s.aov_display || ''), 'across those orders') +
+      '</div>' +
+
+      (CU.colsOpen ? cuColsPanel() : '') +
+
+      '<div class="toolbar" style="flex-wrap:wrap;gap:10px">' +
+        '<div class="search" style="min-width:220px">' + ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
+        '<input id="cuSearch" placeholder="Search name, email, phone or Woo user ID…" value="' + sesc(CU.search) + '"></div>' +
+        '<select class="inp" id="cuSort" style="max-width:230px">' +
+          CU_SORTS.map(function(o){ return '<option value="' + o[0] + '"' + (CU.sort === o[0] ? ' selected' : '') + '>Sort: ' + o[1] + '</option>'; }).join('') +
+        '</select>' +
+        '<button class="btn ghost" id="cuAdv">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters' + (cuAdvCount() ? ' · ' + cuAdvCount() : '') + (CU.adv ? ' ▴' : ' ▾') + '</button>' +
+      '</div>' +
+
+      (CU.adv ? cuAdvPanel(d) : '') +
+
+      '<div class="chips" style="margin-bottom:12px">' +
+        CU_CHIPS.map(function(c){
+          var n = (d.counts && d.counts[c[0]] !== undefined) ? d.counts[c[0]] : 0;
+          return '<button class="chip' + (CU.filter === c[0] ? ' on' : '') + '" data-cuf="' + c[0] + '">' +
+            sesc(c[1]) + ' <span style="opacity:.6">' + n + '</span></button>';
+        }).join('') +
+      '</div>' +
+
+      (selected.length ?
+        '<div class="card pad" style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<b style="font-size:12.5px">' + selected.length + ' selected</b>' +
+        '<button class="btn ghost sm" id="cuClearSel">Clear</button>' +
+        '<div style="flex:1"></div>' +
+        '<button class="btn sm" style="background:var(--red)" id="cuBulkDelete">Move to trash…</button>' +
+        '</div>' : '') +
+
+      '<div class="card" style="overflow:auto">' + cuTable(d, cols) + '</div>' +
+
+      '<div class="pager" style="margin-top:14px;flex-wrap:wrap;gap:10px">' +
+        '<span>' + (d.customers.length ? ((d.page - 1) * d.per_page + 1) : 0) + '–' +
+        ((d.page - 1) * d.per_page + d.customers.length) + ' of ' + d.total + '</span>' +
+        '<div class="row" style="gap:8px">' +
+          '<select class="inp" id="cuPerPage" style="width:126px">' +
+            [25, 50, 100, 200].map(function(n){ return '<option value="' + n + '"' + (n === CU.perPage ? ' selected' : '') + '>' + n + ' per page</option>'; }).join('') +
+          '</select>' +
+          '<button class="btn ghost sm" ' + (d.page <= 1 ? 'disabled' : '') + ' id="cuPrev">‹ Prev</button>' +
+          '<span style="font-size:12px">Page ' + d.page + ' of ' + d.last_page + '</span>' +
+          '<button class="btn ghost sm" ' + (d.page >= d.last_page ? 'disabled' : '') + ' id="cuNext">Next ›</button>' +
+        '</div>' +
+      '</div></div>';
+
+    cuBindList();
+  }
+
+  function cuKpi(label, value, sub){
+    return '<div class="card pad"><div style="font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em">' +
+      sesc(label) + '</div><div style="font-size:21px;font-weight:700;margin-top:6px">' + value +
+      '</div><div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">' + sesc(sub || '') + '</div></div>';
+  }
+
+  function cuAdvCount(){
+    var n = 0;
+    if(CU.spendMin !== '' || CU.spendMax !== '') n++;
+    if(CU.from || CU.to) n++;
+    if(CU.country) n++;
+    if(CU.city) n++;
+    return n;
+  }
+
+  function cuColsPanel(){
+    return '<div class="card pad" style="margin-bottom:14px">' +
+      '<b style="font-size:12.5px">Columns</b>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:11px">' +
+      CU_COLDEF.map(function(c){
+        return '<label class="row" style="gap:8px;font-size:12.5px;cursor:pointer">' +
+          '<span class="cbx' + (cuCols()[c[0]] ? ' on' : '') + '" data-cucol="' + c[0] + '">' + ic(I.check) + '</span> ' + sesc(c[1]) + '</label>';
+      }).join('') +
+      '</div><div style="margin-top:14px"><button class="btn ghost sm" id="cuColsReset">Reset to default</button></div></div>';
+  }
+
+  function cuAdvPanel(d){
+    var band = CU_BANDS.filter(function(b){ return b[0] === CU.spendMin && b[1] === CU.spendMax; })[0];
+    return '<div class="card pad" style="margin-bottom:12px">' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">' +
+        '<div class="fld" style="margin:0"><label>Lifetime spend</label><select id="cuBand">' +
+          CU_BANDS.map(function(b){ return '<option value="' + b[0] + '|' + b[1] + '"' + (band && band[2] === b[2] ? ' selected' : '') + '>' + sesc(b[2]) + '</option>'; }).join('') +
+          (band ? '' : '<option value="custom" selected>Custom range</option>') +
+        '</select></div>' +
+        '<div class="fld" style="margin:0"><label>Spend from (AED)</label><input id="cuSpendMin" type="number" min="0" step="1" value="' + sesc(CU.spendMin) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Spend to (AED)</label><input id="cuSpendMax" type="number" min="0" step="1" value="' + sesc(CU.spendMax) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Registered from</label><input id="cuFrom" type="date" value="' + sesc(CU.from) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Registered to</label><input id="cuTo" type="date" value="' + sesc(CU.to) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Country</label><select id="cuCountry"><option value="">Any country</option>' +
+          (d.countries || []).map(function(c){ return '<option value="' + sesc(c) + '"' + (CU.country === c ? ' selected' : '') + '>' + sesc(c) + '</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="fld" style="margin:0"><label>City</label><input id="cuCity" value="' + sesc(CU.city) + '" placeholder="any city"></div>' +
+      '</div>' +
+      '<div class="row" style="margin-top:14px;gap:8px"><button class="btn sm" id="cuApply">Apply filters</button>' +
+      '<button class="btn ghost sm" id="cuClearFilters">Clear all</button>' +
+      '<span style="font-size:11.5px;color:var(--ink-soft)">Registration dates leave out customers imported without one.</span></div></div>';
+  }
+
+  function cuTable(d, cols){
+    if(!d.customers.length){
+      return '<p style="padding:34px;text-align:center;color:var(--ink-soft);font-size:13px">No customers match this view.' +
+        (cuAdvCount() || CU.search || CU.filter !== 'all' ? ' <button class="btn ghost sm" id="cuEmptyClear" style="margin-left:8px">Clear filters</button>' : '') + '</p>';
+    }
+
+    var allOnPage = d.customers.every(function(c){ return CU.sel[c.id]; });
+
+    var head = '<thead><tr>' +
+      '<th style="width:36px"><span class="cbx' + (allOnPage ? ' on' : '') + '" id="cuAll">' + ic(I.check) + '</span></th>' +
+      '<th>' + cuHeadSort('name', 'Customer') + '</th>' +
+      cols.map(function(c){
+        var right = ['orders', 'spend', 'aov'].indexOf(c[0]) >= 0;
+        var inner = CU_COLSORT[c[0]] ? cuHeadSort(CU_COLSORT[c[0]], c[1]) : (c[0] === 'registered' ? cuHeadSort('newest', c[1]) : sesc(c[1]));
+        return '<th style="white-space:nowrap' + (right ? ';text-align:right' : '') + '">' + inner + '</th>';
+      }).join('') +
+      '<th></th></tr></thead>';
+
+    var body = '<tbody>' + d.customers.map(function(c){
+      return '<tr' + (c.trashed ? ' style="opacity:.62"' : '') + '>' +
+        '<td><span class="cbx' + (CU.sel[c.id] ? ' on' : '') + '" data-cusel="' + c.id + '">' + ic(I.check) + '</span></td>' +
+        '<td><div class="row" style="min-width:0">' +
+          '<span class="pthumb" style="background:' + sesc(tcol(cuLabel(c))) + ';width:32px;height:32px;font-size:10px">' + sesc(initials(cuLabel(c))) + '</span>' +
+          '<div style="min-width:0"><div class="pname" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px">' +
+            (c.name ? sesc(c.name) : '<span style="color:var(--ink-faint)">No name on record</span>') +
+            (c.trashed ? ' <span class="pill grey">Trashed</span>' : '') + '</div>' +
+          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px">' + sesc(c.email) + '</div></div></div></td>' +
+        cols.map(function(col){ return cuCell(col[0], c); }).join('') +
+        '<td style="white-space:nowrap">' + (c.trashed
+          ? '<button class="btn ghost sm" data-curestore="' + c.id + '">Restore</button>'
+          : '<button class="btn ghost sm" data-cuview="' + c.id + '">View</button>') + '</td>' +
+      '</tr>';
+    }).join('') + '</tbody>';
+
+    return '<table style="min-width:760px">' + head + body + '</table>';
+  }
+
+  function cuHeadSort(sort, label){
+    var on = CU.sort === sort;
+    return '<button data-cusort="' + sesc(sort) + '" style="font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;' +
+      (on ? 'color:var(--accent-ink)' : '') + '">' + sesc(label) + (on ? ' ▾' : '') + '</button>';
+  }
+
+  function cuCell(key, c){
+    switch(key){
+      case 'contact': return '<td style="white-space:nowrap">' + cuDash(c.phone) + '</td>';
+      case 'type': return '<td style="white-space:nowrap">' + cuTypePill(c) + '</td>';
+      case 'orders': return '<td style="text-align:right">' + c.orders +
+        (c.orders_all > c.orders ? '<div class="pbrand">' + c.orders_all + ' incl. cancelled</div>' : '') + '</td>';
+      case 'spend': return '<td class="price" style="text-align:right;white-space:nowrap"><b>' + sesc(c.spend_display) + '</b></td>';
+      case 'aov': return '<td style="text-align:right;white-space:nowrap;color:var(--ink-2)">' + (c.orders ? sesc(c.aov_display) : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
+      case 'last_order': return '<td style="white-space:nowrap;font-size:12px">' + cuDate(c.last_order_at) +
+        (c.last_order_at ? '<div class="pbrand">' + sesc(cuAgo(c.last_order_at)) + '</div>' : '') + '</td>';
+      case 'last_active': return '<td style="white-space:nowrap;font-size:12px">' + cuDate(c.last_active_at) +
+        (c.last_active_at ? '<div class="pbrand">' + sesc(cuAgo(c.last_active_at)) + '</div>' : '') + '</td>';
+      case 'location': return '<td style="white-space:nowrap;font-size:12px">' + cuDash(c.country) +
+        (c.city ? '<div class="pbrand">' + sesc(c.city) + '</div>' : '') + '</td>';
+      case 'registered': return '<td style="white-space:nowrap;font-size:12px">' + cuDate(c.registered_at) + '</td>';
+      case 'wp': return '<td style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--ink-soft)">' + cuDash(c.wp_user_id) + '</td>';
+      default: return '<td></td>';
+    }
+  }
+
+  function cuBindList(){
+    var $$$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+    var byId = function(id){ return document.getElementById(id); };
+
+    var searchT;
+    var searchEl = byId('cuSearch');
+    if(searchEl) searchEl.oninput = function(e){
+      clearTimeout(searchT);
+      var v = e.target.value;
+      searchT = setTimeout(function(){ CU.search = v; CU.page = 1; cuLoad(); }, 300);
+    };
+
+    var sortEl = byId('cuSort');
+    if(sortEl) sortEl.onchange = function(e){ CU.sort = e.target.value; CU.page = 1; cuLoad(); };
+
+    $$$('#content [data-cusort]').forEach(function(b){
+      b.onclick = function(){ CU.sort = b.dataset.cusort; CU.page = 1; cuLoad(); };
+    });
+
+    $$$('#content .chip[data-cuf]').forEach(function(b){
+      b.onclick = function(){ CU.filter = b.dataset.cuf; CU.page = 1; CU.sel = {}; cuLoad(); };
+    });
+
+    var adv = byId('cuAdv');
+    if(adv) adv.onclick = function(){ CU.adv = !CU.adv; cuPaint(); };
+
+    var colsBtn = byId('cuColsBtn');
+    if(colsBtn) colsBtn.onclick = function(){ CU.colsOpen = !CU.colsOpen; cuPaint(); };
+
+    $$$('#content .cbx[data-cucol]').forEach(function(b){
+      b.onclick = function(){ var k = b.dataset.cucol; CU.cols[k] = !CU.cols[k]; cuSaveCols(); cuPaint(); };
+    });
+    var colsReset = byId('cuColsReset');
+    if(colsReset) colsReset.onclick = function(){ CU.cols = Object.assign({}, CU_COLS_DEFAULT); cuSaveCols(); cuPaint(); };
+
+    var band = byId('cuBand');
+    if(band) band.onchange = function(e){
+      if(e.target.value === 'custom') return;
+      var parts = e.target.value.split('|');
+      CU.spendMin = parts[0]; CU.spendMax = parts[1]; CU.page = 1; cuLoad();
+    };
+
+    var apply = byId('cuApply');
+    if(apply) apply.onclick = function(){
+      CU.spendMin = (byId('cuSpendMin') || {}).value || '';
+      CU.spendMax = (byId('cuSpendMax') || {}).value || '';
+      CU.from = (byId('cuFrom') || {}).value || '';
+      CU.to = (byId('cuTo') || {}).value || '';
+      CU.country = (byId('cuCountry') || {}).value || '';
+      CU.city = (byId('cuCity') || {}).value || '';
+      CU.page = 1; cuLoad();
+    };
+
+    var clearAll = function(){
+      CU.spendMin = ''; CU.spendMax = ''; CU.from = ''; CU.to = '';
+      CU.country = ''; CU.city = ''; CU.search = ''; CU.filter = 'all';
+      CU.page = 1; cuLoad();
+    };
+    var clearBtn = byId('cuClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
+    var emptyClear = byId('cuEmptyClear'); if(emptyClear) emptyClear.onclick = clearAll;
+
+    var perPage = byId('cuPerPage');
+    if(perPage) perPage.onchange = function(e){
+      CU.perPage = +e.target.value;
+      try{ localStorage.setItem('kbb_cust_pp', CU.perPage); }catch(err){}
+      CU.page = 1; cuLoad();
+    };
+
+    var prev = byId('cuPrev'); if(prev) prev.onclick = function(){ if(CU.data.page > 1){ CU.page = CU.data.page - 1; cuLoad(); } };
+    var next = byId('cuNext'); if(next) next.onclick = function(){ if(CU.data.page < CU.data.last_page){ CU.page = CU.data.page + 1; cuLoad(); } };
+
+    $$$('#content [data-cusel]').forEach(function(b){
+      b.onclick = function(){ var id = b.dataset.cusel; CU.sel[id] = !CU.sel[id]; cuPaint(); };
+    });
+    var all = byId('cuAll');
+    if(all) all.onclick = function(){
+      var on = !CU.data.customers.every(function(c){ return CU.sel[c.id]; });
+      CU.data.customers.forEach(function(c){ CU.sel[c.id] = on; });
+      cuPaint();
+    };
+    var clearSel = byId('cuClearSel'); if(clearSel) clearSel.onclick = function(){ CU.sel = {}; cuPaint(); };
+
+    var bulk = byId('cuBulkDelete');
+    if(bulk) bulk.onclick = function(){
+      var ids = Object.keys(CU.sel).filter(function(k){ return CU.sel[k]; }).map(Number);
+      cuConfirmDelete(ids, null);
+    };
+
+    $$$('#content [data-cuview]').forEach(function(b){
+      b.onclick = function(){ cuDetail(+b.dataset.cuview); };
+    });
+    $$$('#content [data-curestore]').forEach(function(b){
+      b.onclick = async function(){
+        try{
+          await api('/admin-api/customers/' + (+b.dataset.curestore) + '/restore', {method:'POST'});
+          cuToast('Customer restored'); cuLoad();
+        }catch(e){ cuToast('Could not restore this customer'); }
+      };
+    });
+
+    var exportBtn = byId('cuExport');
+    if(exportBtn) exportBtn.onclick = function(){
+      /* A normal navigation, not a fetch: the browser carries the same admin
+         session cookie, the server refuses anyone without it, and the file
+         lands in Downloads instead of in memory. */
+      var qs = cuParams(true);
+      window.location.href = fixAdminApiUrl('/admin-api/customers/export') + (qs ? '?' + qs : '');
+    };
+  }
+
+  /* -------- destructive actions: always a dialog, sometimes two -------- */
+
+  /**
+   * Nothing is deleted on a click. The first dialog says what will happen; the
+   * server then refuses anyone with order history and reports how much history
+   * there is, and only a second, explicit confirmation carrying force=1 goes
+   * through. Trashing is a soft delete either way — the customer and every
+   * order they placed are still in the database and Restore brings them back.
+   */
+  function cuConfirmDelete(ids, label){
+    if(!ids.length) return;
+    var what = ids.length === 1 ? (label ? sesc(label) : 'this customer') : (ids.length + ' customers');
+
+    openModal('<div class="modal-h"><b>Move to trash</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Move ' + what + ' to the trash?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Nothing is destroyed. The record is hidden from this list, every order they placed stays exactly where it is, and you can restore them from the Trash filter at any time.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="cuDelYes">Move to trash</button></div></div>');
+
+    var yes = document.getElementById('cuDelYes');
+    if(yes) yes.onclick = function(){ cuRunDelete(ids, false); };
+  }
+
+  async function cuRunDelete(ids, force){
+    closeModal();
+    try{
+      if(ids.length === 1){
+        var res = await fetch(fixAdminApiUrl('/admin-api/customers/' + ids[0] + (force ? '?force=1' : '')), {
+          method: 'DELETE', credentials: 'same-origin',
+          headers: {'X-XSRF-TOKEN': cookie('XSRF-TOKEN'), Accept: 'application/json'}
+        });
+        var body = await res.json();
+        if(res.status === 409 && body.needs_confirmation){ cuConfirmHistory(ids, body); return; }
+        if(!res.ok) throw new Error('failed');
+        cuToast('Moved to trash');
+      }else{
+        var out = await api('/admin-api/customers/bulk-delete', {
+          method: 'POST', body: JSON.stringify({ids: ids, force: !!force})
+        });
+        if(out.skipped && out.skipped.length){ cuConfirmSkipped(ids, out); return; }
+        cuToast(out.deleted + ' customer' + (out.deleted === 1 ? '' : 's') + ' moved to trash');
+      }
+      CU.sel = {}; cuLoad();
+    }catch(e){
+      cuToast('Could not complete that — nothing was changed');
+    }
+  }
+
+  function cuConfirmHistory(ids, body){
+    openModal('<div class="modal-h"><b>This customer has order history</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">They have <b>' + body.orders + '</b> order' + (body.orders === 1 ? '' : 's') +
+      ' worth <b>' + sesc(body.spend_display || '') + '</b>. Nothing has been deleted.</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Trashing them hides the customer from this list. The orders themselves are untouched and your revenue figures do not change.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Keep this customer</button>' +
+      '<button class="btn" style="background:var(--red)" id="cuDelForce">Trash anyway</button></div></div>');
+    var force = document.getElementById('cuDelForce');
+    if(force) force.onclick = function(){ cuRunDelete(ids, true); };
+  }
+
+  function cuConfirmSkipped(ids, out){
+    openModal('<div class="modal-h"><b>Some customers have order history</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)"><b>' + out.deleted + '</b> moved to trash. <b>' + out.skipped.length +
+      '</b> left alone because ' + (out.skipped.length === 1 ? 'they have' : 'they have') + ' orders:</p>' +
+      '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+      out.skipped.slice(0, 12).map(function(s){ return '<li>' + sesc(s.label) + ' — ' + s.orders + ' order' + (s.orders === 1 ? '' : 's') + '</li>'; }).join('') +
+      (out.skipped.length > 12 ? '<li>and ' + (out.skipped.length - 12) + ' more</li>' : '') + '</ul>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Leave them</button>' +
+      '<button class="btn" style="background:var(--red)" id="cuBulkForce">Trash those too</button></div></div>');
+    var force = document.getElementById('cuBulkForce');
+    if(force) force.onclick = function(){
+      cuRunDelete(out.skipped.map(function(s){ return s.id; }), true);
+    };
+  }
+
+  /* ------------------------------ one customer ------------------------------ */
+
+  async function cuDetail(id){
+    var el = document.querySelector('#content');
+    el.innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading customer…</p></div>';
+
+    var d;
+    try{ d = await api('/admin-api/customers/' + id); }
+    catch(e){
+      el.innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--red)">Could not load this customer.</p>' +
+        '<button class="btn ghost sm" id="cuBack">‹ Back to customers</button></div>';
+      var b0 = document.getElementById('cuBack'); if(b0) b0.onclick = function(){ window.renderCustomers(); };
+      return;
+    }
+
+    var c = d.customer;
+
+    el.innerHTML = '<div class="wrap">' +
+      '<div class="between" style="margin-bottom:14px;flex-wrap:wrap;gap:10px">' +
+        '<button class="btn ghost sm" id="cuBack">‹ All customers</button>' +
+        (c.trashed ? '<button class="btn ghost sm" id="cuRestore">Restore this customer</button>'
+                   : '<button class="btn ghost sm" style="color:var(--red)" id="cuTrash">Move to trash</button>') +
+      '</div>' +
+
+      '<div class="card pad" style="margin-bottom:14px">' +
+        '<div class="row" style="gap:14px;flex-wrap:wrap">' +
+          '<span class="pthumb" style="background:' + sesc(tcol(cuLabel(c))) + ';width:52px;height:52px;font-size:15px">' + sesc(initials(cuLabel(c))) + '</span>' +
+          '<div style="min-width:0;flex:1">' +
+            '<div style="font-size:18px;font-weight:700">' + (c.name ? sesc(c.name) : 'No name on record') + '</div>' +
+            '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px">' + sesc(c.email) + (c.phone ? ' · ' + sesc(c.phone) : '') + '</div>' +
+            '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">' + cuTypePill(c) +
+              (c.whatsapp_optin ? ' <span class="pill green">WhatsApp opt-in</span>' : '') +
+              (c.wp_user_id ? ' <span class="pill grey">Woo user #' + c.wp_user_id + '</span>' : '') +
+              (c.trashed ? ' <span class="pill red">In the trash</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="kpis" style="margin-bottom:14px">' +
+        cuKpi('Lifetime value', sesc(c.spend_display), 'paid and fulfilled orders') +
+        cuKpi('Orders', String(c.orders), c.orders_all > c.orders ? (c.orders_all + ' including cancelled') : 'all counted') +
+        cuKpi('Average order', c.orders ? sesc(c.aov_display) : '—', 'across those orders') +
+        cuKpi('Last order', c.last_order_at ? cuAgo(c.last_order_at) : 'never', c.last_active_at ? ('last seen ' + cuAgo(c.last_active_at)) : '') +
+      '</div>' +
+
+      '<div class="card pad" style="margin-bottom:14px">' +
+        '<b style="font-size:13px">Account</b>' +
+        '<div class="g2" style="margin-top:12px">' +
+          cuField('Registered', c.registered_at ? cuDate(c.registered_at) : '<span style="color:var(--ink-faint)">Not recorded — typical of an imported customer</span>') +
+          cuField('Last activity', c.last_active_at ? (cuDate(c.last_active_at) + ' · ' + sesc(cuAgo(c.last_active_at))) : '<span style="color:var(--ink-faint)">—</span>') +
+          cuField('Sign-in', c.account_type === 'account' ? 'Has a password and can sign in' : 'Guest — checked out without an account') +
+          cuField('Email verified', c.email_verified ? 'Yes' : 'No') +
+          cuField('WooCommerce user ID', c.wp_user_id ? String(c.wp_user_id) : '<span style="color:var(--ink-faint)">Not imported — created on this store</span>') +
+          cuField('Customer ID', String(c.id)) +
+        '</div>' +
+      '</div>' +
+
+      '<div class="card pad" style="margin-bottom:14px">' +
+        '<b style="font-size:13px">Private note</b>' +
+        '<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 10px">Only you see this. The customer never does.</p>' +
+        '<div class="fld" style="margin:0"><textarea id="cuNote" placeholder="Anything worth remembering about this customer…">' + sesc(c.notes || '') + '</textarea></div>' +
+        '<div style="margin-top:10px"><button class="btn sm" id="cuNoteSave">Save note</button></div>' +
+      '</div>' +
+
+      '<div class="card" style="margin-bottom:14px;overflow:auto">' +
+        // Not class="pad": that rule is .card.pad, so it does nothing on a
+        // child element and the heading sat flush against the card edge.
+        '<div style="padding:20px 20px 0"><b style="font-size:13px">Orders</b></div>' +
+        (d.orders.length ?
+          '<table style="min-width:620px;margin-top:10px"><thead><tr><th>Order</th><th>Status</th><th style="text-align:right">Total</th><th>Payment</th><th>Placed</th></tr></thead><tbody>' +
+          d.orders.map(function(o){
+            return '<tr><td><b>' + sesc(o.order_number) + '</b>' + (o.wc_order_id ? '<div class="pbrand">Woo #' + o.wc_order_id + '</div>' : '') + '</td>' +
+              '<td>' + statusPill(o.status) + '</td>' +
+              '<td class="price" style="text-align:right;white-space:nowrap"><b>' + sesc(o.total_display) + '</b>' +
+              (o.counts_as_spend ? '' : '<div class="pbrand">not counted</div>') + '</td>' +
+              '<td style="font-size:12px">' + sesc(o.payment) + '</td>' +
+              '<td style="font-size:12px;white-space:nowrap">' + cuDate(o.placed_at) + '</td></tr>';
+          }).join('') + '</tbody></table>'
+          : '<p style="padding:24px;color:var(--ink-soft);font-size:13px">No orders yet.</p>') +
+      '</div>' +
+
+      '<div class="card pad">' +
+        '<b style="font-size:13px">Addresses</b>' +
+        (d.addresses.length ?
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px">' +
+          d.addresses.map(function(a){
+            return '<div style="border:1px solid var(--border);border-radius:12px;padding:12px">' +
+              '<div class="row" style="gap:6px"><span class="pill grey">' + sesc(a.type) + '</span>' +
+              (a.is_default ? '<span class="pill blue">Default</span>' : '') + '</div>' +
+              '<div style="font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.7">' +
+              [a.name, a.company, a.line1, a.line2, [a.city, a.state].filter(Boolean).join(', '), a.postcode, a.country, a.phone]
+                .filter(function(x){ return x; }).map(function(x){ return sesc(x); }).join('<br>') +
+              '</div></div>';
+          }).join('') + '</div>'
+          : '<p style="font-size:13px;color:var(--ink-soft);margin-top:10px">No saved addresses. A guest checkout does not always leave one.</p>') +
+      '</div></div>';
+
+    var back = document.getElementById('cuBack');
+    if(back) back.onclick = function(){ window.renderCustomers(); };
+
+    var trash = document.getElementById('cuTrash');
+    if(trash) trash.onclick = function(){ cuConfirmDelete([c.id], cuLabel(c)); };
+
+    var restore = document.getElementById('cuRestore');
+    if(restore) restore.onclick = async function(){
+      try{ await api('/admin-api/customers/' + c.id + '/restore', {method:'POST'}); cuToast('Customer restored'); cuDetail(c.id); }
+      catch(e){ cuToast('Could not restore this customer'); }
+    };
+
+    var saveNote = document.getElementById('cuNoteSave');
+    if(saveNote) saveNote.onclick = async function(){
+      var box = document.getElementById('cuNote');
+      try{
+        await api('/admin-api/customers/' + c.id + '/note', {method:'POST', body: JSON.stringify({notes: box ? box.value : ''})});
+        cuToast('Note saved');
+      }catch(e){ cuToast('Could not save the note'); }
+    };
+  }
+
+  function cuField(label, value){
+    return '<div class="fld" style="margin:0"><label>' + sesc(label) + '</label>' +
+      '<div style="font-size:12.5px;color:var(--ink-2);padding-top:2px">' + value + '</div></div>';
+  }
+
+  /* window.go, further down, calls this local name; the window-level function
+     above is what it delegates to, so the screen can be replaced or tested
+     without reaching inside this closure. */
+  function renderCustomers(){ return window.renderCustomers(); }
+
+  /* A bookmark straight to this screen — /admin?go=customers, or #customers.
+     That navigation is performed by the boot block at the end of the FIRST
+     script in this document, which runs before this one exists, so go() lands
+     on its fallback and draws the dashboard. Nothing has painted yet at this
+     point in parsing, so re-rendering here is not a flicker: it is the first
+     thing the browser draws. */
+  if(typeof cur !== 'undefined' && cur === 'customers'){ window.renderCustomers(); }
+  /* ===== LANE T · Store · Customers — END ===== */
 
   /* ---------- Quiz Leads screen (new) ---------- */
   var LEADS=[], leadFilter='all';
