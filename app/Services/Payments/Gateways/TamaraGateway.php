@@ -7,6 +7,8 @@ namespace App\Services\Payments\Gateways;
 use App\Models\Order;
 use App\Services\Payments\HandlesWebhooks;
 use App\Services\Payments\PaymentStart;
+use App\Services\Payments\SettlementResult;
+use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\WebhookOutcome;
 use Illuminate\Http\Request;
@@ -20,6 +22,9 @@ use Illuminate\Http\Request;
  *   POST /checkout                        create a session -> checkout_url
  *   GET  /merchants/orders/{id}           the authoritative state of an order
  *   POST /orders/{id}/authorise           confirm an approved order
+ *   POST /payments/capture                take the money after authorisation
+ *   POST /payments/refund                 give some or all of it back
+ *   Settlement endpoints are flat: the order id travels in the BODY.
  *   Auth: Authorization: Bearer <api_token>
  *   https://api.tamara.co  |  https://api-sandbox.tamara.co
  *   Amounts: {amount, currency} with amount in MAJOR units
@@ -50,7 +55,7 @@ use Illuminate\Http\Request;
  * `order_status` and is how an approval is announced; the webhook carries
  * `event_type` and is how expiry and decline are. Both are handled.
  */
-class TamaraGateway extends RemoteGateway implements HandlesWebhooks
+class TamaraGateway extends RemoteGateway implements HandlesWebhooks, SettlesPayments
 {
     private const LIVE = 'https://api.tamara.co';
 
@@ -58,6 +63,17 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks
 
     /** Tamara operates in these markets. */
     private const COUNTRIES = ['AE', 'SA', 'KW', 'BH', 'QA', 'OM'];
+
+    /**
+     * Default days an authorised order stays capturable.
+     *
+     * Taken from the outer bound the merchant's own Tamara plugin sweeps to:
+     * its "force capture" job hunts orders authorised but not captured within
+     * 180 days, and gives up past that. Overridable on the payments screen,
+     * because Tamara agrees this per merchant. Advisory either way — capture()
+     * reads the order's live status from Tamara and that is what decides.
+     */
+    private const DEFAULT_CAPTURE_DAYS = 180;
 
     public function id(): string
     {
@@ -95,6 +111,7 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks
             'notification_token' => ['secret', 'Notification token', 'Separate from the API token. This is the key Tamara signs webhooks with; without it no webhook can be verified.'],
             'public_key' => ['text', 'Public key', 'Optional, for the product-page widget only.'],
             'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. Forms part of the webhook URL below.'],
+            'capture_days' => ['text', 'Capture window (days)', 'How long Tamara leaves an authorised order capturable on your account. Default 180. Used only to warn you before it lapses — Tamara itself decides.'],
         ];
     }
 
@@ -271,6 +288,226 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks
             $currency,
             $summary,
         );
+    }
+
+    /* ----------------------------------------------------------- settlement */
+
+    public function captureWindow(): string
+    {
+        return sprintf(
+            'Within about %d days of authorisation. Tamara voids an authorisation that is never captured, and an uncaptured order is one the merchant is never paid for.',
+            $this->captureWindowDays(),
+        );
+    }
+
+    public function captureWindowDays(): ?int
+    {
+        $configured = (int) $this->credentials->get($this->id(), 'capture_days', (string) self::DEFAULT_CAPTURE_DAYS);
+
+        return $configured > 0 ? $configured : self::DEFAULT_CAPTURE_DAYS;
+    }
+
+    /**
+     * Take the authorised money.
+     *
+     * `POST /payments/capture`, with the order id in the BODY rather than the
+     * path — Tamara's settlement endpoints are flat, unlike its order
+     * endpoints. The response is `{capture_id: ...}`, and that id is what a
+     * later refund has to be pointed at.
+     *
+     * The live order is read first and its `status` decides:
+     *
+     *   authorised            capturable.
+     *   fully_captured        already done. A success on a retry, not an error.
+     *   partially_captured    also treated as done here. This build captures
+     *                         the whole order in one call and never makes a
+     *                         partial one, so a partial capture on the account
+     *                         came from elsewhere and silently topping it up
+     *                         would be the wrong guess to make with money.
+     *   anything else         declined, expired, cancelled. Nothing to take.
+     */
+    public function capture(Order $order, int $amountFils): SettlementResult
+    {
+        $tamaraOrderId = trim((string) $order->transaction_id);
+
+        if (! $this->configured() || $tamaraOrderId === '') {
+            return SettlementResult::failed(
+                'not_configured',
+                ['provider' => $this->id()],
+                'Tamara is not configured, or this order has no Tamara order on it.',
+            );
+        }
+
+        $remote = $this->call('GET', '/merchants/orders/' . urlencode($tamaraOrderId));
+
+        if ($remote === null) {
+            return SettlementResult::failed(
+                'unreachable',
+                ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId],
+                'Tamara could not be reached. Nothing was captured; try again.',
+            );
+        }
+
+        // The same guard the webhook applies: a reference that is not ours
+        // means this order id belongs to somebody else's order.
+        if ((string) ($remote['order_reference_id'] ?? '') !== (string) $order->order_number) {
+            return SettlementResult::failed(
+                'reference_mismatch',
+                ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId],
+                'Tamara has a different order against that reference. Nothing was captured.',
+            );
+        }
+
+        $status = strtolower((string) ($remote['status'] ?? ''));
+
+        if (in_array($status, ['fully_captured', 'partially_captured'], true)) {
+            return SettlementResult::ok(
+                'already_captured',
+                $this->existingCaptureId($remote),
+                ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId, 'status' => $status],
+                'Tamara had already captured this order.',
+            );
+        }
+
+        if (! in_array($status, ['authorised', 'authorized'], true)) {
+            return SettlementResult::failed(
+                'not_authorised',
+                ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId, 'status' => $status],
+                'Tamara reports this order as ' . ($status !== '' ? $status : 'unknown') . ', so there is nothing to capture.',
+            );
+        }
+
+        $currency = strtoupper((string) ($order->currency ?: 'AED'));
+
+        $attempt = $this->attempt('POST', '/payments/capture', [
+            'order_id' => $tamaraOrderId,
+            'total_amount' => $this->money($amountFils, $currency),
+            'shipping_amount' => $this->money((int) $order->shipping_total, $currency),
+            'tax_amount' => $this->money((int) $order->tax_total, $currency),
+            'discount_amount' => $this->money((int) $order->discount_total, $currency),
+            'items' => $this->items($order, $currency),
+            'shipping_info' => [
+                'shipped_at' => now()->toAtomString(),
+                'shipping_company' => (string) ($order->shipping_method ?: 'Courier'),
+            ],
+        ]);
+
+        $captureId = $attempt['ok'] ? $this->stringOrNull($attempt['body']['capture_id'] ?? null) : null;
+
+        if (! $attempt['ok'] || $captureId === null) {
+            return SettlementResult::failed(
+                $attempt['error'] ?? 'capture_rejected',
+                [
+                    'provider' => $this->id(),
+                    'tamara_order_id' => $tamaraOrderId,
+                    'http_status' => $attempt['status'],
+                    'error' => $attempt['error'],
+                ],
+                'Tamara refused the capture. Nothing was taken.',
+            );
+        }
+
+        return SettlementResult::ok(
+            'captured',
+            $captureId,
+            ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId, 'capture_id' => $captureId],
+            'Captured through Tamara.',
+        );
+    }
+
+    /**
+     * Refund some or all of a capture.
+     *
+     * `POST /payments/refund`, shaped as one order id plus a LIST of refunds
+     * — Tamara batches them — each pointing at the capture it reverses. We
+     * send exactly one per call so that one refund row maps to one provider
+     * transaction; batching would make a partial failure inside the batch
+     * impossible to attribute to the right row in our own table.
+     *
+     * The capture id is required, so a refund before capture is reported as
+     * `not_captured` rather than as a generic failure: the fix is to capture
+     * first, and no other message says so.
+     */
+    public function refund(
+        Order $order,
+        int $amountFils,
+        ?string $reason,
+        ?string $captureRef,
+        ?string $idempotencyKey = null,
+    ): SettlementResult
+    {
+        $tamaraOrderId = trim((string) $order->transaction_id);
+
+        if (! $this->configured() || $tamaraOrderId === '') {
+            return SettlementResult::failed(
+                'not_configured',
+                ['provider' => $this->id()],
+                'Tamara is not configured, or this order has no Tamara order on it.',
+            );
+        }
+
+        $captureId = trim((string) ($order->capture_ref ?? ''));
+
+        if ($captureId === '') {
+            return SettlementResult::failed(
+                'not_captured',
+                ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId],
+                'This Tamara order has not been captured, so there is nothing to refund yet. Capture it first.',
+            );
+        }
+
+        $currency = strtoupper((string) ($order->currency ?: 'AED'));
+
+        $attempt = $this->attempt('POST', '/payments/refund', [
+            'order_id' => $tamaraOrderId,
+            'refunds' => [[
+                'capture_id' => $captureId,
+                'total_amount' => $this->money($amountFils, $currency),
+                'shipping_amount' => $this->money(0, $currency),
+                'tax_amount' => $this->money(0, $currency),
+                'discount_amount' => $this->money(0, $currency),
+                'items' => [],
+                'comment' => $reason !== null && trim($reason) !== '' ? trim($reason) : 'Merchant refund',
+            ]],
+        ]);
+
+        $refundId = $attempt['ok']
+            ? $this->stringOrNull($attempt['body']['refunds'][0]['refund_id'] ?? null)
+            : null;
+
+        if (! $attempt['ok'] || $refundId === null) {
+            return SettlementResult::failed(
+                $attempt['error'] ?? 'refund_rejected',
+                [
+                    'provider' => $this->id(),
+                    'tamara_order_id' => $tamaraOrderId,
+                    'http_status' => $attempt['status'],
+                    'error' => $attempt['error'],
+                ],
+                'Tamara refused the refund. Nothing has been returned to the customer.',
+            );
+        }
+
+        return SettlementResult::ok(
+            'refunded',
+            $refundId,
+            ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId, 'refund_id' => $refundId],
+            'Refunded through Tamara.',
+        );
+    }
+
+    /** The capture id off an already-captured order, if Tamara volunteered one. */
+    private function existingCaptureId(array $remote): ?string
+    {
+        return $this->stringOrNull(
+            $remote['transactions']['captures'][0]['capture_id']
+                ?? ($remote['capture_id'] ?? null)
+        );
+    }
+
+    private function stringOrNull(mixed $value): ?string
+    {
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 
     /* -------------------------------------------------------------- helpers */

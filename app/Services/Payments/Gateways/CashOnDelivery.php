@@ -8,6 +8,8 @@ use App\Models\Order;
 use App\Services\PayShipRules;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Payments\PaymentStart;
+use App\Services\Payments\SettlementResult;
+use App\Services\Payments\SettlesPayments;
 use App\Services\SettingsService;
 
 /**
@@ -29,7 +31,7 @@ use App\Services\SettingsService;
  * courier collects it. Setting it would make the order look settled in every
  * report that reads that column.
  */
-class CashOnDelivery implements PaymentGateway
+class CashOnDelivery implements PaymentGateway, SettlesPayments
 {
     public function __construct(
         private PayShipRules $rules,
@@ -93,5 +95,71 @@ class CashOnDelivery implements PaymentGateway
     public function configSchema(): array
     {
         return [];
+    }
+
+    /* ----------------------------------------------------------- settlement */
+
+    /**
+     * There is no window, because there is no authorisation.
+     *
+     * The other three gateways hold money that expires if it is not taken.
+     * Nothing is held here — the cash is in the customer's hand until the
+     * courier takes it — so there is nothing to race and nothing to lose by
+     * waiting. Returning null from captureWindowDays() is also what tells
+     * PaymentCapturer not to insist on `paid_at` first: a COD order is never
+     * confirmed, deliberately (see the class note above), so a capturer that
+     * required confirmation would make COD permanently uncapturable.
+     */
+    public function captureWindow(): string
+    {
+        return 'No window — the courier collects the cash, and capture is a status change here rather than a call to anyone.';
+    }
+
+    public function captureWindowDays(): ?int
+    {
+        return null;
+    }
+
+    /**
+     * Delivery happened and the money was collected.
+     *
+     * No HTTP, no credentials, nothing to be down. The whole of capture for
+     * cash on delivery is recording that the cash arrived; PaymentCapturer
+     * writes `captured_at`, `captured_total` and the order note, and this
+     * method's only job is to agree that it may.
+     */
+    public function capture(Order $order, int $amountFils): SettlementResult
+    {
+        return SettlementResult::ok(
+            'captured',
+            'cod:' . $order->order_number,
+            ['provider' => 'cod', 'method' => 'cash_on_delivery'],
+            'Marked as collected on delivery.',
+        );
+    }
+
+    /**
+     * Cash goes back as cash, or as a bank transfer somebody makes by hand.
+     *
+     * Returning ok() here is not pretending the money moved. It records the
+     * refund in the ledger — which is the thing the merchant needs when they
+     * make the transfer and again when they reconcile — and says plainly in
+     * the message and the order note that there was no API call, so nobody
+     * reads the green tick as "the customer has been paid".
+     */
+    public function refund(
+        Order $order,
+        int $amountFils,
+        ?string $reason,
+        ?string $captureRef,
+        ?string $idempotencyKey = null,
+    ): SettlementResult
+    {
+        return SettlementResult::ok(
+            'recorded_only',
+            null,
+            ['provider' => 'cod', 'method' => 'cash_on_delivery'],
+            'Recorded. Cash on delivery has nothing to call — return the money by hand and this is the ledger entry for it.',
+        );
     }
 }

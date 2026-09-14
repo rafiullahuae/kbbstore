@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderNote;
 use App\Models\Refund;
+use App\Services\Payments\PaymentCapturer;
+use App\Services\Payments\PaymentRefunder;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +30,12 @@ class AdminOrderController extends Controller
     private const REAL_ACTIONS = ['cancel', 'duplicate'];
     private const PLACEHOLDER_ACTIONS = ['resend_confirmation', 'email_invoice'];
 
-    public function show(int $id, \App\Support\VatDisplay $vat): JsonResponse
+    public function show(
+        int $id,
+        \App\Support\VatDisplay $vat,
+        PaymentCapturer $capturer,
+        PaymentRefunder $refunder,
+    ): JsonResponse
     {
         $order = Order::withTrashed()->with(['items', 'notes'])->find($id);
 
@@ -108,12 +115,28 @@ class AdminOrderController extends Controller
 
             'refunds' => $order->refunds()->latest()->get()->map(fn (Refund $r) => [
                 'id' => $r->id,
-                'amount_aed' => Money::toAed($r->amount),
+                'amount_aed' => Money::toAed((int) $r->amount),
                 'reason' => $r->reason,
                 'refunded_by' => $r->refunded_by,
+                // A failed refund is shown, not hidden. The screen greys it
+                // and the merchant can see that an attempt was made and that
+                // no money went back — which is the whole reason failures are
+                // recorded rather than swallowed.
+                'status' => $r->status,
+                'failure_code' => $r->failure_code,
+                'provider_ref' => $r->provider_ref,
                 'created_at' => optional($r->created_at)->toAtomString(),
             ]),
-            'refunded_total_aed' => Money::toAed((int) $order->refunds()->sum('amount')),
+            // Only refunds that hold money. Summing every row would count
+            // failures, which would quietly reduce what can still be refunded.
+            'refunded_total_aed' => Money::toAed($refunder->refundedFils($order)),
+            'refundable_aed' => Money::toAed(max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order))),
+
+            // Capture: whether this order's money has actually been taken.
+            // Never calls a provider — see PaymentCapturer::status().
+            'settlement' => $capturer->status($order) + [
+                'refundable_fils' => max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order)),
+            ],
 
             'notes' => $order->notes->map(fn (OrderNote $n) => [
                 'id' => $n->id,
@@ -165,48 +188,75 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Records a refund — there is no payment-gateway API integrated yet
-     * (Tabby/Tamara/Stripe are all still open per the master plan), so this
-     * cannot actually move money back to a customer. It creates a real,
-     * permanent record of the refund having happened and who logged it,
-     * the same ledger entry a real gateway integration would eventually
-     * write to as well — not a fake action, just an honestly partial one.
+     * Refund, full or partial — and now really a refund.
+     *
+     * This method used to write a `refunds` row and stop there, because no
+     * gateway had a refund path to call: honestly partial, and documented as
+     * such. It now hands the work to PaymentRefunder, which calls the gateway
+     * and records the attempt either way. Three things moved OUT of here as a
+     * result, and none of them by accident:
+     *
+     *   THE CEILING. It was `order.total` and it is now the CAPTURED amount
+     *   minus what is already refunded, computed inside a locked transaction
+     *   in the service. The old check used `$order->refunds()->sum('amount')`,
+     *   which counts every row — including, once failures started being
+     *   recorded, refunds that never happened. A failed attempt would have
+     *   silently reduced what could still be refunded.
+     *
+     *   THE STATUS CHANGE. Moved for the same reason: a partial refund that
+     *   fails at the gateway must not be what tips an order into `refunded`.
+     *
+     *   IDEMPOTENCY. The double-click guard is a unique index on
+     *   `refunds.idempotency_key`, so it has to be applied by the code that
+     *   writes the row. The screen sends a key per form render; a caller that
+     *   sends none gets a derived one.
+     *
+     * What stays here is HTTP: validate, convert the screen's AED into fils
+     * once, and translate the outcome into a status code. `amount_fils` is
+     * accepted and preferred for a caller that has the integer already —
+     * there is then no float on the path at all.
      */
-    public function refund(Request $request, int $id): JsonResponse
+    public function refund(Request $request, int $id, PaymentRefunder $refunder): JsonResponse
     {
         $order = Order::find($id);
         if ($order === null) return response()->json(['error' => 'not_found'], 404);
 
         $data = $request->validate([
-            'amount_aed' => ['required', 'numeric', 'min:0.01'],
+            'amount_fils' => ['nullable', 'integer', 'min:1'],
+            'amount_aed' => ['nullable', 'numeric', 'min:0.01'],
             'reason' => ['nullable', 'string', 'max:1000'],
+            'idempotency_key' => ['nullable', 'string', 'max:191'],
         ]);
 
-        $amountFils = (int) round($data['amount_aed'] * 100);
-        $alreadyRefunded = (int) $order->refunds()->sum('amount');
-
-        if ($alreadyRefunded + $amountFils > $order->total) {
-            return response()->json(['ok' => false, 'message' => 'That would refund more than the order total.'], 422);
+        if (($data['amount_fils'] ?? null) === null && ($data['amount_aed'] ?? null) === null) {
+            return response()->json(['ok' => false, 'message' => 'Enter a refund amount.'], 422);
         }
 
-        $refund = $order->refunds()->create([
-            'amount' => $amountFils,
-            'reason' => $data['reason'] ?? null,
-            'refunded_by' => auth('admin')->user()?->name ?? 'Admin',
-        ]);
+        // One conversion, in one place, through the same helper the rest of
+        // the app converts money with. Integer fils from here down.
+        $amountFils = $data['amount_fils'] ?? Money::fromMajor($data['amount_aed']);
 
-        // A full refund also moves the order status — a partial one doesn't,
-        // since the order is still legitimately in progress for the rest.
-        if ($alreadyRefunded + $amountFils >= $order->total) {
-            $order->update(['status' => 'refunded']);
-        }
+        $outcome = $refunder->refund(
+            $order,
+            (int) $amountFils,
+            $data['reason'] ?? null,
+            auth('admin')->user()?->name ?? 'Admin',
+            $data['idempotency_key'] ?? null,
+        );
+
+        $order->refresh();
 
         return response()->json([
-            'ok' => true,
-            'refund_id' => $refund->id,
+            'ok' => $outcome->ok,
+            'code' => $outcome->code,
+            // Written for the admin. Never an API body, a key or a buyer field.
+            'message' => $outcome->message,
+            'refund_id' => $outcome->refund?->id,
+            'refund_status' => $outcome->refund?->status,
             'status' => $order->status,
-            'refunded_total_aed' => Money::toAed($alreadyRefunded + $amountFils),
-        ]);
+            'refunded_total_aed' => Money::toAed($refunder->refundedFils($order)),
+            'refundable_aed' => Money::toAed(max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order))),
+        ], $outcome->ok ? 200 : $outcome->status);
     }
 
     public function trash(int $id): JsonResponse

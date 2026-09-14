@@ -33,6 +33,8 @@ class Order extends Model
             'is_gift' => 'bool',
             'gift_fee' => 'int',
             'paid_at' => 'datetime',
+            'captured_at' => 'datetime',
+            'captured_total' => 'int',
             'completed_at' => 'datetime',
             'invoiced_at' => 'datetime',
             'deleted_at' => 'datetime',

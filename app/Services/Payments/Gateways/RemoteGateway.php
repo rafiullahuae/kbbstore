@@ -90,6 +90,90 @@ abstract class RemoteGateway implements PaymentGateway
     }
 
     /**
+     * A JSON call whose FAILURE is worth keeping.
+     *
+     * call() collapses everything that is not a 2xx to null, which is the
+     * right answer for checkout — the shopper does not care why Tabby is down,
+     * only that they should pick something else. It is the wrong answer for
+     * settlement: a capture or a refund that failed has to be written into
+     * `payment_events` with enough of the provider's own answer to find the
+     * transaction in their dashboard, or the merchant is left with "it didn't
+     * work" and no way to tell a declined refund from an expired token.
+     *
+     * What comes back is still narrow by construction. The HTTP status, and a
+     * short error code lifted from the NAMED error fields the three providers
+     * use — Stripe's error.code/error.type, Tabby's errorType, Tamara's
+     * message/error_code. Never the body: a failed capture response echoes the
+     * order back, buyer block included.
+     *
+     * @return array{ok: bool, status: int|null, body: array|null, error: string|null}
+     */
+    protected function attempt(string $method, string $path, array $body = []): array
+    {
+        $url = rtrim($this->baseUrl(), '/') . '/' . ltrim($path, '/');
+
+        try {
+            $request = Http::withHeaders($this->authHeaders())
+                ->timeout(self::TIMEOUT)
+                ->acceptJson()
+                ->asJson();
+
+            /** @var Response $response */
+            $response = match (strtoupper($method)) {
+                'GET' => $request->get($url),
+                'PUT' => $request->put($url, $body),
+                default => $request->post($url, $body),
+            };
+        } catch (\Throwable $e) {
+            $this->log('transport error', $path, null, ['error' => $e->getMessage()]);
+
+            return ['ok' => false, 'status' => null, 'body' => null, 'error' => 'transport_error'];
+        }
+
+        $this->log('api call', $path, $response->status());
+
+        $decoded = $response->json();
+        $decoded = is_array($decoded) ? $decoded : null;
+
+        return [
+            'ok' => $response->successful(),
+            'status' => $response->status(),
+            'body' => $response->successful() ? $decoded : null,
+            'error' => $response->successful() ? null : $this->errorCode($decoded),
+        ];
+    }
+
+    /**
+     * A short machine code out of an error body, or null.
+     *
+     * Named keys only, capped in length, and stripped of anything that is not
+     * an identifier character. A provider is free to put a customer's name in
+     * an error message and one of them does; this makes it impossible for that
+     * to end up in our audit table by accident.
+     */
+    protected function errorCode(?array $body): ?string
+    {
+        if ($body === null) {
+            return null;
+        }
+
+        foreach ([
+            $body['error']['code'] ?? null,
+            $body['error']['type'] ?? null,
+            $body['errorType'] ?? null,
+            $body['error_code'] ?? null,
+            $body['code'] ?? null,
+            $body['status'] ?? null,
+        ] as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return substr(preg_replace('/[^A-Za-z0-9_.\-]/', '', $candidate) ?: '', 0, 64) ?: null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Structured, and deliberately narrow. No bodies, no headers (they carry
      * the bearer token), no buyer fields.
      */

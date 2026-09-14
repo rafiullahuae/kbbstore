@@ -7,6 +7,8 @@ namespace App\Services\Payments\Gateways;
 use App\Models\Order;
 use App\Services\Payments\HandlesWebhooks;
 use App\Services\Payments\PaymentStart;
+use App\Services\Payments\SettlementResult;
+use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\WebhookOutcome;
 use Illuminate\Http\Request;
@@ -47,9 +49,21 @@ use Illuminate\Support\Facades\Http;
  * is still compared against the order's own total by PaymentConfirmer, which
  * is what actually protects us.
  */
-class StripeGateway extends RemoteGateway implements HandlesWebhooks
+class StripeGateway extends RemoteGateway implements HandlesWebhooks, SettlesPayments
 {
     private const API = 'https://api.stripe.com';
+
+    /**
+     * Days an uncaptured PaymentIntent survives before Stripe releases it.
+     *
+     * Only reachable at all if the Checkout session is created with manual
+     * capture, which this build does not do — see capture(). Kept because the
+     * window is real whenever a session IS created that way, and because a
+     * capture screen that quietly reported "no window" for cards would be
+     * telling the merchant something that stops being true the moment
+     * somebody sets capture_method.
+     */
+    private const CAPTURE_DAYS = 7;
 
     public function id(): string
     {
@@ -148,26 +162,58 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks
      */
     private function form(string $path, array $payload): ?array
     {
+        return $this->stripeAttempt('POST', $path, $payload)['body'];
+    }
+
+    /**
+     * The same form-encoded call, with the failure kept.
+     *
+     * form() throws away everything but a successful body, which is right for
+     * checkout and wrong for settlement: a declined refund has to reach
+     * `payment_events` with Stripe's own error code on it. Same wire format,
+     * same timeout, same logging rule — no bodies, ever.
+     *
+     * `Idempotency-Key` is Stripe's native replay guard and is passed through
+     * when the caller has one. Our unique index on `refunds.idempotency_key`
+     * is the guard that actually protects the ledger; this one covers the case
+     * that index cannot see, where our request reached Stripe and the response
+     * never reached us.
+     *
+     * @return array{ok: bool, status: int|null, body: array|null, error: string|null}
+     */
+    private function stripeAttempt(string $method, string $path, array $payload = [], ?string $idempotencyKey = null): array
+    {
+        $headers = $this->authHeaders();
+
+        if ($idempotencyKey !== null && trim($idempotencyKey) !== '') {
+            // Stripe caps this at 255 characters.
+            $headers['Idempotency-Key'] = substr(trim($idempotencyKey), 0, 255);
+        }
+
         try {
-            $response = Http::withHeaders($this->authHeaders())
-                ->timeout(self::TIMEOUT)
-                ->asForm()
-                ->post(rtrim($this->baseUrl(), '/') . $path, $this->flatten($payload));
+            $request = Http::withHeaders($headers)->timeout(self::TIMEOUT)->asForm();
+            $url = rtrim($this->baseUrl(), '/') . $path;
+
+            $response = strtoupper($method) === 'GET'
+                ? $request->get($url)
+                : $request->post($url, $this->flatten($payload));
         } catch (\Throwable $e) {
             $this->log('transport error', $path, null, ['error' => $e->getMessage()]);
 
-            return null;
+            return ['ok' => false, 'status' => null, 'body' => null, 'error' => 'transport_error'];
         }
 
         $this->log('api call', $path, $response->status());
 
-        if (! $response->successful()) {
-            return null;
-        }
-
         $decoded = $response->json();
+        $decoded = is_array($decoded) ? $decoded : null;
 
-        return is_array($decoded) ? $decoded : null;
+        return [
+            'ok' => $response->successful(),
+            'status' => $response->status(),
+            'body' => $response->successful() ? $decoded : null,
+            'error' => $response->successful() ? null : $this->errorCode($decoded),
+        ];
     }
 
     /** ['a' => ['b' => 1]] -> ['a[b]' => 1] */
@@ -260,6 +306,214 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks
             (string) ($object['currency'] ?? ''),
             $summary,
         );
+    }
+
+    /* ----------------------------------------------------------- settlement */
+
+    public function captureWindow(): string
+    {
+        return sprintf(
+            'Card payments through Checkout are captured by Stripe at authorisation, so there is normally nothing to do. '
+            . 'An authorisation deliberately left uncaptured lapses after about %d days.',
+            self::CAPTURE_DAYS,
+        );
+    }
+
+    public function captureWindowDays(): ?int
+    {
+        return self::CAPTURE_DAYS;
+    }
+
+    /**
+     * Capture a card payment.
+     *
+     * This build creates Checkout sessions with Stripe's default automatic
+     * capture, so by the time `checkout.session.completed` arrives the money
+     * has already moved and the honest answer to "capture this" is "Stripe
+     * already did". The PaymentIntent is read rather than assumed, because the
+     * alternative is a screen that reports a capture that never happened:
+     *
+     *   succeeded          already captured. ok(), no write, no second call.
+     *   requires_capture   a manual-capture intent. Capture it for real.
+     *   anything else      requires_payment_method, canceled — nothing to take.
+     */
+    public function capture(Order $order, int $amountFils): SettlementResult
+    {
+        if (! $this->configured()) {
+            return SettlementResult::failed('not_configured', ['provider' => $this->id()], 'Stripe is not configured.');
+        }
+
+        $intentId = $this->paymentIntentId($order);
+
+        if ($intentId === null) {
+            return SettlementResult::failed(
+                'no_payment_intent',
+                ['provider' => $this->id()],
+                'This order has no Stripe payment on it yet.',
+            );
+        }
+
+        $read = $this->stripeAttempt('GET', '/v1/payment_intents/' . urlencode($intentId));
+
+        if (! $read['ok']) {
+            return SettlementResult::failed(
+                $read['error'] ?? 'unreachable',
+                ['provider' => $this->id(), 'payment_intent' => $intentId, 'http_status' => $read['status']],
+                'Stripe could not be reached. Nothing was captured; try again.',
+            );
+        }
+
+        $status = (string) ($read['body']['status'] ?? '');
+
+        if ($status === 'succeeded') {
+            return SettlementResult::ok(
+                'already_captured',
+                $intentId,
+                ['provider' => $this->id(), 'payment_intent' => $intentId, 'status' => $status],
+                'Stripe captured this card payment at authorisation; there was nothing left to take.',
+            );
+        }
+
+        if ($status !== 'requires_capture') {
+            return SettlementResult::failed(
+                'not_capturable',
+                ['provider' => $this->id(), 'payment_intent' => $intentId, 'status' => $status],
+                'Stripe reports this payment as ' . ($status !== '' ? $status : 'unknown') . ', so there is nothing to capture.',
+            );
+        }
+
+        $attempt = $this->stripeAttempt(
+            'POST',
+            '/v1/payment_intents/' . urlencode($intentId) . '/capture',
+            // Already integer minor units, which is how this schema stores
+            // money. No conversion here, so none to get wrong.
+            ['amount_to_capture' => $amountFils],
+            'capture:' . $order->order_number,
+        );
+
+        if (! $attempt['ok'] || (string) ($attempt['body']['status'] ?? '') !== 'succeeded') {
+            return SettlementResult::failed(
+                $attempt['error'] ?? 'capture_rejected',
+                [
+                    'provider' => $this->id(),
+                    'payment_intent' => $intentId,
+                    'http_status' => $attempt['status'],
+                    'error' => $attempt['error'],
+                ],
+                'Stripe refused the capture. Nothing was taken.',
+            );
+        }
+
+        return SettlementResult::ok(
+            'captured',
+            $intentId,
+            ['provider' => $this->id(), 'payment_intent' => $intentId],
+            'Captured through Stripe.',
+        );
+    }
+
+    /**
+     * Refund some or all of a card payment.
+     *
+     * `POST /v1/refunds` against the PaymentIntent, not the Checkout session —
+     * a session id is not a thing Stripe will refund.
+     *
+     * `reason` on this endpoint is an enum of three values, not free text, and
+     * sending the merchant's own wording would be a 400. The wording goes in
+     * metadata instead, where it is visible in the Stripe dashboard beside the
+     * refund it explains.
+     */
+    public function refund(
+        Order $order,
+        int $amountFils,
+        ?string $reason,
+        ?string $captureRef,
+        ?string $idempotencyKey = null,
+    ): SettlementResult {
+        if (! $this->configured()) {
+            return SettlementResult::failed('not_configured', ['provider' => $this->id()], 'Stripe is not configured.');
+        }
+
+        $intentId = $this->paymentIntentId($order);
+
+        if ($intentId === null) {
+            return SettlementResult::failed(
+                'no_payment_intent',
+                ['provider' => $this->id()],
+                'This order has no Stripe payment on it yet.',
+            );
+        }
+
+        $payload = [
+            'payment_intent' => $intentId,
+            'amount' => $amountFils,
+            'reason' => 'requested_by_customer',
+        ];
+
+        if ($reason !== null && trim($reason) !== '') {
+            $payload['metadata'] = ['note' => substr(trim($reason), 0, 500)];
+        }
+
+        $attempt = $this->stripeAttempt('POST', '/v1/refunds', $payload, $idempotencyKey);
+
+        $refundId = $attempt['ok'] ? ($attempt['body']['id'] ?? null) : null;
+        $refundStatus = $attempt['ok'] ? (string) ($attempt['body']['status'] ?? '') : '';
+
+        // `failed` and `canceled` are real Stripe refund states and both come
+        // back on a 200. A refund is only a refund when Stripe says pending or
+        // succeeded; anything else is money that did not move.
+        if (! $attempt['ok'] || ! is_string($refundId) || ! in_array($refundStatus, ['succeeded', 'pending'], true)) {
+            return SettlementResult::failed(
+                $attempt['error'] ?? ($refundStatus !== '' ? 'refund_' . $refundStatus : 'refund_rejected'),
+                [
+                    'provider' => $this->id(),
+                    'payment_intent' => $intentId,
+                    'http_status' => $attempt['status'],
+                    'error' => $attempt['error'],
+                    'refund_status' => $refundStatus !== '' ? $refundStatus : null,
+                ],
+                'Stripe refused the refund. Nothing has been returned to the customer.',
+            );
+        }
+
+        return SettlementResult::ok(
+            'refunded',
+            $refundId,
+            [
+                'provider' => $this->id(),
+                'payment_intent' => $intentId,
+                'refund_id' => $refundId,
+                'refund_status' => $refundStatus,
+            ],
+            'Refunded through Stripe.',
+        );
+    }
+
+    /**
+     * The PaymentIntent for this order.
+     *
+     * `transaction_id` holds whichever of the two Stripe ids was written last:
+     * start() stores the Checkout session (`cs_...`) and the webhook replaces
+     * it with the PaymentIntent (`pi_...`). Settlement needs the intent, so a
+     * session id is exchanged for one rather than sent to an endpoint that
+     * will reject it.
+     */
+    private function paymentIntentId(Order $order): ?string
+    {
+        $ref = trim((string) $order->transaction_id);
+
+        if ($ref === '') {
+            return null;
+        }
+
+        if (! str_starts_with($ref, 'cs_')) {
+            return $ref;
+        }
+
+        $session = $this->stripeAttempt('GET', '/v1/checkout/sessions/' . urlencode($ref));
+        $intent = $session['body']['payment_intent'] ?? null;
+
+        return is_string($intent) && $intent !== '' ? $intent : null;
     }
 
     /**

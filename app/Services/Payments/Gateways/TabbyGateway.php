@@ -7,6 +7,8 @@ namespace App\Services\Payments\Gateways;
 use App\Models\Order;
 use App\Services\Payments\HandlesWebhooks;
 use App\Services\Payments\PaymentStart;
+use App\Services\Payments\SettlementResult;
+use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\WebhookOutcome;
 use Illuminate\Http\Request;
@@ -20,6 +22,8 @@ use Illuminate\Http\Request;
  *   POST /api/v2/checkout          create a session, get a hosted web_url
  *   GET  /api/v2/payments/{id}     the authoritative state of a payment
  *   POST /api/v1/payments/{id}/captures   take the money after authorisation
+ *   POST /api/v1/payments/{id}/refunds    give some or all of it back
+ *   Note the version split: reads are v2, settlement writes are v1.
  *   Auth: Authorization: Bearer <secret_key>, plus X-Merchant-Code per country
  *   Statuses: CREATED, AUTHORIZED, CLOSED, REJECTED, EXPIRED
  *   Amounts: decimal strings in major units
@@ -48,12 +52,23 @@ use Illuminate\Http\Request;
  * ever leaked: the body is used for exactly one thing, reading the payment id
  * to go and ask about.
  */
-class TabbyGateway extends RemoteGateway implements HandlesWebhooks
+class TabbyGateway extends RemoteGateway implements HandlesWebhooks, SettlesPayments
 {
     private const API = 'https://api.tabby.ai';
 
     /** Tabby operates in these markets, and only these. */
     private const COUNTRIES = ['AE', 'SA', 'BH', 'KW', 'QA'];
+
+    /**
+     * Default days an AUTHORIZED payment stays capturable.
+     *
+     * A default, not a constant of the API: the merchant's own plugin reads a
+     * per-account `order_timeout` and Tabby sets the real figure per merchant
+     * agreement, so this is overridable from the payments screen. Whatever the
+     * number, it is advisory here — capture() re-reads the payment's live
+     * status and Tabby's own answer is what decides.
+     */
+    private const DEFAULT_CAPTURE_DAYS = 30;
 
     public function id(): string
     {
@@ -93,6 +108,7 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks
             'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ on sandbox, sk_ live. Never leaves the server.'],
             'merchant_code' => ['text', 'Merchant code', 'The country code Tabby issued the account under — AE for this store.'],
             'webhook_secret' => ['secret', 'Webhook secret', 'Generated for you. It forms part of the webhook URL below; regenerate it by clearing this field and saving.'],
+            'capture_days' => ['text', 'Capture window (days)', 'How long Tabby leaves an authorisation capturable on your account. Default 30. Used only to warn you before it lapses — Tabby itself decides.'],
         ];
     }
 
@@ -237,6 +253,198 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks
             (string) ($payment['currency'] ?? ''),
             $summary,
         );
+    }
+
+    /* ----------------------------------------------------------- settlement */
+
+    public function captureWindow(): string
+    {
+        return sprintf(
+            'Within about %d days of authorisation. Tabby auto-voids an authorisation that is never captured, and the money is then gone.',
+            $this->captureWindowDays(),
+        );
+    }
+
+    public function captureWindowDays(): ?int
+    {
+        $configured = (int) $this->credentials->get($this->id(), 'capture_days', (string) self::DEFAULT_CAPTURE_DAYS);
+
+        return $configured > 0 ? $configured : self::DEFAULT_CAPTURE_DAYS;
+    }
+
+    /**
+     * Take the authorised money.
+     *
+     * `POST /api/v1/payments/{id}/captures` — v1, not the v2 the checkout and
+     * the webhook read use. Tabby splits its API that way and a capture posted
+     * to v2 is a 404, so the version is spelled out here rather than inherited
+     * from baseUrl().
+     *
+     * The status is re-read from Tabby first, over an authenticated GET, and
+     * that answer decides:
+     *
+     *   AUTHORIZED  capturable. Capture it.
+     *   CLOSED      already captured. A success, not an error — this is what a
+     *               retry after a timeout hits, and treating it as a failure
+     *               is how a merchant ends up capturing twice by hand.
+     *   anything    REJECTED, EXPIRED or still CREATED. Nothing to take, and
+     *   else        the reason is recorded rather than guessed at.
+     */
+    public function capture(Order $order, int $amountFils): SettlementResult
+    {
+        $paymentId = trim((string) $order->transaction_id);
+
+        if (! $this->configured() || $paymentId === '') {
+            return SettlementResult::failed(
+                'not_configured',
+                ['provider' => $this->id()],
+                'Tabby is not configured, or this order has no Tabby payment on it.',
+            );
+        }
+
+        $payment = $this->call('GET', '/api/v2/payments/' . urlencode($paymentId));
+
+        if ($payment === null) {
+            return SettlementResult::failed(
+                'unreachable',
+                ['provider' => $this->id(), 'payment_id' => $paymentId],
+                'Tabby could not be reached. Nothing was captured; try again.',
+            );
+        }
+
+        $status = strtoupper((string) ($payment['status'] ?? ''));
+
+        if ($status === 'CLOSED') {
+            $existing = $this->lastId($payment['captures'] ?? null);
+
+            return SettlementResult::ok(
+                'already_captured',
+                $existing,
+                ['provider' => $this->id(), 'payment_id' => $paymentId, 'status' => $status],
+                'Tabby had already captured this payment.',
+            );
+        }
+
+        if ($status !== 'AUTHORIZED') {
+            return SettlementResult::failed(
+                'not_authorised',
+                ['provider' => $this->id(), 'payment_id' => $paymentId, 'status' => $status],
+                'Tabby reports this payment as ' . ($status !== '' ? strtolower($status) : 'unknown') . ', so there is nothing to capture.',
+            );
+        }
+
+        $attempt = $this->attempt('POST', '/api/v1/payments/' . urlencode($paymentId) . '/captures', [
+            'amount' => $this->toMajor($amountFils),
+            'tax_amount' => $this->toMajor((int) $order->tax_total),
+            'shipping_amount' => $this->toMajor((int) $order->shipping_total),
+            'items' => $this->items($order),
+        ]);
+
+        $captureId = $attempt['ok'] ? $this->lastId($attempt['body']['captures'] ?? null) : null;
+
+        if (! $attempt['ok'] || $captureId === null) {
+            return SettlementResult::failed(
+                $attempt['error'] ?? 'capture_rejected',
+                [
+                    'provider' => $this->id(),
+                    'payment_id' => $paymentId,
+                    'http_status' => $attempt['status'],
+                    'error' => $attempt['error'],
+                ],
+                'Tabby refused the capture. Nothing was taken.',
+            );
+        }
+
+        return SettlementResult::ok(
+            'captured',
+            $captureId,
+            ['provider' => $this->id(), 'payment_id' => $paymentId, 'capture_id' => $captureId],
+            'Captured through Tabby.',
+        );
+    }
+
+    /**
+     * Refund some or all of a capture.
+     *
+     * `POST /api/v1/payments/{id}/refunds`, and `capture_id` is not optional:
+     * Tabby refunds against a capture, not against a payment, so a refund
+     * attempted on an authorisation that was never captured has nothing to
+     * point at. That is reported as its own code rather than as a generic
+     * failure, because the fix is "capture it first" and no other message
+     * says so.
+     */
+    public function refund(
+        Order $order,
+        int $amountFils,
+        ?string $reason,
+        ?string $captureRef,
+        ?string $idempotencyKey = null,
+    ): SettlementResult
+    {
+        $paymentId = trim((string) $order->transaction_id);
+
+        if (! $this->configured() || $paymentId === '') {
+            return SettlementResult::failed(
+                'not_configured',
+                ['provider' => $this->id()],
+                'Tabby is not configured, or this order has no Tabby payment on it.',
+            );
+        }
+
+        $captureId = trim((string) ($order->capture_ref ?? ''));
+
+        if ($captureId === '') {
+            return SettlementResult::failed(
+                'not_captured',
+                ['provider' => $this->id(), 'payment_id' => $paymentId],
+                'This Tabby payment has not been captured, so there is nothing to refund yet. Capture it first.',
+            );
+        }
+
+        $attempt = $this->attempt('POST', '/api/v1/payments/' . urlencode($paymentId) . '/refunds', [
+            'capture_id' => $captureId,
+            'amount' => $this->toMajor($amountFils),
+            'reason' => $reason !== null && trim($reason) !== '' ? trim($reason) : 'Merchant refund',
+        ]);
+
+        $refundId = $attempt['ok'] ? $this->lastId($attempt['body']['refunds'] ?? null) : null;
+
+        if (! $attempt['ok'] || $refundId === null) {
+            return SettlementResult::failed(
+                $attempt['error'] ?? 'refund_rejected',
+                [
+                    'provider' => $this->id(),
+                    'payment_id' => $paymentId,
+                    'http_status' => $attempt['status'],
+                    'error' => $attempt['error'],
+                ],
+                'Tabby refused the refund. Nothing has been returned to the customer.',
+            );
+        }
+
+        return SettlementResult::ok(
+            'refunded',
+            $refundId,
+            ['provider' => $this->id(), 'payment_id' => $paymentId, 'refund_id' => $refundId],
+            'Refunded through Tabby.',
+        );
+    }
+
+    /**
+     * Tabby answers a capture or a refund with the payment's WHOLE list of
+     * them, newest last, rather than with the one just made. The last id is
+     * the transaction this call created.
+     */
+    private function lastId(mixed $list): ?string
+    {
+        if (! is_array($list) || $list === []) {
+            return null;
+        }
+
+        $last = end($list);
+        $id = is_array($last) ? ($last['id'] ?? null) : null;
+
+        return is_string($id) && $id !== '' ? $id : null;
     }
 
     /* -------------------------------------------------------------- helpers */
