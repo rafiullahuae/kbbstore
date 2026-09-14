@@ -398,6 +398,19 @@ class AdminController extends Controller
             // Absent from this list, Save reported success and wrote nothing:
             // the loop below skips unknown keys and returns ok regardless.
             'gift_enabled', 'gift_fee',
+            // Social profiles, feeding schema.org sameAs. The SEO screen has
+            // posted all six since it shipped and every one was rejected here,
+            // so sameAs could never be populated from the admin.
+            'social_facebook', 'social_instagram', 'social_tiktok',
+            'social_pinterest', 'social_linkedin', 'social_youtube',
+            // Remaining verification tokens. google_ and bing_ were listed;
+            // these two were not, for no reason anyone recorded.
+            'pinterest_site_verification', 'baidu_site_verification',
+            // Crawling and discovery toggles.
+            'indexnow_on', 'llms_enabled', 'crawl_clean',
+            // Google Merchant listing block.
+            'enable_merchant', 'merchant_condition', 'merchant_ship_country',
+            'merchant_ship_cost', 'merchant_ship_free_over', 'merchant_return_days',
         ];
 
         $incoming = $request->input('settings', []);

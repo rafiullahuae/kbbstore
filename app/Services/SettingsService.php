@@ -54,6 +54,25 @@ class SettingsService
         return $cached;
     }
 
+    /**
+     * Per-request memo for keys outside the autoload map, misses included.
+     *
+     * Without it, every get() of a non-autoloaded key was a fresh SELECT, and
+     * a miss was never remembered at all -- so a key that does not exist cost
+     * one query per call, forever. Measured on /shop: 390 queries for four
+     * products and 780 for twenty-four, 111 distinct keys re-queried, which
+     * was the dominant cost of every storefront page.
+     *
+     * Static, so it lasts a request under PHP-FPM and no longer. That is the
+     * same shape as the Setting::map() trap in CLAUDE.md, so both writers
+     * clear it: set() drops the one key, flush() drops everything. A test
+     * pins that a write is visible to the next read in-process.
+     */
+    private static array $memo = [];
+
+    /** Distinguishes "looked it up and it is not there" from "not looked up". */
+    private const MISS = "\0kbb-miss";
+
     public function get(string $key, mixed $default = null): mixed
     {
         $all = $this->all();
@@ -61,9 +80,24 @@ class SettingsService
             return $all[$key];
         }
 
-        $row = Setting::find($key);
+        if (! array_key_exists($key, self::$memo)) {
+            $row = Setting::find($key);
+            self::$memo[$key] = $row ? $this->decode($row->value) : self::MISS;
+        }
 
-        return $row ? $this->decode($row->value) : $default;
+        return self::$memo[$key] === self::MISS ? $default : self::$memo[$key];
+    }
+
+    /** Drop the per-request memo. Called by set() and flush(); also usable from tests. */
+    public static function forgetMemo(?string $key = null): void
+    {
+        if ($key === null) {
+            self::$memo = [];
+
+            return;
+        }
+
+        unset(self::$memo[$key]);
     }
 
     public function set(string $key, mixed $value, bool $autoload = true): void
@@ -74,6 +108,7 @@ class SettingsService
         );
 
         Cache::forget(self::CACHE_KEY);
+        self::forgetMemo($key);
 
         // Setting::map() keeps its own cache and is read by the SEO layer and
         // the original page controllers. Clearing one without the other leaves
@@ -137,6 +172,7 @@ class SettingsService
     {
         Cache::forget(self::CACHE_KEY);
         Cache::forget(self::MODULES_KEY);
+        self::forgetMemo();
     }
 
     private function decode(mixed $value): mixed
