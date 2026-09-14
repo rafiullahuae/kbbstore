@@ -12,11 +12,13 @@
  */
 
 use App\Models\Cart;
+use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\ShippingZoneLocation;
+use Illuminate\Support\Facades\DB;
 use App\Services\CartService;
 
 beforeEach(function () {
@@ -229,4 +231,49 @@ it('renders the checkout page when every gateway is unconfigured', function () {
     // No payment option can be offered, but the page must render rather than
     // 500 -- which is the state this ships in before the owner fills in keys.
     visitCheckout($cart)->assertOk();
+});
+
+/*
+ * The live 500. nextOrderNumber() was `10000 + max(id) + 1`, which assumes
+ * order numbers march in step with primary keys. The live table had orders for
+ * which that was false, so the generator returned a number that already
+ * existed, order_number is NOT NULL UNIQUE, and the insert raised
+ * SQLSTATE[23000] inside the transaction -- a 500 on every checkout attempt,
+ * with no order written.
+ *
+ * Not caught before because every test here started from an empty orders table,
+ * where the old formula happens to be right.
+ */
+it('places an order when an existing number collides with the old formula', function () {
+    // id 1 holding the exact number `10000 + max(id) + 1` would produce.
+    DB::table('orders')->insert([
+        'id' => 1, 'order_number' => '10002', 'email' => 'prior@example.com',
+        'status' => 'pending', 'currency' => 'AED', 'subtotal' => 100,
+        'discount_total' => 0, 'shipping_total' => 0, 'fee_total' => 0,
+        'tax_total' => 0, 'total' => 100,
+    ]);
+
+    $cart = cartWithItem(20000);
+    $response = place($cart, checkoutForm(['payment_method' => 'cod']));
+
+    expect($response->status())->not->toBe(500);
+    expect(Order::where('email', 'buyer@example.com')->exists())->toBeTrue();
+});
+
+it('places an order when the numbers are far ahead of the ids', function () {
+    // An import: one row, a number nowhere near 10000 + id.
+    DB::table('orders')->insert([
+        'id' => 1, 'order_number' => '48231', 'email' => 'imported@example.com',
+        'status' => 'pending', 'currency' => 'AED', 'subtotal' => 100,
+        'discount_total' => 0, 'shipping_total' => 0, 'fee_total' => 0,
+        'tax_total' => 0, 'total' => 100,
+    ]);
+
+    $cart = cartWithItem(20000);
+    place($cart, checkoutForm(['payment_method' => 'cod']));
+
+    $new = Order::where('email', 'buyer@example.com')->first();
+
+    expect($new)->not->toBeNull()
+        ->and((int) $new->order_number)->toBeGreaterThan(48231);
 });

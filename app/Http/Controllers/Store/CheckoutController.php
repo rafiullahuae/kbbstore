@@ -685,10 +685,42 @@ class CheckoutController extends Controller
      * imported WooCommerce orders keep their numbers, so new ones must not
      * collide with them.
      */
+    /**
+     * The next free order number.
+     *
+     * This was `10000 + max(id) + 1`, which assumes order numbers march in step
+     * with primary keys. They do not: any order whose number was not minted by
+     * this formula -- an import, a demo row, a renumbering -- breaks the
+     * assumption, and the result is a number that already exists. order_number
+     * is NOT NULL UNIQUE, so the insert raised SQLSTATE[23000] inside the
+     * checkout transaction and the shopper got a 500 with no order.
+     *
+     * Now it takes the highest of the two candidates and then walks forward
+     * until it finds a number nothing holds, so an out-of-step table costs a
+     * few cheap lookups rather than every order failing. Deliberately portable:
+     * no REGEXP, no CAST, because the tests run on SQLite and the site on
+     * MySQL, and this is precisely the kind of difference that let the bug
+     * reach production in the first place.
+     */
     private function nextOrderNumber(): string
     {
-        $last = (int) Order::max('id');
+        $candidate = max(
+            10000 + (int) Order::max('id'),
+            (int) Order::max('order_number'),
+        );
 
-        return (string) (10000 + $last + 1);
+        // Bounded so a pathological table cannot spin forever; a thousand
+        // consecutive taken numbers means something is wrong that a retry loop
+        // should not paper over.
+        for ($i = 0; $i < 1000; $i++) {
+            $number = (string) (++$candidate);
+
+            if (! Order::where('order_number', $number)->exists()) {
+                return $number;
+            }
+        }
+
+        // Last resort: unique by construction rather than by search.
+        return (string) $candidate . random_int(100, 999);
     }
 }
