@@ -33,6 +33,14 @@ class CheckoutController extends Controller
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'sku', 'type',
     ];
 
+    /**
+     * Order numbers this browser session is allowed to see in full.
+     *
+     * Deliberately NOT kbb_last_order, which the success view consumes on
+     * first render so the Purchase pixel fires exactly once. See mayView().
+     */
+    private const VIEWABLE_KEY = 'kbb_orders_viewable';
+
     /** Emirates, in the order the live store lists them. */
     private const EMIRATES = [
         'Abu Dhabi' => 'Abu Dhabi', 'Dubai' => 'Dubai', 'Sharjah' => 'Sharjah',
@@ -258,12 +266,10 @@ class CheckoutController extends Controller
             // row firstOrCreate already made for them. `password` is cast
             // `hashed`, so assigning the plain value hashes it.
             //
-            // The guard matters more than the feature. Without it, typing a
-            // stranger's email into checkout would overwrite their password
-            // and hand over their account -- so this only ever fills a blank,
-            // never replaces one, and legacy_password counts as set: those
-            // 3,712 imported customers have a real WordPress password waiting
-            // to be upgraded on first login, and must not be trampled.
+            // The guard matters more than the feature, and it is stated once,
+            // in canSetInitialPassword() -- the order-received page offers the
+            // same thing to a guest afterwards and asks that same method, so
+            // the two cannot drift apart.
             //
             // Silent when it declines. Telling the person at checkout that an
             // account already exists for an address they typed is an account
@@ -271,8 +277,7 @@ class CheckoutController extends Controller
             if (! $request->user('customer')
                 && $request->boolean('create_account')
                 && ($data['account_password'] ?? '') !== ''
-                && $customer->password === null
-                && $customer->legacy_password === null
+                && self::canSetInitialPassword($customer)
             ) {
                 $customer->forceFill(['password' => $data['account_password']])->save();
             }
@@ -389,13 +394,164 @@ class CheckoutController extends Controller
         return redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number);
     }
 
+    /**
+     * The order-received page.
+     *
+     * ACCESS. What stood here was `where('order_number', $request->query('order'))`
+     * and nothing else: any order number typed into the query string rendered
+     * that order, and the numbers are sequential (see nextOrderNumber()). The
+     * comment in place() records that gap. It was survivable while the page
+     * showed four lines of nothing very private; it is not survivable now that
+     * the page carries the line items, the delivery address and the gift
+     * message, so the page is gated rather than widened.
+     *
+     * Two ways in, both of which the visitor already has by other means:
+     *
+     *   - a signed-in customer looking at their own order;
+     *   - the browser that actually placed it, which is remembered in the
+     *     session by rememberViewable() below.
+     *
+     * Anything else gets exactly what a wholly made-up order number gets — the
+     * "we could not find that order" panel — so the page cannot be used to
+     * probe which order numbers exist.
+     */
     public function success(Request $request): View
     {
-        // Eager-loaded because Marketing Pixels' Purchase event reads every
-        // line item; without this it lazy-loads them on every visit instead.
-        $order = Order::with('items')->where('order_number', (string) $request->query('order', ''))->first();
+        $number = trim((string) $request->query('order', ''));
+
+        $order = $number === '' ? null : Order::with([
+            // Eager-loaded because Marketing Pixels' Purchase event reads every
+            // line item; without this it lazy-loads them on every visit instead.
+            // The product behind each line is loaded for its image only — the
+            // name, price and quantity are snapshots on the line itself, which
+            // is why a deleted product still renders (product_id is nullable
+            // and Product soft-deletes, so `product` is simply null here).
+            'items' => fn ($q) => $q->orderBy('id'),
+            'items.product' => fn ($q) => $q->select(['id', 'slug', 'name', 'image', 'brand_id']),
+            'items.product.brand:id,name',
+        ])->where('order_number', $number)->first();
+
+        if ($order !== null && ! $this->mayView($request, $order)) {
+            $order = null;
+        }
 
         return view('store.checkout-success', ['order' => $order, 'settings' => $this->settings]);
+    }
+
+    /**
+     * Finish a guest account: set a password on the customer row the order
+     * already created.
+     *
+     * The rule about WHICH rows may be given a password is not restated here.
+     * It is canSetInitialPassword(), the same method place() asks, because two
+     * copies of "never overwrite an existing password" is one copy too many.
+     *
+     * The answer is identical whether a password was written or not. Telling
+     * the visitor that an account already exists for the address would be an
+     * account enumeration oracle, exactly as it would be at checkout, and the
+     * sentence they get back is true either way: they can sign in with that
+     * email address. For the same reason nobody is logged in here — a session
+     * that appeared only on success would say just as much as a message.
+     */
+    public function claimAccount(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'order' => ['required', 'string', 'max:64'],
+            // Same bounds as the checkout field, min:8 included, so the two
+            // ways into an account cannot disagree about what a password is.
+            'account_password' => ['required', 'string', 'min:8', 'max:72'],
+        ]);
+
+        $order = Order::where('order_number', trim($data['order']))->first();
+
+        // Same gate as the page itself: without it this would be a way to set
+        // a password on any customer whose order number you could guess.
+        if ($order === null || ! $this->mayView($request, $order)) {
+            abort(404);
+        }
+
+        $back = redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number)
+            ->with('kbb_account_done', '1');
+
+        if ($request->user('customer') || $order->customer_id === null) {
+            return $back;
+        }
+
+        $customer = Customer::find($order->customer_id);
+
+        if ($customer !== null && self::canSetInitialPassword($customer)) {
+            // `password` is cast `hashed`, so assigning the plain value hashes it.
+            $customer->forceFill(['password' => $data['account_password']])->save();
+        }
+
+        return $back;
+    }
+
+    /**
+     * May this request see this order?
+     *
+     * @see success() for why the page is gated at all.
+     */
+    private function mayView(Request $request, Order $order): bool
+    {
+        $customer = $request->user('customer');
+
+        if ($customer !== null && $order->customer_id !== null
+            && (int) $order->customer_id === (int) $customer->id) {
+            return true;
+        }
+
+        // place() writes kbb_last_order, but the view CONSUMES it — the
+        // Purchase pixel must fire exactly once — so it cannot itself be what
+        // grants access on a reload. Seeing it once is converted here into a
+        // durable grant that survives the reload, the browser Back button and
+        // the round trip through a hosted payment page.
+        if ((string) $request->session()->get('kbb_last_order', '') === (string) $order->order_number) {
+            $this->rememberViewable($request, (string) $order->order_number);
+
+            return true;
+        }
+
+        return in_array((string) $order->order_number, $this->viewable($request), true);
+    }
+
+    /** @return list<string> */
+    private function viewable(Request $request): array
+    {
+        $seen = $request->session()->get(self::VIEWABLE_KEY, []);
+
+        return is_array($seen) ? array_values(array_map('strval', $seen)) : [];
+    }
+
+    private function rememberViewable(Request $request, string $number): void
+    {
+        $seen = $this->viewable($request);
+
+        if (in_array($number, $seen, true)) {
+            return;
+        }
+
+        $seen[] = $number;
+
+        // Bounded: a session is a cookie on this host, and an unbounded list
+        // of order numbers in it would grow until the cookie stopped fitting.
+        // Ten is more orders than one browser session plausibly places.
+        $request->session()->put(self::VIEWABLE_KEY, array_slice($seen, -10));
+    }
+
+    /**
+     * Whether a password may be written onto this customer row. The single
+     * expression of the rule; place() and claimAccount() both ask it.
+     *
+     * It only ever fills a blank and never replaces one, and legacy_password
+     * counts as set: those 3,712 imported customers have a real WordPress
+     * password waiting to be upgraded on first login and must not be trampled.
+     * Without the rule, typing a stranger's email at checkout would overwrite
+     * their password and hand over their account.
+     */
+    public static function canSetInitialPassword(Customer $customer): bool
+    {
+        return $customer->password === null && $customer->legacy_password === null;
     }
 
     /* ------------------------------------------------------------ helpers */
