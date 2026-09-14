@@ -87,7 +87,11 @@ class ModuleRegistry
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],
         // ── Catalogue ──
-        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'live'],
+        // The screen is Store → Catalog → Reorder, and it has existed for some
+        // time. This row said 'Its own screen' with no console route, which the
+        // admin renders as "Its own screen — screen not built yet": the one
+        // module whose settings the owner was told did not exist while they did.
+        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Store → Catalog → Reorder', 'catalog:reorder', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'live'],
         'brands' => ['catalogue', 'Brands', 'Brand taxonomy with logos, brand pages and a [kbb_brands] directory. Works with WooCommerce’s native brand taxonomy. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Brand pages, logos and the brand directory.', 'todo'],
         'wishlist' => ['catalogue', 'Wishlist', 'Lets shoppers save products (works for guests too, via cookie). Heart button on cards/product pages plus a [kbb_wishlist] page. Off by default.', false, 'Its own screen', '', 'grid', 'card', 'The heart on every product card, and the wishlist page.', 'live'],
         'recently_viewed' => ['catalogue', 'Recently Viewed', 'Shows each shopper the products they just looked at (cookie-based, guests included). Auto-placed on product/cart pages plus a [kbb_recently_viewed] shortcode. Off by default.', false, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'mid', 'The Browsed tab in the cart panel, and a rail on the product page.', 'elsewhere'],
@@ -109,7 +113,28 @@ class ModuleRegistry
         'dispatch_cutoff' => ['extra', 'Dispatch cutoff', 'The “order within X for dispatch today” line, counting down to your cutoff time.', true, 'Store → Ecommerce', 'ecommerce', 'product', 'mid', 'A line under the Add to cart button on the product page.', 'live'],
 
         // ── SEO ──
-        'seo_engine' => ['seo', 'SEO Engine', 'Meta titles & descriptions (with per-page overrides), Open Graph / Twitter cards, canonical, robots and Product / Organization schema. Defers automatically if Yoast or Rank Math is active. Off by default.', false, 'Its own screen', '', 'site', 'all', 'Titles, descriptions and structured data. Nothing visible on the page.', 'live'],
+        /*
+         * The one place this registry deliberately diverges from the plugin's
+         * own default, recorded here rather than left to be discovered.
+         *
+         * The plugin ships SEO Engine OFF because WordPress — with or without
+         * Yoast — still writes a <title>, a canonical and an og:image when the
+         * module is off. Nothing in this app does. App\Support\Seo is the only
+         * thing that has ever produced a <head> here, and it has produced one
+         * on every page since the layout was wired to it, ungated.
+         *
+         * So shipping the switch with the plugin's default would not "restore
+         * the plugin's behaviour" — it would strip every meta description,
+         * canonical, Open Graph tag and JSON-LD node off a live catalogue the
+         * first time this package was applied, silently, with no visible
+         * symptom on any page. On by default keeps what the storefront
+         * already does; the owner can now turn it off on purpose, which is
+         * what the switch is for.
+         *
+         * The settings screen is Store → SEO & Meta and has been real since
+         * before 2.56.1; this row claimed it did not exist.
+         */
+        'seo_engine' => ['seo', 'SEO Engine', 'Meta titles & descriptions (with per-page overrides), Open Graph / Twitter cards, canonical, robots and Product / Organization schema. Turn it off to fall back to a plain page title and nothing else. On by default in this app — unlike the plugin, nothing else here writes a &lt;head&gt;.', true, 'Store → SEO & Meta', 'seo', 'site', 'all', 'Titles, descriptions and structured data. Nothing visible on the page.', 'live'],
         // ── Unknown ──
         // ── install flag ──
         // ── Carts started ──

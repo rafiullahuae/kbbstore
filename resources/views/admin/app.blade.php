@@ -1797,12 +1797,15 @@ function syncNavOpen(id){
 
 const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
 let cur='dash';
-function go(id){
+/* `sub` is an optional sub-tab within the screen — only Catalog has them, and
+   only the Modules screen passes one (product_sorting links to the Reorder
+   tab, which is the screen it actually means). */
+function go(id,sub){
   if(FRAME_SRC[id])return renderFrame(id);
   if(id.startsWith('p-'))return renderPlaceholder(id);
   if(id.startsWith('rev-'))return renderReviewFrame(id);
   cur=id;
-  if(id==='catalog'){catTab='products';catSel.clear();}
+  if(id==='catalog'){catTab=CAT_TABS.includes(sub)?sub:'products';catSel.clear();}
   if(id==='import')impStep=1;
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
   const t=TITLES[id]||['Platform',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
@@ -3321,7 +3324,11 @@ function mdCard(m){
    the next block of Phase 3, and until they exist their rows say so. */
 function mdSettings(m){
   if (m.route) {
-    return `<a class="mdlink go" href="#${escAttr(m.route)}" onclick="go('${escAttr(m.route)}');return false;">
+    /* A route may name a sub-tab as "screen:tab" (product_sorting points at
+       catalog:reorder). Without this the link lands on Catalog's Products tab
+       and the owner has to know which of six tabs the module meant. */
+    const parts=String(m.route).split(':'), rid=parts[0], rtab=parts[1]||'';
+    return `<a class="mdlink go" href="#${escAttr(rid)}" onclick="go('${escAttr(rid)}'${rtab?`,'${escAttr(rtab)}'`:''});return false;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
       ${escHtml(m.screen)}</a>`;
   }
@@ -5521,8 +5528,11 @@ const stockPill=n=>n===0?`<span class="pill red"><span class="d"></span>Out</spa
 
 let catTab='products',catFilter='all',catSel=new Set();
 let catSOopen=false,catPerPage=250;
+/* Named once so go(id,sub) can validate a requested sub-tab against the same
+   list the screen actually renders, rather than a second copy of it. */
+const CAT_TABS=['products','categories','brands','attributes','inventory','reorder'];
 function renderCatalog(){
-  const tabs=['products','categories','brands','attributes','inventory','reorder'];
+  const tabs=CAT_TABS;
   const lbl={products:'Products',categories:'Categories',brands:'Brands',attributes:'Attributes',inventory:'Inventory',reorder:'Reorder'};
   $('#content').innerHTML=`<div class="wrap">
     <div class="between" style="margin-bottom:8px"><div class="page-head" style="margin:0"><h2>Catalog</h2><p>Your products and how they're organised. Reorder works inside any category.</p></div>
