@@ -37,9 +37,16 @@ Route::get('/', \App\Http\Controllers\Store\HomeController::class)->name('home')
 // KBB.routes.subscribe, and the homepage form was the thing pointing elsewhere.
 // The second route is the address the form used to post to, so any cached page
 // still holding it lands somewhere real instead of on a 404.
+// Throttled because the handler answers differently for an address already on
+// the list ('nl_duplicate') than for a new one ('nl_success'), which makes an
+// unlimited public POST a newsletter-membership oracle — and, separately,
+// an unlimited way to fill the subscribers table. 10/minute is far above any
+// real signup rate and well below a useful enumeration rate.
 Route::post('/api/subscribe', [\App\Http\Controllers\Store\SubscribeController::class, 'store'])
+    ->middleware('throttle:10,1')
     ->name('subscribe');
-Route::post('/subscribe', [\App\Http\Controllers\Store\SubscribeController::class, 'store']);
+Route::post('/subscribe', [\App\Http\Controllers\Store\SubscribeController::class, 'store'])
+    ->middleware('throttle:10,1');
 // Shop — server-rendered with real URLs per the URL Contract (Phase 2).
 // /shop/page/2/ pagination, ?filter_brands=, ?orderby= all preserved.
 // URL Contract U-07: /shop/page/2/ is indexed on the live site. The theme
