@@ -39,7 +39,7 @@ class BuildPackage extends Command
 
     /** Never shipped to the server: repo-only, build-time, or a different machine's concern. */
     private const NEVER_SHIP = [
-        '.github/', '.gitignore', 'tests/', 'docs/', 'tools/', 'phpunit.xml',
+        '.github/', '.gitignore', 'tests/', 'docs/', 'tools/', 'phpunit.xml', 'phpunit-mysql.xml',
         'CLAUDE.md', 'README.md', 'KBB-Master-Plan.md', 'KBB-Progress-Dashboard.html',
         'env.staging.txt', 'package.json', 'package-lock.json', 'composer.lock',
         'public-web-root/', 'vendor/', 'node_modules/', '.env',
