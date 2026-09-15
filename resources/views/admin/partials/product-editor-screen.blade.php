@@ -27,6 +27,22 @@
     existing mock already owns .pe-card, .pe-box, .pe-grid and .rte, so a
     shorter prefix here would restyle it from across the file. peo- cannot.
 
+    AND SO IS EVERY data- ATTRIBUTE THAT ANYTHING CLICKS, which is the same rule
+    for a less obvious reason. The console is ONE document, and app.blade.php
+    binds around a dozen listeners to `document` itself, each claiming a bare
+    attribute name -- [data-open], [data-tg], [data-pp], [data-aptab] and so on.
+    A click on any element carrying one of those names is handled by that
+    listener no matter which screen the element belongs to.
+
+    This screen's picker rows were originally data-open, which is the Appearance
+    screen's skin-picker attribute. Clicking a product ran Appearance's handler,
+    which did document.querySelector('[data-pop="<the product id>"]'), got null,
+    and threw on the next line -- a TypeError in the console on every single
+    click of a row, while the row still worked, because this file's own
+    onclick ran too. It cost nothing to find only because the browser check
+    listens for pageerror. Anything here that a delegated listener could claim
+    is therefore data-peo-*.
+
     THE LAYOUT RULE. Nothing here may be wider than its column at 390px,
     because the owner reviews on a phone. The admin sets body{overflow:hidden}
     and scrolls inside #content, which means document.scrollWidth can never
@@ -136,7 +152,13 @@
               display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;min-width:0}
 
 /* ---- images ---- */
-.peo-main-img{border:1px solid var(--border,#e6e6e6);border-radius:11px;overflow:hidden;min-width:0}
+/* Capped rather than full-bleed. The media card lives in the main column now,
+   which is ~660px at 1280 and ~1300px at 1920, and a square preview allowed to
+   fill that is a photograph the size of a window for a field whose job is
+   "yes, that is the right picture". The cap is a max-width, not a width, so it
+   still shrinks to the column at 390px. */
+.peo-main-img{border:1px solid var(--border,#e6e6e6);border-radius:11px;overflow:hidden;
+              min-width:0;max-width:260px}
 .peo-main-img .peo-ph{aspect-ratio:1;background:var(--surface-2,#f7f8fa);display:grid;place-items:center;
                       color:var(--ink-faint,#9ca3af);font-size:12px;text-align:center;padding:12px}
 .peo-main-img img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
@@ -627,7 +649,7 @@
           ? '<img src="' + url(p.image) + '" alt="">'
           : '<span class="peo-noimg"></span>';
 
-        return '<button class="peo-item" data-open="' + esc(p.id) + '">'
+        return '<button class="peo-item" data-peo-open="' + esc(p.id) + '">'
              + img
              + '<span class="peo-meta"><b>' + esc(p.name) + '</b>'
              + '<span class="peo-m2">' + esc(p.brand || '—')
@@ -897,6 +919,14 @@
             +   'Google uses it to match this product to the same item elsewhere, which your own SKU cannot do. '
             +   'Leave it empty if the product has none.</div>'
           + '</div>'
+          /* Media sits in the MAIN column, not the sidebar, and that is a
+             decision the first screenshot forced. Every gallery row carries an
+             alt-text box, and in the 320px sidebar that box was about seventy
+             pixels of usable width — a field for writing a sentence, sized for
+             writing a word. Photographs are primary content on a product page
+             anyway; the sidebar is for the switches. */
+          + mainImageView()
+          + galleryView()
           + rte('short_description', 'Short description',
                 'The summary beside the price. One or two lines.',
                 'A gentle daily toner that calms redness…', model.short_description)
@@ -913,8 +943,6 @@
         + '</div>'
         + '<div class="peo-col">'
           + publishView()
-          + mainImageView()
-          + galleryView()
           + categoriesView()
           + brandView()
           + pricingView()
@@ -956,8 +984,8 @@
       bindPicker._t = setTimeout(loadList, 220);
     });
 
-    document.querySelectorAll('#content [data-open]').forEach(function(b){
-      b.onclick = function(){ loadProduct(parseInt(b.dataset.open, 10)); };
+    document.querySelectorAll('#content [data-peo-open]').forEach(function(b){
+      b.onclick = function(){ loadProduct(parseInt(b.dataset.peoOpen, 10)); };
     });
 
     var add = document.querySelector('#content [data-new]');
