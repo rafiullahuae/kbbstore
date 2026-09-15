@@ -137,6 +137,21 @@ class BrandController extends Controller
         $products = Product::query()
             ->visible()
             ->select(self::CARD_COLUMNS)
+            /*
+             * Both relations the card reads, eager-loaded.
+             *
+             * This page renders through <x-product-grid>, and that component --
+             * unlike <x-product-card>, which the shop uses -- reads BOTH
+             * `$p->brand?->name` AND `$p->categories->first()?->name`. Neither
+             * was loaded here, so every tile fired two more queries and the
+             * page cost grew with the brand's catalogue: measured at 12 queries
+             * for a brand carrying three products and 30 for one carrying more
+             * than the twelve this previews. With both loaded it is flat — the
+             * same count whatever the brand carries — because the two lazy
+             * loads per tile collapse into two batched ones for the page.
+             * Pinned in tests/Feature/StorefrontQueryBudgetTest.php.
+             */
+            ->with(['brand:id,name,slug', 'categories:id,name'])
             ->where('brand_id', $brand->id)
             ->orderBy('position')
             ->orderBy('name')

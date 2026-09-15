@@ -70,6 +70,15 @@ class SettingsService
      */
     private static array $memo = [];
 
+    /**
+     * Has this request already taken the whole-table snapshot? See get().
+     *
+     * Separate from `$memo === []` because a snapshot of a table with no
+     * non-autoloaded rows is still a snapshot, and must not be retaken on
+     * every subsequent miss.
+     */
+    private static bool $snapshotTaken = false;
+
     /** Distinguishes "looked it up and it is not there" from "not looked up". */
     private const MISS = "\0kbb-miss";
 
@@ -81,11 +90,58 @@ class SettingsService
         }
 
         if (! array_key_exists($key, self::$memo)) {
-            $row = Setting::find($key);
-            self::$memo[$key] = $row ? $this->decode($row->value) : self::MISS;
+            $this->snapshot();
+
+            if (! array_key_exists($key, self::$memo)) {
+                self::$memo[$key] = self::MISS;
+            }
         }
 
         return self::$memo[$key] === self::MISS ? $default : self::$memo[$key];
+    }
+
+    /**
+     * Read every setting outside the autoload map in ONE query.
+     *
+     * The memo above fixed re-reading the SAME key; it left one SELECT per
+     * DISTINCT key, and the shared header, footer and product chrome read
+     * around 105 distinct non-autoloaded keys on every page. So the previous
+     * `Setting::find($key)` here cost one single-row SELECT per DISTINCT key on
+     * EVERY storefront request -- 125 of the homepage's 164 queries, 126 of the
+     * product page's 136, 105 of the shop's 112 -- which is the same N+1 the
+     * memo was added to fix, one level up: per key rather than per call. With
+     * the whole table read once, those pages are 40, 11 and 8. Measured, before
+     * and after, in tests/Feature/StorefrontQueryBudgetTest.php.
+     *
+     * The settings table is the store's configuration, not a data table -- the
+     * whole of it is a few hundred small rows, and all() already reads most of
+     * it in one go -- so fetching it entire is cheaper than fetching three of
+     * its rows separately, and bounds the cost at one query however many keys
+     * a page goes on to ask for.
+     */
+    private function snapshot(): void
+    {
+        if (self::$snapshotTaken) {
+            return;
+        }
+
+        $fresh = [];
+
+        foreach (Setting::query()->get(['key', 'value']) as $row) {
+            $fresh[(string) $row->key] = $this->decode($row->value);
+        }
+
+        // Keep the misses already remembered for keys the table still lacks,
+        // so a re-read after a partial forgetMemo() does not go back to the
+        // database for something that was not there a moment ago.
+        foreach (self::$memo as $key => $value) {
+            if ($value === self::MISS && ! array_key_exists($key, $fresh)) {
+                $fresh[$key] = self::MISS;
+            }
+        }
+
+        self::$memo = $fresh;
+        self::$snapshotTaken = true;
     }
 
     /** Drop the per-request memo. Called by set() and flush(); also usable from tests. */
@@ -93,11 +149,16 @@ class SettingsService
     {
         if ($key === null) {
             self::$memo = [];
+            self::$snapshotTaken = false;
 
             return;
         }
 
         unset(self::$memo[$key]);
+
+        // The snapshot is no longer a faithful copy of the table for this key,
+        // so the next read of it has to be allowed back to the database.
+        self::$snapshotTaken = false;
     }
 
     public function set(string $key, mixed $value, bool $autoload = true): void

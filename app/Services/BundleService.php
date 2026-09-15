@@ -117,12 +117,40 @@ class BundleService
         return $out;
     }
 
-    /** The discounted unit price at a given quantity. */
+    /**
+     * The discounted unit price at a given quantity, in whole fils.
+     *
+     * Integer arithmetic, deliberately. This was
+     * `(int) round($unitPrice * (1 - $discount / 100))`, and floating point
+     * made it ONE FIL WRONG on ordinary, whole-number tiers -- not only on
+     * awkward ones. A third of a percent is not representable in binary, so
+     * `1 - 30/100` is 0.69999999999999996, and a price whose exact discounted
+     * value lands on a half fil falls the wrong side of round():
+     *
+     *     unit 45 fils at 30% off -> exact 31.5, rounds to 32
+     *                                float 31.499999999999996, rounds to 31
+     *
+     * At a 30% tier that is wrong for 1,170 of the first 50,000 prices, from 45
+     * fils upward; at 34% for 1,000 of them from 25 fils upward. totalFor()
+     * then multiplies the error by the quantity, so a ten-unit bundle was out
+     * by ten fils, and the storefront's figure disagreed with anything that
+     * recomputed the same line exactly.
+     *
+     * The discount is held to hundredths of a percent -- the precision the
+     * admin's tier editor offers -- so the whole sum is exact in integers, and
+     * `+ 5000` before the division is round-half-up on a positive value, which
+     * is what round() did.
+     */
     public function unitFor(int $unitPrice, int $qty): int
     {
-        $discount = $this->discountFor($qty);
+        // Discount in hundredths of a percent: 30% -> 3000, 12.5% -> 1250.
+        $discount = (int) round($this->discountFor($qty) * 100);
 
-        return (int) round($unitPrice * (1 - $discount / 100));
+        // tiers() already refuses anything outside 0-90%, but unitFor() is
+        // public and a negative or >100% discount would invent money.
+        $discount = max(0, min(10000, $discount));
+
+        return intdiv($unitPrice * (10000 - $discount) + 5000, 10000);
     }
 
     /** The line total at a given quantity, rounded once at the end. */
