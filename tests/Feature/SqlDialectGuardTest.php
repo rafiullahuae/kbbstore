@@ -816,12 +816,21 @@ it('issues portable SQL on the rest of the storefront', function (string $url) {
 
     $product = Product::query()->where('status', 'publish')->firstOrFail();
     $category = Category::query()->firstOrFail();
+    $brand = Brand::query()->firstOrFail();
 
-    // The archive is reached through the category's own path, not its slug: a
-    // nested category's URL is the full chain and the bare slug 404s.
+    /*
+     * Real slugs, not literals. guardFixtures() suffixes every slug with a
+     * uniqid() so repeated runs cannot collide, so a hard-coded 'guard-brand'
+     * in the dataset below would filter to nothing — the page would still be
+     * 200 and the guard would still pass, having exercised the unfiltered
+     * statement rather than the filtered one it was written for.
+     *
+     * The archive is reached through the category's own path, not its slug: a
+     * nested category's URL is the full chain and the bare slug 404s.
+     */
     $url = str_replace(
-        ['{slug}', '{category}'],
-        [(string) $product->slug, (string) ($category->path ?: $category->slug)],
+        ['{slug}', '{category}', '{brand}'],
+        [(string) $product->slug, (string) ($category->path ?: $category->slug), (string) $brand->slug],
         $url
     );
 
@@ -840,7 +849,7 @@ it('issues portable SQL on the rest of the storefront', function (string $url) {
     '/everything-under-54-aed',
     '/reviews',
     '/shop?page=2',
-    '/shop?brand=guard-brand',
+    '/shop?brand={brand}',
     '/cart',
     '/api/products',
     '/api/reviews',
