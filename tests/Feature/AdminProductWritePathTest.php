@@ -637,12 +637,22 @@ it('writes the product SEO fields to the column that actually holds them', funct
      */
     $row = DB::table('products')->where('id', $product->id)->first();
 
+    /*
+     * toEqual, not toBe, and that is a MySQL/SQLite parity point rather than
+     * laziness. `seo` is a json column; SQLite stores the text verbatim and
+     * hands the keys back in insertion order, while MySQL's native JSON type
+     * normalises the object and returns the keys in ITS order. toBe() is
+     * identity on arrays, which for PHP means same pairs IN THE SAME ORDER, so
+     * an assertion written that way passes on SQLite and fails on MySQL --
+     * against code that is behaving correctly on both. toEqual compares the
+     * pairs and not their order, which is the thing actually being claimed.
+     */
     expect(json_decode((string) $row->seo, true))
-        ->toBe(['title' => 'APW SEO title', 'desc' => 'APW SEO description']);
+        ->toEqual(['title' => 'APW SEO title', 'desc' => 'APW SEO description']);
 
     // And it round-trips back out.
     expect(test()->getJson('/admin-api/products/'.$product->id)->assertOk()->json('seo'))
-        ->toBe(['title' => 'APW SEO title', 'desc' => 'APW SEO description']);
+        ->toEqual(['title' => 'APW SEO title', 'desc' => 'APW SEO description']);
 });
 
 it('publishes a saved SEO title and description into the storefront head', function () {

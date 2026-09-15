@@ -768,7 +768,7 @@ it('applies noindex to the page when the owner asks for it', function () {
         'seo' => ['noindex' => true],
     ])->assertOk();
 
-    expect($product->fresh()->seo)->toBe(['noindex' => true]);
+    expect($product->fresh()->seo)->toEqual(['noindex' => true]);
 
     $html = (string) test()->get('/product/'.$product->slug.'/')->getContent();
 
@@ -894,7 +894,10 @@ it('drops alt text for an image that is no longer on the product', function () {
         ],
     ])->assertOk();
 
-    expect($product->fresh()->image_alts)->toBe([
+    // toEqual: `image_alts` is a json column, and MySQL's native JSON type
+    // returns object keys in its own order while SQLite preserves insertion
+    // order. The claim is about which pairs are stored, not their sequence.
+    expect($product->fresh()->image_alts)->toEqual([
         '/uploads/products/main.jpg' => 'Bottle, front',
         '/uploads/products/one.jpg' => 'Texture',
     ]);
