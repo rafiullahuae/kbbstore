@@ -650,6 +650,24 @@ class CustomersApiController extends Controller
      * for the last_active_at CASE expression; dropping the columns removes
      * those four placeholders, and leaving the bindings behind would send the
      * driver more values than the statement has markers.
+     *
+     * The ORDER BY has to go too, and for the same reason. Dropping the select
+     * columns is not enough while `order by customers.created_at desc,
+     * customers.id desc` is still attached: under ONLY_FULL_GROUP_BY those are
+     * bare columns in an aggregate query with no GROUP BY, and MySQL raises the
+     * very same 1140 on the ORDER BY that it raised on the select list. The
+     * ordering of a one-row aggregate is meaningless anyway. Its bindings go
+     * with it — applySort()'s last_active_desc and last_order_desc branches
+     * bind into the 'order' slot, so leaving those behind reintroduces the
+     * placeholder/binding mismatch the select slot was cleared to avoid.
+     *
+     * LIMIT and OFFSET go as well, and this one is not a MySQL problem — it is
+     * wrong on every driver. index() hands summaryFor() the same Builder it has
+     * already run forPage() on, so the summary carried `offset 25` on page two
+     * and `offset 50` on page three. An aggregate query returns one row; skip
+     * the first 25 of it and there is no row at all, so every tile across the
+     * top of the screen read zero on every page but the first. SQLite answered
+     * 200 the whole time.
      */
     private function aggregate(Builder $query, string $expression): ?object
     {
@@ -657,6 +675,12 @@ class CustomersApiController extends Controller
 
         $base->columns = null;
         $base->bindings['select'] = [];
+
+        $base->orders = null;
+        $base->bindings['order'] = [];
+
+        $base->limit = null;
+        $base->offset = null;
 
         return $base->selectRaw($expression)->first();
     }
@@ -850,22 +874,43 @@ class CustomersApiController extends Controller
         ];
     }
 
-    /** ISO-8601, whether the value arrived as a Carbon instance or a raw string. */
+    /**
+     * ISO-8601, whether the value arrived as a Carbon instance or a raw string,
+     * and NULL for the "never active" sentinel however the driver spells it.
+     *
+     * This used to test `$value === self::NEVER`, an exact 19-character string
+     * compare, and that is driver-dependent. lastActiveExpression() is a CASE,
+     * and a CASE takes the widest type of its branches: on MySQL 8 the branches
+     * are DATETIME(6) columns, so the bound sentinel comes back widened to
+     * '1970-01-01 00:00:00.000000' — 26 characters. The compare missed, the
+     * sentinel was parsed as a real date, and every customer who had never
+     * ordered and never had a cart showed a last-active date of 1 Jan 1970 on
+     * the live screen. SQLite returns the string unchanged and so does MariaDB
+     * 10.11, which is why nothing caught it: it needs the production engine.
+     *
+     * Compared as an instant rather than as text, so the fractional seconds,
+     * the driver and the column precision all stop mattering. Anything at or
+     * before the sentinel is "never" — this store has no activity from 1969.
+     */
     private function iso(mixed $value): ?string
     {
-        if ($value === null || $value === '' || $value === self::NEVER) {
+        if ($value === null || $value === '') {
             return null;
-        }
-
-        if ($value instanceof \DateTimeInterface) {
-            return Carbon::instance($value)->toIso8601String();
         }
 
         try {
-            return Carbon::parse((string) $value)->toIso8601String();
+            $when = $value instanceof \DateTimeInterface
+                ? Carbon::instance($value)
+                : Carbon::parse((string) $value);
         } catch (\Throwable) {
             return null;
         }
+
+        if ($when->getTimestamp() <= Carbon::parse(self::NEVER)->getTimestamp()) {
+            return null;
+        }
+
+        return $when->toIso8601String();
     }
 
     private function blankToNull(mixed $value): ?string
