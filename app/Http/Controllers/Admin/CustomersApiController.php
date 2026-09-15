@@ -90,7 +90,7 @@ class CustomersApiController extends Controller
      * than the package just applied, the server is serving cached bytecode and
      * the code is not the thing to go and look at.
      */
-    private const BUILD = '2.60.129';
+    private const BUILD = '2.60.130';
 
     /**
      * The chip filters, named once so the list, the chip counts and the export

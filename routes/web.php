@@ -324,6 +324,17 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // cannot collide however these requires are ordered.
         require __DIR__.'/orders-admin.php';
 
+        // The Import / Export screen. Same group and the same reason: it
+        // accepts uploaded CSVs and writes customers, orders and products —
+        // outside auth:admin that is a stranger rewriting the catalogue.
+        require __DIR__.'/import-admin.php';
+
+        // Invoices and packing slips. Same group: an invoice carries the
+        // customer's name, address and phone, and the URL deliberately holds
+        // no token of its own — the admin session is the only thing standing
+        // between an order id and somebody's delivery address.
+        require __DIR__.'/invoices-admin.php';
+
         // Mail settings and the test-send. Inside this group deliberately: an
         // unauthenticated endpoint that sends mail to a caller-supplied address
         // is an open relay.

@@ -9316,9 +9316,21 @@ buildNav();
       }catch(e){ toast('That action could not be completed.'); }
     };
 
-    // Invoice/Packing placeholders — visible, honest about not being wired yet.
+    /* Invoice and Packing slip are real documents now; the other three are
+       still honest placeholders. The URLs come from the order-detail payload
+       (invoice_url / packing_slip_url) rather than being built here, so this
+       cannot drift from the route or lose the deployment's base path. Opened
+       in a new tab because the admin console is a single page — navigating it
+       away would lose the order the operator is working on. */
     document.querySelectorAll('#content [data-oddoc]').forEach(function(b){
-      b.onclick = function(){ toast(b.dataset.oddoc+' generation is not built yet — this is a placeholder.'); };
+      b.onclick = function(){
+        var kind = b.dataset.oddoc;
+        var url  = kind === 'Invoice' ? (o.invoice_url || '')
+                 : kind === 'Packing slip' ? (o.packing_slip_url || '')
+                 : '';
+        if (url) { window.open(url, '_blank', 'noopener'); return; }
+        toast(kind + ' is not built yet — this is a placeholder.');
+      };
     });
   }
 

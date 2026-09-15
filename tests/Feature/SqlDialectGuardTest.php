@@ -598,6 +598,10 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/orders/{id}/settlement' => '/admin-api/orders/' . $order->id . '/settlement',
         'admin-api/customers/{id}' => '/admin-api/customers/' . $customer->id,
         'admin-api/catalog/reorder/{type}/{id}/products' => '/admin-api/catalog/reorder/category/' . $category->id . '/products',
+        // Both render a whole order with its items and addresses, so they are
+        // exactly the shape that has produced a dialect failure twice.
+        'admin-api/orders/{id}/invoice' => '/admin-api/orders/' . $order->id . '/invoice',
+        'admin-api/orders/{id}/packing-slip' => '/admin-api/orders/' . $order->id . '/packing-slip',
     ];
 
     /** Route URI => why driving it here would prove nothing. */
