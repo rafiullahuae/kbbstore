@@ -395,6 +395,27 @@ class CheckoutController extends Controller
             );
         }
 
+        /*
+         * The order emails: the customer's receipt, and the alert to the store.
+         *
+         * PLACED HERE AND NOWHERE ELSE, for three reasons worth stating:
+         *
+         *   - AFTER the transaction. Inside it, a refused SMTP relay or a
+         *     twenty-second connect timeout would roll the order back — the
+         *     order would be gone and the shopper would see a 500 for an email
+         *     nobody needed.
+         *   - AFTER $start->ok(). Before it, a declined gateway would have
+         *     receipted an order that is about to be marked `failed`.
+         *   - BEFORE both returns, so the hosted-redirect path gets the same
+         *     receipt as the on-site one.
+         *
+         * It cannot throw. App\Services\Mail\OrderMailer catches every transport
+         * failure, logs it with the order number and returns — its header sets
+         * out why a missing email is a support question and a failed checkout is
+         * an outage. Nothing is queued; there is no worker on this host.
+         */
+        app(\App\Services\Mail\OrderMailer::class)->placed($order);
+
         if ($start->redirectUrl !== null) {
             // Away to the provider's hosted page. Not Url::redirect(), which
             // prefixes our own base path — this is an absolute URL on somebody

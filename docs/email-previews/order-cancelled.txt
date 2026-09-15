@@ -1,0 +1,52 @@
+Hello Aisha Khan,
+
+YOUR ORDER HAS BEEN CANCELLED
+
+This order has been cancelled and nothing further will be sent. If you
+had already paid, the refund is on its way back to you by the method you
+paid with — you will get a separate email when it has been sent.
+
+Order KBB-10427 — placed 14 September 2026
+
+WHAT YOU ORDERED
+- Rice Daily Moisturizing Toner 150ml (Haruharu Wonder)
+  SKU HH-RT-150
+  2 x AED 199.00 = AED 398.00
+- Centella Ampoule (SKIN1004)
+  30ml
+  SKU SK-CA-030
+  1 x AED 65.00 = AED 65.00
+
+TOTALS
+Subtotal: AED 463.00
+Discount (GLOW10): AED -40.00
+Delivery: AED 20.00
+Gift wrapping: AED 15.00
+Cash on delivery fee: AED 15.00
+Total: AED 473.00
+
+DELIVERY ADDRESS
+Aisha Khan
+Apartment 1204, Marina Heights
+Dubai Dubai
+AE
++971 50 123 4567
+
+Delivery method: Standard delivery (1–3 working days)
+Payment method: Cash on delivery
+
+GIFT MESSAGE
+Happy birthday, Mama.
+Love from all of us x
+
+ORDER NOTE
+Please ring the doorbell twice — the buzzer is broken.
+
+VIEW YOUR ORDER
+http://localhost/checkout/success?order=KBB-10427
+
+That link opens on the device you ordered from. Anywhere else, sign in to your
+account and look for KBB-10427:
+http://localhost/my-account/orders
+
+— K Beauty Bliss

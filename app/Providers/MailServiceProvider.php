@@ -8,6 +8,8 @@ use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\MailCredentials;
 use App\Services\Mail\MailSettings;
 use App\Services\Mail\MailTester;
+use App\Services\Mail\OrderMailObserver;
+use App\Services\Mail\OrderMailer;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -42,6 +44,7 @@ class MailServiceProvider extends ServiceProvider
         $this->app->scoped(MailSettings::class);
         $this->app->scoped(MailConfigurator::class);
         $this->app->scoped(MailTester::class);
+        $this->app->scoped(OrderMailer::class);
 
         $this->app->afterResolving('mail.manager', function () {
             /*
@@ -60,5 +63,25 @@ class MailServiceProvider extends ServiceProvider
                 // Leave config/mail.php's inert 'kbb' => log entry in place.
             }
         });
+    }
+
+    /**
+     * Hook the order emails to the models that trigger them.
+     *
+     * Registered here rather than in AppServiceProvider because this is mail
+     * wiring and this is the mail provider: the order emails, the transport they
+     * go out on and the settings that configure them are one feature, and a
+     * reader looking for "what sends mail in this app" should find all of it in
+     * one place. OrderMailObserver's own header explains why the trigger is a
+     * model event and not a call in each of the four controllers that change an
+     * order's status — none of which this lane owns.
+     *
+     * Cheap: registering an observer attaches listeners and reads nothing. No
+     * settings lookup, no database query, and no mail manager resolved, so a
+     * storefront page that changes no order still pays nothing for this.
+     */
+    public function boot(): void
+    {
+        OrderMailObserver::register();
     }
 }
