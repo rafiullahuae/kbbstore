@@ -5509,6 +5509,24 @@ function renderReviewFrame(id){
   cur=id;
   const t=TITLES[id]||['Reviews',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
+  /* ===== LANE AM — 'rev-all' is NOT a frame any more =====
+     Every entry in REV_SRC names a standalone HTML file that THIS REPO DOES
+     NOT SHIP, so each of these screens has always rendered an iframe pointing
+     at a 404 — the same defect Lane T found on 'customers'. All Reviews is now
+     rendered in this document by renderReviews() in the LANE AM region of the
+     live-wiring script at the bottom of this file, so it must not get a frame:
+     drawing one here would fire a request for a file that is not there and then
+     be overwritten a moment later.
+
+     What is left for it is an honest message, not a convincing one, for the
+     case where the live-wiring script did not finish starting up. The other
+     seven Reviews screens are still frames and still unbuilt; they are not this
+     lane's to fix and they keep exactly the behaviour they had. ===== */
+  if(id==='rev-all'){
+    $('#content').innerHTML='<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">Reviews could not be loaded — the admin script did not finish starting up. Reload the page.</p></div>';
+    $('#content').scrollTop=0;$('#side').classList.remove('open');
+    return;
+  }
   $('#content').innerHTML=`<iframe src="${REV_SRC[id]}" title="${t[1]}" style="width:100%;height:calc(100vh - 116px);border:0;display:block;background:var(--bg)"></iframe>`;
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
@@ -10209,53 +10227,498 @@ buildNav();
     };
   }
 
-  /* ---------- Reviews moderation (rev-all) ---------- */
-  var REV=[], revFilter='all', revSel=new Set(), REV_COUNTS={};
-  function revStars(n){ var s=''; for(var i=1;i<=5;i++) s+=(i<=n?'\u2605':'\u2606'); return '<span style="color:#e0a11e;font-size:12px">'+s+'</span>'; }
-  function revStatusPill(s){ var m={approved:'green',pending:'amber',rejected:'red'}[s]||'grey'; return '<span class="pill '+m+'"><span class="d"></span>'+s+'</span>'; }
-  async function renderReviews(){
-    try{ var d=await api('/admin-api/reviews'+(revFilter!=='all'?('?status='+revFilter):'')); REV=d.reviews||[]; REV_COUNTS=d.counts||{}; }catch(e){ REV=[]; REV_COUNTS={}; }
-    var chips=[['all','All'],['pending','Pending'],['approved','Approved'],['rejected','Rejected']];
-    document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Reviews</h2><p>Moderate customer reviews. Approved reviews appear on the storefront.</p></div>'+
-      '<div class="chips" style="margin:12px 0 14px">'+chips.map(function(c){return '<button class="chip'+(revFilter===c[0]?' on':'')+'" data-rf="'+c[0]+'">'+c[1]+(REV_COUNTS[c[0]]!=null?(' \u00b7 '+REV_COUNTS[c[0]]):'')+'</button>';}).join('')+'</div>'+
-      '<div id="revBulk"></div>'+
-      '<div class="card" style="overflow:auto"><table><thead><tr><th style="width:30px"></th><th>Product</th><th>Author</th><th>Review</th><th>Status</th><th></th></tr></thead><tbody>'+
-      (REV.length? REV.map(function(r){
-        return '<tr><td><span class="cbx'+(revSel.has(r.id)?' on':'')+'" data-rsel="'+r.id+'">'+ic(I.check)+'</span></td>'+
-          '<td style="font-size:12px">'+sesc(r.product)+'</td>'+
-          '<td><div class="pname">'+sesc(r.author)+(r.verified?' <span class="pill green" style="font-size:9px;padding:1px 6px">Verified</span>':'')+'</div>'+revStars(r.rating)+'</td>'+
-          '<td style="max-width:320px"><b style="font-size:12.5px">'+sesc((r.title||''))+'</b><div class="pbrand" style="white-space:normal">'+sesc((r.body||'').slice(0,140))+((r.body||'').length>140?'\u2026':'')+'</div>'+(r.reply?('<div style="margin-top:5px;font-size:11.5px;color:var(--accent-strong)">\u21b3 '+r.reply.slice(0,120)+'</div>'):'')+'</td>'+
-          '<td>'+revStatusPill(r.status)+'</td>'+
-          '<td><div class="row" style="gap:5px">'+
-            (r.status!=='approved'?'<button class="btn ghost sm" data-rapp="'+r.id+'">Approve</button>':'')+
-            (r.status!=='rejected'?'<button class="btn ghost sm" data-rrej="'+r.id+'">Reject</button>':'')+
-            '<button class="btn ghost sm" data-rrep="'+r.id+'">Reply</button></div></td></tr>';
-      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No reviews'+(revFilter!=='all'?(' with status \u201c'+revFilter+'\u201d'):'')+'.</td></tr>')+
-      '</tbody></table></div><div class="pager"><span>Showing '+REV.length+'</span></div></div>';
-    document.querySelectorAll('#content .chip[data-rf]').forEach(function(c){ c.onclick=function(){ revFilter=c.dataset.rf; revSel.clear(); renderReviews(); }; });
-    document.querySelectorAll('#content [data-rsel]').forEach(function(c){ c.onclick=function(){ var id=+c.dataset.rsel; revSel.has(id)?revSel.delete(id):revSel.add(id); renderReviews(); }; });
-    document.querySelectorAll('#content [data-rapp]').forEach(function(b){ b.onclick=function(){ moderate(+b.dataset.rapp,'approved'); }; });
-    document.querySelectorAll('#content [data-rrej]').forEach(function(b){ b.onclick=function(){ moderate(+b.dataset.rrej,'rejected'); }; });
-    document.querySelectorAll('#content [data-rrep]').forEach(function(b){ b.onclick=function(){ replyReview(+b.dataset.rrep); }; });
-    var bulk=document.getElementById('revBulk');
-    if(revSel.size) bulk.innerHTML='<div class="bulkbar"><span class="cbx on" data-rclear>'+ic(I.check)+'</span> '+revSel.size+' selected<div style="flex:1"></div><button class="btn ghost sm" data-rbulk="approve">Approve</button><button class="btn ghost sm" data-rbulk="reject">Reject</button></div>';
-    var clr=document.querySelector('#content [data-rclear]'); if(clr) clr.onclick=function(){ revSel.clear(); renderReviews(); };
-    document.querySelectorAll('#content [data-rbulk]').forEach(function(b){ b.onclick=function(){ bulkModerate(b.dataset.rbulk); }; });
+  /* ===== LANE AM · Store · Reviews · moderation — BEGIN =====================
+
+     WHAT THIS REPLACED. A single unpaginated fetch of /admin-api/reviews that
+     rendered the WHOLE table into one <table>, with:
+
+       - no search, no rating filter and no product filter;
+       - the review body cut at 140 characters with no way to read the rest, so
+         a long review could not actually be moderated;
+       - chip counts taken from the entire table while the list beside them was
+         filtered, so the numbers answered a different question from the rows;
+       - a `Rejected` chip for a status this schema does not define, and no
+         `Spam` chip for the one it does — an imported spam review appeared
+         under no chip at all and answered 422 when moderated;
+       - and `r.reply` written into innerHTML UNESCAPED. Everything else on
+         that screen went through sesc(); the reply did not. The reply is typed
+         into this console by the owner, but it is also the one field an
+         importer will carry across from WooCommerce, so it is public text in
+         every sense that matters. That was stored XSS in the owner's own
+         back-office.
+
+     WHAT IT IS NOW. A paginated, filtered, searchable list off
+     /admin-api/reviews/list — inside the guarded admin-api group, which is the
+     only reason it is allowed to show the reviewer's email address at all —
+     plus a per-review expansion that fetches the full text and the reviewer's
+     IP from /admin-api/reviews/{id}, one-at-a-time and bulk moderation, and a
+     CSV of whatever the screen is currently showing.
+
+     THE VOCABULARY IS THE SCHEMA'S: pending | approved | spam. "Reject" writes
+     `spam`, which is this schema's name for "refused, not published". See
+     app/Support/ReviewStatus.php for why, and for the one-directional
+     `rejected` alias that keeps an older client working.
+
+     NO TABLE. Every row is a card that reflows, because this screen has to be
+     usable at 390px and a 6-column table is not. It also reads better: the
+     thing being moderated is a paragraph of text, not a spreadsheet row.
+
+     EVERYTHING WRITTEN INTO THE PAGE GOES THROUGH sesc(). Author names, titles,
+     bodies and replies are typed by the public; an unescaped one is stored XSS
+     on the owner's own console. Server messages go through it too — a message
+     can carry a reviewer's name. */
+
+  var RV = {
+    page: 1, perPage: 25, filter: 'all', search: '', rating: '', product: '',
+    sort: 'newest', sel: {}, open: {}, full: {}, data: null, err: null, busy: false
+  };
+
+  var RV_CHIPS = [
+    ['all', 'All'], ['pending', 'Waiting'], ['approved', 'Approved'], ['spam', 'Spam']
+  ];
+
+  var RV_SORTS = [
+    ['newest', 'Newest first'], ['oldest', 'Oldest first'],
+    ['rating_desc', 'Highest rated'], ['rating_asc', 'Lowest rated'],
+    ['helpful_desc', 'Most helpful'], ['updated_desc', 'Recently moderated']
+  ];
+
+  /* The three moderation outcomes, named once so the row buttons and the bulk
+     bar cannot offer different sets of actions. */
+  var RV_ACTIONS = [
+    ['approved', 'Approve', 'Publish this review on the storefront'],
+    ['spam', 'Reject', 'Refuse it — not published, kept for the record'],
+    /* "Move to queue", not "Unapprove": this button is offered on a SPAM review
+       as well as an approved one, and unapproving something that was never
+       approved is not a sentence. The label has to read correctly from every
+       state the button appears in. */
+    ['pending', 'Move to queue', 'Put it back in the queue for a decision']
+  ];
+
+  /* Styles for this screen only, rv- prefixed, injected once. Kept here rather
+     than in the sheet at the top of this document because that sheet is shared
+     and this region is one lane's. */
+  function rvStyles(){
+    if(document.getElementById('rvStyle')) return;
+    var s = document.createElement('style');
+    s.id = 'rvStyle';
+    s.textContent =
+      '.rv-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}' +
+      '.rv-tools .inp{min-width:0}' +
+      '.rv-search{flex:1 1 210px;min-width:0}' +
+      '.rv-card{border:1px solid var(--border);border-radius:11px;background:var(--surface);padding:13px 14px;margin-bottom:10px}' +
+      '.rv-card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}' +
+      '.rv-top{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start}' +
+      '.rv-who{min-width:0;flex:1 1 200px}' +
+      '.rv-nm{font-size:13.5px;font-weight:650;word-break:break-word}' +
+      '.rv-meta{font-size:11.5px;color:var(--ink-soft);margin-top:2px;word-break:break-word}' +
+      '.rv-badges{display:flex;flex-wrap:wrap;gap:6px;align-items:center}' +
+      '.rv-body{margin-top:9px;font-size:13px;line-height:1.55;color:var(--ink-2);word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap}' +
+      '.rv-ttl{font-weight:650;color:var(--ink);font-size:13px;margin-bottom:2px;word-break:break-word}' +
+      '.rv-reply{margin-top:8px;padding:8px 10px;border-radius:9px;background:var(--surface-2);font-size:12.5px;color:var(--ink-2);word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap}' +
+      '.rv-more{background:none;border:0;padding:0;margin-top:5px;font-size:12px;font-weight:600;color:var(--accent-ink);cursor:pointer;text-decoration:underline}' +
+      '.rv-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}' +
+      '.rv-pii{margin-top:8px;font-size:11.5px;color:var(--ink-soft);font-family:var(--mono);word-break:break-all}' +
+      '.rv-empty{padding:34px 16px;text-align:center;color:var(--ink-soft);font-size:13px}' +
+      '.rv-pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:12px 2px 2px;font-size:12.5px;color:var(--ink-soft)}' +
+      '@media(max-width:560px){.rv-tools .inp{flex:1 1 140px}.rv-acts .btn{flex:1 1 auto}}';
+    document.head.appendChild(s);
   }
-  async function moderate(id,status){ try{ await api('/admin-api/reviews/'+id,{method:'PUT',body:JSON.stringify({status:status})}); toast('Review '+status); renderReviews(); }catch(e){ toast('Action failed'); } }
-  async function bulkModerate(action){ var ids=Array.prototype.slice.call(revSel); if(!ids.length)return; try{ await api('/admin-api/reviews/bulk',{method:'POST',body:JSON.stringify({action:action,ids:ids})}); toast(action+'d '+ids.length); revSel.clear(); renderReviews(); }catch(e){ toast('Bulk action failed'); } }
-  function replyReview(id){
-    var r=REV.filter(function(x){return x.id===id;})[0]; if(!r)return;
-    openModal('<div class="modal-h"><b>Reply to '+sesc(r.author)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
-      '<div class="modal-b"><div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">'+revStars(r.rating)+' \u00b7 '+sesc(r.title||'')+'</div>'+
-      '<textarea class="inp" id="revReplyTxt" style="width:100%;min-height:96px" placeholder="Public reply shown under the review\u2026">'+sesc((r.reply||''))+'</textarea>'+
-      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="revReplySave">Save reply</button></div></div>');
-    document.getElementById('revReplySave').onclick=async function(){
-      var txt=document.getElementById('revReplyTxt').value;
-      try{ await api('/admin-api/reviews/'+id,{method:'PUT',body:JSON.stringify({reply:txt})}); toast('Reply saved'); closeModal(); renderReviews(); }catch(e){ toast('Save failed'); }
+
+  function rvStars(n){
+    var s = '';
+    for(var i = 1; i <= 5; i++) s += (i <= n ? '★' : '☆');
+    return '<span style="color:#e0a11e;font-size:12px;letter-spacing:1px" title="' + n + ' out of 5">' + s + '</span>';
+  }
+
+  function rvPill(status){
+    var m = {approved: ['green', 'Approved'], pending: ['amber', 'Waiting'], spam: ['red', 'Spam']}[status]
+      || ['grey', status];
+    return '<span class="pill ' + m[0] + '"><span class="d"></span>' + sesc(m[1]) + '</span>';
+  }
+
+  function rvDate(iso){
+    if(!iso) return '';
+    var d = new Date(iso);
+    if(isNaN(d)) return '';
+    return sesc(d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}));
+  }
+
+  function rvParams(forExport){
+    var p = new URLSearchParams();
+    if(!forExport){ p.set('page', RV.page); p.set('per_page', RV.perPage); }
+    if(RV.filter && RV.filter !== 'all') p.set('filter', RV.filter);
+    if(RV.search) p.set('search', RV.search);
+    if(RV.rating) p.set('rating', RV.rating);
+    if(RV.product) p.set('product_id', RV.product);
+    if(RV.sort && RV.sort !== 'newest') p.set('sort', RV.sort);
+    return p.toString();
+  }
+
+  function rvSelected(){
+    return Object.keys(RV.sel).filter(function(k){ return RV.sel[k]; }).map(Number);
+  }
+
+  async function rvLoad(){
+    if(RV.busy) return;
+    RV.busy = true;
+    try{
+      RV.data = await api('/admin-api/reviews/list?' + rvParams(false));
+      RV.err = null;
+    }catch(e){
+      RV.data = null;
+      /* Say WHAT failed, not what might have. Fetch the same URL plainly so the
+         status and the server's own message can be shown — a guess at the cause
+         sends whoever reads it looking in the wrong place. */
+      RV.err = {status: 0, body: ''};
+      try{
+        var probe = await fetch(fixAdminApiUrl('/admin-api/reviews/list?' + rvParams(false)),
+          {credentials: 'same-origin', headers: {'Accept': 'application/json'}});
+        RV.err.status = probe.status;
+        RV.err.body = (await probe.text() || '').slice(0, 400);
+      }catch(e2){}
+    }finally{
+      RV.busy = false;
+    }
+  }
+
+  async function renderReviews(){
+    rvStyles();
+    await rvLoad();
+
+    var d = RV.data;
+    var counts = (d && d.counts) || {};
+    var rows = (d && d.reviews) || [];
+    var products = (d && d.products) || [];
+
+    var head =
+      '<div class="page-head"><h2>Reviews</h2>' +
+      '<p>Approve what belongs on the storefront and refuse what does not. Only approved reviews are shown to shoppers, and only approved reviews count towards a product’s score.</p></div>';
+
+    if(RV.err){
+      document.querySelector('#content').innerHTML =
+        '<div class="wrap">' + head +
+        '<div class="card pad"><b style="font-size:13.5px">The reviews list could not be loaded.</b>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">' +
+        'GET /admin-api/reviews/list answered ' + sesc(String(RV.err.status || 'no response')) + '.' +
+        (RV.err.status === 404 ? ' That route is not mounted yet — routes/reviews-admin.php still has to be required from routes/web.php.' : '') +
+        '</p>' +
+        (RV.err.body ? '<pre style="margin-top:9px;font-size:11.5px;white-space:pre-wrap;word-break:break-word;color:var(--ink-soft)">' + sesc(RV.err.body) + '</pre>' : '') +
+        '</div></div>';
+      return;
+    }
+
+    var sel = rvSelected();
+
+    var toolbar =
+      '<div class="rv-tools">' +
+        '<input class="inp rv-search" id="rvSearch" type="search" placeholder="Search name, email, title, text or product…" value="' + sesc(RV.search) + '">' +
+        '<select class="inp" id="rvRating"><option value="">Any rating</option>' +
+          [5, 4, 3, 2, 1].map(function(r){
+            return '<option value="' + r + '"' + (String(RV.rating) === String(r) ? ' selected' : '') + '>' + r + ' star' + (r === 1 ? '' : 's') + '</option>';
+          }).join('') +
+        '</select>' +
+        '<select class="inp" id="rvProduct"><option value="">Any product</option>' +
+          '<option value="business"' + (RV.product === 'business' ? ' selected' : '') + '>About the shop</option>' +
+          products.map(function(p){
+            return '<option value="' + p.id + '"' + (String(RV.product) === String(p.id) ? ' selected' : '') + '>' + sesc(p.name) + ' (' + p.reviews + ')</option>';
+          }).join('') +
+        '</select>' +
+        '<select class="inp" id="rvSort">' +
+          RV_SORTS.map(function(s){
+            return '<option value="' + s[0] + '"' + (RV.sort === s[0] ? ' selected' : '') + '>' + sesc(s[1]) + '</option>';
+          }).join('') +
+        '</select>' +
+        '<button class="btn ghost sm" id="rvExport">Export CSV</button>' +
+      '</div>';
+
+    var chips =
+      '<div class="chips" style="margin:0 0 13px">' +
+      RV_CHIPS.map(function(c){
+        var n = counts[c[0]];
+        return '<button class="chip' + (RV.filter === c[0] ? ' on' : '') + '" data-rvf="' + c[0] + '">' +
+          sesc(c[1]) + (n == null ? '' : ' · ' + n) + '</button>';
+      }).join('') + '</div>';
+
+    var bulk = '';
+    if(sel.length){
+      bulk = '<div class="bulkbar" style="flex-wrap:wrap">' +
+        '<span class="cbx on" id="rvClear" title="Clear selection">' + ic(I.check) + '</span>' +
+        '<span>' + sel.length + ' selected</span><div style="flex:1 1 40px"></div>' +
+        RV_ACTIONS.map(function(a){
+          return '<button class="btn ghost sm" data-rvbulk="' + a[0] + '" title="' + sesc(a[2]) + '">' + sesc(a[1]) + '</button>';
+        }).join('') +
+        '<button class="btn danger sm" data-rvbulk="delete" title="Remove these reviews permanently">Delete</button>' +
+        '</div>';
+    }
+
+    var list = rows.length
+      ? rows.map(rvCard).join('')
+      : '<div class="card"><div class="rv-empty">Nothing here.' +
+        (RV.filter !== 'all' || RV.search || RV.rating || RV.product
+          ? ' No review matches the filters above.'
+          : ' No reviews have been left yet.') + '</div></div>';
+
+    var total = (d && d.total) || 0;
+    var pages = (d && d.pages) || 1;
+    var from = total ? ((RV.page - 1) * RV.perPage) + 1 : 0;
+    var to = Math.min(total, RV.page * RV.perPage);
+
+    var pager =
+      '<div class="rv-pager">' +
+        '<span>' + (total ? ('Showing ' + from + '–' + to + ' of ' + total) : 'Nothing to show') + '</span>' +
+        '<span class="row" style="gap:6px">' +
+          '<button class="btn ghost sm" id="rvPrev"' + (RV.page <= 1 ? ' disabled' : '') + '>Previous</button>' +
+          '<span>Page ' + RV.page + ' of ' + pages + '</span>' +
+          '<button class="btn ghost sm" id="rvNext"' + (RV.page >= pages ? ' disabled' : '') + '>Next</button>' +
+        '</span>' +
+      '</div>';
+
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap">' + head + toolbar + chips +
+      '<div id="rvBulk">' + bulk + '</div>' + list + pager + '</div>';
+
+    rvBind();
+  }
+
+  /* One review. Everything interpolated here is public text; every one of them
+     goes through sesc(), the reply included — that was the hole. */
+  function rvCard(r){
+    var open = !!RV.open[r.id];
+    var full = RV.full[r.id];
+    var text = open && full != null ? full : r.excerpt;
+
+    var product = r.product
+      ? sesc(r.product)
+      : (r.product_id == null ? 'About the shop' : 'Product #' + r.product_id);
+
+    var pii = open && full != null && RV.full['ip_' + r.id] != null
+      ? '<div class="rv-pii">IP ' + sesc(RV.full['ip_' + r.id]) + '</div>'
+      : '';
+
+    return '<div class="rv-card' + (RV.sel[r.id] ? ' sel' : '') + '">' +
+      '<div class="rv-top">' +
+        '<span class="cbx' + (RV.sel[r.id] ? ' on' : '') + '" data-rvsel="' + r.id + '">' + ic(I.check) + '</span>' +
+        '<div class="rv-who">' +
+          '<div class="rv-nm">' + sesc(r.author || 'Anonymous') + '</div>' +
+          '<div class="rv-meta">' + sesc(r.author_email || '') +
+            (r.author_email ? ' · ' : '') + product +
+            (r.created_at ? ' · ' + rvDate(r.created_at) : '') + '</div>' +
+        '</div>' +
+        '<div class="rv-badges">' + rvStars(r.rating) + rvPill(r.status) +
+          (r.verified ? '<span class="pill green" title="Bought this product">✓ Verified</span>' : '') +
+          (r.helpful ? '<span class="pill grey">' + r.helpful + ' helpful</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="rv-body">' +
+        (r.title ? '<div class="rv-ttl">' + sesc(r.title) + '</div>' : '') +
+        sesc(text) + (r.truncated && !open ? '…' : '') +
+      '</div>' +
+      ((r.truncated || r.author_email)
+        ? '<button class="rv-more" data-rvopen="' + r.id + '">' +
+            (open ? 'Show less' : (r.truncated ? 'Read the whole review (' + r.length + ' characters)' : 'Show details')) +
+          '</button>'
+        : '') +
+      pii +
+      (r.reply ? '<div class="rv-reply"><b>Your reply:</b> ' + sesc(r.reply) + '</div>' : '') +
+      '<div class="rv-acts">' +
+        RV_ACTIONS.filter(function(a){ return a[0] !== r.status; }).map(function(a){
+          return '<button class="btn ghost sm" data-rvact="' + a[0] + '" data-rvid="' + r.id + '" title="' + sesc(a[2]) + '">' + sesc(a[1]) + '</button>';
+        }).join('') +
+        '<button class="btn ghost sm" data-rvreply="' + r.id + '">' + (r.reply ? 'Edit reply' : 'Reply') + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function rvBind(){
+    var q = function(s){ return document.querySelectorAll('#content ' + s); };
+
+    q('.chip[data-rvf]').forEach(function(c){
+      c.onclick = function(){ RV.filter = c.dataset.rvf; RV.page = 1; RV.sel = {}; renderReviews(); };
+    });
+
+    q('[data-rvsel]').forEach(function(c){
+      c.onclick = function(){
+        var id = c.dataset.rvsel;
+        RV.sel[id] = !RV.sel[id];
+        renderReviews();
+      };
+    });
+
+    q('[data-rvact]').forEach(function(b){
+      b.onclick = function(){ rvModerate(+b.dataset.rvid, b.dataset.rvact); };
+    });
+
+    q('[data-rvopen]').forEach(function(b){
+      b.onclick = function(){ rvToggle(+b.dataset.rvopen); };
+    });
+
+    q('[data-rvreply]').forEach(function(b){
+      b.onclick = function(){ rvReply(+b.dataset.rvreply); };
+    });
+
+    q('[data-rvbulk]').forEach(function(b){
+      b.onclick = function(){ rvBulk(b.dataset.rvbulk); };
+    });
+
+    var clear = document.getElementById('rvClear');
+    if(clear) clear.onclick = function(){ RV.sel = {}; renderReviews(); };
+
+    var prev = document.getElementById('rvPrev');
+    if(prev) prev.onclick = function(){ if(RV.page > 1){ RV.page--; renderReviews(); } };
+
+    var next = document.getElementById('rvNext');
+    if(next) next.onclick = function(){
+      if(RV.data && RV.page < RV.data.pages){ RV.page++; renderReviews(); }
+    };
+
+    var rating = document.getElementById('rvRating');
+    if(rating) rating.onchange = function(){ RV.rating = rating.value; RV.page = 1; renderReviews(); };
+
+    var product = document.getElementById('rvProduct');
+    if(product) product.onchange = function(){ RV.product = product.value; RV.page = 1; renderReviews(); };
+
+    var sort = document.getElementById('rvSort');
+    if(sort) sort.onchange = function(){ RV.sort = sort.value; RV.page = 1; renderReviews(); };
+
+    var search = document.getElementById('rvSearch');
+    if(search){
+      /* Debounced, and the caret is restored after the re-render: typing into a
+         box that re-renders on every keystroke otherwise jumps to the start of
+         the field after the first character. */
+      var timer = null;
+      search.oninput = function(){
+        clearTimeout(timer);
+        var at = search.selectionStart;
+        timer = setTimeout(function(){
+          RV.search = search.value;
+          RV.page = 1;
+          renderReviews().then(function(){
+            var again = document.getElementById('rvSearch');
+            if(again){ again.focus(); try{ again.setSelectionRange(at, at); }catch(e){} }
+          });
+        }, 300);
+      };
+    }
+
+    var exp = document.getElementById('rvExport');
+    if(exp) exp.onclick = function(){
+      window.location.href = fixAdminApiUrl('/admin-api/reviews/export?' + rvParams(true));
     };
   }
+
+  /* Read the whole review. The list deliberately carries only an excerpt, so
+     this is a real fetch — and it is also where the reviewer's IP comes from,
+     which the list does not carry at all. */
+  async function rvToggle(id){
+    if(RV.open[id]){ RV.open[id] = false; return renderReviews(); }
+    RV.open[id] = true;
+    if(RV.full[id] == null){
+      try{
+        var d = await api('/admin-api/reviews/' + id);
+        RV.full[id] = (d.review && d.review.content) || '';
+        RV.full['ip_' + id] = (d.review && d.review.ip) || '';
+      }catch(e){
+        RV.full[id] = '';
+        toast('Could not load the full review');
+      }
+    }
+    renderReviews();
+  }
+
+  async function rvModerate(id, status){
+    try{
+      var d = await api('/admin-api/reviews/' + id + '/moderate',
+        {method: 'PUT', body: JSON.stringify({status: status})});
+      /* The server says what it STORED, which is not always what was asked for
+         — `rejected` is accepted and normalised to `spam`. Reporting the
+         server's answer rather than the request means the toast can never claim
+         a status the table does not hold. */
+      toast('Review ' + (d.status === 'spam' ? 'rejected' : d.status === 'approved' ? 'approved' : 'moved back to the queue'));
+      renderReviews();
+    }catch(e){ toast('That change could not be saved'); }
+  }
+
+  async function rvBulk(action){
+    var ids = rvSelected();
+    if(!ids.length) return;
+
+    if(action === 'delete'){
+      return rvConfirmDelete(ids);
+    }
+
+    try{
+      var d = await api('/admin-api/reviews/bulk-moderate',
+        {method: 'POST', body: JSON.stringify({action: action, ids: ids})});
+      /* "3 of 5" rather than "5", because the endpoint leaves rows that already
+         hold the target status alone and saying otherwise would claim a change
+         that did not happen. */
+      toast(d.affected === d.requested
+        ? (d.affected + ' review' + (d.affected === 1 ? '' : 's') + ' updated')
+        : (d.affected + ' of ' + d.requested + ' updated — the rest were already there'));
+      RV.sel = {};
+      renderReviews();
+    }catch(e){ toast('That bulk action could not be saved'); }
+  }
+
+  function rvConfirmDelete(ids){
+    openModal('<div class="modal-h"><b>Delete ' + ids.length + ' review' + (ids.length === 1 ? '' : 's') + '</b>' +
+      '<button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">This removes the ' +
+      (ids.length === 1 ? 'review' : 'reviews') + ' permanently and cannot be undone. ' +
+      'To take a review off the storefront without destroying it, use <b>Reject</b> instead — it stays here for the record.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn danger" id="rvDelYes">Delete permanently</button></div></div>');
+
+    var yes = document.getElementById('rvDelYes');
+    if(yes) yes.onclick = async function(){
+      closeModal();
+      try{
+        var d = await api('/admin-api/reviews/bulk-moderate',
+          {method: 'POST', body: JSON.stringify({action: 'delete', ids: ids})});
+        toast(d.affected + ' review' + (d.affected === 1 ? '' : 's') + ' deleted');
+        RV.sel = {};
+        renderReviews();
+      }catch(e){ toast('Those reviews could not be deleted'); }
+    };
+  }
+
+  function rvReply(id){
+    var r = ((RV.data && RV.data.reviews) || []).filter(function(x){ return x.id === id; })[0];
+    if(!r) return;
+
+    openModal('<div class="modal-h"><b>Reply to ' + sesc(r.author || 'this reviewer') + '</b>' +
+      '<button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b">' +
+      '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">' + rvStars(r.rating) + ' · ' + sesc(r.title || '') + '</div>' +
+      '<textarea class="inp" id="rvReplyTxt" style="width:100%;min-height:96px" placeholder="Shown publicly under the review…">' + sesc(r.reply || '') + '</textarea>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="rvReplySave">Save reply</button></div></div>');
+
+    var save = document.getElementById('rvReplySave');
+    if(save) save.onclick = async function(){
+      var box = document.getElementById('rvReplyTxt');
+      try{
+        await api('/admin-api/reviews/' + id + '/moderate',
+          {method: 'PUT', body: JSON.stringify({reply: box ? box.value : ''})});
+        toast('Reply saved');
+        closeModal();
+        renderReviews();
+      }catch(e){ toast('That reply could not be saved'); }
+    };
+  }
+
+  /* A bookmark straight to this screen — /admin?go=rev-all, or #rev-all. That
+     navigation is performed by the boot block at the end of the FIRST script in
+     this document, which runs before this one exists, so go() lands on
+     renderReviewFrame() and draws an iframe pointing at a file this repo does
+     not ship. Nothing has painted yet at this point in parsing, so re-rendering
+     here is not a flicker: it is the first thing the browser draws. */
+  if(typeof cur !== 'undefined' && cur === 'rev-all'){ renderReviews(); }
+  /* ===== LANE AM · Store · Reviews · moderation — END ====================== */
+
 
   /* ---------- Analytics (derived from real orders) ---------- */
   async function renderAnalytics(){
