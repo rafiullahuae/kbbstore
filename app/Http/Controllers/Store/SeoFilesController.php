@@ -88,17 +88,23 @@ class SeoFilesController extends Controller
         if (Schema::hasTable('products')) {
             $q = DB::table('products')->select('slug', 'updated_at');
 
-            if (Schema::hasColumn('products', 'status')) {
-                $q->where('status', 'publish');
-            }
-
-            if (Schema::hasColumn('products', 'is_visible')) {
-                $q->where('is_visible', true);
-            }
-
-            if (Schema::hasColumn('products', 'deleted_at')) {
-                $q->whereNull('deleted_at');
-            }
+            /*
+             * One helper rather than three hand-written clauses, because a
+             * fourth condition arrived and this file did not get it.
+             *
+             * Scheduled publishing added products.published_at, and
+             * Product::scopeVisible() honours it — so a product scheduled for
+             * next week is correctly absent from the shop and its own URL
+             * 404s. This sitemap is built from a raw query builder, which no
+             * model scope can reach, so it went on listing that URL. A sitemap
+             * entry that 404s is a soft 404 in Search Console, which is the
+             * exact opposite of what scheduling a launch is for.
+             *
+             * ProductVisibility::raw() is the same set of conditions the scope
+             * applies, column-guarded the same way the code it replaces was,
+             * so it is safe to run before the migration that adds the column.
+             */
+            \App\Support\ProductVisibility::raw($q, '');
 
             // A product carrying noindex in its per-product SEO overrides is
             // one the owner has said should not be in the index. The page

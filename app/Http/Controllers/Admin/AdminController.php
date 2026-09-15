@@ -230,14 +230,31 @@ class AdminController extends Controller
             'stock'             => $p->stock,
             'status'            => $p->status,
             'slug'              => $p->slug,
-            // `products` carries BOTH a `seo` json column (Phase 0, the Yoast
-            // import target, which nothing writes) and a `seo_json` text column
-            // (2026_07_11_000001_add_seo_json_to_products), which is the one
-            // this editor has always read and written. Checked against the
-            // migrations rather than taken on trust: a sibling lane believed
-            // the column was `seo`, and writing there would have put the
-            // operator's SEO fields somewhere nothing reads.
-            'seo'               => $p->seo_json ? json_decode($p->seo_json, true) : null,
+            /*
+             * `seo`, the json column — NOT `seo_json`.
+             *
+             * This used to read `seo_json`, and the note here used to say that
+             * was the column "this editor has always read and written" and that
+             * a sibling lane believing it was `seo` would have written
+             * "somewhere nothing reads". Half of that was right. The editor did
+             * read and write `seo_json` — and nothing else in the application
+             * ever did, in either direction. The readers are all on `seo`:
+             *
+             *   Store\ProductController::show()      builds the actual <head>
+             *   Admin\SchemaInspectorApiController   the JSON-LD preview
+             *   Admin\CatalogueAuditApiController    the SEO health report
+             *
+             * So `seo_json` was a closed loop between these two methods: the
+             * operator typed a meta title, this endpoint handed it straight
+             * back, the screen looked correct, and Google was never told. The
+             * feature had never once worked in production.
+             *
+             * 2026_10_05_000001 moves the stored blobs across and renames the
+             * two keys that also differed (seo_title -> title,
+             * meta_description -> desc), so an operator's existing work follows
+             * them to the column that publishes it.
+             */
+            'seo'               => is_array($p->seo) ? $p->seo : null,
         ]);
     }
 
@@ -411,9 +428,19 @@ class AdminController extends Controller
         }
 
         if (array_key_exists('seo', $data)) {
-            // `seo_json`, not `seo`. Both columns exist on this table; see the
-            // note in getProduct().
-            $changes['seo_json'] = json_encode($data['seo']);
+            /*
+             * `seo`, not `seo_json` — see the long note in getProduct() for why
+             * the previous arrangement round-tripped perfectly and published
+             * nothing.
+             *
+             * The key names are normalised on the way in as well. This editor's
+             * SEO panel collects Yoast-shaped names and the storefront reads
+             * `title` and `desc`, so a payload pointed at the right column
+             * would still have published nothing without the rename. The same
+             * two renames are applied by the data migration, and
+             * App\Support\ProductSeo owns the mapping so the two cannot drift.
+             */
+            $changes['seo'] = \App\Support\ProductSeo::normalise($data['seo']);
         }
 
         /*

@@ -19,6 +19,7 @@ class Product extends Model
     {
         return [
             'images' => 'array',
+            'image_alts' => 'array',
             'seo' => 'array',
             'meta_feed' => 'array',
             'custom_tabs' => 'array',
@@ -27,6 +28,7 @@ class Product extends Model
             'manage_stock' => 'bool',
             'sale_starts_at' => 'datetime',
             'sale_ends_at' => 'datetime',
+            'published_at' => 'datetime',
             'price' => 'int',
             'sale_price' => 'int',
             'rating' => 'float',
@@ -105,9 +107,105 @@ class Product extends Model
         ];
     }
 
+    /**
+     * On the storefront right now.
+     *
+     * The third condition is new: a product may be `publish` and visible and
+     * still be scheduled for a date that has not arrived. See
+     * App\Support\ProductVisibility for why that is a comparison against now()
+     * rather than a cron job — this host has no scheduler, and
+     * effectivePrice() above already sets the precedent by honouring
+     * sale_starts_at / sale_ends_at exactly this way.
+     *
+     * published_at NULL means "not scheduled", which is every row that existed
+     * before the column did, so nothing already in the catalogue changes.
+     */
     public function scopeVisible($query)
     {
-        return $query->where('status', 'publish')->where('is_visible', true);
+        $query->where('status', 'publish')->where('is_visible', true);
+
+        return \App\Support\ProductVisibility::schedule($query);
+    }
+
+    /**
+     * Alt text for one image of this product.
+     *
+     * WHY THERE IS A STORED FIELD AT ALL, rather than deriving everything.
+     *
+     * A derived alt — "Anua Heartleaf Toner, Texture" — is a fine default and a
+     * poor ceiling. The whole reason to put real <img> tags on the product page
+     * is so Google Images can index the photographs, and what it indexes is the
+     * alt: five shots of one product that all say the same sentence are five
+     * results competing with each other for the same query. The shots differ in
+     * ways only the person who chose them knows — one is the texture on a hand,
+     * one is the ingredient list on the back of the box, one is the product in
+     * use — and none of that is recoverable from the filename or the position.
+     * It is also the accessibility text, and "View 3" tells a screen-reader user
+     * nothing.
+     *
+     * WHY IT IS A SEPARATE COLUMN KEYED BY URL, and not a change to `images`.
+     *
+     * `images` is a flat list of URL strings, and three things already read it
+     * that way: Store\ProductController::gallery(), which merges it with
+     * `image`; toApi() above, which publishes it; and the WooCommerce importer,
+     * which writes it. Turning its entries into objects would break all three
+     * at once, for a field only the page needs. A map keyed by URL costs those
+     * three nothing, survives reordering for free — the key is the image, not
+     * its position — and covers the main image, which is not in `images` at all.
+     *
+     * The fallback is the derived sentence, so a caller never has to decide:
+     * ask for the alt, get the best one available.
+     *
+     * AND THE DERIVED HALF IS App\Support\ProductTitle's, not a second copy.
+     * That helper exists because this catalogue is a WooCommerce import whose
+     * product names are not written to one rule: some already carry the brand
+     * ("Anua Azelaic Acid 10 Serum") and some do not ("1025 Dokdo Toner", by
+     * Round Lab). Joining brand and name naively produces "Anua — Anua
+     * Heartleaf…", which is precisely the defect ProductTitle was written to
+     * stop. So the stored value is this method's contribution and the computed
+     * one is delegated — one rule for how a product is named, in one file.
+     *
+     * $index and $total are the shot's position in the gallery, which is what
+     * ProductTitle::alt() uses to distinguish the second photograph from the
+     * first. Callers that do not know them pass nothing and get the base.
+     */
+    public function altFor(?string $url, int $index = 0, int $total = 1): string
+    {
+        $map = is_array($this->image_alts) ? $this->image_alts : [];
+        $stored = trim((string) ($map[(string) $url] ?? ''));
+
+        if ($stored !== '') {
+            return $stored;
+        }
+
+        return \App\Support\ProductTitle::alt($this->brand?->name, $this->name, $index, $total);
+    }
+
+    /**
+     * Waiting for a publish date that has not arrived.
+     *
+     * The editor's fourth status. It is not a value in `products.status` —
+     * that column is publish | draft | private and inventing a fourth string
+     * is the defect that took this catalogue off the storefront once already,
+     * because scopeVisible(), the sitemap and every category page filter on
+     * the literal 'publish'. A scheduled product is a PUBLISHED product with a
+     * future date, so the day it comes due every one of those filters is
+     * already correct without anything being rewritten.
+     */
+    public function isScheduled(): bool
+    {
+        return $this->status === 'publish'
+            && $this->published_at !== null
+            && now()->lt($this->published_at);
+    }
+
+    /**
+     * What the editor's status control should show: the stored status, or
+     * 'scheduled' when a future date makes that the truer word.
+     */
+    public function editorStatus(): string
+    {
+        return $this->isScheduled() ? 'scheduled' : (string) $this->status;
     }
 
     public function scopeInStock($query)

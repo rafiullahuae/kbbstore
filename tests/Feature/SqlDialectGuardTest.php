@@ -657,6 +657,10 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // is a parameterised admin GET and the point of this list is that no
         // such route gets to skip the walk unexamined.
         'admin-api/reviews/{review}' => '/admin-api/reviews/' . $review->id,
+        // Loads one product with its brand, its categories pivot, its gallery
+        // and its SEO blob for the editor — several joins and a json column,
+        // which is exactly the shape that has produced a dialect failure here.
+        'admin-api/product-editor-load/{id}' => '/admin-api/product-editor-load/' . $product->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */

@@ -35,7 +35,12 @@
             {{-- The LCP element: eager, high priority, never lazy. --}}
             <img class="gmain-img" id="gmainImg"
                  src="{{ $mainImage }}"
-                 alt="{{ ProductTitle::alt($brandName, $product->name, 0, $shotCount) }}"
+                 {{-- altFor() returns the alt the owner typed for THIS image if
+                      there is one, and falls back to ProductTitle::alt() when
+                      there is not. Keyed by image URL rather than by position,
+                      so reordering the gallery cannot slide one photograph's
+                      description onto another. --}}
+                 alt="{{ $product->altFor($mainImage, 0, $shotCount) }}"
                  width="1000" height="1000"
                  loading="eager" decoding="async" fetchpriority="high">
         @endif
@@ -66,7 +71,7 @@
             @foreach ($gallery as $i => $shot)
                 @php
                     $shotImage = $shot['image'] ?? null;
-                    $shotAlt = ProductTitle::alt($brandName, $product->name, $i, $shotCount);
+                    $shotAlt = $product->altFor($shotImage, $i, $shotCount);
                 @endphp
                 <div class="gthumb{{ 0 === $i ? ' on' : '' }}{{ ! empty($shot['video']) ? ' vid' : '' }}"
                      data-i="{{ $i }}"

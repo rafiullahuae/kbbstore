@@ -107,7 +107,24 @@ class AppServiceProvider extends ServiceProvider
         // Post hook just below, which never had this problem because it
         // never went through Url::to() in the first place.
         \App\Models\Product::saved(function (\App\Models\Product $product) {
-            if ($product->status === 'publish' && $product->is_visible) {
+            /*
+             * ProductVisibility::isLive(), not a hand-written status check.
+             *
+             * A product scheduled for next Tuesday is `publish` and visible and
+             * satisfies the old two-part test the moment it is saved — so this
+             * hook told Google to come and crawl a URL that will 404 until
+             * Tuesday. Submitting a soft-404 to IndexNow is worse than
+             * submitting nothing: it spends crawl budget and teaches the index
+             * that the URL is missing, on exactly the page a launch date exists
+             * to make a good first impression on.
+             *
+             * Nothing re-submits when the date passes, and that is deliberate
+             * rather than a gap: the product is in the sitemap from that moment
+             * on, and a real edit after launch saves the row again and pings
+             * then. Manufacturing a ping with no scheduler to run it is the
+             * problem this whole package avoids.
+             */
+            if (\App\Support\ProductVisibility::isLive($product)) {
                 $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
                 if ($base !== '') {
                     \App\Services\Seo\IndexNow::submitOne($base . '/product/' . $product->slug . '/');

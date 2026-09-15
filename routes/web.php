@@ -385,6 +385,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // other whatever order these requires land in.
         require __DIR__.'/catalog-product-create-admin.php';
 
+        // Catalog → Product editor: the full editor (gallery, categories, rich
+        // description, SEO, scheduled publishing). Distinct prefix from the
+        // create endpoints above, so mounting both is safe; the older create
+        // path is the one to retire once this screen has been used in anger.
+        require __DIR__.'/product-editor-admin.php';
+
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);

@@ -91,8 +91,13 @@ class ReviewController extends Controller
             'product_id' => [
                 'required',
                 'integer',
+                // Through the shared predicate so a product that is scheduled
+                // but not yet launched cannot be reviewed. It is not on the
+                // storefront, so nobody has legitimately seen it to review it,
+                // and a review dated before the product existed is a thing the
+                // owner would have to explain.
                 Rule::exists('products', 'id')->where(
-                    fn ($q) => $q->where('status', 'publish')->where('is_visible', true)
+                    fn ($q) => \App\Support\ProductVisibility::raw($q, '')
                 ),
             ],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],

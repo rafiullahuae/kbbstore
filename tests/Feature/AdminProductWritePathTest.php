@@ -608,25 +608,76 @@ it('writes the product SEO fields to the column that actually holds them', funct
     $product = apwProduct();
 
     test()->putJson('/admin-api/products/'.$product->id, [
-        'seo' => ['title' => 'APW SEO title', 'description' => 'APW SEO description'],
+        'seo' => ['seo_title' => 'APW SEO title', 'meta_description' => 'APW SEO description'],
     ])->assertOk();
 
     /*
+     * `seo`, the json column — and this assertion is the inverse of what it
+     * used to be.
+     *
      * `products` carries BOTH a `seo` json column (Phase 0, the Yoast import
-     * target) and a `seo_json` text column (2026_07_11_000001). This editor has
-     * always read and written `seo_json`, and the migrations are what settles
-     * it — a sibling lane believed the column was `seo`, and moving the write
-     * there would have put the operator's SEO fields somewhere nothing reads.
+     * target) and a `seo_json` text column (2026_07_11_000001). This test
+     * previously asserted the write landed in `seo_json` and that `seo` stayed
+     * null, on the stated grounds that `seo_json` was "the one this editor has
+     * always read and written". That was true and it was the bug: the editor
+     * was the ONLY thing at either end of `seo_json`. Every reader in the
+     * application is on `seo` —
+     *
+     *     Store\ProductController::show()      builds the real <head>
+     *     Admin\SchemaInspectorApiController   the JSON-LD preview
+     *     Admin\CatalogueAuditApiController    the SEO health report
+     *
+     * — so the operator's meta title round-tripped through this endpoint,
+     * displayed correctly in the admin, and never reached Google. A green test
+     * pinned it there.
+     *
+     * The keys are asserted as the STOREFRONT's vocabulary too, because the two
+     * differed as well: the panel sends Yoast-shaped names and the storefront
+     * reads `title` and `desc`. App\Support\ProductSeo owns that mapping.
      */
     $row = DB::table('products')->where('id', $product->id)->first();
 
-    expect(json_decode((string) $row->seo_json, true))
-        ->toBe(['title' => 'APW SEO title', 'description' => 'APW SEO description'])
-        ->and($row->seo)->toBeNull();
+    /*
+     * toEqual, not toBe, and that is a MySQL/SQLite parity point rather than
+     * laziness. `seo` is a json column; SQLite stores the text verbatim and
+     * hands the keys back in insertion order, while MySQL's native JSON type
+     * normalises the object and returns the keys in ITS order. toBe() is
+     * identity on arrays, which for PHP means same pairs IN THE SAME ORDER, so
+     * an assertion written that way passes on SQLite and fails on MySQL --
+     * against code that is behaving correctly on both. toEqual compares the
+     * pairs and not their order, which is the thing actually being claimed.
+     */
+    expect(json_decode((string) $row->seo, true))
+        ->toEqual(['title' => 'APW SEO title', 'desc' => 'APW SEO description']);
 
     // And it round-trips back out.
     expect(test()->getJson('/admin-api/products/'.$product->id)->assertOk()->json('seo'))
-        ->toBe(['title' => 'APW SEO title', 'description' => 'APW SEO description']);
+        ->toEqual(['title' => 'APW SEO title', 'desc' => 'APW SEO description']);
+});
+
+it('publishes a saved SEO title and description into the storefront head', function () {
+    /*
+     * The end-to-end half, and the one the previous test could not have caught.
+     * Asserting which column a value lands in is a structural claim; this asks
+     * the only question that matters — after the owner types a meta title into
+     * the admin, does the product page say it?
+     */
+    asApwAdmin();
+
+    $product = apwProduct();
+
+    test()->putJson('/admin-api/products/'.$product->id, [
+        'seo' => [
+            'seo_title' => 'Glow Serum | Best price in Dubai',
+            'meta_description' => 'Authentic Korean glow serum, delivered across the UAE.',
+        ],
+    ])->assertOk();
+
+    $html = (string) test()->get('/product/'.$product->slug.'/')->getContent();
+
+    expect($html)
+        ->toContain('Glow Serum | Best price in Dubai')
+        ->toContain('Authentic Korean glow serum, delivered across the UAE.');
 });
 
 /* ------------------------------------------------------------ the guard itself */
