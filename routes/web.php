@@ -128,7 +128,14 @@ Route::prefix('api/cart')->group(function () {
     Route::post('/add',    [\App\Http\Controllers\Store\CartController::class, 'add']);
     Route::post('/update', [\App\Http\Controllers\Store\CartController::class, 'update']);
     Route::post('/remove', [\App\Http\Controllers\Store\CartController::class, 'remove']);
-    Route::post('/coupon', [\App\Http\Controllers\Store\CartController::class, 'coupon']);
+    // Throttled: CouponService::validate() answers differently for a code that
+    // does not exist, one not active YET, one expired, and one fully redeemed.
+    // That is deliberate UX, but unthrottled it lets anyone brute-force the
+    // coupon namespace at line speed — including discovering promotions that
+    // have not launched. 20/minute is far above any real shopper and far below
+    // a useful enumeration rate. Found by Lane Z.
+    Route::post('/coupon', [\App\Http\Controllers\Store\CartController::class, 'coupon'])
+        ->middleware('throttle:20,1');
 });
 
 // Checkout — ported page, server-side totals, order placement.
@@ -497,7 +504,14 @@ Route::middleware('auth:customer')->group(function () {
 
 Route::middleware('guest:customer')->group(function () {
     Route::post('/my-account/login', [CustomerAuthController::class, 'login'])->name('customer.login');
-    Route::post('/my-account/register', [CustomerAuthController::class, 'register'])->name('customer.register');
+    // Throttled: the 'unique:customers,email' rule makes an anonymous POST a
+    // definitive yes/no on whether an address already shops here. The arithmetic
+    // human-check (account_check, on by default) already makes that slow rather
+    // than free; this makes bulk enumeration impractical without changing the
+    // wording a real shopper sees. Found by Lane Z.
+    Route::post('/my-account/register', [CustomerAuthController::class, 'register'])
+        ->middleware('throttle:10,1')
+        ->name('customer.register');
 });
 
 Route::post('/my-account/logout', [CustomerAuthController::class, 'logout'])

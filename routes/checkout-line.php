@@ -48,4 +48,5 @@ Route::post('/checkout/line', [CheckoutController::class, 'lineUpdate'])
  * middleware: a shopper posts it, so it needs the session and CSRF.
  */
 Route::post('/checkout/coupon', [CheckoutController::class, 'couponUpdate'])
+    ->middleware('throttle:20,1')
     ->name('checkout.couponUpdate');

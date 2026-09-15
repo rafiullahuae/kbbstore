@@ -399,3 +399,49 @@ it('keeps a script tag in an SEO text field from closing the JSON-LD block', fun
     expect($html)->not->toContain('</script><script>alert(1)')
         ->and($html)->not->toContain('<script>alert(1)</script>');
 });
+
+/* ------------------------------------------------- integrator: the throttles */
+
+/**
+ * Lane Z reported these and could not fix them: the rate limits live on routes,
+ * and routes/web.php is the integrator's file. Read off the REGISTERED routes
+ * rather than from the source, for the same reason the guard assertions are —
+ * what matters is what the router ended up with.
+ */
+it('rate-limits the endpoints that answer differently for things that exist', function (string $uri, string $limit) {
+    $route = collect(app('router')->getRoutes()->getRoutes())
+        ->first(fn ($r) => $r->uri() === $uri && in_array('POST', $r->methods(), true));
+
+    expect($route)->not->toBeNull("route {$uri} is not registered")
+        ->and($route->gatherMiddleware())->toContain($limit);
+})->with([
+    // CouponService distinguishes "no such code" from "not active yet",
+    // "expired" and "fully redeemed" — unthrottled that enumerates the coupon
+    // namespace, future promotions included.
+    ['api/cart/coupon', 'throttle:20,1'],
+    ['checkout/coupon', 'throttle:20,1'],
+    // unique:customers,email makes registration a yes/no on whether an address
+    // shops here.
+    ['my-account/register', 'throttle:10,1'],
+]);
+
+/**
+ * The Customers error path must never return the statement or its bindings.
+ *
+ * QueryException::getMessage() appends "(Connection: mysql, SQL: … where email
+ * = someone@example.com)" — the whole statement with bindings interpolated, and
+ * the bindings there carry the operator's search term. The handler falls back
+ * to a fixed sentence instead. Latent rather than live (getPrevious() is
+ * normally the PDOException), which is exactly why it needed pinning.
+ */
+it('never returns SQL or bindings from the customers error path', function () {
+    $source = file_get_contents(app_path('Http/Controllers/Admin/CustomersApiController.php'));
+
+    $code = implode('', array_map(
+        static fn (array $t): string => (string) (is_array($t) ? ($t[0] === T_COMMENT || $t[0] === T_DOC_COMMENT ? '' : $t[1]) : $t),
+        array_map(static fn ($t) => is_array($t) ? $t : [0, $t], token_get_all($source)),
+    ));
+
+    expect($code)->not->toContain('?? $e->getMessage()')
+        ->and($code)->toContain("'The database driver gave no further detail.'");
+});

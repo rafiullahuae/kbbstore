@@ -90,7 +90,7 @@ class CustomersApiController extends Controller
      * than the package just applied, the server is serving cached bytecode and
      * the code is not the thing to go and look at.
      */
-    private const BUILD = '2.60.125';
+    private const BUILD = '2.60.126';
 
     /**
      * The chip filters, named once so the list, the chip counts and the export
@@ -135,7 +135,15 @@ class CustomersApiController extends Controller
 
             return response()->json([
                 'message' => 'The customer list could not be read from the database.',
-                'db_error' => $e->getPrevious()?->getMessage() ?? $e->getMessage(),
+                // getPrevious() is the PDOException, whose message is the driver's
+                // own text and nothing else. NEVER fall back to
+                // $e->getMessage(): QueryException appends
+                // "(Connection: mysql, SQL: ... where email = someone@example.com)"
+                // — the whole statement with the BINDINGS INTERPOLATED, and the
+                // bindings here carry the operator's search term. That would make
+                // the promise three lines above a lie. Found by Lane Z.
+                'db_error' => $e->getPrevious()?->getMessage()
+                    ?? 'The database driver gave no further detail.',
                 'build' => self::BUILD,
             ], 500);
         }
