@@ -419,6 +419,49 @@ it('keeps a scheduled product out of the sitemap through the shared predicate', 
         ->and($slugs)->not->toContain($hidden->slug);
 });
 
+it('keeps a draft invisible even when it carries a date that has already passed', function () {
+    /*
+     * ADDED BECAUSE A MUTATION SURVIVED. Rewriting ProductVisibility::schedule()
+     * from the grouped form to the flat one —
+     *
+     *     $query->whereNull($c)->orWhere($c, '<=', $now)
+     *
+     * instead of wrapping both in a closure — left every test green. It is not
+     * harmless. AND binds tighter than OR in SQL, so the flat version reads as
+     *
+     *     (status='publish' AND is_visible=1 AND published_at IS NULL)
+     *      OR (published_at <= now)
+     *
+     * and that second branch has no status test on it at all: ANY row with a
+     * past date matches, whatever its status. A draft carrying an old date —
+     * which the importer can write, and which any row un-scheduled by hand
+     * would have — is published to the world.
+     *
+     * The existing scheduling tests could not see it because they only ever use
+     * FUTURE dates, where the leaking branch is false anyway. This one uses a
+     * past date on a row that must stay hidden, which is the only shape that
+     * tells the two implementations apart.
+     */
+    $draft = peProduct(['status' => 'draft', 'published_at' => now()->subMonth()]);
+    $private = peProduct(['status' => 'private', 'published_at' => now()->subMonth()]);
+    $hidden = peProduct(['is_visible' => false, 'published_at' => now()->subMonth()]);
+
+    foreach ([$draft, $private, $hidden] as $product) {
+        expect(Product::visible()->whereKey($product->id)->exists())
+            ->toBeFalse($product->status.' with a past date leaked onto the storefront')
+            ->and(peOnShop($product))->toBeFalse()
+            ->and(peInSitemap($product))->toBeFalse();
+    }
+
+    // And the raw predicate, which the sitemap will adopt, agrees.
+    $slugs = \App\Support\ProductVisibility::raw(DB::table('products'))->pluck('slug')->all();
+
+    expect($slugs)
+        ->not->toContain($draft->slug)
+        ->not->toContain($private->slug)
+        ->not->toContain($hidden->slug);
+});
+
 it('clears a pending schedule when the status is set back to published', function () {
     asPeAdmin();
 
