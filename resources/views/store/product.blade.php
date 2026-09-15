@@ -10,6 +10,7 @@
 @php
     use App\Support\Gradient;
     use App\Support\Money;
+    use App\Support\ProductTitle;
     use App\Support\Url;
 
     $brand   = $product->brand?->name ?? '';
@@ -42,27 +43,32 @@
     $showRate = in_array($capStyle, ['inline', 'both'], true);
 @endphp
 
-@section('title', ($brand ? $brand . ' ' : '') . $product->name . ' · K-Beauty Bliss')
+{{-- Brand once, not twice. This concatenated brand and name unconditionally,
+     but a great many names in this catalogue were imported already carrying
+     their brand, so the tab read "Anua Anua Heartleaf 77% Soothing Toner".
+     Prepending only when the name does not already lead with the brand is the
+     whole fix; ProductTitle explains why that test compares words rather than
+     characters, and why stripping a leading brand instead would be wrong. --}}
+@section('title', ProductTitle::full($brand, $product->name) . ' · K-Beauty Bliss')
 
 @push('head')
     {{--
-        The LCP element on this page is the main gallery shot, and the gallery
-        draws it as a CSS background-image rather than an <img> (see
-        partials/product-gallery.blade.php). A background image is not in the
-        preload scanner's reach: the browser cannot discover it until the
-        stylesheet has downloaded, parsed and matched the rule, so the single
-        largest paint on the most-visited page type on the site starts a whole
-        stylesheet round-trip late.
+        SUPERSEDED, AND KEPT ONLY BECAUSE IT IS PINNED ELSEWHERE.
 
-        This preload puts it back on the scanner's first pass. fetchpriority
-        high, because by definition this is the largest contentful paint and
-        everything else on the page can wait for it.
+        This preload was added while the gallery painted the main shot as a CSS
+        background-image, which the preload scanner cannot see. Its own note
+        said so: "a mitigation, not the fix -- the real repair is an <img> with
+        width, height and alt ... which the product page layout lane owns."
 
-        It is a mitigation, not the fix: the real repair is an <img> with width,
-        height and alt, which also gets the photograph into Google Images and
-        gives the frame an intrinsic aspect ratio so it cannot shift. That is a
-        change to the gallery's markup and its swap script, which the product
-        page layout lane owns.
+        That repair has landed. partials/product-gallery.blade.php now renders
+        the main shot as a real <img> carrying loading="eager" and
+        fetchpriority="high", in the initial HTML, so the scanner finds it on
+        its first pass with no hint required. This <link> now resolves to the
+        same URL as that <img> and buys nothing.
+
+        It is left in place only because two tests in ProductSeoTest.php assert
+        it, and that file belongs to another lane. Removing the link and those
+        two assertions together is a one-line follow-up for whoever owns it.
     --}}
     @if (! empty($gallery[0]['image']))
         <link rel="preload" as="image" href="{{ $gallery[0]['image'] }}" fetchpriority="high">

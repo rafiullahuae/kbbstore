@@ -771,9 +771,22 @@ it('keeps the live /shop/page/{n}/ address redirecting rather than serving a dup
 it('preloads the main gallery shot, which is the LCP element', function () {
     $html = pseoFetch(pseoProduct());
 
-    // The gallery paints the main shot as a CSS background, which the preload
-    // scanner cannot see. Without this hint the largest paint on the page waits
-    // for the stylesheet.
+    /*
+     * This comment used to say the gallery paints the main shot as a CSS
+     * background that the preload scanner cannot see. That WAS the reason the
+     * hint was added, and it is no longer true: the gallery now emits a real
+     * <img fetchpriority="high"> in the initial HTML, which the scanner finds
+     * on its first pass without any help.
+     *
+     * The hint is kept anyway, and the reason is worth writing down rather
+     * than leaving as an accident. It points at $gallery[0]['image'], the same
+     * URL the <img> uses, so there is no second request to pay for -- and it
+     * keeps the LCP hint attached to the <head> rather than to one element in
+     * one partial, so moving or restructuring the gallery cannot silently cost
+     * the largest paint its priority. A comment that asserts the opposite of
+     * what the code does is how the next reader gets misled, which is the only
+     * thing here that actually needed fixing.
+     */
     expect(pseoHead($html))->toContain(
         '<link rel="preload" as="image" href="/media/anua-main.jpg" fetchpriority="high">'
     );

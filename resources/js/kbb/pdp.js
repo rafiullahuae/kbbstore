@@ -16,19 +16,21 @@ export function initPdp() {
     const form = document.querySelector('.kbb-cart-form');
     if (!form) return;
 
-    const main = document.getElementById('gmain');
     const qtyVal = document.getElementById('qtyVal');
     const qtyInput = document.getElementById('qtyInput');
     const varId = document.getElementById('kbbVarId');
 
     document.addEventListener('click', (event) => {
-        // Gallery — the theme paints the main image as a background, not an <img>.
-        const thumb = event.target.closest('.gthumb');
-        if (thumb && main) {
-            main.style.background = `#fff url('${thumb.dataset.img}') center/contain no-repeat`;
-            document.querySelectorAll('.gthumb').forEach((t) => t.classList.toggle('on', t === thumb));
-            return;
-        }
+        /* The gallery is NOT handled here. This listener used to carry a
+           thumbnail branch of its own that read `thumb.dataset.img` -- an
+           attribute the markup has never emitted; it is `data-image`. So the
+           branch resolved to the string "undefined", set the main frame to
+           `url('undefined')`, and because it is bound to `document` it ran
+           *after* initGallery's own handler had already set the frame
+           correctly, overwriting it. Clicking any thumbnail blanked the
+           photograph to white. Removed rather than repaired: initGallery below
+           owns the gallery, and two handlers for one click is how this
+           happened. */
 
         // Option selection — a variant, or a quantity bundle.
         const variant = event.target.closest('.variant');
@@ -173,15 +175,50 @@ export function initGallery() {
         strip.querySelectorAll('.gthumb').forEach((t) => t.classList.toggle('on', t === thumb));
 
         const image = thumb.dataset.image;
-        main.style.background = image
-            ? `#fff url('${image}') center/contain no-repeat`
-            : getComputedStyle(thumb).background;
+
+        if (image) {
+            /* The frame carries a real <img> now, so swapping means changing
+               its src, not restyling the div. A product whose first shot is a
+               placeholder has no <img> to change, so one is created the first
+               time a photographed shot is chosen. */
+            let img = main.querySelector('.gmain-img');
+
+            if (!img) {
+                img = document.createElement('img');
+                img.className = 'gmain-img';
+                img.id = 'gmainImg';
+                img.decoding = 'async';
+                img.width = 1000;
+                img.height = 1000;
+                main.prepend(img);
+            }
+
+            img.src = image;
+            img.alt = thumb.dataset.alt || '';
+            img.hidden = false;
+            main.style.background = '#fff';
+        } else {
+            const img = main.querySelector('.gmain-img');
+            if (img) img.hidden = true;
+            main.style.background = getComputedStyle(thumb).background;
+        }
 
         if (caption) {
-            caption.style.display = image ? 'none' : '';
+            caption.hidden = Boolean(image);
+
             if (!image && thumb.dataset.label) {
-                const brand = caption.dataset.brand || caption.textContent.split('\n')[0];
-                caption.innerHTML = `${brand}<br>${thumb.dataset.label}`;
+                /* Text nodes, not innerHTML. A brand name is operator-supplied
+                   data and this file has no business turning it back into
+                   markup -- the same mistake the XSS sweep took out of
+                   eighteen other places. */
+                const brand = caption.dataset.brand || '';
+                caption.textContent = '';
+
+                if (brand) {
+                    caption.append(brand, document.createElement('br'));
+                }
+
+                caption.append(thumb.dataset.label);
             }
         }
     });
