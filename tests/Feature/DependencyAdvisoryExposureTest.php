@@ -105,13 +105,41 @@ it('is symfony/mime that closes the CRLF advisory today', function () {
             ->toThrow(\Symfony\Component\Mime\Exception\InvalidArgumentException::class);
     }
 
-    // And through the real mailer, not just the value object, so this holds for
-    // the way the application actually sends rather than for a constructor.
-    foreach (crlfAddressesTheFrameworkAccepts() as $address) {
-        expect(function () use ($address) {
+    /*
+     * And through the real mailer, not just the value object, so this holds for
+     * the way the application actually sends rather than for a constructor.
+     *
+     * Asserted as "something refused it", not as a class. The 12.x spike
+     * (lane/laravel-12-spike) showed why: Laravel 12 puts a guard of its own in
+     * front of Symfony's, and the class the caller sees changes with it —
+     *
+     *   11.56.1  Symfony\...\Mime\Exception\InvalidArgumentException
+     *            "Email address contains control characters."
+     *   12.69.2  \InvalidArgumentException
+     *            "Email addresses may not contain line break characters."
+     *
+     * Pinning the 11.x class would have made this the ONLY failing test on the
+     * whole upgrade — 666 of 667 passed — which is a booby trap, not coverage.
+     * What must hold is that the send is refused.
+     */
+    foreach (crlfAddressesTheFrameworkAccepts() as $why => $address) {
+        $refused = false;
+
+        try {
             Mail::mailer('array')->raw('body', fn ($m) => $m->to($address)->subject('s'));
-        })->toThrow(\Symfony\Component\Mime\Exception\InvalidArgumentException::class);
+        } catch (\Throwable $e) {
+            $refused = true;
+        }
+
+        expect($refused)->toBeTrue(
+            "The mailer accepted {$why}: " . json_encode($address)
+            . ' — a CR reached a message header.'
+        );
     }
+
+    // Nothing was handed to the transport, either. A refusal that still queued
+    // the message would pass the check above and leak anyway.
+    expect(Mail::mailer('array')->getSymfonyTransport()->messages())->toHaveCount(0);
 });
 
 it('mints and verifies no Laravel signed URL anywhere', function () {
