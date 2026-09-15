@@ -393,13 +393,29 @@ input.inp[type=file]{padding:6px 9px}
 .odmain{min-width:0}
 .odside{min-width:0}
 .odcard{background:#fff;border:1px solid var(--border);border-radius:13px;box-shadow:0 1px 2px rgba(18,21,31,.04),0 1px 10px rgba(18,21,31,.03);overflow:hidden}
-.odgiftfee{display:inline-block;margin-left:8px;font-size:11px;color:var(--ink-soft)}
-.odgiftflag{display:inline-block;background:#fff0f4;color:#b4517a;border-radius:99px;padding:3px 11px;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
-.odgiftmsg,.odcustnote{margin-bottom:12px}
+/* The Customer note card's body.
+   This class was written into the markup and never given a rule, so the card
+   had NO horizontal padding: the gift pill, both labels and the message box
+   all sat flush against the card border while the header above them was
+   indented 22px, which is what made the card look broken. Same 22px as
+   .odcardhead and .odcard .pad so all three line up. */
+.odcardbody{padding:16px 22px 18px}
+/* Pill and fee on one row, centred against each other. They were an
+   inline-block pair on a baseline, so the taller pill and the small grey fee
+   sat a couple of pixels out of true; flex removes the question. Wraps rather
+   than overflowing when a long fee string meets a narrow phone. */
+.odgiftrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.odgiftfee{font-size:11.5px;color:var(--ink-soft)}
+.odgiftflag{display:inline-block;background:#fff0f4;color:#b4517a;border-radius:99px;padding:4px 11px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.35}
+.odgiftmsg,.odcustnote{margin-bottom:14px}
 .odgiftmsg:last-child,.odcustnote:last-child{margin-bottom:0}
-.odgiftmsg b,.odcustnote b{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
-.odgiftmsg p,.odcustnote p{margin:0;font-size:13.5px;line-height:1.6;white-space:pre-wrap}
-.odgiftmsg p{padding:10px 12px;background:#fff7fa;border:1px solid #f0dde4;border-radius:8px}
+.odgiftmsg b,.odcustnote b{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint,var(--ink-soft));margin-bottom:6px;font-weight:700}
+.odgiftmsg p,.odcustnote p{margin:0;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+/* Both notes get a box. Previously only the gift message did, so the
+   customer's delivery note was bare text hanging off the card edge and read
+   as a stray paragraph rather than as something the shopper wrote. */
+.odgiftmsg p{padding:11px 13px;background:#fff7fa;border:1px solid #f0dde4;border-radius:8px}
+.odcustnote p{padding:11px 13px;background:#F7F8FA;border:1px solid var(--border);border-radius:8px}
 .odcardhead{background:#FFF8EC;color:#92600A;padding:13px 22px;font-weight:700;font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
 .odchev{display:flex;gap:4px}
 .odtoggle{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:.75;cursor:pointer}
@@ -8784,9 +8800,9 @@ buildNav();
     if(!note && !gift && !o.is_gift) return '';
     var body = '';
     if(o.is_gift){
-      body += '<p style="margin:0 0 10px"><span class="odgiftflag">Gift order</span>'+
-        (o.gift_fee_aed>0?'<span class="odgiftfee">AED '+o.gift_fee_aed+' charged</span>':'<span class="odgiftfee">no charge</span>')+
-        '</p>';
+      body += '<div class="odgiftrow"><span class="odgiftflag">Gift order</span>'+
+        (o.gift_fee_aed>0?'<span class="odgiftfee">AED '+o.gift_fee_aed+' charged</span>':'<span class="odgiftfee">No gift-wrap charge</span>')+
+        '</div>';
     }
     if(gift){
       body += '<div class="odgiftmsg"><b>Message for the gift card</b><p>'+sesc(gift).replace(/\n/g,'<br>')+'</p></div>';
