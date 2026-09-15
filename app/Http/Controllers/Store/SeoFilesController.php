@@ -31,6 +31,23 @@ class SeoFilesController extends Controller
         ), '/');
     }
 
+    /**
+     * Does this products.seo value ask for noindex?
+     *
+     * The value arrives as a raw json string from the query builder (the
+     * Eloquent cast is not in play here), and the flag itself has been written
+     * by hand, by the importer and by the admin screen, so it can be true, 1 or
+     * "1". Anything truthy counts; anything unparseable does not.
+     */
+    private static function isNoindex(mixed $seo): bool
+    {
+        if (is_string($seo)) {
+            $seo = json_decode($seo, true);
+        }
+
+        return is_array($seo) && ! empty($seo['noindex']);
+    }
+
     /** GET /sitemap.xml — dynamic sitemap of indexable URLs. */
     public function sitemap()
     {
@@ -47,7 +64,11 @@ class SeoFilesController extends Controller
 
         // Static pages
         $add($base . '/', null, '1.0', 'daily');
-        $add($base . '/shop', null, '0.9', 'daily');
+        // Trailing slash, for the same reason the product entries carry one:
+        // the shop page canonicalises to /shop/, so submitting /shop asks
+        // Google to fetch a URL that then points somewhere else. Every other
+        // entry in this file already used the slashed form.
+        $add($base . '/shop/', null, '0.9', 'daily');
         $add($base . '/reviews/', null, '0.5', 'weekly');
         $add($base . '/skin-quiz/', null, '0.5', 'monthly');
         $add($base . '/brands/', null, '0.5', 'weekly');
@@ -79,8 +100,27 @@ class SeoFilesController extends Controller
                 $q->whereNull('deleted_at');
             }
 
+            // A product carrying noindex in its per-product SEO overrides is
+            // one the owner has said should not be in the index. The page
+            // already emits "noindex, nofollow" for it; listing the same URL in
+            // the sitemap asks Google to come and crawl a page whose only
+            // instruction is to go away. Every such fetch is crawl budget taken
+            // off a product that does want to rank, and Search Console reports
+            // the pair as "Submitted URL marked noindex".
+            //
+            // The column is json, so the flag is read in PHP rather than
+            // matched in SQL: MySQL and SQLite disagree about json_extract and
+            // about how `true` comes back out of it, and this file runs on
+            // both.
+            $hasSeo = Schema::hasColumn('products', 'seo');
+
+            if ($hasSeo) {
+                $q->addSelect('seo');
+            }
+
             foreach ($q->get() as $p) {
                 if (empty($p->slug)) continue;
+                if ($hasSeo && self::isNoindex($p->seo ?? null)) continue;
                 $add($base . '/product/' . $p->slug . '/', $p->updated_at ?? null, '0.8', 'weekly');
             }
         }

@@ -68,6 +68,16 @@ class ProductController extends Controller
 
         // Demo reviews only when the product genuinely has none. A product with
         // real reviews is never padded — that would misrepresent it.
+        //
+        // $realSummary is kept separately and is the ONLY thing the structured
+        // data is allowed to see. Demo content is a dressing for an empty page
+        // while the catalogue is being filled; publishing an aggregateRating
+        // derived from it would tell Google this product has reviews and a star
+        // average that no visitor can find anywhere on the page, which is the
+        // textbook trigger for a structured-data manual action. The seoCtx
+        // closure below used to capture $summary after this block had already
+        // replaced it.
+        $realSummary = $summary;
         $demo = app(DemoContent::class);
 
         if ($demo->enabled() && $reviews->isEmpty()) {
@@ -97,8 +107,13 @@ class ProductController extends Controller
             // variable that does not exist inside the closure. PHP 8 raises
             // a warning, Laravel promotes it to an ErrorException, and every
             // product page returned 500.
-            'seoCtx' => (function () use ($product, $summary) {
-                $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+            'seoCtx' => (function () use ($product, $realSummary) {
+                // SeoSettings::map(), not Setting::map(): the latter memoises in
+                // a process-level static as well as in the cache, so the first
+                // render in a long-lived process pins site_url for every render
+                // after it. That is what left the breadcrumb trail below
+                // root-relative on a site whose canonical was absolute.
+                $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
                 // Per-product SEO overrides — the `seo` json column already
                 // existed on this table, commented "Yoast import target"
                 // from the original schema, but nothing had ever read from
@@ -121,11 +136,29 @@ class ProductController extends Controller
                         'name' => $product->name,
                         'brand' => $product->brand?->name,
                         'sku' => $product->sku,
-                        'price_aed' => \App\Support\Money::toAed($product->effectivePrice()),
-                        'stock' => $product->stock_status === 'instock' ? 1 : 0,
-                        'sale_ends_at' => $product->sale_ends_at?->toDateString(),
-                        'rating' => $summary['average'] ?: null,
-                        'reviews' => $summary['total'] ?: null,
+                        // The exact price as a decimal string, straight off the
+                        // integer fils. Money::toAed() returns a float and the
+                        // renderer then ran number_format() on it — two float
+                        // hops for the one number a crawler compares against
+                        // the price printed on the page.
+                        'price' => \App\Support\Money::decimalString($product->effectivePrice()),
+                        'price_minor' => $product->effectivePrice(),
+                        'currency' => \App\Support\Money::currency(),
+                        // The real column, so 'onbackorder' can say BackOrder
+                        // rather than being flattened into OutOfStock.
+                        'stock_status' => $product->stock_status,
+                        // Only while a sale is actually running. Outside that
+                        // window the advertised price is the ordinary one and
+                        // has no known end date, and sale_ends_at would be a
+                        // date in the past — which Google reads as an expired
+                        // offer and drops the price for.
+                        'sale_ends_at' => $product->isOnSale() ? $product->sale_ends_at?->toDateString() : null,
+                        // The gallery, so Google gets more than the featured
+                        // shot and can pick an aspect ratio per layout.
+                        'images' => $this->schemaImages($product, $override),
+                        // $realSummary, never the demo fixture.
+                        'rating' => $realSummary['average'] ?: null,
+                        'reviews' => $realSummary['total'] ?: null,
                     ],
                 ];
 
@@ -171,6 +204,43 @@ class ProductController extends Controller
         $trail[] = ['name' => $product->name, 'url' => $base . $product->url()];
 
         return $trail;
+    }
+
+    /**
+     * The images the structured data may claim, in the order Google should see
+     * them.
+     *
+     * Deliberately NOT gallery(): that one tops the strip up with labelled
+     * placeholders when demo content is on, and a placeholder is not a
+     * photograph of this product. Only the real featured image and the real
+     * gallery rows go out, with a per-product og_image override winning the
+     * first position when one has been set.
+     *
+     * @param  array<string, mixed>  $override  the products.seo json column
+     * @return list<string>
+     */
+    private function schemaImages(Product $product, array $override): array
+    {
+        $images = array_merge(
+            [$override['og_image'] ?? null, $product->image],
+            is_array($product->images) ? $product->images : []
+        );
+
+        $clean = [];
+
+        foreach ($images as $image) {
+            if (! is_string($image)) {
+                continue;
+            }
+
+            $image = trim($image);
+
+            if ($image !== '' && ! in_array($image, $clean, true)) {
+                $clean[] = $image;
+            }
+        }
+
+        return $clean;
     }
 
     private function gallery(Product $product): array

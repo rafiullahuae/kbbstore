@@ -233,6 +233,41 @@ final class Money
         return self::fromMajor($aed);
     }
 
+    /**
+     * The exact major-unit amount as a plain decimal string, for machines.
+     *
+     * JSON-LD offers, product feeds and anything else a crawler parses need
+     * "79.00", not "AED 79" and not 79.000000000001. Every other route from
+     * fils to a string in this file is aimed at a human: amount() follows
+     * displayDecimals(), which this store deliberately sets to 0, so the price
+     * Google was being shown came from toMajor() -> float -> number_format(),
+     * two float hops in a money path for a value a search engine compares
+     * against the page.
+     *
+     * This does it in integer arithmetic only, at the currency's own exponent,
+     * so the string is exact at three decimals (KWD, OMR) as well as two.
+     * Structured data always carries the full precision regardless of what the
+     * storefront chooses to print.
+     */
+    public static function decimalString(int $minor): string
+    {
+        $exp = self::minorExponent();
+        $scale = 10 ** $exp;
+
+        $sign = $minor < 0 ? '-' : '';
+        $abs = abs($minor);
+
+        $whole = intdiv($abs, $scale);
+
+        if ($exp <= 0) {
+            return $sign . $whole;
+        }
+
+        $fraction = str_pad((string) ($abs % $scale), $exp, '0', STR_PAD_LEFT);
+
+        return $sign . $whole . '.' . $fraction;
+    }
+
     // -----------------------------------------------------------------
     // Rendering
     // -----------------------------------------------------------------
