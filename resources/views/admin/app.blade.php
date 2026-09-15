@@ -6240,51 +6240,589 @@ function openProduct(idx){
 function closeDrawer(){$('#drawerBg').classList.remove('on');$('#drawer').classList.remove('on');}
 
 /* ===================== IMPORT / EXPORT ===================== */
-let impStep=1,impSource='woocsv',impData={products:true,taxos:true,orders:true,customers:true,users:true,reviews:true,coupons:true,seo:true};
-function renderImport(){
-  const steps=['Source','What to import','Field mapping','Validate in Sandbox','Import'];
-  $('#content').innerHTML=`<div class="wrap">
-    <div class="page-head"><h2>Import / Export</h2><p>Bring your WooCommerce store across — products, images, variations, pricing, SEO, orders, customers and logins. Nothing on the live site is touched.</p></div>
-    <div class="wiz"><div class="steps">${steps.map((s,i)=>`<div class="stp ${impStep===i+1?'on':impStep>i+1?'done':''}"><span class="sn">${impStep>i+1?ic(I.check):i+1}</span>${s}</div>`).join('')}</div>
-      <div class="card pad" id="impBody"></div></div></div>`;
-  impBody();
-}
-function impNav(){return `<div class="row" style="justify-content:space-between;margin-top:20px"><button class="btn ghost" ${impStep===1?'disabled':''} onclick="impBack()">Back</button><button class="btn" onclick="impNext()">${impStep===4?'Looks good — continue':'Continue'} →</button></div>`;}
-function impBody(){
-  const b=$('#impBody');
-  if(impStep===1){
-    b.innerHTML=`<b style="font-size:14px">Where is your data coming from?</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">Pick how you'll provide the export from kbeautybliss.com.</p>
-    <div style="display:flex;flex-direction:column;gap:10px">${[['woocsv','WooCommerce CSV','Products export from Woo → Products → Export'],['wpxml','WordPress XML','Tools → Export (posts, pages, media)'],['wcrest','WooCommerce REST API','Live pull via API keys — products, orders, customers'],['json','JSON file','Custom JSON in our import format']].map(o=>`<div class="optcard${impSource===o[0]?' on':''}" data-s="${o[0]}"><div class="oi">${ic(I.sandbox)}</div><div style="flex:1"><b>${o[1]}</b><p>${o[2]}</p></div><span class="cbx${impSource===o[0]?' on':''}">${ic(I.check)}</span></div>`).join('')}</div>${impNav()}`;
-    $$('#impBody .optcard').forEach(c=>c.onclick=()=>{impSource=c.dataset.s;impBody();});
-  } else if(impStep===2){
-    const items=[['products','Products','incl. images, variations, prices, SKUs'],['taxos','Categories, Tags, Brands, Attributes',''],['orders','Orders','2,419 incl. line items & statuses'],['customers','Customers','addresses & history'],['users','Users with logins','passwords preserved (phpass verify)'],['reviews','Reviews','45 reviews'],['coupons','Coupons',''],['seo','SEO meta','Yoast titles, descriptions, redirects']];
-    b.innerHTML=`<b style="font-size:14px">What should we bring across?</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">Everything's on by default — untick anything you don't need.</p>
-    <div style="display:flex;flex-direction:column;gap:8px">${items.map(it=>`<div class="optcard${impData[it[0]]?' on':''}" data-d="${it[0]}"><span class="cbx${impData[it[0]]?' on':''}">${ic(I.check)}</span><div><b>${it[1]}</b>${it[2]?`<p>${it[2]}</p>`:''}</div></div>`).join('')}</div>${impNav()}`;
-    $$('#impBody .optcard').forEach(c=>c.onclick=()=>{impData[c.dataset.d]=!impData[c.dataset.d];impBody();});
-  } else if(impStep===3){
-    const maps=[['Name','name'],['Regular price','price'],['Sale price','sale_price'],['SKU','sku'],['Categories','category'],['Images','images[]'],['Stock','stock_qty'],['Description','description'],['_yoast_wpseo_title','seo.title']];
-    b.innerHTML=`<b style="font-size:14px">Field mapping · Products</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">Matched automatically — adjust if your export uses different columns.</p>
-    <div class="card" style="box-shadow:none"><table><thead><tr><th>WooCommerce field</th><th></th><th>KBB field</th></tr></thead><tbody>${maps.map(m=>`<tr><td style="font-family:var(--mono);font-size:11.5px">${m[0]}</td><td style="color:var(--ink-faint)">${ic('<path d="M5 12h14M13 6l6 6-6 6"/>')}</td><td><span class="pill green">${m[1]}</span></td></tr>`).join('')}</tbody></table></div>${impNav()}`;
-  } else if(impStep===4){
-    b.innerHTML=`<b style="font-size:14px">Dry-run in Sandbox</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">We simulate the whole import against a sandbox copy of live — zero risk.</p>
-    <div class="checks">${[['Source parsed','642 products found'],['Images reachable','3,948 URLs OK · 2 flagged'],['No ID conflicts','matched on woo_id'],['Variations linked','1,180 variations'],['Logins verifiable','phpass hashes valid'],['Migration dry-run','non-destructive']].map(c=>`<div class="check"><div class="ci green">${ic(I.check)}</div><b>${c[0]}</b><small>${c[1]}</small></div>`).join('')}</div>
-    <div class="diff" style="margin-top:16px"><span><b class="plus">642</b> products</span><span><b class="plus">1,180</b> variations</span><span><b class="plus">3,948</b> images</span><span><b class="plus">48</b> categories</span><span><b class="plus">5,312</b> customers</span><span><b class="plus">2,419</b> orders</span><span><b>0</b> conflicts</span></div>${impNav()}`;
-  } else {
-    b.innerHTML=`<b style="font-size:14px">Import to live</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px" id="impMsg">A backup of the live database is taken automatically before importing.</p>
-    <div style="display:flex;flex-direction:column;gap:13px">${[['Products','imp1'],['Images','imp2'],['Orders','imp3'],['Customers & logins','imp4'],['SEO meta','imp5']].map(x=>`<div><div class="between" style="margin-bottom:6px"><span style="font-size:12.5px;font-weight:600">${x[0]}</span><span style="font-size:11px;color:var(--ink-soft)" id="${x[1]}t">queued</span></div><div class="pbar"><i id="${x[1]}"></i></div></div>`).join('')}</div>
-    <div class="row" style="justify-content:flex-end;gap:10px;margin-top:18px"><button class="btn ghost" onclick="impGo(4)">Back</button><button class="btn" id="runImp" onclick="runImport()">${ic(I.rocket)} Start import</button></div>`;
-  }
-}
-function runImport(){
-  $('#runImp').disabled=true;$('#runImp').innerHTML='Importing…';
-  const bars=['imp1','imp2','imp3','imp4','imp5'];let k=0;
-  const step=()=>{if(k>=bars.length){$('#impMsg').innerHTML='<b style="color:var(--accent-strong)">Import complete ✓</b> — your catalogue is now in the app.';toast('Import complete ✓');return;}
-    const id=bars[k];$('#'+id).style.width='100%';$('#'+id+'t').textContent='done';k++;setTimeout(step,640);};
-  setTimeout(step,400);
-}
-window.openProduct=openProduct;window.closeDrawer=closeDrawer;window.runImport=runImport;
+/*
+  Store → Import / Export. The screen that makes `php artisan kbb:import`
+  reachable by someone who has no shell.
+
+  THIS SCREEN DOES NOT IMPORT ANYTHING. Every row goes through the importer in
+  app/Services/Import — the same mapping, the same refusals, the same
+  idempotency — driven through /admin-api/import. What lives here is the part
+  that cannot live in a command: the uploads, the plain-word explanation of the
+  four decisions that are the owner's, and the loop that turns an import too
+  long for one request into a sequence of short ones.
+
+  THE LOOP IS THE WHOLE POINT, so it is worth stating what it does. Shared
+  PHP-FPM kills long requests and there is no queue worker on this host, so the
+  import is many small requests, each continuing from the checkpoint the last
+  one committed. This browser loop:
+
+    - measures how long each step really took and sizes the next one to land
+      near IMP_STEP_TARGET_MS, because the host's real timeout is unknown and
+      cannot be read from inside PHP. Halving on a slow step is how it finds the
+      ceiling without being told what it is;
+
+    - treats a FAILED request as a slice that was too big rather than as the end
+      of the world: it halves and retries. A timeout costs the rows in the
+      uncommitted batch and nothing else, because every committed batch advanced
+      the checkpoint in the same transaction;
+
+    - treats a 409 as "the last request is still running server-side" — which is
+      exactly what a proxy timeout leaves behind, since the PHP process keeps
+      going — and waits for it instead of starting a second one;
+
+    - never auto-starts. A reload of a part-finished import shows what happened
+      and a Continue button. Continuing is always safe; guessing that the owner
+      wanted to continue is not.
+
+  The preview is different and the screen says so in words: a dry run writes
+  everything and rolls it back inside ONE transaction, which is the only way it
+  can resolve an order's customer, so it cannot be continued across requests —
+  only redone deeper. See ImportDriver's class comment.
+*/
+window.openProduct=openProduct;window.closeDrawer=closeDrawer;
 window.clearSel=()=>{catSel.clear();catProducts();};
-window.impNext=()=>{impStep++;renderImport();};window.impBack=()=>{impStep--;renderImport();};window.impGo=n=>{impStep=n;renderImport();};
+
+// The section router at the top of this file still assigns to this when the
+// Import screen is opened. Kept so that line keeps working; nothing reads it.
+let impStep=1;
+
+/* How long one step should take. Comfortably inside any plausible
+   max_execution_time, and long enough that a 20,000-row import is not 400
+   round trips. */
+const IMP_STEP_TARGET_MS=8000;
+
+let impState=null;      // the last /import/status payload
+let impRows=400;        // rows per step, adapted from what the server manages
+let impRunning=false;   // the loop is going
+let impFails=0;         // consecutive failed steps, for the backoff
+let impMsg='';          // what to tell the owner about the last step
+let impMsgKind='';      // '', 'warn', 'bad'
+let impChoice=null;     // the owner's decisions, before a run pins them
+
+function impBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'')+'/admin-api'; }
+
+function impEsc(s){
+  // Refusal reasons quote the refused cell, and a refused cell contains
+  // whatever was in the owner's WooCommerce database. It is never HTML.
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function impNum(n){ return Number(n||0).toLocaleString('en-US'); }
+function impBytes(b){ b=Number(b||0); return b<1024?b+' B':(b<1048576?Math.round(b/1024)+' KB':(b/1048576).toFixed(1)+' MB'); }
+
+/* Never throws on an HTTP error: a 409 and a 500 mean different things to the
+   loop and both have to be visible to it. */
+async function impApi(path,opts){
+  const o=Object.assign({credentials:'same-origin',headers:{}},opts||{});
+  o.headers=Object.assign({'X-XSRF-TOKEN':uToken(),'Accept':'application/json'},o.headers);
+  if(o.method&&o.method!=='GET'&&!(o.body instanceof FormData)) o.headers['Content-Type']='application/json';
+  const r=await fetch(impBase()+path,o);
+  const text=await r.text();
+  let data=null;
+  try{ data=JSON.parse(text); }
+  catch(e){
+    // A non-JSON body is an error page — a 419, a 504 from the proxy, a raw
+    // 500 — not an API answer. Surfacing a snippet beats "something failed".
+    return {status:r.status,data:null,raw:text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,200)};
+  }
+  return {status:r.status,data:data};
+}
+
+async function impRefresh(){
+  const r=await impApi('/import/status');
+  if(r.data&&r.data.ok){ impState=r.data; if(!impChoice) impChoice=Object.assign({},r.data.defaults); }
+  return impState;
+}
+
+/* ------------------------------------------------------------------ render */
+
+async function renderImport(){
+  $('#content').innerHTML='<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading…</p></div>';
+  impRunning=false; impMsg=''; impMsgKind='';
+  try{ await impRefresh(); }
+  catch(e){ $('#content').innerHTML='<div class="wrap"><div class="card pad">Could not reach the server.</div></div>'; return; }
+  impPaint();
+}
+
+function impPaint(){
+  const s=impState; if(!s) return;
+  const run=s.run;
+  const anyFile=s.files.some(f=>f.present);
+
+  $('#content').innerHTML=impCss()+'<div class="wrap impwrap">'
+    +'<div class="page-head"><h2>Import / Export</h2><p>Bring your WooCommerce store across — categories, brands, products, customers, orders and order lines. '
+    +'Upload the exports, look at what <b>would</b> happen, fix anything it refuses, then import for real. '
+    +'Nothing is written until you press Import.</p></div>'
+    +impBanner(run)
+    +impFilesCard(s)
+    +(anyFile?impChoicesCard(s):'')
+    +(anyFile?impPreviewCard(s):'')
+    +(anyFile?impRunCard(s):'')
+    +impRejectsCard(s)
+    +impExportCard()
+    +'</div>';
+
+  impWire();
+}
+
+function impCss(){
+  return '<style>'
+  +'.impwrap .impgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}'
+  +'.impwrap .impfile{border:1px solid var(--border);border-radius:11px;padding:13px 14px;display:flex;flex-direction:column;gap:7px;min-width:0}'
+  +'.impwrap .impfile.on{border-color:#9ED8BB;background:#F6FCF9}'
+  +'.impwrap .impfile b{font-size:13px}'
+  +'.impwrap .impfile p{font-size:11.5px;color:var(--ink-soft);margin:0;line-height:1.5}'
+  +'.impwrap .impmeta{font-size:11.5px;color:var(--ink-soft);display:flex;gap:10px;flex-wrap:wrap;align-items:center}'
+  +'.impwrap .impdrop{border:2px dashed var(--border);border-radius:12px;padding:22px 16px;text-align:center;cursor:pointer;background:var(--surface-2)}'
+  +'.impwrap .impdrop.hot{border-color:var(--accent);background:var(--accent-soft)}'
+  +'.impwrap .impdrop b{display:block;font-size:13.5px;margin-bottom:4px}'
+  +'.impwrap .impdrop span{font-size:12px;color:var(--ink-soft)}'
+  +'.impwrap .imptbl{width:100%;border-collapse:collapse;font-size:12.5px}'
+  +'.impwrap .imptbl th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}'
+  +'.impwrap .imptbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}'
+  +'.impwrap .imptbl td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}'
+  +'.impwrap .impscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}'
+  /* On a phone these two tables stack into labelled blocks rather than scrolling
+     sideways. The refusal REASON is the column that matters and it is the last
+     one, so a sideways-scrolling table hides the only part worth reading. */
+  +'@media(max-width:640px){'
+  +'.impwrap .impstack thead{display:none}'
+  +'.impwrap .impstack,.impwrap .impstack tbody,.impwrap .impstack tr,.impwrap .impstack td{display:block;width:auto}'
+  +'.impwrap .impstack tr{border-bottom:1px solid var(--border);padding:9px 0}'
+  +'.impwrap .impstack td{border:0;padding:2px 0;text-align:left}'
+  +'.impwrap .impstack td.num{text-align:left}'
+  +'.impwrap .impstack td[data-l]::before{content:attr(data-l) " ";color:var(--ink-faint);font-size:10.5px;'
+  +'text-transform:uppercase;letter-spacing:.06em;font-weight:700}'
+  +'}'
+  +'.impwrap .impchoice{border:1px solid var(--border);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:9px;min-width:0}'
+  +'.impwrap .impchoice b{font-size:13px}'
+  +'.impwrap .impchoice p{font-size:12px;color:var(--ink-soft);margin:0;line-height:1.55}'
+  +'.impwrap .impseg{display:flex;gap:6px;flex-wrap:wrap}'
+  +'.impwrap .impseg button{flex:1 1 auto;min-width:110px;border:1px solid var(--border);background:var(--surface);border-radius:9px;padding:8px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}'
+  +'.impwrap .impseg button.on{border-color:var(--accent);background:var(--accent-soft);font-weight:700}'
+  +'.impwrap .impbanner{border-radius:11px;padding:13px 15px;margin-bottom:16px;font-size:12.5px;line-height:1.6;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}'
+  +'.impwrap .impbanner.warn{background:#FFF8EC;border:1px solid #F5E1BC;color:#7A5410}'
+  +'.impwrap .impbanner.bad{background:#FDF2F2;border:1px solid #F3C9C9;color:#96271F}'
+  +'.impwrap .impbanner.good{background:#F0F9F4;border:1px solid #CFE9DB;color:#1F7D52}'
+  +'.impwrap .impbanner .row{flex-shrink:0}'
+  +'.impwrap .impnote{font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin-top:6px}'
+  +'.impwrap .impbar{height:7px;background:var(--surface-3);border-radius:99px;overflow:hidden;margin-top:6px}'
+  +'.impwrap .impbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-strong));border-radius:99px;transition:.35s var(--ease)}'
+  +'.impwrap .impwhy{font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin:10px 0 0}'
+  +'@media(max-width:560px){.impwrap .impbanner{flex-direction:column;align-items:stretch}.impwrap .impbanner .row{width:100%}.impwrap .impbanner .btn{flex:1}.impwrap .impseg button{min-width:0}}'
+  +'</style>';
+}
+
+function impBanner(run){
+  if(impMsg){
+    return '<div class="impbanner '+(impMsgKind||'warn')+'"><div>'+impEsc(impMsg)+'</div>'
+      +(run&&run.status==='running'?'<div class="row"><button class="btn" id="impContinue">Continue</button></div>':'')+'</div>';
+  }
+  if(!run) return '';
+  if(run.status==='running'){
+    return '<div class="impbanner warn"><div><b>'+(run.mode==='preview'?'A preview':'An import')+' is part-way through.</b> '
+      +'Nothing was lost — it carries on from the last batch that finished. Press Continue whenever you are ready.</div>'
+      +'<div class="row"><button class="btn" id="impContinue">Continue</button><button class="btn ghost" id="impStop">Stop</button></div></div>';
+  }
+  if(run.status==='complete'){
+    return '<div class="impbanner good"><div><b>'+(run.mode==='preview'?'Preview finished.':'Import finished.')+'</b> '
+      +(run.mode==='preview'?'Nothing was written — read the table below, fix anything refused, then import for real.'
+        :'Run it once more to prove it: everything should come back as “unchanged”.')+'</div></div>';
+  }
+  return '';
+}
+
+/* ---------------------------------------------------------------- 1. files */
+
+function impFilesCard(s){
+  const lim=s.limits;
+  const cards=s.files.map(f=>
+    '<div class="impfile'+(f.present?' on':'')+'">'
+    +'<div class="between" style="align-items:flex-start"><b>'+impEsc(f.label)+'</b>'
+    +(f.present
+      ?'<span class="pill green">ready</span>'
+      :'<span style="font-size:11px;color:#94A3B8;font-weight:600">not uploaded</span>')+'</div>'
+    +'<p>'+impEsc(f.help)+'</p>'
+    +(f.present
+      ?'<div class="impmeta"><span>'+impNum(f.rows)+' rows</span><span>'+impBytes(f.bytes)+'</span>'
+        +'<button class="btn ghost sm impforget" data-e="'+impEsc(f.entity)+'" style="margin-left:auto;padding:3px 9px;font-size:11px">Remove</button></div>'
+      :'<div class="impmeta">expects <code style="font-family:var(--mono);font-size:11px">'+impEsc(f.file)+'</code></div>')
+    +'</div>').join('');
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<div class="between" style="margin-bottom:12px;flex-wrap:wrap;gap:10px"><div><b style="font-size:14px">1 · Your exports</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0">Upload as many as you have. You do not need all six — a file you leave out is simply not touched, '
+    +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div></div>'
+    +'<div class="impdrop" id="impDrop"><b>Drop your CSV files here, or click to choose</b>'
+    +'<span>Name them <code style="font-family:var(--mono)">categories.csv</code>, <code style="font-family:var(--mono)">brands.csv</code>, '
+    +'<code style="font-family:var(--mono)">products.csv</code>, <code style="font-family:var(--mono)">customers.csv</code>, '
+    +'<code style="font-family:var(--mono)">orders.csv</code>, <code style="font-family:var(--mono)">order_items.csv</code> and they sort themselves out.</span>'
+    +'<input type="file" id="impFileInput" accept=".csv,text/csv" multiple hidden></div>'
+    +'<div class="impnote">This server accepts uploads up to <b>'+impEsc(lim.upload_max_filesize)+'</b> each ('
+    +'form limit '+impEsc(lim.post_max_size)+'). Files are stored outside the website folder and are never reachable from the web. '
+    +'If an order export is larger than that, split it — the importer carries on across files.</div>'
+    +'<div class="impgrid" style="margin-top:14px">'+cards+'</div>'
+    +'<div id="impUploadMsg"></div>'
+    +'</div>';
+}
+
+/* -------------------------------------------------------------- 2. choices */
+
+function impChoicesCard(s){
+  const c=impChoice||s.defaults;
+  const locked=s.run&&s.run.status==='running';
+  const pinned=locked?s.run.options:c;
+  const seg=(key,opts)=>'<div class="impseg">'+opts.map(o=>
+      '<button class="impopt'+(String(pinned[key])===String(o[0])?' on':'')+'" data-k="'+key+'" data-v="'+impEsc(o[0])+'"'
+      +(locked?' disabled style="opacity:.55;cursor:not-allowed"':'')+'>'+impEsc(o[1])+'</button>').join('')+'</div>';
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<b style="font-size:14px">2 · Four decisions that are yours, not the importer\'s</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 14px">Each one is already set to what we recommend, so you can leave them alone. '
+    +(locked?'<b>They are fixed for the run that is in progress</b> — stop it first to change them.':'')+'</p>'
+    +'<div class="impgrid">'
+
+    +'<div class="impchoice"><b>Orders placed without an account</b>'
+    +'<p>Most people check out as guests. <b>Make a customer record</b> files those orders under the shopper\'s email, so they show up in '
+    +'Customers and count towards what that person has spent — which is what this store already does when someone buys without signing in. '
+    +'<b>Leave them unattached</b> keeps them as orders belonging to nobody, and they then sit outside every per-customer figure.</p>'
+    +seg('guests',[['synthesise','Make a customer record'],['unlinked','Leave them unattached']])+'</div>'
+
+    +'<div class="impchoice"><b>Which order number to keep</b>'
+    +'<p><b>The number on the invoice</b> keeps what your customer already has on their paperwork. '
+    +'<b>WooCommerce\'s internal id</b> is guaranteed never to clash — use it if the import tells you two orders share a number.</p>'
+    +seg('order_number',[['number','The number on the invoice'],['id','WooCommerce\'s internal id']])+'</div>'
+
+    +'<div class="impchoice"><b>What time zone your export\'s dates are in</b>'
+    +'<p>WooCommerce writes order dates in your shop\'s own time zone. Getting this wrong shifts every order in the store by a few hours, '
+    +'which quietly moves evening orders onto the next day and makes your daily sales disagree with WooCommerce. '
+    +'Leave it on Dubai unless your WordPress was set to something else.</p>'
+    +'<select class="inp" id="impTz"'+(locked?' disabled':'')+'>'
+    +s.timezones.map(t=>'<option value="'+impEsc(t)+'"'+(pinned.timezone===t?' selected':'')+'>'+impEsc(t)+'</option>').join('')
+    +'</select></div>'
+
+    +'<div class="impchoice"><b>The sample catalogue is holding real names</b>'
+    +'<p>This store was set up with a few placeholder brands and categories — <i>cosrx</i>, <i>beauty of joseon</i>, <i>cleansers</i>, '
+    +'<i>toners</i>, <i>serums</i> — and those are real things you sell. Your genuine ones cannot use the same web address twice, '
+    +'so by default they are refused and listed. Turn this on and the real WooCommerce record simply takes the placeholder\'s place. '
+    +'A name held by a different genuine record is still refused either way — only you can decide that one.</p>'
+    +seg('adopt_by_slug',[[true,'Take over the placeholders'],[false,'Refuse and list them']])+'</div>'
+
+    +'</div>'
+    +'<label class="impnote" style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;cursor:pointer">'
+    +'<input type="checkbox" id="impRestart" style="margin-top:2px"'+(locked?' disabled':'')+'>'
+    +'<span><b>Start every file again from its first row.</b> Normally you do not want this — an interrupted import picks up where it stopped. '
+    +'Use it when you have re-exported a file and want it re-read from the top. It is safe: rows already imported are simply re-presented and come back as “unchanged”.</span></label>'
+    +'</div>';
+}
+
+/* -------------------------------------------------------------- 3. preview */
+
+function impPreviewCard(s){
+  const run=s.run, isPreview=run&&run.mode==='preview';
+  const deepest=Math.max.apply(null,[1].concat(s.entities.filter(e=>e.present).map(e=>e.rows_total)));
+  const depth=isPreview?Math.min(run.preview_limit,deepest):0;
+  const pct=isPreview?Math.round(100*depth/deepest):0;
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<div class="between" style="flex-wrap:wrap;gap:12px;align-items:flex-start">'
+    +'<div><b style="font-size:14px">3 · Look before you write</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:640px">This does the entire import and then throws it away, so it can tell you exactly '
+    +'what would happen — including every row it would refuse and why. <b>Nothing is saved.</b></p></div>'
+    +'<div class="row" style="gap:8px">'
+    +'<button class="btn ghost" id="impPreview"'+(impRunning?' disabled':'')+'>'+(isPreview&&run.status==='running'?'Continue preview':'Preview')+'</button>'
+    +'</div></div>'
+    +(isPreview?'<div class="impnote" style="margin-top:12px"><b>Checked the first '+impNum(depth)+' rows of each file</b>'
+        +(run.status==='complete'?' — that is all of them.':' of '+impNum(deepest)+'.')
+        +'<div class="impbar"><i style="width:'+pct+'%"></i></div>'
+        +'<div style="margin-top:7px">A preview cannot be continued the way a real import can: it has to write everything and undo it in one go, '
+        +'which is the only way it can work out which order belongs to which customer. So it reads deeper each time you press Continue, '
+        +'starting from the top again. If it stops getting deeper, preview what it managed and import the rest for real — the real import '
+        +'<i>does</i> carry on from where it stopped.</div></div>':'')
+    +(isPreview?impResultTable(s,'Would create','Would update','Already identical','Would refuse'):'')
+    +'</div>';
+}
+
+/* ------------------------------------------------------------------ 4. run */
+
+function impRunCard(s){
+  const run=s.run, isLive=run&&run.mode==='live';
+  const busy=impRunning;
+
+  const rows=s.entities.filter(e=>e.present).map(e=>{
+    const pct=e.rows_total?Math.min(100,Math.round(100*e.processed/e.rows_total)):0;
+    const state=!isLive?'waiting':(e.done_this_run?'done':(run.current_entity===e.entity?'importing…':(e.processed>0?'part way':'waiting')));
+    return '<div style="margin-bottom:11px"><div class="between" style="margin-bottom:4px">'
+      +'<span style="font-size:12.5px;font-weight:600">'+impEsc(e.label)+'</span>'
+      +'<span style="font-size:11.5px;color:var(--ink-soft)">'+impNum(e.processed)+' of '+impNum(e.rows_total)+' · '+impEsc(state)+'</span></div>'
+      +'<div class="impbar"><i style="width:'+pct+'%"></i></div></div>';
+  }).join('');
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<div class="between" style="flex-wrap:wrap;gap:12px;align-items:flex-start">'
+    +'<div><b style="font-size:14px">4 · Import for real</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:640px">Safe to run more than once. Every row is matched on its WooCommerce id, '
+    +'so importing the same file twice updates rather than duplicates — and a second run reporting everything as “unchanged” is the best proof there is that it worked.</p></div>'
+    +'<div class="row" style="gap:8px">'
+    +(busy?'<button class="btn ghost" id="impPause">Pause</button>'
+          :'<button class="btn" id="impRun">'+(isLive&&run.status==='running'?'Continue import':'Import')+'</button>')
+    +'</div></div>'
+    +'<div style="margin-top:14px">'+rows+'</div>'
+    +'<div class="impnote">Your browser does this in small pieces, a few seconds at a time, so this shared server never has to hold one long request open. '
+    +'You can close this tab: whatever had finished stays finished, and coming back here offers to carry on. It will not start over and it will not import anything twice.'
+    +(busy?' <b>Working — about '+impNum(impRows)+' rows per piece.</b>':'')+'</div>'
+    +(isLive?impResultTable(s,'Created','Updated','Unchanged','Refused'):'')
+    +'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="impReset" style="color:#c0392b">Forget progress and start over</button></div>'
+    +'</div>';
+}
+
+function impResultTable(s,a,b,c,d){
+  const shown=s.entities.filter(e=>e.present&&(e.created||e.updated||e.unchanged||e.rejected||e.processed));
+  if(!shown.length) return '';
+
+  const notes=[];
+  shown.forEach(e=>{ Object.keys(e.notes||{}).forEach(n=>notes.push([e.label,n,e.notes[n]])); });
+
+  return '<div class="impscroll" style="margin-top:16px"><table class="imptbl impstack"><thead><tr><th>What</th>'
+    +'<th style="text-align:right">'+impEsc(a)+'</th><th style="text-align:right">'+impEsc(b)+'</th>'
+    +'<th style="text-align:right">'+impEsc(c)+'</th><th style="text-align:right">'+impEsc(d)+'</th></tr></thead><tbody>'
+    +shown.map(e=>'<tr><td><b>'+impEsc(e.label)+'</b>'+(e.source_changed?' <span class="pill" style="background:#FDF2F2;color:#96271F">file changed</span>':'')+'</td>'
+      +'<td class="num" data-l="'+impEsc(a)+'">'+impNum(e.created)+'</td>'
+      +'<td class="num" data-l="'+impEsc(b)+'">'+impNum(e.updated)+'</td>'
+      +'<td class="num" data-l="'+impEsc(c)+'">'+impNum(e.unchanged)+'</td>'
+      +'<td class="num" data-l="'+impEsc(d)+'"'+(e.rejected?' style="color:#96271F;font-weight:700"':'')+'>'+impNum(e.rejected)+'</td></tr>').join('')
+    +'</tbody></table></div>'
+    +(notes.length?'<div class="impwhy"><b>Worth knowing</b><ul style="margin:6px 0 0;padding-left:18px">'
+      +notes.map(n=>'<li>'+impEsc(n[0])+' — '+impEsc(n[1])+' <span style="color:var(--ink-faint)">('+impNum(n[2])+')</span></li>').join('')
+      +'</ul></div>':'');
+}
+
+/* -------------------------------------------------------------- 5. refusals */
+
+function impRejectsCard(s){
+  const r=s.rejects;
+  if(!r||!r.count) return '';
+  const mode=(s.run&&s.run.mode)||'preview';
+
+  return '<div class="card pad" style="margin-bottom:16px;border-color:#F3C9C9">'
+    +'<div class="between" style="flex-wrap:wrap;gap:12px;align-items:flex-start">'
+    +'<div><b style="font-size:14px;color:#96271F">'+impNum(r.count)+' rows were refused</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:640px">These are <b>not</b> in the database. Each one says what is wrong with it. '
+    +'Fix them in your export and upload it again — the rows that did go in will just report as unchanged next time.</p></div>'
+    +'<div class="row"><a class="btn ghost" href="'+impBase()+'/import/rejects?mode='+encodeURIComponent(mode)+'">Download all '+impNum(r.count)+' as CSV</a></div></div>'
+    +'<div class="impscroll" style="margin-top:14px"><table class="imptbl impstack"><thead><tr><th>What</th><th>Line</th><th>Which row</th><th>Why it was refused</th></tr></thead><tbody>'
+    +r.shown.map(x=>'<tr><td data-l="File"><b>'+impEsc(x.entity)+'</b></td><td class="num" data-l="Line">'+impEsc(x.line)+'</td>'
+      +'<td data-l="Row" style="font-family:var(--mono);font-size:11px">'+impEsc(x.id)+'</td>'
+      +'<td data-l="Why">'+impEsc(x.reason)+'</td></tr>').join('')
+    +'</tbody></table></div>'
+    +(r.truncated?'<div class="impnote">Showing the first '+impNum(r.shown.length)+'. The CSV has every one of them.</div>':'')
+    +'</div>';
+}
+
+/* ---------------------------------------------------------------- 6. export */
+
+function impExportCard(){
+  return '<div class="card pad">'
+    +'<b style="font-size:14px">Export</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:680px">'
+    +'Two exports already exist and are the ones worth having: <b>Store → Customers</b> hands you the customer list as a CSV, filters and all, '
+    +'and <b>Store → Orders</b> does the same for orders. Use those.</p>'
+    +'<p class="impwhy" style="max-width:680px">A matching export of all six files — one that could be re-imported and come back identical — is not here on purpose. '
+    +'Writing it means a second set of rules mapping every column back the other way, and a second set of rules is a second answer to what a row meant. '
+    +'That belongs in its own piece of work with its own tests, not bolted onto this screen.</p>'
+    +'</div>';
+}
+
+/* ------------------------------------------------------------------- wiring */
+
+function impWire(){
+  const drop=$('#impDrop'), input=$('#impFileInput');
+  if(drop&&input){
+    drop.onclick=()=>input.click();
+    drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot');};
+    drop.ondragleave=()=>drop.classList.remove('hot');
+    drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');impUpload(e.dataTransfer.files);};
+    input.onchange=()=>impUpload(input.files);
+  }
+
+  document.querySelectorAll('.impforget').forEach(b=>{
+    b.onclick=async()=>{
+      b.disabled=true;
+      await impApi('/import/forget',{method:'POST',body:JSON.stringify({entity:b.dataset.e})});
+      await impRefresh(); impPaint();
+    };
+  });
+
+  document.querySelectorAll('.impopt').forEach(b=>{
+    b.onclick=()=>{
+      if(b.disabled) return;
+      const v=b.dataset.v;
+      impChoice[b.dataset.k]=(v==='true')?true:((v==='false')?false:v);
+      impPaint();
+    };
+  });
+
+  const tz=$('#impTz'); if(tz) tz.onchange=()=>{ impChoice.timezone=tz.value; };
+
+  const preview=$('#impPreview');
+  if(preview) preview.onclick=()=>impBegin('preview');
+
+  const run=$('#impRun');
+  if(run) run.onclick=()=>{
+    if(!confirm('Import for real. This writes to your store.\n\nIt is safe to run again afterwards — rows are matched on their WooCommerce id, so nothing is duplicated. Continue?')) return;
+    impBegin('live');
+  };
+
+  const cont=$('#impContinue'); if(cont) cont.onclick=()=>{ impMsg=''; impDrive(); };
+  const pause=$('#impPause'); if(pause) pause.onclick=()=>{ impRunning=false; impPaint(); };
+  const stop=$('#impStop'); if(stop) stop.onclick=async()=>{ impRunning=false; await impApi('/import/stop',{method:'POST'}); await impRefresh(); impPaint(); };
+
+  const reset=$('#impReset');
+  if(reset) reset.onclick=async()=>{
+    if(!confirm('Forget how far the import got, so the next run reads every file from its first row?\n\nNothing already imported is deleted — those rows will simply be re-presented and reported as unchanged.')) return;
+    impRunning=false;
+    await impApi('/import/reset',{method:'POST'});
+    await impRefresh(); impPaint();
+  };
+}
+
+async function impUpload(fileList){
+  const files=Array.prototype.slice.call(fileList||[]);
+  if(!files.length) return;
+
+  const box=$('#impUploadMsg');
+  if(box) box.innerHTML='<div class="impnote">Uploading '+files.length+' file'+(files.length===1?'':'s')+'…</div>';
+
+  const body=new FormData();
+  files.forEach(f=>body.append('files[]',f));
+
+  const r=await impApi('/import/upload',{method:'POST',body:body});
+
+  if(!r.data){
+    // No JSON at all: almost always the file being larger than the server's
+    // own limit, which PHP refuses before any of our code runs.
+    impMsg='The server would not take that upload. It is usually a file larger than the limit shown above. '+(r.raw||'');
+    impMsgKind='bad';
+    await impRefresh(); impPaint(); return;
+  }
+
+  if(r.data.status) impState=r.data.status;
+
+  const refused=(r.data.refused||[]);
+  if(refused.length){
+    impMsg=refused.map(x=>x.message).join('  ·  ');
+    impMsgKind='bad';
+  }else{
+    impMsg=''; impMsgKind='';
+    toast('Uploaded');
+  }
+
+  impPaint();
+}
+
+async function impBegin(mode){
+  const c=impChoice||impState.defaults;
+  const restartEl=$('#impRestart');
+
+  const r=await impApi('/import/start',{method:'POST',body:JSON.stringify({
+    mode:mode,
+    guests:c.guests,
+    order_number:c.order_number,
+    timezone:c.timezone,
+    adopt_by_slug:!!c.adopt_by_slug,
+    restart:!!(restartEl&&restartEl.checked),
+    force:true
+  })});
+
+  if(!r.data||!r.data.ok){
+    impMsg=(r.data&&r.data.message)||'Could not start.'; impMsgKind='bad'; impPaint(); return;
+  }
+
+  impState=r.data.status;
+  impRows=impState.limits.default_step_rows;
+  impFails=0; impMsg=''; impMsgKind='';
+  impDrive();
+}
+
+/*
+ * The loop. See the note at the top of this section for why it is shaped like
+ * this; what follows is only the arithmetic.
+ */
+async function impDrive(){
+  if(impRunning) return;
+  impRunning=true; impFails=0;
+  impPaint();
+
+  while(impRunning){
+    const t0=performance.now();
+    let r;
+
+    try{ r=await impApi('/import/step',{method:'POST',body:JSON.stringify({rows:impRows})}); }
+    catch(e){ r={status:0,data:null,raw:String(e&&e.message||e)}; }
+
+    const took=performance.now()-t0;
+
+    // 409: the previous request is still running on the server. That is what a
+    // proxy timeout leaves behind — the browser gave up, PHP did not — so the
+    // only correct move is to wait for it, never to start a second one.
+    if(r.status===409){
+      impFails++;
+      if(impFails>20){ impRunning=false; impMsg='Something else is still working on this import. Reload in a minute.'; impMsgKind='warn'; impPaint(); return; }
+      impMsg='Waiting for the previous piece to finish on the server…'; impMsgKind='warn'; impPaint();
+      await new Promise(res=>setTimeout(res,5000));
+      continue;
+    }
+
+    if(!r.data||r.status>=500||r.status===0){
+      // The slice was too big for this host, or the network dropped. Nothing is
+      // lost: every batch that committed advanced the checkpoint with it. Halve
+      // and try again, which is how this finds a host's real ceiling without
+      // being told what it is.
+      impFails++;
+      if(impRows>impState.limits.min_step_rows&&impFails<=6){
+        impRows=Math.max(impState.limits.min_step_rows,Math.floor(impRows/2));
+        impMsg='That piece was too big for this server, so it is trying a smaller one ('+impNum(impRows)+' rows). Nothing was lost.';
+        impMsgKind='warn'; impPaint();
+        continue;
+      }
+      impRunning=false;
+      impMsg='The server stopped responding. Nothing already imported was lost — press Continue to pick up where it stopped.'
+        +(r.raw?' ('+r.raw+')':'');
+      impMsgKind='bad';
+      await impRefresh(); impPaint(); return;
+    }
+
+    impFails=0;
+    if(r.data.status) impState=r.data.status;
+
+    if(r.data.ok===false){
+      impRunning=false;
+      impMsg=r.data.message||'That piece could not be done.';
+      impMsgKind=r.data.needs_restart?'warn':'bad';
+      if(r.data.needs_restart){
+        impMsg+='  Tick “Start every file again from its first row” above and press Import again.';
+      }
+      impPaint(); return;
+    }
+
+    // Aim the next piece at IMP_STEP_TARGET_MS. Grow slowly, shrink fast: being
+    // half as quick as possible costs minutes, and being one step too greedy
+    // costs a timeout.
+    if(took<IMP_STEP_TARGET_MS*0.6) impRows=Math.min(impState.limits.max_step_rows,Math.ceil(impRows*1.6));
+    else if(took>IMP_STEP_TARGET_MS*1.5) impRows=Math.max(impState.limits.min_step_rows,Math.floor(impRows/2));
+
+    impMsg=''; impMsgKind='';
+    impPaint();
+
+    if(!impState.run||impState.run.status!=='running'){
+      impRunning=false;
+      impPaint();
+      toast(impState.run&&impState.run.mode==='preview'?'Preview finished':'Import finished');
+      return;
+    }
+  }
+
+  impPaint();
+}
 
 /* ===================== PRODUCT LABELS ===================== */
 const OCCASIONS=[['none','None'],['eid','Eid'],['ramadan','Ramadan'],['xmas','Christmas'],['ny','New Year'],['bf','Black Friday'],['summer','Summer Sale']];
