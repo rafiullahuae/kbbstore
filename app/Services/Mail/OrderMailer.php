@@ -202,6 +202,99 @@ class OrderMailer
     }
 
     /**
+     * Send this order's invoice to the customer, on purpose, from the admin.
+     *
+     * The second method in this class that REPORTS rather than swallows, and for
+     * the same reason resendConfirmation() gives: the swallowing everywhere else
+     * exists because a dead SMTP host must not take down a checkout whose payment
+     * is already taken, and nothing is waiting on the answer. Here a person
+     * pressed "Email invoice" and is owed the truth. A button that says "Sent"
+     * whatever happened is worse than one that refuses.
+     *
+     * THE NUMBER IS ALLOCATED BEFORE THE SEND, NOT AFTER. An invoice with no
+     * number on it is not an invoice, and a customer who receives one and then
+     * receives a second copy carrying a number has been sent two documents for
+     * one debt. Allocation is idempotent and race-safe (see InvoiceNumbers), so
+     * emailing an order that has already been printed re-sends THAT invoice
+     * rather than minting a new one — the emailed document and the printed one
+     * are the same document, by number and by figure.
+     *
+     * If the send fails the number is NOT rolled back, deliberately. It has been
+     * issued; it belongs to this order now. Releasing it would mean the next
+     * order could be given a number that a half-delivered email may already be
+     * carrying, which is the one thing an invoice sequence may never do.
+     *
+     * NO MODULE SWITCH IS CONSULTED, and that is a decision rather than an
+     * oversight. The five keys above guard emails the store sends BY ITSELF, and
+     * a toggle exists so the owner can stop them happening without being asked.
+     * This one only ever happens because the owner asked for it, one order at a
+     * time, from a screen they are looking at. A switch whose only effect is to
+     * make a button the owner just pressed refuse is not a setting, it is a
+     * trap. (ModuleRegistry belongs to another lane; adding a row there is the
+     * integrator's call if the owner ever wants one.)
+     *
+     * @return array{ok: bool, message: string, invoice_number?: int}
+     */
+    public function emailInvoice(Order $order): array
+    {
+        $to = trim((string) $order->email);
+
+        if ($to === '') {
+            return ['ok' => false, 'message' => 'This order has no email address on it.'];
+        }
+
+        try {
+            $number = app(\App\Services\Invoices\InvoiceNumbers::class)->allocate($order);
+        } catch (\Throwable $e) {
+            Log::error('invoice number allocation failed', [
+                'order' => $order->order_number,
+                'exception' => class_basename($e),
+                'message' => $this->redact($e->getMessage()),
+            ]);
+
+            return [
+                'ok' => false,
+                'message' => 'Could not allocate an invoice number for this order: ' . $this->redact($e->getMessage()),
+            ];
+        }
+
+        try {
+            // Re-read before rendering: under contention the number written may
+            // be another request's, and the document must print what the
+            // database holds rather than what this process hoped to write.
+            $order->refresh();
+            $order->loadMissing('items');
+
+            Mail::mailer(MailConfigurator::MAILER)
+                ->to($to)
+                ->send(new \App\Mail\OrderInvoice($order));
+
+            return [
+                'ok' => true,
+                'message' => 'Invoice ' . \App\Services\Invoices\InvoiceNumbers::format($number)
+                    . ' sent to ' . $to . '.',
+                'invoice_number' => $number,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('email invoice failed', [
+                'order' => $order->order_number,
+                'invoice_number' => $number,
+                'exception' => class_basename($e),
+                'message' => $this->redact($e->getMessage()),
+            ]);
+
+            return [
+                'ok' => false,
+                // The driver's own words, redacted of the SMTP password, because
+                // "it failed" sends the owner to a log file they cannot read on
+                // shared hosting.
+                'message' => 'Could not send: ' . $this->redact($e->getMessage()),
+                'invoice_number' => $number,
+            ];
+        }
+    }
+
+    /**
      * The order's status column changed to something the customer is owed a
      * message about.
      *
