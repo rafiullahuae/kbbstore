@@ -1,0 +1,8 @@
+term_id,name,slug,parent,description,position
+15,Skincare,skincare,,Everything for the face,1
+22,Face Cleansers,face-cleansers,15,,2
+31,Makeup Removers,makeup-removers,22,Four levels deep in production,3
+40,Orphaned Branch,orphaned-branch,999,Parent term is not in this export,4
+0,Bad Term Id,bad-term-id,,Term id 0 is not an id,5
+,No Term Id,no-term-id,,Nothing to match this row on next run,6
+55,,no-name,15,A category with no name,7

@@ -1,0 +1,11 @@
+id,name,slug,sku,status,type,regular_price,sale_price,stock_status,stock,brand_term_id,category_term_ids,position,date_created,description
+4021,Ginseng Serum,serum-4021,KBB-4021,publish,simple,99.50,89.00,instock,12,502,"22,15",1,2019-03-04 10:00:00,A serum.
+4022,Rice Toner,toner-4022,KBB-4022,publish,simple,"1,234.50",,instock,4,501,31,2,2020-06-01 09:00:00,A toner.
+4023,Precision Loss,precision-4023,KBB-4023,publish,simple,12.345,,instock,1,501,15,3,2021-01-01 00:00:00,Three decimals cannot be fils.
+4024,Trashed Product,trashed-4024,KBB-4024,trash,simple,10.00,,instock,1,501,15,4,2021-01-01 00:00:00,In the WordPress trash.
+4025,Ambiguous Money,ambiguous-4025,KBB-4025,publish,simple,"99,50",,instock,1,501,15,5,2021-01-01 00:00:00,Comma could be either.
+4026,Sale With No Regular,sale-only-4026,KBB-4026,publish,simple,,49.00,instock,1,501,15,6,2021-01-01 00:00:00,No regular price.
+4027,Snail Essence,essence-4027,KBB-4027,publish,simple,120.00,,outofstock,0,501,22,7,2019-11-20 08:30:00,An old product.
+4028,Unknown Status,unknown-4028,KBB-4028,archived,simple,15.00,,instock,1,501,15,8,2021-01-01 00:00:00,Status this schema has no concept of.
+,No Product Id,no-id,KBB-NONE,publish,simple,10.00,,instock,1,501,15,9,2021-01-01 00:00:00,Cannot be matched on a re-run.
+4029,Missing Category,missing-cat-4029,KBB-4029,publish,simple,20.00,,instock,1,501,4242,10,2021-01-01 00:00:00,References a category not in the export.
