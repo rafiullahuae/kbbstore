@@ -1,15 +1,21 @@
 @extends('emails.layout')
 
 @section('body')
-    <p style="margin:0 0 16px;font-size:16px;font-weight:600;">A new order has come in.</p>
+    @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
 
-    <div style="padding:12px 14px;background:#f5f5f7;border-radius:8px;margin:0 0 4px;">
-        <div><span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9096a1;">Order</span>
-            <span style="font-weight:700;margin-left:6px;">{{ $order['number'] }}</span></div>
-        <div style="margin-top:4px;color:#4b5563;">{{ $order['email'] }}@if ($order['phone'] !== '') &middot; {{ $order['phone'] }}@endif</div>
-    </div>
+    <p style="margin:0 0 16px;font-size:19px;font-weight:700;line-height:1.3;color:{{ $c['ink'] }};">A new order has come in.</p>
 
-    <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9096a1;margin:20px 0 -6px;">Items</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};border-radius:9px;">
+        <tr>
+            <td style="padding:13px 15px;font-size:14px;line-height:1.5;color:{{ $c['ink'] }};">
+                <div><span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">Order</span>
+                    <span style="font-weight:700;margin-left:7px;font-size:16px;color:{{ $c['pinkDeep'] }};">{{ $order['number'] }}</span></div>
+                <div style="margin-top:4px;color:{{ $c['ink2'] }};">{{ $order['email'] }}@if ($order['phone'] !== '') &middot; {{ $order['phone'] }}@endif</div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;margin:22px 0 -10px;">Items to pick</div>
     @include('emails.partials.items')
     @include('emails.partials.totals')
     @include('emails.partials.delivery')
@@ -20,7 +26,7 @@
         leak, and mail is the least controlled channel this app has. The order
         number is enough to find it, and is worth nothing to an interceptor.
     --}}
-    <p style="margin:26px 0 0;font-size:13px;color:#6b7280;">
+    <p style="margin:26px 0 0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
         Open Orders in your store admin and search for {{ $order['number'] }} to pick, pack and mark it dispatched.
     </p>
 @endsection

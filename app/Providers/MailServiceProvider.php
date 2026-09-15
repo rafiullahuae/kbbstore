@@ -46,7 +46,26 @@ class MailServiceProvider extends ServiceProvider
         $this->app->scoped(MailTester::class);
         $this->app->scoped(OrderMailer::class);
 
-        $this->app->afterResolving('mail.manager', function () {
+        $this->app->afterResolving('mail.manager', function ($manager) {
+            /*
+             * First, because it must happen whatever the settings lookup below
+             * does. `kbb-server` is not one of MailManager's built-in drivers,
+             * so without this the manager would throw "Unsupported mail
+             * transport [kbb-server]" the moment anything tried to send -- and
+             * the swallow in OrderMailer would turn that into a logged line and
+             * a customer who never heard from the store. Registering a creator
+             * is a single array write and builds nothing.
+             *
+             * The manager arrives as the callback's argument rather than being
+             * fetched from the container, because this runs during that
+             * container resolution.
+             */
+            try {
+                MailConfigurator::registerTransports($manager);
+            } catch (\Throwable) {
+                // An older framework build without extend(). Leave `log` in place.
+            }
+
             /*
              * Guarded, and guarded loudly in the comment rather than quietly in
              * the code: this runs during a request that wants to send mail, and

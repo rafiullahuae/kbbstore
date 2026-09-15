@@ -1,7 +1,8 @@
-Hello{!! $order['customerName'] !== '' ? ' ' . $order['customerName'] : '' !!},
+Thank you{!! $order['customerName'] !== '' ? ', ' . $order['customerName'] : '' !!}
 
-Thank you — we have your order and are getting it ready. Here is everything
-that was on it.
+Your order is in and we are packing it with care. Everything you chose is
+listed below, exactly as it was when you ordered — keep this email, it is
+your receipt.
 
 @include('emails.partials.body-text')
 
@@ -12,4 +13,4 @@ That link opens on the device you ordered from. Anywhere else, sign in to your
 account and your orders are all listed there under {!! $order['number'] !!}:
 {!! $order['accountUrl'] !!}
 
-— K Beauty Bliss
+@include('emails.partials.support-text')

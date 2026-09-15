@@ -28,6 +28,14 @@ use Illuminate\Mail\Mailables\Envelope;
  */
 class NewOrderAlert extends OrderMail
 {
+    /*
+     * No support block and no sign-off. This is the store writing to itself:
+     * printing "chat to us on WhatsApp" in the owner's own new-order alert is
+     * noise at best, and at worst it is the packing team's eye being trained to
+     * skip the bottom of an email that will one day carry something they need.
+     */
+    protected const CUSTOMER_FACING = false;
+
     public function envelope(): Envelope
     {
         return new Envelope(

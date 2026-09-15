@@ -26,8 +26,9 @@ use Illuminate\Support\Facades\Mail;
  *     -- not "something went wrong". That string is the whole deliverable: it
  *     is what tells the owner whether the host blocks the port, rejects the
  *     password, or refuses the From address.
- *   - When the configured transport is `log`, or SMTP is not filled in, the
- *     result says so in its own status. It is never dressed up as a send.
+ *   - When the configured transport is `log`, or a chosen SMTP is not filled
+ *     in, or the host has disabled PHP's mail(), the result says so in its own
+ *     status. It is never dressed up as a send.
  *   - Accepting a message is not delivering it. A server can take it and bounce
  *     it minutes later, and the wording says that rather than claiming the
  *     inbox.
@@ -46,12 +47,39 @@ class MailTester
     {
         $transport = $this->settings->transport();
 
-        if ($transport === 'smtp' && ! $this->settings->configured()) {
+        if ($transport === MailSettings::TRANSPORT_SMTP && ! $this->settings->configured()) {
+            /*
+             * Still refused, still not dressed up as a send -- even though the
+             * mailer would now quietly fall back to the server transport and
+             * probably succeed. The owner asked whether their SMTP server works;
+             * answering "yes" because a different transport delivered the message
+             * is the kind of green tick this whole screen exists to stop.
+             */
             return $this->record([
                 'ok' => false,
                 'status' => 'unconfigured',
-                'message' => 'Nothing was sent: SMTP is not set up yet. Still needed: '
-                    . implode(', ', $this->settings->missing()) . '.',
+                'message' => 'Nothing was sent: the dedicated SMTP server is not set up yet. Still needed: '
+                    . implode(', ', $this->settings->missing())
+                    . '. Order emails are still going out through this server\'s own mail in the meantime.',
+                'error' => null,
+                'to' => $to,
+                'transport' => 'none',
+                'duration_ms' => 0,
+            ]);
+        }
+
+        if ($transport === MailSettings::TRANSPORT_SERVER && ! ServerMailTransport::available()) {
+            /*
+             * Answerable without sending anything, so it is answered here rather
+             * than as a transport exception: the host has switched mail() off in
+             * php.ini and no amount of pressing the button will change that.
+             */
+            return $this->record([
+                'ok' => false,
+                'status' => 'unavailable',
+                'message' => "Nothing was sent: this host has disabled PHP's mail() function, so the "
+                    . 'server cannot send mail on its own. Ask the host to enable it, or switch '
+                    . '"How this store sends email" to a dedicated SMTP server.',
                 'error' => null,
                 'to' => $to,
                 'transport' => 'none',
@@ -62,6 +90,7 @@ class MailTester
         // Pick up anything saved in this same request before sending.
         $this->configurator->refresh();
 
+        $active = $this->configurator->activeTransport();
         $real = $this->configurator->usesRealTransport();
         $started = microtime(true);
 
@@ -75,7 +104,7 @@ class MailTester
                 'message' => $this->redact($e->getMessage()),
                 'error' => $this->redact($this->describe($e)),
                 'to' => $to,
-                'transport' => $real ? 'smtp' : 'log',
+                'transport' => $active,
                 'duration_ms' => (int) round((microtime(true) - $started) * 1000),
             ]);
         }
@@ -83,15 +112,22 @@ class MailTester
         return $this->record([
             'ok' => true,
             'status' => $real ? 'sent' : 'logged',
-            'message' => $real
-                // "Accepted", not "delivered": the mail server took the message.
-                // A bounce or a spam folder is still possible and this must not
-                // imply otherwise.
-                ? 'The mail server accepted the message for ' . $to . '. Check that inbox (and its spam folder) to confirm it arrives.'
-                : 'Nothing was sent. "Send using" is set to log, so the message was written to the Laravel log instead. Switch it to smtp to test real delivery.',
+            // "Accepted", not "delivered": something took the message. A bounce
+            // or a spam folder is still possible and none of this may imply
+            // otherwise. Which something it was is named, because "the mail
+            // server" means two different machines depending on the setting.
+            'message' => match ($active) {
+                MailSettings::TRANSPORT_SERVER => 'This server accepted the message for ' . $to
+                    . '. Check that inbox (and its spam folder) to confirm it arrives — a shared host will '
+                    . 'often accept a message and then have it filtered, so the inbox is the proof, not this line.',
+                MailSettings::TRANSPORT_SMTP => 'The mail server accepted the message for ' . $to
+                    . '. Check that inbox (and its spam folder) to confirm it arrives.',
+                default => 'Nothing was sent. "How this store sends email" is set to write to the log, so the '
+                    . 'message went to the Laravel log instead. Choose one of the other two options to test real delivery.',
+            },
             'error' => null,
             'to' => $to,
-            'transport' => $real ? 'smtp' : 'log',
+            'transport' => $active,
             'duration_ms' => (int) round((microtime(true) - $started) * 1000),
         ]);
     }

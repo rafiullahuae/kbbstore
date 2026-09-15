@@ -18,6 +18,13 @@
 
     $itemsHeading lets the merchant alert say "ITEMS" where the customer's copy
     says "WHAT YOU ORDERED" — the merchant did not order anything.
+
+    QUANTITY IS LABELLED HERE TOO. The HTML part gained a Qty column; this one
+    gained the word. It used to read "2 x AED 199.00 = AED 398.00", one run of
+    figures in which the quantity is the one that looks least like a quantity.
+    Now each line names all three — how many, what each, what that came to — so
+    the text part and the HTML part say the same thing in the same order, which
+    is the whole reason both render the same presenter array.
 --}}
 Order {!! $order['number'] !!}@if ($order['placedAt'] !== '') — placed {!! $order['placedAt'] !!}@endif
 
@@ -32,7 +39,7 @@ Order {!! $order['number'] !!}@if ($order['placedAt'] !== '') — placed {!! $or
 @if ($item['sku'] !== '')
   SKU {!! $item['sku'] !!}
 @endif
-  {!! $item['quantity'] !!} x {!! $item['unitPlain'] !!} = {!! $item['linePlain'] !!}
+  QTY {!! $item['quantity'] !!}  ·  {!! $item['unitPlain'] !!} each  ·  line total {!! $item['linePlain'] !!}
 @endforeach
 
 TOTALS

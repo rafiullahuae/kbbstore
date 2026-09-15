@@ -30,18 +30,34 @@ class MailConfigurator
     /**
      * Write the live configuration.
      *
-     * Falls back to the `log` transport when SMTP is not configured -- which is
-     * this app's state today and will be until somebody fills the form in. A
-     * half-filled form must not throw at the transport layer on an unrelated
-     * page; it must produce a mailer that quietly writes to the log, and a test
-     * -send that says exactly which fields are missing. MailTester does the
-     * second half.
+     * NOTHING FALLS BACK TO `log` ANY MORE, and that is the correction this
+     * class carries. It used to: a store that had not filled the SMTP form in
+     * got the log transport, which is what the owner's live server has been
+     * doing with every order confirmation since the day order email shipped —
+     * writing them to storage/logs and delivering them to nobody, with no error
+     * anywhere on the screen. The unconfigured state now resolves to the host's
+     * own mail, which needs nothing filled in, and `log` is only ever reached
+     * because somebody chose it in Store → Mail.
+     *
+     * A half-filled SMTP form still must not throw at the transport layer on an
+     * unrelated page. It falls back to the server transport instead of to the
+     * log, so the customer's receipt still goes out while the screen says which
+     * fields are missing; MailTester does that second half and deliberately
+     * refuses to dress the fallback up as a working SMTP configuration.
      */
     public function apply(): void
     {
         config(['mail.mailers.' . self::MAILER => $this->mailerConfig()]);
 
-        $from = $this->settings->get('mail_from_address');
+        /*
+         * A From address is now always set, derived from APP_URL when the owner
+         * has not typed one -- see MailSettings::fromAddress(). Leaving
+         * config/mail.php's `hello@example.com` in place would hand a shared
+         * host a From on a domain it does not host, which it rejects outright or
+         * spam-scores into oblivion; "the emails all went to junk" is the same
+         * outcome for a customer as not sending them at all.
+         */
+        $from = $this->settings->fromAddress();
 
         if ($from !== '') {
             config([
@@ -49,6 +65,29 @@ class MailConfigurator
                 'mail.from.name' => $this->settings->get('mail_from_name') ?: config('app.name'),
             ]);
         }
+    }
+
+    /**
+     * Teach the mail manager about the server transport.
+     *
+     * MailManager resolves a transport name to a `create<Name>Transport` method
+     * and there is no such method for ours, so it has to be registered as a
+     * custom creator. Called with the manager rather than through the Mail
+     * facade because this runs inside afterResolving('mail.manager') and asking
+     * the container for the thing it is in the middle of resolving is a trap
+     * worth not setting.
+     *
+     * Idempotent: MailManager::extend overwrites the entry, so a second call
+     * from refresh() costs one array write.
+     *
+     * @param  \Illuminate\Mail\MailManager  $manager
+     */
+    public static function registerTransports($manager): void
+    {
+        $manager->extend(
+            ServerMailTransport::NAME,
+            static fn (array $config = []) => new ServerMailTransport,
+        );
     }
 
     /** Apply, then discard any mailer already built from the previous values. */
@@ -62,17 +101,48 @@ class MailConfigurator
         Mail::purge(self::MAILER);
     }
 
-    /** Is the runtime mailer a real network transport, or the log fallback? */
+    /**
+     * Will a message actually leave this server, or only reach a log file?
+     *
+     * True for SMTP and for the host's own mail; false only for `log`. The old
+     * version answered `transport === 'smtp'`, which was the same question when
+     * there were two transports and the wrong answer now: it would have reported
+     * the working default as "nothing is being sent".
+     */
     public function usesRealTransport(): bool
     {
-        return ($this->mailerConfig()['transport'] ?? 'log') === 'smtp';
+        return ($this->mailerConfig()['transport'] ?? 'log') !== 'log';
+    }
+
+    /** Which transport the runtime mailer resolved to: server, smtp or log. */
+    public function activeTransport(): string
+    {
+        return match ($this->mailerConfig()['transport'] ?? 'log') {
+            'smtp' => MailSettings::TRANSPORT_SMTP,
+            ServerMailTransport::NAME => MailSettings::TRANSPORT_SERVER,
+            default => MailSettings::TRANSPORT_LOG,
+        };
     }
 
     /** @return array<string, mixed> */
     public function mailerConfig(): array
     {
-        if ($this->settings->transport() !== 'smtp' || ! $this->settings->configured()) {
+        $chosen = $this->settings->transport();
+
+        if ($chosen === MailSettings::TRANSPORT_LOG) {
+            // Chosen, never fallen back to.
             return ['transport' => 'log', 'channel' => config('mail.mailers.log.channel')];
+        }
+
+        if ($chosen !== MailSettings::TRANSPORT_SMTP || ! $this->settings->configured()) {
+            /*
+             * The default, and the landing place for an SMTP form that was
+             * started and not finished. The second case is deliberate: an owner
+             * who half-filled the SMTP boxes has a store that still emails its
+             * customers, rather than one that went silent while a banner they
+             * may never see says which field is blank.
+             */
+            return ['transport' => ServerMailTransport::NAME];
         }
 
         $values = $this->settings->all();
