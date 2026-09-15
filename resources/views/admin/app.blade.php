@@ -7952,7 +7952,10 @@ buildNav();
         CAT_PRODUCTS.push([p.name, p.brand||'', sku, p.category||'\u2014',
           (p.price_aed==null?0:p.price_aed), (p.sale_aed==null?null:p.sale_aed),
           (p.stock==null?0:p.stock), p.id, p.status, p.slug]);
-        if(p.status!=='active') CAT_DRAFT.add(sku);
+        // 'publish', not 'active'. products.status is publish|draft|private —
+        // there is no 'active' in this schema, so this marked every LIVE
+        // product as a draft and left real drafts indistinguishable from them.
+        if(p.status!=='publish') CAT_DRAFT.add(sku);
       });
       CAT_CATEGORIES.length = 0; d.categories.forEach(function(c){ CAT_CATEGORIES.push([c.name, c.count]); });
       CAT_BRANDS.length = 0; d.brands.forEach(function(b){ CAT_BRANDS.push([b.name, b.count]); });
