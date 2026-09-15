@@ -104,3 +104,33 @@ it('sends exactly as many bindings as the statement has placeholders', function 
 
     expect($mismatch)->toBe([]);
 });
+
+/**
+ * A wildcard in the search box must mean a literal character on both engines.
+ *
+ * The original escaping relied on a backslash, which MySQL treats as the
+ * default LIKE escape and SQLite does not recognise at all — so the same search
+ * behaved differently in production than under the suite. Found by the Orders
+ * lane; back-ported here with an explicit ESCAPE '!'.
+ */
+it('treats % and _ in the search box as literal characters', function () {
+    Customer::create(['email' => 'promo@kbb.test', 'name' => 'KBB-100%-OFF']);
+    Customer::create(['email' => 'other@kbb.test', 'name' => 'Ordinary Shopper']);
+
+    $admin = mysqlSafetyAdmin();
+
+    $hit = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/customers/list?search=' . urlencode('100%'))
+        ->assertOk()->json('customers');
+
+    // Finds the literal name, and does NOT match everything the way a bare
+    // wildcard would.
+    expect(collect($hit)->pluck('name')->all())->toBe(['KBB-100%-OFF']);
+
+    $underscore = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/customers/list?search=' . urlencode('K_B'))
+        ->assertOk()->json('customers');
+
+    // '_' is a single-character wildcard unless escaped; "KBB" must not match.
+    expect($underscore)->toBe([]);
+});

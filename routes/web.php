@@ -310,6 +310,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // person has spent. Outside it, the whole customer table is public.
         require __DIR__.'/customers-admin.php';
 
+        // The Orders screen: list, export, bulk actions. Its paths are FLAT
+        // (orders-list, not orders/list) because line 432 above registers
+        // /orders/{id} with no constraint on {id} — a nested /orders/list is
+        // matched by it, and whichever registered first wins. Flat names
+        // cannot collide however these requires are ordered.
+        require __DIR__.'/orders-admin.php';
+
         // Mail settings and the test-send. Inside this group deliberately: an
         // unauthenticated endpoint that sends mail to a caller-supplied address
         // is an open relay.

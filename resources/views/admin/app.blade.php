@@ -553,6 +553,19 @@ tr.invdirty{background:var(--accent-soft)}
 
 @media(max-width:1080px){.kpis{grid-template-columns:1fr 1fr}.mod-grid,.grid2,.grid2b,.tcards,.envcards,.health{grid-template-columns:1fr}}
 @media(max-width:880px){.app{grid-template-columns:1fr}.side{position:fixed;z-index:80;width:248px;height:100%;transform:translateX(-100%);transition:.25s var(--ease)}.side.open{transform:none}.menubtn{display:grid!important}}
+/* The admin chrome is a single non-wrapping flex row — breadcrumb, environment
+   toggle, icon buttons, user chip — with an intrinsic width around 520-550px.
+   On a phone it pushed the whole console sideways: the UNTOUCHED dashboard
+   measured 164px of horizontal page scroll at 390px, so every screen inherited
+   it and no individual screen could fix it. Letting it wrap is the whole fix;
+   the environment toggle goes last so the page title keeps the first line. */
+@media(max-width:880px){.top{flex-wrap:wrap;padding:12px 16px;gap:8px}.top .envtog{order:3}
+  /* .flag is position:fixed at top-right with z-index 90, so it floats over
+     the chrome whatever the chrome does. On desktop there is room beside it;
+     once the bar wraps on a phone it lands squarely on the theme, search and
+     notification buttons. A decorative build badge must not cover working
+     controls, and the same build stage is already on the Console screen. */
+  .flag{display:none}}
 .menubtn{display:none}
 
 .skingrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}

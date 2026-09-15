@@ -403,15 +403,24 @@ it('survives imported rows with no phone, no city, no items and an odd address b
     DB::table('orders')->where('id', $bare->id)->update([
         'phone' => null,
         'billing_address' => null,
-        'shipping_address' => '',
+        // An empty ARRAY, not an empty string. Both address columns are
+        // json(), and MySQL enforces that: '' and 'not json at all' are
+        // rejected outright (SQLSTATE 22032, "The document is empty"), so the
+        // malformed-blob state this test used to set up cannot exist on the
+        // production engine at all. SQLite stores json() as text and accepts
+        // anything, which is why it passed here and failed the moment the
+        // suite met a real MySQL.
+        'shipping_address' => '[]',
         'payment_method' => null,
         'payment_method_title' => null,
     ]);
 
-    // And one whose address survived the import as something that is not an
-    // object at all. A malformed row must not take out the page.
+    // And one whose address survived the import as valid JSON that is not an
+    // object — a bare string where a map was expected. That IS storable on
+    // both engines, and it is the shape a sloppy import actually produces. A
+    // row like this must not take out the page.
     $broken = oOrder(['customer' => null, 'total' => 100]);
-    DB::table('orders')->where('id', $broken->id)->update(['billing_address' => 'not json at all']);
+    DB::table('orders')->where('id', $broken->id)->update(['billing_address' => '"not an object"']);
 
     $rows = oRows();
 

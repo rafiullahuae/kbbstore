@@ -561,11 +561,15 @@ class CustomersApiController extends Controller
             $like = '%' . $this->escapeLike($search) . '%';
 
             $query->where(function ($q) use ($like, $search) {
-                $q->where('customers.name', 'like', $like)
-                    ->orWhere('customers.first_name', 'like', $like)
-                    ->orWhere('customers.last_name', 'like', $like)
-                    ->orWhere('customers.email', 'like', $like)
-                    ->orWhere('customers.phone', 'like', $like);
+                foreach ([
+                    'customers.name',
+                    'customers.first_name',
+                    'customers.last_name',
+                    'customers.email',
+                    'customers.phone',
+                ] as $column) {
+                    $q->orWhereRaw($column . ' like ? escape ' . self::LIKE_ESCAPE_SQL, [$like]);
+                }
 
                 // Typing an id finds that customer, and typing a WooCommerce
                 // user id finds the row it was imported into — the only way to
@@ -611,7 +615,7 @@ class CustomersApiController extends Controller
         $city = trim((string) $request->query('city', ''));
 
         if ($city !== '') {
-            $query->where('ad.city', 'like', '%' . $this->escapeLike($city) . '%');
+            $query->whereRaw('ad.city like ? escape ' . self::LIKE_ESCAPE_SQL, ['%' . $this->escapeLike($city) . '%']);
         }
 
         return $query;
@@ -937,9 +941,32 @@ class CustomersApiController extends Controller
         return $value === '' ? null : $value;
     }
 
+    /**
+     * Back-ported from OrdersApiController, which found the trap.
+     *
+     * str_replace(['\\', '%', '_'], ...) with a plain ->where(…, 'like', …) is
+     * dialect-dependent: MySQL treats a backslash as the default LIKE escape,
+     * SQLite has NO default escape at all. The same pattern that finds
+     * "KBB-100%-OFF" on production matches nothing under the suite — green
+     * here, and a search box behaving differently where nobody is measuring.
+     *
+     * An explicit ESCAPE '!' removes the difference. Both engines accept it,
+     * and '!' has no special meaning in a string literal on either, so there is
+     * no second layer of escaping to get wrong. The escape character is doubled
+     * first, or a term containing '!' would escape the character after it.
+     */
+    private const LIKE_ESCAPE = '!';
+
+    /** The literal as written into SQL. No binding: it is a constant. */
+    private const LIKE_ESCAPE_SQL = "'!'";
+
     private function escapeLike(string $term): string
     {
-        return str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $term);
+        return str_replace(
+            [self::LIKE_ESCAPE, '%', '_'],
+            [self::LIKE_ESCAPE . self::LIKE_ESCAPE, self::LIKE_ESCAPE . '%', self::LIKE_ESCAPE . '_'],
+            $term
+        );
     }
 
     /**
