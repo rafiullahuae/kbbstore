@@ -107,10 +107,17 @@ class BrandController extends Controller
         $brands = Brand::query()
             ->select('brands.id', 'brands.name', 'brands.slug', 'brands.logo', 'brands.description')
             ->selectRaw('COUNT(products.id) as products_count')
+            // The join condition goes through the shared predicate, so a brand's
+            // product count on this index matches what its own page will
+            // actually list. Without it a brand with three live products and
+            // one scheduled for next month advertises four, and the customer
+            // who clicks through counts three and finds the shop wrong about
+            // its own catalogue. `is_visible` was not being checked here
+            // either, which was the same defect for hidden products.
             ->leftJoin('products', function ($join) {
-                $join->on('products.brand_id', '=', 'brands.id')
-                    ->whereNull('products.deleted_at')
-                    ->where('products.status', '=', 'publish');
+                $join->on('products.brand_id', '=', 'brands.id');
+
+                \App\Support\ProductVisibility::raw($join);
             })
             ->groupBy('brands.id', 'brands.name', 'brands.slug', 'brands.logo', 'brands.description')
             ->orderBy('brands.name')

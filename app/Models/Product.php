@@ -27,6 +27,7 @@ class Product extends Model
             'manage_stock' => 'bool',
             'sale_starts_at' => 'datetime',
             'sale_ends_at' => 'datetime',
+            'published_at' => 'datetime',
             'price' => 'int',
             'sale_price' => 'int',
             'rating' => 'float',
@@ -105,9 +106,51 @@ class Product extends Model
         ];
     }
 
+    /**
+     * On the storefront right now.
+     *
+     * The third condition is new: a product may be `publish` and visible and
+     * still be scheduled for a date that has not arrived. See
+     * App\Support\ProductVisibility for why that is a comparison against now()
+     * rather than a cron job — this host has no scheduler, and
+     * effectivePrice() above already sets the precedent by honouring
+     * sale_starts_at / sale_ends_at exactly this way.
+     *
+     * published_at NULL means "not scheduled", which is every row that existed
+     * before the column did, so nothing already in the catalogue changes.
+     */
     public function scopeVisible($query)
     {
-        return $query->where('status', 'publish')->where('is_visible', true);
+        $query->where('status', 'publish')->where('is_visible', true);
+
+        return \App\Support\ProductVisibility::schedule($query);
+    }
+
+    /**
+     * Waiting for a publish date that has not arrived.
+     *
+     * The editor's fourth status. It is not a value in `products.status` —
+     * that column is publish | draft | private and inventing a fourth string
+     * is the defect that took this catalogue off the storefront once already,
+     * because scopeVisible(), the sitemap and every category page filter on
+     * the literal 'publish'. A scheduled product is a PUBLISHED product with a
+     * future date, so the day it comes due every one of those filters is
+     * already correct without anything being rewritten.
+     */
+    public function isScheduled(): bool
+    {
+        return $this->status === 'publish'
+            && $this->published_at !== null
+            && now()->lt($this->published_at);
+    }
+
+    /**
+     * What the editor's status control should show: the stored status, or
+     * 'scheduled' when a future date makes that the truer word.
+     */
+    public function editorStatus(): string
+    {
+        return $this->isScheduled() ? 'scheduled' : (string) $this->status;
     }
 
     public function scopeInStock($query)

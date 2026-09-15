@@ -1,0 +1,109 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+/**
+ * The shape of `products.seo`, in one place.
+ *
+ * WHY THIS IS A CLASS AND NOT A LITERAL IN TWO FILES.
+ *
+ * Per-product SEO was broken in two independent ways at once, and the second
+ * one is the reason this file exists. The first was the column: the admin wrote
+ * `seo_json` and every reader in the application reads `seo`. The second was
+ * the key names — the admin's panel collected Yoast-shaped names and the
+ * storefront reads different ones:
+ *
+ *     admin sent            storefront reads
+ *     -----------           ----------------
+ *     seo_title             title
+ *     meta_description      desc
+ *
+ * So even after the column was corrected, a save would still have published
+ * nothing: Store\ProductController tests `!empty($override['title'])` and there
+ * would have been no `title` key to find. Two places now have to agree about
+ * that rename — the write path in Admin\AdminController and the data migration
+ * that rescues what operators already typed — and two copies of a mapping is
+ * how a rename half-happens. They both call this.
+ *
+ * THE PUBLISHED VOCABULARY. These are the keys the storefront actually acts on,
+ * read out of Store\ProductController::show() and cross-checked against
+ * Admin\SchemaInspectorApiController and Admin\CatalogueAuditApiController,
+ * which read the same blob:
+ *
+ *     title      overrides the whole <title>, verbatim, no template applied
+ *     desc       <meta name="description"> and the og/schema description
+ *     og_image   the share image, falling back to the product's main image
+ *     canonical  an absolute URL that replaces the computed canonical
+ *     noindex    truthy adds <meta name="robots" content="noindex">
+ *
+ * Anything else in the array is carried through untouched rather than dropped.
+ * The admin panel also collects a focus keyphrase and og_title/og_description
+ * that nothing publishes yet; they are the operator's work, they cost a few
+ * bytes in a json column, and a normaliser that silently deletes fields the
+ * screen is still showing is a worse bug than an unused key.
+ */
+final class ProductSeo
+{
+    /** Legacy key => the key the storefront reads. */
+    public const RENAME = [
+        'seo_title' => 'title',
+        'meta_description' => 'desc',
+        // Two more spellings that have appeared in payloads from the older
+        // panel. Harmless to map, and each is a silent no-op if absent.
+        'meta_title' => 'title',
+        'description' => 'desc',
+    ];
+
+    /** The keys the storefront reads. Documentation, and the editor's form. */
+    public const PUBLISHED_KEYS = ['title', 'desc', 'og_image', 'canonical', 'noindex'];
+
+    /**
+     * A payload from any of the editors into the stored shape.
+     *
+     * Returns null rather than an empty array when nothing survives, so that
+     * `is_array($product->seo)` — the test every reader uses — is false for a
+     * product with no overrides instead of true-but-empty.
+     */
+    public static function normalise(mixed $seo): ?array
+    {
+        if (! is_array($seo)) {
+            return null;
+        }
+
+        $out = [];
+
+        foreach ($seo as $key => $value) {
+            $key = self::RENAME[$key] ?? $key;
+
+            if ($key === 'noindex') {
+                // A checkbox arrives as true/false, "1"/"0", "on", or absent.
+                // Stored as a real bool so `!empty($override['noindex'])` on
+                // the storefront cannot be fooled by the string "false", which
+                // is truthy in PHP and would silently deindex the page.
+                $out['noindex'] = filter_var($value, FILTER_VALIDATE_BOOL);
+
+                continue;
+            }
+
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+
+            $out[$key] = $value;
+        }
+
+        // `noindex: false` is the default, not a value worth storing.
+        if (array_key_exists('noindex', $out) && $out['noindex'] === false) {
+            unset($out['noindex']);
+        }
+
+        $out = array_filter(
+            $out,
+            static fn ($v) => $v !== null && $v !== '' && $v !== []
+        );
+
+        return $out === [] ? null : $out;
+    }
+}

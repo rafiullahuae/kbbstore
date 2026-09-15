@@ -14026,6 +14026,16 @@ buildNav();
      Categories tab is untouched and still does single-category CRUD. --}}
 @include('admin.partials.category-tree-screen')
 
+{{-- Catalog -> Product editor. Same arrangement and for the same reason as the
+     two screens above: its own file, its own sidebar entry appended to the
+     rendered nav, its own wrapper around window.go. Included last so its nav
+     entry anchors beneath the Catalog group.
+
+     It does NOT replace openProduct() further up this file — that editor is a
+     mock whose controls all call toast('… (preview)') — it is a separate screen
+     on its own routes (routes/product-editor-admin.php). --}}
+@include('admin.partials.product-editor-screen')
+
 @verbatim
 </body>
 </html>
