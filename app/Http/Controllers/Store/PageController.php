@@ -164,6 +164,43 @@ class PageController extends Controller
     }
 
     /**
+     * The standalone app prototype at /app.
+     *
+     * The third instance of the same bug skinQuiz() and reviewWall() above were
+     * written to fix, and the one nobody caught: routes/web.php has pointed
+     * /app at PageController::app() since the 2.60.41 baseline and the method
+     * was never written, so the page has thrown
+     * "Call to undefined method ...PageController::app()" — a 500 to every
+     * visitor — for the entire life of the repo. The Blade view
+     * (resources/views/store/app.blade.php) has been complete the whole time;
+     * only the controller half was missing, which is why the tree looked fine.
+     *
+     * The page is entirely client-side — it renders its own catalogue from a
+     * JavaScript array and calls itself a "standalone app prototype" in its own
+     * footer — so, like skinQuiz(), there is nothing to fetch: it needs its
+     * <head> and nothing else.
+     *
+     * noindex, because that prototype catalogue is invented. Letting a search
+     * engine index a second copy of the storefront, listing products at prices
+     * that are not real, competes with the pages that are.
+     */
+    public function app()
+    {
+        $base = self::siteBase();
+
+        return view('store.app', [
+            'seo' => Seo::render([
+                'type' => 'website',
+                'title' => 'App Preview',
+                'description' => 'A standalone preview of the K-Beauty Bliss shopping experience.',
+                'url' => $base . '/app/',
+                'noindex' => true,
+            ]),
+            'settings' => $this->settings,
+        ]);
+    }
+
+    /**
      * The blog listing — same missing-method 500 as post() below, and the
      * same root cause: the view fetched a nonexistent /api/posts endpoint
      * and silently fell back to three hardcoded demo posts regardless of
