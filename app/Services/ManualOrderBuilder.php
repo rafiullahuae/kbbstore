@@ -39,6 +39,9 @@ use Illuminate\Support\Str;
  *   - coupon validity   -> CouponService::validate()
  *   - discount          -> CartService::totals(), which calls
  *                          CouponService::discountFor()
+ *   - coupon redemption -> CouponService::recordRedemption(), inside this
+ *                          class's own transaction, so a usage_limit counts a
+ *                          back-office order exactly as it counts a web one
  *   - shipping rates    -> ShippingService::ratesFor()
  *   - the total         -> CartService::totals()
  *   - the COD fee       -> the cod_fee setting, added exactly as
@@ -81,12 +84,6 @@ use Illuminate\Support\Str;
  *    on this path only would make a back-office order and a web order mean
  *    different things to the inventory count, which is worse than neither
  *    doing it. This wants fixing for both paths at once, in its own change.
- *
- *  - It does not record a coupon redemption. Store\CheckoutController::place()
- *    does not call CouponService::recordRedemption() either, so usage_count
- *    and usage_limit_per_user do not move on a website order. Matching that is
- *    the whole point of this class; diverging would make a back-office order
- *    consume a coupon a web order does not.
  *
  *  - It does not apply a manual, ad-hoc discount. CartService::totals() derives
  *    discount from the coupon and nothing else, so an arbitrary "take 15 off"
@@ -306,6 +303,34 @@ class ManualOrderBuilder
                 'subtotal' => $item->lineTotal(),
                 'total' => $item->lineTotal(),
             ]);
+        }
+
+        // Spend the coupon, in the transaction that wrote the order — the same
+        // call, in the same position, as Store\CheckoutController::place().
+        //
+        // The docblock at the top of this class used to say this deliberately
+        // did NOT happen, because the website path did not do it either and
+        // diverging would be worse than matching. That reasoning held only
+        // while the website path was broken. It records now, so this does too:
+        // a back-office order and a web order spend a coupon identically, and
+        // one usage_limit governs both.
+        //
+        // CouponExhausted is a ManualOrderFailure in disguise as far as this
+        // class is concerned — create() already turns that into a 422 carrying
+        // the service's own wording — so it is translated rather than left to
+        // escape as a 500.
+        if ($cart->coupon) {
+            try {
+                $this->coupons->recordRedemption(
+                    $cart->coupon,
+                    (int) $totals['discount'],
+                    $order->id,
+                    $customer->id,
+                    $customer->email,
+                );
+            } catch (CouponExhausted $e) {
+                throw new ManualOrderFailure($e->getMessage());
+            }
         }
 
         $cart->forceFill(['status' => 'converted', 'converted_at' => now()])->save();
