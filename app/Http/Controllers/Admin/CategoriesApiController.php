@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Store\ShopController;
 use App\Models\Category;
+use App\Support\CategoryPath;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -69,14 +72,41 @@ class CategoriesApiController extends Controller
         $categories = Category::query()
             ->select('categories.id', 'categories.slug', 'categories.name', 'categories.parent_id',
                 'categories.description', 'categories.image', 'categories.position',
-                'categories.depth', 'categories.path')
+                'categories.depth', 'categories.path', 'categories.seo')
+            // The headline count, and it has to agree with the archive page.
+            //
+            // It did not. This subquery filtered on `deleted_at IS NULL` alone,
+            // while the page it labels renders Product::visible() —
+            // status='publish' AND is_visible=1 — through
+            // whereHas('categories', …). A category holding one live product,
+            // one draft and one hidden product was labelled "3" beside a page
+            // listing 1. Asserted both ways in CategoryCountHonestyTest.
+            //
+            // Product::visible() is not reusable here (this is a query-builder
+            // subquery, not an Eloquent one), so the two clauses are spelled
+            // out and a test pins them against the scope itself — if
+            // visible() ever gains a third condition, that test fails rather
+            // than this count quietly drifting again.
+            ->selectSub(
+                DB::table('category_product')
+                    ->join('products', 'products.id', '=', 'category_product.product_id')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('category_product.category_id', 'categories.id')
+                    ->whereNull('products.deleted_at')
+                    ->where('products.status', 'publish')
+                    ->where('products.is_visible', true),
+                'products_count'
+            )
+            // Everything filed under it, live or not. Not the headline — the
+            // owner still needs to see that a category holds eleven drafts,
+            // or "0 products" on a category they just filled reads as a bug.
             ->selectSub(
                 DB::table('category_product')
                     ->join('products', 'products.id', '=', 'category_product.product_id')
                     ->selectRaw('COUNT(*)')
                     ->whereColumn('category_product.category_id', 'categories.id')
                     ->whereNull('products.deleted_at'),
-                'products_count'
+                'filed_count'
             )
             ->selectSub(
                 DB::table('products')
@@ -110,19 +140,73 @@ class CategoriesApiController extends Controller
             return $category;
         });
 
+        $this->flushStorefrontCaches();
+
         return response()->json(['ok' => true, 'category' => $category->fresh()], 201);
     }
 
+    /**
+     * PUT /admin-api/categories/{category}
+     *
+     * RENAMING IS A URL DECISION, so it is made here rather than left to
+     * whatever the operator happens to type.
+     *
+     * The display NAME and the URL SLUG are independent. Editing the name never
+     * touches the slug — the derivation from the name only fires when the slug
+     * arrives empty, which is the create case. This is the first and most
+     * important protection, because almost every rename an owner performs is
+     * cosmetic ("Sun Care" -> "Suncare & SPF") and must not move an indexed URL
+     * at all. Asserted in CategoryPathContractTest.
+     *
+     * When the path genuinely does change — the operator edited the slug, or
+     * re-parented the category — the old path is recorded in
+     * `category_redirects` and answers 301 from then on. Deliberately a
+     * redirect rather than a refusal: moving a category is a legitimate
+     * merchandising act, and refusing it would make the tree less useful than
+     * the spreadsheet it replaces. And deliberately not silence: silence is
+     * what happens today, and because an unknown category path renders "Shop
+     * all" with a 200 rather than 404ing, the breakage is invisible to
+     * everyone except the ranking.
+     *
+     * The whole subtree is handled, not just this row. Re-parenting a category
+     * with children rewrites every descendant's path too, so every descendant's
+     * old path needs its own redirect — otherwise moving a parent silently
+     * kills every child URL under it, which is the larger of the two blast
+     * radii and the easy one to miss.
+     */
     public function update(Request $request, Category $category): JsonResponse
     {
         $data = $this->validated($request, $category);
 
-        DB::transaction(function () use ($category, $data) {
+        // Snapshot every path in this subtree BEFORE the write, keyed by id.
+        $before = $this->subtreePaths($category);
+
+        DB::transaction(function () use ($category, $data, $before) {
             $category->update($data);
             $this->resyncTree();
+
+            foreach ($before as $id => $oldPath) {
+                $moved = Category::query()->find($id);
+
+                if ($moved === null) {
+                    continue;
+                }
+
+                $newPath = CategoryPath::canonicalPath($moved);
+
+                if ($newPath !== $oldPath) {
+                    CategoryPath::record($oldPath, $id, 'slug');
+                }
+            }
         });
 
-        return response()->json(['ok' => true, 'category' => $category->fresh()]);
+        $this->flushStorefrontCaches();
+
+        return response()->json([
+            'ok' => true,
+            'category' => $category->fresh(),
+            'redirects' => $this->movedPaths($before),
+        ]);
     }
 
     /**
@@ -163,7 +247,11 @@ class CategoriesApiController extends Controller
             ], 422);
         }
 
-        DB::transaction(function () use ($category) {
+        $before = $this->subtreePaths($category);
+        $ownPath = CategoryPath::canonicalPath($category);
+        $parentId = $category->parent_id === null ? null : (int) $category->parent_id;
+
+        DB::transaction(function () use ($category, $before, $ownPath, $parentId) {
             DB::table('products')
                 ->where('category_id', $category->id)
                 ->update(['category_id' => null]);
@@ -177,12 +265,148 @@ class CategoriesApiController extends Controller
             $category->delete();
 
             $this->resyncTree();
+
+            // The deleted category's own URL. It points at the parent if there
+            // is one — the nearest page that still means something to a
+            // visitor who followed a link to "Ampoules" — and at nothing when
+            // the category was top level, which resolves to a 404. A 404 is
+            // the honest answer there; the alternative is redirecting every
+            // dead archive to /shop/, which is a soft 404 wearing a 301 and is
+            // treated as one.
+            CategoryPath::record($ownPath, $parentId, 'delete');
+
+            // Children were re-parented, so their paths moved too. Each old
+            // child path redirects to that child's new home.
+            foreach ($before as $id => $oldPath) {
+                if ($oldPath === $ownPath) {
+                    continue;
+                }
+
+                $moved = Category::query()->find($id);
+
+                if ($moved === null) {
+                    continue;
+                }
+
+                $newPath = CategoryPath::canonicalPath($moved);
+
+                if ($newPath !== $oldPath) {
+                    CategoryPath::record($oldPath, $id, 'move');
+                }
+            }
         });
+
+        $this->flushStorefrontCaches();
 
         return response()->json([
             'ok' => true,
             'detached' => $counts['products_count'] + $counts['primary_count'],
             'reparented' => $counts['children_count'],
+        ]);
+    }
+
+    /**
+     * POST /admin-api/categories/{category}/merge — fold one category into
+     * another and delete it.
+     *
+     * The safe answer to "this category should not exist any more, but it has
+     * 40 products in it". A force-delete detaches those products and empties an
+     * archive page that is probably indexed; a merge moves them somewhere real
+     * and 301s the old URL there, so nothing is orphaned and no link dies.
+     *
+     * Refused when the target is the category itself or one of its own
+     * descendants: merging a parent into its child would delete the child's
+     * ancestor mid-operation and leave the subtree pointing at a row that no
+     * longer exists.
+     *
+     * insertOrIgnore for the pivot, because a product may already be filed
+     * under both. `category_product` has a unique pair index, so a plain insert
+     * would raise on the first product the two categories share — which, for
+     * two categories similar enough to be worth merging, is most of them.
+     */
+    public function merge(Request $request, Category $category): JsonResponse
+    {
+        $data = $request->validate([
+            'target_id' => ['required', 'integer', Rule::exists('categories', 'id')],
+        ], [
+            'target_id.exists' => 'That category no longer exists.',
+        ]);
+
+        $target = Category::query()->findOrFail((int) $data['target_id']);
+
+        if ((int) $target->id === (int) $category->id) {
+            throw ValidationException::withMessages([
+                'target_id' => 'A category cannot be merged into itself.',
+            ]);
+        }
+
+        if (in_array((int) $target->id, $this->descendantIds($category), true)) {
+            throw ValidationException::withMessages([
+                'target_id' => 'That category sits under this one. Move it out first, or merge the other way round.',
+            ]);
+        }
+
+        $counts = $this->attachmentCounts($category);
+        $before = $this->subtreePaths($category);
+        $ownPath = CategoryPath::canonicalPath($category);
+
+        DB::transaction(function () use ($category, $target, $before, $ownPath) {
+            $productIds = DB::table('category_product')
+                ->where('category_id', $category->id)
+                ->pluck('product_id')
+                ->all();
+
+            foreach (array_chunk($productIds, 500) as $chunk) {
+                DB::table('category_product')->insertOrIgnore(array_map(
+                    fn ($pid) => ['category_id' => $target->id, 'product_id' => $pid],
+                    $chunk
+                ));
+            }
+
+            DB::table('category_product')->where('category_id', $category->id)->delete();
+
+            // Products whose PRIMARY category this was follow it to the target
+            // rather than being left with none.
+            DB::table('products')
+                ->where('category_id', $category->id)
+                ->update(['category_id' => $target->id]);
+
+            DB::table('categories')
+                ->where('parent_id', $category->id)
+                ->update(['parent_id' => $category->parent_id]);
+
+            $category->delete();
+
+            $this->resyncTree();
+
+            CategoryPath::record($ownPath, (int) $target->id, 'merge');
+
+            foreach ($before as $id => $oldPath) {
+                if ($oldPath === $ownPath) {
+                    continue;
+                }
+
+                $moved = Category::query()->find($id);
+
+                if ($moved === null) {
+                    continue;
+                }
+
+                $newPath = CategoryPath::canonicalPath($moved);
+
+                if ($newPath !== $oldPath) {
+                    CategoryPath::record($oldPath, $id, 'move');
+                }
+            }
+        });
+
+        $this->flushStorefrontCaches();
+
+        return response()->json([
+            'ok' => true,
+            'moved' => $counts['products_count'],
+            'reparented' => $counts['children_count'],
+            'target' => $target->fresh(),
         ]);
     }
 
@@ -218,10 +442,120 @@ class CategoriesApiController extends Controller
             }
         });
 
+        $this->flushStorefrontCaches();
+
         return response()->json(['ok' => true, 'ordered' => count($ids)]);
     }
 
     /* ------------------------------------------------------------------ */
+
+    /**
+     * Every cached surface that shows categories.
+     *
+     * NOTHING IN THIS CONTROLLER CALLED THIS BEFORE. ShopController::
+     * flushSidebarCache() has existed all along and four other admin
+     * controllers call it, but the one screen whose entire job is editing
+     * categories did not. So creating, renaming, re-parenting, reordering or
+     * deleting a category left the shop sidebar and the homepage tiles showing
+     * the previous catalogue for the remaining life of a 900-second cache
+     * entry — long enough for the owner to conclude the save had not worked
+     * and do it again.
+     *
+     * kbb.home.cats is flushed here too: HomeController caches the category
+     * tiles under its own key, which flushSidebarCache() does not touch,
+     * because until now nothing that edits categories ever ran.
+     */
+    private function flushStorefrontCaches(): void
+    {
+        ShopController::flushSidebarCache();
+        Cache::forget('kbb.home.cats');
+        Cache::forget('kbb.home.rails');
+    }
+
+    /**
+     * This category's path and every descendant's, keyed by id, as they are
+     * right now.
+     *
+     * Taken before a structural write so the caller can see which paths moved
+     * and record a redirect for each. Reads the whole table once: the tree is
+     * tens of rows, and walking children with a query per level is how a
+     * "cheap" helper becomes the slowest thing on the screen.
+     *
+     * @return array<int, string>
+     */
+    private function subtreePaths(Category $category): array
+    {
+        $ids = array_merge([(int) $category->id], $this->descendantIds($category));
+
+        $paths = [];
+
+        foreach (Category::query()->whereIn('id', $ids)->get() as $row) {
+            $paths[(int) $row->id] = CategoryPath::canonicalPath($row);
+        }
+
+        return $paths;
+    }
+
+    /**
+     * Ids of everything below this category.
+     *
+     * @return array<int, int>
+     */
+    private function descendantIds(Category $category): array
+    {
+        $rows = DB::table('categories')->select('id', 'parent_id')->get();
+
+        $byParent = [];
+
+        foreach ($rows as $row) {
+            $byParent[$row->parent_id === null ? 0 : (int) $row->parent_id][] = (int) $row->id;
+        }
+
+        $out = [];
+        $stack = $byParent[(int) $category->id] ?? [];
+        $guard = 0;
+
+        while ($stack !== [] && $guard++ < 10000) {
+            $id = array_pop($stack);
+            $out[] = $id;
+
+            foreach ($byParent[$id] ?? [] as $child) {
+                $stack[] = $child;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Which of the snapshotted paths actually moved, and where to.
+     *
+     * Returned to the screen so it can tell the operator "2 URLs moved and now
+     * redirect" instead of leaving them to find out from search traffic.
+     *
+     * @param  array<int, string>  $before
+     * @return array<int, array{from:string, to:string}>
+     */
+    private function movedPaths(array $before): array
+    {
+        $moved = [];
+
+        foreach ($before as $id => $oldPath) {
+            $row = Category::query()->find($id);
+
+            if ($row === null) {
+                continue;
+            }
+
+            $newPath = CategoryPath::canonicalPath($row);
+
+            if ($newPath !== $oldPath) {
+                $moved[] = ['from' => $oldPath, 'to' => $newPath];
+            }
+        }
+
+        return $moved;
+    }
 
     /** @return array{products_count:int,primary_count:int,children_count:int} */
     private function attachmentCounts(Category $category): array
@@ -294,6 +628,14 @@ class CategoriesApiController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
             'image' => ['nullable', 'string', 'max:2048'],
             'position' => ['nullable', 'integer', 'min:0', 'max:65535'],
+            // Bounded deliberately. These land in a <title> and a
+            // <meta name="description">, where anything past roughly 60 and
+            // 160 characters is truncated by the search engine anyway, and an
+            // unbounded string here is a row the operator can grow until the
+            // column rejects it with a 500.
+            'seo' => ['nullable', 'array'],
+            'seo.title' => ['nullable', 'string', 'max:255'],
+            'seo.description' => ['nullable', 'string', 'max:500'],
         ], [
             'slug.regex' => 'The slug may contain only lower-case letters, numbers and single hyphens.',
             'slug.unique' => 'Another category already uses that slug.',
@@ -304,6 +646,17 @@ class CategoriesApiController extends Controller
         $data['parent_id'] = $this->safeParentId($category, $data['parent_id'] ?? null);
         $data['image'] = $this->safeImageUrl($data['image'] ?? null);
         $data['position'] = (int) ($data['position'] ?? $category?->position ?? 0);
+
+        // Only the two keys the screen edits are kept, and empties are dropped
+        // rather than stored as "". A stored empty title is not the same as no
+        // title: the archive would render an empty <title> instead of falling
+        // back to the category name.
+        $seo = array_filter([
+            'title' => trim((string) ($data['seo']['title'] ?? '')),
+            'description' => trim((string) ($data['seo']['description'] ?? '')),
+        ], fn ($v) => $v !== '');
+
+        $data['seo'] = $seo === [] ? null : $seo;
 
         return $data;
     }
