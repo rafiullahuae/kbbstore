@@ -643,6 +643,99 @@ something half-right.
       browsed count all update from one request, because `PayShipRules` measures its COD window
       against the total and a single add can withdraw the selected method — *2.60.116*
 
+## Phase 8b — Admin screens, engine parity and the import foundation *(2.60.117 → .125)*
+
+- [x] **Payments: capture and refunds, all four gateways** — per-gateway capture windows
+      (Tabby 30d, Tamara 180d, Stripe 7d, COD none), each honoured by reading the provider's
+      live status before acting rather than trusting a stored one. Refund ceiling computed
+      inside a locked transaction from our own columns, never from the request. A *sequential*
+      double-refund gap was found by its own test and closed with a recency guard — that would
+      have been live money, twice — *2.60.117*
+- [x] **Public API sweep** — quiz leads were editable by counting ids, unmoderated reviews were
+      discoverable, review votes could be stuffed without limit, and hidden products could be
+      reviewed. All closed — *2.60.117*
+- [x] **`GET /api/cart/debug` was world-readable** and returned the five most recently active
+      carts **site-wide** with their ids, `customer_id`s and token prefixes. Its own doc comment
+      said "nothing sensitive" while doing it, which is how it survived review. Gated on the
+      route, so an edit to the controller cannot drop it — *2.60.117*
+- [x] **`/skin-quiz/` and `/reviews/` returned 500 to every visitor** — both routes pointed at
+      controller methods that were never written. The Blade views existed the whole time, so
+      nothing in the tree looked broken — *2.60.117*
+- [x] **SEO Engine and Product Sorting switches made real** — both were marked `live` in the
+      module registry while **nothing in the codebase read either one**. Verified independently
+      before merging, which made the accompanying migration protective: without it, adding the
+      reads would have stripped every canonical, OG tag and JSON-LD node off the live catalogue
+      and reordered every listing, silently, on apply — *2.60.117*
+- [x] **Cart drawer empty on the first add of a session** — the drawer's view composer decided
+      "no cart" from a cookie that `CartService::create()` only queues onto the *response*, then
+      painted the empty state over the correct contents the controller had already built. The
+      same overwrite was silently re-breaking the Browsed list on every add — *2.60.118*
+- [x] **Checkout quantity and discount code apply in place** — both did a full page reload,
+      losing every field already typed, the scroll position and the chosen country. They posted
+      to the generic cart endpoint, which renders the mini-cart and the cart page — neither on
+      screen at checkout — so a reload was the only way to show new figures — *2.60.118, .122*
+- [x] **Mobile checkout scrolled sideways by 7px** — two free-delivery confetti particles fly
+      past the edge and, finishing at `opacity:0` rather than removed, kept occupying space for
+      the life of the page. Measured by two lanes independently — *2.60.118*
+- [x] **Cart heading count floated in dead space** — its `lead` class collides with the global
+      form-field icon rule (`position:absolute`). The fourth layout bug in this project caused
+      by a generic class name; fixed by renaming, not by overriding — *2.60.118*
+- [x] **Store → Customers, rebuilt** — the old screen had no search, filters, sorting or paging,
+      and its "Emirate" column read a field that has never existed on the table, so it was blank
+      on every install. Now aggregated in SQL at a fixed query count, with guest and imported
+      rows handled, and orders not linked to any customer counted in a banner rather than
+      dropped — *2.60.118*
+- [x] **Orders record the payment method's name** — nothing ever wrote `payment_method_title`
+      except the demo seeder, so every real order printed the raw gateway id and the account
+      page showed customers `cod` — *2.60.118*
+- [x] **Floating bottom menu behind a switch**, off by default, at Store → Modules → Store &
+      content — *2.60.119*
+- [x] **Real MySQL in CI, and the three faults only it could see.** The suite had always run
+      SQLite while production runs MySQL, so an entire class of bug was invisible. Running it
+      against MySQL 8 failed **110 tests**. Fixed: `payment_providers.config` and
+      `mail_credentials.config` are JSON columns carrying encrypted values, which are not valid
+      JSON — **every save of a gateway key or SMTP password failed outright on the live server**;
+      the Customers summary inherited the page offset and read zero from page two on (wrong on
+      every engine); and MySQL 8's microsecond datetimes made every never-ordered customer show
+      1 Jan 1970. MariaDB passed a build MySQL failed — it is not a stand-in — *2.60.123*
+- [x] **Store → Orders, rebuilt** to the Customers standard: chips with counts over the real
+      status vocabulary (an imported `wc-tamara-p-failed` gets its own chip rather than being
+      prettified away), date and value ranges, CSV export, and bulk actions that refuse to take
+      an order out of revenue without naming each one. `refunded` cannot be set by hand at all,
+      because `PaymentRefunder` writes it when money actually moves — *2.60.124*
+- [x] **The admin console scrolled sideways on every screen at phone width** — the shared top
+      bar is one non-wrapping flex row ~540px wide, so the untouched dashboard overflowed by
+      164px and no individual screen could have fixed it — *2.60.124*
+- [x] **Import foundation** — `docs/IMPORT-READINESS.md`, external-id columns, and the unique
+      constraints a re-run depends on. The repair migrations had re-added `wc_order_id` and
+      `wp_user_id` as **bare columns with no unique index**, so a readiness check would answer
+      "yes" while the importer's second pass inserted a complete duplicate of every order.
+      `customers.orders_count` / `total_spent` / `last_order_at` are retired in place as
+      deliberately unmaintained. `kbb:import-catalog` does nothing and never did; its 60 lines
+      of dead code would have written AED 99.50 as 99 fils — *2.60.124*
+- [x] **One shared aggregate helper** (`App\Support\AggregatesQueries`) — the same defect
+      shipped to production twice. `selectRaw()` appends rather than replaces, and
+      `applySort()`/`forPage()` mutate the builder, so a summary built from the same instance as
+      the page inherits its columns, its ORDER BY and its OFFSET. Three failures from one cause:
+      MySQL 1140 twice over, and a surviving offset that makes every summary tile read zero from
+      page two — wrong on every engine, and silent — *2.60.125*
+
+### What this phase cost, and the rules that came out of it
+
+- **A cumulative package that runs no migration resets no OPcache.** 2.60.121 shipped the
+  correct fix and the server kept executing the previous compiled class, making a correct fix
+  look like a wrong one. Every package that changes a PHP class now ships a `clear_caches_*`
+  migration, not only the ones that add routes — and the packager warns when one is missing.
+- **A diagnostic beats a guess.** Two releases were spent on a 500 that reported only "Server
+  Error". The endpoint now returns the driver's own message, and the controller carries a BUILD
+  constant so "the fix is wrong" and "the fix is not running" can be told apart from a
+  screenshot.
+- **Judge the SQL a request issues, not the answer it returns.** `tests/Support/SqlShape.php`
+  asserts statement shape via `DB::listen`, which is dialect-independent and therefore catches
+  MySQL-only faults from the SQLite suite.
+- **A guard is decor until it fails.** Every guard added in this phase was verified by reverting
+  the fix and watching it go red.
+
 ## Phase 9 — Content pages
 
 - [x] Privacy, terms, New In, Best Sellers, Super Sale, Under 54 AED, Wishlist
