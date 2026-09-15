@@ -7,52 +7,50 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\OrderNote;
 use App\Models\Product;
+use App\Models\Refund;
 use App\Services\ManualOrderBuilder;
+use App\Services\Mail\OrderMailer;
 use App\Services\SettingsService;
 use App\Services\ShippingService;
+use App\Services\Payments\PaymentCapturer;
+use App\Services\Payments\PaymentRefunder;
 use App\Support\AggregatesQueries;
-use App\Support\Csv;
 use App\Support\Fils;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 
 /**
- * Store -> New Order: placing an order on a customer's behalf.
- *
- * The shop takes orders on WhatsApp and in Instagram DMs as well as through
- * the website, and there was no way to get those into the system at all. This
- * is the screen's back end.
- *
- * Every route here is registered inside the `auth:admin` group in
- * routes/web.php (see routes/manual-orders-admin.php for the require and why
- * it goes where it goes). Nothing here does its own authorisation, so it MUST
- * NOT be registered anywhere else — /api/* is unauthenticated, and this
- * returns customer emails, phone numbers and street addresses.
- *
- * No pricing happens in this file. It validates, hands the payload to
- * ManualOrderBuilder — which prices through the very services the storefront
- * checkout uses — and shapes the answer as JSON.
+ * Backs the detailed admin order page (built from Rafi's WooCommerce
+ * reference screenshot). Kept separate from the older AdminController
+ * order() method rather than extending it — that method has real, wrong
+ * column references (`$o->delivery`, `$o->cod_fee`, `$o->ship_method`,
+ * `$i->qty`, none of which exist on these models) that silently return
+ * null instead of erroring, quietly showing zeros in the old order modal.
+ * Not fixed here since it's a separate, pre-existing bug outside this
+ * page's scope — flagged rather than silently inherited into new code.
  */
 class AdminOrderController extends Controller
 {
     /**
      * Counting a builder that is also used to fetch a page of rows is how this
-     * repo shipped MySQL error 1140 to production twice.
+     * repo shipped MySQL error 1140 to production twice, and how a page-two
+     * total silently read zero on every engine.
      */
     use AggregatesQueries;
 
-    /** How many rows a search returns at once. */
+    /** How many rows one customer or product search returns. */
     private const PAGE = 20;
 
     /**
      * The LIKE escape character.
      *
-     * Without it, a customer searching for "50% off" or an operator typing an
-     * underscore gets every row back: % and _ are wildcards inside LIKE, and a
-     * bound parameter does not escape them — binding protects against SQL
+     * Without it, an operator searching for "50% off" or typing an underscore
+     * matches every row in the table: % and _ are wildcards inside LIKE, and a
+     * bound parameter does not escape them. Binding protects against SQL
      * injection, not against pattern injection.
      */
     private const LIKE_ESCAPE = '!';
@@ -62,6 +60,599 @@ class AdminOrderController extends Controller
         private ShippingService $shipping,
         private SettingsService $settings,
     ) {}
+
+    /** Actions that are real right now vs. visible-but-not-wired-up. */
+    private const REAL_ACTIONS = ['cancel', 'duplicate', 'resend_confirmation', 'email_invoice'];
+    /*
+     * 'resend_confirmation' left the placeholder list when order email was
+     * built; 'email_invoice' has now left it too. The store has a real invoice
+     * — an invoice number allocated out of the unique sequence, and a document
+     * rendered from the order_items snapshot by App\Services\Invoices — so the
+     * button sends one instead of apologising for not having one.
+     *
+     * The list itself stays rather than being deleted. It is the mechanism for
+     * saying "visible, and honest about not working yet", and the next
+     * half-built action should use it rather than reinventing it. Empty is the
+     * correct state of an honest list with nothing to declare, and
+     * InvoiceEmailTest pins that 'email_invoice' is not on it.
+     */
+    private const PLACEHOLDER_ACTIONS = [];
+
+    public function show(
+        int $id,
+        \App\Support\VatDisplay $vat,
+        PaymentCapturer $capturer,
+        PaymentRefunder $refunder,
+    ): JsonResponse
+    {
+        $order = Order::withTrashed()->with(['items', 'notes'])->find($id);
+
+        if ($order === null) {
+            return response()->json(['error' => 'not_found'], 404);
+        }
+
+        $customer = $order->customer;
+
+        return response()->json([
+            'id' => $order->id,
+            'order_number' => $order->order_number ?? (string) $order->id,
+            'status' => $order->status,
+            'trashed' => $order->trashed(),
+            'editable' => in_array($order->status, self::EDITABLE_STATUSES, true),
+            'created_at' => optional($order->created_at)->toAtomString(),
+            'currency' => $order->currency,
+
+            'payment_method' => $order->payment_method,
+            'payment_method_title' => $order->payment_method_title,
+            'transaction_id' => $order->transaction_id,
+            'paid_at' => optional($order->paid_at)->toAtomString(),
+            'ip_address' => $order->ip_address,
+
+            'billing_address' => $order->billing_address,
+            'shipping_address' => $order->shipping_address,
+            'email' => $order->email,
+            'phone' => $order->phone,
+
+            'customer' => $customer ? [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'email' => $customer->email,
+            ] : null,
+
+            'items' => $order->items->map(fn ($i) => [
+                'id' => $i->id,
+                'name' => $i->name,
+                'brand' => $i->brand,
+                'sku' => $i->sku,
+                'variant_attributes' => $i->variant_attributes,
+                'quantity' => $i->quantity,
+                'unit_price_aed' => Money::toAed($i->unit_price),
+                'total_aed' => Money::toAed($i->total),
+                'image' => $i->product?->image,
+                'product_slug' => $i->product?->slug,
+            ]),
+
+            'shipping_method' => $order->shipping_method,
+            'coupon_code' => $order->coupon_code,
+            'customer_note' => $order->customer_note,
+            'is_gift' => (bool) $order->is_gift,
+            'gift_note' => $order->gift_note,
+            'gift_fee_aed' => Money::toAed((int) $order->gift_fee),
+            'whatsapp_optin' => $order->whatsapp_optin,
+
+            'subtotal_aed' => Money::toAed($order->subtotal),
+            'discount_total_aed' => Money::toAed($order->discount_total),
+            'shipping_total_aed' => Money::toAed($order->shipping_total),
+            'fee_total_aed' => Money::toAed($order->fee_total),
+            'total_aed' => Money::toAed($order->total),
+            // VAT is a display line only (decision D-64) — never stored, never
+            // added to the total, computed fresh from the real order total
+            // via the same VatDisplay service the checkout page itself uses,
+            // so the two can never quietly drift apart. VatDisplay's own
+            // 'formatted' field is raw HTML meant for server-rendered Blade
+            // (Money::format() wraps it in <span> tags) — wrong for this JSON
+            // response, so only the label and a converted AED amount are used.
+            'vat' => (function () use ($vat, $order) {
+                $line = $vat->line($order->total);
+
+                return $line ? ['label' => $line['label'], 'amount_aed' => Money::toAed($line['amount'])] : null;
+            })(),
+
+            'invoice_number' => $order->invoice_number,
+            'invoiced_at' => optional($order->invoiced_at)->toAtomString(),
+            // Where the two printable documents live, built by the controller
+            // that serves them so there is one definition of each path and the
+            // admin console never has to assemble one out of string pieces.
+            // Both are inside the admin-api group, i.e. behind auth:admin; see
+            // the InvoiceController header for why there is no public link.
+            // Opening the invoice URL is what allocates invoice_number above,
+            // so an order that reads "Not yet invoiced" here has genuinely
+            // never had one issued.
+            'invoice_url' => \App\Http\Controllers\Admin\InvoiceController::invoiceUrl($order->id),
+            'packing_slip_url' => \App\Http\Controllers\Admin\InvoiceController::packingSlipUrl($order->id),
+
+            'refunds' => $order->refunds()->latest()->get()->map(fn (Refund $r) => [
+                'id' => $r->id,
+                'amount_aed' => Money::toAed((int) $r->amount),
+                'reason' => $r->reason,
+                'refunded_by' => $r->refunded_by,
+                // A failed refund is shown, not hidden. The screen greys it
+                // and the merchant can see that an attempt was made and that
+                // no money went back — which is the whole reason failures are
+                // recorded rather than swallowed.
+                'status' => $r->status,
+                'failure_code' => $r->failure_code,
+                'provider_ref' => $r->provider_ref,
+                'created_at' => optional($r->created_at)->toAtomString(),
+            ]),
+            // Only refunds that hold money. Summing every row would count
+            // failures, which would quietly reduce what can still be refunded.
+            'refunded_total_aed' => Money::toAed($refunder->refundedFils($order)),
+            'refundable_aed' => Money::toAed(max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order))),
+
+            // Capture: whether this order's money has actually been taken.
+            // Never calls a provider — see PaymentCapturer::status().
+            'settlement' => $capturer->status($order) + [
+                'refundable_fils' => max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order)),
+            ],
+
+            'notes' => $order->notes->map(fn (OrderNote $n) => [
+                'id' => $n->id,
+                'author' => $n->author,
+                'is_customer_note' => $n->is_customer_note,
+                'content' => $n->content,
+                'created_at' => optional($n->created_at)->toAtomString(),
+            ]),
+
+            'customer_history' => $this->customerHistory($order->customer_id, $order->email),
+
+            // Order attribution: the panel Rafi's reference shows, kept honest
+            // rather than faked — none of source/device/session-views is
+            // tracked by anything in this app yet (confirmed directly: the
+            // `origin` column exists in the schema but nothing anywhere ever
+            // writes to it, not even on new checkout orders today). Shown as
+            // null so the page can render "Not tracked yet" instead of a
+            // fabricated number.
+            'attribution' => [
+                'origin' => $order->origin,
+                'device_type' => null,
+                'session_page_views' => null,
+            ],
+
+            'actions' => [
+                'real' => self::REAL_ACTIONS,
+                'placeholder' => self::PLACEHOLDER_ACTIONS,
+            ],
+        ]);
+    }
+
+    public function addNote(Request $request, int $id): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+
+        $data = $request->validate(['content' => ['required', 'string', 'max:5000']]);
+
+        $note = $order->notes()->create([
+            'content' => $data['content'],
+            'author' => auth('admin')->user()?->name ?? 'Admin',
+            'is_customer_note' => false,
+        ]);
+
+        return response()->json(['ok' => true, 'note' => [
+            'id' => $note->id, 'author' => $note->author, 'content' => $note->content,
+            'is_customer_note' => false, 'created_at' => $note->created_at->toAtomString(),
+        ]]);
+    }
+
+    /**
+     * Refund, full or partial — and now really a refund.
+     *
+     * This method used to write a `refunds` row and stop there, because no
+     * gateway had a refund path to call: honestly partial, and documented as
+     * such. It now hands the work to PaymentRefunder, which calls the gateway
+     * and records the attempt either way. Three things moved OUT of here as a
+     * result, and none of them by accident:
+     *
+     *   THE CEILING. It was `order.total` and it is now the CAPTURED amount
+     *   minus what is already refunded, computed inside a locked transaction
+     *   in the service. The old check used `$order->refunds()->sum('amount')`,
+     *   which counts every row — including, once failures started being
+     *   recorded, refunds that never happened. A failed attempt would have
+     *   silently reduced what could still be refunded.
+     *
+     *   THE STATUS CHANGE. Moved for the same reason: a partial refund that
+     *   fails at the gateway must not be what tips an order into `refunded`.
+     *
+     *   IDEMPOTENCY. The double-click guard is a unique index on
+     *   `refunds.idempotency_key`, so it has to be applied by the code that
+     *   writes the row. The screen sends a key per form render; a caller that
+     *   sends none gets a derived one.
+     *
+     * What stays here is HTTP: validate, convert the screen's AED into fils
+     * once, and translate the outcome into a status code. `amount_fils` is
+     * accepted and preferred for a caller that has the integer already —
+     * there is then no float on the path at all.
+     */
+    public function refund(Request $request, int $id, PaymentRefunder $refunder): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+
+        $data = $request->validate([
+            'amount_fils' => ['nullable', 'integer', 'min:1'],
+            'amount_aed' => ['nullable', 'numeric', 'min:0.01'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+            'idempotency_key' => ['nullable', 'string', 'max:191'],
+        ]);
+
+        if (($data['amount_fils'] ?? null) === null && ($data['amount_aed'] ?? null) === null) {
+            return response()->json(['ok' => false, 'message' => 'Enter a refund amount.'], 422);
+        }
+
+        // One conversion, in one place, through the same helper the rest of
+        // the app converts money with. Integer fils from here down.
+        $amountFils = $data['amount_fils'] ?? Money::fromMajor($data['amount_aed']);
+
+        $outcome = $refunder->refund(
+            $order,
+            (int) $amountFils,
+            $data['reason'] ?? null,
+            auth('admin')->user()?->name ?? 'Admin',
+            $data['idempotency_key'] ?? null,
+        );
+
+        $order->refresh();
+
+        return response()->json([
+            'ok' => $outcome->ok,
+            'code' => $outcome->code,
+            // Written for the admin. Never an API body, a key or a buyer field.
+            'message' => $outcome->message,
+            'refund_id' => $outcome->refund?->id,
+            'refund_status' => $outcome->refund?->status,
+            'status' => $order->status,
+            'refunded_total_aed' => Money::toAed($refunder->refundedFils($order)),
+            'refundable_aed' => Money::toAed(max(0, $refunder->capturedFils($order) - $refunder->refundedFils($order))),
+        ], $outcome->ok ? 200 : $outcome->status);
+    }
+
+    public function trash(int $id): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+
+        $order->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function restore(int $id): JsonResponse
+    {
+        $order = Order::withTrashed()->find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+
+        $order->restore();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function updateAddress(Request $request, int $id): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+
+        $data = $request->validate([
+            'type' => ['required', 'in:billing,shipping'],
+            'address' => ['required', 'array'],
+        ]);
+
+        $order->update([($data['type'] === 'billing' ? 'billing_address' : 'shipping_address') => $data['address']]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Every action on this dropdown is now real.
+     *
+     * Cancel and duplicate always were. 'resend_confirmation' became real when
+     * order email shipped but was never added back to REAL_ACTIONS, so the
+     * screen stopped offering it at all — it is on the list again above.
+     * 'email_invoice' is real as of this package: it allocates the order's
+     * invoice number if it has none and mails the document.
+     *
+     * The placeholder branch below survives them, unused. It is the mechanism
+     * for showing Rafi what the page is building toward without ever making a
+     * button look like it worked when it did not, and deleting it would mean
+     * the next half-built action invents its own way of saying so.
+     */
+    public function runAction(Request $request, int $id): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+
+        $data = $request->validate(['action' => ['required', 'string']]);
+        $action = $data['action'];
+
+        if ($action === 'resend_confirmation') {
+            // The mailer answers honestly here rather than swallowing, because
+            // somebody pressed a button and is waiting for the result. 422 on
+            // failure so the screen shows the reason instead of a tick.
+            $result = app(\App\Services\Mail\OrderMailer::class)->resendConfirmation($order);
+
+            return response()->json($result, $result['ok'] ? 200 : 422);
+        }
+
+        if ($action === 'email_invoice') {
+            // Same contract as the resend above, and for the same reason: the
+            // mailer reports instead of swallowing, because somebody pressed a
+            // button and is waiting for the answer. 422 on failure so the screen
+            // prints the reason rather than a tick. The response carries the
+            // invoice number the send used, so the screen can show it without a
+            // second round trip — and so the owner can see which document went.
+            $result = app(\App\Services\Mail\OrderMailer::class)->emailInvoice($order);
+
+            return response()->json($result, $result['ok'] ? 200 : 422);
+        }
+
+        if (in_array($action, self::PLACEHOLDER_ACTIONS, true)) {
+            // The list is empty today. This stays as the shape of an honest
+            // refusal for the next action that is visible before it is built:
+            // the copy names what is missing rather than claiming the whole
+            // feature is unbuilt, which is what the old invoice message did for
+            // months after the sentence stopped being true.
+            return response()->json([
+                'ok' => false,
+                'message' => 'That action is on the screen but not wired up yet.',
+            ], 422);
+        }
+
+        if ($action === 'cancel') {
+            $order->update(['status' => 'cancelled']);
+            return response()->json(['ok' => true, 'status' => 'cancelled']);
+        }
+
+        if ($action === 'duplicate') {
+            $new = $order->replicate(['order_number', 'invoice_number', 'transaction_id', 'paid_at', 'completed_at', 'deleted_at']);
+            $new->order_number = $this->nextOrderNumber();
+            $new->status = 'draft';
+            $new->save();
+
+            foreach ($order->items as $item) {
+                $new->items()->create($item->replicate()->toArray());
+            }
+
+            return response()->json(['ok' => true, 'new_order_id' => $new->id, 'new_order_number' => $new->order_number]);
+        }
+
+        return response()->json(['ok' => false, 'message' => 'Unknown action.'], 422);
+    }
+
+    /** Only orders that haven't shipped are safe to change the contents of — once packed, editing the line items doesn't reflect reality. */
+    private const EDITABLE_STATUSES = ['draft', 'pending', 'processing', 'onhold'];
+
+    /**
+     * The ceiling on one line's quantity.
+     *
+     * Not a guess at what anyone would order: it is the largest quantity that
+     * cannot on its own take a line past the money column at any unit price a
+     * shop would charge, and it matches the 99 the storefront cart enforces in
+     * CartService::add(). A back office that accepted a quantity the shop front
+     * clamps would be two different products.
+     */
+    private const MAX_QUANTITY = 99;
+
+    /**
+     * Refuse a line whose money will not fit, before anything is written.
+     *
+     * order_items.unit_price, .subtotal and .total are all `$t->integer` —
+     * signed 32-bit, so 2,147,483,647 fils (AED 21,474,836.47) is the ceiling.
+     * Both the Phase 0 schema and 2026_09_15_020000_repair_order_tables declare
+     * them that way.
+     *
+     * Bounding each factor on its own is not enough: a unit price and a
+     * quantity can both be perfectly ordinary and their product still be past
+     * the column. And the order's own subtotal is a sum across lines, so a
+     * tenth line can overflow it while every line including that one fits.
+     *
+     * Both engines are wrong here, differently. MySQL in strict mode raises and
+     * the operator sees a 500 on a save they had no reason to think would fail.
+     * SQLite stores the wrapped number without a word — an order that reads as
+     * placed, with a total that is negative or nonsense, which is the half that
+     * reaches a customer.
+     */
+    private function refuseOverflowingLine(Order $order, int $unitPrice, int $quantity, ?int $ignoreItemId = null): ?JsonResponse
+    {
+        $ceiling = Money::plain(Fils::max());
+
+        if (! Fils::productFits($unitPrice, $quantity)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'That quantity at that unit price comes to more than an order line can hold (' . $ceiling . ').',
+            ], 422);
+        }
+
+        $line = $unitPrice * $quantity;
+
+        $others = (int) $order->items()
+            ->when($ignoreItemId !== null, fn ($q) => $q->whereKeyNot($ignoreItemId))
+            ->sum('total');
+
+        if (! Fils::sumFits($others, $line, (int) $order->shipping_total, (int) $order->fee_total, (int) $order->tax_total)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'That line would take the order total past what it can hold (' . $ceiling . ').',
+            ], 422);
+        }
+
+        return null;
+    }
+
+    private function assertEditable(Order $order): ?JsonResponse
+    {
+        if (!in_array($order->status, self::EDITABLE_STATUSES, true)) {
+            return response()->json(['ok' => false, 'message' => 'This order is no longer editable — it has already shipped or been closed out.'], 422);
+        }
+
+        return null;
+    }
+
+    /** Recomputes subtotal/total from the order's own line items after any add/update/remove — never trusts a client-sent total. */
+    private function recalcTotals(Order $order): void
+    {
+        $subtotal = (int) $order->items()->sum('total');
+        $order->subtotal = $subtotal;
+        $order->total = $subtotal + $order->shipping_total + $order->fee_total + $order->tax_total - $order->discount_total;
+        $order->save();
+    }
+
+    public function addItem(Request $request, int $id): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+        if ($blocked = $this->assertEditable($order)) return $blocked;
+
+        $data = $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            // Bounded. order_items.quantity is an unsignedInteger and the money
+            // columns beside it are signed 32-bit; an unbounded quantity
+            // overflows their product long before it overflows itself.
+            'quantity' => ['required', 'integer', 'min:1', 'max:' . self::MAX_QUANTITY],
+        ]);
+
+        $product = \App\Models\Product::find($data['product_id']);
+        $unitPrice = (int) ($product->sale_price ?: $product->price);
+        $quantity = (int) $data['quantity'];
+
+        if ($refusal = $this->refuseOverflowingLine($order, $unitPrice, $quantity)) {
+            return $refusal;
+        }
+
+        $lineTotal = $unitPrice * $quantity;
+
+        $item = $order->items()->create([
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'brand' => $product->brand?->name,
+            'sku' => $product->sku,
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'subtotal' => $lineTotal,
+            'total' => $lineTotal,
+        ]);
+
+        $this->recalcTotals($order);
+
+        return response()->json(['ok' => true, 'item_id' => $item->id, 'total_aed' => Money::toAed($order->total)]);
+    }
+
+    public function updateItem(Request $request, int $id, int $itemId): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+        if ($blocked = $this->assertEditable($order)) return $blocked;
+
+        $item = $order->items()->find($itemId);
+        if ($item === null) return response()->json(['error' => 'not_found'], 404);
+
+        $data = $request->validate([
+            'quantity' => ['sometimes', 'integer', 'min:1', 'max:' . self::MAX_QUANTITY],
+            /*
+             * A STRING, not `numeric`, and parsed by Fils::parse().
+             *
+             * `numeric` accepts scientific notation and any number of decimals,
+             * and the old `(int) round($value * 100)` then routed an operator's
+             * keystrokes through a double: (int) (1.15 * 100) is 114. round()
+             * happens to rescue two-decimal values at today's magnitudes, so
+             * this was latent rather than wrong — the same class of defect the
+             * product editor had, and worth removing for the same reason.
+             *
+             * Fils::parse() reads the digits one at a time, refuses more
+             * precision than a fil can hold rather than silently dropping it,
+             * and refuses anything past the 32-bit money column.
+             */
+            'unit_price_aed' => ['sometimes', 'string', 'max:24', function (string $attribute, $value, $fail) {
+                $fils = Fils::parse((string) $value);
+
+                if ($fils === null) {
+                    $fail('Enter a plain amount with at most two decimals, up to '
+                        . Money::plain(Fils::max()) . '.');
+
+                    return;
+                }
+
+                if ($fils < 0) {
+                    $fail('A unit price cannot be negative.');
+                }
+            }],
+        ]);
+
+        if (isset($data['quantity'])) {
+            $item->quantity = (int) $data['quantity'];
+        }
+
+        if (isset($data['unit_price_aed'])) {
+            $item->unit_price = (int) Fils::parse((string) $data['unit_price_aed']);
+        }
+
+        // Both factors are individually in range by now. Their PRODUCT is the
+        // thing that actually overflows, and it is checked after both have been
+        // applied rather than against whichever one this request happened to
+        // change — a sane new quantity against an already-large unit price
+        // overflows just as well as the other way round.
+        if ($refusal = $this->refuseOverflowingLine($order, (int) $item->unit_price, (int) $item->quantity, $item->id)) {
+            return $refusal;
+        }
+
+        $item->subtotal = $item->unit_price * $item->quantity;
+        $item->total = $item->subtotal;
+        $item->save();
+
+        $this->recalcTotals($order);
+
+        return response()->json(['ok' => true, 'total_aed' => Money::toAed($order->total)]);
+    }
+
+    public function removeItem(int $id, int $itemId): JsonResponse
+    {
+        $order = Order::find($id);
+        if ($order === null) return response()->json(['error' => 'not_found'], 404);
+        if ($blocked = $this->assertEditable($order)) return $blocked;
+
+        $item = $order->items()->find($itemId);
+        if ($item === null) return response()->json(['error' => 'not_found'], 404);
+        if ($order->items()->count() <= 1) {
+            return response()->json(['ok' => false, 'message' => 'An order needs at least one item — remove the whole order instead if it should not exist.'], 422);
+        }
+
+        $item->delete();
+        $this->recalcTotals($order);
+
+        return response()->json(['ok' => true, 'total_aed' => Money::toAed($order->total)]);
+    }
+
+    private function nextOrderNumber(): string
+    {
+        $max = (int) Order::withTrashed()->max('id');
+
+        return 'KBB-' . str_pad((string) ($max + 1000), 5, '0', STR_PAD_LEFT);
+    }
+
+    private function customerHistory(?int $customerId, string $email): array
+    {
+        $query = $customerId
+            ? Order::withTrashed()->where('customer_id', $customerId)
+            : Order::withTrashed()->where('email', $email);
+
+        $orders = $query->get(['id', 'total', 'status']);
+        $real = $orders->whereIn('status', Order::REAL_STATUSES);
+
+        return [
+            'total_orders' => $orders->count(),
+            'total_revenue_aed' => Money::toAed((int) $real->sum('total')),
+            'average_order_value_aed' => $real->count() > 0 ? Money::toAed((int) round($real->sum('total') / $real->count())) : 0,
+        ];
+    }
 
     /* ===================================================================
      | GET /admin-api/manual-orders/bootstrap
@@ -78,7 +669,7 @@ class AdminOrderController extends Controller
      * table that owns it, and the same constants feed both this endpoint and
      * the validator in store().
      */
-    public function bootstrap(): JsonResponse
+    public function bootstrap(OrderMailer $mailer): JsonResponse
     {
         $countries = $this->shipping->coveredCountries();
 
@@ -103,7 +694,7 @@ class AdminOrderController extends Controller
             ],
             'currency' => 'AED',
             'cod_fee_fils' => (int) $this->settings->get('cod_fee', 0),
-            'email' => $this->confirmationEmailCapability(),
+            'email' => $this->confirmationEmailCapability($mailer),
         ]);
     }
 
@@ -139,10 +730,12 @@ class AdminOrderController extends Controller
             });
         }
 
-        // The total is taken through the trait, from a copy of the builder with
-        // its select list, ordering and paging stripped. Counting $query as it
-        // stands — after orderByDesc and limit below — is MySQL error 1140.
-        $total = $this->aggregateCount($query);
+        // Through App\Support\AggregatesQueries, which strips the select list,
+        // the ordering and the page window from a copy of the builder. Counting
+        // $query as it stands — after the orderByDesc and forPage below — is
+        // MySQL 1140 on the ordering and a silent zero from page two on the
+        // offset. Both have shipped from this repo.
+        $total = (int) ($this->aggregate($query, 'count(*) as aggregate')?->aggregate ?? 0);
 
         $rows = (clone $query)
             ->orderByDesc('id')
@@ -195,7 +788,7 @@ class AdminOrderController extends Controller
             });
         }
 
-        $total = $this->aggregateCount($query);
+        $total = (int) ($this->aggregate($query, 'count(*) as aggregate')?->aggregate ?? 0);
 
         $rows = (clone $query)
             ->with(['brand:id,name', 'variants'])
@@ -257,7 +850,7 @@ class AdminOrderController extends Controller
      |=================================================================== */
 
     /** Create the order. */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, OrderMailer $mailer): JsonResponse
     {
         $input = $this->validatedPayload($request, forCreate: true);
 
@@ -301,82 +894,14 @@ class AdminOrderController extends Controller
                     'line_total_fils' => (int) $i->total,
                 ])->values(),
             ],
-            // Said plainly rather than left to be discovered: see
-            // confirmationEmailCapability() and the stock note below.
-            'email' => $this->emailOutcome((bool) ($input['send_confirmation'] ?? false)),
+            // Said plainly rather than left to be discovered.
+            'email' => $this->sendConfirmation($order, (bool) ($input['send_confirmation'] ?? false), $mailer),
             'stock' => [
                 'adjusted' => false,
                 'reason' => 'No order path in this build moves stock — a website '
                     . 'order does not decrement it either. Adjust it in Catalog → Inventory.',
             ],
         ], 201);
-    }
-
-    /* ===================================================================
-     | GET /admin-api/manual-orders/{order}/packing-list.csv
-     |=================================================================== */
-
-    /**
-     * The packing list, for the team who pack from the order record.
-     *
-     * Every cell goes through Csv::cell(), which prefixes =, +, -, @, tab and
-     * CR with an apostrophe. A product name is merchant-supplied text and a
-     * customer note is customer-supplied text; either can begin with = and
-     * become a live formula the moment the file is opened in Excel.
-     */
-    public function packingList(int $order): Response
-    {
-        $record = Order::with('items')->find($order);
-
-        if (! $record) {
-            return response('Not found', 404);
-        }
-
-        $address = (array) ($record->shipping_address ?? []);
-
-        $rows = [
-            ['Order', 'Placed', 'Channel', 'Status', 'Customer', 'Email', 'Phone', 'Address', 'Payment'],
-            [
-                $record->order_number,
-                (string) $record->created_at,
-                (string) $record->origin,
-                (string) $record->status,
-                trim(($address['first_name'] ?? '') . ' ' . ($address['last_name'] ?? '')),
-                (string) $record->email,
-                (string) ($address['phone'] ?? $record->phone ?? ''),
-                implode(', ', array_filter([
-                    $address['line1'] ?? null,
-                    $address['city'] ?? null,
-                    $address['state'] ?? null,
-                    $address['country'] ?? null,
-                ])),
-                (string) ($record->payment_method_title ?: $record->payment_method),
-            ],
-            [],
-            ['SKU', 'Item', 'Qty', 'Unit (AED)', 'Line (AED)'],
-        ];
-
-        foreach ($record->items as $item) {
-            $rows[] = [
-                (string) $item->sku,
-                (string) $item->name,
-                (int) $item->quantity,
-                Fils::toDecimalString((int) $item->unit_price),
-                Fils::toDecimalString((int) $item->total),
-            ];
-        }
-
-        $rows[] = [];
-        $rows[] = ['', '', '', 'Subtotal', Fils::toDecimalString((int) $record->subtotal)];
-        $rows[] = ['', '', '', 'Discount', Fils::toDecimalString(-(int) $record->discount_total)];
-        $rows[] = ['', '', '', 'Delivery', Fils::toDecimalString((int) $record->shipping_total)];
-        $rows[] = ['', '', '', 'Fee', Fils::toDecimalString((int) $record->fee_total)];
-        $rows[] = ['', '', '', 'Total', Fils::toDecimalString((int) $record->total)];
-
-        return response(Csv::document($rows), 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="packing-' . $record->order_number . '.csv"',
-        ]);
     }
 
     /* ===================================================================
@@ -509,53 +1034,50 @@ class AdminOrderController extends Controller
     /**
      * Whether a confirmation email can be sent at all.
      *
-     * There is no mail in this build: no app/Mail, no Mailable, not one
-     * Mail:: call anywhere in app/. The checkbox on the form is therefore
-     * rendered disabled with this reason shown beside it, rather than being a
-     * control that silently does nothing — an operator ticking "email the
-     * customer" and no email arriving is worse than no checkbox at all.
-     *
-     * The capability check is a class_exists on the Mailable this would send,
-     * so the day one is added the checkbox becomes live without this file
-     * changing.
+     * There is a real one now: App\Mail\OrderConfirmation, sent through
+     * App\Services\Mail\OrderMailer, which is also what the storefront
+     * checkout fires on placement. The owner can switch it off in
+     * Store -> Modules -> Order emails, and this reports that rather than
+     * offering a checkbox that would be quietly overruled.
      */
-    private function confirmationEmailCapability(): array
+    private function confirmationEmailCapability(OrderMailer $mailer): array
     {
-        $mailable = 'App\\Mail\\OrderConfirmation';
-        $hasMailable = class_exists($mailable);
-        $mailer = (string) config('mail.default', '');
-        $mailerSends = ! in_array($mailer, ['', 'array', 'log'], true);
-
-        if (! $hasMailable) {
+        if (! $mailer->confirmationEnabled()) {
             return [
                 'available' => false,
-                'reason' => 'This build has no order-confirmation email — there is no mailable '
-                    . 'to send and no order path that sends one. Nothing will be emailed.',
-            ];
-        }
-
-        if (! $mailerSends) {
-            return [
-                'available' => false,
-                'reason' => 'Mail is set to "' . $mailer . '", which does not deliver. '
-                    . 'Configure a mailer before relying on this.',
+                'reason' => 'Order confirmation emails are switched off in '
+                    . 'Store → Modules → Order emails, so nothing would be sent.',
             ];
         }
 
         return ['available' => true, 'reason' => null];
     }
 
-    /** What actually happened to the confirmation email on this order. */
-    private function emailOutcome(bool $requested): array
+    /**
+     * Send the confirmation, or say why not.
+     *
+     * resendConfirmation() rather than placed(): placed() also fires the
+     * merchant alert, and a "new order" landing in the owner's inbox for an
+     * order the owner just keyed in by hand is a lie about what happened. It is
+     * also the only method on OrderMailer that REPORTS rather than swallowing
+     * the outcome, which is what an operator who ticked a box is owed.
+     */
+    private function sendConfirmation(Order $order, bool $requested, OrderMailer $mailer): array
     {
-        $capability = $this->confirmationEmailCapability();
+        if (! $requested) {
+            return [
+                'requested' => false,
+                'sent' => false,
+                'reason' => 'Not requested — the operator left the box unticked.',
+            ];
+        }
+
+        $result = $mailer->resendConfirmation($order);
 
         return [
-            'requested' => $requested,
-            'sent' => false,
-            'reason' => $requested
-                ? ($capability['reason'] ?? 'Sending is not wired up yet.')
-                : 'Not requested — the operator left the box unticked.',
+            'requested' => true,
+            'sent' => (bool) $result['ok'],
+            'reason' => (string) $result['message'],
         ];
     }
 

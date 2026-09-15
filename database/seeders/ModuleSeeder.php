@@ -55,8 +55,11 @@ class ModuleSeeder extends Seeder
             ['module' => 'newsletter', 'enabled' => false],
             // performance
             ['module' => 'performance', 'enabled' => false],
-            // seo
-            ['module' => 'seo_engine', 'enabled' => false],
+            // seo — on, unlike the plugin. App\Support\Seo is the only thing in
+            // this app that writes a <head>; off would mean no canonical, no
+            // description, no Open Graph and no schema on a fresh install. The
+            // reasoning is recorded in full on the ModuleRegistry row.
+            ['module' => 'seo_engine', 'enabled' => true],
         ];
 
         foreach ($modules as $module) {

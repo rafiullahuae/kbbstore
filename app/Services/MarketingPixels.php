@@ -139,6 +139,76 @@ class MarketingPixels
         return $out;
     }
 
+    /**
+     * AddToCart, wired to the buttons rather than to a page.
+     *
+     * Meta's WooCommerce plugin fires this and every lookalike audience and
+     * add-to-cart optimisation depends on it; without it the funnel jumps
+     * PageView -> InitiateCheckout and the middle is invisible.
+     *
+     * Emitted as one delegated listener rather than per button, because the
+     * cart panel, quick view and grids all rebuild their markup after load and
+     * per-element handlers would be lost. Delegation on document catches
+     * whatever exists at click time.
+     *
+     * Price and name come from the button's own data attributes, written
+     * server-side from effectivePrice(), so a sale price is reported as the
+     * price actually charged. If a button carries no price the event still
+     * fires with the id, which is enough to build an audience -- a missing
+     * attribute must not cost the event.
+     *
+     * Fires on click, not on cart success. The cart request is what the click
+     * starts, and there is no event to hang it on; over-reporting a failed add
+     * is a smaller loss than under-reporting every successful one.
+     */
+    public function addToCart(): string
+    {
+        if (! $this->active()) {
+            return '';
+        }
+
+        $c = $this->all();
+        $currency = json_encode($this->currency());
+
+        $calls = [];
+
+        if (! empty($c['meta_id'])) {
+            $calls[] = "if(window.fbq)fbq('track','AddToCart',{content_ids:[id],content_type:'product',value:v,currency:{$currency}});";
+        }
+
+        if (! empty($c['ga_id'])) {
+            $calls[] = "if(window.gtag)gtag('event','add_to_cart',{currency:{$currency},value:v,items:[{item_id:id,item_name:n,price:v,quantity:q}]});";
+        }
+
+        if (! empty($c['tiktok_id'])) {
+            $calls[] = "if(window.ttq)ttq.track('AddToCart',{content_id:String(id),content_type:'product',value:v,currency:{$currency}});";
+        }
+
+        if ($calls === []) {
+            return '';
+        }
+
+        $body = implode("\n    ", $calls);
+
+        return <<<HTML
+<script>
+document.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-kbb-add]');
+  if (!el) return;
+  var id = el.getAttribute('data-kbb-add');
+  if (!id) return;
+  var v = parseFloat(el.getAttribute('data-price') || '0') || 0;
+  var n = el.getAttribute('data-name') || '';
+  var q = parseInt(el.getAttribute('data-quantity') || '1', 10) || 1;
+  try {
+    {$body}
+  } catch (err) {}
+}, true);
+</script>
+
+HTML;
+    }
+
     /** Checkout-page event. The caller is responsible for never calling this on the success page. */
     public function beginCheckout(int $totalFils): string
     {

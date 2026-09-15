@@ -112,13 +112,70 @@ final class UpdateRunner
             $release->update(['status' => 'applied', 'completed_at' => now()]);
             $this->completed = true;
 
+            // InstalledVersion memoises within the request. This row is what it
+            // reads, and it was just written, so drop the memo or the response
+            // that confirms the update still reports the previous version.
+            InstalledVersion::forget();
+
             $this->backups->prune(5);
+            $this->archivePackage($release, $package);
 
             return $release->fresh();
         } catch (\Throwable $e) {
             $this->rollback($release, $e->getMessage());
 
             return $release->fresh();
+        }
+    }
+
+    /**
+     * Copies the uploaded zip into a permanent archive folder instead of
+     * letting it be deleted, and records where. Every prior release simply
+     * discarded the zip once applied — there was no way to come back for a
+     * specific past patch later, from this server or anywhere else, and no
+     * way for a future session (this one's own memory included) to recover
+     * it if needed. This never blocks or fails the update itself: a problem
+     * archiving is logged and swallowed, not thrown, since the site
+     * updating successfully matters far more than a copy of the file that
+     * did it.
+     */
+    private function archivePackage(UpdateRelease $release, UpdatePackage $package): void
+    {
+        try {
+            $slugSource = trim($package->notes()) !== '' ? $package->notes() : $release->name;
+            $slug = \Illuminate\Support\Str::slug(substr($slugSource, 0, 60));
+            $filename = 'kbb-patch-archive/' . $release->version . ($slug !== '' ? '_' . $slug : '') . '.zip';
+
+            // Written through the same Storage facade the download route
+            // reads it back through, rather than a raw filesystem path —
+            // the 'local' disk's actual root (storage/app/private, not
+            // storage/app) is a Storage-facade concern, not something to
+            // duplicate and risk drifting out of sync with here. Streamed
+            // rather than loaded into a string, so a package considerably
+            // larger than today's ~500KB ones still copies without needing
+            // to hold the whole file in memory at once.
+            $stream = fopen($package->zipPath(), 'rb');
+
+            if ($stream === false) {
+                throw new \RuntimeException("Could not open the package at {$package->zipPath()}.");
+            }
+
+            try {
+                if (! \Illuminate\Support\Facades\Storage::disk('local')->put($filename, $stream)) {
+                    throw new \RuntimeException("Could not write the archive to {$filename}.");
+                }
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
+
+            $release->update(['archive_path' => $filename]);
+        } catch (\Throwable $e) {
+            Log::warning('kbb-update: could not archive applied package', [
+                'version' => $release->version,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

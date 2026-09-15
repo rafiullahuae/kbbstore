@@ -25,17 +25,26 @@ use Illuminate\View\View;
 class ShopController extends Controller
 {
     /** Only the columns the card renders. The row also carries description,
-     *  seo, meta_feed and images — several KB each, never used here. */
+     *  seo, meta_feed and images — several KB each, never used here.
+     *  `created_at` is in the list because ProductLabels reads it for the
+     *  "New" badge — while it was missing that badge could never fire on a
+     *  listing, only on the product page. */
     private const CARD_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image',
         'rating', 'review_count', 'featured', 'position', 'type', 'total_sales',
+        'created_at',
     ];
 
     public function __construct(private SettingsService $settings) {}
 
     public function index(Request $request, ?string $categorySlug = null): View
     {
+        // Facets::active() memoises in a process-level static. Under PHP-FPM
+        // that is one request and harmless; in the test suite, a queue worker
+        // or Octane it would hand this request the previous one's filters.
+        Facets::reset();
+
         $active = Facets::active();
         $page = Facets::page();
         $perPage = (int) $this->settings->get('products_per_page', 24);
@@ -70,6 +79,11 @@ class ShopController extends Controller
             'curorder' => Facets::sort(),
             'buckets' => Facets::BUCKETS,
             'title' => $title,
+            'seoCtx' => [
+                'description' => $this->seoDescription($category, (string) $request->query('s', ''), $total),
+                'url' => Facets::canonicalUrl($this->absoluteListingUrl($category)),
+                'breadcrumb' => $this->breadcrumbTrail($category),
+            ],
             'sub' => $sub,
             'crumb' => $crumb,
             'clearUrl' => $category ? $category->url() : Facets::clearUrl(),
@@ -98,10 +112,23 @@ class ShopController extends Controller
     private function applyFacets($query, array $active, string $search): void
     {
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', "%{$search}%"));
+            // Expanded before matching: "moisturiser" has to reach a product
+            // labelled "Moisturizer", and "sun cream" has to reach "sunscreen".
+            // Matching the raw string returns nothing and the shopper concludes
+            // the shop does not stock it.
+            //
+            // Also note the escaping. The old code interpolated the term
+            // straight into the pattern, so a shopper typing "50%" searched for
+            // "anything, then 50, then anything" -- not a SQL injection, since
+            // the value is still bound, but wrong results all the same.
+            $terms = \App\Support\SearchTerms::expand($search);
+
+            $query->where(function ($q) use ($terms) {
+                foreach ($terms as $term) {
+                    \App\Support\SearchTerms::orWhereLike($q, 'products.name', $term);
+                    \App\Support\SearchTerms::orWhereLike($q, 'products.sku', $term);
+                    $q->orWhereHas('brand', fn ($b) => \App\Support\SearchTerms::whereLike($b, 'brands.name', $term));
+                }
             });
         }
 
@@ -139,13 +166,106 @@ class ShopController extends Controller
             'date' => $query->orderByDesc('created_at'),
             'name' => $query->orderBy('name'),
             // "Featured" is the curated order the Sorting module maintains.
-            default => $query->orderByDesc('featured')->orderBy('position')->orderBy('name'),
+            default => $this->applyDefaultSort($query),
         };
     }
 
-    private function heading(?Category $category, string $search): array
+    /**
+     * "Featured" — the shop's default sort, and the one surface the
+     * `product_sorting` module actually governs.
+     *
+     * The curated order lives in `products.position`, written by Store →
+     * Catalog → Reorder (CatalogReorderApiController). This is the plugin's
+     * own idea: WordPress's `menu_order` baked into WooCommerce's "Default
+     * sorting". Off, the column is simply not consulted and the default view
+     * falls back to featured-first, then alphabetical — which is exactly what
+     * this query did before a curated order existed at all.
+     *
+     * This gate is the whole module. Before it, `position` was in the ORDER BY
+     * unconditionally and the switch on Store → Modules changed nothing
+     * whatsoever, while the registry advertised it as `live`.
+     *
+     * Deliberately NOT gated: the `menu_order` option of the [kbb_products]
+     * shortcode (App\Support\Shortcodes). That is an explicit, per-shortcode
+     * request for the curated order, not the default sort the module is about,
+     * and silently ignoring an author's explicit choice is a different bug.
+     */
+    private function applyDefaultSort($query)
+    {
+        $query->orderByDesc('featured');
+
+        if ($this->settings->moduleEnabled('product_sorting', false)) {
+            $query->orderBy('position');
+        }
+
+        return $query->orderBy('name');
+    }
+
+    /**
+     * A real, page-specific meta description instead of falling back to one
+     * sitewide default everywhere — every category, search, and the general
+     * shop page gets its own, distinct text. Duplicate meta descriptions
+     * across a catalogue's category pages is flagged as a real quality
+     * signal problem, not just a missed opportunity, so this isn't
+     * cosmetic. Kept deliberately short (under ~130 characters) rather than
+     * padded out to the full 160-character budget — accurate and concise
+     * reads better than stretched, and Google truncates hard past 155-160
+     * on desktop and roughly 120 on mobile regardless.
+     */
+    /**
+     * BreadcrumbList schema's own trail, not the single visual label
+     * `heading()` returns — search-engine breadcrumb schema needs the
+     * real ancestor chain with URLs (Home → Shop → Category), which
+     * nothing in this controller was building until now; the schema
+     * renderer itself (Seo::jsonLd()) has accepted a 'breadcrumb' context
+     * key from the start, but no controller ever actually supplied one.
+     */
+    private function breadcrumbTrail(?Category $category): array
+    {
+        $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+        $trail = [
+            ['name' => 'Home', 'url' => $base . '/'],
+            ['name' => 'Shop', 'url' => $base . '/shop/'],
+        ];
+
+        if ($category) {
+            $trail[] = ['name' => $category->name, 'url' => $base . $category->url()];
+        }
+
+        return $trail;
+    }
+
+    /**
+     * Category::url() (like Product::url()) is deliberately root-relative
+     * for <a href> links — a canonical tag needs the real, absolute URL,
+     * so site_url is prepended by hand here rather than reused as-is.
+     */
+    private function absoluteListingUrl(?Category $category): string
+    {
+        $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+
+        return $base . ($category ? $category->url() : '/shop/');
+    }
+
+    private function seoDescription(?Category $category, string $search, int $total): string
     {
         if ($category) {
+            $count = $total ? "{$total} authentic Korean skincare picks" : 'authentic Korean skincare';
+
+            return "Shop {$category->name} at K-Beauty Bliss — {$count}, next-day UAE delivery.";
+        }
+
+        if ($search !== '') {
+            $result = $total === 1 ? 'result' : 'results';
+
+            return "\"{$search}\" — {$total} {$result} at K-Beauty Bliss, authentic Korean skincare with next-day UAE delivery.";
+        }
+
+        return "Browse every K-Beauty Bliss product — {$total} authentic Korean skincare picks, from serums to beauty devices, next-day UAE delivery.";
+    }
+
+    private function heading(?Category $category, string $search): array
+    {        if ($category) {
             return [
                 $category->name,
                 $category->description ?: 'Authentic Korean skincare, curated for the UAE.',
@@ -160,18 +280,32 @@ class ShopController extends Controller
         return ['Shop all', 'Authentic Korean skincare, curated for the UAE.', 'Shop'];
     }
 
-    /** Removable chips for whatever is currently applied. */
+    /**
+     * Removable chips for whatever is currently applied.
+     *
+     * The two lookups are batched. Selecting eight brands used to mean eight
+     * separate `select name from brands where slug = ?` round trips just to
+     * label the chips above the grid.
+     */
     private function chips(array $active): array
     {
         $chips = [];
 
+        $catNames = $active['cat']
+            ? Category::whereIn('slug', $active['cat'])->pluck('name', 'slug')
+            : collect();
+
+        $brandNames = $active['brand']
+            ? Brand::whereIn('slug', $active['brand'])->pluck('name', 'slug')
+            : collect();
+
         foreach ($active['cat'] as $slug) {
-            $name = Category::where('slug', $slug)->value('name');
+            $name = $catNames[$slug] ?? null;
             if ($name) { $chips[] = ['key' => 'cat', 'value' => $slug, 'label' => $name]; }
         }
 
         foreach ($active['brand'] as $slug) {
-            $name = Brand::where('slug', $slug)->value('name');
+            $name = $brandNames[$slug] ?? null;
             if ($name) { $chips[] = ['key' => 'brand', 'value' => $slug, 'label' => $name]; }
         }
 

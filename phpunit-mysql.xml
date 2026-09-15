@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The same suite as phpunit.xml, pointed at a real MySQL/MariaDB.
+
+    Why this file exists: tests run on SQLite, production runs MySQL, and the
+    gap between the two dialects has caused two outages that the green SQLite
+    suite could not see (see docs/MYSQL-PARITY.md). This config is the other
+    half of the suite — same tests, real dialect.
+
+        vendor/bin/pest -c phpunit-mysql.xml (add the compact flag)
+
+    The connection is `mysql` with Laravel's `strict => true`, which issues
+    SET SESSION sql_mode='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,
+    NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'. The live
+    host's sql_mode is unknown, so the suite is pinned to the strictest
+    realistic setting rather than to a guess.
+
+    force="true" matters: without it PHPUnit leaves an already-exported
+    DB_CONNECTION alone and the run silently falls back to SQLite — exactly
+    the false green this file exists to prevent.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+    <testsuites>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include><directory>app</directory></include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="DB_HOST" value="127.0.0.1" force="true"/>
+        <env name="DB_PORT" value="3306" force="true"/>
+        <env name="DB_DATABASE" value="kbb_test" force="true"/>
+        <env name="DB_USERNAME" value="kbb" force="true"/>
+        <env name="DB_PASSWORD" value="kbb" force="true"/>
+        <env name="DB_CHARSET" value="utf8mb4" force="true"/>
+        <env name="DB_COLLATION" value="utf8mb4_unicode_ci" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+    </php>
+</phpunit>

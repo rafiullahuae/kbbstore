@@ -1,0 +1,58 @@
+Thank you, Aisha Khan
+
+Your order is in and we are packing it with care. Everything you chose is
+listed below, exactly as it was when you ordered — keep this email, it is
+your receipt.
+
+Order KBB-10427 — placed 14 September 2026
+
+WHAT YOU ORDERED
+- Rice Daily Moisturizing Toner 150ml (Haruharu Wonder)
+  SKU HH-RT-150
+  QTY 2  ·  AED 199.00 each  ·  line total AED 398.00
+- Centella Ampoule (SKIN1004)
+  30ml
+  SKU SK-CA-030
+  QTY 1  ·  AED 65.00 each  ·  line total AED 65.00
+
+TOTALS
+Subtotal: AED 463.00
+Discount (GLOW10): AED -40.00
+Delivery: AED 20.00
+Gift wrapping: AED 15.00
+Cash on delivery fee: AED 15.00
+Total: AED 473.00
+
+DELIVERY ADDRESS
+Aisha Khan
+Apartment 1204, Marina Heights
+Dubai Dubai
+AE
++971 50 123 4567
+
+Delivery method: Standard delivery (1–3 working days)
+Payment method: Cash on delivery
+
+GIFT MESSAGE
+Happy birthday, Mama.
+Love from all of us x
+
+ORDER NOTE
+Please ring the doorbell twice — the buzzer is broken.
+
+TRACK YOUR ORDER
+http://localhost/checkout/success?order=KBB-10427
+
+That link opens on the device you ordered from. Anywhere else, sign in to your
+account and your orders are all listed there under KBB-10427:
+http://localhost/my-account/orders
+
+WE ARE HERE IF YOU NEED US
+A real person answers. Ask us anything — a question about your order, or
+about what to use it with.
+WhatsApp: +971 58 505 2611 (https://wa.me/971585052611)
+Email us: hello@kbeautybliss.com (mailto:hello@kbeautybliss.com)
+Instagram: @kbeauty.bliss (https://www.instagram.com/kbeauty.bliss/)
+
+With love,
+the K Beauty Bliss team

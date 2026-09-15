@@ -15,6 +15,7 @@ use App\Models\ShippingZone;
 use App\Models\ShippingZoneLocation;
 use App\Models\User;
 use App\Services\SettingsService;
+use Tests\Support\ManualOrdersAdminRoutes;
 
 /**
  * Shared setup for the manual-order tests.
@@ -28,28 +29,23 @@ use App\Services\SettingsService;
  */
 final class ManualOrders
 {
-    /**
-     * The route file is registered by Tests\CreatesApplication, during
-     * application creation, using the exact nesting its own header documents.
-     * This is kept as an explicit no-op so a test reads as though it asked for
-     * them, and so there is one place to change if that ever moves.
-     */
+    /** Mount the lane's route file, exactly as its header tells the integrator to. */
     public static function registerRoutes(): void
     {
-        // Intentionally empty — see Tests\CreatesApplication::createApplication().
+        ManualOrdersAdminRoutes::wire(app());
     }
 
-    /** Every path this lane registers, as method => uri pairs. */
+    /**
+     * Every path this lane registers, read off the ROUTER rather than written
+     * out here — a hand-kept list keeps passing after someone adds a route and
+     * forgets to add it to the list, which is the one case a guard test exists
+     * to catch.
+     *
+     * @return list<array{0: string, 1: string}>
+     */
     public static function paths(): array
     {
-        return [
-            ['GET', '/admin-api/manual-orders/bootstrap'],
-            ['GET', '/admin-api/manual-orders/customers'],
-            ['GET', '/admin-api/manual-orders/products'],
-            ['POST', '/admin-api/manual-orders/quote'],
-            ['POST', '/admin-api/manual-orders'],
-            ['GET', '/admin-api/manual-orders/1/packing-list.csv'],
-        ];
+        return ManualOrdersAdminRoutes::paths();
     }
 
     public static function admin(): AdminUser

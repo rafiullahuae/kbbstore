@@ -69,7 +69,7 @@
                     <div class="kbb-card-rate"><span class="kbb-crate">@for ($i = 1; $i <= 5; $i++)<span class="kbb-cstar{{ $i <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $p->review_count }})</span></div>
                 @endif
                 <div class="cp">@if ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price) !!}</span> @endif<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice()) !!}</span></div>
-                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}">Add to cart</span>
+                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">Add to cart</span>
             </div>
         </a>
     @endforeach

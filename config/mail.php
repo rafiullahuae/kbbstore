@@ -14,7 +14,19 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    /*
+     * Default: the `kbb` mailer below, which App\Services\Mail\MailConfigurator
+     * fills in at runtime from the settings the owner enters under Store → Mail.
+     *
+     * The env variable still wins where one is set, which is what keeps CI on
+     * `array` and lets a developer point at Mailpit without touching the
+     * database. Production has never had MAIL_MAILER set at all -- that is the
+     * blocker this package exists to clear -- so there it resolves to `kbb`.
+     *
+     * The old default was `log`. Anything that started sending would have gone
+     * silently to storage/logs and looked like it worked.
+     */
+    'default' => env('MAIL_MAILER', 'kbb'),
 
     /*
     |--------------------------------------------------------------------------
@@ -36,6 +48,28 @@ return [
     */
 
     'mailers' => [
+
+        /*
+         * The store's own mailer.
+         *
+         * Declared inert on purpose. Host, port, username and password come
+         * from the database (settings + the encrypted mail_credentials row) and
+         * are written in here at runtime by MailConfigurator, hooked to the
+         * resolution of the mail manager by MailServiceProvider.
+         *
+         * They are NOT read from env() here, and that is the point: this file
+         * is what `php artisan config:cache` serialises into a plain-text PHP
+         * file under bootstrap/cache. An SMTP password resolved at this level
+         * would be written to disk in the clear on a shared host, and shipped
+         * inside every update package that happened to include the cache.
+         *
+         * Until the form is filled in, MailConfigurator leaves this as `log`,
+         * so nothing throws on a page that tries to send before the store can.
+         */
+        'kbb' => [
+            'transport' => 'log',
+            'channel' => env('MAIL_LOG_CHANNEL'),
+        ],
 
         'smtp' => [
             'transport' => 'smtp',

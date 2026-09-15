@@ -6,11 +6,6 @@
 @endverbatim
 {!! $seo ?? '' !!}
 @verbatim
-<meta name="description" id="metaDesc" content="Skincare tips, ingredient guides and the K-beauty edit — from K-Beauty Bliss.">
-<link rel="canonical" href="https://kbeautybliss.com/blog">
-<meta property="og:type" content="website">
-<meta property="og:title" content="The Glow Journal · K-Beauty Bliss">
-<meta property="og:description" content="Skincare tips, ingredient guides and the K-beauty edit.">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#fff;--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#E0567B;--pink-deep:#C13E63;
@@ -90,7 +85,30 @@
   <div class="chips" id="chips"></div>
 </div></section>
 
-<div class="wrap"><div class="grid" id="grid"></div></div>
+<div class="wrap"><div class="grid" id="grid">
+@endverbatim
+@forelse($posts as $p)
+  {{-- Posts live at the site root, one slug per post — the Phase 9 decision.
+       The /skincare-guide/{slug}/ form this app used is now a 301. --}}
+  <a class="post" data-tag="{{ $p->tag }}" href="{{ \App\Support\Url::to('/' . $p->slug . '/') }}">
+    <div class="cover" style="{{ $p->cover && (str_contains($p->cover, 'gradient') || str_contains($p->cover, '#') || str_contains($p->cover, 'url')) ? 'background:' . $p->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
+      @if(!$p->cover || !(str_contains($p->cover, 'url') || str_contains($p->cover, 'http')))
+        {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}
+      @endif
+      @if($p->tag)<span class="ptag">{{ $p->tag }}</span>@endif
+    </div>
+    <div class="pbody">
+      <div class="pdate">{{ optional($p->published_at)->format('j F Y') }}</div>
+      <div class="ptitle">{{ $p->title }}</div>
+      <div class="pex">{{ $p->excerpt }}</div>
+      <div class="pmore">Read more →</div>
+    </div>
+  </a>
+@empty
+  <div class="empty">No articles yet — check back soon.</div>
+@endforelse
+@verbatim
+</div></div>
 
 <footer><div class="wrap fin">
   <div>© K-Beauty Bliss · Authentic Korean beauty in the UAE</div>
@@ -98,38 +116,19 @@
 </div></footer>
 
 <script>
-  const $=s=>document.querySelector(s);
-  const API='';
-  const esc=s=>{const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;};
-  const fmt=iso=>{const d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});};
-  let POSTS=[], tag='All';
-  const SEED=[
-    {slug:'ten-step-routine-simplified-uae-heat',title:'The 10-step routine, simplified for UAE heat',tag:'Routine',cover:'linear-gradient(135deg,#FFF0F4,#FCE0E8)',excerpt:'You don’t need ten bottles to glow in Dubai humidity. Here’s the lightweight version that actually works.',created_at:'2026-06-29'},
-    {slug:'centella-vs-cica-what-calms-skin',title:'Centella vs. Cica: what actually calms skin',tag:'Ingredients',cover:'linear-gradient(135deg,#e6f7ef,#cdeede)',excerpt:'They sound different but come from the same plant. Here’s what soothes redness.',created_at:'2026-06-24'},
-    {slug:'why-korean-sunscreens-win-daily-wear',title:'Why Korean sunscreens win for daily wear',tag:'SPF',cover:'linear-gradient(135deg,#ece7ff,#d7ccff)',excerpt:'No white cast, no greasy film, and a finish you’ll actually want to reapply.',created_at:'2026-06-19'}
-  ];
-  const EMO={Routine:'✍️',Ingredients:'🌿',SPF:'☀️',News:'📰'};
-  function coverStyle(c){return /gradient|#|url/.test(c||'')?`background:${c}`:`background:linear-gradient(135deg,#FFF0F4,#FCE0E8)`;}
-  function render(){
-    const tags=['All',...[...new Set(POSTS.map(p=>p.tag).filter(Boolean))]];
-    $('#chips').innerHTML=tags.map(t=>`<button class="chip${t===tag?' on':''}" onclick="setTag('${esc(t)}')">${esc(t)}</button>`).join('');
-    const list=tag==='All'?POSTS:POSTS.filter(p=>p.tag===tag);
-    $('#grid').innerHTML=list.length?list.map(p=>`
-      <a class="post" href="/post?slug=${encodeURIComponent(p.slug)}">
-        <div class="cover" style="${coverStyle(p.cover)}">${/url\(|http/.test(p.cover||'')?'':(EMO[p.tag]||'✨')}${p.tag?`<span class="ptag">${esc(p.tag)}</span>`:''}</div>
-        <div class="pbody">
-          <div class="pdate">${fmt(p.created_at)}</div>
-          <div class="ptitle">${esc(p.title)}</div>
-          <div class="pex">${esc(p.excerpt||'')}</div>
-          <div class="pmore">Read more →</div>
-        </div>
-      </a>`).join(''):'<div class="empty">No articles yet — check back soon.</div>';
+  // Tag filter — client-side show/hide over the server-rendered cards
+  // above, not a re-fetch against an API. The cards and their content are
+  // real now; this only toggles which of them are visible.
+  function setTag(t){
+    document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.textContent.trim()===t));
+    document.querySelectorAll('#grid .post').forEach(a=>{
+      a.style.display = (t==='All' || a.dataset.tag===t) ? '' : 'none';
+    });
   }
-  function setTag(t){tag=t;render();}
-  window.setTag=setTag;
-  (async()=>{
-    try{const r=await fetch(API+'/api/posts');if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length){POSTS=d;render();return;}}throw 0;}
-    catch(e){POSTS=SEED;render();}
+  window.setTag = setTag;
+  (function(){
+    const tags = ['All', ...new Set([...document.querySelectorAll('#grid .post')].map(a=>a.dataset.tag).filter(Boolean))];
+    document.getElementById('chips').innerHTML = tags.map(t=>`<button class="chip${t==='All'?' on':''}" onclick="setTag('${t.replace(/'/g,"\\'")}')">${t}</button>`).join('');
   })();
 </script>
 </body>

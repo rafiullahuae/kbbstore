@@ -1,0 +1,8 @@
+item_id,order_id,product_id,name,sku,brand,quantity,subtotal,total,tax_total
+5501,10233,4021,Ginseng Serum,KBB-4021,Beauty of Joseon,3,298.50,298.50,0.00
+5502,10233,9999,Discontinued Sheet Mask,KBB-9999,COSRX,1,0.00,0.00,0.00
+5503,99999,4021,Line On A Missing Order,KBB-4021,Beauty of Joseon,1,99.50,99.50,0.00
+5504,10234,4022,,KBB-4022,COSRX,1,45.00,45.00,0.00
+5505,10234,4022,Rice Toner,KBB-4022,COSRX,1,45.00,45.00,0.00
+5506,10237,4027,Snail Essence,KBB-4027,COSRX,2,120.00,120.00,0.00
+,10237,4027,Line With No Item Id,KBB-4027,COSRX,1,10.00,10.00,0.00

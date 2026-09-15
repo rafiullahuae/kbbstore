@@ -92,8 +92,18 @@ svg{display:block}
 .nav-gh .gh-name{flex:1}
 .nav-gh .chev{width:13px;height:13px;color:var(--ink-soft);transition:transform .22s var(--ease);flex-shrink:0}
 .nav-gh .gh-badge{font-size:10px;font-weight:700;background:var(--accent);color:#fff;border-radius:99px;padding:1px 7px;min-width:18px;text-align:center}
-.nav-sub{overflow:hidden;max-height:0;transition:max-height .26s var(--ease)}
-.nav-group:hover .nav-sub,.nav-group.open .nav-sub{max-height:560px}
+.nav-sub{overflow:hidden;max-height:0;transition:max-height .34s var(--ease)}
+/* 560px fitted about 15 rows. Store has 20, so Business Details, Customers,
+   Quiz Leads and Content & Pages were cut off by overflow:hidden with no way
+   to reach them -- the group looked complete and simply ended at Media
+   Library. Raised well clear of the longest group so new entries do not
+   silently disappear the same way.
+
+   max-height has to stay a fixed number for the transition to animate, so
+   this is headroom rather than a true fit. The outer .nav already scrolls
+   (flex:1 + overflow-y:auto), which is what carries the overflow once a group
+   is taller than the sidebar. */
+.nav-group:hover .nav-sub,.nav-group.open .nav-sub{max-height:1600px}
 .nav-group:hover .chev,.nav-group.open .chev{transform:rotate(90deg)}
 .nav-group.open .nav-gh{color:var(--ink)}
 .nav-group.open .gh-badge,.nav-group:hover .gh-badge{display:none}
@@ -123,6 +133,10 @@ svg{display:block}
 .iconbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--ink-soft);transition:.15s;position:relative}
 .iconbtn:hover{color:var(--ink);border-color:#d6dbe7}
 .iconbtn svg{width:18px;height:18px}
+.dciconbox svg{width:20px;height:20px}
+.dcokicon svg{width:13px;height:13px}
+.dcgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1000px){.dcgrid{grid-template-columns:1fr 1fr}}
 .iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid #fff}
 .userchip{display:flex;align-items:center;gap:9px;padding:5px 7px 5px 5px;border:1px solid var(--border);border-radius:99px;background:#fff}
 .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7b6cf0,#3f6fe0);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
@@ -147,6 +161,7 @@ body[data-env="sandbox"] .envbar{display:flex}
 .page-head p{font-size:13px;color:var(--ink-soft);margin-top:3px;max-width:680px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-s)}
 .card.pad{padding:20px}
+.odcard .pad{padding:20px 22px}
 .sec-title{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-faint);margin:26px 0 12px}
 .sec-title:first-child{margin-top:0}
 
@@ -374,6 +389,37 @@ input.inp[type=file]{padding:6px 9px}
 .fld input:focus,.fld textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .fld textarea{resize:vertical;min-height:78px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.odgrid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.odmain{min-width:0}
+.odside{min-width:0}
+.odcard{background:#fff;border:1px solid var(--border);border-radius:13px;box-shadow:0 1px 2px rgba(18,21,31,.04),0 1px 10px rgba(18,21,31,.03);overflow:hidden}
+.odgiftfee{display:inline-block;margin-left:8px;font-size:11px;color:var(--ink-soft)}
+.odgiftflag{display:inline-block;background:#fff0f4;color:#b4517a;border-radius:99px;padding:3px 11px;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.odgiftmsg,.odcustnote{margin-bottom:12px}
+.odgiftmsg:last-child,.odcustnote:last-child{margin-bottom:0}
+.odgiftmsg b,.odcustnote b{display:block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
+.odgiftmsg p,.odcustnote p{margin:0;font-size:13.5px;line-height:1.6;white-space:pre-wrap}
+.odgiftmsg p{padding:10px 12px;background:#fff7fa;border:1px solid #f0dde4;border-radius:8px}
+.odcardhead{background:#FFF8EC;color:#92600A;padding:13px 22px;font-weight:700;font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
+.odchev{display:flex;gap:4px}
+.odtoggle{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:.75;cursor:pointer}
+.odtoggle:hover{opacity:1;background:rgba(0,0,0,.06)}
+.odcols3{display:grid;grid-template-columns:1fr 1fr 1fr}
+.odcolcell{padding:20px 22px}
+.odcolcell.odcolmid{border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.odcols2{display:grid;grid-template-columns:1fr 1fr;gap:28px;padding:20px 22px}
+.odcollabel{font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:.06em;margin-bottom:14px;display:flex;justify-content:space-between}
+.odcollabel a{font-weight:600;font-size:11px;color:#E08A1A;text-decoration:none;letter-spacing:0}
+.odfld{margin-bottom:13px}
+.odfld label{display:block;font-size:10.5px;color:var(--ink-2);margin-bottom:6px;font-weight:600}
+.odinp,.odcard select{width:100%;padding:10px 12px;border:1.5px solid #D8DCE3;border-radius:8px;font-size:12.5px;color:var(--ink);background:#FAFBFC;font-family:inherit;font-weight:500;box-shadow:inset 0 1px 2px rgba(18,21,31,.03)}
+.odinp:focus,.odcard select:focus{outline:none;border-color:#E08A1A;background:#fff;box-shadow:0 0 0 3px #FFF3E0}
+.odtimegrid{display:grid;grid-template-columns:1.3fr .7fr .7fr;gap:7px}
+.odaddr{font-size:11.5px;line-height:1.8;color:var(--ink-2)}
+.odaddr a{color:#E08A1A;text-decoration:none;font-weight:500}
+.odaddr .odname{font-weight:700;color:var(--ink)}
+.odcustchip{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1.5px solid #D8DCE3;border-radius:8px;font-size:12px;font-weight:600;background:#FAFBFC;box-shadow:inset 0 1px 2px rgba(18,21,31,.03)}
+@media(max-width:1100px){.odgrid{grid-template-columns:1fr}.odcols3{grid-template-columns:1fr}.odcols2{grid-template-columns:1fr}.odcolcell.odcolmid{border-left:none;border-right:none;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}}
 .imgdrop{border:1.5px dashed var(--border);border-radius:12px;padding:22px;text-align:center;color:var(--ink-soft);font-size:12.5px}
 .imgrow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .imgrow .ph2{width:54px;height:54px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-faint);font-size:10px}
@@ -507,6 +553,19 @@ tr.invdirty{background:var(--accent-soft)}
 
 @media(max-width:1080px){.kpis{grid-template-columns:1fr 1fr}.mod-grid,.grid2,.grid2b,.tcards,.envcards,.health{grid-template-columns:1fr}}
 @media(max-width:880px){.app{grid-template-columns:1fr}.side{position:fixed;z-index:80;width:248px;height:100%;transform:translateX(-100%);transition:.25s var(--ease)}.side.open{transform:none}.menubtn{display:grid!important}}
+/* The admin chrome is a single non-wrapping flex row — breadcrumb, environment
+   toggle, icon buttons, user chip — with an intrinsic width around 520-550px.
+   On a phone it pushed the whole console sideways: the UNTOUCHED dashboard
+   measured 164px of horizontal page scroll at 390px, so every screen inherited
+   it and no individual screen could fix it. Letting it wrap is the whole fix;
+   the environment toggle goes last so the page title keeps the first line. */
+@media(max-width:880px){.top{flex-wrap:wrap;padding:12px 16px;gap:8px}.top .envtog{order:3}
+  /* .flag is position:fixed at top-right with z-index 90, so it floats over
+     the chrome whatever the chrome does. On desktop there is room beside it;
+     once the bar wraps on a phone it lands squarely on the theme, search and
+     notification buttons. A decorative build badge must not cover working
+     controls, and the same build stage is already on the Console screen. */
+  .flag{display:none}}
 .menubtn{display:none}
 
 .skingrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
@@ -1709,8 +1768,8 @@ const ADMIN_BASE = window.location.pathname.replace(/\/+$/, '');
 const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
   {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings]]},
-  {sec:'Safety',items:[['debug','Debug & Monitor',I.debug,'live'],['sandbox','Sandbox & Deploy',I.sandbox]]},
-  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['catalog','Catalog',I.catalog],['import','Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['blog','Blog','<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],['posts','Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>'],['p-content','Content & Pages',I.content,'lock']]},
+  {sec:'Safety',items:[['debug','Debug & Monitor',I.debug,'live'],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
+  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['catalog','Catalog',I.catalog],['import','Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['blog','Blog','<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],['posts','Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],['mail','Mail','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>'],['p-content','Content & Pages',I.content,'lock']]},
   {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
   {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
@@ -1749,19 +1808,22 @@ function syncNavOpen(id){
   });
 }
 
-const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
+const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
 let cur='dash';
-function go(id){
+/* `sub` is an optional sub-tab within the screen — only Catalog has them, and
+   only the Modules screen passes one (product_sorting links to the Reorder
+   tab, which is the screen it actually means). */
+function go(id,sub){
   if(FRAME_SRC[id])return renderFrame(id);
   if(id.startsWith('p-'))return renderPlaceholder(id);
   if(id.startsWith('rev-'))return renderReviewFrame(id);
   cur=id;
-  if(id==='catalog'){catTab='products';catSel.clear();}
+  if(id==='catalog'){catTab=CAT_TABS.includes(sub)?sub:'products';catSel.clear();}
   if(id==='import')impStep=1;
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
   const t=TITLES[id]||['Platform',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
   $('#content').innerHTML='';
-  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters}[id]||renderDash)();
+  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,mail:renderMail,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
@@ -1918,14 +1980,14 @@ function paintUpdates(msg, err){
   const d = UPD;
   const p = d.pending;
 
-  const banner = msg ? `<div class="card" style="padding:14px 18px;border-color:#b7e2c6;background:#f2fbf5;margin-bottom:16px">${msg}</div>` : '';
+  const banner = msg ? `<div class="card" style="padding:14px 18px;border-color:#b7e2c6;background:#f2fbf5;margin-bottom:16px">${escHtml(msg)}</div>` : '';
   const errors = err && err.length ? `<div class="card" style="padding:14px 18px;border-color:#f0c2c2;background:#fdf3f3;margin-bottom:16px">
-      <b>Nothing was changed.</b><ul style="margin:8px 0 0 18px">${err.map(e=>`<li>${e}</li>`).join('')}</ul></div>` : '';
+      <b>Nothing was changed.</b><ul style="margin:8px 0 0 18px">${err.map(e=>`<li>${escHtml(e)}</li>`).join('')}</ul></div>` : '';
 
   const upload = p ? `
     <div class="card" style="padding:22px;border-color:#b7e2c6">
-      <div class="between"><div><b style="font-size:15px">${p.name} ${p.version}</b>
-        <div class="mdesc" style="margin-top:4px">${p.notes||''}</div></div>
+      <div class="between"><div><b style="font-size:15px">${escHtml(p.name)} ${escHtml(p.version)}</b>
+        <div class="mdesc" style="margin-top:4px">${escHtml(p.notes||'')}</div></div>
         <span class="pill green">Ready to apply</span></div>
       <p style="margin:14px 0 6px"><b>${p.changes.length} files</b> will change.
         ${p.migrations ? 'This update also changes the database — a full dump is taken first.' : ''}</p>
@@ -1955,14 +2017,16 @@ function paintUpdates(msg, err){
     <div class="sec-title">History</div>
     <div class="card" style="padding:0;overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr>${['Version','Status','Files','When'].map(h=>`<th style="text-align:left;padding:10px 14px;background:#f8fafc;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#64748b">${h}</th>`).join('')}</tr></thead>
+        <thead><tr>${['Version','Status','Files','When',''].map(h=>`<th style="text-align:left;padding:10px 14px;background:#f8fafc;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#64748b">${h}</th>`).join('')}</tr></thead>
         <tbody>${d.releases.length ? d.releases.map(r=>`<tr style="border-top:1px solid #eef2f7">
-          <td style="padding:10px 14px"><b>${r.version}</b><div class="mdesc">${r.name}</div></td>
-          <td style="padding:10px 14px"><span class="pill ${r.status==='applied'?'green':'grey'}">${r.status.replace('_',' ')}</span>
-            ${r.error?`<div class="mdesc" style="max-width:520px">${r.error}</div>`:''}</td>
+          <td style="padding:10px 14px"><b>${escHtml(r.version)}</b><div class="mdesc">${escHtml(r.name)}</div>
+            ${r.superseded_by?`<div class="mdesc" style="color:#b45309">⚠ Superseded by ${escHtml(r.superseded_by)} — see that version's notes</div>`:''}</td>
+          <td style="padding:10px 14px"><span class="pill ${r.status==='applied'?'green':'grey'}">${escHtml(r.status.replace('_',' '))}</span>
+            ${r.error?`<div class="mdesc" style="max-width:520px">${escHtml(r.error)}</div>`:''}</td>
           <td style="padding:10px 14px">${r.files}</td>
-          <td style="padding:10px 14px" class="mdesc">${r.when||''}</td></tr>`).join('')
-          : `<tr><td colspan="4" style="padding:14px" class="mdesc">No updates yet.</td></tr>`}</tbody>
+          <td style="padding:10px 14px" class="mdesc">${r.when||''}</td>
+          <td style="padding:10px 14px">${r.has_archive?`<a href="${uBase()}/${r.id}/download" class="btn small">Download</a>`:''}</td></tr>`).join('')
+          : `<tr><td colspan="5" style="padding:14px" class="mdesc">No updates yet.</td></tr>`}</tbody>
       </table>
     </div>`;
 
@@ -3273,7 +3337,11 @@ function mdCard(m){
    the next block of Phase 3, and until they exist their rows say so. */
 function mdSettings(m){
   if (m.route) {
-    return `<a class="mdlink go" href="#${escAttr(m.route)}" onclick="go('${escAttr(m.route)}');return false;">
+    /* A route may name a sub-tab as "screen:tab" (product_sorting points at
+       catalog:reorder). Without this the link lands on Catalog's Products tab
+       and the owner has to know which of six tabs the module meant. */
+    const parts=String(m.route).split(':'), rid=parts[0], rtab=parts[1]||'';
+    return `<a class="mdlink go" href="#${escAttr(rid)}" onclick="go('${escAttr(rid)}'${rtab?`,'${escAttr(rtab)}'`:''});return false;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
       ${escHtml(m.screen)}</a>`;
   }
@@ -5419,7 +5487,12 @@ function renderPlaceholder(id){
 }
 
 /* ---------- Store screens that load as standalone files (iframe) ---------- */
-const FRAME_SRC={'orders':'kbb-admin-orders.html','payments':'kbb-admin-payments.html','analytics':'kbb-admin-analytics.html','store-settings':'kbb-admin-settings.html','customers':'kbb-admin-customers.html','quiz-leads':'kbb-admin-quiz-leads.html','seo':'kbb-admin-seo.html','blog':'kbb-admin-blog.html','posts':'kbb-admin-blog.html','htmlblocks':'kbb-admin-blocks.html','media':'kbb-admin-media.html'};
+/* 'customers' is deliberately NOT in here any more — see the Lane T region.
+   These entries load a standalone HTML file that this repo does not ship, so
+   go('customers') from a bookmark used to render an iframe pointing at a 404
+   before the live wiring replaced it. The Customers screen is rendered in this
+   document now, so it does not need, and must not get, a frame. */
+const FRAME_SRC={'orders':'kbb-admin-orders.html','payments':'kbb-admin-payments.html','analytics':'kbb-admin-analytics.html','store-settings':'kbb-admin-settings.html','quiz-leads':'kbb-admin-quiz-leads.html','seo':'kbb-admin-seo.html','blog':'kbb-admin-blog.html','posts':'kbb-admin-blog.html','htmlblocks':'kbb-admin-blocks.html','media':'kbb-admin-media.html'};
 function renderFrame(id,query){
   cur=id;
   const t=TITLES[id]||['Store',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
@@ -5462,6 +5535,9 @@ const CAT_DRAFT=new Set(['SK1-CEN','ISN-SUN']);
 const CAT_CATEGORIES=[['Beauty Devices',11],['Cleansers',38],['Toners',26],['Essences',19],['Serums',64],['Ampoules',12],['Moisturisers',41],['Sun Care',23],['Masks',31],['Eye Care',9],['Sets & Bundles',15]];
 const CAT_BRANDS=[['Anua',42],['COSRX',58],['Beauty of Joseon',37],['Medicube',29],['Torriden',18],['Numbuzin',21],['Some By Mi',24],['SKIN1004',16],['Isntree',14],['MEDIHEAL',26],['Round Lab',12],["Dr.Althea",9],['Shark',6]];
 const PE_CATS=['Beauty Devices','Hair Care Silk','Hair Tools','Medicube','Makeup','Best Sellers','Under AED 54','Cleansers','Toners','Serums','Sun Care','Masks','Uncategorized'];
+/* Still feeding the product editor's Variations panel (peBox, further down),
+   which is a different preview and a different lane's to fix. The Attributes
+   TAB no longer reads it — see the Lane N region. */
 const CAT_ATTRS=[['Skin Type',['Dry','Oily','Combination','Sensitive','Normal']],['Concern',['Hydration','Brightening','Acne','Anti-aging','Soothing','Pores']],['Size',['30ml','50ml','100ml','150ml','200ml']],['Finish',['Dewy','Matte','Natural']]];
 const TCOL=['#15a85a','#3f6fe0','#7b6cf0','#e0922f','#e0567b','#2bb3a3','#c13e63','#4b5a72'];
 const tcol=s=>TCOL[[...s].reduce((a,c)=>a+c.charCodeAt(0),0)%TCOL.length];
@@ -5470,97 +5546,63 @@ const stockPill=n=>n===0?`<span class="pill red"><span class="d"></span>Out</spa
 
 let catTab='products',catFilter='all',catSel=new Set();
 let catSOopen=false,catPerPage=250;
-const COLDEF=[['image','Image'],['sku','SKU'],['stock','Stock'],['price','Price'],['categories','Categories'],['tags','Tags'],['featured','Featured'],['date','Date'],['stats','Stats'],['meta','Synced to Meta catalog'],['seo','SEO score'],['read','Readability score'],['seotitle','SEO Title'],['metadesc','Meta Desc.'],['keyphrase','Keyphrase'],['brands','Brands'],['outlinks','Outgoing internal links'],['inlinks','Received internal links']];
-const catCols={image:true,sku:false,stock:true,price:true,categories:true,tags:false,featured:true,date:true,stats:false,meta:true,seo:true,read:true,seotitle:false,metadesc:false,keyphrase:false,brands:true,outlinks:false,inlinks:false};
-const invDate=i=>'Jun '+(((i*5)%26)+2)+', 2026';
-const seoDot=l=>{const m={good:['green','Good'],ok:['amber','OK'],bad:['red','Poor']}[l];return `<span class="pill ${m[0]}"><span class="d"></span>${m[1]}</span>`;};
-function cellFor(k,p,idx){const[n,b,sku,cat,price,sale,stock]=p;
-  switch(k){
-   case 'sku':return `<td style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">${sku}</td>`;
-   case 'stock':return `<td>${stockPill(stock)}</td>`;
-   case 'price':return `<td class="price">${sale?`<b>AED ${sale}</b><s>AED ${price}</s>`:`<b>AED ${price}</b>`}</td>`;
-   case 'categories':return `<td>${cat}</td>`;
-   case 'tags':return `<td><span class="tagchip" style="font-size:10px">k-beauty</span></td>`;
-   case 'featured':return `<td style="font-size:15px;color:${idx%4===0?'#e0a11e':'var(--border)'}">${idx%4===0?'★':'☆'}</td>`;
-   case 'date':return `<td style="font-size:11.5px;color:var(--ink-soft)">${invDate(idx)}</td>`;
-   case 'stats':return `<td style="font-size:11.5px;color:var(--ink-soft)">${idx*137+420} views</td>`;
-   case 'meta':return `<td>${idx%5===0?'<span class="pill grey">Not synced</span>':'<span class="pill green"><span class="d"></span>Synced</span>'}</td>`;
-   case 'seo':return `<td>${seoDot(['good','ok','good','bad'][idx%4])}</td>`;
-   case 'read':return `<td>${seoDot(['good','good','ok'][idx%3])}</td>`;
-   case 'seotitle':return `<td style="font-size:11px;color:var(--ink-soft);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n} | KBB</td>`;
-   case 'metadesc':return `<td style="font-size:11px;color:var(--ink-soft);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Shop ${n} at K-Beauty Bliss…</td>`;
-   case 'keyphrase':return `<td style="font-size:11.5px;color:var(--ink-soft)">${b.toLowerCase()} ${cat.toLowerCase()}</td>`;
-   case 'brands':return `<td>${b}</td>`;
-   case 'outlinks':return `<td>${idx%3}</td>`;
-   case 'inlinks':return `<td>${(idx%4)+1}</td>`;
-   default:return '';
-  }
-}
-function catSOToggle(){catSOopen=!catSOopen;renderCatalog();}
-function catApplySO(){$$('#catBody .so-col .cbx[data-col]').forEach(c=>catCols[c.dataset.col]=c.classList.contains('on'));const v=parseInt($('#soPer').value,10);if(v>0)catPerPage=v;catSOopen=false;renderCatalog();toast('Columns & pagination applied');}
+/* Named once so go(id,sub) can validate a requested sub-tab against the same
+   list the screen actually renders, rather than a second copy of it. */
+const CAT_TABS=['products','categories','brands','attributes','inventory','reorder'];
 function renderCatalog(){
-  const tabs=['products','categories','brands','attributes','inventory','reorder'];
+  const tabs=CAT_TABS;
   const lbl={products:'Products',categories:'Categories',brands:'Brands',attributes:'Attributes',inventory:'Inventory',reorder:'Reorder'};
   $('#content').innerHTML=`<div class="wrap">
     <div class="between" style="margin-bottom:8px"><div class="page-head" style="margin:0"><h2>Catalog</h2><p>Your products and how they're organised. Reorder works inside any category.</p></div>
-      <div class="row" style="gap:8px">${catTab==='products'?`<button class="btn ghost" onclick="catSOToggle()">${ic('<path d="M4 6h16M7 12h10M10 18h4"/>')} Screen Options ${catSOopen?'▴':'▾'}</button><button class="btn" onclick="openProduct(-1)">${ic('<path d="M12 5v14M5 12h14"/>')} Add product</button>`:''}</div></div>
+      <div class="row" style="gap:8px">${catTab==='products'?`<button class="btn" onclick="openProduct(-1)">${ic('<path d="M12 5v14M5 12h14"/>')} Add product</button>`:''}</div></div>
     <div class="subtabs">${tabs.map(t=>`<button class="subtab${t===catTab?' on':''}" data-t="${t}">${lbl[t]}</button>`).join('')}</div>
     <div id="catBody"></div></div>`;
   $$('#content .subtab').forEach(b=>b.onclick=()=>{catTab=b.dataset.t;renderCatalog();});
   ({products:catProducts,categories:catCategories,brands:catBrands,attributes:catAttributes,inventory:catInventory,reorder:catReorder}[catTab])();
 }
+/* ===== Catalog → Products — the fallback only =====
+
+   What used to be here was the whole Products tab: a list, a chip row and an
+   Edit button whose entire implementation was a toast saying that product
+   editing had not been built and that the list was real but editing was next.
+
+   The real screen — sortable, filtered, inline-editable, with bulk actions and
+   a CSV export — is window.catProducts in the LANE AF region of the
+   live-wiring script at the bottom of this file. It has to live down there
+   rather than here: api(), sesc(), fixAdminApiUrl() and cookie() are all
+   declared inside that script's IIFE and are not reachable from this one.
+
+   This declaration stays only so renderCatalog's dispatch table is never
+   undefined, and what is left of it is an honest message rather than a
+   convincing one. Same arrangement as window.catCategories and
+   window.catAttributes below. ===== */
 function catProducts(){
-  const filt=p=>{const stock=p[6],draft=CAT_DRAFT.has(p[2]);if(catFilter==='pub')return!draft;if(catFilter==='draft')return draft;if(catFilter==='low')return stock>0&&stock<=15;if(catFilter==='out')return stock===0;return true;};
-  const list=CAT_PRODUCTS.filter(filt);const allOn=list.length&&list.every(p=>catSel.has(CAT_PRODUCTS.indexOf(p)));
-  const cols=COLDEF.filter(c=>c[0]!=='image'&&catCols[c[0]]);
-  const page=list.slice(0,catPerPage);
-  $('#catBody').innerHTML=`
-    ${catSOopen?`<div class="card pad" style="margin-bottom:14px">
-      <div class="pe-h" style="margin-bottom:11px">Columns</div>
-      <div class="so-cols">${COLDEF.map(c=>`<label class="so-col"><span class="cbx${catCols[c[0]]?' on':''}" data-col="${c[0]}">${ic(I.check)}</span> ${c[1]}</label>`).join('')}</div>
-      <div class="pe-h" style="margin:18px 0 9px">Pagination</div>
-      <div class="row" style="gap:10px;align-items:center"><span style="font-size:12.5px;color:var(--ink-2)">Number of items per page</span><input class="inp" id="soPer" style="width:88px" value="${catPerPage}"></div>
-      <button class="btn" style="margin-top:14px" onclick="catApplySO()">Apply</button>
-    </div>`:''}
-    <div class="toolbar"><div class="search">${ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>')}<input placeholder="Search ${CAT_PRODUCTS.length} products by name, brand or SKU…"></div>
-      <select class="inp"><option>Sort: Newest</option><option>Name A–Z</option><option>Price high→low</option><option>Stock low→high</option></select></div>
-    <div class="chips" style="margin-bottom:14px">${[['all','All'],['pub','Published'],['draft','Draft'],['low','Low stock'],['out','Out of stock']].map(c=>`<button class="chip${catFilter===c[0]?' on':''}" data-f="${c[0]}">${c[1]}</button>`).join('')}</div>
-    <div id="bulkWrap"></div>
-    <div class="card" style="overflow:auto"><table>
-      <thead><tr><th style="width:30px"><span class="cbx${allOn?' on':''}" id="cbAll">${ic(I.check)}</span></th><th>Product</th>${cols.map(c=>`<th>${c[1]}</th>`).join('')}<th>Status</th><th></th></tr></thead>
-      <tbody>${page.map(p=>{const idx=CAT_PRODUCTS.indexOf(p);const[n,b,sku]=p;const draft=CAT_DRAFT.has(sku);
-        return `<tr><td><span class="cbx${catSel.has(idx)?' on':''}" data-sel="${idx}">${ic(I.check)}</span></td>
-        <td><div class="row">${catCols.image?`<span class="pthumb" style="background:${tcol(b)}">${initials(b)}</span>`:''}<div><div class="pname">${n}</div><div class="pbrand">${b}</div></div></div></td>
-        ${cols.map(c=>cellFor(c[0],p,idx)).join('')}
-        <td><span class="pill ${draft?'grey':'green'}">${draft?'Draft':'Published'}</span></td>
-        <td><button class="btn ghost sm" onclick="openProduct(${idx})">Edit</button></td></tr>`;}).join('')}</tbody>
-    </table></div>
-    <div class="pager"><span>Showing ${page.length} of ${list.length} · ${catPerPage}/page</span><div class="pagebtns"><button class="on">1</button><button>2</button><button>3</button><button>›</button></div></div>`;
-  if(catSOopen)$$('#catBody .so-col .cbx').forEach(c=>c.onclick=()=>c.classList.toggle('on'));
-  $$('#catBody .chip').forEach(c=>c.onclick=()=>{catFilter=c.dataset.f;catProducts();});
-  $$('#catBody .cbx[data-sel]').forEach(c=>c.onclick=()=>{const i=+c.dataset.sel;catSel.has(i)?catSel.delete(i):catSel.add(i);catProducts();});
-  $('#cbAll').onclick=()=>{if(allOn)catSel.clear();else list.forEach(p=>catSel.add(CAT_PRODUCTS.indexOf(p)));catProducts();};
-  const w=$('#bulkWrap');
-  if(catSel.size)w.innerHTML=`<div class="bulkbar"><span class="cbx on" onclick="clearSel()">${ic(I.check)}</span> ${catSel.size} selected <div style="flex:1"></div>
-    <button class="btn ghost sm" onclick="toast('Published ${catSel.size} (preview)')">Publish</button>
-    <button class="btn ghost sm" onclick="toast('Set to draft (preview)')">Draft</button>
-    <button class="btn ghost sm" onclick="toast('Bulk price edit (preview)')">Edit price</button>
-    <button class="btn ghost sm" onclick="toast('Deleted (preview)')">Delete</button></div>`;
+  var body=document.getElementById('catBody');
+  if(body) body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Products could not be loaded.</p>';
 }
-function catCategories(){
-  $('#catBody').innerHTML=`<div class="between" style="margin-bottom:12px"><span class="pill grey">${CAT_CATEGORIES.length} categories</span><button class="btn sm" onclick="toast('Add category (preview)')">${ic('<path d="M12 5v14M5 12h14"/>')} Add category</button></div>
-  <div class="card"><table><thead><tr><th>Category</th><th>Products</th><th>Slug</th><th></th></tr></thead><tbody>
-  ${CAT_CATEGORIES.map(c=>`<tr><td><b>${c[0]}</b></td><td>${c[1]}</td><td style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)">/${c[0].toLowerCase().replace(/[^a-z]+/g,'-')}</td><td><button class="btn ghost sm" onclick="toast('Edit category (preview)')">Edit</button></td></tr>`).join('')}
-  </tbody></table></div>`;
-}
+function redirectsApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/redirects'; }
+function schemaInspectApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/schema-inspect'; }
+function catalogueAuditApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalogue-audit'; }
+/* ===== LANE N · Catalog · Categories & Attributes fallbacks — BEGIN =====
+   What used to sit here was the defect: eleven invented category rows out of
+   CAT_CATEGORIES with slugs made up in JavaScript, and four invented
+   attributes out of CAT_ATTRS — "Skin Type", "Concern", "Finish" — none of
+   which exist in this database, behind buttons that raised a "(preview)"
+   toast. Two screens that looked like they worked.
+
+   The real ones are the window.catCategories / window.catAttributes
+   assignments in the Lane N region of the live-wiring script at the bottom of
+   this file, which replace these the same way window.catBrands replaces
+   catBrands below. These declarations stay only so renderCatalog's dispatch
+   table is never undefined, and what is left of them is an honest message —
+   not a convincing one. ===== */
+function catCategories(){ $('#catBody').innerHTML='<p style="padding:24px;color:var(--ink-soft)">Categories could not be loaded — the admin script did not finish starting up. Reload the page.</p>'; }
 function catBrands(){
   $('#catBody').innerHTML=`<div class="between" style="margin-bottom:12px"><span class="pill grey">${CAT_BRANDS.length}+ brands</span><button class="btn sm" onclick="toast('Add brand (preview)')">${ic('<path d="M12 5v14M5 12h14"/>')} Add brand</button></div>
   <div class="mod-grid">${CAT_BRANDS.map(b=>`<div class="mod"><span class="pthumb" style="background:${tcol(b[0])};width:40px;height:40px">${initials(b[0])}</span><div><div class="mname">${b[0]}</div><div class="mdesc">${b[1]} products</div></div><div class="mod-r"><button class="btn ghost sm" onclick="toast('Edit brand (preview)')">Edit</button></div></div>`).join('')}</div>`;
 }
-function catAttributes(){
-  $('#catBody').innerHTML=`<div class="between" style="margin-bottom:12px"><span class="pill grey">${CAT_ATTRS.length} attributes</span><button class="btn sm" onclick="toast('Add attribute (preview)')">${ic('<path d="M12 5v14M5 12h14"/>')} Add attribute</button></div>
-  ${CAT_ATTRS.map(a=>`<div class="card pad" style="margin-bottom:12px"><div class="between"><b style="font-size:13.5px">${a[0]}</b><button class="btn ghost sm" onclick="toast('Edit terms (preview)')">Edit terms</button></div><div class="tagchips" style="margin-top:11px">${a[1].map(t=>`<span class="tagchip">${t}</span>`).join('')}</div></div>`).join('')}`;
-}
+function catAttributes(){ $('#catBody').innerHTML='<p style="padding:24px;color:var(--ink-soft)">Attributes could not be loaded — the admin script did not finish starting up. Reload the page.</p>'; }
+/* ===== LANE N · Catalog · Categories & Attributes fallbacks — END ===== */
 let invFilter='all',invSearch='',invDraft={};
 const invStatus=q=>q===0?'out':q<=15?'low':'in';
 const invDirty=()=>Object.keys(invDraft).filter(k=>invDraft[k]!==CAT_PRODUCTS[k][6]).length;
@@ -5597,16 +5639,264 @@ function catInventory(){
   $$('#catBody .invq').forEach(inp=>inp.oninput=()=>{const i=+inp.dataset.i;const v=inp.value===''?0:Math.max(0,parseInt(inp.value,10)||0);invDraft[i]=v;const tr=inp.closest('tr');tr.classList.toggle('invdirty',v!==CAT_PRODUCTS[i][6]);tr.querySelector('.invstat').innerHTML=stockPill(v);renderInvSaveBar();});
   renderInvSaveBar();
 }
-let reorderCat='Serums',reorderList=null;
-function catReorder(){
-  const cats=[...new Set(CAT_PRODUCTS.map(p=>p[3]))];
-  if(!reorderList)reorderList=CAT_PRODUCTS.filter(p=>p[3]===reorderCat).map(p=>p[0]);
-  $('#catBody').innerHTML=`<div class="toolbar"><div class="row"><span style="font-size:13px;font-weight:600">Category</span><select class="inp" id="reCat">${cats.map(c=>`<option${c===reorderCat?' selected':''}>${c}</option>`).join('')}</select></div><div style="flex:1"></div><button class="btn sm" onclick="toast('Order saved (preview)')">Save order</button></div>
-  <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">Drag the handle or use the arrows to set how products appear in <b>${reorderCat}</b> on the storefront.</p>
-  <div class="rlist" id="rlist">${reorderList.map((nm,i)=>{const p=CAT_PRODUCTS.find(x=>x[0]===nm);return `<div class="ritem" draggable="true" data-i="${i}"><span class="grip">${ic('<circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>')}</span><span class="ord">${i+1}</span><span class="pthumb" style="background:${tcol(p[1])};width:32px;height:32px;font-size:10px">${initials(p[1])}</span><div><div class="pname" style="font-size:12.5px">${nm}</div><div class="pbrand">${p[1]}</div></div><div class="mv"><button data-mv="up" data-i="${i}">${ic('<path d="m6 15 6-6 6 6"/>')}</button><button data-mv="down" data-i="${i}">${ic('<path d="m6 9 6 6 6-6"/>')}</button></div></div>`;}).join('')}</div>`;
-  $('#reCat').onchange=e=>{reorderCat=e.target.value;reorderList=null;catReorder();};
-  $$('#rlist .mv button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,j=b.dataset.mv==='up'?i-1:i+1;if(j<0||j>=reorderList.length)return;[reorderList[i],reorderList[j]]=[reorderList[j],reorderList[i]];catReorder();});
-  let dragI=null;$$('#rlist .ritem').forEach(it=>{it.ondragstart=()=>dragI=+it.dataset.i;it.ondragover=e=>e.preventDefault();it.ondrop=()=>{const to=+it.dataset.i;if(dragI===null||dragI===to)return;const m=reorderList.splice(dragI,1)[0];reorderList.splice(to,0,m);dragI=null;catReorder();};});
+let reorderType='category',reorderScopes=null,reorderScopeId=null,reorderScopeName=null,reorderData=null,reorderPage=1,reorderSearch='',reorderLocal=null,reorderDirty=false,reorderSelected=new Set(),reorderBusy=false,reorderPerPage=+(localStorage.getItem('kbb_reorder_pp')||50),reorderPpCustomMode=false;
+function reorderApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalog/reorder'; }
+function reorderFmtMoney(n){ return n==null ? '' : 'AED '+(Math.round(n*100)/100).toLocaleString(); }
+
+async function catReorder(){
+  const body=$('#catBody');
+  if(!reorderScopes){
+    body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading…</p>`;
+    try{
+      const r=await fetch(reorderApiBase()+'/scopes?type='+reorderType,{credentials:'same-origin',headers:{Accept:'application/json'}});
+      reorderScopes=(await r.json()).scopes||[];
+    }catch(e){ body.innerHTML=`<p style="padding:24px;color:var(--sale)">Could not load — ${escHtml(e.message)}</p>`; return; }
+    if(!reorderScopes.length){ body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Nothing with visible products yet.</p>`; return; }
+    if(!reorderScopeId){
+      const first=reorderScopes[0];
+      reorderScopeId=first.id; reorderScopeName=first.name;
+    }
+  }
+  await reorderLoadProducts();
+}
+
+function reorderConfirmDiscard(){
+  if(!reorderDirty) return true;
+  return confirm('You have unsaved reorder changes on this page. Discard them?');
+}
+
+function reorderScopeOptions(){
+  if(reorderType==='brand') return reorderScopes.map(b=>`<option value="${b.id}"${b.id===reorderScopeId?' selected':''}>${escHtml(b.name)}</option>`).join('');
+  const opts=[];
+  reorderScopes.forEach(c=>{
+    opts.push(`<option value="${c.id}"${c.id===reorderScopeId?' selected':''}>${escHtml(c.name)}</option>`);
+    (c.children||[]).forEach(k=>opts.push(`<option value="${k.id}"${k.id===reorderScopeId?' selected':''}>&nbsp;&nbsp;&nbsp;&nbsp;↳ ${escHtml(k.name)}</option>`));
+  });
+  return opts.join('');
+}
+
+const REORDER_PP_PRESETS=[25,50,100,200];
+
+async function reorderLoadProducts(){
+  const body=$('#catBody');
+  const listArea=$('#reListArea');
+  if(listArea) listArea.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading…</p>`;
+  else body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading products…</p>`;
+  try{
+    const q=new URLSearchParams({page:reorderPage, search:reorderSearch, per_page:reorderPerPage});
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/products?'+q,{credentials:'same-origin',headers:{Accept:'application/json'}});
+    reorderData=await r.json();
+  }catch(e){ body.innerHTML=`<p style="padding:24px;color:var(--sale)">Could not load products — ${escHtml(e.message)}</p>`; return; }
+  reorderPerPage=reorderData.per_page;
+  reorderLocal=reorderData.products.map(p=>({...p}));
+  reorderDirty=false;
+  reorderSelected.clear();
+  reorderPaint();
+}
+
+function reorderPaint(){
+  const body=$('#catBody');
+  const d=reorderData;
+  const list=reorderLocal;
+  const ppIsPreset=REORDER_PP_PRESETS.includes(reorderPerPage) && !reorderPpCustomMode;
+  body.innerHTML=`
+  <div class="toolbar" style="flex-wrap:wrap;gap:10px">
+    <div class="row" style="gap:6px">
+      <button class="chip${reorderType==='category'?' on':''}" id="reTypeCat">Categories</button>
+      <button class="chip${reorderType==='brand'?' on':''}" id="reTypeBrand">Brands</button>
+    </div>
+    <div class="row" style="gap:8px"><span style="font-size:13px;font-weight:600">${reorderType==='brand'?'Brand':'Category'}</span>
+      <select class="inp" id="reCat" style="min-width:190px">${reorderScopeOptions()}</select></div>
+    <div class="search" style="min-width:180px"><input id="reSearch" placeholder="Find a product…" value="${escHtml(reorderSearch)}"></div>
+    <div class="row" style="gap:6px"><span style="font-size:12.5px;color:var(--ink-soft)">Start from</span>
+      <select class="inp" id="reAutoSort" style="width:140px">
+        <option value="">Auto-sort…</option>
+        <option value="bestselling">Best selling</option>
+        <option value="newest">Newest</option>
+        <option value="price">Price: low to high</option>
+        <option value="name">Name A–Z</option>
+      </select></div>
+    <div style="flex:1"></div>
+    <span style="font-size:12px;color:var(--ink-soft)">${d.total} products · page ${d.page} of ${d.last_page}</span>
+  </div>
+  <div class="toolbar" style="margin-top:2px">
+    <span style="font-size:12.5px;color:var(--ink-soft)">Show</span>
+    <select class="inp" id="rePerPage" style="width:100px">
+      ${REORDER_PP_PRESETS.map(n=>`<option value="${n}"${n===reorderPerPage&&ppIsPreset?' selected':''}>${n} per page</option>`).join('')}
+      <option value="custom"${ppIsPreset?'':' selected'}>Custom…</option>
+    </select>
+    ${ppIsPreset?'':`<input class="inp" id="rePerPageCustom" type="number" min="10" max="500" value="${reorderPerPage}" style="width:80px" placeholder="10–500">`}
+    <span style="font-size:11px;color:var(--ink-soft)">10–500</span>
+  </div>
+  <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 12px">
+    This is the product's real, global sort order — the same one the shop's default view uses — edited here one ${reorderType} at a time. A product shared across more than one moves everywhere it appears, matching how the live storefront's own "menu order" always worked.
+  </p>
+  <div id="reBulkBar" style="${reorderSelected.size?'':'display:none'};background:var(--pink-soft,#fff0f4);border:1px solid var(--accent,#E0567B);border-radius:10px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:12.5px;font-weight:600">${reorderSelected.size} selected</span>
+    <button class="btn ghost sm" id="reBulkTop">Move to top of this page</button>
+    <button class="btn ghost sm" id="reBulkClear">Clear selection</button>
+  </div>
+  <div id="reListArea">${reorderRenderList(list)}</div>
+  <div class="pager" style="margin-top:14px">
+    <span>Showing ${list.length ? ((d.page-1)*d.per_page+1) : 0}–${(d.page-1)*d.per_page+list.length} of ${d.total}</span>
+    <div class="row" style="gap:8px;align-items:center">
+      <button class="btn ghost sm" style="white-space:nowrap" ${d.page<=1?'disabled':''} id="rePrev">‹ Prev</button>
+      <button class="btn ghost sm" style="white-space:nowrap" ${d.page>=d.last_page?'disabled':''} id="reNext">Next ›</button>
+    </div>
+  </div>
+  <div class="between" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+    <span style="font-size:12.5px;color:${reorderDirty?'var(--sale)':'var(--ink-soft)'}">${reorderDirty?'Unsaved changes on this page':'No changes to save'}</span>
+    <button class="btn primary" id="reSave" ${reorderDirty?'':'disabled'}>Save changes</button>
+  </div>`;
+
+  $('#reTypeCat').onclick=()=>{ if(reorderType==='category'||!reorderConfirmDiscard())return; reorderType='category'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reTypeBrand').onclick=()=>{ if(reorderType==='brand'||!reorderConfirmDiscard())return; reorderType='brand'; reorderScopes=null; reorderScopeId=null; reorderPage=1; reorderSearch=''; catReorder(); };
+  $('#reCat').onchange=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderScopeId;return;} reorderScopeId=+e.target.value;const opt=e.target.selectedOptions[0];reorderScopeName=opt.textContent.replace(/^[\s↳]+/,'');reorderPage=1;reorderSearch='';reorderLoadProducts(); };
+  let searchT;$('#reSearch').oninput=e=>{ if(!reorderConfirmDiscard()){e.target.value=reorderSearch;return;} clearTimeout(searchT);const v=e.target.value;searchT=setTimeout(()=>{reorderSearch=v;reorderPage=1;reorderLoadProducts();},300); };
+  $('#reAutoSort').onchange=async e=>{
+    const by=e.target.value; if(!by) return;
+    if(!confirm(`Re-sort the whole ${reorderType} (${d.total} products) by ${e.target.selectedOptions[0].textContent}? This saves immediately and can't be undone by a Save button — you can still fine-tune afterward.`)){e.target.value='';return;}
+    reorderBusy=true;
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/auto-sort',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify({by})});
+    const j=await r.json();
+    reorderBusy=false;
+    if(j.ok){toast(`Sorted ${j.sorted} products — fine-tune below`);reorderPage=1;reorderLoadProducts();}
+    else{toast('Could not auto-sort.');}
+  };
+  $('#rePerPage').onchange=e=>{
+    if(!reorderConfirmDiscard()){ reorderPaint(); return; }
+    if(e.target.value==='custom'){ reorderPpCustomMode=true; reorderPaint(); setTimeout(()=>$('#rePerPageCustom')?.focus(),0); return; }
+    reorderPpCustomMode=false; reorderPerPage=+e.target.value; localStorage.setItem('kbb_reorder_pp', reorderPerPage); reorderPage=1; reorderLoadProducts();
+  };
+  const ppCustom=$('#rePerPageCustom');
+  if(ppCustom){
+    const applyCustom=()=>{
+      let v=parseInt(ppCustom.value,10);
+      if(!v || v<10) v=10; if(v>500) v=500;
+      reorderPerPage=v; localStorage.setItem('kbb_reorder_pp', v); reorderPage=1;
+      if(!reorderConfirmDiscard()) return;
+      reorderLoadProducts();
+    };
+    ppCustom.onkeydown=e=>{ if(e.key==='Enter'){ applyCustom(); } };
+    ppCustom.onblur=applyCustom;
+  }
+  $('#rePrev').onclick=()=>{ if(d.page>1 && reorderConfirmDiscard()){reorderPage--;reorderLoadProducts();} };
+  $('#reNext').onclick=()=>{ if(d.page<d.last_page && reorderConfirmDiscard()){reorderPage++;reorderLoadProducts();} };
+  const bulkTop=$('#reBulkTop'); if(bulkTop) bulkTop.onclick=reorderBulkTopOfPage;
+  const bulkClear=$('#reBulkClear'); if(bulkClear) bulkClear.onclick=()=>{reorderSelected.clear();reorderPaint();};
+  $('#reSave').onclick=reorderSave;
+  reorderWireList();
+}
+
+function reorderRenderList(list){
+  if(!list.length) return reorderSearch
+    ? `<p style="padding:24px;color:var(--ink-soft)">No products match "${escHtml(reorderSearch)}".</p>`
+    : `<p style="padding:24px;color:var(--ink-soft)">No visible products here.</p>`;
+  return `<div class="rlist" id="rlist">${list.map((p,i)=>`
+    <div class="ritem" draggable="true" data-i="${i}" data-id="${p.id}">
+      <span class="cbx${reorderSelected.has(p.id)?' on':''}" data-rsel="${p.id}">${ic(I.check)}</span>
+      <span class="grip">${ic('<circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>')}</span>
+      <input class="inp" id="rerank-${p.id}" value="${(reorderData.page-1)*reorderData.per_page+i+1}" style="width:50px;text-align:center;padding:5px 4px;font-size:12px" data-rankinput="${p.id}">
+      <span class="pthumb" style="background:${tcol(p.brand||p.name)};width:32px;height:32px;font-size:10px">${initials(p.brand||p.name)}</span>
+      <div style="flex:1;min-width:0"><div class="pname" style="font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div><div class="pbrand" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.brand||'')}${p.sku?' · '+escHtml(p.sku):''}</div></div>
+      <div style="text-align:right;flex:0 0 88px">
+        ${p.sale_price!=null
+          ? `<div style="font-size:12.5px;font-weight:700;color:var(--sale)">${reorderFmtMoney(p.sale_price)}</div><div style="font-size:10.5px;color:var(--ink-soft);text-decoration:line-through">${reorderFmtMoney(p.price)}</div>`
+          : `<div style="font-size:12.5px;font-weight:700">${reorderFmtMoney(p.price)}</div>`}
+      </div>
+      <div style="text-align:right;flex:0 0 76px;font-size:11px;color:var(--ink-soft)" title="Distinct orders this product has appeared in">${p.orders_count} order${p.orders_count===1?'':'s'}</div>
+      <div class="mv" style="flex:0 0 auto;flex-direction:row;gap:4px">
+        <button data-rtop="${p.id}" title="Move to top of this page">${ic('<path d="M12 19V5M5 12l7-7 7 7"/>')}</button>
+        <button data-rbottom="${p.id}" title="Move to bottom of this page">${ic('<path d="M12 5v14M5 12l7 7 7-7"/>')}</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function reorderWireList(){
+  $$('#rlist .cbx[data-rsel]').forEach(c=>c.onclick=()=>{
+    const id=+c.dataset.rsel;
+    reorderSelected.has(id)?reorderSelected.delete(id):reorderSelected.add(id);
+    reorderPaint();
+  });
+  $$('#rlist [data-rankinput]').forEach(inp=>{
+    inp.onkeydown=e=>{ if(e.key==='Enter'){ e.target.blur(); } };
+    inp.onblur=e=>{
+      const id=+e.target.dataset.rankinput;
+      const rank=parseInt(e.target.value,10);
+      if(!rank || rank<1){ e.target.value=e.target.defaultValue; return; }
+      reorderJumpToRank(id, rank);
+    };
+  });
+  $$('#rlist [data-rtop]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rtop, 0));
+  $$('#rlist [data-rbottom]').forEach(b=>b.onclick=()=>reorderLocalMove(+b.dataset.rbottom, reorderLocal.length-1));
+  let dragI=null;
+  $$('#rlist .ritem').forEach(it=>{
+    it.ondragstart=e=>{ if(e.target.closest('[data-rankinput],[data-rsel]')){e.preventDefault();return;} dragI=+it.dataset.i; };
+    it.ondragover=e=>e.preventDefault();
+    it.ondrop=()=>{
+      const to=+it.dataset.i;
+      if(dragI===null||dragI===to) return;
+      const i=dragI; dragI=null;
+      reorderLocalMove(reorderLocal[i].id, to);
+    };
+  });
+}
+
+function reorderLocalMove(productId, toIndex){
+  const from=reorderLocal.findIndex(p=>p.id===productId);
+  if(from===-1) return;
+  const [moved]=reorderLocal.splice(from,1);
+  reorderLocal.splice(Math.min(toIndex,reorderLocal.length),0,moved);
+  reorderDirty=true;
+  reorderPaint();
+}
+
+function reorderBulkTopOfPage(){
+  if(!reorderSelected.size) return;
+  const selected=reorderLocal.filter(p=>reorderSelected.has(p.id));
+  const rest=reorderLocal.filter(p=>!reorderSelected.has(p.id));
+  reorderLocal=[...selected,...rest];
+  reorderDirty=true;
+  reorderPaint();
+}
+
+async function reorderJumpToRank(productId, rank){
+  const pageStart=(reorderData.page-1)*reorderData.per_page+1;
+  const pageEnd=pageStart+reorderLocal.length-1;
+  if(rank>=pageStart && rank<=pageEnd){
+    reorderLocalMove(productId, rank-pageStart);
+    return;
+  }
+  if(reorderDirty && !confirm('Moving to a position outside this page saves immediately, including any unsaved changes already made on this page. Continue?')) {
+    reorderPaint();
+    return;
+  }
+  reorderBusy=true;
+  try{
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/move',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+      body:JSON.stringify({product_id:productId, to:rank-1})});
+    const j=await r.json();
+    if(j.ok){ toast('Moved and saved'); await reorderLoadProducts(); }
+    else{ toast(j.message||'Could not move that product.'); }
+  }catch(e){ toast('Could not save — check your connection.'); }
+  reorderBusy=false;
+}
+
+async function reorderSave(){
+  if(reorderBusy || !reorderDirty) return;
+  reorderBusy=true;
+  const btn=$('#reSave'); if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    const r=await fetch(reorderApiBase()+'/'+reorderType+'/'+reorderScopeId+'/save-page',{method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+      body:JSON.stringify({page:reorderData.page, per_page:reorderData.per_page, product_ids:reorderLocal.map(p=>p.id)})});
+    const j=await r.json();
+    if(j.ok){ toast(`Saved — ${j.updated} products`); reorderDirty=false; await reorderLoadProducts(); }
+    else{ toast(j.message||'Could not save — reload and try again.'); }
+  }catch(e){ toast('Could not save — check your connection.'); }
+  reorderBusy=false;
 }
 let pdTab='general',reyTab='misc',yoastTab='seo',pageTab='general',peCtx={};
 const ICO={img:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',ring:'<circle cx="12" cy="12" r="9"/>'};
@@ -5828,51 +6118,589 @@ function openProduct(idx){
 function closeDrawer(){$('#drawerBg').classList.remove('on');$('#drawer').classList.remove('on');}
 
 /* ===================== IMPORT / EXPORT ===================== */
-let impStep=1,impSource='woocsv',impData={products:true,taxos:true,orders:true,customers:true,users:true,reviews:true,coupons:true,seo:true};
-function renderImport(){
-  const steps=['Source','What to import','Field mapping','Validate in Sandbox','Import'];
-  $('#content').innerHTML=`<div class="wrap">
-    <div class="page-head"><h2>Import / Export</h2><p>Bring your WooCommerce store across — products, images, variations, pricing, SEO, orders, customers and logins. Nothing on the live site is touched.</p></div>
-    <div class="wiz"><div class="steps">${steps.map((s,i)=>`<div class="stp ${impStep===i+1?'on':impStep>i+1?'done':''}"><span class="sn">${impStep>i+1?ic(I.check):i+1}</span>${s}</div>`).join('')}</div>
-      <div class="card pad" id="impBody"></div></div></div>`;
-  impBody();
-}
-function impNav(){return `<div class="row" style="justify-content:space-between;margin-top:20px"><button class="btn ghost" ${impStep===1?'disabled':''} onclick="impBack()">Back</button><button class="btn" onclick="impNext()">${impStep===4?'Looks good — continue':'Continue'} →</button></div>`;}
-function impBody(){
-  const b=$('#impBody');
-  if(impStep===1){
-    b.innerHTML=`<b style="font-size:14px">Where is your data coming from?</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">Pick how you'll provide the export from kbeautybliss.com.</p>
-    <div style="display:flex;flex-direction:column;gap:10px">${[['woocsv','WooCommerce CSV','Products export from Woo → Products → Export'],['wpxml','WordPress XML','Tools → Export (posts, pages, media)'],['wcrest','WooCommerce REST API','Live pull via API keys — products, orders, customers'],['json','JSON file','Custom JSON in our import format']].map(o=>`<div class="optcard${impSource===o[0]?' on':''}" data-s="${o[0]}"><div class="oi">${ic(I.sandbox)}</div><div style="flex:1"><b>${o[1]}</b><p>${o[2]}</p></div><span class="cbx${impSource===o[0]?' on':''}">${ic(I.check)}</span></div>`).join('')}</div>${impNav()}`;
-    $$('#impBody .optcard').forEach(c=>c.onclick=()=>{impSource=c.dataset.s;impBody();});
-  } else if(impStep===2){
-    const items=[['products','Products','incl. images, variations, prices, SKUs'],['taxos','Categories, Tags, Brands, Attributes',''],['orders','Orders','2,419 incl. line items & statuses'],['customers','Customers','addresses & history'],['users','Users with logins','passwords preserved (phpass verify)'],['reviews','Reviews','45 reviews'],['coupons','Coupons',''],['seo','SEO meta','Yoast titles, descriptions, redirects']];
-    b.innerHTML=`<b style="font-size:14px">What should we bring across?</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">Everything's on by default — untick anything you don't need.</p>
-    <div style="display:flex;flex-direction:column;gap:8px">${items.map(it=>`<div class="optcard${impData[it[0]]?' on':''}" data-d="${it[0]}"><span class="cbx${impData[it[0]]?' on':''}">${ic(I.check)}</span><div><b>${it[1]}</b>${it[2]?`<p>${it[2]}</p>`:''}</div></div>`).join('')}</div>${impNav()}`;
-    $$('#impBody .optcard').forEach(c=>c.onclick=()=>{impData[c.dataset.d]=!impData[c.dataset.d];impBody();});
-  } else if(impStep===3){
-    const maps=[['Name','name'],['Regular price','price'],['Sale price','sale_price'],['SKU','sku'],['Categories','category'],['Images','images[]'],['Stock','stock_qty'],['Description','description'],['_yoast_wpseo_title','seo.title']];
-    b.innerHTML=`<b style="font-size:14px">Field mapping · Products</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">Matched automatically — adjust if your export uses different columns.</p>
-    <div class="card" style="box-shadow:none"><table><thead><tr><th>WooCommerce field</th><th></th><th>KBB field</th></tr></thead><tbody>${maps.map(m=>`<tr><td style="font-family:var(--mono);font-size:11.5px">${m[0]}</td><td style="color:var(--ink-faint)">${ic('<path d="M5 12h14M13 6l6 6-6 6"/>')}</td><td><span class="pill green">${m[1]}</span></td></tr>`).join('')}</tbody></table></div>${impNav()}`;
-  } else if(impStep===4){
-    b.innerHTML=`<b style="font-size:14px">Dry-run in Sandbox</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px">We simulate the whole import against a sandbox copy of live — zero risk.</p>
-    <div class="checks">${[['Source parsed','642 products found'],['Images reachable','3,948 URLs OK · 2 flagged'],['No ID conflicts','matched on woo_id'],['Variations linked','1,180 variations'],['Logins verifiable','phpass hashes valid'],['Migration dry-run','non-destructive']].map(c=>`<div class="check"><div class="ci green">${ic(I.check)}</div><b>${c[0]}</b><small>${c[1]}</small></div>`).join('')}</div>
-    <div class="diff" style="margin-top:16px"><span><b class="plus">642</b> products</span><span><b class="plus">1,180</b> variations</span><span><b class="plus">3,948</b> images</span><span><b class="plus">48</b> categories</span><span><b class="plus">5,312</b> customers</span><span><b class="plus">2,419</b> orders</span><span><b>0</b> conflicts</span></div>${impNav()}`;
-  } else {
-    b.innerHTML=`<b style="font-size:14px">Import to live</b><p style="font-size:12.5px;color:var(--ink-soft);margin:5px 0 16px" id="impMsg">A backup of the live database is taken automatically before importing.</p>
-    <div style="display:flex;flex-direction:column;gap:13px">${[['Products','imp1'],['Images','imp2'],['Orders','imp3'],['Customers & logins','imp4'],['SEO meta','imp5']].map(x=>`<div><div class="between" style="margin-bottom:6px"><span style="font-size:12.5px;font-weight:600">${x[0]}</span><span style="font-size:11px;color:var(--ink-soft)" id="${x[1]}t">queued</span></div><div class="pbar"><i id="${x[1]}"></i></div></div>`).join('')}</div>
-    <div class="row" style="justify-content:flex-end;gap:10px;margin-top:18px"><button class="btn ghost" onclick="impGo(4)">Back</button><button class="btn" id="runImp" onclick="runImport()">${ic(I.rocket)} Start import</button></div>`;
-  }
-}
-function runImport(){
-  $('#runImp').disabled=true;$('#runImp').innerHTML='Importing…';
-  const bars=['imp1','imp2','imp3','imp4','imp5'];let k=0;
-  const step=()=>{if(k>=bars.length){$('#impMsg').innerHTML='<b style="color:var(--accent-strong)">Import complete ✓</b> — your catalogue is now in the app.';toast('Import complete ✓');return;}
-    const id=bars[k];$('#'+id).style.width='100%';$('#'+id+'t').textContent='done';k++;setTimeout(step,640);};
-  setTimeout(step,400);
-}
-window.openProduct=openProduct;window.closeDrawer=closeDrawer;window.runImport=runImport;
+/*
+  Store → Import / Export. The screen that makes `php artisan kbb:import`
+  reachable by someone who has no shell.
+
+  THIS SCREEN DOES NOT IMPORT ANYTHING. Every row goes through the importer in
+  app/Services/Import — the same mapping, the same refusals, the same
+  idempotency — driven through /admin-api/import. What lives here is the part
+  that cannot live in a command: the uploads, the plain-word explanation of the
+  four decisions that are the owner's, and the loop that turns an import too
+  long for one request into a sequence of short ones.
+
+  THE LOOP IS THE WHOLE POINT, so it is worth stating what it does. Shared
+  PHP-FPM kills long requests and there is no queue worker on this host, so the
+  import is many small requests, each continuing from the checkpoint the last
+  one committed. This browser loop:
+
+    - measures how long each step really took and sizes the next one to land
+      near IMP_STEP_TARGET_MS, because the host's real timeout is unknown and
+      cannot be read from inside PHP. Halving on a slow step is how it finds the
+      ceiling without being told what it is;
+
+    - treats a FAILED request as a slice that was too big rather than as the end
+      of the world: it halves and retries. A timeout costs the rows in the
+      uncommitted batch and nothing else, because every committed batch advanced
+      the checkpoint in the same transaction;
+
+    - treats a 409 as "the last request is still running server-side" — which is
+      exactly what a proxy timeout leaves behind, since the PHP process keeps
+      going — and waits for it instead of starting a second one;
+
+    - never auto-starts. A reload of a part-finished import shows what happened
+      and a Continue button. Continuing is always safe; guessing that the owner
+      wanted to continue is not.
+
+  The preview is different and the screen says so in words: a dry run writes
+  everything and rolls it back inside ONE transaction, which is the only way it
+  can resolve an order's customer, so it cannot be continued across requests —
+  only redone deeper. See ImportDriver's class comment.
+*/
+window.openProduct=openProduct;window.closeDrawer=closeDrawer;
 window.clearSel=()=>{catSel.clear();catProducts();};
-window.impNext=()=>{impStep++;renderImport();};window.impBack=()=>{impStep--;renderImport();};window.impGo=n=>{impStep=n;renderImport();};
+
+// The section router at the top of this file still assigns to this when the
+// Import screen is opened. Kept so that line keeps working; nothing reads it.
+let impStep=1;
+
+/* How long one step should take. Comfortably inside any plausible
+   max_execution_time, and long enough that a 20,000-row import is not 400
+   round trips. */
+const IMP_STEP_TARGET_MS=8000;
+
+let impState=null;      // the last /import/status payload
+let impRows=400;        // rows per step, adapted from what the server manages
+let impRunning=false;   // the loop is going
+let impFails=0;         // consecutive failed steps, for the backoff
+let impMsg='';          // what to tell the owner about the last step
+let impMsgKind='';      // '', 'warn', 'bad'
+let impChoice=null;     // the owner's decisions, before a run pins them
+
+function impBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'')+'/admin-api'; }
+
+function impEsc(s){
+  // Refusal reasons quote the refused cell, and a refused cell contains
+  // whatever was in the owner's WooCommerce database. It is never HTML.
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function impNum(n){ return Number(n||0).toLocaleString('en-US'); }
+function impBytes(b){ b=Number(b||0); return b<1024?b+' B':(b<1048576?Math.round(b/1024)+' KB':(b/1048576).toFixed(1)+' MB'); }
+
+/* Never throws on an HTTP error: a 409 and a 500 mean different things to the
+   loop and both have to be visible to it. */
+async function impApi(path,opts){
+  const o=Object.assign({credentials:'same-origin',headers:{}},opts||{});
+  o.headers=Object.assign({'X-XSRF-TOKEN':uToken(),'Accept':'application/json'},o.headers);
+  if(o.method&&o.method!=='GET'&&!(o.body instanceof FormData)) o.headers['Content-Type']='application/json';
+  const r=await fetch(impBase()+path,o);
+  const text=await r.text();
+  let data=null;
+  try{ data=JSON.parse(text); }
+  catch(e){
+    // A non-JSON body is an error page — a 419, a 504 from the proxy, a raw
+    // 500 — not an API answer. Surfacing a snippet beats "something failed".
+    return {status:r.status,data:null,raw:text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,200)};
+  }
+  return {status:r.status,data:data};
+}
+
+async function impRefresh(){
+  const r=await impApi('/import/status');
+  if(r.data&&r.data.ok){ impState=r.data; if(!impChoice) impChoice=Object.assign({},r.data.defaults); }
+  return impState;
+}
+
+/* ------------------------------------------------------------------ render */
+
+async function renderImport(){
+  $('#content').innerHTML='<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading…</p></div>';
+  impRunning=false; impMsg=''; impMsgKind='';
+  try{ await impRefresh(); }
+  catch(e){ $('#content').innerHTML='<div class="wrap"><div class="card pad">Could not reach the server.</div></div>'; return; }
+  impPaint();
+}
+
+function impPaint(){
+  const s=impState; if(!s) return;
+  const run=s.run;
+  const anyFile=s.files.some(f=>f.present);
+
+  $('#content').innerHTML=impCss()+'<div class="wrap impwrap">'
+    +'<div class="page-head"><h2>Import / Export</h2><p>Bring your WooCommerce store across — categories, brands, products, customers, orders and order lines. '
+    +'Upload the exports, look at what <b>would</b> happen, fix anything it refuses, then import for real. '
+    +'Nothing is written until you press Import.</p></div>'
+    +impBanner(run)
+    +impFilesCard(s)
+    +(anyFile?impChoicesCard(s):'')
+    +(anyFile?impPreviewCard(s):'')
+    +(anyFile?impRunCard(s):'')
+    +impRejectsCard(s)
+    +impExportCard()
+    +'</div>';
+
+  impWire();
+}
+
+function impCss(){
+  return '<style>'
+  +'.impwrap .impgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}'
+  +'.impwrap .impfile{border:1px solid var(--border);border-radius:11px;padding:13px 14px;display:flex;flex-direction:column;gap:7px;min-width:0}'
+  +'.impwrap .impfile.on{border-color:#9ED8BB;background:#F6FCF9}'
+  +'.impwrap .impfile b{font-size:13px}'
+  +'.impwrap .impfile p{font-size:11.5px;color:var(--ink-soft);margin:0;line-height:1.5}'
+  +'.impwrap .impmeta{font-size:11.5px;color:var(--ink-soft);display:flex;gap:10px;flex-wrap:wrap;align-items:center}'
+  +'.impwrap .impdrop{border:2px dashed var(--border);border-radius:12px;padding:22px 16px;text-align:center;cursor:pointer;background:var(--surface-2)}'
+  +'.impwrap .impdrop.hot{border-color:var(--accent);background:var(--accent-soft)}'
+  +'.impwrap .impdrop b{display:block;font-size:13.5px;margin-bottom:4px}'
+  +'.impwrap .impdrop span{font-size:12px;color:var(--ink-soft)}'
+  +'.impwrap .imptbl{width:100%;border-collapse:collapse;font-size:12.5px}'
+  +'.impwrap .imptbl th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}'
+  +'.impwrap .imptbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}'
+  +'.impwrap .imptbl td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}'
+  +'.impwrap .impscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}'
+  /* On a phone these two tables stack into labelled blocks rather than scrolling
+     sideways. The refusal REASON is the column that matters and it is the last
+     one, so a sideways-scrolling table hides the only part worth reading. */
+  +'@media(max-width:640px){'
+  +'.impwrap .impstack thead{display:none}'
+  +'.impwrap .impstack,.impwrap .impstack tbody,.impwrap .impstack tr,.impwrap .impstack td{display:block;width:auto}'
+  +'.impwrap .impstack tr{border-bottom:1px solid var(--border);padding:9px 0}'
+  +'.impwrap .impstack td{border:0;padding:2px 0;text-align:left}'
+  +'.impwrap .impstack td.num{text-align:left}'
+  +'.impwrap .impstack td[data-l]::before{content:attr(data-l) " ";color:var(--ink-faint);font-size:10.5px;'
+  +'text-transform:uppercase;letter-spacing:.06em;font-weight:700}'
+  +'}'
+  +'.impwrap .impchoice{border:1px solid var(--border);border-radius:11px;padding:14px;display:flex;flex-direction:column;gap:9px;min-width:0}'
+  +'.impwrap .impchoice b{font-size:13px}'
+  +'.impwrap .impchoice p{font-size:12px;color:var(--ink-soft);margin:0;line-height:1.55}'
+  +'.impwrap .impseg{display:flex;gap:6px;flex-wrap:wrap}'
+  +'.impwrap .impseg button{flex:1 1 auto;min-width:110px;border:1px solid var(--border);background:var(--surface);border-radius:9px;padding:8px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--ink)}'
+  +'.impwrap .impseg button.on{border-color:var(--accent);background:var(--accent-soft);font-weight:700}'
+  +'.impwrap .impbanner{border-radius:11px;padding:13px 15px;margin-bottom:16px;font-size:12.5px;line-height:1.6;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}'
+  +'.impwrap .impbanner.warn{background:#FFF8EC;border:1px solid #F5E1BC;color:#7A5410}'
+  +'.impwrap .impbanner.bad{background:#FDF2F2;border:1px solid #F3C9C9;color:#96271F}'
+  +'.impwrap .impbanner.good{background:#F0F9F4;border:1px solid #CFE9DB;color:#1F7D52}'
+  +'.impwrap .impbanner .row{flex-shrink:0}'
+  +'.impwrap .impnote{font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin-top:6px}'
+  +'.impwrap .impbar{height:7px;background:var(--surface-3);border-radius:99px;overflow:hidden;margin-top:6px}'
+  +'.impwrap .impbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-strong));border-radius:99px;transition:.35s var(--ease)}'
+  +'.impwrap .impwhy{font-size:11.5px;color:var(--ink-soft);line-height:1.6;margin:10px 0 0}'
+  +'@media(max-width:560px){.impwrap .impbanner{flex-direction:column;align-items:stretch}.impwrap .impbanner .row{width:100%}.impwrap .impbanner .btn{flex:1}.impwrap .impseg button{min-width:0}}'
+  +'</style>';
+}
+
+function impBanner(run){
+  if(impMsg){
+    return '<div class="impbanner '+(impMsgKind||'warn')+'"><div>'+impEsc(impMsg)+'</div>'
+      +(run&&run.status==='running'?'<div class="row"><button class="btn" id="impContinue">Continue</button></div>':'')+'</div>';
+  }
+  if(!run) return '';
+  if(run.status==='running'){
+    return '<div class="impbanner warn"><div><b>'+(run.mode==='preview'?'A preview':'An import')+' is part-way through.</b> '
+      +'Nothing was lost — it carries on from the last batch that finished. Press Continue whenever you are ready.</div>'
+      +'<div class="row"><button class="btn" id="impContinue">Continue</button><button class="btn ghost" id="impStop">Stop</button></div></div>';
+  }
+  if(run.status==='complete'){
+    return '<div class="impbanner good"><div><b>'+(run.mode==='preview'?'Preview finished.':'Import finished.')+'</b> '
+      +(run.mode==='preview'?'Nothing was written — read the table below, fix anything refused, then import for real.'
+        :'Run it once more to prove it: everything should come back as “unchanged”.')+'</div></div>';
+  }
+  return '';
+}
+
+/* ---------------------------------------------------------------- 1. files */
+
+function impFilesCard(s){
+  const lim=s.limits;
+  const cards=s.files.map(f=>
+    '<div class="impfile'+(f.present?' on':'')+'">'
+    +'<div class="between" style="align-items:flex-start"><b>'+impEsc(f.label)+'</b>'
+    +(f.present
+      ?'<span class="pill green">ready</span>'
+      :'<span style="font-size:11px;color:#94A3B8;font-weight:600">not uploaded</span>')+'</div>'
+    +'<p>'+impEsc(f.help)+'</p>'
+    +(f.present
+      ?'<div class="impmeta"><span>'+impNum(f.rows)+' rows</span><span>'+impBytes(f.bytes)+'</span>'
+        +'<button class="btn ghost sm impforget" data-e="'+impEsc(f.entity)+'" style="margin-left:auto;padding:3px 9px;font-size:11px">Remove</button></div>'
+      :'<div class="impmeta">expects <code style="font-family:var(--mono);font-size:11px">'+impEsc(f.file)+'</code></div>')
+    +'</div>').join('');
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<div class="between" style="margin-bottom:12px;flex-wrap:wrap;gap:10px"><div><b style="font-size:14px">1 · Your exports</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0">Upload as many as you have. You do not need all six — a file you leave out is simply not touched, '
+    +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div></div>'
+    +'<div class="impdrop" id="impDrop"><b>Drop your CSV files here, or click to choose</b>'
+    +'<span>Name them <code style="font-family:var(--mono)">categories.csv</code>, <code style="font-family:var(--mono)">brands.csv</code>, '
+    +'<code style="font-family:var(--mono)">products.csv</code>, <code style="font-family:var(--mono)">customers.csv</code>, '
+    +'<code style="font-family:var(--mono)">orders.csv</code>, <code style="font-family:var(--mono)">order_items.csv</code> and they sort themselves out.</span>'
+    +'<input type="file" id="impFileInput" accept=".csv,text/csv" multiple hidden></div>'
+    +'<div class="impnote">This server accepts uploads up to <b>'+impEsc(lim.upload_max_filesize)+'</b> each ('
+    +'form limit '+impEsc(lim.post_max_size)+'). Files are stored outside the website folder and are never reachable from the web. '
+    +'If an order export is larger than that, split it — the importer carries on across files.</div>'
+    +'<div class="impgrid" style="margin-top:14px">'+cards+'</div>'
+    +'<div id="impUploadMsg"></div>'
+    +'</div>';
+}
+
+/* -------------------------------------------------------------- 2. choices */
+
+function impChoicesCard(s){
+  const c=impChoice||s.defaults;
+  const locked=s.run&&s.run.status==='running';
+  const pinned=locked?s.run.options:c;
+  const seg=(key,opts)=>'<div class="impseg">'+opts.map(o=>
+      '<button class="impopt'+(String(pinned[key])===String(o[0])?' on':'')+'" data-k="'+key+'" data-v="'+impEsc(o[0])+'"'
+      +(locked?' disabled style="opacity:.55;cursor:not-allowed"':'')+'>'+impEsc(o[1])+'</button>').join('')+'</div>';
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<b style="font-size:14px">2 · Four decisions that are yours, not the importer\'s</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 14px">Each one is already set to what we recommend, so you can leave them alone. '
+    +(locked?'<b>They are fixed for the run that is in progress</b> — stop it first to change them.':'')+'</p>'
+    +'<div class="impgrid">'
+
+    +'<div class="impchoice"><b>Orders placed without an account</b>'
+    +'<p>Most people check out as guests. <b>Make a customer record</b> files those orders under the shopper\'s email, so they show up in '
+    +'Customers and count towards what that person has spent — which is what this store already does when someone buys without signing in. '
+    +'<b>Leave them unattached</b> keeps them as orders belonging to nobody, and they then sit outside every per-customer figure.</p>'
+    +seg('guests',[['synthesise','Make a customer record'],['unlinked','Leave them unattached']])+'</div>'
+
+    +'<div class="impchoice"><b>Which order number to keep</b>'
+    +'<p><b>The number on the invoice</b> keeps what your customer already has on their paperwork. '
+    +'<b>WooCommerce\'s internal id</b> is guaranteed never to clash — use it if the import tells you two orders share a number.</p>'
+    +seg('order_number',[['number','The number on the invoice'],['id','WooCommerce\'s internal id']])+'</div>'
+
+    +'<div class="impchoice"><b>What time zone your export\'s dates are in</b>'
+    +'<p>WooCommerce writes order dates in your shop\'s own time zone. Getting this wrong shifts every order in the store by a few hours, '
+    +'which quietly moves evening orders onto the next day and makes your daily sales disagree with WooCommerce. '
+    +'Leave it on Dubai unless your WordPress was set to something else.</p>'
+    +'<select class="inp" id="impTz"'+(locked?' disabled':'')+'>'
+    +s.timezones.map(t=>'<option value="'+impEsc(t)+'"'+(pinned.timezone===t?' selected':'')+'>'+impEsc(t)+'</option>').join('')
+    +'</select></div>'
+
+    +'<div class="impchoice"><b>The sample catalogue is holding real names</b>'
+    +'<p>This store was set up with a few placeholder brands and categories — <i>cosrx</i>, <i>beauty of joseon</i>, <i>cleansers</i>, '
+    +'<i>toners</i>, <i>serums</i> — and those are real things you sell. Your genuine ones cannot use the same web address twice, '
+    +'so by default they are refused and listed. Turn this on and the real WooCommerce record simply takes the placeholder\'s place. '
+    +'A name held by a different genuine record is still refused either way — only you can decide that one.</p>'
+    +seg('adopt_by_slug',[[true,'Take over the placeholders'],[false,'Refuse and list them']])+'</div>'
+
+    +'</div>'
+    +'<label class="impnote" style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;cursor:pointer">'
+    +'<input type="checkbox" id="impRestart" style="margin-top:2px"'+(locked?' disabled':'')+'>'
+    +'<span><b>Start every file again from its first row.</b> Normally you do not want this — an interrupted import picks up where it stopped. '
+    +'Use it when you have re-exported a file and want it re-read from the top. It is safe: rows already imported are simply re-presented and come back as “unchanged”.</span></label>'
+    +'</div>';
+}
+
+/* -------------------------------------------------------------- 3. preview */
+
+function impPreviewCard(s){
+  const run=s.run, isPreview=run&&run.mode==='preview';
+  const deepest=Math.max.apply(null,[1].concat(s.entities.filter(e=>e.present).map(e=>e.rows_total)));
+  const depth=isPreview?Math.min(run.preview_limit,deepest):0;
+  const pct=isPreview?Math.round(100*depth/deepest):0;
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<div class="between" style="flex-wrap:wrap;gap:12px;align-items:flex-start">'
+    +'<div><b style="font-size:14px">3 · Look before you write</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:640px">This does the entire import and then throws it away, so it can tell you exactly '
+    +'what would happen — including every row it would refuse and why. <b>Nothing is saved.</b></p></div>'
+    +'<div class="row" style="gap:8px">'
+    +'<button class="btn ghost" id="impPreview"'+(impRunning?' disabled':'')+'>'+(isPreview&&run.status==='running'?'Continue preview':'Preview')+'</button>'
+    +'</div></div>'
+    +(isPreview?'<div class="impnote" style="margin-top:12px"><b>Checked the first '+impNum(depth)+' rows of each file</b>'
+        +(run.status==='complete'?' — that is all of them.':' of '+impNum(deepest)+'.')
+        +'<div class="impbar"><i style="width:'+pct+'%"></i></div>'
+        +'<div style="margin-top:7px">A preview cannot be continued the way a real import can: it has to write everything and undo it in one go, '
+        +'which is the only way it can work out which order belongs to which customer. So it reads deeper each time you press Continue, '
+        +'starting from the top again. If it stops getting deeper, preview what it managed and import the rest for real — the real import '
+        +'<i>does</i> carry on from where it stopped.</div></div>':'')
+    +(isPreview?impResultTable(s,'Would create','Would update','Already identical','Would refuse'):'')
+    +'</div>';
+}
+
+/* ------------------------------------------------------------------ 4. run */
+
+function impRunCard(s){
+  const run=s.run, isLive=run&&run.mode==='live';
+  const busy=impRunning;
+
+  const rows=s.entities.filter(e=>e.present).map(e=>{
+    const pct=e.rows_total?Math.min(100,Math.round(100*e.processed/e.rows_total)):0;
+    const state=!isLive?'waiting':(e.done_this_run?'done':(run.current_entity===e.entity?'importing…':(e.processed>0?'part way':'waiting')));
+    return '<div style="margin-bottom:11px"><div class="between" style="margin-bottom:4px">'
+      +'<span style="font-size:12.5px;font-weight:600">'+impEsc(e.label)+'</span>'
+      +'<span style="font-size:11.5px;color:var(--ink-soft)">'+impNum(e.processed)+' of '+impNum(e.rows_total)+' · '+impEsc(state)+'</span></div>'
+      +'<div class="impbar"><i style="width:'+pct+'%"></i></div></div>';
+  }).join('');
+
+  return '<div class="card pad" style="margin-bottom:16px">'
+    +'<div class="between" style="flex-wrap:wrap;gap:12px;align-items:flex-start">'
+    +'<div><b style="font-size:14px">4 · Import for real</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:640px">Safe to run more than once. Every row is matched on its WooCommerce id, '
+    +'so importing the same file twice updates rather than duplicates — and a second run reporting everything as “unchanged” is the best proof there is that it worked.</p></div>'
+    +'<div class="row" style="gap:8px">'
+    +(busy?'<button class="btn ghost" id="impPause">Pause</button>'
+          :'<button class="btn" id="impRun">'+(isLive&&run.status==='running'?'Continue import':'Import')+'</button>')
+    +'</div></div>'
+    +'<div style="margin-top:14px">'+rows+'</div>'
+    +'<div class="impnote">Your browser does this in small pieces, a few seconds at a time, so this shared server never has to hold one long request open. '
+    +'You can close this tab: whatever had finished stays finished, and coming back here offers to carry on. It will not start over and it will not import anything twice.'
+    +(busy?' <b>Working — about '+impNum(impRows)+' rows per piece.</b>':'')+'</div>'
+    +(isLive?impResultTable(s,'Created','Updated','Unchanged','Refused'):'')
+    +'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="impReset" style="color:#c0392b">Forget progress and start over</button></div>'
+    +'</div>';
+}
+
+function impResultTable(s,a,b,c,d){
+  const shown=s.entities.filter(e=>e.present&&(e.created||e.updated||e.unchanged||e.rejected||e.processed));
+  if(!shown.length) return '';
+
+  const notes=[];
+  shown.forEach(e=>{ Object.keys(e.notes||{}).forEach(n=>notes.push([e.label,n,e.notes[n]])); });
+
+  return '<div class="impscroll" style="margin-top:16px"><table class="imptbl impstack"><thead><tr><th>What</th>'
+    +'<th style="text-align:right">'+impEsc(a)+'</th><th style="text-align:right">'+impEsc(b)+'</th>'
+    +'<th style="text-align:right">'+impEsc(c)+'</th><th style="text-align:right">'+impEsc(d)+'</th></tr></thead><tbody>'
+    +shown.map(e=>'<tr><td><b>'+impEsc(e.label)+'</b>'+(e.source_changed?' <span class="pill" style="background:#FDF2F2;color:#96271F">file changed</span>':'')+'</td>'
+      +'<td class="num" data-l="'+impEsc(a)+'">'+impNum(e.created)+'</td>'
+      +'<td class="num" data-l="'+impEsc(b)+'">'+impNum(e.updated)+'</td>'
+      +'<td class="num" data-l="'+impEsc(c)+'">'+impNum(e.unchanged)+'</td>'
+      +'<td class="num" data-l="'+impEsc(d)+'"'+(e.rejected?' style="color:#96271F;font-weight:700"':'')+'>'+impNum(e.rejected)+'</td></tr>').join('')
+    +'</tbody></table></div>'
+    +(notes.length?'<div class="impwhy"><b>Worth knowing</b><ul style="margin:6px 0 0;padding-left:18px">'
+      +notes.map(n=>'<li>'+impEsc(n[0])+' — '+impEsc(n[1])+' <span style="color:var(--ink-faint)">('+impNum(n[2])+')</span></li>').join('')
+      +'</ul></div>':'');
+}
+
+/* -------------------------------------------------------------- 5. refusals */
+
+function impRejectsCard(s){
+  const r=s.rejects;
+  if(!r||!r.count) return '';
+  const mode=(s.run&&s.run.mode)||'preview';
+
+  return '<div class="card pad" style="margin-bottom:16px;border-color:#F3C9C9">'
+    +'<div class="between" style="flex-wrap:wrap;gap:12px;align-items:flex-start">'
+    +'<div><b style="font-size:14px;color:#96271F">'+impNum(r.count)+' rows were refused</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:640px">These are <b>not</b> in the database. Each one says what is wrong with it. '
+    +'Fix them in your export and upload it again — the rows that did go in will just report as unchanged next time.</p></div>'
+    +'<div class="row"><a class="btn ghost" href="'+impBase()+'/import/rejects?mode='+encodeURIComponent(mode)+'">Download all '+impNum(r.count)+' as CSV</a></div></div>'
+    +'<div class="impscroll" style="margin-top:14px"><table class="imptbl impstack"><thead><tr><th>What</th><th>Line</th><th>Which row</th><th>Why it was refused</th></tr></thead><tbody>'
+    +r.shown.map(x=>'<tr><td data-l="File"><b>'+impEsc(x.entity)+'</b></td><td class="num" data-l="Line">'+impEsc(x.line)+'</td>'
+      +'<td data-l="Row" style="font-family:var(--mono);font-size:11px">'+impEsc(x.id)+'</td>'
+      +'<td data-l="Why">'+impEsc(x.reason)+'</td></tr>').join('')
+    +'</tbody></table></div>'
+    +(r.truncated?'<div class="impnote">Showing the first '+impNum(r.shown.length)+'. The CSV has every one of them.</div>':'')
+    +'</div>';
+}
+
+/* ---------------------------------------------------------------- 6. export */
+
+function impExportCard(){
+  return '<div class="card pad">'
+    +'<b style="font-size:14px">Export</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:680px">'
+    +'Two exports already exist and are the ones worth having: <b>Store → Customers</b> hands you the customer list as a CSV, filters and all, '
+    +'and <b>Store → Orders</b> does the same for orders. Use those.</p>'
+    +'<p class="impwhy" style="max-width:680px">A matching export of all six files — one that could be re-imported and come back identical — is not here on purpose. '
+    +'Writing it means a second set of rules mapping every column back the other way, and a second set of rules is a second answer to what a row meant. '
+    +'That belongs in its own piece of work with its own tests, not bolted onto this screen.</p>'
+    +'</div>';
+}
+
+/* ------------------------------------------------------------------- wiring */
+
+function impWire(){
+  const drop=$('#impDrop'), input=$('#impFileInput');
+  if(drop&&input){
+    drop.onclick=()=>input.click();
+    drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot');};
+    drop.ondragleave=()=>drop.classList.remove('hot');
+    drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');impUpload(e.dataTransfer.files);};
+    input.onchange=()=>impUpload(input.files);
+  }
+
+  document.querySelectorAll('.impforget').forEach(b=>{
+    b.onclick=async()=>{
+      b.disabled=true;
+      await impApi('/import/forget',{method:'POST',body:JSON.stringify({entity:b.dataset.e})});
+      await impRefresh(); impPaint();
+    };
+  });
+
+  document.querySelectorAll('.impopt').forEach(b=>{
+    b.onclick=()=>{
+      if(b.disabled) return;
+      const v=b.dataset.v;
+      impChoice[b.dataset.k]=(v==='true')?true:((v==='false')?false:v);
+      impPaint();
+    };
+  });
+
+  const tz=$('#impTz'); if(tz) tz.onchange=()=>{ impChoice.timezone=tz.value; };
+
+  const preview=$('#impPreview');
+  if(preview) preview.onclick=()=>impBegin('preview');
+
+  const run=$('#impRun');
+  if(run) run.onclick=()=>{
+    if(!confirm('Import for real. This writes to your store.\n\nIt is safe to run again afterwards — rows are matched on their WooCommerce id, so nothing is duplicated. Continue?')) return;
+    impBegin('live');
+  };
+
+  const cont=$('#impContinue'); if(cont) cont.onclick=()=>{ impMsg=''; impDrive(); };
+  const pause=$('#impPause'); if(pause) pause.onclick=()=>{ impRunning=false; impPaint(); };
+  const stop=$('#impStop'); if(stop) stop.onclick=async()=>{ impRunning=false; await impApi('/import/stop',{method:'POST'}); await impRefresh(); impPaint(); };
+
+  const reset=$('#impReset');
+  if(reset) reset.onclick=async()=>{
+    if(!confirm('Forget how far the import got, so the next run reads every file from its first row?\n\nNothing already imported is deleted — those rows will simply be re-presented and reported as unchanged.')) return;
+    impRunning=false;
+    await impApi('/import/reset',{method:'POST'});
+    await impRefresh(); impPaint();
+  };
+}
+
+async function impUpload(fileList){
+  const files=Array.prototype.slice.call(fileList||[]);
+  if(!files.length) return;
+
+  const box=$('#impUploadMsg');
+  if(box) box.innerHTML='<div class="impnote">Uploading '+files.length+' file'+(files.length===1?'':'s')+'…</div>';
+
+  const body=new FormData();
+  files.forEach(f=>body.append('files[]',f));
+
+  const r=await impApi('/import/upload',{method:'POST',body:body});
+
+  if(!r.data){
+    // No JSON at all: almost always the file being larger than the server's
+    // own limit, which PHP refuses before any of our code runs.
+    impMsg='The server would not take that upload. It is usually a file larger than the limit shown above. '+(r.raw||'');
+    impMsgKind='bad';
+    await impRefresh(); impPaint(); return;
+  }
+
+  if(r.data.status) impState=r.data.status;
+
+  const refused=(r.data.refused||[]);
+  if(refused.length){
+    impMsg=refused.map(x=>x.message).join('  ·  ');
+    impMsgKind='bad';
+  }else{
+    impMsg=''; impMsgKind='';
+    toast('Uploaded');
+  }
+
+  impPaint();
+}
+
+async function impBegin(mode){
+  const c=impChoice||impState.defaults;
+  const restartEl=$('#impRestart');
+
+  const r=await impApi('/import/start',{method:'POST',body:JSON.stringify({
+    mode:mode,
+    guests:c.guests,
+    order_number:c.order_number,
+    timezone:c.timezone,
+    adopt_by_slug:!!c.adopt_by_slug,
+    restart:!!(restartEl&&restartEl.checked),
+    force:true
+  })});
+
+  if(!r.data||!r.data.ok){
+    impMsg=(r.data&&r.data.message)||'Could not start.'; impMsgKind='bad'; impPaint(); return;
+  }
+
+  impState=r.data.status;
+  impRows=impState.limits.default_step_rows;
+  impFails=0; impMsg=''; impMsgKind='';
+  impDrive();
+}
+
+/*
+ * The loop. See the note at the top of this section for why it is shaped like
+ * this; what follows is only the arithmetic.
+ */
+async function impDrive(){
+  if(impRunning) return;
+  impRunning=true; impFails=0;
+  impPaint();
+
+  while(impRunning){
+    const t0=performance.now();
+    let r;
+
+    try{ r=await impApi('/import/step',{method:'POST',body:JSON.stringify({rows:impRows})}); }
+    catch(e){ r={status:0,data:null,raw:String(e&&e.message||e)}; }
+
+    const took=performance.now()-t0;
+
+    // 409: the previous request is still running on the server. That is what a
+    // proxy timeout leaves behind — the browser gave up, PHP did not — so the
+    // only correct move is to wait for it, never to start a second one.
+    if(r.status===409){
+      impFails++;
+      if(impFails>20){ impRunning=false; impMsg='Something else is still working on this import. Reload in a minute.'; impMsgKind='warn'; impPaint(); return; }
+      impMsg='Waiting for the previous piece to finish on the server…'; impMsgKind='warn'; impPaint();
+      await new Promise(res=>setTimeout(res,5000));
+      continue;
+    }
+
+    if(!r.data||r.status>=500||r.status===0){
+      // The slice was too big for this host, or the network dropped. Nothing is
+      // lost: every batch that committed advanced the checkpoint with it. Halve
+      // and try again, which is how this finds a host's real ceiling without
+      // being told what it is.
+      impFails++;
+      if(impRows>impState.limits.min_step_rows&&impFails<=6){
+        impRows=Math.max(impState.limits.min_step_rows,Math.floor(impRows/2));
+        impMsg='That piece was too big for this server, so it is trying a smaller one ('+impNum(impRows)+' rows). Nothing was lost.';
+        impMsgKind='warn'; impPaint();
+        continue;
+      }
+      impRunning=false;
+      impMsg='The server stopped responding. Nothing already imported was lost — press Continue to pick up where it stopped.'
+        +(r.raw?' ('+r.raw+')':'');
+      impMsgKind='bad';
+      await impRefresh(); impPaint(); return;
+    }
+
+    impFails=0;
+    if(r.data.status) impState=r.data.status;
+
+    if(r.data.ok===false){
+      impRunning=false;
+      impMsg=r.data.message||'That piece could not be done.';
+      impMsgKind=r.data.needs_restart?'warn':'bad';
+      if(r.data.needs_restart){
+        impMsg+='  Tick “Start every file again from its first row” above and press Import again.';
+      }
+      impPaint(); return;
+    }
+
+    // Aim the next piece at IMP_STEP_TARGET_MS. Grow slowly, shrink fast: being
+    // half as quick as possible costs minutes, and being one step too greedy
+    // costs a timeout.
+    if(took<IMP_STEP_TARGET_MS*0.6) impRows=Math.min(impState.limits.max_step_rows,Math.ceil(impRows*1.6));
+    else if(took>IMP_STEP_TARGET_MS*1.5) impRows=Math.max(impState.limits.min_step_rows,Math.floor(impRows/2));
+
+    impMsg=''; impMsgKind='';
+    impPaint();
+
+    if(!impState.run||impState.run.status!=='running'){
+      impRunning=false;
+      impPaint();
+      toast(impState.run&&impState.run.mode==='preview'?'Preview finished':'Import finished');
+      return;
+    }
+  }
+
+  impPaint();
+}
 
 /* ===================== PRODUCT LABELS ===================== */
 const OCCASIONS=[['none','None'],['eid','Eid'],['ramadan','Ramadan'],['xmas','Christmas'],['ny','New Year'],['bf','Black Friday'],['summer','Summer Sale']];
@@ -5967,6 +6795,7 @@ function shIntro(){
 
 function paintShipping(){
   if(SHTAB==='extended'){ paintExtended(); return; }
+  if(SHTAB==='gift'){ paintGift(); return; }
   $('#content').innerHTML=`<div class="wrap ecwrap">
     <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Delivery &amp; Shipping</h2>
       ${shIntro()}</div>
@@ -6049,8 +6878,118 @@ function shTabs(){
   return `<div class="ectabs">
     <button class="ectab${SHTAB==='zones'?' on':''}" data-shtab="zones">Zones</button>
     <button class="ectab${SHTAB==='extended'?' on':''}" data-shtab="extended">Extended${XD&&XD.on?'<span class="ecn">on</span>':''}</button>
+    <button class="ectab${SHTAB==='gift'?' on':''}" data-shtab="gift">Gift wrapping${GIFT&&GIFT.gift_enabled==='1'?'<span class="ecn">on</span>':''}</button>
   </div>
-  <p class="ectabs-hint">${SHTAB==='zones'?'Your current delivery charges — including the Gulf countries — are the cards below.':'Countries added here on top of your zones.'}</p>`;
+  <p class="ectabs-hint">${SHTAB==='zones'?'Your current delivery charges — including the Gulf countries — are the cards below.':SHTAB==='gift'?'An optional gift-wrap tick at checkout, and what it costs.':'Countries added here on top of your zones.'}</p>`;
+}
+
+/* ---------- Store · Delivery & Shipping · Gift wrapping ----------
+ *
+ * Lives here rather than on Business Details because it is a fulfilment
+ * charge: it rides the same order total as delivery, and the field it
+ * controls sits in the Delivery step of checkout.
+ *
+ * Self-contained on purpose. SETTINGS, sval() and loadSettings() belong to
+ * the Business Details block, which is a different script scope -- reaching
+ * for them from here throws a ReferenceError and takes the whole Delivery &
+ * Shipping screen down with it. This block talks to /admin-api/settings
+ * directly, the same way loadExtended() talks to its own endpoint.
+ */
+let GIFT=null;
+
+function giftBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/settings'; }
+
+function giftCookie(name){
+  var m = document.cookie.match(new RegExp('(^| )'+name+'=([^;]+)'));
+  return m ? decodeURIComponent(m[2]) : '';
+}
+
+async function loadGift(){
+  try{
+    const r = await fetch(giftBase(), {credentials:'same-origin', headers:{Accept:'application/json'}});
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    GIFT = d.settings || {};
+  }catch(e){ GIFT = {}; }
+  return GIFT;
+}
+
+async function paintGift(){
+  if(!GIFT) await loadGift();
+
+  // Read straight from the stored value -- no default guessed here. A
+  // migration seeds the row, so this screen and the storefront are looking at
+  // the same string. Guessing a default in two places is what made the tab
+  // read Off above a checkout that was showing the tick.
+  const on = GIFT.gift_enabled === '1';
+  const fee = GIFT.gift_fee ? (parseInt(GIFT.gift_fee, 10) / 100) : 0;
+
+  $('#content').innerHTML=`<div class="wrap ecwrap">
+    <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Delivery &amp; Shipping</h2>
+      ${shIntro()}</div>
+    ${shTabs()}
+    <div class="card mdcard">
+      <div class="mmhd"><b>Gift wrapping</b><span>Shown in the Delivery step at checkout</span></div>
+      <div style="padding:16px 18px 18px">
+        <p class="mdesc" style="margin:0 0 14px">With this on, shoppers see a <b>This order is a gift</b> tick and a
+          600-character message printed on the card. The fee below is added to the order total, alongside any
+          cash-on-delivery fee. Set it to 0 to offer wrapping free.</p>
+        <div class="g2">
+          <div class="fld"><label>Offer gift wrapping</label>
+            <select id="gf_on"><option value="0"${on?'':' selected'}>Off</option><option value="1"${on?' selected':''}>On</option></select>
+          </div>
+          <div class="fld"><label>Gift wrapping fee (AED)</label>
+            <input id="gf_fee" type="number" step="1" min="0" value="${fee}">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ecsave">
+      <span class="ecdirty" id="gfDirty" style="visibility:hidden">Unsaved changes</span>
+      <button class="btn primary" id="gfSave">Save changes</button>
+    </div>
+  </div>`;
+
+  bindShTabs();
+
+  const dirty=()=>{ const d=document.getElementById('gfDirty'); if(d) d.style.visibility='visible'; };
+  ['gf_on','gf_fee'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onchange=dirty; });
+
+  document.getElementById('gfSave').onclick=async function(){
+    const val=id=>{ const el=document.getElementById(id); return el?el.value:''; };
+    const payload={
+      gift_enabled: val('gf_on'),
+      // fils, like cod_fee and delivery_flat, so Money::format handles it and
+      // no screen has to remember which unit this one uses.
+      gift_fee: String(Math.round((parseFloat(val('gf_fee'))||0)*100))
+    };
+    try{
+      const r = await fetch(giftBase(), {
+        method:'PUT',
+        credentials:'same-origin',
+        headers:{
+          'Accept':'application/json',
+          'Content-Type':'application/json',
+          'X-XSRF-TOKEN': giftCookie('XSRF-TOKEN')
+        },
+        body: JSON.stringify({settings: payload})
+      });
+      if(!r.ok) throw new Error(r.status);
+      const res = await r.json().catch(()=>({}));
+      // The endpoint answers ok even when it skipped every key, which is how
+      // this screen reported success while writing nothing. Trust the counts.
+      if(res.rejected && res.rejected.length){
+        toast('Not saved: '+res.rejected.join(', ')+' \u2014 the server rejected these keys');
+        return;
+      }
+      if(res.saved === 0){ toast('Nothing was saved \u2014 check the server log'); return; }
+      Object.assign(GIFT, payload);
+      const d=document.getElementById('gfDirty'); if(d) d.style.visibility='hidden';
+      toast('Gift wrapping saved');
+      GIFT = null;
+      paintGift();
+    }catch(e){ toast('Save failed \u2014 check connection'); }
+  };
 }
 
 async function loadExtended(){
@@ -6648,6 +7587,122 @@ function tpv(th){const[,,,bg,sf,ac,ln,ink,as]=th;
 }
 const segHTML=(opts,cur,pref)=>`<div class="seg" data-pref="${pref}">${opts.map(o=>`<button data-v="${o[0]}" class="${o[0]===cur?'on':''}">${o[1]}</button>`).join('')}</div>`;
 const optHTML=(o,cur)=>Object.entries(o).map(([v,l])=>`<option value="${v}"${v===cur?' selected':''}>${l}</option>`).join('');
+/* ---------- Demo Content ---------- */
+const DEMO_CONTENT_TYPES=[
+  ['orders','Demo Orders','Sample orders across every status — processing, shipped, refunded — so you can try the order detail page, refunds, and status changes on something real.','<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/>','#4F46E5','#EEF2FF'],
+  ['customers','Demo Customers','Sample customer accounts, for testing account pages, the customer history panel, and order lookups.','<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>','#2563EB','#EFF6FF'],
+  ['products','Demo Products','Sample products with brands, categories and pricing already filled in — including a few on sale.','<path d="M21 8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/>','#059669','#ECFDF5'],
+  ['pages','Demo Pages','A few sample static pages — About, Shipping, Returns — to preview the page layout before writing the real ones.','<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>','#7C3AED','#F5F3FF'],
+  ['posts','Demo Blog Posts','Sample Journal articles, so the blog is not empty while you plan out real content.','<path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/>','#D97706','#FFFBEB'],
+  ['reviews','Demo Reviews','Sample product reviews at a mix of ratings, for testing the review moderation queue and star display.','<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>','#E0567B','#FDF2F6'],
+  ['menu','Demo Mega Menu','A ready-made navigation menu with brand and category dropdowns already wired up and set live.','<path d="M3 12h18M3 6h18M3 18h18"/>','#0891B2','#ECFEFF'],
+];
+/**
+ * Computes the admin-api base the same way pApiBase() does — from the
+ * current page's own path, not a hardcoded leading slash. A hardcoded
+ * '/admin-api/...' resolves against the domain root; on a subdirectory
+ * deployment (the live site runs at easywebsol.com/kbb-upgrade/) that
+ * silently points at a URL with no matching route at all, which is
+ * exactly the "route could not be found" this shape of bug produces.
+ */
+function dcApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api'; }
+async function dcApi(path, opts){
+  var o = Object.assign({credentials:'same-origin', headers:{}}, opts||{});
+  o.headers = Object.assign({'X-XSRF-TOKEN':uToken(), 'Accept':'application/json'}, o.headers);
+  var r = await fetch(dcApiBase()+path, o);
+  var text = await r.text();
+  var data;
+  try{ data = JSON.parse(text); }
+  catch(e){
+    // A non-JSON body means an error page (a 419 CSRF page, a 404, a raw
+    // 500), not a real API response. Surface a short, real snippet instead
+    // of a silent "could not import" that hides what actually happened.
+    throw new Error('HTTP '+r.status+': '+text.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160));
+  }
+  if(!r.ok || data.ok===false) throw new Error(data.message||('HTTP '+r.status));
+  return data;
+}
+async function renderDemoContent(){
+  $('#content').innerHTML='<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading…</p></div>';
+  var counts={};
+  try{ counts=(await dcApi('/demo-content')).counts||{}; }catch(e){}
+
+  $('#content').innerHTML=`<div class="wrap">
+    <div class="page-head"><h2>Demo Content</h2><p>Sample data so you can try every part of the admin without needing real customer information yet. Import what you need, remove it whenever you are ready to go live.</p></div>
+
+    <div class="card pad" style="margin:18px 0 22px;background:linear-gradient(120deg,#FFF8EC,#FFFBF5);border-color:#F5E1BC">
+      <div class="between" style="flex-wrap:wrap;gap:14px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="color:#B36A0E;flex-shrink:0;margin-top:2px">${ic('<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/>')}</div>
+          <div>
+            <b style="font-size:13.5px">This is sample data, clearly separate from anything real</b>
+            <p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:520px">Every demo record is tracked, so removing it never touches your real orders, customers, or products. Safe to import and remove as many times as you like.</p>
+          </div>
+        </div>
+        <div class="row" style="gap:10px;flex-shrink:0">
+          <button class="btn ghost" id="dcRemoveAll" style="border-color:#c0392b;color:#c0392b;gap:7px">${ic('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>')} Remove All Demo Content</button>
+          <button class="btn" id="dcImportAll" style="gap:7px">${ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>')} Import All Demo Content</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dcgrid" id="dcGrid">${DEMO_CONTENT_TYPES.map(t=>dcCard(t,counts[t[0]]||0)).join('')}</div>
+  </div>`;
+
+  wireDemoContent();
+}
+function dcCard([key,title,desc,icon,color,tint],count){
+  var imported=count>0;
+  var status=imported
+    ? `<span style="display:inline-flex;align-items:center;gap:5px;color:#0EA968;font-size:11.5px;font-weight:700" class="dcokicon">${ic('<path d="M20 6L9 17l-5-5"/>')} ${count} imported</span>`
+    : `<span style="color:#94A3B8;font-size:11.5px;font-weight:600">Not imported yet</span>`;
+  return `<div class="card pad dccard" data-type="${key}" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="dciconbox" style="width:42px;height:42px;border-radius:11px;background:${tint};color:${color};display:flex;align-items:center;justify-content:center">${ic(icon)}</div>
+      <span class="dcstatus">${status}</span>
+    </div>
+    <div><b style="font-size:14px">${title}</b><p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;line-height:1.55">${desc}</p></div>
+    <div class="row" style="gap:8px;margin-top:auto;padding-top:4px">
+      <button class="btn ghost sm dcimport" style="flex:1;gap:6px">${ic('<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>')} Import</button>
+      <button class="btn ghost sm dcremove" style="color:#c0392b;gap:6px" ${imported?'':'disabled style="opacity:.4;cursor:not-allowed"'}>${ic('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>')} Remove</button>
+    </div>
+  </div>`;
+}
+function wireDemoContent(){
+  document.querySelectorAll('.dccard').forEach(card=>{
+    var type=card.dataset.type;
+    card.querySelector('.dcimport').onclick=async function(btn){
+      var b=card.querySelector('.dcimport');
+      b.disabled=true;
+      try{
+        var r=await dcApi('/demo-content/'+type+'/import',{method:'POST'});
+        toast(r.already?'Already imported':'Imported');
+        renderDemoContent();
+      }catch(e){ toast('Could not import: '+e.message); b.disabled=false; }
+    };
+    card.querySelector('.dcremove').onclick=async function(){
+      if(card.querySelector('.dcremove').disabled)return;
+      if(!confirm('Remove this demo content? This cannot be undone.'))return;
+      try{
+        await dcApi('/demo-content/'+type+'/remove',{method:'POST'});
+        toast('Removed');
+        renderDemoContent();
+      }catch(e){ toast('Could not remove: '+e.message); }
+    };
+  });
+  document.getElementById('dcImportAll').onclick=async function(){
+    this.disabled=true;
+    try{ await dcApi('/demo-content/import-all',{method:'POST'}); toast('All demo content imported'); renderDemoContent(); }
+    catch(e){ toast('Could not import all: '+e.message); this.disabled=false; }
+  };
+  document.getElementById('dcRemoveAll').onclick=async function(){
+    if(!confirm('Remove ALL demo content? This cannot be undone.'))return;
+    this.disabled=true;
+    try{ await dcApi('/demo-content/remove-all',{method:'POST'}); toast('All demo content removed'); renderDemoContent(); }
+    catch(e){ toast('Could not remove all: '+e.message); this.disabled=false; }
+  };
+}
+
 function renderConsole(){
   $('#content').innerHTML=`<div class="wrap">
     <div class="page-head"><h2>Console</h2><p>Preferences for this admin console — yours and your team's. Separate from store settings; new console options will keep landing here.</p></div>
@@ -6670,6 +7725,162 @@ function renderConsole(){
   $$('#content .tog[data-pref]').forEach(t=>t.onclick=()=>{t.classList.toggle('on');consolePrefs[t.dataset.pref]=t.classList.contains('on');toast('Saved (preview)');});
   $$('#content select.inp').forEach(s=>s.onchange=()=>{consolePrefs[s.dataset.pref]=s.value;toast('Saved (preview)');});
 }
+
+/* ===== LANE J · Store · Mail — BEGIN =========================================
+   Self-contained. Nothing above or below this marker is referenced except the
+   shared helpers ($, $$, escHtml, escAttr, toast, uToken) and the three
+   registry lines noted in the PR body.
+
+   The screen exists for one question — can this server send email — so the
+   answer is the loudest thing on it, and it is never softened. A failed send
+   prints the transport's own words verbatim, because "535 Incorrect
+   authentication data" and "Connection could not be established" send the
+   owner to two completely different places and a tidy "Could not send" sends
+   them nowhere.
+
+   The password box renders EMPTY always. The API does not return the stored
+   value (it cannot — it is encrypted in mail_credentials and show() sends an
+   empty string with has_value), so there is nothing to render, and blank on
+   save means unchanged. */
+let MAILCFG=null;
+
+function mailBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/mail'; }
+
+async function renderMail(){
+  $('#content').innerHTML=`<div class="wrap"><div class="page-head"><h2>Mail</h2><p>Loading…</p></div></div>`;
+  try{
+    const r=await fetch(mailBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
+    if(!r.ok) throw new Error(r.status);
+    MAILCFG=await r.json();
+  }catch(e){
+    const why=String(e.message||e);
+    const hint = why==='404'
+      ? 'The admin route is not registered — the cache-clearing migration for this release may not have run.'
+      : why==='500' ? 'The server errored. Check storage/logs/laravel.log.' : 'The request did not complete.';
+    $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">
+      <b>Could not load the mail settings.</b>
+      <p style="margin:6px 0 12px;color:#7b8697;font-size:12.5px">${escHtml(hint)} <code>${escHtml(why)}</code></p>
+      <button class="btn small" onclick="renderMail()">Retry</button></div></div>`;
+    return;
+  }
+  paintMail();
+}
+
+function mailField(f){
+  const lbl=`<div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>`;
+  if(f.options)
+    return `<div class="mmrow">${lbl}<select class="inp" data-mail="${escAttr(f.key)}">${
+      f.options.map(o=>`<option value="${escAttr(o)}"${o===f.value?' selected':''}>${escHtml(o)}</option>`).join('')}</select></div>`;
+  if(f.type==='secret')
+    return `<div class="mmrow">${lbl}<input type="password" autocomplete="new-password" data-mail="${escAttr(f.key)}"
+      placeholder="${f.has_value?'Stored — leave blank to keep it':'Not set'}"></div>`;
+  return `<div class="mmrow">${lbl}<input type="text" value="${escAttr(String(f.value??''))}" data-mail="${escAttr(f.key)}"></div>`;
+}
+
+/* The outcome of the last test, kept server-side so it outlives the tab that
+   pressed the button. */
+function mailLastTest(){
+  const t=MAILCFG.last_test;
+  if(!t) return `<p style="margin:0;color:#7b8697;font-size:12.5px">No test has ever been run on this server.</p>`;
+  const when=(()=>{ try{ return new Date(t.at).toLocaleString(); }catch(e){ return t.at; } })();
+  return `<div style="border-left:3px solid ${t.ok?'#1f9d55':'#d64545'};padding:8px 12px">
+    <b>${t.ok?'Last test succeeded':'Last test failed'}</b>
+    <div style="color:#7b8697;font-size:12.5px;margin-top:2px">${escHtml(when)} → ${escHtml(String(t.to||''))}</div>
+    <div style="margin-top:6px;font-size:12.5px;white-space:pre-wrap;word-break:break-word">${escHtml(String(t.message||''))}</div>
+  </div>`;
+}
+
+function paintMail(){
+  const warn = MAILCFG.configured ? '' :
+    `<div class="banner" style="margin-bottom:14px"><div>This store cannot send email yet. Still needed: <b>${
+      escHtml(MAILCFG.missing.join(', '))}</b>. Password reset, email verification and newsletter confirmation stay off until a test-send succeeds.</div></div>`;
+  const logNote = MAILCFG.transport==='log'
+    ? `<div class="banner" style="margin-bottom:14px"><div><b>Nothing is being sent.</b> Mail is going to the Laravel log. Set <b>Send using</b> to <code>smtp</code> for real delivery.</div></div>`
+    : '';
+
+  $('#content').innerHTML=`<div class="wrap">
+    <div class="page-head"><h2>Mail</h2><p>The mailbox this store sends from. Settings come from the hosting control panel; the password is stored encrypted and is never shown again.</p></div>
+    ${warn}${logNote}
+    <div class="sec-title">Outgoing mail server</div>
+    <div class="card mmcard"><div class="mmbody">${MAILCFG.fields.map(mailField).join('')}</div></div>
+    <div class="ecsave">
+      <span class="ecdirty" id="mlDirty" style="visibility:hidden">Unsaved changes</span>
+      <button class="btn primary" id="mlSave">Save changes</button>
+    </div>
+
+    <div class="sec-title">Send a test</div>
+    <div class="card pad">
+      <div class="mmrow"><div class="mmlbl"><b>Send a test message to</b><span>Save first. The send happens while you wait — the result below is what the mail server actually said, not a queued job.</span></div>
+        <input type="email" id="mlTo" placeholder="you@example.com"></div>
+      <div style="margin-top:10px"><button class="btn primary" id="mlTest">Send test message</button></div>
+      <div id="mlResult" style="margin-top:14px">${mailLastTest()}</div>
+    </div>
+  </div>`;
+  bindMail();
+}
+
+function bindMail(){
+  const dirty=()=>{ const d=$('#mlDirty'); if(d) d.style.visibility='visible'; };
+  $$('#content [data-mail]').forEach(el=>{ el.oninput=dirty; el.onchange=dirty; });
+
+  const collect=()=>{
+    const out={};
+    $$('#content [data-mail]').forEach(el=>{
+      // A blank password box means "unchanged", so it is not sent at all —
+      // sending '' would be harmless today but only because the service
+      // happens to treat it that way. Do not rely on that from here.
+      if(el.type==='password' && el.value==='') return;
+      out[el.dataset.mail]=el.value;
+    });
+    return out;
+  };
+
+  const save=$('#mlSave');
+  if(save) save.onclick=async()=>{
+    save.disabled=true;
+    try{
+      const r=await fetch(mailBase(),{method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+        body:JSON.stringify({settings:collect()})});
+      const d=await r.json();
+      if(!r.ok||!d.ok) throw new Error(d.error||r.status);
+      toast('Mail settings saved');
+      renderMail();
+    }catch(e){ toast('Could not save: '+e.message); }
+    finally{ save.disabled=false; }
+  };
+
+  const test=$('#mlTest');
+  if(test) test.onclick=async()=>{
+    const to=($('#mlTo').value||'').trim();
+    if(!to){ toast('Enter an address to send to'); return; }
+    const box=$('#mlResult');
+    test.disabled=true;
+    box.innerHTML=`<p style="margin:0;color:#7b8697;font-size:12.5px">Connecting to the mail server…</p>`;
+    try{
+      const r=await fetch(mailBase()+'/test',{method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+        body:JSON.stringify({to})});
+      if(r.status===429){
+        box.innerHTML=`<div style="border-left:3px solid #d64545;padding:8px 12px"><b>Too many attempts</b>
+          <div style="font-size:12.5px;margin-top:4px">The test-send is rate limited. Wait a minute and try again.</div></div>`;
+        return;
+      }
+      const d=await r.json();
+      // Verbatim. A summary here would throw away the only useful part.
+      box.innerHTML=`<div style="border-left:3px solid ${d.ok?'#1f9d55':'#d64545'};padding:8px 12px">
+        <b>${d.ok?(d.status==='sent'?'The mail server accepted it':'Written to the log — nothing sent'):'Send failed'}</b>
+        <div style="margin-top:6px;font-size:12.5px;white-space:pre-wrap;word-break:break-word">${escHtml(String(d.message||''))}</div>
+        ${d.error?`<div style="margin-top:6px;font-size:12px;color:#7b8697;white-space:pre-wrap;word-break:break-word"><code>${escHtml(String(d.error))}</code></div>`:''}
+      </div>`;
+    }catch(e){
+      box.innerHTML=`<div style="border-left:3px solid #d64545;padding:8px 12px"><b>The request did not complete</b>
+        <div style="font-size:12.5px;margin-top:4px">${escHtml(String(e.message||e))}</div></div>`;
+    }
+    finally{ test.disabled=false; }
+  };
+}
+/* ===== LANE J · Store · Mail — END ========================================= */
 
 $('.side-pin .nav-item').onclick=()=>go('console');
 buildNav();
@@ -6697,12 +7908,32 @@ buildNav();
       return k===name ? decodeURIComponent(c.slice(i+1)) : r;
     },'');
   }
+  /**
+   * A URL written as '/admin-api/...' assumes the app lives at the domain
+   * root. On a subdirectory deployment (the live site runs at
+   * easywebsol.com/kbb-upgrade/) that silently resolves to a URL with no
+   * matching route at all. Shared by api() and every raw fetch() call in
+   * this file that still builds its own URL by hand, so the fix lives in
+   * one place rather than being repeated at each call site.
+   */
+  function fixAdminApiUrl(url){
+    if(url.indexOf('/admin-api/')===0){
+      return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + url;
+    }
+    return url;
+  }
   async function api(url, opts){
     opts = opts || {};
+    url = fixAdminApiUrl(url);
     opts.headers = Object.assign({'Accept':'application/json'}, opts.headers||{});
     if(opts.method && opts.method!=='GET'){
       opts.headers['X-XSRF-TOKEN'] = cookie('XSRF-TOKEN');
-      opts.headers['Content-Type'] = opts.headers['Content-Type'] || 'application/json';
+      // FormData bodies (file uploads) must NOT have Content-Type set here —
+      // the browser has to generate its own multipart boundary, which it
+      // only does when the header is left unset entirely.
+      if(!(opts.body instanceof FormData)){
+        opts.headers['Content-Type'] = opts.headers['Content-Type'] || 'application/json';
+      }
     }
     opts.credentials = 'same-origin';
     var r = await fetch(url, opts);
@@ -6721,7 +7952,10 @@ buildNav();
         CAT_PRODUCTS.push([p.name, p.brand||'', sku, p.category||'\u2014',
           (p.price_aed==null?0:p.price_aed), (p.sale_aed==null?null:p.sale_aed),
           (p.stock==null?0:p.stock), p.id, p.status, p.slug]);
-        if(p.status!=='active') CAT_DRAFT.add(sku);
+        // 'publish', not 'active'. products.status is publish|draft|private —
+        // there is no 'active' in this schema, so this marked every LIVE
+        // product as a draft and left real drafts indistinguishable from them.
+        if(p.status!=='publish') CAT_DRAFT.add(sku);
       });
       CAT_CATEGORIES.length = 0; d.categories.forEach(function(c){ CAT_CATEGORIES.push([c.name, c.count]); });
       CAT_BRANDS.length = 0; d.brands.forEach(function(b){ CAT_BRANDS.push([b.name, b.count]); });
@@ -6756,49 +7990,1236 @@ buildNav();
       var feed = feedCard.querySelector('div:last-child');
       if(feed) feed.innerHTML = s.recent.map(function(o){
         var dot = o.status==='completed'?'green':(o.status==='cancelled'||o.status==='failed'?'red':'amber');
-        return '<div class="row" style="padding:11px 0;border-bottom:1px solid var(--border-2)"><span class="hd '+dot+'" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600">Order #'+o.id+' \u00b7 '+o.customer+'</div><div style="font-size:11.5px;color:var(--ink-soft)">AED '+o.total_aed.toLocaleString()+' \u00b7 '+o.status+'</div></div><small style="margin-left:auto;font-size:11px;color:var(--ink-faint)">'+(o.created_at||'').slice(0,10)+'</small></div>';
+        return '<div class="row" style="padding:11px 0;border-bottom:1px solid var(--border-2)"><span class="hd '+dot+'" style="width:8px;height:8px;border-radius:50%;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600">Order #'+o.id+' \u00b7 '+sesc(o.customer)+'</div><div style="font-size:11.5px;color:var(--ink-soft)">AED '+o.total_aed.toLocaleString()+' \u00b7 '+sesc(o.status)+'</div></div><small style="margin-left:auto;font-size:11px;color:var(--ink-faint)">'+(o.created_at||'').slice(0,10)+'</small></div>';
       }).join('');
     }
   }
 
   /* ---------- Orders screen (new; built from the admin's own tokens) ---------- */
-  var ORDER_STATUSES=['pending','processing','onhold','completed','cancelled','refunded','failed'];
-  var ORD=[], ordFilter='all';
+  var ORDER_STATUSES=['draft','pending','processing','onhold','shipped','completed','cancelled','refunded','failed'];
   function statusPill(s){
-    var m={completed:'green',processing:'amber',onhold:'amber',pending:'grey',cancelled:'red',refunded:'red',failed:'red'}[s]||'grey';
+    var m={completed:'green',processing:'amber',onhold:'amber',shipped:'blue',pending:'grey',draft:'grey',cancelled:'red',refunded:'red',failed:'red'}[s]||'grey';
     return '<span class="pill '+m+'"><span class="d"></span>'+s+'</span>';
   }
-  async function renderOrders(){
-    try{ var d=await api('/admin-api/orders'); ORD=d.orders; }catch(e){ ORD=[]; }
-    var counts={all:ORD.length};
-    ORDER_STATUSES.forEach(function(s){ counts[s]=ORD.filter(function(o){return o.status===s;}).length; });
-    var list = ordFilter==='all' ? ORD : ORD.filter(function(o){return o.status===ordFilter;});
-    var chips = [['all','All']].concat(ORDER_STATUSES.map(function(s){return [s, s.charAt(0).toUpperCase()+s.slice(1)];}));
+  /**
+   * Replaces the sidebar's "Blog" and "Posts" links, which previously
+   * loaded an iframe pointing at a standalone file that was never built.
+   * Read-only for now — listing and a real preview link on the live site
+   * is what was actually missing; a full editor is separate, larger scope.
+   */
+  function appRoot(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,''); }
+  async function renderPosts(){
+    var posts;
+    try{ posts = (await api('/admin-api/posts')).posts; }catch(e){ posts = null; }
+
+    if(posts === null){
+      document.querySelector('#content').innerHTML = '<div class="wrap"><div class="page-head"><h2>Posts</h2></div>'+
+        '<p style="padding:24px;color:var(--sale,#c0392b)">Could not load posts.</p></div>';
+      return;
+    }
+
+    var statusColor = function(s){ return s==='published' ? 'green' : 'grey'; };
+
     document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Orders</h2><p>Every order placed through the storefront. Open one to update its status.</p></div>'+
-      '<div class="chips" style="margin:12px 0 14px">'+chips.map(function(c){
-        return '<button class="chip'+(ordFilter===c[0]?' on':'')+'" data-of="'+c[0]+'">'+c[1]+(counts[c[0]]?(' \u00b7 '+counts[c[0]]):'')+'</button>';
-      }).join('')+'</div>'+
-      '<div class="card" style="overflow:auto"><table><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>'+
-      (list.length? list.map(function(o){
-        return '<tr><td><b>#'+o.id+'</b></td>'+
-          '<td><div class="pname">'+o.customer+'</div><div class="pbrand">'+(o.email||'')+'</div></td>'+
-          '<td>'+o.items+'</td>'+
-          '<td class="price"><b>AED '+o.total_aed.toLocaleString()+'</b></td>'+
-          '<td>'+statusPill(o.status)+'</td>'+
-          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(o.created_at||'').slice(0,10)+'</td>'+
-          '<td><button class="btn ghost sm" data-view="'+o.id+'">View</button></td></tr>';
-      }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:34px">No orders yet.</td></tr>')+
-      '</tbody></table></div><div class="pager"><span>Showing '+list.length+' of '+ORD.length+'</span></div></div>';
-    document.querySelectorAll('#content .chip[data-of]').forEach(function(c){ c.onclick=function(){ ordFilter=c.dataset.of; renderOrders(); }; });
-    document.querySelectorAll('#content [data-view]').forEach(function(b){ b.onclick=function(){ openOrder(+b.dataset.view); }; });
+      '<div class="wrap"><div class="page-head"><h2>Posts</h2><p>Every article on the Journal blog. Editing happens on the real page for now — click Preview to open it.</p></div>'+
+      '<div class="card" style="overflow:auto"><table><thead><tr><th>Title</th><th>Tag</th><th>Author</th><th>Status</th><th>Published</th><th></th></tr></thead><tbody>'+
+      (posts.length ? posts.map(function(p){
+        return '<tr><td><b>'+sesc(p.title)+'</b></td>'+
+          '<td>'+(p.tag?sesc(p.tag):'<span style="color:var(--ink-faint)">\u2014</span>')+'</td>'+
+          '<td>'+sesc(p.author||'')+'</td>'+
+          '<td><span class="pill '+statusColor(p.status)+'"><span class="d"></span>'+sesc(p.status)+'</span></td>'+
+          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(p.published_at?p.published_at.slice(0,10):'\u2014')+'</td>'+
+          '<td><a class="btn ghost sm" href="'+appRoot()+'/'+encodeURIComponent(p.slug)+'/'+'" target="_blank" rel="noopener">Preview</a></td></tr>';
+      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No posts yet.</td></tr>')+
+      '</tbody></table></div></div>';
+  }
+
+  /* ===== LANE V · Store · Orders — BEGIN =====================================
+
+     WHAT WAS HERE BEFORE. renderOrders() fetched /admin-api/orders, which
+     returns EVERY order the store has ever taken in one array, kept it in a
+     module-level ORD variable, counted the filter chips by running
+     Array.filter over it once per status, and paginated not at all. Against
+     the 2,419 orders the WooCommerce import brings across that is one very
+     large response per visit and a chip count that is only ever as right as
+     whatever the browser happens to be holding.
+
+     Everything is now asked of the server: one page of rows, the chip counts,
+     the summary and the sort all come back from /admin-api/orders-list for the
+     filters currently on screen. The money in the summary is computed in SQL
+     over the filtered set, never by adding up the rows on this page.
+
+     WHAT THIS DOES NOT TOUCH. renderOrderDetail() below, its capture panel and
+     its refund form belong to other lanes and already work. The View button
+     here opens that screen. Nothing in this region defines a second way to look
+     at an order, and nothing in it moves money.
+
+     THE 390px DEFECT. The old table was 607px wide inside a 342px card on a
+     390px phone, clipped mid-column with no indication there was more. It now
+     lives in .odlscroll, which is overflow-x:auto and max-width:100% — the
+     table scrolls inside the card and contributes nothing to the width of the
+     page. The KPI grid uses minmax(0,1fr) rather than 1fr for the same reason:
+     a grid track defaults to min-width:auto, so a long money figure like
+     "AED 1,245,300" widens the track past its share and pushes the page out.
+     Measured in real Chromium at 390 and 1280; #content reports
+     scrollWidth === clientWidth at both.
+
+     BLANKS ARE EXPECTED, NOT EXCEPTIONAL. An imported order can have no
+     customer row, no phone, no city, no payment method and a date from 2019.
+     Every cell falls back to an em dash rather than printing "undefined".
+
+     Everything the public typed — billing names, emails, phones, cities — goes
+     through sesc() before it reaches innerHTML.
+  */
+
+  (function odlStyles(){
+    if(document.getElementById('odlcss')) return;
+
+    /* Injected rather than added to the stylesheet at the top of this file:
+       that block is shared by every screen and several lanes are editing this
+       view at once. A style element this region owns outright cannot collide
+       with somebody else's rule. */
+    var s = document.createElement('style');
+    s.id = 'odlcss';
+    s.textContent =
+      '.odlkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}' +
+      '@media(max-width:900px){.odlkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+      '@media(max-width:430px){.odlkpis{grid-template-columns:minmax(0,1fr)}}' +
+      '.odlkpi{min-width:0;overflow-wrap:anywhere}' +
+      '.odlkpi .v{font-size:21px;font-weight:700;margin-top:6px;line-height:1.15}' +
+      '.odlkpi .k{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}' +
+      '.odlkpi .s{font-size:11.5px;color:var(--ink-soft);margin-top:2px}' +
+      /* The whole point of the fix: a wide table scrolls in here, never on the
+         page. max-width:100% stops a min-width table stretching the card. */
+      '.odlscroll{max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}' +
+      '.odlscroll table{min-width:880px}' +
+      '.odlhint{display:none;font-size:11.5px;color:var(--ink-soft);padding:10px 14px 0}' +
+      '@media(max-width:900px){.odlhint{display:block}}' +
+      '.odltools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}' +
+      '.odltools .search{flex:1 1 200px;min-width:0}' +
+      '.odltools .inp{max-width:100%}' +
+      '.odlgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}' +
+      '.odlbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}' +
+      '.odlpager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;' +
+        'padding:13px 4px 2px;font-size:12.5px;color:var(--ink-soft)}' +
+      '.odlnum{font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      '.odlwarn{border-color:#f0dcae;background:var(--amber-soft)}';
+
+    document.head.appendChild(s);
+  })();
+
+  var OL = {
+    page: 1,
+    perPage: +(localStorage.getItem('kbb_ord_pp') || 50),
+    search: '', filter: 'all', sort: 'newest',
+    from: '', to: '', totalMin: '', totalMax: '', payment: '',
+    adv: false, colsOpen: false, cols: null, data: null, err: null, sel: {}, busy: false
+  };
+
+  var OL_COLDEF = [
+    ['status', 'Status'], ['items', 'Items'], ['total', 'Total'], ['refunded', 'Refunded'],
+    ['payment', 'Payment'], ['placed', 'Placed'], ['location', 'City'],
+    ['contact', 'Phone'], ['wc', 'Woo ID']
+  ];
+
+  /* Refunded, City, Phone and the Woo ID are off by default and one click away
+     in Columns. Most orders have no refund, and the six that are on already
+     fill a 1032px content area; Woo's own screen shows more and pays for it on
+     every page load. */
+  var OL_COLS_DEFAULT = {
+    status: true, items: true, total: true, refunded: false,
+    payment: true, placed: true, location: false, contact: false, wc: false
+  };
+
+  /* Which sort each sortable header maps to, so the header caret and the Sort
+     menu can never disagree about what the list is ordered by. */
+  var OL_COLSORT = { items: 'units_desc', total: 'total_desc', placed: 'newest', status: 'status' };
+
+  var OL_SORTS = [
+    ['newest', 'Newest first'], ['oldest', 'Oldest first'], ['number', 'Order number'],
+    ['total_desc', 'Value, high to low'], ['total_asc', 'Value, low to high'],
+    ['units_desc', 'Most items'], ['status', 'Status'], ['customer', 'Customer A–Z']
+  ];
+
+  /* Bands in whole dirhams; the server converts with Money::fromMajor, so the
+     comparison happens in fils and nothing here ever holds a money float. */
+  var OL_BANDS = [
+    ['', '', 'Any value'], ['', '99', 'Under AED 100'], ['100', '499', 'AED 100 – 499'],
+    ['500', '1999', 'AED 500 – 1,999'], ['2000', '', 'AED 2,000 and over']
+  ];
+
+  /* Statuses a bulk action may set. Mirrors OrdersApiController::BULK_SETTABLE
+     — and 'refunded' is absent from both, because that status is written when
+     money actually goes back and a dropdown must not be able to claim it did. */
+  var OL_SETTABLE = [
+    ['processing', 'Processing'], ['onhold', 'On hold'], ['shipped', 'Shipped'],
+    ['completed', 'Completed'], ['pending', 'Pending'], ['cancelled', 'Cancelled']
+  ];
+
+  function olCols(){
+    if(OL.cols) return OL.cols;
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('kbb_ord_cols') || 'null'); }catch(e){ saved = null; }
+    OL.cols = Object.assign({}, OL_COLS_DEFAULT, saved || {});
+    return OL.cols;
+  }
+  function olSaveCols(){ try{ localStorage.setItem('kbb_ord_cols', JSON.stringify(OL.cols)); }catch(e){} }
+
+  function olParams(forExport){
+    var p = new URLSearchParams();
+    if(!forExport){ p.set('page', OL.page); p.set('per_page', OL.perPage); }
+    if(OL.search) p.set('search', OL.search);
+    if(OL.filter && OL.filter !== 'all') p.set('filter', OL.filter);
+    if(OL.sort && OL.sort !== 'newest') p.set('sort', OL.sort);
+    if(OL.from) p.set('from', OL.from);
+    if(OL.to) p.set('to', OL.to);
+    if(OL.totalMin !== '') p.set('total_min', OL.totalMin);
+    if(OL.totalMax !== '') p.set('total_max', OL.totalMax);
+    if(OL.payment) p.set('payment', OL.payment);
+    return p.toString();
+  }
+
+  function olDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
+
+  function olDate(iso){
+    if(!iso) return '<span style="color:var(--ink-faint)">—</span>';
+    var d = new Date(iso);
+    if(isNaN(d)) return '<span style="color:var(--ink-faint)">—</span>';
+    return sesc(d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}));
+  }
+
+  /* "3 days ago" under the date. A shop owner reads recency faster than a date,
+     and an order imported from 2019 should look like it. */
+  function olAgo(iso){
+    if(!iso) return '';
+    var d = new Date(iso); if(isNaN(d)) return '';
+    var days = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if(days < 0) return '';
+    if(days === 0) return 'today';
+    if(days === 1) return 'yesterday';
+    if(days < 31) return days + ' days ago';
+    if(days < 365){ var m = Math.max(1, Math.round(days / 30)); return m + (m === 1 ? ' month ago' : ' months ago'); }
+    var years = Math.floor(days / 365);
+    return (years < 2 ? 'over a year ago' : years + ' years ago');
+  }
+
+  /* How this application's own statuses read on a chip. A status NOT in here
+     came out of the import, and it is shown verbatim: "wc-tamara-p-failed" is
+     the key the operator will search WooCommerce for, and prettifying it into
+     "Wc tamara p failed" throws that away for nothing. */
+  var OL_LABELS = {
+    draft: 'Draft', pending: 'Pending', processing: 'Processing', onhold: 'On hold',
+    shipped: 'Shipped', completed: 'Completed', cancelled: 'Cancelled',
+    refunded: 'Refunded', failed: 'Failed'
+  };
+  function olTitle(s){ return OL_LABELS[s] || s; }
+  function olLabel(o){ return o.customer_name || o.email || ('Order ' + o.order_number); }
+
+  async function olLoad(){
+    if(OL.busy) return;
+    OL.busy = true;
+    try{
+      OL.data = await api('/admin-api/orders-list?' + olParams(false));
+      OL.perPage = OL.data.per_page;
+      OL.err = null;
+    }catch(e){
+      OL.data = null;
+      /* Say WHAT failed, not what might have. Fetch the same URL again plainly
+         so the status and the server's own message can be shown, rather than
+         guessing at a cause and sending whoever reads it to the wrong place. */
+      OL.err = {status:0, body:''};
+      try{
+        var probe = await fetch(fixAdminApiUrl('/admin-api/orders-list?' + olParams(false)),
+          {credentials:'same-origin', headers:{'Accept':'application/json'}});
+        OL.err.status = probe.status;
+        OL.err.body = (await probe.text() || '').slice(0, 400);
+      }catch(e2){
+        OL.err.body = String(e2 && e2.message || e);
+      }
+    }
+    OL.busy = false;
+    olPaint();
+  }
+
+  async function renderOrders(){
+    OL.page = 1; OL.sel = {};
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap"><div class="page-head"><h2>Orders</h2>' +
+      '<p>Every order the store has taken, including guest and imported ones.</p></div>' +
+      '<p style="padding:24px;color:var(--ink-soft)">Loading orders…</p></div>';
+    await olLoad();
+  }
+
+  /* Turn the HTTP status into the thing to actually go and check. */
+  function olWhy(){
+    var st = OL.err ? OL.err.status : 0;
+    if(st === 404) return 'The server returned 404 — this build’s routes are not live yet. The compiled route cache needs clearing (Store → Core Updates does this on every apply).';
+    if(st === 401 || st === 403) return 'The server returned ' + st + ' — the admin session was refused. Sign out and back in.';
+    if(st === 419) return 'The server returned 419 — the admin session expired. Reload the page.';
+    if(st === 500) return 'The server returned 500 — the request reached the code and the code threw. The exception is in storage/logs/laravel.log; the text below is what the server sent back.';
+    if(st === 0)   return 'The request never completed — the browser could not reach the server at all.';
+    return 'The server returned ' + st + '. The text below is what it sent back.';
+  }
+
+  function olKpi(label, value, sub){
+    return '<div class="card pad odlkpi"><div class="k">' + sesc(label) + '</div>' +
+      '<div class="v odlnum">' + value + '</div><div class="s">' + sesc(sub || '') + '</div></div>';
+  }
+
+  function olAdvCount(){
+    var n = 0;
+    if(OL.from || OL.to) n++;
+    if(OL.totalMin !== '' || OL.totalMax !== '') n++;
+    if(OL.payment) n++;
+    return n;
+  }
+
+  /* All, Paid, every status actually present, Trash. A status nobody has is not
+     a chip — but an imported one nobody planned for (wc-tamara-p-failed) is,
+     because the server builds the list from the column rather than a constant. */
+  function olChips(d){
+    var counts = d.counts || {};
+    var chips = [['all', 'All'], ['paid', 'Counts as revenue']];
+
+    (d.statuses || []).forEach(function(s){
+      if(counts[s]) chips.push([s, olTitle(s)]);
+    });
+
+    chips.push(['trashed', 'Trash']);
+
+    return chips.map(function(c){
+      var n = counts[c[0]] || 0;
+      return '<button class="chip' + (OL.filter === c[0] ? ' on' : '') + '" data-olf="' + sesc(c[0]) + '">' +
+        sesc(c[1]) + ' <span style="opacity:.6">' + n + '</span></button>';
+    }).join('');
+  }
+
+  function olPaint(){
+    var el = document.querySelector('#content');
+    var d = OL.data;
+
+    if(!d){
+      el.innerHTML = '<div class="wrap"><div class="page-head"><h2>Orders</h2></div>' +
+        '<div class="card pad"><p style="font-size:13px;color:var(--red)">Orders could not be loaded.</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">' + olWhy() + '</p>' +
+        (OL.err && OL.err.body ? '<pre style="margin-top:10px;padding:10px;background:var(--bg-soft,#f6f6f7);border-radius:8px;font-size:11.5px;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto">' + sesc(OL.err.body) + '</pre>' : '') +
+        '<div style="margin-top:12px"><button class="btn ghost sm" id="olRetry">Try again</button></div></div></div>';
+      var retry = document.getElementById('olRetry');
+      if(retry) retry.onclick = function(){ olLoad(); };
+      return;
+    }
+
+    var cols = OL_COLDEF.filter(function(c){ return olCols()[c[0]]; });
+    var selected = Object.keys(OL.sel).filter(function(k){ return OL.sel[k]; });
+    var s = d.summary || {};
+
+    el.innerHTML =
+      '<div class="wrap">' +
+      '<div class="between" style="margin-bottom:8px;flex-wrap:wrap;gap:12px">' +
+        '<div class="page-head" style="margin:0"><h2>Orders</h2>' +
+        '<p>Every order the store has taken, including guest and imported ones. Revenue counts processing, on-hold, shipped and completed orders, with refunds taken off.</p></div>' +
+        '<div class="row" style="gap:8px;flex-wrap:wrap">' +
+          '<button class="btn ghost" id="olColsBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Columns</button>' +
+          '<button class="btn" id="olExport">' + ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + ' Export CSV</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="odlkpis">' +
+        olKpi('Orders in this view', (s.orders || 0).toLocaleString(),
+          s.paid_orders === s.orders ? 'all count as revenue' : (s.paid_orders || 0) + ' count as revenue') +
+        olKpi('Revenue', sesc(s.revenue_display || ''), 'after refunds') +
+        olKpi('Refunded', sesc(s.refunded_display || ''), 'across this view') +
+        olKpi('Average order', sesc(s.aov_display || ''), 'across the revenue orders') +
+      '</div>' +
+
+      (OL.colsOpen ? olColsPanel() : '') +
+
+      '<div class="odltools">' +
+        '<div class="search">' + ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
+        '<input id="olSearch" placeholder="Search order number, name, email, phone or Woo ID…" value="' + sesc(OL.search) + '"></div>' +
+        '<select class="inp" id="olSort" style="max-width:220px">' +
+          OL_SORTS.map(function(o){ return '<option value="' + o[0] + '"' + (OL.sort === o[0] ? ' selected' : '') + '>Sort: ' + o[1] + '</option>'; }).join('') +
+        '</select>' +
+        '<button class="btn ghost" id="olAdv">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters' + (olAdvCount() ? ' · ' + olAdvCount() : '') + (OL.adv ? ' ▴' : ' ▾') + '</button>' +
+      '</div>' +
+
+      (OL.adv ? olAdvPanel(d) : '') +
+
+      '<div class="chips" style="margin-bottom:12px">' + olChips(d) + '</div>' +
+
+      (selected.length ? olSelectionBar(selected) : '') +
+
+      '<div class="card">' +
+        '<p class="odlhint">This table is wider than the screen — swipe it sideways to see every column, or hide the ones you do not need with Columns.</p>' +
+        '<div class="odlscroll">' + olTable(d, cols) + '</div>' +
+      '</div>' +
+
+      '<div class="odlpager">' +
+        '<span>' + (d.orders.length ? ((d.page - 1) * d.per_page + 1) : 0) + '–' +
+        ((d.page - 1) * d.per_page + d.orders.length) + ' of ' + d.total + '</span>' +
+        '<div class="row" style="gap:8px;flex-wrap:wrap">' +
+          '<select class="inp" id="olPerPage" style="width:126px">' +
+            [25, 50, 100, 200].map(function(n){ return '<option value="' + n + '"' + (n === OL.perPage ? ' selected' : '') + '>' + n + ' per page</option>'; }).join('') +
+          '</select>' +
+          '<button class="btn ghost sm" ' + (d.page <= 1 ? 'disabled' : '') + ' id="olPrev">‹ Prev</button>' +
+          '<span style="font-size:12px">Page ' + d.page + ' of ' + d.last_page + '</span>' +
+          '<button class="btn ghost sm" ' + (d.page >= d.last_page ? 'disabled' : '') + ' id="olNext">Next ›</button>' +
+        '</div>' +
+      '</div></div>';
+
+    olBind();
+  }
+
+  function olSelectionBar(selected){
+    var trashView = OL.filter === 'trashed';
+
+    return '<div class="card pad odlbar" style="margin-bottom:12px">' +
+      '<b style="font-size:12.5px">' + selected.length + ' selected</b>' +
+      '<button class="btn ghost sm" id="olClearSel">Clear</button>' +
+      '<div style="flex:1"></div>' +
+      (trashView
+        ? '<button class="btn sm" id="olBulkRestore">Restore</button>'
+        : '<select class="inp" id="olBulkStatus" style="width:auto;min-width:150px">' +
+            '<option value="">Set status to…</option>' +
+            OL_SETTABLE.map(function(o){ return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+          '</select>' +
+          '<button class="btn sm" style="background:var(--red)" id="olBulkDelete">Move to trash…</button>') +
+      '</div>';
+  }
+
+  function olColsPanel(){
+    return '<div class="card pad" style="margin-bottom:14px">' +
+      '<b style="font-size:12.5px">Columns</b>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:11px">' +
+      OL_COLDEF.map(function(c){
+        return '<label class="row" style="gap:8px;font-size:12.5px;cursor:pointer">' +
+          '<span class="cbx' + (olCols()[c[0]] ? ' on' : '') + '" data-olcol="' + c[0] + '">' + ic(I.check) + '</span> ' + sesc(c[1]) + '</label>';
+      }).join('') +
+      '</div><div style="margin-top:14px"><button class="btn ghost sm" id="olColsReset">Reset to default</button></div></div>';
+  }
+
+  function olAdvPanel(d){
+    var band = OL_BANDS.filter(function(b){ return b[0] === OL.totalMin && b[1] === OL.totalMax; })[0];
+
+    /* The payment methods that actually appear in this view, so the filter
+       cannot offer a gateway the store has never taken money through. */
+    var methods = {};
+    (d.orders || []).forEach(function(o){ if(o.payment_method) methods[o.payment_method] = o.payment; });
+    if(OL.payment && !methods[OL.payment]) methods[OL.payment] = OL.payment;
+
+    return '<div class="card pad" style="margin-bottom:12px">' +
+      '<div class="odlgrid">' +
+        '<div class="fld" style="margin:0"><label>Order value</label><select id="olBand">' +
+          OL_BANDS.map(function(b){ return '<option value="' + b[0] + '|' + b[1] + '"' + (band && band[2] === b[2] ? ' selected' : '') + '>' + sesc(b[2]) + '</option>'; }).join('') +
+          (band ? '' : '<option value="custom" selected>Custom range</option>') +
+        '</select></div>' +
+        '<div class="fld" style="margin:0"><label>Value from (AED)</label><input id="olMin" type="number" min="0" step="1" value="' + sesc(OL.totalMin) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Value to (AED)</label><input id="olMax" type="number" min="0" step="1" value="' + sesc(OL.totalMax) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Placed from</label><input id="olFrom" type="date" value="' + sesc(OL.from) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Placed to</label><input id="olTo" type="date" value="' + sesc(OL.to) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Payment</label><select id="olPayment"><option value="">Any payment method</option>' +
+          Object.keys(methods).sort().map(function(k){ return '<option value="' + sesc(k) + '"' + (OL.payment === k ? ' selected' : '') + '>' + sesc(methods[k]) + '</option>'; }).join('') +
+        '</select></div>' +
+      '</div>' +
+      '<div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn sm" id="olApply">Apply filters</button>' +
+      '<button class="btn ghost sm" id="olClearFilters">Clear all</button>' +
+      '<span style="font-size:11.5px;color:var(--ink-soft)">Dates are when the order was placed, so imported orders sort by their original date.</span></div></div>';
+  }
+
+  function olTable(d, cols){
+    if(!d.orders.length){
+      return '<p style="padding:34px;text-align:center;color:var(--ink-soft);font-size:13px">No orders match this view.' +
+        (olAdvCount() || OL.search || OL.filter !== 'all' ? ' <button class="btn ghost sm" id="olEmptyClear" style="margin-left:8px">Clear filters</button>' : '') + '</p>';
+    }
+
+    var allOnPage = d.orders.every(function(o){ return OL.sel[o.id]; });
+
+    var head = '<thead><tr>' +
+      '<th style="width:36px"><span class="cbx' + (allOnPage ? ' on' : '') + '" id="olAll">' + ic(I.check) + '</span></th>' +
+      '<th>' + olHeadSort('number', 'Order') + '</th>' +
+      '<th>' + olHeadSort('customer', 'Customer') + '</th>' +
+      cols.map(function(c){
+        var right = ['items', 'total', 'refunded'].indexOf(c[0]) >= 0;
+        var inner = OL_COLSORT[c[0]] ? olHeadSort(OL_COLSORT[c[0]], c[1]) : sesc(c[1]);
+        return '<th style="white-space:nowrap' + (right ? ';text-align:right' : '') + '">' + inner + '</th>';
+      }).join('') +
+      '<th></th></tr></thead>';
+
+    var body = '<tbody>' + d.orders.map(function(o){
+      return '<tr' + (o.trashed ? ' style="opacity:.62"' : '') + '>' +
+        '<td><span class="cbx' + (OL.sel[o.id] ? ' on' : '') + '" data-olsel="' + o.id + '">' + ic(I.check) + '</span></td>' +
+        '<td style="white-space:nowrap"><div class="pname">' + sesc(o.order_number) + '</div>' +
+          '<div class="pbrand">' +
+            (o.wc_order_id ? 'Woo #' + o.wc_order_id : '#' + o.id) +
+            (o.trashed ? ' · <span style="color:var(--red)">in the trash</span>' : '') +
+          '</div></td>' +
+        '<td><div class="row" style="min-width:0">' +
+          '<span class="pthumb" style="background:' + sesc(tcol(olLabel(o))) + ';width:32px;height:32px;font-size:10px">' + sesc(initials(olLabel(o))) + '</span>' +
+          '<div style="min-width:0"><div class="pname" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px">' +
+            (o.customer_name ? sesc(o.customer_name) : '<span style="color:var(--ink-faint)">No name on record</span>') +
+            (o.guest ? ' <span class="pill grey">Guest</span>' : '') + '</div>' +
+          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px">' + olDash(o.email) + '</div></div></div></td>' +
+        cols.map(function(col){ return olCell(col[0], o); }).join('') +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn ghost sm" data-olview="' + o.id + '">View</button></td>' +
+      '</tr>';
+    }).join('') + '</tbody>';
+
+    return '<table>' + head + body + '</table>';
+  }
+
+  function olHeadSort(sort, label){
+    var on = OL.sort === sort;
+    return '<button data-olsort="' + sesc(sort) + '" style="font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;' +
+      (on ? 'color:var(--accent-ink)' : '') + '">' + sesc(label) + (on ? ' ▾' : '') + '</button>';
+  }
+
+  function olCell(key, o){
+    switch(key){
+      case 'status':
+        return '<td style="white-space:nowrap">' + statusPill(o.status) +
+          (o.counts_as_revenue ? '' : '<div class="pbrand">not revenue</div>') + '</td>';
+      case 'items':
+        return '<td class="odlnum" style="text-align:right">' + o.units +
+          (o.lines !== o.units ? '<div class="pbrand">' + o.lines + ' line' + (o.lines === 1 ? '' : 's') + '</div>' : '') + '</td>';
+      case 'total':
+        return '<td class="price odlnum" style="text-align:right"><b>' + sesc(o.total_display) + '</b>' +
+          (o.refunded_fils ? '<div class="pbrand">' + sesc(o.net_display) + ' net</div>' : '') + '</td>';
+      case 'refunded':
+        return '<td class="odlnum" style="text-align:right;color:' + (o.refunded_fils ? 'var(--red)' : 'var(--ink-faint)') + '">' +
+          (o.refunded_fils ? sesc(o.refunded_display) : '—') + '</td>';
+      case 'payment':
+        return '<td style="font-size:12px">' + olDash(o.payment) +
+          (o.captured ? '<div class="pbrand">captured</div>' : '') + '</td>';
+      case 'placed':
+        return '<td style="white-space:nowrap;font-size:12px">' + olDate(o.placed_at) +
+          (o.placed_at ? '<div class="pbrand">' + sesc(olAgo(o.placed_at)) + '</div>' : '') + '</td>';
+      case 'location':
+        return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.city) +
+          (o.country ? '<div class="pbrand">' + sesc(o.country) + '</div>' : '') + '</td>';
+      case 'contact':
+        return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.phone) + '</td>';
+      case 'wc':
+        return '<td style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--ink-soft)">' + olDash(o.wc_order_id) + '</td>';
+      default:
+        return '<td></td>';
+    }
+  }
+
+  function olSelectedIds(){
+    return Object.keys(OL.sel).filter(function(k){ return OL.sel[k]; }).map(Number);
+  }
+
+  function olBind(){
+    var $$$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+    var byId = function(id){ return document.getElementById(id); };
+
+    var searchT;
+    var searchEl = byId('olSearch');
+    if(searchEl) searchEl.oninput = function(e){
+      clearTimeout(searchT);
+      var v = e.target.value;
+      searchT = setTimeout(function(){ OL.search = v; OL.page = 1; olLoad(); }, 300);
+    };
+
+    var sortEl = byId('olSort');
+    if(sortEl) sortEl.onchange = function(e){ OL.sort = e.target.value; OL.page = 1; olLoad(); };
+
+    $$$('#content [data-olsort]').forEach(function(b){
+      b.onclick = function(){ OL.sort = b.dataset.olsort; OL.page = 1; olLoad(); };
+    });
+
+    $$$('#content .chip[data-olf]').forEach(function(b){
+      b.onclick = function(){ OL.filter = b.dataset.olf; OL.page = 1; OL.sel = {}; olLoad(); };
+    });
+
+    var adv = byId('olAdv');
+    if(adv) adv.onclick = function(){ OL.adv = !OL.adv; olPaint(); };
+
+    var colsBtn = byId('olColsBtn');
+    if(colsBtn) colsBtn.onclick = function(){ OL.colsOpen = !OL.colsOpen; olPaint(); };
+
+    $$$('#content .cbx[data-olcol]').forEach(function(b){
+      b.onclick = function(){ var k = b.dataset.olcol; OL.cols[k] = !OL.cols[k]; olSaveCols(); olPaint(); };
+    });
+    var colsReset = byId('olColsReset');
+    if(colsReset) colsReset.onclick = function(){ OL.cols = Object.assign({}, OL_COLS_DEFAULT); olSaveCols(); olPaint(); };
+
+    var band = byId('olBand');
+    if(band) band.onchange = function(e){
+      if(e.target.value === 'custom') return;
+      var parts = e.target.value.split('|');
+      OL.totalMin = parts[0]; OL.totalMax = parts[1]; OL.page = 1; olLoad();
+    };
+
+    var apply = byId('olApply');
+    if(apply) apply.onclick = function(){
+      OL.totalMin = (byId('olMin') || {}).value || '';
+      OL.totalMax = (byId('olMax') || {}).value || '';
+      OL.from = (byId('olFrom') || {}).value || '';
+      OL.to = (byId('olTo') || {}).value || '';
+      OL.payment = (byId('olPayment') || {}).value || '';
+      OL.page = 1; olLoad();
+    };
+
+    var clearAll = function(){
+      OL.totalMin = ''; OL.totalMax = ''; OL.from = ''; OL.to = '';
+      OL.payment = ''; OL.search = ''; OL.filter = 'all';
+      OL.page = 1; olLoad();
+    };
+    var clearBtn = byId('olClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
+    var emptyClear = byId('olEmptyClear'); if(emptyClear) emptyClear.onclick = clearAll;
+
+    var perPage = byId('olPerPage');
+    if(perPage) perPage.onchange = function(e){
+      OL.perPage = +e.target.value;
+      try{ localStorage.setItem('kbb_ord_pp', OL.perPage); }catch(err){}
+      OL.page = 1; olLoad();
+    };
+
+    var prev = byId('olPrev'); if(prev) prev.onclick = function(){ if(OL.data.page > 1){ OL.page = OL.data.page - 1; olLoad(); } };
+    var next = byId('olNext'); if(next) next.onclick = function(){ if(OL.data.page < OL.data.last_page){ OL.page = OL.data.page + 1; olLoad(); } };
+
+    $$$('#content [data-olsel]').forEach(function(b){
+      b.onclick = function(){ var id = b.dataset.olsel; OL.sel[id] = !OL.sel[id]; olPaint(); };
+    });
+    var all = byId('olAll');
+    if(all) all.onclick = function(){
+      var on = !OL.data.orders.every(function(o){ return OL.sel[o.id]; });
+      OL.data.orders.forEach(function(o){ OL.sel[o.id] = on; });
+      olPaint();
+    };
+    var clearSel = byId('olClearSel'); if(clearSel) clearSel.onclick = function(){ OL.sel = {}; olPaint(); };
+
+    var bulkStatus = byId('olBulkStatus');
+    if(bulkStatus) bulkStatus.onchange = function(e){
+      var status = e.target.value;
+      e.target.value = '';
+      if(status) olConfirmStatus(olSelectedIds(), status);
+    };
+
+    var bulkDelete = byId('olBulkDelete');
+    if(bulkDelete) bulkDelete.onclick = function(){ olConfirmDelete(olSelectedIds()); };
+
+    var bulkRestore = byId('olBulkRestore');
+    if(bulkRestore) bulkRestore.onclick = async function(){
+      var ids = olSelectedIds();
+      if(!ids.length) return;
+      try{
+        var out = await api('/admin-api/orders-bulk-restore', {method:'POST', body: JSON.stringify({ids: ids})});
+        toast(out.restored + ' order' + (out.restored === 1 ? '' : 's') + ' restored');
+        OL.sel = {}; olLoad();
+      }catch(e){ toast('Could not restore those orders'); }
+    };
+
+    /* The detail screen that already exists. This list does not define a second
+       one, and the capture and refund panels on it are another lane's work. */
+    $$$('#content [data-olview]').forEach(function(b){
+      b.onclick = function(){ renderOrderDetail(+b.dataset.olview); };
+    });
+
+    var exportBtn = byId('olExport');
+    if(exportBtn) exportBtn.onclick = function(){
+      /* A normal navigation, not a fetch: the browser carries the same admin
+         session cookie, the server refuses anyone without it, and the file
+         lands in Downloads instead of in memory. */
+      var qs = olParams(true);
+      window.location.href = fixAdminApiUrl('/admin-api/orders-export') + (qs ? '?' + qs : '');
+    };
+  }
+
+  /* -------- destructive actions: always a dialog, sometimes two -------- */
+
+  /**
+   * Nothing changes on a click. The first dialog says what will happen; the
+   * server then refuses any order that counts as revenue and reports which
+   * ones and what they are worth, and only a second, explicit confirmation
+   * carrying force goes through.
+   */
+  function olConfirmStatus(ids, status){
+    if(!ids.length) return;
+    var label = (OL_SETTABLE.filter(function(o){ return o[0] === status; })[0] || [status, olTitle(status)])[1];
+
+    openModal('<div class="modal-h"><b>Change status</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Set <b>' + ids.length + '</b> order' + (ids.length === 1 ? '' : 's') +
+      ' to <b>' + sesc(label) + '</b>?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">A note is added to each order recording the change. Orders that would stop counting as revenue are left alone unless you confirm them separately.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="olStatusYes">Set status</button></div></div>');
+
+    var yes = document.getElementById('olStatusYes');
+    if(yes) yes.onclick = function(){ olRunStatus(ids, status, false); };
+  }
+
+  async function olRunStatus(ids, status, force){
+    closeModal();
+    try{
+      var out = await api('/admin-api/orders-bulk-status', {
+        method: 'POST', body: JSON.stringify({ids: ids, status: status, force: !!force})
+      });
+
+      if(out.skipped && out.skipped.length){ olConfirmSkipped(out, status, 'status'); return; }
+
+      toast(out.changed + ' order' + (out.changed === 1 ? '' : 's') + ' updated');
+      OL.sel = {}; olLoad();
+    }catch(e){
+      toast('Could not complete that — nothing was changed');
+    }
+  }
+
+  function olConfirmDelete(ids){
+    if(!ids.length) return;
+
+    openModal('<div class="modal-h"><b>Move to trash</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Move <b>' + ids.length + '</b> order' + (ids.length === 1 ? '' : 's') + ' to the trash?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Nothing is destroyed. The orders and their line items stay in the database, they leave this list, and the Trash filter restores them at any time. Orders that count as revenue are left alone unless you confirm them separately.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="olDelYes">Move to trash</button></div></div>');
+
+    var yes = document.getElementById('olDelYes');
+    if(yes) yes.onclick = function(){ olRunDelete(ids, false); };
+  }
+
+  async function olRunDelete(ids, force){
+    closeModal();
+    try{
+      var out = await api('/admin-api/orders-bulk-delete', {
+        method: 'POST', body: JSON.stringify({ids: ids, force: !!force})
+      });
+
+      if(out.skipped && out.skipped.length){ olConfirmSkipped(out, null, 'delete'); return; }
+
+      toast(out.deleted + ' order' + (out.deleted === 1 ? '' : 's') + ' moved to trash');
+      OL.sel = {}; olLoad();
+    }catch(e){
+      toast('Could not complete that — nothing was changed');
+    }
+  }
+
+  /**
+   * The second dialog. The server has already done the safe half and is telling
+   * the operator exactly which orders it refused and what they are worth, by
+   * order number rather than by id.
+   */
+  function olConfirmSkipped(out, status, kind){
+    var done = kind === 'delete' ? out.deleted : out.changed;
+
+    openModal('<div class="modal-h"><b>Some of these count as revenue</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)"><b>' + done + '</b> ' +
+      (kind === 'delete' ? 'moved to trash' : 'updated') + '. <b>' + out.skipped.length +
+      '</b> left alone because ' + (out.skipped.length === 1 ? 'it counts' : 'they count') + ' as revenue:</p>' +
+      '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+      out.skipped.slice(0, 12).map(function(s){
+        return '<li>' + sesc(s.label) + ' — ' + sesc(s.status) + ', ' + sesc(s.total_display) + '</li>';
+      }).join('') +
+      (out.skipped.length > 12 ? '<li>and ' + (out.skipped.length - 12) + ' more</li>' : '') + '</ul>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">Going ahead takes their value out of the store’s revenue figures. Refunds are not affected either way — money only moves from the order screen.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Leave them</button>' +
+      '<button class="btn" style="background:var(--red)" id="olForce">' + (kind === 'delete' ? 'Trash those too' : 'Change those too') + '</button></div></div>');
+
+    var force = document.getElementById('olForce');
+    if(force) force.onclick = function(){
+      var ids = out.skipped.map(function(s){ return s.id; });
+      if(kind === 'delete') olRunDelete(ids, true); else olRunStatus(ids, status, true);
+    };
+  }
+
+  /* ===== LANE V · Store · Orders — END ===== */
+
+  /**
+   * The detailed order page, built from Rafi's own WooCommerce reference
+   * screenshot. Card-stack layout, every section open by default (his
+   * choice) rather than collapsed — the ^v▲ controls just toggle a
+   * section shut for anyone who wants to tidy the page, they don't start
+   * that way. Talks to AdminOrderController, which already existed fully
+   * built and tested by the time this page was written — this is the
+   * missing other half, not a rebuild of that work.
+   */
+  async function renderOrderDetail(id){
+    document.querySelector('#content').innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading order…</p></div>';
+    var o;
+    try{ o = await api('/admin-api/orders/'+id+'/detail'); }
+    catch(e){ document.querySelector('#content').innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--sale)">Could not load this order.</p></div>'; return; }
+
+    var paidLine = o.payment_method_title
+      ? 'Payment via '+sesc(o.payment_method_title)+'.'+(o.transaction_id?' ('+sesc(o.transaction_id)+').':'')+(o.paid_at?' Paid on '+fmtDT(o.paid_at)+'.':'')+(o.ip_address?' Customer IP: '+sesc(o.ip_address)+'.':'')
+      : 'No payment recorded yet.';
+
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap">'+
+      '<p style="margin-bottom:10px"><a href="#" id="ordBack" style="font-size:12.5px;color:var(--pink-deep,#c0392b);text-decoration:none">\u2190 Back to Orders</a></p>'+
+      '<div class="page-head" style="margin-bottom:4px"><h2>Order #'+sesc(o.order_number)+'</h2></div>'+
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px">'+paidLine+'</p>'+
+      '<div class="odgrid">'+
+      '<div class="odmain">'+odOverviewAddressesCard(o)+odCustomerNoteCard(o)+odItemsCard(o)+odNotesCard(o)+'</div>'+
+      '<div class="odside">'+odAttributionCard(o)+odActionsCard(o)+odHistoryCard(o)+odInvoiceCard(o)+'</div>'+
+      '</div></div>';
+
+    document.getElementById('ordBack').onclick = function(e){ e.preventDefault(); renderOrders(); };
+    wireOrderDetail(o);
+  }
+
+  function odCardHead(title){
+    return '<div class="odcardhead"><b>'+title+'</b><div class="odchev">'+
+      '<span class="odtoggle" data-odsec="1">'+ic('<path d="M18 15l-6-6-6 6"/>')+'</span>'+
+      '<span class="odtoggle">'+ic('<path d="M6 9l6 6 6-6"/>')+'</span></div></div>';
+  }
+
+  /*
+   * What the shopper wrote, as opposed to odNotesCard which is the internal
+   * thread staff add to. Two different audiences, so two different cards --
+   * a gift message read as an internal note is how the wrong words end up
+   * on a card in the box.
+   *
+   * customer_note has been on the orders table and in this endpoint's payload
+   * since the beginning, but nothing captured it at checkout and nothing
+   * rendered it here. Both halves land together.
+   */
+  function odCustomerNoteCard(o){
+    var note = (o.customer_note||'').trim();
+    var gift = (o.gift_note||'').trim();
+    if(!note && !gift && !o.is_gift) return '';
+    var body = '';
+    if(o.is_gift){
+      body += '<p style="margin:0 0 10px"><span class="odgiftflag">Gift order</span>'+
+        (o.gift_fee_aed>0?'<span class="odgiftfee">AED '+o.gift_fee_aed+' charged</span>':'<span class="odgiftfee">no charge</span>')+
+        '</p>';
+    }
+    if(gift){
+      body += '<div class="odgiftmsg"><b>Message for the gift card</b><p>'+sesc(gift).replace(/\n/g,'<br>')+'</p></div>';
+    }
+    if(note){
+      body += '<div class="odcustnote"><b>Delivery notes from the customer</b><p>'+sesc(note).replace(/\n/g,'<br>')+'</p></div>';
+    }
+    return '<div class="odcard">'+odCardHead('Customer note')+'<div class="odcardbody">'+body+'</div></div>';
+  }
+
+  function odOverviewAddressesCard(o){
+    var c = o.customer||{};
+    var b = o.billing_address||{}, s = o.shipping_address||{};
+    var addrLines = function(a){
+      return [a.line1, a.line2, [a.city,a.emirate].filter(Boolean).join(', ')].filter(Boolean).map(sesc).join('<br>');
+    };
+    return '<div class="odcard" style="margin-bottom:16px" id="odGeneral">'+
+      '<div class="odcols3">'+
+      '<div class="odcolcell">'+
+        '<div class="odcollabel">GENERAL</div>'+
+        '<div class="odfld"><label>Date created</label>'+
+        '<div class="odtimegrid"><input class="odinp" id="odDateCreated" value="'+sesc((o.created_at||'').slice(0,10))+'"><input class="odinp" id="odTimeH" value="'+sesc((o.created_at||'').slice(11,13))+'"><input class="odinp" id="odTimeM" value="'+sesc((o.created_at||'').slice(14,16))+'"></div></div>'+
+        '<div class="odfld"><label>Status</label>'+seoSel2('odStatusSel', o.status, ORDER_STATUSES.map(function(s){return [s, s.charAt(0).toUpperCase()+s.slice(1)];}))+'</div>'+
+        '<div class="odfld" style="margin-bottom:0"><label>Customer'+(c.id?' &middot; <a href="#" id="odCustHist" style="color:#E08A1A;font-weight:600">Order history</a>':'')+'</label>'+
+        (c.id ? '<div class="odcustchip"><span>'+sesc(c.name)+'</span></div>' : '<div class="odcustchip"><span style="color:var(--ink-faint)">Guest checkout</span></div>')+
+        '</div>'+
+      '</div>'+
+      '<div class="odcolcell odcolmid">'+
+        '<div class="odcollabel">BILLING <a href="#">Edit</a></div>'+
+        '<div class="odaddr"><span class="odname">'+sesc(b.name||o.customer&&o.customer.name||'')+'</span><br>'+(addrLines(b)||'\u2014')+'</div>'+
+        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Email address</label>'+(o.email?'<a href="mailto:'+sesc(o.email)+'" style="font-size:11.5px">'+sesc(o.email)+'</a>':'\u2014')+'</div>'+
+        '<div class="odfld" style="margin-top:10px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'\u2014')+'</div>'+
+      '</div>'+
+      '<div class="odcolcell">'+
+        '<div class="odcollabel">SHIPPING <span class="odedit" data-odedit="shipping" style="cursor:pointer;color:#E08A1A;font-weight:600">Edit</span></div>'+
+        '<div class="odaddr" id="odShipView"><span class="odname">'+sesc(s.name||'')+'</span><br>'+(addrLines(s)||'\u2014')+'</div>'+
+        '<div id="odShipEdit" style="display:none;margin-top:10px">'+
+          '<textarea class="odinp" id="odShipJson" rows="4" style="font-size:11px;font-family:monospace">'+sesc(JSON.stringify(s||{}, null, 2))+'</textarea>'+
+          '<button class="btn sm" id="odShipSave" style="margin-top:8px">Save</button></div>'+
+        '<div class="odfld" style="margin-top:14px;margin-bottom:0"><label>Phone</label>'+(o.phone?'<a href="tel:'+sesc(o.phone)+'" style="font-size:11.5px">'+sesc(o.phone)+'</a>':'\u2014')+'</div>'+
+      '</div>'+
+      '</div></div>';
+  }
+
+  function odItemsCard(o){
+    var editable = !!o.editable;
+    var rows = o.items.map(function(it){
+      var qtyCell = editable
+        ? '<input class="odinp odqty" data-itemid="'+it.id+'" type="number" min="1" value="'+it.quantity+'" style="width:60px;padding:6px 7px">'
+        : '\u00d7 '+it.quantity;
+      var priceCell = editable
+        ? '<input class="odinp odprice" data-itemid="'+it.id+'" type="number" step="0.01" min="0" value="'+it.unit_price_aed+'" style="width:84px;padding:6px 7px">'
+        : 'AED '+it.unit_price_aed;
+      var removeCell = editable
+        ? '<button class="btn ghost sm oditemdel" data-itemid="'+it.id+'" style="color:var(--sale,#c0392b);padding:4px 9px">Remove</button>'
+        : '';
+      return '<tr><td style="width:44px"><div style="width:36px;height:36px;border-radius:8px;background:var(--surface-2);overflow:hidden">'+
+        (it.image?'<img src="'+sesc(it.image)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div></td>'+
+        '<td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc(it.brand||'')+'</div></td>'+
+        '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
+    }).join('');
+
+    var refundedLine = o.refunded_total_aed>0 ? '<div class="between" style="color:var(--sale,#c0392b)"><span>Refunded</span><span>-AED '+o.refunded_total_aed+'</span></div>' : '';
+    var capturedLine = (o.settlement && o.settlement.captured) ? '<div class="between" style="color:var(--ink-soft)"><span>Captured</span><span>AED '+o.settlement.captured_total_aed+'</span></div>' : '';
+    var vatLine = o.vat ? '<div class="between" style="color:var(--ink-faint);font-size:11.5px;padding-top:4px"><span>'+sesc(o.vat.label)+'</span><span>AED '+o.vat.amount_aed+'</span></div>' : '';
+
+    var addProductBlock = editable
+      ? '<div style="margin-top:14px;position:relative"><input class="odinp" id="odAddProductSearch" placeholder="Search products to add\u2026" style="width:280px">'+
+        '<div id="odAddProductResults" style="display:none;position:absolute;z-index:20;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.08);width:340px;max-height:280px;overflow:auto;margin-top:4px"></div></div>'
+      : '<p style="font-size:12px;color:var(--ink-faint);margin-top:12px;display:flex;align-items:center;gap:6px">'+ic('<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round"/>')+'This order is no longer editable \u2014 it has already shipped or been closed out.</p>';
+
+    return '<div class="odcard" id="odItems">'+odCardHead('Items')+
+      '<div class="pad">'+
+      '<div style="overflow:auto"><table><thead><tr><th></th><th>Item</th><th>Price</th><th>Qty</th><th>Total</th>'+(editable?'<th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      addProductBlock+
+      (o.shipping_method?'<p style="font-size:12px;color:var(--ink-soft);margin-top:10px">Shipping: '+sesc(o.shipping_method)+'</p>':'')+
+      '<div style="margin-top:14px;max-width:280px;margin-left:auto;'+(editable?'margin-right:140px;':'')+'display:flex;flex-direction:column;gap:5px;font-size:13px">'+
+      '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
+      (o.discount_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Discount'+(o.coupon_code?' ('+sesc(o.coupon_code)+')':'')+'</span><span>-AED '+o.discount_total_aed+'</span></div>':'')+
+      '<div class="between"><span style="color:var(--ink-soft)">Shipping</span><span>AED '+o.shipping_total_aed+'</span></div>'+
+      (o.fee_total_aed>0?'<div class="between"><span style="color:var(--ink-soft)">Fees</span><span>AED '+o.fee_total_aed+'</span></div>':'')+
+      '<div class="between" style="font-weight:800;font-size:14px;border-top:1px solid var(--border);padding-top:8px"><span>Order total</span><span>AED '+o.total_aed+'</span></div>'+
+      vatLine+
+      capturedLine+
+      refundedLine+
+      '</div>'+
+      odCapturePanel(o)+
+      '<div class="row" style="margin-top:16px;gap:10px;align-items:center">'+
+      '<button class="btn ghost sm" id="odRefundToggle">Refund</button>'+
+      '<div id="odRefundForm" style="display:none;gap:8px;align-items:center" class="row">'+
+        '<input class="odinp" id="odRefundAmt" type="number" step="0.01" placeholder="Amount AED" style="width:120px">'+
+        '<input class="odinp" id="odRefundReason" placeholder="Reason (optional)" style="width:200px">'+
+        /*
+         * The double-click guard, and it lives here rather than on the button
+         * because the server's own guard is a UNIQUE index on this value. One
+         * key per form render means two clicks send the same key and collide
+         * in the database; a successful refund re-renders the page and gets a
+         * fresh one, so a second, deliberate refund of the same amount is
+         * still allowed. A disabled button would only stop the clicks this
+         * browser makes.
+         */
+        '<input type="hidden" id="odRefundKey" value="'+sesc(odNewKey())+'">'+
+        '<button class="btn sm" id="odRefundGo">Confirm refund</button></div>'+
+      (o.refundable_aed!=null ? '<span style="font-size:11.5px;color:var(--ink-faint)">AED '+o.refundable_aed+' still refundable</span>' : '')+
+      '</div>'+
+      '</div></div>';
+  }
+
+  /* A fresh idempotency key. randomUUID is not available on http:// origins in
+   * older browsers, so there is a fallback rather than an undefined key. */
+  function odNewKey(){
+    try{ if(window.crypto && crypto.randomUUID) return 'ui:'+crypto.randomUUID(); }catch(e){}
+    return 'ui:'+Date.now()+'-'+Math.random().toString(36).slice(2,12);
+  }
+
+  /*
+   * Capture.
+   *
+   * The reason this panel exists at all: Tabby and Tamara AUTHORISE at
+   * checkout and auto-void an authorisation that is never captured. An order
+   * that reads "paid" and was never captured is one the merchant does not get
+   * paid for, so the state is shown on the order rather than left to be
+   * discovered in a provider dashboard, and it shouts when the window is
+   * nearly up.
+   */
+  function odCapturePanel(o){
+    var s = o.settlement;
+    if(!s || !s.supported) return '';
+
+    if(s.captured){
+      return '<div style="margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--ink-soft)">'+
+        '<b style="color:var(--ink)">Captured</b> \u00b7 AED '+s.captured_total_aed+
+        (s.captured_at?' on '+fmtDT(s.captured_at):'')+
+        (s.capture_ref?' \u00b7 ref '+sesc(s.capture_ref):'')+'</div>';
+    }
+
+    if(!s.capturable){
+      return '<div style="margin-top:14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:12.5px;color:var(--ink-faint)">'+
+        'Not capturable yet \u2014 this order has not been authorised by the payment provider.</div>';
+    }
+
+    var urgent = !!s.expiring;
+    var left = (s.days_left!=null)
+      ? (s.days_left>0 ? s.days_left+' day'+(s.days_left===1?'':'s')+' left to capture.' : 'The capture window has run out. Try anyway \u2014 the provider decides.')
+      : '';
+
+    return '<div style="margin-top:14px;padding:12px;border:1px solid '+(urgent?'var(--sale,#c0392b)':'var(--border)')+';border-radius:8px">'+
+      '<div style="font-size:12.5px;color:'+(urgent?'var(--sale,#c0392b)':'var(--ink-soft)')+';margin-bottom:8px">'+
+      '<b style="color:'+(urgent?'var(--sale,#c0392b)':'var(--ink)')+'">Not captured.</b> '+sesc(left)+' '+sesc(s.window||'')+'</div>'+
+      '<button class="btn sm" id="odCaptureGo">Capture AED '+o.total_aed+'</button></div>';
+  }
+
+  function odNotesCard(o){
+    var rows = o.notes.map(function(n){
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:12.5px">'+sesc(n.content)+'</div>'+
+        '<div style="font-size:11px;color:var(--ink-soft);margin-top:3px">'+sesc(n.author||'Admin')+' \u00b7 '+fmtDT(n.created_at)+'</div></div>';
+    }).join('');
+
+    return '<div class="odcard" id="odNotes">'+odCardHead('Order notes')+'<div class="pad">'+
+      (rows || '<p style="font-size:12.5px;color:var(--ink-soft)">No notes yet.</p>')+
+      '<div class="row" style="margin-top:12px;gap:8px"><textarea class="odinp" id="odNoteText" rows="2" placeholder="Add a note for other admins…" style="flex:1"></textarea>'+
+      '<button class="btn sm" id="odNoteGo" style="align-self:flex-end">Add</button></div></div></div>';
+  }
+
+  function odAttributionCard(o){
+    var a = o.attribution||{};
+    var na = '<span style="color:var(--ink-faint)">Not tracked yet</span>';
+    return '<div class="odcard" style="margin-bottom:14px" id="odAttr">'+odCardHead('Order attribution')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">SOURCE</label><div style="font-size:13px">'+(a.origin?sesc(a.origin):na)+'</div></div>'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">DEVICE TYPE</label><div style="font-size:13px">'+(a.device_type?sesc(a.device_type):na)+'</div></div>'+
+      '<div class="odfld" style="margin-bottom:0"><label style="font-weight:700;color:var(--ink-faint)">SESSION PAGE VIEWS</label><div style="font-size:13px">'+(a.session_page_views!=null?a.session_page_views:na)+'</div></div>'+
+      '</div></div>';
+  }
+
+  function odActionsCard(o){
+    var real = (o.actions&&o.actions.real)||[], ph = (o.actions&&o.actions.placeholder)||[];
+    var labels = {cancel:'Cancel order', duplicate:'Duplicate order', resend_confirmation:'Resend confirmation email', email_invoice:'Email invoice'};
+    var opts = real.concat(ph).map(function(a){ return '<option value="'+a+'">'+(labels[a]||a)+(ph.indexOf(a)>-1?' (not available yet)':'')+'</option>'; }).join('');
+    return '<div class="odcard" style="margin-bottom:14px" id="odActions">'+odCardHead('Order actions')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="row" style="gap:8px;margin-bottom:14px"><select class="odinp" id="odActionSel" style="flex:1"><option value="">Choose an action\u2026</option>'+opts+'</select>'+
+      '<button class="btn sm" id="odActionGo" style="background:#FFF3E0;color:#B36A0E;border:1.5px solid transparent">'+ic('<path d="M9 6l6 6-6 6"/>')+'</button></div>'+
+      '<div class="between"><a href="#" id="odTrash" style="color:var(--sale,#c0392b);font-size:12.5px;font-weight:600;text-decoration:none">Move to trash</a><button class="btn" id="odUpdate" style="background:#E08A1A;color:#fff">Update</button></div></div></div>';
+  }
+
+  function odHistoryCard(o){
+    var h = o.customer_history||{};
+    return '<div class="odcard" style="margin-bottom:14px" id="odHist">'+odCardHead('Customer history')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">TOTAL ORDERS</label><div style="font-size:17px;font-weight:800">'+(h.total_orders||0)+'</div></div>'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">TOTAL REVENUE</label><div style="font-size:17px;font-weight:800">AED '+(h.total_revenue_aed||0)+'</div></div>'+
+      '<div class="odfld" style="margin-bottom:0"><label style="font-weight:700;color:var(--ink-faint)">AVERAGE ORDER VALUE</label><div style="font-size:17px;font-weight:800">AED '+(h.average_order_value_aed||0)+'</div></div>'+
+      '</div></div>';
+  }
+
+  function odInvoiceCard(o){
+    var docs = ['Invoice','Packing slip','Delivery note','Shipping Label','Dispatch Label'];
+    return '<div class="odcard" id="odInvoice">'+odCardHead('Invoice / Packing')+'<div class="pad" style="padding:18px 20px">'+
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">INVOICE NUMBER</label><div style="font-size:13px">'+(o.invoice_number?sesc(String(o.invoice_number)):'<span style="color:var(--ink-faint)">Not yet invoiced</span>')+'</div></div>'+
+      '<label style="font-size:10.5px;font-weight:700;color:var(--ink-faint)">PRINT / DOWNLOAD</label>'+
+      '<div style="margin-top:8px">'+docs.map(function(d){
+        return '<div class="between" style="padding:8px 0;border-bottom:1px solid var(--line-2,var(--border))"><span style="font-size:12.5px;font-weight:500">'+d+'</span><button class="btn ghost sm" data-oddoc="'+d+'" style="padding:5px 9px">'+ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>')+'</button></div>';
+      }).join('')+'</div></div></div>';
+  }
+
+  function seoSel2(id, cur, opts){
+    return '<select class="inp" id="'+id+'" style="width:100%">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===cur?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';
+  }
+
+  function fmtDT(iso){
+    if(!iso) return '\u2014';
+    var d = new Date(iso);
+    if(isNaN(d)) return sesc(iso);
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' at '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  }
+
+  function wireOrderDetail(o){
+    var id = o.id;
+
+    // Collapse/expand — sections start open (Rafi's choice); this just toggles.
+    document.querySelectorAll('#content .odtoggle').forEach(function(t){
+      t.onclick = function(){
+        var card = t.closest('.card');
+        var body = card.querySelectorAll(':scope > *:not(.between)');
+        var hidden = body[0] && body[0].style.display==='none';
+        body.forEach(function(el){ el.style.display = hidden ? '' : 'none'; });
+        t.textContent = hidden ? 'Hide' : 'Show';
+      };
+    });
+
+    document.getElementById('odUpdate').onclick = async function(){
+      var status = document.getElementById('odStatusSel').value;
+      try{ await api('/admin-api/orders/'+id+'/status',{method:'PUT',body:JSON.stringify({status:status})});
+        toast('Order updated'); renderOrderDetail(id);
+      }catch(e){ toast('Update failed'); }
+    };
+
+    document.getElementById('odTrash').onclick = async function(){
+      if(!confirm('Move this order to trash?')) return;
+      try{ await api('/admin-api/orders/'+id,{method:'DELETE'}); toast('Order moved to trash'); renderOrders(); }
+      catch(e){ toast('Could not trash this order.'); }
+    };
+
+    var custHist = document.getElementById('odCustHist');
+    if(custHist) custHist.onclick = function(e){ e.preventDefault(); go('customers'); };
+
+    // Shipping address inline edit.
+    document.getElementById('odShipEdit') && (function(){
+      document.querySelector('[data-odedit="shipping"]').onclick = function(){
+        var view=document.getElementById('odShipView'), edit=document.getElementById('odShipEdit');
+        var open = edit.style.display==='none'; view.style.display = open?'none':''; edit.style.display = open?'':'none';
+      };
+      document.getElementById('odShipSave').onclick = async function(){
+        var raw = document.getElementById('odShipJson').value;
+        var parsed; try{ parsed = JSON.parse(raw); }catch(e){ toast('That is not valid JSON.'); return; }
+        try{
+          var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/address'),{method:'PUT',credentials:'same-origin',
+            headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+            body:JSON.stringify({type:'shipping',address:parsed})});
+          if(!r.ok) throw 0;
+          toast('Shipping address updated'); renderOrderDetail(id);
+        }catch(e){ toast('Could not save the address.'); }
+      };
+    })();
+
+    // Item editing: quantity, price, remove, add product — only rendered when o.editable.
+    if(o.editable){
+      document.querySelectorAll('#content .odqty').forEach(function(inp){
+        inp.onchange = async function(){
+          var qty = parseInt(inp.value, 10);
+          if(!qty || qty<1){ toast('Quantity must be at least 1.'); renderOrderDetail(id); return; }
+          try{
+            var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+inp.dataset.itemid),{method:'PUT',credentials:'same-origin',
+              headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+              body:JSON.stringify({quantity:qty})});
+            var j = await r.json();
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
+            toast('Quantity updated'); renderOrderDetail(id);
+          }catch(e){ toast('Could not update that item.'); }
+        };
+      });
+      document.querySelectorAll('#content .odprice').forEach(function(inp){
+        inp.onchange = async function(){
+          var price = parseFloat(inp.value);
+          if(price==null || isNaN(price) || price<0){ toast('Enter a valid price.'); renderOrderDetail(id); return; }
+          try{
+            var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+inp.dataset.itemid),{method:'PUT',credentials:'same-origin',
+              headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+              body:JSON.stringify({unit_price_aed:price})});
+            var j = await r.json();
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not update that item.'); return; }
+            toast('Price updated'); renderOrderDetail(id);
+          }catch(e){ toast('Could not update that item.'); }
+        };
+      });
+      document.querySelectorAll('#content .oditemdel').forEach(function(btn){
+        btn.onclick = async function(){
+          if(!confirm('Remove this item from the order?')) return;
+          try{
+            var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items/'+btn.dataset.itemid),{method:'DELETE',credentials:'same-origin',
+              headers:{'X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'}});
+            var j = await r.json();
+            if(!r.ok || j.ok===false){ toast(j.message||'Could not remove that item.'); return; }
+            toast('Item removed'); renderOrderDetail(id);
+          }catch(e){ toast('Could not remove that item.'); }
+        };
+      });
+
+      var searchInp = document.getElementById('odAddProductSearch');
+      var resultsBox = document.getElementById('odAddProductResults');
+      var searchT;
+      if(searchInp){
+        searchInp.oninput = function(){
+          clearTimeout(searchT);
+          var q = searchInp.value.trim();
+          if(q.length<2){ resultsBox.style.display='none'; return; }
+          searchT = setTimeout(async function(){
+            try{
+              var data = await api('/admin-api/catalog/products?search='+encodeURIComponent(q)+'&per_page=8');
+              var list = data.products||[];
+              resultsBox.innerHTML = list.length ? list.map(function(p){
+                return '<div class="odaddrow" data-pid="'+p.id+'" style="padding:9px 12px;cursor:pointer;font-size:12.5px;border-bottom:1px solid var(--border)">'+
+                  '<b>'+sesc(p.name)+'</b><div style="color:var(--ink-faint);font-size:11px">'+sesc(p.brand||'')+' \u00b7 AED '+(p.sale_price||p.price)+'</div></div>';
+              }).join('') : '<div style="padding:12px;color:var(--ink-faint);font-size:12.5px">No products found.</div>';
+              resultsBox.style.display='block';
+              document.querySelectorAll('#content .odaddrow').forEach(function(row){
+                row.onclick = async function(){
+                  try{
+                    var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items'),{method:'POST',credentials:'same-origin',
+                      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+                      body:JSON.stringify({product_id:parseInt(row.dataset.pid,10), quantity:1})});
+                    var j = await r.json();
+                    if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.'); return; }
+                    toast('Product added'); renderOrderDetail(id);
+                  }catch(e){ toast('Could not add that product.'); }
+                };
+              });
+            }catch(e){ resultsBox.style.display='none'; }
+          }, 300);
+        };
+        document.addEventListener('click', function(e){
+          if(!resultsBox.contains(e.target) && e.target!==searchInp) resultsBox.style.display='none';
+        });
+      }
+    }
+
+    // Refund.
+    document.getElementById('odRefundToggle').onclick = function(){
+      var f = document.getElementById('odRefundForm');
+      f.style.display = f.style.display==='none' ? 'flex' : 'none';
+    };
+    document.getElementById('odRefundGo').onclick = async function(){
+      var amt = parseFloat(document.getElementById('odRefundAmt').value);
+      if(!amt || amt<=0){ toast('Enter a refund amount.'); return; }
+      var reason = document.getElementById('odRefundReason').value;
+      var btn = this;
+      // Cosmetic only. The guard that counts is the idempotency key below,
+      // which the server has a unique index on -- a disabled button does
+      // nothing about a retried request or a second tab.
+      btn.disabled = true;
+      try{
+        var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/refund'),{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+          body:JSON.stringify({amount_aed:amt, reason:reason, idempotency_key:document.getElementById('odRefundKey').value})});
+        var j = await r.json();
+        if(!r.ok || j.ok===false){ btn.disabled = false; toast(j.message||'Could not process that refund.'); return; }
+        // The server's own words: "refunded through Tabby" and "recorded --
+        // return the money by hand" are different facts and the admin needs
+        // to be told which one happened.
+        toast(j.message||'Refund recorded'); renderOrderDetail(id);
+      }catch(e){ btn.disabled = false; toast('Could not process that refund.'); }
+    };
+
+    // Capture. Present only when the order is capturable -- see odCapturePanel.
+    var captureBtn = document.getElementById('odCaptureGo');
+    if(captureBtn){
+      captureBtn.onclick = async function(){
+        captureBtn.disabled = true;
+        try{
+          var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/capture'),{method:'POST',credentials:'same-origin',
+            headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+            body:'{}'});
+          var j = await r.json();
+          if(!r.ok || j.ok===false){ captureBtn.disabled = false; toast(j.message||'Could not capture that payment.'); return; }
+          toast(j.message||'Captured'); renderOrderDetail(id);
+        }catch(e){ captureBtn.disabled = false; toast('Could not capture that payment.'); }
+      };
+    }
+
+    // Add note.
+    document.getElementById('odNoteGo').onclick = async function(){
+      var content = document.getElementById('odNoteText').value.trim();
+      if(!content){ toast('Write a note first.'); return; }
+      try{ await api('/admin-api/orders/'+id+'/notes',{method:'POST',body:JSON.stringify({content:content})});
+        toast('Note added'); renderOrderDetail(id);
+      }catch(e){ toast('Could not save that note.'); }
+    };
+
+    // Actions dropdown.
+    document.getElementById('odActionGo').onclick = async function(){
+      var action = document.getElementById('odActionSel').value;
+      if(!action){ toast('Choose an action first.'); return; }
+      try{
+        var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/action'),{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+          body:JSON.stringify({action:action})});
+        var j = await r.json();
+        if(!r.ok || j.ok===false){ toast(j.message||'That action could not be completed.'); return; }
+        toast('Done'); renderOrderDetail(id);
+      }catch(e){ toast('That action could not be completed.'); }
+    };
+
+    /* Invoice and Packing slip are real documents now; the other three are
+       still honest placeholders. The URLs come from the order-detail payload
+       (invoice_url / packing_slip_url) rather than being built here, so this
+       cannot drift from the route or lose the deployment's base path. Opened
+       in a new tab because the admin console is a single page — navigating it
+       away would lose the order the operator is working on. */
+    document.querySelectorAll('#content [data-oddoc]').forEach(function(b){
+      b.onclick = function(){
+        var kind = b.dataset.oddoc;
+        var url  = kind === 'Invoice' ? (o.invoice_url || '')
+                 : kind === 'Packing slip' ? (o.packing_slip_url || '')
+                 : '';
+        if (url) { window.open(url, '_blank', 'noopener'); return; }
+        toast(kind + ' is not built yet — this is a placeholder.');
+      };
+    });
   }
 
   async function openOrder(id){
     var o; try{ o=await api('/admin-api/orders/'+id); }catch(e){ toast('Could not load order'); return; }
     var opts=ORDER_STATUSES.map(function(s){return '<option value="'+s+'"'+(s===o.status?' selected':'')+'>'+s+'</option>';}).join('');
     var c=o.customer||{};
-    var addr=[c.name,c.email,c.phone,((c.emirate||'')+(c.address?(' \u00b7 '+c.address):''))].filter(Boolean).join('<br>');
+    var addr=[sesc(c.name),sesc(c.email),sesc(c.phone),sesc((c.emirate||'')+(c.address?(' \u00b7 '+c.address):''))].filter(Boolean).join('<br>');
     openModal(
       '<div class="modal-h"><b>Order #'+o.id+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
       '<div class="modal-b">'+
@@ -6807,7 +9228,7 @@ buildNav();
       '<button class="btn sm" id="ordStatusSave">Update</button></div>'+
       '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">Customer</b><div style="font-size:12.5px;color:var(--ink-2);margin-top:6px;line-height:1.7">'+(addr||'\u2014')+'</div></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>'+
-      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+it.name+'</b><div class="pbrand">'+(it.brand||'')+'</div></td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
+      o.items.map(function(it){ return '<tr><td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc((it.brand||''))+'</div></td><td>'+it.qty+'</td><td>AED '+it.unit_aed+'</td><td><b>AED '+it.line_aed+'</b></td></tr>'; }).join('')+
       '</tbody></table></div>'+
       '<div style="margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:5px">'+
       '<div class="between"><span style="color:var(--ink-soft)">Subtotal</span><span>AED '+o.subtotal_aed+'</span></div>'+
@@ -6841,22 +9262,715 @@ buildNav();
     };
   }
 
-  /* ---------- Customers screen (new) ---------- */
-  var CUST=[];
-  async function renderCustomers(){
-    try{ var d=await api('/admin-api/customers'); CUST=d.customers||[]; }catch(e){ CUST=[]; }
-    document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Customers</h2><p>Everyone who has placed an order through the storefront.</p></div>'+
-      '<div class="card" style="overflow:auto"><table><thead><tr><th>Customer</th><th>Contact</th><th>Emirate</th><th>Orders</th><th>Spent</th><th>Joined</th></tr></thead><tbody>'+
-      (CUST.length? CUST.map(function(c){
-        return '<tr><td><div class="row"><span class="pthumb" style="background:'+tcol(c.name||'KB')+';width:30px;height:30px;font-size:10px">'+initials(c.name||'KB')+'</span><b style="font-size:12.5px">'+(c.name||'Guest')+'</b></div></td>'+
-          '<td><div class="pname">'+(c.email||'')+'</div><div class="pbrand">'+(c.phone||'')+'</div></td>'+
-          '<td>'+(c.emirate||'\u2014')+'</td><td>'+c.orders+'</td>'+
-          '<td class="price"><b>AED '+c.spent_aed.toLocaleString()+'</b></td>'+
-          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(c.created_at||'').slice(0,10)+'</td></tr>';
-      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No customers yet.</td></tr>')+
-      '</tbody></table></div><div class="pager"><span>'+CUST.length+' customer'+(CUST.length===1?'':'s')+'</span></div></div>';
+  /* ===== LANE T · Store · Customers — BEGIN =====
+
+     WHAT THIS REPLACED. Six columns off a single unpaginated fetch of
+     /admin-api/customers, one of which — "Emirate" — read c.emirate, and
+     `emirate` is not a column on the customers table and never has been. It
+     was blank on every install and no one had cause to notice, because the
+     screen otherwise looked finished. Pointed at the 5,312 customers the
+     WooCommerce import will bring across, that fetch is one response
+     containing the entire customer database and no way to find anybody in it.
+
+     WHAT IT IS NOW. A paginated, sortable, filterable list off
+     /admin-api/customers/list — inside the guarded admin-api group, which is
+     the only reason it is allowed to carry email, phone and home city at all
+     — plus a per-customer page, a private note, a reversible trash and a CSV
+     of whatever the screen is currently showing.
+
+     EVERY FIGURE IS AGGREGATED IN SQL. Orders, lifetime spend, average order
+     value, last order and last activity all arrive with the row. Nothing on
+     this screen loops over customers fetching anything, which is the mistake
+     that made /shop run 390 queries for four products.
+
+     EVERYTHING WRITTEN INTO THE PAGE GOES THROUGH sesc(). Customer names,
+     emails, cities and phone numbers are typed by the public at checkout and
+     land in innerHTML; an unescaped one is stored XSS on the owner's own
+     back-office. Server messages go through it too — a message can carry a
+     customer name.
+
+     BLANKS ARE EXPECTED, NOT EXCEPTIONAL. An imported customer can have no
+     name, no phone, no address and no registration date; the owner's own
+     reference screenshot shows exactly that. Every cell falls back to an em
+     dash instead of printing "undefined" or throwing.
+  */
+
+  var CU = {
+    page: 1,
+    perPage: +(localStorage.getItem('kbb_cust_pp') || 50),
+    search: '', filter: 'all', sort: 'newest',
+    spendMin: '', spendMax: '', from: '', to: '', country: '', city: '',
+    adv: false, cols: null, data: null, err: null, sel: {}, busy: false
+  };
+
+  var CU_COLDEF = [
+    ['contact', 'Phone'], ['type', 'Type'], ['orders', 'Orders'], ['spend', 'Total spend'],
+    ['aov', 'AOV'], ['last_order', 'Last order'], ['last_active', 'Last active'],
+    ['location', 'Country / City'], ['registered', 'Registered'], ['wp', 'Woo ID']
+  ];
+  /* Last active and the Woo ID are off by default and one click away in
+     Columns: last-active repeats last-order for anybody who has bought, and
+     the ten columns that are on already fill a 1032px content area. Woo's own
+     screen shows both; this one lets the owner choose without paying for them
+     on every page load. */
+  var CU_COLS_DEFAULT = {
+    contact: true, type: true, orders: true, spend: true, aov: true,
+    last_order: true, last_active: false, location: true, registered: true, wp: false
+  };
+  /* Which column each sortable header maps to, so the header caret and the
+     Sort menu can never disagree about what the list is ordered by. */
+  var CU_COLSORT = {
+    orders: 'orders_desc', spend: 'spend_desc', aov: 'aov_desc',
+    last_order: 'last_order_desc', last_active: 'last_active_desc'
+  };
+  var CU_SORTS = [
+    ['newest', 'Newest first'], ['oldest', 'Oldest first'], ['name', 'Name A–Z'],
+    ['spend_desc', 'Total spend, high to low'], ['spend_asc', 'Total spend, low to high'],
+    ['orders_desc', 'Most orders'], ['aov_desc', 'Highest average order'],
+    ['last_order_desc', 'Ordered most recently'], ['last_active_desc', 'Active most recently']
+  ];
+  var CU_CHIPS = [
+    ['all', 'All'], ['ordered', 'Has ordered'], ['never', 'Never ordered'],
+    ['repeat', 'Repeat buyers'], ['account', 'Has an account'], ['guest', 'Guest checkout'],
+    ['verified', 'Email verified'], ['unverified', 'Not verified'], ['trashed', 'Trash']
+  ];
+  /* Bands in whole dirhams; the server converts with Money::fromMajor, so the
+     comparison happens in fils and nothing here ever holds a money float. */
+  var CU_BANDS = [
+    ['', '', 'Any spend'], ['0', '0', 'Nothing yet'], ['1', '499', 'Under AED 500'],
+    ['500', '1999', 'AED 500 – 1,999'], ['2000', '', 'AED 2,000 and over']
+  ];
+
+  function cuCols(){
+    if(CU.cols) return CU.cols;
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('kbb_cust_cols') || 'null'); }catch(e){ saved = null; }
+    CU.cols = Object.assign({}, CU_COLS_DEFAULT, saved || {});
+    return CU.cols;
   }
+  function cuSaveCols(){ try{ localStorage.setItem('kbb_cust_cols', JSON.stringify(CU.cols)); }catch(e){} }
+
+  function cuParams(forExport){
+    var p = new URLSearchParams();
+    if(!forExport){ p.set('page', CU.page); p.set('per_page', CU.perPage); }
+    if(CU.search) p.set('search', CU.search);
+    if(CU.filter && CU.filter !== 'all') p.set('filter', CU.filter);
+    if(CU.sort && CU.sort !== 'newest') p.set('sort', CU.sort);
+    if(CU.spendMin !== '') p.set('spend_min', CU.spendMin);
+    if(CU.spendMax !== '') p.set('spend_max', CU.spendMax);
+    if(CU.from) p.set('from', CU.from);
+    if(CU.to) p.set('to', CU.to);
+    if(CU.country) p.set('country', CU.country);
+    if(CU.city) p.set('city', CU.city);
+    return p.toString();
+  }
+
+  function cuDate(iso){
+    if(!iso) return '<span style="color:var(--ink-faint)">—</span>';
+    var d = new Date(iso);
+    if(isNaN(d)) return '<span style="color:var(--ink-faint)">—</span>';
+    return sesc(d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}));
+  }
+  /* "3 days ago" under the date. A shop owner reads recency faster than a
+     date, and a customer who last did anything in 2019 should look like it. */
+  function cuAgo(iso){
+    if(!iso) return '';
+    var d = new Date(iso); if(isNaN(d)) return '';
+    var days = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if(days < 0) return '';
+    if(days === 0) return 'today';
+    if(days === 1) return 'yesterday';
+    if(days < 31) return days + ' days ago';
+    if(days < 365){ var m = Math.max(1, Math.round(days / 30)); return m + (m === 1 ? ' month ago' : ' months ago'); }
+    var years = Math.floor(days / 365);
+    return (years < 2 ? 'over a year ago' : years + ' years ago');
+  }
+  function cuLabel(c){ return c.name || c.email || ('Customer #' + c.id); }
+  function cuDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
+  function cuToast(msg){ toast(sesc(msg)); }
+
+  function cuTypePill(c){
+    var badge = c.account_type === 'account'
+      ? '<span class="pill blue">Account</span>'
+      : '<span class="pill grey">Guest</span>';
+    if(c.email_verified) badge += ' <span class="pill green" title="Email verified">✓</span>';
+    return badge;
+  }
+
+  async function cuLoad(){
+    if(CU.busy) return;
+    CU.busy = true;
+    try{
+      CU.data = await api('/admin-api/customers/list?' + cuParams(false));
+      CU.perPage = CU.data.per_page;
+      CU.err = null;
+    }catch(e){
+      CU.data = null;
+      /* Say WHAT failed, not what might have. The first version of this screen
+         guessed "the route may not be wired up", which was wrong on a server
+         where it was wired and something else broke — and a wrong guess sends
+         whoever is reading it looking in the wrong place. Fetch the same URL
+         again plainly so the status and the server's own message can be shown. */
+      CU.err = {status:0, body:''};
+      try{
+        var probe = await fetch(fixAdminApiUrl('/admin-api/customers/list?' + cuParams(false)),
+          {credentials:'same-origin', headers:{'Accept':'application/json'}});
+        CU.err.status = probe.status;
+        CU.err.body = (await probe.text() || '').slice(0, 400);
+      }catch(e2){
+        CU.err.body = String(e2 && e2.message || e);
+      }
+    }
+    CU.busy = false;
+    cuPaint();
+  }
+
+  window.renderCustomers = async function(){
+    CU.page = 1; CU.sel = {};
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap"><div class="page-head"><h2>Customers</h2>' +
+      '<p>Everyone with a record on the store — shoppers who checked out as guests as well as people with an account.</p></div>' +
+      '<p style="padding:24px;color:var(--ink-soft)">Loading customers…</p></div>';
+    await cuLoad();
+  };
+
+  /* Turn the HTTP status into the thing to actually go and check. */
+  function cuWhy(){
+    var st = CU.err ? CU.err.status : 0;
+    if(st === 404) return 'The server returned 404 — this build\u2019s routes are not live yet. The compiled route cache needs clearing (Store \u2192 Core Updates does this on every apply).';
+    if(st === 401 || st === 403) return 'The server returned ' + st + ' — the admin session was refused. Sign out and back in.';
+    if(st === 419) return 'The server returned 419 — the admin session expired. Reload the page.';
+    if(st === 500) return 'The server returned 500 — the request reached the code and the code threw. The exception is in storage/logs/laravel.log; the text below is what the server sent back. If its \u201cbuild\u201d is older than the package you just applied, the server is running cached code rather than the file that shipped.';
+    if(st === 0)   return 'The request never completed — the browser could not reach the server at all.';
+    return 'The server returned ' + st + '. The text below is what it sent back.';
+  }
+
+  function cuPaint(){
+    var el = document.querySelector('#content');
+    var d = CU.data;
+
+    if(!d){
+      el.innerHTML = '<div class="wrap"><div class="page-head"><h2>Customers</h2></div>' +
+        '<div class="card pad"><p style="font-size:13px;color:var(--red)">Customers could not be loaded.</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">' + cuWhy() + '</p>' +
+        (CU.err && CU.err.body ? '<pre style="margin-top:10px;padding:10px;background:var(--bg-soft,#f6f6f7);border-radius:8px;font-size:11.5px;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto">' + sesc(CU.err.body) + '</pre>' : '') +
+        '<div style="margin-top:12px"><button class="btn ghost sm" id="cuRetry">Try again</button></div></div></div>';
+      var retry = document.getElementById('cuRetry');
+      if(retry) retry.onclick = function(){ cuLoad(); };
+      return;
+    }
+
+    var cols = CU_COLDEF.filter(function(c){ return cuCols()[c[0]]; });
+    var selected = Object.keys(CU.sel).filter(function(k){ return CU.sel[k]; });
+    var s = d.summary || {customers:0, orders:0, spend_display:'', aov_display:''};
+
+    el.innerHTML =
+      '<div class="wrap">' +
+      '<div class="between" style="margin-bottom:8px;flex-wrap:wrap;gap:12px">' +
+        '<div class="page-head" style="margin:0"><h2>Customers</h2>' +
+        '<p>Everyone with a record on the store — shoppers who checked out as guests as well as people with an account. Orders and spend count paid, processing, shipped and completed orders.</p></div>' +
+        '<div class="row" style="gap:8px">' +
+          '<button class="btn ghost" id="cuColsBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Columns</button>' +
+          '<button class="btn" id="cuExport">' + ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + ' Export CSV</button>' +
+        '</div>' +
+      '</div>' +
+
+      (d.unlinked_orders ?
+        '<div class="card pad" style="margin-bottom:14px;border-color:#f0dcae;background:var(--amber-soft)">' +
+        '<b style="font-size:12.5px">' + d.unlinked_orders + ' order' + (d.unlinked_orders === 1 ? ' is' : 's are') + ' not linked to any customer.</b>' +
+        '<p style="font-size:12px;color:var(--ink-2);margin-top:4px">Their revenue is real but it cannot appear against anybody in this list. This is what an import of WooCommerce guest orders without matching customer records looks like.</p>' +
+        '</div>' : '') +
+
+      '<div class="kpis" style="margin-bottom:16px">' +
+        cuKpi('Customers in this view', (s.customers || 0).toLocaleString(), d.total === s.customers ? 'matching the filters' : '') +
+        cuKpi('Orders', (s.orders || 0).toLocaleString(), 'paid and fulfilled') +
+        cuKpi('Lifetime revenue', sesc(s.spend_display || ''), 'from these customers') +
+        cuKpi('Average order', sesc(s.aov_display || ''), 'across those orders') +
+      '</div>' +
+
+      (CU.colsOpen ? cuColsPanel() : '') +
+
+      '<div class="toolbar" style="flex-wrap:wrap;gap:10px">' +
+        '<div class="search" style="min-width:220px">' + ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
+        '<input id="cuSearch" placeholder="Search name, email, phone or Woo user ID…" value="' + sesc(CU.search) + '"></div>' +
+        '<select class="inp" id="cuSort" style="max-width:230px">' +
+          CU_SORTS.map(function(o){ return '<option value="' + o[0] + '"' + (CU.sort === o[0] ? ' selected' : '') + '>Sort: ' + o[1] + '</option>'; }).join('') +
+        '</select>' +
+        '<button class="btn ghost" id="cuAdv">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters' + (cuAdvCount() ? ' · ' + cuAdvCount() : '') + (CU.adv ? ' ▴' : ' ▾') + '</button>' +
+      '</div>' +
+
+      (CU.adv ? cuAdvPanel(d) : '') +
+
+      '<div class="chips" style="margin-bottom:12px">' +
+        CU_CHIPS.map(function(c){
+          var n = (d.counts && d.counts[c[0]] !== undefined) ? d.counts[c[0]] : 0;
+          return '<button class="chip' + (CU.filter === c[0] ? ' on' : '') + '" data-cuf="' + c[0] + '">' +
+            sesc(c[1]) + ' <span style="opacity:.6">' + n + '</span></button>';
+        }).join('') +
+      '</div>' +
+
+      (selected.length ?
+        '<div class="card pad" style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+        '<b style="font-size:12.5px">' + selected.length + ' selected</b>' +
+        '<button class="btn ghost sm" id="cuClearSel">Clear</button>' +
+        '<div style="flex:1"></div>' +
+        '<button class="btn sm" style="background:var(--red)" id="cuBulkDelete">Move to trash…</button>' +
+        '</div>' : '') +
+
+      '<div class="card" style="overflow:auto">' + cuTable(d, cols) + '</div>' +
+
+      '<div class="pager" style="margin-top:14px;flex-wrap:wrap;gap:10px">' +
+        '<span>' + (d.customers.length ? ((d.page - 1) * d.per_page + 1) : 0) + '–' +
+        ((d.page - 1) * d.per_page + d.customers.length) + ' of ' + d.total + '</span>' +
+        '<div class="row" style="gap:8px">' +
+          '<select class="inp" id="cuPerPage" style="width:126px">' +
+            [25, 50, 100, 200].map(function(n){ return '<option value="' + n + '"' + (n === CU.perPage ? ' selected' : '') + '>' + n + ' per page</option>'; }).join('') +
+          '</select>' +
+          '<button class="btn ghost sm" ' + (d.page <= 1 ? 'disabled' : '') + ' id="cuPrev">‹ Prev</button>' +
+          '<span style="font-size:12px">Page ' + d.page + ' of ' + d.last_page + '</span>' +
+          '<button class="btn ghost sm" ' + (d.page >= d.last_page ? 'disabled' : '') + ' id="cuNext">Next ›</button>' +
+        '</div>' +
+      '</div></div>';
+
+    cuBindList();
+  }
+
+  function cuKpi(label, value, sub){
+    return '<div class="card pad"><div style="font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em">' +
+      sesc(label) + '</div><div style="font-size:21px;font-weight:700;margin-top:6px">' + value +
+      '</div><div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">' + sesc(sub || '') + '</div></div>';
+  }
+
+  function cuAdvCount(){
+    var n = 0;
+    if(CU.spendMin !== '' || CU.spendMax !== '') n++;
+    if(CU.from || CU.to) n++;
+    if(CU.country) n++;
+    if(CU.city) n++;
+    return n;
+  }
+
+  function cuColsPanel(){
+    return '<div class="card pad" style="margin-bottom:14px">' +
+      '<b style="font-size:12.5px">Columns</b>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:11px">' +
+      CU_COLDEF.map(function(c){
+        return '<label class="row" style="gap:8px;font-size:12.5px;cursor:pointer">' +
+          '<span class="cbx' + (cuCols()[c[0]] ? ' on' : '') + '" data-cucol="' + c[0] + '">' + ic(I.check) + '</span> ' + sesc(c[1]) + '</label>';
+      }).join('') +
+      '</div><div style="margin-top:14px"><button class="btn ghost sm" id="cuColsReset">Reset to default</button></div></div>';
+  }
+
+  function cuAdvPanel(d){
+    var band = CU_BANDS.filter(function(b){ return b[0] === CU.spendMin && b[1] === CU.spendMax; })[0];
+    return '<div class="card pad" style="margin-bottom:12px">' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">' +
+        '<div class="fld" style="margin:0"><label>Lifetime spend</label><select id="cuBand">' +
+          CU_BANDS.map(function(b){ return '<option value="' + b[0] + '|' + b[1] + '"' + (band && band[2] === b[2] ? ' selected' : '') + '>' + sesc(b[2]) + '</option>'; }).join('') +
+          (band ? '' : '<option value="custom" selected>Custom range</option>') +
+        '</select></div>' +
+        '<div class="fld" style="margin:0"><label>Spend from (AED)</label><input id="cuSpendMin" type="number" min="0" step="1" value="' + sesc(CU.spendMin) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Spend to (AED)</label><input id="cuSpendMax" type="number" min="0" step="1" value="' + sesc(CU.spendMax) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Registered from</label><input id="cuFrom" type="date" value="' + sesc(CU.from) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Registered to</label><input id="cuTo" type="date" value="' + sesc(CU.to) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Country</label><select id="cuCountry"><option value="">Any country</option>' +
+          (d.countries || []).map(function(c){ return '<option value="' + sesc(c) + '"' + (CU.country === c ? ' selected' : '') + '>' + sesc(c) + '</option>'; }).join('') +
+        '</select></div>' +
+        '<div class="fld" style="margin:0"><label>City</label><input id="cuCity" value="' + sesc(CU.city) + '" placeholder="any city"></div>' +
+      '</div>' +
+      '<div class="row" style="margin-top:14px;gap:8px"><button class="btn sm" id="cuApply">Apply filters</button>' +
+      '<button class="btn ghost sm" id="cuClearFilters">Clear all</button>' +
+      '<span style="font-size:11.5px;color:var(--ink-soft)">Registration dates leave out customers imported without one.</span></div></div>';
+  }
+
+  function cuTable(d, cols){
+    if(!d.customers.length){
+      return '<p style="padding:34px;text-align:center;color:var(--ink-soft);font-size:13px">No customers match this view.' +
+        (cuAdvCount() || CU.search || CU.filter !== 'all' ? ' <button class="btn ghost sm" id="cuEmptyClear" style="margin-left:8px">Clear filters</button>' : '') + '</p>';
+    }
+
+    var allOnPage = d.customers.every(function(c){ return CU.sel[c.id]; });
+
+    var head = '<thead><tr>' +
+      '<th style="width:36px"><span class="cbx' + (allOnPage ? ' on' : '') + '" id="cuAll">' + ic(I.check) + '</span></th>' +
+      '<th>' + cuHeadSort('name', 'Customer') + '</th>' +
+      cols.map(function(c){
+        var right = ['orders', 'spend', 'aov'].indexOf(c[0]) >= 0;
+        var inner = CU_COLSORT[c[0]] ? cuHeadSort(CU_COLSORT[c[0]], c[1]) : (c[0] === 'registered' ? cuHeadSort('newest', c[1]) : sesc(c[1]));
+        return '<th style="white-space:nowrap' + (right ? ';text-align:right' : '') + '">' + inner + '</th>';
+      }).join('') +
+      '<th></th></tr></thead>';
+
+    var body = '<tbody>' + d.customers.map(function(c){
+      return '<tr' + (c.trashed ? ' style="opacity:.62"' : '') + '>' +
+        '<td><span class="cbx' + (CU.sel[c.id] ? ' on' : '') + '" data-cusel="' + c.id + '">' + ic(I.check) + '</span></td>' +
+        '<td><div class="row" style="min-width:0">' +
+          '<span class="pthumb" style="background:' + sesc(tcol(cuLabel(c))) + ';width:32px;height:32px;font-size:10px">' + sesc(initials(cuLabel(c))) + '</span>' +
+          '<div style="min-width:0"><div class="pname" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px">' +
+            (c.name ? sesc(c.name) : '<span style="color:var(--ink-faint)">No name on record</span>') +
+            (c.trashed ? ' <span class="pill grey">Trashed</span>' : '') + '</div>' +
+          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px">' + sesc(c.email) + '</div></div></div></td>' +
+        cols.map(function(col){ return cuCell(col[0], c); }).join('') +
+        '<td style="white-space:nowrap">' + (c.trashed
+          ? '<button class="btn ghost sm" data-curestore="' + c.id + '">Restore</button>'
+          : '<button class="btn ghost sm" data-cuview="' + c.id + '">View</button>') + '</td>' +
+      '</tr>';
+    }).join('') + '</tbody>';
+
+    return '<table style="min-width:760px">' + head + body + '</table>';
+  }
+
+  function cuHeadSort(sort, label){
+    var on = CU.sort === sort;
+    return '<button data-cusort="' + sesc(sort) + '" style="font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;' +
+      (on ? 'color:var(--accent-ink)' : '') + '">' + sesc(label) + (on ? ' ▾' : '') + '</button>';
+  }
+
+  function cuCell(key, c){
+    switch(key){
+      case 'contact': return '<td style="white-space:nowrap">' + cuDash(c.phone) + '</td>';
+      case 'type': return '<td style="white-space:nowrap">' + cuTypePill(c) + '</td>';
+      case 'orders': return '<td style="text-align:right">' + c.orders +
+        (c.orders_all > c.orders ? '<div class="pbrand">' + c.orders_all + ' incl. cancelled</div>' : '') + '</td>';
+      case 'spend': return '<td class="price" style="text-align:right;white-space:nowrap"><b>' + sesc(c.spend_display) + '</b></td>';
+      case 'aov': return '<td style="text-align:right;white-space:nowrap;color:var(--ink-2)">' + (c.orders ? sesc(c.aov_display) : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
+      case 'last_order': return '<td style="white-space:nowrap;font-size:12px">' + cuDate(c.last_order_at) +
+        (c.last_order_at ? '<div class="pbrand">' + sesc(cuAgo(c.last_order_at)) + '</div>' : '') + '</td>';
+      case 'last_active': return '<td style="white-space:nowrap;font-size:12px">' + cuDate(c.last_active_at) +
+        (c.last_active_at ? '<div class="pbrand">' + sesc(cuAgo(c.last_active_at)) + '</div>' : '') + '</td>';
+      case 'location': return '<td style="white-space:nowrap;font-size:12px">' + cuDash(c.country) +
+        (c.city ? '<div class="pbrand">' + sesc(c.city) + '</div>' : '') + '</td>';
+      case 'registered': return '<td style="white-space:nowrap;font-size:12px">' + cuDate(c.registered_at) + '</td>';
+      case 'wp': return '<td style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--ink-soft)">' + cuDash(c.wp_user_id) + '</td>';
+      default: return '<td></td>';
+    }
+  }
+
+  function cuBindList(){
+    var $$$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+    var byId = function(id){ return document.getElementById(id); };
+
+    var searchT;
+    var searchEl = byId('cuSearch');
+    if(searchEl) searchEl.oninput = function(e){
+      clearTimeout(searchT);
+      var v = e.target.value;
+      searchT = setTimeout(function(){ CU.search = v; CU.page = 1; cuLoad(); }, 300);
+    };
+
+    var sortEl = byId('cuSort');
+    if(sortEl) sortEl.onchange = function(e){ CU.sort = e.target.value; CU.page = 1; cuLoad(); };
+
+    $$$('#content [data-cusort]').forEach(function(b){
+      b.onclick = function(){ CU.sort = b.dataset.cusort; CU.page = 1; cuLoad(); };
+    });
+
+    $$$('#content .chip[data-cuf]').forEach(function(b){
+      b.onclick = function(){ CU.filter = b.dataset.cuf; CU.page = 1; CU.sel = {}; cuLoad(); };
+    });
+
+    var adv = byId('cuAdv');
+    if(adv) adv.onclick = function(){ CU.adv = !CU.adv; cuPaint(); };
+
+    var colsBtn = byId('cuColsBtn');
+    if(colsBtn) colsBtn.onclick = function(){ CU.colsOpen = !CU.colsOpen; cuPaint(); };
+
+    $$$('#content .cbx[data-cucol]').forEach(function(b){
+      b.onclick = function(){ var k = b.dataset.cucol; CU.cols[k] = !CU.cols[k]; cuSaveCols(); cuPaint(); };
+    });
+    var colsReset = byId('cuColsReset');
+    if(colsReset) colsReset.onclick = function(){ CU.cols = Object.assign({}, CU_COLS_DEFAULT); cuSaveCols(); cuPaint(); };
+
+    var band = byId('cuBand');
+    if(band) band.onchange = function(e){
+      if(e.target.value === 'custom') return;
+      var parts = e.target.value.split('|');
+      CU.spendMin = parts[0]; CU.spendMax = parts[1]; CU.page = 1; cuLoad();
+    };
+
+    var apply = byId('cuApply');
+    if(apply) apply.onclick = function(){
+      CU.spendMin = (byId('cuSpendMin') || {}).value || '';
+      CU.spendMax = (byId('cuSpendMax') || {}).value || '';
+      CU.from = (byId('cuFrom') || {}).value || '';
+      CU.to = (byId('cuTo') || {}).value || '';
+      CU.country = (byId('cuCountry') || {}).value || '';
+      CU.city = (byId('cuCity') || {}).value || '';
+      CU.page = 1; cuLoad();
+    };
+
+    var clearAll = function(){
+      CU.spendMin = ''; CU.spendMax = ''; CU.from = ''; CU.to = '';
+      CU.country = ''; CU.city = ''; CU.search = ''; CU.filter = 'all';
+      CU.page = 1; cuLoad();
+    };
+    var clearBtn = byId('cuClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
+    var emptyClear = byId('cuEmptyClear'); if(emptyClear) emptyClear.onclick = clearAll;
+
+    var perPage = byId('cuPerPage');
+    if(perPage) perPage.onchange = function(e){
+      CU.perPage = +e.target.value;
+      try{ localStorage.setItem('kbb_cust_pp', CU.perPage); }catch(err){}
+      CU.page = 1; cuLoad();
+    };
+
+    var prev = byId('cuPrev'); if(prev) prev.onclick = function(){ if(CU.data.page > 1){ CU.page = CU.data.page - 1; cuLoad(); } };
+    var next = byId('cuNext'); if(next) next.onclick = function(){ if(CU.data.page < CU.data.last_page){ CU.page = CU.data.page + 1; cuLoad(); } };
+
+    $$$('#content [data-cusel]').forEach(function(b){
+      b.onclick = function(){ var id = b.dataset.cusel; CU.sel[id] = !CU.sel[id]; cuPaint(); };
+    });
+    var all = byId('cuAll');
+    if(all) all.onclick = function(){
+      var on = !CU.data.customers.every(function(c){ return CU.sel[c.id]; });
+      CU.data.customers.forEach(function(c){ CU.sel[c.id] = on; });
+      cuPaint();
+    };
+    var clearSel = byId('cuClearSel'); if(clearSel) clearSel.onclick = function(){ CU.sel = {}; cuPaint(); };
+
+    var bulk = byId('cuBulkDelete');
+    if(bulk) bulk.onclick = function(){
+      var ids = Object.keys(CU.sel).filter(function(k){ return CU.sel[k]; }).map(Number);
+      cuConfirmDelete(ids, null);
+    };
+
+    $$$('#content [data-cuview]').forEach(function(b){
+      b.onclick = function(){ cuDetail(+b.dataset.cuview); };
+    });
+    $$$('#content [data-curestore]').forEach(function(b){
+      b.onclick = async function(){
+        try{
+          await api('/admin-api/customers/' + (+b.dataset.curestore) + '/restore', {method:'POST'});
+          cuToast('Customer restored'); cuLoad();
+        }catch(e){ cuToast('Could not restore this customer'); }
+      };
+    });
+
+    var exportBtn = byId('cuExport');
+    if(exportBtn) exportBtn.onclick = function(){
+      /* A normal navigation, not a fetch: the browser carries the same admin
+         session cookie, the server refuses anyone without it, and the file
+         lands in Downloads instead of in memory. */
+      var qs = cuParams(true);
+      window.location.href = fixAdminApiUrl('/admin-api/customers/export') + (qs ? '?' + qs : '');
+    };
+  }
+
+  /* -------- destructive actions: always a dialog, sometimes two -------- */
+
+  /**
+   * Nothing is deleted on a click. The first dialog says what will happen; the
+   * server then refuses anyone with order history and reports how much history
+   * there is, and only a second, explicit confirmation carrying force=1 goes
+   * through. Trashing is a soft delete either way — the customer and every
+   * order they placed are still in the database and Restore brings them back.
+   */
+  function cuConfirmDelete(ids, label){
+    if(!ids.length) return;
+    var what = ids.length === 1 ? (label ? sesc(label) : 'this customer') : (ids.length + ' customers');
+
+    openModal('<div class="modal-h"><b>Move to trash</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Move ' + what + ' to the trash?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Nothing is destroyed. The record is hidden from this list, every order they placed stays exactly where it is, and you can restore them from the Trash filter at any time.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="cuDelYes">Move to trash</button></div></div>');
+
+    var yes = document.getElementById('cuDelYes');
+    if(yes) yes.onclick = function(){ cuRunDelete(ids, false); };
+  }
+
+  async function cuRunDelete(ids, force){
+    closeModal();
+    try{
+      if(ids.length === 1){
+        var res = await fetch(fixAdminApiUrl('/admin-api/customers/' + ids[0] + (force ? '?force=1' : '')), {
+          method: 'DELETE', credentials: 'same-origin',
+          headers: {'X-XSRF-TOKEN': cookie('XSRF-TOKEN'), Accept: 'application/json'}
+        });
+        var body = await res.json();
+        if(res.status === 409 && body.needs_confirmation){ cuConfirmHistory(ids, body); return; }
+        if(!res.ok) throw new Error('failed');
+        cuToast('Moved to trash');
+      }else{
+        var out = await api('/admin-api/customers/bulk-delete', {
+          method: 'POST', body: JSON.stringify({ids: ids, force: !!force})
+        });
+        if(out.skipped && out.skipped.length){ cuConfirmSkipped(ids, out); return; }
+        cuToast(out.deleted + ' customer' + (out.deleted === 1 ? '' : 's') + ' moved to trash');
+      }
+      CU.sel = {}; cuLoad();
+    }catch(e){
+      cuToast('Could not complete that — nothing was changed');
+    }
+  }
+
+  function cuConfirmHistory(ids, body){
+    openModal('<div class="modal-h"><b>This customer has order history</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">They have <b>' + body.orders + '</b> order' + (body.orders === 1 ? '' : 's') +
+      ' worth <b>' + sesc(body.spend_display || '') + '</b>. Nothing has been deleted.</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Trashing them hides the customer from this list. The orders themselves are untouched and your revenue figures do not change.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Keep this customer</button>' +
+      '<button class="btn" style="background:var(--red)" id="cuDelForce">Trash anyway</button></div></div>');
+    var force = document.getElementById('cuDelForce');
+    if(force) force.onclick = function(){ cuRunDelete(ids, true); };
+  }
+
+  function cuConfirmSkipped(ids, out){
+    openModal('<div class="modal-h"><b>Some customers have order history</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)"><b>' + out.deleted + '</b> moved to trash. <b>' + out.skipped.length +
+      '</b> left alone because ' + (out.skipped.length === 1 ? 'they have' : 'they have') + ' orders:</p>' +
+      '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+      out.skipped.slice(0, 12).map(function(s){ return '<li>' + sesc(s.label) + ' — ' + s.orders + ' order' + (s.orders === 1 ? '' : 's') + '</li>'; }).join('') +
+      (out.skipped.length > 12 ? '<li>and ' + (out.skipped.length - 12) + ' more</li>' : '') + '</ul>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Leave them</button>' +
+      '<button class="btn" style="background:var(--red)" id="cuBulkForce">Trash those too</button></div></div>');
+    var force = document.getElementById('cuBulkForce');
+    if(force) force.onclick = function(){
+      cuRunDelete(out.skipped.map(function(s){ return s.id; }), true);
+    };
+  }
+
+  /* ------------------------------ one customer ------------------------------ */
+
+  async function cuDetail(id){
+    var el = document.querySelector('#content');
+    el.innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading customer…</p></div>';
+
+    var d;
+    try{ d = await api('/admin-api/customers/' + id); }
+    catch(e){
+      el.innerHTML = '<div class="wrap"><p style="padding:40px;color:var(--red)">Could not load this customer.</p>' +
+        '<button class="btn ghost sm" id="cuBack">‹ Back to customers</button></div>';
+      var b0 = document.getElementById('cuBack'); if(b0) b0.onclick = function(){ window.renderCustomers(); };
+      return;
+    }
+
+    var c = d.customer;
+
+    el.innerHTML = '<div class="wrap">' +
+      '<div class="between" style="margin-bottom:14px;flex-wrap:wrap;gap:10px">' +
+        '<button class="btn ghost sm" id="cuBack">‹ All customers</button>' +
+        (c.trashed ? '<button class="btn ghost sm" id="cuRestore">Restore this customer</button>'
+                   : '<button class="btn ghost sm" style="color:var(--red)" id="cuTrash">Move to trash</button>') +
+      '</div>' +
+
+      '<div class="card pad" style="margin-bottom:14px">' +
+        '<div class="row" style="gap:14px;flex-wrap:wrap">' +
+          '<span class="pthumb" style="background:' + sesc(tcol(cuLabel(c))) + ';width:52px;height:52px;font-size:15px">' + sesc(initials(cuLabel(c))) + '</span>' +
+          '<div style="min-width:0;flex:1">' +
+            '<div style="font-size:18px;font-weight:700">' + (c.name ? sesc(c.name) : 'No name on record') + '</div>' +
+            '<div style="font-size:12.5px;color:var(--ink-soft);margin-top:2px">' + sesc(c.email) + (c.phone ? ' · ' + sesc(c.phone) : '') + '</div>' +
+            '<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">' + cuTypePill(c) +
+              (c.whatsapp_optin ? ' <span class="pill green">WhatsApp opt-in</span>' : '') +
+              (c.wp_user_id ? ' <span class="pill grey">Woo user #' + c.wp_user_id + '</span>' : '') +
+              (c.trashed ? ' <span class="pill red">In the trash</span>' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="kpis" style="margin-bottom:14px">' +
+        cuKpi('Lifetime value', sesc(c.spend_display), 'paid and fulfilled orders') +
+        cuKpi('Orders', String(c.orders), c.orders_all > c.orders ? (c.orders_all + ' including cancelled') : 'all counted') +
+        cuKpi('Average order', c.orders ? sesc(c.aov_display) : '—', 'across those orders') +
+        cuKpi('Last order', c.last_order_at ? cuAgo(c.last_order_at) : 'never', c.last_active_at ? ('last seen ' + cuAgo(c.last_active_at)) : '') +
+      '</div>' +
+
+      '<div class="card pad" style="margin-bottom:14px">' +
+        '<b style="font-size:13px">Account</b>' +
+        '<div class="g2" style="margin-top:12px">' +
+          cuField('Registered', c.registered_at ? cuDate(c.registered_at) : '<span style="color:var(--ink-faint)">Not recorded — typical of an imported customer</span>') +
+          cuField('Last activity', c.last_active_at ? (cuDate(c.last_active_at) + ' · ' + sesc(cuAgo(c.last_active_at))) : '<span style="color:var(--ink-faint)">—</span>') +
+          cuField('Sign-in', c.account_type === 'account' ? 'Has a password and can sign in' : 'Guest — checked out without an account') +
+          cuField('Email verified', c.email_verified ? 'Yes' : 'No') +
+          cuField('WooCommerce user ID', c.wp_user_id ? String(c.wp_user_id) : '<span style="color:var(--ink-faint)">Not imported — created on this store</span>') +
+          cuField('Customer ID', String(c.id)) +
+        '</div>' +
+      '</div>' +
+
+      '<div class="card pad" style="margin-bottom:14px">' +
+        '<b style="font-size:13px">Private note</b>' +
+        '<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 10px">Only you see this. The customer never does.</p>' +
+        '<div class="fld" style="margin:0"><textarea id="cuNote" placeholder="Anything worth remembering about this customer…">' + sesc(c.notes || '') + '</textarea></div>' +
+        '<div style="margin-top:10px"><button class="btn sm" id="cuNoteSave">Save note</button></div>' +
+      '</div>' +
+
+      '<div class="card" style="margin-bottom:14px;overflow:auto">' +
+        // Not class="pad": that rule is .card.pad, so it does nothing on a
+        // child element and the heading sat flush against the card edge.
+        '<div style="padding:20px 20px 0"><b style="font-size:13px">Orders</b></div>' +
+        (d.orders.length ?
+          '<table style="min-width:620px;margin-top:10px"><thead><tr><th>Order</th><th>Status</th><th style="text-align:right">Total</th><th>Payment</th><th>Placed</th></tr></thead><tbody>' +
+          d.orders.map(function(o){
+            return '<tr><td><b>' + sesc(o.order_number) + '</b>' + (o.wc_order_id ? '<div class="pbrand">Woo #' + o.wc_order_id + '</div>' : '') + '</td>' +
+              '<td>' + statusPill(o.status) + '</td>' +
+              '<td class="price" style="text-align:right;white-space:nowrap"><b>' + sesc(o.total_display) + '</b>' +
+              (o.counts_as_spend ? '' : '<div class="pbrand">not counted</div>') + '</td>' +
+              '<td style="font-size:12px">' + sesc(o.payment) + '</td>' +
+              '<td style="font-size:12px;white-space:nowrap">' + cuDate(o.placed_at) + '</td></tr>';
+          }).join('') + '</tbody></table>'
+          : '<p style="padding:24px;color:var(--ink-soft);font-size:13px">No orders yet.</p>') +
+      '</div>' +
+
+      '<div class="card pad">' +
+        '<b style="font-size:13px">Addresses</b>' +
+        (d.addresses.length ?
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px">' +
+          d.addresses.map(function(a){
+            return '<div style="border:1px solid var(--border);border-radius:12px;padding:12px">' +
+              '<div class="row" style="gap:6px"><span class="pill grey">' + sesc(a.type) + '</span>' +
+              (a.is_default ? '<span class="pill blue">Default</span>' : '') + '</div>' +
+              '<div style="font-size:12.5px;color:var(--ink-2);margin-top:8px;line-height:1.7">' +
+              [a.name, a.company, a.line1, a.line2, [a.city, a.state].filter(Boolean).join(', '), a.postcode, a.country, a.phone]
+                .filter(function(x){ return x; }).map(function(x){ return sesc(x); }).join('<br>') +
+              '</div></div>';
+          }).join('') + '</div>'
+          : '<p style="font-size:13px;color:var(--ink-soft);margin-top:10px">No saved addresses. A guest checkout does not always leave one.</p>') +
+      '</div></div>';
+
+    var back = document.getElementById('cuBack');
+    if(back) back.onclick = function(){ window.renderCustomers(); };
+
+    var trash = document.getElementById('cuTrash');
+    if(trash) trash.onclick = function(){ cuConfirmDelete([c.id], cuLabel(c)); };
+
+    var restore = document.getElementById('cuRestore');
+    if(restore) restore.onclick = async function(){
+      try{ await api('/admin-api/customers/' + c.id + '/restore', {method:'POST'}); cuToast('Customer restored'); cuDetail(c.id); }
+      catch(e){ cuToast('Could not restore this customer'); }
+    };
+
+    var saveNote = document.getElementById('cuNoteSave');
+    if(saveNote) saveNote.onclick = async function(){
+      var box = document.getElementById('cuNote');
+      try{
+        await api('/admin-api/customers/' + c.id + '/note', {method:'POST', body: JSON.stringify({notes: box ? box.value : ''})});
+        cuToast('Note saved');
+      }catch(e){ cuToast('Could not save the note'); }
+    };
+  }
+
+  function cuField(label, value){
+    return '<div class="fld" style="margin:0"><label>' + sesc(label) + '</label>' +
+      '<div style="font-size:12.5px;color:var(--ink-2);padding-top:2px">' + value + '</div></div>';
+  }
+
+  /* window.go, further down, calls this local name; the window-level function
+     above is what it delegates to, so the screen can be replaced or tested
+     without reaching inside this closure. */
+  function renderCustomers(){ return window.renderCustomers(); }
+
+  /* A bookmark straight to this screen — /admin?go=customers, or #customers.
+     That navigation is performed by the boot block at the end of the FIRST
+     script in this document, which runs before this one exists, so go() lands
+     on its fallback and draws the dashboard. Nothing has painted yet at this
+     point in parsing, so re-rendering here is not a flicker: it is the first
+     thing the browser draws. */
+  if(typeof cur !== 'undefined' && cur === 'customers'){ window.renderCustomers(); }
+  /* ===== LANE T · Store · Customers — END ===== */
 
   /* ---------- Quiz Leads screen (new) ---------- */
   var LEADS=[], leadFilter='all';
@@ -6869,8 +9983,8 @@ buildNav();
       '<div class="chips" style="margin:12px 0 14px">'+[['all','All \u00b7 '+LEADS.length],['expert','Expert requests \u00b7 '+expertN]].map(function(c){return '<button class="chip'+(leadFilter===c[0]?' on':'')+'" data-lf="'+c[0]+'">'+c[1]+'</button>';}).join('')+'</div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Lead</th><th>Skin type</th><th>Concerns</th><th>Recommended</th><th>Expert</th><th>Date</th></tr></thead><tbody>'+
       (list.length? list.map(function(l){
-        return '<tr><td><div class="pname">'+(l.name||'Anonymous')+'</div><div class="pbrand">'+(l.email||l.phone||'')+'</div></td>'+
-          '<td>'+(l.skin_type||'\u2014')+'</td>'+
+        return '<tr><td><div class="pname">'+sesc((l.name||'Anonymous'))+'</div><div class="pbrand">'+sesc((l.email||l.phone||''))+'</div></td>'+
+          '<td>'+sesc((l.skin_type||'\u2014'))+'</td>'+
           '<td>'+(l.concerns&&l.concerns.length? l.concerns.map(function(x){return '<span class="tagchip" style="font-size:10px">'+x+'</span>';}).join(' ') : '\u2014')+'</td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(l.recommended&&l.recommended.length? l.recommended.join(', ') : '\u2014')+'</td>'+
           '<td>'+(l.expert? '<span class="pill amber"><span class="d"></span>Requested</span>':'<span class="pill grey">\u2014</span>')+'</td>'+
@@ -7109,9 +10223,9 @@ buildNav();
       '<div class="card" style="overflow:auto"><table><thead><tr><th style="width:30px"></th><th>Product</th><th>Author</th><th>Review</th><th>Status</th><th></th></tr></thead><tbody>'+
       (REV.length? REV.map(function(r){
         return '<tr><td><span class="cbx'+(revSel.has(r.id)?' on':'')+'" data-rsel="'+r.id+'">'+ic(I.check)+'</span></td>'+
-          '<td style="font-size:12px">'+r.product+'</td>'+
-          '<td><div class="pname">'+r.author+(r.verified?' <span class="pill green" style="font-size:9px;padding:1px 6px">Verified</span>':'')+'</div>'+revStars(r.rating)+'</td>'+
-          '<td style="max-width:320px"><b style="font-size:12.5px">'+(r.title||'')+'</b><div class="pbrand" style="white-space:normal">'+(r.body||'').slice(0,140)+((r.body||'').length>140?'\u2026':'')+'</div>'+(r.reply?('<div style="margin-top:5px;font-size:11.5px;color:var(--accent-strong)">\u21b3 '+r.reply.slice(0,120)+'</div>'):'')+'</td>'+
+          '<td style="font-size:12px">'+sesc(r.product)+'</td>'+
+          '<td><div class="pname">'+sesc(r.author)+(r.verified?' <span class="pill green" style="font-size:9px;padding:1px 6px">Verified</span>':'')+'</div>'+revStars(r.rating)+'</td>'+
+          '<td style="max-width:320px"><b style="font-size:12.5px">'+sesc((r.title||''))+'</b><div class="pbrand" style="white-space:normal">'+sesc((r.body||'').slice(0,140))+((r.body||'').length>140?'\u2026':'')+'</div>'+(r.reply?('<div style="margin-top:5px;font-size:11.5px;color:var(--accent-strong)">\u21b3 '+r.reply.slice(0,120)+'</div>'):'')+'</td>'+
           '<td>'+revStatusPill(r.status)+'</td>'+
           '<td><div class="row" style="gap:5px">'+
             (r.status!=='approved'?'<button class="btn ghost sm" data-rapp="'+r.id+'">Approve</button>':'')+
@@ -7133,9 +10247,9 @@ buildNav();
   async function bulkModerate(action){ var ids=Array.prototype.slice.call(revSel); if(!ids.length)return; try{ await api('/admin-api/reviews/bulk',{method:'POST',body:JSON.stringify({action:action,ids:ids})}); toast(action+'d '+ids.length); revSel.clear(); renderReviews(); }catch(e){ toast('Bulk action failed'); } }
   function replyReview(id){
     var r=REV.filter(function(x){return x.id===id;})[0]; if(!r)return;
-    openModal('<div class="modal-h"><b>Reply to '+r.author+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
-      '<div class="modal-b"><div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">'+revStars(r.rating)+' \u00b7 '+(r.title||'')+'</div>'+
-      '<textarea class="inp" id="revReplyTxt" style="width:100%;min-height:96px" placeholder="Public reply shown under the review\u2026">'+(r.reply||'')+'</textarea>'+
+    openModal('<div class="modal-h"><b>Reply to '+sesc(r.author)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
+      '<div class="modal-b"><div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">'+revStars(r.rating)+' \u00b7 '+sesc(r.title||'')+'</div>'+
+      '<textarea class="inp" id="revReplyTxt" style="width:100%;min-height:96px" placeholder="Public reply shown under the review\u2026">'+sesc((r.reply||''))+'</textarea>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="revReplySave">Save reply</button></div></div>');
     document.getElementById('revReplySave').onclick=async function(){
       var txt=document.getElementById('revReplyTxt').value;
@@ -7156,7 +10270,7 @@ buildNav();
     var sb=a.status_breakdown||{};
     var statusHtml=Object.keys(sb).map(function(k){ var m={completed:'green',processing:'amber',onhold:'amber',pending:'grey',cancelled:'red',refunded:'red',failed:'red'}[k]||'grey'; return '<span class="pill '+m+'" style="margin:2px"><span class="d"></span>'+k+': '+sb[k]+'</span>'; }).join('');
     var tp=a.top_products||[];
-    var rows=tp.length? tp.map(function(p){ return '<tr><td><div class="pname">'+p.name+'</div><div class="pbrand">'+(p.brand||'')+'</div></td><td>'+p.units+'</td><td class="price"><b>AED '+p.revenue_aed.toLocaleString()+'</b></td></tr>'; }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--ink-soft);padding:24px">No sales yet.</td></tr>';
+    var rows=tp.length? tp.map(function(p){ return '<tr><td><div class="pname">'+sesc(p.name)+'</div><div class="pbrand">'+sesc((p.brand||''))+'</div></td><td>'+p.units+'</td><td class="price"><b>AED '+p.revenue_aed.toLocaleString()+'</b></td></tr>'; }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--ink-soft);padding:24px">No sales yet.</td></tr>';
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Analytics</h2><p>Sales performance from real orders. Revenue counts processing, on-hold and completed orders.</p></div>'+
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">'+
@@ -7184,8 +10298,8 @@ buildNav();
       '<button class="btn" id="usr_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add user</button></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Added</th><th></th></tr></thead><tbody>'+
       (ADMINS.length? ADMINS.map(function(u){
-        return '<tr><td><div class="row"><span class="pthumb" style="background:'+tcol(u.name||u.email)+';width:30px;height:30px;font-size:10px">'+initials(u.name||u.email)+'</span><b style="font-size:12.5px">'+(u.name||'\u2014')+(u.is_self?' <span class="pbrand" style="display:inline">(you)</span>':'')+'</b></div></td>'+
-          '<td style="font-size:12px">'+u.email+'</td>'+
+        return '<tr><td><div class="row"><span class="pthumb" style="background:'+sesc(tcol(u.name||u.email))+';width:30px;height:30px;font-size:10px">'+sesc(initials(u.name||u.email))+'</span><b style="font-size:12.5px">'+sesc((u.name||'\u2014'))+(u.is_self?' <span class="pbrand" style="display:inline">(you)</span>':'')+'</b></div></td>'+
+          '<td style="font-size:12px">'+sesc(u.email)+'</td>'+
           '<td>'+roleBadge(u.role)+'</td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(u.created_at||'').slice(0,10)+'</td>'+
           '<td><div class="row" style="gap:5px"><button class="btn ghost sm" data-uedit="'+u.id+'">Edit</button>'+
@@ -7218,7 +10332,7 @@ buildNav();
   }
   function editUser(id){
     var u=ADMINS.filter(function(x){return x.id===id;})[0]; if(!u)return;
-    openModal('<div class="modal-h"><b>Edit '+(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
+    openModal('<div class="modal-h"><b>Edit '+sesc(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
       '<div class="modal-b"><div class="fld"><label>Name</label><input id="eu_name" value="'+sesc(u.name)+'"></div>'+
       '<div class="fld"><label>Role</label>'+roleSelect('eu_role',u.role)+'</div>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="eu_save">Save</button></div></div>');
@@ -7229,7 +10343,7 @@ buildNav();
   }
   function resetUserPassword(id){
     var u=ADMINS.filter(function(x){return x.id===id;})[0]; if(!u)return;
-    openModal('<div class="modal-h"><b>Reset password \u2014 '+(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
+    openModal('<div class="modal-h"><b>Reset password \u2014 '+sesc(u.name||u.email)+'</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
       '<div class="modal-b"><div class="fld"><label>New password</label><input id="rp_pass" type="text" placeholder="min 8 characters"></div>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" id="rp_save">Set password</button></div></div>');
     document.getElementById('rp_save').onclick=async function(){
@@ -7241,7 +10355,7 @@ buildNav();
   async function deleteUser(id){
     var u=ADMINS.filter(function(x){return x.id===id;})[0]; if(!u)return;
     openModal('<div class="modal-h"><b>Delete user</b><button class="x" onclick="closeModal()">\u2715</button></div>'+
-      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Remove <b>'+(u.name||u.email)+'</b>? This cannot be undone.</p>'+
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Remove <b>'+sesc((u.name||u.email))+'</b>? This cannot be undone.</p>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button><button class="btn" style="background:var(--danger,#d6455a)" id="du_yes">Delete</button></div></div>');
     document.getElementById('du_yes').onclick=async function(){
       try{ await api('/admin-api/users/'+id,{method:'DELETE'}); toast('User deleted'); closeModal(); renderUsers(); }
@@ -7256,26 +10370,63 @@ buildNav();
   function money2aed(k){ var v=SETTINGS[k]; return (v==null||v==='')?'':(parseInt(v,10)/100); }
   async function loadSettings(){ try{ var d=await api('/admin-api/settings'); SETTINGS=d.settings||{}; }catch(e){ SETTINGS={}; } return SETTINGS; }
 
+  /* The currency table, rendered from app/Support/Currencies.php so a symbol or
+     a decimal count is never restated here. Curated, not all ~135 Stripe
+     currencies — see the comment in that file. */
+@endverbatim
+  var KBB_CURRENCIES = @json(\App\Support\Currencies::forSelect());
+@verbatim
+  function curFind(code){ code=String(code||'').toUpperCase(); for(var i=0;i<KBB_CURRENCIES.length;i++){ if(KBB_CURRENCIES[i].code===code) return KBB_CURRENCIES[i]; } return null; }
+  function curSymbol(){ var s=SETTINGS.currency_symbol; if(s!=null&&String(s).trim()!=='') return String(s); var c=curFind(SETTINGS.currency||'AED'); return c?c.symbol:''; }
+  function curSelect(){
+    var cur=String(SETTINGS.currency||'AED').toUpperCase(), seen=false;
+    var out=KBB_CURRENCIES.map(function(c){ if(c.code===cur) seen=true; return '<option value="'+sesc(c.code)+'"'+(c.code===cur?' selected':'')+'>'+sesc(c.code+' — '+c.name)+'</option>'; }).join('');
+    if(!seen&&cur) out='<option value="'+sesc(cur)+'" selected>'+sesc(cur)+'</option>'+out;
+    return '<select class="inp" id="set_currency" style="width:100%">'+out+'</select>';
+  }
+
   async function renderStoreSettings(){
     await loadSettings();
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Business Details</h2><p>Core store configuration. These values drive the storefront and checkout totals.</p></div>'+
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Store</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Store name</label><input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'"></div>'+
-      '<div class="fld"><label>Currency</label><input id="set_currency" value="'+sesc(SETTINGS.currency||'AED')+'"></div></div>'+
+      '<div class="fld"><label>Currency</label>'+curSelect()+'</div></div>'+
       '<div class="fld" style="max-width:220px"><label>VAT rate (%)</label><input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'"></div></div>'+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Currency display</b>'+
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">How prices are printed everywhere on the storefront. Choosing a currency above fills in its symbol and decimals — you can still override the symbol.</p>'+
+      '<div class="g2"><div class="fld"><label>Symbol</label><input id="set_currency_symbol" value="'+sesc(SETTINGS.currency_symbol)+'" placeholder="'+sesc(curSymbol())+'">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Leave blank to use the selected currency’s own symbol.</p></div>'+
+      '<div class="fld"><label>Symbol rendering</label>'+seoSel('set_currency_symbol_render',SETTINGS.currency_symbol_render,[['unicode','Unicode character — correct, may show an empty box'],['svg','Drawn glyph (SVG) — always renders']],'unicode')+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">The dirham sign “⃃” was accepted by Unicode in July 2025 and ships in Unicode 18.0 (September 2026), so most devices have no font glyph for it yet and draw an empty box instead. <b>Unicode</b> is the default because it puts the real character in the page — right for copy-paste, screen readers and search engines. If the empty box bothers you, switch to <b>Drawn glyph</b>: the storefront then draws the symbol itself and it always renders.</p></div></div>'+
+      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Symbol position</label>'+seoSel('set_currency_position',SETTINGS.currency_position,[['before','Before the number — '+sesc(curSymbol())+'199'],['before_space','Before, with a space — '+sesc(curSymbol())+' 199'],['after','After the number — 199'+sesc(curSymbol())],['after_space','After, with a space — 199 '+sesc(curSymbol())]],'before')+'</div>'+
+      '<div class="fld"><label>Decimal places</label><input id="set_currency_decimals" type="number" min="0" max="4" step="1" value="'+sesc(SETTINGS.currency_decimals)+'" placeholder="blank — whole numbers">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Drives both what is printed and how stored amounts are read back (2 = hundredths, which is how every amount already in the database is stored). Leave blank to keep the current whole-dirham display.</p></div></div></div>'+
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Shipping &amp; COD</b>'+
       '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">All amounts in AED. Free shipping applies when the cart subtotal reaches the threshold.</p>'+
       '<div class="g2"><div class="fld"><label>Free-shipping threshold (AED)</label><input id="set_free_ship" type="number" step="1" value="'+money2aed('free_ship')+'"></div>'+
       '<div class="fld"><label>Flat delivery fee (AED)</label><input id="set_delivery" type="number" step="1" value="'+money2aed('delivery_flat')+'"></div></div>'+
       '<div class="fld" style="max-width:220px"><label>COD fee (AED)</label><input id="set_cod" type="number" step="1" value="'+money2aed('cod_fee')+'"></div></div>'+
       '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_biz">Save changes</button></div></div>';
+    /* Picking a currency fills in its symbol and decimals; both stay editable. */
+    var curSel=document.getElementById('set_currency');
+    if(curSel) curSel.onchange=function(){
+      var c=curFind(curSel.value); if(!c) return;
+      var symEl=document.getElementById('set_currency_symbol'), decEl=document.getElementById('set_currency_decimals');
+      if(symEl){ symEl.value=c.symbol; symEl.placeholder=c.symbol; }
+      if(decEl) decEl.value=String(c.decimals);
+    };
     document.getElementById('set_save_biz').onclick=async function(){
       var payload={
         store_name: sval('set_store_name'), currency: sval('set_currency'), vat_rate: sval('set_vat'),
+        currency_symbol: sval('set_currency_symbol'),
+        currency_symbol_render: sval('set_currency_symbol_render'),
+        currency_position: sval('set_currency_position'),
+        currency_decimals: sval('set_currency_decimals'),
         free_ship: String(Math.round((parseFloat(sval('set_free_ship'))||0)*100)),
         delivery_flat: String(Math.round((parseFloat(sval('set_delivery'))||0)*100)),
         cod_fee: String(Math.round((parseFloat(sval('set_cod'))||0)*100))
+
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('Business details saved'); }
       catch(e){ toast('Save failed \u2014 check connection'); }
@@ -7283,11 +10434,78 @@ buildNav();
   }
 
   function seoSel(id,cur,opts,dflt){ cur=(cur==null||cur==='')?dflt:cur; return '<select class="inp" id="'+id+'" style="width:100%">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===cur?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'; }
+
+  /**
+   * A real upload widget — click-to-browse (or drag a file onto it) with a
+   * live preview — replacing a raw "paste a URL" text field so a
+   * non-technical store owner never has to know how to host an image
+   * somewhere else first. Falls back to a plain URL input underneath for
+   * anyone who already has one.
+   */
+  function imgUploadField(id,curUrl,label,folder){
+    var hasImg = curUrl && curUrl.trim()!=='';
+    return '<div class="fld"><label>'+label+'</label>'+
+      '<div class="imgup" id="'+id+'_zone" style="border:1.5px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;position:relative">'+
+      '<input type="file" id="'+id+'_file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" style="position:absolute;inset:0;opacity:0;cursor:pointer">'+
+      '<div id="'+id+'_preview" style="'+(hasImg?'':'display:none')+';margin-bottom:8px"><img src="'+sesc(curUrl)+'" style="max-height:70px;max-width:100%;border-radius:6px;display:'+(hasImg?'block':'none')+';margin:0 auto"></div>'+
+      '<div id="'+id+'_prompt" style="font-size:12px;color:var(--ink-soft)">'+(hasImg?'Click to replace':'Click to upload, or drag an image here')+'</div>'+
+      '<div id="'+id+'_status" style="font-size:11.5px;color:var(--ink-soft);margin-top:4px"></div>'+
+      '</div>'+
+      '<input type="hidden" id="'+id+'" value="'+sesc(curUrl)+'">'+
+      '<p class="description" style="margin:6px 0 0"><a href="#" id="'+id+'_manual" style="font-size:11.5px">or paste a URL directly</a></p>'+
+      '<input id="'+id+'_url" class="inp" style="display:none;margin-top:6px" value="'+sesc(curUrl)+'" placeholder="https://…"></div>';
+  }
+
+  function wireImgUpload(id,folder){
+    var zone=document.getElementById(id+'_zone'), fileInput=document.getElementById(id+'_file'),
+        hidden=document.getElementById(id), preview=document.getElementById(id+'_preview'),
+        img=preview?preview.querySelector('img'):null, prompt=document.getElementById(id+'_prompt'),
+        status=document.getElementById(id+'_status'), manualLink=document.getElementById(id+'_manual'),
+        urlInput=document.getElementById(id+'_url');
+    if(!zone) return;
+
+    async function doUpload(file){
+      if(!file) return;
+      status.textContent='Uploading…';
+      try{
+        var fd=new FormData(); fd.append('file',file); fd.append('folder',folder||'seo');
+        var res=await api('/admin-api/media/upload',{method:'POST',body:fd});
+        hidden.value=res.url; urlInput.value=res.url;
+        img.src=res.url; img.style.display='block'; preview.style.display='block';
+        prompt.textContent='Click to replace'; status.textContent='Uploaded';
+        setTimeout(function(){status.textContent='';},1800);
+      }catch(e){ status.textContent='Upload failed — check connection'; }
+    }
+
+    fileInput.onchange=function(){ doUpload(fileInput.files[0]); };
+    zone.ondragover=function(e){ e.preventDefault(); zone.style.borderColor='var(--accent)'; };
+    zone.ondragleave=function(){ zone.style.borderColor='var(--border)'; };
+    zone.ondrop=function(e){ e.preventDefault(); zone.style.borderColor='var(--border)'; if(e.dataTransfer.files[0]) doUpload(e.dataTransfer.files[0]); };
+    manualLink.onclick=function(e){
+      e.preventDefault();
+      urlInput.style.display = urlInput.style.display==='none' ? 'block' : 'none';
+    };
+    urlInput.oninput=function(){ hidden.value=urlInput.value; if(urlInput.value){ img.src=urlInput.value; img.style.display='block'; preview.style.display='block'; } };
+  }
+
+  let seoTab='settings';
+
   async function renderSeo(){
-    await loadSettings(); var S=SETTINGS;
-    var base=(location.origin||'');
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>SEO &amp; Meta</h2><p>Site-wide search-engine settings. These render into every storefront page\u2019s &lt;head&gt; and power the sitemap, robots.txt and structured data.</p></div>'+
+      '<div class="subtabs"><button class="subtab'+(seoTab==='settings'?' on':'')+'" data-st="settings">Settings</button><button class="subtab'+(seoTab==='redirects'?' on':'')+'" data-st="redirects">Redirects &amp; 404s</button><button class="subtab'+(seoTab==='schema'?' on':'')+'" data-st="schema">Schema Inspector</button><button class="subtab'+(seoTab==='audit'?' on':'')+'" data-st="audit">Catalogue Audit</button></div>'+
+      '<div id="seoTabBody"></div></div>';
+    $$('#content .subtab').forEach(function(b){ b.onclick=function(){ seoTab=b.dataset.st; renderSeo(); }; });
+    if(seoTab==='redirects') return renderSeoRedirects();
+    if(seoTab==='schema') return renderSchemaInspector();
+    if(seoTab==='audit') return renderCatalogueAudit();
+    return renderSeoSettings();
+  }
+
+  async function renderSeoSettings(){
+    await loadSettings(); var S=SETTINGS;
+    var base=(location.origin||'');
+    document.getElementById('seoTabBody').innerHTML =
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Search appearance</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Site URL (canonical base)</label><input id="seo_site_url" value="'+sesc(S.site_url)+'" placeholder="https://kbeautybliss.com"></div>'+
@@ -7301,26 +10519,61 @@ buildNav();
       '<div class="fld"><label>Follow links</label>'+seoSel('seo_robots_f',S.robots_follow,[['follow','Follow'],['nofollow','Nofollow']],'follow')+'</div></div></div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Social (Open Graph &amp; Twitter)</b>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Default share image URL (1200\u00d7630)</label><input id="seo_og_img" value="'+sesc(S.og_default_image)+'" placeholder="https://\u2026/og.jpg"></div>'+
+      '<p class="description" style="margin:4px 0 0">The share image and title/description below apply everywhere a link is shared \u2014 Facebook, LinkedIn, WhatsApp, Pinterest, iMessage \u2014 they all read the same Open Graph tags. Twitter/X alone uses its own separate card format, which is why it gets its own field just below.</p>'+
+      '<div class="g2" style="margin-top:12px">'+imgUploadField('seo_og_img',S.og_default_image,'Default share image (1200\u00d7630)','seo')+
       '<div class="fld"><label>Twitter / X handle</label><input id="seo_tw" value="'+sesc(S.twitter_handle)+'" placeholder="@kbeautybliss"></div></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Social profile links</b>'+
+      '<p class="description" style="margin:4px 0 0">Linked into your Organization schema below (as <code>sameAs</code>) so Google can confirm these are genuinely your official profiles \u2014 helps your Knowledge Panel and brand search results. Leave any blank you do not have.</p>'+
+      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Facebook</label><input id="seo_soc_fb" value="'+sesc(S.social_facebook)+'" placeholder="https://facebook.com/kbeautybliss"></div>'+
+      '<div class="fld"><label>Instagram</label><input id="seo_soc_ig" value="'+sesc(S.social_instagram)+'" placeholder="https://instagram.com/kbeautybliss"></div></div>'+
+      '<div class="g2"><div class="fld"><label>TikTok</label><input id="seo_soc_tt" value="'+sesc(S.social_tiktok)+'" placeholder="https://tiktok.com/@kbeautybliss"></div>'+
+      '<div class="fld"><label>Pinterest</label><input id="seo_soc_pin" value="'+sesc(S.social_pinterest)+'" placeholder="https://pinterest.com/kbeautybliss"></div></div>'+
+      '<div class="g2"><div class="fld"><label>LinkedIn</label><input id="seo_soc_li" value="'+sesc(S.social_linkedin)+'" placeholder="https://linkedin.com/company/kbeautybliss"></div>'+
+      '<div class="fld"><label>YouTube</label><input id="seo_soc_yt" value="'+sesc(S.social_youtube)+'" placeholder="https://youtube.com/@kbeautybliss"></div></div></div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Organization (schema.org)</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Organization name</label><input id="seo_org_name" value="'+sesc(S.org_name||S.store_name)+'"></div>'+
       '<div class="fld"><label>Type</label>'+seoSel('seo_org_type',S.org_type,[['Organization','Organization'],['OnlineStore','OnlineStore'],['Store','Store'],['LocalBusiness','LocalBusiness']],'Organization')+'</div></div>'+
-      '<div class="fld"><label>Logo URL</label><input id="seo_org_logo" value="'+sesc(S.org_logo)+'" placeholder="https://\u2026/logo.png"></div></div>'+
+      imgUploadField('seo_org_logo',S.org_logo,'Logo','seo')+'</div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Verification &amp; tracking</b>'+
       '<div class="g2" style="margin-top:12px"><div class="fld"><label>Google Search Console</label><input id="seo_gsv" value="'+sesc(S.google_site_verification)+'" placeholder="verification token"></div>'+
       '<div class="fld"><label>Bing Webmaster</label><input id="seo_bing" value="'+sesc(S.bing_site_verification)+'" placeholder="verification token"></div></div>'+
+      '<div class="g2"><div class="fld"><label>Pinterest</label><input id="seo_pin" value="'+sesc(S.pinterest_site_verification)+'" placeholder="verification token"></div>'+
+      '<div class="fld"><label>Baidu</label><input id="seo_baidu" value="'+sesc(S.baidu_site_verification)+'" placeholder="verification token"></div></div>'+
       '<div class="g2"><div class="fld"><label>Google Analytics ID</label><input id="seo_ga" value="'+sesc(S.ga)+'" placeholder="G-XXXXXXXXXX"></div>'+
       '<div class="fld"><label>Meta (Facebook) Pixel</label><input id="seo_pixel" value="'+sesc(S.meta_pixel)+'" placeholder="123456789012345"></div></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Merchant listing (rich product results)</b>'+
+      '<p class="description" style="margin:4px 0 12px">Adds brand, condition, shipping and return policy to every product schema \u2014 what actually unlocks price and star ratings showing directly in Google, and eligibility for AI Shopping. Off by default: wrong shipping or return terms going out to search engines is worse than none at all, so this only turns on once you have confirmed the numbers below are accurate.</p>'+
+      '<div class="fld"><label><span class="cbx'+(String(S.enable_merchant)==='1'?' on':'')+'" id="seo_merchant_cbx">'+ic(I.check)+'</span> Enable merchant listing on every product</label></div>'+
+      '<div class="g2" style="margin-top:10px"><div class="fld"><label>Condition</label>'+seoSel('seo_merch_cond',S.merchant_condition,[['NewCondition','New'],['UsedCondition','Used'],['RefurbishedCondition','Refurbished']],'NewCondition')+'</div>'+
+      '<div class="fld"><label>Ship-to country</label><input id="seo_merch_country" value="'+sesc(S.merchant_ship_country||'AE')+'" maxlength="2" style="max-width:100px;text-transform:uppercase"></div></div>'+
+      '<div class="g2"><div class="fld"><label>Shipping cost (AED)</label><input id="seo_merch_cost" type="number" step="0.01" value="'+sesc(S.merchant_ship_cost||'0')+'"></div>'+
+      '<div class="fld"><label>Free shipping over (AED, 0 = never)</label><input id="seo_merch_freeover" type="number" step="1" value="'+sesc(S.merchant_ship_free_over||'0')+'"></div></div>'+
+      '<div class="fld" style="margin-bottom:0;max-width:220px"><label>Return window (days, 0 = no policy shown)</label><input id="seo_merch_returndays" type="number" value="'+sesc(S.merchant_return_days||'0')+'"></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Search-engine support</b>'+
+      '<div class="fld" style="margin-top:12px"><label><span class="cbx'+(String(S.indexnow_on)==='1'?' on':'')+'" id="seo_indexnow_cbx">'+ic(I.check)+'</span> Instant indexing (IndexNow)</label>'+
+      '<p class="description" style="margin:6px 0 0">Auto-submits new/updated product and blog URLs to Bing, Yandex, Naver, Seznam &amp; Yep the moment they publish. Google is not part of IndexNow \u2014 it uses your sitemap instead.'+(String(S.indexnow_on)==='1'?(' Key file: <a href="'+base+'/'+sesc(S.indexnow_key||'')+'.txt" target="_blank">'+sesc(S.indexnow_key||'(generated on first use)')+'.txt \u2197</a>'):'')+'</p></div>'+
+      '<div class="fld"><label><span class="cbx'+(String(S.llms_enabled)!=='0'?' on':'')+'" id="seo_llms_cbx">'+ic(I.check)+'</span> Publish <a href="'+base+'/llms.txt" target="_blank">/llms.txt</a> for AI crawlers</label></div>'+
+      '<div class="fld" style="margin-bottom:0"><label><span class="cbx'+(String(S.crawl_clean)!=='0'?' on':'')+'" id="seo_crawlclean_cbx">'+ic(I.check)+'</span> Crawl-budget cleanup</label>'+
+      '<p class="description" style="margin:6px 0 0">Filtered and sorted views of the shop (by brand, price, in-stock, sort order) point their canonical tag back at the clean category URL, so search engines consolidate ranking signals there instead of treating every filter combination as a separate page. Paginated pages keep their own canonical \u2014 only filters and sort collapse, page 2 onward still index normally.</p></div></div>'+
 
       '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Sitemap &amp; robots</b>'+
       '<div class="row" style="gap:8px;margin:10px 0 12px"><a class="btn ghost sm" href="'+base+'/sitemap.xml" target="_blank">View sitemap.xml</a><a class="btn ghost sm" href="'+base+'/robots.txt" target="_blank">View robots.txt</a></div>'+
       '<div class="fld"><label>XML sitemap</label>'+seoSel('seo_sitemap',S.sitemap_enabled,[['1','Enabled'],['0','Disabled']],'1')+'</div>'+
       '<div class="fld" style="margin:0"><label>robots.txt (leave blank for the smart default)</label><textarea id="seo_robots_txt" class="inp" style="width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12px" placeholder="User-agent: *\nAllow: /">'+sesc(S.robots_txt)+'</textarea></div></div>'+
 
-      '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_seo">Save SEO settings</button></div></div>';
+      '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_seo">Save SEO settings</button></div>';
+
+    document.getElementById('seo_indexnow_cbx').onclick=function(){ this.classList.toggle('on'); };
+    document.getElementById('seo_llms_cbx').onclick=function(){ this.classList.toggle('on'); };
+    document.getElementById('seo_crawlclean_cbx').onclick=function(){ this.classList.toggle('on'); };
+    document.getElementById('seo_merchant_cbx').onclick=function(){ this.classList.toggle('on'); };
+    wireImgUpload('seo_og_img','seo');
+    wireImgUpload('seo_org_logo','seo');
 
     document.getElementById('set_save_seo').onclick=async function(){
       var payload={
@@ -7328,13 +10581,2145 @@ buildNav();
         seo_home_title:sval('seo_home_t'), seo_home_description:sval('seo_home_d'), seo_default_description:sval('seo_def_d'),
         robots_index:sval('seo_robots_i'), robots_follow:sval('seo_robots_f'),
         og_default_image:sval('seo_og_img'), twitter_handle:sval('seo_tw'),
+        social_facebook:sval('seo_soc_fb'), social_instagram:sval('seo_soc_ig'), social_tiktok:sval('seo_soc_tt'),
+        social_pinterest:sval('seo_soc_pin'), social_linkedin:sval('seo_soc_li'), social_youtube:sval('seo_soc_yt'),
         org_name:sval('seo_org_name'), org_type:sval('seo_org_type'), org_logo:sval('seo_org_logo'),
-        google_site_verification:sval('seo_gsv'), bing_site_verification:sval('seo_bing'), ga:sval('seo_ga'), meta_pixel:sval('seo_pixel'),
-        sitemap_enabled:sval('seo_sitemap'), robots_txt:sval('seo_robots_txt')
+        google_site_verification:sval('seo_gsv'), bing_site_verification:sval('seo_bing'),
+        pinterest_site_verification:sval('seo_pin'), baidu_site_verification:sval('seo_baidu'),
+        ga:sval('seo_ga'), meta_pixel:sval('seo_pixel'),
+        sitemap_enabled:sval('seo_sitemap'), robots_txt:sval('seo_robots_txt'),
+        indexnow_on:document.getElementById('seo_indexnow_cbx').classList.contains('on')?'1':'0',
+        llms_enabled:document.getElementById('seo_llms_cbx').classList.contains('on')?'1':'0',
+        crawl_clean:document.getElementById('seo_crawlclean_cbx').classList.contains('on')?'1':'0',
+        enable_merchant:document.getElementById('seo_merchant_cbx').classList.contains('on')?'1':'0',
+        merchant_condition:sval('seo_merch_cond'), merchant_ship_country:sval('seo_merch_country'),
+        merchant_ship_cost:sval('seo_merch_cost'), merchant_ship_free_over:sval('seo_merch_freeover'),
+        merchant_return_days:sval('seo_merch_returndays')
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('SEO settings saved'); }
       catch(e){ toast('Save failed \u2014 check connection'); }
     };
+  }
+
+  /**
+   * Redirects created automatically (on a published product/post's slug
+   * changing) sit in the same list as ones an admin added by hand — same
+   * table, same effect on a visitor's request either way — marked with an
+   * "auto" badge only so it is clear where each one came from, not
+   * separated into two different screens for what is the same feature.
+   */
+  async function renderSeoRedirects(){
+    var body=document.getElementById('seoTabBody');
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading\u2026</p>';
+    var data;
+    try{
+      var res=await fetch(redirectsApiBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
+      data=await res.json();
+    }catch(e){ body.innerHTML='<p style="padding:24px;color:var(--sale)">Could not load \u2014 '+sesc(e.message)+'</p>'; return; }
+
+    var reds=data.redirects||[], nf=data.not_found||[];
+
+    body.innerHTML =
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Add a redirect</b>'+
+      '<p class="description" style="margin:4px 0 0">Best for pages that are actually gone \u2014 a removed product, an old WordPress URL that no longer exists. Redirecting a page that still works and still loads normally is not supported yet.</p>'+
+      '<div class="g2" style="margin-top:12px"><div class="fld"><label>From (path on this site)</label><input id="rd_source" placeholder="/old-page/"></div>'+
+      '<div class="fld"><label>To (path or full URL)</label><input id="rd_target" placeholder="/new-page/ or https://\u2026"></div></div>'+
+      '<div class="row" style="gap:10px;align-items:flex-end"><div class="fld" style="max-width:160px;margin:0"><label>Type</label>'+seoSel('rd_code','301',[['301','301 (permanent)'],['302','302 (temporary)']],'301')+'</div>'+
+      '<button class="btn" id="rd_add" style="margin-top:9px">Add redirect</button></div></div>'+
+
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Redirects</b> <span style="font-size:11.5px;color:var(--ink-soft)">'+reds.length+'</span>'+
+      '<div style="margin-top:12px" id="rd_list">'+(reds.length?reds.map(redirectRow).join(''):'<p style="color:var(--ink-soft);font-size:12.5px">No redirects yet.</p>')+'</div></div>'+
+
+      '<div class="card pad"><b style="font-size:13px">Recent 404s</b> <span style="font-size:11.5px;color:var(--ink-soft)">'+nf.length+' \u2014 broken links people have actually hit, most-hit first</span>'+
+      '<div style="margin-top:12px" id="nf_list">'+(nf.length?nf.map(notFoundRow).join(''):'<p style="color:var(--ink-soft);font-size:12.5px">No broken links logged.</p>')+'</div></div>';
+
+    document.getElementById('rd_add').onclick=async function(){
+      var source=sval('rd_source').trim(), target=sval('rd_target').trim(), code=sval('rd_code');
+      if(!source||!target){ toast('Enter both a from and to path'); return; }
+      try{
+        var res=await fetch(redirectsApiBase(),{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
+          body:JSON.stringify({source:source,target:target,code:+code})});
+        var j=await res.json();
+        if(j.ok){ toast('Redirect added'); renderSeoRedirects(); }
+        else{ toast(j.message||'Could not add that redirect.'); }
+      }catch(e){ toast('Could not save \u2014 check your connection.'); }
+    };
+    wireRedirectRows();
+    wireNotFoundRows();
+  }
+
+  function redirectRow(r){
+    return '<div class="row" style="gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(r.source)+'</div>'+
+      '<div style="font-size:11px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\u2192 '+sesc(r.target)+'</div></div>'+
+      '<span class="pill '+sesc((r.code===301?'green':'amber'))+'" style="flex:0 0 auto">'+sesc(r.code)+'</span>'+
+      (r.auto_created?'<span class="pill" style="flex:0 0 auto;background:var(--surface-2)">auto</span>':'')+
+      '<span style="flex:0 0 60px;font-size:11px;color:var(--ink-soft);text-align:right">'+r.hits+' hit'+(r.hits===1?'':'s')+'</span>'+
+      '<span class="cbx'+(r.enabled?' on':'')+'" data-rdtoggle="'+r.id+'" style="flex:0 0 auto" title="Enabled">'+ic(I.check)+'</span>'+
+      '<button class="btn ghost sm" data-rddel="'+r.id+'" style="flex:0 0 auto">Delete</button></div>';
+  }
+
+  function notFoundRow(n){
+    return '<div class="row" style="gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)" id="nf_row_'+n.id+'">'+
+      '<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(n.path)+'</div>'+
+      (n.referer?'<div style="font-size:10.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">from '+sesc(n.referer)+'</div>':'')+'</div>'+
+      '<span style="flex:0 0 60px;font-size:11px;color:var(--ink-soft);text-align:right">'+n.hits+' hit'+(n.hits===1?'':'s')+'</span>'+
+      '<input id="nf_target_'+n.id+'" class="inp" style="flex:0 0 160px;display:none;font-size:12px" placeholder="/redirect-to/">'+
+      '<button class="btn ghost sm" data-nfresolve="'+n.id+'" style="flex:0 0 auto">Resolve</button>'+
+      '<button class="btn ghost sm" data-nfdismiss="'+n.id+'" style="flex:0 0 auto">Dismiss</button></div>';
+  }
+
+  function wireRedirectRows(){
+    $$('#rd_list [data-rdtoggle]').forEach(function(el){ el.onclick=async function(){
+      try{
+        var res=await fetch(redirectsApiBase()+'/'+el.dataset.rdtoggle+'/toggle',{method:'POST',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
+        var j=await res.json();
+        if(j.ok){ el.classList.toggle('on', j.enabled); }
+      }catch(e){ toast('Could not update \u2014 check your connection.'); }
+    };});
+    $$('#rd_list [data-rddel]').forEach(function(b){ b.onclick=async function(){
+      if(!confirm('Delete this redirect?')) return;
+      try{
+        await fetch(redirectsApiBase()+'/'+b.dataset.rddel,{method:'DELETE',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
+        toast('Redirect deleted'); renderSeoRedirects();
+      }catch(e){ toast('Could not delete \u2014 check your connection.'); }
+    };});
+  }
+
+  function wireNotFoundRows(){
+    $$('#nf_list [data-nfresolve]').forEach(function(b){ b.onclick=async function(){
+      var id=b.dataset.nfresolve, input=document.getElementById('nf_target_'+id);
+      if(input.style.display==='none'){ input.style.display='inline-block'; input.focus(); return; }
+      var target=input.value.trim();
+      if(!target){ toast('Enter where this should redirect to'); return; }
+      try{
+        var res=await fetch(redirectsApiBase()+'/not-found/'+id+'/resolve',{method:'POST',credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},body:JSON.stringify({target:target,code:301})});
+        var j=await res.json();
+        if(j.ok){ toast('Redirect created'); renderSeoRedirects(); }
+        else{ toast(j.message||'Could not resolve that.'); }
+      }catch(e){ toast('Could not save \u2014 check your connection.'); }
+    };});
+    $$('#nf_list [data-nfdismiss]').forEach(function(b){ b.onclick=async function(){
+      try{
+        await fetch(redirectsApiBase()+'/not-found/'+b.dataset.nfdismiss,{method:'DELETE',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
+        renderSeoRedirects();
+      }catch(e){ toast('Could not dismiss \u2014 check your connection.'); }
+    };});
+  }
+
+  /**
+   * Shows an admin the real JSON-LD a page would actually output — builds
+   * the exact same context the real storefront controllers do (see
+   * SchemaInspectorApiController), so nothing shown here can drift from
+   * what a real page actually ships.
+   */
+  function renderSchemaInspector(){
+    var body=document.getElementById('seoTabBody');
+    body.innerHTML =
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Inspect a page\u2019s structured data</b>'+
+      '<p class="description" style="margin:4px 0 12px">Shows the exact JSON-LD a page would send to search engines right now \u2014 the same renderer every real page uses, not a preview.</p>'+
+      '<div class="row" style="gap:10px;align-items:flex-end"><div class="fld" style="max-width:160px;margin:0"><label>Page type</label>'+seoSel('si_type','product',[['product','Product'],['category','Category'],['shop','Shop (all)'],['home','Homepage']],'product')+'</div>'+
+      '<div class="fld" id="si_slug_wrap" style="margin:0;flex:1"><label>Slug</label><input id="si_slug" placeholder="e.g. relief-sun-rice-probiotics-spf50"></div>'+
+      '<button class="btn" id="si_go" style="margin-bottom:0">Inspect</button></div></div>'+
+      '<div id="si_result"></div>';
+
+    var typeSel=document.getElementById('si_type');
+    var slugWrap=document.getElementById('si_slug_wrap');
+    function syncSlugVisibility(){ slugWrap.style.display=(typeSel.value==='shop'||typeSel.value==='home')?'none':''; }
+    typeSel.onchange=syncSlugVisibility;
+    syncSlugVisibility();
+
+    document.getElementById('si_go').onclick=async function(){
+      var type=typeSel.value, slug=sval('si_slug').trim();
+      var result=document.getElementById('si_result');
+      result.innerHTML='<p style="padding:16px;color:var(--ink-soft)">Checking\u2026</p>';
+      try{
+        var q=new URLSearchParams({type:type, slug:slug});
+        var res=await fetch(schemaInspectApiBase()+'?'+q,{credentials:'same-origin',headers:{Accept:'application/json'}});
+        var j=await res.json();
+        if(!j.ok){ result.innerHTML='<div class="card pad"><p style="color:var(--sale);margin:0">'+sesc(j.message||'Could not inspect that page.')+'</p></div>'; return; }
+        var warningsHtml=j.warnings&&j.warnings.length
+          ? '<div class="card pad" style="margin-bottom:16px;border-color:var(--amber)"><b style="font-size:13px">Worth a look</b><ul style="margin:8px 0 0;padding-left:20px">'+j.warnings.map(function(w){return '<li style="font-size:12.5px;margin-bottom:4px">'+sesc(w)+'</li>';}).join('')+'</ul></div>'
+          : '<div class="card pad" style="margin-bottom:16px"><p style="margin:0;font-size:12.5px;color:var(--ink-soft)">No issues found.</p></div>';
+        var nodesHtml=j.nodes.map(function(n){
+          return '<div class="card pad" style="margin-bottom:12px"><b style="font-size:12.5px">'+sesc(n['@type']||'?')+'</b>'+
+            '<pre style="margin:8px 0 0;font-size:11px;background:var(--surface-2);padding:10px;border-radius:8px;overflow:auto;white-space:pre-wrap">'+sesc(JSON.stringify(n,null,2))+'</pre></div>';
+        }).join('');
+        result.innerHTML=warningsHtml+nodesHtml;
+      }catch(e){ result.innerHTML='<div class="card pad"><p style="color:var(--sale);margin:0">Could not check \u2014 check your connection.</p></div>'; }
+    };
+  }
+
+  /**
+   * Reports, doesn't fix — scans every visible product for the handful of
+   * gaps that actually matter (missing meta description, missing image, a
+   * short description too thin to build a real fallback from) and shows
+   * counts plus the worst offenders. Reads the same `seo` column
+   * ProductController now actually renders from, so a product this
+   * reports as fixed genuinely is.
+   */
+  async function renderCatalogueAudit(){
+    var body=document.getElementById('seoTabBody');
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Scanning catalogue\u2026</p>';
+    var data;
+    try{
+      var res=await fetch(catalogueAuditApiBase(),{credentials:'same-origin',headers:{Accept:'application/json'}});
+      data=await res.json();
+    }catch(e){ body.innerHTML='<p style="padding:24px;color:var(--sale)">Could not scan \u2014 '+sesc(e.message)+'</p>'; return; }
+
+    function issueCard(title, desc, key){
+      var list=data.issues[key]||[], count=data.counts[key]||0;
+      var rows=list.map(function(p){
+        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px">'+
+          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(p.name)+'</span>'+
+          (p.words!==undefined?'<span style="color:var(--ink-soft)">'+p.words+' words</span>':'')+'</div>';
+      }).join('');
+      var more=count>list.length?'<p class="description" style="margin:8px 0 0">+ '+(count-list.length)+' more, not shown.</p>':'';
+      return '<div class="card pad" style="margin-bottom:16px"><div class="between"><b style="font-size:13px">'+title+'</b><span class="pill '+(count===0?'green':'amber')+'">'+count+'</span></div>'+
+        '<p class="description" style="margin:4px 0 12px">'+desc+'</p>'+
+        (list.length?rows:'<p style="font-size:12.5px;color:var(--ink-soft)">None \u2014 every visible product has one.</p>')+more+'</div>';
+    }
+
+    body.innerHTML =
+      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">'+data.total+' visible products scanned</b></div>'+
+      issueCard('Missing meta description', 'No per-product SEO description set, and the short description is too thin (under 15 words) to build a real fallback from.', 'no_description')+
+      issueCard('Missing image', 'No image at all \u2014 affects search results, social shares, and Product schema.', 'no_image')+
+      issueCard('Short description too thin', 'Under 15 words \u2014 not necessarily wrong, but too little for a real fallback SEO description or a useful product page.', 'thin_short_description');
+  }
+
+  /* ---------- Catalog → Brands (real CRUD, replacing the preview grid) ----------
+     The tab above renders a hard-coded CAT_BRANDS array with "(preview)"
+     buttons. This replaces the whole tab: the brand list comes from
+     /admin-api/brands, Add/Edit open a real form, and the logo field posts
+     through the same /admin-api/media/upload every other image field uses.
+     The display-mode select at the top writes `brands_display` through
+     /admin-api/settings, which is what the storefront directory reads. */
+  var BRANDS=[];
+  var BRAND_DISPLAY_OPTS=[
+    ['auto','Logo when the brand has one, name otherwise (default)'],
+    ['logos','Logos only'],
+    ['names','Names only']
+  ];
+
+  async function brandWrite(path, method, body){
+    var r = await fetch(fixAdminApiUrl('/admin-api/brands'+(path||'')), {
+      method: method,
+      credentials: 'same-origin',
+      headers: {'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var j={}; try{ j=await r.json(); }catch(e){}
+    if(!r.ok){
+      // 422 carries either Laravel's `errors` bag (duplicate slug, bad logo
+      // URL) or this controller's own `message` (brand still in use). Both
+      // are meant for the operator, so both are shown rather than swallowed
+      // into a generic "save failed".
+      var msg = j.message || '';
+      if(j.errors){ msg = Object.keys(j.errors).map(function(k){ return j.errors[k][0]; }).join(' '); }
+      var err = new Error(msg || ('Request failed ('+r.status+')'));
+      err.payload = j; err.status = r.status;
+      throw err;
+    }
+    return j;
+  }
+
+  window.catBrands = async function(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading brands…</p>';
+    try{
+      var d=await brandWrite('','GET',null); BRANDS=d.brands||[];
+    }catch(e){ BRANDS=[]; }
+    await loadSettings();
+    brandPaint();
+  };
+
+  function brandPaint(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    var mode=SETTINGS.brands_display||'auto';
+    body.innerHTML=
+      '<div class="card pad" style="margin-bottom:14px"><b style="font-size:13px">Directory display</b>'+
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">How each tile is drawn on the storefront brands page (/korean-skincare-brands/). Brands with no logo always fall back to their name, so “Logos only” can never leave an empty tile.</p>'+
+      '<div class="fld" style="max-width:420px;margin:0"><label>Show</label>'+
+      '<select class="inp" id="brd_display" style="width:100%">'+BRAND_DISPLAY_OPTS.map(function(o){
+        return '<option value="'+o[0]+'"'+(o[0]===mode?' selected':'')+'>'+o[1]+'</option>';
+      }).join('')+'</select></div>'+
+      '<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="brd_display_save">Save display</button></div></div>'+
+      '<div class="between" style="margin-bottom:12px"><span class="pill grey">'+BRANDS.length+' brand'+(BRANDS.length===1?'':'s')+'</span>'+
+      '<button class="btn sm" id="brd_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add brand</button></div>'+
+      (BRANDS.length?
+        '<div class="mod-grid">'+BRANDS.map(function(b){
+          var thumb = b.logo
+            ? '<span class="pthumb" style="width:40px;height:40px;background:var(--bg);overflow:hidden"><img src="'+sesc(b.logo)+'" alt="'+sesc(b.name)+'" style="width:100%;height:100%;object-fit:contain"></span>'
+            : '<span class="pthumb" style="background:'+sesc(tcol(b.name))+';width:40px;height:40px">'+sesc(initials(b.name))+'</span>';
+          return '<div class="mod">'+thumb+
+            '<div><div class="mname">'+sesc(b.name)+'</div>'+
+            '<div class="mdesc">'+b.products_count+' product'+(b.products_count===1?'':'s')+' · /'+sesc(b.slug)+(b.logo?'':' · no logo')+'</div></div>'+
+            '<div class="mod-r"><button class="btn ghost sm" data-bedit="'+b.id+'">Edit</button>'+
+            '<button class="btn ghost sm" data-bdel="'+b.id+'">Delete</button></div></div>';
+        }).join('')+'</div>'
+        : '<p style="padding:24px;color:var(--ink-soft)">No brands yet — add the first one.</p>');
+
+    document.getElementById('brd_display_save').onclick=async function(){
+      var payload={brands_display: sval('brd_display')};
+      try{
+        await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})});
+        Object.assign(SETTINGS,payload); toast('Brand display saved');
+      }catch(e){ toast('Save failed — check connection'); }
+    };
+    document.getElementById('brd_add').onclick=function(){ brandEditor(null); };
+    document.querySelectorAll('#catBody [data-bedit]').forEach(function(b){
+      b.onclick=function(){ brandEditor(BRANDS.filter(function(x){return x.id===+b.dataset.bedit;})[0]); };
+    });
+    document.querySelectorAll('#catBody [data-bdel]').forEach(function(b){
+      b.onclick=function(){ brandDelete(BRANDS.filter(function(x){return x.id===+b.dataset.bdel;})[0]); };
+    });
+  }
+
+  function brandEditor(brand){
+    var isNew=!brand; brand=brand||{name:'',slug:'',logo:'',description:'',position:0};
+    openModal('<div class="modal-h"><b>'+(isNew?'Add brand':'Edit brand')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="brd_name" value="'+sesc(brand.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="brd_slug" value="'+sesc(brand.slug)+'" placeholder="left blank, made from the name">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Used in /korean-skincare-brands/{slug}/ and the shop filter. Lower case, hyphens.</p></div>'+
+      imgUploadField('brd_logo', brand.logo||'', 'Logo', 'brands')+
+      '<div class="fld"><label>Description</label><textarea id="brd_desc" class="inp" rows="3">'+sesc(brand.description)+'</textarea></div>'+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="brd_pos" type="number" min="0" value="'+sesc(brand.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="brd_save">'+(isNew?'Create brand':'Save brand')+'</button></div></div>');
+    wireImgUpload('brd_logo','brands');
+    document.getElementById('brd_save').onclick=async function(){
+      var payload={
+        name: sval('brd_name'), slug: sval('brd_slug'), logo: sval('brd_logo'),
+        description: sval('brd_desc'), position: parseInt(sval('brd_pos'),10)||0
+      };
+      if(!payload.name){ toast('A brand needs a name'); return; }
+      try{
+        await (isNew ? brandWrite('','POST',payload) : brandWrite('/'+brand.id,'PUT',payload));
+        toast(isNew?'Brand created':'Brand saved'); closeModal(); window.catBrands();
+      }catch(e){ toast(e.message); }
+    };
+  }
+
+  async function brandDelete(brand){
+    if(!brand) return;
+    var warn = brand.products_count>0
+      ? '<p style="font-size:13px;color:var(--ink-2)"><b>'+brand.products_count+'</b> product'+(brand.products_count===1?'':'s')+' still belong'+(brand.products_count===1?'s':'')+' to <b>'+sesc(brand.name)+'</b>. Deleting the brand leaves them with no brand — the products themselves are kept.</p>'
+      : '<p style="font-size:13px;color:var(--ink-2)">Delete <b>'+sesc(brand.name)+'</b>? This cannot be undone.</p>';
+    openModal('<div class="modal-h"><b>Delete brand</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="brd_del_yes">Delete</button></div></div>');
+    document.getElementById('brd_del_yes').onclick=async function(){
+      try{
+        // force is what the operator just confirmed: without it the API
+        // refuses to unbrand products behind their back.
+        await brandWrite('/'+brand.id+'?force=1','DELETE',null);
+        toast('Brand deleted'); closeModal(); window.catBrands();
+      }catch(e){ toast(e.message); }
+    };
+  }
+
+  /* ===== LANE N · Catalog · Categories & Attributes — BEGIN ==================
+     The two tabs that were still hard-coded HTML previews. Above, catCategories
+     drew eleven invented rows out of CAT_CATEGORIES with slugs made up in
+     JavaScript, and catAttributes drew four invented attributes out of
+     CAT_ATTRS — "Skin Type", "Concern", "Finish", none of which exist in this
+     database — behind buttons that raised a "(preview)" toast. Both are
+     replaced here, whole, the same way the Brands tab above was: real data from
+     /admin-api/categories and /admin-api/attributes, real forms, real deletes.
+
+     Every operator-supplied string — a category name, a term name, a slug, an
+     error message that quotes one back — goes through sesc() before it reaches
+     innerHTML. This region is inside @verbatim, so Blade's {{ }} does not apply
+     to it; sesc() is this file's equivalent and the reason it exists.
+
+     Written to match the Brands block above rather than to any fresh design:
+     same fetch wrapper shape, same 422 handling, same refuse-then-confirm
+     delete flow, same modal furniture. Two tabs that sit next to each other
+     behaving differently would be the surprise. ======================= */
+
+  /* Shared fetch wrapper. Same contract as brandWrite: throws on !ok with the
+     operator-facing message already unpacked, so each call site is a try/catch
+     around one line rather than a status-code ladder. 422 carries either
+     Laravel's `errors` bag (duplicate slug, bad image URL, a parent that would
+     make a loop) or the controller's own `message` (still in use). Both are
+     written for the operator, so both are shown. */
+  async function catalogWrite(path, method, body){
+    var r = await fetch(fixAdminApiUrl('/admin-api'+path), {
+      method: method,
+      credentials: 'same-origin',
+      headers: {'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var j={}; try{ j=await r.json(); }catch(e){}
+    if(!r.ok){
+      var msg = j.message || '';
+      if(j.errors){ msg = Object.keys(j.errors).map(function(k){ return j.errors[k][0]; }).join(' '); }
+      var err = new Error(msg || ('Request failed ('+r.status+')'));
+      err.payload = j; err.status = r.status;
+      throw err;
+    }
+    return j;
+  }
+
+  /* toast() assigns its argument into innerHTML, so anything that can contain a
+     category or term name — every message this region raises — is escaped on
+     the way in. */
+  function catToast(msg){ toast(sesc(msg)); }
+
+  /* ---------- Catalog → Categories (real CRUD, replacing the preview table) */
+  var CATEGORIES=[];
+
+  window.catCategories = async function(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading categories…</p>';
+    try{
+      var d=await catalogWrite('/categories','GET',null); CATEGORIES=d.categories||[];
+    }catch(e){ CATEGORIES=[]; }
+    catCatPaint();
+  };
+
+  /** Children of one parent, in the order the server sorted them. */
+  function catKids(parentId){
+    return CATEGORIES.filter(function(c){
+      var p = c.parent_id==null ? null : +c.parent_id;
+      return p===parentId;
+    });
+  }
+
+  /** Flat render list, depth-first, so a nested tree draws as indented rows. */
+  function catTreeRows(parentId, depth, out){
+    catKids(parentId).forEach(function(c){
+      out.push({cat:c, depth:depth});
+      catTreeRows(+c.id, depth+1, out);
+    });
+    return out;
+  }
+
+  /** Ids of a category and everything under it — what a parent select must not offer. */
+  function catSubtreeIds(id){
+    var ids=[id];
+    catKids(id).forEach(function(k){ ids = ids.concat(catSubtreeIds(+k.id)); });
+    return ids;
+  }
+
+  function catCatPaint(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+
+    /* Rows the tree walk never reached: a row whose parent_id points at a
+       category that is not in the list. It cannot happen through this screen —
+       parent_id is a real FK — but an import can leave one, and silently not
+       drawing a category the owner can see in the database is exactly the kind
+       of "looks like it works" this screen exists to stop. */
+    var rows=catTreeRows(null,0,[]);
+    var drawn={}; rows.forEach(function(r){ drawn[r.cat.id]=1; });
+    CATEGORIES.forEach(function(c){ if(!drawn[c.id]) rows.push({cat:c, depth:0, orphan:true}); });
+
+    body.innerHTML=
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:13px">Categories are the archive pages at /product-category/…/ and the shop filter. Nesting is real — a sub-category’s URL is its whole chain of slugs, rebuilt whenever you rename or move one.</p>'+
+      '<div class="between" style="margin-bottom:12px"><span class="pill grey">'+CATEGORIES.length+' categor'+(CATEGORIES.length===1?'y':'ies')+'</span>'+
+      '<button class="btn sm" id="cat_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add category</button></div>'+
+      (rows.length?
+        '<div class="card" style="overflow:auto"><table><thead><tr><th>Category</th><th>Products</th><th>URL path</th><th style="width:150px"></th></tr></thead><tbody>'+
+        rows.map(function(r){
+          var c=r.cat;
+          var pad = r.depth*18;
+          var total = (+c.products_count||0);
+          var primary = (+c.primary_count||0);
+          var kids = (+c.children_count||0);
+          var counts = total+' filed'+(primary?' · '+primary+' primary':'')+(kids?' · '+kids+' sub':'');
+          return '<tr>'+
+            '<td><div class="row" style="gap:8px;min-width:0">'+
+              (pad?'<span style="display:inline-block;width:'+pad+'px"></span><span style="color:var(--ink-faint)">└</span>':'')+
+              '<b>'+sesc(c.name)+'</b>'+
+              (r.orphan?'<span class="pill amber" style="margin-left:6px">parent missing</span>':'')+
+            '</div></td>'+
+            '<td style="font-size:12px;color:var(--ink-soft)">'+sesc(counts)+'</td>'+
+            '<td style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)">/'+sesc(c.path||c.slug)+'/</td>'+
+            '<td><div class="row" style="gap:4px;justify-content:flex-end">'+
+              '<button class="btn ghost sm" data-cup="'+(+c.id)+'" title="Move up">▲</button>'+
+              '<button class="btn ghost sm" data-cdn="'+(+c.id)+'" title="Move down">▼</button>'+
+              '<button class="btn ghost sm" data-cedit="'+(+c.id)+'">Edit</button>'+
+              '<button class="btn ghost sm" data-cdel="'+(+c.id)+'">Delete</button>'+
+            '</div></td></tr>';
+        }).join('')+
+        '</tbody></table></div>'
+        : '<p style="padding:24px;color:var(--ink-soft)">No categories yet — add the first one.</p>');
+
+    document.getElementById('cat_add').onclick=function(){ catCatEditor(null); };
+    document.querySelectorAll('#catBody [data-cedit]').forEach(function(b){
+      b.onclick=function(){ catCatEditor(catById(+b.dataset.cedit)); };
+    });
+    document.querySelectorAll('#catBody [data-cdel]').forEach(function(b){
+      b.onclick=function(){ catCatDelete(catById(+b.dataset.cdel)); };
+    });
+    document.querySelectorAll('#catBody [data-cup]').forEach(function(b){
+      b.onclick=function(){ catCatMove(+b.dataset.cup, -1); };
+    });
+    document.querySelectorAll('#catBody [data-cdn]').forEach(function(b){
+      b.onclick=function(){ catCatMove(+b.dataset.cdn, 1); };
+    });
+  }
+
+  function catById(id){ return CATEGORIES.filter(function(c){ return +c.id===id; })[0]; }
+
+  /* Reorder is per sibling group: only the row's own siblings are sent, so a
+     move never renumbers a branch the operator is not looking at. */
+  async function catCatMove(id, delta){
+    var cat=catById(id); if(!cat) return;
+    var sibs=catKids(cat.parent_id==null?null:+cat.parent_id);
+    var at=-1; sibs.forEach(function(s,i){ if(+s.id===id) at=i; });
+    var to=at+delta;
+    if(at<0 || to<0 || to>=sibs.length) return;
+    var order=sibs.map(function(s){ return +s.id; });
+    order.splice(to,0,order.splice(at,1)[0]);
+    try{
+      await catalogWrite('/categories/reorder','POST',{order:order});
+      window.catCategories();
+    }catch(e){ catToast(e.message); }
+  }
+
+  function catCatEditor(cat){
+    var isNew=!cat;
+    cat=cat||{name:'',slug:'',parent_id:null,description:'',image:'',position:0};
+    var banned = isNew ? [] : catSubtreeIds(+cat.id);
+    var opts='<option value="">— top level —</option>'+
+      catTreeRows(null,0,[]).filter(function(r){ return banned.indexOf(+r.cat.id)===-1; })
+        .map(function(r){
+          var sel = (cat.parent_id!=null && +cat.parent_id===+r.cat.id) ? ' selected' : '';
+          return '<option value="'+(+r.cat.id)+'"'+sel+'>'+sesc(new Array(r.depth+1).join('   ')+r.cat.name)+'</option>';
+        }).join('');
+
+    openModal('<div class="modal-h"><b>'+(isNew?'Add category':'Edit category')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="cat_name" value="'+sesc(cat.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="cat_slug" value="'+sesc(cat.slug)+'" placeholder="left blank, made from the name">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">One segment of /product-category/…/. Lower case, hyphens. The full path is built from the parents.</p></div>'+
+      '<div class="fld"><label>Parent</label><select class="inp" id="cat_parent" style="width:100%">'+opts+'</select>'+
+      (isNew?'':'<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">This category and anything under it are not offered — a category cannot sit inside itself.</p>')+'</div>'+
+      imgUploadField('cat_image', cat.image||'', 'Image', 'categories')+
+      '<div class="fld"><label>Description</label><textarea id="cat_desc" class="inp" rows="3">'+sesc(cat.description)+'</textarea></div>'+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="cat_pos" type="number" min="0" value="'+sesc(cat.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="cat_save">'+(isNew?'Create category':'Save category')+'</button></div></div>');
+    wireImgUpload('cat_image','categories');
+
+    document.getElementById('cat_save').onclick=async function(){
+      var parent=sval('cat_parent');
+      var payload={
+        name: sval('cat_name'), slug: sval('cat_slug'),
+        parent_id: parent===''?null:parseInt(parent,10),
+        description: sval('cat_desc'), image: sval('cat_image'),
+        position: parseInt(sval('cat_pos'),10)||0
+      };
+      if(!payload.name){ catToast('A category needs a name'); return; }
+      try{
+        await (isNew ? catalogWrite('/categories','POST',payload)
+                     : catalogWrite('/categories/'+(+cat.id),'PUT',payload));
+        catToast(isNew?'Category created':'Category saved'); closeModal(); window.catCategories();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  async function catCatDelete(cat){
+    if(!cat) return;
+    var filed=(+cat.products_count||0), primary=(+cat.primary_count||0), kids=(+cat.children_count||0);
+    var warn;
+    if(filed||primary||kids){
+      var bits=[];
+      if(filed) bits.push('<b>'+filed+'</b> product'+(filed===1?' is':'s are')+' filed under it');
+      if(primary) bits.push('<b>'+primary+'</b> product'+(primary===1?' has':'s have')+' it as their primary category');
+      if(kids) bits.push('<b>'+kids+'</b> sub-categor'+(kids===1?'y sits':'ies sit')+' under it');
+      warn='<p style="font-size:13px;color:var(--ink-2)">'+bits.join(', ')+'. Deleting <b>'+sesc(cat.name)+
+        '</b> empties its archive page and moves any sub-category up a level. <b>No product is deleted</b> — only the link to this category.</p>';
+    } else {
+      warn='<p style="font-size:13px;color:var(--ink-2)">Delete <b>'+sesc(cat.name)+'</b>? Nothing is attached to it. This cannot be undone.</p>';
+    }
+    openModal('<div class="modal-h"><b>Delete category</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="cat_del_yes">Delete</button></div></div>');
+    document.getElementById('cat_del_yes').onclick=async function(){
+      try{
+        // force is what the operator just confirmed: without it the API refuses
+        // to detach products and re-parent children behind their back.
+        await catalogWrite('/categories/'+(+cat.id)+'?force=1','DELETE',null);
+        catToast('Category deleted'); closeModal(); window.catCategories();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  /* ---------- Catalog → Attributes (real CRUD, replacing the preview cards)
+     An attribute is a global list of terms; nothing joins a product to the
+     attribute itself. Products join to its VALUES through
+     product_attribute_value (which terms a product offers — what the shop
+     filter matches), and variants join to them through
+     product_variant_attribute_value (which terms define one purchasable
+     variant). So the counts on screen are per-term counts rolled up, and the
+     delete warnings talk about variants for a reason: a variant that loses the
+     term defining it stays on sale with nothing left to say what it is. */
+  var ATTRIBUTES=[];
+
+  window.catAttributes = async function(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading attributes…</p>';
+    try{
+      var d=await catalogWrite('/attributes','GET',null); ATTRIBUTES=d.attributes||[];
+    }catch(e){ ATTRIBUTES=[]; }
+    catAttrPaint();
+  };
+
+  function attrById(id){ return ATTRIBUTES.filter(function(a){ return +a.id===id; })[0]; }
+
+  function attrValueById(attr, id){
+    return (attr.values||[]).filter(function(v){ return +v.id===id; })[0];
+  }
+
+  function catAttrPaint(){
+    var body=document.getElementById('catBody');
+    if(!body) return;
+
+    body.innerHTML=
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:13px">A global attribute is a named list of terms. Products carry the terms they offer; a variable product’s variants are each pinned to one term per axis. Turning an attribute into a variation axis is what lets variants be built from it; making it filterable is what puts it in the storefront filter panel.</p>'+
+      '<div class="between" style="margin-bottom:12px"><span class="pill grey">'+ATTRIBUTES.length+' attribute'+(ATTRIBUTES.length===1?'':'s')+'</span>'+
+      '<button class="btn sm" id="attr_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add attribute</button></div>'+
+      (ATTRIBUTES.length?
+        ATTRIBUTES.map(function(a){
+          var vals=a.values||[];
+          return '<div class="card pad" style="margin-bottom:12px">'+
+            '<div class="between"><div><b style="font-size:13.5px">'+sesc(a.name)+'</b>'+
+              '<span style="font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-left:8px">'+sesc(a.slug)+'</span>'+
+              (a.is_variation_axis?'<span class="pill green" style="margin-left:8px">variation axis</span>':'')+
+              (a.is_filterable?'<span class="pill grey" style="margin-left:6px">filterable as '+sesc(a.query_var||('filter_'+a.slug))+'</span>':'')+
+            '</div>'+
+            '<div class="row" style="gap:4px">'+
+              '<button class="btn ghost sm" data-avadd="'+(+a.id)+'">Add term</button>'+
+              '<button class="btn ghost sm" data-aedit="'+(+a.id)+'">Edit</button>'+
+              '<button class="btn ghost sm" data-adel="'+(+a.id)+'">Delete</button>'+
+            '</div></div>'+
+            '<p style="font-size:11.5px;color:var(--ink-soft);margin:6px 0 0">'+
+              vals.length+' term'+(vals.length===1?'':'s')+' · '+
+              (+a.products_count||0)+' product'+((+a.products_count||0)===1?'':'s')+' · '+
+              (+a.variants_count||0)+' variant'+((+a.variants_count||0)===1?'':'s')+'</p>'+
+            (vals.length?
+              '<div class="tagchips" style="margin-top:11px">'+vals.map(function(v){
+                var swatch = v.swatch_color
+                  ? '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+sesc(v.swatch_color)+';margin-right:5px;vertical-align:middle"></span>'
+                  : '';
+                return '<span class="tagchip">'+swatch+sesc(v.name)+
+                  '<span style="color:var(--ink-faint);margin-left:5px">'+(+v.products_count||0)+'/'+(+v.variants_count||0)+'</span>'+
+                  '<button class="btn ghost sm" style="margin-left:6px;padding:0 5px" data-avedit="'+(+a.id)+':'+(+v.id)+'" title="Edit term">✎</button>'+
+                  '<button class="btn ghost sm" style="padding:0 5px" data-avdel="'+(+a.id)+':'+(+v.id)+'" title="Delete term">✕</button>'+
+                '</span>';
+              }).join('')+'</div>'+
+              '<p style="font-size:11px;color:var(--ink-faint);margin:8px 0 0">The two numbers on each term are products / variants using it.</p>'
+              : '<p style="font-size:12px;color:var(--ink-soft);margin:11px 0 0">No terms yet — add the first one.</p>')+
+          '</div>';
+        }).join('')
+        : '<p style="padding:24px;color:var(--ink-soft)">No attributes yet — add the first one.</p>');
+
+    document.getElementById('attr_add').onclick=function(){ catAttrEditor(null); };
+    document.querySelectorAll('#catBody [data-aedit]').forEach(function(b){
+      b.onclick=function(){ catAttrEditor(attrById(+b.dataset.aedit)); };
+    });
+    document.querySelectorAll('#catBody [data-adel]').forEach(function(b){
+      b.onclick=function(){ catAttrDelete(attrById(+b.dataset.adel)); };
+    });
+    document.querySelectorAll('#catBody [data-avadd]').forEach(function(b){
+      b.onclick=function(){ catValEditor(attrById(+b.dataset.avadd), null); };
+    });
+    document.querySelectorAll('#catBody [data-avedit]').forEach(function(b){
+      b.onclick=function(){
+        var p=b.dataset.avedit.split(':'), a=attrById(+p[0]);
+        catValEditor(a, attrValueById(a, +p[1]));
+      };
+    });
+    document.querySelectorAll('#catBody [data-avdel]').forEach(function(b){
+      b.onclick=function(){
+        var p=b.dataset.avdel.split(':'), a=attrById(+p[0]);
+        catValDelete(a, attrValueById(a, +p[1]));
+      };
+    });
+  }
+
+  function catAttrEditor(attr){
+    var isNew=!attr;
+    attr=attr||{name:'',slug:'',query_var:'',is_variation_axis:false,is_filterable:true,position:0};
+    openModal('<div class="modal-h"><b>'+(isNew?'Add attribute':'Edit attribute')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="atr_name" value="'+sesc(attr.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="atr_slug" value="'+sesc(attr.slug)+'" placeholder="left blank, made from the name"></div>'+
+      '<div class="fld"><label>Filter parameter</label><input id="atr_qv" value="'+sesc(attr.query_var||'')+'" placeholder="filter_color">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">The query string this attribute filters on. Existing links use the imported value — changing it breaks them. Leave blank and filter_{slug} is used.</p></div>'+
+      '<div class="fld"><label><input type="checkbox" id="atr_axis"'+(attr.is_variation_axis?' checked':'')+'> Use as a variation axis</label>'+
+      '<p class="description" style="margin:4px 0 0;font-size:11.5px;color:var(--ink-soft)">Variants of a variable product can be built from this attribute’s terms.</p></div>'+
+      '<div class="fld"><label><input type="checkbox" id="atr_filt"'+(attr.is_filterable?' checked':'')+'> Show in the storefront filter panel</label></div>'+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="atr_pos" type="number" min="0" value="'+sesc(attr.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="atr_save">'+(isNew?'Create attribute':'Save attribute')+'</button></div></div>');
+
+    document.getElementById('atr_save').onclick=async function(){
+      var payload={
+        name: sval('atr_name'), slug: sval('atr_slug'), query_var: sval('atr_qv'),
+        is_variation_axis: document.getElementById('atr_axis').checked,
+        is_filterable: document.getElementById('atr_filt').checked,
+        position: parseInt(sval('atr_pos'),10)||0
+      };
+      if(!payload.name){ catToast('An attribute needs a name'); return; }
+      try{
+        await (isNew ? catalogWrite('/attributes','POST',payload)
+                     : catalogWrite('/attributes/'+(+attr.id),'PUT',payload));
+        catToast(isNew?'Attribute created':'Attribute saved'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  async function catAttrDelete(attr){
+    if(!attr) return;
+    var p=(+attr.products_count||0), v=(+attr.variants_count||0), n=(attr.values||[]).length;
+    var warn = (p||v)
+      ? '<p style="font-size:13px;color:var(--ink-2)">The '+n+' term'+(n===1?'':'s')+' of <b>'+sesc(attr.name)+'</b> '+
+        (n===1?'is':'are')+' still used by <b>'+p+'</b> product'+(p===1?'':'s')+' and <b>'+v+'</b> variant'+(v===1?'':'s')+
+        '. Deleting the attribute strips those terms from them. <b>No product and no variant is deleted</b>'+
+        (v?' — but a variant that loses the term defining it stays on sale with nothing left to say what it is.':'.')+'</p>'
+      : '<p style="font-size:13px;color:var(--ink-2)">Delete <b>'+sesc(attr.name)+'</b> and its '+n+' term'+(n===1?'':'s')+'? Nothing is using them. This cannot be undone.</p>';
+    openModal('<div class="modal-h"><b>Delete attribute</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="atr_del_yes">Delete</button></div></div>');
+    document.getElementById('atr_del_yes').onclick=async function(){
+      try{
+        await catalogWrite('/attributes/'+(+attr.id)+'?force=1','DELETE',null);
+        catToast('Attribute deleted'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  function catValEditor(attr, val){
+    if(!attr) return;
+    var isNew=!val;
+    val=val||{name:'',slug:'',swatch_color:'',swatch_image:'',position:0};
+    openModal('<div class="modal-h"><b>'+(isNew?'Add term':'Edit term')+' · '+sesc(attr.name)+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+
+      '<div class="fld"><label>Name</label><input id="atv_name" value="'+sesc(val.name)+'"></div>'+
+      '<div class="fld"><label>Slug</label><input id="atv_slug" value="'+sesc(val.slug)+'" placeholder="left blank, made from the name">'+
+      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Unique within this attribute only — “large” may exist under Size and under Shades.</p></div>'+
+      '<div class="fld" style="max-width:200px"><label>Swatch colour</label><input id="atv_color" value="'+sesc(val.swatch_color||'')+'" placeholder="#E0567B"></div>'+
+      imgUploadField('atv_image', val.swatch_image||'', 'Swatch image', 'attributes')+
+      '<div class="fld" style="max-width:160px"><label>Position</label><input id="atv_pos" type="number" min="0" value="'+sesc(val.position||0)+'"></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" id="atv_save">'+(isNew?'Create term':'Save term')+'</button></div></div>');
+    wireImgUpload('atv_image','attributes');
+
+    document.getElementById('atv_save').onclick=async function(){
+      var payload={
+        name: sval('atv_name'), slug: sval('atv_slug'),
+        swatch_color: sval('atv_color'), swatch_image: sval('atv_image'),
+        position: parseInt(sval('atv_pos'),10)||0
+      };
+      if(!payload.name){ catToast('A term needs a name'); return; }
+      try{
+        await (isNew ? catalogWrite('/attributes/'+(+attr.id)+'/values','POST',payload)
+                     : catalogWrite('/attributes/'+(+attr.id)+'/values/'+(+val.id),'PUT',payload));
+        catToast(isNew?'Term created':'Term saved'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+
+  async function catValDelete(attr, val){
+    if(!attr || !val) return;
+    var p=(+val.products_count||0), v=(+val.variants_count||0);
+    var warn = (p||v)
+      ? '<p style="font-size:13px;color:var(--ink-2)"><b>'+sesc(val.name)+'</b> is still used by <b>'+p+'</b> product'+(p===1?'':'s')+
+        ' and <b>'+v+'</b> variant'+(v===1?'':'s')+'. Removing it strips the term from them. <b>No product and no variant is deleted</b>'+
+        (v?' — but a variant that loses the term defining it stays on sale with nothing left to say what it is.':'.')+'</p>'
+      : '<p style="font-size:13px;color:var(--ink-2)">Delete the term <b>'+sesc(val.name)+'</b>? Nothing is using it. This cannot be undone.</p>';
+    openModal('<div class="modal-h"><b>Delete term</b><button class="x" onclick="closeModal()">✕</button></div>'+
+      '<div class="modal-b">'+warn+
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+      '<button class="btn" style="background:var(--danger,#d6455a)" id="atv_del_yes">Delete</button></div></div>');
+    document.getElementById('atv_del_yes').onclick=async function(){
+      try{
+        await catalogWrite('/attributes/'+(+attr.id)+'/values/'+(+val.id)+'?force=1','DELETE',null);
+        catToast('Term deleted'); closeModal(); window.catAttributes();
+      }catch(e){ catToast(e.message); }
+    };
+  }
+  /* ===== LANE N · Catalog · Categories & Attributes — END ================== */
+
+  /* ===== LANE AF · Catalog · Products — BEGIN ================================
+
+     WHAT WAS HERE BEFORE. catProducts() in the first script block: a list, a
+     five-chip row, four sorts, and an Edit button whose entire implementation
+     was a toast saying that product editing had not been built. The list was
+     real — it paginated and searched on the server — but this is the screen a
+     shop owner spends their day on, and the two things they do on it all day,
+     change a price and change a stock number, were the two things it could not
+     do. There was no export, no bulk action, no way to see what had no image or
+     no category, and the 'private' status the schema declares had no chip at
+     all. That block is gone; what is left of it upstairs is an honest fallback
+     message.
+
+     Everything is now asked of the server: one page of rows, every chip count,
+     the summary tiles and the sort all come back from
+     /admin-api/catalog-products-list for the filters currently on screen. No
+     figure on this page is computed in the browser.
+
+     MONEY NEVER BECOMES A NUMBER IN HERE. Prices arrive as `price_display`
+     (already formatted by Money::plain) and `price_input` (a plain decimal
+     string for a text box), and they go back as the string the operator typed.
+     Nothing in this region multiplies, divides or rounds a price — the server
+     parses the digits and stores integer fils. The bulk percentage is sent as
+     text too, and turned into integer basis points on the other side. A float
+     spelling of "30% off" is 0.69999999999999995559 and lands a fil light,
+     which is a defect this repo has already paid for once.
+
+     THE 390px RULE. The table lives in .cplscroll, which is overflow-x:auto and
+     max-width:100% — it scrolls inside the card and contributes nothing to the
+     width of the page. Every grid uses minmax(0,1fr) rather than 1fr, because a
+     grid track defaults to min-width:auto and one long money figure otherwise
+     widens its track past its share and pushes the whole page sideways.
+     Measured in real Chromium at 390 and 1280; #content reports
+     scrollWidth === clientWidth at both.
+
+     BLANKS ARE THE NORMAL CASE. An imported product can have no image, no
+     category, no brand, no SKU and no price. Every cell falls back to an em
+     dash rather than printing "undefined", and the chips count each of those
+     conditions so they can be found rather than stumbled over.
+
+     Product names and SKUs come out of a WooCommerce export and land in
+     innerHTML. Everything written into the page goes through sesc().
+  */
+
+  (function cplStyles(){
+    if(document.getElementById('cplcss')) return;
+
+    /* Injected rather than added to the stylesheet at the top of this file:
+       that block is shared by every screen and several lanes are editing this
+       view at once. A style element this region owns outright cannot collide
+       with somebody else's rule. */
+    var s = document.createElement('style');
+    s.id = 'cplcss';
+    s.textContent =
+      '.cplkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}' +
+      '@media(max-width:900px){.cplkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+      '@media(max-width:430px){.cplkpis{grid-template-columns:minmax(0,1fr)}}' +
+      '.cplkpi{min-width:0;overflow-wrap:anywhere}' +
+      '.cplkpi .v{font-size:21px;font-weight:700;margin-top:6px;line-height:1.15}' +
+      '.cplkpi .k{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}' +
+      '.cplkpi .s{font-size:11.5px;color:var(--ink-soft);margin-top:2px}' +
+      /* The whole point of the 390px fix: a wide table scrolls in here, never
+         on the page. max-width:100% stops a min-width table stretching the
+         card it is inside. */
+      '.cplscroll{max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}' +
+      '.cplscroll table{min-width:940px}' +
+      '.cplhint{display:none;font-size:11.5px;color:var(--ink-soft);padding:10px 14px 0}' +
+      '@media(max-width:900px){.cplhint{display:block}}' +
+      '.cpltools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}' +
+      '.cpltools .search{flex:1 1 220px;min-width:0}' +
+      '.cpltools .inp{max-width:100%}' +
+      '.cplgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}' +
+      '.cplbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}' +
+      '.cplpager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;' +
+        'padding:13px 4px 2px;font-size:12.5px;color:var(--ink-soft)}' +
+      '.cplnum{font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      '.cplcell{cursor:text;border-radius:5px;padding:2px 5px;margin:-2px -5px;display:inline-block;min-width:44px}' +
+      '.cplcell:hover{background:var(--border-2,rgba(0,0,0,.05))}' +
+      '.cplin{font:inherit;width:84px;max-width:100%;padding:3px 6px;border:1px solid var(--accent,#3f6fe0);' +
+        'border-radius:5px;background:var(--card,#fff);color:inherit;text-align:right}' +
+      '.cplsel{font:inherit;padding:2px 4px;border:1px solid var(--border);border-radius:5px;' +
+        'background:var(--card,#fff);color:inherit;max-width:100%}' +
+      '.cplthumb{width:34px;height:34px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--border-2)}' +
+      '.cplnoimg{width:34px;height:34px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;' +
+        'justify-content:center;border:1px dashed var(--border);color:var(--ink-faint);font-size:9px}' +
+      '.cplpanel{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}' +
+      '@media(max-width:860px){.cplpanel{grid-template-columns:minmax(0,1fr)}}' +
+      '.cplfield{margin-bottom:12px}' +
+      '.cplfield label{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:4px}' +
+      '.cplfield .inp,.cplfield textarea{width:100%;max-width:100%;box-sizing:border-box}' +
+      '.cplpair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}' +
+      '.cplcats{display:flex;flex-wrap:wrap;gap:6px}' +
+      '.cplcat{font-size:11.5px;border:1px solid var(--border);border-radius:999px;padding:3px 10px;cursor:pointer}' +
+      '.cplcat.on{background:var(--ink,#1c2430);color:var(--card,#fff);border-color:var(--ink,#1c2430)}';
+
+    document.head.appendChild(s);
+  })();
+
+  var CP = {
+    page: 1,
+    perPage: +(localStorage.getItem('kbb_cp_pp') || 50),
+    search: '', filter: 'all', sort: 'newest',
+    brandId: '', categoryId: '', priceMin: '', priceMax: '',
+    adv: false, colsOpen: false, cols: null,
+    data: null, facets: null, err: null, sel: {}, busy: false, detail: null
+  };
+
+  var CP_COLDEF = [
+    ['sku', 'SKU'], ['brand', 'Brand'], ['status', 'Status'], ['stock', 'Stock'],
+    ['price', 'Price'], ['sale', 'Sale price'], ['categories', 'Categories'],
+    ['featured', 'Featured'], ['orders', 'Orders'], ['date', 'Added'], ['wc', 'Woo ID']
+  ];
+
+  /* Woo ID and Sale price are off by default and one click away in Columns.
+     The eight that are on already fill a 1032px content area, and a column
+     nobody reads is a column that costs horizontal room on every page load. */
+  var CP_COLS_DEFAULT = {
+    sku: true, brand: true, status: true, stock: true, price: true,
+    sale: false, categories: true, featured: true, orders: true, date: true, wc: false
+  };
+
+  /* Which sort each sortable header maps to, so the header caret and the Sort
+     menu can never disagree about what the list is ordered by. */
+  var CP_COLSORT = {
+    price: 'price_desc', stock: 'stock_asc', orders: 'orders_desc',
+    date: 'newest', status: 'status', brand: 'brand', sku: 'sku'
+  };
+
+  var CP_SORTS = [
+    ['newest', 'Newest first'], ['oldest', 'Oldest first'], ['updated', 'Recently edited'],
+    ['name', 'Name A–Z'], ['name_desc', 'Name Z–A'],
+    ['price_desc', 'Price, high to low'], ['price_asc', 'Price, low to high'],
+    ['stock_asc', 'Stock, low to high'], ['stock_desc', 'Stock, high to low'],
+    ['sku', 'SKU'], ['brand', 'Brand A–Z'], ['status', 'Status'],
+    ['orders_desc', 'Most orders'], ['sales_desc', 'Most units sold'],
+    ['position', 'Catalogue order']
+  ];
+
+  /* How this schema's own statuses read on a chip. A status NOT in here came
+     out of an import — the dead importer this repo replaced wrote 'active' —
+     and it is shown verbatim, because that is the string the operator will
+     search WooCommerce for and prettifying it throws that away for nothing. */
+  var CP_STATUS_LABEL = { publish: 'Published', draft: 'Draft', private: 'Private' };
+  var CP_STOCK_LABEL = { instock: 'In stock', outofstock: 'Out of stock', onbackorder: 'On backorder' };
+  var CP_STATUS_PILL = { publish: 'green', draft: 'grey', private: 'amber' };
+
+  /* The chips that are not a status value, in the order they are drawn. Each
+     one is a way an imported product can be incomplete, plus the trash. */
+  var CP_DERIVED_CHIPS = [
+    ['on_sale', 'On sale'], ['low', 'Low stock'], ['no_image', 'No image'],
+    ['no_category', 'No category'], ['no_price', 'No price'], ['hidden', 'Hidden'],
+    ['featured', 'Featured'], ['trashed', 'Trash']
+  ];
+
+  var CP_PER_PAGE = [25, 50, 100, 200, 500];
+
+  function cpCols(){
+    if(CP.cols) return CP.cols;
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('kbb_cp_cols') || 'null'); }catch(e){ saved = null; }
+    CP.cols = Object.assign({}, CP_COLS_DEFAULT, saved || {});
+    return CP.cols;
+  }
+  function cpSaveCols(){ try{ localStorage.setItem('kbb_cp_cols', JSON.stringify(CP.cols)); }catch(e){} }
+
+  function cpParams(forExport){
+    var p = new URLSearchParams();
+    if(!forExport){ p.set('page', CP.page); p.set('per_page', CP.perPage); }
+    if(CP.search) p.set('search', CP.search);
+    if(CP.filter && CP.filter !== 'all') p.set('filter', CP.filter);
+    if(CP.sort && CP.sort !== 'newest') p.set('sort', CP.sort);
+    if(CP.brandId) p.set('brand_id', CP.brandId);
+    if(CP.categoryId) p.set('category_id', CP.categoryId);
+    if(CP.priceMin !== '') p.set('price_min', CP.priceMin);
+    if(CP.priceMax !== '') p.set('price_max', CP.priceMax);
+    return p.toString();
+  }
+
+  function cpDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
+  function cpTitle(s){ return String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1); }
+  function cpStatusLabel(s){ return CP_STATUS_LABEL[s] || s; }
+  function cpStockLabel(s){ return CP_STOCK_LABEL[s] || s; }
+
+  /* A write that unpacks the operator-facing message the server sent. 422
+     carries either Laravel's `errors` bag or the controller's own `message`,
+     and both are written for a person, so both are shown. Same contract as
+     catalogWrite() above, deliberately: two screens next to each other
+     behaving differently would be the surprise. */
+  async function cpWrite(path, body, method){
+    /* The FULL '/admin-api/...' path, not a suffix bolted onto a prefix in
+       here. Every endpoint this screen writes to is then greppable in this
+       file by its real name, which is what lets AdminCatalogProductsTest
+       assert that each one is actually called. */
+    var r = await fetch(fixAdminApiUrl(path), {
+      method: method || 'POST',
+      credentials: 'same-origin',
+      headers: {'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var j = {}; try{ j = await r.json(); }catch(e){}
+    if(!r.ok){
+      var msg = j.message || '';
+      if(j.errors){ msg = Object.keys(j.errors).map(function(k){ return j.errors[k][0]; }).join(' '); }
+      var err = new Error(msg || ('Request failed (' + r.status + ')'));
+      err.payload = j; err.status = r.status;
+      throw err;
+    }
+    return j;
+  }
+
+  /* toast() assigns its argument into innerHTML, so anything that can contain a
+     product name — every message this region raises — is escaped on the way. */
+  function cpToast(msg){ toast(sesc(msg)); }
+
+  /* ---------------------------------------------------------------- loading */
+
+  window.catProducts = async function(){
+    var body = document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML = '<p style="padding:24px;color:var(--ink-soft)">Loading products…</p>';
+    await cpLoad();
+  };
+
+  async function cpLoad(){
+    var body = document.getElementById('catBody');
+    if(!body) return;
+
+    var listArea = document.getElementById('cplListArea');
+    if(listArea) listArea.innerHTML = '<p style="padding:24px;color:var(--ink-soft)">Loading…</p>';
+
+    CP.err = null;
+
+    try{
+      CP.data = await api('/admin-api/catalog-products-list?' + cpParams(false));
+    }catch(e){
+      CP.err = e && e.message ? e.message : 'unknown error';
+      body.innerHTML = '<div class="card pad"><p style="color:var(--sale,#c0392b);font-size:13px">' +
+        'The product list could not be loaded — ' + sesc(CP.err) + '</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">If this is a fresh deployment, the ' +
+        'Catalog → Products routes may not be wired into routes/web.php yet.</p></div>';
+      return;
+    }
+
+    /* The brand and category vocabularies, once per visit rather than once per
+       page of rows. They only change when somebody edits a category. */
+    if(!CP.facets){
+      try{ CP.facets = await api('/admin-api/catalog-products-facets'); }
+      catch(e){ CP.facets = {brands: [], categories: []}; }
+    }
+
+    CP.perPage = CP.data.per_page;
+    cpPaint();
+  }
+
+  /* ---------------------------------------------------------------- drawing */
+
+  function cpPaint(){
+    var body = document.getElementById('catBody');
+    if(!body || !CP.data) return;
+
+    var d = CP.data;
+    var cols = cpCols();
+    var counts = d.counts || {};
+    var sum = d.summary || {};
+    var selected = cpSelectedIds();
+
+    var chips = [['all', 'All']];
+    (d.statuses || []).forEach(function(s){ chips.push([s, cpStatusLabel(s)]); });
+    (d.stock_statuses || []).forEach(function(s){ chips.push([s, cpStockLabel(s)]); });
+    CP_DERIVED_CHIPS.forEach(function(c){ chips.push(c); });
+
+    body.innerHTML =
+      cpKpis(sum, d) +
+      '<div class="cpltools">' +
+        '<div class="search" style="min-width:0">' +
+          ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
+          '<input id="cplSearch" placeholder="Search ' + (d.total || 0) + ' products by name, SKU, brand or Woo ID…" value="' + sesc(CP.search) + '">' +
+        '</div>' +
+        '<select class="inp" id="cplSort" style="max-width:220px">' +
+          CP_SORTS.map(function(s){
+            return '<option value="' + s[0] + '"' + (CP.sort === s[0] ? ' selected' : '') + '>' + sesc(s[1]) + '</option>';
+          }).join('') +
+        '</select>' +
+        '<button class="btn ghost" id="cplAdvBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters ' + (CP.adv ? '▴' : '▾') + '</button>' +
+        '<button class="btn ghost" id="cplColsBtn">Columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
+        '<button class="btn ghost" id="cplExport">' + ic('<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 19h16"/>') + ' Export CSV</button>' +
+      '</div>' +
+      (CP.adv ? cpAdvanced() : '') +
+      (CP.colsOpen ? cpColumnsPanel() : '') +
+      '<div class="chips" style="margin-bottom:10px">' +
+        chips.map(function(c){
+          var n = counts[c[0]];
+          if(n === undefined) n = 0;
+          return '<button class="chip' + (CP.filter === c[0] ? ' on' : '') + '" data-cpf="' + sesc(c[0]) + '">' +
+            sesc(c[1]) + ' <span style="opacity:.6">' + n + '</span></button>';
+        }).join('') +
+      '</div>' +
+      cpBulkBar(selected) +
+      '<div class="card" style="padding:0">' +
+        '<div class="cplhint">Swipe the table sideways to see every column.</div>' +
+        '<div class="cplscroll" id="cplListArea">' + cpTable(d.products || [], cols, d) + '</div>' +
+      '</div>' +
+      '<div class="cplpager">' +
+        '<span>Showing ' + ((d.products || []).length ? ((d.page - 1) * d.per_page + 1) : 0) + '–' +
+          ((d.page - 1) * d.per_page + (d.products || []).length) + ' of ' + d.total + '</span>' +
+        '<div class="row" style="gap:8px;align-items:center">' +
+          '<select class="inp" id="cplPerPage" style="width:auto">' +
+            CP_PER_PAGE.map(function(n){
+              return '<option value="' + n + '"' + (n === CP.perPage ? ' selected' : '') + '>' + n + ' per page</option>';
+            }).join('') +
+          '</select>' +
+          '<button class="btn ghost sm" style="white-space:nowrap"' + (d.page <= 1 ? ' disabled' : '') + ' id="cplPrev">‹ Prev</button>' +
+          '<span class="cplnum">' + d.page + ' / ' + d.last_page + '</span>' +
+          '<button class="btn ghost sm" style="white-space:nowrap"' + (d.page >= d.last_page ? ' disabled' : '') + ' id="cplNext">Next ›</button>' +
+        '</div>' +
+      '</div>';
+
+    cpBind();
+  }
+
+  function cpKpis(sum, d){
+    return '<div class="cplkpis">' +
+      cpKpi('Products', (sum.products || 0).toLocaleString(), (sum.live || 0) + ' live on the shop') +
+      cpKpi('Inventory value', sum.inventory_display || '—', (sum.stock_units || 0).toLocaleString() + ' units tracked') +
+      cpKpi('Average price', sum.average_price_display || '—', (sum.priced || 0) + ' with a price set') +
+      cpKpi('Needs attention', ((d.counts && d.counts.no_price) || 0) + ((d.counts && d.counts.no_image) || 0) + ((d.counts && d.counts.no_category) || 0),
+        (sum.out_of_stock || 0) + ' out of stock · ' + (sum.on_sale || 0) + ' on sale') +
+      '</div>';
+  }
+
+  function cpKpi(k, v, s){
+    return '<div class="card pad cplkpi"><div class="k">' + sesc(k) + '</div>' +
+      '<div class="v cplnum">' + sesc(v) + '</div><div class="s">' + sesc(s) + '</div></div>';
+  }
+
+  function cpAdvanced(){
+    var f = CP.facets || {brands: [], categories: []};
+
+    return '<div class="card pad" style="margin-bottom:12px"><div class="cplgrid">' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Brand</label>' +
+        '<select class="inp" id="cplBrand" style="width:100%"><option value="">Any brand</option>' +
+        (f.brands || []).map(function(b){
+          return '<option value="' + b.id + '"' + (String(CP.brandId) === String(b.id) ? ' selected' : '') + '>' + sesc(b.name) + '</option>';
+        }).join('') + '</select></div>' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Category</label>' +
+        '<select class="inp" id="cplCategory" style="width:100%"><option value="">Any category</option>' +
+        (f.categories || []).map(function(c){
+          var pad = '';
+          for(var i = 0; i < (+c.depth || 0); i++) pad += '— ';
+          return '<option value="' + c.id + '"' + (String(CP.categoryId) === String(c.id) ? ' selected' : '') + '>' + sesc(pad + c.name) + '</option>';
+        }).join('') + '</select></div>' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Price from</label>' +
+        '<input class="inp" id="cplMin" style="width:100%" inputmode="decimal" placeholder="0" value="' + sesc(CP.priceMin) + '"></div>' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Price to</label>' +
+        '<input class="inp" id="cplMax" style="width:100%" inputmode="decimal" placeholder="any" value="' + sesc(CP.priceMax) + '"></div>' +
+      '</div><div class="row" style="gap:8px;margin-top:12px">' +
+      '<button class="btn" id="cplApply">Apply</button>' +
+      '<button class="btn ghost" id="cplClearFilters">Clear all</button></div></div>';
+  }
+
+  function cpColumnsPanel(){
+    return '<div class="card pad" style="margin-bottom:12px">' +
+      '<div class="so-cols">' + CP_COLDEF.map(function(c){
+        return '<label class="so-col"><span class="cbx' + (CP.cols[c[0]] ? ' on' : '') + '" data-cpcol="' + c[0] + '">' +
+          ic(I.check) + '</span> ' + sesc(c[1]) + '</label>';
+      }).join('') + '</div>' +
+      '<div style="margin-top:14px"><button class="btn ghost sm" id="cplColsReset">Reset to default</button></div></div>';
+  }
+
+  function cpBulkBar(selected){
+    if(!selected.length) return '';
+
+    var settable = (CP.data && CP.data.settable_statuses) || ['publish', 'draft', 'private'];
+    var cats = (CP.facets && CP.facets.categories) || [];
+
+    return '<div class="card pad cplbar" style="margin-bottom:12px">' +
+      '<b style="font-size:13px">' + selected.length + ' selected</b>' +
+      '<select class="inp sm" id="cplBulkStatus" style="width:auto"><option value="">Set status…</option>' +
+        settable.map(function(s){ return '<option value="' + sesc(s) + '">' + sesc(cpStatusLabel(s)) + '</option>'; }).join('') +
+      '</select>' +
+      '<select class="inp sm" id="cplBulkCatMode" style="width:auto">' +
+        '<option value="add">Add to category</option>' +
+        '<option value="remove">Remove from category</option>' +
+        '<option value="replace">Replace categories with</option>' +
+      '</select>' +
+      '<select class="inp sm" id="cplBulkCat" style="width:auto;max-width:220px"><option value="">Choose a category…</option>' +
+        cats.map(function(c){
+          var pad = '';
+          for(var i = 0; i < (+c.depth || 0); i++) pad += '— ';
+          return '<option value="' + c.id + '">' + sesc(pad + c.name) + '</option>';
+        }).join('') +
+      '</select>' +
+      '<button class="btn ghost sm" id="cplBulkCatGo">Apply</button>' +
+      '<button class="btn ghost sm" id="cplBulkPrice">Adjust prices…</button>' +
+      '<div style="flex:1"></div>' +
+      '<button class="btn ghost sm" id="cplClearSel">Clear selection</button>' +
+      '</div>';
+  }
+
+  function cpTable(rows, cols, d){
+    if(!rows.length){
+      return '<div style="padding:34px;text-align:center;color:var(--ink-soft)">' +
+        '<p style="font-size:13px">No products match this view.</p>' +
+        '<button class="btn ghost sm" id="cplEmptyClear" style="margin-top:12px">Clear the filters</button></div>';
+    }
+
+    var allOn = rows.every(function(p){ return CP.sel[p.id]; });
+
+    var head = '<th style="width:34px"><span class="cbx' + (allOn ? ' on' : '') + '" id="cplAll">' + ic(I.check) + '</span></th>' +
+      '<th>Product</th>' +
+      CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){
+        var sort = CP_COLSORT[c[0]];
+        var align = (c[0] === 'price' || c[0] === 'sale' || c[0] === 'stock' || c[0] === 'orders') ? 'text-align:right' : '';
+        var caret = (sort && CP.sort === sort) ? ' ▾' : '';
+        return '<th style="' + align + (sort ? ';cursor:pointer' : '') + '"' + (sort ? ' data-cpsort="' + sort + '"' : '') + '>' +
+          sesc(c[1]) + caret + '</th>';
+      }).join('') +
+      '<th style="width:74px"></th>';
+
+    var bodyRows = rows.map(function(p){
+      return '<tr' + (CP.sel[p.id] ? ' style="background:var(--border-2,rgba(0,0,0,.03))"' : '') + '>' +
+        '<td><span class="cbx' + (CP.sel[p.id] ? ' on' : '') + '" data-cpsel="' + p.id + '">' + ic(I.check) + '</span></td>' +
+        '<td><div class="row" style="min-width:0;gap:9px">' +
+          (p.has_image
+            ? '<img class="cplthumb" src="' + sesc(p.image) + '" alt="" loading="lazy">'
+            : '<span class="cplnoimg" title="No image">no img</span>') +
+          '<div style="min-width:0">' +
+            '<div class="pname" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + sesc(p.name) + '</div>' +
+            '<div class="pbrand" style="font-size:11px;color:var(--ink-soft)">' +
+              (p.is_visible ? '' : '<span class="pill grey" style="font-size:9px;padding:1px 6px">Hidden</span> ') +
+              (p.on_sale ? '<span class="pill red" style="font-size:9px;padding:1px 6px">-' + p.discount_percent + '%</span> ' : '') +
+              sesc(p.slug) +
+            '</div>' +
+          '</div>' +
+        '</div></td>' +
+        CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){ return cpCell(c[0], p, d); }).join('') +
+        '<td><button class="btn ghost sm" data-cpedit="' + p.id + '">Edit</button></td>' +
+      '</tr>';
+    }).join('');
+
+    return '<table style="width:100%"><thead><tr>' + head + '</tr></thead><tbody>' + bodyRows + '</tbody></table>';
+  }
+
+  /* One cell.
+     price, sale price, stock and status are EDITABLE IN PLACE — those are the
+     four an owner changes all day. Each one carries the field name and the
+     current value as a plain decimal string (price_input), never a number, so
+     what goes back to the server is the text the operator sees. */
+  function cpCell(k, p, d){
+    switch(k){
+      case 'sku':
+        return '<td style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cpDash(p.sku) + '</td>';
+
+      case 'brand':
+        return '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cpDash(p.brand) + '</td>';
+
+      case 'status':
+        return '<td><select class="cplsel" data-cpfield="status" data-cpid="' + p.id + '">' +
+          ((d.settable_statuses || []).concat(
+            (d.settable_statuses || []).indexOf(p.status) === -1 ? [p.status] : []
+          )).map(function(s){
+            return '<option value="' + sesc(s) + '"' + (s === p.status ? ' selected' : '') + '>' + sesc(cpStatusLabel(s)) + '</option>';
+          }).join('') + '</select></td>';
+
+      case 'stock':
+        if(!p.manage_stock){
+          return '<td style="text-align:right"><span class="pill ' + (p.stock_status === 'outofstock' ? 'red' : 'green') + '">' +
+            sesc(cpStockLabel(p.stock_status)) + '</span></td>';
+        }
+        return '<td style="text-align:right"><span class="cplcell cplnum" data-cpfield="stock" data-cpid="' + p.id + '" ' +
+          'data-cpvalue="' + p.stock + '" title="Click to edit">' +
+          (p.stock === 0 ? '<span class="pill red"><span class="d"></span>0</span>'
+            : (p.low_stock ? '<span class="pill amber"><span class="d"></span>' + p.stock + '</span>' : p.stock)) +
+          '</span></td>';
+
+      case 'price':
+        return '<td style="text-align:right"><span class="cplcell cplnum" data-cpfield="price" data-cpid="' + p.id + '" ' +
+          'data-cpvalue="' + sesc(p.price_input) + '" title="Click to edit">' +
+          (p.price_fils === null ? '<span style="color:var(--ink-faint)">—</span>' : sesc(p.price_display)) +
+          '</span></td>';
+
+      case 'sale':
+        return '<td style="text-align:right"><span class="cplcell cplnum" data-cpfield="sale_price" data-cpid="' + p.id + '" ' +
+          'data-cpvalue="' + sesc(p.sale_price_input) + '" title="Click to edit">' +
+          (p.sale_price_fils === null ? '<span style="color:var(--ink-faint)">—</span>' : sesc(p.sale_price_display)) +
+          '</span></td>';
+
+      case 'categories':
+        return '<td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+          (p.categories && p.categories.length ? sesc(p.categories.join(', ')) : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
+
+      case 'featured':
+        return '<td style="font-size:15px;text-align:center;color:' + (p.featured ? '#e0a11e' : 'var(--border)') +
+          ';cursor:pointer" data-cpfeat="' + p.id + '" title="Featured">' + (p.featured ? '★' : '☆') + '</td>';
+
+      case 'orders':
+        return '<td style="text-align:right;font-size:11.5px;color:var(--ink-soft)" title="' + sesc(p.units_sold + ' units · ' + p.revenue_display) + '">' +
+          p.orders_count + '</td>';
+
+      case 'date':
+        return '<td style="font-size:11.5px;color:var(--ink-soft);white-space:nowrap">' + cpDash(p.date) + '</td>';
+
+      case 'wc':
+        return '<td style="font-size:11.5px;color:var(--ink-soft)">' + cpDash(p.wc_id) + '</td>';
+
+      default:
+        return '<td></td>';
+    }
+  }
+
+  /* ---------------------------------------------------------------- binding */
+
+  function cpBind(){
+    var $$$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+    var byId = function(id){ return document.getElementById(id); };
+
+    var search = byId('cplSearch');
+    if(search){
+      var searchT;
+      search.oninput = function(e){
+        clearTimeout(searchT);
+        var v = e.target.value;
+        searchT = setTimeout(function(){ CP.search = v; CP.page = 1; cpLoad(); }, 300);
+      };
+    }
+
+    var sort = byId('cplSort');
+    if(sort) sort.onchange = function(e){ CP.sort = e.target.value; CP.page = 1; cpLoad(); };
+
+    $$$('#catBody [data-cpsort]').forEach(function(th){
+      th.onclick = function(){ CP.sort = th.dataset.cpsort; CP.page = 1; cpLoad(); };
+    });
+
+    var advBtn = byId('cplAdvBtn');
+    if(advBtn) advBtn.onclick = function(){ CP.adv = !CP.adv; cpPaint(); };
+
+    var colsBtn = byId('cplColsBtn');
+    if(colsBtn) colsBtn.onclick = function(){ CP.colsOpen = !CP.colsOpen; cpPaint(); };
+
+    $$$('#catBody .cbx[data-cpcol]').forEach(function(b){
+      b.onclick = function(){ var k = b.dataset.cpcol; CP.cols[k] = !CP.cols[k]; cpSaveCols(); cpPaint(); };
+    });
+    var colsReset = byId('cplColsReset');
+    if(colsReset) colsReset.onclick = function(){ CP.cols = Object.assign({}, CP_COLS_DEFAULT); cpSaveCols(); cpPaint(); };
+
+    var apply = byId('cplApply');
+    if(apply) apply.onclick = function(){
+      CP.brandId = (byId('cplBrand') || {}).value || '';
+      CP.categoryId = (byId('cplCategory') || {}).value || '';
+      CP.priceMin = (byId('cplMin') || {}).value || '';
+      CP.priceMax = (byId('cplMax') || {}).value || '';
+      CP.page = 1; cpLoad();
+    };
+
+    var clearAll = function(){
+      CP.brandId = ''; CP.categoryId = ''; CP.priceMin = ''; CP.priceMax = '';
+      CP.search = ''; CP.filter = 'all'; CP.page = 1; cpLoad();
+    };
+    var clearBtn = byId('cplClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
+    var emptyClear = byId('cplEmptyClear'); if(emptyClear) emptyClear.onclick = clearAll;
+
+    $$$('#catBody .chip[data-cpf]').forEach(function(c){
+      c.onclick = function(){ CP.filter = c.dataset.cpf; CP.page = 1; cpLoad(); };
+    });
+
+    var perPage = byId('cplPerPage');
+    if(perPage) perPage.onchange = function(e){
+      CP.perPage = +e.target.value;
+      try{ localStorage.setItem('kbb_cp_pp', CP.perPage); }catch(err){}
+      CP.page = 1; cpLoad();
+    };
+
+    var prev = byId('cplPrev'); if(prev) prev.onclick = function(){ if(CP.data.page > 1){ CP.page = CP.data.page - 1; cpLoad(); } };
+    var next = byId('cplNext'); if(next) next.onclick = function(){ if(CP.data.page < CP.data.last_page){ CP.page = CP.data.page + 1; cpLoad(); } };
+
+    $$$('#catBody [data-cpsel]').forEach(function(b){
+      b.onclick = function(){ var id = b.dataset.cpsel; CP.sel[id] = !CP.sel[id]; cpPaint(); };
+    });
+
+    var all = byId('cplAll');
+    if(all) all.onclick = function(){
+      var on = !CP.data.products.every(function(p){ return CP.sel[p.id]; });
+      CP.data.products.forEach(function(p){ CP.sel[p.id] = on; });
+      cpPaint();
+    };
+
+    var clearSel = byId('cplClearSel'); if(clearSel) clearSel.onclick = function(){ CP.sel = {}; cpPaint(); };
+
+    /* ---- inline editing: the four cells an owner changes all day ---- */
+
+    $$$('#catBody .cplcell[data-cpfield]').forEach(function(cell){
+      cell.onclick = function(){ cpOpenCell(cell); };
+    });
+
+    $$$('#catBody select[data-cpfield]').forEach(function(sel){
+      sel.onchange = function(){
+        cpSave(+sel.dataset.cpid, sel.dataset.cpfield, sel.value);
+      };
+    });
+
+    $$$('#catBody [data-cpfeat]').forEach(function(el){
+      el.onclick = async function(){
+        var id = +el.dataset.cpfeat;
+        try{
+          var out = await cpWrite('/admin-api/catalog-products-save/' + id, {featured: !cpRowById(id).featured});
+          cpReplaceRow(out.product);
+        }catch(e){ cpToast(e.message); }
+      };
+    });
+
+    $$$('#catBody [data-cpedit]').forEach(function(b){
+      b.onclick = function(){ cpOpenDetail(+b.dataset.cpedit); };
+    });
+
+    var bulkStatus = byId('cplBulkStatus');
+    if(bulkStatus) bulkStatus.onchange = function(e){
+      var status = e.target.value;
+      e.target.value = '';
+      if(status) cpConfirmStatus(cpSelectedIds(), status);
+    };
+
+    var bulkCatGo = byId('cplBulkCatGo');
+    if(bulkCatGo) bulkCatGo.onclick = function(){
+      var mode = (byId('cplBulkCatMode') || {}).value || 'add';
+      var categoryId = (byId('cplBulkCat') || {}).value || '';
+      if(!categoryId){ cpToast('Choose a category first.'); return; }
+      cpConfirmCategory(cpSelectedIds(), mode, +categoryId);
+    };
+
+    var bulkPrice = byId('cplBulkPrice');
+    if(bulkPrice) bulkPrice.onclick = function(){ cpPriceDialog(cpSelectedIds()); };
+
+    var exportBtn = byId('cplExport');
+    if(exportBtn) exportBtn.onclick = function(){
+      /* A normal navigation, not a fetch: the browser carries the same admin
+         session cookie, the server refuses anyone without it, and the file
+         lands in Downloads instead of in memory. */
+      var qs = cpParams(true);
+      window.location.href = fixAdminApiUrl('/admin-api/catalog-products-export') + (qs ? '?' + qs : '');
+    };
+  }
+
+  function cpSelectedIds(){
+    return Object.keys(CP.sel).filter(function(k){ return CP.sel[k]; }).map(Number);
+  }
+
+  function cpRowById(id){
+    return ((CP.data && CP.data.products) || []).filter(function(p){ return p.id === id; })[0] || {};
+  }
+
+  /* Swap one row's data in place and repaint. Cheaper than a reload after an
+     inline edit, and it keeps the operator's scroll position — but the chip
+     counts and the summary would then be stale, so anything that can move them
+     (a status change) reloads instead. */
+  function cpReplaceRow(row){
+    if(!row || !CP.data) return;
+    CP.data.products = CP.data.products.map(function(p){ return p.id === row.id ? row : p; });
+    cpPaint();
+  }
+
+  /* Turn a cell into a text box. Enter or blur commits, Escape abandons. */
+  function cpOpenCell(cell){
+    if(cell.querySelector('input')) return;
+
+    var field = cell.dataset.cpfield;
+    var id = +cell.dataset.cpid;
+    var value = cell.dataset.cpvalue || '';
+    var previous = cell.innerHTML;
+
+    cell.innerHTML = '<input class="cplin" type="text" inputmode="decimal" value="' + sesc(value) + '">';
+
+    var input = cell.querySelector('input');
+    input.focus();
+    input.select();
+
+    var done = false;
+
+    var commit = function(){
+      if(done) return;
+      done = true;
+      var next = input.value.trim();
+      if(next === value){ cell.innerHTML = previous; return; }
+      cpSave(id, field, next);
+    };
+
+    input.onkeydown = function(e){
+      if(e.key === 'Enter'){ commit(); }
+      if(e.key === 'Escape'){ done = true; cell.innerHTML = previous; }
+    };
+    input.onblur = commit;
+  }
+
+  /**
+   * One field, one product, one request.
+   *
+   * The value goes up as the STRING the operator typed. Nothing here parses it
+   * into a number: the server reads the digits and stores integer fils, and a
+   * price that went through parseFloat on the way would already have lost the
+   * exactness the fils representation exists to keep.
+   */
+  async function cpSave(id, field, value){
+    var payload = {};
+
+    if(field === 'stock'){
+      payload.stock = value === '' ? null : parseInt(value, 10);
+      /* Typing a stock number on a product that does not track stock is a
+         request to start tracking it — otherwise the number is written and the
+         shelf ignores it. */
+      payload.manage_stock = true;
+    }else if(field === 'price' || field === 'sale_price'){
+      payload[field] = value === '' ? null : value;
+    }else{
+      payload[field] = value;
+    }
+
+    try{
+      var out = await cpWrite('/admin-api/catalog-products-save/' + id, payload);
+      cpToast('Saved');
+
+      /* A status change moves the chip counts and the summary tiles, so the
+         page is reloaded rather than patched — a screen whose chips disagree
+         with its rows is worse than one that takes a moment. */
+      if(field === 'status'){ cpLoad(); return; }
+
+      cpReplaceRow(out.product);
+    }catch(e){
+      cpToast(e.message);
+      cpPaint();
+    }
+  }
+
+  /* -------- destructive actions: always a dialog, sometimes two -------- */
+
+  /**
+   * Nothing changes on a click. The first dialog says what will happen; the
+   * server then refuses any product that is live on the storefront and reports
+   * which ones, and only a second, explicit confirmation carrying force goes
+   * through.
+   */
+  function cpConfirmStatus(ids, status){
+    if(!ids.length) return;
+
+    openModal('<div class="modal-h"><b>Change status</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Set <b>' + ids.length + '</b> product' + (ids.length === 1 ? '' : 's') +
+      ' to <b>' + sesc(cpStatusLabel(status)) + '</b>?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Anything that is currently live on the storefront is left alone unless you confirm it separately — taking a product out of Published removes it from the shop, from every category page and from the sitemap.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="cplStatusYes">Set status</button></div></div>');
+
+    var yes = document.getElementById('cplStatusYes');
+    if(yes) yes.onclick = function(){ cpRunStatus(ids, status, false); };
+  }
+
+  async function cpRunStatus(ids, status, force){
+    closeModal();
+    try{
+      var out = await cpWrite('/admin-api/catalog-products-bulk-status', {ids: ids, status: status, force: !!force});
+
+      if(out.skipped && out.skipped.length){ cpConfirmSkipped(out, status); return; }
+
+      cpToast(out.changed + ' product' + (out.changed === 1 ? '' : 's') + ' updated');
+      CP.sel = {}; cpLoad();
+    }catch(e){ cpToast(e.message); }
+  }
+
+  /**
+   * The second dialog. The server has already done the safe half and is telling
+   * the operator exactly which products it refused and why, by name.
+   */
+  function cpConfirmSkipped(out, status){
+    openModal('<div class="modal-h"><b>Some of these are live</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)"><b>' + out.changed + '</b> updated. <b>' +
+      out.skipped.length + '</b> left alone because ' + (out.skipped.length === 1 ? 'it is' : 'they are') + ' published:</p>' +
+      '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+      out.skipped.slice(0, 12).map(function(s){
+        return '<li>' + sesc(s.label) + (s.sku ? ' — ' + sesc(s.sku) : '') + '</li>';
+      }).join('') +
+      (out.skipped.length > 12 ? '<li>and ' + (out.skipped.length - 12) + ' more</li>' : '') + '</ul>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">Going ahead takes them off the storefront immediately.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Leave them</button>' +
+      '<button class="btn" style="background:var(--red)" id="cplForce">Change those too</button></div></div>');
+
+    var force = document.getElementById('cplForce');
+    if(force) force.onclick = function(){
+      cpRunStatus(out.skipped.map(function(s){ return s.id; }), status, true);
+    };
+  }
+
+  /**
+   * Add and Remove are additive and reversible, so they go straight through.
+   * Replace drops every category a product is already in — on an imported
+   * catalogue that is its whole WooCommerce taxonomy — so it asks first, and
+   * the server refuses it without the confirmation regardless of what this
+   * screen sends.
+   */
+  function cpConfirmCategory(ids, mode, categoryId){
+    if(!ids.length) return;
+
+    var cats = (CP.facets && CP.facets.categories) || [];
+    var name = (cats.filter(function(c){ return c.id === categoryId; })[0] || {}).name || 'that category';
+
+    if(mode !== 'replace'){ cpRunCategory(ids, mode, categoryId, false); return; }
+
+    openModal('<div class="modal-h"><b>Replace categories</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Put <b>' + ids.length + '</b> product' + (ids.length === 1 ? '' : 's') +
+      ' in <b>' + sesc(name) + '</b> and <b>remove every other category</b> they are in?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">On imported products that is the whole WooCommerce taxonomy for each one, and there is no undo. Add to category does the safe version of this.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="cplCatYes">Replace categories</button></div></div>');
+
+    var yes = document.getElementById('cplCatYes');
+    if(yes) yes.onclick = function(){ cpRunCategory(ids, mode, categoryId, true); };
+  }
+
+  async function cpRunCategory(ids, mode, categoryId, confirm){
+    closeModal();
+    try{
+      var out = await cpWrite('/admin-api/catalog-products-bulk-category', {
+        ids: ids, mode: mode, category_ids: [categoryId], confirm: !!confirm
+      });
+
+      cpToast(out.changed + ' product' + (out.changed === 1 ? '' : 's') + ' updated');
+      CP.sel = {}; cpLoad();
+    }catch(e){ cpToast(e.message); }
+  }
+
+  /**
+   * The price dialog. Two steps, always: this form, then a confirmation, and
+   * the server refuses the request outright without `confirm` however it is
+   * called. A bulk price change cannot be undone.
+   *
+   * The percentage and the amount are sent as TEXT. The server carries the
+   * percentage as integer basis points and does the arithmetic on integers —
+   * `1 - 30 / 100` is 0.69999999999999995559 and lands a fil light on every
+   * product, which is exactly the defect found in bundle pricing.
+   */
+  function cpPriceDialog(ids){
+    if(!ids.length) return;
+
+    openModal('<div class="modal-h"><b>Adjust prices</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b">' +
+      '<p style="font-size:13px;color:var(--ink-2);margin-bottom:12px">' + ids.length + ' product' + (ids.length === 1 ? '' : 's') + ' selected.</p>' +
+      '<div class="cplfield"><label>Which price</label><select class="inp" id="cplPriceTarget">' +
+        '<option value="price">Regular price</option><option value="sale_price">Sale price</option></select></div>' +
+      '<div class="cplfield"><label>Change</label><select class="inp" id="cplPriceMode">' +
+        '<option value="percent">By a percentage</option>' +
+        '<option value="amount">By an amount</option>' +
+        '<option value="set">Set to exactly</option>' +
+        '<option value="clear">Clear it</option></select></div>' +
+      '<div class="cplfield" id="cplPriceValueWrap"><label id="cplPriceValueLabel">Percentage (negative to discount)</label>' +
+        '<input class="inp" id="cplPriceValue" inputmode="decimal" placeholder="-10"></div>' +
+      '<p style="font-size:12px;color:var(--ink-soft)">Products with no price to adjust, and anything that would end below zero or leave a sale price at or above its regular price, are skipped and listed back to you.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="cplPriceGo">Review change</button></div></div>');
+
+    var mode = document.getElementById('cplPriceMode');
+    var label = document.getElementById('cplPriceValueLabel');
+    var wrap = document.getElementById('cplPriceValueWrap');
+
+    if(mode) mode.onchange = function(){
+      if(mode.value === 'clear'){ wrap.style.display = 'none'; return; }
+      wrap.style.display = '';
+      label.textContent = mode.value === 'percent'
+        ? 'Percentage (negative to discount)'
+        : (mode.value === 'amount' ? 'Amount to add (negative to subtract)' : 'New price');
+    };
+
+    var go = document.getElementById('cplPriceGo');
+    if(go) go.onclick = function(){
+      var target = (document.getElementById('cplPriceTarget') || {}).value || 'price';
+      var m = (document.getElementById('cplPriceMode') || {}).value || 'percent';
+      var value = ((document.getElementById('cplPriceValue') || {}).value || '').trim();
+
+      if(m !== 'clear' && value === ''){ cpToast('Enter a value first.'); return; }
+
+      cpConfirmPrice(ids, target, m, value);
+    };
+  }
+
+  function cpConfirmPrice(ids, target, mode, value){
+    var what = target === 'price' ? 'regular price' : 'sale price';
+    var how = mode === 'percent' ? ('by ' + value + '%')
+      : (mode === 'amount' ? ('by ' + value) : (mode === 'set' ? ('to ' + value) : 'removed'));
+
+    openModal('<div class="modal-h"><b>Confirm price change</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Change the <b>' + sesc(what) + '</b> of <b>' +
+      ids.length + '</b> product' + (ids.length === 1 ? '' : 's') + ' <b>' + sesc(how) + '</b>?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">This cannot be undone. Export the current view first if you want a record of what the prices were.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="cplPriceYes">Change prices</button></div></div>');
+
+    var yes = document.getElementById('cplPriceYes');
+    if(yes) yes.onclick = async function(){
+      closeModal();
+
+      var payload = {ids: ids, target: target, mode: mode, confirm: true};
+      if(mode === 'percent') payload.percent = value;
+      if(mode === 'amount') payload.amount = value;
+      if(mode === 'set') payload.value = value;
+
+      try{
+        var out = await cpWrite('/admin-api/catalog-products-bulk-price', payload);
+
+        cpToast(out.changed + ' price' + (out.changed === 1 ? '' : 's') + ' changed' +
+          (out.skipped && out.skipped.length ? ', ' + out.skipped.length + ' skipped' : ''));
+
+        if(out.skipped && out.skipped.length) cpShowSkipped(out.skipped);
+
+        CP.sel = {}; cpLoad();
+      }catch(e){ cpToast(e.message); }
+    };
+  }
+
+  function cpShowSkipped(skipped){
+    openModal('<div class="modal-h"><b>Skipped</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><ul style="font-size:12.5px;color:var(--ink-2);margin:0 0 0 18px">' +
+      skipped.slice(0, 20).map(function(s){
+        return '<li><b>' + sesc(s.label) + '</b> — ' + sesc(s.reason) + '</li>';
+      }).join('') +
+      (skipped.length > 20 ? '<li>and ' + (skipped.length - 20) + ' more</li>' : '') +
+      '</ul><div class="row" style="justify-content:flex-end;margin-top:14px">' +
+      '<button class="btn" onclick="closeModal()">Close</button></div></div>');
+  }
+
+  /* ------------------------------------------------------------ the product */
+
+  /**
+   * One product, on its own screen.
+   *
+   * Everything editable here goes back through the same
+   * /catalog-products-save/{id} endpoint the inline cells use, so there is one
+   * place where a product write is validated and one definition of what may be
+   * written. The read-only column on the right is what the product IS rather
+   * than what it is set to — its Woo id, what it has sold, its rating — and
+   * none of it is a text box, because none of it is a field anyone should be
+   * able to type over.
+   */
+  async function cpOpenDetail(id){
+    var content = document.getElementById('content');
+    if(!content) return;
+
+    content.innerHTML = '<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">Loading product…</p></div>';
+
+    var p;
+    try{ p = (await api('/admin-api/catalog-products-detail/' + id)).product; }
+    catch(e){
+      content.innerHTML = '<div class="wrap"><div class="card pad"><p style="color:var(--sale,#c0392b)">That product could not be loaded.</p>' +
+        '<button class="btn ghost sm" style="margin-top:12px" onclick="go(\'catalog\')">Back to Catalog</button></div></div>';
+      return;
+    }
+
+    CP.detail = p;
+
+    var cats = (CP.facets && CP.facets.categories) || [];
+    var brands = (CP.facets && CP.facets.brands) || [];
+    var selectedCats = {};
+    (p.categories || []).forEach(function(c){ selectedCats[c.id] = true; });
+
+    content.innerHTML = '<div class="wrap">' +
+      '<div class="pe-top" style="margin-bottom:12px"><button class="btn ghost sm" id="cplBack">' +
+        ic('<path d="m15 18-6-6 6-6"/>') + ' Products</button><div style="flex:1"></div>' +
+        '<a class="btn ghost sm" href="' + sesc(p.url) + '" target="_blank" rel="noopener">View on the shop</a>' +
+        '<button class="btn" id="cplDetailSave">Save</button></div>' +
+
+      '<div class="page-head" style="margin:0 0 12px"><h2 style="overflow-wrap:anywhere">' + sesc(p.name) + '</h2>' +
+        '<p>' + (p.sku ? sesc(p.sku) + ' · ' : '') + sesc(p.slug) + '</p></div>' +
+
+      '<div class="cplpanel">' +
+        '<div class="card pad">' +
+          '<div class="cplfield"><label>Name</label><input class="inp" id="cplfName" value="' + sesc(p.name) + '"></div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>SKU</label><input class="inp" id="cplfSku" value="' + sesc(p.sku || '') + '"></div>' +
+            '<div class="cplfield"><label>Brand</label><select class="inp" id="cplfBrand"><option value="">No brand</option>' +
+              brands.map(function(b){
+                return '<option value="' + b.id + '"' + (p.brand_id === b.id ? ' selected' : '') + '>' + sesc(b.name) + '</option>';
+              }).join('') + '</select></div>' +
+          '</div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>Regular price (' + sesc(p.currency) + ')</label>' +
+              '<input class="inp" id="cplfPrice" inputmode="decimal" value="' + sesc(p.price_input) + '"></div>' +
+            '<div class="cplfield"><label>Sale price (' + sesc(p.currency) + ')</label>' +
+              '<input class="inp" id="cplfSale" inputmode="decimal" value="' + sesc(p.sale_price_input) + '"></div>' +
+          '</div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>Status</label><select class="inp" id="cplfStatus">' +
+              ['publish', 'draft', 'private'].concat(
+                ['publish', 'draft', 'private'].indexOf(p.status) === -1 ? [p.status] : []
+              ).map(function(s){
+                return '<option value="' + sesc(s) + '"' + (s === p.status ? ' selected' : '') + '>' + sesc(cpStatusLabel(s)) + '</option>';
+              }).join('') + '</select></div>' +
+            '<div class="cplfield"><label>Stock status</label><select class="inp" id="cplfStockStatus">' +
+              ['instock', 'outofstock', 'onbackorder'].map(function(s){
+                return '<option value="' + s + '"' + (s === p.stock_status ? ' selected' : '') + '>' + sesc(cpStockLabel(s)) + '</option>';
+              }).join('') + '</select></div>' +
+          '</div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>Track stock</label><select class="inp" id="cplfManage">' +
+              '<option value="0"' + (p.manage_stock ? '' : ' selected') + '>No</option>' +
+              '<option value="1"' + (p.manage_stock ? ' selected' : '') + '>Yes</option></select></div>' +
+            '<div class="cplfield"><label>Units in stock</label>' +
+              '<input class="inp" id="cplfStock" inputmode="numeric" value="' + (p.stock === null ? '' : p.stock) + '"></div>' +
+          '</div>' +
+          '<div class="cplfield"><label>Visible in the catalogue</label><select class="inp" id="cplfVisible">' +
+            '<option value="1"' + (p.is_visible ? ' selected' : '') + '>Yes</option>' +
+            '<option value="0"' + (p.is_visible ? '' : ' selected') + '>No</option></select></div>' +
+          '<div class="cplfield"><label>Categories</label><div class="cplcats" id="cplfCats">' +
+            cats.map(function(c){
+              var pad = '';
+              for(var i = 0; i < (+c.depth || 0); i++) pad += '· ';
+              return '<span class="cplcat' + (selectedCats[c.id] ? ' on' : '') + '" data-cpcat="' + c.id + '">' + sesc(pad + c.name) + '</span>';
+            }).join('') + '</div></div>' +
+          '<div class="cplfield"><label>Short description</label>' +
+            '<textarea class="inp" id="cplfShort" rows="3">' + sesc(p.short_description || '') + '</textarea></div>' +
+        '</div>' +
+
+        '<div class="card pad" style="align-self:start">' +
+          '<div class="pe-h" style="margin-bottom:10px">What this product is</div>' +
+          cpFact('Woo product ID', p.wc_id === null ? 'Created here' : p.wc_id) +
+          cpFact('Effective price today', p.effective_price_display + (p.on_sale ? ' (−' + p.discount_percent + '%)' : '')) +
+          cpFact('Orders', p.orders_count) +
+          cpFact('Units sold', p.units_sold) +
+          cpFact('Revenue', p.revenue_display) +
+          cpFact('Reviews', p.review_count + (p.review_count ? ' · ' + p.rating.toFixed(1) + '★' : '')) +
+          cpFact('Added', (p.created_at || '').slice(0, 10)) +
+          cpFact('Last edited', (p.updated_at || '').slice(0, 10)) +
+          (p.trashed ? '<p style="margin-top:10px"><span class="pill red"><span class="d"></span>In the trash</span></p>' : '') +
+          '<p style="font-size:11.5px;color:var(--ink-soft);margin-top:12px">Orders, units sold, revenue and the rating are computed from the store\'s own records. They are not fields and cannot be typed over.</p>' +
+        '</div>' +
+      '</div></div>';
+
+    document.getElementById('cplBack').onclick = function(){ go('catalog', 'products'); };
+
+    Array.prototype.slice.call(document.querySelectorAll('#cplfCats .cplcat')).forEach(function(el){
+      el.onclick = function(){ el.classList.toggle('on'); };
+    });
+
+    document.getElementById('cplDetailSave').onclick = async function(){
+      var value = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+
+      var chosen = Array.prototype.slice.call(document.querySelectorAll('#cplfCats .cplcat.on'))
+        .map(function(el){ return +el.dataset.cpcat; });
+
+      var payload = {
+        name: value('cplfName'),
+        sku: value('cplfSku') === '' ? null : value('cplfSku'),
+        brand_id: value('cplfBrand') === '' ? null : +value('cplfBrand'),
+        // The decimal STRING, exactly as typed. Nothing here parses it into a
+        // number; the server reads the digits and stores integer fils.
+        price: value('cplfPrice') === '' ? null : value('cplfPrice'),
+        sale_price: value('cplfSale') === '' ? null : value('cplfSale'),
+        status: value('cplfStatus'),
+        stock_status: value('cplfStockStatus'),
+        manage_stock: value('cplfManage') === '1',
+        stock: value('cplfStock') === '' ? null : parseInt(value('cplfStock'), 10),
+        is_visible: value('cplfVisible') === '1',
+        category_ids: chosen,
+        short_description: value('cplfShort') === '' ? null : value('cplfShort')
+      };
+
+      try{
+        await cpWrite('/admin-api/catalog-products-save/' + p.id, payload);
+        cpToast('Product saved');
+        go('catalog', 'products');
+      }catch(e){ cpToast(e.message); }
+    };
+  }
+
+  function cpFact(k, v){
+    return '<div class="row" style="justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--border-2)">' +
+      '<span style="font-size:11.5px;color:var(--ink-soft)">' + sesc(k) + '</span>' +
+      '<b class="cplnum" style="font-size:12.5px;text-align:right;overflow-wrap:anywhere">' + sesc(v) + '</b></div>';
+  }
+
+  /* ===== LANE AF · Catalog · Products — END ================================= */
+
+  /* ---------- Store → Payments (gateway credentials) ----------
+     The real screen for /admin-api/payments (Admin\PaymentsApiController),
+     replacing the kbb-admin-payments.html mock frame. Four gateways shipped
+     with working webhooks and no way to enter a credential; this is that way.
+
+     Everything is built from what the endpoint actually returns — id, title,
+     enabled, mode, configured, fields[] (key/type/label/help/value/has_value)
+     and webhook_url — so a gateway added to GatewayRegistry appears here with
+     no edit to this file.
+
+     No stored secret is ever rendered. The endpoint returns every `secret`
+     field as an empty string with a `has_value` flag, so the box is drawn
+     blank with "stored" beside it, and a blank box posts back as "leave the
+     stored one alone". The one stored secret that reaches the page is the
+     random tail of webhook_url — the owner cannot obtain it any other way and
+     has to paste it into the provider, which is the whole point of showing
+     it. It appears on this screen and nowhere else. */
+  var PAYG=[];
+
+  /* The URL secret is generated on first save, never typed. Drawing it as an
+     empty password box would only invite someone to overwrite it; it is shown
+     as part of the webhook URL instead, with a Regenerate button. */
+  var PAY_HIDDEN_FIELDS={webhook_secret:1};
+
+  /* Only Tamara switches API host on this flag (GatewayCredentials::live()).
+     Saying so beats a switch that looks like it does more than it does. */
+  var PAY_MODE_HELP={
+    tamara:'Sandbox talks to Tamara’s sandbox API, live to the production one. This switch is the only thing that decides which.',
+    stripe:'A label for your own records. Stripe itself decides test or live from the keys you paste — pk_test_/sk_test_ against pk_live_/sk_live_.',
+    tabby:'A label for your own records. Tabby itself decides test or live from the keys you paste.'
+  };
+
+  function payStatus(g){
+    if(!g.configured) return ['amber','Not configured'];
+    return g.enabled ? ['green','Offered at checkout'] : ['grey','Switched off'];
+  }
+
+  function payStatusLine(g){
+    if(!g.configured) return 'Not set up. Its credentials are missing, so it reports itself unavailable and shoppers never see it — checkout does not fail, the option simply is not there. Fill in the fields below and save.';
+    if(!g.enabled) return 'Set up, but switched off. Turn it on to offer it at checkout.';
+    return 'Set up and switched on. Shoppers see this option at checkout.';
+  }
+
+  function payField(gid,f){
+    var id='pay_'+gid+'_'+f.key;
+    var head='<div class="ecl"><label for="'+sesc(id)+'">'+sesc(f.label)+'</label>'+
+      (f.type==='secret'
+        ? (f.has_value?'<span class="pill green">stored</span>':'<span class="pill amber">not set</span>')
+        : '')+'</div>'+
+      (f.help?'<div class="echelp">'+sesc(f.help)+'</div>':'');
+
+    if(f.type==='secret'){
+      return '<div class="ecopt wide"><div class="ecom">'+head+
+        '<div class="echelp">'+(f.has_value
+          ? 'Already stored. Leave this blank to keep it — type a new value only to replace it. The stored value is never sent back to this page.'
+          : 'Nothing stored yet.')+'</div></div>'+
+        '<div class="ecctl"><input type="password" class="inp" id="'+sesc(id)+'" data-payg="'+sesc(gid)+'" data-payf="'+sesc(f.key)+'"'+
+        ' autocomplete="new-password" spellcheck="false" value="" placeholder="'+
+        (f.has_value?'••••••••  unchanged':'paste the key here')+'"></div></div>';
+    }
+
+    return '<div class="ecopt wide"><div class="ecom">'+head+'</div>'+
+      '<div class="ecctl"><input type="text" class="inp" id="'+sesc(id)+'" data-payg="'+sesc(gid)+'" data-payf="'+sesc(f.key)+'"'+
+      ' spellcheck="false" value="'+sesc(f.value)+'"></div></div>';
+  }
+
+  /* The URL the owner has to paste into the provider dashboard. It cannot be
+     guessed or assembled by hand, so it is shown in full with a copy button. */
+  function payWebhook(g){
+    var hasHook=false;
+    for(var i=0;i<g.fields.length;i++){ if(g.fields[i].key==='webhook_secret') hasHook=true; }
+    if(!hasHook) return '';
+
+    if(!g.webhook_url){
+      return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Webhook URL</label>'+
+        '<span class="pill amber">not generated yet</span></div>'+
+        '<div class="echelp">Save this gateway once and its webhook URL appears here. Until it is generated and pasted into the provider dashboard, '+sesc(g.title)+' cannot tell this store that a payment succeeded.</div>'+
+        '</div></div>';
+    }
+
+    return '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Webhook URL</label>'+
+      '<span class="pill green">ready to paste</span></div>'+
+      '<div class="echelp">Paste this into the provider dashboard as the endpoint for payment events. The random tail is this gateway’s own URL secret, which is what makes the endpoint unguessable — treat the whole URL as confidential and keep it off any public page.</div></div>'+
+      '<div class="ecctl" style="display:block;width:100%">'+
+      '<input type="text" class="inp" readonly id="pay_hook_'+sesc(g.id)+'" data-payhook="'+sesc(g.id)+'" value="'+sesc(g.webhook_url)+'" style="max-width:none">'+
+      '<div class="row" style="gap:8px;margin-top:8px">'+
+      '<button type="button" class="btn ghost sm" data-paycopy="'+sesc(g.id)+'">Copy URL</button>'+
+      '<button type="button" class="btn ghost sm" data-payregen="'+sesc(g.id)+'">Regenerate</button>'+
+      '<span class="echelp" id="pay_copied_'+sesc(g.id)+'" style="margin:0"></span></div></div></div>';
+  }
+
+  function payCard(g){
+    var st=payStatus(g);
+    var creds=g.fields.filter(function(f){ return !PAY_HIDDEN_FIELDS[f.key]; });
+    var hasCreds=g.fields.length>0;
+
+    return '<div class="card mmcard" data-paycard="'+sesc(g.id)+'">'+
+      '<div class="mmhd" style="display:flex;align-items:center;gap:10px">'+
+      '<b style="flex:1">'+sesc(g.title)+'</b>'+
+      '<span class="pill '+st[0]+'"><span class="d"></span>'+sesc(st[1])+'</span></div>'+
+      '<div class="mmbody">'+
+      '<p class="echelp" style="margin:10px 0 2px;max-width:none">'+sesc(payStatusLine(g))+'</p>'+
+
+      '<div class="ecopt istog"><div class="ecom"><div class="ecl"><label>Offer this at checkout</label></div>'+
+      '<div class="echelp">A gateway that is on but not configured stays hidden rather than failing at the till.</div></div>'+
+      '<div class="ecctl"><span class="ectog'+(g.enabled?' on':'')+'" data-payen="'+sesc(g.id)+'" role="switch" aria-checked="'+(g.enabled?'true':'false')+'" tabindex="0"></span></div></div>'+
+
+      '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_title_'+sesc(g.id)+'">Label shown to shoppers</label></div>'+
+      '<div class="echelp">The wording on the checkout radio list.</div></div>'+
+      '<div class="ecctl"><input type="text" class="inp" id="pay_title_'+sesc(g.id)+'" data-paytitle="'+sesc(g.id)+'" maxlength="120" value="'+sesc(g.title)+'"></div></div>'+
+
+      (hasCreds
+        ? '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label for="pay_mode_'+sesc(g.id)+'">Mode</label></div>'+
+          '<div class="echelp">'+sesc(PAY_MODE_HELP[g.id]||'Sandbox or live.')+'</div></div>'+
+          '<div class="ecctl"><select class="inp" id="pay_mode_'+sesc(g.id)+'" data-paymode="'+sesc(g.id)+'">'+
+          '<option value="test"'+(g.mode==='live'?'':' selected')+'>Sandbox / test</option>'+
+          '<option value="live"'+(g.mode==='live'?' selected':'')+'>Live</option></select></div></div>'
+        : '')+
+
+      (creds.length
+        ? creds.map(function(f){ return payField(g.id,f); }).join('')
+        : '<div class="ecopt wide"><div class="ecom"><div class="ecl"><label>Credentials</label></div>'+
+          '<div class="echelp">None — cash on delivery needs no account with anyone, so there is nothing to enter and it is ready as soon as it is switched on.</div></div></div>')+
+
+      payWebhook(g)+
+
+      '<div class="row" style="justify-content:flex-end;gap:10px;padding:12px 0 4px">'+
+      '<span class="echelp" id="pay_msg_'+sesc(g.id)+'" style="margin:0;margin-right:auto"></span>'+
+      '<button type="button" class="btn" data-paysave="'+sesc(g.id)+'">Save '+sesc(g.title)+'</button></div>'+
+      '</div></div>';
+  }
+
+  function paintPayments(){
+    var unconfigured=PAYG.filter(function(g){ return g.enabled && !g.configured; });
+    var ready=PAYG.filter(function(g){ return g.enabled && g.configured; });
+
+    document.querySelector('#content').innerHTML=
+      '<div class="wrap ecwrap mmwrap">'+
+      '<div class="page-head"><h2>Payments</h2>'+
+      '<p>Credentials for each payment method. A gateway is offered at checkout only when it is switched on <i>and</i> its credentials are stored — an unconfigured one reports itself unavailable rather than failing on the shopper.</p></div>'+
+
+      (ready.length===0
+        ? '<div class="nlwarn">No payment method is both configured and switched on, so checkout currently has nothing to offer.</div>'
+        : '')+
+      (unconfigured.length
+        ? '<div class="nlwarn">'+unconfigured.length+' gateway'+(unconfigured.length===1?' is':'s are')+
+          ' switched on but missing credentials — '+sesc(unconfigured.map(function(g){ return g.title; }).join(', '))+
+          '. '+(unconfigured.length===1?'It is':'They are')+' hidden at checkout until the fields below are filled in.</div>'
+        : '')+
+
+      PAYG.map(payCard).join('')+
+      '</div>';
+
+    bindPayments();
+  }
+
+  function payMsg(id,text){
+    var el=document.getElementById('pay_msg_'+id);
+    if(el) el.textContent=text||'';
+  }
+
+  async function renderPayments(){
+    var body=document.querySelector('#content');
+    if(!body) return;
+    body.innerHTML='<div class="wrap"><div class="page-head"><h2>Payments</h2><p>Loading gateways…</p></div></div>';
+    try{
+      var d=await api('/admin-api/payments');
+      PAYG=d.gateways||[];
+    }catch(e){
+      // 404 here means the admin route is not registered — on this host that
+      // is the cache-clearing migration for the release not having run.
+      body.innerHTML='<div class="wrap"><div class="card pad"><b>Could not load the payment gateways.</b>'+
+        '<p style="margin:6px 0 12px;color:var(--ink-soft);font-size:12.5px">'+sesc(e.message)+'</p>'+
+        '<button type="button" class="btn sm" id="pay_retry">Retry</button></div></div>';
+      var rb=document.getElementById('pay_retry');
+      if(rb) rb.onclick=function(){ renderPayments(); };
+      return;
+    }
+    paintPayments();
+  }
+
+  async function paySave(id,settingsOverride,note){
+    var g=PAYG.filter(function(x){ return x.id===id; })[0];
+    if(!g) return;
+
+    var settings=settingsOverride;
+    if(!settings){
+      settings={};
+      document.querySelectorAll('[data-payg="'+id+'"]').forEach(function(el){
+        // A blank secret box posts back blank, which the controller reads as
+        // "leave the stored one alone" — so an edit to the label alone can
+        // never wipe the keys.
+        settings[el.dataset.payf]=el.value;
+      });
+    }
+
+    var tog=document.querySelector('[data-payen="'+id+'"]');
+    var titleEl=document.getElementById('pay_title_'+id);
+    var modeEl=document.getElementById('pay_mode_'+id);
+
+    var payload={
+      id:id,
+      enabled:tog?tog.classList.contains('on'):!!g.enabled,
+      title:titleEl?titleEl.value:g.title,
+      mode:modeEl?modeEl.value:g.mode,
+      settings:settings
+    };
+
+    var btn=document.querySelector('[data-paysave="'+id+'"]');
+    if(btn) btn.disabled=true;
+    payMsg(id,'Saving…');
+    try{
+      // Not api(): a 422 here carries the controller's own sentence — "Unknown
+      // setting: x", "Unknown payment gateway." — and api() throws away the
+      // body, leaving the operator with a status code and no idea why.
+      var r=await fetch(fixAdminApiUrl('/admin-api/payments'),{
+        method:'POST',credentials:'same-origin',
+        headers:{'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+        body:JSON.stringify(payload)
+      });
+      var d={}; try{ d=await r.json(); }catch(pe){}
+      if(!r.ok||d.ok===false){
+        var why=d.error||'';
+        if(d.errors){ why=Object.keys(d.errors).map(function(k){ return d.errors[k][0]; }).join(' '); }
+        throw new Error(why||('Request failed ('+r.status+')'));
+      }
+      toast(note||(g.title+' saved'));
+      await renderPayments();
+    }catch(e){
+      payMsg(id,'');
+      toast('Could not save — '+e.message);
+      if(btn) btn.disabled=false;
+    }
+  }
+
+  function bindPayments(){
+    document.querySelectorAll('[data-payen]').forEach(function(el){
+      var flip=function(){
+        var on=!el.classList.contains('on');
+        el.classList.toggle('on',on);
+        el.setAttribute('aria-checked',on?'true':'false');
+        payMsg(el.dataset.payen,'Unsaved change');
+      };
+      el.onclick=flip;
+      el.onkeydown=function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); } };
+    });
+
+    document.querySelectorAll('[data-paysave]').forEach(function(b){
+      b.onclick=function(){ paySave(b.dataset.paysave,null,null); };
+    });
+
+    document.querySelectorAll('[data-payhook]').forEach(function(el){
+      el.onclick=function(){ el.select(); };
+    });
+
+    document.querySelectorAll('[data-paycopy]').forEach(function(b){
+      b.onclick=async function(){
+        var id=b.dataset.paycopy;
+        var input=document.getElementById('pay_hook_'+id);
+        if(!input) return;
+        try{ await navigator.clipboard.writeText(input.value); }
+        catch(err){ input.select(); try{ document.execCommand('copy'); }catch(e2){} }
+        var ok=document.getElementById('pay_copied_'+id);
+        if(ok){ ok.textContent='Copied'; setTimeout(function(){ ok.textContent=''; },1800); }
+      };
+    });
+
+    document.querySelectorAll('[data-payregen]').forEach(function(b){
+      b.onclick=function(){
+        var id=b.dataset.payregen;
+        var g=PAYG.filter(function(x){ return x.id===id; })[0];
+        if(!g) return;
+        openModal('<div class="modal-h"><b>Regenerate webhook URL</b><button class="x" onclick="closeModal()">✕</button></div>'+
+          '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">A new URL is generated for <b>'+sesc(g.title)+'</b> and the current one stops working at once. Any payment confirmation sent to the old URL is rejected until the new one is pasted into the provider dashboard.</p>'+
+          '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
+          '<button class="btn" id="pay_regen_yes">Regenerate</button></div></div>');
+        var yes=document.getElementById('pay_regen_yes');
+        if(yes) yes.onclick=function(){
+          closeModal();
+          // null clears the stored key; the controller then finds it empty and
+          // mints a fresh one on the same save.
+          paySave(id,{webhook_secret:null},'New webhook URL generated — paste it into '+g.title);
+        };
+      };
+    });
   }
 
   /* ---------- Route interception: hydrate dash, render new screens ---------- */
@@ -7345,8 +12730,10 @@ buildNav();
     if(id==='quiz-leads'){ _go(id); return renderQuizLeads(); }
     if(id==='rev-all'){ _go(id); return renderReviews(); }
     if(id==='store-settings'){ _go(id); return renderStoreSettings(); }
+    if(id==='payments'){ _go(id); return renderPayments(); }
     if(id==='seo'){ _go(id); return renderSeo(); }
     if(id==='analytics'){ _go(id); return renderAnalytics(); }
+    if(id==='blog'||id==='posts'){ _go(id); return renderPosts(); }
     _go(id);
     if(id==='dash') hydrateDash();
   };

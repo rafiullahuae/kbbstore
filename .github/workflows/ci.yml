@@ -1,0 +1,259 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          # Matches the production host (PHP 8.3.x on Hostinger).
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, zip, gd
+          coverage: none
+
+      - name: Cache composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Lint every PHP file
+        run: find app database routes tools -name '*.php' -print0 | xargs -0 -n1 -P4 php -l
+
+      # Written here rather than copied from env.staging.txt: that file sets
+      # KBB_BASE_PATH=/kbb-upgrade, which prefixes every route, so the suite
+      # would request paths the router does not serve.
+      - name: Prepare environment
+        run: |
+          cat > .env <<'ENV'
+          APP_NAME=KBB
+          APP_ENV=testing
+          APP_KEY=
+          APP_DEBUG=true
+          APP_URL=http://localhost
+          DB_CONNECTION=sqlite
+          DB_DATABASE=database/testing.sqlite
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          MAIL_MAILER=array
+          ENV
+          touch database/testing.sqlite
+          php artisan key:generate --force
+
+      - name: Tests
+        run: vendor/bin/pest --compact
+
+      # Advisory only, and deliberately still advisory: an advisory disclosed
+      # upstream this morning is not the fault of whichever PR runs next, and a
+      # step that blocks on one teaches people to re-run CI until it passes.
+      #
+      # What changed is legibility. `composer audit` printed the same three
+      # laravel/framework advisories on every run for months, which is exactly
+      # how a fourth one gets read as "yes, the usual three" and ignored. This
+      # step diffs the live audit against docs/dependency-advisories.json — the
+      # ids this repo has actually assessed — and says which of three things
+      # each one is:
+      #
+      #   KNOWN     already assessed; its verdict is printed, one line.
+      #   NEW       not in the file. Nobody has looked at this yet. Loud.
+      #   RESOLVED  in the file but gone from the audit. Equally loud, because
+      #             it means the accepted-risk note is now describing something
+      #             that no longer exists and should be deleted.
+      #
+      # docs/DEPENDENCY-ADVISORIES.md carries the long-form exposure analysis;
+      # tests/Feature/DependencyAdvisoryExposureTest.php pins the facts each
+      # verdict rests on, and that one DOES block.
+      - name: Dependency advisories
+        run: |
+          set -uo pipefail
+
+          BASELINE=docs/dependency-advisories.json
+
+          # --locked, so the audit describes composer.lock rather than whatever
+          # the vendor cache restored. Failure is expected (it exits non-zero
+          # whenever anything is found), so the exit code is discarded here and
+          # the JSON is what gets judged.
+          composer audit --locked --format=json --no-interaction > /tmp/audit.json || true
+
+          if ! jq -e . /tmp/audit.json >/dev/null 2>&1; then
+            echo "::warning title=Dependency advisories::composer audit produced no usable JSON (network? proxy?). Advisories NOT checked this run."
+            exit 0
+          fi
+
+          jq -r '.advisories | to_entries[] | .value[] | [.advisoryId, .packageName, (.severity // "unscored"), .title] | @tsv' \
+            /tmp/audit.json | sort > /tmp/current.tsv
+          jq -r '.accepted | keys[]' "$BASELINE" | sort > /tmp/accepted.txt
+          cut -f1 /tmp/current.tsv | sort > /tmp/current-ids.txt
+
+          {
+            echo "## Dependency advisories"
+            echo
+            echo "Baseline reviewed $(jq -r .reviewed_at "$BASELINE") against $(jq -r .reviewed_against "$BASELINE")."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          new_ids=$(comm -23 /tmp/current-ids.txt /tmp/accepted.txt)
+          gone_ids=$(comm -13 /tmp/current-ids.txt /tmp/accepted.txt)
+
+          echo "=== KNOWN AND ACCEPTED ==="
+          echo "| id | package | severity | exposure | advisory |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          while IFS=$'\t' read -r id pkg sev title; do
+            [ -z "${id:-}" ] && continue
+            grep -qx "$id" /tmp/accepted.txt || continue
+            exposure=$(jq -r --arg i "$id" '.accepted[$i].real_exposure // "unassessed"' "$BASELINE")
+            printf '  %-22s %-20s %-8s exposure=%-12s %s\n' "$id" "$pkg" "$sev" "$exposure" "$title"
+            echo "| \`$id\` | $pkg | $sev | **$exposure** | $title |" >> "$GITHUB_STEP_SUMMARY"
+          done < /tmp/current.tsv
+
+          if [ -n "$new_ids" ]; then
+            echo
+            echo "=== NEW — NOT YET ASSESSED ==="
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "### :rotating_light: New, not yet assessed" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            for id in $new_ids; do
+              line=$(grep -P "^\Q$id\E\t" /tmp/current.tsv || true)
+              pkg=$(printf '%s' "$line" | cut -f2)
+              sev=$(printf '%s' "$line" | cut -f3)
+              title=$(printf '%s' "$line" | cut -f4)
+              printf '  %-22s %-20s %-8s %s\n' "$id" "$pkg" "$sev" "$title"
+              echo "- \`$id\` **$pkg** ($sev) — $title" >> "$GITHUB_STEP_SUMMARY"
+              echo "::warning title=New dependency advisory::$id $pkg ($sev): $title — assess it and add it to $BASELINE"
+            done
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "Assess each against this codebase, then add it to \`$BASELINE\` with a real verdict." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ -n "$gone_ids" ]; then
+            echo
+            echo "=== RESOLVED — BASELINE IS STALE ==="
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "### :white_check_mark: Resolved upstream — baseline is stale" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            for id in $gone_ids; do
+              title=$(jq -r --arg i "$id" '.accepted[$i].title // "?"' "$BASELINE")
+              echo "  $id no longer reported: $title"
+              echo "- \`$id\` — $title" >> "$GITHUB_STEP_SUMMARY"
+              echo "::warning title=Advisory resolved upstream::$id is no longer reported. Remove it from $BASELINE and delete the accepted-risk note it carries."
+            done
+          fi
+
+          if [ -z "$new_ids" ] && [ -z "$gone_ids" ]; then
+            echo
+            echo "No change: every advisory reported is one this repo has assessed."
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "_No change — every advisory reported is one this repo has already assessed._" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Always zero. The gate on this material is the test file, not here.
+          exit 0
+
+  # The same suite, against the engine the store actually runs on.
+  #
+  # The job above proves the code works on SQLite. It cannot prove it works in
+  # production, because SQLite is the more permissive of the two dialects and
+  # accepts several kinds of statement MySQL rejects outright. That gap has cost
+  # this store real outages while CI stayed green — the Customers screen 500
+  # (SQLSTATE 1140), gateway and SMTP credentials that could not be saved at all
+  # (a JSON column holding ciphertext), and a "last active" date of 1 Jan 1970
+  # on every customer who had never ordered. None of the three was visible to
+  # the SQLite run. See docs/MYSQL-PARITY.md.
+  #
+  # This job is required, not advisory. A dialect bug that CI reports but does
+  # not block is a dialect bug that ships.
+  mysql:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        # Matches the production host's engine family. MariaDB is NOT an
+        # adequate stand-in: it returned the correct 19-character value for the
+        # sentinel that MySQL 8 widens to DATETIME(6), so it missed the 1970 bug
+        # that this job now pins.
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: kbb_test
+          MYSQL_USER: kbb
+          MYSQL_PASSWORD: kbb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, mysqli, pdo_sqlite, sqlite3, zip, gd
+          coverage: none
+
+      - name: Cache composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      # The live host's sql_mode is unknown, so the suite runs against the
+      # strictest realistic setting rather than against a guess. Laravel's
+      # `strict => true` already issues this per session; setting it globally
+      # too means artisan, the mysql client and anything else in this job get
+      # the same treatment, and tests/Feature/SqlDialectGuardTest.php asserts
+      # the connection really arrived strict rather than trusting the config.
+      - name: Pin sql_mode to the strictest realistic setting
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -uroot -proot -e "
+            SET GLOBAL sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+            SELECT VERSION(), @@GLOBAL.sql_mode;
+          "
+
+      - name: Prepare environment
+        run: |
+          cat > .env <<'ENV'
+          APP_NAME=KBB
+          APP_ENV=testing
+          APP_KEY=
+          APP_DEBUG=true
+          APP_URL=http://localhost
+          DB_CONNECTION=mysql
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=kbb_test
+          DB_USERNAME=kbb
+          DB_PASSWORD=kbb
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          MAIL_MAILER=array
+          ENV
+          php artisan key:generate --force
+
+      # Run separately from the suite so a migration that only fails on MySQL is
+      # reported as a migration failure rather than as 500 broken tests.
+      - name: Migrate from scratch
+        run: php artisan migrate:fresh --force
+
+      - name: Tests on MySQL
+        run: vendor/bin/pest -c phpunit-mysql.xml --compact

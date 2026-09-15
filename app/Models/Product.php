@@ -43,6 +43,11 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     public function categories()
     {
         return $this->belongsToMany(Category::class);
@@ -66,6 +71,38 @@ class Product extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * The public API projection.
+     *
+     * Named explicitly rather than returning the model, because the products
+     * table carries fields the storefront has no business publishing: wc_id
+     * and sku are internal identity, total_sales is commercial, stock is an
+     * exact count competitors would read, and seo/meta_feed/custom_tabs are
+     * admin blobs. An allowlist also means a column added later is private
+     * until someone decides otherwise.
+     *
+     * Api\ProductController has called this since before 2.60.36, but the
+     * method never existed: its status filter matched no rows, so the closure
+     * never ran and the missing method never surfaced. Fixing the filter in
+     * 2.60.105 turned that into a 500 on every /api/products request.
+     */
+    public function toApi(): array
+    {
+        return [
+            'slug'              => $this->slug,
+            'name'              => $this->name,
+            'brand'             => $this->relationLoaded('brand') ? $this->brand?->name : null,
+            'price'             => $this->price,
+            'sale_price'        => $this->sale_price,
+            'image'             => $this->image,
+            'images'            => $this->images,
+            'rating'            => $this->rating,
+            'review_count'      => $this->review_count,
+            'stock_status'      => $this->stock_status,
+            'short_description' => $this->short_description,
+        ];
     }
 
     public function scopeVisible($query)

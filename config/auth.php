@@ -120,9 +120,25 @@ return [
             'throttle' => 60,
         ],
 
+        /*
+         * Storefront customers.
+         *
+         * A table of its own, not the stock `password_reset_tokens`. That table
+         * is keyed by email alone and carries nothing saying which provider a
+         * row belongs to, so two brokers sharing it means a token minted for an
+         * admin verifies for the customer with the same address, and either
+         * request silently retires the other's pending link. See
+         * 2026_09_16_000000_create_customer_password_resets.
+         *
+         * `expire` is in MINUTES and `throttle` in SECONDS — Laravel's own
+         * units, easy to misread. An hour to use a link; a minute before the
+         * same address may mint another. The public form's own limiter is
+         * tighter still (see Store\PasswordResetController); this is the floor
+         * the broker enforces no matter who calls it.
+         */
         'customers' => [
             'provider' => 'customers',
-            'table' => 'password_reset_tokens',
+            'table' => 'customer_password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],

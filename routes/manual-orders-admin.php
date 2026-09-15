@@ -9,33 +9,40 @@ declare(strict_types=1);
 |
 | INTEGRATOR: add exactly one line to routes/web.php, INSIDE the existing
 |
-|     Route::prefix('admin-api')->middleware(NoStoreAdminApi::class)->group(function () {
+|     Route::middleware(['web', 'auth:admin', NoStoreAdminApi::class])
+|         ->prefix('admin-api')
+|         ->group(function () { ... });
 |
-| block — the one that already holds /stats, /products, /orders and the rest —
-| directly after the three order routes near the end of that group:
+| block — the one that already mounts routes/orders-admin.php and
+| routes/customers-admin.php — beside those requires:
 |
 |     require __DIR__ . '/manual-orders-admin.php';
 |
-| That group sits inside `Route::middleware('auth:admin')->group(...)`, so
-| requiring the file THERE and nowhere else is what gives every route below:
+| Mounting it THERE and nowhere else is what gives every route below:
 |
-|   * the auth:admin guard. These endpoints return customer names, emails,
-|     phone numbers and street addresses, and they create real orders. There
-|     is no per-route authorisation in AdminOrderController — it relies
-|     entirely on being inside that group. /api/* is unauthenticated, so
-|     requiring this from routes/api.php would publish the customer list.
+|   * the web + auth:admin guard. These endpoints return customer names,
+|     emails, phone numbers and street addresses, and they create real orders
+|     against real money. There is no per-route authorisation in
+|     AdminOrderController — it relies entirely on being inside that group.
+|     /api/* is unauthenticated, so mounting this from routes/api.php would
+|     publish the customer list.
+|
+|     ONE middleware() CALL, NOT TWO. RouteRegistrar::middleware() REPLACES the
+|     pending middleware rather than appending, so ->middleware('web')
+|     ->middleware('auth:admin') registers routes carrying auth:admin and NOT
+|     web — or, reversed, no guard at all while reading as though it had one.
 |   * the /admin-api prefix, which is why no path below repeats it.
 |   * NoStoreAdminApi, so shared hosting cannot serve a cached copy of a
 |     customer search or, worse, of a just-created order.
 |
 | The paths are shaped as /manual-orders/... rather than hanging off the
-| existing /orders prefix on purpose: /orders/{id} is already taken by
-| AdminController::order, and /orders/new would be captured by that route's
-| {id} placeholder ahead of anything declared later. A separate noun avoids
-| that collision instead of depending on declaration order to break the tie.
+| existing /orders prefix on purpose: /orders/{id} is already taken, and
+| /orders/new would be captured by that route's {id} placeholder ahead of
+| anything declared later. A separate noun avoids the collision instead of
+| depending on declaration order to break the tie.
 |
-| Routes are matched in declaration order, so the two literal paths below come
-| before the one with a parameter.
+| Routes are matched in declaration order, so the literal paths below come
+| before any that take a parameter.
 |
 | Compiled route cache: this file adds routes, so the package that ships it
 | also ships database/migrations/2026_09_15_090000_clear_caches_manual_orders.php.
@@ -62,6 +69,5 @@ Route::post('/manual-orders/quote', [AdminOrderController::class, 'quote']);
 // Create the order.
 Route::post('/manual-orders', [AdminOrderController::class, 'store']);
 
-// The packing list the inventory team works from.
-Route::get('/manual-orders/{order}/packing-list.csv', [AdminOrderController::class, 'packingList'])
-    ->whereNumber('order');
+// The packer's document is the store's existing packing slip
+// (routes/invoices-admin.php), not a second one from this lane.

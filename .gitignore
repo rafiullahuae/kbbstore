@@ -31,3 +31,14 @@
 .DS_Store
 Thumbs.db
 *.orig
+
+# Editor and patch-system leftovers — see docs/REPO-STATE.md
+*.backup-*
+*.before-patch-*
+app/*.zip
+
+# Test database
+/database/testing.sqlite
+
+# Agent worktrees — transient checkouts created per lane, never committed
+/.claude/worktrees/

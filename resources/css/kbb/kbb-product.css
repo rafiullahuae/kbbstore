@@ -180,8 +180,26 @@ a{color:inherit;text-decoration:none}
 .macc{display:none}
 .macc-i{border-bottom:1px solid var(--line-2)}
 .macc-h{width:100%;display:flex;align-items:center;justify-content:space-between;padding:15px 2px;font-size:14.5px;font-weight:600;text-align:left}
-.macc-h .pm{font-size:19px;color:var(--pink-deep);transition:.2s}
-.macc-i.open .macc-h .pm{transform:rotate(45deg)}
+/* The accordion's +/- control.
+
+   The glyph used to BE the icon: product-tabs.blade.php prints "+" on a closed
+   row and "-" (U+2212 MINUS SIGN) on the open one, tabs.js swaps them on tap,
+   and the rule here rotated the open one 45deg. That rotation was written for a
+   control that stays a plus -- rotating a plus 45deg gives a clean multiply
+   sign. Rotating a MINUS 45deg gives one short stroke leaning over at 45
+   degrees, which is exactly what the open row has been showing.
+
+   Drawing the icon from two bars settles it. The glyph the script writes is
+   hidden (font-size:0), the horizontal bar is always drawn, and the vertical
+   one lies down into it when the row opens: closed is an exact plus, open is an
+   exact minus, both the same weight, length and colour, and the change between
+   them animates. tabs.js is untouched and keeps writing its glyph; with no
+   JavaScript at all the first row is still open and both states still draw. */
+.macc-h .pm{position:relative;flex:0 0 auto;width:15px;height:15px;margin-left:12px;font-size:0;line-height:0;color:transparent}
+.macc-h .pm::before,.macc-h .pm::after{content:"";position:absolute;top:50%;left:0;width:15px;height:2px;margin-top:-1px;border-radius:2px;background:var(--pink-deep);transition:transform .2s var(--ease)}
+.macc-h .pm::after{transform:rotate(90deg)}
+.macc-i.open .macc-h .pm{transform:none}
+.macc-i.open .macc-h .pm::after{transform:rotate(0deg)}
 .macc-b{display:none;padding:0 2px 16px}
 .macc-i.open .macc-b{display:block}
 @media(max-width:720px){.dtabbar,.dpanel{display:none}.macc{display:block}}
@@ -241,9 +259,33 @@ a{color:inherit;text-decoration:none}
 .lb .lbimg{width:min(80vw,540px);aspect-ratio:1;border-radius:14px}
 .lb .lbx{position:absolute;top:18px;right:24px;color:#fff;font-size:36px;line-height:1}
 
+/* Customer Reviews: the page gutter, not two of them.
+
+   The block is sorina-reviews.css's, ported verbatim, and that stylesheet ends
+   `.sr{max-width:900px;margin:34px auto 56px;padding:0 16px}`. The padding is
+   there because the plugin drew this section on a page that gave it no gutter
+   of its own. Here it sits directly inside .wrap, which already pads the page
+   by 20px, so the two stack and the reviews sat 36px in while the buy box, the
+   details and the related grid all sat at 20px.
+
+   Drop it for as long as the 900px column is width-constrained -- 900 plus
+   .wrap's two 20px pads is 940 -- so the section lines up with the rest of the
+   page. Above 940 the column is centred with room to spare, its own padding
+   costs nothing, and the desktop layout is left exactly as it was.
+
+   The child combinator is load-bearing: ProductController inlines that
+   stylesheet in a <style> AFTER this file, so a bare `.sr` here would lose the
+   tie on source order. It also keeps the rule off the standalone review wall,
+   which builds its own page and has no .wrap. */
+@media(max-width:940px){.wrap > .sr{padding-left:0;padding-right:0}}
+
 /* related */
 .rel{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
 @media(max-width:880px){.rel{grid-template-columns:repeat(2,1fr)}}
+/* Two columns on a phone leave each card about 170px wide. 18px is the figure
+   the four-across desktop grid wants; between two cards that narrow it reads as
+   a hole, most of all down the rows, where nothing fills it. */
+@media(max-width:600px){.rel{gap:10px}}
 .pc{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-m);overflow:hidden;transition:.18s var(--ease);display:flex;flex-direction:column}
 .pc:hover{box-shadow:var(--sh-m);transform:translateY(-3px)}
 .pc .ph{position:relative;aspect-ratio:1;display:grid;place-items:center}

@@ -28,7 +28,7 @@ class SubscribeController extends Controller
     {
         try {
             $data = $request->validate([
-                'email' => ['required', 'email:rfc', 'max:160'],
+                'email' => ['required', 'string', 'max:160', new \App\Rules\StorefrontEmail],
             ]);
         } catch (ValidationException $e) {
             return $this->fail($request, (string) $this->newsletter->get('nl_error'));

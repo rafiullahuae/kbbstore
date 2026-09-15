@@ -188,7 +188,7 @@ class CartController extends Controller
         return response()->json([
             'ok' => true,
             'count' => $payload['totals']['item_count'],
-            'html' => view('partials.cart-drawer', $payload)->render(),
+            'html' => $this->drawerHtml($payload),
         ]);
     }
 
@@ -207,6 +207,24 @@ class CartController extends Controller
             'items.variant:id,product_id,price,sale_price,image,stock_status',
             'coupon:id,code,type,amount',
         ]);
+    }
+
+    /**
+     * The drawer fragment, rendered from the payload computed HERE.
+     *
+     * The flag is what stops CartDrawerComposer filling the same partial in a
+     * second time from its own look at the request. A composer runs after the
+     * data handed to a view and overwrites it, and on the first add of a
+     * session that meant the panel was painted EMPTY over a payload that was
+     * already correct: the cart is created during that request and its cookie
+     * only goes out on the response, so the composer's cookie test said there
+     * was nothing to show.
+     */
+    private function drawerHtml(array $payload): string
+    {
+        return view('partials.cart-drawer', $payload + [
+            \App\View\Composers\CartDrawerComposer::SUPPLIED => true,
+        ])->render();
     }
 
     private function payload($cart, Request $request): array
@@ -291,7 +309,7 @@ class CartController extends Controller
             'error' => $error,
             'toast' => $toast,
             'count' => $payload['totals']['item_count'],
-            'drawer' => view('partials.cart-drawer', $payload)->render(),
+            'drawer' => $this->drawerHtml($payload),
             'page' => $wantsPage ? view('store.cart-inner', $payload)->render() : null,
             'subtotal' => Money::format($payload['totals']['subtotal']),
             'total' => Money::format($payload['totals']['total']),

@@ -1,6 +1,8 @@
 # KBB Master Plan — live tracking
 
-**As at version 2.60.41.** Tick items as they ship; add the version that shipped them.
+**As at version 2.60.107.** Tick items as they ship; add the version that shipped them.
+
+**Mail provider is deferred, not pending.** Password reset, newsletter double opt-in, `abandoned_cart` and `back_in_stock` all wait on it. Nothing else depends on them, so that group is parked rather than blocking.
 
 **Visual progress dashboard**: `KBB-Progress-Dashboard.html`, alongside this file — a colored,
 per-phase progress view computed directly from the checkboxes below, not a separately maintained
@@ -253,24 +255,30 @@ something half-right.
   admin screen (Search / Extended Search Results / Search styles & colors), replacing a nav
   item that had pointed at a non-existent iframe file the whole time — *2.60.35*
 - [~] Search results — `/shop/?s=` works; **decide whether SE-05 wants a distinct page**
-- [ ] Filters and sorting on the results page
-- [ ] Synonyms and misspelling tolerance — partially covered by Extended Search's brand
+- [x] Filters and sorting on the results page — was already built and never ticked. `SearchController::page()` delegates to `ShopController::index()`, so the results page *is* the shop page: `Facets` handles cat, brand, price, sale, instock and orderby, and `shop.blade.php` renders the sidebar, chips and sort control — *verified 2.60.91*
+- [x] Synonyms and misspelling tolerance — `App\Support\SearchTerms` expands a query before matching, on the results page and in the autocomplete dropdown. Narrow by design: spacing, hyphens, a plural trim, no edit distance, and nothing under four characters is expanded to — *2.60.77, autocomplete 2.60.90*. Partially covered by Extended Search's brand
   splitting, but not general misspelling tolerance
 
 ## Phase 5 — Product cards and grids
 
 - [x] 28 skins · 34 settings · columns per device · shortcode builder
 - [x] Full product titles — *2.40.3*
-- [ ] Card skin preview inside the shortcode builder
-- [ ] Quick view
+- [x] Card skin preview inside the shortcode builder — was already built and never ticked. `#scPrev` renders `skinCard(SC.skin ?? grid_skin)` under a "Card style used" note — *verified 2.60.91*
+- [x] Quick view — modal from any grid card with image, brand, price including sale rules, stock, short description and add-to-cart. Server-rendered fragment so money formatting cannot drift from the card; hidden on touch devices — *2.60.72, module switch 2.60.73*
 
 ## Phase 6 — Product page
 
 - [x] Gallery, tabs, badges, price, bundles, 17 sections
 - [x] Sticky add-to-cart — *2.38.0 → 2.39.0*
-- [ ] ▲ **Reviews: the entire customer side is dead markup.** Ten hooks rendered,
-      no `reviews.js` in the build, no submit endpoint. Shoppers cannot leave a review
-- [ ] Related and recently viewed — exists; to be registered as `recently_viewed`
+- [x] **Reviews submit flow — stale note, already fully built and working.** Checked
+  directly rather than trusting the old claim: `reviews.js` is imported and called in
+  `app.js`, and `Store\ReviewController` has a complete submit endpoint — rate
+  limiting, a honeypot, a real signed-token arithmetic captcha, validation, photo
+  upload. Verified with a genuine end-to-end submission (real captcha token, correct
+  answer, real review content) — a Review row was actually created, response was the
+  real "awaiting approval" message. Must have been built in a session this plan was
+  never updated to reflect
+- [x] Related and recently viewed — was already registered and never ticked. Present in `ModuleRegistry`, settings at Appearance → Cart panel — *verified 2.60.91*
 
 ## Phase 7 — Account area
 
@@ -278,9 +286,329 @@ something half-right.
 - [x] Field component, password strength, autofill, sum guard, account panel
 - [ ] ▲ **Password reset actually sends an email.** No outbound mail has been
       demonstrated. Blocks email verification and newsletter double opt-in
-- [ ] Address book: add, edit, delete, default
-- [ ] Order detail page with line items and status history
-- [ ] Track-my-order against real orders
+- [x] Address book: add, edit, delete, default — the `addresses` table, the model and `Customer::addresses()` already existed; the page was a 12-line stub that printed "No addresses saved yet" without ever querying. One default per type, enforced in two statements; deleting a default hands it on — *2.60.72, module switch 2.60.73*
+- [x] **Order detail page with line items and status history — plus a much bigger find
+  along the way.** Checking this surfaced that the entire `/my-account/*` route group
+  was gated behind `guest:customer` middleware, meaning every logged-in customer was
+  redirected away from their own account pages — confirmed directly with a real
+  authenticated request to `/my-account/orders` before touching anything: 302 to the
+  homepage, not the order list. `index()` itself already branched on auth state
+  internally to show dashboard vs. login form, which is what exposed the mismatch: the
+  route middleware was fighting the controller's own logic. Restructured into three
+  correctly-scoped groups (open to everyone, `auth:customer`, `guest:customer` — only
+  login/register belong in the last one) and verified all three cases individually.
+  Also found `$order->number` doesn't exist anywhere in the schema (it's
+  `order_number`) on both the dashboard and the orders list, so every customer was
+  seeing their internal database id instead of their real order number — fixed in both
+  places. Built the detail page itself: real line items, a real price breakdown
+  (subtotal/discount/shipping/fees/total), real delivery address, strictly scoped to
+  the logged-in customer's own orders — verified with two real seeded customers that
+  one cannot view the other's order (404, not a data leak) — *2.60.57*
+- [x] Track-my-order against real orders — was a pure stub: the form existed and
+  submitted, but the controller returned no data regardless of what was searched for.
+  Wired to a real lookup requiring order number **and** email together, deliberately
+  never number alone, so it cannot be used to enumerate other customers' order statuses
+  by guessing. Verified: correct number+email shows the real order; a mismatched email
+  against a real order number shows "not found" with no order data anywhere in the
+  response, only the safely-echoed input the visitor typed; an empty, unsubmitted form
+  shows no error — *2.60.57*
+
+- [x] **Account area repaired** — `/my-account/` was serving the **login form to signed-in
+      customers**: both controllers resolved the shopper through `auth()->guard()`, the
+      *default* guard, which is `web` (the admin users table). Inside the `auth:customer` group
+      it resolved correctly by accident, because Laravel's middleware calls `shouldUse()` on the
+      guard it matched; `/my-account` carries no middleware, so there it did not. `actingAs()`
+      masks this exactly, which is why no test caught it. Order detail also printed address keys
+      checkout never writes, so the **recipient's name was blank on every order**, and read
+      orders through the query builder, so a trashed order was still served. Track order was an
+      order-number oracle — unthrottled, with distinguishable answers — *2.60.116*
+- [x] **Password reset and email verification** — the forgot form had been posting to a route
+      that did not exist for as long as the view has existed. A reset clears `legacy_password`
+      in the same save, without which the leaked WordPress password keeps working. The customers
+      broker pointed at a table keyed by email alone, so a customer and an admin sharing an
+      address could redeem each other's token. Both open Laravel advisories are mitigated rather
+      than relied on: the public form does not use the `email` rule, and links carry an HMAC over
+      a claim containing no URL instead of a Laravel signed URL — *2.60.116*
+
+## Admin — Order detail page  *(new — built from Rafi's own WooCommerce reference screenshot)*
+
+- [x] **Status list expanded** to `draft`/`pending`/`processing`/`onhold`/`shipped`/
+  `completed`/`cancelled`/`refunded`/`failed`, matching what Rafi actually needs to see.
+  Adding `shipped` had a real, easy-to-miss consequence: a shipped-but-not-yet-completed
+  order is genuinely a paid, real order, so it now counts toward revenue and order-count
+  totals the same way `processing`/`onhold` already did — verified directly, not assumed
+  — *2.60.58*
+- [x] **The detailed order page itself.** A genuinely important discovery mid-build: a
+  full, separate backend (`AdminOrderController`) already existed, built from this exact
+  reference screenshot — real notes, a real `refunds` table (not a bolt-on total
+  column), soft-delete, address editing, the honest "not tracked yet" attribution
+  panel, and the same real-vs-placeholder action split already agreed. Caught **before**
+  shipping anything, but only after already starting to duplicate it — a redundant
+  `customer_ip` column had been added when the real one (`ip_address`) already existed
+  and was already being captured at checkout. Stopped, reverted every duplicate/
+  conflicting change (deleted the redundant migration, reverted the model and checkout
+  edits, restored the method that would otherwise have been clobbered), then thoroughly
+  tested the *existing* backend before trusting it — every endpoint (order detail,
+  notes, partial refund, over-refund rejection, placeholder-action rejection, cancel,
+  duplicate, trash, restore, address update) verified individually with real seeded
+  data matching the reference screenshot (Nina Zandnia, order #32187, Tabby payment).
+  Built the missing other half: the actual card-stack page, every section open by
+  default (Rafi's choice, collapsible but not collapsed) — order details/billing/
+  shipping, items with real images and totals, notes with add, order attribution
+  (honestly empty, not faked), order actions (real actions run, placeholder actions
+  refuse with the real reason, never a fake success), customer history, and Invoice/
+  Packing with visible-but-not-wired PDF placeholders per the agreed scope. Verified
+  interactively end to end, not just that it renders: refund form submits the real
+  amount and reason; a note save sends real content; a status change sends the real new
+  status; a placeholder action shows the real, honest backend rejection message in the
+  actual toast; trash requires and respects a confirm dialog — *2.60.59*
+- [ ] Downloadable-product permissions — deliberately skipped, not relevant to a
+  physical-skincare shop
+- [ ] Order source/device/session-page-view tracking — deliberately deferred; the panel
+  shows "Not tracked yet" honestly rather than fabricated numbers
+- [ ] Real PDF generation for Invoice/Packing slip/Delivery note/Shipping Label/
+  Dispatch Label — buttons are real, visible placeholders; wiring actual document
+  generation is a separate, later piece of work
+- [x] **Visual revision, requested after first review** — billing and shipping split
+  into their own explicit two-column card (previously a 3-column grid mixing them
+  with order status/customer). A genuine color system replaces the flat, single-accent
+  admin theme: each card gets its own accent (indigo for overview, violet for
+  addresses, emerald for items, amber for notes, cyan for attribution, rose for
+  actions, blue for customer history, slate for invoice/packing), shown as a left
+  border and a small colored dot next to the heading — restrained rather than a full
+  gradient wash per card, keeping the boldness in one clear signal instead of
+  decorating everything. Also dropped the ALL-CAPS field labels throughout in favor of
+  sentence case, per the same "commonest AI-generated tell" the design skill itself
+  flags. Customer history now reads like a real KPI panel — large, bold, colored
+  numbers rather than small uniform text. Full regression-tested after the rewrite,
+  not just visually reviewed: refund, note-add, status update, and address-edit all
+  reconfirmed working with real data before shipping — *2.60.60*
+- [x] **Layout — final direction chosen and shipped live.** Went through several real
+  rounds after 2.60.60, each with actual working HTML previews rather than
+  descriptions: three grid-alignment directions, then five genuinely different
+  structural concepts at Rafi's request (a status-stepper pipeline, a receipt/ledger,
+  a dark ops console, a chronological timeline, an editorial big-number layout) after
+  he rejected the first round outright, then back to matching his own original
+  WooCommerce reference screenshot exactly once he clarified that was the actual
+  target — three header/divider treatments on that matched layout, then one refined
+  further (real SVG icons instead of text glyphs, softer shadows) at his request, then
+  three more resolving his specific asks (real column dividers, restrained font sizes,
+  light-colored box headers), and finally the chosen one (amber headers) with its
+  input fields deliberately strengthened (border, tint, inset shadow) so they read as
+  real interactive fields. **This final design is now live**, not just a preview —
+  rebuilt directly into `AdminOrderController`/`app.blade.php`, replacing the previous
+  rainbow-left-border card system with the approved amber-header, column-divided,
+  prominent-field treatment. Every existing interaction re-verified working after the
+  rewrite: status update, refund, add-note, add/edit/remove item, actions, trash —
+  none silently broke in the visual rebuild
+- [x] **VAT line added to the order summary — inclusive, display-only, matching
+  checkout exactly.** Checked first rather than guessing at a formula: a real,
+  already-built `VatDisplay` service exists precisely for this (decision D-64 — VAT is
+  a display line only, 5% inclusive, computed as `total × rate ÷ (100 + rate)`, never
+  stored on the order and never added to the total). Reused that exact service rather
+  than reimplementing the math, so the admin figure can never quietly drift from what
+  the checkout page itself shows. Verified the calculation directly against the
+  documented formula (AED 239 → AED 11.38, matching exactly) and confirmed the line
+  correctly disappears when VAT is turned off in settings
+- [x] **Checked the checkout page for anything missing from the order summary.**
+  Read through the real checkout summary partial line by line: subtotal, coupon/
+  discount, delivery (or free), a conditional COD fee, total, then the VAT line. Every
+  one of those already had a place in the admin order summary except VAT, which is
+  the piece just added above — nothing else is missing
+- [x] **Edit order — add products, adjust pricing, partial refund, admin status
+  update.** Checked first rather than assuming: partial refund and admin status
+  update were already fully built and tested in the 2.60.59 pass — refund already
+  supports any amount up to the remaining balance via a real `refunds` sum, and the
+  status dropdown already writes real changes. The genuinely new piece was editing
+  order contents: add a product (search reuses the existing catalog-search endpoint,
+  no new search built), adjust an item's quantity or price inline, remove a line item
+  (blocked below one remaining item), all recalculating the order's real subtotal/
+  total server-side rather than trusting anything sent from the browser. Editing is
+  deliberately gated to orders that haven't shipped yet (`draft`/`pending`/
+  `processing`/`onhold`) — once packed, changing line items doesn't reflect reality;
+  a shipped or closed-out order shows a plain, honest "no longer editable" message
+  instead, with no edit controls rendered at all. Verified every path with real data:
+  add, quantity change, price change, remove, blocked last-item removal, and blocked
+  editing on a shipped order — all individually confirmed correct before the frontend
+  was even built, then the frontend itself was retested end to end afterward — *2.60.62*
+- [x] **Alignment fixes — Items and Order notes specifically, exactly as reported.**
+  Measured actual pixel positions rather than eyeballing a screenshot to find the real
+  causes, not just something that looked plausible. Two separate, genuine bugs: the
+  `.pad` padding class only ever applied as the compound selector `.card.pad`, but
+  these two cards' inner wrapper used the plain `.pad` class alone — so it silently
+  matched nothing and both cards had zero internal padding, content touching the card
+  edge directly. The sidebar cards were never affected only because each one happened
+  to carry its own inline padding override already; Items and Notes were the two that
+  didn't, which is exactly what was reported. Second, separate bug: the order-totals
+  summary was right-aligned to the full table width, including the Remove-item
+  button's column, so it visually overshot past where the table's own "Total" column
+  sits above it. Fixed both, then measured again rather than trusting the fix by eye —
+  confirmed real padding now present (20px/22px) and the totals block's right edge
+  now lines up with the Total column's right edge instead of the far edge of the
+  Remove column. Pure CSS; re-confirmed no backend or interactivity regression — *2.60.63*
+- [x] **Demo Content — a new Safety screen for testing with real, working sample
+  data instead of an empty store.** Requested because there was no demo order to
+  actually try the order detail page against. Designed first and shown before
+  building anything: a light-hearted grid of per-type cards (Orders, Customers,
+  Products, Pages, Blog Posts, Reviews, Mega Menu) each with its own Import/Remove,
+  plus Import All / Remove All at the top — approved before a line of backend code
+  was written. Every sample record is tracked in a new `demo_seed_log` table the
+  moment it's created, so Remove deletes exactly those records and nothing else —
+  it can never touch a real order, customer, or product even sitting side by side
+  with sample data. Checked first rather than assuming a blank slate: the app
+  already had a separate, pre-existing placeholder catalogue from initial setup
+  (`DemoCatalogueSeeder`, a handful of static pages, a default menu) — confirmed
+  this new system correctly leaves all of that alone rather than colliding with it.
+  Tested hard, not just once: two full import-then-remove-then-import-again cycles
+  confirmed the store returns to its exact original state every time. That testing
+  caught two real bugs before shipping — removing certain sample records only
+  soft-hid them (they use SoftDeletes) rather than truly deleting them, which
+  silently blocked a second import with a duplicate-entry error on re-use of the
+  same email/slug; and a removal count under-reported itself when the database
+  cascade-deleted related rows on its own (a product's reviews) before the count
+  got to them, even though the data itself was genuinely fully gone. Both fixed
+  and re-verified. Also caught and fixed two build-time mistakes during the
+  frontend wire-up before they ever reached testing: a duplicate declaration of
+  the panel's shared icon helper that would have broken the entire admin console,
+  and an editing accident that deleted an unrelated function's own declaration
+  line while inserting this one. Verified the whole thing end to end through the
+  real web address and full HTTP stack — routing, session, CSRF — not only through
+  internal checks, and confirmed a sample order renders correctly on the order
+  detail page, the original reason this was asked for — *2.60.64*
+- [x] **Fixed: every Import button failed with "Could not import that" on the
+  real server, immediately after 2.60.64 went live.** "When I hit anything"
+  was the key detail — every type failing identically pointed at something
+  hit before any type-specific logic runs, not a bug in one generator.
+  Diagnosis: if the demo_seed_log migration was ever skipped or failed
+  silently during deploy, every endpoint would throw on the missing table,
+  and on the real server (`APP_DEBUG` off) Laravel returns an HTML error
+  page for an uncaught exception rather than JSON — the frontend's response
+  parsing then throws its own separate error, and the generic catch message
+  swallowed that entirely, hiding the real cause behind an unhelpful "could
+  not import" for every single button. Fixed on both ends: the controller
+  now self-heals the table if it's missing, the same pattern already used
+  in `MegaMenuApiController::ensureColumns`, and every endpoint is wrapped
+  so a genuine failure always comes back as real JSON with an actual
+  message rather than an HTML error page; the frontend now shows that real
+  message instead of a canned one. Reproduced the exact reported scenario
+  before believing the fix — a fresh database with every migration applied
+  except this one — confirmed import correctly self-heals and succeeds
+  where it previously would have failed, then re-ran two full import/
+  remove cycles against that same recovered state to confirm nothing else
+  regressed — *2.60.65*
+- [x] **Fixed: 2.60.65's improved error message correctly revealed the real
+  problem — "The route admin-api/demo-content/orders/import could not be
+  found."** A genuine 404, on a route confirmed present in both the 2.60.64
+  and 2.60.65 packages themselves (checked byte-for-byte inside the actual
+  delivered .zip files, not just the local working copy) — meaning the
+  route genuinely exists in `routes/web.php` on disk but wasn't being
+  matched at runtime. This codebase already has documented history with
+  exactly this failure mode: a compiled route cache file silently takes
+  absolute priority over the real `routes/web.php` the instant one exists
+  on disk, which is why `route:cache` was removed from the update process
+  entirely after it caused a real outage once before (see the doc comment
+  on `UpdateRunner::down()` and on `2026_09_10_100000_clear_caches_2_60_48`).
+  The update process already runs `route:clear` on every release, so this
+  should not be reachable through the normal path — but a second,
+  independent migration now force-clears the compiled route cache (and
+  config/events/services/view caches alongside it) as a defensive backstop,
+  matching the codebase's own established pattern for this exact class of
+  problem rather than inventing a new one. Verified directly: created a
+  real stale route cache file, ran this migration against it, confirmed
+  the file is gone afterward — *2.60.66*
+- [x] **Resolved — see the entry below.** This line is a step in the diagnosis, not an outstanding task; the `[x]` beneath it closes it. Left ticked open, it read as a live bug for weeks — *verified 2.60.91*. Rafi
+  fetched the real server log directly — an old, unrelated MegaMenu column
+  error and update-archiving warning from Sept 9–10, nothing from the actual
+  failure, which is expected (Laravel doesn't log plain 404s by default) but
+  ruled out one theory without confirming another. Stopped guessing and
+  shipped a direct diagnostic instead: a new browser-visitable route,
+  `/{admin path}/kbb-route-check?search=demo-content`, that lists exactly
+  what `Route::getRoutes()` has registered right now — the real, live route
+  table Laravel is actually dispatching against, not a reading of the
+  source file that could disagree with what's really loaded. No SSH or
+  file access required, matching the existing `kbb-health-log` pattern.
+  Verified it correctly lists all 5 demo-content routes including the
+  failing POST import route in a clean local test — awaiting what it shows
+  on the real server, which will say definitively whether the route is
+  missing there or something else is happening — *2.60.67*
+- [x] **Found and fixed the real root cause.** Rafi's diagnostic-page result was
+  decisive: all 5 demo-content routes were genuinely registered on the real
+  server, identical to a clean local test. That ruled out registration and
+  caching entirely and pointed at something in the actual request path itself.
+  Traced Laravel's exact error text to its source in the framework
+  (`AbstractRouteCollection`) — confirmed it is the genuine, standard message
+  for "no route at all matches this request," which only makes sense if the
+  browser's real request path differed from what was assumed. The live site
+  runs at a subdirectory (`easywebsol.com/kbb-upgrade/`), not the domain
+  root — and the new code used a hardcoded, leading-slash path
+  (`/admin-api/demo-content/...`), which resolves against the domain root
+  and silently points at a URL with no route at all on a subdirectory
+  deployment. The rest of the admin panel already had the correct pattern
+  for this exact problem (`pApiBase()`, computing the base from the current
+  page's own path rather than assuming the domain root) — matched it exactly
+  instead of inventing a new approach. Verified the underlying logic
+  directly against the real deployment shape (`/kbb-upgrade/admin` →
+  `/kbb-upgrade/admin-api`, confirmed correct) and confirmed the full click-
+  to-import flow now builds the correct, complete request path end to end
+  — *2.60.68*
+- [x] **The subdirectory-path bug was bigger than Demo Content — it was the
+  entire order detail page.** Rafi reported Demo Orders imported successfully
+  but the real Orders list showed completely empty, no error. Traced it: the
+  Orders list's own fetch call had the exact same hardcoded-path bug just
+  fixed in Demo Content, except it silently swallows any failure into an
+  empty list (`catch(e){ ORD=[]; }`) rather than showing an error — explaining
+  why it looked empty instead of broken. Checking further found this wasn't
+  isolated: `api()`, the shared helper used throughout the entire order
+  detail page, had the same flaw, plus 7 more raw `fetch()` calls inside
+  it specifically (address editing, item add/update/remove, refund, actions)
+  that bypass `api()` entirely and each had their own copy of the same bug.
+  In effect, every interactive feature built into the order detail page
+  this session — not just Demo Content — has likely never actually worked
+  on the real, subdirectory-deployed site, only in local testing where no
+  subdirectory was ever in play. Fixed at the root: one shared helper
+  (`fixAdminApiUrl`), matching the exact pattern already proven correct
+  elsewhere in this file (`pApiBase()` and its siblings), applied inside
+  `api()` itself so every existing caller is corrected automatically, and
+  explicitly added to each of the 7 raw `fetch()` calls that don't go
+  through `api()`. Verified the list, detail, and refund calls all now
+  build genuinely prefixed URLs instead of bare `/admin-api/...` ones — *2.60.69*
+- [x] **Fixed: Demo Blog Posts 404'd on the actual public blog.** Checked the
+  real controllers rather than guessing: both `PageController::blog()` and
+  `::post()` correctly filter strictly to `status = 'published'` — draft
+  posts don't appear on the listing and 404 if visited directly. The demo
+  post generator created its posts as `draft`, which directly contradicts
+  what the Demo Content card itself promises ("so the blog is not empty") —
+  a genuine mismatch between the card's stated purpose and what the code
+  actually did, not intended behavior. `PageController::show()` has the
+  identical filter for pages, so Demo Pages had the same latent bug even
+  though it hadn't been hit yet. Fixed both generators to create their
+  content as `published`. Verified against the real, unmodified public
+  controllers, not just the database rows: the blog listing now returns
+  the 4 demo posts instead of zero, and both a demo post and a demo page
+  render successfully where they previously threw a 404. Note for next
+  session: existing demo posts/pages already imported before this fix are
+  still sitting in the database as `draft` — Rafi will need to Remove and
+  re-Import Demo Blog Posts (and Demo Pages) once this version is live for
+  the fix to take effect on that already-created data — *2.60.70*
+- [x] **Found and fixed a completely separate, pre-existing issue — the
+  admin's own "Blog" and "Posts" screens were never built.** Rafi's 404
+  screenshot showed this happening inside the admin panel itself, not on
+  the public site — the 2.60.70 fix was correct but irrelevant to this.
+  Traced it: the sidebar's Blog and Posts links load an iframe pointing at
+  a standalone file (`kbb-admin-blog.html`) that doesn't exist anywhere in
+  the codebase — confirmed every other `FRAME_SRC` entry (Orders, Payments,
+  Analytics, Settings, Customers, SEO, Media, eight in total) is the same
+  kind of stub, left over from an earlier design phase. Orders, Customers,
+  and a few others already got real screens at some point, but not through
+  editing that original dispatch table directly — found a second, later
+  `window.go` override in the file that intercepts specific ids and
+  replaces the dead iframe with a real screen immediately after. Built the
+  same way: a new read-only `PostsApiController`, and a `renderPosts()`
+  screen listing every post with its status and a working Preview link to
+  the real, live page — added to that exact same interception pattern
+  rather than touching the original, riskier dispatch code. Verified in a
+  real browser that both the Blog and Posts sidebar links now show the
+  real table with no iframe and no 404 — *2.60.71*
 
 ## Phase 8 — Cart and checkout
 
@@ -288,8 +616,125 @@ something half-right.
 - [x] Cart page: quantity, remove, coupon, totals — *2.39.x*
 - [ ] ▲ **Checkout styling** — agreed to move checkout to `<x-field>`, **requires D-35
       amended**, and to be tested against a real order
-- [ ] Coupons and gift notes end to end
-- [ ] Guest checkout → account creation
+- [x] Coupons and gift notes end to end — coupons were already complete including removal (`CartController::coupon` handles both paths) and never ticked. Gift notes added with their own column, a priced gift-wrap option controlled at Store → Delivery & Shipping → Gift wrapping, and the dead `customer_note` path wired at both ends — *coupons verified 2.60.91, gift notes 2.60.78, pricing 2.60.82*
+- [x] Guest checkout → account creation — checkout already made a `Customer` row for every guest; it had no password. An optional tick sets one, written only into a blank and never over an existing password, with `legacy_password` counting as set so the 3,712 imported customers cannot be trampled. Declines silently to avoid an enumeration oracle. No email, so it does not wait on the mail decision — *2.60.76*
+- [x] **Placing an order works again** — it had not since 2.60.85. The `orders` table was
+      missing `is_gift`, `gift_note` and `gift_fee`, so every submission failed on the insert
+      with a 500. The columns were missing because **no update package has ever run a
+      migration**: `UpdateRunner` gates them on a `migrations` flag in `update.json` that
+      `hasMigrations()` reads and nothing ever set, so migration files were copied to the
+      server and left on disk for this project's entire history. Repaired across all nine
+      tables that a broken `->after()` chain could have left incomplete, and the builder now
+      sets the flag — *2.60.111 → .114*. First confirmed live order: **#10009**
+- [x] **Order-received page — full redesign** — sign in or your orders, track the order, go
+      home, and the full itemised summary with show/hide past three lines (a plain `<details>`,
+      so the toggle cannot break). A guest is asked to set a password rather than offered a
+      sign-in they cannot use, and the card replaces that step once they finish — driven by the
+      session, never by whether the address already has an account, which would be an
+      enumeration oracle. Rebuilding it also closed a live leak: the page looked orders up by
+      number from the query string with **no ownership check at all**, and numbers are
+      sequential — *2.60.115*
+- [x] **Mobile checkout: "View full summary" and the Browsed tab** — both dead. The handler set
+      `open` on `#kbbPanels` while the CSS keys the expansion off `.summary.open`, so the class
+      landed on an element no rule matches and the panel stayed clamped at its 148px peek. One
+      root cause for both — *2.60.115*
+- [x] **Add from Browsed, silently** — no drawer, no tab switch, a small confirmation, and the
+      row goes. Summary, payment options, mobile bag strip with its free-delivery bar, and the
+      browsed count all update from one request, because `PayShipRules` measures its COD window
+      against the total and a single add can withdraw the selected method — *2.60.116*
+
+## Phase 8b — Admin screens, engine parity and the import foundation *(2.60.117 → .125)*
+
+- [x] **Payments: capture and refunds, all four gateways** — per-gateway capture windows
+      (Tabby 30d, Tamara 180d, Stripe 7d, COD none), each honoured by reading the provider's
+      live status before acting rather than trusting a stored one. Refund ceiling computed
+      inside a locked transaction from our own columns, never from the request. A *sequential*
+      double-refund gap was found by its own test and closed with a recency guard — that would
+      have been live money, twice — *2.60.117*
+- [x] **Public API sweep** — quiz leads were editable by counting ids, unmoderated reviews were
+      discoverable, review votes could be stuffed without limit, and hidden products could be
+      reviewed. All closed — *2.60.117*
+- [x] **`GET /api/cart/debug` was world-readable** and returned the five most recently active
+      carts **site-wide** with their ids, `customer_id`s and token prefixes. Its own doc comment
+      said "nothing sensitive" while doing it, which is how it survived review. Gated on the
+      route, so an edit to the controller cannot drop it — *2.60.117*
+- [x] **`/skin-quiz/` and `/reviews/` returned 500 to every visitor** — both routes pointed at
+      controller methods that were never written. The Blade views existed the whole time, so
+      nothing in the tree looked broken — *2.60.117*
+- [x] **SEO Engine and Product Sorting switches made real** — both were marked `live` in the
+      module registry while **nothing in the codebase read either one**. Verified independently
+      before merging, which made the accompanying migration protective: without it, adding the
+      reads would have stripped every canonical, OG tag and JSON-LD node off the live catalogue
+      and reordered every listing, silently, on apply — *2.60.117*
+- [x] **Cart drawer empty on the first add of a session** — the drawer's view composer decided
+      "no cart" from a cookie that `CartService::create()` only queues onto the *response*, then
+      painted the empty state over the correct contents the controller had already built. The
+      same overwrite was silently re-breaking the Browsed list on every add — *2.60.118*
+- [x] **Checkout quantity and discount code apply in place** — both did a full page reload,
+      losing every field already typed, the scroll position and the chosen country. They posted
+      to the generic cart endpoint, which renders the mini-cart and the cart page — neither on
+      screen at checkout — so a reload was the only way to show new figures — *2.60.118, .122*
+- [x] **Mobile checkout scrolled sideways by 7px** — two free-delivery confetti particles fly
+      past the edge and, finishing at `opacity:0` rather than removed, kept occupying space for
+      the life of the page. Measured by two lanes independently — *2.60.118*
+- [x] **Cart heading count floated in dead space** — its `lead` class collides with the global
+      form-field icon rule (`position:absolute`). The fourth layout bug in this project caused
+      by a generic class name; fixed by renaming, not by overriding — *2.60.118*
+- [x] **Store → Customers, rebuilt** — the old screen had no search, filters, sorting or paging,
+      and its "Emirate" column read a field that has never existed on the table, so it was blank
+      on every install. Now aggregated in SQL at a fixed query count, with guest and imported
+      rows handled, and orders not linked to any customer counted in a banner rather than
+      dropped — *2.60.118*
+- [x] **Orders record the payment method's name** — nothing ever wrote `payment_method_title`
+      except the demo seeder, so every real order printed the raw gateway id and the account
+      page showed customers `cod` — *2.60.118*
+- [x] **Floating bottom menu behind a switch**, off by default, at Store → Modules → Store &
+      content — *2.60.119*
+- [x] **Real MySQL in CI, and the three faults only it could see.** The suite had always run
+      SQLite while production runs MySQL, so an entire class of bug was invisible. Running it
+      against MySQL 8 failed **110 tests**. Fixed: `payment_providers.config` and
+      `mail_credentials.config` are JSON columns carrying encrypted values, which are not valid
+      JSON — **every save of a gateway key or SMTP password failed outright on the live server**;
+      the Customers summary inherited the page offset and read zero from page two on (wrong on
+      every engine); and MySQL 8's microsecond datetimes made every never-ordered customer show
+      1 Jan 1970. MariaDB passed a build MySQL failed — it is not a stand-in — *2.60.123*
+- [x] **Store → Orders, rebuilt** to the Customers standard: chips with counts over the real
+      status vocabulary (an imported `wc-tamara-p-failed` gets its own chip rather than being
+      prettified away), date and value ranges, CSV export, and bulk actions that refuse to take
+      an order out of revenue without naming each one. `refunded` cannot be set by hand at all,
+      because `PaymentRefunder` writes it when money actually moves — *2.60.124*
+- [x] **The admin console scrolled sideways on every screen at phone width** — the shared top
+      bar is one non-wrapping flex row ~540px wide, so the untouched dashboard overflowed by
+      164px and no individual screen could have fixed it — *2.60.124*
+- [x] **Import foundation** — `docs/IMPORT-READINESS.md`, external-id columns, and the unique
+      constraints a re-run depends on. The repair migrations had re-added `wc_order_id` and
+      `wp_user_id` as **bare columns with no unique index**, so a readiness check would answer
+      "yes" while the importer's second pass inserted a complete duplicate of every order.
+      `customers.orders_count` / `total_spent` / `last_order_at` are retired in place as
+      deliberately unmaintained. `kbb:import-catalog` does nothing and never did; its 60 lines
+      of dead code would have written AED 99.50 as 99 fils — *2.60.124*
+- [x] **One shared aggregate helper** (`App\Support\AggregatesQueries`) — the same defect
+      shipped to production twice. `selectRaw()` appends rather than replaces, and
+      `applySort()`/`forPage()` mutate the builder, so a summary built from the same instance as
+      the page inherits its columns, its ORDER BY and its OFFSET. Three failures from one cause:
+      MySQL 1140 twice over, and a surviving offset that makes every summary tile read zero from
+      page two — wrong on every engine, and silent — *2.60.125*
+
+### What this phase cost, and the rules that came out of it
+
+- **A cumulative package that runs no migration resets no OPcache.** 2.60.121 shipped the
+  correct fix and the server kept executing the previous compiled class, making a correct fix
+  look like a wrong one. Every package that changes a PHP class now ships a `clear_caches_*`
+  migration, not only the ones that add routes — and the packager warns when one is missing.
+- **A diagnostic beats a guess.** Two releases were spent on a 500 that reported only "Server
+  Error". The endpoint now returns the driver's own message, and the controller carries a BUILD
+  constant so "the fix is wrong" and "the fix is not running" can be told apart from a
+  screenshot.
+- **Judge the SQL a request issues, not the answer it returns.** `tests/Support/SqlShape.php`
+  asserts statement shape via `DB::listen`, which is dialect-independent and therefore catches
+  MySQL-only faults from the SQLite suite.
+- **A guard is decor until it fails.** Every guard added in this phase was verified by reverting
+  the fix and watching it go red.
 
 ## Phase 9 — Content pages
 
@@ -299,9 +744,34 @@ something half-right.
       `/korean-skincare-brands/`. Which is the live address?
 - [ ] ▲ `/skincare-guide/` — a permalink structure, not one page: the homepage builds
       `/skincare-guide/{slug}/`, the router serves `/blog` and `/post/{slug}`
-- [ ] Blog
-- [ ] Desktop nav drops the base path — Home, New In, Best Sellers, Shop point at the
-      domain root instead of `/kbb-upgrade/`
+- [x] **Blog — was a complete, silent outage.** Checked directly rather than assuming
+  from the plan's own listing: both `/blog` and every `/post/{slug}` returned a real
+  500, not a placeholder — `PageController::blog()` and `::post()` were called by the
+  routes but simply didn't exist (only `show()`, for the unrelated static-page model,
+  was there). The views themselves (`store.blog`, `store.post`) turned out to be a
+  second, deeper problem once the 500 was traced: leftover, unfinished client-side-only
+  mockups that read the slug from a query string instead of the URL path, fetched an
+  `/api/posts` endpoint that was never built, and silently fell back to hardcoded demo
+  content for every request that didn't happen to match — meaning even a minimal fix of
+  just the missing methods would still have shown the same wrong content for every real
+  post. Rebuilt both views server-rendered, matching the same pattern already working
+  for products and categories: real posts, real path-based links, real excerpt/body/
+  cover/date, related posts, and — for free, since the SEO renderer already had Article
+  and BreadcrumbList support built and simply never had real data reach it — genuine
+  Article schema and breadcrumbs on every post. Caught and fixed a real bug of my own
+  before shipping: an early attempt to conditionally hide the "more" section produced
+  visible, un-compiled Blade text leaking straight into the page — caught only because
+  the fix was checked with a real screenshot, not just a passing lint. Verified end to
+  end: draft posts correctly stay invisible, a nonexistent slug 404s instead of 500ing,
+  and the tag filter on the listing page is a real, working interaction over the
+  server-rendered cards. **Marked [x] for "no longer 500s," not "done" — Rafi flagged
+  this needs a lot more work (visual design, content richness, likely more features)
+  before it's actually where he wants it. Revisit later, deliberately not now.**
+- [x] Desktop nav drops the base path — checked directly rather than trusting the old
+  note: already fixed, most likely as a side effect of the Mega Menu rebuild in an
+  earlier session, which correctly routes every nav link through `Url::to()`. Verified
+  with a real request and `kbb.base_path` configured — every generated link correctly
+  carries the prefix. Stale note, not a live bug
 
 ## Phase 10 — Build my routine  *(designed, not built)*
 
@@ -326,8 +796,149 @@ something half-right.
   a 126 AED serum cost 12,600. **Not yet done:** Yoast migration, the six orphaned view
   files with a matching `$seo` placeholder that turned out to be dead code, and the
   `performance` half, which the plan already notes doesn't port at all
-- [ ] Structured data — sitewide + product now real; category, blog, and article
-  schema still open
+
+**Full feature audit done 2026-09-10** — read the WordPress plugin's actual `seo_engine`
+module source directly (not secondhand) plus dedicated research on Yoast itself, since
+Rafi confirmed Yoast is the real plugin in use. Full writeup: `KBB-SEO-Feature-List.md`.
+Broken out below by whether each piece is buildable now or blocked on the product edit
+page (Phase 6/`openProduct()` is still a complete mockup — "Update"/"Publish" just shows
+a fake success toast and saves nothing).
+
+- [x] Site-wide SEO settings admin screen — **already real, found on inspection** (was
+  wrongly listed as "not built" on first pass through this list — corrected after
+  actually reading the code instead of assuming from the feature audit alone). Title
+  templates, OG/Twitter, Organization schema, Google + Bing verification, sitemap
+  toggle, robots.txt editor — *2.60.36*
+- [x] XML sitemap (`/sitemap.xml`) — **already real**, same correction as above. Covers
+  static pages, products, categories, blog posts with lastmod/priority/changefreq.
+  Missing brand archive URLs specifically — small gap, not a rebuild
+- [x] `robots.txt` — **already real**, sensible default + admin override
+- [x] Missing verification fields — Pinterest, Baidu — *2.60.50*
+- [x] IndexNow — auto-submit new/updated URLs to Bing/Yandex/Naver/Seznam/Yep on
+  publish, with the required key-file verification route. Caught and fixed two real
+  bugs before shipping: the key was regenerating on every call instead of persisting,
+  and the submitted URL was relative instead of the absolute URL the protocol requires
+  — *2.60.50*
+- [x] `llms.txt` for AI crawlers — *2.60.50*
+- [x] Real image upload for the share-image/logo fields — the upload endpoint already
+  existed (built for exactly this) but was never actually wired into the form; fixed,
+  not built new — *2.60.51*
+- [x] Social profile links (Facebook/Instagram/TikTok/Pinterest/LinkedIn/YouTube) →
+  Organization schema `sameAs` — *2.60.51*
+- [x] Crawl-budget cleanup — researched current (2026) guidance directly before building
+  rather than guessing: for a catalogue this size (~650 products, not the tens-of-
+  thousands where crawl budget becomes a genuine crisis), the safe, low-risk approach
+  research consistently recommends is canonical-only — never noindex or robots.txt
+  blocking, both of which carry real risk if sequenced wrong (a robots.txt block on an
+  already-indexed URL can trap it as indexed-but-invisible, since Google can no longer
+  see the noindex or canonical telling it otherwise). Filtered/sorted listing views
+  (brand, price, in-stock, sort order) now canonicalize to the clean category URL;
+  paginated pages keep their own self-referencing canonical rather than collapsing to
+  page 1, since current guidance is that doing so risks Google simply never discovering
+  products that only appear on later pages. New `crawl_clean` toggle (default on).
+  Found and fixed a real, pre-existing bug while building this: canonical for every
+  shop/category page was defaulting to the site root regardless of what page you were
+  actually on, telling Google every category page duplicates the homepage — fixed
+  unconditionally, not gated behind the new toggle, since having *some* correct
+  canonical is a correctness fix, not an opinionated strategy choice. Caught and fixed
+  a `Url::to()` misuse before shipping: that helper is deliberately root-relative
+  (correct for `<a href>` links, the one thing it's for) — using it to build a
+  canonical tag produced a domain-less, broken URL; fixed to build the absolute URL
+  from `site_url` directly, the same pattern already established for IndexNow and the
+  media uploader. Verified via a real HTTP request through the full kernel with the
+  actual rendered `<head>` parsed for the canonical tag, not just a direct method call
+  — *2.60.53*
+- [x] Redirects & 404 manager — manual 301/302s (from the SEO & Meta screen's new
+  "Redirects & 404s" tab), **auto-301 on published slug change with chain collapsing**
+  (A→B→C collapses to A→C, B→C rather than left chaining), 404 hit-logging with noise
+  filtering and a table-size cap, one-click "resolve a 404 into a redirect." Found the
+  `redirects` table already existed from the original schema migration with different
+  column names (`source`/`target`/`code`) than first assumed — corrected by actually
+  testing against it rather than trusting the assumption. Caught and fixed three more
+  real bugs before shipping: the matching logic was stripping the trailing slash this
+  site's URLs deliberately keep, which would have made every auto-created redirect
+  silently never match a real request; dismissing a 404 left the visible count stale
+  since it only removed the DOM row without refreshing the summary label; and — the
+  significant one — the original design (redirect-checking as real HTTP middleware,
+  registered from a service provider) looked correct and passed an early test, but
+  testing it against the actual HTTP kernel rather than trusting it showed it silently
+  never ran for real requests. Laravel 11's middleware configuration turns out to be
+  fully resolved during `bootstrap/app.php`'s own bootstrap, before any service
+  provider runs, so a group modified afterward never reaches a real request — and
+  `bootstrap/app.php` itself is outside what the update system's own file guard
+  permits writing, so it can't be fixed there either. Rebuilt around the exception
+  handler instead, which reliably catches every 404 regardless of source (a completely
+  unmatched old WordPress URL, or a real route pattern like `/product/{slug}` whose
+  controller can't find the underlying product) — verified end to end with the actual
+  core scenario: created a product, renamed its slug, confirmed the auto-redirect, then
+  confirmed a real request to the old URL genuinely returns 301. **Known, disclosed
+  limitation**: redirecting a page that still genuinely works (e.g. manually
+  redirecting `/shop` elsewhere while `/shop` itself still loads fine) does not work
+  with this architecture, since nothing ever throws an exception for a route that
+  succeeds — noted directly on the "Add a redirect" form rather than left as a silent
+  gap. The two things that actually matter here — auto-redirect on slug change, and
+  catching dead/broken URLs — both work correctly — *2.60.52*
+- [ ] **Per-product SEO editor** ▲ *blocked on the product edit page* — focus keyphrase,
+  SEO title/description with live counts + SERP preview, live SEO + readability
+  traffic-light checks, per-page OG override, canonical/noindex/nofollow/cornerstone
+  flags, internal-link suggestions. This has to live inside the real product editor —
+  building it standalone now means rebuilding it once that editor exists. **Do this
+  once Phase 6's product edit page is real, not before.**
+- [~] Structured data expansion — done: **BreadcrumbList** (the render logic already
+  existed in `Seo.php` and had from the start, but no controller had ever actually fed
+  it data — same "built, never wired up" pattern found a few times this session; wired
+  into both `ShopController` and `ProductController`, verified real output: Home →
+  Shop → Cleansers → the product's actual name, correct URLs at every step),
+  **merchant-listing offer fields** (condition, shipping cost/threshold, return
+  policy — off by default, admin has to confirm the numbers before they ship to search
+  engines; verified the free-shipping-threshold math both above and below the
+  cutoff, and confirmed zero regression when off — offer schema byte-identical to
+  before), and a **Schema Inspector** tab (enter a product/category slug, see the real
+  JSON-LD that page would actually output, plus plain-language warnings — calls the
+  exact same renderer every real page uses via a new `Seo::inspect()` wrapper, so nothing
+  shown can drift from what actually ships; tested against a real product, a
+  nonexistent slug, and a category). Found and fixed a significant bug while wiring
+  the canonical URL in for breadcrumbs: **every single product page** (650+, not just
+  the handful of category pages the earlier canonical fix covered) had the same
+  canonical-defaults-to-site-root bug — confirmed and fixed the same way, a real HTTP
+  request through the full kernel with the actual rendered `<head>` parsed, not a
+  variable checked in isolation. **Still open: GTIN and variant-level offers** —
+  genuinely blocked, no GTIN/barcode column exists anywhere in the schema and there's
+  no existing source of truth for it, unlike everything else in this item which either
+  already had the right data or needed only site-wide settings — *2.60.54*
+- [~] Per-product SEO storage — a genuinely major find while starting this: `products`
+  already has a `seo` json column, from the original schema, commented **"Yoast import
+  target"** — deliberately built for exactly this, then never once read from. Same
+  "built, never wired up" pattern found a few times this session, just discovered
+  before building a duplicate rather than after. Wired directly into
+  `ProductController`: title/description/canonical/noindex overrides now genuinely
+  take effect on the real rendered page the moment anything writes to the column — by
+  hand, by a future importer, or eventually by the per-product editor. Verified with a
+  real product set to a full override: exact title (no template applied), exact
+  description, exact canonical, correct `noindex, nofollow` — all confirmed via a real
+  HTTP request through the full kernel, and confirmed a product with *no* override
+  behaves exactly as before, no regression. This is the schema the Yoast importer and
+  the audit tooling below both explicitly needed to exist first
+- [x] Site-wide audit tooling — **Catalogue Audit** tab: scans every visible product,
+  reports counts plus the worst offenders for missing meta description (checking the
+  same `seo` column now actually read, not a duplicate check), missing image, and a
+  short description too thin to build a real fallback from. Deliberately read-only for
+  this first version — reports, does not bulk-fix; that is the natural next step once
+  the counts it reports are trusted. Verified with real, deliberately varied seed
+  data covering every branch: a product with nothing set (correctly flagged for both
+  missing description and missing image), a product with a real override description
+  (correctly excluded), a product with a thin 2-word description (correctly flagged),
+  and a product with a genuinely long description (correctly excluded from both
+  checks) — *2.60.55*
+- [ ] Yoast data importer — field-by-field mapping (`_yoast_wpseo_*` → the `seo` column
+  above, now that it is real). Storage side is done; the import itself is only worth
+  running once there's confirmation of which Yoast tier (free / Premium / +WooCommerce
+  SEO add-on) was actually in use — that decides whether there's product-schema data
+  to import at all
+- [~] Structured data — sitewide, product, BreadcrumbList, and article now real (article
+  landed as a side effect of the blog outage fix above — the renderer already supported
+  it, it just never had real data reach it before). Category pages still use plain
+  `website` type rather than a proper `CollectionPage`/`ItemList` — the one piece left
 - [ ] Image pipeline · cache strategy
 
 ## Phase 13 — Data migration  *(one-time, idempotent Artisan command)*

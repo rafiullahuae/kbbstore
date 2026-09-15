@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Services\Import\Money as ImportMoney;
+
 /**
  * Turning something a person typed into integer fils, without a float in the
  * middle of it.
@@ -26,7 +28,21 @@ namespace App\Support;
  * builds the integer with integer arithmetic only.
  *
  * Accepted:  "12"  "12.5"  "12.50"  ".5"  "1,299.99"  " 12.50 "  "-5"  "AED 12.50"
- * Rejected:  ""  "abc"  "1.234"  "1.2.3"  "1e3"  "12,"  "٢٥" (non-ASCII digits)
+ * Rejected:  ""  "abc"  "1.234"  "1.2.3"  "1e3"  "1 2"  "٢٥" (non-ASCII digits),
+ *            and anything outside a 32-bit money column.
+ *
+ * WHY THIS EXISTS ALONGSIDE THE TWO PARSERS ALREADY IN THE REPOSITORY.
+ * App\Services\Import\Money::fils() is the importer's: it throws RowRejected,
+ * whose message talks about the export, and it is the right thing for a 40,000
+ * row CSV. CatalogProductsApiController::filsFromMajor() is private to that
+ * screen and TRUNCATES excess precision rather than refusing it, which is the
+ * correct call for a bulk price adjustment and the wrong one for a single
+ * amount an operator typed. This one answers null so a validation rule can turn
+ * it into a message beside the field, and refuses rather than truncates.
+ *
+ * What it does NOT do is invent a third idea of how big a money value may be:
+ * the bounds are Import\Money's constants, which are in turn the real width of
+ * the `integer` money columns.
  */
 final class Fils
 {
@@ -53,7 +69,9 @@ final class Fils
         // so it is refused rather than silently given the (int)(x*100) result
         // this class exists to avoid.
         if (is_int($input)) {
-            return $input * 100;
+            // Bounded like every other path — an integer major amount can be
+            // past the column just as easily as a typed one.
+            return self::withinColumn($input * 100);
         }
 
         if (is_float($input)) {
@@ -130,7 +148,67 @@ final class Fils
             $fils = $next;
         }
 
-        return $negative ? -$fils : $fils;
+        return self::withinColumn($negative ? -$fils : $fils);
+    }
+
+    /**
+     * The value, or null when it will not fit a money column.
+     *
+     * Every money column in this schema is a signed 32-bit `integer` —
+     * $t->integer('total') in the Phase 0 schema and in
+     * 2026_09_15_020000_repair_order_tables both. Past that, MySQL in strict
+     * mode errors on the insert and SQLite stores the wrong number without a
+     * word. The second half is the dangerous one: the order looks placed and
+     * its total is nonsense, and the two engines disagree about a value the
+     * tests would have called fine.
+     */
+    private static function withinColumn(int $fils): ?int
+    {
+        return ($fils > ImportMoney::MAX_FILS || $fils < ImportMoney::MIN_FILS) ? null : $fils;
+    }
+
+    /**
+     * Does a product of two integers fit in a money column?
+     *
+     * The multiply is where an overflow actually happens: a unit price and a
+     * quantity can each be perfectly sane and their product still be past the
+     * column. Checked by division rather than by multiplying and looking at the
+     * result, because the multiplication is the thing that would already have
+     * wrapped.
+     */
+    public static function productFits(int $unitFils, int $quantity): bool
+    {
+        if ($unitFils === 0 || $quantity === 0) {
+            return true;
+        }
+
+        if ($unitFils < 0 || $quantity < 0) {
+            return false;
+        }
+
+        return $quantity <= intdiv(ImportMoney::MAX_FILS, $unitFils);
+    }
+
+    /** Does a sum of money values fit in a money column? */
+    public static function sumFits(int ...$parts): bool
+    {
+        $total = 0;
+
+        foreach ($parts as $part) {
+            if ($part > ImportMoney::MAX_FILS - $total) {
+                return false;
+            }
+
+            $total += $part;
+        }
+
+        return true;
+    }
+
+    /** The ceiling, so a message can name it. */
+    public static function max(): int
+    {
+        return ImportMoney::MAX_FILS;
     }
 
     /**

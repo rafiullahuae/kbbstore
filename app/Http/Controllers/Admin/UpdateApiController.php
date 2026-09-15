@@ -42,7 +42,7 @@ class UpdateApiController extends Controller
         $pending = $this->currentPending($request);
 
         return response()->json([
-            'version' => config('kbb.version', '1.0.0'),
+            'version' => \App\Services\Update\InstalledVersion::get(),
             'signed' => (string) config('kbb.update_secret', '') !== '',
             'admin_path' => AdminPathService::current(),
             'admin_path_locked' => AdminPathService::isLockedByEnv(),
@@ -56,6 +56,8 @@ class UpdateApiController extends Controller
                 'files' => $r->file_count,
                 'backup_id' => $r->backup_id,
                 'when' => $r->created_at?->diffForHumans(),
+                'has_archive' => (bool) ($r->archive_path && \Illuminate\Support\Facades\Storage::disk('local')->exists($r->archive_path)),
+                'superseded_by' => $r->superseded_by,
             ]),
             'backups' => $this->listBackups(),
         ]);
@@ -81,7 +83,14 @@ class UpdateApiController extends Controller
      */
     private function currentPending(Request $request): ?array
     {
-        $pending = $request->session()->get('kbb_update_pending_api');
+        // Also checks the fallback page's own session key when this one is
+        // empty — see UpdateController::currentPending() for the full
+        // explanation. The two screens used to be entirely blind to each
+        // other's pending state; this and the matching fix there make
+        // either screen able to see and clear a package regardless of
+        // which one it was uploaded through.
+        $pending = $request->session()->get('kbb_update_pending_api')
+            ?? $request->session()->get('kbb_update_pending');
 
         if (! $pending) {
             return null;
@@ -95,6 +104,7 @@ class UpdateApiController extends Controller
             @unlink(Storage::disk('local')->path($pending['zip']));
             $this->deleteTree($pending['scratch']);
             $request->session()->forget('kbb_update_pending_api');
+            $request->session()->forget('kbb_update_pending');
 
             return null;
         }
@@ -185,6 +195,7 @@ class UpdateApiController extends Controller
             @unlink(Storage::disk('local')->path($pending['zip']));
             $this->deleteTree($pending['scratch']);
             $request->session()->forget('kbb_update_pending_api');
+            $request->session()->forget('kbb_update_pending');
 
             return response()->json(['ok' => false, 'errors' => $package->errors], 422);
         }
@@ -209,6 +220,7 @@ class UpdateApiController extends Controller
         // showed the "cleared" pending record sitting there unchanged.
         @unlink(Storage::disk('local')->path($pending['zip']));
         $request->session()->forget('kbb_update_pending_api');
+        $request->session()->forget('kbb_update_pending');
 
         return response()->json([
             'ok' => $release->status === 'applied',
@@ -228,6 +240,7 @@ class UpdateApiController extends Controller
         if ($pending) {
             @unlink(Storage::disk('local')->path($pending['zip']));
             $request->session()->forget('kbb_update_pending_api');
+            $request->session()->forget('kbb_update_pending');
         }
 
         return response()->json(['ok' => true]);
@@ -325,6 +338,23 @@ class UpdateApiController extends Controller
                 'database' => is_file($dir . '/database.sql'),
             ];
         }, $dirs);
+    }
+
+    /**
+     * Downloads a previously-applied release's own package, from the
+     * permanent archive on this server — independent of any chat session,
+     * any upload, anything on Claude's side at all. Exists specifically so
+     * "what did version X actually contain" has an answer months later.
+     */
+    public function download(UpdateRelease $release)
+    {
+        if (! $release->archive_path || ! Storage::disk('local')->exists($release->archive_path)) {
+            abort(404, 'This release has no archived package on this server.');
+        }
+
+        $safeName = $release->version . '.zip';
+
+        return Storage::disk('local')->download($release->archive_path, $safeName);
     }
 
     /** Same as UpdateController's own copy — no shared base class between them to hang it on. */

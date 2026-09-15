@@ -33,6 +33,14 @@ class CheckoutController extends Controller
         'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'sku', 'type',
     ];
 
+    /**
+     * Order numbers this browser session is allowed to see in full.
+     *
+     * Deliberately NOT kbb_last_order, which the success view consumes on
+     * first render so the Purchase pixel fires exactly once. See mayView().
+     */
+    private const VIEWABLE_KEY = 'kbb_orders_viewable';
+
     /** Emirates, in the order the live store lists them. */
     private const EMIRATES = [
         'Abu Dhabi' => 'Abu Dhabi', 'Dubai' => 'Dubai', 'Sharjah' => 'Sharjah',
@@ -44,6 +52,7 @@ class CheckoutController extends Controller
         private CartService $carts,
         private ShippingService $shipping,
         private SettingsService $settings,
+        private \App\Services\CouponService $coupons,
     ) {}
 
     public function page(Request $request): View|RedirectResponse
@@ -96,7 +105,7 @@ class CheckoutController extends Controller
             'totals' => $totals,
             'rates' => $rates,
             'chosenRate' => $chosen,
-            'gateways' => $this->gateways((int) ($totals['total'] ?? 0)),
+            'gateways' => $this->gateways((int) ($totals['total'] ?? 0), $country),
             // Set when Payment & Shipping Rules has hidden Cash on delivery, so
             // the page can say why rather than the option simply not being there.
             'codHidden' => app(\App\Services\PayShipRules::class)
@@ -139,7 +148,17 @@ class CheckoutController extends Controller
         $lastNameRule = $this->settings->get('checkout_single_name', true) ? 'nullable' : 'required';
 
         $data = $request->validate([
-            'billing_email' => ['required', 'email', 'max:160'],
+            'billing_email' => ['required', 'string', 'max:160', new \App\Rules\StorefrontEmail],
+            // Guest checkout -> account. Both optional: leaving them alone
+            // keeps the existing guest flow byte-for-byte unchanged.
+            'create_account' => ['nullable', 'boolean'],
+            'account_password' => ['nullable', 'required_if:create_account,1', 'string', 'min:8', 'max:72'],
+            // Order note and gift message. Both optional; 600 characters is
+            // generous for a gift card and short enough that a paste of an
+            // entire email does not end up printed on one.
+            'customer_note' => ['nullable', 'string', 'max:600'],
+            'is_gift' => ['nullable', 'boolean'],
+            'gift_note' => ['nullable', 'string', 'max:600'],
             // Optional, matching the live checkout where Phone is marked
             // (optional). Requiring it here would reject a valid order.
             'billing_phone' => ['nullable', 'string', 'max:40'],
@@ -185,28 +204,93 @@ class CheckoutController extends Controller
         // now also whether Store → Ecommerce → Checkout has it switched on at
         // all — a toggle that only hid the option from the page without also
         // being enforced here would not really be a switch.
+        $offered = $this->gateways((int) ($totals['total'] ?? 0), $data['billing_country']);
+
         if ($data['payment_method'] === 'cod') {
             $reason = app(\App\Services\PayShipRules::class)
                 ->codHiddenReason((int) ($totals['total'] ?? 0));
 
+            // Kept as its own branch purely for the wording: the window has a
+            // specific sentence to say ("available on orders over X"), which
+            // the generic check below cannot produce.
             if ($reason !== null) {
                 return back()->withInput()->withErrors($reason);
             }
-
-            if (! collect($this->gateways((int) ($totals['total'] ?? 0)))->contains('id', 'cod')) {
-                return back()->withInput()->withErrors('Cash on delivery is not available.');
-            }
         }
 
-        $fee = $data['payment_method'] === 'cod'
-            ? (int) $this->settings->get('cod_fee', 0)
+        // Generalised from the COD-only check that stood here. The reasoning
+        // never depended on the method: the list is only what the page
+        // offered, and a posted method is whatever the shopper sent. An
+        // unconfigured Stripe, a Tabby switched off an hour ago, and a gateway
+        // id this build has no code for are all the same answer — it was not
+        // on offer, so it is not accepted.
+        if (! collect($offered)->contains('id', $data['payment_method'])) {
+            return back()->withInput()->withErrors('That payment method is not available.');
+        }
+
+        // The wording the shopper actually saw on the checkout page. It is
+        // snapshotted onto the order for the same reason order_items snapshot
+        // name and price: the merchant can rename a gateway in Store →
+        // Payments tomorrow, and an old order must still say what it said on
+        // the day. Without this the order pages fall back to the raw id and
+        // print "cod" at the customer.
+        $paymentTitle = (string) (collect($offered)
+            ->firstWhere('id', $data['payment_method'])['title'] ?? '');
+
+        $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find($data['payment_method']);
+
+        if ($gateway === null) {
+            return back()->withInput()->withErrors('That payment method is not available.');
+        }
+
+        // Gift fee is read from settings, never from the request. The form
+        // posts whether the shopper wants wrapping; how much that costs is the
+        // merchant's to decide, and a posted amount would be a price the
+        // browser got to choose.
+        $giftFee = ($request->boolean('is_gift') && $this->settings->get('gift_enabled', '1'))
+            ? (int) $this->settings->get('gift_fee', '1500')
             : 0;
 
-        $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $request) {
+        $request->session()->forget('kbb_gift');
+
+        // The gateway's own surcharge, asked of the gateway rather than
+        // inferred from its id. Still read server-side -- COD is the only one
+        // that charges anything today and it reads the same `cod_fee` setting
+        // it always did, never a figure from the request.
+        $fee = $giftFee + $gateway->feeFils((int) ($totals['total'] ?? 0));
+
+        // $giftFee is in this use list because the closure writes it to the
+        // order's gift_fee column. It was missing, and a PHP closure inherits
+        // nothing it is not handed -- so every call reached "Undefined
+        // variable $giftFee", which Laravel's error handler turns into an
+        // ErrorException. That is thrown from inside DB::transaction, so the
+        // order rolled back: the storefront checkout could not place an order
+        // at all. Found by the first test to POST to this endpoint.
+        $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle) {
             $customer = $request->user('customer') ?? Customer::firstOrCreate(
                 ['email' => mb_strtolower($data['billing_email'])],
                 ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
             );
+
+            // A guest who asked for an account gets a usable password on the
+            // row firstOrCreate already made for them. `password` is cast
+            // `hashed`, so assigning the plain value hashes it.
+            //
+            // The guard matters more than the feature, and it is stated once,
+            // in canSetInitialPassword() -- the order-received page offers the
+            // same thing to a guest afterwards and asks that same method, so
+            // the two cannot drift apart.
+            //
+            // Silent when it declines. Telling the person at checkout that an
+            // account already exists for an address they typed is an account
+            // enumeration oracle, and the order itself is fine either way.
+            if (! $request->user('customer')
+                && $request->boolean('create_account')
+                && ($data['account_password'] ?? '') !== ''
+                && self::canSetInitialPassword($customer)
+            ) {
+                $customer->forceFill(['password' => $data['account_password']])->save();
+            }
 
             $address = [
                 'first_name' => $first, 'last_name' => $last,
@@ -222,6 +306,21 @@ class CheckoutController extends Controller
                 'phone' => $data['billing_phone'] ?? null,
                 'status' => 'pending',
                 'currency' => 'AED',
+                // customer_note has existed on this table from the start, but
+                // nothing ever wrote to it and the admin never showed it, so
+                // the column was dead at both ends. Wired here and rendered on
+                // the order screen in the same package.
+                'customer_note' => $data['customer_note'] ?? null,
+                'is_gift' => $request->boolean('is_gift'),
+                // The amount charged, not the amount configured. Recomputing
+                // this later from the setting would misreport every past order
+                // the first time the price changes.
+                'gift_fee' => $giftFee,
+                // Only kept when the gift box is actually ticked -- otherwise
+                // an untouched-but-populated field (browser autofill, a
+                // shopper changing their mind) would print a gift card nobody
+                // asked for.
+                'gift_note' => $request->boolean('is_gift') ? ($data['gift_note'] ?? null) : null,
                 'billing_address' => $address,
                 'shipping_address' => $address,
                 'subtotal' => $totals['subtotal'],
@@ -232,8 +331,10 @@ class CheckoutController extends Controller
                 'total' => $totals['total'] + $fee,
                 'shipping_method' => $rate['title'],
                 'payment_method' => $data['payment_method'],
+                'payment_method_title' => $paymentTitle !== '' ? $paymentTitle : null,
                 'coupon_code' => $totals['coupon_code'],
                 'whatsapp_optin' => $request->boolean('billing_kbb_whatsapp'),
+                'ip_address' => $request->ip(),
             ]);
 
             foreach ($cart->items as $item) {
@@ -272,16 +373,217 @@ class CheckoutController extends Controller
         // if they revisited their own success page a moment later.
         session(['kbb_last_order' => $order->order_number]);
 
+        // Hand off to the gateway. The order row exists and is `pending`
+        // before this runs, so a hosted session that is started and then
+        // abandoned leaves a real order to reconcile rather than nothing at
+        // all — and the webhook that eventually arrives has something to match
+        // its reference against.
+        //
+        // Deliberately outside the transaction above: this is a network call
+        // to a third party, and holding a database transaction open across one
+        // is how a slow provider becomes a locked table.
+        $start = $gateway->start($order);
+
+        if (! $start->ok()) {
+            // The order stays, marked failed, so the shopper can retry and
+            // support can see what happened. $start->message is written for a
+            // shopper — gateways never put an API error body in it.
+            $order->forceFill(['status' => 'failed'])->save();
+
+            return back()->withInput()->withErrors(
+                $start->message ?? 'We could not start that payment. Please try another method.'
+            );
+        }
+
+        /*
+         * The order emails: the customer's receipt, and the alert to the store.
+         *
+         * PLACED HERE AND NOWHERE ELSE, for three reasons worth stating:
+         *
+         *   - AFTER the transaction. Inside it, a refused SMTP relay or a
+         *     twenty-second connect timeout would roll the order back — the
+         *     order would be gone and the shopper would see a 500 for an email
+         *     nobody needed.
+         *   - AFTER $start->ok(). Before it, a declined gateway would have
+         *     receipted an order that is about to be marked `failed`.
+         *   - BEFORE both returns, so the hosted-redirect path gets the same
+         *     receipt as the on-site one.
+         *
+         * It cannot throw. App\Services\Mail\OrderMailer catches every transport
+         * failure, logs it with the order number and returns — its header sets
+         * out why a missing email is a support question and a failed checkout is
+         * an outage. Nothing is queued; there is no worker on this host.
+         */
+        app(\App\Services\Mail\OrderMailer::class)->placed($order);
+
+        if ($start->redirectUrl !== null) {
+            // Away to the provider's hosted page. Not Url::redirect(), which
+            // prefixes our own base path — this is an absolute URL on somebody
+            // else's domain.
+            return redirect()->away($start->redirectUrl);
+        }
+
         return redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number);
     }
 
+    /**
+     * The order-received page.
+     *
+     * ACCESS. What stood here was `where('order_number', $request->query('order'))`
+     * and nothing else: any order number typed into the query string rendered
+     * that order, and the numbers are sequential (see nextOrderNumber()). The
+     * comment in place() records that gap. It was survivable while the page
+     * showed four lines of nothing very private; it is not survivable now that
+     * the page carries the line items, the delivery address and the gift
+     * message, so the page is gated rather than widened.
+     *
+     * Two ways in, both of which the visitor already has by other means:
+     *
+     *   - a signed-in customer looking at their own order;
+     *   - the browser that actually placed it, which is remembered in the
+     *     session by rememberViewable() below.
+     *
+     * Anything else gets exactly what a wholly made-up order number gets — the
+     * "we could not find that order" panel — so the page cannot be used to
+     * probe which order numbers exist.
+     */
     public function success(Request $request): View
     {
-        // Eager-loaded because Marketing Pixels' Purchase event reads every
-        // line item; without this it lazy-loads them on every visit instead.
-        $order = Order::with('items')->where('order_number', (string) $request->query('order', ''))->first();
+        $number = trim((string) $request->query('order', ''));
+
+        $order = $number === '' ? null : Order::with([
+            // Eager-loaded because Marketing Pixels' Purchase event reads every
+            // line item; without this it lazy-loads them on every visit instead.
+            // The product behind each line is loaded for its image only — the
+            // name, price and quantity are snapshots on the line itself, which
+            // is why a deleted product still renders (product_id is nullable
+            // and Product soft-deletes, so `product` is simply null here).
+            'items' => fn ($q) => $q->orderBy('id'),
+            'items.product' => fn ($q) => $q->select(['id', 'slug', 'name', 'image', 'brand_id']),
+            'items.product.brand:id,name',
+        ])->where('order_number', $number)->first();
+
+        if ($order !== null && ! $this->mayView($request, $order)) {
+            $order = null;
+        }
 
         return view('store.checkout-success', ['order' => $order, 'settings' => $this->settings]);
+    }
+
+    /**
+     * Finish a guest account: set a password on the customer row the order
+     * already created.
+     *
+     * The rule about WHICH rows may be given a password is not restated here.
+     * It is canSetInitialPassword(), the same method place() asks, because two
+     * copies of "never overwrite an existing password" is one copy too many.
+     *
+     * The answer is identical whether a password was written or not. Telling
+     * the visitor that an account already exists for the address would be an
+     * account enumeration oracle, exactly as it would be at checkout, and the
+     * sentence they get back is true either way: they can sign in with that
+     * email address. For the same reason nobody is logged in here — a session
+     * that appeared only on success would say just as much as a message.
+     */
+    public function claimAccount(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'order' => ['required', 'string', 'max:64'],
+            // Same bounds as the checkout field, min:8 included, so the two
+            // ways into an account cannot disagree about what a password is.
+            'account_password' => ['required', 'string', 'min:8', 'max:72'],
+        ]);
+
+        $order = Order::where('order_number', trim($data['order']))->first();
+
+        // Same gate as the page itself: without it this would be a way to set
+        // a password on any customer whose order number you could guess.
+        if ($order === null || ! $this->mayView($request, $order)) {
+            abort(404);
+        }
+
+        $back = redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number)
+            ->with('kbb_account_done', '1');
+
+        if ($request->user('customer') || $order->customer_id === null) {
+            return $back;
+        }
+
+        $customer = Customer::find($order->customer_id);
+
+        if ($customer !== null && self::canSetInitialPassword($customer)) {
+            // `password` is cast `hashed`, so assigning the plain value hashes it.
+            $customer->forceFill(['password' => $data['account_password']])->save();
+        }
+
+        return $back;
+    }
+
+    /**
+     * May this request see this order?
+     *
+     * @see success() for why the page is gated at all.
+     */
+    private function mayView(Request $request, Order $order): bool
+    {
+        $customer = $request->user('customer');
+
+        if ($customer !== null && $order->customer_id !== null
+            && (int) $order->customer_id === (int) $customer->id) {
+            return true;
+        }
+
+        // place() writes kbb_last_order, but the view CONSUMES it — the
+        // Purchase pixel must fire exactly once — so it cannot itself be what
+        // grants access on a reload. Seeing it once is converted here into a
+        // durable grant that survives the reload, the browser Back button and
+        // the round trip through a hosted payment page.
+        if ((string) $request->session()->get('kbb_last_order', '') === (string) $order->order_number) {
+            $this->rememberViewable($request, (string) $order->order_number);
+
+            return true;
+        }
+
+        return in_array((string) $order->order_number, $this->viewable($request), true);
+    }
+
+    /** @return list<string> */
+    private function viewable(Request $request): array
+    {
+        $seen = $request->session()->get(self::VIEWABLE_KEY, []);
+
+        return is_array($seen) ? array_values(array_map('strval', $seen)) : [];
+    }
+
+    private function rememberViewable(Request $request, string $number): void
+    {
+        $seen = $this->viewable($request);
+
+        if (in_array($number, $seen, true)) {
+            return;
+        }
+
+        $seen[] = $number;
+
+        // Bounded: a session is a cookie on this host, and an unbounded list
+        // of order numbers in it would grow until the cookie stopped fitting.
+        // Ten is more orders than one browser session plausibly places.
+        $request->session()->put(self::VIEWABLE_KEY, array_slice($seen, -10));
+    }
+
+    /**
+     * Whether a password may be written onto this customer row. The single
+     * expression of the rule; place() and claimAccount() both ask it.
+     *
+     * It only ever fills a blank and never replaces one, and legacy_password
+     * counts as set: those 3,712 imported customers have a real WordPress
+     * password waiting to be upgraded on first login and must not be trampled.
+     * Without the rule, typing a stranger's email at checkout would overwrite
+     * their password and hand over their account.
+     */
+    public static function canSetInitialPassword(Customer $customer): bool
+    {
+        return $customer->password === null && $customer->legacy_password === null;
     }
 
     /* ------------------------------------------------------------ helpers */
@@ -316,38 +618,33 @@ class CheckoutController extends Controller
         return [$first, implode(' ', $parts)];
     }
 
-    private function gateways(int $totalFils = 0): array
+    /**
+     * The payment options this basket may use.
+     *
+     * The array shape is unchanged — id / title / description / fee_html /
+     * fee_fils, exactly what store.checkout has always iterated — but the list
+     * is now built by GatewayRegistry rather than assembled from provider rows
+     * here. That moves three things out of this method that never belonged to
+     * it: whether a gateway's credentials are present, what its fee is, and
+     * what its description says. Each gateway answers for itself, so adding
+     * Stripe did not mean adding another `$p->id === 'stripe'` arm to a chain
+     * of them.
+     *
+     * Payment & Shipping Rules still decides the COD window. It is called from
+     * CashOnDelivery::availableFor(), which is the same PayShipRules instance
+     * the other three call sites use — one rule, one definition.
+     */
+    private function gateways(int $totalFils = 0, ?string $country = null): array
     {
-        $cod = (int) $this->settings->get('cod_fee', 0);
-
-        // Payment & Shipping Rules: Cash on delivery is dropped outside the
-        // configured order-value window. Every other gateway is untouched.
-        $codAllowed = app(\App\Services\PayShipRules::class)->codAllowed($totalFils);
-
-        $list = PaymentProvider::query()
-            ->where('enabled', true)
-            ->orderBy('position')
-            ->get()
-            ->reject(fn ($p) => $p->id === 'cod' && ! $codAllowed)
-            ->map(fn ($p) => [
-                'id' => $p->id,
-                'title' => $p->title,
-                'description' => $p->id === 'cod' && $cod > 0
-                    ? 'Pay in cash to the courier. A small ' . \App\Support\Money::format($cod) . ' handling fee applies.'
-                    : null,
-                // Shown right on the option itself, not only in the
-                // paragraph beneath it — a fee should be visible at the point
-                // of choosing, not discovered after.
-                'fee_html' => $p->id === 'cod' && $cod > 0
-                    ? '+' . \App\Support\Money::format($cod)
-                    : null,
-                'fee_fils' => $p->id === 'cod' ? $cod : 0,
-            ])
-            ->all();
+        $list = app(\App\Services\Payments\GatewayRegistry::class)
+            ->checkoutList($totalFils, $country);
 
         if ($list !== []) {
             return $list;
         }
+
+        $cod = (int) $this->settings->get('cod_fee', 0);
+        $codAllowed = app(\App\Services\PayShipRules::class)->codAllowed($totalFils);
 
         // A store with nothing configured at all would render an empty
         // payment section; COD is the safe floor for that case. But once a
@@ -383,6 +680,57 @@ class CheckoutController extends Controller
      *
      * @return array{0: array, 1: ?string, 2: array}
      */
+    /**
+     * Gift wrapping on or off, then fresh totals.
+     *
+     * The choice is kept in the session rather than posted with every
+     * subsequent request, because two other paths recompute these totals --
+     * the country-change refresh and an ordinary reload -- and neither sends
+     * the checkbox. Holding it server-side means all three agree instead of
+     * the fee disappearing the moment someone changes emirate.
+     */
+    public function gift(Request $request): JsonResponse
+    {
+        $request->validate(['is_gift' => ['nullable', 'boolean']]);
+
+        if (! $this->settings->get('gift_enabled', '1')) {
+            return response()->json(['ok' => false, 'error' => 'Gift wrapping is not available.'], 422);
+        }
+
+        $on = $request->boolean('is_gift');
+        $on ? $request->session()->put('kbb_gift', true) : $request->session()->forget('kbb_gift');
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json(['ok' => false, 'error' => 'Your bag is empty.'], 422);
+        }
+
+        $country = (string) ($request->input('country') ?: 'AE');
+        [, , $totals] = $this->rateContext($cart, $country, $request->input('state'));
+
+        $gift = $on ? (int) $this->settings->get('gift_fee', '1500') : 0;
+        $cod = (int) $this->settings->get('cod_fee', 0);
+
+        return response()->json([
+            'ok' => true,
+            'on' => $on,
+            'giftFee' => \App\Support\Money::format($gift),
+            'total' => \App\Support\Money::format((int) $totals['total'] + $gift),
+            'totalWithFee' => $cod > 0
+                ? \App\Support\Money::format((int) $totals['total'] + $cod + $gift)
+                : null,
+        ]);
+    }
+
+    /** Gift fee in fils for this request, or zero. Settings are the price. */
+    private function giftFee(Request $request): int
+    {
+        return ($request->session()->get('kbb_gift') && $this->settings->get('gift_enabled', '1'))
+            ? (int) $this->settings->get('gift_fee', '1500')
+            : 0;
+    }
+
     private function rateContext($cart, ?string $country, ?string $state): array
     {
         $rates = $this->shipping->ratesFor($country, $state,
@@ -444,18 +792,313 @@ class CheckoutController extends Controller
             'shipping' => $totals['shipping'] > 0
                 ? \App\Support\Money::format((int) $totals['shipping'])
                 : '<span style="color:var(--green);font-weight:700">Free</span>',
-            'total' => \App\Support\Money::format((int) $totals['total']),
+            'total' => \App\Support\Money::format((int) $totals['total'] + $this->giftFee($request)),
             // The COD-fee-inclusive total, kept in step with the country so
             // it is never wrong after switching country while Cash on
             // delivery happens to be selected. The fee itself is flat and
             // never changes; only the total under it does.
-            'totalWithFee' => (function () use ($totals) {
+            'totalWithFee' => (function () use ($totals, $request) {
                 $fee = (int) $this->settings->get('cod_fee', 0);
+                $gift = $this->giftFee($request);
 
-                return $fee > 0 ? \App\Support\Money::format((int) $totals['total'] + $fee) : null;
+                return $fee > 0
+                    ? \App\Support\Money::format((int) $totals['total'] + $fee + $gift)
+                    : null;
             })(),
             'vat' => $totals['vat'] ? ['label' => $totals['vat']['label'], 'formatted' => $totals['vat']['formatted']] : null,
         ]);
+    }
+
+    /**
+     * One tap on Add in the checkout's Browsed tab.
+     *
+     * Silent by design: no drawer, no jump back to Order summary. The page
+     * stays exactly where it is and the regions the new line actually changes
+     * are re-rendered HERE and swapped in, so the browser is never asked to
+     * work out a price. Money stays integer fils on this side of the wire.
+     *
+     * Four regions change on a single add, and all four come out of this one
+     * request so they cannot disagree with each other:
+     *
+     *   1. the Order summary lines and the totals block (which opens with the
+     *      free-delivery bar, so that moves with them);
+     *   2. the payment options — PayShipRules measures its Cash-on-delivery
+     *      window against the order total, so one more product can withdraw
+     *      the method the shopper has already selected. Leaving the list
+     *      alone would hand them a method place() refuses at the last step;
+     *   3. the mobile bag strip — thumbnails, "N items", and its own copy of
+     *      the free-delivery bar;
+     *   4. the Browsed list itself and its count badge, both rendered from
+     *      the same collection so the row leaves the list only because the
+     *      server says it is in the bag.
+     *
+     * The cart drawer and badge are the one thing NOT rendered here: the count
+     * comes back with this response for the badge, and the panel body is
+     * refreshed through the drawer endpoint that already exists, rather than a
+     * second copy of CartController's drawer payload growing in this class.
+     */
+    public function browsedAdd(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'product_id' => ['required', 'integer'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+            // What the shopper currently has selected. A choice, never an
+            // amount — the same rule the rest of this controller follows.
+            'payment_method' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        // Nothing is ever removed from the page on a failure; each of these
+        // returns a sentence the row can show, in words.
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Your bag is empty — please start again from the cart.',
+            ], 422);
+        }
+
+        $product = Product::query()->select(self::LINE_COLUMNS)->visible()->find($data['product_id']);
+
+        if (! $product) {
+            return response()->json(['ok' => false, 'error' => 'That product is no longer available.'], 404);
+        }
+
+        if ($product->stock_status !== 'instock') {
+            return response()->json(['ok' => false, 'error' => 'That product is sold out.'], 422);
+        }
+
+        // Adding the same product again increments the line rather than
+        // duplicating it — CartService::add() matches on product and variant
+        // and reprices the whole line, because a bundle rate depends on the
+        // final quantity.
+        $this->carts->add($cart, $product, 1);
+
+        $cart = $this->loadCart($request);
+
+        return response()->json(
+            ['ok' => true, 'productId' => $product->id] + $this->fragments($request, $cart, $data)
+        );
+    }
+
+    /**
+     * A quantity change, or a removal, made from the checkout's order summary.
+     *
+     * The controls were already live and already correct; what they did with
+     * the answer was `window.location.reload()`. The cart endpoints in
+     * CartController return the DRAWER and the cart page, neither of which is
+     * on screen here, so there was nothing this page could swap in and a full
+     * navigation was the only way to show the new figures. Reloading throws
+     * away every field already typed into the form above, scrolls back to the
+     * top and re-runs page()'s country detection over the shopper's own
+     * choice — an expensive way to change a number by one.
+     *
+     * This is the same shape as browsedAdd: one write, then every region that
+     * write moves, rendered here and swapped in. Money never crosses the wire
+     * as anything but a formatted string the server produced.
+     */
+    public function lineUpdate(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'item_id' => ['required', 'integer'],
+            // 0 removes the line — the ✕ beside the stepper is the same change
+            // with a different number, not a second endpoint.
+            'quantity' => ['required', 'integer', 'min:0', 'max:99'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+            'payment_method' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Your bag is empty — please start again from the cart.',
+            ], 422);
+        }
+
+        /*
+         * The line has to be one of THIS cart's own.
+         *
+         * CartService::updateQuantity() already scopes its lookup to the cart,
+         * so an id belonging to someone else's basket matches nothing and
+         * changes nothing. Saying so is the difference between a stepper that
+         * refuses and one that silently reports success for a change that never
+         * happened.
+         */
+        if (! $cart->items->contains('id', (int) $data['item_id'])) {
+            return response()->json(['ok' => false, 'error' => 'That item is no longer in your bag.'], 404);
+        }
+
+        $this->carts->updateQuantity($cart, (int) $data['item_id'], (int) $data['quantity']);
+
+        $cart = $this->loadCart($request);
+
+        /*
+         * Removing the last line is the one change that legitimately leaves
+         * this page: page() itself redirects an empty bag to /cart/, so there
+         * is no checkout left to repaint. The destination is named here rather
+         * than guessed in the browser, so it carries the deployment's base
+         * path like every other link.
+         */
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => true,
+                'empty' => true,
+                'count' => 0,
+                'redirect' => Url::to('/cart/'),
+            ]);
+        }
+
+        return response()->json(
+            ['ok' => true, 'empty' => false, 'itemId' => (int) $data['item_id']]
+            + $this->fragments($request, $cart, $data)
+        );
+    }
+
+    /**
+     * Applying or removing a coupon from the checkout page, in place.
+     *
+     * The stepper got its own endpoint because /api/cart/coupon renders the
+     * mini-cart and the cart page — neither of which is on screen here — so the
+     * only way to show new figures was a full reload, which threw away every
+     * field already typed. A coupon moves exactly the regions a quantity change
+     * moves (line discounts, totals, the free-delivery bar, and which payment
+     * methods the order total still qualifies for), so it shares fragments()
+     * with the stepper rather than growing a second copy that can drift.
+     *
+     * The discount itself is never taken from the request: validate() reads the
+     * coupon from the database and checks it against this cart, exactly as the
+     * cart page's own endpoint does. The browser sends a code, never an amount.
+     */
+    public function couponUpdate(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'code' => ['nullable', 'string', 'max:60'],
+            'remove' => ['nullable', 'boolean'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'state' => ['nullable', 'string', 'max:120'],
+            'payment_method' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $cart = $this->loadCart($request);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Your bag is empty — please start again from the cart.',
+            ], 422);
+        }
+
+        if ($request->boolean('remove')) {
+            $cart->forceFill(['coupon_id' => null])->save();
+            $message = 'Coupon removed';
+        } else {
+            $result = $this->coupons->validate(
+                (string) ($data['code'] ?? ''),
+                $cart,
+                $request->user('customer')?->email
+            );
+
+            // A rejected code leaves the cart exactly as it was. The page is
+            // still repainted from the unchanged totals so the shopper sees the
+            // error beside figures that are current, not stale.
+            if (! $result['ok']) {
+                return response()->json(
+                    ['ok' => false, 'error' => $result['error']]
+                    + $this->fragments($request, $cart, $data)
+                );
+            }
+
+            $cart->forceFill(['coupon_id' => $result['coupon']->id])->save();
+            $message = 'Coupon applied';
+        }
+
+        $cart = $this->loadCart($request);
+
+        return response()->json(
+            ['ok' => true, 'message' => $message]
+            + $this->fragments($request, $cart, $data)
+        );
+    }
+
+    /**
+     * Every region of the checkout that a change to the cart moves, rendered
+     * once from one set of totals so they cannot disagree with each other.
+     *
+     * Shared by the Browsed one-tap add and the summary's quantity steppers:
+     * both change what is in the bag, and both change the same four regions.
+     * A second copy of this is how the add and the stepper would drift apart.
+     *
+     * $posted carries the shopper's current payment choice — a choice, never an
+     * amount. PayShipRules measures its Cash-on-delivery window against the
+     * order total, so a quantity change in either direction can withdraw or
+     * restore the method they have selected.
+     */
+    private function fragments(Request $request, $cart, array $data): array
+    {
+        // Only a country the shopper's own selector offers. Anything else
+        // falls back to the store's country rather than being taken on trust.
+        $country = strtoupper((string) ($data['country'] ?? ''));
+
+        if (! isset($this->countries()[$country])) {
+            $country = (string) $this->settings->get('store_country', 'AE');
+        }
+
+        $state = $data['state'] ?? null;
+
+        [, , $totals] = $this->rateContext($cart, $country, $state);
+
+        $totalFils = (int) ($totals['total'] ?? 0);
+        $gateways = $this->gateways($totalFils, $country);
+        $codHidden = app(\App\Services\PayShipRules::class)->codHiddenReason($totalFils);
+
+        // Did this change cost them the method they had selected? Said out
+        // loud, with what is selected instead — a radio quietly moving under
+        // the cursor is the confusion this feature exists to remove.
+        $posted = trim((string) ($data['payment_method'] ?? ''));
+        $offeredIds = array_column($gateways, 'id');
+        $dropped = $posted !== '' && ! in_array($posted, $offeredIds, true);
+        $payNotice = null;
+
+        if ($dropped) {
+            $payNotice = ($gateways === [])
+                ? 'No payment method is available for this order total.'
+                : 'Your payment method is no longer available for this order — '
+                    . $gateways[0]['title'] . ' is selected instead.';
+        }
+
+        $browsed = $this->browsed($request, $cart);
+
+        $view = [
+            'settings' => $this->settings,
+            'items' => $cart->items,
+            'totals' => $totals,
+        ];
+
+        return [
+            'count' => (int) ($totals['item_count'] ?? 0),
+            'itemsHtml' => view('partials.checkout.summary-items', $view)->render(),
+            'orderHtml' => view('partials.checkout.order-block', $view + [
+                'withActions' => true,
+                'deliveryText' => $this->deliveryText($country),
+            ])->render(),
+            'thumbsHtml' => view('partials.checkout.thumbs', $view)->render(),
+            'paymentHtml' => view('partials.checkout.payment-methods', [
+                'gateways' => $gateways,
+                'codHidden' => $codHidden,
+                'selectedMethod' => $dropped ? null : ($posted !== '' ? $posted : null),
+                'payNotice' => $payNotice,
+            ])->render(),
+            'browsedHtml' => view('partials.checkout.browsed-list', ['browsed' => $browsed])->render(),
+            'browsedCount' => $browsed->count(),
+            // For the optional sticky bar, which carries a .js-total of its own
+            // outside every slot above. Formatted here like everything else.
+            'total' => \App\Support\Money::format($totalFils + $this->giftFee($request)),
+            'payNotice' => $payNotice,
+        ];
     }
 
     private function countries(): array
@@ -522,10 +1165,42 @@ class CheckoutController extends Controller
      * imported WooCommerce orders keep their numbers, so new ones must not
      * collide with them.
      */
+    /**
+     * The next free order number.
+     *
+     * This was `10000 + max(id) + 1`, which assumes order numbers march in step
+     * with primary keys. They do not: any order whose number was not minted by
+     * this formula -- an import, a demo row, a renumbering -- breaks the
+     * assumption, and the result is a number that already exists. order_number
+     * is NOT NULL UNIQUE, so the insert raised SQLSTATE[23000] inside the
+     * checkout transaction and the shopper got a 500 with no order.
+     *
+     * Now it takes the highest of the two candidates and then walks forward
+     * until it finds a number nothing holds, so an out-of-step table costs a
+     * few cheap lookups rather than every order failing. Deliberately portable:
+     * no REGEXP, no CAST, because the tests run on SQLite and the site on
+     * MySQL, and this is precisely the kind of difference that let the bug
+     * reach production in the first place.
+     */
     private function nextOrderNumber(): string
     {
-        $last = (int) Order::max('id');
+        $candidate = max(
+            10000 + (int) Order::max('id'),
+            (int) Order::max('order_number'),
+        );
 
-        return (string) (10000 + $last + 1);
+        // Bounded so a pathological table cannot spin forever; a thousand
+        // consecutive taken numbers means something is wrong that a retry loop
+        // should not paper over.
+        for ($i = 0; $i < 1000; $i++) {
+            $number = (string) (++$candidate);
+
+            if (! Order::where('order_number', $number)->exists()) {
+                return $number;
+            }
+        }
+
+        // Last resort: unique by construction rather than by search.
+        return (string) $candidate . random_int(100, 999);
     }
 }

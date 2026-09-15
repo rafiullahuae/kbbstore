@@ -61,6 +61,22 @@
                         <h2><span class="n">1</span> Contact</h2>
                         <div class="row2">
                             <p class="form-row form-row-wide validate-required validate-email" id="billing_email_field" data-priority="1"><label for="billing_email" class="required_field">Email address&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="email" class="input-text " name="billing_email" id="billing_email" placeholder="you@email.com"  value="{{ old('billing_email', $prefill['email'] ?? '') }}" aria-required="true" autocomplete="section-billing billing email" /></span></p>                            <p class="form-row form-row-wide validate-phone" id="billing_phone_field" data-priority="100"><label for="billing_phone" class="">Phone&nbsp;<span class="optional">(optional)</span></label><span class="woocommerce-input-wrapper"><input type="tel" class="input-text " name="billing_phone" id="billing_phone" placeholder="+971 5x xxx xxxx"  value="{{ old('billing_phone', $prefill['phone'] ?? '') }}" autocomplete="section-billing billing tel" /></span></p>                        </div>
+@guest('customer')
+                            <p class="form-row form-row-wide kbb-acct" id="create_account_field">
+                                <label for="create_account" class="kbb-acct-opt">
+                                    <input type="checkbox" name="create_account" id="create_account" value="1" @checked(old('create_account'))>
+                                    <span>Create an account for faster checkout next time</span>
+                                </label>
+                                <span class="woocommerce-input-wrapper kbb-acct-pw" id="account_password_wrap" hidden>
+                                    <input type="password" class="input-text" name="account_password" id="account_password"
+                                           placeholder="Choose a password (8 characters or more)" autocomplete="new-password" minlength="8">
+                                </span>
+                                @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
+                            </p>
+@endguest
+
+
+
                         <div class="co-note ok" id="kbbReturning" style="display:none"></div>
                             <div class="kbb-wa"><p class="form-row form-row-wide" id="billing_kbb_whatsapp_field" data-priority="25"><span class="woocommerce-input-wrapper"><label class="checkbox " ><input type="checkbox" name="billing_kbb_whatsapp" id="billing_kbb_whatsapp" value="1" class="input-checkbox " @checked(old('billing_kbb_whatsapp', true)) /> Send order updates on WhatsApp — confirmation, dispatch &amp; delivery alerts.&nbsp;<span class="optional">(optional)</span></label></span></p></div>
                     </div>
@@ -102,6 +118,33 @@
                         <div id="kbbDeliverySlot" class="kbb-delivery">
                             @include('partials.checkout.delivery-options')
                         </div>
+                            <p class="form-row form-row-wide kbb-note" id="customer_note_field">
+                                <label for="customer_note">Delivery notes <span class="optional">(optional)</span></label>
+                                <span class="woocommerce-input-wrapper">
+                                    <textarea name="customer_note" id="customer_note" class="input-text" rows="2" maxlength="600"
+                                              placeholder="Delivery instructions, a landmark, a preferred time">{{ old('customer_note') }}</textarea>
+                                </span>
+                            </p>
+                            @if (app(\App\Services\SettingsService::class)->get('gift_enabled', '1'))
+                            <p class="form-row form-row-wide kbb-gift" id="gift_field">
+                                @php
+                                    $giftOn = app(\App\Services\SettingsService::class)->get('gift_enabled', '1');
+                                    $giftFee = (int) app(\App\Services\SettingsService::class)->get('gift_fee', '1500');
+                                @endphp
+                                <label class="kbb-gift-opt" for="is_gift">
+                                    <input type="checkbox" name="is_gift" id="is_gift" value="1" @checked(old('is_gift', session('kbb_gift')))>
+                                    <span>This order is a gift</span>
+                                    @if ($giftFee > 0)
+                                        <b class="kbb-gift-fee">+{!! \App\Support\Money::format($giftFee) !!}</b>
+                                    @endif
+                                </label>
+                                <span class="woocommerce-input-wrapper kbb-gift-msg" id="gift_note_wrap" hidden>
+                                    <textarea name="gift_note" id="gift_note" class="input-text" rows="3" maxlength="600"
+                                              placeholder="Your message, printed on the gift card">{{ old('gift_note') }}</textarea>
+                                    <span class="kbb-gift-count"><span id="gift_left">600</span> characters left</span>
+                                </span>
+                            </p>
+                            @endif
                     </div>
 
                     <!-- 4 · Payment -->
@@ -114,32 +157,15 @@
                             </div>
                             <div class="ordiv">or pay with</div>
 
-                        <div id="payment" class="woocommerce-checkout-payment">
-            <ul class="wc_payment_methods payment_methods methods">
-            @if (!empty($codHidden))<p class="pay-note">{{ $codHidden }}</p>@endif
-            @foreach ($gateways as $g)
-            <li class="wc_payment_method payment_method_{{ $g['id'] }}">
-    <input id="payment_method_{{ $g['id'] }}" type="radio" class="input-radio" name="payment_method" value="{{ $g['id'] }}" @checked($loop->first) data-order_button_text="" />
-
-    <label for="payment_method_{{ $g['id'] }}">
-        {{ $g['title'] }}
-        {{-- The fee, right on the option — not only in the paragraph below,
-             which is easy to miss until after it has already been chosen. --}}
-        @if (!empty($g['fee_html']))<span class="codfee">{!! $g['fee_html'] !!}</span>@endif
-    </label>
-            @if ($g['description'])
-            {{-- Shown purely by :has() on .kbb-checkout below, matching how
-                 the selected-option highlight on this same list already
-                 works — no JS, and correct for whichever option is checked
-                 rather than only ever the first one. --}}
-            <div class="payment_box payment_method_{{ $g['id'] }}">
-            <p>{!! $g['description'] !!}</p>
-        </div>
-            @endif
-    </li>
-            @endforeach
-        </ul>
-                        </div>
+                        {{-- The list itself lives in its own partial: adding a
+                             product from Browsed can move the order total
+                             across the Cash-on-delivery window, and the refresh
+                             has to render THIS markup rather than a second copy
+                             of it. old('payment_method') is honoured for the
+                             same reason it is on every other field here — a
+                             rejected Place order should not silently reset the
+                             choice. --}}
+                        <div id="payment" class="woocommerce-checkout-payment">@include('partials.checkout.payment-methods', ['selectedMethod' => old('payment_method')])</div>
                     </div>
 
                     @include('partials.checkout.reassurance')                </div>
@@ -160,14 +186,23 @@
                         <div class="co-items">
                             @include('partials.checkout.summary-items')                        </div>
 
-                        @include('partials.checkout.order-block', ['withActions' => true])                    </div>
+                        {{-- A stable container round the order block, for the
+                             same reason .kbb-freeship-slot inside it has one:
+                             the block is rendered twice (here and in the mobile
+                             box), so it cannot carry an id, and the one-tap add
+                             swaps every copy of it in one go. --}}
+                        <div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>                    </div>
 
                     @if ($showBrowsed)
                     <!-- Browsed panel -->
                     <div class="spanel" data-spanel="browsed">
-                        <p class="bhead">Recently browsed — add in one tap</p>
-                        <div id="kbbBrowsedList">
-                            @foreach ($browsed as $bp)@include('partials.checkout.browsed-item', ['bp' => $bp])@endforeach                        </div>
+                        {{-- The "Added" confirmation is pinned to this heading,
+                             not to the row: a successful add replaces the list
+                             below, which would take a note living on the row
+                             with it. It is absolutely positioned so appearing
+                             costs no height — nothing on the page moves. --}}
+                        <p class="bhead">Recently browsed — add in one tap<span class="baddnote" id="kbbBrowsedNote" role="status" aria-live="polite"></span></p>
+                        <div id="kbbBrowsedList" data-add-url="{{ Url::to('/checkout/browsed-add') }}">@include('partials.checkout.browsed-list')</div>
                     </div>
                     @endif
 
@@ -175,14 +210,21 @@
                 </div>
 
                 <!-- mobile: expand/collapse the summary -->
-                <button type="button" class="viewfull" id="kbbViewItems">View full summary ▾</button>
+                <button type="button" class="viewfull" id="kbbViewItems" aria-controls="kbbPanels" aria-expanded="false">View full summary ▾</button>
             </aside>
 
         </div>
 
         <!-- mobile-only: full on-page Place order box (sticky bar is optional) -->
+        {{-- The mobile bag strip — "Your bag · N items", the round thumbnails
+             with their ×n badges — and, immediately under it, the order block
+             whose first element is the free-delivery progress bar. Both are in
+             their own slots: a one-tap add from Browsed has to bring a new
+             thumbnail, a new count and a moved progress bar with it, and a bar
+             still reading 80% while the summary says "Free" is worse than one
+             that never moved at all. --}}
         <div class="kbb-mobile-order">
-            @include('partials.checkout.thumbs')            @include('partials.checkout.order-block', ['withActions' => true])        </div>
+            <div class="kbb-thumbs-slot">@include('partials.checkout.thumbs')</div><div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>        </div>
     </form>
 
     @if ($settings->get('mobile_sticky_bar', false))
@@ -197,5 +239,132 @@
 
 @push('scripts')
 {!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
+@endpush
+
+@push('scripts')
+<style>
+/* Scoped to .kbb-checkout and built from the sheet's own tokens, so these
+   rows inherit the same palette as every other field.
+
+   Checkbox metrics copied from .kbb-wa rather than guessed: 17px box,
+   margin-top 1px, flex-shrink 0, align-items flex-start. That row already
+   sits correctly against a label that wraps to two lines, so matching it
+   keeps every tick on this page on the same optical line instead of each
+   one being a slightly different hand-tuned number.
+
+   None of these may go inside .row2 -- that is a two-column grid, and a
+   .form-row dropped into it becomes a grid child and interleaves with Email
+   and Phone. */
+.kbb-checkout .kbb-acct,
+.kbb-checkout .kbb-gift,
+.kbb-checkout .kbb-note{margin-top:10px}
+/* label.<class>, not just .<class>: the sheet's own
+   `.kbb-checkout .form-row label{display:block}` scores 0,2,1 and beat a bare
+   0,2,0 selector, so display:flex never applied and the box sat inline on the
+   text baseline -- which is why align-items did nothing at all. */
+.kbb-checkout .form-row label.kbb-acct-opt,
+.kbb-checkout .form-row label.kbb-gift-opt{display:flex;align-items:center;gap:9px;cursor:pointer;
+  font-size:12px;font-weight:500;color:var(--ink-2);margin:0;line-height:1.45}
+/* `.kbb-checkout .sumrow{display:flex}` also outranks the browser's own
+   [hidden]{display:none}, so the Gift wrapping row stayed visible at 0 even
+   when marked hidden. */
+.kbb-checkout .sumrow[hidden]{display:none}
+.kbb-checkout .kbb-acct-opt input[type="checkbox"],
+.kbb-checkout .kbb-gift-opt input[type="checkbox"]{width:17px;height:17px;margin-top:1px;
+  accent-color:var(--pink);flex-shrink:0;margin-top:0}
+.kbb-checkout .kbb-gift-fee{margin-left:7px;font-weight:700;color:var(--pink)}
+.kbb-checkout .kbb-acct-pw,
+.kbb-checkout .kbb-gift-msg{display:block;margin-top:9px}
+.kbb-checkout .kbb-acct-pw[hidden],
+.kbb-checkout .kbb-gift-msg[hidden]{display:none}
+.kbb-checkout .kbb-acct-err{display:block;margin-top:6px;font-size:12px;color:var(--pink)}
+.kbb-checkout .kbb-note textarea,
+.kbb-checkout .kbb-gift textarea{resize:vertical;min-height:62px}
+.kbb-checkout .kbb-gift-count{display:block;margin-top:5px;font-size:11px;color:var(--muted);text-align:right}
+</style>
+<script>
+/* The order summary's quantity endpoint, prefixed for this deployment.
+   Url::to() rather than route(): the route lives in routes/checkout-line.php,
+   which the integrator wires into routes/web.php, and a page that 500s because
+   a route name is not registered yet is worse than a stepper that is not wired
+   up yet. Published here rather than added to the layout's route list, which
+   belongs to every page on the site and not just this one. */
+window.KBB.routes.checkoutLine = @json(Url::to('/checkout/line'));
+window.KBB.routes.checkoutCoupon = @json(Url::to('/checkout/coupon'));
+
+(function () {
+  var box = document.getElementById('create_account');
+  var wrap = document.getElementById('account_password_wrap');
+  if (!box || !wrap) return;
+  function sync() {
+    wrap.hidden = !box.checked;
+    // Only required while the box is ticked, so an untouched checkout still
+    // submits -- the server applies the same rule with required_if.
+    var pw = document.getElementById('account_password');
+    if (pw) { pw.required = box.checked; if (!box.checked) pw.value = ''; }
+  }
+  box.addEventListener('change', sync);
+  sync();
+})();
+
+(function () {
+  var gift = document.getElementById('is_gift');
+  var wrap = document.getElementById('gift_note_wrap');
+  var msg = document.getElementById('gift_note');
+  var left = document.getElementById('gift_left');
+  if (!gift || !wrap) return;
+  function sync() {
+    wrap.hidden = !gift.checked;
+    // Cleared rather than merely hidden. The server drops it too when the box
+    // is unticked, but a field the shopper cannot see should not still be
+    // carrying their words.
+    if (!gift.checked && msg) { msg.value = ''; }
+    count();
+  }
+  function count() {
+    if (msg && left) { left.textContent = String(600 - msg.value.length); }
+  }
+  gift.addEventListener('change', function () { sync(); price(); });
+  if (msg) { msg.addEventListener('input', count); }
+
+  // The fee comes back from the server, never added up here. The browser is
+  // told what wrapping costs; it does not get to decide.
+  var busy = false;
+  function price() {
+    if (busy) return;
+    busy = true;
+    var country = document.getElementById('billing_country');
+    var state = document.getElementById('billing_state');
+    fetch(@json(route('checkout.gift')), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': window.KBB.csrf,
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        is_gift: gift.checked ? 1 : 0,
+        country: country ? country.value : 'AE',
+        state: state ? state.value : ''
+      })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) { window.kbbToast && window.kbbToast(d.error || 'Could not update the total.'); return; }
+        document.querySelectorAll('.js-gift-row').forEach(function (el) { el.hidden = !d.on; });
+        document.querySelectorAll('.js-gift').forEach(function (el) { el.innerHTML = d.giftFee; });
+        // Two copies of the totals exist -- summary column and mobile box.
+        document.querySelectorAll('.js-total').forEach(function (el) { el.innerHTML = d.total; });
+        if (d.totalWithFee) {
+          document.querySelectorAll('.js-total-fee').forEach(function (el) { el.innerHTML = d.totalWithFee; });
+        }
+      })
+      .catch(function () { window.kbbToast && window.kbbToast('Could not update the total.'); })
+      .finally(function () { busy = false; });
+  }
+
+  sync();
+})();
+</script>
 @endpush
 @endsection

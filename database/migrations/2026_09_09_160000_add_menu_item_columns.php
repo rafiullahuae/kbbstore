@@ -21,7 +21,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('menu_items', function (Blueprint $t) {
-            $t->unsignedTinyInteger('columns')->nullable()->after('new_tab');
+            if (! Schema::hasColumn('menu_items', 'columns')) {
+                $t->unsignedTinyInteger('columns')->nullable()->after('new_tab');
+            }
         });
     }
 

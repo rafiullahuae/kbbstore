@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\Customer;
@@ -12,6 +11,8 @@ use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\Fils;
+use App\Support\Money;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -95,28 +96,34 @@ use Illuminate\Support\Str;
 class ManualOrderBuilder
 {
     /**
-     * The order statuses this schema actually uses.
+     * The order statuses a manual order may be created with.
      *
-     * The column is a free-form string (see the orders table: imported custom
-     * statuses such as wc-shipped have to survive), so there is no database
-     * enum to read. This list is the one the rest of the console validates
-     * against — AdminController::updateOrderStatus uses exactly these seven —
-     * and the two must not drift, or an order created here would be one the
-     * Orders screen cannot subsequently set.
+     * `orders.status` is a free-form string column — the Phase 0 schema says
+     * so in as many words, because imported WooCommerce statuses such as
+     * wc-shipped have to survive — so there is no database enum to read. The
+     * vocabulary is the one the rest of the console already uses:
+     * OrdersApiController::KNOWN_STATUSES, minus the three a person keying in
+     * an order has no business choosing.
+     *
+     * 'refunded' is absent for the reason OrdersApiController gives for
+     * leaving it out of its bulk actions: PaymentRefunder writes it when money
+     * actually moved, and a screen that could type it would be a way to make
+     * the books say a refund happened without one. 'failed' is absent for the
+     * same shape of reason — it is what a gateway decided, not what an
+     * operator decides. 'draft' is absent because this screen places orders;
+     * an order nobody agreed to does not need a customer and a total.
      *
      * Nothing outside this list is invented. In particular the vocabulary is
-     * NOT active/draft/archived: those belong to no table in this schema.
+     * NOT active/draft/archived: those belong to no column in this schema.
      */
-    public const STATUSES = [
-        'pending', 'processing', 'onhold', 'completed', 'cancelled', 'refunded', 'failed',
-    ];
+    public const STATUSES = ['pending', 'processing', 'onhold', 'shipped', 'completed', 'cancelled'];
 
     /**
      * Default for a new manual order.
      *
-     * 'processing' rather than 'pending': a phone or DM order has already been
-     * agreed with the customer, and processing is what AdminController counts
-     * as revenue (REVENUE_STATUSES = processing, onhold, completed).
+     * 'processing' rather than 'pending': a WhatsApp or DM order has already
+     * been agreed with the customer, and processing is one of the four
+     * Order::REAL_STATUSES that count as revenue.
      */
     public const DEFAULT_STATUS = 'processing';
 
@@ -423,6 +430,37 @@ class ManualOrderBuilder
 
         $fee = $this->feeFor((string) ($input['payment_method'] ?? ''));
 
+        /*
+         * Will any of this fit in the columns it is about to be written to?
+         *
+         * orders.subtotal, .total and order_items.unit_price, .subtotal,
+         * .total are all `$t->integer` — signed 32-bit, so 2,147,483,647 fils
+         * (AED 21,474,836.47). Checked before a row is written rather than
+         * after, because the two engines fail differently and only one of them
+         * is loud: MySQL in strict mode raises, SQLite stores the wrapped
+         * number in silence and the order reads as placed with a nonsense
+         * total.
+         *
+         * Checked on the SUM as well as on each line. Ninety-nine of something
+         * expensive is one line that fits; sixty lines of it is an order total
+         * that does not, and no individual check would have caught that.
+         */
+        foreach ($cart->items as $item) {
+            if (! Fils::productFits((int) $item->unit_price, (int) $item->quantity)) {
+                return $this->failure(
+                    'That quantity at that price comes to more than an order line can hold ('
+                    . Money::plain(Fils::max()) . ').'
+                );
+            }
+        }
+
+        if (! Fils::sumFits((int) $totals['total'], $fee)) {
+            return $this->failure(
+                'That order comes to more than an order total can hold ('
+                . Money::plain(Fils::max()) . ').'
+            );
+        }
+
         return [
             'ok' => true,
             'error' => null,
@@ -490,8 +528,10 @@ class ManualOrderBuilder
         // saved address from an order screen is how people lose one.
         if ($customer->wasRecentlyCreated && ! empty($input['address']['line1'])) {
             foreach (['billing', 'shipping'] as $type) {
-                Address::create([
-                    'customer_id' => $customer->id,
+                // Through the relation, not Address::create([...'customer_id']):
+                // that column is deliberately not fillable, so a mass-assigned
+                // one is silently dropped and the insert fails on NOT NULL.
+                $customer->addresses()->create([
                     'type' => $type,
                     'is_default' => true,
                     'first_name' => $first,
@@ -546,36 +586,54 @@ class ManualOrderBuilder
     }
 
     /**
-     * Insert the order, allocating an order_number that is free.
+     * Insert the order, allocating an order_number nothing already holds.
      *
-     * The number follows Store\CheckoutController::nextOrderNumber() exactly —
-     * 10000 + the highest order id — because imported WooCommerce orders keep
-     * their own numbers and a new one must not collide with them. That method
-     * is private on the checkout controller, so the expression is repeated
-     * here rather than the controller being edited; if it ever changes, this
-     * has to change with it.
+     * The allocation is Store\CheckoutController::nextOrderNumber()'s, and it
+     * has to stay that way or the two paths will collide with each other: the
+     * highest of "10000 + the largest id" and "the largest order_number",
+     * walked forward until something is free. The second candidate is what
+     * makes imported WooCommerce orders safe — they keep their own numbers, and
+     * an id-derived guess alone lands straight on top of one.
      *
-     * What is added: order_number is UNIQUE, and two operators saving at the
-     * same moment both read the same max(id). The checkout would 500 on that.
-     * Here the insert is retried against the unique index, which is the only
-     * thing that actually knows whether the number is taken.
+     * That method is private on the checkout controller, so the rule is
+     * repeated here rather than the controller being edited. If it changes,
+     * this has to change with it.
+     *
+     * What is added: order_number is UNIQUE, and two operators saving in the
+     * same second both read the same maximum. The insert is retried against the
+     * unique index, which is the only thing that actually knows.
      */
     private function insertOrder(array $attributes): Order
     {
         $lastError = null;
 
         for ($attempt = 0; $attempt < 8; $attempt++) {
-            $candidate = (string) (10000 + (int) Order::max('id') + 1 + $attempt);
+            $candidate = max(
+                10000 + (int) Order::withTrashed()->max('id'),
+                (int) Order::withTrashed()->max('order_number'),
+            );
 
-            if (Order::where('order_number', $candidate)->exists()) {
-                continue;
+            // Bounded, like the checkout's own loop: a thousand consecutive
+            // taken numbers means something a retry should not paper over.
+            $number = null;
+
+            for ($i = 0; $i < 1000; $i++) {
+                $next = (string) (++$candidate);
+
+                if (! Order::withTrashed()->where('order_number', $next)->exists()) {
+                    $number = $next;
+                    break;
+                }
+            }
+
+            if ($number === null) {
+                $number = (string) $candidate . random_int(100, 999);
             }
 
             try {
-                return Order::create($attributes + ['order_number' => $candidate]);
+                return Order::create($attributes + ['order_number' => $number]);
             } catch (QueryException $e) {
-                // Lost the race to another writer between the check and the
-                // insert. Take the next number.
+                // Lost the race between the check and the insert. Look again.
                 $lastError = $e;
             }
         }
@@ -598,7 +656,7 @@ class ManualOrderBuilder
 
         if (array_key_exists('shipping_override_fils', $input) && $input['shipping_override_fils'] !== null) {
             $lines[] = 'Delivery charge set by hand to AED '
-                . \App\Support\Fils::toDecimalString((int) $input['shipping_override_fils']) . '.';
+                . Fils::toDecimalString((int) $input['shipping_override_fils']) . '.';
         }
 
         $lines[] = ($input['send_confirmation'] ?? false)

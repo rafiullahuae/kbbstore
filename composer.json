@@ -1,8 +1,12 @@
 {
     "name": "kbb/store",
     "type": "project",
-    "description": "K-Beauty Bliss — storefront on Laravel 11 (Hostinger-ready)",
-    "keywords": ["laravel", "kbb", "storefront"],
+    "description": "K-Beauty Bliss \u2014 storefront on Laravel 11 (Hostinger-ready)",
+    "keywords": [
+        "laravel",
+        "kbb",
+        "storefront"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
@@ -17,7 +21,9 @@
         }
     },
     "autoload-dev": {
-        "psr-4": { "Tests\\": "tests/" }
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
     },
     "scripts": {
         "post-autoload-dump": [
@@ -26,7 +32,9 @@
         ]
     },
     "extra": {
-        "laravel": { "dont-discover": [] }
+        "laravel": {
+            "dont-discover": []
+        }
     },
     "config": {
         "optimize-autoloader": true,
@@ -35,14 +43,16 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.3.999"
         }
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require-dev": {
-        "fakerphp/faker": "^1.23",
         "mockery/mockery": "^1.6",
-        "pestphp/pest": "^3.0",
-        "pestphp/pest-plugin-laravel": "^3.0"
+        "pestphp/pest": "^4.7",
+        "pestphp/pest-plugin-laravel": "^4.1"
     }
 }

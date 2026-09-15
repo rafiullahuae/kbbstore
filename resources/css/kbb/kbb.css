@@ -2311,7 +2311,8 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .acw-empty a{color:var(--pink-deep);text-decoration:underline}
 .acw-orders{display:flex;flex-direction:column;gap:8px}
 .acw-order{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line-2);
-    border-radius:12px;padding:13px 16px;font-size:13px}
+    border-radius:12px;padding:13px 16px;font-size:13px;color:inherit;text-decoration:none;transition:.15s}
+.acw-order:hover{border-color:var(--pink,#E0567B);box-shadow:0 2px 10px rgba(42,34,40,.06)}
 .acw-order span{color:var(--muted);font-size:12px}
 .acw-status{margin-left:auto;background:var(--cream);border-radius:99px;padding:3px 11px;
     font-weight:600;color:var(--ink-2)!important}

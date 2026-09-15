@@ -8,13 +8,26 @@ class PostController extends Controller
     public function index()
     {
         return response()->json(
-            Post::where('status', 'published')->orderByDesc('created_at')->get()
+            // Named columns. `seo` is an internal settings blob and `status`
+            // is a workflow field; neither belongs in a public feed.
+            Post::query()
+                ->select(['id', 'slug', 'title', 'excerpt', 'cover', 'tag', 'author', 'published_at'])
+                ->where('status', 'published')
+                ->orderByDesc('created_at')
+                ->limit(100)
+                ->get()
         );
     }
     /** GET /api/posts/{slug} */
     public function show(string $slug)
     {
-        $p = Post::where('slug', $slug)->first();
+        // Drafts were readable by slug. The index has always filtered on
+        // status; this did not.
+        $p = Post::query()
+            ->select(['id', 'slug', 'title', 'excerpt', 'body', 'cover', 'tag', 'author', 'published_at'])
+            ->where('status', 'published')
+            ->where('slug', $slug)
+            ->first();
         return $p ? response()->json($p) : response()->json(['error' => 'not_found'], 404);
     }
 }

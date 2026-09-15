@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Models\Address;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
@@ -20,7 +19,7 @@ beforeEach(function () {
     $this->admin = ManualOrders::admin();
 });
 
-function asAdmin()
+function moAdmin()
 {
     return test()->actingAs(test()->admin, 'admin');
 }
@@ -32,13 +31,13 @@ it('finds a customer by name, email or phone', function () {
     ManualOrders::customer(['name' => 'Fatima Hassan', 'first_name' => 'Fatima',
         'last_name' => 'Hassan', 'email' => 'fatima@example.ae', 'phone' => '+971559999999']);
 
-    expect(asAdmin()->getJson('/admin-api/manual-orders/customers?q=fatima')
+    expect(moAdmin()->getJson('/admin-api/manual-orders/customers?q=fatima')
         ->assertOk()->json('customers.0.email'))->toBe('fatima@example.ae');
 
-    expect(asAdmin()->getJson('/admin-api/manual-orders/customers?q=layla@example.ae')
+    expect(moAdmin()->getJson('/admin-api/manual-orders/customers?q=layla@example.ae')
         ->assertOk()->json('customers.0.name'))->toBe('Layla Al Mansoori');
 
-    expect(asAdmin()->getJson('/admin-api/manual-orders/customers?q=559999999')
+    expect(moAdmin()->getJson('/admin-api/manual-orders/customers?q=559999999')
         ->assertOk()->json('customers.0.email'))->toBe('fatima@example.ae');
 });
 
@@ -52,18 +51,18 @@ it('escapes the LIKE wildcards in a search term', function () {
     ManualOrders::customer(['name' => 'under_score', 'email' => 'us@example.ae', 'phone' => null]);
 
     // A bare % must be treated as the character, not "everything".
-    $all = asAdmin()->getJson('/admin-api/manual-orders/customers?q=' . urlencode('%'))->assertOk();
+    $all = moAdmin()->getJson('/admin-api/manual-orders/customers?q=' . urlencode('%'))->assertOk();
     expect($all->json('total'))->toBe(1)
         ->and($all->json('customers.0.email'))->toBe('fifty@example.ae');
 
     // A bare _ must not match any single character.
-    $underscore = asAdmin()->getJson('/admin-api/manual-orders/customers?q=' . urlencode('_'))->assertOk();
+    $underscore = moAdmin()->getJson('/admin-api/manual-orders/customers?q=' . urlencode('_'))->assertOk();
     expect($underscore->json('total'))->toBe(1)
         ->and($underscore->json('customers.0.email'))->toBe('us@example.ae');
 
     // And the escape character itself is not a wildcard either.
     ManualOrders::customer(['name' => 'Bang! Beauty', 'email' => 'bang@example.ae', 'phone' => null]);
-    $bang = asAdmin()->getJson('/admin-api/manual-orders/customers?q=' . urlencode('Bang!'))->assertOk();
+    $bang = moAdmin()->getJson('/admin-api/manual-orders/customers?q=' . urlencode('Bang!'))->assertOk();
     expect($bang->json('total'))->toBe(1)
         ->and($bang->json('customers.0.email'))->toBe('bang@example.ae');
 });
@@ -81,13 +80,13 @@ it('counts every match, not just the page it returned', function () {
         ]);
     }
 
-    $first = asAdmin()->getJson('/admin-api/manual-orders/customers?q=Shopper')->assertOk();
+    $first = moAdmin()->getJson('/admin-api/manual-orders/customers?q=Shopper')->assertOk();
 
     expect($first->json('total'))->toBe(25)
         ->and($first->json('customers'))->toHaveCount(20)
         ->and($first->json('per_page'))->toBe(20);
 
-    $second = asAdmin()->getJson('/admin-api/manual-orders/customers?q=Shopper&page=2')->assertOk();
+    $second = moAdmin()->getJson('/admin-api/manual-orders/customers?q=Shopper&page=2')->assertOk();
 
     expect($second->json('total'))->toBe(25)
         ->and($second->json('customers'))->toHaveCount(5);
@@ -96,8 +95,9 @@ it('counts every match, not just the page it returned', function () {
 it('returns the customer’s saved address so the form can prefill it', function () {
     $customer = ManualOrders::customer();
 
-    Address::create([
-        'customer_id' => $customer->id,
+    // Through the relation: addresses.customer_id is deliberately not fillable
+    // on this model, so Address::create() would silently drop it.
+    $customer->addresses()->create([
         'type' => 'shipping',
         'is_default' => true,
         'line1' => 'Villa 9, Jumeirah 1',
@@ -107,7 +107,7 @@ it('returns the customer’s saved address so the form can prefill it', function
         'phone' => '+971500000009',
     ]);
 
-    $body = asAdmin()->getJson('/admin-api/manual-orders/customers?q=layla')->assertOk();
+    $body = moAdmin()->getJson('/admin-api/manual-orders/customers?q=layla')->assertOk();
 
     expect($body->json('customers.0.address.line1'))->toBe('Villa 9, Jumeirah 1')
         ->and($body->json('customers.0.address.country'))->toBe('AE');
@@ -118,23 +118,35 @@ it('returns the customer’s saved address so the form can prefill it', function
 it('searches the catalogue by name and by SKU', function () {
     $toner = ManualOrders::product('Heartleaf 77% Soothing Toner', 8900);
 
-    expect(asAdmin()->getJson('/admin-api/manual-orders/products?q=heartleaf')
+    expect(moAdmin()->getJson('/admin-api/manual-orders/products?q=heartleaf')
         ->assertOk()->json('products.0.id'))->toBe($toner->id);
 
-    expect(asAdmin()->getJson('/admin-api/manual-orders/products?q=' . $toner->sku)
+    expect(moAdmin()->getJson('/admin-api/manual-orders/products?q=' . $toner->sku)
         ->assertOk()->json('products.0.id'))->toBe($toner->id);
 });
 
 it('escapes LIKE wildcards in a product search too', function () {
     // "77%" is a real product name on this store, which is exactly how a
-    // trailing % gets into a search box by accident.
+    // trailing % gets into a search box by accident. The decoy is named so
+    // that an UNESCAPED "77%" — where % is the wildcard — matches it too: a
+    // test whose only candidate is the right answer cannot tell the two apart.
     ManualOrders::product('Heartleaf 77% Soothing Toner', 8900);
+    ManualOrders::product('Ceramide 77 Barrier Cream', 7900);
     ManualOrders::product('Snail Mucin Essence', 7900);
 
-    $hit = asAdmin()->getJson('/admin-api/manual-orders/products?q=' . urlencode('77%'))->assertOk();
+    $hit = moAdmin()->getJson('/admin-api/manual-orders/products?q=' . urlencode('77%'))->assertOk();
 
     expect($hit->json('total'))->toBe(1)
         ->and($hit->json('products.0.name'))->toBe('Heartleaf 77% Soothing Toner');
+
+    // And an underscore is the character, not "any one character".
+    ManualOrders::product('Dew_Drop Serum', 5000);
+    ManualOrders::product('Dewy Drop Serum', 5000);
+
+    $underscore = moAdmin()->getJson('/admin-api/manual-orders/products?q=' . urlencode('Dew_'))->assertOk();
+
+    expect($underscore->json('total'))->toBe(1)
+        ->and($underscore->json('products.0.name'))->toBe('Dew_Drop Serum');
 });
 
 it('offers products hidden from the shop grid, but never drafts', function () {
@@ -148,7 +160,7 @@ it('offers products hidden from the shop grid, but never drafts', function () {
     $private = ManualOrders::product('Private product', 1000, ['status' => 'private']);
     ManualOrders::product('Draft product', 1000, ['status' => 'draft']);
 
-    $found = collect(asAdmin()->getJson('/admin-api/manual-orders/products?q=product')
+    $found = collect(moAdmin()->getJson('/admin-api/manual-orders/products?q=product')
         ->assertOk()->json('products'))->pluck('id')->all();
 
     expect($found)->toContain($live->id)
@@ -163,7 +175,7 @@ it('prices a search hit at the effective price, sale window and all', function (
         'sale_price' => 6900, 'sale_starts_at' => now()->addWeek(),
     ]);
 
-    $rows = collect(asAdmin()->getJson('/admin-api/manual-orders/products?q=sale')
+    $rows = collect(moAdmin()->getJson('/admin-api/manual-orders/products?q=sale')
         ->assertOk()->json('products'))->keyBy('name');
 
     expect($rows['On sale now']['price_fils'])->toBe(6900)
@@ -175,7 +187,7 @@ it('counts every catalogue match, not just the page', function () {
         ManualOrders::product('Widget number ' . $i, 1000);
     }
 
-    $page = asAdmin()->getJson('/admin-api/manual-orders/products?q=Widget')->assertOk();
+    $page = moAdmin()->getJson('/admin-api/manual-orders/products?q=Widget')->assertOk();
 
     expect($page->json('total'))->toBe(23)
         ->and($page->json('products'))->toHaveCount(20);
@@ -184,51 +196,21 @@ it('counts every catalogue match, not just the page', function () {
 /* ------------------------------------------------------------ bootstrap */
 
 it('offers only countries the shop actually delivers to', function () {
-    $body = asAdmin()->getJson('/admin-api/manual-orders/bootstrap')->assertOk();
+    $body = moAdmin()->getJson('/admin-api/manual-orders/bootstrap')->assertOk();
 
     expect($body->json('countries'))->toBe(['AE' => 'United Arab Emirates'])
         ->and($body->json('statuses'))->toBe([
-            'pending', 'processing', 'onhold', 'completed', 'cancelled', 'refunded', 'failed',
+            'pending', 'processing', 'onhold', 'shipped', 'completed', 'cancelled',
         ])
         ->and($body->json('default_status'))->toBe('processing')
         ->and($body->json('currency'))->toBe('AED');
 });
 
-/* --------------------------------------------------------- packing list */
+/* ------------------------------------------------------------ what is NOT here
 
-it('emits a packing list no spreadsheet will execute', function () {
-    $customer = ManualOrders::customer();
-
-    // A product name that is a live formula. Merchant-supplied text reaches
-    // this file unchanged, and the packer opens it in Excel.
-    $nasty = ManualOrders::product('=HYPERLINK("https://evil.example","Refund")', 5000);
-    $normal = ManualOrders::product('Heartleaf Toner', 8900);
-
-    asAdmin()->postJson('/admin-api/manual-orders', ManualOrders::payload([
-        'customer_id' => $customer->id,
-        'items' => [
-            ['product_id' => $nasty->id, 'quantity' => 1],
-            ['product_id' => $normal->id, 'quantity' => 2],
-        ],
-    ]))->assertCreated();
-
-    $order = Order::latest('id')->first();
-
-    $csv = asAdmin()->get('/admin-api/manual-orders/' . $order->id . '/packing-list.csv')
-        ->assertOk()
-        ->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-
-    $body = $csv->getContent();
-
-    // Neutralised, and still present as text.
-    expect($body)->toContain('"\'=HYPERLINK')
-        ->and($body)->not->toContain(',"=HYPERLINK')
-        ->and($body)->toContain('Heartleaf Toner')
-        // Amounts are written from fils by integer arithmetic.
-        ->and($body)->toContain('"178.00"')
-        ->and($body)->toContain('"89.00"');
-});
-
-it('404s a packing list for an order that does not exist', function () {
-    asAdmin()->get('/admin-api/manual-orders/99999/packing-list.csv')->assertNotFound();
-});
+   No packing list, and no CSV, from this lane. The store already has real
+   invoices and packing slips — App\Services\Invoices, mounted at
+   routes/invoices-admin.php — and a second document rendered from the same
+   order_items rows would be one more thing to keep in step with the first.
+   The screen links to that one.
+*/

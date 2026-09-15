@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\HeaderSettings;
 use App\Services\SettingsService;
 use App\Support\Money;
+use App\Support\SearchTerms;
 use App\Support\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -188,8 +189,10 @@ class SearchController extends Controller
                 ->where('brand_id', $brand->id);
 
             if ($rest !== '') {
-                $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $rest) . '%';
-                $ownQuery->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like));
+                $ownQuery->where(function ($w) use ($rest) {
+                    SearchTerms::orWhereLike($w, 'products.name', $rest);
+                    SearchTerms::orWhereLike($w, 'products.sku', $rest);
+                });
             }
 
             $own = $ownQuery->orderByDesc('total_sales')->limit($n)->get();
@@ -217,14 +220,15 @@ class SearchController extends Controller
             // Brand + word, widening on: the same word, matched against every
             // other brand too, filling whatever room is left.
             if ($rest !== '' && $broaden && $products->count() < $n) {
-                $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $rest) . '%';
-
                 $others = Product::query()
                     ->select(self::CARD_COLUMNS)
                     ->visible()
                     ->with('brand:id,name,slug')
                     ->where('brand_id', '!=', $brand->id)
-                    ->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('sku', 'like', $like))
+                    ->where(function ($w) use ($rest) {
+                        SearchTerms::orWhereLike($w, 'products.name', $rest);
+                        SearchTerms::orWhereLike($w, 'products.sku', $rest);
+                    })
                     ->whereNotIn('id', $products->pluck('id')->all() ?: [0])
                     ->orderByDesc('total_sales')
                     ->limit($n - $products->count())
@@ -252,9 +256,9 @@ class SearchController extends Controller
 
         // Categories, unaffected by which brand was recognised.
         if ($rest !== '' && ($n = (int) $this->header->get('search_limit_categories'))) {
-            $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $rest) . '%';
-            $cats = Category::query()->select('id', 'name', 'slug')
-                ->where('name', 'like', $like)
+            $cats = SearchTerms::whereLike(
+                Category::query()->select('id', 'name', 'slug'), 'categories.name', $rest
+            )
                 ->withCount(['products' => fn ($w) => $w->visible()])
                 ->groupBy('categories.id', 'categories.name', 'categories.slug')
                 ->having('products_count', '>', 0)
@@ -288,22 +292,78 @@ class SearchController extends Controller
         ];
     }
 
+    /**
+     * `term%` — a PREFIX pattern with the shopper's wildcards made literal.
+     *
+     * SearchTerms::like() is the equivalent for the `%term%` patterns the WHERE
+     * clauses use; this is the prefix form the relevance ranking needs, and it
+     * escapes by exactly the same rules so the two halves of the query agree
+     * about what was typed. The escape character is doubled first, or a term
+     * containing it would escape the character after it.
+     *
+     * Kept here rather than added to SearchTerms because app/Support belongs to
+     * another lane; if that lane wants it, it moves.
+     */
+    private static function likePrefix(string $term): string
+    {
+        $escape = SearchTerms::ESCAPE;
+
+        return str_replace(
+            [$escape, '%', '_'],
+            [$escape . $escape, $escape . '%', $escape . '_'],
+            $term
+        ) . '%';
+    }
+
     private function buildGeneral(string $q): array
     {
         $groups = [];
-        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $q) . '%';
+
+        // The results page has expanded synonyms since 2.60.77; the dropdown
+        // did not, so typing "moisturiser" showed nothing here and then found
+        // products the moment you pressed enter. Same SearchTerms, so the two
+        // agree.
+        $terms = \App\Support\SearchTerms::expand($q);
 
         if ($n = (int) $this->header->get('search_results_max')) {
             $products = Product::query()
                 ->select(self::CARD_COLUMNS)
                 ->visible()
                 ->with('brand:id,name,slug')
-                ->where(fn ($w) => $w->where('name', 'like', $like)
-                    ->orWhere('sku', 'like', $like)
-                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', $like)))
-                // A name match beats a brand or SKU match, so the obvious
-                // result is not buried under an incidental one.
-                ->orderByRaw('CASE WHEN name LIKE ? THEN 0 ELSE 1 END', [$q . '%'])
+                ->where(function ($w) use ($terms) {
+                    foreach ($terms as $term) {
+                        SearchTerms::orWhereLike($w, 'products.name', $term);
+                        SearchTerms::orWhereLike($w, 'products.sku', $term);
+                        $w->orWhereHas('brand', fn ($b) => SearchTerms::whereLike($b, 'brands.name', $term));
+                    }
+                })
+                /*
+                 * A name match beats a brand or SKU match, so the obvious
+                 * result is not buried under an incidental one.
+                 *
+                 * Escaped and given an explicit ESCAPE clause, exactly as the
+                 * WHERE above is by SearchTerms::orWhereLike(). This clause was
+                 * interpolating the raw term straight into a LIKE pattern while
+                 * the matching half escaped it, so the two halves disagreed
+                 * about what the shopper typed: a '%' or '_' in the box acted
+                 * as a wildcard HERE and as literal text there, and a backslash
+                 * meant one thing on MySQL (its default LIKE escape) and
+                 * another on SQLite (no default escape at all) — the same
+                 * search ranked differently in the suite and in production.
+                 * Only ordering was ever wrong, never which rows came back,
+                 * which is why it survived: the results were right and the
+                 * best one was not always first.
+                 *
+                 * `name` is left unquoted deliberately: MySQL reads "name" as a
+                 * STRING literal unless ANSI_QUOTES is set, which would make
+                 * this compare the word "name" to the pattern and rank nothing
+                 * at all. The column is unambiguous here — this query joins
+                 * nothing — so the bare identifier is the portable spelling.
+                 */
+                ->orderByRaw(
+                    "CASE WHEN name like ? escape '" . SearchTerms::ESCAPE . "' THEN 0 ELSE 1 END",
+                    [self::likePrefix($q)]
+                )
                 ->orderByDesc('total_sales')
                 ->limit($n)
                 ->get();
@@ -357,8 +417,9 @@ class SearchController extends Controller
         }
 
         if ($n = (int) $this->header->get('search_limit_categories')) {
-            $cats = Category::query()->select('id', 'name', 'slug')
-                ->where('name', 'like', $like)
+            $cats = SearchTerms::whereLike(
+                Category::query()->select('id', 'name', 'slug'), 'categories.name', $q
+            )
                 ->withCount(['products' => fn ($w) => $w->visible()])
                 ->groupBy('categories.id', 'categories.name', 'categories.slug')
                 ->having('products_count', '>', 0)
@@ -382,8 +443,9 @@ class SearchController extends Controller
         }
 
         if ($n = (int) $this->header->get('search_limit_brands')) {
-            $brands = Brand::query()->select('id', 'name', 'slug')
-                ->where('name', 'like', $like)
+            $brands = SearchTerms::whereLike(
+                Brand::query()->select('id', 'name', 'slug'), 'brands.name', $q
+            )
                 ->withCount(['products' => fn ($w) => $w->visible()])
                 ->groupBy('brands.id', 'brands.name', 'brands.slug')
                 ->having('products_count', '>', 0)

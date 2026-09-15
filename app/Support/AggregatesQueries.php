@@ -4,77 +4,71 @@ declare(strict_types=1);
 
 namespace App\Support;
 
-use Illuminate\Contracts\Database\Query\Builder as QueryBuilderContract;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
- * Counting and summing a builder that is also used for a page of rows.
+ * Turn a filtered row query into an aggregate-only query.
  *
- * MySQL in strict mode raises error 1140 —
+ * THIS EXISTS BECAUSE THE SAME BUG SHIPPED TWICE.
  *
- *   "In aggregated query without GROUP BY, expression #1 of SELECT list
- *    contains nonaggregated column ...; this is incompatible with
- *    sql_mode=only_full_group_by"
+ * Laravel's selectRaw() APPENDS to the select list rather than replacing it, so
+ * "(clone $rows)->selectRaw('COUNT(*)')" keeps every row column and adds an
+ * aggregate beside them with no GROUP BY. And applySort()/forPage() MUTATE the
+ * builder they are given, so a summary computed from the same instance the page
+ * was built from also inherits its ORDER BY, LIMIT and OFFSET.
  *
- * — the moment an aggregate is added to a builder that still carries the
- * select list it was going to fetch rows with. An ORDER BY on a column that is
- * not in the aggregate is the same trap, and LIMIT/OFFSET silently truncates
- * the aggregate rather than erroring, which is worse: the number simply comes
- * back wrong. That bug shipped to production twice on this repo.
+ * Each of those breaks differently, and only one of them is loud:
  *
- * The fix is always the same and always easy to forget, so it lives here
- * rather than being written out at each call site: clone the builder, strip
- * the parts that belong to the row query, then aggregate.
+ *   - bare columns beside an aggregate  -> MySQL 1140, SQLite invents a row
+ *   - an ORDER BY on a bare column      -> MySQL 1140, SQLite ignores it
+ *   - a surviving OFFSET                -> WRONG ON EVERY ENGINE. An aggregate
+ *     returns one row; skip 25 and there is none, so every total reads zero
+ *     from page two on, silently, while the endpoint still answers 200.
  *
- * SQLite does not raise 1140, so a call site that gets this wrong passes the
- * test suite and fails on the server. That is the whole reason this is a
- * shared helper with its own tests.
+ * The Customers screen hit all three in production. The Orders screen then
+ * copied the half-fixed helper and hit them again. Dropping the columns without
+ * dropping their bindings is its own trap: the placeholders go and the values
+ * stay, and the driver is handed more values than the statement has markers.
+ *
+ * So there is one implementation, and both screens use it. A third screen that
+ * needs a summary uses it too rather than writing a fourth variant.
+ *
+ * What deliberately survives: the joins, the WHERE and any GROUP BY. The counts
+ * describe the filtered set and read the joined derived tables, so removing
+ * those would answer a different question.
  */
 trait AggregatesQueries
 {
-    /** Total matching rows, ignoring any paging already applied to $query. */
-    protected function aggregateCount(EloquentBuilder|QueryBuilder $query, string $column = '*'): int
-    {
-        return (int) $this->forAggregate($query)->count($column);
-    }
-
-    /** Sum of $column across every matching row, ignoring paging. */
-    protected function aggregateSum(EloquentBuilder|QueryBuilder $query, string $column): int
-    {
-        return (int) $this->forAggregate($query)->sum($column);
-    }
-
     /**
-     * A copy of $query safe to aggregate: no select list, no ordering, no
-     * limit or offset. The original is left untouched so the caller can still
-     * paginate it.
+     * @param  Builder<covariant \Illuminate\Database\Eloquent\Model>  $query
+     * @param  array<int, mixed>  $bindings
      */
-    protected function forAggregate(EloquentBuilder|QueryBuilder $query): EloquentBuilder|QueryBuilder
+    protected function aggregateQuery(Builder $query, string $expression, array $bindings = []): QueryBuilder
     {
-        $clone = clone $query;
+        $base = (clone $query)->toBase();
 
-        $base = $clone instanceof EloquentBuilder ? $clone->getQuery() : $clone;
-
-        $this->stripRowParts($base);
-
-        return $clone;
-    }
-
-    private function stripRowParts(QueryBuilderContract|QueryBuilder $base): void
-    {
-        // Named individually rather than via a loop over a property list: each
-        // of these has bitten this codebase, and a reader should see exactly
-        // which ones are cleared.
+        // The row columns and the bindings that belong to them.
         $base->columns = null;
+        $base->bindings['select'] = [];
+
+        // The ordering, which names bare columns an aggregate may not.
         $base->orders = null;
+        $base->bindings['order'] = [];
+
+        // The page window. This one is a correctness bug, not a dialect one.
         $base->limit = null;
         $base->offset = null;
 
-        // A UNION carries its own ordering and paging, and those are applied
-        // after the aggregate, so they have to go too.
-        $base->unionOrders = null;
-        $base->unionLimit = null;
-        $base->unionOffset = null;
+        return $base->selectRaw($expression, $bindings);
+    }
+
+    /**
+     * @param  Builder<covariant \Illuminate\Database\Eloquent\Model>  $query
+     * @param  array<int, mixed>  $bindings
+     */
+    protected function aggregate(Builder $query, string $expression, array $bindings = []): ?object
+    {
+        return $this->aggregateQuery($query, $expression, $bindings)->first();
     }
 }

@@ -8,6 +8,9 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Mail\NewOrderAlert;
+use App\Mail\OrderConfirmation;
+use Illuminate\Support\Facades\Mail;
 use Tests\ManualOrders;
 
 /*
@@ -26,13 +29,13 @@ beforeEach(function () {
     $this->admin = ManualOrders::admin();
 });
 
-function post(array $payload)
+function moPost(array $payload)
 {
     return test()->actingAs(test()->admin, 'admin')
         ->postJson('/admin-api/manual-orders', $payload);
 }
 
-function quote(array $payload)
+function moQuote(array $payload)
 {
     return test()->actingAs(test()->admin, 'admin')
         ->postJson('/admin-api/manual-orders/quote', $payload);
@@ -45,7 +48,7 @@ it('creates an order for an existing customer, in exact fils', function () {
     $toner = ManualOrders::product('Heartleaf 77% Soothing Toner', 8900);   // AED 89
     $serum = ManualOrders::product('Glow Deep Serum', 7500);                // AED 75
 
-    $response = post(ManualOrders::payload([
+    $response = moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [
             ['product_id' => $toner->id, 'quantity' => 2],
@@ -84,7 +87,7 @@ it('charges delivery when the basket is under the free-shipping threshold', func
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Sheet mask', 1500);   // AED 15
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 2]],
     ]))->assertCreated()
@@ -101,7 +104,7 @@ it('adds the cash-on-delivery fee exactly as the checkout does', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Cleanser', 4900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'payment_method' => 'cod',
@@ -118,7 +121,7 @@ it('does not add the cash-on-delivery fee to a card order', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Cleanser', 4900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'payment_method' => 'stripe',
@@ -134,7 +137,7 @@ it('does not add the cash-on-delivery fee to a card order', function () {
 it('creates the customer record when one is entered inline', function () {
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'new_customer' => [
             'name' => 'Noura Al Suwaidi',
             'email' => 'Noura@Example.AE',
@@ -165,7 +168,7 @@ it('attaches to the existing record when the typed email already belongs to a cu
     $existing = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'new_customer' => ['name' => 'Layla A M', 'email' => 'layla@example.ae'],
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
     ]))->assertCreated();
@@ -177,7 +180,7 @@ it('attaches to the existing record when the typed email already belongs to a cu
 it('refuses an order with neither a customer nor the details to make one', function () {
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
     ]))->assertStatus(422)
         ->assertJsonValidationErrors(['customer_id', 'new_customer']);
@@ -191,7 +194,7 @@ it('discounts through CouponService, not through arithmetic of its own', functio
     // percent coupons store the percentage x 100, so 1000 is 10%.
     ManualOrders::coupon('WELCOME10', 'percent', 1000);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 3]],
         'coupon_code' => 'WELCOME10',
@@ -212,7 +215,7 @@ it('rounds a percentage discount the way the storefront rounds it', function () 
     $item = ManualOrders::product('Toner', 8900);
     ManualOrders::coupon('HALFPC', 'percent', 1250);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 3]],
         'coupon_code' => 'HALFPC',
@@ -226,7 +229,7 @@ it('refuses an expired coupon in the storefront’s own words', function () {
     $item = ManualOrders::product('Toner', 8900);
     ManualOrders::coupon('OLDCODE', 'percent', 1000, ['expires_at' => now()->subDay()]);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'coupon_code' => 'OLDCODE',
@@ -240,7 +243,7 @@ it('refuses a coupon that does not exist', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'coupon_code' => 'NOPE',
@@ -255,7 +258,7 @@ it('takes the operator’s delivery charge digit by digit', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         // The value that breaks the naive conversion: (int)(1.15*100) is 114.
@@ -269,7 +272,7 @@ it('accepts a typed delivery charge of zero as a real answer, not a blank', func
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'shipping_override' => '0',
@@ -282,7 +285,7 @@ it('refuses a delivery charge it cannot hold exactly', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'shipping_override' => '1.234',
@@ -296,20 +299,26 @@ it('accepts only the order statuses this schema actually uses', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    // The class of mistake this pins: AdminController::updateProduct validates
+    // The class of mistake this pins: AdminController::updateProduct validated
     // products.status as in:active,draft,archived when the column's vocabulary
-    // is publish|draft|private. orders.status is pending|processing|onhold|
-    // completed|cancelled|refunded|failed, and nothing else.
-    foreach (['active', 'archived', 'draft', 'wc-shipped', 'paid', ''] as $invented) {
-        post(ManualOrders::payload([
+    // is publish|draft|private, and a save through it hid the product from the
+    // whole storefront. orders.status is a free-form string, so the check has
+    // to be against the vocabulary the console actually uses.
+    //
+    // 'refunded' and 'failed' are refused here on purpose and not by oversight:
+    // PaymentRefunder writes the first when money actually moved and a gateway
+    // decides the second, so neither is a thing an operator types. 'draft' is
+    // refused because this screen places orders.
+    foreach (['active', 'archived', 'draft', 'wc-shipped', 'paid', 'refunded', 'failed', ''] as $invented) {
+        moPost(ManualOrders::payload([
             'customer_id' => $customer->id,
             'items' => [['product_id' => $item->id, 'quantity' => 1]],
             'status' => $invented,
         ]))->assertStatus(422);
     }
 
-    foreach (['pending', 'processing', 'onhold', 'completed', 'cancelled', 'refunded', 'failed'] as $real) {
-        post(ManualOrders::payload([
+    foreach (['pending', 'processing', 'onhold', 'shipped', 'completed', 'cancelled'] as $real) {
+        moPost(ManualOrders::payload([
             'customer_id' => $customer->id,
             'items' => [['product_id' => $item->id, 'quantity' => 1]],
             'status' => $real,
@@ -322,7 +331,7 @@ it('accepts only payment methods that exist in payment_providers', function () {
     $item = ManualOrders::product('Toner', 8900);
 
     foreach (['paypal', 'bank', 'cash', ''] as $invented) {
-        post(ManualOrders::payload([
+        moPost(ManualOrders::payload([
             'customer_id' => $customer->id,
             'items' => [['product_id' => $item->id, 'quantity' => 1]],
             'payment_method' => $invented,
@@ -344,7 +353,7 @@ it('refuses a country nothing delivers to', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'address' => ['country' => 'JP'],
@@ -361,7 +370,7 @@ it('never lets a client-sent price reach the order', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [[
             'product_id' => $item->id,
@@ -382,7 +391,7 @@ it('honours a sale price without being told about it', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900, ['sale_price' => 6900]);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
     ]))->assertCreated()
@@ -403,7 +412,7 @@ it('applies the quantity-bundle tier, because CartService is what prices a line'
 
     // The default tiers are 5% at two units, 10% at three.
     // round(8900 x 0.95) = 8455, x 2 = 16910.
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 2]],
     ]))->assertCreated()
@@ -419,7 +428,7 @@ it('ignores a sale price whose window has not opened', function () {
         'sale_starts_at' => now()->addWeek(),
     ]);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
     ]))->assertCreated()
@@ -430,7 +439,7 @@ it('snapshots the line so the order still reads after the product is deleted', f
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Heartleaf Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
     ]))->assertCreated();
@@ -462,7 +471,7 @@ it('gives each order a unique, non-colliding order number', function () {
     $numbers = [];
 
     for ($i = 0; $i < 3; $i++) {
-        $numbers[] = post(ManualOrders::payload([
+        $numbers[] = moPost(ManualOrders::payload([
             'customer_id' => $customer->id,
             'items' => [['product_id' => $item->id, 'quantity' => 1]],
         ]))->assertCreated()->json('order.order_number');
@@ -477,7 +486,7 @@ it('records who created it, and the two things that did not happen', function ()
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'channel' => 'instagram',
@@ -500,7 +509,7 @@ it('leaves stock alone, exactly as a website order does', function () {
     $item = ManualOrders::product('Toner', 8900);
     $before = $item->stock;
 
-    $response = post(ManualOrders::payload([
+    $response = moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 4]],
     ]))->assertCreated();
@@ -516,7 +525,7 @@ it('marks the draft cart converted instead of leaving an active one behind', fun
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    post(ManualOrders::payload([
+    moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
     ]))->assertCreated();
@@ -531,7 +540,7 @@ it('prices a basket without writing anything', function () {
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    quote(ManualOrders::payload([
+    moQuote(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 2]],
     ]))->assertOk()
@@ -567,8 +576,8 @@ it('quotes the same numbers the create call then writes', function () {
         'shipping_override' => '17.85',
     ]);
 
-    $quoted = quote($payload)->assertOk()->json('totals');
-    $created = post($payload)->assertCreated()->json('order');
+    $quoted = moQuote($payload)->assertOk()->json('totals');
+    $created = moPost($payload)->assertCreated()->json('order');
 
     expect($created['subtotal_fils'])->toBe($quoted['subtotal_fils'])
         ->and($created['discount_fils'])->toBe($quoted['discount_fils'])
@@ -592,7 +601,7 @@ it('defaults the confirmation email to off and never sends one silently', functi
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    $response = post(ManualOrders::payload([
+    $response = moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
     ]))->assertCreated();
@@ -601,32 +610,67 @@ it('defaults the confirmation email to off and never sends one silently', functi
         ->assertJsonPath('email.sent', false);
 });
 
-it('says plainly that nothing was sent when the operator asked for it', function () {
-    // There is no mailable and no mailer in this build. The checkbox is
-    // rendered disabled with this reason beside it; if it is posted anyway,
-    // the answer says what happened rather than implying success.
+it('sends the confirmation when the operator asks for it, and reports the outcome', function () {
+    // There is a real order-confirmation email now (Lane AG), and the website
+    // checkout fires one on placement. So the box does something — but only
+    // when it is ticked.
+    Mail::fake();
+
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    $response = post(ManualOrders::payload([
+    $response = moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
         'send_confirmation' => true,
     ]))->assertCreated();
 
     $response->assertJsonPath('email.requested', true)
-        ->assertJsonPath('email.sent', false);
+        ->assertJsonPath('email.sent', true);
 
-    expect($response->json('email.reason'))->toContain('no order-confirmation email');
+    Mail::assertSent(OrderConfirmation::class, fn ($mail) => $mail->hasTo('layla@example.ae'));
 
-    // And the operator's intent is on the order, for whoever picks this up.
+    // resendConfirmation(), not placed(): placed() also fires the merchant
+    // alert, and a "new order" landing in the owner's inbox for an order the
+    // owner just keyed in by hand is a lie about what happened.
+    Mail::assertNotSent(NewOrderAlert::class);
+
+    // The operator's intent is on the order either way, for whoever picks it up.
     expect(Order::latest('id')->first()->notes()->first()->content)
         ->toContain('Operator asked for a confirmation email');
 });
 
-it('tells the form the checkbox cannot do anything yet', function () {
+it('sends nothing at all when the box is left alone', function () {
+    Mail::fake();
+
+    $customer = ManualOrders::customer();
+    $item = ManualOrders::product('Toner', 8900);
+
+    moPost(ManualOrders::payload([
+        'customer_id' => $customer->id,
+        'items' => [['product_id' => $item->id, 'quantity' => 1]],
+    ]))->assertCreated();
+
+    // Not "no confirmation": nothing. An order created here must not quietly
+    // become an email the operator did not ask for.
+    Mail::assertNothingSent();
+});
+
+it('tells the form whether the confirmation email is switched on at all', function () {
     $this->actingAs($this->admin, 'admin')
         ->getJson('/admin-api/manual-orders/bootstrap')
         ->assertOk()
-        ->assertJsonPath('email.available', false);
+        ->assertJsonPath('email.available', true);
+
+    // Turned off in Store -> Modules -> Order emails, the checkbox is rendered
+    // disabled with the reason beside it rather than being a control that
+    // would be quietly overruled.
+    app(\App\Services\SettingsService::class)->setModule('email_order_confirmation', false);
+
+    $body = $this->actingAs($this->admin, 'admin')
+        ->getJson('/admin-api/manual-orders/bootstrap')
+        ->assertOk();
+
+    $body->assertJsonPath('email.available', false);
+    expect($body->json('email.reason'))->toContain('switched off');
 });

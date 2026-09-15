@@ -346,3 +346,128 @@ export function initSearchStarter() {
         if (renderStarter(panel, data)) panel.classList.add('on');
     });
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   Quick view.
+
+   Everything this needs already existed and none of it was connected:
+   product-card.blade.php renders the `.qv-btn` carrying data-kbb-qv,
+   layouts/store.blade.php prints the `#kbbQv` shell and all of its CSS,
+   and /quick-view/{id} answers with a rendered fragment — but no
+   JavaScript anywhere in resources/js listened for the click. The button
+   was inert on every grid in the store.
+
+   Delegated from the document, so it covers every grid (shop, category,
+   brand, search, the home rails) and any card rendered later, without
+   each of them having to register anything of its own.
+
+   The fragment injected carries `data-kbb-add`, which cart.js already
+   picks up through its own delegated listener, so Add to cart inside the
+   modal works with no further wiring.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Routes are prefixed by KBB_BASE_PATH on staging (/kbb-upgrade), so this
+   path cannot be hardcoded. window.KBB.routes.home is Url::to('/') and
+   carries that prefix; the endpoint is built from it. */
+const kbbRoot = () =>
+    ((window.KBB && window.KBB.routes && window.KBB.routes.home) || '/').replace(/\/+$/, '');
+
+export function initQuickView() {
+    const back = document.getElementById('kbbQv');
+
+    // Module off at Store → Modules: the shell is not printed, and neither is
+    // the button, so there is nothing to wire.
+    if (!back) return;
+
+    const slot = back.querySelector('.qv-slot');
+    if (!slot) return;
+
+    let controller = null;
+    let opener = null;
+
+    const reset = () => { slot.innerHTML = '<div class="qv-load">Loading…</div>'; };
+
+    const close = () => {
+        if (back.hidden) return;
+
+        back.hidden = true;
+        controller?.abort();
+        controller = null;
+        reset();
+
+        // Focus goes back to the card that opened it rather than being dropped
+        // at the top of the document.
+        opener?.focus?.();
+        opener = null;
+    };
+
+    const open = async (id, button) => {
+        opener = button;
+        reset();
+        back.hidden = false;
+        back.querySelector('.qv-x')?.focus();
+
+        // A second click while the first is still in flight wins.
+        controller?.abort();
+        controller = new AbortController();
+
+        try {
+            const response = await fetch(`${kbbRoot()}/quick-view/${encodeURIComponent(id)}`, {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                signal: controller.signal,
+            });
+
+            // A product that is not visible 404s here exactly as it does on its
+            // own page, and nothing is rendered for it.
+            if (!response.ok) { close(); return; }
+
+            const data = await response.json();
+
+            if (!data || !data.ok || !data.html) { close(); return; }
+
+            // Server-rendered Blade on purpose: price, sale and stock rules stay
+            // in one place instead of being restated in JavaScript.
+            slot.innerHTML = data.html;
+        } catch (error) {
+            if (error.name !== 'AbortError') close();
+        }
+    };
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest?.('[data-kbb-qv]');
+        if (!button) return;
+
+        // The card photo carries its own location.href handler; the button sits
+        // on top of it and must not fall through to it.
+        event.preventDefault();
+        event.stopPropagation();
+
+        const id = button.dataset.kbbQv;
+        if (id) open(id, button);
+    });
+
+    // Three ways out: the ✕, the backdrop itself (never the panel on top of
+    // it), and Escape.
+    back.addEventListener('click', (event) => {
+        if (event.target === back || event.target.closest?.('.qv-x')) {
+            event.preventDefault();
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') close();
+    });
+}
+
+/* Registered from this module rather than from app.js, which this lane does
+   not own. app.js already imports search.js, so the listener is installed on
+   load; the named export stays available if the integrator would rather add
+   an explicit initQuickView() call to boot(). */
+if (typeof document !== 'undefined') {
+    document.readyState === 'loading'
+        ? document.addEventListener('DOMContentLoaded', initQuickView)
+        : initQuickView();
+}

@@ -40,6 +40,7 @@ class ModuleRegistry
         'cart'        => 'Cart & mini-cart',
         'store'       => 'Store & content',
         'payship'     => 'Payments & shipping',
+        'email'       => 'Order emails',
         'catalogue'   => 'Catalogue',
         'marketing'   => 'Marketing',
         'performance' => 'Performance',
@@ -79,6 +80,29 @@ class ModuleRegistry
         // ── Cart & mini-cart ──
         'minicart_promo' => ['cart', 'Mini-cart promo', 'Editable promo line in the cart drawer.', true, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'bottom', 'The promo line above the subtotal in the cart panel.', 'live'],
         'back_to_cart' => ['cart', '“Go back to cart” link', 'Return-to-cart control beside the Checkout heading.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'top', 'A return-to-cart link beside the Checkout heading.', 'live'],
+        /*
+         * The cart page's own discount-code box, and only that one.
+         *
+         * Not to be confused with `coupon_hint`, which governs the clickable
+         * promo-code SUGGESTION printed under the box; the box itself has never
+         * had a switch. Turning this off hides the input and the Apply button
+         * on /cart/ and, with them, the hint that only makes sense beside them.
+         * The checkout page keeps its own coupon box — that is a separate
+         * surface and is not gated here.
+         *
+         * Off by default, which is the plugin-style default for anything this
+         * registry adds: a fresh install shows no cart-page coupon box until
+         * the owner asks for one. Existing installs are unaffected either way,
+         * because a store that has explicitly saved Store → Modules already has
+         * a `module_toggles` row and moduleEnabled() returns that row rather
+         * than this default. No migration writes a value for this key, so no
+         * store's decision is overwritten.
+         *
+         * Nothing is removed: coupons still apply, an already-applied coupon
+         * still shows and can still be removed, and /cart/coupon still works.
+         */
+        'mobile_tabbar' => ['store', 'Floating bottom menu (mobile)', 'The floating bar pinned to the bottom of the screen on phones — Home, Shop, Quiz, Saved and Bag. Off by default; the header, its cart icon and the mobile menu all keep working without it.', false, 'No settings screen', '', 'mobile', 'mid', 'The floating Home / Shop / Quiz / Saved / Bag bar at the bottom of every page on a phone.', 'live'],
+        'cart_coupon_field' => ['cart', 'Cart-page discount code box', 'The “Discount code” input and Apply button in the cart page order summary. Off by default; the checkout page has its own box and is not affected.', false, 'No settings screen', '', 'cartpage', 'mid', 'The discount code box in the order summary on the cart page.', 'live'],
         // ── Store & content ──
         'banners' => ['store', 'Banners', 'Drives the homepage hero slider — headline, eyebrow, buttons, floating product pods and the offer badge — using the theme’s own .heroslider markup. Supports scheduling. Off by default.', false, 'Appearance → Homepage', '', 'home', 'top', 'The homepage hero slider — headline, buttons and product pods.', 'elsewhere'],
         'mega_menu' => ['store', 'Mega Menu', 'Drives the header mega panels from the admin using the theme\'s own design — category columns, brands and editor\'s picks — plus a mobile slide-in overlay. Off by default.', false, 'Store → Mega Menu', 'megamenu', 'header', 'nav', 'The panels that drop from the category bar, and the phone overlay.', 'live'],
@@ -86,8 +110,80 @@ class ModuleRegistry
         'product_labels' => ['store', 'Product Labels', 'Configurable Sale / New / Sold-out / Bestseller badges on product cards. Off by default — the theme’s built-in badges show until you turn it on.', false, 'Catalogue → Product Labels', 'labels', 'grid', 'card', 'Sale, New, Sold-out and Bestseller badges on product cards.', 'live'],
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],
+        /*
+         * ── Order emails ──
+         *
+         * The one group in this registry that ships ON.
+         *
+         * Everything this registry adds is off by default, on the plugin's own
+         * principle that a fresh install shows nothing the owner did not ask for.
+         * These five break that rule on purpose, and the reason is the same one
+         * that applies to `seo_engine` above: the default has to be measured
+         * against what the store does WITHOUT the switch, not against a blank
+         * slate.
+         *
+         * Without them this store sends a customer nothing whatsoever. They pay,
+         * and the only confirmation that has ever existed is the order-received
+         * page, which is gated to the browser that placed the order — close the
+         * tab and it is gone. The merchant is not told an order arrived at all;
+         * AdminOrderController::runAction still refuses its own resend actions
+         * with "outbound email is not configured for this store". Shipping these
+         * off by default would mean applying a package called "order emails" and
+         * changing nothing until somebody found the screen.
+         *
+         * The safety net that used to make ON defensible was that nothing was
+         * being sent: MailConfigurator fell back to the `log` transport whenever
+         * SMTP was not filled in, so on an install where nobody had completed
+         * Store → Mail these wrote to storage/logs and reached no inbox.
+         *
+         * THAT IS NO LONGER TRUE, AND THE CHANGE WAS THE POINT. The owner's live
+         * store had exactly that shape -- five order emails switched on, every
+         * one of them going to a log file, nobody told. `mail_transport` now
+         * defaults to the host's own mail (MailSettings::TRANSPORT_SERVER) and an
+         * untouched install really sends. So these five being ON is no longer
+         * harmless-because-inert; it is ON because a store that takes money and
+         * says nothing is the worse default, which is what the paragraph above
+         * argues and what the owner asked for in as many words.
+         *
+         * No migration writes a value for any of these keys, so a store that has
+         * already saved Store → Modules keeps whatever it chose: moduleEnabled()
+         * returns the module_toggles row when one exists and only falls back to
+         * the default below when it does not.
+         *
+         * Every row is `live`: OrderMailer reads each key by name, and
+         * Phase3ModuleSwitchesTest greps for exactly that.
+         */
+        'email_order_confirmation' => ['email', 'Order confirmation email', 'The receipt sent to the customer the moment an order is placed — line items as bought, the money breakdown, delivery address, delivery and payment method, and a link to the order.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when they place an order. Nothing visible on the site.', 'live'],
+        'email_merchant_new_order' => ['email', 'New-order alert to you', 'Tells the store an order has come in, with the customer’s details, so you do not have to watch the admin. Goes to the address set under Store → Mail.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to you when an order is placed. Nothing visible on the site.', 'live'],
+        'email_order_shipped' => ['email', 'Dispatch notification', 'Tells the customer their order has left you, sent when its status becomes Shipped.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when you mark an order Shipped. Nothing visible on the site.', 'live'],
+        'email_order_cancelled' => ['email', 'Cancellation notification', 'Tells the customer an order has been cancelled and nothing further will be sent, when its status becomes Cancelled.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when an order is cancelled. Nothing visible on the site.', 'live'],
+        'email_order_refunded' => ['email', 'Refund notification', 'Tells the customer money has gone back, sent when a refund actually settles — not when an order is merely marked refunded. Covers partial refunds too.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when a refund succeeds. Nothing visible on the site.', 'live'],
+        /*
+         * The sixth row in this group, and the only one that is not "send this
+         * email or do not".
+         *
+         * It is here rather than on Store → Mail because that screen renders
+         * MailSettings::SCHEMA through MailApiController, which knows three
+         * field types -- text, secret, and a choice whose options that
+         * controller supplies -- and none of them is a checkbox. An on/off put
+         * there would be a text box the owner had to type a word into. This
+         * screen already draws real switches, already carries the five order
+         * emails, and is already where the owner goes to turn a piece of an
+         * email off.
+         *
+         * ON by default, and safe to be: the logo only appears if one has
+         * actually been uploaded under Store → Business Details. With no logo
+         * saved, on and off render the same email — the wordmark — so the
+         * default cannot surprise anybody. App\Services\Mail\EmailBranding is
+         * the reader, and it reads this key by name.
+         */
+        'email_show_logo' => ['email', 'Logo in order emails', 'Prints your uploaded store logo at the top of every order email instead of the text wordmark. Uses the same logo as Store → Business Details — there is no second upload. With no logo saved, the wordmark is shown either way.', true, 'Store → Business Details', 'store-settings', 'site', 'all', 'Your logo at the top of every order email. Nothing visible on the site.', 'live'],
         // ── Catalogue ──
-        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'todo'],
+        // The screen is Store → Catalog → Reorder, and it has existed for some
+        // time. This row said 'Its own screen' with no console route, which the
+        // admin renders as "Its own screen — screen not built yet": the one
+        // module whose settings the owner was told did not exist while they did.
+        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Store → Catalog → Reorder', 'catalog:reorder', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'live'],
         'brands' => ['catalogue', 'Brands', 'Brand taxonomy with logos, brand pages and a [kbb_brands] directory. Works with WooCommerce’s native brand taxonomy. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Brand pages, logos and the brand directory.', 'todo'],
         'wishlist' => ['catalogue', 'Wishlist', 'Lets shoppers save products (works for guests too, via cookie). Heart button on cards/product pages plus a [kbb_wishlist] page. Off by default.', false, 'Its own screen', '', 'grid', 'card', 'The heart on every product card, and the wishlist page.', 'live'],
         'recently_viewed' => ['catalogue', 'Recently Viewed', 'Shows each shopper the products they just looked at (cookie-based, guests included). Auto-placed on product/cart pages plus a [kbb_recently_viewed] shortcode. Off by default.', false, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'mid', 'The Browsed tab in the cart panel, and a rail on the product page.', 'elsewhere'],
@@ -103,11 +199,34 @@ class ModuleRegistry
         // Not in the plugin. They are real module_toggles keys the storefront
         // already reads, so leaving them off this screen would make them the one
         // pair nobody can switch.
+        'quick_view' => ['extra', 'Quick view', 'A Quick view button on product cards opening a modal with price, stock, short description and add-to-cart, so a shopper does not lose a filtered listing. Hidden on touch devices, where hover has no meaning.', true, 'No settings screen', '', 'grid', 'card', 'The Quick view button revealed on hover over every product card.', 'live'],
+        'address_book' => ['extra', 'Address book', 'The saved-addresses screen at /my-account/edit-address: add, edit, delete and set a default per type. Turning this off hides the dashboard card and makes the page itself 404, not just the link.', true, 'Appearance → Login / Register panel → Links', 'acctpanel', 'site', 'all', 'The Addresses screen inside a signed-in customer account.', 'live'],
         'quantity_bundles' => ['extra', 'Quantity bundles', 'Buy-more-save-more tiers on the product page, generated from the price rather than authored.', true, 'Appearance → Quantity bundles', 'bundles', 'product', 'mid', 'The bundle tiles under the price on the product page.', 'live'],
         'dispatch_cutoff' => ['extra', 'Dispatch cutoff', 'The “order within X for dispatch today” line, counting down to your cutoff time.', true, 'Store → Ecommerce', 'ecommerce', 'product', 'mid', 'A line under the Add to cart button on the product page.', 'live'],
 
         // ── SEO ──
-        'seo_engine' => ['seo', 'SEO Engine', 'Meta titles & descriptions (with per-page overrides), Open Graph / Twitter cards, canonical, robots and Product / Organization schema. Defers automatically if Yoast or Rank Math is active. Off by default.', false, 'Its own screen', '', 'site', 'all', 'Titles, descriptions and structured data. Nothing visible on the page.', 'todo'],
+        /*
+         * The one place this registry deliberately diverges from the plugin's
+         * own default, recorded here rather than left to be discovered.
+         *
+         * The plugin ships SEO Engine OFF because WordPress — with or without
+         * Yoast — still writes a <title>, a canonical and an og:image when the
+         * module is off. Nothing in this app does. App\Support\Seo is the only
+         * thing that has ever produced a <head> here, and it has produced one
+         * on every page since the layout was wired to it, ungated.
+         *
+         * So shipping the switch with the plugin's default would not "restore
+         * the plugin's behaviour" — it would strip every meta description,
+         * canonical, Open Graph tag and JSON-LD node off a live catalogue the
+         * first time this package was applied, silently, with no visible
+         * symptom on any page. On by default keeps what the storefront
+         * already does; the owner can now turn it off on purpose, which is
+         * what the switch is for.
+         *
+         * The settings screen is Store → SEO & Meta and has been real since
+         * before 2.56.1; this row claimed it did not exist.
+         */
+        'seo_engine' => ['seo', 'SEO Engine', 'Meta titles & descriptions (with per-page overrides), Open Graph / Twitter cards, canonical, robots and Product / Organization schema. Turn it off to fall back to a plain page title and nothing else. On by default in this app — unlike the plugin, nothing else here writes a &lt;head&gt;.', true, 'Store → SEO & Meta', 'seo', 'site', 'all', 'Titles, descriptions and structured data. Nothing visible on the page.', 'live'],
         // ── Unknown ──
         // ── install flag ──
         // ── Carts started ──

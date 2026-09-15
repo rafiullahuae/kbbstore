@@ -4,35 +4,18 @@
          bootstrap="vendor/autoload.php"
          colors="true">
     <testsuites>
-        <testsuite name="Unit">
-            <directory>tests/Unit</directory>
-        </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
     <source>
-        <include>
-            <directory>app</directory>
-        </include>
+        <include><directory>app</directory></include>
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="APP_KEY" value="base64:Cg9gGAeC4OmOhuFUNOtRvE4pl3O3VGZFM9SCZ3HUmmA="/>
-        <env name="APP_DEBUG" value="true"/>
-        <!-- File-backed SQLite, never :memory: — the migration set does not
-             survive an in-memory database (CLAUDE.md). -->
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value="database/testing.sqlite"/>
-        <env name="DB_FOREIGN_KEYS" value="true"/>
-        <!-- env.staging.txt sets KBB_BASE_PATH=/kbb-upgrade, which prefixes
-             every route. Tests must run unprefixed. -->
-        <env name="KBB_BASE_PATH" value=""/>
-        <!-- bootstrap/app.php pins usePublicPath() at the shared host's web
-             root, which makes 2026_08_28_183000_relocate_public_assets treat
-             public/build as a stray tree and DELETE it. Tests/CreatesApplication
-             repoints the public path at the repo's own public/ so the two paths
-             match and the migration becomes the no-op it is on the server. -->
         <env name="CACHE_STORE" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

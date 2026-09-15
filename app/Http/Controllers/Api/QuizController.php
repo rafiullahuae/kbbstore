@@ -36,17 +36,31 @@ class QuizController extends Controller
             'source_url'    => $request->headers->get('referer'),
         ]);
 
-        return response()->json(['ok' => true, 'id' => $sub->id], 201);
+        // A signed handle, not the bare row id. The storefront reads this as
+        // `id` and puts it straight back in the expert-request URL, so the
+        // shape of the flow is unchanged -- what changed is that the value is
+        // now unguessable. See QuizSubmission::publicToken().
+        return response()->json(['ok' => true, 'id' => $sub->publicToken()], 201);
     }
 
-    /** POST /api/quiz/{id}/expert-request — attach an expert callback request to a lead */
-    public function expertRequest(Request $request, int $id)
+    /**
+     * POST /api/quiz/{id}/expert-request — attach an expert callback request to a lead
+     *
+     * {id} is the signed token issued by store(), not the primary key. With a
+     * bare key here this endpoint had no ownership check of any kind: counting
+     * upwards from 1 let anyone attach a message to, and move the status of,
+     * every lead in the table -- and the 404-vs-200 split told the counter
+     * exactly which ids were real. Both halves are the same fix: an id you
+     * were not given resolves to nothing, and resolves to nothing in the same
+     * way a lead that does not exist does.
+     */
+    public function expertRequest(Request $request, string $id)
     {
         $data = $request->validate([
             'message' => 'nullable|string|max:2000',
         ]);
 
-        $sub = QuizSubmission::find($id);
+        $sub = QuizSubmission::findByPublicToken($id);
         if (!$sub) {
             return response()->json(['error' => 'not_found'], 404);
         }

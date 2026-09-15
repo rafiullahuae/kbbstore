@@ -13,7 +13,7 @@ class Redirect extends Model
 
     protected function casts(): array
     {
-        return ['enabled' => 'bool', 'last_hit_at' => 'datetime'];
+        return ['enabled' => 'bool', 'last_hit_at' => 'datetime', 'hits' => 'int', 'status_code' => 'int', 'auto_created' => 'bool'];
     }
 
 }

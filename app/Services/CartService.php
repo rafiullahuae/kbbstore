@@ -74,6 +74,23 @@ class CartService
         $this->resolved = null;
     }
 
+    /**
+     * The cart already resolved during THIS request, or null.
+     *
+     * Never queries, never creates, never reads the cookie. It exists because
+     * the cookie is not a reliable answer to "does this visitor have a cart"
+     * on the one request that matters most: the first add of a fresh session
+     * creates the cart here and queues its cookie onto the RESPONSE, so the
+     * request itself still carries none. Anything rendering later in that same
+     * request — the drawer composer, in particular — has to ask the service
+     * what it already found rather than re-reading an incoming cookie that
+     * cannot exist yet.
+     */
+    public function resolved(): ?Cart
+    {
+        return $this->resolved;
+    }
+
     private function resolve(Request $request, bool $create): ?Cart
     {
         $customer = $request->user('customer');

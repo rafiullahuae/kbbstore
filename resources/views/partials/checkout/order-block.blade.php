@@ -25,6 +25,13 @@
     // threaded through from the controller, matching how the freeship bar
     // above already reads $settings directly in this partial.
     $codFeeFils = (int) $settings->get('cod_fee', 0);
+    // Read from the session rather than a request field: the country-change
+    // refresh and a plain reload both land here without ever posting the
+    // checkbox, and a fee that vanishes when someone changes emirate is worse
+    // than no fee at all.
+    $giftFeeFils = ($settings->get('gift_enabled', '1') && session('kbb_gift'))
+        ? (int) $settings->get('gift_fee', '1500')
+        : 0;
 @endphp
 
 @if ($codFeeFils > 0)
@@ -33,12 +40,13 @@
      driving the selected-option highlight on the payment list itself. No JS
      needed for this part; the country-change refresh in checkout.js keeps
      the number itself correct (see js-total-fee below). --}}
+<div class="sumrow js-gift-row"@if ($giftFeeFils <= 0) hidden @endif><span>Gift wrapping</span><span class="js-gift">{!! \App\Support\Money::format($giftFeeFils) !!}</span></div>
 <div class="sumrow js-fee-row"><span>Cash-on-delivery fee</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils) !!}</span></div>
 @endif
 
-<div class="sumrow tot js-total-row"><span>Total</span><span class="js-total">{!! \App\Support\Money::format($totals['total']) !!}</span></div>
+<div class="sumrow tot js-total-row"><span>Total</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils) !!}</span></div>
 @if ($codFeeFils > 0)
-<div class="sumrow tot js-total-row-fee"><span>Total</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils) !!}</span></div>
+<div class="sumrow tot js-total-row-fee"><span>Total</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils) !!}</span></div>
 @endif
 
 @if ($totals['vat'])

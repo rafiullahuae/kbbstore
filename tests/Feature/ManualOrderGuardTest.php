@@ -39,7 +39,6 @@ it('registers exactly the routes the lane documents, and no others', function ()
         'GET /admin-api/manual-orders/bootstrap',
         'GET /admin-api/manual-orders/customers',
         'GET /admin-api/manual-orders/products',
-        'GET /admin-api/manual-orders/{order}/packing-list.csv',
         'POST /admin-api/manual-orders',
         'POST /admin-api/manual-orders/quote',
     ]);
