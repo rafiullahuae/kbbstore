@@ -1,5 +1,13 @@
 # Import readiness
 
+> **The importer described here now exists: `kbb:import`, with its operating
+> manual in [`IMPORT-RUNBOOK.md`](IMPORT-RUNBOOK.md).** Every schema claim below
+> was re-verified against the migrations while it was built; §8 at the end of
+> this file records what held, what was incomplete, and the one thing this audit
+> did not anticipate. Section 7's "there is no importer in this repository" is
+> no longer true, and is kept because the audit of the dead one it replaced is
+> still the reason several of its rules exist.
+
 What a WooCommerce importer has to know about this database before it writes a
 single row: which tables receive imported data, what identifies an imported row
 as the same row next time, what the database will refuse, and which columns have
@@ -409,3 +417,104 @@ is a trap set for whoever runs the real migration under time pressure: it is the
 obvious thing to re-enable, it would have failed on the first row, and had the
 schema drifted the other way it would have succeeded and mangled every price
 instead. The command now says what it is and points here.
+
+---
+
+## 8. Verified while building the importer
+
+Every claim above was re-checked against the migrations as the importer came to
+depend on it, rather than taken on trust. This section records the result,
+because "the audit was right" is worth as much to the next person as a
+correction would be.
+
+### Held exactly as stated
+
+- `customers.email` is `string('email')->unique()` with no `->nullable()` —
+  UNIQUE NOT NULL, both halves biting (§2.3).
+- `customers.orders_count`, `total_spent` and `last_order_at` exist, are named
+  in `Customer::UNMAINTAINED_COLUMNS`, are hidden, and are written by nothing.
+  The importer writes none of them, and `CustomerImporter` raises a
+  `LogicException` rather than a rejection if a future edit ever tries to — a
+  convention that can be broken silently is not a safeguard.
+- `orders.wc_order_id` nullable unique, `orders.order_number` `string` UNIQUE
+  **NOT NULL**, `orders.invoice_number` nullable unique.
+- `products.wc_id` nullable unique; `products.sku` indexed and **not** unique,
+  exactly as warned, which is why nothing in the importer falls back to matching
+  on it.
+- `products.status` holds `publish`/`draft`/`private`; there is no `active`.
+- `categories.depth` and `categories.path` are cached columns, not derived —
+  `Category::buildPath()` exists but nothing calls it on read, so an import that
+  does not set them produces categories with no URL.
+- `addresses.country` is `string('country', 2)->default('AE')` in Phase 0 and
+  `string('country')->nullable()` in the repair migration. The truncation trap is
+  real and the importer refuses anything that is not alpha-2.
+- Every money column is `$t->integer(...)`, i.e. signed 32-bit. `Money` range-
+  checks against that ceiling rather than leaving MySQL to error and SQLite to
+  accept.
+- `orders.status` is free-form with a `pending` default, so Woo custom statuses
+  survive.
+- `order_items.name` is `string('name')` NOT NULL; `order_items.product_id` is
+  nullable with `nullOnDelete`.
+- `addresses.source_key`, `order_items.wc_item_id` and `users.wp_user_id` all
+  exist with unique indexes, added by `2026_09_22_000000_add_import_external_ids`.
+- `Address` guards `customer_id` and makes `source_key` fillable, exactly as
+  §2.2 describes.
+
+### Incomplete, in ways that matter to an importer
+
+- **§2.2's `source_key` composition rule is a contract with nothing enforcing
+  it.** The doc gives the four shapes but no code owned them, so a second lane
+  writing addresses could pick a different scheme and neither would fail. They
+  now have one owner, `App\Services\Import\AddressWriter`, and the rule is in
+  one place.
+- **The table in §4 lists `addresses` as needing `customer_id` (NOT NULL)
+  without noting that this makes an order's addresses conditional.** An unlinked
+  guest order — which §2.4 explicitly permits — cannot have `addresses` rows at
+  all. The importer files them only where the order has a customer and relies on
+  the order's own JSON snapshot otherwise, which is what the order page reads
+  anyway.
+
+### What the audit did not anticipate, and it is on every install
+
+**`2026_08_27_100000_seed_demo_catalogue` seeds brands slugged `cosrx` and
+`beauty-of-joseon` and categories slugged `cleansers`, `toners`, `serums`,
+`moisturisers`, `sunscreens` and `masks`.** Those are real brands and real
+categories this store sells, and `brands.slug` and `categories.slug` are UNIQUE.
+So the genuine `pa_brands` term for COSRX collides on its slug with a demo row
+that has `source_term_id` NULL, and is refused — on the very first import, for
+an unknown share of 93 brand terms and the whole category tree.
+
+Rule 1 of §5 ("match on the external id, never on a name, slug, email or SKU")
+is why this cannot simply be fixed by matching on the slug. The importer refuses
+by default and offers `--adopt-by-slug`, which claims a holder **only** when its
+external id is NULL — demonstrably not from WooCommerce — writes the WooCommerce
+id onto it so every later pass matches on the external id like everything else,
+and reports each adoption individually. A slug held by a different Woo term is
+refused with or without the flag.
+
+This is decision **D7** in `IMPORT-RUNBOOK.md` §6, and it needs the owner:
+adopting the demo rows and correcting them is usually right, but deleting the
+demo catalogue before the import is cleaner and is not something an importer
+should do on its own.
+
+### A MySQL divergence the audit could not have found from the schema
+
+**MySQL reorders the keys of a `json` column.** A `json` column is parsed and
+stored in a binary form with object keys sorted by length and then
+alphabetically, so `orders.billing_address` written as
+`{first_name, last_name, company, line1, …}` reads back as
+`{city, line1, phone, state, …, first_name}`. SQLite stores the bytes it was
+given.
+
+Laravel's change detection then compares the two decoded arrays with `===`,
+which for arrays is order-sensitive, so the attribute is dirty on every pass
+forever. Nothing is corrupted — the value written is identical to the value
+already there — but every delta pass rewrites every order that has an address,
+and the report says "updated" when nothing changed. Since that report is the
+evidence the import was idempotent, an idempotency proof that can never say
+"unchanged" is not a proof of anything.
+
+`ImportContext::withoutEquivalentJson()` compares array attributes with `==`,
+which is order-insensitive, and drops the ones that already say the same thing.
+`WooImportTest` pins it. It was green on SQLite and failed on MySQL the first
+time the parity suite ran, which is the entire argument for that job existing.

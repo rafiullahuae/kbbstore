@@ -44,18 +44,27 @@ use Illuminate\Console\Command;
  * The contract a real importer has to meet — every table, its external id, its
  * uniqueness constraints and the columns it must set — is written down in
  * docs/IMPORT-READINESS.md, and pinned by tests/Feature/ImportContractTest.php.
+ *
+ * THAT IMPORTER NOW EXISTS. It is `kbb:import`
+ * (App\Console\Commands\ImportWooCommerce), with the operating manual in
+ * docs/IMPORT-RUNBOOK.md. This command is kept as a signpost rather than
+ * deleted: it is the name in the old notes and the obvious thing to reach for,
+ * and a command that has silently disappeared sends whoever is running the
+ * migration under time pressure looking for a file rather than at the one they
+ * want.
  */
 class ImportCatalog extends Command
 {
     protected $signature = 'kbb:import-catalog';
 
-    protected $description = 'Retired. No importer exists yet — see docs/IMPORT-READINESS.md';
+    protected $description = 'Retired — use kbb:import';
 
     public function handle(): int
     {
         $this->warn('kbb:import-catalog is retired and imports nothing.');
-        $this->line('No WooCommerce importer exists in this repository yet.');
-        $this->line('The contract one must meet is documented in docs/IMPORT-READINESS.md.');
+        $this->line('The WooCommerce importer is:  php artisan kbb:import --dir=<folder> --dry-run');
+        $this->line('Operating manual:             docs/IMPORT-RUNBOOK.md');
+        $this->line('Schema contract:              docs/IMPORT-READINESS.md');
 
         return self::SUCCESS;
     }
