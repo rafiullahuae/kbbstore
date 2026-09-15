@@ -341,9 +341,32 @@ it('leaves the routes another lane owns exactly where they are', function () {
         ->and($web)->toContain('toggle-featured')
         ->and($web)->toContain("Route::put('/products/{id}'");
 
-    // And none of this lane's own routes were smuggled into it.
-    expect($web)->not->toContain('catalog-products-list')
-        ->and($web)->not->toContain('catalog-products-admin.php');
+    // This lane added no route to web.php by hand. The integrator wires the
+    // whole file in with one require, asserted separately below.
+    expect($web)->not->toContain('catalog-products-list');
+});
+
+it('is wired into web.php, so the screen is not a set of 404s', function () {
+    // The lane that built this screen was forbidden from editing routes/web.php,
+    // so the require line is the integrator's to add and therefore the thing
+    // most likely to be forgotten. Without it every button on the screen 404s
+    // while the screen itself still loads, which looks like a data problem.
+    $web = (string) file_get_contents(base_path('routes/web.php'));
+
+    expect($web)->toContain("require __DIR__.'/catalog-products-admin.php';");
+
+    // And it landed inside the guarded group, not after it. Read off the
+    // registered routes rather than the file: RouteRegistrar::middleware()
+    // replaces rather than appends, so only the router knows the truth.
+    $routes = collect(app('router')->getRoutes()->getRoutes())
+        ->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/catalog-products'));
+
+    expect($routes)->toHaveCount(8);
+
+    $routes->each(function ($route) {
+        expect($route->gatherMiddleware())->toContain('auth:admin')
+            ->and($route->gatherMiddleware())->toContain(\App\Http\Middleware\NoStoreAdminApi::class);
+    });
 });
 
 /* ------------------------------------------------------------- the list body */

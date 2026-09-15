@@ -344,6 +344,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // records and accept an uploaded image.
         require __DIR__.'/catalog-admin.php';
 
+        // Catalog → Products: the list, inline edits, the detail panel, guarded
+        // bulk actions and the filtered CSV export. Flat paths on purpose —
+        // /admin-api/products/{id} above carries no constraint on {id}, so a
+        // nested /catalog/products/... would be decided by where this line sits.
+        require __DIR__.'/catalog-products-admin.php';
+
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
