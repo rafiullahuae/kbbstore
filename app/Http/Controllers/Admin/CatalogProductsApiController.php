@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\MajorUnits;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -1551,47 +1552,23 @@ class CatalogProductsApiController extends Controller
      * The integer and fractional halves are split on the decimal point, the
      * fraction is padded or truncated to the currency's exponent, and the two
      * are combined with multiplication and addition on integers only.
+     *
+     * THE PARSE ITSELF NOW LIVES IN App\Support\MajorUnits, unchanged, and
+     * this method calls it. Catalog → Products' create form needs exactly this
+     * arithmetic and a third hand-rolled copy of it is a third place for the
+     * same defect to come back — the same reasoning that keeps image uploads on
+     * one endpoint (routes/brands-admin.php, routes/catalog-admin.php). The
+     * signature, the behaviour and every caller here are unchanged.
      */
     private function filsFromMajor(mixed $value): ?int
     {
-        if ($value === null) {
-            return null;
-        }
-
-        $text = trim((string) $value);
-
-        if ($text === '') {
-            return null;
-        }
-
-        return $this->signedFilsFromMajor($text);
+        return MajorUnits::fils($value);
     }
 
     /** The same parse, for a signed value (a bulk amount adjustment). */
     private function signedFilsFromMajor(string $text): int
     {
-        $text = trim($text);
-        $negative = str_starts_with($text, '-');
-
-        if ($negative || str_starts_with($text, '+')) {
-            $text = substr($text, 1);
-        }
-
-        $parts = explode('.', $text, 2);
-        $whole = $parts[0] === '' ? '0' : $parts[0];
-        $fraction = $parts[1] ?? '';
-
-        $exponent = Money::minorExponent();
-
-        // Pad to the currency's exponent, then truncate anything beyond it.
-        // Truncation rather than rounding: the operator typed more precision
-        // than the currency has, and inventing the last digit up is a price
-        // they did not ask for.
-        $fraction = substr(str_pad($fraction, $exponent, '0'), 0, max(0, $exponent));
-
-        $fils = ((int) $whole) * (10 ** $exponent) + ($fraction === '' ? 0 : (int) $fraction);
-
-        return $negative ? -$fils : $fils;
+        return MajorUnits::signedFils($text);
     }
 
     /**

@@ -5554,10 +5554,23 @@ function renderCatalog(){
   const lbl={products:'Products',categories:'Categories',brands:'Brands',attributes:'Attributes',inventory:'Inventory',reorder:'Reorder'};
   $('#content').innerHTML=`<div class="wrap">
     <div class="between" style="margin-bottom:8px"><div class="page-head" style="margin:0"><h2>Catalog</h2><p>Your products and how they're organised. Reorder works inside any category.</p></div>
-      <div class="row" style="gap:8px">${catTab==='products'?`<button class="btn" onclick="openProduct(-1)">${ic('<path d="M12 5v14M5 12h14"/>')} Add product</button>`:''}</div></div>
+      <div class="row" style="gap:8px">${catTab==='products'?`<button class="btn" id="catAddProduct">${ic('<path d="M12 5v14M5 12h14"/>')} Add product</button>`:''}</div></div>
     <div class="subtabs">${tabs.map(t=>`<button class="subtab${t===catTab?' on':''}" data-t="${t}">${lbl[t]}</button>`).join('')}</div>
     <div id="catBody"></div></div>`;
   $$('#content .subtab').forEach(b=>b.onclick=()=>{catTab=b.dataset.t;renderCatalog();});
+  /* LANE AK. "Add product" used to be an inline handler calling openProduct(-1), which reached
+     the preview mock at the top of this file — a form whose every control was a
+     toast and which never wrote anything. It now opens the real create form,
+     window.cpOpenCreate, in the Lane AK region of the live-wiring script at the
+     bottom. Wired as a property rather than as an inline onclick because the
+     handler lives in that script's IIFE, and because some sandboxed previews
+     block inline on* entirely (see the CSP fallback at the foot of this file):
+     a real listener works in both. */
+  const addBtn=$('#content #catAddProduct');
+  if(addBtn) addBtn.onclick=()=>{
+    if(typeof window.cpOpenCreate==='function') window.cpOpenCreate();
+    else toast('The product form could not be loaded — reload the page.');
+  };
   ({products:catProducts,categories:catCategories,brands:catBrands,attributes:catAttributes,inventory:catInventory,reorder:catReorder}[catTab])();
 }
 /* ===== Catalog → Products — the fallback only =====
@@ -12375,7 +12388,19 @@ buildNav();
             '<textarea class="inp" id="cplfShort" rows="3">' + sesc(p.short_description || '') + '</textarea></div>' +
         '</div>' +
 
-        '<div class="card pad" style="align-self:start">' +
+        '<div style="display:flex;flex-direction:column;gap:16px;min-width:0;align-self:start">' +
+
+        /* LANE AK. The hole this closes: this panel edited fifteen fields and
+           not the image, and the only image control in the console was the one
+           in the preview mock at the top of this file. The box, the upload and
+           the rules behind them are cpImageBoxHtml / cpWireImageBox in the Lane
+           AK region below — one widget shared with the create form rather than
+           two that drift. Given a productId it saves each change straight
+           through POST /admin-api/catalog-product-image/{id}, so an image
+           change does not depend on the operator also pressing Save. */
+        '<div class="card pad">' + cpImageBoxHtml('cplDetailImg', p.image || '', 'Product image') + '</div>' +
+
+        '<div class="card pad">' +
           '<div class="pe-h" style="margin-bottom:10px">What this product is</div>' +
           cpFact('Woo product ID', p.wc_id === null ? 'Created here' : p.wc_id) +
           cpFact('Effective price today', p.effective_price_display + (p.on_sale ? ' (−' + p.discount_percent + '%)' : '')) +
@@ -12388,7 +12413,11 @@ buildNav();
           (p.trashed ? '<p style="margin-top:10px"><span class="pill red"><span class="d"></span>In the trash</span></p>' : '') +
           '<p style="font-size:11.5px;color:var(--ink-soft);margin-top:12px">Orders, units sold, revenue and the rating are computed from the store\'s own records. They are not fields and cannot be typed over.</p>' +
         '</div>' +
+        '</div>' +
       '</div></div>';
+
+    // LANE AK. Saves straight to the server on every change — see above.
+    cpWireImageBox('cplDetailImg', {productId: p.id});
 
     document.getElementById('cplBack').onclick = function(){ go('catalog', 'products'); };
 
@@ -12434,6 +12463,699 @@ buildNav();
   }
 
   /* ===== LANE AF · Catalog · Products — END ================================= */
+
+  /* ===== LANE AK · Catalog · Products · Add + image — BEGIN ==================
+
+     WHAT WAS HERE BEFORE. Two holes, and they are the two a shop owner hits
+     first.
+
+     (1) There was no way to add a product. The "Add product" button on the
+     Catalog header called openProduct(-1) — the mock in the first script block,
+     whose every control raises toast('… (preview)'): Publish was a toast, the
+     slug's Edit link was a toast, the image box's Edit and Remove were toasts,
+     "Add new brand" was a toast. It looked exactly like a product editor and
+     wrote nothing, ever.
+
+     (2) The real edit panel (cpOpenDetail, in the Lane AF region above) edits
+     fifteen fields and not the image. The only image control in the console was
+     the one in the mock.
+
+     Both are real now, and both go through the server: POST
+     /admin-api/catalog-product-create and POST
+     /admin-api/catalog-product-image/{id}. Nothing on this screen decides
+     whether a product may be saved — the endpoint does, and the checks below
+     are a courtesy to the operator so they find out before they have typed a
+     description rather than after.
+
+     THE FILE GOES TO THE ONE UPLOAD ENDPOINT. cpUpload posts to
+     /admin-api/media/upload, the same path the brand logo, the category image,
+     the attribute swatch and the SEO share image all use. What travels to this
+     lane's own endpoints is the URL that came back. A second upload path is the
+     thing routes/brands-admin.php and routes/catalog-admin.php each went out of
+     their way to avoid.
+
+     IT ALSO SHOWS WHAT WENT WRONG. The shared wireImgUpload() in the first
+     script block catches every failure as 'Upload failed — check connection',
+     because api() throws a status code and discards the body. A 6MB photograph
+     and a PDF named .png are then the same sentence, and neither of them is
+     about the connection. cpUpload below reads the JSON and prints the server's
+     own message: the size cap in MB, the type that actually arrived, or the
+     element that made an SVG unsafe.
+
+     MONEY NEVER BECOMES A NUMBER IN HERE, exactly as in the Lane AF region
+     above: the price is the string the operator typed, sent as typed, parsed to
+     integer fils on the server. Nothing here multiplies, divides or rounds one.
+
+     THE SLUG IS ASKED FOR, NOT GUESSED. The permalink under the name field
+     comes from /admin-api/catalog-product-slug, i.e. from the same Str::slug()
+     that will store it. A browser-side
+     name.toLowerCase().replace(/[^a-z0-9]+/g,'-') — which is what the mock did
+     — disagrees with it on accents, on '&' and on every non-Latin character,
+     and a preview that does not match what gets stored is worse than no
+     preview. The same call reports when the address is already taken, before
+     the operator has filled in anything else.
+
+     PUBLISHED AND INVISIBLE CANNOT BE EXPRESSED. Product::scopeVisible() is
+     `status = 'publish' AND is_visible = 1`. Choosing Published pins catalogue
+     visibility to Yes and says why, so the form cannot produce the row that is
+     published, invisible, and absent from the shop, the category pages and the
+     sitemap while the Products list files it under "Published". The server
+     refuses the combination too — this is the courtesy, that is the control.
+
+     THE 390px RULE. Every grid here uses minmax(0,1fr), never 1fr: a grid track
+     defaults to min-width:auto, so one long uploaded URL in a 1fr track widens
+     the track past its share and pushes the whole page sideways. The image
+     preview is max-width:100%, the URL readout wraps with overflow-wrap:anywhere
+     and the action row wraps. Measured in real Chromium at 390 and 1280, in
+     every state the form has: empty, filled, showing validation errors, image
+     chosen, image uploaded, upload rejected, and the edit panel with and
+     without an image. #content reports scrollWidth === clientWidth at both.
+
+     Product names, SKUs and image URLs are operator text and land in innerHTML.
+     Everything written into the page goes through sesc().
+  */
+
+  (function cpakStyles(){
+    if(document.getElementById('cpakcss')) return;
+
+    /* Injected rather than added to the stylesheet at the top of this file:
+       that block is shared by every screen and several lanes are editing this
+       view at once. A style element this region owns outright cannot collide
+       with somebody else's rule. */
+    var s = document.createElement('style');
+    s.id = 'cpakcss';
+    s.textContent =
+      /* The image box. Used by the create form and by the edit panel, so there
+         is one image widget in the Catalog screen rather than two that drift. */
+      '.cpakimg{min-width:0}' +
+      '.cpakimg .cpakframe{border:1px dashed var(--border);border-radius:10px;padding:10px;' +
+        'display:flex;align-items:center;justify-content:center;min-height:132px;background:var(--border-2,#f4f5f7)}' +
+      /* max-width:100% and height:auto, or a 2000px product photograph is a
+         2000px page. */
+      '.cpakimg .cpakframe img{max-width:100%;max-height:200px;height:auto;border-radius:8px;display:block}' +
+      '.cpakimg .cpakempty{font-size:11.5px;color:var(--ink-soft);text-align:center;padding:16px 8px}' +
+      '.cpakacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}' +
+      '.cpakacts .btn{flex:0 1 auto}' +
+      '.cpakhint{font-size:11px;color:var(--ink-soft);margin-top:8px}' +
+      /* The uploaded URL is the longest unbroken string on this screen and the
+         single likeliest cause of a sideways page. It wraps anywhere. */
+      '.cpakurl{font-size:10.5px;color:var(--ink-faint,#8a93a0);margin-top:6px;overflow-wrap:anywhere;word-break:break-word}' +
+      '.cpakstatus{font-size:11.5px;margin-top:8px;overflow-wrap:anywhere}' +
+      '.cpakstatus.bad{color:var(--sale,#c0392b)}' +
+      '.cpakstatus.good{color:var(--accent-strong,#15a85a)}' +
+      '.cpakpaste{margin-top:8px}' +
+      '.cpakpaste summary{font-size:11.5px;color:var(--ink-soft);cursor:pointer}' +
+      '.cpakpaste .inp{width:100%;max-width:100%;box-sizing:border-box;margin-top:6px}' +
+
+      /* The create form. Same two-column shell as the edit panel, collapsing at
+         the same width, so the two screens are recognisably one screen. */
+      '.cpakgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}' +
+      '@media(max-width:860px){.cpakgrid{grid-template-columns:minmax(0,1fr)}}' +
+      '.cpakside{display:flex;flex-direction:column;gap:16px;min-width:0}' +
+      '.cpakperma{font-size:11.5px;color:var(--ink-soft);margin-top:6px;overflow-wrap:anywhere;word-break:break-word}' +
+      '.cpakperma b{font-weight:600;color:var(--ink)}' +
+      '.cpakperma .lk{background:none;border:0;padding:0 0 0 6px;color:var(--accent-strong,#15a85a);' +
+        'cursor:pointer;font-size:11.5px;text-decoration:underline}' +
+      '.cpakperma.bad b{color:var(--sale,#c0392b)}' +
+      '.cpakerr{font-size:11.5px;color:var(--sale,#c0392b);margin-top:4px;overflow-wrap:anywhere}' +
+      '.cpakfield .inp.bad,.cpakfield textarea.bad{border-color:var(--sale,#c0392b)}' +
+      '.cpaknote{font-size:11px;color:var(--ink-soft);margin-top:4px}' +
+      '.cpaktop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}' +
+      '.cpakbanner{border:1px solid var(--sale,#c0392b);border-radius:10px;padding:10px 12px;margin-bottom:12px;' +
+        'font-size:12.5px;color:var(--sale,#c0392b);overflow-wrap:anywhere}';
+
+    document.head.appendChild(s);
+  })();
+
+  /* ------------------------------------------------------------ the uploader */
+
+  /**
+   * Post one file to the ONE upload endpoint and return its URL.
+   *
+   * Deliberately not api(): api() throws `'api ' + url + ' -> ' + status` and
+   * never reads the body, so every refusal this endpoint can make — too large,
+   * not an image, an SVG carrying a script — arrives at the operator as the
+   * same meaningless sentence. The body is where the reason is.
+   */
+  async function cpUpload(file){
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('folder', 'products');
+
+    var r = await fetch(fixAdminApiUrl('/admin-api/media/upload'), {
+      method: 'POST',
+      credentials: 'same-origin',
+      /* No Content-Type: the browser has to generate its own multipart
+         boundary, which it only does when the header is left unset entirely. */
+      headers: {'Accept': 'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN')},
+      body: fd
+    });
+
+    var j = {}; try{ j = await r.json(); }catch(e){}
+
+    if(!r.ok || !j.url){
+      var msg = j.message || '';
+      /* A 422 from the validator carries `errors`; one raised by the controller
+         carries `message`. Both are written for the operator, so both are
+         shown rather than flattened into "upload failed". */
+      if(j.errors){ msg = Object.keys(j.errors).map(function(k){ return j.errors[k][0]; }).join(' '); }
+      throw new Error(msg || ('The upload failed (' + r.status + ').'));
+    }
+
+    return j.url;
+  }
+
+  /* ----------------------------------------------------------- the image box */
+
+  /**
+   * The markup for one image box.
+   *
+   * `id` namespaces every element in it, so the create form and the edit panel
+   * can each hold one without colliding. The current URL is the only state; the
+   * box is re-read from the DOM when the form is saved rather than kept in a
+   * variable that could drift from what is on screen.
+   */
+  function cpImageBoxHtml(id, url, heading){
+    url = url || '';
+
+    return '<div class="cpakimg" id="' + id + '">' +
+      (heading ? '<div class="pe-h" style="margin-bottom:10px">' + sesc(heading) + '</div>' : '') +
+      '<div class="cpakframe" id="' + id + '_frame">' +
+        (url
+          ? '<img id="' + id + '_img" src="' + sesc(url) + '" alt="">'
+          : '<div class="cpakempty" id="' + id + '_empty">No image yet.<br>A product without one shows a grey box on the shop.</div>') +
+      '</div>' +
+      '<div class="cpakacts">' +
+        /* A label wrapping a hidden input rather than a button that clicks it:
+           it is the native control, it is keyboard reachable, and it needs no
+           inline handler — which matters because some sandboxed previews block
+           inline on* entirely (see the CSP fallback at the foot of this file). */
+        '<label class="btn ghost sm" for="' + id + '_file">' + (url ? 'Replace image' : 'Choose image') + '</label>' +
+        '<input type="file" id="' + id + '_file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" style="display:none">' +
+        '<button type="button" class="btn ghost sm" id="' + id + '_remove"' + (url ? '' : ' disabled') + '>Remove</button>' +
+      '</div>' +
+      '<p class="cpakstatus" id="' + id + '_status" role="status" aria-live="polite"></p>' +
+      '<p class="cpakurl" id="' + id + '_url">' + (url ? sesc(url) : '') + '</p>' +
+      '<p class="cpakhint">JPG, PNG, WebP, GIF or SVG, up to 5MB. The file is checked by its contents, not by its name.</p>' +
+      '<details class="cpakpaste"><summary>or paste an image address</summary>' +
+        '<input class="inp" id="' + id + '_paste" placeholder="https://…" value="' + sesc(url) + '">' +
+      '</details>' +
+      /* The value the form actually reads. Kept in the DOM rather than in a
+         closure variable so what is submitted is always what the box shows. */
+      '<input type="hidden" id="' + id + '_value" value="' + sesc(url) + '">' +
+    '</div>';
+  }
+
+  /**
+   * Wire one image box.
+   *
+   * `opts.productId` makes the box save to the server on every change — that is
+   * the edit panel, where there is a product to save to. Without it the box
+   * only holds a URL for whoever submits the form, which is the create form,
+   * where there is no row yet.
+   */
+  function cpWireImageBox(id, opts){
+    opts = opts || {};
+
+    var el = function(suffix){ return document.getElementById(id + suffix); };
+    var box = el(''), file = el('_file'), remove = el('_remove'),
+        status = el('_status'), paste = el('_paste'), value = el('_value');
+
+    if(!box || !value) return;
+
+    function say(message, kind){
+      if(!status) return;
+      status.textContent = message || '';
+      status.className = 'cpakstatus' + (kind ? ' ' + kind : '');
+    }
+
+    /* Repaint the frame, the URL readout and the two buttons from one value, so
+       there is a single place where "the box has an image" is decided. */
+    function show(url){
+      var frame = el('_frame'), urlOut = el('_url'), label = box.querySelector('label.btn');
+
+      value.value = url || '';
+      if(paste) paste.value = url || '';
+      if(urlOut) urlOut.textContent = url || '';
+      if(remove) remove.disabled = !url;
+      if(label) label.textContent = url ? 'Replace image' : 'Choose image';
+
+      if(!frame) return;
+
+      frame.innerHTML = url
+        ? '<img id="' + id + '_img" src="' + sesc(url) + '" alt="">'
+        : '<div class="cpakempty" id="' + id + '_empty">No image yet.<br>A product without one shows a grey box on the shop.</div>';
+    }
+
+    /** On the edit panel only: persist the change immediately. */
+    async function persist(url){
+      if(!opts.productId) return;
+
+      await cpWrite('/admin-api/catalog-product-image/' + opts.productId, {image: url === '' ? null : url});
+    }
+
+    if(file){
+      file.onchange = async function(){
+        var chosen = file.files && file.files[0];
+        if(!chosen) return;
+
+        /* Shown before the upload starts, so the operator sees their own
+           picture immediately rather than a spinner. If the server refuses it,
+           show() puts the previous value back — the preview is never mistaken
+           for a saved state, because the status line says which it is. */
+        var previous = value.value;
+        var preview = null;
+
+        try{ preview = URL.createObjectURL(chosen); }catch(e){}
+
+        if(preview){
+          var frame = el('_frame');
+          if(frame) frame.innerHTML = '<img src="' + preview + '" alt="">';
+        }
+
+        say('Uploading…');
+
+        try{
+          var url = await cpUpload(chosen);
+          await persist(url);
+          show(url);
+          say(opts.productId ? 'Image saved.' : 'Image uploaded. It is attached when you save the product.', 'good');
+        }catch(e){
+          show(previous);
+          /* The server's own sentence, not "check your connection": it names
+             the size cap, the type that actually arrived, or what made an SVG
+             unsafe, and each of those is something the operator can act on. */
+          say(e.message, 'bad');
+        }finally{
+          if(preview){ try{ URL.revokeObjectURL(preview); }catch(e){} }
+          file.value = '';
+        }
+      };
+    }
+
+    if(remove){
+      remove.onclick = async function(){
+        say('');
+
+        try{
+          await persist('');
+          show('');
+          say('Image removed.', 'good');
+        }catch(e){ say(e.message, 'bad'); }
+      };
+    }
+
+    if(paste){
+      /* `change`, not `input`: saving on every keystroke would write a dozen
+         half-typed URLs to a live product. */
+      paste.onchange = async function(){
+        var url = paste.value.trim();
+
+        try{
+          await persist(url);
+          show(url);
+          say(url ? 'Image address saved.' : 'Image removed.', 'good');
+        }catch(e){ say(e.message, 'bad'); }
+      };
+    }
+
+    show(value.value);
+  }
+
+  /** What one image box currently holds, for whoever is submitting the form. */
+  function cpImageBoxValue(id){
+    var value = document.getElementById(id + '_value');
+
+    return value && value.value.trim() !== '' ? value.value.trim() : null;
+  }
+
+  /* ------------------------------------------------------- the create screen */
+
+  var CPNEW = {slugTouched: false, slugTimer: null, busy: false};
+
+  /**
+   * Catalog → Products → Add product.
+   *
+   * Deliberately the same shape as cpOpenDetail above — same two-column shell,
+   * same field classes, same Save button in the same corner — because a create
+   * form that looks like a different application is a second screen to learn
+   * for the same job.
+   */
+  window.cpOpenCreate = async function(){
+    var content = document.getElementById('content');
+    if(!content) return;
+
+    content.innerHTML = '<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">Loading…</p></div>';
+
+    /* The brand and category vocabularies. Fetched here as well as by the list,
+       because Add product is reachable before the list has finished loading and
+       an empty category picker on a required field is a dead end. */
+    if(!CP.facets){
+      try{ CP.facets = await api('/admin-api/catalog-products-facets'); }
+      catch(e){ CP.facets = {brands: [], categories: []}; }
+    }
+
+    var brands = (CP.facets && CP.facets.brands) || [];
+    var cats = (CP.facets && CP.facets.categories) || [];
+    var currency = (CP.data && CP.data.currency) || 'AED';
+
+    CPNEW.slugTouched = false;
+    CPNEW.busy = false;
+
+    content.innerHTML = '<div class="wrap">' +
+      '<div class="cpaktop"><button class="btn ghost sm" id="cpakBack">' +
+        ic('<path d="m15 18-6-6 6-6"/>') + ' Products</button><div style="flex:1"></div>' +
+        '<button class="btn" id="cpakSave">Add product</button></div>' +
+
+      '<div class="page-head" style="margin:0 0 12px"><h2>New product</h2>' +
+        '<p>It appears on the shop as soon as you publish it.</p></div>' +
+
+      '<div id="cpakBanner"></div>' +
+
+      '<div class="cpakgrid">' +
+        '<div class="card pad">' +
+          '<div class="cplfield cpakfield"><label>Product name</label>' +
+            '<input class="inp" id="cpakName" placeholder="e.g. Anua Heartleaf 77% Soothing Toner" autocomplete="off">' +
+            '<div class="cpakperma" id="cpakPerma">Web address: <b>—</b></div>' +
+            '<div class="cpakerr" id="cpakErrName"></div>' +
+            '<div class="cpakerr" id="cpakErrSlug"></div>' +
+            /* Hidden until the operator chooses to edit it. The address is
+               generated for them; it becomes a decision only if they want it
+               to be one. */
+            '<div id="cpakSlugWrap" style="display:none;margin-top:8px">' +
+              '<label style="display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:4px">Web address</label>' +
+              '<input class="inp" id="cpakSlug" placeholder="anua-heartleaf-77-soothing-toner" autocomplete="off">' +
+              '<p class="cpaknote">Lower-case letters, numbers and hyphens. This cannot be changed after the ' +
+                'product is saved — it is the address customers and Google will hold.</p>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="cplpair">' +
+            '<div class="cplfield cpakfield"><label>SKU (optional)</label>' +
+              '<input class="inp" id="cpakSku" autocomplete="off"><div class="cpakerr" id="cpakErrSku"></div></div>' +
+            '<div class="cplfield cpakfield"><label>Brand (optional)</label>' +
+              '<select class="inp" id="cpakBrand"><option value="">No brand</option>' +
+                brands.map(function(b){ return '<option value="' + b.id + '">' + sesc(b.name) + '</option>'; }).join('') +
+              '</select><div class="cpakerr" id="cpakErrBrand"></div></div>' +
+          '</div>' +
+
+          '<div class="cplfield cpakfield"><label>Category</label>' +
+            '<select class="inp" id="cpakCategory"><option value="">Choose a category…</option>' +
+              cats.map(function(c){
+                var pad = '';
+                for(var i = 0; i < (+c.depth || 0); i++) pad += '· ';
+                return '<option value="' + c.id + '">' + sesc(pad + c.name) + '</option>';
+              }).join('') +
+            '</select>' +
+            '<p class="cpaknote">Shoppers browse by category. A product filed under none is not on any category page.</p>' +
+            '<div class="cpakerr" id="cpakErrCategory"></div></div>' +
+
+          '<div class="cplpair">' +
+            '<div class="cplfield cpakfield"><label>Regular price (' + sesc(currency) + ')</label>' +
+              '<input class="inp" id="cpakPrice" inputmode="decimal" placeholder="99.50" autocomplete="off">' +
+              '<div class="cpakerr" id="cpakErrPrice"></div></div>' +
+            '<div class="cplfield cpakfield"><label>Sale price (' + sesc(currency) + ', optional)</label>' +
+              '<input class="inp" id="cpakSale" inputmode="decimal" placeholder="79.00" autocomplete="off">' +
+              '<div class="cpakerr" id="cpakErrSale"></div></div>' +
+          '</div>' +
+
+          '<div class="cplfield cpakfield"><label>Short description</label>' +
+            '<textarea class="inp" id="cpakShort" rows="3" placeholder="The line that appears under the name on the product page."></textarea>' +
+            '<div class="cpakerr" id="cpakErrShort"></div></div>' +
+
+          '<div class="cplfield cpakfield" style="margin-bottom:0"><label>Full description</label>' +
+            '<textarea class="inp" id="cpakLong" rows="8" placeholder="What it is, what it does, how to use it."></textarea>' +
+            '<div class="cpakerr" id="cpakErrLong"></div></div>' +
+        '</div>' +
+
+        '<div class="cpakside">' +
+          '<div class="card pad">' +
+            '<div class="cplfield cpakfield"><label>Status</label>' +
+              '<select class="inp" id="cpakStatus">' +
+                '<option value="publish">Published — on the shop</option>' +
+                '<option value="draft">Draft — not on the shop yet</option>' +
+                '<option value="private">Private — hidden from the shop</option>' +
+              '</select><div class="cpakerr" id="cpakErrStatus"></div></div>' +
+
+            '<div class="cplfield cpakfield"><label>Visible in the catalogue</label>' +
+              '<select class="inp" id="cpakVisible"><option value="1">Yes</option><option value="0">No</option></select>' +
+              '<p class="cpaknote" id="cpakVisibleNote"></p>' +
+              '<div class="cpakerr" id="cpakErrVisible"></div></div>' +
+
+            '<div class="cplpair">' +
+              '<div class="cplfield cpakfield"><label>Stock status</label>' +
+                '<select class="inp" id="cpakStockStatus">' +
+                  '<option value="instock">In stock</option>' +
+                  '<option value="outofstock">Out of stock</option>' +
+                  '<option value="onbackorder">On backorder</option>' +
+                '</select><div class="cpakerr" id="cpakErrStockStatus"></div></div>' +
+              '<div class="cplfield cpakfield"><label>Track stock</label>' +
+                '<select class="inp" id="cpakManage"><option value="0">No</option><option value="1">Yes</option></select></div>' +
+            '</div>' +
+
+            '<div class="cplfield cpakfield" style="margin-bottom:0"><label>Units in stock</label>' +
+              '<input class="inp" id="cpakStock" inputmode="numeric" placeholder="Leave blank if you are not counting">' +
+              '<div class="cpakerr" id="cpakErrStock"></div></div>' +
+          '</div>' +
+
+          '<div class="card pad">' + cpImageBoxHtml('cpakImage', '', 'Product image') +
+            '<div class="cpakerr" id="cpakErrImage"></div></div>' +
+        '</div>' +
+      '</div></div>';
+
+    cpWireImageBox('cpakImage', {});
+
+    document.getElementById('cpakBack').onclick = function(){ go('catalog', 'products'); };
+
+    var name = document.getElementById('cpakName'),
+        slug = document.getElementById('cpakSlug'),
+        slugWrap = document.getElementById('cpakSlugWrap'),
+        perma = document.getElementById('cpakPerma'),
+        status = document.getElementById('cpakStatus'),
+        visible = document.getElementById('cpakVisible'),
+        visibleNote = document.getElementById('cpakVisibleNote');
+
+    /* --- the permalink, from the server ---------------------------------- */
+
+    var lastAsked = '';
+
+    async function refreshSlug(){
+      var body = CPNEW.slugTouched
+        ? {slug: slug.value, name: name.value}
+        : {name: name.value};
+
+      var key = JSON.stringify(body);
+      if(key === lastAsked) return;
+      lastAsked = key;
+
+      var out;
+      try{ out = await cpWrite('/admin-api/catalog-product-slug', body); }
+      catch(e){ return; }
+
+      /* Another keystroke landed while this was in flight; that answer is about
+         a name the operator has already moved on from. */
+      if(key !== lastAsked) return;
+
+      if(!out.slug){
+        perma.className = 'cpakperma';
+        perma.innerHTML = 'Web address: <b>—</b>';
+        return;
+      }
+
+      if(!CPNEW.slugTouched) slug.value = out.slug;
+
+      perma.className = 'cpakperma' + (out.available ? '' : ' bad');
+      perma.innerHTML = 'Web address: <b>/product/' + sesc(out.slug) + '/</b>' +
+        '<button type="button" class="lk" id="cpakSlugEdit">' + (slugWrap.style.display === 'none' ? 'Edit' : 'Hide') + '</button>' +
+        (out.available ? '' : '<br><span style="color:var(--sale,#c0392b)">' + sesc(out.reason) +
+          (out.suggestion ? ' <button type="button" class="lk" id="cpakSlugUse">Use ' + sesc(out.suggestion) + '</button>' : '') +
+          '</span>');
+
+      var edit = document.getElementById('cpakSlugEdit');
+      if(edit) edit.onclick = function(){
+        slugWrap.style.display = slugWrap.style.display === 'none' ? 'block' : 'none';
+        edit.textContent = slugWrap.style.display === 'none' ? 'Edit' : 'Hide';
+        if(slugWrap.style.display === 'block') slug.focus();
+      };
+
+      /* Offered, never applied behind the operator's back: the address this
+         product lives at for the rest of its life is their decision. */
+      var use = document.getElementById('cpakSlugUse');
+      if(use) use.onclick = function(){
+        CPNEW.slugTouched = true;
+        slug.value = out.suggestion;
+        refreshSlug();
+      };
+    }
+
+    function scheduleSlug(){
+      if(CPNEW.slugTimer) clearTimeout(CPNEW.slugTimer);
+      CPNEW.slugTimer = setTimeout(refreshSlug, 250);
+    }
+
+    name.oninput = scheduleSlug;
+    slug.oninput = function(){ CPNEW.slugTouched = true; scheduleSlug(); };
+
+    /* --- published and invisible cannot be expressed ---------------------- */
+
+    function syncVisibility(){
+      if(status.value === 'publish'){
+        visible.value = '1';
+        visible.disabled = true;
+        visibleNote.textContent = 'A published product has to be visible — otherwise it is not on the shop, '
+          + 'not on its category page and not in the sitemap. Save it as a draft to keep it off the shop.';
+      }else{
+        visible.disabled = false;
+        visibleNote.textContent = status.value === 'private'
+          ? 'Private products are never on the shop, whichever this is set to.'
+          : 'A draft is not on the shop until you publish it.';
+      }
+    }
+
+    status.onchange = syncVisibility;
+    syncVisibility();
+
+    /* --- saving ----------------------------------------------------------- */
+
+    document.getElementById('cpakSave').onclick = async function(){
+      if(CPNEW.busy) return;
+
+      var value = function(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+      var save = document.getElementById('cpakSave');
+
+      cpClearErrors();
+
+      var payload = {
+        name: value('cpakName'),
+        /* Sent only when the operator opened the slug field and typed in it.
+           Otherwise the server derives it from the name, which is the same
+           Str::slug() the preview above has been showing them. */
+        slug: CPNEW.slugTouched ? value('cpakSlug') : '',
+        sku: value('cpakSku') === '' ? null : value('cpakSku'),
+        brand_id: value('cpakBrand') === '' ? null : +value('cpakBrand'),
+        category_id: value('cpakCategory') === '' ? null : +value('cpakCategory'),
+        /* The decimal STRING, exactly as typed. Nothing here parses it into a
+           number; the server reads the digits and stores integer fils. */
+        price: value('cpakPrice'),
+        sale_price: value('cpakSale') === '' ? null : value('cpakSale'),
+        status: value('cpakStatus'),
+        stock_status: value('cpakStockStatus'),
+        is_visible: document.getElementById('cpakVisible').value === '1',
+        manage_stock: value('cpakManage') === '1',
+        stock: value('cpakStock') === '' ? null : parseInt(value('cpakStock'), 10),
+        short_description: value('cpakShort') === '' ? null : value('cpakShort'),
+        description: value('cpakLong') === '' ? null : value('cpakLong'),
+        image: cpImageBoxValue('cpakImage')
+      };
+
+      CPNEW.busy = true;
+      save.disabled = true;
+      save.textContent = 'Saving…';
+
+      try{
+        var out = await cpWrite('/admin-api/catalog-product-create', payload);
+
+        cpToast(out.live ? 'Product added and live on the shop.' : 'Product saved.');
+
+        /* Straight into the real edit panel for the product just created, which
+           is where the operator would go next anyway — and it proves the row
+           exists rather than asserting it. */
+        CP.page = 1;
+        cpOpenDetail(out.id);
+      }catch(e){
+        cpShowErrors(e);
+      }finally{
+        CPNEW.busy = false;
+        save.disabled = false;
+        save.textContent = 'Add product';
+      }
+    };
+
+    var focusable = document.getElementById('cpakName');
+    if(focusable) focusable.focus();
+
+    content.scrollTop = 0;
+  };
+
+  /* --------------------------------------------------------------- errors */
+
+  /* Which error slot belongs to which field. Named once, so clearing and
+     filling cannot drift apart and leave a stale message under a field the
+     operator has since fixed. */
+  var CPAK_ERR = {
+    name: ['cpakErrName', 'cpakName'],
+    slug: ['cpakErrSlug', 'cpakSlug'],
+    sku: ['cpakErrSku', 'cpakSku'],
+    brand_id: ['cpakErrBrand', 'cpakBrand'],
+    category_id: ['cpakErrCategory', 'cpakCategory'],
+    price: ['cpakErrPrice', 'cpakPrice'],
+    sale_price: ['cpakErrSale', 'cpakSale'],
+    status: ['cpakErrStatus', 'cpakStatus'],
+    is_visible: ['cpakErrVisible', 'cpakVisible'],
+    stock_status: ['cpakErrStockStatus', 'cpakStockStatus'],
+    stock: ['cpakErrStock', 'cpakStock'],
+    short_description: ['cpakErrShort', 'cpakShort'],
+    description: ['cpakErrLong', 'cpakLong'],
+    image: ['cpakErrImage', null]
+  };
+
+  function cpClearErrors(){
+    var banner = document.getElementById('cpakBanner');
+    if(banner) banner.innerHTML = '';
+
+    Object.keys(CPAK_ERR).forEach(function(field){
+      var slot = document.getElementById(CPAK_ERR[field][0]);
+      if(slot) slot.textContent = '';
+
+      var input = CPAK_ERR[field][1] ? document.getElementById(CPAK_ERR[field][1]) : null;
+      if(input) input.classList.remove('bad');
+    });
+  }
+
+  /**
+   * Put the server's refusal where the operator is looking.
+   *
+   * Every message here is written by the endpoint, not by this file. A form
+   * that paraphrases the server ends up saying something subtly different from
+   * the rule that actually refused, and the operator then fixes the wrong
+   * thing — which is how a "price must be a number" message hides a value that
+   * was refused for being too large.
+   */
+  function cpShowErrors(e){
+    var payload = (e && e.payload) || {};
+    var errors = payload.errors || {};
+    var placed = 0;
+
+    Object.keys(errors).forEach(function(field){
+      var target = CPAK_ERR[field];
+      if(!target) return;
+
+      var slot = document.getElementById(target[0]);
+      if(!slot) return;
+
+      slot.textContent = errors[field][0];
+      placed++;
+
+      var input = target[1] ? document.getElementById(target[1]) : null;
+      if(input){
+        input.classList.add('bad');
+        if(placed === 1 && input.focus) input.focus();
+      }
+    });
+
+    /* Anything that had no field to sit under — a refusal about the shape of
+       the whole request rather than one box — goes in the banner rather than
+       into a toast that disappears while the operator is still reading it. */
+    var banner = document.getElementById('cpakBanner');
+
+    if(banner && (placed === 0 || payload.message)){
+      banner.innerHTML = '<div class="cpakbanner">' + sesc(payload.message || e.message) + '</div>';
+    }
+
+    if(placed === 0 && !payload.message) cpToast(e.message);
+  }
+
+  /* ===== LANE AK · Catalog · Products · Add + image — END ==================== */
 
   /* ---------- Store → Payments (gateway credentials) ----------
      The real screen for /admin-api/payments (Admin\PaymentsApiController),
