@@ -14016,6 +14016,16 @@ buildNav();
      anchor its nav entry beneath that one. --}}
 @include('admin.partials.coupon-usage-screen')
 
+{{-- Catalog -> Categories & Brands (Lane AQ). Same arrangement and for the
+     same reason as the two screens above: its own file, its own sidebar entry
+     appended to the rendered nav, its own wrapper around window.go.
+
+     This is the merchandising view of the tree -- drag-to-reorder, merge, the
+     per-category SEO fields, the redirect log, and a product count that
+     matches what the category page actually lists. The existing Catalog ->
+     Categories tab is untouched and still does single-category CRUD. --}}
+@include('admin.partials.category-tree-screen')
+
 @verbatim
 </body>
 </html>

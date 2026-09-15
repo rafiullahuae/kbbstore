@@ -94,11 +94,21 @@ Route::get('/shop', [\App\Http\Controllers\Store\ShopController::class, 'index']
 
 // Category archives render through the same controller — same filters, same
 // grid, same sort. URL Contract U-03: /product-category/{nested/path}/
-Route::get('/product-category/{path}', function (\Illuminate\Http\Request $request, string $path) {
-    $slug = basename(trim($path, '/'));
-
-    return app(\App\Http\Controllers\Store\ShopController::class)->index($request, $slug);
-})->where('path', '.*')->name('category');
+/*
+ * Repointed from an inline closure at a real controller, because the closure
+ * could not 404 and that was doing measurable harm.
+ *
+ * It took basename() of the path and handed the last segment to ShopController,
+ * which falls back to the whole catalogue for a slug it does not recognise. So
+ * /product-category/zz-nope/ answered 200 with every product on the site, and
+ * so did /product-category/made-up/zz-child/ — verified against a running
+ * server before this change. That is an unbounded crawlable space of soft 404s
+ * all serving the same duplicate content, and it also meant a renamed category
+ * did not break its old URL so much as leave it answering 200 with the wrong
+ * page, forever and invisibly.
+ */
+Route::get('/product-category/{path}', [\App\Http\Controllers\Store\CategoryArchiveController::class, 'show'])
+    ->where('path', '.*')->name('category');
 // Product — /product/{slug}/ per the URL Contract. The old ?slug= form redirects
 // so any existing link keeps working rather than 404ing.
 Route::get('/product/{slug}', [\App\Http\Controllers\Store\ProductController::class, 'show'])->name('product.show');
@@ -355,6 +365,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Categories and attributes. Same guarded group: these write catalogue
         // records and accept an uploaded image.
         require __DIR__.'/catalog-admin.php';
+
+        // Catalog → Categories & Brands: merge, the redirect ledger, and the
+        // brand tree with its reorder. Same guarded group — the redirect
+        // ledger is a map of the store's old URLs and the merge endpoint
+        // moves every product out of a category.
+        require __DIR__.'/categories-brands-admin.php';
 
         // Catalog → Products: the list, inline edits, the detail panel, guarded
         // bulk actions and the filtered CSV export. Flat paths on purpose —

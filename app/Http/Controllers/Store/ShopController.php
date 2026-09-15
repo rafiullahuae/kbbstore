@@ -90,19 +90,38 @@ class ShopController extends Controller
             'chips' => $this->chips($active),
             // The sidebar is identical for every visitor and only changes with
             // the catalogue, so it is cached rather than recounted per view.
+            // Ordered by the curated `position` FIRST, then by size.
+            //
+            // It was ordered by size alone, which meant the category reorder in
+            // Store → Catalog → Categories wrote `categories.position` and
+            // nothing on the storefront ever read it: the owner could reorder
+            // the tree all day and this list never moved. "Most products" is
+            // not a merchandising decision, and it is not one the owner asked
+            // for.
+            //
+            // Backward compatible by construction: `position` defaults to 0 on
+            // every row and nothing has ever written it, so until the owner
+            // actually reorders something, every row ties at 0 and the size
+            // ordering below decides exactly as before.
             'cats' => Cache::remember('kbb.shop.cats', 900, fn () => Category::query()
                 ->select('id', 'name', 'slug')
                 ->withCount(['products' => fn ($q) => $q->visible()])
-                ->groupBy('categories.id', 'categories.name', 'categories.slug')
+                ->groupBy('categories.id', 'categories.name', 'categories.slug', 'categories.position')
                 ->having('products_count', '>', 0)
+                ->orderBy('categories.position')
                 ->orderByDesc('products_count')
                 ->limit(30)
                 ->get()),
+            // Same reasoning as the categories above: `brands.position` has
+            // existed since the original schema and nothing has ever read it,
+            // so the brand reorder had nowhere to show up. Ties at 0 fall back
+            // to alphabetical, which is what this did before.
             'brands' => Cache::remember('kbb.shop.brands', 900, fn () => Brand::query()
                 ->select('id', 'name', 'slug')
                 ->withCount(['products' => fn ($q) => $q->visible()])
-                ->groupBy('brands.id', 'brands.name', 'brands.slug')
+                ->groupBy('brands.id', 'brands.name', 'brands.slug', 'brands.position')
                 ->having('products_count', '>', 0)
+                ->orderBy('brands.position')
                 ->orderBy('name')
                 ->limit(40)
                 ->get()),

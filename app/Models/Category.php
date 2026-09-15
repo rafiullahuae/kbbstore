@@ -14,7 +14,7 @@ class Category extends Model
 
     protected function casts(): array
     {
-        return ['depth' => 'int', 'position' => 'int'];
+        return ['depth' => 'int', 'position' => 'int', 'seo' => 'array'];
     }
 
     public function parent()
