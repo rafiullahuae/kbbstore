@@ -30,6 +30,9 @@ use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route as RouteFacade;
+use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\Support\CustomersAdminRoutes;
 use Tests\Support\OrdersAdminRoutes;
 use Tests\Support\SqlShape;
@@ -473,4 +476,401 @@ it('reports the same summary on every page of the orders list', function () {
 
     expect($second)->toBe($first)
         ->and($second['orders'])->toBeGreaterThan(0);
+});
+
+/* ------------------------------------------------- Lane X: the whole surface */
+
+/**
+ * THE GAP THAT LET THE ORDERS BUG THROUGH WAS A LIST.
+ *
+ * Every guard above names its endpoint by hand. /admin-api/orders-list did not
+ * exist when the earlier ones were written, so the screen shipped the identical
+ * MySQL 1140 with a green suite — not because a rule was missing, but because
+ * nobody added two lines to an array. A guard whose coverage depends on somebody
+ * remembering to extend it has a known failure mode, and that failure mode has
+ * now fired twice.
+ *
+ * So coverage is not a list here. It is the router.
+ *
+ * This walks every admin-api GET route that takes no parameters, drives it, and
+ * judges the SQL it issued. A screen added next month is covered the day its
+ * route is registered, by nobody doing anything. The hand-written blocks above
+ * stay, because they exercise the sorts, chips and second pages that a bare GET
+ * of the same path never reaches — the router can enumerate paths, not
+ * meaningful query strings.
+ *
+ * Endpoints that stream (the CSV exports) have their body consumed on purpose:
+ * a StreamedResponse runs no query until something reads it, so asserting
+ * against an unread stream asserts against nothing at all.
+ */
+function guardAdminApiGetPaths(): array
+{
+    $paths = [];
+
+    foreach (RouteFacade::getRoutes()->getRoutes() as $route) {
+        if (! str_starts_with($route->uri(), 'admin-api/')) {
+            continue;
+        }
+
+        if (! in_array('GET', $route->methods(), true)) {
+            continue;
+        }
+
+        if (str_contains($route->uri(), '{')) {
+            continue;
+        }
+
+        $paths[$route->uri()] = true;
+    }
+
+    ksort($paths);
+
+    return array_keys($paths);
+}
+
+it('issues portable SQL on every parameterless admin-api GET route', function () {
+    guardFixtures();
+    ordersGuardFixture();
+
+    $admin = guardAdmin();
+
+    $paths = guardAdminApiGetPaths();
+
+    // A router that returned nothing would make this test vacuously green, which
+    // is the exact shape of failure it exists to prevent.
+    expect(count($paths))->toBeGreaterThan(30);
+
+    $failures = [];
+
+    foreach ($paths as $uri) {
+        $status = null;
+
+        $captured = SqlShape::capture(function () use ($admin, $uri, &$status) {
+            $response = $this->actingAs($admin, 'admin')->get('/' . $uri);
+
+            $status = $response->getStatusCode();
+
+            // Force a streamed body to actually run. Without this the export
+            // endpoints report zero statements and pass by doing nothing.
+            if ($response->baseResponse instanceof StreamedResponse) {
+                $response->streamedContent();
+            }
+        });
+
+        if ($status >= 500) {
+            $failures[] = "{$uri}: responded {$status}";
+        }
+
+        foreach (SqlShape::violations($captured) as $problem) {
+            $failures[] = "{$uri}: {$problem}";
+        }
+    }
+
+    expect($failures)->toBe([]);
+});
+
+/**
+ * And the parameterised ones cannot be quietly skipped.
+ *
+ * The walk above cannot invent an order id, so it passes over every route with a
+ * {placeholder} in it — including /admin-api/orders/{id}, which is a real screen
+ * reading real money. Listing them by hand would reintroduce exactly the stale
+ * list this file is trying to get rid of, so instead: every parameterised route
+ * is either DRIVEN below with resolved parameters, or named in the skip list
+ * with a reason. A new one that is neither fails here, which forces the decision
+ * to be made rather than defaulted.
+ */
+it('drives or explicitly excuses every parameterised admin-api GET route', function () {
+    guardFixtures();
+
+    $admin = guardAdmin();
+
+    $product = Product::query()->firstOrFail();
+    $category = Category::query()->firstOrFail();
+    $customer = Customer::query()->firstOrFail();
+    $order = Order::query()->firstOrFail();
+
+    /** Route URI => the concrete path to drive it with. */
+    $driven = [
+        'admin-api/products/{id}' => '/admin-api/products/' . $product->id,
+        'admin-api/orders/{id}' => '/admin-api/orders/' . $order->id,
+        'admin-api/orders/{id}/detail' => '/admin-api/orders/' . $order->id . '/detail',
+        'admin-api/orders/{id}/settlement' => '/admin-api/orders/' . $order->id . '/settlement',
+        'admin-api/customers/{id}' => '/admin-api/customers/' . $customer->id,
+        'admin-api/catalog/reorder/{type}/{id}/products' => '/admin-api/catalog/reorder/category/' . $category->id . '/products',
+    ];
+
+    /** Route URI => why driving it here would prove nothing. */
+    $excused = [
+        // Serves a zip from disk. Touches no query and cannot carry a dialect
+        // problem; driving it would assert against a 404 for a missing file.
+        'admin-api/updates/{release}/download' => 'file download, issues no SQL',
+    ];
+
+    $parameterised = [];
+
+    foreach (RouteFacade::getRoutes()->getRoutes() as $route) {
+        if (! str_starts_with($route->uri(), 'admin-api/')) {
+            continue;
+        }
+
+        if (! in_array('GET', $route->methods(), true)) {
+            continue;
+        }
+
+        if (! str_contains($route->uri(), '{')) {
+            continue;
+        }
+
+        $parameterised[$route->uri()] = true;
+    }
+
+    $unhandled = array_values(array_diff(
+        array_keys($parameterised),
+        array_keys($driven),
+        array_keys($excused)
+    ));
+
+    expect($unhandled)->toBe([], 'parameterised admin-api GET routes with no dialect coverage and no recorded reason: '
+        . implode(', ', $unhandled));
+
+    $failures = [];
+
+    foreach ($driven as $uri => $path) {
+        // Only drive what is actually registered — a route this lane resolved
+        // that another lane later renames should fail on the list above, with a
+        // readable message, not here with a 404.
+        if (! isset($parameterised[$uri])) {
+            continue;
+        }
+
+        $status = null;
+
+        $captured = SqlShape::capture(function () use ($admin, $path, &$status) {
+            $status = $this->actingAs($admin, 'admin')->get($path)->getStatusCode();
+        });
+
+        if ($status >= 500) {
+            $failures[] = "{$path}: responded {$status}";
+        }
+
+        foreach (SqlShape::violations($captured) as $problem) {
+            $failures[] = "{$path}: {$problem}";
+        }
+    }
+
+    expect($failures)->toBe([]);
+});
+
+/**
+ * Catalog → Products, across its sorts, chips, search and second page.
+ *
+ * Same treatment the Customers and Orders screens get above. This screen builds
+ * its page from a Builder it has already sorted, and it reports a `total` and a
+ * `counts` block alongside the rows — the exact arrangement that produced the
+ * 1140 twice. It happens to be correct today; nothing said so until now.
+ */
+it('issues portable SQL on the catalog products screen for every sort and chip', function (string $query) {
+    guardFixtures();
+
+    $admin = guardAdmin();
+
+    $captured = SqlShape::capture(function () use ($admin, $query) {
+        $this->actingAs($admin, 'admin')->getJson('/admin-api/catalog/products?' . $query)->assertOk();
+    });
+
+    expect($captured)->not->toBeEmpty();
+    expect(SqlShape::violations($captured))->toBe([], "portability violations on ?{$query}");
+})->with([
+    'sort=newest',
+    'sort=name',
+    'sort=price_desc',
+    'sort=stock_asc',
+    'filter=all',
+    'filter=published',
+    'filter=draft',
+    'filter=low',
+    'filter=out',
+    'search=Guard',
+    'page=2&per_page=10',
+]);
+
+/**
+ * The tab counts and the row total describe the filtered set, not the page.
+ *
+ * This is the assertion nobody had written for the Customers screen, which is
+ * why `offset 25` on an aggregate went unnoticed: every tile read zero from page
+ * two on and the endpoint still answered 200.
+ */
+it('reports the same counts on every page of the catalog products list', function () {
+    guardFixtures();
+
+    // Enough products that page two is real at the per_page floor of 10.
+    foreach (range(1, 14) as $n) {
+        Product::create([
+            'slug' => 'paged-' . $n . '-' . uniqid(),
+            'name' => 'Paged Product ' . $n,
+            'status' => 'publish',
+            'is_visible' => true,
+            'price' => 1000 * $n,
+            'stock_status' => 'instock',
+        ]);
+    }
+
+    $admin = guardAdmin();
+
+    $first = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/catalog/products?per_page=10&page=1')->assertOk();
+
+    $second = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/catalog/products?per_page=10&page=2')->assertOk();
+
+    expect($second->json('counts'))->toBe($first->json('counts'))
+        ->and($second->json('total'))->toBe($first->json('total'))
+        ->and($second->json('total'))->toBeGreaterThan(10);
+});
+
+/**
+ * Catalog → Reorder reports a total beside a page of products. Same shape, same
+ * assertion.
+ */
+it('reports the same total on every page of the catalog reorder list', function () {
+    guardFixtures();
+
+    $category = Category::query()->firstOrFail();
+
+    foreach (range(1, 14) as $n) {
+        $p = Product::create([
+            'slug' => 'reorder-' . $n . '-' . uniqid(),
+            'name' => 'Reorder Product ' . $n,
+            'status' => 'publish',
+            'is_visible' => true,
+            'price' => 1000 * $n,
+            'stock_status' => 'instock',
+        ]);
+
+        $p->categories()->attach($category->id);
+    }
+
+    $admin = guardAdmin();
+
+    $base = '/admin-api/catalog/reorder/category/' . $category->id . '/products?per_page=10&page=';
+
+    $first = $this->actingAs($admin, 'admin')->getJson($base . '1')->assertOk();
+    $second = $this->actingAs($admin, 'admin')->getJson($base . '2')->assertOk();
+
+    expect($second->json('total'))->toBe($first->json('total'))
+        ->and($second->json('total'))->toBeGreaterThan(10);
+});
+
+/**
+ * Schema introspection is the framework's, and the framework knows both
+ * dialects.
+ *
+ * Schema::hasTable() reads sqlite_master here and information_schema on MySQL,
+ * because the grammar is chosen per driver. Five live admin endpoints call it —
+ * Newsletter, Extended Delivery, Demo Content, Mega Menu and Updates — and while
+ * SqlShape reported those statements the route walk above could not be written
+ * at all: every one of them failed on a portability problem that does not exist.
+ *
+ * The distinction is made on the call stack, not on the text, so a query the
+ * APPLICATION writes against sqlite_master is still a violation. Both halves are
+ * asserted, because a rule that stops firing is worth no more than a rule that
+ * fires wrongly.
+ */
+it('excuses the framework schema introspection and nothing else', function () {
+    $captured = SqlShape::capture(function () {
+        Schema::hasTable('orders');
+    });
+
+    expect($captured)->not->toBeEmpty()
+        ->and(SqlShape::violations($captured))->toBe([]);
+
+    if (DB::connection()->getDriverName() !== 'sqlite') {
+        return;
+    }
+
+    // The same table, read by application code rather than by the schema
+    // builder, is still SQLite-only and still reported.
+    $byHand = SqlShape::capture(function () {
+        DB::select("select name from sqlite_master where type = 'table' limit 1");
+    });
+
+    expect(SqlShape::violations($byHand))->not->toBe([]);
+});
+
+/* ----------------------------------------- Lane X: the rest of the storefront */
+
+/**
+ * The storefront list above stopped at four pages. Every other page a shopper
+ * reaches that counts, groups or paginates is here.
+ *
+ * The brand directory and the shop sidebar both carry per-brand and
+ * per-category counts behind a GROUP BY. The four curated collections paginate.
+ * The review wall aggregates ratings. The category archive is the shop query
+ * with a pivot join on it — the join is what makes its count different from the
+ * shop's, and a count over a join is where a GROUP BY goes missing.
+ */
+it('issues portable SQL on the rest of the storefront', function (string $url) {
+    guardFixtures();
+
+    $product = Product::query()->where('status', 'publish')->firstOrFail();
+    $category = Category::query()->firstOrFail();
+
+    // The archive is reached through the category's own path, not its slug: a
+    // nested category's URL is the full chain and the bare slug 404s.
+    $url = str_replace(
+        ['{slug}', '{category}'],
+        [(string) $product->slug, (string) ($category->path ?: $category->slug)],
+        $url
+    );
+
+    $captured = SqlShape::capture(function () use ($url) {
+        $this->get($url)->assertOk();
+    });
+
+    expect($captured)->not->toBeEmpty("no SQL was issued for {$url}");
+    expect(SqlShape::violations($captured))->toBe([], "portability violations on {$url}");
+})->with([
+    '/korean-skincare-brands',
+    '/product-category/{category}',
+    '/new-in',
+    '/best-sellers',
+    '/super-sale',
+    '/everything-under-54-aed',
+    '/reviews',
+    '/shop?page=2',
+    '/shop?brand=guard-brand',
+    '/cart',
+    '/api/products',
+    '/api/reviews',
+]);
+
+/**
+ * The shop's result count describes the filtered catalogue, not the page of it.
+ *
+ * Same property as an admin summary tile, and the same failure if it is built
+ * from the Builder the page was taken from: the heading would read "24 products"
+ * on page one and "0 products" on page two while both pages rendered fine.
+ */
+it('reports the same product total on every page of the shop', function () {
+    guardFixtures();
+
+    // Enough to fill more than one page at the default of 24 per page.
+    foreach (range(1, 30) as $n) {
+        Product::create([
+            'slug' => 'shop-paged-' . $n . '-' . uniqid(),
+            'name' => 'Shop Paged ' . $n,
+            'status' => 'publish',
+            'is_visible' => true,
+            'price' => 1000 + $n,
+            'stock_status' => 'instock',
+        ]);
+    }
+
+    $first = $this->get('/shop')->assertOk()->viewData('total');
+    $second = $this->get('/shop?page=2')->assertOk()->viewData('total');
+
+    expect($second)->toBe($first)
+        ->and($second)->toBeGreaterThan(24);
 });

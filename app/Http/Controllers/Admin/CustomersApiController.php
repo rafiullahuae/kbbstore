@@ -90,7 +90,7 @@ class CustomersApiController extends Controller
      * than the package just applied, the server is serving cached bytecode and
      * the code is not the thing to go and look at.
      */
-    private const BUILD = '2.60.125';
+    private const BUILD = '2.60.126';
 
     /**
      * The chip filters, named once so the list, the chip counts and the export
@@ -279,10 +279,25 @@ class CustomersApiController extends Controller
         $segment = $this->segment($request);
         $sort = (string) $request->query('sort', 'newest');
 
+        /*
+         * NO ->limit(self::EXPORT_MAX) HERE, DELIBERATELY. It used to be, and
+         * it did nothing at all.
+         *
+         * chunk() walks the query with forPage(), and forPage() SETS limit and
+         * offset — it does not intersect with a limit already on the builder.
+         * So the 50,000 ceiling was overwritten by `limit 500 offset 0` on the
+         * first round trip and the export streamed the entire filtered table.
+         * Proved by the statements the endpoint issues: EXPORT_MAX never
+         * appeared in any of them.
+         *
+         * The ceiling is enforced where it can actually be enforced — by
+         * counting rows written and stopping the walk. Returning false from the
+         * chunk callback is how chunk() is told to stop.
+         */
         $query = $this->applySort(
             $this->applySegment($this->baseQuery($request), $segment),
             $sort
-        )->limit(self::EXPORT_MAX);
+        );
 
         $filename = 'customers-' . now()->format('Y-m-d') . '.csv';
 
@@ -309,8 +324,16 @@ class CustomersApiController extends Controller
 
             $currency = Money::currency();
 
-            $query->chunk(self::EXPORT_CHUNK, function ($chunk) use ($out, $currency) {
+            $written = 0;
+
+            $query->chunk(self::EXPORT_CHUNK, function ($chunk) use ($out, $currency, &$written) {
                 foreach ($chunk as $c) {
+                    if ($written >= self::EXPORT_MAX) {
+                        return false;
+                    }
+
+                    $written++;
+
                     $row = $this->rowToApi($c);
 
                     fputcsv($out, array_map($this->csvCell(...), [

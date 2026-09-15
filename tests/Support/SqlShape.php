@@ -49,14 +49,18 @@ final class SqlShape
     /**
      * Run $fn with a query log attached.
      *
-     * @return list<array{sql: string, bindings: array<int, mixed>}>
+     * @return list<array{sql: string, bindings: array<int, mixed>, schema: bool}>
      */
     public static function capture(callable $fn): array
     {
         $seen = [];
 
         DB::listen(function ($query) use (&$seen) {
-            $seen[] = ['sql' => $query->sql, 'bindings' => $query->bindings];
+            $seen[] = [
+                'sql' => $query->sql,
+                'bindings' => $query->bindings,
+                'schema' => self::issuedBySchemaBuilder($query->sql),
+            ];
         });
 
         $fn();
@@ -65,9 +69,54 @@ final class SqlShape
     }
 
     /**
+     * Was this statement written by the framework's own schema grammar?
+     *
+     * Schema::hasTable() on SQLite reads sqlite_master; on MySQL the SAME call
+     * reads information_schema, because the grammar is chosen per driver. So a
+     * `sqlite_master` statement that came out of Illuminate\Database\Schema is
+     * portable by construction and flagging it is a false positive — one with
+     * teeth, because five live admin endpoints call Schema::hasTable() and the
+     * guard could not be extended to cover any of them while it fired here.
+     *
+     * Decided by the call stack rather than by the text, deliberately. Matching
+     * on "looks like introspection" would also excuse app code that queries
+     * sqlite_master itself, which is exactly the SQLite-only statement this
+     * class exists to catch. The stack cannot be imitated by a query the
+     * application wrote.
+     *
+     * The backtrace is only walked for statements that would otherwise be
+     * reported, so the ordinary case costs one substring scan.
+     */
+    private static function issuedBySchemaBuilder(string $sql): bool
+    {
+        $suspect = false;
+
+        foreach (array_keys(self::SQLITE_ONLY) as $needle) {
+            if (stripos($sql, $needle) !== false) {
+                $suspect = true;
+                break;
+            }
+        }
+
+        if (! $suspect) {
+            return false;
+        }
+
+        foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 40) as $frame) {
+            $class = $frame['class'] ?? '';
+
+            if (str_starts_with($class, 'Illuminate\\Database\\Schema\\')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Every portability problem in a captured log, as readable strings.
      *
-     * @param  list<array{sql: string, bindings: array<int, mixed>}>  $captured
+     * @param  list<array{sql: string, bindings: array<int, mixed>, schema?: bool}>  $captured
      * @return list<string>
      */
     public static function violations(array $captured): array
@@ -75,7 +124,7 @@ final class SqlShape
         $problems = [];
 
         foreach ($captured as $entry) {
-            foreach (self::inspect($entry['sql'], $entry['bindings']) as $problem) {
+            foreach (self::inspect($entry['sql'], $entry['bindings'], (bool) ($entry['schema'] ?? false)) as $problem) {
                 $problems[] = $problem . "\n    " . self::trim($entry['sql']);
             }
         }
@@ -87,7 +136,7 @@ final class SqlShape
      * @param  array<int, mixed>  $bindings
      * @return list<string>
      */
-    private static function inspect(string $sql, array $bindings): array
+    private static function inspect(string $sql, array $bindings, bool $schema = false): array
     {
         $problems = [];
 
@@ -102,9 +151,11 @@ final class SqlShape
             );
         }
 
-        foreach (self::SQLITE_ONLY as $needle => $why) {
-            if (preg_match('/\b' . preg_quote($needle, '/') . '\b/i', $sql) === 1) {
-                $problems[] = $why;
+        if (! $schema) {
+            foreach (self::SQLITE_ONLY as $needle => $why) {
+                if (preg_match('/\b' . preg_quote($needle, '/') . '\b/i', $sql) === 1) {
+                    $problems[] = $why;
+                }
             }
         }
 
