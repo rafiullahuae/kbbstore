@@ -383,8 +383,20 @@ class AdminController extends Controller
          * one — MySQL under ONLY_FULL_GROUP_BY rejects a bare `brand` beside an
          * aggregate, which is the same 1140 that took the Customers screen down.
          */
+        /*
+         * whereNull('orders.deleted_at') is not decoration.
+         *
+         * Order uses SoftDeletes, so `Order::query()` carries a global scope
+         * that hides trashed rows — but a raw join to `orders` from OrderItem
+         * does NOT, because the scope belongs to the Order builder and this
+         * query is built from OrderItem. Without it a trashed order's units and
+         * revenue would reappear in these figures while the same order stayed
+         * out of paid_orders and revenue_total above, and the two halves of the
+         * screen would disagree with each other.
+         */
         $itemQuery = OrderItem::query()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereNull('orders.deleted_at')
             ->whereIn('orders.status', self::REVENUE_STATUSES);
 
         $unitsSold = (int) ((clone $itemQuery)

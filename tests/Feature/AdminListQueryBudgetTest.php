@@ -278,6 +278,31 @@ it('reports real unit counts on the analytics screen', function () {
     expect(OrderItem::query()->get()->sum('qty'))->toBe(0)
         ->and(OrderItem::query()->get()->sum('quantity'))->toBe(12);
 
+    /*
+     * A trashed order is not revenue, and its units are not units.
+     *
+     * The totals come from an Eloquent Order query, which carries the
+     * SoftDeletes scope. The per-product figures come from OrderItem joined to
+     * orders, which does NOT — the scope belongs to the Order builder. Trash
+     * one order and assert BOTH halves moved, or the two sides of this screen
+     * can disagree and nothing says so.
+     */
+    Order::query()->orderBy('id')->first()?->delete();
+
+    $body = $this->actingAs(budgetAdmin(), 'admin')
+        ->getJson('/admin-api/analytics')
+        ->assertOk();
+
+    expect($body->json('units_sold'))->toBe(9)
+        ->and($body->json('top_products.0.units'))->toBe(9)
+        ->and($body->json('paid_orders'))->toBe(3);
+
+    Order::withTrashed()->orderBy('id')->first()?->restore();
+
+    $body = $this->actingAs(budgetAdmin(), 'admin')
+        ->getJson('/admin-api/analytics')
+        ->assertOk();
+
     expect($body->json('units_sold'))->toBe(12)
         ->and($body->json('top_products.0.units'))->toBe(12)
         // 4 lines x 3 units x 1000 fils = 12000 fils = AED 120.
