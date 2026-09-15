@@ -65,13 +65,11 @@ it('accepts every key the SEO screen posts', function () {
         'merchant_ship_cost', 'merchant_ship_free_over', 'merchant_return_days',
     ];
 
-    $allowed = (function () {
-        $src = file_get_contents(app_path('Http/Controllers/Admin/AdminController.php'));
-        $start = strpos($src, '$allowed = [');
-        preg_match_all("/'([a-z0-9_]+)'/", substr($src, $start, strpos($src, '];', $start) - $start), $m);
-
-        return $m[1];
-    })();
+    // Read as DATA rather than scraped out of the controller source. The regex
+    // version of this looked for `$allowed = [` and pulled every quoted string
+    // after it, so it broke when the allowlist became a constant — and it would
+    // equally have passed on a key that appeared in a comment.
+    $allowed = array_keys(\App\Http\Controllers\Admin\AdminController::SETTING_RULES);
 
     foreach ($posted as $key) {
         expect($allowed)->toContain($key);

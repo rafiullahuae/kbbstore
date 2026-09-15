@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryCountry;
 use App\Services\ExtendedDelivery;
+use App\Services\Import\Money as ImportMoney;
 use App\Services\SettingsService;
 use App\Services\ShippingService;
 use App\Support\Countries;
@@ -90,8 +91,11 @@ class ExtendedDeliveryApiController extends Controller
             'rows' => ['present', 'array'],
             'rows.*.code' => ['required', 'string', 'size:2'],
             'rows.*.enabled' => ['required', 'boolean'],
-            'rows.*.charge' => ['required', 'integer', 'min:0'],
-            'rows.*.free_from' => ['nullable', 'integer', 'min:0'],
+            // Fils in `integer` columns — signed 32-bit. `integer|min:0` is not
+            // a ceiling, and without one MySQL answers the write with ERROR
+            // 1264 while SQLite stores the value, so the suite could not see it.
+            'rows.*.charge' => ['required', 'integer', 'min:0', 'max:' . ImportMoney::MAX_FILS],
+            'rows.*.free_from' => ['nullable', 'integer', 'min:0', 'max:' . ImportMoney::MAX_FILS],
             'rows.*.eta' => ['nullable', 'string', 'max:40'],
         ]);
 

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
+use App\Services\Import\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -64,13 +65,26 @@ class ShippingApiController extends Controller
 
     public function save(Request $request): JsonResponse
     {
+        /*
+         * `cost` and `min_amount` are fils in `integer` columns — signed 32-bit,
+         * so Money::MAX_FILS is the real ceiling. `integer|min:0` on its own is
+         * not a bound: Laravel's `integer` rule takes 99,999,999,999 without
+         * complaint, and the two engines then disagree about what to do with
+         * it. MySQL in strict mode raises ERROR 1264 and this screen 500s on
+         * the live host; SQLite stores it, which is why the suite stayed green.
+         * Bounded here so both engines behave the same and the operator gets a
+         * sentence instead of a server error.
+         */
         $data = $request->validate([
             'methods' => ['required', 'array'],
             'methods.*.id' => ['required', 'integer'],
             'methods.*.title' => ['required', 'string', 'max:60'],
             'methods.*.enabled' => ['required', 'boolean'],
-            'methods.*.cost' => ['required', 'integer', 'min:0'],
-            'methods.*.min_amount' => ['nullable', 'integer', 'min:0'],
+            'methods.*.cost' => ['required', 'integer', 'min:0', 'max:' . Money::MAX_FILS],
+            'methods.*.min_amount' => ['nullable', 'integer', 'min:0', 'max:' . Money::MAX_FILS],
+        ], [
+            'methods.*.cost.max' => 'A delivery charge cannot be more than AED 21,474,836.47.',
+            'methods.*.min_amount.max' => 'A free-delivery threshold cannot be more than AED 21,474,836.47.',
         ]);
 
         foreach ($data['methods'] as $row) {

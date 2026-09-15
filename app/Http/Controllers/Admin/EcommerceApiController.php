@@ -421,7 +421,7 @@ class EcommerceApiController extends Controller
                     continue;
                 }
 
-                $value = $this->cast($def[0], $incoming[$name], $def[4] ?? null);
+                $value = $this->cast($def[0], $incoming[$name], $def[4] ?? null, $name);
 
                 if ($value === null) {
                     return response()->json(['ok' => false, 'error' => "“{$def[1]}” is not a valid value."], 422);
@@ -453,15 +453,81 @@ class EcommerceApiController extends Controller
         return response()->json(['ok' => true, 'saved' => $saved]);
     }
 
-    /** Returns null when the value is not acceptable for its type. */
-    private function cast(string $type, mixed $raw, ?array $options): mixed
+    /**
+     * Bounds for `int` fields whose reader genuinely has one.
+     *
+     * Deliberately short. A wrong ceiling is worse than none: it blocks a value
+     * the operator is entitled to enter and there is nothing on the screen to
+     * say why. So this lists only the fields where the bound is a fact about
+     * what the number MEANS — an hour of the day has 24 of them — and every
+     * other `int` is simply required to be a non-negative whole number.
+     */
+    private const INT_BOUNDS = [
+        'dispatch_cutoff_hour' => [0, 23],
+    ];
+
+    /**
+     * Returns null when the value is not acceptable for its type.
+     *
+     * TWO THINGS THIS USED TO GET WRONG, both on `'int', 'money'`, which was
+     * `is_numeric($raw) && (int) $raw >= 0 ? (int) $raw : null`:
+     *
+     *  - is_numeric('12.50') is true and `(int) '12.50'` is 12. The one money
+     *    field here is the COD fee, in fils, so a hand-typed "12.50" was stored
+     *    as 12 fils — AED 0.12 instead of AED 12.50 — and the screen said
+     *    "Saved". That is the silent-corruption shape: a hundredfold error that
+     *    reads back as a plausible number. Refused now, with the fils value the
+     *    operator probably meant named in the message.
+     *  - there was no ceiling. `is_numeric` is happy with 99,999,999,999, and
+     *    the fee is added into `orders.total`, a signed 32-bit column. MySQL in
+     *    strict mode answers that INSERT with ERROR 1264 and the checkout 500s;
+     *    SQLite stores it, which is why the test suite could not see it.
+     */
+    private function cast(string $type, mixed $raw, ?array $options, ?string $name = null): mixed
     {
         return match ($type) {
             'bool' => (bool) $raw,
-            'int', 'money' => is_numeric($raw) && (int) $raw >= 0 ? (int) $raw : null,
+            'money' => $this->castFils($raw),
+            'int' => $this->castInt($raw, self::INT_BOUNDS[$name] ?? null),
             'select' => $options && array_key_exists((string) $raw, $options) ? (string) $raw : null,
             'colour' => preg_match('/^#[0-9a-f]{6}$/i', (string) $raw) ? (string) $raw : null,
             default => is_string($raw) && mb_strlen($raw) <= 2000 ? $raw : null,
         };
+    }
+
+    /** A whole number of fils, within what a 32-bit money column can hold. */
+    private function castFils(mixed $raw): ?int
+    {
+        $value = trim((string) $raw);
+
+        if (preg_match('/^\d+$/', $value) !== 1) {
+            return null;
+        }
+
+        // Length first, so the string cannot overflow a PHP int on the way to
+        // the comparison and wrap into something that looks acceptable.
+        if (strlen(ltrim($value, '0')) > 10 || (int) $value > \App\Services\Import\Money::MAX_FILS) {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
+    /** A non-negative whole number, inside its bounds where it has any. */
+    private function castInt(mixed $raw, ?array $bounds): ?int
+    {
+        $value = trim((string) $raw);
+
+        if (preg_match('/^\d+$/', $value) !== 1 || strlen(ltrim($value, '0')) > 10) {
+            return null;
+        }
+
+        $n = (int) $value;
+
+        if ($bounds !== null && ($n < $bounds[0] || $n > $bounds[1])) {
+            return null;
+        }
+
+        return $n;
     }
 }

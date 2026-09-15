@@ -83,7 +83,25 @@ function cpProduct(array $attributes = []): Product
 
     $product = Product::create(array_merge([
         'name' => 'CP Product '.$n,
-        'slug' => 'cp-product-'.$n.'-'.uniqid(),
+        /*
+         * DIGIT-FREE, deliberately.
+         *
+         * This was 'cp-product-'.$n.'-'.uniqid(). uniqid() is a hex timestamp,
+         * so every product built in the same test shares a long prefix -- and
+         * the search endpoint LIKEs products.slug. The moment that prefix
+         * happened to contain the digits of a row id or a wc_id, a search for
+         * one product matched all of them and the search test failed. It is
+         * clock-dependent, so it passed twelve runs in a row here and still
+         * failed elsewhere; forcing a real-shaped uniqid of 6aa925d2a18422f
+         * reproduces it every time, because it contains 18422.
+         *
+         * The controller was never wrong. $n is a process-wide counter and
+         * RefreshDatabase gives each test a clean table, so $n alone is unique
+         * -- but spelled in digits it can still collide with an id being
+         * searched for. Mapping the digits onto letters keeps it bijective,
+         * so it stays unique, and puts no digit in the slug at all.
+         */
+        'slug' => 'cp-product-'.strtr((string) $n, '0123456789', 'abcdefghij'),
         'sku' => 'CP-SKU-'.str_pad((string) $n, 4, '0', STR_PAD_LEFT),
         'status' => 'publish',
         'is_visible' => true,
