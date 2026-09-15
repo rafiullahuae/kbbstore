@@ -148,7 +148,7 @@ class CheckoutController extends Controller
         $lastNameRule = $this->settings->get('checkout_single_name', true) ? 'nullable' : 'required';
 
         $data = $request->validate([
-            'billing_email' => ['required', 'email', 'max:160'],
+            'billing_email' => ['required', 'string', 'max:160', new \App\Rules\StorefrontEmail],
             // Guest checkout -> account. Both optional: leaving them alone
             // keeps the existing guest flow byte-for-byte unchanged.
             'create_account' => ['nullable', 'boolean'],

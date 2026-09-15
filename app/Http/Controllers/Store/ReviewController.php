@@ -97,7 +97,7 @@ class ReviewController extends Controller
             ],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'author_name' => ['required', 'string', 'max:100'],
-            'author_email' => ['required', 'email', 'max:120'],
+            'author_email' => ['required', 'string', 'max:120', new \App\Rules\StorefrontEmail],
             'title' => ['nullable', 'string', 'max:120'],
             'content' => ['required', 'string', 'max:5000'],
             'sr_photos' => ['nullable', 'array', 'max:' . self::MAX_PHOTOS],

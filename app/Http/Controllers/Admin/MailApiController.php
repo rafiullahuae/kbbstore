@@ -155,7 +155,7 @@ class MailApiController extends Controller
     public function test(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'to' => ['required', 'string', 'email', 'max:255'],
+            'to' => ['required', 'string', 'max:255', new \App\Rules\StorefrontEmail],
         ]);
 
         $result = $this->tester->send($data['to']);

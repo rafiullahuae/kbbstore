@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Store;
 
+use App\Rules\StorefrontEmail;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Services\CartService;
@@ -87,7 +88,7 @@ class CustomerAuthController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:160', 'unique:customers,email'],
+            'email' => ['required', 'string', 'max:160', new StorefrontEmail, 'unique:customers,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'phone' => ['nullable', 'string', 'max:40'],
         ]);
