@@ -44,14 +44,23 @@
    own scroller and no element carries a min-width larger than the narrowest
    content box.
 --------------------------------------------------------------------------- */
-.cu-wrap{display:grid;gap:16px}
+/* min-width:0 on the grid AND on its children is load-bearing, not tidiness.
+   A grid item's default min-width is auto, which means "at least as wide as my
+   content" -- so .cu-card refused to shrink below the width of the table
+   inside it, .cu-scroll's overflow-x:auto never got the chance to scroll, and
+   the whole screen was stretched to the table's natural width. At 390px the
+   content box measured 677px: the last three columns were off-screen with no
+   way to reach them, and the stat tiles were dragged out with it because they
+   were being laid out in that stretched space. */
+.cu-wrap{display:grid;gap:16px;min-width:0}
+.cu-wrap > *{min-width:0}
 .cu-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
          border-radius:var(--r,12px);padding:16px}
 .cu-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
 .cu-title{font-weight:650;font-size:15px}
 .cu-sub{color:var(--ink-soft,#6b7280);font-size:12.5px}
 
-.cu-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.cu-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
 .cu-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
          border-radius:var(--r,12px);padding:12px 14px}
 .cu-stat b{display:block;font-size:20px;line-height:1.3;font-variant-numeric:tabular-nums}
@@ -61,7 +70,7 @@
 .cu-search input{flex:1 1 180px;min-width:0;padding:8px 10px;font:inherit;
                  border:1px solid var(--border,#e6e6e6);border-radius:9px;background:transparent;color:inherit}
 
-.cu-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cu-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;max-width:100%}
 .cu-table{width:100%;border-collapse:collapse;font-size:13px}
 .cu-table th,.cu-table td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border,#e6e6e6);
                           white-space:nowrap;vertical-align:middle}
