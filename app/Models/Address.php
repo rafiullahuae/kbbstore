@@ -21,6 +21,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Address extends Model
 {
     protected $fillable = [
+        // The WooCommerce origin of this row, e.g. "user:412:billing" or
+        // "order:10233:shipping", carrying a unique index so a re-run of the
+        // address import updates the row it created last time instead of
+        // filing a second copy of it. Fillable ON PURPOSE and unlike
+        // customer_id: the importer matches with
+        // updateOrCreate(['source_key' => ...], [...]), and Eloquent fills the
+        // match attributes through the same guard as everything else, so a
+        // guarded column here would silently produce an address with a null
+        // key on every pass — which is exactly the duplication the column
+        // exists to prevent. Nothing a shopper can submit reaches it: the
+        // storefront's address book writes its own allowlist and leaves this
+        // null, which is what an address with no WordPress origin should say.
+        'source_key',
         'type',
         'is_default',
         'first_name',
