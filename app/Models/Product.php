@@ -19,6 +19,7 @@ class Product extends Model
     {
         return [
             'images' => 'array',
+            'image_alts' => 'array',
             'seo' => 'array',
             'meta_feed' => 'array',
             'custom_tabs' => 'array',
@@ -124,6 +125,56 @@ class Product extends Model
         $query->where('status', 'publish')->where('is_visible', true);
 
         return \App\Support\ProductVisibility::schedule($query);
+    }
+
+    /**
+     * Alt text for one image of this product.
+     *
+     * WHY THERE IS A STORED FIELD AT ALL, rather than deriving everything.
+     *
+     * A derived alt — "Anua Heartleaf Toner, Texture" — is a fine default and a
+     * poor ceiling. The whole reason to put real <img> tags on the product page
+     * is so Google Images can index the photographs, and what it indexes is the
+     * alt: five shots of one product that all say the same sentence are five
+     * results competing with each other for the same query. The shots differ in
+     * ways only the person who chose them knows — one is the texture on a hand,
+     * one is the ingredient list on the back of the box, one is the product in
+     * use — and none of that is recoverable from the filename or the position.
+     * It is also the accessibility text, and "View 3" tells a screen-reader user
+     * nothing.
+     *
+     * WHY IT IS A SEPARATE COLUMN KEYED BY URL, and not a change to `images`.
+     *
+     * `images` is a flat list of URL strings, and three things already read it
+     * that way: Store\ProductController::gallery(), which merges it with
+     * `image`; toApi() above, which publishes it; and the WooCommerce importer,
+     * which writes it. Turning its entries into objects would break all three
+     * at once, for a field only the page needs. A map keyed by URL costs those
+     * three nothing, survives reordering for free — the key is the image, not
+     * its position — and covers the main image, which is not in `images` at all.
+     *
+     * The fallback is the derived sentence, so a caller never has to decide:
+     * ask for the alt, get the best one available.
+     */
+    public function altFor(?string $url, ?string $label = null): string
+    {
+        $map = is_array($this->image_alts) ? $this->image_alts : [];
+        $stored = trim((string) ($map[(string) $url] ?? ''));
+
+        if ($stored !== '') {
+            return $stored;
+        }
+
+        $parts = array_filter([
+            $this->brand?->name,
+            $this->name,
+            // "Front" / "Texture" and friends, when the caller knows which shot
+            // this is. Skipped when it is the generic "View 4", which is a
+            // position rather than a description and reads as noise.
+            $label !== null && ! preg_match('/^View \d+$/', $label) ? $label : null,
+        ]);
+
+        return implode(' — ', $parts);
     }
 
     /**

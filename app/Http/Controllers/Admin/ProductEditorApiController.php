@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\Gtin;
 use App\Support\MajorUnits;
 use App\Support\Money;
 use App\Support\ProductSeo;
@@ -239,6 +240,7 @@ class ProductEditorApiController extends Controller
             'name' => (string) $product->name,
             'slug' => (string) $product->slug,
             'sku' => $product->sku,
+            'gtin' => $product->gtin,
             'brand_id' => $product->brand_id === null ? null : (int) $product->brand_id,
             'type' => $product->type,
 
@@ -267,6 +269,7 @@ class ProductEditorApiController extends Controller
 
             'image' => $product->image,
             'images' => array_values(array_filter((array) ($product->images ?? []))),
+            'image_alts' => is_array($product->image_alts) ? $product->image_alts : (object) [],
 
             'seo' => is_array($product->seo) ? $product->seo : null,
 
@@ -352,6 +355,7 @@ class ProductEditorApiController extends Controller
         $rules = [
             'name' => [$creating ? 'required' : 'sometimes', 'string', 'max:200'],
             'sku' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'gtin' => ['sometimes', 'nullable', 'string', 'max:20'],
             'brand_id' => ['sometimes', 'nullable', 'integer', Rule::exists('brands', 'id')],
             'type' => ['sometimes', 'nullable', 'string', 'max:40'],
 
@@ -385,6 +389,8 @@ class ProductEditorApiController extends Controller
             'image' => ['sometimes', 'nullable', 'string', 'max:500'],
             'images' => ['sometimes', 'array', 'max:24'],
             'images.*' => ['string', 'max:500'],
+            'image_alts' => ['sometimes', 'nullable', 'array'],
+            'image_alts.*' => ['nullable', 'string', 'max:250'],
 
             'seo' => ['sometimes', 'nullable', 'array'],
             'seo.title' => ['nullable', 'string', 'max:200'],
@@ -463,6 +469,39 @@ class ProductEditorApiController extends Controller
             ], 422);
         }
 
+        /* ------------------------------------------------------------ gtin */
+        if (array_key_exists('gtin', $data)) {
+            $raw = trim((string) ($data['gtin'] ?? ''));
+
+            if ($raw === '') {
+                $product->gtin = null;
+            } else {
+                /*
+                 * The check digit is verified, not the digit count.
+                 *
+                 * A GTIN's last digit is a mod-10 checksum over the others, and
+                 * its only job is to catch the two mistakes someone makes
+                 * copying fourteen digits off a box: one wrong digit, and a
+                 * transposed pair. A rule that merely counted digits would
+                 * accept both — and the shop would then publish a confident,
+                 * structured claim that this product is a different product.
+                 * A wrong GTIN is worse for a merchant listing than none.
+                 */
+                if (! Gtin::isValid($raw)) {
+                    return response()->json([
+                        'ok' => false,
+                        'message' => 'That barcode number is not a valid GTIN. Check the digits against the '
+                            . 'barcode — it should be 8, 12, 13 or 14 digits, and the last one is a checksum.',
+                        'errors' => ['gtin' => ['Not a valid GTIN.']],
+                    ], 422);
+                }
+
+                // Stored without the grouping the operator may have typed, so
+                // "400-6381-33393-1" and "4006381333931" are one value.
+                $product->gtin = Gtin::normalise($raw);
+            }
+        }
+
         /* ----------------------------------------------------------- plain */
         foreach (['name', 'sku', 'type', 'stock', 'stock_status', 'position'] as $field) {
             if (array_key_exists($field, $data)) {
@@ -519,6 +558,33 @@ class ProductEditorApiController extends Controller
             )));
 
             $product->images = $images;
+        }
+
+        if (array_key_exists('image_alts', $data)) {
+            /*
+             * Kept only for images this product still has.
+             *
+             * The map is keyed by URL, so a shot the operator removed would
+             * otherwise leave its alt text behind forever — invisible in the
+             * editor, growing every time a picture is swapped, and liable to be
+             * re-attached if the same URL is uploaded again later.
+             */
+            $keep = array_values(array_filter(array_merge(
+                [(string) ($product->image ?? '')],
+                (array) ($product->images ?? [])
+            )));
+
+            $alts = [];
+
+            foreach ((array) ($data['image_alts'] ?? []) as $url => $alt) {
+                $alt = trim((string) $alt);
+
+                if ($alt !== '' && in_array((string) $url, $keep, true)) {
+                    $alts[(string) $url] = $alt;
+                }
+            }
+
+            $product->image_alts = $alts === [] ? null : $alts;
         }
 
         /* ------------------------------------------------------------- seo */

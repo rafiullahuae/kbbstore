@@ -142,22 +142,40 @@
 .peo-main-img img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
 .peo-main-cap{display:flex;gap:8px;padding:8px 10px;border-top:1px solid var(--border,#e6e6e6);flex-wrap:wrap}
 
-.peo-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;min-width:0}
+/* The gallery is a LIST, not a grid of thumbnails, and that is a decision
+   about alt text rather than about looks. Every shot carries its own alt, the
+   alt is a sentence, and a sentence needs a full-width box to be typed into --
+   in a 3-across grid at 390px each input would be 104px wide. A row also makes
+   the reorder controls reachable with a thumb and gives the drag handle
+   somewhere obvious to live. */
+.peo-gal{display:grid;gap:8px;min-width:0}
 .peo-gal > *{min-width:0}
-.peo-tile{position:relative;border:1px solid var(--border,#e6e6e6);border-radius:10px;overflow:hidden;
-          background:var(--surface-2,#f7f8fa);cursor:grab;min-width:0}
-.peo-tile img{display:block;width:100%;aspect-ratio:1;object-fit:cover;pointer-events:none}
+.peo-tile{display:flex;align-items:center;gap:10px;padding:8px;min-width:0;
+          border:1px solid var(--border,#e6e6e6);border-radius:10px;
+          background:var(--surface,#fff)}
+.peo-tile img{display:block;width:56px;height:56px;border-radius:8px;object-fit:cover;
+              flex:none;pointer-events:none;background:var(--surface-2,#f7f8fa)}
 .peo-tile.peo-drag{opacity:.35}
-.peo-tile.peo-over{outline:2px dashed #1f7d52;outline-offset:-3px}
-.peo-tile .peo-ord{position:absolute;top:4px;left:4px;background:rgba(17,24,39,.78);color:#fff;
-                   font-size:10px;font-weight:700;border-radius:5px;padding:1px 5px;line-height:1.5}
-.peo-tile .peo-x{position:absolute;top:4px;right:4px;background:rgba(17,24,39,.78);color:#fff;border:0;
-                 width:20px;height:20px;border-radius:5px;font-size:12px;line-height:1;cursor:pointer;padding:0}
-.peo-tile .peo-nudge{position:absolute;left:0;right:0;bottom:0;display:flex;
-                     background:rgba(17,24,39,.72)}
-.peo-tile .peo-nudge button{flex:1;background:none;border:0;color:#fff;font-size:13px;line-height:1;
-                            padding:4px 0;cursor:pointer}
-.peo-tile .peo-nudge button[disabled]{opacity:.35;cursor:default}
+.peo-tile.peo-over{outline:2px dashed #1f7d52;outline-offset:-2px}
+.peo-tile .peo-grip{flex:none;cursor:grab;color:var(--ink-faint,#9ca3af);font-size:15px;
+                    line-height:1;padding:4px 2px;user-select:none}
+.peo-tile .peo-body{flex:1 1 auto;min-width:0}
+.peo-tile .peo-ord{font-size:10.5px;font-weight:700;color:var(--ink-soft,#6b7280);
+                   display:block;margin-bottom:4px}
+.peo-tile .peo-alt{width:100%;max-width:100%;box-sizing:border-box;min-width:0;font:inherit;
+                   font-size:12.5px;padding:6px 8px;border-radius:7px;
+                   border:1px solid var(--border,#e6e6e6);background:var(--surface,#fff);color:inherit}
+.peo-tile .peo-alt:focus{outline:0;border-color:#1f7d52;box-shadow:0 0 0 3px rgba(31,125,82,.14)}
+.peo-tile .peo-acts{flex:none;display:flex;gap:3px}
+.peo-tile .peo-acts button{background:var(--surface-2,#f7f8fa);border:1px solid var(--border,#e6e6e6);
+                           color:inherit;width:26px;height:26px;border-radius:7px;font-size:12px;
+                           line-height:1;cursor:pointer;padding:0}
+.peo-tile .peo-acts button[disabled]{opacity:.35;cursor:default}
+.peo-tile .peo-acts button.peo-rm{color:#b4443c}
+@media(max-width:420px){
+  .peo-tile{flex-wrap:wrap}
+  .peo-tile .peo-body{flex:1 1 100%;order:3}
+}
 
 .peo-drop{border:1.5px dashed var(--border,#e6e6e6);border-radius:10px;padding:18px 12px;text-align:center;
           font-size:12.5px;color:var(--ink-soft,#6b7280);cursor:pointer;min-width:0;background:none}
@@ -390,13 +408,13 @@
 
   function blank(){
     return {
-      id: null, name: '', slug: '', sku: null, brand_id: null,
+      id: null, name: '', slug: '', sku: null, gtin: null, brand_id: null,
       status: 'draft', is_visible: true, featured: false, published_at: null,
       category_ids: [], primary_category_id: null,
       price_aed: '', sale_aed: '', sale_starts_at: null, sale_ends_at: null,
       manage_stock: false, stock: null, stock_status: 'instock',
       short_description: '', description: '', ingredients: '', how_to_use: '',
-      image: null, images: [], seo: null,
+      image: null, images: [], image_alts: {}, seo: null,
       readonly: {total_sales:0, rating:0, review_count:0, url:''}
     };
   }
@@ -424,6 +442,7 @@
     var body = {
       name: model.name,
       sku: model.sku,
+      gtin: model.gtin,
       brand_id: model.brand_id,
       status: model.status,
       published_at: model.published_at,
@@ -444,6 +463,7 @@
       how_to_use: model.how_to_use,
       image: model.image,
       images: model.images,
+      image_alts: model.image_alts || {},
       seo: model.seo || {}
     };
 
@@ -520,6 +540,13 @@
 
     document.querySelectorAll('#content .peo-rte-area').forEach(function(el){
       model[el.dataset.field] = el.innerHTML;
+    });
+
+    // Alt text, keyed by the image URL rather than by position, so reordering
+    // or removing a shot cannot move a caption onto a different photograph.
+    document.querySelectorAll('#content [data-alt]').forEach(function(el){
+      model.image_alts = model.image_alts || {};
+      model.image_alts[el.dataset.alt] = el.value;
     });
 
     document.querySelectorAll('#content [data-bind]').forEach(function(el){
@@ -625,15 +652,24 @@
       + '</div>';
   }
 
+  function altOf(u){
+    return (model.image_alts && model.image_alts[u]) || '';
+  }
+
   function galleryView(){
     var tiles = model.images.map(function(u, i){
       return '<div class="peo-tile" draggable="true" data-i="' + i + '">'
+        + '<span class="peo-grip" title="Drag to reorder">⠿</span>'
         + '<img src="' + url(u) + '" alt="">'
-        + '<span class="peo-ord">' + (i + 2) + '</span>'
-        + '<button class="peo-x" data-rm="' + i + '" title="Remove">✕</button>'
-        + '<span class="peo-nudge">'
-        +   '<button data-mv="' + i + ':-1"' + (i === 0 ? ' disabled' : '') + ' title="Move earlier">←</button>'
-        +   '<button data-mv="' + i + ':1"' + (i === model.images.length - 1 ? ' disabled' : '') + ' title="Move later">→</button>'
+        + '<span class="peo-body">'
+        +   '<span class="peo-ord">Position ' + (i + 2) + '</span>'
+        +   '<input class="peo-alt" data-alt="' + esc(u) + '" value="' + esc(altOf(u)) + '" '
+        +     'placeholder="Describe this photo, e.g. texture on the back of a hand">'
+        + '</span>'
+        + '<span class="peo-acts">'
+        +   '<button data-mv="' + i + ':-1"' + (i === 0 ? ' disabled' : '') + ' title="Move earlier">↑</button>'
+        +   '<button data-mv="' + i + ':1"' + (i === model.images.length - 1 ? ' disabled' : '') + ' title="Move later">↓</button>'
+        +   '<button class="peo-rm" data-rm="' + i + '" title="Remove">✕</button>'
         + '</span>'
       + '</div>';
     }).join('');
@@ -641,12 +677,13 @@
     var body = model.images.length
       ? '<div class="peo-gal" id="peo-gal">' + tiles + '</div>'
       : '<div class="peo-empty"><b>No gallery images yet</b>'
-        + 'The main image above is shown first. Add more and they appear beside it, in this order.</div>';
+        + 'The main image above is shown first. Add more and they appear after it, in this order.</div>';
 
     return '<div class="peo-card">'
       + '<h3>Gallery</h3>'
-      + '<p class="peo-hint">Drag a thumbnail to reorder, or use ← →. This is the order customers see, '
-      +   'after the main image.</p>'
+      + '<p class="peo-hint">Drag the handle to reorder, or use ↑ ↓. This is the order customers see, '
+      +   'after the main image. The description under each photo is what Google Images and screen '
+      +   'readers read — write what is actually in the shot.</p>'
       + body
       + '<div style="height:10px"></div>'
       + '<button class="peo-drop" id="peo-galdrop"><b>Add gallery images</b>Drop them here, or tap to choose</button>'
@@ -668,6 +705,13 @@
       +     (model.image ? '<button class="peo-btn peo-danger" id="peo-mainrm">Remove</button>' : '')
       +   '</div>'
       + '</div>'
+      + (model.image
+          ? '<div class="peo-fld" style="margin-top:11px"><label>Image description</label>'
+            + '<input class="peo-in" data-alt="' + esc(model.image) + '" value="' + esc(altOf(model.image)) + '" '
+            +   'placeholder="e.g. Anua Heartleaf Toner bottle, front">'
+            + '<div class="peo-note">Read by Google Images and by screen readers. '
+            +   'Left empty, the shop uses the brand and product name.</div></div>'
+          : '')
       + '<input type="file" id="peo-mainfile" accept="image/*" hidden>'
       + '</div>';
   }
@@ -843,8 +887,15 @@
                   + '<input class="peo-in" data-bind="slug" id="peo-slug" value="' + esc(model.slug) + '" placeholder="anua-heartleaf-toner">'
                   + '<div class="peo-note" id="peo-slugnote">Set once. It cannot be changed after the product exists.</div></div>'
                 : '')
-            + '<div class="peo-fld"><label>SKU</label>'
-            +   '<input class="peo-in" data-bind="sku" value="' + esc(model.sku || '') + '" placeholder="Optional"></div>'
+            + '<div class="peo-row">'
+            +   '<div class="peo-fld"><label>SKU</label>'
+            +     '<input class="peo-in" data-bind="sku" value="' + esc(model.sku || '') + '" placeholder="Your own code"></div>'
+            +   '<div class="peo-fld"><label>Barcode (GTIN)</label>'
+            +     '<input class="peo-in" inputmode="numeric" data-bind="gtin" value="' + esc(model.gtin || '') + '" placeholder="e.g. 8809525360024"></div>'
+            + '</div>'
+            + '<div class="peo-note" style="margin:-6px 0 0">The number under the barcode — 8, 12, 13 or 14 digits. '
+            +   'Google uses it to match this product to the same item elsewhere, which your own SKU cannot do. '
+            +   'Leave it empty if the product has none.</div>'
           + '</div>'
           + rte('short_description', 'Short description',
                 'The summary beside the price. One or two lines.',
@@ -1033,6 +1084,18 @@
         model.images.splice(to, 0, moved);
         dirty = true; collect(); render();
       };
+    });
+
+    /* Alt text. Read back in collect() by URL, so this listener only has to
+       mark the form dirty — it must NOT re-render, or the input being typed
+       into would be replaced mid-keystroke. */
+    document.querySelectorAll('#content [data-alt]').forEach(function(el){
+      el.addEventListener('input', function(){
+        model.image_alts = model.image_alts || {};
+        model.image_alts[el.dataset.alt] = el.value;
+        dirty = true;
+        markDirty();
+      });
     });
 
     bindDrag();

@@ -742,6 +742,139 @@ it('refuses a canonical that is not a real URL', function () {
     ])->assertStatus(422);
 });
 
+/* ------------------------------------------------------------------ GTIN */
+
+it('accepts a real barcode and stores it without its grouping', function () {
+    asPeAdmin();
+
+    $product = peProduct();
+
+    foreach ([
+        ['4006381333931', '4006381333931'],   // EAN-13
+        ['96385074', '96385074'],             // EAN-8
+        ['036000291452', '036000291452'],     // UPC-A
+        ['00012345678905', '00012345678905'], // GTIN-14, leading zeros kept
+        ['400-6381-33393-1', '4006381333931'],// grouped as printed
+    ] as [$typed, $stored]) {
+        test()->postJson('/admin-api/product-editor-save/'.$product->id, [
+            'gtin' => $typed,
+        ])->assertOk();
+
+        expect($product->fresh()->gtin)->toBe($stored, "typed {$typed}");
+    }
+});
+
+it('refuses a barcode whose check digit does not agree with it', function () {
+    /*
+     * The whole reason the field is worth having. A rule that counted digits
+     * would accept every one of these, and the shop would then publish a
+     * structured, machine-readable claim that this product is a DIFFERENT
+     * product — which is worse for a merchant listing than publishing nothing.
+     */
+    asPeAdmin();
+
+    $product = peProduct(['gtin' => '4006381333931']);
+
+    foreach ([
+        '4006381333932',   // one digit mistyped
+        '4006381333913',   // a transposed pair
+        '400638133393',    // an EAN-13 body with the check digit dropped
+        '1234567890',      // 10 digits is not a GTIN length
+        '12345678901',     // nor is 11 (UPC-E)
+        '4006381A33931',   // not digits
+    ] as $bad) {
+        test()->postJson('/admin-api/product-editor-save/'.$product->id, [
+            'gtin' => $bad,
+        ])->assertStatus(422);
+    }
+
+    // And the good value that was already there is untouched.
+    expect($product->fresh()->gtin)->toBe('4006381333931');
+});
+
+it('lets a barcode be cleared, because most of this catalogue has none', function () {
+    asPeAdmin();
+
+    $product = peProduct(['gtin' => '4006381333931']);
+
+    test()->postJson('/admin-api/product-editor-save/'.$product->id, ['gtin' => ''])->assertOk();
+
+    expect($product->fresh()->gtin)->toBeNull();
+});
+
+/* -------------------------------------------------------------- alt text */
+
+it('stores alt text per image and keys it by URL, not by position', function () {
+    asPeAdmin();
+
+    $product = peProduct();
+
+    test()->postJson('/admin-api/product-editor-save/'.$product->id, [
+        'image' => '/uploads/products/main.jpg',
+        'images' => ['/uploads/products/one.jpg', '/uploads/products/two.jpg'],
+        'image_alts' => [
+            '/uploads/products/main.jpg' => 'Bottle, front',
+            '/uploads/products/one.jpg' => 'Texture on the back of a hand',
+            '/uploads/products/two.jpg' => 'Ingredient list on the box',
+        ],
+    ])->assertOk();
+
+    $fresh = $product->fresh();
+
+    expect($fresh->altFor('/uploads/products/one.jpg'))->toBe('Texture on the back of a hand');
+
+    // Reorder the gallery WITHOUT resending the alts. Because the map is keyed
+    // by URL, the caption stays on its own photograph rather than sliding onto
+    // whichever image now occupies that position.
+    test()->postJson('/admin-api/product-editor-save/'.$product->id, [
+        'images' => ['/uploads/products/two.jpg', '/uploads/products/one.jpg'],
+    ])->assertOk();
+
+    $fresh = $product->fresh();
+
+    expect($fresh->altFor('/uploads/products/one.jpg'))->toBe('Texture on the back of a hand')
+        ->and($fresh->altFor('/uploads/products/two.jpg'))->toBe('Ingredient list on the box');
+});
+
+it('drops alt text for an image that is no longer on the product', function () {
+    asPeAdmin();
+
+    $product = peProduct();
+
+    test()->postJson('/admin-api/product-editor-save/'.$product->id, [
+        'image' => '/uploads/products/main.jpg',
+        'images' => ['/uploads/products/one.jpg'],
+        'image_alts' => [
+            '/uploads/products/main.jpg' => 'Bottle, front',
+            '/uploads/products/one.jpg' => 'Texture',
+            '/uploads/products/gone.jpg' => 'An image that is not here',
+        ],
+    ])->assertOk();
+
+    expect($product->fresh()->image_alts)->toBe([
+        '/uploads/products/main.jpg' => 'Bottle, front',
+        '/uploads/products/one.jpg' => 'Texture',
+    ]);
+});
+
+it('falls back to a derived description when no alt was written', function () {
+    $brand = peBrand();
+    $product = peProduct(['name' => 'Heartleaf Toner', 'brand_id' => $brand->id]);
+    $product->load('brand');
+
+    // A named shot gets its label; the generic "View 4" is a position rather
+    // than a description and is left out rather than read aloud.
+    expect($product->altFor('/uploads/x.jpg', 'Texture'))->toBe('PE Brand — Heartleaf Toner — Texture')
+        ->and($product->altFor('/uploads/x.jpg', 'View 4'))->toBe('PE Brand — Heartleaf Toner')
+        ->and($product->altFor('/uploads/x.jpg'))->toBe('PE Brand — Heartleaf Toner');
+
+    // A stored alt always wins over the derived one.
+    $product->image_alts = ['/uploads/x.jpg' => 'The real thing'];
+    $product->save();
+
+    expect($product->fresh()->altFor('/uploads/x.jpg', 'Texture'))->toBe('The real thing');
+});
+
 /* ---------------------------------------------------- identity + computed */
 
 it('refuses to change a slug or a wc_id after the product exists', function () {
