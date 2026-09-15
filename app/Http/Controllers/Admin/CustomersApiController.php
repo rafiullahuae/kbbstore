@@ -75,6 +75,22 @@ class CustomersApiController extends Controller
     private const BULK_MAX = 500;
 
     /**
+     * Which build of THIS FILE is actually executing, reported with any error.
+     *
+     * 2.60.121 shipped the real fix for the MySQL 1140 failure and the live
+     * server returned the identical error afterwards. That left two
+     * indistinguishable explanations — the fix is wrong, or the fix is not
+     * running — and no way to tell them apart from a screenshot. The package
+     * was verified to contain the corrected file, so it was the second; but
+     * proving that took a round trip that this constant removes.
+     *
+     * Bump it whenever this file changes. If an error reports a build older
+     * than the package just applied, the server is serving cached bytecode and
+     * the code is not the thing to go and look at.
+     */
+    private const BUILD = '2.60.122';
+
+    /**
      * The chip filters, named once so the list, the chip counts and the export
      * cannot drift apart — a filter meaning one thing on screen and another in
      * the download is how somebody emails the wrong customer list.
@@ -118,6 +134,7 @@ class CustomersApiController extends Controller
             return response()->json([
                 'message' => 'The customer list could not be read from the database.',
                 'db_error' => $e->getPrevious()?->getMessage() ?? $e->getMessage(),
+                'build' => self::BUILD,
             ], 500);
         }
     }

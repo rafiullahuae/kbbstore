@@ -8328,7 +8328,7 @@ buildNav();
     if(st === 404) return 'The server returned 404 — this build\u2019s routes are not live yet. The compiled route cache needs clearing (Store \u2192 Core Updates does this on every apply).';
     if(st === 401 || st === 403) return 'The server returned ' + st + ' — the admin session was refused. Sign out and back in.';
     if(st === 419) return 'The server returned 419 — the admin session expired. Reload the page.';
-    if(st === 500) return 'The server returned 500 — the request reached the code and the code threw. The exception is in storage/logs/laravel.log; the text below is what the server sent back.';
+    if(st === 500) return 'The server returned 500 — the request reached the code and the code threw. The exception is in storage/logs/laravel.log; the text below is what the server sent back. If its \u201cbuild\u201d is older than the package you just applied, the server is running cached code rather than the file that shipped.';
     if(st === 0)   return 'The request never completed — the browser could not reach the server at all.';
     return 'The server returned ' + st + '. The text below is what it sent back.';
   }

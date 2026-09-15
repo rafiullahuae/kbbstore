@@ -143,6 +143,25 @@ class BuildPackage extends Command
             }
         }
 
+        /*
+         * A package that changes code must also carry a migration the server
+         * has not run yet.
+         *
+         * 2.60.121 shipped a corrected controller and no new migration. Every
+         * migration in it had already run under 2.60.120, so applying it ran
+         * none — and every opcache_reset() in this project lives inside a
+         * clear_caches_* migration. The fixed file landed on disk and the
+         * server kept executing the previous compiled copy, reproducing the
+         * exact error the release was meant to end and making a correct fix
+         * look like a wrong one.
+         *
+         * Builds here are cumulative, so "ships a migration" is not the test —
+         * every build ships all of them. The test is whether this package
+         * carries one NEWER than the newest in the previous package, since
+         * that is the only kind the server will actually run.
+         */
+        $this->warnIfNoFreshMigration($manifest, $outDir, $version);
+
         $zip->addFromString('update.json', (string) json_encode([
             'name' => 'KBB Storefront',
             'version' => $version,
@@ -237,5 +256,67 @@ class BuildPackage extends Command
         }
         $zip->close();
         $this->line('  verified '.count($manifest).' files against the manifest');
+    }
+
+    /**
+     * Compare this package's migrations with the previous package's and warn
+     * when nothing new would run. Advisory, not fatal: a genuinely
+     * assets-only or docs-only release is legitimate.
+     */
+    private function warnIfNoFreshMigration(array $manifest, string $out, string $version): void
+    {
+        $changesCode = false;
+        foreach (array_keys($manifest) as $path) {
+            if (str_starts_with($path, 'app/') || str_starts_with($path, 'routes/')
+                || str_starts_with($path, 'resources/views/')) {
+                $changesCode = true;
+                break;
+            }
+        }
+
+        if (! $changesCode) {
+            return;
+        }
+
+        $mine = [];
+        foreach (array_keys($manifest) as $path) {
+            if (str_starts_with($path, 'database/migrations/')) {
+                $mine[] = basename($path);
+            }
+        }
+
+        $previous = collect(glob(rtrim($out, '/').'/kbb-update-*.zip') ?: [])
+            ->reject(fn (string $f): bool => str_contains($f, $version))
+            ->sort()
+            ->last();
+
+        if ($previous === null) {
+            return;
+        }
+
+        $zip = new ZipArchive();
+
+        if ($zip->open($previous) !== true) {
+            return;
+        }
+
+        $raw = $zip->getFromName('update.json');
+        $zip->close();
+
+        $theirs = [];
+        foreach (array_keys((array) (json_decode((string) $raw, true)['files'] ?? [])) as $path) {
+            if (str_starts_with((string) $path, 'database/migrations/')) {
+                $theirs[] = basename((string) $path);
+            }
+        }
+
+        if (array_diff($mine, $theirs) !== []) {
+            return;
+        }
+
+        $this->warn('This package changes code but carries no migration newer than '
+            .basename($previous).'. Applying it will run no migration, so no '
+            .'opcache_reset() fires and the server may keep executing the '
+            .'previous compiled copy. Add a clear_caches_* migration.');
     }
 }
