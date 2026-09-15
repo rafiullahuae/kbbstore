@@ -35,6 +35,24 @@ class MailSettings
         'mail_password' => ['secret', 'Password', 'The mailbox password. Stored encrypted and never shown again once saved.'],
         'mail_from_address' => ['text', 'From address', 'What customers see as the sender. On most shared hosts this MUST be a mailbox on this domain or the host rejects the message.'],
         'mail_from_name' => ['text', 'From name', 'e.g. K Beauty Bliss'],
+        /*
+         * Where the store itself is told an order has come in.
+         *
+         * A separate field rather than reusing the From address, because they are
+         * different jobs: From is what a customer sees and on a shared host must
+         * be a mailbox on this domain, while this is wherever the person who packs
+         * the orders actually reads their mail — a personal Gmail, more often than
+         * not. Left blank it falls back to the From address, which is the one
+         * address we know exists; OrderMailer::merchantAddress() is where that
+         * fallback lives.
+         *
+         * MailApiController::save() carries a hardcoded rule list and has no entry
+         * for this key, and that controller belongs to another lane. So the format
+         * check is done in save() below instead — a settings screen that accepts
+         * "not an address" and then fails silently at send time is how a merchant
+         * finds out weeks later that they were never told about any of it.
+         */
+        'mail_merchant_address' => ['text', 'New-order alerts to', 'Where you want to be told an order has come in. Leave blank to use the From address above.'],
         'mail_timeout' => ['text', 'Timeout (seconds)', 'How long to wait for the mail server before giving up. Blank uses the default.'],
     ];
 
@@ -169,7 +187,21 @@ class MailSettings
                 continue;
             }
 
-            $this->settings->set($key, is_scalar($value) ? trim((string) $value) : '');
+            $value = is_scalar($value) ? trim((string) $value) : '';
+
+            /*
+             * The one field this class validates itself. See the SCHEMA entry:
+             * MailApiController's rule list is in another lane's file and has no
+             * entry for it, and an unvalidated address here is an alert nobody
+             * ever receives. Blank is allowed and means "fall back to From".
+             */
+            if ($key === 'mail_merchant_address'
+                && $value !== ''
+                && filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+                continue;
+            }
+
+            $this->settings->set($key, $value);
         }
     }
 

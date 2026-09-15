@@ -40,6 +40,7 @@ class ModuleRegistry
         'cart'        => 'Cart & mini-cart',
         'store'       => 'Store & content',
         'payship'     => 'Payments & shipping',
+        'email'       => 'Order emails',
         'catalogue'   => 'Catalogue',
         'marketing'   => 'Marketing',
         'performance' => 'Performance',
@@ -109,6 +110,47 @@ class ModuleRegistry
         'product_labels' => ['store', 'Product Labels', 'Configurable Sale / New / Sold-out / Bestseller badges on product cards. Off by default — the theme’s built-in badges show until you turn it on.', false, 'Catalogue → Product Labels', 'labels', 'grid', 'card', 'Sale, New, Sold-out and Bestseller badges on product cards.', 'live'],
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],
+        /*
+         * ── Order emails ──
+         *
+         * The one group in this registry that ships ON.
+         *
+         * Everything this registry adds is off by default, on the plugin's own
+         * principle that a fresh install shows nothing the owner did not ask for.
+         * These five break that rule on purpose, and the reason is the same one
+         * that applies to `seo_engine` above: the default has to be measured
+         * against what the store does WITHOUT the switch, not against a blank
+         * slate.
+         *
+         * Without them this store sends a customer nothing whatsoever. They pay,
+         * and the only confirmation that has ever existed is the order-received
+         * page, which is gated to the browser that placed the order — close the
+         * tab and it is gone. The merchant is not told an order arrived at all;
+         * AdminOrderController::runAction still refuses its own resend actions
+         * with "outbound email is not configured for this store". Shipping these
+         * off by default would mean applying a package called "order emails" and
+         * changing nothing until somebody found the screen.
+         *
+         * The safety net that makes ON defensible is already in place and is not
+         * this registry's doing: MailConfigurator falls back to the `log`
+         * transport whenever SMTP is not filled in, so on an install where nobody
+         * has completed Store → Mail these send to storage/logs and reach no
+         * inbox. Turning them on cannot surprise a customer of a store that
+         * cannot send mail yet.
+         *
+         * No migration writes a value for any of these keys, so a store that has
+         * already saved Store → Modules keeps whatever it chose: moduleEnabled()
+         * returns the module_toggles row when one exists and only falls back to
+         * the default below when it does not.
+         *
+         * Every row is `live`: OrderMailer reads each key by name, and
+         * Phase3ModuleSwitchesTest greps for exactly that.
+         */
+        'email_order_confirmation' => ['email', 'Order confirmation email', 'The receipt sent to the customer the moment an order is placed — line items as bought, the money breakdown, delivery address, delivery and payment method, and a link to the order.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when they place an order. Nothing visible on the site.', 'live'],
+        'email_merchant_new_order' => ['email', 'New-order alert to you', 'Tells the store an order has come in, with the customer’s details, so you do not have to watch the admin. Goes to the address set under Store → Mail.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to you when an order is placed. Nothing visible on the site.', 'live'],
+        'email_order_shipped' => ['email', 'Dispatch notification', 'Tells the customer their order has left you, sent when its status becomes Shipped.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when you mark an order Shipped. Nothing visible on the site.', 'live'],
+        'email_order_cancelled' => ['email', 'Cancellation notification', 'Tells the customer an order has been cancelled and nothing further will be sent, when its status becomes Cancelled.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when an order is cancelled. Nothing visible on the site.', 'live'],
+        'email_order_refunded' => ['email', 'Refund notification', 'Tells the customer money has gone back, sent when a refund actually settles — not when an order is merely marked refunded. Covers partial refunds too.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when a refund succeeds. Nothing visible on the site.', 'live'],
         // ── Catalogue ──
         // The screen is Store → Catalog → Reorder, and it has existed for some
         // time. This row said 'Its own screen' with no console route, which the
