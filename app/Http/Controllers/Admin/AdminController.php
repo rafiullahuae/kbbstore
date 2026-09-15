@@ -927,57 +927,180 @@ class AdminController extends Controller
         return response()->json(['settings' => \App\Models\Setting::map()]);
     }
 
+    /**
+     * The editable settings, each with the rule its own consumer imposes.
+     *
+     * WHY PER-KEY AND NOT ONE BLANKET RULE. This used to be a flat list of key
+     * names: if the key was on it, whatever string arrived was written. Nothing
+     * downstream could recover from a bad one, because every consumer reads
+     * these with a bare cast and `(int) 'abc'` is 0 — silently, and 0 is a
+     * legal-looking value for all of them. A typo in the free-shipping
+     * threshold therefore set it to zero, and `$subtotal >= 0` is true for
+     * every basket that has ever existed, so the store shipped everything free
+     * and said "Saved" while doing it. Same shape for the COD and gift fees,
+     * which simply stopped being charged.
+     *
+     * The three money conventions here are genuinely different and one rule
+     * could not have covered them:
+     *
+     *   fils  free_ship, delivery_flat, cod_fee, gift_fee — the screen
+     *         multiplies by 100 before posting, so the wire value is an integer
+     *         number of fils. A decimal is REFUSED rather than guessed at:
+     *         "12.50" in a fils field is either AED 12.50 or 12 fils depending
+     *         on who typed it, and the old `(int)` cast silently chose 12 —
+     *         AED 0.12, a hundredfold under-charge that reads back as a
+     *         plausible number on the screen afterwards.
+     *   aed   merchant_ship_cost, merchant_ship_free_over — posted raw from a
+     *         `step="0.01"` box and compared against price_aed by
+     *         App\Support\Seo, so these ARE major units and a decimal is right.
+     *   pct   vat_rate — a percentage, read as a float by VatDisplay.
+     *
+     * Every bound below comes from the consumer, not from taste: the money
+     * ceiling is the 32-bit money column (Money::MAX_FILS), the enums are the
+     * exact lists their readers match against, and keys whose column is
+     * longText and whose reader imposes no shape are left as free text rather
+     * than given a length limit nobody could justify.
+     *
+     * PUBLIC so that a test can ask what this endpoint accepts instead of
+     * scraping the method body for quoted strings, which is how the currency
+     * and SEO allowlist tests used to do it — they broke the moment the list
+     * moved, while the behaviour they describe had not changed at all.
+     *
+     * @var array<string, array{0:string, 1:string, 2?:mixed}>
+     */
+    public const SETTING_RULES = [
+        'store_name' => ['text', 'Store name'],
+
+        // Currency display (Store -> Business Details -> Currency). Every one of
+        // these has to be here or Save reports success and writes nothing.
+        'currency' => ['code', 'Currency', 3],
+        'currency_symbol' => ['text', 'Currency symbol'],
+        'currency_position' => ['enum', 'Symbol position', \App\Support\Money::POSITIONS],
+        'currency_decimals' => ['int', 'Currency decimals', [0, 4]],
+        'currency_symbol_render' => ['enum', 'Symbol rendering', \App\Support\Money::RENDER_MODES],
+
+        'vat_rate' => ['pct', 'VAT rate'],
+
+        // Money, in fils. See the note above for why a decimal is refused.
+        'free_ship' => ['fils', 'Free-shipping threshold'],
+        'delivery_flat' => ['fils', 'Flat delivery charge'],
+        'cod_fee' => ['fils', 'Cash-on-delivery fee'],
+
+        'meta_pixel' => ['text', 'Meta Pixel ID'],
+        'ga' => ['text', 'Google Analytics ID'],
+        'google_site_verification' => ['text', 'Google verification token'],
+        'bing_site_verification' => ['text', 'Bing verification token'],
+        'seo_json' => ['text', 'Custom JSON-LD'],
+
+        // Search appearance.
+        'site_url' => ['text', 'Site URL'],
+        'seo_site_name' => ['text', 'Site name'],
+        'seo_separator' => ['text', 'Title separator'],
+        'seo_title_template' => ['text', 'Title template'],
+        'seo_home_title' => ['text', 'Home title'],
+        'seo_home_description' => ['text', 'Home description'],
+        'seo_default_description' => ['text', 'Default description'],
+
+        // Emitted straight into <meta name="robots">, so the vocabulary is the
+        // one the tag actually defines rather than a boolean.
+        'robots_index' => ['enum', 'Search engines', ['index', 'noindex']],
+        'robots_follow' => ['enum', 'Follow links', ['follow', 'nofollow']],
+
+        // Social.
+        'og_default_image' => ['text', 'Default share image'],
+        'twitter_handle' => ['text', 'X / Twitter handle'],
+
+        // Organization / schema.
+        'org_name' => ['text', 'Organization name'],
+        'org_logo' => ['text', 'Organization logo'],
+        'org_type' => ['enum', 'Organization type', ['Organization', 'OnlineStore', 'Store', 'LocalBusiness']],
+
+        // Sitemap / robots.
+        'sitemap_enabled' => ['flag', 'XML sitemap'],
+        'robots_txt' => ['text', 'robots.txt'],
+
+        // Gift wrapping (Store -> Delivery & Shipping -> Gift wrapping).
+        'gift_enabled' => ['flag', 'Gift wrapping'],
+        'gift_fee' => ['fils', 'Gift-wrap fee'],
+
+        // Social profiles, feeding schema.org sameAs.
+        'social_facebook' => ['text', 'Facebook URL'],
+        'social_instagram' => ['text', 'Instagram URL'],
+        'social_tiktok' => ['text', 'TikTok URL'],
+        'social_pinterest' => ['text', 'Pinterest URL'],
+        'social_linkedin' => ['text', 'LinkedIn URL'],
+        'social_youtube' => ['text', 'YouTube URL'],
+
+        'pinterest_site_verification' => ['text', 'Pinterest verification token'],
+        'baidu_site_verification' => ['text', 'Baidu verification token'],
+
+        // Crawling and discovery toggles.
+        'indexnow_on' => ['flag', 'Instant indexing'],
+        'llms_enabled' => ['flag', 'Publish llms.txt'],
+        'crawl_clean' => ['flag', 'Crawl-budget cleanup'],
+
+        // Brand directory display mode, read by BrandController.
+        'brands_display' => ['enum', 'Brand display', \App\Http\Controllers\Store\BrandController::DISPLAY_MODES],
+
+        // Google Merchant listing block. The two money keys here are AED, not
+        // fils — see the note above.
+        'enable_merchant' => ['flag', 'Merchant listing'],
+        'merchant_condition' => ['enum', 'Condition', ['NewCondition', 'UsedCondition', 'RefurbishedCondition']],
+        'merchant_ship_country' => ['code', 'Ship-to country', 2],
+        'merchant_ship_cost' => ['aed', 'Shipping cost'],
+        'merchant_ship_free_over' => ['aed', 'Free shipping over'],
+        'merchant_return_days' => ['int', 'Return window', [0, 3650]],
+    ];
+
     /** PUT /admin-api/settings — upsert a whitelisted set of store settings. */
     public function updateSettings(Request $request)
     {
-        // Only these keys are editable from the admin (values arrive as plain strings;
-        // money keys — free_ship, delivery_flat, cod_fee — are already in fils, converted UI-side).
-        $allowed = [
-            'store_name', 'currency', 'vat_rate',
-            // Currency display (Store -> Business Details -> Currency).
-            // Every one of these has to be here or Save reports success and
-            // writes nothing — the loop below skips unknown keys silently.
-            'currency_symbol', 'currency_position', 'currency_decimals',
-            'currency_symbol_render',
-            'free_ship', 'delivery_flat', 'cod_fee',
-            'meta_pixel', 'ga', 'google_site_verification', 'bing_site_verification', 'seo_json',
-            // Search appearance
-            'site_url', 'seo_site_name', 'seo_separator', 'seo_title_template',
-            'seo_home_title', 'seo_home_description', 'seo_default_description',
-            'robots_index', 'robots_follow',
-            // Social
-            'og_default_image', 'twitter_handle',
-            // Organization / schema
-            'org_name', 'org_logo', 'org_type',
-            // Sitemap / robots
-            'sitemap_enabled', 'robots_txt',
-            // Gift wrapping (Store -> Delivery & Shipping -> Gift wrapping).
-            // Absent from this list, Save reported success and wrote nothing:
-            // the loop below skips unknown keys and returns ok regardless.
-            'gift_enabled', 'gift_fee',
-            // Social profiles, feeding schema.org sameAs. The SEO screen has
-            // posted all six since it shipped and every one was rejected here,
-            // so sameAs could never be populated from the admin.
-            'social_facebook', 'social_instagram', 'social_tiktok',
-            'social_pinterest', 'social_linkedin', 'social_youtube',
-            // Remaining verification tokens. google_ and bing_ were listed;
-            // these two were not, for no reason anyone recorded.
-            'pinterest_site_verification', 'baidu_site_verification',
-            // Crawling and discovery toggles.
-            'indexnow_on', 'llms_enabled', 'crawl_clean',
-            // Brand directory display mode: auto | logos | names. Read by
-            // BrandController and rendered by store/brands.blade.php.
-            'brands_display',
-            // Google Merchant listing block.
-            'enable_merchant', 'merchant_condition', 'merchant_ship_country',
-            'merchant_ship_cost', 'merchant_ship_free_over', 'merchant_return_days',
-        ];
-
         $incoming = $request->input('settings', []);
         if (!is_array($incoming)) return response()->json(['error' => 'invalid'], 422);
 
-        $saved = 0;
         $rejected = [];
+        $errors = [];
+        $clean = [];
+
+        /*
+         * VALIDATE EVERYTHING FIRST, WRITE NOTHING UNTIL IT ALL PASSES.
+         *
+         * The screen posts a whole tab in one request. Writing as we went would
+         * leave a rejected payload half-applied — some keys new, some old, and
+         * a 422 on screen naming one field while the others landed anyway. That
+         * is a worse state to be in than either outcome on its own.
+         */
+        foreach ($incoming as $key => $value) {
+            if (! array_key_exists($key, self::SETTING_RULES)) {
+                $rejected[] = $key;
+                continue;
+            }
+
+            [$type, $label] = self::SETTING_RULES[$key];
+            $extra = self::SETTING_RULES[$key][2] ?? null;
+
+            $result = $this->checkSetting($type, $label, $value, $extra);
+
+            if ($result['error'] !== null) {
+                $errors[$key] = [$result['error']];
+                continue;
+            }
+
+            $clean[$key] = $result['value'];
+        }
+
+        if ($errors !== []) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Nothing was saved. ' . implode(' ', array_map(
+                    static fn (array $m) => $m[0],
+                    array_slice($errors, 0, 3)
+                )),
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $saved = 0;
 
         // Through SettingsService::set() rather than Setting::updateOrCreate().
         // all() is a rememberForever cache and Setting::map() keeps a second
@@ -988,13 +1111,8 @@ class AdminController extends Controller
         // both caches.
         $settings = app(\App\Services\SettingsService::class);
 
-        foreach ($incoming as $key => $value) {
-            if (! in_array($key, $allowed, true)) {
-                $rejected[] = $key;
-                continue;
-            }
-
-            $settings->set($key, (string) $value);
+        foreach ($clean as $key => $value) {
+            $settings->set($key, $value);
             $saved++;
         }
 
@@ -1005,6 +1123,141 @@ class AdminController extends Controller
             'saved' => $saved,
             'rejected' => $rejected ?: null,
         ], static fn ($v) => $v !== null));
+    }
+
+    /**
+     * Check one setting against its rule.
+     *
+     * Returns ['value' => string, 'error' => null] or ['value' => null,
+     * 'error' => message]. A refusal is always better than a coerced value
+     * here: the caller is a person looking at the field they just typed into,
+     * and the alternative — the old behaviour — was to store something that
+     * read back as zero and charge customers accordingly.
+     *
+     * @return array{value: ?string, error: ?string}
+     */
+    private function checkSetting(string $type, string $label, mixed $raw, mixed $extra): array
+    {
+        $ok = static fn (string $v): array => ['value' => $v, 'error' => null];
+        $no = static fn (string $m): array => ['value' => null, 'error' => $m];
+
+        // Arrays and objects are not settings values; the column is text.
+        if (is_array($raw) || is_object($raw)) {
+            return $no("“{$label}” must be a single value.");
+        }
+
+        $value = trim((string) $raw);
+
+        switch ($type) {
+            case 'text':
+                // settings.value is longText and these keys have no shape their
+                // reader depends on, so no length rule is invented here. A wrong
+                // limit blocks a legitimate value, which is worse than none.
+                return $ok($value);
+
+            case 'flag':
+                return ($value === '0' || $value === '1')
+                    ? $ok($value)
+                    : $no("“{$label}” must be on or off.");
+
+            case 'enum':
+                return in_array($value, (array) $extra, true)
+                    ? $ok($value)
+                    : $no("“{$label}” must be one of: " . implode(', ', (array) $extra) . '.');
+
+            case 'code':
+                $len = (int) $extra;
+
+                return preg_match('/^[A-Za-z]{' . $len . '}$/', $value) === 1
+                    ? $ok(strtoupper($value))
+                    : $no("“{$label}” must be {$len} letters.");
+
+            case 'int':
+                [$min, $max] = (array) $extra;
+
+                if (preg_match('/^-?\d+$/', $value) !== 1) {
+                    return $no("“{$label}” must be a whole number.");
+                }
+
+                $n = (int) $value;
+
+                return ($n >= $min && $n <= $max)
+                    ? $ok((string) $n)
+                    : $no("“{$label}” must be between {$min} and {$max}.");
+
+            case 'fils':
+                /*
+                 * A whole number of fils. A decimal is refused rather than
+                 * truncated: the screen posts fils, so "12.50" here is somebody
+                 * typing dirhams into a fils field, and the old `(int)` cast
+                 * turned that into 12 fils — AED 0.12 instead of AED 12.50.
+                 * The message says what to type instead rather than just "no".
+                 */
+                if (preg_match('/^\d+$/', $value) !== 1) {
+                    if (preg_match('/^\d+\.\d{1,2}$/', $value) === 1) {
+                        return $no("“{$label}” is in fils (AED x 100), so it must be a whole number — "
+                            . 'for AED ' . $value . ' enter ' . $this->filsFromAedText($value) . '.');
+                    }
+
+                    return $no("“{$label}” must be a whole number of fils (AED x 100).");
+                }
+
+                // Length first, so the string cannot overflow a PHP int on the
+                // way to the numeric comparison and wrap into a plausible value.
+                if (strlen(ltrim($value, '0')) > 10
+                    || (int) $value > \App\Services\Import\Money::MAX_FILS) {
+                    return $no("“{$label}” is more than the money column can store "
+                        . '(up to AED 21,474,836.47).');
+                }
+
+                return $ok((string) (int) $value);
+
+            case 'aed':
+                /*
+                 * Major units, up to two decimals, parsed digit-by-digit so no
+                 * float is ever constructed: 99.50 is 99 * 100 + 50 by
+                 * construction. `(int) round($aed * 100)` would be a coin flip
+                 * on values binary floating point cannot hold exactly.
+                 */
+                if (preg_match('/^\d+(?:\.\d{1,2})?$/', $value) !== 1) {
+                    return $no("“{$label}” must be an amount in AED, with at most two decimals.");
+                }
+
+                if (strlen(explode('.', $value)[0]) > 9
+                    || $this->filsFromAedText($value) > \App\Services\Import\Money::MAX_FILS) {
+                    return $no("“{$label}” is more than the money column can store "
+                        . '(up to AED 21,474,836.47).');
+                }
+
+                return $ok($value);
+
+            case 'pct':
+                if (preg_match('/^\d+(?:\.\d{1,2})?$/', $value) !== 1) {
+                    return $no("“{$label}” must be a percentage, with at most two decimals.");
+                }
+
+                // Compared in hundredths, so the bound is exact integer work too.
+                return $this->filsFromAedText($value) <= 10000
+                    ? $ok($value)
+                    : $no("“{$label}” must be between 0 and 100.");
+        }
+
+        return $no("“{$label}” could not be checked.");
+    }
+
+    /**
+     * An AED decimal string -> exact fils, by integer arithmetic only.
+     *
+     * The caller has already checked the shape, so this cannot fail. Split on
+     * the point and combine the halves with an integer multiply and add: 99.50
+     * is 9950, 1.15 is 115 and 0.29 is 29 — none of which survive a round trip
+     * through a binary float intact.
+     */
+    private function filsFromAedText(string $value): int
+    {
+        [$whole, $frac] = array_pad(explode('.', $value, 2), 2, '');
+
+        return ((int) $whole) * 100 + (int) str_pad(substr($frac, 0, 2), 2, '0');
     }
 
     /** GET /admin-api/reviews?status= — moderation list (all, or by status). */
@@ -1119,7 +1372,33 @@ class AdminController extends Controller
     /** GET /admin-api/customers — customer list with order count + lifetime spend. */
     public function customers()
     {
-        $agg = Order::select('customer_id', DB::raw('count(*) as n'), DB::raw('sum(total) as s'))
+        /*
+         * SPEND IS REAL ORDERS ONLY; THE ORDER COUNT IS EVERY ORDER.
+         *
+         * `sum(total)` used to run over every status, cancelled and refunded
+         * included, so this screen and the Customers screen — which has always
+         * summed Order::REAL_STATUSES — showed two different lifetime totals
+         * for the same person, and neither said which it meant. A customer who
+         * ordered AED 125 and had a AED 999 order cancelled read as AED 1,124
+         * here and AED 125 there.
+         *
+         * REAL_STATUSES is the right definition and it is not this lane's
+         * opinion: the constant exists precisely so the dashboard's revenue
+         * figure, Catalog → Reorder and the Customers screen cannot drift
+         * apart, and a cancelled order is money the store never took. So this
+         * endpoint is the one that changes.
+         *
+         * The COUNT deliberately stays at every order. "How many times has this
+         * person ordered" and "how much have they actually paid us" are two
+         * different questions, and the replacement screen keeps both for the
+         * same reason (paid_orders beside all_orders).
+         */
+        $real = Order::REAL_STATUSES;
+        $marks = implode(',', array_fill(0, count($real), '?'));
+
+        $agg = Order::select('customer_id')
+            ->selectRaw('count(*) as n')
+            ->selectRaw("coalesce(sum(case when status in ($marks) then total else 0 end), 0) as s", $real)
             ->groupBy('customer_id')->get()->keyBy('customer_id');
 
         /*

@@ -325,18 +325,19 @@ it('keeps plain() free of markup and invisible control characters', function () 
 // ---------------------------------------------------------------------------
 
 it('lists every currency key in the updateSettings allowlist', function () {
-    // Asserted against the source as well as over HTTP: seventeen keys were
-    // already found reporting success and writing nothing, and a reflection
-    // check says which key is missing rather than just that a save failed.
-    $method = new ReflectionMethod(AdminController::class, 'updateSettings');
-    $source = implode('', array_slice(
-        file($method->getFileName()),
-        $method->getStartLine() - 1,
-        $method->getEndLine() - $method->getStartLine() + 1
-    ));
+    // Asserted against the allowlist as well as over HTTP: seventeen keys were
+    // already found reporting success and writing nothing, and naming the
+    // missing key beats "a save failed" when it happens again.
+    //
+    // Read as DATA, not by grepping the method body for quoted strings. The
+    // source-scraping version of this check broke the moment the allowlist
+    // moved into a constant, while the behaviour it describes was unchanged —
+    // a test that fails for a refactor it does not care about teaches people to
+    // edit the test until it passes.
+    $allowed = array_keys(AdminController::SETTING_RULES);
 
     foreach (['currency', 'currency_symbol', 'currency_position', 'currency_decimals', 'currency_symbol_render'] as $key) {
-        expect($source)->toContain("'" . $key . "'");
+        expect($allowed)->toContain($key);
     }
 });
 
