@@ -107,6 +107,10 @@ class MailApiController extends Controller
             'mail_password' => ['string', 'max:255'],
             'mail_from_address' => ['string', 'email', 'max:255'],
             'mail_from_name' => ['string', 'max:120'],
+            // Where the new-order alert goes. MailSettings::save() also checks
+            // it, but only this list makes the SCREEN report a bad value rather
+            // than silently keeping the previous one.
+            'mail_merchant_address' => ['string', 'email', 'max:255'],
             'mail_timeout' => ['integer', 'min:1', 'max:120'],
         ];
 

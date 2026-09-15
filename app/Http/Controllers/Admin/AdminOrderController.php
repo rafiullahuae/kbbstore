@@ -28,7 +28,13 @@ class AdminOrderController extends Controller
 {
     /** Actions that are real right now vs. visible-but-not-wired-up (email requires SMTP, not configured — see the dashboard's own health panel). */
     private const REAL_ACTIONS = ['cancel', 'duplicate'];
-    private const PLACEHOLDER_ACTIONS = ['resend_confirmation', 'email_invoice'];
+    /*
+     * 'resend_confirmation' left this list when order email was built: the
+     * store now has a confirmation to re-send. 'email_invoice' stays, because
+     * there is still no invoice PDF to attach — and a button that mails an
+     * empty invoice is worse than one that says it is not ready.
+     */
+    private const PLACEHOLDER_ACTIONS = ['email_invoice'];
 
     public function show(
         int $id,
@@ -310,8 +316,17 @@ class AdminOrderController extends Controller
         $data = $request->validate(['action' => ['required', 'string']]);
         $action = $data['action'];
 
+        if ($action === 'resend_confirmation') {
+            // The mailer answers honestly here rather than swallowing, because
+            // somebody pressed a button and is waiting for the result. 422 on
+            // failure so the screen shows the reason instead of a tick.
+            $result = app(\App\Services\Mail\OrderMailer::class)->resendConfirmation($order);
+
+            return response()->json($result, $result['ok'] ? 200 : 422);
+        }
+
         if (in_array($action, self::PLACEHOLDER_ACTIONS, true)) {
-            return response()->json(['ok' => false, 'message' => 'Not available yet — outbound email is not configured for this store.'], 422);
+            return response()->json(['ok' => false, 'message' => 'Not available yet — this needs the invoice PDF, which is not built.'], 422);
         }
 
         if ($action === 'cancel') {

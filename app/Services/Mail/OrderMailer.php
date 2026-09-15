@@ -144,6 +144,64 @@ class OrderMailer
     }
 
     /**
+     * Send the customer's receipt again, on purpose, from the admin.
+     *
+     * NOT placed(): that also fires the merchant alert, and a second "new
+     * order" landing in the owner's inbox because they re-sent a customer's
+     * receipt is a lie about what happened.
+     *
+     * And unlike every other method here, this one REPORTS. The swallowing in
+     * placed() exists because a dead SMTP host must not take down a checkout
+     * whose payment is already taken; nothing is waiting on the answer. Here a
+     * person pressed a button and is owed the truth — a button that says
+     * "Sent" whatever happened is worse than one that refuses.
+     *
+     * The module switch is honoured: if the owner has turned confirmations off,
+     * a resend is refused rather than quietly overriding their setting.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function resendConfirmation(Order $order): array
+    {
+        if (! $this->confirmationEnabled()) {
+            return [
+                'ok' => false,
+                'message' => 'Order confirmation emails are switched off in Store → Modules → Order emails.',
+            ];
+        }
+
+        $to = trim((string) $order->email);
+
+        if ($to === '') {
+            return ['ok' => false, 'message' => 'This order has no email address on it.'];
+        }
+
+        try {
+            $order->loadMissing('items');
+
+            Mail::mailer(MailConfigurator::MAILER)
+                ->to($to)
+                ->send(new OrderConfirmation($order));
+
+            return ['ok' => true, 'message' => 'Confirmation re-sent to ' . $to . '.'];
+        } catch (\Throwable $e) {
+            Log::error('resend confirmation failed', [
+                'order' => $order->order_number,
+                'exception' => class_basename($e),
+                'message' => $this->redact($e->getMessage()),
+            ]);
+
+            return [
+                'ok' => false,
+                // The driver's own words, redacted of the SMTP password, because
+                // "it failed" sends the owner to a log file they cannot read on
+                // shared hosting.
+                'message' => 'Could not send: ' . $this->redact($e->getMessage()),
+            ];
+        }
+    }
+
+    /**
      * The order's status column changed to something the customer is owed a
      * message about.
      *
