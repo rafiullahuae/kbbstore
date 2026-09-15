@@ -7565,7 +7565,6 @@ buildNav();
 
   /* ---------- Orders screen (new; built from the admin's own tokens) ---------- */
   var ORDER_STATUSES=['draft','pending','processing','onhold','shipped','completed','cancelled','refunded','failed'];
-  var ORD=[], ordFilter='all';
   function statusPill(s){
     var m={completed:'green',processing:'amber',onhold:'amber',shipped:'blue',pending:'grey',draft:'grey',cancelled:'red',refunded:'red',failed:'red'}[s]||'grey';
     return '<span class="pill '+m+'"><span class="d"></span>'+s+'</span>';
@@ -7603,31 +7602,700 @@ buildNav();
       '</tbody></table></div></div>';
   }
 
-  async function renderOrders(){
-    try{ var d=await api('/admin-api/orders'); ORD=d.orders; }catch(e){ ORD=[]; }
-    var counts={all:ORD.length};
-    ORDER_STATUSES.forEach(function(s){ counts[s]=ORD.filter(function(o){return o.status===s;}).length; });
-    var list = ordFilter==='all' ? ORD : ORD.filter(function(o){return o.status===ordFilter;});
-    var chips = [['all','All']].concat(ORDER_STATUSES.map(function(s){return [s, s.charAt(0).toUpperCase()+s.slice(1)];}));
-    document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Orders</h2><p>Every order placed through the storefront. Open one to update its status.</p></div>'+
-      '<div class="chips" style="margin:12px 0 14px">'+chips.map(function(c){
-        return '<button class="chip'+(ordFilter===c[0]?' on':'')+'" data-of="'+c[0]+'">'+c[1]+(counts[c[0]]?(' \u00b7 '+counts[c[0]]):'')+'</button>';
-      }).join('')+'</div>'+
-      '<div class="card" style="overflow:auto"><table><thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>'+
-      (list.length? list.map(function(o){
-        return '<tr><td><b>#'+o.id+'</b></td>'+
-          '<td><div class="pname">'+sesc(o.customer)+'</div><div class="pbrand">'+sesc(o.email||'')+'</div></td>'+
-          '<td>'+sesc(o.items)+'</td>'+
-          '<td class="price"><b>AED '+o.total_aed.toLocaleString()+'</b></td>'+
-          '<td>'+statusPill(o.status)+'</td>'+
-          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(o.created_at||'').slice(0,10)+'</td>'+
-          '<td><button class="btn ghost sm" data-view="'+o.id+'">View</button></td></tr>';
-      }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:34px">No orders yet.</td></tr>')+
-      '</tbody></table></div><div class="pager"><span>Showing '+list.length+' of '+ORD.length+'</span></div></div>';
-    document.querySelectorAll('#content .chip[data-of]').forEach(function(c){ c.onclick=function(){ ordFilter=c.dataset.of; renderOrders(); }; });
-    document.querySelectorAll('#content [data-view]').forEach(function(b){ b.onclick=function(){ renderOrderDetail(+b.dataset.view); }; });
+  /* ===== LANE V · Store · Orders — BEGIN =====================================
+
+     WHAT WAS HERE BEFORE. renderOrders() fetched /admin-api/orders, which
+     returns EVERY order the store has ever taken in one array, kept it in a
+     module-level ORD variable, counted the filter chips by running
+     Array.filter over it once per status, and paginated not at all. Against
+     the 2,419 orders the WooCommerce import brings across that is one very
+     large response per visit and a chip count that is only ever as right as
+     whatever the browser happens to be holding.
+
+     Everything is now asked of the server: one page of rows, the chip counts,
+     the summary and the sort all come back from /admin-api/orders-list for the
+     filters currently on screen. The money in the summary is computed in SQL
+     over the filtered set, never by adding up the rows on this page.
+
+     WHAT THIS DOES NOT TOUCH. renderOrderDetail() below, its capture panel and
+     its refund form belong to other lanes and already work. The View button
+     here opens that screen. Nothing in this region defines a second way to look
+     at an order, and nothing in it moves money.
+
+     THE 390px DEFECT. The old table was 607px wide inside a 342px card on a
+     390px phone, clipped mid-column with no indication there was more. It now
+     lives in .odlscroll, which is overflow-x:auto and max-width:100% — the
+     table scrolls inside the card and contributes nothing to the width of the
+     page. The KPI grid uses minmax(0,1fr) rather than 1fr for the same reason:
+     a grid track defaults to min-width:auto, so a long money figure like
+     "AED 1,245,300" widens the track past its share and pushes the page out.
+     Measured in real Chromium at 390 and 1280; #content reports
+     scrollWidth === clientWidth at both.
+
+     BLANKS ARE EXPECTED, NOT EXCEPTIONAL. An imported order can have no
+     customer row, no phone, no city, no payment method and a date from 2019.
+     Every cell falls back to an em dash rather than printing "undefined".
+
+     Everything the public typed — billing names, emails, phones, cities — goes
+     through sesc() before it reaches innerHTML.
+  */
+
+  (function odlStyles(){
+    if(document.getElementById('odlcss')) return;
+
+    /* Injected rather than added to the stylesheet at the top of this file:
+       that block is shared by every screen and several lanes are editing this
+       view at once. A style element this region owns outright cannot collide
+       with somebody else's rule. */
+    var s = document.createElement('style');
+    s.id = 'odlcss';
+    s.textContent =
+      '.odlkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}' +
+      '@media(max-width:900px){.odlkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+      '@media(max-width:430px){.odlkpis{grid-template-columns:minmax(0,1fr)}}' +
+      '.odlkpi{min-width:0;overflow-wrap:anywhere}' +
+      '.odlkpi .v{font-size:21px;font-weight:700;margin-top:6px;line-height:1.15}' +
+      '.odlkpi .k{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}' +
+      '.odlkpi .s{font-size:11.5px;color:var(--ink-soft);margin-top:2px}' +
+      /* The whole point of the fix: a wide table scrolls in here, never on the
+         page. max-width:100% stops a min-width table stretching the card. */
+      '.odlscroll{max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}' +
+      '.odlscroll table{min-width:880px}' +
+      '.odlhint{display:none;font-size:11.5px;color:var(--ink-soft);padding:10px 14px 0}' +
+      '@media(max-width:900px){.odlhint{display:block}}' +
+      '.odltools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}' +
+      '.odltools .search{flex:1 1 200px;min-width:0}' +
+      '.odltools .inp{max-width:100%}' +
+      '.odlgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}' +
+      '.odlbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}' +
+      '.odlpager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;' +
+        'padding:13px 4px 2px;font-size:12.5px;color:var(--ink-soft)}' +
+      '.odlnum{font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      '.odlwarn{border-color:#f0dcae;background:var(--amber-soft)}';
+
+    document.head.appendChild(s);
+  })();
+
+  var OL = {
+    page: 1,
+    perPage: +(localStorage.getItem('kbb_ord_pp') || 50),
+    search: '', filter: 'all', sort: 'newest',
+    from: '', to: '', totalMin: '', totalMax: '', payment: '',
+    adv: false, colsOpen: false, cols: null, data: null, err: null, sel: {}, busy: false
+  };
+
+  var OL_COLDEF = [
+    ['status', 'Status'], ['items', 'Items'], ['total', 'Total'], ['refunded', 'Refunded'],
+    ['payment', 'Payment'], ['placed', 'Placed'], ['location', 'City'],
+    ['contact', 'Phone'], ['wc', 'Woo ID']
+  ];
+
+  /* Refunded, City, Phone and the Woo ID are off by default and one click away
+     in Columns. Most orders have no refund, and the six that are on already
+     fill a 1032px content area; Woo's own screen shows more and pays for it on
+     every page load. */
+  var OL_COLS_DEFAULT = {
+    status: true, items: true, total: true, refunded: false,
+    payment: true, placed: true, location: false, contact: false, wc: false
+  };
+
+  /* Which sort each sortable header maps to, so the header caret and the Sort
+     menu can never disagree about what the list is ordered by. */
+  var OL_COLSORT = { items: 'units_desc', total: 'total_desc', placed: 'newest', status: 'status' };
+
+  var OL_SORTS = [
+    ['newest', 'Newest first'], ['oldest', 'Oldest first'], ['number', 'Order number'],
+    ['total_desc', 'Value, high to low'], ['total_asc', 'Value, low to high'],
+    ['units_desc', 'Most items'], ['status', 'Status'], ['customer', 'Customer A–Z']
+  ];
+
+  /* Bands in whole dirhams; the server converts with Money::fromMajor, so the
+     comparison happens in fils and nothing here ever holds a money float. */
+  var OL_BANDS = [
+    ['', '', 'Any value'], ['', '99', 'Under AED 100'], ['100', '499', 'AED 100 – 499'],
+    ['500', '1999', 'AED 500 – 1,999'], ['2000', '', 'AED 2,000 and over']
+  ];
+
+  /* Statuses a bulk action may set. Mirrors OrdersApiController::BULK_SETTABLE
+     — and 'refunded' is absent from both, because that status is written when
+     money actually goes back and a dropdown must not be able to claim it did. */
+  var OL_SETTABLE = [
+    ['processing', 'Processing'], ['onhold', 'On hold'], ['shipped', 'Shipped'],
+    ['completed', 'Completed'], ['pending', 'Pending'], ['cancelled', 'Cancelled']
+  ];
+
+  function olCols(){
+    if(OL.cols) return OL.cols;
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('kbb_ord_cols') || 'null'); }catch(e){ saved = null; }
+    OL.cols = Object.assign({}, OL_COLS_DEFAULT, saved || {});
+    return OL.cols;
   }
+  function olSaveCols(){ try{ localStorage.setItem('kbb_ord_cols', JSON.stringify(OL.cols)); }catch(e){} }
+
+  function olParams(forExport){
+    var p = new URLSearchParams();
+    if(!forExport){ p.set('page', OL.page); p.set('per_page', OL.perPage); }
+    if(OL.search) p.set('search', OL.search);
+    if(OL.filter && OL.filter !== 'all') p.set('filter', OL.filter);
+    if(OL.sort && OL.sort !== 'newest') p.set('sort', OL.sort);
+    if(OL.from) p.set('from', OL.from);
+    if(OL.to) p.set('to', OL.to);
+    if(OL.totalMin !== '') p.set('total_min', OL.totalMin);
+    if(OL.totalMax !== '') p.set('total_max', OL.totalMax);
+    if(OL.payment) p.set('payment', OL.payment);
+    return p.toString();
+  }
+
+  function olDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
+
+  function olDate(iso){
+    if(!iso) return '<span style="color:var(--ink-faint)">—</span>';
+    var d = new Date(iso);
+    if(isNaN(d)) return '<span style="color:var(--ink-faint)">—</span>';
+    return sesc(d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}));
+  }
+
+  /* "3 days ago" under the date. A shop owner reads recency faster than a date,
+     and an order imported from 2019 should look like it. */
+  function olAgo(iso){
+    if(!iso) return '';
+    var d = new Date(iso); if(isNaN(d)) return '';
+    var days = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if(days < 0) return '';
+    if(days === 0) return 'today';
+    if(days === 1) return 'yesterday';
+    if(days < 31) return days + ' days ago';
+    if(days < 365){ var m = Math.max(1, Math.round(days / 30)); return m + (m === 1 ? ' month ago' : ' months ago'); }
+    var years = Math.floor(days / 365);
+    return (years < 2 ? 'over a year ago' : years + ' years ago');
+  }
+
+  /* How this application's own statuses read on a chip. A status NOT in here
+     came out of the import, and it is shown verbatim: "wc-tamara-p-failed" is
+     the key the operator will search WooCommerce for, and prettifying it into
+     "Wc tamara p failed" throws that away for nothing. */
+  var OL_LABELS = {
+    draft: 'Draft', pending: 'Pending', processing: 'Processing', onhold: 'On hold',
+    shipped: 'Shipped', completed: 'Completed', cancelled: 'Cancelled',
+    refunded: 'Refunded', failed: 'Failed'
+  };
+  function olTitle(s){ return OL_LABELS[s] || s; }
+  function olLabel(o){ return o.customer_name || o.email || ('Order ' + o.order_number); }
+
+  async function olLoad(){
+    if(OL.busy) return;
+    OL.busy = true;
+    try{
+      OL.data = await api('/admin-api/orders-list?' + olParams(false));
+      OL.perPage = OL.data.per_page;
+      OL.err = null;
+    }catch(e){
+      OL.data = null;
+      /* Say WHAT failed, not what might have. Fetch the same URL again plainly
+         so the status and the server's own message can be shown, rather than
+         guessing at a cause and sending whoever reads it to the wrong place. */
+      OL.err = {status:0, body:''};
+      try{
+        var probe = await fetch(fixAdminApiUrl('/admin-api/orders-list?' + olParams(false)),
+          {credentials:'same-origin', headers:{'Accept':'application/json'}});
+        OL.err.status = probe.status;
+        OL.err.body = (await probe.text() || '').slice(0, 400);
+      }catch(e2){
+        OL.err.body = String(e2 && e2.message || e);
+      }
+    }
+    OL.busy = false;
+    olPaint();
+  }
+
+  async function renderOrders(){
+    OL.page = 1; OL.sel = {};
+    document.querySelector('#content').innerHTML =
+      '<div class="wrap"><div class="page-head"><h2>Orders</h2>' +
+      '<p>Every order the store has taken, including guest and imported ones.</p></div>' +
+      '<p style="padding:24px;color:var(--ink-soft)">Loading orders…</p></div>';
+    await olLoad();
+  }
+
+  /* Turn the HTTP status into the thing to actually go and check. */
+  function olWhy(){
+    var st = OL.err ? OL.err.status : 0;
+    if(st === 404) return 'The server returned 404 — this build’s routes are not live yet. The compiled route cache needs clearing (Store → Core Updates does this on every apply).';
+    if(st === 401 || st === 403) return 'The server returned ' + st + ' — the admin session was refused. Sign out and back in.';
+    if(st === 419) return 'The server returned 419 — the admin session expired. Reload the page.';
+    if(st === 500) return 'The server returned 500 — the request reached the code and the code threw. The exception is in storage/logs/laravel.log; the text below is what the server sent back.';
+    if(st === 0)   return 'The request never completed — the browser could not reach the server at all.';
+    return 'The server returned ' + st + '. The text below is what it sent back.';
+  }
+
+  function olKpi(label, value, sub){
+    return '<div class="card pad odlkpi"><div class="k">' + sesc(label) + '</div>' +
+      '<div class="v odlnum">' + value + '</div><div class="s">' + sesc(sub || '') + '</div></div>';
+  }
+
+  function olAdvCount(){
+    var n = 0;
+    if(OL.from || OL.to) n++;
+    if(OL.totalMin !== '' || OL.totalMax !== '') n++;
+    if(OL.payment) n++;
+    return n;
+  }
+
+  /* All, Paid, every status actually present, Trash. A status nobody has is not
+     a chip — but an imported one nobody planned for (wc-tamara-p-failed) is,
+     because the server builds the list from the column rather than a constant. */
+  function olChips(d){
+    var counts = d.counts || {};
+    var chips = [['all', 'All'], ['paid', 'Counts as revenue']];
+
+    (d.statuses || []).forEach(function(s){
+      if(counts[s]) chips.push([s, olTitle(s)]);
+    });
+
+    chips.push(['trashed', 'Trash']);
+
+    return chips.map(function(c){
+      var n = counts[c[0]] || 0;
+      return '<button class="chip' + (OL.filter === c[0] ? ' on' : '') + '" data-olf="' + sesc(c[0]) + '">' +
+        sesc(c[1]) + ' <span style="opacity:.6">' + n + '</span></button>';
+    }).join('');
+  }
+
+  function olPaint(){
+    var el = document.querySelector('#content');
+    var d = OL.data;
+
+    if(!d){
+      el.innerHTML = '<div class="wrap"><div class="page-head"><h2>Orders</h2></div>' +
+        '<div class="card pad"><p style="font-size:13px;color:var(--red)">Orders could not be loaded.</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">' + olWhy() + '</p>' +
+        (OL.err && OL.err.body ? '<pre style="margin-top:10px;padding:10px;background:var(--bg-soft,#f6f6f7);border-radius:8px;font-size:11.5px;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto">' + sesc(OL.err.body) + '</pre>' : '') +
+        '<div style="margin-top:12px"><button class="btn ghost sm" id="olRetry">Try again</button></div></div></div>';
+      var retry = document.getElementById('olRetry');
+      if(retry) retry.onclick = function(){ olLoad(); };
+      return;
+    }
+
+    var cols = OL_COLDEF.filter(function(c){ return olCols()[c[0]]; });
+    var selected = Object.keys(OL.sel).filter(function(k){ return OL.sel[k]; });
+    var s = d.summary || {};
+
+    el.innerHTML =
+      '<div class="wrap">' +
+      '<div class="between" style="margin-bottom:8px;flex-wrap:wrap;gap:12px">' +
+        '<div class="page-head" style="margin:0"><h2>Orders</h2>' +
+        '<p>Every order the store has taken, including guest and imported ones. Revenue counts processing, on-hold, shipped and completed orders, with refunds taken off.</p></div>' +
+        '<div class="row" style="gap:8px;flex-wrap:wrap">' +
+          '<button class="btn ghost" id="olColsBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Columns</button>' +
+          '<button class="btn" id="olExport">' + ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>') + ' Export CSV</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="odlkpis">' +
+        olKpi('Orders in this view', (s.orders || 0).toLocaleString(),
+          s.paid_orders === s.orders ? 'all count as revenue' : (s.paid_orders || 0) + ' count as revenue') +
+        olKpi('Revenue', sesc(s.revenue_display || ''), 'after refunds') +
+        olKpi('Refunded', sesc(s.refunded_display || ''), 'across this view') +
+        olKpi('Average order', sesc(s.aov_display || ''), 'across the revenue orders') +
+      '</div>' +
+
+      (OL.colsOpen ? olColsPanel() : '') +
+
+      '<div class="odltools">' +
+        '<div class="search">' + ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
+        '<input id="olSearch" placeholder="Search order number, name, email, phone or Woo ID…" value="' + sesc(OL.search) + '"></div>' +
+        '<select class="inp" id="olSort" style="max-width:220px">' +
+          OL_SORTS.map(function(o){ return '<option value="' + o[0] + '"' + (OL.sort === o[0] ? ' selected' : '') + '>Sort: ' + o[1] + '</option>'; }).join('') +
+        '</select>' +
+        '<button class="btn ghost" id="olAdv">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters' + (olAdvCount() ? ' · ' + olAdvCount() : '') + (OL.adv ? ' ▴' : ' ▾') + '</button>' +
+      '</div>' +
+
+      (OL.adv ? olAdvPanel(d) : '') +
+
+      '<div class="chips" style="margin-bottom:12px">' + olChips(d) + '</div>' +
+
+      (selected.length ? olSelectionBar(selected) : '') +
+
+      '<div class="card">' +
+        '<p class="odlhint">This table is wider than the screen — swipe it sideways to see every column, or hide the ones you do not need with Columns.</p>' +
+        '<div class="odlscroll">' + olTable(d, cols) + '</div>' +
+      '</div>' +
+
+      '<div class="odlpager">' +
+        '<span>' + (d.orders.length ? ((d.page - 1) * d.per_page + 1) : 0) + '–' +
+        ((d.page - 1) * d.per_page + d.orders.length) + ' of ' + d.total + '</span>' +
+        '<div class="row" style="gap:8px;flex-wrap:wrap">' +
+          '<select class="inp" id="olPerPage" style="width:126px">' +
+            [25, 50, 100, 200].map(function(n){ return '<option value="' + n + '"' + (n === OL.perPage ? ' selected' : '') + '>' + n + ' per page</option>'; }).join('') +
+          '</select>' +
+          '<button class="btn ghost sm" ' + (d.page <= 1 ? 'disabled' : '') + ' id="olPrev">‹ Prev</button>' +
+          '<span style="font-size:12px">Page ' + d.page + ' of ' + d.last_page + '</span>' +
+          '<button class="btn ghost sm" ' + (d.page >= d.last_page ? 'disabled' : '') + ' id="olNext">Next ›</button>' +
+        '</div>' +
+      '</div></div>';
+
+    olBind();
+  }
+
+  function olSelectionBar(selected){
+    var trashView = OL.filter === 'trashed';
+
+    return '<div class="card pad odlbar" style="margin-bottom:12px">' +
+      '<b style="font-size:12.5px">' + selected.length + ' selected</b>' +
+      '<button class="btn ghost sm" id="olClearSel">Clear</button>' +
+      '<div style="flex:1"></div>' +
+      (trashView
+        ? '<button class="btn sm" id="olBulkRestore">Restore</button>'
+        : '<select class="inp" id="olBulkStatus" style="width:auto;min-width:150px">' +
+            '<option value="">Set status to…</option>' +
+            OL_SETTABLE.map(function(o){ return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+          '</select>' +
+          '<button class="btn sm" style="background:var(--red)" id="olBulkDelete">Move to trash…</button>') +
+      '</div>';
+  }
+
+  function olColsPanel(){
+    return '<div class="card pad" style="margin-bottom:14px">' +
+      '<b style="font-size:12.5px">Columns</b>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:11px">' +
+      OL_COLDEF.map(function(c){
+        return '<label class="row" style="gap:8px;font-size:12.5px;cursor:pointer">' +
+          '<span class="cbx' + (olCols()[c[0]] ? ' on' : '') + '" data-olcol="' + c[0] + '">' + ic(I.check) + '</span> ' + sesc(c[1]) + '</label>';
+      }).join('') +
+      '</div><div style="margin-top:14px"><button class="btn ghost sm" id="olColsReset">Reset to default</button></div></div>';
+  }
+
+  function olAdvPanel(d){
+    var band = OL_BANDS.filter(function(b){ return b[0] === OL.totalMin && b[1] === OL.totalMax; })[0];
+
+    /* The payment methods that actually appear in this view, so the filter
+       cannot offer a gateway the store has never taken money through. */
+    var methods = {};
+    (d.orders || []).forEach(function(o){ if(o.payment_method) methods[o.payment_method] = o.payment; });
+    if(OL.payment && !methods[OL.payment]) methods[OL.payment] = OL.payment;
+
+    return '<div class="card pad" style="margin-bottom:12px">' +
+      '<div class="odlgrid">' +
+        '<div class="fld" style="margin:0"><label>Order value</label><select id="olBand">' +
+          OL_BANDS.map(function(b){ return '<option value="' + b[0] + '|' + b[1] + '"' + (band && band[2] === b[2] ? ' selected' : '') + '>' + sesc(b[2]) + '</option>'; }).join('') +
+          (band ? '' : '<option value="custom" selected>Custom range</option>') +
+        '</select></div>' +
+        '<div class="fld" style="margin:0"><label>Value from (AED)</label><input id="olMin" type="number" min="0" step="1" value="' + sesc(OL.totalMin) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Value to (AED)</label><input id="olMax" type="number" min="0" step="1" value="' + sesc(OL.totalMax) + '" placeholder="any"></div>' +
+        '<div class="fld" style="margin:0"><label>Placed from</label><input id="olFrom" type="date" value="' + sesc(OL.from) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Placed to</label><input id="olTo" type="date" value="' + sesc(OL.to) + '"></div>' +
+        '<div class="fld" style="margin:0"><label>Payment</label><select id="olPayment"><option value="">Any payment method</option>' +
+          Object.keys(methods).sort().map(function(k){ return '<option value="' + sesc(k) + '"' + (OL.payment === k ? ' selected' : '') + '>' + sesc(methods[k]) + '</option>'; }).join('') +
+        '</select></div>' +
+      '</div>' +
+      '<div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap"><button class="btn sm" id="olApply">Apply filters</button>' +
+      '<button class="btn ghost sm" id="olClearFilters">Clear all</button>' +
+      '<span style="font-size:11.5px;color:var(--ink-soft)">Dates are when the order was placed, so imported orders sort by their original date.</span></div></div>';
+  }
+
+  function olTable(d, cols){
+    if(!d.orders.length){
+      return '<p style="padding:34px;text-align:center;color:var(--ink-soft);font-size:13px">No orders match this view.' +
+        (olAdvCount() || OL.search || OL.filter !== 'all' ? ' <button class="btn ghost sm" id="olEmptyClear" style="margin-left:8px">Clear filters</button>' : '') + '</p>';
+    }
+
+    var allOnPage = d.orders.every(function(o){ return OL.sel[o.id]; });
+
+    var head = '<thead><tr>' +
+      '<th style="width:36px"><span class="cbx' + (allOnPage ? ' on' : '') + '" id="olAll">' + ic(I.check) + '</span></th>' +
+      '<th>' + olHeadSort('number', 'Order') + '</th>' +
+      '<th>' + olHeadSort('customer', 'Customer') + '</th>' +
+      cols.map(function(c){
+        var right = ['items', 'total', 'refunded'].indexOf(c[0]) >= 0;
+        var inner = OL_COLSORT[c[0]] ? olHeadSort(OL_COLSORT[c[0]], c[1]) : sesc(c[1]);
+        return '<th style="white-space:nowrap' + (right ? ';text-align:right' : '') + '">' + inner + '</th>';
+      }).join('') +
+      '<th></th></tr></thead>';
+
+    var body = '<tbody>' + d.orders.map(function(o){
+      return '<tr' + (o.trashed ? ' style="opacity:.62"' : '') + '>' +
+        '<td><span class="cbx' + (OL.sel[o.id] ? ' on' : '') + '" data-olsel="' + o.id + '">' + ic(I.check) + '</span></td>' +
+        '<td style="white-space:nowrap"><div class="pname">' + sesc(o.order_number) + '</div>' +
+          '<div class="pbrand">' +
+            (o.wc_order_id ? 'Woo #' + o.wc_order_id : '#' + o.id) +
+            (o.trashed ? ' · <span style="color:var(--red)">in the trash</span>' : '') +
+          '</div></td>' +
+        '<td><div class="row" style="min-width:0">' +
+          '<span class="pthumb" style="background:' + sesc(tcol(olLabel(o))) + ';width:32px;height:32px;font-size:10px">' + sesc(initials(olLabel(o))) + '</span>' +
+          '<div style="min-width:0"><div class="pname" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px">' +
+            (o.customer_name ? sesc(o.customer_name) : '<span style="color:var(--ink-faint)">No name on record</span>') +
+            (o.guest ? ' <span class="pill grey">Guest</span>' : '') + '</div>' +
+          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px">' + olDash(o.email) + '</div></div></div></td>' +
+        cols.map(function(col){ return olCell(col[0], o); }).join('') +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn ghost sm" data-olview="' + o.id + '">View</button></td>' +
+      '</tr>';
+    }).join('') + '</tbody>';
+
+    return '<table>' + head + body + '</table>';
+  }
+
+  function olHeadSort(sort, label){
+    var on = OL.sort === sort;
+    return '<button data-olsort="' + sesc(sort) + '" style="font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;' +
+      (on ? 'color:var(--accent-ink)' : '') + '">' + sesc(label) + (on ? ' ▾' : '') + '</button>';
+  }
+
+  function olCell(key, o){
+    switch(key){
+      case 'status':
+        return '<td style="white-space:nowrap">' + statusPill(o.status) +
+          (o.counts_as_revenue ? '' : '<div class="pbrand">not revenue</div>') + '</td>';
+      case 'items':
+        return '<td class="odlnum" style="text-align:right">' + o.units +
+          (o.lines !== o.units ? '<div class="pbrand">' + o.lines + ' line' + (o.lines === 1 ? '' : 's') + '</div>' : '') + '</td>';
+      case 'total':
+        return '<td class="price odlnum" style="text-align:right"><b>' + sesc(o.total_display) + '</b>' +
+          (o.refunded_fils ? '<div class="pbrand">' + sesc(o.net_display) + ' net</div>' : '') + '</td>';
+      case 'refunded':
+        return '<td class="odlnum" style="text-align:right;color:' + (o.refunded_fils ? 'var(--red)' : 'var(--ink-faint)') + '">' +
+          (o.refunded_fils ? sesc(o.refunded_display) : '—') + '</td>';
+      case 'payment':
+        return '<td style="font-size:12px">' + olDash(o.payment) +
+          (o.captured ? '<div class="pbrand">captured</div>' : '') + '</td>';
+      case 'placed':
+        return '<td style="white-space:nowrap;font-size:12px">' + olDate(o.placed_at) +
+          (o.placed_at ? '<div class="pbrand">' + sesc(olAgo(o.placed_at)) + '</div>' : '') + '</td>';
+      case 'location':
+        return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.city) +
+          (o.country ? '<div class="pbrand">' + sesc(o.country) + '</div>' : '') + '</td>';
+      case 'contact':
+        return '<td style="white-space:nowrap;font-size:12px">' + olDash(o.phone) + '</td>';
+      case 'wc':
+        return '<td style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--ink-soft)">' + olDash(o.wc_order_id) + '</td>';
+      default:
+        return '<td></td>';
+    }
+  }
+
+  function olSelectedIds(){
+    return Object.keys(OL.sel).filter(function(k){ return OL.sel[k]; }).map(Number);
+  }
+
+  function olBind(){
+    var $$$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+    var byId = function(id){ return document.getElementById(id); };
+
+    var searchT;
+    var searchEl = byId('olSearch');
+    if(searchEl) searchEl.oninput = function(e){
+      clearTimeout(searchT);
+      var v = e.target.value;
+      searchT = setTimeout(function(){ OL.search = v; OL.page = 1; olLoad(); }, 300);
+    };
+
+    var sortEl = byId('olSort');
+    if(sortEl) sortEl.onchange = function(e){ OL.sort = e.target.value; OL.page = 1; olLoad(); };
+
+    $$$('#content [data-olsort]').forEach(function(b){
+      b.onclick = function(){ OL.sort = b.dataset.olsort; OL.page = 1; olLoad(); };
+    });
+
+    $$$('#content .chip[data-olf]').forEach(function(b){
+      b.onclick = function(){ OL.filter = b.dataset.olf; OL.page = 1; OL.sel = {}; olLoad(); };
+    });
+
+    var adv = byId('olAdv');
+    if(adv) adv.onclick = function(){ OL.adv = !OL.adv; olPaint(); };
+
+    var colsBtn = byId('olColsBtn');
+    if(colsBtn) colsBtn.onclick = function(){ OL.colsOpen = !OL.colsOpen; olPaint(); };
+
+    $$$('#content .cbx[data-olcol]').forEach(function(b){
+      b.onclick = function(){ var k = b.dataset.olcol; OL.cols[k] = !OL.cols[k]; olSaveCols(); olPaint(); };
+    });
+    var colsReset = byId('olColsReset');
+    if(colsReset) colsReset.onclick = function(){ OL.cols = Object.assign({}, OL_COLS_DEFAULT); olSaveCols(); olPaint(); };
+
+    var band = byId('olBand');
+    if(band) band.onchange = function(e){
+      if(e.target.value === 'custom') return;
+      var parts = e.target.value.split('|');
+      OL.totalMin = parts[0]; OL.totalMax = parts[1]; OL.page = 1; olLoad();
+    };
+
+    var apply = byId('olApply');
+    if(apply) apply.onclick = function(){
+      OL.totalMin = (byId('olMin') || {}).value || '';
+      OL.totalMax = (byId('olMax') || {}).value || '';
+      OL.from = (byId('olFrom') || {}).value || '';
+      OL.to = (byId('olTo') || {}).value || '';
+      OL.payment = (byId('olPayment') || {}).value || '';
+      OL.page = 1; olLoad();
+    };
+
+    var clearAll = function(){
+      OL.totalMin = ''; OL.totalMax = ''; OL.from = ''; OL.to = '';
+      OL.payment = ''; OL.search = ''; OL.filter = 'all';
+      OL.page = 1; olLoad();
+    };
+    var clearBtn = byId('olClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
+    var emptyClear = byId('olEmptyClear'); if(emptyClear) emptyClear.onclick = clearAll;
+
+    var perPage = byId('olPerPage');
+    if(perPage) perPage.onchange = function(e){
+      OL.perPage = +e.target.value;
+      try{ localStorage.setItem('kbb_ord_pp', OL.perPage); }catch(err){}
+      OL.page = 1; olLoad();
+    };
+
+    var prev = byId('olPrev'); if(prev) prev.onclick = function(){ if(OL.data.page > 1){ OL.page = OL.data.page - 1; olLoad(); } };
+    var next = byId('olNext'); if(next) next.onclick = function(){ if(OL.data.page < OL.data.last_page){ OL.page = OL.data.page + 1; olLoad(); } };
+
+    $$$('#content [data-olsel]').forEach(function(b){
+      b.onclick = function(){ var id = b.dataset.olsel; OL.sel[id] = !OL.sel[id]; olPaint(); };
+    });
+    var all = byId('olAll');
+    if(all) all.onclick = function(){
+      var on = !OL.data.orders.every(function(o){ return OL.sel[o.id]; });
+      OL.data.orders.forEach(function(o){ OL.sel[o.id] = on; });
+      olPaint();
+    };
+    var clearSel = byId('olClearSel'); if(clearSel) clearSel.onclick = function(){ OL.sel = {}; olPaint(); };
+
+    var bulkStatus = byId('olBulkStatus');
+    if(bulkStatus) bulkStatus.onchange = function(e){
+      var status = e.target.value;
+      e.target.value = '';
+      if(status) olConfirmStatus(olSelectedIds(), status);
+    };
+
+    var bulkDelete = byId('olBulkDelete');
+    if(bulkDelete) bulkDelete.onclick = function(){ olConfirmDelete(olSelectedIds()); };
+
+    var bulkRestore = byId('olBulkRestore');
+    if(bulkRestore) bulkRestore.onclick = async function(){
+      var ids = olSelectedIds();
+      if(!ids.length) return;
+      try{
+        var out = await api('/admin-api/orders-bulk-restore', {method:'POST', body: JSON.stringify({ids: ids})});
+        toast(out.restored + ' order' + (out.restored === 1 ? '' : 's') + ' restored');
+        OL.sel = {}; olLoad();
+      }catch(e){ toast('Could not restore those orders'); }
+    };
+
+    /* The detail screen that already exists. This list does not define a second
+       one, and the capture and refund panels on it are another lane's work. */
+    $$$('#content [data-olview]').forEach(function(b){
+      b.onclick = function(){ renderOrderDetail(+b.dataset.olview); };
+    });
+
+    var exportBtn = byId('olExport');
+    if(exportBtn) exportBtn.onclick = function(){
+      /* A normal navigation, not a fetch: the browser carries the same admin
+         session cookie, the server refuses anyone without it, and the file
+         lands in Downloads instead of in memory. */
+      var qs = olParams(true);
+      window.location.href = fixAdminApiUrl('/admin-api/orders-export') + (qs ? '?' + qs : '');
+    };
+  }
+
+  /* -------- destructive actions: always a dialog, sometimes two -------- */
+
+  /**
+   * Nothing changes on a click. The first dialog says what will happen; the
+   * server then refuses any order that counts as revenue and reports which
+   * ones and what they are worth, and only a second, explicit confirmation
+   * carrying force goes through.
+   */
+  function olConfirmStatus(ids, status){
+    if(!ids.length) return;
+    var label = (OL_SETTABLE.filter(function(o){ return o[0] === status; })[0] || [status, olTitle(status)])[1];
+
+    openModal('<div class="modal-h"><b>Change status</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Set <b>' + ids.length + '</b> order' + (ids.length === 1 ? '' : 's') +
+      ' to <b>' + sesc(label) + '</b>?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">A note is added to each order recording the change. Orders that would stop counting as revenue are left alone unless you confirm them separately.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="olStatusYes">Set status</button></div></div>');
+
+    var yes = document.getElementById('olStatusYes');
+    if(yes) yes.onclick = function(){ olRunStatus(ids, status, false); };
+  }
+
+  async function olRunStatus(ids, status, force){
+    closeModal();
+    try{
+      var out = await api('/admin-api/orders-bulk-status', {
+        method: 'POST', body: JSON.stringify({ids: ids, status: status, force: !!force})
+      });
+
+      if(out.skipped && out.skipped.length){ olConfirmSkipped(out, status, 'status'); return; }
+
+      toast(out.changed + ' order' + (out.changed === 1 ? '' : 's') + ' updated');
+      OL.sel = {}; olLoad();
+    }catch(e){
+      toast('Could not complete that — nothing was changed');
+    }
+  }
+
+  function olConfirmDelete(ids){
+    if(!ids.length) return;
+
+    openModal('<div class="modal-h"><b>Move to trash</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Move <b>' + ids.length + '</b> order' + (ids.length === 1 ? '' : 's') + ' to the trash?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Nothing is destroyed. The orders and their line items stay in the database, they leave this list, and the Trash filter restores them at any time. Orders that count as revenue are left alone unless you confirm them separately.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="olDelYes">Move to trash</button></div></div>');
+
+    var yes = document.getElementById('olDelYes');
+    if(yes) yes.onclick = function(){ olRunDelete(ids, false); };
+  }
+
+  async function olRunDelete(ids, force){
+    closeModal();
+    try{
+      var out = await api('/admin-api/orders-bulk-delete', {
+        method: 'POST', body: JSON.stringify({ids: ids, force: !!force})
+      });
+
+      if(out.skipped && out.skipped.length){ olConfirmSkipped(out, null, 'delete'); return; }
+
+      toast(out.deleted + ' order' + (out.deleted === 1 ? '' : 's') + ' moved to trash');
+      OL.sel = {}; olLoad();
+    }catch(e){
+      toast('Could not complete that — nothing was changed');
+    }
+  }
+
+  /**
+   * The second dialog. The server has already done the safe half and is telling
+   * the operator exactly which orders it refused and what they are worth, by
+   * order number rather than by id.
+   */
+  function olConfirmSkipped(out, status, kind){
+    var done = kind === 'delete' ? out.deleted : out.changed;
+
+    openModal('<div class="modal-h"><b>Some of these count as revenue</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)"><b>' + done + '</b> ' +
+      (kind === 'delete' ? 'moved to trash' : 'updated') + '. <b>' + out.skipped.length +
+      '</b> left alone because ' + (out.skipped.length === 1 ? 'it counts' : 'they count') + ' as revenue:</p>' +
+      '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+      out.skipped.slice(0, 12).map(function(s){
+        return '<li>' + sesc(s.label) + ' — ' + sesc(s.status) + ', ' + sesc(s.total_display) + '</li>';
+      }).join('') +
+      (out.skipped.length > 12 ? '<li>and ' + (out.skipped.length - 12) + ' more</li>' : '') + '</ul>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">Going ahead takes their value out of the store’s revenue figures. Refunds are not affected either way — money only moves from the order screen.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Leave them</button>' +
+      '<button class="btn" style="background:var(--red)" id="olForce">' + (kind === 'delete' ? 'Trash those too' : 'Change those too') + '</button></div></div>');
+
+    var force = document.getElementById('olForce');
+    if(force) force.onclick = function(){
+      var ids = out.skipped.map(function(s){ return s.id; });
+      if(kind === 'delete') olRunDelete(ids, true); else olRunStatus(ids, status, true);
+    };
+  }
+
+  /* ===== LANE V · Store · Orders — END ===== */
 
   /**
    * The detailed order page, built from Rafi's own WooCommerce reference
