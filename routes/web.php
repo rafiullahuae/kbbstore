@@ -324,6 +324,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // cannot collide however these requires are ordered.
         require __DIR__.'/orders-admin.php';
 
+        // Store → New Order: creating an order on a customer's behalf for the
+        // WhatsApp and Instagram orders that never touch the website. Paths are
+        // /manual-orders/... rather than hanging off /orders because
+        // /orders/{id} above carries no constraint and would swallow /orders/new.
+        require __DIR__.'/manual-orders-admin.php';
+
         // The Import / Export screen. Same group and the same reason: it
         // accepts uploaded CSVs and writes customers, orders and products —
         // outside auth:admin that is a stranger rewriting the catalogue.

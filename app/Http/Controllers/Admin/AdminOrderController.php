@@ -5,14 +5,23 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderNote;
+use App\Models\Product;
 use App\Models\Refund;
+use App\Services\ManualOrderBuilder;
+use App\Services\Mail\OrderMailer;
+use App\Services\SettingsService;
+use App\Services\ShippingService;
 use App\Services\Payments\PaymentCapturer;
 use App\Services\Payments\PaymentRefunder;
+use App\Support\AggregatesQueries;
+use App\Support\Fils;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * Backs the detailed admin order page (built from Rafi's WooCommerce
@@ -26,6 +35,32 @@ use Illuminate\Http\Request;
  */
 class AdminOrderController extends Controller
 {
+    /**
+     * Counting a builder that is also used to fetch a page of rows is how this
+     * repo shipped MySQL error 1140 to production twice, and how a page-two
+     * total silently read zero on every engine.
+     */
+    use AggregatesQueries;
+
+    /** How many rows one customer or product search returns. */
+    private const PAGE = 20;
+
+    /**
+     * The LIKE escape character.
+     *
+     * Without it, an operator searching for "50% off" or typing an underscore
+     * matches every row in the table: % and _ are wildcards inside LIKE, and a
+     * bound parameter does not escape them. Binding protects against SQL
+     * injection, not against pattern injection.
+     */
+    private const LIKE_ESCAPE = '!';
+
+    public function __construct(
+        private ManualOrderBuilder $builder,
+        private ShippingService $shipping,
+        private SettingsService $settings,
+    ) {}
+
     /** Actions that are real right now vs. visible-but-not-wired-up. */
     private const REAL_ACTIONS = ['cancel', 'duplicate', 'resend_confirmation', 'email_invoice'];
     /*
@@ -396,6 +431,63 @@ class AdminOrderController extends Controller
     /** Only orders that haven't shipped are safe to change the contents of — once packed, editing the line items doesn't reflect reality. */
     private const EDITABLE_STATUSES = ['draft', 'pending', 'processing', 'onhold'];
 
+    /**
+     * The ceiling on one line's quantity.
+     *
+     * Not a guess at what anyone would order: it is the largest quantity that
+     * cannot on its own take a line past the money column at any unit price a
+     * shop would charge, and it matches the 99 the storefront cart enforces in
+     * CartService::add(). A back office that accepted a quantity the shop front
+     * clamps would be two different products.
+     */
+    private const MAX_QUANTITY = 99;
+
+    /**
+     * Refuse a line whose money will not fit, before anything is written.
+     *
+     * order_items.unit_price, .subtotal and .total are all `$t->integer` —
+     * signed 32-bit, so 2,147,483,647 fils (AED 21,474,836.47) is the ceiling.
+     * Both the Phase 0 schema and 2026_09_15_020000_repair_order_tables declare
+     * them that way.
+     *
+     * Bounding each factor on its own is not enough: a unit price and a
+     * quantity can both be perfectly ordinary and their product still be past
+     * the column. And the order's own subtotal is a sum across lines, so a
+     * tenth line can overflow it while every line including that one fits.
+     *
+     * Both engines are wrong here, differently. MySQL in strict mode raises and
+     * the operator sees a 500 on a save they had no reason to think would fail.
+     * SQLite stores the wrapped number without a word — an order that reads as
+     * placed, with a total that is negative or nonsense, which is the half that
+     * reaches a customer.
+     */
+    private function refuseOverflowingLine(Order $order, int $unitPrice, int $quantity, ?int $ignoreItemId = null): ?JsonResponse
+    {
+        $ceiling = Money::plain(Fils::max());
+
+        if (! Fils::productFits($unitPrice, $quantity)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'That quantity at that unit price comes to more than an order line can hold (' . $ceiling . ').',
+            ], 422);
+        }
+
+        $line = $unitPrice * $quantity;
+
+        $others = (int) $order->items()
+            ->when($ignoreItemId !== null, fn ($q) => $q->whereKeyNot($ignoreItemId))
+            ->sum('total');
+
+        if (! Fils::sumFits($others, $line, (int) $order->shipping_total, (int) $order->fee_total, (int) $order->tax_total)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'That line would take the order total past what it can hold (' . $ceiling . ').',
+            ], 422);
+        }
+
+        return null;
+    }
+
     private function assertEditable(Order $order): ?JsonResponse
     {
         if (!in_array($order->status, self::EDITABLE_STATUSES, true)) {
@@ -422,21 +514,31 @@ class AdminOrderController extends Controller
 
         $data = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            // Bounded. order_items.quantity is an unsignedInteger and the money
+            // columns beside it are signed 32-bit; an unbounded quantity
+            // overflows their product long before it overflows itself.
+            'quantity' => ['required', 'integer', 'min:1', 'max:' . self::MAX_QUANTITY],
         ]);
 
         $product = \App\Models\Product::find($data['product_id']);
         $unitPrice = (int) ($product->sale_price ?: $product->price);
+        $quantity = (int) $data['quantity'];
+
+        if ($refusal = $this->refuseOverflowingLine($order, $unitPrice, $quantity)) {
+            return $refusal;
+        }
+
+        $lineTotal = $unitPrice * $quantity;
 
         $item = $order->items()->create([
             'product_id' => $product->id,
             'name' => $product->name,
             'brand' => $product->brand?->name,
             'sku' => $product->sku,
-            'quantity' => $data['quantity'],
+            'quantity' => $quantity,
             'unit_price' => $unitPrice,
-            'subtotal' => $unitPrice * $data['quantity'],
-            'total' => $unitPrice * $data['quantity'],
+            'subtotal' => $lineTotal,
+            'total' => $lineTotal,
         ]);
 
         $this->recalcTotals($order);
@@ -454,12 +556,54 @@ class AdminOrderController extends Controller
         if ($item === null) return response()->json(['error' => 'not_found'], 404);
 
         $data = $request->validate([
-            'quantity' => ['sometimes', 'integer', 'min:1'],
-            'unit_price_aed' => ['sometimes', 'numeric', 'min:0'],
+            'quantity' => ['sometimes', 'integer', 'min:1', 'max:' . self::MAX_QUANTITY],
+            /*
+             * A STRING, not `numeric`, and parsed by Fils::parse().
+             *
+             * `numeric` accepts scientific notation and any number of decimals,
+             * and the old `(int) round($value * 100)` then routed an operator's
+             * keystrokes through a double: (int) (1.15 * 100) is 114. round()
+             * happens to rescue two-decimal values at today's magnitudes, so
+             * this was latent rather than wrong — the same class of defect the
+             * product editor had, and worth removing for the same reason.
+             *
+             * Fils::parse() reads the digits one at a time, refuses more
+             * precision than a fil can hold rather than silently dropping it,
+             * and refuses anything past the 32-bit money column.
+             */
+            'unit_price_aed' => ['sometimes', 'string', 'max:24', function (string $attribute, $value, $fail) {
+                $fils = Fils::parse((string) $value);
+
+                if ($fils === null) {
+                    $fail('Enter a plain amount with at most two decimals, up to '
+                        . Money::plain(Fils::max()) . '.');
+
+                    return;
+                }
+
+                if ($fils < 0) {
+                    $fail('A unit price cannot be negative.');
+                }
+            }],
         ]);
 
-        if (isset($data['quantity'])) $item->quantity = $data['quantity'];
-        if (isset($data['unit_price_aed'])) $item->unit_price = (int) round($data['unit_price_aed'] * 100);
+        if (isset($data['quantity'])) {
+            $item->quantity = (int) $data['quantity'];
+        }
+
+        if (isset($data['unit_price_aed'])) {
+            $item->unit_price = (int) Fils::parse((string) $data['unit_price_aed']);
+        }
+
+        // Both factors are individually in range by now. Their PRODUCT is the
+        // thing that actually overflows, and it is checked after both have been
+        // applied rather than against whichever one this request happened to
+        // change — a sane new quantity against an already-large unit price
+        // overflows just as well as the other way round.
+        if ($refusal = $this->refuseOverflowingLine($order, (int) $item->unit_price, (int) $item->quantity, $item->id)) {
+            return $refusal;
+        }
+
         $item->subtotal = $item->unit_price * $item->quantity;
         $item->total = $item->subtotal;
         $item->save();
@@ -507,6 +651,451 @@ class AdminOrderController extends Controller
             'total_orders' => $orders->count(),
             'total_revenue_aed' => Money::toAed((int) $real->sum('total')),
             'average_order_value_aed' => $real->count() > 0 ? Money::toAed((int) round($real->sum('total') / $real->count())) : 0,
+        ];
+    }
+
+    /* ===================================================================
+     | GET /admin-api/manual-orders/bootstrap
+     |=================================================================== */
+
+    /**
+     * Everything the form needs to render: the real vocabularies, not invented
+     * ones.
+     *
+     * A sibling lane found AdminController::updateProduct validating status as
+     * in:active,draft,archived when the products column carries
+     * publish|draft|private — a save through it hid the product from the whole
+     * storefront. So every list below is read from the schema or from the
+     * table that owns it, and the same constants feed both this endpoint and
+     * the validator in store().
+     */
+    public function bootstrap(OrderMailer $mailer): JsonResponse
+    {
+        $countries = $this->shipping->coveredCountries();
+
+        if ($countries === []) {
+            // No zone configured at all — the same floor the storefront
+            // checkout falls back to, so the two never offer different lists.
+            $countries = ['AE' => 'United Arab Emirates'];
+        }
+
+        return response()->json([
+            'statuses' => ManualOrderBuilder::STATUSES,
+            'default_status' => ManualOrderBuilder::DEFAULT_STATUS,
+            'channels' => ManualOrderBuilder::CHANNELS,
+            'payment_methods' => $this->builder->paymentMethods(),
+            'countries' => $countries,
+            'default_country' => (string) $this->settings->get('store_country', 'AE'),
+            // Free text on the live site, offered as suggestions only — the
+            // addresses table does not constrain state.
+            'emirates' => [
+                'Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman',
+                'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah',
+            ],
+            'currency' => 'AED',
+            'cod_fee_fils' => (int) $this->settings->get('cod_fee', 0),
+            'email' => $this->confirmationEmailCapability($mailer),
+        ]);
+    }
+
+    /* ===================================================================
+     | GET /admin-api/manual-orders/customers?q=
+     |=================================================================== */
+
+    /** Search the customer list by name, email or phone. */
+    public function customers(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'page' => ['nullable', 'integer', 'min:1', 'max:5000'],
+        ]);
+
+        $term = trim((string) ($data['q'] ?? ''));
+        $page = (int) ($data['page'] ?? 1);
+
+        // Customer soft-deletes, so the model's global scope already excludes
+        // removed rows; nothing extra is needed here.
+        $query = Customer::query();
+
+        if ($term !== '') {
+            $like = '%' . $this->escapeLike($term) . '%';
+
+            $query->where(function ($q) use ($like) {
+                foreach (['name', 'first_name', 'last_name', 'email', 'phone'] as $column) {
+                    $q->orWhereRaw(
+                        $column . " LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'",
+                        [$like],
+                    );
+                }
+            });
+        }
+
+        // Through App\Support\AggregatesQueries, which strips the select list,
+        // the ordering and the page window from a copy of the builder. Counting
+        // $query as it stands — after the orderByDesc and forPage below — is
+        // MySQL 1140 on the ordering and a silent zero from page two on the
+        // offset. Both have shipped from this repo.
+        $total = (int) ($this->aggregate($query, 'count(*) as aggregate')?->aggregate ?? 0);
+
+        $rows = (clone $query)
+            ->orderByDesc('id')
+            ->forPage($page, self::PAGE)
+            ->get();
+
+        return response()->json([
+            'total' => $total,
+            'page' => $page,
+            'per_page' => self::PAGE,
+            'customers' => $rows->map(fn (Customer $c) => [
+                'id' => $c->id,
+                'name' => $c->displayName(),
+                'email' => $c->email,
+                'phone' => $c->phone,
+                'orders_count' => (int) $c->orders_count,
+                'total_spent_fils' => (int) $c->total_spent,
+                'address' => $this->addressOf($c),
+            ])->values(),
+        ]);
+    }
+
+    /* ===================================================================
+     | GET /admin-api/manual-orders/products?q=
+     |=================================================================== */
+
+    /** Search the real catalogue by name or SKU. */
+    public function products(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'page' => ['nullable', 'integer', 'min:1', 'max:5000'],
+        ]);
+
+        $term = trim((string) ($data['q'] ?? ''));
+        $page = (int) ($data['page'] ?? 1);
+
+        // Everything sellable, including products hidden from the catalogue:
+        // staff take orders for things that are not on the shop grid. Drafts
+        // are excluded — 'publish' and 'private' are the two live values in
+        // this schema's products.status (publish | draft | private).
+        $query = Product::query()->whereIn('status', ['publish', 'private']);
+
+        if ($term !== '') {
+            $like = '%' . $this->escapeLike($term) . '%';
+
+            $query->where(function ($q) use ($like) {
+                $q->orWhereRaw("name LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like])
+                    ->orWhereRaw("sku LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like]);
+            });
+        }
+
+        $total = (int) ($this->aggregate($query, 'count(*) as aggregate')?->aggregate ?? 0);
+
+        $rows = (clone $query)
+            ->with(['brand:id,name', 'variants'])
+            ->orderBy('name')
+            ->forPage($page, self::PAGE)
+            ->get();
+
+        return response()->json([
+            'total' => $total,
+            'page' => $page,
+            'per_page' => self::PAGE,
+            'products' => $rows->map(fn (Product $p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'sku' => $p->sku,
+                'brand' => $p->brand?->name,
+                'image' => $p->image,
+                // effectivePrice() honours the sale window. The quantity-bundle
+                // tier is applied later, by CartService, once a quantity exists.
+                'price_fils' => $p->effectivePrice(),
+                'stock' => $p->stock,
+                'stock_status' => $p->stock_status,
+                'variants' => $p->variants->map(fn ($v) => [
+                    'id' => $v->id,
+                    'sku' => $v->sku,
+                    'price_fils' => $v->effectivePrice(),
+                    'stock_status' => $v->stock_status,
+                ])->values(),
+            ])->values(),
+        ]);
+    }
+
+    /* ===================================================================
+     | POST /admin-api/manual-orders/quote
+     |=================================================================== */
+
+    /**
+     * Price a basket without saving anything.
+     *
+     * Fired whenever a line, quantity, destination or coupon changes, so the
+     * operator sees the same total the customer will be charged before they
+     * commit to it.
+     */
+    public function quote(Request $request): JsonResponse
+    {
+        $input = $this->validatedPayload($request, forCreate: false);
+
+        $priced = $this->builder->quote($input);
+
+        if (! $priced['ok']) {
+            return response()->json(['ok' => false, 'error' => $priced['error']], 422);
+        }
+
+        return response()->json(['ok' => true] + $this->totalsPayload($priced));
+    }
+
+    /* ===================================================================
+     | POST /admin-api/manual-orders
+     |=================================================================== */
+
+    /** Create the order. */
+    public function store(Request $request, OrderMailer $mailer): JsonResponse
+    {
+        $input = $this->validatedPayload($request, forCreate: true);
+
+        $result = $this->builder->create(
+            $input,
+            $request->user('admin')?->name ?: $request->user('admin')?->email,
+        );
+
+        if (! $result['ok']) {
+            return response()->json(['ok' => false, 'error' => $result['error']], 422);
+        }
+
+        /** @var Order $order */
+        $order = $result['order'];
+
+        return response()->json([
+            'ok' => true,
+            'order' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'origin' => $order->origin,
+                'email' => $order->email,
+                'phone' => $order->phone,
+                'currency' => $order->currency,
+                'subtotal_fils' => (int) $order->subtotal,
+                'discount_fils' => (int) $order->discount_total,
+                'shipping_fils' => (int) $order->shipping_total,
+                'fee_fils' => (int) $order->fee_total,
+                'total_fils' => (int) $order->total,
+                'coupon_code' => $order->coupon_code,
+                'shipping_method' => $order->shipping_method,
+                'payment_method' => $order->payment_method,
+                'payment_method_title' => $order->payment_method_title,
+                'shipping_address' => $order->shipping_address,
+                'items' => $order->items->map(fn ($i) => [
+                    'name' => $i->name,
+                    'sku' => $i->sku,
+                    'quantity' => (int) $i->quantity,
+                    'unit_price_fils' => (int) $i->unit_price,
+                    'line_total_fils' => (int) $i->total,
+                ])->values(),
+            ],
+            // Said plainly rather than left to be discovered.
+            'email' => $this->sendConfirmation($order, (bool) ($input['send_confirmation'] ?? false), $mailer),
+            'stock' => [
+                'adjusted' => false,
+                'reason' => 'No order path in this build moves stock — a website '
+                    . 'order does not decrement it either. Adjust it in Catalog → Inventory.',
+            ],
+        ], 201);
+    }
+
+    /* ===================================================================
+     | Validation
+     |=================================================================== */
+
+    /**
+     * One validator for quote() and store(), so the two can never disagree
+     * about what a valid order is — a quote that prices something the create
+     * call then rejects is the worst possible version of this screen.
+     */
+    private function validatedPayload(Request $request, bool $forCreate): array
+    {
+        $paymentIds = $this->builder->paymentMethodIds();
+
+        $rules = [
+            // Either an existing customer, or enough to make one. The
+            // required_without pair is what enforces "one or the other".
+            'customer_id' => ['nullable', 'integer', 'required_without:new_customer', 'exists:customers,id'],
+            'new_customer' => ['nullable', 'array', 'required_without:customer_id'],
+            'new_customer.name' => ['required_with:new_customer', 'string', 'max:120'],
+            'new_customer.email' => ['required_with:new_customer', 'email', 'max:160'],
+            'new_customer.phone' => ['nullable', 'string', 'max:40'],
+
+            'items' => ['required', 'array', 'min:1', 'max:60'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            // 99 is CartService's own ceiling; asking for more silently becomes
+            // 99 there, so it is refused here instead of quietly changed.
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:99'],
+
+            'address' => ['required', 'array'],
+            'address.line1' => ['required', 'string', 'max:255'],
+            'address.city' => ['required', 'string', 'max:120'],
+            // Free text on the live site, not a fixed list — the addresses
+            // table does not constrain it either.
+            'address.state' => ['required', 'string', 'max:120'],
+            'address.country' => ['required', 'string', 'size:2'],
+            'address.phone' => ['nullable', 'string', 'max:40'],
+
+            'coupon_code' => ['nullable', 'string', 'max:60'],
+            'shipping_method_id' => ['nullable', 'integer'],
+            // Typed by the operator in AED. Parsed digit-by-digit below; the
+            // rule only checks it is a shape Fils::parse can hold exactly.
+            'shipping_override' => ['nullable', 'string', 'max:20', function (string $attribute, $value, $fail) {
+                if ($value !== null && $value !== '' && ! Fils::isValid($value)) {
+                    $fail('Enter the delivery charge as a plain amount, with at most two decimals.');
+                }
+            }],
+
+            // payment_providers.id is the vocabulary. Nothing invented.
+            'payment_method' => ['required', 'string', Rule::in($paymentIds)],
+            'channel' => ['nullable', 'string', Rule::in(ManualOrderBuilder::CHANNELS)],
+            'customer_note' => ['nullable', 'string', 'max:2000'],
+            'whatsapp_optin' => ['nullable', 'boolean'],
+            'send_confirmation' => ['nullable', 'boolean'],
+        ];
+
+        if ($forCreate) {
+            // orders.status is a free-form string so imported WooCommerce
+            // statuses survive; the console's working vocabulary is these
+            // seven, and AdminController::updateOrderStatus accepts exactly
+            // the same set. An order created with anything else would be one
+            // the Orders screen could never edit again.
+            $rules['status'] = ['required', 'string', Rule::in(ManualOrderBuilder::STATUSES)];
+        } else {
+            $rules['status'] = ['nullable', 'string', Rule::in(ManualOrderBuilder::STATUSES)];
+        }
+
+        $data = $request->validate($rules);
+
+        // The one operator-typed money field in this screen. Fils::parse reads
+        // the string one character at a time and never multiplies by 100 —
+        // (int) (1.15 * 100) is 114, and a one-fil error on a delivery charge
+        // is exactly the kind nobody spots until it is on an invoice.
+        $override = $data['shipping_override'] ?? null;
+        $data['shipping_override_fils'] = ($override === null || $override === '')
+            ? null
+            : Fils::parse((string) $override);
+
+        unset($data['shipping_override']);
+
+        return $data;
+    }
+
+    /* ===================================================================
+     | Helpers
+     |=================================================================== */
+
+    /**
+     * Escape the LIKE wildcards in an operator's search term.
+     *
+     * The escape character itself has to go first, or "!%" would become "!!%"
+     * the wrong way round and stop escaping anything.
+     */
+    private function escapeLike(string $term): string
+    {
+        return str_replace(
+            [self::LIKE_ESCAPE, '%', '_'],
+            [self::LIKE_ESCAPE . self::LIKE_ESCAPE, self::LIKE_ESCAPE . '%', self::LIKE_ESCAPE . '_'],
+            $term,
+        );
+    }
+
+    /** The shape the screen renders totals from. All amounts are fils. */
+    private function totalsPayload(array $priced): array
+    {
+        $totals = $priced['totals'];
+
+        return [
+            'lines' => $priced['lines'],
+            'rates' => $priced['rates'],
+            'chosen_rate_id' => $priced['chosen_rate']['id'] ?? null,
+            'totals' => [
+                'subtotal_fils' => (int) $totals['subtotal'],
+                'discount_fils' => (int) $totals['discount'],
+                'shipping_fils' => (int) $totals['shipping'],
+                'fee_fils' => (int) $priced['fee'],
+                'total_fils' => (int) $priced['grand_total'],
+                'coupon_code' => $totals['coupon_code'],
+                'item_count' => (int) $totals['item_count'],
+                'free_shipping_threshold_fils' => $totals['free_shipping_threshold'],
+                'free_shipping_remaining_fils' => $totals['free_shipping_remaining'],
+                // Display only — never added to the total (D-64).
+                'vat' => $totals['vat'],
+            ],
+        ];
+    }
+
+    /**
+     * Whether a confirmation email can be sent at all.
+     *
+     * There is a real one now: App\Mail\OrderConfirmation, sent through
+     * App\Services\Mail\OrderMailer, which is also what the storefront
+     * checkout fires on placement. The owner can switch it off in
+     * Store -> Modules -> Order emails, and this reports that rather than
+     * offering a checkbox that would be quietly overruled.
+     */
+    private function confirmationEmailCapability(OrderMailer $mailer): array
+    {
+        if (! $mailer->confirmationEnabled()) {
+            return [
+                'available' => false,
+                'reason' => 'Order confirmation emails are switched off in '
+                    . 'Store → Modules → Order emails, so nothing would be sent.',
+            ];
+        }
+
+        return ['available' => true, 'reason' => null];
+    }
+
+    /**
+     * Send the confirmation, or say why not.
+     *
+     * resendConfirmation() rather than placed(): placed() also fires the
+     * merchant alert, and a "new order" landing in the owner's inbox for an
+     * order the owner just keyed in by hand is a lie about what happened. It is
+     * also the only method on OrderMailer that REPORTS rather than swallowing
+     * the outcome, which is what an operator who ticked a box is owed.
+     */
+    private function sendConfirmation(Order $order, bool $requested, OrderMailer $mailer): array
+    {
+        if (! $requested) {
+            return [
+                'requested' => false,
+                'sent' => false,
+                'reason' => 'Not requested — the operator left the box unticked.',
+            ];
+        }
+
+        $result = $mailer->resendConfirmation($order);
+
+        return [
+            'requested' => true,
+            'sent' => (bool) $result['ok'],
+            'reason' => (string) $result['message'],
+        ];
+    }
+
+    /** The customer's saved address, for prefilling the form. */
+    private function addressOf(Customer $customer): ?array
+    {
+        $address = $customer->defaultAddress('shipping') ?? $customer->defaultAddress('billing');
+
+        if (! $address) {
+            return null;
+        }
+
+        return [
+            'line1' => $address->line1,
+            'city' => $address->city,
+            'state' => $address->state,
+            'country' => $address->country,
+            'phone' => $address->phone,
         ];
     }
 }
