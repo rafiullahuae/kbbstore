@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Tests\Support\CatalogProductsAdminRoutes;
 use Tests\Support\CustomersAdminRoutes;
 use Tests\Support\OrdersAdminRoutes;
 use Tests\Support\SqlShape;
@@ -532,9 +533,29 @@ it('issues portable SQL on every parameterless admin-api GET route', function ()
     guardFixtures();
     ordersGuardFixture();
 
+    /*
+     * Lane files that routes/web.php does not require yet are mounted here
+     * BEFORE the router is walked.
+     *
+     * The walk is only as complete as the route table it reads, and a lane
+     * whose file ships unmounted is not in that table — so "the router covers
+     * new screens automatically" would be true of every screen except the ones
+     * that have not been wired in yet, which is precisely the set most likely
+     * to carry a new defect. Mounting them here closes that hole: Catalog →
+     * Products is driven by this walk today, and stays driven by it after the
+     * integrator adds the require line.
+     */
+    CatalogProductsAdminRoutes::wire(app());
+
     $admin = guardAdmin();
 
     $paths = guardAdminApiGetPaths();
+
+    // The screens this lane added really are in the walk, rather than being
+    // silently absent and leaving the test green for having found nothing.
+    expect($paths)->toContain('admin-api/catalog-products-list')
+        ->and($paths)->toContain('admin-api/catalog-products-export')
+        ->and($paths)->toContain('admin-api/catalog-products-facets');
 
     // A router that returned nothing would make this test vacuously green, which
     // is the exact shape of failure it exists to prevent.
@@ -583,6 +604,10 @@ it('issues portable SQL on every parameterless admin-api GET route', function ()
 it('drives or explicitly excuses every parameterised admin-api GET route', function () {
     guardFixtures();
 
+    // Same reason as the walk above: a route file that is not mounted is a
+    // route file this test cannot make anybody account for.
+    CatalogProductsAdminRoutes::wire(app());
+
     $admin = guardAdmin();
 
     $product = Product::query()->firstOrFail();
@@ -597,6 +622,7 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         'admin-api/orders/{id}/detail' => '/admin-api/orders/' . $order->id . '/detail',
         'admin-api/orders/{id}/settlement' => '/admin-api/orders/' . $order->id . '/settlement',
         'admin-api/customers/{id}' => '/admin-api/customers/' . $customer->id,
+        'admin-api/catalog-products-detail/{id}' => '/admin-api/catalog-products-detail/' . $product->id,
         'admin-api/catalog/reorder/{type}/{id}/products' => '/admin-api/catalog/reorder/category/' . $category->id . '/products',
         // Both render a whole order with its items and addresses, so they are
         // exactly the shape that has produced a dialect failure twice.
@@ -733,6 +759,226 @@ it('reports the same counts on every page of the catalog products list', functio
         ->and($second->json('total'))->toBe($first->json('total'))
         ->and($second->json('total'))->toBeGreaterThan(10);
 });
+
+/**
+ * Catalog → Products, rebuilt (Lane AF), across every sort, chip, search and
+ * second page.
+ *
+ * This screen now reports a summary and eleven-plus chip counts beside a page
+ * of rows, all built from Builders it also sorts and pages — the exact
+ * arrangement that produced the MySQL 1140 on Customers and then again on
+ * Orders. The counts go through App\Support\AggregatesQueries; these drive the
+ * combinations the bare GET in the route walk above cannot reach, because the
+ * router can enumerate paths and not meaningful query strings.
+ *
+ * The chip list is not hard-coded here either: it is read back off the
+ * endpoint, so a chip added to the controller is covered the day it exists.
+ */
+function catalogProductsGuardFixture(): void
+{
+    Cache::flush();
+
+    $brand = Brand::create(['name' => 'CPG Brand', 'slug' => 'cpg-brand-'.uniqid()]);
+    $category = Category::create(['name' => 'CPG Category', 'slug' => 'cpg-cat-'.uniqid()]);
+
+    $statuses = ['publish', 'draft', 'private', 'publish'];
+    $stock = ['instock', 'outofstock', 'onbackorder', 'instock'];
+
+    foreach (range(1, 14) as $i) {
+        $product = Product::create([
+            'slug' => 'cpg-'.$i.'-'.uniqid(),
+            'name' => 'CPG Product '.$i,
+            'sku' => 'CPG-'.$i,
+            'status' => $statuses[$i % 4],
+            'is_visible' => $i % 5 !== 0,
+            'featured' => $i % 6 === 0,
+            'brand_id' => $i % 3 === 0 ? null : $brand->id,
+            'price' => $i % 7 === 0 ? null : 1000 * $i,
+            'sale_price' => $i % 4 === 0 ? 500 * $i : null,
+            'manage_stock' => $i % 2 === 0,
+            'stock' => $i,
+            'stock_status' => $stock[$i % 4],
+            'image' => $i % 3 === 0 ? null : 'https://cdn.test/cpg-'.$i.'.jpg',
+            'wc_id' => 900000 + $i,
+        ]);
+
+        if ($i % 2 === 0) {
+            $product->categories()->attach($category->id);
+        }
+    }
+
+    // A status the schema has no concept of, written by the importer this repo
+    // replaced. The chips are built from the column, so it gets one.
+    DB::table('products')->insert([
+        'name' => 'CPG Legacy', 'slug' => 'cpg-legacy-'.uniqid(), 'status' => 'active',
+        'is_visible' => 1, 'type' => 'simple', 'stock_status' => 'instock',
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+}
+
+it('issues portable SQL on the rebuilt products screen for every sort and chip', function (string $query) {
+    catalogProductsGuardFixture();
+
+    CatalogProductsAdminRoutes::wire(app());
+
+    $admin = guardAdmin();
+
+    $captured = SqlShape::capture(function () use ($admin, $query) {
+        $this->actingAs($admin, 'admin')->getJson('/admin-api/catalog-products-list?'.$query)->assertOk();
+    });
+
+    expect($captured)->not->toBeEmpty();
+    expect(SqlShape::violations($captured))->toBe([], "portability violations on ?{$query}");
+})->with([
+    'sort=newest',
+    'sort=oldest',
+    'sort=updated',
+    'sort=name',
+    'sort=name_desc',
+    'sort=sku',
+    'sort=price_desc',
+    'sort=price_asc',
+    'sort=stock_asc',
+    'sort=stock_desc',
+    'sort=status',
+    'sort=brand',
+    'sort=orders_desc',
+    'sort=sales_desc',
+    'sort=position',
+    'filter=all',
+    'filter=publish',
+    'filter=draft',
+    'filter=private',
+    'filter=active',
+    'filter=instock',
+    'filter=outofstock',
+    'filter=onbackorder',
+    'filter=low',
+    'filter=hidden',
+    'filter=featured',
+    'filter=no_image',
+    'filter=no_price',
+    'filter=no_category',
+    'filter=on_sale',
+    'filter=trashed',
+    'search=CPG',
+    'search=900001',
+    'brand_id=1',
+    'category_id=1',
+    'price_min=10&price_max=100',
+    'page=2&per_page=10',
+]);
+
+it('covers every chip the rebuilt products screen offers, not a list written by hand', function () {
+    catalogProductsGuardFixture();
+
+    CatalogProductsAdminRoutes::wire(app());
+
+    $admin = guardAdmin();
+
+    $body = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/catalog-products-list')->assertOk()->json();
+
+    /*
+     * THE GAP THAT LET THE ORDERS BUG THROUGH WAS A LIST. The dataset above is
+     * one, so this reads the chips back off the endpoint and drives each of
+     * them. A chip added to the controller next month is covered the day it
+     * exists, by nobody doing anything.
+     */
+    $chips = array_values(array_unique(array_merge(
+        ['all'],
+        $body['statuses'],
+        $body['stock_statuses'],
+        array_keys($body['counts'])
+    )));
+
+    expect(count($chips))->toBeGreaterThan(12);
+
+    $failures = [];
+
+    foreach ($chips as $chip) {
+        $captured = SqlShape::capture(function () use ($admin, $chip, &$status) {
+            $status = $this->actingAs($admin, 'admin')
+                ->getJson('/admin-api/catalog-products-list?filter='.urlencode((string) $chip))
+                ->getStatusCode();
+        });
+
+        if ($status >= 400) {
+            $failures[] = "filter={$chip}: responded {$status}";
+        }
+
+        foreach (SqlShape::violations($captured) as $problem) {
+            $failures[] = "filter={$chip}: {$problem}";
+        }
+    }
+
+    expect($failures)->toBe([]);
+});
+
+it('reports the same counts and summary on every page of the rebuilt products list', function () {
+    catalogProductsGuardFixture();
+
+    CatalogProductsAdminRoutes::wire(app());
+
+    $admin = guardAdmin();
+
+    $first = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/catalog-products-list?per_page=10&page=1')->assertOk();
+
+    $second = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/catalog-products-list?per_page=10&page=2')->assertOk();
+
+    // An aggregate returns one row. Skip 10 and there is none, so every tile
+    // reads zero from page two on — on every driver, while the endpoint still
+    // answers 200. That is the bug App\Support\AggregatesQueries exists for.
+    expect($second->json('counts'))->toBe($first->json('counts'))
+        ->and($second->json('summary'))->toBe($first->json('summary'))
+        ->and($second->json('total'))->toBe($first->json('total'))
+        ->and($second->json('total'))->toBeGreaterThan(10)
+        ->and($second->json('summary.inventory_fils'))->toBeGreaterThan(0);
+});
+
+it('fails if the summary is rebuilt from the page s own sorted, paged builder', function () {
+    catalogProductsGuardFixture();
+
+    /*
+     * The guard, aimed at itself.
+     *
+     * This is the statement the Customers screen shipped and the Orders screen
+     * then copied: the row query's columns and ORDER BY still attached to an
+     * aggregate, with the page's OFFSET along for the ride. If SqlShape stopped
+     * reporting it, every dialect test above would keep passing while the
+     * defect walked back in — so the rule is asserted to FIRE, not merely to be
+     * absent elsewhere.
+     */
+    $defective = DB::table('products')
+        ->selectRaw('products.id, products.name, COUNT(*) as c')
+        ->orderBy('products.created_at', 'desc')
+        ->offset(10)
+        ->limit(1);
+
+    /*
+     * Judged from the SQL it WOULD issue, not by issuing it. Running it is not
+     * an option here: on MySQL it raises the 1140 itself, which aborts the test
+     * before anything is asserted — and DB::listen never fires for a statement
+     * that throws, so there would be nothing captured to judge either. The
+     * shape is the whole subject, and toSql() has it.
+     */
+    $violations = SqlShape::violations([[
+        'sql' => $defective->toSql(),
+        'bindings' => $defective->getBindings(),
+        'schema' => false,
+    ]]);
+
+    expect($violations)->not->toBe([]);
+
+    $text = implode("\n", $violations);
+
+    expect($text)->toContain('1140')
+        ->and($text)->toContain('ORDER BY')
+        ->and($text)->toContain('OFFSET');
+});
+
 
 /**
  * Catalog → Reorder reports a total beside a page of products. Same shape, same
