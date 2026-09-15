@@ -67,18 +67,38 @@ class NewsletterApiController extends Controller
      * Streamed rather than assembled in memory: this table only grows, and a
      * shared host will not thank us for holding thirty thousand rows to build
      * a string that is written straight out again.
+     *
+     * EVERY CELL GOES THROUGH csvCell(). Both columns that carry text here are
+     * written by the public: `email` comes off the signup form, and `source` is
+     * taken straight from the request by Store\SubscribeController with nothing
+     * but a 40-character truncation applied — and `nl_source_tag` defaults to
+     * on, so it is populated on a stock install. An unauthenticated POST to
+     * /subscribe could therefore put `=cmd|'/c calc'!A1` in a cell that the
+     * owner's spreadsheet runs when they open this file. fputcsv() does not
+     * help: it quotes the field for CSV, and Excel strips that quoting before
+     * it decides the cell is a formula.
+     *
+     * The sibling exports (OrdersApiController and CustomersApiController) have
+     * guarded their cells since they were written; this one was the odd one out.
      */
     public function export(): StreamedResponse
     {
         $name = 'kbb-subscribers-' . now()->format('Y-m-d') . '.csv';
 
-        $callback = static function (): void {
+        $cell = $this->csvCell(...);
+
+        $callback = static function () use ($cell): void {
             $out = fopen('php://output', 'w');
             fputcsv($out, ['email', 'source', 'status', 'signed_up']);
 
-            DB::table('subscribers')->orderBy('id')->chunk(500, static function ($rows) use ($out) {
+            DB::table('subscribers')->orderBy('id')->chunk(500, static function ($rows) use ($out, $cell) {
                 foreach ($rows as $row) {
-                    fputcsv($out, [$row->email, $row->source, $row->status, $row->created_at]);
+                    fputcsv($out, [
+                        $cell($row->email),
+                        $cell($row->source),
+                        $cell($row->status),
+                        $cell($row->created_at),
+                    ]);
                 }
             });
 
@@ -89,6 +109,30 @@ class NewsletterApiController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $name . '"',
         ]);
+    }
+
+    /**
+     * Neutralise a spreadsheet formula before it reaches a cell.
+     *
+     * Excel, LibreOffice and Sheets all execute a cell beginning =, +, - or @,
+     * and a leading tab or carriage return sneaks past a naive check of the
+     * first character. Prefixing a single quote is the mitigation those
+     * applications understand — the cell reads as text and the original
+     * characters survive in the raw file.
+     *
+     * Character-for-character the same rule as OrdersApiController::csvCell()
+     * and CustomersApiController::csvCell(), deliberately: three exports that
+     * disagree about what is dangerous are three different bugs waiting.
+     */
+    private function csvCell(mixed $value): string
+    {
+        $string = (string) $value;
+
+        if ($string !== '' && str_contains("=+-@\t\r", $string[0])) {
+            return "'" . $string;
+        }
+
+        return $string;
     }
 
     /**

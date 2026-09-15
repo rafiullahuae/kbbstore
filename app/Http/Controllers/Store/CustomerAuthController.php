@@ -66,8 +66,7 @@ class CustomerAuthController extends Controller
         }
 
         // Shown once inside the account panel, then gone.
-        session()->flash('kbb.greet', ['kind' => 'back',
-            'name' => strtok((string) (auth()->guard()->user()->name ?? ''), ' ')]);
+        session()->flash('kbb.greet', ['kind' => 'back', 'name' => $this->firstName($customer)]);
 
         return redirect()->intended('/my-account/');
     }
@@ -110,8 +109,7 @@ class CustomerAuthController extends Controller
         }
 
         // Shown once inside the account panel, then gone.
-        session()->flash('kbb.greet', ['kind' => 'new',
-            'name' => strtok((string) (auth()->guard()->user()->name ?? ''), ' ')]);
+        session()->flash('kbb.greet', ['kind' => 'new', 'name' => $this->firstName($customer)]);
 
         return redirect('/my-account/');
     }
@@ -123,6 +121,29 @@ class CustomerAuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    /**
+     * The name to greet this shopper by, off the Customer we just signed in.
+     *
+     * NOT `auth()->guard()->user()`, which is what both call sites used to say.
+     * That is the DEFAULT guard — `web`, the admin-side `users` table — and
+     * SessionGuard::login() does not make `customer` the default, so the name
+     * came from whoever held the `web` session in that browser. Two outcomes,
+     * both wrong: for an ordinary shopper the web guard has nobody, so `?? ''`
+     * fired and every "Welcome back" rendered with a blank name; and on a
+     * browser where an admin was also signed in — the owner checking their own
+     * storefront, or any shared back-office machine — the shopper was greeted
+     * with the ADMIN USER'S NAME, putting a back-office identity on a
+     * storefront page. Same default-guard trap the AccountController class
+     * docblock was written about.
+     *
+     * The Customer is already in hand at both call sites, so no guard needs
+     * consulting at all.
+     */
+    private function firstName(Customer $customer): string
+    {
+        return (string) strtok(trim((string) $customer->name), ' ');
     }
 
     /**
