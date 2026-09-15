@@ -21,18 +21,74 @@ class Customer extends Authenticatable
     use Notifiable;
     use SoftDeletes;
 
+    /**
+     * Columns that exist, look authoritative, and are not.
+     *
+     * `orders_count`, `total_spent` and `last_order_at` were created by the
+     * Phase 0 schema as denormalised customer lifetime figures. Nothing in this
+     * application has ever written any of the three. On every install they read
+     * 0, 0 and NULL for every customer, including one with hundreds of dirhams
+     * of order history, so the only thing they can do is mislead.
+     *
+     * THE DECISION: they are retired in place, not maintained and not dropped.
+     *
+     * Not maintained, because a lifetime total is a derived value with five
+     * separate write paths — checkout, an admin status change, a refund, a
+     * capture, and the importer itself — and a cache that any one of them can
+     * forget to update is a cache that is wrong without saying so. Store →
+     * Customers already computes all three from `orders` in SQL, in the same
+     * query as the page of rows, using Order::REAL_STATUSES so a cancelled
+     * order is not spend. That is one source of truth and it is correct by
+     * construction. A second one that agrees most of the time is worse than no
+     * second one, because it gets believed.
+     *
+     * Not dropped, because the live server is MySQL carrying real customer rows
+     * and reaching production through signed zip packages with no shell access.
+     * A DROP COLUMN there is irreversible, buys nothing a rule cannot, and this
+     * project has already paid once for a migration that looked like a no-op
+     * and was not.
+     *
+     * So the columns stay in the table and are made unmistakable in the code:
+     * listed here, hidden from serialisation so no endpoint can leak a
+     * confident-looking zero, and stripped of their casts, which were the only
+     * thing suggesting anything ever read them. CustomerDerivedColumnsTest
+     * fails if any of that is undone.
+     *
+     * THE IMPORTER MUST LEAVE ALL THREE ALONE. Filling them is the one change
+     * that would turn a wrong-but-harmless column into a second, disagreeing
+     * source of truth for a number the owner makes decisions with.
+     *
+     * @var list<string>
+     */
+    public const UNMAINTAINED_COLUMNS = ['orders_count', 'total_spent', 'last_order_at'];
+
     protected $guarded = [];
 
-    protected $hidden = ['password', 'legacy_password', 'remember_token'];
+    /**
+     * The credentials, plus the three columns above: a derived figure that is
+     * always zero must not reach an API response, where it would be indistinguishable
+     * from a customer who genuinely has never ordered.
+     */
+    protected $hidden = [
+        'password',
+        'legacy_password',
+        'remember_token',
+        'orders_count',
+        'total_spent',
+        'last_order_at',
+    ];
 
+    /**
+     * `last_order_at` and `total_spent` were cast here as datetime and int.
+     * Casting a column implies something reads it; nothing does, and the casts
+     * were the last thing making them look alive. See UNMAINTAINED_COLUMNS.
+     */
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
             'email_verified_at' => 'datetime',
-            'last_order_at' => 'datetime',
             'whatsapp_optin' => 'bool',
-            'total_spent' => 'int',
         ];
     }
 
