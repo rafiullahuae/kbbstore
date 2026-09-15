@@ -1,21 +1,31 @@
 {{--
-    Store → New Order.
+    Store - New Order.
 
-    Included from resources/views/admin/app.blade.php, immediately after that
-    file's @endverbatim and before </body>, so it runs once the console's own
-    script has defined window.go, toast() and the design tokens this screen
-    borrows.
+    Pulled into resources/views/admin/app.blade.php at the very end, after that
+    file closes its raw block and before </body>, so this runs once the
+    console's own script has defined window.go, toast() and the design tokens
+    this screen borrows.
 
-    It is a separate file rather than 400 more lines inside a 7,400-line Blade
-    for one reason: several lanes edit app.blade.php at once, and a screen that
-    lives in its own file can be reviewed, reverted and merged on its own. The
-    cost is that it cannot reach app.blade.php's module-scoped constants (NAV,
-    TITLES, ADMIN_BASE are const, not window properties), so it adds its own
-    sidebar entry to the DOM and wraps window.go instead. Both of those are
-    public surfaces the console already exposes for exactly this.
+    Its own file rather than 400 more lines inside a 7,400-line Blade: several
+    lanes edit that file at once, and a screen that lives on its own can be
+    reviewed, reverted and merged on its own. The cost is that it cannot reach
+    app.blade.php's module-scoped constants -- NAV, TITLES and ADMIN_BASE are
+    const, not window properties -- so it appends its own sidebar entry to the
+    rendered nav and wraps window.go instead. Both are surfaces the console
+    already exposes for exactly this.
 
-    Everything here is @verbatim: it is plain JS and CSS, and the {{ }} inside
-    template literals would otherwise be read as Blade.
+    NOTHING BELOW THIS COMMENT MAY NAME BLADE'S RAW-BLOCK DIRECTIVES, and
+    neither may this comment. Blade pairs the first such opening directive it
+    finds anywhere in the file -- inside a comment included -- with the next
+    closing one, so writing the word in prose swallows everything between them:
+    the comment's own terminator ends up inside the raw block, the comment is
+    never stripped, and the whole docblock is served to the browser as visible
+    text at the top of the screen. That is not hypothetical; it happened here,
+    and app.blade.php line 10938 has the same word in a JS comment, harmless
+    only because it is already inside a raw block.
+
+    The whole body is wrapped in one so that the {{ }} inside JavaScript
+    template literals is not read as Blade.
 --}}
 @verbatim
 <style>
@@ -471,7 +481,8 @@
       return;
     }
 
-    busy = true; render();
+    busy = true;
+    setBusy(true);
 
     try {
       var res = await api('/manual-orders', {method:'POST', body:JSON.stringify(payload())});
@@ -481,6 +492,7 @@
       say('Order ' + res.order.order_number + ' created');
     } catch (e) {
       busy = false;
+      setBusy(false);
       if (e.status === 422 && e.body && e.body.errors) {
         // Server-side validation. Mapped back onto the fields rather than
         // dumped in a banner, so the operator can see which box to fix.
@@ -494,6 +506,14 @@
       }
       render();
     }
+  }
+
+  /** Disable the Create button while a save is in flight, without re-rendering. */
+  function setBusy(on){
+    var btn = document.querySelector('#moSubmit');
+    if (!btn) return;
+    btn.disabled = on;
+    btn.innerHTML = icon('<path d="M20 6 9 17l-5-5"/>') + (on ? 'Creating…' : 'Create order');
   }
 
   function reset(){
@@ -707,22 +727,10 @@
       '</div>';
   }
 
-  function totalsCard(){
+  function totalsRowsHTML(){
     var t = priced && priced.totals;
-    var emailCap = (V && V.email) || {available:false, reason:''};
 
-    var couponRow = form.applied_coupon
-      ? '<div class="mo-note" style="margin-bottom:11px"><div><b>' + esc(form.applied_coupon) + '</b> applied. ' +
-        '<button type="button" id="moCouponClear" style="color:var(--red);font-weight:700;text-decoration:underline">Remove</button></div></div>'
-      : '<div class="mo-two" style="grid-template-columns:1fr auto;gap:8px;align-items:end">' +
-          '<div class="mo-fld" style="margin-bottom:11px"><label for="mo_coupon">Coupon code</label>' +
-          '<input id="mo_coupon" data-bind="coupon" type="text" autocomplete="off" placeholder="WELCOME10" value="' +
-          esc(form.coupon) + '"></div>' +
-          '<div class="mo-fld" style="margin-bottom:11px">' +
-          '<button type="button" class="btn ghost sm" id="moCouponApply">Apply</button></div>' +
-        '</div>';
-
-    var rows = t
+    return t
       ? '<div class="mo-tot">' +
           '<div class="mo-tot-r"><span>Subtotal · ' + t.item_count + ' item' + (t.item_count === 1 ? '' : 's') +
           '</span><b>' + aed(t.subtotal_fils) + '</b></div>' +
@@ -739,11 +747,29 @@
         '</div>'
       : '<div class="mo-empty" style="padding:18px 0">Add a customer, items and a delivery ' +
         'address and the total appears here.</div>';
+  }
+
+  function couponRowHTML(){
+    return form.applied_coupon
+      ? '<div class="mo-note" style="margin-bottom:11px"><div><b>' + esc(form.applied_coupon) + '</b> applied. ' +
+        '<button type="button" id="moCouponClear" style="color:var(--red);font-weight:700;text-decoration:underline">Remove</button></div></div>'
+      : '<div class="mo-two" style="grid-template-columns:1fr auto;gap:8px;align-items:end">' +
+          '<div class="mo-fld" style="margin-bottom:11px"><label for="mo_coupon">Coupon code</label>' +
+          '<input id="mo_coupon" data-bind="coupon" type="text" autocomplete="off" placeholder="WELCOME10" value="' +
+          esc(form.coupon) + '"></div>' +
+          '<div class="mo-fld" style="margin-bottom:11px">' +
+          '<button type="button" class="btn ghost sm" id="moCouponApply">Apply</button></div>' +
+        '</div>';
+  }
+
+  function totalsCard(){
+    var t = priced && priced.totals;
+    var emailCap = (V && V.email) || {available:false, reason:''};
 
     return '<div class="mo-card"><h3><i class="mo-step">4</i>Total</h3>' +
       '<p>Worked out server-side from the catalogue, the delivery zones and the coupon rules.</p>' +
-      couponRow +
-      '<div id="moTotals">' + rows + '</div>' +
+      '<div id="moCouponRow">' + couponRowHTML() + '</div>' +
+      '<div id="moTotals">' + totalsRowsHTML() + '</div>' +
 
       '<div style="margin:14px 0 12px">' +
         '<label class="mo-check' + (emailCap.available ? '' : ' off') + '">' +
@@ -777,19 +803,35 @@
       '</div></div>';
   }
 
+  /*
+   * The figures only, never the card around them.
+   *
+   * A quote fires on every change to a line, the destination or the payment
+   * method, and it lands asynchronously. Re-rendering the whole card on each
+   * one would replace the Create order button underneath whatever the operator
+   * is currently doing — press it while a quote is in flight and the click
+   * lands on a detached node and silently does nothing. It also throws away
+   * focus and the caret in the coupon box mid-keystroke.
+   *
+   * #moTotals holds no handlers, so swapping its contents needs no rewiring
+   * and cannot detach anything the operator is touching.
+   */
   function renderTotals(){
     var host = document.querySelector('#moTotals');
     if (!host) return;
-    // The totals block is inside the card the button lives in, so the whole
-    // card is re-rendered rather than surgically patched — one code path for
-    // what the operator sees, whatever changed.
-    var card = host.closest('.mo-card');
-    if (!card) return;
-    var replacement = document.createElement('div');
-    replacement.innerHTML = totalsCard();
-    card.replaceWith(replacement.firstChild);
-    wireTotals();
+
+    host.innerHTML = totalsRowsHTML();
     renderLines();
+  }
+
+  /** The coupon row, which DOES carry handlers, rebound after it is replaced. */
+  function renderCouponRow(){
+    var host = document.querySelector('#moCouponRow');
+    if (!host) return;
+
+    host.innerHTML = couponRowHTML();
+    bindInputs(host);
+    wireCoupon();
   }
 
   function doneHTML(){
@@ -887,9 +929,7 @@
     });
   }
 
-  function wireTotals(){
-    bindInputs(document.querySelector('#moScreen'));
-
+  function wireCoupon(){
     var apply = document.querySelector('#moCouponApply');
     if (apply) apply.onclick = function(){
       var code = (form.coupon || '').trim();
@@ -899,15 +939,20 @@
         // The quote is what decides whether the code was any good, so the
         // applied state is only kept when it came back priced.
         if (!priced) form.applied_coupon = '';
-        render();
+        renderCouponRow();
       });
     };
 
     var clear = document.querySelector('#moCouponClear');
     if (clear) clear.onclick = function(){
       form.applied_coupon = ''; form.coupon = '';
-      requote().then(render);
+      requote().then(renderCouponRow);
     };
+  }
+
+  function wireTotals(){
+    bindInputs(document.querySelector('#moScreen'));
+    wireCoupon();
 
     var submitBtn = document.querySelector('#moSubmit');
     if (submitBtn) submitBtn.onclick = submit;
