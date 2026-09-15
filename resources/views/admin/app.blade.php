@@ -5560,151 +5560,29 @@ function renderCatalog(){
   $$('#content .subtab').forEach(b=>b.onclick=()=>{catTab=b.dataset.t;renderCatalog();});
   ({products:catProducts,categories:catCategories,brands:catBrands,attributes:catAttributes,inventory:catInventory,reorder:catReorder}[catTab])();
 }
-const PCOLDEF=[['image','Image'],['sku','SKU'],['stock','Stock'],['price','Price'],['categories','Categories'],['featured','Featured'],['date','Date added'],['brand','Brand'],['orders','Orders']];
-const pcColsDefault={image:true,sku:true,stock:true,price:true,categories:true,featured:true,date:true,brand:true,orders:true};
-let pCols=JSON.parse(localStorage.getItem('kbb_pcols')||'null')||{...pcColsDefault};
-function catSOToggle(){catSOopen=!catSOopen;pPaint();}
-let pTab=null,pScopes=null,pData=null,pLocal=null,pPage=1,pSearch='',pFilter='all',pSort='newest',pSel=new Set(),pBusy=false,pPerPage=+(localStorage.getItem('kbb_products_pp')||50),pPpCustomMode=false;
-const PP_PRESETS=[25,50,100,200];
-function pApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalog/products'; }
+/* ===== Catalog → Products — the fallback only =====
+
+   What used to be here was the whole Products tab: a list, a chip row and an
+   Edit button whose entire implementation was a toast saying that product
+   editing had not been built and that the list was real but editing was next.
+
+   The real screen — sortable, filtered, inline-editable, with bulk actions and
+   a CSV export — is window.catProducts in the LANE AF region of the
+   live-wiring script at the bottom of this file. It has to live down there
+   rather than here: api(), sesc(), fixAdminApiUrl() and cookie() are all
+   declared inside that script's IIFE and are not reachable from this one.
+
+   This declaration stays only so renderCatalog's dispatch table is never
+   undefined, and what is left of it is an honest message rather than a
+   convincing one. Same arrangement as window.catCategories and
+   window.catAttributes below. ===== */
+function catProducts(){
+  var body=document.getElementById('catBody');
+  if(body) body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Products could not be loaded.</p>';
+}
 function redirectsApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/redirects'; }
 function schemaInspectApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/schema-inspect'; }
 function catalogueAuditApiBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/catalogue-audit'; }
-function pFmtMoney(n){ return n==null ? '' : 'AED '+(Math.round(n*100)/100).toLocaleString(); }
-
-async function catProducts(){
-  const body=$('#catBody');
-  body.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading products…</p>`;
-  await pLoad();
-}
-
-async function pLoad(){
-  const body=$('#catBody');
-  const listArea=$('#pListArea');
-  if(listArea) listArea.innerHTML=`<p style="padding:24px;color:var(--ink-soft)">Loading…</p>`;
-  try{
-    const q=new URLSearchParams({page:pPage, search:pSearch, filter:pFilter, sort:pSort, per_page:pPerPage});
-    const r=await fetch(pApiBase()+'?'+q,{credentials:'same-origin',headers:{Accept:'application/json'}});
-    pData=await r.json();
-  }catch(e){ body.innerHTML=`<p style="padding:24px;color:var(--sale)">Could not load products — ${escHtml(e.message)}</p>`; return; }
-  pPerPage=pData.per_page;
-  pPaint();
-}
-
-function pPaint(){
-  const body=$('#catBody');
-  const d=pData;
-  const cols=PCOLDEF.filter(c=>c[0]!=='image'&&pCols[c[0]]);
-  const ppIsPreset=PP_PRESETS.includes(pPerPage) && !pPpCustomMode;
-  const filters=[['all','All',d.counts.all],['published','Published',d.counts.published],['draft','Draft',d.counts.draft],['low','Low stock',d.counts.low],['out','Out of stock',d.counts.out]];
-
-  body.innerHTML=`
-    ${catSOopen?`<div class="card pad" style="margin-bottom:14px">
-      <div class="pe-h" style="margin-bottom:11px">Columns</div>
-      <div class="so-cols">${PCOLDEF.map(c=>`<label class="so-col"><span class="cbx${pCols[c[0]]?' on':''}" data-pcol="${c[0]}">${ic(I.check)}</span> ${c[1]}</label>`).join('')}</div>
-      <div style="margin-top:14px"><button class="btn ghost sm" id="pColsReset">Reset to default</button></div>
-    </div>`:''}
-    <div class="toolbar" style="flex-wrap:wrap;gap:10px">
-      <button class="btn ghost" id="pScreenOpts">${ic('<path d="M4 6h16M7 12h10M10 18h4"/>')} Screen Options ${catSOopen?'▴':'▾'}</button>
-      <div class="search" style="min-width:220px">${ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>')}<input id="pSearch" placeholder="Search ${d.total} products by name, brand or SKU…" value="${escHtml(pSearch)}"></div>
-      <select class="inp" id="pSort">
-        <option value="newest"${pSort==='newest'?' selected':''}>Sort: Newest</option>
-        <option value="name"${pSort==='name'?' selected':''}>Name A–Z</option>
-        <option value="price_desc"${pSort==='price_desc'?' selected':''}>Price high→low</option>
-        <option value="stock_asc"${pSort==='stock_asc'?' selected':''}>Stock low→high</option>
-      </select>
-    </div>
-    <div class="chips" style="margin-bottom:6px">${filters.map(c=>`<button class="chip${pFilter===c[0]?' on':''}" data-pf="${c[0]}">${c[1]} <span style="opacity:.6">${c[2]}</span></button>`).join('')}</div>
-    <div class="toolbar" style="margin-bottom:10px">
-      <span style="font-size:12.5px;color:var(--ink-soft)">Show</span>
-      <select class="inp" id="pPerPage" style="width:100px">
-        ${PP_PRESETS.map(n=>`<option value="${n}"${n===pPerPage&&ppIsPreset?' selected':''}>${n} per page</option>`).join('')}
-        <option value="custom"${ppIsPreset?'':' selected'}>Custom…</option>
-      </select>
-      ${ppIsPreset?'':`<input class="inp" id="pPerPageCustom" type="number" min="10" max="500" value="${pPerPage}" style="width:80px" placeholder="10–500">`}
-      <span style="font-size:11px;color:var(--ink-soft)">10–500</span>
-      <div style="flex:1"></div>
-      <span style="font-size:12px;color:var(--ink-soft)">${d.total} products · page ${d.page} of ${d.last_page}</span>
-    </div>
-    <div id="pBulkWrap"></div>
-    <div id="pListArea">${pRenderTable(d.products, cols)}</div>
-    <div class="pager" style="margin-top:14px">
-      <span>Showing ${d.products.length ? ((d.page-1)*d.per_page+1) : 0}–${(d.page-1)*d.per_page+d.products.length} of ${d.total}</span>
-      <div class="row" style="gap:8px;align-items:center">
-        <button class="btn ghost sm" style="white-space:nowrap" ${d.page<=1?'disabled':''} id="pPrev">‹ Prev</button>
-        <button class="btn ghost sm" style="white-space:nowrap" ${d.page>=d.last_page?'disabled':''} id="pNext">Next ›</button>
-      </div>
-    </div>`;
-
-  $('#pScreenOpts').onclick=catSOToggle;
-  if(catSOopen){
-    $$('#catBody .so-col .cbx[data-pcol]').forEach(c=>c.onclick=()=>{
-      const k=c.dataset.pcol; pCols[k]=!pCols[k]; localStorage.setItem('kbb_pcols', JSON.stringify(pCols)); pPaint();
-    });
-    const resetBtn=$('#pColsReset'); if(resetBtn) resetBtn.onclick=()=>{ pCols={...pcColsDefault}; localStorage.setItem('kbb_pcols', JSON.stringify(pCols)); pPaint(); };
-  }
-  let searchT;$('#pSearch').oninput=e=>{clearTimeout(searchT);const v=e.target.value;searchT=setTimeout(()=>{pSearch=v;pPage=1;pLoad();},300);};
-  $('#pSort').onchange=e=>{pSort=e.target.value;pPage=1;pLoad();};
-  $$('#catBody .chip[data-pf]').forEach(c=>c.onclick=()=>{pFilter=c.dataset.pf;pPage=1;pLoad();});
-  $('#pPerPage').onchange=e=>{
-    if(e.target.value==='custom'){ pPpCustomMode=true; pPaint(); setTimeout(()=>$('#pPerPageCustom')?.focus(),0); return; }
-    pPpCustomMode=false; pPerPage=+e.target.value; localStorage.setItem('kbb_products_pp', pPerPage); pPage=1; pLoad();
-  };
-  const ppCustom=$('#pPerPageCustom');
-  if(ppCustom){
-    const applyCustom=()=>{
-      let v=parseInt(ppCustom.value,10);
-      if(!v||v<10) v=10; if(v>500) v=500;
-      pPerPage=v; localStorage.setItem('kbb_products_pp', v); pPage=1; pLoad();
-    };
-    ppCustom.onkeydown=e=>{ if(e.key==='Enter'){ applyCustom(); } };
-    ppCustom.onblur=applyCustom;
-  }
-  $('#pPrev').onclick=()=>{ if(d.page>1){pPage--;pLoad();} };
-  $('#pNext').onclick=()=>{ if(d.page<d.last_page){pPage++;pLoad();} };
-  $$('#catBody [data-pfeat]').forEach(el=>el.onclick=async()=>{
-    const id=+el.dataset.pfeat;
-    try{
-      const r=await fetch(pApiBase()+'/'+id+'/toggle-featured',{method:'POST',credentials:'same-origin',
-        headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
-      const j=await r.json();
-      if(j.ok){ el.textContent=j.featured?'★':'☆'; el.style.color=j.featured?'#e0a11e':'var(--border)'; }
-    }catch(e){ toast('Could not update — check your connection.'); }
-  });
-  $$('#catBody [data-pedit]').forEach(b=>b.onclick=()=>toast('Product editing isn\'t built yet — this list is real, editing is next.'));
-}
-
-function pRenderTable(products, cols){
-  if(!products.length) return `<p style="padding:24px;color:var(--ink-soft)">No products match this view.</p>`;
-  return `<div class="card" style="overflow:auto"><table style="table-layout:fixed;width:100%">
-    <colgroup><col style="width:34%"><col style="width:12%">${cols.map(c=>{
-      const w={sku:'10%',stock:'11%',price:'12%',categories:'14%',featured:'8%',date:'11%',brand:'12%',orders:'9%'}[c[0]]||'10%';
-      return `<col style="width:${w}">`;
-    }).join('')}<col style="width:9%"></colgroup>
-    <thead><tr><th>Product</th><th>Status</th>${cols.map(c=>`<th style="${['price','stock','orders'].includes(c[0])?'text-align:right':''}">${c[1]}</th>`).join('')}<th></th></tr></thead>
-    <tbody>${products.map(p=>`<tr>
-      <td><div class="row" style="min-width:0">${pCols.image?`<span class="pthumb" style="background:${tcol(p.brand||p.name)};flex-shrink:0">${initials(p.brand||p.name)}</span>`:''}
-        <div style="min-width:0"><div class="pname" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.name)}</div><div class="pbrand">${escHtml(p.brand||'')}</div></div></div></td>
-      <td><span class="pill ${p.status==='publish'?'green':'grey'}">${p.status==='publish'?'Published':(p.status==='draft'?'Draft':'Private')}</span></td>
-      ${cols.map(c=>pCellFor(c[0],p)).join('')}
-      <td><button class="btn ghost sm" data-pedit="${p.id}">Edit</button></td>
-    </tr>`).join('')}</tbody>
-  </table></div>`;
-}
-
-function pCellFor(k,p){
-  switch(k){
-    case 'sku':return `<td style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.sku||'')}</td>`;
-    case 'stock':return `<td style="text-align:right">${p.stock==null?`<span class="pill ${p.stock_status==='outofstock'?'red':'green'}">${p.stock_status==='outofstock'?'Out':'In stock'}</span>`:stockPill(p.stock)}</td>`;
-    case 'price':return `<td class="price" style="text-align:right">${p.sale_price!=null?`<b>${pFmtMoney(p.sale_price)}</b><br><s style="color:var(--ink-soft);font-size:11px">${pFmtMoney(p.price)}</s>`:`<b>${pFmtMoney(p.price)}</b>`}</td>`;
-    case 'categories':return `<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.categories.join(', '))||'<span style="color:var(--ink-soft)">—</span>'}</td>`;
-    case 'featured':return `<td style="font-size:15px;color:${p.featured?'#e0a11e':'var(--border)'};cursor:pointer" data-pfeat="${p.id}">${p.featured?'★':'☆'}</td>`;
-    case 'date':return `<td style="font-size:11.5px;color:var(--ink-soft)">${p.date||''}</td>`;
-    case 'brand':return `<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(p.brand||'')}</td>`;
-    case 'orders':return `<td style="text-align:right;font-size:11.5px;color:var(--ink-soft)">${p.orders_count}</td>`;
-    default:return '<td></td>';
-  }
-}
 /* ===== LANE N · Catalog · Categories & Attributes fallbacks — BEGIN =====
    What used to sit here was the defect: eleven invented category rows out of
    CAT_CATEGORIES with slugs made up in JavaScript, and four invented
@@ -10923,6 +10801,1086 @@ buildNav();
     };
   }
   /* ===== LANE N · Catalog · Categories & Attributes — END ================== */
+
+  /* ===== LANE AF · Catalog · Products — BEGIN ================================
+
+     WHAT WAS HERE BEFORE. catProducts() in the first script block: a list, a
+     five-chip row, four sorts, and an Edit button whose entire implementation
+     was a toast saying that product editing had not been built. The list was
+     real — it paginated and searched on the server — but this is the screen a
+     shop owner spends their day on, and the two things they do on it all day,
+     change a price and change a stock number, were the two things it could not
+     do. There was no export, no bulk action, no way to see what had no image or
+     no category, and the 'private' status the schema declares had no chip at
+     all. That block is gone; what is left of it upstairs is an honest fallback
+     message.
+
+     Everything is now asked of the server: one page of rows, every chip count,
+     the summary tiles and the sort all come back from
+     /admin-api/catalog-products-list for the filters currently on screen. No
+     figure on this page is computed in the browser.
+
+     MONEY NEVER BECOMES A NUMBER IN HERE. Prices arrive as `price_display`
+     (already formatted by Money::plain) and `price_input` (a plain decimal
+     string for a text box), and they go back as the string the operator typed.
+     Nothing in this region multiplies, divides or rounds a price — the server
+     parses the digits and stores integer fils. The bulk percentage is sent as
+     text too, and turned into integer basis points on the other side. A float
+     spelling of "30% off" is 0.69999999999999995559 and lands a fil light,
+     which is a defect this repo has already paid for once.
+
+     THE 390px RULE. The table lives in .cplscroll, which is overflow-x:auto and
+     max-width:100% — it scrolls inside the card and contributes nothing to the
+     width of the page. Every grid uses minmax(0,1fr) rather than 1fr, because a
+     grid track defaults to min-width:auto and one long money figure otherwise
+     widens its track past its share and pushes the whole page sideways.
+     Measured in real Chromium at 390 and 1280; #content reports
+     scrollWidth === clientWidth at both.
+
+     BLANKS ARE THE NORMAL CASE. An imported product can have no image, no
+     category, no brand, no SKU and no price. Every cell falls back to an em
+     dash rather than printing "undefined", and the chips count each of those
+     conditions so they can be found rather than stumbled over.
+
+     Product names and SKUs come out of a WooCommerce export and land in
+     innerHTML. Everything written into the page goes through sesc().
+  */
+
+  (function cplStyles(){
+    if(document.getElementById('cplcss')) return;
+
+    /* Injected rather than added to the stylesheet at the top of this file:
+       that block is shared by every screen and several lanes are editing this
+       view at once. A style element this region owns outright cannot collide
+       with somebody else's rule. */
+    var s = document.createElement('style');
+    s.id = 'cplcss';
+    s.textContent =
+      '.cplkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}' +
+      '@media(max-width:900px){.cplkpis{grid-template-columns:repeat(2,minmax(0,1fr))}}' +
+      '@media(max-width:430px){.cplkpis{grid-template-columns:minmax(0,1fr)}}' +
+      '.cplkpi{min-width:0;overflow-wrap:anywhere}' +
+      '.cplkpi .v{font-size:21px;font-weight:700;margin-top:6px;line-height:1.15}' +
+      '.cplkpi .k{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}' +
+      '.cplkpi .s{font-size:11.5px;color:var(--ink-soft);margin-top:2px}' +
+      /* The whole point of the 390px fix: a wide table scrolls in here, never
+         on the page. max-width:100% stops a min-width table stretching the
+         card it is inside. */
+      '.cplscroll{max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}' +
+      '.cplscroll table{min-width:940px}' +
+      '.cplhint{display:none;font-size:11.5px;color:var(--ink-soft);padding:10px 14px 0}' +
+      '@media(max-width:900px){.cplhint{display:block}}' +
+      '.cpltools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}' +
+      '.cpltools .search{flex:1 1 220px;min-width:0}' +
+      '.cpltools .inp{max-width:100%}' +
+      '.cplgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}' +
+      '.cplbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}' +
+      '.cplpager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;' +
+        'padding:13px 4px 2px;font-size:12.5px;color:var(--ink-soft)}' +
+      '.cplnum{font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      '.cplcell{cursor:text;border-radius:5px;padding:2px 5px;margin:-2px -5px;display:inline-block;min-width:44px}' +
+      '.cplcell:hover{background:var(--border-2,rgba(0,0,0,.05))}' +
+      '.cplin{font:inherit;width:84px;max-width:100%;padding:3px 6px;border:1px solid var(--accent,#3f6fe0);' +
+        'border-radius:5px;background:var(--card,#fff);color:inherit;text-align:right}' +
+      '.cplsel{font:inherit;padding:2px 4px;border:1px solid var(--border);border-radius:5px;' +
+        'background:var(--card,#fff);color:inherit;max-width:100%}' +
+      '.cplthumb{width:34px;height:34px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--border-2)}' +
+      '.cplnoimg{width:34px;height:34px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;' +
+        'justify-content:center;border:1px dashed var(--border);color:var(--ink-faint);font-size:9px}' +
+      '.cplpanel{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}' +
+      '@media(max-width:860px){.cplpanel{grid-template-columns:minmax(0,1fr)}}' +
+      '.cplfield{margin-bottom:12px}' +
+      '.cplfield label{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:4px}' +
+      '.cplfield .inp,.cplfield textarea{width:100%;max-width:100%;box-sizing:border-box}' +
+      '.cplpair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}' +
+      '.cplcats{display:flex;flex-wrap:wrap;gap:6px}' +
+      '.cplcat{font-size:11.5px;border:1px solid var(--border);border-radius:999px;padding:3px 10px;cursor:pointer}' +
+      '.cplcat.on{background:var(--ink,#1c2430);color:var(--card,#fff);border-color:var(--ink,#1c2430)}';
+
+    document.head.appendChild(s);
+  })();
+
+  var CP = {
+    page: 1,
+    perPage: +(localStorage.getItem('kbb_cp_pp') || 50),
+    search: '', filter: 'all', sort: 'newest',
+    brandId: '', categoryId: '', priceMin: '', priceMax: '',
+    adv: false, colsOpen: false, cols: null,
+    data: null, facets: null, err: null, sel: {}, busy: false, detail: null
+  };
+
+  var CP_COLDEF = [
+    ['sku', 'SKU'], ['brand', 'Brand'], ['status', 'Status'], ['stock', 'Stock'],
+    ['price', 'Price'], ['sale', 'Sale price'], ['categories', 'Categories'],
+    ['featured', 'Featured'], ['orders', 'Orders'], ['date', 'Added'], ['wc', 'Woo ID']
+  ];
+
+  /* Woo ID and Sale price are off by default and one click away in Columns.
+     The eight that are on already fill a 1032px content area, and a column
+     nobody reads is a column that costs horizontal room on every page load. */
+  var CP_COLS_DEFAULT = {
+    sku: true, brand: true, status: true, stock: true, price: true,
+    sale: false, categories: true, featured: true, orders: true, date: true, wc: false
+  };
+
+  /* Which sort each sortable header maps to, so the header caret and the Sort
+     menu can never disagree about what the list is ordered by. */
+  var CP_COLSORT = {
+    price: 'price_desc', stock: 'stock_asc', orders: 'orders_desc',
+    date: 'newest', status: 'status', brand: 'brand', sku: 'sku'
+  };
+
+  var CP_SORTS = [
+    ['newest', 'Newest first'], ['oldest', 'Oldest first'], ['updated', 'Recently edited'],
+    ['name', 'Name A–Z'], ['name_desc', 'Name Z–A'],
+    ['price_desc', 'Price, high to low'], ['price_asc', 'Price, low to high'],
+    ['stock_asc', 'Stock, low to high'], ['stock_desc', 'Stock, high to low'],
+    ['sku', 'SKU'], ['brand', 'Brand A–Z'], ['status', 'Status'],
+    ['orders_desc', 'Most orders'], ['sales_desc', 'Most units sold'],
+    ['position', 'Catalogue order']
+  ];
+
+  /* How this schema's own statuses read on a chip. A status NOT in here came
+     out of an import — the dead importer this repo replaced wrote 'active' —
+     and it is shown verbatim, because that is the string the operator will
+     search WooCommerce for and prettifying it throws that away for nothing. */
+  var CP_STATUS_LABEL = { publish: 'Published', draft: 'Draft', private: 'Private' };
+  var CP_STOCK_LABEL = { instock: 'In stock', outofstock: 'Out of stock', onbackorder: 'On backorder' };
+  var CP_STATUS_PILL = { publish: 'green', draft: 'grey', private: 'amber' };
+
+  /* The chips that are not a status value, in the order they are drawn. Each
+     one is a way an imported product can be incomplete, plus the trash. */
+  var CP_DERIVED_CHIPS = [
+    ['on_sale', 'On sale'], ['low', 'Low stock'], ['no_image', 'No image'],
+    ['no_category', 'No category'], ['no_price', 'No price'], ['hidden', 'Hidden'],
+    ['featured', 'Featured'], ['trashed', 'Trash']
+  ];
+
+  var CP_PER_PAGE = [25, 50, 100, 200, 500];
+
+  function cpCols(){
+    if(CP.cols) return CP.cols;
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('kbb_cp_cols') || 'null'); }catch(e){ saved = null; }
+    CP.cols = Object.assign({}, CP_COLS_DEFAULT, saved || {});
+    return CP.cols;
+  }
+  function cpSaveCols(){ try{ localStorage.setItem('kbb_cp_cols', JSON.stringify(CP.cols)); }catch(e){} }
+
+  function cpParams(forExport){
+    var p = new URLSearchParams();
+    if(!forExport){ p.set('page', CP.page); p.set('per_page', CP.perPage); }
+    if(CP.search) p.set('search', CP.search);
+    if(CP.filter && CP.filter !== 'all') p.set('filter', CP.filter);
+    if(CP.sort && CP.sort !== 'newest') p.set('sort', CP.sort);
+    if(CP.brandId) p.set('brand_id', CP.brandId);
+    if(CP.categoryId) p.set('category_id', CP.categoryId);
+    if(CP.priceMin !== '') p.set('price_min', CP.priceMin);
+    if(CP.priceMax !== '') p.set('price_max', CP.priceMax);
+    return p.toString();
+  }
+
+  function cpDash(v){ return (v === null || v === undefined || v === '') ? '<span style="color:var(--ink-faint)">—</span>' : sesc(v); }
+  function cpTitle(s){ return String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1); }
+  function cpStatusLabel(s){ return CP_STATUS_LABEL[s] || s; }
+  function cpStockLabel(s){ return CP_STOCK_LABEL[s] || s; }
+
+  /* A write that unpacks the operator-facing message the server sent. 422
+     carries either Laravel's `errors` bag or the controller's own `message`,
+     and both are written for a person, so both are shown. Same contract as
+     catalogWrite() above, deliberately: two screens next to each other
+     behaving differently would be the surprise. */
+  async function cpWrite(path, body, method){
+    /* The FULL '/admin-api/...' path, not a suffix bolted onto a prefix in
+       here. Every endpoint this screen writes to is then greppable in this
+       file by its real name, which is what lets AdminCatalogProductsTest
+       assert that each one is actually called. */
+    var r = await fetch(fixAdminApiUrl(path), {
+      method: method || 'POST',
+      credentials: 'same-origin',
+      headers: {'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    var j = {}; try{ j = await r.json(); }catch(e){}
+    if(!r.ok){
+      var msg = j.message || '';
+      if(j.errors){ msg = Object.keys(j.errors).map(function(k){ return j.errors[k][0]; }).join(' '); }
+      var err = new Error(msg || ('Request failed (' + r.status + ')'));
+      err.payload = j; err.status = r.status;
+      throw err;
+    }
+    return j;
+  }
+
+  /* toast() assigns its argument into innerHTML, so anything that can contain a
+     product name — every message this region raises — is escaped on the way. */
+  function cpToast(msg){ toast(sesc(msg)); }
+
+  /* ---------------------------------------------------------------- loading */
+
+  window.catProducts = async function(){
+    var body = document.getElementById('catBody');
+    if(!body) return;
+    body.innerHTML = '<p style="padding:24px;color:var(--ink-soft)">Loading products…</p>';
+    await cpLoad();
+  };
+
+  async function cpLoad(){
+    var body = document.getElementById('catBody');
+    if(!body) return;
+
+    var listArea = document.getElementById('cplListArea');
+    if(listArea) listArea.innerHTML = '<p style="padding:24px;color:var(--ink-soft)">Loading…</p>';
+
+    CP.err = null;
+
+    try{
+      CP.data = await api('/admin-api/catalog-products-list?' + cpParams(false));
+    }catch(e){
+      CP.err = e && e.message ? e.message : 'unknown error';
+      body.innerHTML = '<div class="card pad"><p style="color:var(--sale,#c0392b);font-size:13px">' +
+        'The product list could not be loaded — ' + sesc(CP.err) + '</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">If this is a fresh deployment, the ' +
+        'Catalog → Products routes may not be wired into routes/web.php yet.</p></div>';
+      return;
+    }
+
+    /* The brand and category vocabularies, once per visit rather than once per
+       page of rows. They only change when somebody edits a category. */
+    if(!CP.facets){
+      try{ CP.facets = await api('/admin-api/catalog-products-facets'); }
+      catch(e){ CP.facets = {brands: [], categories: []}; }
+    }
+
+    CP.perPage = CP.data.per_page;
+    cpPaint();
+  }
+
+  /* ---------------------------------------------------------------- drawing */
+
+  function cpPaint(){
+    var body = document.getElementById('catBody');
+    if(!body || !CP.data) return;
+
+    var d = CP.data;
+    var cols = cpCols();
+    var counts = d.counts || {};
+    var sum = d.summary || {};
+    var selected = cpSelectedIds();
+
+    var chips = [['all', 'All']];
+    (d.statuses || []).forEach(function(s){ chips.push([s, cpStatusLabel(s)]); });
+    (d.stock_statuses || []).forEach(function(s){ chips.push([s, cpStockLabel(s)]); });
+    CP_DERIVED_CHIPS.forEach(function(c){ chips.push(c); });
+
+    body.innerHTML =
+      cpKpis(sum, d) +
+      '<div class="cpltools">' +
+        '<div class="search" style="min-width:0">' +
+          ic('<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>') +
+          '<input id="cplSearch" placeholder="Search ' + (d.total || 0) + ' products by name, SKU, brand or Woo ID…" value="' + sesc(CP.search) + '">' +
+        '</div>' +
+        '<select class="inp" id="cplSort" style="max-width:220px">' +
+          CP_SORTS.map(function(s){
+            return '<option value="' + s[0] + '"' + (CP.sort === s[0] ? ' selected' : '') + '>' + sesc(s[1]) + '</option>';
+          }).join('') +
+        '</select>' +
+        '<button class="btn ghost" id="cplAdvBtn">' + ic('<path d="M4 6h16M7 12h10M10 18h4"/>') + ' Filters ' + (CP.adv ? '▴' : '▾') + '</button>' +
+        '<button class="btn ghost" id="cplColsBtn">Columns ' + (CP.colsOpen ? '▴' : '▾') + '</button>' +
+        '<button class="btn ghost" id="cplExport">' + ic('<path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 19h16"/>') + ' Export CSV</button>' +
+      '</div>' +
+      (CP.adv ? cpAdvanced() : '') +
+      (CP.colsOpen ? cpColumnsPanel() : '') +
+      '<div class="chips" style="margin-bottom:10px">' +
+        chips.map(function(c){
+          var n = counts[c[0]];
+          if(n === undefined) n = 0;
+          return '<button class="chip' + (CP.filter === c[0] ? ' on' : '') + '" data-cpf="' + sesc(c[0]) + '">' +
+            sesc(c[1]) + ' <span style="opacity:.6">' + n + '</span></button>';
+        }).join('') +
+      '</div>' +
+      cpBulkBar(selected) +
+      '<div class="card" style="padding:0">' +
+        '<div class="cplhint">Swipe the table sideways to see every column.</div>' +
+        '<div class="cplscroll" id="cplListArea">' + cpTable(d.products || [], cols, d) + '</div>' +
+      '</div>' +
+      '<div class="cplpager">' +
+        '<span>Showing ' + ((d.products || []).length ? ((d.page - 1) * d.per_page + 1) : 0) + '–' +
+          ((d.page - 1) * d.per_page + (d.products || []).length) + ' of ' + d.total + '</span>' +
+        '<div class="row" style="gap:8px;align-items:center">' +
+          '<select class="inp" id="cplPerPage" style="width:auto">' +
+            CP_PER_PAGE.map(function(n){
+              return '<option value="' + n + '"' + (n === CP.perPage ? ' selected' : '') + '>' + n + ' per page</option>';
+            }).join('') +
+          '</select>' +
+          '<button class="btn ghost sm" style="white-space:nowrap"' + (d.page <= 1 ? ' disabled' : '') + ' id="cplPrev">‹ Prev</button>' +
+          '<span class="cplnum">' + d.page + ' / ' + d.last_page + '</span>' +
+          '<button class="btn ghost sm" style="white-space:nowrap"' + (d.page >= d.last_page ? ' disabled' : '') + ' id="cplNext">Next ›</button>' +
+        '</div>' +
+      '</div>';
+
+    cpBind();
+  }
+
+  function cpKpis(sum, d){
+    return '<div class="cplkpis">' +
+      cpKpi('Products', (sum.products || 0).toLocaleString(), (sum.live || 0) + ' live on the shop') +
+      cpKpi('Inventory value', sum.inventory_display || '—', (sum.stock_units || 0).toLocaleString() + ' units tracked') +
+      cpKpi('Average price', sum.average_price_display || '—', (sum.priced || 0) + ' with a price set') +
+      cpKpi('Needs attention', ((d.counts && d.counts.no_price) || 0) + ((d.counts && d.counts.no_image) || 0) + ((d.counts && d.counts.no_category) || 0),
+        (sum.out_of_stock || 0) + ' out of stock · ' + (sum.on_sale || 0) + ' on sale') +
+      '</div>';
+  }
+
+  function cpKpi(k, v, s){
+    return '<div class="card pad cplkpi"><div class="k">' + sesc(k) + '</div>' +
+      '<div class="v cplnum">' + sesc(v) + '</div><div class="s">' + sesc(s) + '</div></div>';
+  }
+
+  function cpAdvanced(){
+    var f = CP.facets || {brands: [], categories: []};
+
+    return '<div class="card pad" style="margin-bottom:12px"><div class="cplgrid">' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Brand</label>' +
+        '<select class="inp" id="cplBrand" style="width:100%"><option value="">Any brand</option>' +
+        (f.brands || []).map(function(b){
+          return '<option value="' + b.id + '"' + (String(CP.brandId) === String(b.id) ? ' selected' : '') + '>' + sesc(b.name) + '</option>';
+        }).join('') + '</select></div>' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Category</label>' +
+        '<select class="inp" id="cplCategory" style="width:100%"><option value="">Any category</option>' +
+        (f.categories || []).map(function(c){
+          var pad = '';
+          for(var i = 0; i < (+c.depth || 0); i++) pad += '— ';
+          return '<option value="' + c.id + '"' + (String(CP.categoryId) === String(c.id) ? ' selected' : '') + '>' + sesc(pad + c.name) + '</option>';
+        }).join('') + '</select></div>' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Price from</label>' +
+        '<input class="inp" id="cplMin" style="width:100%" inputmode="decimal" placeholder="0" value="' + sesc(CP.priceMin) + '"></div>' +
+      '<div><label style="font-size:11.5px;color:var(--ink-soft)">Price to</label>' +
+        '<input class="inp" id="cplMax" style="width:100%" inputmode="decimal" placeholder="any" value="' + sesc(CP.priceMax) + '"></div>' +
+      '</div><div class="row" style="gap:8px;margin-top:12px">' +
+      '<button class="btn" id="cplApply">Apply</button>' +
+      '<button class="btn ghost" id="cplClearFilters">Clear all</button></div></div>';
+  }
+
+  function cpColumnsPanel(){
+    return '<div class="card pad" style="margin-bottom:12px">' +
+      '<div class="so-cols">' + CP_COLDEF.map(function(c){
+        return '<label class="so-col"><span class="cbx' + (CP.cols[c[0]] ? ' on' : '') + '" data-cpcol="' + c[0] + '">' +
+          ic(I.check) + '</span> ' + sesc(c[1]) + '</label>';
+      }).join('') + '</div>' +
+      '<div style="margin-top:14px"><button class="btn ghost sm" id="cplColsReset">Reset to default</button></div></div>';
+  }
+
+  function cpBulkBar(selected){
+    if(!selected.length) return '';
+
+    var settable = (CP.data && CP.data.settable_statuses) || ['publish', 'draft', 'private'];
+    var cats = (CP.facets && CP.facets.categories) || [];
+
+    return '<div class="card pad cplbar" style="margin-bottom:12px">' +
+      '<b style="font-size:13px">' + selected.length + ' selected</b>' +
+      '<select class="inp sm" id="cplBulkStatus" style="width:auto"><option value="">Set status…</option>' +
+        settable.map(function(s){ return '<option value="' + sesc(s) + '">' + sesc(cpStatusLabel(s)) + '</option>'; }).join('') +
+      '</select>' +
+      '<select class="inp sm" id="cplBulkCatMode" style="width:auto">' +
+        '<option value="add">Add to category</option>' +
+        '<option value="remove">Remove from category</option>' +
+        '<option value="replace">Replace categories with</option>' +
+      '</select>' +
+      '<select class="inp sm" id="cplBulkCat" style="width:auto;max-width:220px"><option value="">Choose a category…</option>' +
+        cats.map(function(c){
+          var pad = '';
+          for(var i = 0; i < (+c.depth || 0); i++) pad += '— ';
+          return '<option value="' + c.id + '">' + sesc(pad + c.name) + '</option>';
+        }).join('') +
+      '</select>' +
+      '<button class="btn ghost sm" id="cplBulkCatGo">Apply</button>' +
+      '<button class="btn ghost sm" id="cplBulkPrice">Adjust prices…</button>' +
+      '<div style="flex:1"></div>' +
+      '<button class="btn ghost sm" id="cplClearSel">Clear selection</button>' +
+      '</div>';
+  }
+
+  function cpTable(rows, cols, d){
+    if(!rows.length){
+      return '<div style="padding:34px;text-align:center;color:var(--ink-soft)">' +
+        '<p style="font-size:13px">No products match this view.</p>' +
+        '<button class="btn ghost sm" id="cplEmptyClear" style="margin-top:12px">Clear the filters</button></div>';
+    }
+
+    var allOn = rows.every(function(p){ return CP.sel[p.id]; });
+
+    var head = '<th style="width:34px"><span class="cbx' + (allOn ? ' on' : '') + '" id="cplAll">' + ic(I.check) + '</span></th>' +
+      '<th>Product</th>' +
+      CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){
+        var sort = CP_COLSORT[c[0]];
+        var align = (c[0] === 'price' || c[0] === 'sale' || c[0] === 'stock' || c[0] === 'orders') ? 'text-align:right' : '';
+        var caret = (sort && CP.sort === sort) ? ' ▾' : '';
+        return '<th style="' + align + (sort ? ';cursor:pointer' : '') + '"' + (sort ? ' data-cpsort="' + sort + '"' : '') + '>' +
+          sesc(c[1]) + caret + '</th>';
+      }).join('') +
+      '<th style="width:74px"></th>';
+
+    var bodyRows = rows.map(function(p){
+      return '<tr' + (CP.sel[p.id] ? ' style="background:var(--border-2,rgba(0,0,0,.03))"' : '') + '>' +
+        '<td><span class="cbx' + (CP.sel[p.id] ? ' on' : '') + '" data-cpsel="' + p.id + '">' + ic(I.check) + '</span></td>' +
+        '<td><div class="row" style="min-width:0;gap:9px">' +
+          (p.has_image
+            ? '<img class="cplthumb" src="' + sesc(p.image) + '" alt="" loading="lazy">'
+            : '<span class="cplnoimg" title="No image">no img</span>') +
+          '<div style="min-width:0">' +
+            '<div class="pname" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + sesc(p.name) + '</div>' +
+            '<div class="pbrand" style="font-size:11px;color:var(--ink-soft)">' +
+              (p.is_visible ? '' : '<span class="pill grey" style="font-size:9px;padding:1px 6px">Hidden</span> ') +
+              (p.on_sale ? '<span class="pill red" style="font-size:9px;padding:1px 6px">-' + p.discount_percent + '%</span> ' : '') +
+              sesc(p.slug) +
+            '</div>' +
+          '</div>' +
+        '</div></td>' +
+        CP_COLDEF.filter(function(c){ return cols[c[0]]; }).map(function(c){ return cpCell(c[0], p, d); }).join('') +
+        '<td><button class="btn ghost sm" data-cpedit="' + p.id + '">Edit</button></td>' +
+      '</tr>';
+    }).join('');
+
+    return '<table style="width:100%"><thead><tr>' + head + '</tr></thead><tbody>' + bodyRows + '</tbody></table>';
+  }
+
+  /* One cell.
+     price, sale price, stock and status are EDITABLE IN PLACE — those are the
+     four an owner changes all day. Each one carries the field name and the
+     current value as a plain decimal string (price_input), never a number, so
+     what goes back to the server is the text the operator sees. */
+  function cpCell(k, p, d){
+    switch(k){
+      case 'sku':
+        return '<td style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cpDash(p.sku) + '</td>';
+
+      case 'brand':
+        return '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + cpDash(p.brand) + '</td>';
+
+      case 'status':
+        return '<td><select class="cplsel" data-cpfield="status" data-cpid="' + p.id + '">' +
+          ((d.settable_statuses || []).concat(
+            (d.settable_statuses || []).indexOf(p.status) === -1 ? [p.status] : []
+          )).map(function(s){
+            return '<option value="' + sesc(s) + '"' + (s === p.status ? ' selected' : '') + '>' + sesc(cpStatusLabel(s)) + '</option>';
+          }).join('') + '</select></td>';
+
+      case 'stock':
+        if(!p.manage_stock){
+          return '<td style="text-align:right"><span class="pill ' + (p.stock_status === 'outofstock' ? 'red' : 'green') + '">' +
+            sesc(cpStockLabel(p.stock_status)) + '</span></td>';
+        }
+        return '<td style="text-align:right"><span class="cplcell cplnum" data-cpfield="stock" data-cpid="' + p.id + '" ' +
+          'data-cpvalue="' + p.stock + '" title="Click to edit">' +
+          (p.stock === 0 ? '<span class="pill red"><span class="d"></span>0</span>'
+            : (p.low_stock ? '<span class="pill amber"><span class="d"></span>' + p.stock + '</span>' : p.stock)) +
+          '</span></td>';
+
+      case 'price':
+        return '<td style="text-align:right"><span class="cplcell cplnum" data-cpfield="price" data-cpid="' + p.id + '" ' +
+          'data-cpvalue="' + sesc(p.price_input) + '" title="Click to edit">' +
+          (p.price_fils === null ? '<span style="color:var(--ink-faint)">—</span>' : sesc(p.price_display)) +
+          '</span></td>';
+
+      case 'sale':
+        return '<td style="text-align:right"><span class="cplcell cplnum" data-cpfield="sale_price" data-cpid="' + p.id + '" ' +
+          'data-cpvalue="' + sesc(p.sale_price_input) + '" title="Click to edit">' +
+          (p.sale_price_fils === null ? '<span style="color:var(--ink-faint)">—</span>' : sesc(p.sale_price_display)) +
+          '</span></td>';
+
+      case 'categories':
+        return '<td style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+          (p.categories && p.categories.length ? sesc(p.categories.join(', ')) : '<span style="color:var(--ink-faint)">—</span>') + '</td>';
+
+      case 'featured':
+        return '<td style="font-size:15px;text-align:center;color:' + (p.featured ? '#e0a11e' : 'var(--border)') +
+          ';cursor:pointer" data-cpfeat="' + p.id + '" title="Featured">' + (p.featured ? '★' : '☆') + '</td>';
+
+      case 'orders':
+        return '<td style="text-align:right;font-size:11.5px;color:var(--ink-soft)" title="' + sesc(p.units_sold + ' units · ' + p.revenue_display) + '">' +
+          p.orders_count + '</td>';
+
+      case 'date':
+        return '<td style="font-size:11.5px;color:var(--ink-soft);white-space:nowrap">' + cpDash(p.date) + '</td>';
+
+      case 'wc':
+        return '<td style="font-size:11.5px;color:var(--ink-soft)">' + cpDash(p.wc_id) + '</td>';
+
+      default:
+        return '<td></td>';
+    }
+  }
+
+  /* ---------------------------------------------------------------- binding */
+
+  function cpBind(){
+    var $$$ = function(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); };
+    var byId = function(id){ return document.getElementById(id); };
+
+    var search = byId('cplSearch');
+    if(search){
+      var searchT;
+      search.oninput = function(e){
+        clearTimeout(searchT);
+        var v = e.target.value;
+        searchT = setTimeout(function(){ CP.search = v; CP.page = 1; cpLoad(); }, 300);
+      };
+    }
+
+    var sort = byId('cplSort');
+    if(sort) sort.onchange = function(e){ CP.sort = e.target.value; CP.page = 1; cpLoad(); };
+
+    $$$('#catBody [data-cpsort]').forEach(function(th){
+      th.onclick = function(){ CP.sort = th.dataset.cpsort; CP.page = 1; cpLoad(); };
+    });
+
+    var advBtn = byId('cplAdvBtn');
+    if(advBtn) advBtn.onclick = function(){ CP.adv = !CP.adv; cpPaint(); };
+
+    var colsBtn = byId('cplColsBtn');
+    if(colsBtn) colsBtn.onclick = function(){ CP.colsOpen = !CP.colsOpen; cpPaint(); };
+
+    $$$('#catBody .cbx[data-cpcol]').forEach(function(b){
+      b.onclick = function(){ var k = b.dataset.cpcol; CP.cols[k] = !CP.cols[k]; cpSaveCols(); cpPaint(); };
+    });
+    var colsReset = byId('cplColsReset');
+    if(colsReset) colsReset.onclick = function(){ CP.cols = Object.assign({}, CP_COLS_DEFAULT); cpSaveCols(); cpPaint(); };
+
+    var apply = byId('cplApply');
+    if(apply) apply.onclick = function(){
+      CP.brandId = (byId('cplBrand') || {}).value || '';
+      CP.categoryId = (byId('cplCategory') || {}).value || '';
+      CP.priceMin = (byId('cplMin') || {}).value || '';
+      CP.priceMax = (byId('cplMax') || {}).value || '';
+      CP.page = 1; cpLoad();
+    };
+
+    var clearAll = function(){
+      CP.brandId = ''; CP.categoryId = ''; CP.priceMin = ''; CP.priceMax = '';
+      CP.search = ''; CP.filter = 'all'; CP.page = 1; cpLoad();
+    };
+    var clearBtn = byId('cplClearFilters'); if(clearBtn) clearBtn.onclick = clearAll;
+    var emptyClear = byId('cplEmptyClear'); if(emptyClear) emptyClear.onclick = clearAll;
+
+    $$$('#catBody .chip[data-cpf]').forEach(function(c){
+      c.onclick = function(){ CP.filter = c.dataset.cpf; CP.page = 1; cpLoad(); };
+    });
+
+    var perPage = byId('cplPerPage');
+    if(perPage) perPage.onchange = function(e){
+      CP.perPage = +e.target.value;
+      try{ localStorage.setItem('kbb_cp_pp', CP.perPage); }catch(err){}
+      CP.page = 1; cpLoad();
+    };
+
+    var prev = byId('cplPrev'); if(prev) prev.onclick = function(){ if(CP.data.page > 1){ CP.page = CP.data.page - 1; cpLoad(); } };
+    var next = byId('cplNext'); if(next) next.onclick = function(){ if(CP.data.page < CP.data.last_page){ CP.page = CP.data.page + 1; cpLoad(); } };
+
+    $$$('#catBody [data-cpsel]').forEach(function(b){
+      b.onclick = function(){ var id = b.dataset.cpsel; CP.sel[id] = !CP.sel[id]; cpPaint(); };
+    });
+
+    var all = byId('cplAll');
+    if(all) all.onclick = function(){
+      var on = !CP.data.products.every(function(p){ return CP.sel[p.id]; });
+      CP.data.products.forEach(function(p){ CP.sel[p.id] = on; });
+      cpPaint();
+    };
+
+    var clearSel = byId('cplClearSel'); if(clearSel) clearSel.onclick = function(){ CP.sel = {}; cpPaint(); };
+
+    /* ---- inline editing: the four cells an owner changes all day ---- */
+
+    $$$('#catBody .cplcell[data-cpfield]').forEach(function(cell){
+      cell.onclick = function(){ cpOpenCell(cell); };
+    });
+
+    $$$('#catBody select[data-cpfield]').forEach(function(sel){
+      sel.onchange = function(){
+        cpSave(+sel.dataset.cpid, sel.dataset.cpfield, sel.value);
+      };
+    });
+
+    $$$('#catBody [data-cpfeat]').forEach(function(el){
+      el.onclick = async function(){
+        var id = +el.dataset.cpfeat;
+        try{
+          var out = await cpWrite('/admin-api/catalog-products-save/' + id, {featured: !cpRowById(id).featured});
+          cpReplaceRow(out.product);
+        }catch(e){ cpToast(e.message); }
+      };
+    });
+
+    $$$('#catBody [data-cpedit]').forEach(function(b){
+      b.onclick = function(){ cpOpenDetail(+b.dataset.cpedit); };
+    });
+
+    var bulkStatus = byId('cplBulkStatus');
+    if(bulkStatus) bulkStatus.onchange = function(e){
+      var status = e.target.value;
+      e.target.value = '';
+      if(status) cpConfirmStatus(cpSelectedIds(), status);
+    };
+
+    var bulkCatGo = byId('cplBulkCatGo');
+    if(bulkCatGo) bulkCatGo.onclick = function(){
+      var mode = (byId('cplBulkCatMode') || {}).value || 'add';
+      var categoryId = (byId('cplBulkCat') || {}).value || '';
+      if(!categoryId){ cpToast('Choose a category first.'); return; }
+      cpConfirmCategory(cpSelectedIds(), mode, +categoryId);
+    };
+
+    var bulkPrice = byId('cplBulkPrice');
+    if(bulkPrice) bulkPrice.onclick = function(){ cpPriceDialog(cpSelectedIds()); };
+
+    var exportBtn = byId('cplExport');
+    if(exportBtn) exportBtn.onclick = function(){
+      /* A normal navigation, not a fetch: the browser carries the same admin
+         session cookie, the server refuses anyone without it, and the file
+         lands in Downloads instead of in memory. */
+      var qs = cpParams(true);
+      window.location.href = fixAdminApiUrl('/admin-api/catalog-products-export') + (qs ? '?' + qs : '');
+    };
+  }
+
+  function cpSelectedIds(){
+    return Object.keys(CP.sel).filter(function(k){ return CP.sel[k]; }).map(Number);
+  }
+
+  function cpRowById(id){
+    return ((CP.data && CP.data.products) || []).filter(function(p){ return p.id === id; })[0] || {};
+  }
+
+  /* Swap one row's data in place and repaint. Cheaper than a reload after an
+     inline edit, and it keeps the operator's scroll position — but the chip
+     counts and the summary would then be stale, so anything that can move them
+     (a status change) reloads instead. */
+  function cpReplaceRow(row){
+    if(!row || !CP.data) return;
+    CP.data.products = CP.data.products.map(function(p){ return p.id === row.id ? row : p; });
+    cpPaint();
+  }
+
+  /* Turn a cell into a text box. Enter or blur commits, Escape abandons. */
+  function cpOpenCell(cell){
+    if(cell.querySelector('input')) return;
+
+    var field = cell.dataset.cpfield;
+    var id = +cell.dataset.cpid;
+    var value = cell.dataset.cpvalue || '';
+    var previous = cell.innerHTML;
+
+    cell.innerHTML = '<input class="cplin" type="text" inputmode="decimal" value="' + sesc(value) + '">';
+
+    var input = cell.querySelector('input');
+    input.focus();
+    input.select();
+
+    var done = false;
+
+    var commit = function(){
+      if(done) return;
+      done = true;
+      var next = input.value.trim();
+      if(next === value){ cell.innerHTML = previous; return; }
+      cpSave(id, field, next);
+    };
+
+    input.onkeydown = function(e){
+      if(e.key === 'Enter'){ commit(); }
+      if(e.key === 'Escape'){ done = true; cell.innerHTML = previous; }
+    };
+    input.onblur = commit;
+  }
+
+  /**
+   * One field, one product, one request.
+   *
+   * The value goes up as the STRING the operator typed. Nothing here parses it
+   * into a number: the server reads the digits and stores integer fils, and a
+   * price that went through parseFloat on the way would already have lost the
+   * exactness the fils representation exists to keep.
+   */
+  async function cpSave(id, field, value){
+    var payload = {};
+
+    if(field === 'stock'){
+      payload.stock = value === '' ? null : parseInt(value, 10);
+      /* Typing a stock number on a product that does not track stock is a
+         request to start tracking it — otherwise the number is written and the
+         shelf ignores it. */
+      payload.manage_stock = true;
+    }else if(field === 'price' || field === 'sale_price'){
+      payload[field] = value === '' ? null : value;
+    }else{
+      payload[field] = value;
+    }
+
+    try{
+      var out = await cpWrite('/admin-api/catalog-products-save/' + id, payload);
+      cpToast('Saved');
+
+      /* A status change moves the chip counts and the summary tiles, so the
+         page is reloaded rather than patched — a screen whose chips disagree
+         with its rows is worse than one that takes a moment. */
+      if(field === 'status'){ cpLoad(); return; }
+
+      cpReplaceRow(out.product);
+    }catch(e){
+      cpToast(e.message);
+      cpPaint();
+    }
+  }
+
+  /* -------- destructive actions: always a dialog, sometimes two -------- */
+
+  /**
+   * Nothing changes on a click. The first dialog says what will happen; the
+   * server then refuses any product that is live on the storefront and reports
+   * which ones, and only a second, explicit confirmation carrying force goes
+   * through.
+   */
+  function cpConfirmStatus(ids, status){
+    if(!ids.length) return;
+
+    openModal('<div class="modal-h"><b>Change status</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Set <b>' + ids.length + '</b> product' + (ids.length === 1 ? '' : 's') +
+      ' to <b>' + sesc(cpStatusLabel(status)) + '</b>?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Anything that is currently live on the storefront is left alone unless you confirm it separately — taking a product out of Published removes it from the shop, from every category page and from the sitemap.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="cplStatusYes">Set status</button></div></div>');
+
+    var yes = document.getElementById('cplStatusYes');
+    if(yes) yes.onclick = function(){ cpRunStatus(ids, status, false); };
+  }
+
+  async function cpRunStatus(ids, status, force){
+    closeModal();
+    try{
+      var out = await cpWrite('/admin-api/catalog-products-bulk-status', {ids: ids, status: status, force: !!force});
+
+      if(out.skipped && out.skipped.length){ cpConfirmSkipped(out, status); return; }
+
+      cpToast(out.changed + ' product' + (out.changed === 1 ? '' : 's') + ' updated');
+      CP.sel = {}; cpLoad();
+    }catch(e){ cpToast(e.message); }
+  }
+
+  /**
+   * The second dialog. The server has already done the safe half and is telling
+   * the operator exactly which products it refused and why, by name.
+   */
+  function cpConfirmSkipped(out, status){
+    openModal('<div class="modal-h"><b>Some of these are live</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)"><b>' + out.changed + '</b> updated. <b>' +
+      out.skipped.length + '</b> left alone because ' + (out.skipped.length === 1 ? 'it is' : 'they are') + ' published:</p>' +
+      '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+      out.skipped.slice(0, 12).map(function(s){
+        return '<li>' + sesc(s.label) + (s.sku ? ' — ' + sesc(s.sku) : '') + '</li>';
+      }).join('') +
+      (out.skipped.length > 12 ? '<li>and ' + (out.skipped.length - 12) + ' more</li>' : '') + '</ul>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">Going ahead takes them off the storefront immediately.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Leave them</button>' +
+      '<button class="btn" style="background:var(--red)" id="cplForce">Change those too</button></div></div>');
+
+    var force = document.getElementById('cplForce');
+    if(force) force.onclick = function(){
+      cpRunStatus(out.skipped.map(function(s){ return s.id; }), status, true);
+    };
+  }
+
+  /**
+   * Add and Remove are additive and reversible, so they go straight through.
+   * Replace drops every category a product is already in — on an imported
+   * catalogue that is its whole WooCommerce taxonomy — so it asks first, and
+   * the server refuses it without the confirmation regardless of what this
+   * screen sends.
+   */
+  function cpConfirmCategory(ids, mode, categoryId){
+    if(!ids.length) return;
+
+    var cats = (CP.facets && CP.facets.categories) || [];
+    var name = (cats.filter(function(c){ return c.id === categoryId; })[0] || {}).name || 'that category';
+
+    if(mode !== 'replace'){ cpRunCategory(ids, mode, categoryId, false); return; }
+
+    openModal('<div class="modal-h"><b>Replace categories</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Put <b>' + ids.length + '</b> product' + (ids.length === 1 ? '' : 's') +
+      ' in <b>' + sesc(name) + '</b> and <b>remove every other category</b> they are in?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">On imported products that is the whole WooCommerce taxonomy for each one, and there is no undo. Add to category does the safe version of this.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="cplCatYes">Replace categories</button></div></div>');
+
+    var yes = document.getElementById('cplCatYes');
+    if(yes) yes.onclick = function(){ cpRunCategory(ids, mode, categoryId, true); };
+  }
+
+  async function cpRunCategory(ids, mode, categoryId, confirm){
+    closeModal();
+    try{
+      var out = await cpWrite('/admin-api/catalog-products-bulk-category', {
+        ids: ids, mode: mode, category_ids: [categoryId], confirm: !!confirm
+      });
+
+      cpToast(out.changed + ' product' + (out.changed === 1 ? '' : 's') + ' updated');
+      CP.sel = {}; cpLoad();
+    }catch(e){ cpToast(e.message); }
+  }
+
+  /**
+   * The price dialog. Two steps, always: this form, then a confirmation, and
+   * the server refuses the request outright without `confirm` however it is
+   * called. A bulk price change cannot be undone.
+   *
+   * The percentage and the amount are sent as TEXT. The server carries the
+   * percentage as integer basis points and does the arithmetic on integers —
+   * `1 - 30 / 100` is 0.69999999999999995559 and lands a fil light on every
+   * product, which is exactly the defect found in bundle pricing.
+   */
+  function cpPriceDialog(ids){
+    if(!ids.length) return;
+
+    openModal('<div class="modal-h"><b>Adjust prices</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b">' +
+      '<p style="font-size:13px;color:var(--ink-2);margin-bottom:12px">' + ids.length + ' product' + (ids.length === 1 ? '' : 's') + ' selected.</p>' +
+      '<div class="cplfield"><label>Which price</label><select class="inp" id="cplPriceTarget">' +
+        '<option value="price">Regular price</option><option value="sale_price">Sale price</option></select></div>' +
+      '<div class="cplfield"><label>Change</label><select class="inp" id="cplPriceMode">' +
+        '<option value="percent">By a percentage</option>' +
+        '<option value="amount">By an amount</option>' +
+        '<option value="set">Set to exactly</option>' +
+        '<option value="clear">Clear it</option></select></div>' +
+      '<div class="cplfield" id="cplPriceValueWrap"><label id="cplPriceValueLabel">Percentage (negative to discount)</label>' +
+        '<input class="inp" id="cplPriceValue" inputmode="decimal" placeholder="-10"></div>' +
+      '<p style="font-size:12px;color:var(--ink-soft)">Products with no price to adjust, and anything that would end below zero or leave a sale price at or above its regular price, are skipped and listed back to you.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="cplPriceGo">Review change</button></div></div>');
+
+    var mode = document.getElementById('cplPriceMode');
+    var label = document.getElementById('cplPriceValueLabel');
+    var wrap = document.getElementById('cplPriceValueWrap');
+
+    if(mode) mode.onchange = function(){
+      if(mode.value === 'clear'){ wrap.style.display = 'none'; return; }
+      wrap.style.display = '';
+      label.textContent = mode.value === 'percent'
+        ? 'Percentage (negative to discount)'
+        : (mode.value === 'amount' ? 'Amount to add (negative to subtract)' : 'New price');
+    };
+
+    var go = document.getElementById('cplPriceGo');
+    if(go) go.onclick = function(){
+      var target = (document.getElementById('cplPriceTarget') || {}).value || 'price';
+      var m = (document.getElementById('cplPriceMode') || {}).value || 'percent';
+      var value = ((document.getElementById('cplPriceValue') || {}).value || '').trim();
+
+      if(m !== 'clear' && value === ''){ cpToast('Enter a value first.'); return; }
+
+      cpConfirmPrice(ids, target, m, value);
+    };
+  }
+
+  function cpConfirmPrice(ids, target, mode, value){
+    var what = target === 'price' ? 'regular price' : 'sale price';
+    var how = mode === 'percent' ? ('by ' + value + '%')
+      : (mode === 'amount' ? ('by ' + value) : (mode === 'set' ? ('to ' + value) : 'removed'));
+
+    openModal('<div class="modal-h"><b>Confirm price change</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Change the <b>' + sesc(what) + '</b> of <b>' +
+      ids.length + '</b> product' + (ids.length === 1 ? '' : 's') + ' <b>' + sesc(how) + '</b>?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">This cannot be undone. Export the current view first if you want a record of what the prices were.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" style="background:var(--red)" id="cplPriceYes">Change prices</button></div></div>');
+
+    var yes = document.getElementById('cplPriceYes');
+    if(yes) yes.onclick = async function(){
+      closeModal();
+
+      var payload = {ids: ids, target: target, mode: mode, confirm: true};
+      if(mode === 'percent') payload.percent = value;
+      if(mode === 'amount') payload.amount = value;
+      if(mode === 'set') payload.value = value;
+
+      try{
+        var out = await cpWrite('/admin-api/catalog-products-bulk-price', payload);
+
+        cpToast(out.changed + ' price' + (out.changed === 1 ? '' : 's') + ' changed' +
+          (out.skipped && out.skipped.length ? ', ' + out.skipped.length + ' skipped' : ''));
+
+        if(out.skipped && out.skipped.length) cpShowSkipped(out.skipped);
+
+        CP.sel = {}; cpLoad();
+      }catch(e){ cpToast(e.message); }
+    };
+  }
+
+  function cpShowSkipped(skipped){
+    openModal('<div class="modal-h"><b>Skipped</b><button class="x" onclick="closeModal()">✕</button></div>' +
+      '<div class="modal-b"><ul style="font-size:12.5px;color:var(--ink-2);margin:0 0 0 18px">' +
+      skipped.slice(0, 20).map(function(s){
+        return '<li><b>' + sesc(s.label) + '</b> — ' + sesc(s.reason) + '</li>';
+      }).join('') +
+      (skipped.length > 20 ? '<li>and ' + (skipped.length - 20) + ' more</li>' : '') +
+      '</ul><div class="row" style="justify-content:flex-end;margin-top:14px">' +
+      '<button class="btn" onclick="closeModal()">Close</button></div></div>');
+  }
+
+  /* ------------------------------------------------------------ the product */
+
+  /**
+   * One product, on its own screen.
+   *
+   * Everything editable here goes back through the same
+   * /catalog-products-save/{id} endpoint the inline cells use, so there is one
+   * place where a product write is validated and one definition of what may be
+   * written. The read-only column on the right is what the product IS rather
+   * than what it is set to — its Woo id, what it has sold, its rating — and
+   * none of it is a text box, because none of it is a field anyone should be
+   * able to type over.
+   */
+  async function cpOpenDetail(id){
+    var content = document.getElementById('content');
+    if(!content) return;
+
+    content.innerHTML = '<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">Loading product…</p></div>';
+
+    var p;
+    try{ p = (await api('/admin-api/catalog-products-detail/' + id)).product; }
+    catch(e){
+      content.innerHTML = '<div class="wrap"><div class="card pad"><p style="color:var(--sale,#c0392b)">That product could not be loaded.</p>' +
+        '<button class="btn ghost sm" style="margin-top:12px" onclick="go(\'catalog\')">Back to Catalog</button></div></div>';
+      return;
+    }
+
+    CP.detail = p;
+
+    var cats = (CP.facets && CP.facets.categories) || [];
+    var brands = (CP.facets && CP.facets.brands) || [];
+    var selectedCats = {};
+    (p.categories || []).forEach(function(c){ selectedCats[c.id] = true; });
+
+    content.innerHTML = '<div class="wrap">' +
+      '<div class="pe-top" style="margin-bottom:12px"><button class="btn ghost sm" id="cplBack">' +
+        ic('<path d="m15 18-6-6 6-6"/>') + ' Products</button><div style="flex:1"></div>' +
+        '<a class="btn ghost sm" href="' + sesc(p.url) + '" target="_blank" rel="noopener">View on the shop</a>' +
+        '<button class="btn" id="cplDetailSave">Save</button></div>' +
+
+      '<div class="page-head" style="margin:0 0 12px"><h2 style="overflow-wrap:anywhere">' + sesc(p.name) + '</h2>' +
+        '<p>' + (p.sku ? sesc(p.sku) + ' · ' : '') + sesc(p.slug) + '</p></div>' +
+
+      '<div class="cplpanel">' +
+        '<div class="card pad">' +
+          '<div class="cplfield"><label>Name</label><input class="inp" id="cplfName" value="' + sesc(p.name) + '"></div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>SKU</label><input class="inp" id="cplfSku" value="' + sesc(p.sku || '') + '"></div>' +
+            '<div class="cplfield"><label>Brand</label><select class="inp" id="cplfBrand"><option value="">No brand</option>' +
+              brands.map(function(b){
+                return '<option value="' + b.id + '"' + (p.brand_id === b.id ? ' selected' : '') + '>' + sesc(b.name) + '</option>';
+              }).join('') + '</select></div>' +
+          '</div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>Regular price (' + sesc(p.currency) + ')</label>' +
+              '<input class="inp" id="cplfPrice" inputmode="decimal" value="' + sesc(p.price_input) + '"></div>' +
+            '<div class="cplfield"><label>Sale price (' + sesc(p.currency) + ')</label>' +
+              '<input class="inp" id="cplfSale" inputmode="decimal" value="' + sesc(p.sale_price_input) + '"></div>' +
+          '</div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>Status</label><select class="inp" id="cplfStatus">' +
+              ['publish', 'draft', 'private'].concat(
+                ['publish', 'draft', 'private'].indexOf(p.status) === -1 ? [p.status] : []
+              ).map(function(s){
+                return '<option value="' + sesc(s) + '"' + (s === p.status ? ' selected' : '') + '>' + sesc(cpStatusLabel(s)) + '</option>';
+              }).join('') + '</select></div>' +
+            '<div class="cplfield"><label>Stock status</label><select class="inp" id="cplfStockStatus">' +
+              ['instock', 'outofstock', 'onbackorder'].map(function(s){
+                return '<option value="' + s + '"' + (s === p.stock_status ? ' selected' : '') + '>' + sesc(cpStockLabel(s)) + '</option>';
+              }).join('') + '</select></div>' +
+          '</div>' +
+          '<div class="cplpair">' +
+            '<div class="cplfield"><label>Track stock</label><select class="inp" id="cplfManage">' +
+              '<option value="0"' + (p.manage_stock ? '' : ' selected') + '>No</option>' +
+              '<option value="1"' + (p.manage_stock ? ' selected' : '') + '>Yes</option></select></div>' +
+            '<div class="cplfield"><label>Units in stock</label>' +
+              '<input class="inp" id="cplfStock" inputmode="numeric" value="' + (p.stock === null ? '' : p.stock) + '"></div>' +
+          '</div>' +
+          '<div class="cplfield"><label>Visible in the catalogue</label><select class="inp" id="cplfVisible">' +
+            '<option value="1"' + (p.is_visible ? ' selected' : '') + '>Yes</option>' +
+            '<option value="0"' + (p.is_visible ? '' : ' selected') + '>No</option></select></div>' +
+          '<div class="cplfield"><label>Categories</label><div class="cplcats" id="cplfCats">' +
+            cats.map(function(c){
+              var pad = '';
+              for(var i = 0; i < (+c.depth || 0); i++) pad += '· ';
+              return '<span class="cplcat' + (selectedCats[c.id] ? ' on' : '') + '" data-cpcat="' + c.id + '">' + sesc(pad + c.name) + '</span>';
+            }).join('') + '</div></div>' +
+          '<div class="cplfield"><label>Short description</label>' +
+            '<textarea class="inp" id="cplfShort" rows="3">' + sesc(p.short_description || '') + '</textarea></div>' +
+        '</div>' +
+
+        '<div class="card pad" style="align-self:start">' +
+          '<div class="pe-h" style="margin-bottom:10px">What this product is</div>' +
+          cpFact('Woo product ID', p.wc_id === null ? 'Created here' : p.wc_id) +
+          cpFact('Effective price today', p.effective_price_display + (p.on_sale ? ' (−' + p.discount_percent + '%)' : '')) +
+          cpFact('Orders', p.orders_count) +
+          cpFact('Units sold', p.units_sold) +
+          cpFact('Revenue', p.revenue_display) +
+          cpFact('Reviews', p.review_count + (p.review_count ? ' · ' + p.rating.toFixed(1) + '★' : '')) +
+          cpFact('Added', (p.created_at || '').slice(0, 10)) +
+          cpFact('Last edited', (p.updated_at || '').slice(0, 10)) +
+          (p.trashed ? '<p style="margin-top:10px"><span class="pill red"><span class="d"></span>In the trash</span></p>' : '') +
+          '<p style="font-size:11.5px;color:var(--ink-soft);margin-top:12px">Orders, units sold, revenue and the rating are computed from the store\'s own records. They are not fields and cannot be typed over.</p>' +
+        '</div>' +
+      '</div></div>';
+
+    document.getElementById('cplBack').onclick = function(){ go('catalog', 'products'); };
+
+    Array.prototype.slice.call(document.querySelectorAll('#cplfCats .cplcat')).forEach(function(el){
+      el.onclick = function(){ el.classList.toggle('on'); };
+    });
+
+    document.getElementById('cplDetailSave').onclick = async function(){
+      var value = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+
+      var chosen = Array.prototype.slice.call(document.querySelectorAll('#cplfCats .cplcat.on'))
+        .map(function(el){ return +el.dataset.cpcat; });
+
+      var payload = {
+        name: value('cplfName'),
+        sku: value('cplfSku') === '' ? null : value('cplfSku'),
+        brand_id: value('cplfBrand') === '' ? null : +value('cplfBrand'),
+        // The decimal STRING, exactly as typed. Nothing here parses it into a
+        // number; the server reads the digits and stores integer fils.
+        price: value('cplfPrice') === '' ? null : value('cplfPrice'),
+        sale_price: value('cplfSale') === '' ? null : value('cplfSale'),
+        status: value('cplfStatus'),
+        stock_status: value('cplfStockStatus'),
+        manage_stock: value('cplfManage') === '1',
+        stock: value('cplfStock') === '' ? null : parseInt(value('cplfStock'), 10),
+        is_visible: value('cplfVisible') === '1',
+        category_ids: chosen,
+        short_description: value('cplfShort') === '' ? null : value('cplfShort')
+      };
+
+      try{
+        await cpWrite('/admin-api/catalog-products-save/' + p.id, payload);
+        cpToast('Product saved');
+        go('catalog', 'products');
+      }catch(e){ cpToast(e.message); }
+    };
+  }
+
+  function cpFact(k, v){
+    return '<div class="row" style="justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--border-2)">' +
+      '<span style="font-size:11.5px;color:var(--ink-soft)">' + sesc(k) + '</span>' +
+      '<b class="cplnum" style="font-size:12.5px;text-align:right;overflow-wrap:anywhere">' + sesc(v) + '</b></div>';
+  }
+
+  /* ===== LANE AF · Catalog · Products — END ================================= */
 
   /* ---------- Store → Payments (gateway credentials) ----------
      The real screen for /admin-api/payments (Admin\PaymentsApiController),
