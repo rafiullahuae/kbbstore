@@ -903,22 +903,35 @@ it('drops alt text for an image that is no longer on the product', function () {
     ]);
 });
 
-it('falls back to a derived description when no alt was written', function () {
-    $brand = peBrand();
-    $product = peProduct(['name' => 'Heartleaf Toner', 'brand_id' => $brand->id]);
-    $product->load('brand');
+it('falls back to the shared naming rule when no alt was written', function () {
+    /*
+     * The derived half is App\Support\ProductTitle's, not a second copy here.
+     * That matters for a reason this catalogue supplies: its product names are
+     * a WooCommerce import written to no single rule, so some already carry
+     * the brand and some do not. A naive "brand — name" join produces
+     * "Anua — Anua Heartleaf Toner", which is the exact defect ProductTitle
+     * exists to prevent — and it is asserted here rather than assumed.
+     */
+    $brand = Brand::create(['name' => 'Anua', 'slug' => 'pe-anua-'.uniqid()]);
 
-    // A named shot gets its label; the generic "View 4" is a position rather
-    // than a description and is left out rather than read aloud.
-    expect($product->altFor('/uploads/x.jpg', 'Texture'))->toBe('PE Brand — Heartleaf Toner — Texture')
-        ->and($product->altFor('/uploads/x.jpg', 'View 4'))->toBe('PE Brand — Heartleaf Toner')
-        ->and($product->altFor('/uploads/x.jpg'))->toBe('PE Brand — Heartleaf Toner');
+    $carries = peProduct(['name' => 'Anua Heartleaf Toner', 'brand_id' => $brand->id]);
+    $lacks = peProduct(['name' => 'Heartleaf Toner', 'brand_id' => $brand->id]);
+
+    $carries->load('brand');
+    $lacks->load('brand');
+
+    expect($carries->altFor('/uploads/x.jpg'))->toBe('Anua Heartleaf Toner')
+        ->and($lacks->altFor('/uploads/x.jpg'))->toBe('Anua Heartleaf Toner');
+
+    // A later shot in a multi-image gallery is distinguished by position, so
+    // five photographs of one product are not five identical alt strings.
+    expect($carries->altFor('/uploads/y.jpg', 2, 4))->toBe('Anua Heartleaf Toner, view 3 of 4');
 
     // A stored alt always wins over the derived one.
-    $product->image_alts = ['/uploads/x.jpg' => 'The real thing'];
-    $product->save();
+    $carries->image_alts = ['/uploads/x.jpg' => 'Texture on the back of a hand'];
+    $carries->save();
 
-    expect($product->fresh()->altFor('/uploads/x.jpg', 'Texture'))->toBe('The real thing');
+    expect($carries->fresh()->altFor('/uploads/x.jpg'))->toBe('Texture on the back of a hand');
 });
 
 /* ---------------------------------------------------- identity + computed */

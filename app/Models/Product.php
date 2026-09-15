@@ -155,8 +155,21 @@ class Product extends Model
      *
      * The fallback is the derived sentence, so a caller never has to decide:
      * ask for the alt, get the best one available.
+     *
+     * AND THE DERIVED HALF IS App\Support\ProductTitle's, not a second copy.
+     * That helper exists because this catalogue is a WooCommerce import whose
+     * product names are not written to one rule: some already carry the brand
+     * ("Anua Azelaic Acid 10 Serum") and some do not ("1025 Dokdo Toner", by
+     * Round Lab). Joining brand and name naively produces "Anua — Anua
+     * Heartleaf…", which is precisely the defect ProductTitle was written to
+     * stop. So the stored value is this method's contribution and the computed
+     * one is delegated — one rule for how a product is named, in one file.
+     *
+     * $index and $total are the shot's position in the gallery, which is what
+     * ProductTitle::alt() uses to distinguish the second photograph from the
+     * first. Callers that do not know them pass nothing and get the base.
      */
-    public function altFor(?string $url, ?string $label = null): string
+    public function altFor(?string $url, int $index = 0, int $total = 1): string
     {
         $map = is_array($this->image_alts) ? $this->image_alts : [];
         $stored = trim((string) ($map[(string) $url] ?? ''));
@@ -165,16 +178,7 @@ class Product extends Model
             return $stored;
         }
 
-        $parts = array_filter([
-            $this->brand?->name,
-            $this->name,
-            // "Front" / "Texture" and friends, when the caller knows which shot
-            // this is. Skipped when it is the generic "View 4", which is a
-            // position rather than a description and reads as noise.
-            $label !== null && ! preg_match('/^View \d+$/', $label) ? $label : null,
-        ]);
-
-        return implode(' — ', $parts);
+        return \App\Support\ProductTitle::alt($this->brand?->name, $this->name, $index, $total);
     }
 
     /**
