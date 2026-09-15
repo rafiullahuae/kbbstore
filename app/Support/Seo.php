@@ -160,6 +160,32 @@ class Seo
         if ($url)   $out[] = '<meta property="og:url" content="' . $e($url) . '">';
         if ($image) $out[] = '<meta property="og:image" content="' . $e($image) . '">';
 
+        // og:product price/availability. These are what Meta's catalogue and
+        // Pinterest's rich pins read — og:type=product was already being
+        // emitted with none of the properties that make it mean anything. Only
+        // ever the same values the Offer above carries, so the two cannot
+        // disagree.
+        if ($type === 'product' && !empty($ctx['product'])) {
+            $p = $ctx['product'];
+            $priceString = self::priceString($p);
+
+            if ($priceString !== null) {
+                $out[] = '<meta property="product:price:amount" content="' . $e($priceString) . '">';
+                $out[] = '<meta property="product:price:currency" content="'
+                    . $e(SeoSettings::firstFilled($p['currency'] ?? null, 'AED')) . '">';
+            }
+
+            // Open Graph has its own small vocabulary here and it is not the
+            // schema.org one, so the two are mapped explicitly rather than by
+            // decamelising the schema URL — "BackOrder" is not an og value.
+            $out[] = '<meta property="product:availability" content="'
+                . $e(match (self::availability($p)) {
+                    'https://schema.org/OutOfStock' => 'out of stock',
+                    'https://schema.org/BackOrder' => 'available for order',
+                    default => 'in stock',
+                }) . '">';
+        }
+
         // Twitter card
         $out[] = '<meta name="twitter:card" content="' . ($image ? 'summary_large_image' : 'summary') . '">';
         if (!empty($s['twitter_handle'])) $out[] = '<meta name="twitter:site" content="' . $e($s['twitter_handle']) . '">';
@@ -373,68 +399,163 @@ class Seo
         // Product schema
         if (($ctx['type'] ?? '') === 'product' && !empty($ctx['product'])) {
             $p = $ctx['product'];
+            $currency = SeoSettings::firstFilled($p['currency'] ?? null, 'AED');
             $node = [
                 '@context' => 'https://schema.org', '@type' => 'Product',
                 'name' => $p['name'] ?? $title,
             ];
             if (!empty($p['brand']))       $node['brand'] = ['@type' => 'Brand', 'name' => $p['brand']];
             if ($desc)                     $node['description'] = $desc;
-            if ($image)                    $node['image'] = $image;
+
+            // image: Google takes several per product and picks per layout,
+            // preferring a set that covers 1:1, 4:3 and 16:9. The gallery is
+            // already on the page; emitting only the featured shot threw the
+            // rest away. Absolute, de-duplicated, order preserved, and still a
+            // bare string when there is genuinely only one -- both forms are
+            // valid and the single-image page should not gain an array.
+            $images = [];
+            foreach ((array) ($p['images'] ?? []) as $candidate) {
+                $abs = self::absolute(is_string($candidate) ? $candidate : null, $base);
+
+                if ($abs !== null && !in_array($abs, $images, true)) {
+                    $images[] = $abs;
+                }
+            }
+            if ($images === [] && $image) {
+                $images[] = $image;
+            }
+            if ($images !== []) {
+                $node['image'] = count($images) === 1 ? $images[0] : $images;
+            }
+
             if (!empty($p['sku']))         $node['sku'] = $p['sku'];
-            if (isset($p['price_aed'])) {
+            // Recommended, and cheap: it disambiguates the product from the
+            // page when the two are ever cited separately.
+            if ($url)                      $node['url'] = $url;
+
+            // The price arrives as an exact decimal string built from the
+            // integer minor units (see Money::decimalString). price_aed is the
+            // older float-valued key, still accepted for the Schema Inspector
+            // and any caller that has not been moved across.
+            $priceString = self::priceString($p);
+
+            if ($priceString !== null) {
                 $offer = [
-                    '@type' => 'Offer', 'priceCurrency' => 'AED',
-                    'price' => number_format((float) $p['price_aed'], 2, '.', ''),
-                    'availability' => (($p['stock'] ?? 1) > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    '@type' => 'Offer', 'priceCurrency' => $currency,
+                    'price' => $priceString,
+                    'availability' => self::availability($p),
                     'url' => $url,
                 ];
 
-                // Google reports a missing priceValidUntil on every Offer. A
-                // live sale gives a real date; otherwise a rolling year ahead,
-                // which is what the field is for -- a statement that the price
-                // is not stale, not a commitment to a date.
-                $offer['priceValidUntil'] = ! empty($p['sale_ends_at'])
-                    ? substr((string) $p['sale_ends_at'], 0, 10)
-                    : date('Y-m-d', strtotime('+1 year'));
+                // itemCondition is a merchant-listing requirement and is not a
+                // shipping or returns term, so it is not behind the merchant
+                // gate: the store sells new retail stock and the setting says
+                // so, defaulting to NewCondition.
+                $offer['itemCondition'] = 'https://schema.org/' . SeoSettings::from($s, 'merchant_condition');
 
-                // Merchant listing: brand/GTIN/condition/shipping/returns on
-                // the Offer itself — what actually unlocks price + star
-                // ratings showing directly in Google, and eligibility for
-                // AI Shopping surfaces. Off by default (enable_merchant),
-                // since shipping/return terms entered wrong is worse than
-                // not shown at all — an admin has to deliberately confirm
-                // these are accurate before they go out to search engines.
+                // priceValidUntil is emitted ONLY when a real sale window says
+                // when this price stops applying, and only while that date is
+                // still ahead.
+                //
+                // It used to fall back to date('+1 year'), which is a claim the
+                // store cannot make: nothing guarantees the price holds for a
+                // year. The other half of the same bug was worse -- the date
+                // was taken from sale_ends_at whether or not the sale was still
+                // running, so a finished sale published a priceValidUntil in
+                // the PAST, and Google reads an elapsed priceValidUntil as an
+                // expired offer and drops the price from the rich result
+                // entirely. A missing recommended field costs a warning; a
+                // stale one costs the result.
+                $validUntil = self::futureDate($p['sale_ends_at'] ?? null);
+
+                if ($validUntil !== null) {
+                    $offer['priceValidUntil'] = $validUntil;
+                }
+
+                // Merchant listing: shipping and returns on the Offer itself —
+                // what unlocks price + star ratings showing directly in Google,
+                // and eligibility for AI Shopping surfaces. Off by default
+                // (enable_merchant), since shipping/return terms entered wrong
+                // is worse than not shown at all — an admin has to deliberately
+                // confirm these are accurate before they go out to search
+                // engines.
                 if (($s['enable_merchant'] ?? '') === '1') {
-                    $offer['itemCondition'] = 'https://schema.org/' . ($s['merchant_condition'] ?? 'NewCondition');
+                    $country = SeoSettings::from($s, 'merchant_ship_country');
 
-                    $shipCost = (float) ($s['merchant_ship_cost'] ?? 0);
-                    $freeOver = (float) ($s['merchant_ship_free_over'] ?? 0);
-                    $actualShipCost = ($freeOver > 0 && (float) $p['price_aed'] >= $freeOver) ? 0 : $shipCost;
+                    // Both settings are major units typed into a step="0.01"
+                    // box (AdminController::SETTING_RULES calls them 'aed'), so
+                    // they are converted to minor units once and every
+                    // comparison and the emitted string are integer work from
+                    // there. The old line compared two floats and then cast the
+                    // cost straight to a string, which published "0" for free
+                    // shipping and "12.5" for AED 12.50.
+                    $shipMinor = Money::fromMajor($s['merchant_ship_cost'] ?? 0);
+                    $freeOverMinor = Money::fromMajor($s['merchant_ship_free_over'] ?? 0);
+                    $priceMinor = self::priceMinor($p);
+
+                    if ($freeOverMinor > 0 && $priceMinor !== null && $priceMinor >= $freeOverMinor) {
+                        $shipMinor = 0;
+                    }
 
                     $offer['shippingDetails'] = [
                         '@type' => 'OfferShippingDetails',
-                        'shippingRate' => ['@type' => 'MonetaryAmount', 'value' => (string) $actualShipCost, 'currency' => 'AED'],
-                        'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => $s['merchant_ship_country'] ?? 'AE'],
+                        'shippingRate' => [
+                            '@type' => 'MonetaryAmount',
+                            'value' => Money::decimalString($shipMinor),
+                            'currency' => $currency,
+                        ],
+                        'shippingDestination' => ['@type' => 'DefinedRegion', 'addressCountry' => $country],
                     ];
 
                     $returnDays = (int) ($s['merchant_return_days'] ?? 0);
                     if ($returnDays > 0) {
-                        $offer['hasMerchantReturnPolicy'] = [
+                        $policy = [
                             '@type' => 'MerchantReturnPolicy',
-                            'applicableCountry' => $s['merchant_ship_country'] ?? 'AE',
+                            'applicableCountry' => $country,
                             'returnPolicyCategory' => 'https://schema.org/MerchantReturnFiniteReturnWindow',
                             'merchantReturnDays' => $returnDays,
-                            'returnMethod' => 'https://schema.org/ReturnByMail',
-                            'returnFees' => 'https://schema.org/FreeReturn',
                         ];
+
+                        // returnMethod and returnFees were hardcoded to
+                        // ReturnByMail and FreeReturn. Neither is something
+                        // this code can know, and both are promises to a
+                        // shopper: a store that charges for returns and
+                        // publishes FreeReturn has misrepresented its terms in
+                        // a Google surface. They are emitted only when an admin
+                        // has actually stated them.
+                        $method = SeoSettings::from($s, 'merchant_return_method', '');
+                        $fees = SeoSettings::from($s, 'merchant_return_fees', '');
+
+                        if ($method !== '') $policy['returnMethod'] = 'https://schema.org/' . $method;
+                        if ($fees !== '')   $policy['returnFees'] = 'https://schema.org/' . $fees;
+
+                        $offer['hasMerchantReturnPolicy'] = $policy;
                     }
                 }
 
                 $node['offers'] = $offer;
             }
-            if (!empty($p['rating']) && !empty($p['reviews'])) {
-                $node['aggregateRating'] = ['@type' => 'AggregateRating', 'ratingValue' => (string) $p['rating'], 'reviewCount' => (int) $p['reviews']];
+
+            // AggregateRating only where real, approved reviews exist. Both
+            // halves are checked: a rating with no reviews behind it, or a
+            // review count with no rating, is a star rating Google can show
+            // against a page that does not display one — the textbook trigger
+            // for a structured-data manual action.
+            $rating = (float) ($p['rating'] ?? 0);
+            $reviews = (int) ($p['reviews'] ?? 0);
+
+            if ($rating > 0 && $reviews > 0) {
+                $node['aggregateRating'] = [
+                    '@type' => 'AggregateRating',
+                    'ratingValue' => (string) $rating,
+                    'reviewCount' => $reviews,
+                    // Stated rather than left to the default, so the scale is
+                    // unambiguous to any consumer that does not assume 1–5.
+                    'bestRating' => '5',
+                    'worstRating' => '1',
+                ];
             }
+
             $nodes[] = $node;
         }
 
@@ -452,14 +573,119 @@ class Seo
         }
 
         // Breadcrumbs
+        //
+        // `item` is absolutised here rather than trusted from the caller. Every
+        // trail on the storefront is built as site_url . $model->url(), and
+        // site_url is read through Setting::map(), which memoises in a
+        // process-level static -- so a page rendered before that map was first
+        // filled produced a trail of root-relative items ("/shop/") inside an
+        // otherwise absolute document. Google resolves `item` as an identifier,
+        // not against <base>, and reports a relative one as invalid. The same
+        // canonical() that fixes og:url and rel=canonical fixes it here, which
+        // also collapses the doubled base path under KBB_BASE_PATH.
         if (!empty($ctx['breadcrumb']) && is_array($ctx['breadcrumb'])) {
             $items = [];
             foreach ($ctx['breadcrumb'] as $i => $bc) {
-                $items[] = ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $bc['name'], 'item' => $bc['url']];
+                $item = self::canonical($bc['url'] ?? null, $base);
+                $entry = ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $bc['name']];
+
+                if ($item !== null) {
+                    $entry['item'] = $item;
+                }
+
+                $items[] = $entry;
             }
             $nodes[] = ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => $items];
         }
 
         return $nodes;
+    }
+
+    /**
+     * The offer price as an exact decimal string, or null when there is none.
+     *
+     * `price` is the exact string the caller already built from integer minor
+     * units and is used as-is. `price_aed` is the older float-valued key: it is
+     * still accepted so the Schema Inspector and any caller not yet moved
+     * across keep working, but it is routed back through the integer path
+     * rather than through number_format() on a float.
+     */
+    private static function priceString(array $p): ?string
+    {
+        if (isset($p['price']) && is_string($p['price']) && trim($p['price']) !== '') {
+            return trim($p['price']);
+        }
+
+        $minor = self::priceMinor($p);
+
+        return $minor === null ? null : Money::decimalString($minor);
+    }
+
+    /** The offer price in minor units, or null. */
+    private static function priceMinor(array $p): ?int
+    {
+        if (isset($p['price_minor']) && is_numeric($p['price_minor'])) {
+            return (int) $p['price_minor'];
+        }
+
+        if (isset($p['price']) && is_numeric(str_replace(',', '', (string) $p['price']))) {
+            return Money::fromMajor(str_replace(',', '', (string) $p['price']));
+        }
+
+        if (isset($p['price_aed']) && is_numeric($p['price_aed'])) {
+            return Money::fromMajor($p['price_aed']);
+        }
+
+        return null;
+    }
+
+    /**
+     * The schema.org availability URL for this product.
+     *
+     * stock_status is the column the storefront actually branches on and it has
+     * three values, not two. The old expression read a synthesised `stock` flag
+     * and collapsed 'onbackorder' into OutOfStock, which tells a shopper in a
+     * search result that something they can order today cannot be bought.
+     */
+    private static function availability(array $p): string
+    {
+        $status = isset($p['stock_status']) ? (string) $p['stock_status'] : null;
+
+        if ($status === null) {
+            return (($p['stock'] ?? 1) > 0)
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock';
+        }
+
+        return match ($status) {
+            'outofstock' => 'https://schema.org/OutOfStock',
+            'onbackorder' => 'https://schema.org/BackOrder',
+            default => 'https://schema.org/InStock',
+        };
+    }
+
+    /**
+     * A Y-m-d date, but only if it is genuinely today or later.
+     *
+     * A date already in the past is not a weaker version of this field, it is
+     * an active harm: Google treats an elapsed priceValidUntil as an expired
+     * offer. Anything unparseable or historic yields null and the field is
+     * simply not emitted.
+     */
+    private static function futureDate(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        $stamp = strtotime($value);
+
+        if ($stamp === false) {
+            return null;
+        }
+
+        return date('Y-m-d', $stamp) >= date('Y-m-d') ? date('Y-m-d', $stamp) : null;
     }
 }

@@ -44,6 +44,31 @@
 
 @section('title', ($brand ? $brand . ' ' : '') . $product->name . ' · K-Beauty Bliss')
 
+@push('head')
+    {{--
+        The LCP element on this page is the main gallery shot, and the gallery
+        draws it as a CSS background-image rather than an <img> (see
+        partials/product-gallery.blade.php). A background image is not in the
+        preload scanner's reach: the browser cannot discover it until the
+        stylesheet has downloaded, parsed and matched the rule, so the single
+        largest paint on the most-visited page type on the site starts a whole
+        stylesheet round-trip late.
+
+        This preload puts it back on the scanner's first pass. fetchpriority
+        high, because by definition this is the largest contentful paint and
+        everything else on the page can wait for it.
+
+        It is a mitigation, not the fix: the real repair is an <img> with width,
+        height and alt, which also gets the photograph into Google Images and
+        gives the frame an intrinsic aspect ratio so it cannot shift. That is a
+        change to the gallery's markup and its swap script, which the product
+        page layout lane owns.
+    --}}
+    @if (! empty($gallery[0]['image']))
+        <link rel="preload" as="image" href="{{ $gallery[0]['image'] }}" fetchpriority="high">
+    @endif
+@endpush
+
 @push('styles')
     @vite('resources/css/kbb/kbb-product.css')
     <style>{!! $reviewsCss !!}</style>
