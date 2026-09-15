@@ -31,6 +31,7 @@ use App\Models\Review;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\CustomersAdminRoutes;
+use Tests\Support\OrdersAdminRoutes;
 use Tests\Support\SqlShape;
 
 /**
@@ -384,4 +385,92 @@ it('stores an encrypted config on whatever driver is running', function () {
     $mail->forceFill(['id' => 'smtp', 'config' => $password])->save();
 
     expect(MailCredential::query()->find('smtp')?->config)->toBe($password);
+});
+
+/* ------------------------------------------------------------- Store → Orders */
+
+/**
+ * The Orders screen shipped with the SAME defect, copied.
+ *
+ * Lane V branched before the Customers fix landed and took the half-finished
+ * aggregate() helper with it — the version that discards the select columns but
+ * leaves the ORDER BY, LIMIT and OFFSET attached. The live screen returned the
+ * identical MySQL 1140. These guards did not catch it because the endpoint list
+ * above names the OLD /admin-api/orders, and the new /admin-api/orders-list did
+ * not exist when they were written.
+ *
+ * Both controllers now share App\Support\AggregatesQueries, and this covers the
+ * new endpoint the way the Customers one is covered, so a third screen cannot
+ * repeat it unnoticed.
+ */
+function ordersGuardFixture(): void
+{
+    Cache::flush();
+
+    // Enough rows that page two is real, spread across statuses so the chips
+    // and the revenue/non-revenue split both have something to count.
+    $statuses = ['completed', 'processing', 'onhold', 'shipped', 'pending', 'cancelled', 'refunded'];
+
+    foreach (range(1, 14) as $i) {
+        Order::create([
+            'order_number' => 'GRD-' . str_pad((string) $i, 5, '0', STR_PAD_LEFT),
+            'email' => "guard{$i}@kbb.test",
+            'status' => $statuses[$i % count($statuses)],
+            'currency' => 'AED',
+            'subtotal' => $i * 1000,
+            'total' => $i * 1000,
+            'created_at' => now()->subDays($i),
+            'updated_at' => now()->subDays($i),
+        ]);
+    }
+}
+
+it('issues portable SQL on the orders screen for every sort and chip', function (string $query) {
+    ordersGuardFixture();
+
+    OrdersAdminRoutes::wire(app());
+
+    $admin = guardAdmin();
+
+    $captured = SqlShape::capture(function () use ($admin, $query) {
+        $this->actingAs($admin, 'admin')->getJson('/admin-api/orders-list?' . $query)->assertOk();
+    });
+
+    expect($captured)->not->toBeEmpty();
+    expect(SqlShape::violations($captured))->toBe([], "portability violations on ?{$query}");
+})->with([
+    'sort=newest',
+    'sort=oldest',
+    'sort=number',
+    'sort=total_desc',
+    'sort=total_asc',
+    'sort=units_desc',
+    'sort=status',
+    'sort=customer',
+    'status=completed',
+    'status=revenue',
+    'status=trashed',
+    'search=GRD',
+    'page=2&per_page=10',
+]);
+
+it('reports the same summary on every page of the orders list', function () {
+    ordersGuardFixture();
+
+    OrdersAdminRoutes::wire(app());
+
+    $admin = guardAdmin();
+
+    $first = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/orders-list?per_page=10&page=1')
+        ->assertOk()
+        ->json('summary');
+
+    $second = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/orders-list?per_page=10&page=2')
+        ->assertOk()
+        ->json('summary');
+
+    expect($second)->toBe($first)
+        ->and($second['orders'])->toBeGreaterThan(0);
 });

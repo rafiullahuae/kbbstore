@@ -77,6 +77,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class OrdersApiController extends Controller
 {
+    use \App\Support\AggregatesQueries;
+
     private const PER_PAGE_DEFAULT = 50;
     private const PER_PAGE_MIN = 10;
     private const PER_PAGE_MAX = 500;
@@ -612,20 +614,6 @@ class OrdersApiController extends Controller
      * go with them: leaving bindings behind for markers that no longer exist
      * sends the driver more values than the statement has placeholders.
      */
-    private function aggregate(Builder $query, string $expression, array $bindings = []): ?object
-    {
-        return $this->aggregateQuery($query, $expression, $bindings)->first();
-    }
-
-    private function aggregateQuery(Builder $query, string $expression, array $bindings = []): \Illuminate\Database\Query\Builder
-    {
-        $base = (clone $query)->toBase();
-
-        $base->columns = null;
-        $base->bindings['select'] = [];
-
-        return $base->selectRaw($expression, $bindings);
-    }
 
     /**
      * Every chip's count.

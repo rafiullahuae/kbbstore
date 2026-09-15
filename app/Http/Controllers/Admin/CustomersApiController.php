@@ -61,6 +61,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class CustomersApiController extends Controller
 {
+    use \App\Support\AggregatesQueries;
+
     private const PER_PAGE_DEFAULT = 50;
     private const PER_PAGE_MIN = 10;
     private const PER_PAGE_MAX = 500;
@@ -88,7 +90,7 @@ class CustomersApiController extends Controller
      * than the package just applied, the server is serving cached bytecode and
      * the code is not the thing to go and look at.
      */
-    private const BUILD = '2.60.124';
+    private const BUILD = '2.60.125';
 
     /**
      * The chip filters, named once so the list, the chip counts and the export
@@ -651,60 +653,6 @@ class CustomersApiController extends Controller
      * screen already runs five statements and each one on this host is a round
      * trip over a socket shared with the storefront.
      */
-    /**
-     * The same filtered set, but as an aggregate-only query.
-     *
-     * selectRaw() APPENDS to the select list, it does not replace it. A
-     * "(clone $base)->toBase()->selectRaw('COUNT(*) ...')" therefore keeps all
-     * 22 allowlisted columns from rowQuery() and adds an aggregate after them,
-     * with no GROUP BY on the outer query. SQLite permits that and picks an
-     * arbitrary row for the bare columns; MySQL refuses it outright:
-     *
-     *   SQLSTATE[42000] 1140 Mixing of GROUP columns (MIN(),MAX(),COUNT(),...)
-     *   with no GROUP columns is illegal if there is no GROUP BY clause
-     *
-     * which is what the live Customers screen returned while every test here
-     * passed. The joins and the WHERE have to survive — the counts describe the
-     * filtered set and read oa.* — so only the columns are discarded.
-     *
-     * The select BINDINGS go with them. rowQuery() adds four to the select slot
-     * for the last_active_at CASE expression; dropping the columns removes
-     * those four placeholders, and leaving the bindings behind would send the
-     * driver more values than the statement has markers.
-     *
-     * The ORDER BY has to go too, and for the same reason. Dropping the select
-     * columns is not enough while `order by customers.created_at desc,
-     * customers.id desc` is still attached: under ONLY_FULL_GROUP_BY those are
-     * bare columns in an aggregate query with no GROUP BY, and MySQL raises the
-     * very same 1140 on the ORDER BY that it raised on the select list. The
-     * ordering of a one-row aggregate is meaningless anyway. Its bindings go
-     * with it — applySort()'s last_active_desc and last_order_desc branches
-     * bind into the 'order' slot, so leaving those behind reintroduces the
-     * placeholder/binding mismatch the select slot was cleared to avoid.
-     *
-     * LIMIT and OFFSET go as well, and this one is not a MySQL problem — it is
-     * wrong on every driver. index() hands summaryFor() the same Builder it has
-     * already run forPage() on, so the summary carried `offset 25` on page two
-     * and `offset 50` on page three. An aggregate query returns one row; skip
-     * the first 25 of it and there is no row at all, so every tile across the
-     * top of the screen read zero on every page but the first. SQLite answered
-     * 200 the whole time.
-     */
-    private function aggregate(Builder $query, string $expression): ?object
-    {
-        $base = (clone $query)->toBase();
-
-        $base->columns = null;
-        $base->bindings['select'] = [];
-
-        $base->orders = null;
-        $base->bindings['order'] = [];
-
-        $base->limit = null;
-        $base->offset = null;
-
-        return $base->selectRaw($expression)->first();
-    }
 
     private function segmentCounts(Builder $base, Request $request): array
     {
