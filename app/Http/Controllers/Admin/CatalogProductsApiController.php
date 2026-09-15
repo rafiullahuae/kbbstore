@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\MajorUnits;
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -138,12 +139,39 @@ class CatalogProductsApiController extends Controller
     /**
      * Money on the wire, in major units, as a decimal string.
      *
-     * Anchored, digits only, at most four decimal places — more than any
-     * currency in Currencies uses. A regex rather than `numeric` because the
-     * value is parsed as TEXT afterwards: `numeric` accepts "1e3" and
-     * " 1.5 ", and neither survives digit-by-digit parsing.
+     * A regex rather than `numeric` because the value is parsed as TEXT
+     * afterwards: `numeric` accepts "1e3" and " 1.5 ", and neither survives
+     * digit-by-digit parsing.
+     *
+     * This was 'regex:/^\d{1,9}(\.\d{1,4})?$/' — four decimal places and no
+     * ceiling — which left two live defects on the inline price cell and the
+     * bulk price actions. "0.145" passed and stored as 14 fils, half a fil
+     * dropped without a word. And "999999999" is 99,999,999,900 fils into a
+     * signed 32-bit column: MySQL strict mode raises 1264 and answers 500,
+     * SQLite stores it happily, and the two engines part company on what the
+     * catalogue holds. The order-line editor had the same pair and was fixed
+     * in the package before this one; this is the same fix on the other screen.
+     *
+     * MajorUnits::shape() allows at most as many decimals as the currency
+     * actually has, so excess precision is refused out loud rather than
+     * truncated. It stays deliberately wider than the column so that a number
+     * whose only problem is being too large is told that, rather than being
+     * called a bad format — the ceiling itself is enforced by
+     * MajorUnits::exceedsColumn() in moneyOrFail() below.
      */
-    private const MONEY_RULE = 'regex:/^\d{1,9}(\.\d{1,4})?$/';
+    private static function moneyRule(): array
+    {
+        return [MajorUnits::shape(), function (string $attribute, $value, $fail) {
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            if (MajorUnits::exceedsColumn(MajorUnits::fils($value))) {
+                $fail('That amount is larger than this store can hold. The most is '
+                    . MajorUnits::maxMajor() . '.');
+            }
+        }];
+    }
 
     /* ------------------------------------------------------------------ list */
 
@@ -366,8 +394,8 @@ class CatalogProductsApiController extends Controller
             'manage_stock' => ['sometimes', 'boolean'],
             'stock' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:1000000'],
             // Decimal strings in major units. Parsed by integer arithmetic.
-            'price' => ['sometimes', 'nullable', self::MONEY_RULE],
-            'sale_price' => ['sometimes', 'nullable', self::MONEY_RULE],
+            'price' => ['sometimes', 'nullable', ...self::moneyRule()],
+            'sale_price' => ['sometimes', 'nullable', ...self::moneyRule()],
             'sale_starts_at' => ['sometimes', 'nullable', 'date'],
             'sale_ends_at' => ['sometimes', 'nullable', 'date'],
             'brand_id' => ['sometimes', 'nullable', 'integer', 'exists:brands,id'],
@@ -690,7 +718,7 @@ class CatalogProductsApiController extends Controller
             'percent' => ['required_if:mode,percent', 'nullable', 'regex:/^-?\d{1,3}(\.\d{1,2})?$/'],
             // A signed decimal string in major units, for mode=amount.
             'amount' => ['required_if:mode,amount', 'nullable', 'regex:/^-?\d{1,9}(\.\d{1,4})?$/'],
-            'value' => ['required_if:mode,set', 'nullable', self::MONEY_RULE],
+            'value' => ['required_if:mode,set', 'nullable', ...self::moneyRule()],
         ]);
 
         if (! $request->boolean('confirm')) {
@@ -1551,47 +1579,23 @@ class CatalogProductsApiController extends Controller
      * The integer and fractional halves are split on the decimal point, the
      * fraction is padded or truncated to the currency's exponent, and the two
      * are combined with multiplication and addition on integers only.
+     *
+     * THE PARSE ITSELF NOW LIVES IN App\Support\MajorUnits, unchanged, and
+     * this method calls it. Catalog → Products' create form needs exactly this
+     * arithmetic and a third hand-rolled copy of it is a third place for the
+     * same defect to come back — the same reasoning that keeps image uploads on
+     * one endpoint (routes/brands-admin.php, routes/catalog-admin.php). The
+     * signature, the behaviour and every caller here are unchanged.
      */
     private function filsFromMajor(mixed $value): ?int
     {
-        if ($value === null) {
-            return null;
-        }
-
-        $text = trim((string) $value);
-
-        if ($text === '') {
-            return null;
-        }
-
-        return $this->signedFilsFromMajor($text);
+        return MajorUnits::fils($value);
     }
 
     /** The same parse, for a signed value (a bulk amount adjustment). */
     private function signedFilsFromMajor(string $text): int
     {
-        $text = trim($text);
-        $negative = str_starts_with($text, '-');
-
-        if ($negative || str_starts_with($text, '+')) {
-            $text = substr($text, 1);
-        }
-
-        $parts = explode('.', $text, 2);
-        $whole = $parts[0] === '' ? '0' : $parts[0];
-        $fraction = $parts[1] ?? '';
-
-        $exponent = Money::minorExponent();
-
-        // Pad to the currency's exponent, then truncate anything beyond it.
-        // Truncation rather than rounding: the operator typed more precision
-        // than the currency has, and inventing the last digit up is a price
-        // they did not ask for.
-        $fraction = substr(str_pad($fraction, $exponent, '0'), 0, max(0, $exponent));
-
-        $fils = ((int) $whole) * (10 ** $exponent) + ($fraction === '' ? 0 : (int) $fraction);
-
-        return $negative ? -$fils : $fils;
+        return MajorUnits::signedFils($text);
     }
 
     /**

@@ -871,9 +871,6 @@ it('saves a price typed as a decimal string to the exact fil', function () {
         ['199.99', 19999],
         ['0.01', 1],
         ['8.29', 829],
-        // More precision than the currency has is truncated, not rounded up
-        // into a price the operator did not type.
-        ['1.199', 119],
     ] as [$typed, $fils]) {
         $out = test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => $typed])
             ->assertOk()
@@ -883,6 +880,81 @@ it('saves a price typed as a decimal string to the exact fil', function () {
             ->and($out['product']['price_fils'])->toBe($fils)
             ->and($out['product']['price_fils'])->toBeInt();
     }
+});
+
+it('refuses more decimals than the currency has instead of truncating them', function () {
+    asCatalogAdmin();
+
+    $product = cpProduct(['price' => 10000]);
+
+    /*
+     * This screen used to accept '1.199' and store 119 fils -- truncated, not
+     * rounded, so the operator got AED 1.19 for a price they did not type and
+     * nothing said so. The rule was regex:/^\d{1,9}(\.\d{1,4})?$/: four
+     * decimal places, on a currency that has two.
+     *
+     * Truncation is the right behaviour once a value has been ACCEPTED --
+     * rounding a price up is a price nobody asked for either -- but the moment
+     * to refuse extra precision is before that, where it can be said out loud.
+     * App\Services\Import\Money takes exactly this line, and the create form
+     * added in the same package takes it too; leaving this path truncating
+     * would have made two product-write screens disagree about the same
+     * keystrokes.
+     */
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => '1.199'])
+        ->assertStatus(422);
+
+    // And it did not half-apply: the old price is still there.
+    expect((int) $product->fresh()->price)->toBe(10000);
+
+    // Two decimals remain fine, which is the whole point -- this refuses
+    // precision the currency cannot hold, not decimals as such.
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => '1.19'])
+        ->assertOk();
+
+    expect((int) $product->fresh()->price)->toBe(119);
+});
+
+it('refuses a price larger than the column can hold rather than overflowing it', function () {
+    asCatalogAdmin();
+
+    $product = cpProduct(['price' => 10000]);
+
+    /*
+     * 999999999 major units is 99,999,999,900 fils against a signed 32-bit
+     * column -- 46 times over. MySQL strict mode raises 1264 and answers 500;
+     * SQLite stores it and the two engines stop agreeing about what the
+     * catalogue holds. The order-line editor had the same hole and was closed
+     * one package earlier; this is the same fix on the other screen.
+     */
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => '999999999'])
+        ->assertStatus(422);
+
+    expect((int) $product->fresh()->price)->toBe(10000);
+
+    /*
+     * The boundary itself is accepted, so the ceiling is the column's own and
+     * not an arbitrary smaller number. Spelled from MAX_FILS rather than
+     * hardcoded, and NOT taken from MajorUnits::maxMajor() -- that returns a
+     * formatted display string ("AED 21,474,836"), which is the right thing to
+     * put in an error message and the wrong thing to post as a value.
+     */
+    $maxFils = \App\Support\MajorUnits::MAX_FILS;
+    $exactMax = intdiv($maxFils, 100).'.'.str_pad((string) ($maxFils % 100), 2, '0', STR_PAD_LEFT);
+
+    expect($exactMax)->toBe('21474836.47');
+
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => $exactMax])
+        ->assertOk();
+
+    expect((int) $product->fresh()->price)->toBe($maxFils);
+
+    // And one fil past it is refused, so the boundary is exact rather than
+    // approximate.
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => '21474836.48'])
+        ->assertStatus(422);
+
+    expect((int) $product->fresh()->price)->toBe($maxFils);
 });
 
 it('saves stock, status, visibility and the stock status from an inline cell', function () {
