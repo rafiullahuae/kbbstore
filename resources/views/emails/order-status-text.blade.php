@@ -19,4 +19,4 @@ That link opens on the device you ordered from. Anywhere else, sign in to your
 account and look for {!! $order['number'] !!}:
 {!! $order['accountUrl'] !!}
 
-— K Beauty Bliss
+@include('emails.partials.support-text')

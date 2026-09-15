@@ -27,6 +27,49 @@ use App\Mail\OrderRefunded;
 use App\Mail\OrderStatusChanged;
 use App\Models\Order;
 use App\Models\Refund;
+use App\Models\Setting;
+use App\Services\Mail\MailSettings;
+use App\Services\SettingsService;
+
+/**
+ * The store, as the owner will have configured it.
+ *
+ * WHY THE PREVIEWS ARE SEEDED AND NOT LEFT BLANK. The support block and the
+ * signature only print where the store has values for them, which is right —
+ * a receipt advertising a WhatsApp number nobody answers is worse than no
+ * block at all. But it means an unseeded preview shows an email with the two
+ * new blocks missing, and the owner would be reviewing a page that is not the
+ * one their customers will receive.
+ *
+ * These are the store's own published contact details, the same ones the
+ * storefront header and footer already carry as their defaults. They are a
+ * fixture, here, and nowhere near the templates: EmailBranding reads every one
+ * of them from settings and there is no hardcoded number or handle anywhere in
+ * app/ or resources/views/emails/.
+ *
+ * `org_logo` is deliberately NOT set. The logo switch (Store → Modules → Order
+ * emails → "Logo in order emails") is on by default, but this store has no
+ * logo image saved, so what the masthead really prints today is the two-part
+ * wordmark from Header settings — and that is what the owner should be looking
+ * at. EmailBrandingTest covers the image path.
+ */
+function previewStore(): void
+{
+    $settings = app(SettingsService::class);
+
+    $settings->set('store_name', 'K Beauty Bliss');
+    $settings->set('brand_whatsapp', '+971 58 505 2611');
+    $settings->set('social_instagram', 'kbeauty.bliss');
+
+    app(MailSettings::class)->save([
+        'mail_from_address' => 'hello@kbeautybliss.com',
+        'mail_from_name' => 'K Beauty Bliss',
+        'mail_signature' => 'With love,|the K Beauty Bliss team',
+    ]);
+
+    Setting::flushMap();
+    SettingsService::forgetMemo();
+}
 
 /** Where the rendered files land. */
 function previewDir(): string
@@ -124,6 +167,8 @@ function previewOrder(): Order
 }
 
 it('renders every order email and saves it for review', function () {
+    previewStore();
+
     $order = previewOrder();
 
     // The figures the previews are a picture of. Asserted first, so a preview
@@ -151,6 +196,8 @@ it('renders every order email and saves it for review', function () {
     foreach ($emails as $name => $mailable) {
         $html = (string) $mailable->render();
 
+        $customerFacing = $name !== 'new-order-alert';
+
         expect($html)->toContain('KBB-10427')
             // AED 473.00 — full precision, from 47300 fils. The storefront
             // would print AED 473 by rounding; a receipt may not. See
@@ -158,6 +205,26 @@ it('renders every order email and saves it for review', function () {
             ->and($html)->toContain('473.00')
             // Blade escaped the customer's own words rather than running them.
             ->and($html)->not->toContain('<script');
+
+        // Quantity as its own column, in every email that lists what was
+        // bought. The preview order has a line of 2 and a line of 1, so a
+        // template that printed the wrong cell would show 1 twice.
+        expect($html)->toContain('>Qty<')
+            ->and($html)->toContain('each');
+
+        // The support block and the signature: on for the customer, off for the
+        // merchant's own alert. Asserted both ways round, because a block that
+        // is always shown is not a decision.
+        if ($customerFacing) {
+            expect($html)->toContain('We are here if you need us')
+                ->and($html)->toContain('wa.me/97158505261')
+                ->and($html)->toContain('instagram.com/kbeauty.bliss')
+                ->and($html)->toContain('hello@kbeautybliss.com')
+                ->and($html)->toContain('the K Beauty Bliss team');
+        } else {
+            expect($html)->not->toContain('We are here if you need us')
+                ->and($html)->not->toContain('wa.me/');
+        }
 
         $written[] = previewWrite($name . '.html', $html);
 
@@ -171,7 +238,15 @@ it('renders every order email and saves it for review', function () {
         expect($text)->toContain('KBB-10427')
             // No markup leaked into the text/plain part.
             ->and($text)->not->toContain('<span')
-            ->and($text)->not->toContain('<div');
+            ->and($text)->not->toContain('<div')
+            // The text twin names all three figures the HTML columns carry.
+            ->and($text)->toContain('QTY 2')
+            ->and($text)->toContain('each');
+
+        if ($customerFacing) {
+            expect($text)->toContain('WE ARE HERE IF YOU NEED US')
+                ->and($text)->toContain('the K Beauty Bliss team');
+        }
 
         $written[] = previewWrite($name . '.txt', $text);
     }

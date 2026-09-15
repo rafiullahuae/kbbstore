@@ -25,6 +25,7 @@ use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\MailCredentials;
 use App\Services\Mail\MailSettings;
 use App\Services\Mail\MailTester;
+use App\Services\Mail\ServerMailTransport;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Envelope;
@@ -187,15 +188,32 @@ it('redacts the password out of a transport error before it reaches a screen', f
 
 /* ------------------------------------------------- the honest non-answers -- */
 
-it('refuses to pretend an unconfigured store just sent something', function () {
-    // Nothing filled in, which is this app's state today.
+it('refuses to pretend a half-filled SMTP server just sent something', function () {
+    /*
+     * DELIBERATELY UPDATED, 2.60.x "server mail by default".
+     *
+     * This used to fill in nothing at all, because "nothing filled in" was the
+     * unconfigured state and the unconfigured state was SMTP. It is not any
+     * more: an untouched install now uses the host's own mail and really sends
+     * (MailServerTransportTest pins that). What still has to be refused is the
+     * case this test was always about -- an owner who deliberately chose a
+     * dedicated SMTP server and left the boxes empty. Answering "sent" there,
+     * because the mailer fell back to the server transport and it worked, would
+     * be the green tick that means nothing.
+     */
+    app(MailSettings::class)->save(['mail_transport' => MailSettings::TRANSPORT_SMTP]);
+    Setting::flushMap();
+
     $result = app(MailTester::class)->send('owner@example.com');
 
     expect($result['ok'])->toBeFalse()
         ->and($result['status'])->toBe('unconfigured')
         // And it names the fields, so the owner knows what to do next.
         ->and($result['message'])->toContain('SMTP host')
-        ->and($result['message'])->toContain('Password');
+        ->and($result['message'])->toContain('Password')
+        // And it says the store is not silent in the meantime, which is the
+        // one thing an owner reading a red box actually needs to know.
+        ->and($result['message'])->toContain("server's own mail");
 });
 
 it('says so when the message went to the log instead of a mail server', function () {
@@ -270,13 +288,27 @@ it('uses starttls on 587 rather than wrapping the socket', function () {
     expect(app(MailConfigurator::class)->mailerConfig()['scheme'])->toBe('smtp');
 });
 
-it('falls back to the log transport while the form is unfilled', function () {
-    // The important half: an unconfigured store must not throw at the transport
-    // layer on some unrelated page that tries to send.
+it('sends through the server rather than the log while the form is unfilled', function () {
+    /*
+     * DELIBERATELY UPDATED, and this is the line the whole release turns on.
+     *
+     * It used to assert `log`, and it was right about the code: an unconfigured
+     * store got the log transport. What nobody had checked was what that meant
+     * on the owner's live server, which has never had the SMTP form filled in --
+     * every order confirmation written to storage/logs and delivered to nobody,
+     * with a screen that reported no error. The unconfigured state is now the
+     * host's own mail, and it really sends.
+     *
+     * The other half of the old test still stands and still matters: an
+     * unconfigured store must not throw at the transport layer on some unrelated
+     * page that tries to send. It does not -- the server transport needs no
+     * host, no port and no password to be constructed.
+     */
     $configurator = app(MailConfigurator::class);
 
-    expect($configurator->mailerConfig()['transport'])->toBe('log')
-        ->and($configurator->usesRealTransport())->toBeFalse();
+    expect($configurator->mailerConfig()['transport'])->toBe(ServerMailTransport::NAME)
+        ->and($configurator->activeTransport())->toBe(MailSettings::TRANSPORT_SERVER)
+        ->and($configurator->usesRealTransport())->toBeTrue();
 });
 
 it('does not resolve the smtp password through config caching', function () {

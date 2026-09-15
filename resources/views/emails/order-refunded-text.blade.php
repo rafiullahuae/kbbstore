@@ -18,4 +18,4 @@ Paid by: {!! $order['paymentLabel'] !!}
 If the money has not reached you in ten working days, reply to this message with
 order number {!! $order['number'] !!} and we will chase it.
 
-— K Beauty Bliss
+@include('emails.partials.support-text')

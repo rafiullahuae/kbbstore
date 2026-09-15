@@ -42,6 +42,7 @@ use App\Services\CartService;
 use App\Services\Mail\MailCredentials;
 use App\Services\Mail\MailSettings;
 use App\Services\Mail\OrderEmailPresenter;
+use App\Services\Mail\ServerMailTransport;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Envelope;
@@ -383,14 +384,24 @@ it('still places the order when the mail server is dead', function () {
         ->and($order->status)->toBe('processing');
 });
 
-it('still places the order when the mailable itself cannot be built', function () {
+it('still places the order when the default server transport throws', function () {
     orderMailCod();
 
-    // Not a transport failure — a rendering one. The view is swapped for a name
-    // that does not exist, which is what a half-applied package looks like:
-    // the class shipped, the Blade file did not. CLAUDE.md records exactly that
-    // kind of partial package (2.60.102–.106).
-    Mail::extend('smtp', fn () => new class implements Symfony\Component\Mailer\Transport\TransportInterface
+    /*
+     * Nothing is configured, which since the "server mail by default" release is
+     * no longer the same thing as "nothing is sent": an untouched store now uses
+     * the host's own mail. So the transport that has to be made to fail is that
+     * one, and the exception is a bare RuntimeException rather than a
+     * TransportException — a failure that is not even of the kind the mail
+     * component declares, which is what a half-applied package looks like when
+     * the class shipped and something it needs did not. CLAUDE.md records
+     * exactly that kind of partial package (2.60.102–.106).
+     *
+     * Extending the transport by name also keeps the suite off PHP's real
+     * mail(), which on a machine with no local mail program prints
+     * "/usr/sbin/sendmail: not found" to stderr in the middle of a test run.
+     */
+    Mail::extend(ServerMailTransport::NAME, fn () => new class implements Symfony\Component\Mailer\Transport\TransportInterface
     {
         public function send(RawMessage $message, ?Envelope $envelope = null): ?SentMessage
         {

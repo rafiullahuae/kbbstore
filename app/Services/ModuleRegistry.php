@@ -131,12 +131,19 @@ class ModuleRegistry
          * off by default would mean applying a package called "order emails" and
          * changing nothing until somebody found the screen.
          *
-         * The safety net that makes ON defensible is already in place and is not
-         * this registry's doing: MailConfigurator falls back to the `log`
-         * transport whenever SMTP is not filled in, so on an install where nobody
-         * has completed Store → Mail these send to storage/logs and reach no
-         * inbox. Turning them on cannot surprise a customer of a store that
-         * cannot send mail yet.
+         * The safety net that used to make ON defensible was that nothing was
+         * being sent: MailConfigurator fell back to the `log` transport whenever
+         * SMTP was not filled in, so on an install where nobody had completed
+         * Store → Mail these wrote to storage/logs and reached no inbox.
+         *
+         * THAT IS NO LONGER TRUE, AND THE CHANGE WAS THE POINT. The owner's live
+         * store had exactly that shape -- five order emails switched on, every
+         * one of them going to a log file, nobody told. `mail_transport` now
+         * defaults to the host's own mail (MailSettings::TRANSPORT_SERVER) and an
+         * untouched install really sends. So these five being ON is no longer
+         * harmless-because-inert; it is ON because a store that takes money and
+         * says nothing is the worse default, which is what the paragraph above
+         * argues and what the owner asked for in as many words.
          *
          * No migration writes a value for any of these keys, so a store that has
          * already saved Store → Modules keeps whatever it chose: moduleEnabled()
@@ -151,6 +158,26 @@ class ModuleRegistry
         'email_order_shipped' => ['email', 'Dispatch notification', 'Tells the customer their order has left you, sent when its status becomes Shipped.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when you mark an order Shipped. Nothing visible on the site.', 'live'],
         'email_order_cancelled' => ['email', 'Cancellation notification', 'Tells the customer an order has been cancelled and nothing further will be sent, when its status becomes Cancelled.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when an order is cancelled. Nothing visible on the site.', 'live'],
         'email_order_refunded' => ['email', 'Refund notification', 'Tells the customer money has gone back, sent when a refund actually settles — not when an order is merely marked refunded. Covers partial refunds too.', true, 'Store → Mail', 'mail', 'site', 'all', 'An email to the customer when a refund succeeds. Nothing visible on the site.', 'live'],
+        /*
+         * The sixth row in this group, and the only one that is not "send this
+         * email or do not".
+         *
+         * It is here rather than on Store → Mail because that screen renders
+         * MailSettings::SCHEMA through MailApiController, which knows three
+         * field types -- text, secret, and a choice whose options that
+         * controller supplies -- and none of them is a checkbox. An on/off put
+         * there would be a text box the owner had to type a word into. This
+         * screen already draws real switches, already carries the five order
+         * emails, and is already where the owner goes to turn a piece of an
+         * email off.
+         *
+         * ON by default, and safe to be: the logo only appears if one has
+         * actually been uploaded under Store → Business Details. With no logo
+         * saved, on and off render the same email — the wordmark — so the
+         * default cannot surprise anybody. App\Services\Mail\EmailBranding is
+         * the reader, and it reads this key by name.
+         */
+        'email_show_logo' => ['email', 'Logo in order emails', 'Prints your uploaded store logo at the top of every order email instead of the text wordmark. Uses the same logo as Store → Business Details — there is no second upload. With no logo saved, the wordmark is shown either way.', true, 'Store → Business Details', 'store-settings', 'site', 'all', 'Your logo at the top of every order email. Nothing visible on the site.', 'live'],
         // ── Catalogue ──
         // The screen is Store → Catalog → Reorder, and it has existed for some
         // time. This row said 'Its own screen' with no console route, which the

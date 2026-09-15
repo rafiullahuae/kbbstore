@@ -8,4 +8,4 @@ Customer: {!! $order['email'] !!}@if ($order['phone'] !== '') / {!! $order['phon
 Open Orders in your store admin and search for {!! $order['number'] !!} to pick,
 pack and mark it dispatched.
 
-— K Beauty Bliss
+— {!! $brand['storeName'] !!}
