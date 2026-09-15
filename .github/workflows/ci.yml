@@ -55,11 +55,111 @@ jobs:
       - name: Tests
         run: vendor/bin/pest --compact
 
-      # Advisory only: Laravel 11 carries three open advisories that need a 12.x
-      # upgrade. Reported on every run so it cannot be forgotten, but it does not
-      # block a PR that did not introduce it.
+      # Advisory only, and deliberately still advisory: an advisory disclosed
+      # upstream this morning is not the fault of whichever PR runs next, and a
+      # step that blocks on one teaches people to re-run CI until it passes.
+      #
+      # What changed is legibility. `composer audit` printed the same three
+      # laravel/framework advisories on every run for months, which is exactly
+      # how a fourth one gets read as "yes, the usual three" and ignored. This
+      # step diffs the live audit against docs/dependency-advisories.json — the
+      # ids this repo has actually assessed — and says which of three things
+      # each one is:
+      #
+      #   KNOWN     already assessed; its verdict is printed, one line.
+      #   NEW       not in the file. Nobody has looked at this yet. Loud.
+      #   RESOLVED  in the file but gone from the audit. Equally loud, because
+      #             it means the accepted-risk note is now describing something
+      #             that no longer exists and should be deleted.
+      #
+      # docs/DEPENDENCY-ADVISORIES.md carries the long-form exposure analysis;
+      # tests/Feature/DependencyAdvisoryExposureTest.php pins the facts each
+      # verdict rests on, and that one DOES block.
       - name: Dependency advisories
-        run: composer audit --no-interaction || true
+        run: |
+          set -uo pipefail
+
+          BASELINE=docs/dependency-advisories.json
+
+          # --locked, so the audit describes composer.lock rather than whatever
+          # the vendor cache restored. Failure is expected (it exits non-zero
+          # whenever anything is found), so the exit code is discarded here and
+          # the JSON is what gets judged.
+          composer audit --locked --format=json --no-interaction > /tmp/audit.json || true
+
+          if ! jq -e . /tmp/audit.json >/dev/null 2>&1; then
+            echo "::warning title=Dependency advisories::composer audit produced no usable JSON (network? proxy?). Advisories NOT checked this run."
+            exit 0
+          fi
+
+          jq -r '.advisories | to_entries[] | .value[] | [.advisoryId, .packageName, (.severity // "unscored"), .title] | @tsv' \
+            /tmp/audit.json | sort > /tmp/current.tsv
+          jq -r '.accepted | keys[]' "$BASELINE" | sort > /tmp/accepted.txt
+          cut -f1 /tmp/current.tsv | sort > /tmp/current-ids.txt
+
+          {
+            echo "## Dependency advisories"
+            echo
+            echo "Baseline reviewed $(jq -r .reviewed_at "$BASELINE") against $(jq -r .reviewed_against "$BASELINE")."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          new_ids=$(comm -23 /tmp/current-ids.txt /tmp/accepted.txt)
+          gone_ids=$(comm -13 /tmp/current-ids.txt /tmp/accepted.txt)
+
+          echo "=== KNOWN AND ACCEPTED ==="
+          echo "| id | package | severity | exposure | advisory |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          while IFS=$'\t' read -r id pkg sev title; do
+            [ -z "${id:-}" ] && continue
+            grep -qx "$id" /tmp/accepted.txt || continue
+            exposure=$(jq -r --arg i "$id" '.accepted[$i].real_exposure // "unassessed"' "$BASELINE")
+            printf '  %-22s %-20s %-8s exposure=%-12s %s\n' "$id" "$pkg" "$sev" "$exposure" "$title"
+            echo "| \`$id\` | $pkg | $sev | **$exposure** | $title |" >> "$GITHUB_STEP_SUMMARY"
+          done < /tmp/current.tsv
+
+          if [ -n "$new_ids" ]; then
+            echo
+            echo "=== NEW — NOT YET ASSESSED ==="
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "### :rotating_light: New, not yet assessed" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            for id in $new_ids; do
+              line=$(grep -P "^\Q$id\E\t" /tmp/current.tsv || true)
+              pkg=$(printf '%s' "$line" | cut -f2)
+              sev=$(printf '%s' "$line" | cut -f3)
+              title=$(printf '%s' "$line" | cut -f4)
+              printf '  %-22s %-20s %-8s %s\n' "$id" "$pkg" "$sev" "$title"
+              echo "- \`$id\` **$pkg** ($sev) — $title" >> "$GITHUB_STEP_SUMMARY"
+              echo "::warning title=New dependency advisory::$id $pkg ($sev): $title — assess it and add it to $BASELINE"
+            done
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "Assess each against this codebase, then add it to \`$BASELINE\` with a real verdict." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ -n "$gone_ids" ]; then
+            echo
+            echo "=== RESOLVED — BASELINE IS STALE ==="
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "### :white_check_mark: Resolved upstream — baseline is stale" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            for id in $gone_ids; do
+              title=$(jq -r --arg i "$id" '.accepted[$i].title // "?"' "$BASELINE")
+              echo "  $id no longer reported: $title"
+              echo "- \`$id\` — $title" >> "$GITHUB_STEP_SUMMARY"
+              echo "::warning title=Advisory resolved upstream::$id is no longer reported. Remove it from $BASELINE and delete the accepted-risk note it carries."
+            done
+          fi
+
+          if [ -z "$new_ids" ] && [ -z "$gone_ids" ]; then
+            echo
+            echo "No change: every advisory reported is one this repo has assessed."
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "_No change — every advisory reported is one this repo has already assessed._" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Always zero. The gate on this material is the test file, not here.
+          exit 0
 
   # The same suite, against the engine the store actually runs on.
   #
