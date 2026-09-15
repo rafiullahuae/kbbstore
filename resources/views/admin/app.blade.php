@@ -13532,6 +13532,12 @@ buildNav();
      above has run. --}}
 @include('admin.partials.manual-order-screen')
 
+{{-- Store -> Coupons. Same arrangement and for the same reason as the screen
+     above: its own file, its own sidebar entry appended to the rendered nav,
+     its own wrapper around window.go. Included after New Order so it can
+     anchor its nav entry beneath that one. --}}
+@include('admin.partials.coupon-usage-screen')
+
 @verbatim
 </body>
 </html>

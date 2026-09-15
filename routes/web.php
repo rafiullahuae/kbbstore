@@ -330,6 +330,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // /orders/{id} above carries no constraint and would swallow /orders/new.
         require __DIR__.'/manual-orders-admin.php';
 
+        // Store → Coupons. Inside this group and nowhere else: these endpoints
+        // return the redemption list, which carries customer email addresses,
+        // so mounting them unguarded would publish a customer list keyed by
+        // which promotion each person answered.
+        require __DIR__.'/coupons-admin.php';
+
         // The Import / Export screen. Same group and the same reason: it
         // accepts uploaded CSVs and writes customers, orders and products —
         // outside auth:admin that is a stranger rewriting the catalogue.

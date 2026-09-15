@@ -266,100 +266,132 @@ class CheckoutController extends Controller
         // ErrorException. That is thrown from inside DB::transaction, so the
         // order rolled back: the storefront checkout could not place an order
         // at all. Found by the first test to POST to this endpoint.
-        $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle) {
-            $customer = $request->user('customer') ?? Customer::firstOrCreate(
-                ['email' => mb_strtolower($data['billing_email'])],
-                ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
-            );
+        try {
+            $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle) {
+                $customer = $request->user('customer') ?? Customer::firstOrCreate(
+                    ['email' => mb_strtolower($data['billing_email'])],
+                    ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
+                );
 
-            // A guest who asked for an account gets a usable password on the
-            // row firstOrCreate already made for them. `password` is cast
-            // `hashed`, so assigning the plain value hashes it.
-            //
-            // The guard matters more than the feature, and it is stated once,
-            // in canSetInitialPassword() -- the order-received page offers the
-            // same thing to a guest afterwards and asks that same method, so
-            // the two cannot drift apart.
-            //
-            // Silent when it declines. Telling the person at checkout that an
-            // account already exists for an address they typed is an account
-            // enumeration oracle, and the order itself is fine either way.
-            if (! $request->user('customer')
-                && $request->boolean('create_account')
-                && ($data['account_password'] ?? '') !== ''
-                && self::canSetInitialPassword($customer)
-            ) {
-                $customer->forceFill(['password' => $data['account_password']])->save();
-            }
+                // A guest who asked for an account gets a usable password on the
+                // row firstOrCreate already made for them. `password` is cast
+                // `hashed`, so assigning the plain value hashes it.
+                //
+                // The guard matters more than the feature, and it is stated once,
+                // in canSetInitialPassword() -- the order-received page offers the
+                // same thing to a guest afterwards and asks that same method, so
+                // the two cannot drift apart.
+                //
+                // Silent when it declines. Telling the person at checkout that an
+                // account already exists for an address they typed is an account
+                // enumeration oracle, and the order itself is fine either way.
+                if (! $request->user('customer')
+                    && $request->boolean('create_account')
+                    && ($data['account_password'] ?? '') !== ''
+                    && self::canSetInitialPassword($customer)
+                ) {
+                    $customer->forceFill(['password' => $data['account_password']])->save();
+                }
 
-            $address = [
-                'first_name' => $first, 'last_name' => $last,
-                'line1' => $data['billing_address_1'], 'city' => $data['billing_city'],
-                'state' => $data['billing_state'], 'country' => $data['billing_country'],
-                'phone' => $data['billing_phone'] ?? null,
-            ];
+                $address = [
+                    'first_name' => $first, 'last_name' => $last,
+                    'line1' => $data['billing_address_1'], 'city' => $data['billing_city'],
+                    'state' => $data['billing_state'], 'country' => $data['billing_country'],
+                    'phone' => $data['billing_phone'] ?? null,
+                ];
 
-            $order = Order::create([
-                'order_number' => $this->nextOrderNumber(),
-                'customer_id' => $customer->id,
-                'email' => mb_strtolower($data['billing_email']),
-                'phone' => $data['billing_phone'] ?? null,
-                'status' => 'pending',
-                'currency' => 'AED',
-                // customer_note has existed on this table from the start, but
-                // nothing ever wrote to it and the admin never showed it, so
-                // the column was dead at both ends. Wired here and rendered on
-                // the order screen in the same package.
-                'customer_note' => $data['customer_note'] ?? null,
-                'is_gift' => $request->boolean('is_gift'),
-                // The amount charged, not the amount configured. Recomputing
-                // this later from the setting would misreport every past order
-                // the first time the price changes.
-                'gift_fee' => $giftFee,
-                // Only kept when the gift box is actually ticked -- otherwise
-                // an untouched-but-populated field (browser autofill, a
-                // shopper changing their mind) would print a gift card nobody
-                // asked for.
-                'gift_note' => $request->boolean('is_gift') ? ($data['gift_note'] ?? null) : null,
-                'billing_address' => $address,
-                'shipping_address' => $address,
-                'subtotal' => $totals['subtotal'],
-                'discount_total' => $totals['discount'],
-                'shipping_total' => (int) $rate['cost'],
-                'fee_total' => $fee,
-                'tax_total' => 0,   // VAT is display-only (D-64)
-                'total' => $totals['total'] + $fee,
-                'shipping_method' => $rate['title'],
-                'payment_method' => $data['payment_method'],
-                'payment_method_title' => $paymentTitle !== '' ? $paymentTitle : null,
-                'coupon_code' => $totals['coupon_code'],
-                'whatsapp_optin' => $request->boolean('billing_kbb_whatsapp'),
-                'ip_address' => $request->ip(),
-            ]);
-
-            foreach ($cart->items as $item) {
-                $p = $item->product;
-
-                $order->items()->create([
-                    'product_id' => $p?->id,
-                    'product_variant_id' => $item->product_variant_id,
-                    // Snapshots, so the order still reads correctly if the
-                    // product is later renamed or removed.
-                    'name' => $p?->name ?? 'Item',
-                    'brand' => $p?->brand?->name,
-                    'sku' => $item->variant?->sku ?? $p?->sku,
-                    'variant_attributes' => $item->variant?->attributeValues->pluck('name')->all(),
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'subtotal' => $item->lineTotal(),
-                    'total' => $item->lineTotal(),
+                $order = Order::create([
+                    'order_number' => $this->nextOrderNumber(),
+                    'customer_id' => $customer->id,
+                    'email' => mb_strtolower($data['billing_email']),
+                    'phone' => $data['billing_phone'] ?? null,
+                    'status' => 'pending',
+                    'currency' => 'AED',
+                    // customer_note has existed on this table from the start, but
+                    // nothing ever wrote to it and the admin never showed it, so
+                    // the column was dead at both ends. Wired here and rendered on
+                    // the order screen in the same package.
+                    'customer_note' => $data['customer_note'] ?? null,
+                    'is_gift' => $request->boolean('is_gift'),
+                    // The amount charged, not the amount configured. Recomputing
+                    // this later from the setting would misreport every past order
+                    // the first time the price changes.
+                    'gift_fee' => $giftFee,
+                    // Only kept when the gift box is actually ticked -- otherwise
+                    // an untouched-but-populated field (browser autofill, a
+                    // shopper changing their mind) would print a gift card nobody
+                    // asked for.
+                    'gift_note' => $request->boolean('is_gift') ? ($data['gift_note'] ?? null) : null,
+                    'billing_address' => $address,
+                    'shipping_address' => $address,
+                    'subtotal' => $totals['subtotal'],
+                    'discount_total' => $totals['discount'],
+                    'shipping_total' => (int) $rate['cost'],
+                    'fee_total' => $fee,
+                    'tax_total' => 0,   // VAT is display-only (D-64)
+                    'total' => $totals['total'] + $fee,
+                    'shipping_method' => $rate['title'],
+                    'payment_method' => $data['payment_method'],
+                    'payment_method_title' => $paymentTitle !== '' ? $paymentTitle : null,
+                    'coupon_code' => $totals['coupon_code'],
+                    'whatsapp_optin' => $request->boolean('billing_kbb_whatsapp'),
+                    'ip_address' => $request->ip(),
                 ]);
-            }
 
-            $cart->forceFill(['status' => 'converted', 'converted_at' => now()])->save();
+                foreach ($cart->items as $item) {
+                    $p = $item->product;
 
-            return $order;
-        });
+                    $order->items()->create([
+                        'product_id' => $p?->id,
+                        'product_variant_id' => $item->product_variant_id,
+                        // Snapshots, so the order still reads correctly if the
+                        // product is later renamed or removed.
+                        'name' => $p?->name ?? 'Item',
+                        'brand' => $p?->brand?->name,
+                        'sku' => $item->variant?->sku ?? $p?->sku,
+                        'variant_attributes' => $item->variant?->attributeValues->pluck('name')->all(),
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'subtotal' => $item->lineTotal(),
+                        'total' => $item->lineTotal(),
+                    ]);
+                }
+
+                // Spend the coupon, inside the transaction that wrote the order.
+                //
+                // This is what makes usage_limit and usage_limit_per_user mean
+                // anything: both are checked by CouponService::validate() against
+                // state that, until this call existed, nothing ever wrote. It also
+                // re-checks the limits against a locked coupon row, so two shoppers
+                // holding the last use of a code cannot both spend it — see
+                // CouponService::recordRedemption().
+                //
+                // CouponExhausted from in here propagates out of DB::transaction(),
+                // which rolls the order back. That is the intended outcome: if the
+                // code ran out while this shopper was on the checkout page, they
+                // get the refusal rather than the discount.
+                if ($cart->coupon) {
+                    $this->coupons->recordRedemption(
+                        $cart->coupon,
+                        (int) $totals['discount'],
+                        $order->id,
+                        $customer->id,
+                        $order->email,
+                    );
+                }
+
+                $cart->forceFill(['status' => 'converted', 'converted_at' => now()])->save();
+
+                return $order;
+            });
+        } catch (\App\Services\CouponExhausted $e) {
+            // The code ran out between this shopper applying it and pressing
+            // Place Order — someone else took the last use, or this is their
+            // own second go at a one-per-customer code. The transaction rolled
+            // back, so there is no order and no redemption; the basket is still
+            // theirs to buy at full price.
+            return back()->withInput()->withErrors($e->getMessage());
+        }
 
         // Marks this browser session as the one that actually just placed
         // this order. The success page has no ownership check on ?order=
@@ -389,6 +421,46 @@ class CheckoutController extends Controller
             // support can see what happened. $start->message is written for a
             // shopper — gateways never put an API error body in it.
             $order->forceFill(['status' => 'failed'])->save();
+
+            /*
+             * Hand the coupon use back.
+             *
+             * The payment never started, so the discount was never given. If
+             * the use stayed spent, a shopper whose card was declined would
+             * have burned their one go at WELCOME10 on a sale that did not
+             * happen — and their retry, which is the whole reason the failed
+             * order is kept, would be refused by the limit they just consumed.
+             *
+             * This is safe to do here, and ONLY here, because the failure is
+             * synchronous: the same request that recorded the redemption a
+             * moment ago is undoing it, so there is no path where the release
+             * is missed and no window where another order can interleave.
+             *
+             * CANCELLATION AND REFUND ARE DELIBERATELY NOT TREATED THIS WAY.
+             *
+             * The argument for releasing them is real — a cancelled order cost
+             * the shop nothing, and a public code could be exhausted by placing
+             * and cancelling orders. What stops it being done here is that
+             * there is no single place an order's status changes. It moves in
+             * OrdersApiController::bulkStatus() via a mass
+             * Order::whereIn(...)->update(), which bypasses Eloquent events
+             * entirely; in AdminOrderController; in PaymentRefunder when money
+             * actually moves; and in the gateway webhooks. A release hooked to
+             * some of those and not the others would make usage_count disagree
+             * with the redemption rows depending on which screen the operator
+             * happened to use — two paths that disagree, which is the exact
+             * failure this lane was opened to repair, reintroduced one layer
+             * down. It is the same reasoning ManualOrderBuilder gives for not
+             * decrementing stock on one path only.
+             *
+             * So a redemption is a permanent record of a code having been
+             * accepted on an order, and releasing one on cancellation needs a
+             * single choke point for status transitions first. Until then the
+             * owner can see the redemptions and their orders on Store →
+             * Coupons and judge for themselves; CouponService::
+             * releaseRedemptions() is ready for that change when it comes.
+             */
+            $this->coupons->releaseRedemptions((int) $order->id);
 
             return back()->withInput()->withErrors(
                 $start->message ?? 'We could not start that payment. Please try another method.'

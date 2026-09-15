@@ -22,6 +22,7 @@ declare(strict_types=1);
 use App\Models\AdminUser;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\MailCredential;
 use App\Models\Order;
@@ -615,6 +616,25 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
     $customer = Customer::query()->firstOrFail();
     $order = Order::query()->firstOrFail();
 
+    /*
+     * The coupons screen reads redemptions grouped per coupon, so it is the
+     * shape that has produced a dialect failure twice in this repo already.
+     * Created here rather than in the seed above because nothing else in this
+     * file needs one.
+     */
+    $coupon = Coupon::create([
+        'code' => 'GUARD-' . uniqid(),
+        'type' => 'percent',
+        'amount' => 1000,
+        'usage_limit' => 5,
+        'usage_count' => 0,
+        // No is_active column on this table -- a coupon's state is its
+        // starts_at/expires_at window plus its usage, which is what
+        // CouponService::validate() actually reads.
+        'starts_at' => now()->subDay(),
+        'expires_at' => now()->addYear(),
+    ]);
+
     /** Route URI => the concrete path to drive it with. */
     $driven = [
         'admin-api/products/{id}' => '/admin-api/products/' . $product->id,
@@ -628,6 +648,9 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // exactly the shape that has produced a dialect failure twice.
         'admin-api/orders/{id}/invoice' => '/admin-api/orders/' . $order->id . '/invoice',
         'admin-api/orders/{id}/packing-slip' => '/admin-api/orders/' . $order->id . '/packing-slip',
+        // Groups redemptions per coupon and counts them beside the row, which
+        // is the aggregate-plus-row shape MySQL's ONLY_FULL_GROUP_BY rejects.
+        'admin-api/coupons/{coupon}' => '/admin-api/coupons/' . $coupon->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */
