@@ -41,8 +41,14 @@ class AdminController extends Controller
         // simple conversion proxy: paid orders / total orders (only meaningful once traffic is tracked)
         $paid = Order::whereIn('status', self::REVENUE_STATUSES)->count();
 
-        $recent = Order::orderByDesc('id')->limit(8)->get()->map(function (Order $o) {
-            $c = Customer::find($o->customer_id);
+        /*
+         * Eager-loaded. `Customer::find($o->customer_id)` inside the map was one
+         * extra SELECT per recent order — bounded at eight here, unbounded in
+         * orders() below, which is the same mistake without the limit. Both are
+         * now one query for the whole set.
+         */
+        $recent = Order::with('customer:id,name')->orderByDesc('id')->limit(8)->get()->map(function (Order $o) {
+            $c = $o->customer;
             return [
                 'id'         => $o->id,
                 'customer'   => $c->name ?? 'Guest',
@@ -199,20 +205,45 @@ class AdminController extends Controller
         return response()->json(['ok' => true, 'saved' => $n]);
     }
 
-    /** GET /admin-api/orders — orders list for the admin table. */
+    /**
+     * GET /admin-api/orders — orders list for the admin table.
+     *
+     * Three queries, not two per order.
+     *
+     * This method used to run `Customer::find()` AND an `OrderItem::where()
+     * ->count()` inside the map, over EVERY row in `orders` with no pagination:
+     * 2N + 1 queries, so 1,343 statements on the 671-order live table for one
+     * screen. Both are now resolved in one query each — the customer through an
+     * eager load, the line count through a single grouped query keyed by
+     * order_id.
+     *
+     * `ship_method` was also a column that has never existed. Eloquent returns
+     * null for a missing attribute instead of raising, so the shipping method
+     * was blank on every row and nothing said why. The column is
+     * `shipping_method`; AdminOrderController's header comment has flagged this
+     * family of wrong names since it was written.
+     */
     public function orders()
     {
-        $rows = Order::orderByDesc('id')->get()->map(function (Order $o) {
-            $c = Customer::find($o->customer_id);
+        $orders = Order::with('customer:id,name,email')->orderByDesc('id')->get();
+
+        $lineCounts = OrderItem::query()
+            ->whereIn('order_id', $orders->pluck('id'))
+            ->groupBy('order_id')
+            ->selectRaw('order_id, COUNT(*) as n')
+            ->pluck('n', 'order_id');
+
+        $rows = $orders->map(function (Order $o) use ($lineCounts) {
+            $c = $o->customer;
             return [
                 'id'         => $o->id,
                 'customer'   => $c->name ?? 'Guest',
                 'email'      => $c->email ?? null,
-                'items'      => OrderItem::where('order_id', $o->id)->count(),
+                'items'      => (int) ($lineCounts[$o->id] ?? 0),
                 'subtotal_aed' => (int) round(($o->subtotal ?? 0) / 100),
                 'total_aed'  => (int) round(($o->total ?? 0) / 100),
                 'status'     => $o->status,
-                'ship_method'=> $o->ship_method,
+                'ship_method'=> $o->shipping_method,
                 'created_at' => $o->created_at,
             ];
         });
@@ -220,19 +251,50 @@ class AdminController extends Controller
         return response()->json(['orders' => $rows]);
     }
 
-    /** GET /admin-api/orders/{id} — single order with items + customer. */
+    /**
+     * GET /admin-api/orders/{id} — single order with items + customer.
+     *
+     * Four columns named here have never existed on these tables, and Eloquent
+     * answers a missing attribute with null rather than raising, so this modal
+     * showed a quantity of nothing, a line total of AED 0 on every row, no
+     * delivery charge, no COD fee and a blank shipping method — on real orders
+     * that had all five. AdminOrderController's class comment has recorded the
+     * list since it was written and deliberately left it alone as out of scope.
+     *
+     *   $i->qty        -> order_items.quantity
+     *   $o->delivery   -> orders.shipping_total
+     *   $o->cod_fee    -> orders.fee_total
+     *   $o->ship_method-> orders.shipping_method
+     *
+     * The response keys are unchanged; only the columns behind them are real
+     * now. Money stays integer fils until the final conversion, as everywhere
+     * else here.
+     */
     public function order(int $id)
     {
-        $o = Order::find($id);
+        /*
+         * The eager load names only columns `customers` actually has.
+         *
+         * `emirate` and `default_address` are read below and are NOT columns on
+         * that table — they answer null, exactly as they did when this method
+         * looked the customer up by hand. Listing them here instead would be a
+         * far worse bug than the one being fixed: SQLite resolves a
+         * double-quoted identifier that matches no column as a STRING LITERAL,
+         * so `select "emirate" from customers` returns the word "emirate" and
+         * the suite stays green, while MySQL quotes with backticks and raises
+         * 1054 Unknown column. A 500 on the live Orders screen, invisible here.
+         * tests/Feature/EagerLoadColumnsTest.php now fails on any such list.
+         */
+        $o = Order::with('customer:id,name,email,phone')->find($id);
         if (!$o) return response()->json(['error' => 'not_found'], 404);
 
-        $c = Customer::find($o->customer_id);
+        $c = $o->customer;
         $items = OrderItem::where('order_id', $o->id)->get()->map(fn (OrderItem $i) => [
             'name'       => $i->name,
             'brand'      => $i->brand,
-            'qty'        => $i->qty,
+            'qty'        => (int) ($i->quantity ?? 0),
             'unit_aed'   => (int) round(($i->unit_price ?? 0) / 100),
-            'line_aed'   => (int) round((($i->unit_price ?? 0) * ($i->qty ?? 0)) / 100),
+            'line_aed'   => (int) round((((int) ($i->unit_price ?? 0)) * ((int) ($i->quantity ?? 0))) / 100),
         ]);
 
         return response()->json([
@@ -241,60 +303,129 @@ class AdminController extends Controller
             'customer'     => $c ? ['name' => $c->name, 'email' => $c->email, 'phone' => $c->phone, 'emirate' => $c->emirate, 'address' => $c->default_address] : null,
             'items'        => $items,
             'subtotal_aed' => (int) round(($o->subtotal ?? 0) / 100),
-            'delivery_aed' => (int) round(($o->delivery ?? 0) / 100),
-            'cod_fee_aed'  => (int) round(($o->cod_fee ?? 0) / 100),
+            'delivery_aed' => (int) round(($o->shipping_total ?? 0) / 100),
+            'cod_fee_aed'  => (int) round(($o->fee_total ?? 0) / 100),
             'total_aed'    => (int) round(($o->total ?? 0) / 100),
-            'ship_method'  => $o->ship_method,
+            'ship_method'  => $o->shipping_method,
             'created_at'   => $o->created_at,
         ]);
     }
 
-    /** GET /admin-api/analytics — sales metrics derived from real orders. */
+    /**
+     * GET /admin-api/analytics — sales metrics derived from real orders.
+     *
+     * TWO THINGS WERE WRONG HERE, and only one of them was visible.
+     *
+     * 1. `$it->qty`. `order_items` has `quantity`; there is no `qty` column and
+     *    never has been. Eloquent answers a missing attribute with null, so
+     *    every `(int) $it->qty` was 0 — which means `units_sold` on the
+     *    Analytics screen has read ZERO since this endpoint shipped, every unit
+     *    count in `top_products` read zero, and the revenue each product was
+     *    RANKED by was `unit_price * 0` = 0. The ordering was therefore
+     *    arbitrary too. The endpoint answered 200 throughout.
+     *
+     * 2. It read the whole of `orders` and the whole of `order_items` into PHP
+     *    to add them up, and fed every paid order id into one `whereIn`. On the
+     *    live table that is 671 orders and their lines through the application,
+     *    and a list of ids long enough to be worth worrying about against
+     *    max_allowed_packet. Every figure but the 14-day series is an aggregate
+     *    the database can do in one statement, so it does.
+     *
+     * The daily series is still bucketed in PHP, deliberately: grouping by day
+     * in SQL needs DATE()/strftime(), and strftime() is SQLite-only — one of
+     * the exact statements Tests\Support\SqlShape rejects. Only 14 days of paid
+     * orders are read for it, not the table.
+     *
+     * Money stays in integer fils until the one conversion at the end.
+     */
     public function analytics()
     {
-        $orders = Order::orderBy('id')->get();
-        $paid   = $orders->whereIn('status', self::REVENUE_STATUSES);
+        $paidQuery = Order::query()->whereIn('status', self::REVENUE_STATUSES);
 
-        $revenueTotal = (int) $paid->sum('total');           // fils
-        $paidCount    = $paid->count();
+        $totals = (clone $paidQuery)
+            ->selectRaw('COUNT(*) as n, COALESCE(SUM(total), 0) as revenue')
+            ->first();
+
+        $revenueTotal = (int) ($totals->revenue ?? 0);       // fils
+        $paidCount    = (int) ($totals->n ?? 0);
         $aov          = $paidCount ? intdiv($revenueTotal, $paidCount) : 0;
+        $ordersTotal  = (int) Order::query()->count();
 
-        // Daily revenue for the last 14 days (created_at is an ISO string → bucket by date).
+        // Daily revenue for the last 14 days. `created_at` is compared as a
+        // date rather than grouped by one, so no dialect-specific date function
+        // is needed and only the window's rows are read.
         $days = [];
         for ($i = 13; $i >= 0; $i--) $days[now()->subDays($i)->format('Y-m-d')] = 0;
-        foreach ($paid as $o) {
+
+        $window = (clone $paidQuery)
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->get(['created_at', 'total']);
+
+        foreach ($window as $o) {
             $d = substr((string) $o->created_at, 0, 10);
             if (array_key_exists($d, $days)) $days[$d] += (int) $o->total;
         }
+
         $daily = [];
         foreach ($days as $d => $v) $daily[] = ['date' => $d, 'revenue_aed' => (int) round($v / 100)];
 
-        // Status breakdown (all statuses present).
-        $status = $orders->groupBy('status')->map(fn ($g) => $g->count());
+        // Status breakdown (all statuses present), grouped by the database.
+        $status = Order::query()
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as n')
+            ->pluck('n', 'status')
+            ->map(fn ($n) => (int) $n);
 
-        // Top products by revenue, from the paid orders' line items.
-        $items = OrderItem::whereIn('order_id', $paid->pluck('id'))->get();
-        $byName = [];
-        foreach ($items as $it) {
-            $k = $it->name;
-            if (!isset($byName[$k])) $byName[$k] = ['name' => $k, 'brand' => $it->brand, 'units' => 0, 'revenue' => 0];
-            $byName[$k]['units']   += (int) $it->qty;
-            $byName[$k]['revenue'] += (int) $it->unit_price * (int) $it->qty;
-        }
-        usort($byName, fn ($a, $b) => $b['revenue'] <=> $a['revenue']);
-        $top = array_map(fn ($p) => [
-            'name'        => $p['name'],
-            'brand'       => $p['brand'],
-            'units'       => $p['units'],
-            'revenue_aed' => (int) round($p['revenue'] / 100),
-        ], array_slice($byName, 0, 8));
+        /*
+         * Top products by revenue, from the paid orders' line items.
+         *
+         * Grouped by name and brand in SQL. Both are in the GROUP BY, not just
+         * one — MySQL under ONLY_FULL_GROUP_BY rejects a bare `brand` beside an
+         * aggregate, which is the same 1140 that took the Customers screen down.
+         */
+        /*
+         * whereNull('orders.deleted_at') is not decoration.
+         *
+         * Order uses SoftDeletes, so `Order::query()` carries a global scope
+         * that hides trashed rows — but a raw join to `orders` from OrderItem
+         * does NOT, because the scope belongs to the Order builder and this
+         * query is built from OrderItem. Without it a trashed order's units and
+         * revenue would reappear in these figures while the same order stayed
+         * out of paid_orders and revenue_total above, and the two halves of the
+         * screen would disagree with each other.
+         */
+        $itemQuery = OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereNull('orders.deleted_at')
+            ->whereIn('orders.status', self::REVENUE_STATUSES);
+
+        $unitsSold = (int) ((clone $itemQuery)
+            ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as units')
+            ->first()->units ?? 0);
+
+        $top = (clone $itemQuery)
+            ->groupBy('order_items.name', 'order_items.brand')
+            ->selectRaw('order_items.name as name, order_items.brand as brand,'
+                . ' COALESCE(SUM(order_items.quantity), 0) as units,'
+                . ' COALESCE(SUM(order_items.unit_price * order_items.quantity), 0) as revenue')
+            ->orderByDesc('revenue')
+            ->limit(8)
+            ->get()
+            ->map(fn ($r) => [
+                'name'        => $r->name,
+                'brand'       => $r->brand,
+                'units'       => (int) $r->units,
+                'revenue_aed' => (int) round(((int) $r->revenue) / 100),
+            ])
+            ->values()
+            ->all();
 
         return response()->json([
             'revenue_total_aed' => (int) round($revenueTotal / 100),
-            'orders_total'      => $orders->count(),
+            'orders_total'      => $ordersTotal,
             'paid_orders'       => $paidCount,
             'aov_aed'           => (int) round($aov / 100),
-            'units_sold'        => (int) $items->sum('qty'),
+            'units_sold'        => $unitsSold,
             'daily'             => $daily,
             'status_breakdown'  => $status,
             'top_products'      => $top,
