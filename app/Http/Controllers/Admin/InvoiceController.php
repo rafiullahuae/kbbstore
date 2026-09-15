@@ -1,0 +1,149 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Services\Invoices\InvoiceDocument;
+use App\Services\Invoices\InvoiceNumbers;
+use App\Support\Url;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\Response;
+
+/**
+ * The two printable documents an order produces.
+ *
+ * ── WHY HTML AND NOT A PDF ──────────────────────────────────────────────────
+ *
+ * The host is shared Hostinger with no shell access, and `vendor/` cannot reach
+ * the server through the updater at all: it is in BuildPackage::NEVER_SHIP and
+ * in UpdateGuard::FORBIDDEN_PREFIXES, so a package containing a composer PDF
+ * library would be refused, and installing one by hand is a change the updater
+ * could not roll back. A print-ready HTML document has none of that problem and
+ * loses nothing the owner needs — every browser's print dialog writes a PDF,
+ * with selectable text and real fonts, from the same markup.
+ *
+ * ── WHY THESE ROUTES LIVE BEHIND auth:admin AND NOWHERE ELSE ────────────────
+ *
+ * An invoice carries the buyer's full name, their street address, their phone
+ * number, what they bought and what they paid. `/api/*` in this app is
+ * unauthenticated by design (CLAUDE.md), so these belong in the `admin-api`
+ * group, which already carries `web`, `auth:admin` and NoStoreAdminApi.
+ * InvoiceDocumentTest asserts the refusal for an anonymous caller, for a
+ * signed-in storefront customer and for a `web`-guard user, and reads the
+ * middleware stack back off the registered routes rather than trusting the
+ * harness that mounted them.
+ *
+ * THERE IS NO PUBLIC, TOKENISED INVOICE LINK, and that is the design rather
+ * than an omission. A URL that carries its own authority is a credential that
+ * sits in a browser history, a referrer header and an inbox forever — the exact
+ * argument OrderEmailPresenter::trackUrl() makes about the order-received page,
+ * and the reason CustomerPasswordReset is the only mailed link in this app that
+ * carries one. The admin session is the single answer to "who may read this
+ * order", so guessing an order id buys nothing: every one of these paths
+ * refuses before it loads a row.
+ *
+ * ── WHEN THE NUMBER IS ALLOCATED ────────────────────────────────────────────
+ *
+ * On the first render of the INVOICE, and nowhere else. Not at checkout: an
+ * abandoned or failed order would burn a number out of a legal sequence and
+ * leave a gap an accountant has to explain. Not on the packing slip either —
+ * that document is a picking list, it is printed for orders that may never be
+ * invoiced, and printing one must not consume a number. Allocation is
+ * idempotent (see InvoiceNumbers), so reloading the invoice ten times, or two
+ * admins opening it at once, still produces exactly one number for the order.
+ */
+class InvoiceController extends Controller
+{
+    public function __construct(
+        private InvoiceDocument $documents,
+        private InvoiceNumbers $numbers,
+    ) {}
+
+    /** The printable invoice. Allocates this order's invoice number if it has none. */
+    public function invoice(int $id): View|Response
+    {
+        $order = $this->find($id);
+
+        if ($order === null) {
+            return $this->missing();
+        }
+
+        $this->numbers->allocate($order);
+
+        // Re-read, so the document prints the number and timestamp that are in
+        // the database rather than the ones this process hoped to write. Under
+        // contention those are not always the same thing.
+        $order->refresh();
+
+        return view('invoices.invoice', [
+            'doc' => $this->documents->present($order),
+            'packingSlipUrl' => self::packingSlipUrl($order->id),
+        ]);
+    }
+
+    /**
+     * The packing slip: the same order with no prices on it.
+     *
+     * Deliberately does NOT allocate a number — see the class header. If the
+     * order has one already it is printed, because a warehouse matching a
+     * parcel to a document is helped by it.
+     */
+    public function packingSlip(int $id): View|Response
+    {
+        $order = $this->find($id);
+
+        if ($order === null) {
+            return $this->missing();
+        }
+
+        return view('invoices.packing-slip', [
+            'doc' => $this->documents->present($order),
+            'invoiceUrl' => self::invoiceUrl($order->id),
+        ]);
+    }
+
+    /** Where the admin console links to. Built here so one definition exists. */
+    public static function invoiceUrl(int $orderId): string
+    {
+        return Url::to('/admin-api/orders/' . $orderId . '/invoice');
+    }
+
+    public static function packingSlipUrl(int $orderId): string
+    {
+        return Url::to('/admin-api/orders/' . $orderId . '/packing-slip');
+    }
+
+    /**
+     * Trashed orders included.
+     *
+     * A soft-deleted order is still an order that was placed and may still have
+     * been paid for; its invoice is a record, and records do not stop existing
+     * because a row was tidied away in the admin.
+     */
+    private function find(int $id): ?Order
+    {
+        return Order::withTrashed()
+            ->with(['items' => fn ($q) => $q->orderBy('id')])
+            ->find($id);
+    }
+
+    /**
+     * A plain 404 page rather than a JSON body.
+     *
+     * These two routes sit in a JSON group but serve documents to a browser
+     * window; handing that window `{"error":"not_found"}` as raw text is a
+     * worse answer than a sentence.
+     */
+    private function missing(): Response
+    {
+        return response(
+            '<!doctype html><meta charset="utf-8"><title>Order not found</title>'
+            . '<p style="font:14px/1.6 system-ui,sans-serif;padding:24px">'
+            . 'That order does not exist, so there is nothing to print.</p>',
+            404,
+        )->header('Content-Type', 'text/html; charset=utf-8');
+    }
+}

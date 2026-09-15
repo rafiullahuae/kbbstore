@@ -26,15 +26,22 @@ use Illuminate\Http\Request;
  */
 class AdminOrderController extends Controller
 {
-    /** Actions that are real right now vs. visible-but-not-wired-up (email requires SMTP, not configured — see the dashboard's own health panel). */
-    private const REAL_ACTIONS = ['cancel', 'duplicate'];
+    /** Actions that are real right now vs. visible-but-not-wired-up. */
+    private const REAL_ACTIONS = ['cancel', 'duplicate', 'resend_confirmation', 'email_invoice'];
     /*
-     * 'resend_confirmation' left this list when order email was built: the
-     * store now has a confirmation to re-send. 'email_invoice' stays, because
-     * there is still no invoice PDF to attach — and a button that mails an
-     * empty invoice is worse than one that says it is not ready.
+     * 'resend_confirmation' left the placeholder list when order email was
+     * built; 'email_invoice' has now left it too. The store has a real invoice
+     * — an invoice number allocated out of the unique sequence, and a document
+     * rendered from the order_items snapshot by App\Services\Invoices — so the
+     * button sends one instead of apologising for not having one.
+     *
+     * The list itself stays rather than being deleted. It is the mechanism for
+     * saying "visible, and honest about not working yet", and the next
+     * half-built action should use it rather than reinventing it. Empty is the
+     * correct state of an honest list with nothing to declare, and
+     * InvoiceEmailTest pins that 'email_invoice' is not on it.
      */
-    private const PLACEHOLDER_ACTIONS = ['email_invoice'];
+    private const PLACEHOLDER_ACTIONS = [];
 
     public function show(
         int $id,
@@ -118,6 +125,16 @@ class AdminOrderController extends Controller
 
             'invoice_number' => $order->invoice_number,
             'invoiced_at' => optional($order->invoiced_at)->toAtomString(),
+            // Where the two printable documents live, built by the controller
+            // that serves them so there is one definition of each path and the
+            // admin console never has to assemble one out of string pieces.
+            // Both are inside the admin-api group, i.e. behind auth:admin; see
+            // the InvoiceController header for why there is no public link.
+            // Opening the invoice URL is what allocates invoice_number above,
+            // so an order that reads "Not yet invoiced" here has genuinely
+            // never had one issued.
+            'invoice_url' => \App\Http\Controllers\Admin\InvoiceController::invoiceUrl($order->id),
+            'packing_slip_url' => \App\Http\Controllers\Admin\InvoiceController::packingSlipUrl($order->id),
 
             'refunds' => $order->refunds()->latest()->get()->map(fn (Refund $r) => [
                 'id' => $r->id,
@@ -301,12 +318,18 @@ class AdminOrderController extends Controller
     }
 
     /**
-     * Cancel and duplicate are real; resend/email actions are visible but
-     * refuse with a clear reason, matching the same "placeholder, wired
-     * later" pattern already agreed for the invoice/shipping-label PDFs —
-     * shown rather than hidden, since Rafi should be able to see what the
-     * page is building toward, but never made to look like it worked when
-     * it didn't.
+     * Every action on this dropdown is now real.
+     *
+     * Cancel and duplicate always were. 'resend_confirmation' became real when
+     * order email shipped but was never added back to REAL_ACTIONS, so the
+     * screen stopped offering it at all — it is on the list again above.
+     * 'email_invoice' is real as of this package: it allocates the order's
+     * invoice number if it has none and mails the document.
+     *
+     * The placeholder branch below survives them, unused. It is the mechanism
+     * for showing Rafi what the page is building toward without ever making a
+     * button look like it worked when it did not, and deleting it would mean
+     * the next half-built action invents its own way of saying so.
      */
     public function runAction(Request $request, int $id): JsonResponse
     {
@@ -325,8 +348,28 @@ class AdminOrderController extends Controller
             return response()->json($result, $result['ok'] ? 200 : 422);
         }
 
+        if ($action === 'email_invoice') {
+            // Same contract as the resend above, and for the same reason: the
+            // mailer reports instead of swallowing, because somebody pressed a
+            // button and is waiting for the answer. 422 on failure so the screen
+            // prints the reason rather than a tick. The response carries the
+            // invoice number the send used, so the screen can show it without a
+            // second round trip — and so the owner can see which document went.
+            $result = app(\App\Services\Mail\OrderMailer::class)->emailInvoice($order);
+
+            return response()->json($result, $result['ok'] ? 200 : 422);
+        }
+
         if (in_array($action, self::PLACEHOLDER_ACTIONS, true)) {
-            return response()->json(['ok' => false, 'message' => 'Not available yet — this needs the invoice PDF, which is not built.'], 422);
+            // The list is empty today. This stays as the shape of an honest
+            // refusal for the next action that is visible before it is built:
+            // the copy names what is missing rather than claiming the whole
+            // feature is unbuilt, which is what the old invoice message did for
+            // months after the sentence stopped being true.
+            return response()->json([
+                'ok' => false,
+                'message' => 'That action is on the screen but not wired up yet.',
+            ], 422);
         }
 
         if ($action === 'cancel') {
