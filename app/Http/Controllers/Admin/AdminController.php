@@ -7,13 +7,22 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Store back-office API. Session-guarded (auth:admin) and mounted in web.php,
  * NOT api.php — the stateless API guard can't see the admin web session.
- * Money is stored in fils; the admin UI works in whole AED, so we convert here.
+ *
+ * MONEY IS INTEGER FILS. It is stored that way, it stays that way through every
+ * calculation here, and it is converted once at the edge of the response. The
+ * admin UI works in major units (AED), so a value arriving from a form is a
+ * decimal STRING parsed by integer arithmetic — never `$aed * 100`, which is
+ * 114 for 1.15 because binary floating point cannot hold 1.15. This file used
+ * to say "the admin UI works in whole AED", and that was the bug rather than
+ * the design: the schema has always stored fils and the importer has always
+ * parsed AED 99.50 into 9950.
  */
 class AdminController extends Controller
 {
@@ -22,6 +31,42 @@ class AdminController extends Controller
     // Catalog → Reorder / Products' order-count. See that constant's own
     // comment for why.
     private const REVENUE_STATUSES = \App\Models\Order::REAL_STATUSES;
+
+    /**
+     * `products.status`, read out of the schema rather than guessed.
+     *
+     * Declared in 0001_01_01_000000_create_kbb_schema.php as
+     * `publish | draft | private`, and Product::scopeVisible() — which every
+     * category page, the shop listing and the sitemap go through — is
+     * `status = 'publish'`. This validator used to accept `active`, `draft`,
+     * `archived`; two of those three are values nothing in this application has
+     * ever recognised. CatalogProductsApiController::SETTABLE_STATUSES is the
+     * same three, from the same reading.
+     */
+    private const PRODUCT_STATUSES = ['publish', 'draft', 'private'];
+
+    /**
+     * Columns the product editor may not write, whatever it sends.
+     *
+     * `slug` and `wc_id` are identity: /product/{slug}/ and `?add-to-cart={wc_id}`
+     * are live URL contracts with links in the wild, so editing either breaks
+     * addresses that already exist. `total_sales`, `rating` and `review_count`
+     * are computed from orders and reviews — a figure that can be typed over is
+     * a figure that means nothing.
+     */
+    private const PRODUCT_READONLY_FIELDS = ['slug', 'wc_id', 'total_sales', 'rating', 'review_count'];
+
+    /**
+     * A money field arriving from the admin: a decimal string in major units.
+     *
+     * A STRING, deliberately. `integer` was the old rule and it made AED 99.50
+     * unenterable; `numeric` would let a float through and put the rounding
+     * back. Up to four decimal places are accepted and truncated to the
+     * currency's exponent in filsFromMajor(), so a paste from a spreadsheet
+     * with trailing zeros is not a 422. Same rule as
+     * CatalogProductsApiController::MONEY_RULE.
+     */
+    private const MONEY_RULE = 'regex:/^\d{1,9}(\.\d{1,4})?$/';
 
     /** GET /admin-api/stats — dashboard KPIs + recent orders. */
     public function stats()
@@ -83,8 +128,21 @@ class AdminController extends Controller
             'brand'      => $p->brand?->name,
             'sku'        => $p->sku,
             'category'   => $p->category?->name,
-            'price_aed'  => $p->price !== null ? (int) round($p->price / 100) : null,
-            'sale_aed'   => $p->sale_price !== null ? (int) round($p->sale_price / 100) : null,
+            /*
+             * Exact major units, plus the integer beside them.
+             *
+             * `(int) round($p->price / 100)` rounded a real price to the
+             * nearest dirham on the way out of the database. The product
+             * editor reads THIS list to fill its price input, so a product
+             * stored at 9950 fils was shown as 100 and saved back as 10000 —
+             * the row got 50 fils more expensive every time somebody opened it
+             * and pressed Update without touching the price. Same pair of keys
+             * /admin-api/catalog/products answers with.
+             */
+            'price_aed'  => $p->price === null ? null : Money::toMajor((int) $p->price),
+            'price_fils' => $p->price === null ? null : (int) $p->price,
+            'sale_aed'   => $p->sale_price === null ? null : Money::toMajor((int) $p->sale_price),
+            'sale_fils'  => $p->sale_price === null ? null : (int) $p->sale_price,
             'stock'      => $p->stock,
             'status'     => $p->status,
             'slug'       => $p->slug,
@@ -126,63 +184,364 @@ class AdminController extends Controller
         ]);
     }
 
-    /** GET /admin-api/products/{id} — full editable record for the product editor. */
+    /**
+     * GET /admin-api/products/{id} — full editable record for the product editor.
+     *
+     * `brand` and `category` were returned as `$p->brand` and `$p->category`.
+     * Neither is a column: both are belongsTo RELATIONS (brand_id /
+     * category_id), so Eloquent lazy-loaded them and serialised the whole
+     * related model into the response. The editor, which wants a name to put in
+     * a <select>, was handed
+     * `{"id":9,"slug":"anua","name":"Anua","logo":null,...,"source_term_id":null}`
+     * — every column of `brands`, including the importer's own bookkeeping —
+     * and two extra queries per call to build it. The name is what this screen
+     * reads, so the name is what it gets, with the id beside it for anything
+     * that wants to write the field back.
+     *
+     * MONEY. `(int) round($p->price / 100)` rounded a real price to the nearest
+     * dirham on the way OUT. A product stored at 9950 fils (AED 99.50) was
+     * shown to the operator as 100, and saving the form back without touching
+     * the price wrote 10000 — a silent 50-fil rise every time anybody opened
+     * the record. `price_aed` is now the exact major-unit value and
+     * `price_fils` the integer beside it, which is the pair
+     * /admin-api/catalog/products already answers with.
+     */
     public function getProduct(int $id)
     {
-        $p = Product::find($id);
+        // Eager-loaded, and only the two columns this response reads. Without
+        // it `brand` and `category` are two more SELECTs per call.
+        $p = Product::with(['brand:id,name', 'category:id,name'])->find($id);
         if (!$p) return response()->json(['error' => 'not_found'], 404);
+
         return response()->json([
             'id'                => $p->id,
             'name'              => $p->name,
-            'brand'             => $p->brand,
-            'category'          => $p->category,
+            'brand'             => $p->brand?->name,
+            'brand_id'          => $p->brand_id,
+            'category'          => $p->category?->name,
+            'category_id'       => $p->category_id,
             'sku'               => $p->sku,
             'description'       => $p->description,
             'short_description' => $p->short_description,
-            'price_aed'         => $p->price !== null ? (int) round($p->price / 100) : null,
-            'sale_aed'          => $p->sale_price !== null ? (int) round($p->sale_price / 100) : null,
+            'price_aed'         => $p->price === null ? null : Money::toMajor((int) $p->price),
+            'price_fils'        => $p->price === null ? null : (int) $p->price,
+            'sale_aed'          => $p->sale_price === null ? null : Money::toMajor((int) $p->sale_price),
+            'sale_fils'         => $p->sale_price === null ? null : (int) $p->sale_price,
             'stock'             => $p->stock,
             'status'            => $p->status,
             'slug'              => $p->slug,
+            // `products` carries BOTH a `seo` json column (Phase 0, the Yoast
+            // import target, which nothing writes) and a `seo_json` text column
+            // (2026_07_11_000001_add_seo_json_to_products), which is the one
+            // this editor has always read and written. Checked against the
+            // migrations rather than taken on trust: a sibling lane believed
+            // the column was `seo`, and writing there would have put the
+            // operator's SEO fields somewhere nothing reads.
             'seo'               => $p->seo_json ? json_decode($p->seo_json, true) : null,
         ]);
     }
 
-    /** PUT /admin-api/products/{id} — persist edits (stock, price, name, status). */
+    /**
+     * PUT /admin-api/products/{id} — persist edits from the product editor.
+     *
+     * FOUR THINGS WERE WRONG HERE. Three of them answered 200.
+     *
+     * 1. THE STATUS VOCABULARY, and this one was live data loss.
+     *    `products.status` is `publish | draft | private` — declared in the
+     *    Phase 0 schema, mapped onto by the importer, and filtered on by
+     *    Product::scopeVisible(), which is `status = 'publish'`. This validator
+     *    accepted `active`, `draft`, `archived`. `active` was the only
+     *    non-draft value it took, so the one thing an operator could do to
+     *    publish a product wrote a value nothing in the application recognises:
+     *    the row vanished from the storefront, from every category page and
+     *    from the sitemap, and the endpoint answered {"ok":true}. `archived`
+     *    does not exist either. The set is now read off the schema.
+     *
+     *    `active` is REFUSED rather than quietly mapped to `publish`. A caller
+     *    sending it is working from the wrong vocabulary and should be told,
+     *    and a 422 is strictly better than the silent delisting it used to get.
+     *
+     * 2. BRAND AND CATEGORY WERE WRITTEN AS COLUMNS. `$product->brand = 'Anua'`
+     *    does not touch the relation — setAttribute() has no idea `brand` is
+     *    one — it puts 'Anua' in the attribute bag, and save() then issues
+     *    `UPDATE products SET brand = ?`. There is no such column, so this was
+     *    SQLSTATE 42S22 and an HTTP 500. Not theoretical: the product editor in
+     *    resources/views/admin/app.blade.php sends `brand` on every save the
+     *    moment the Brands box is on screen, and its catch shows the operator
+     *    "Save failed — check connection" while their edits are dropped.
+     *
+     *    THE FIX, and why this one rather than the other one: the rest of this
+     *    admin writes brands and categories as foreign keys validated with
+     *    `exists:` — CatalogProductsApiController::update() takes `brand_id`
+     *    and `category_id` and nothing else. So that is the canonical form here
+     *    too. The NAME form is still accepted, because the live editor sends it
+     *    and its <select> is populated from this controller's own /admin-api/products
+     *    rollup, i.e. from real rows — but it is RESOLVED against `brands` /
+     *    `categories` and an unknown name is refused. It never creates a brand
+     *    or a category: a product save is not the place to grow the catalogue's
+     *    taxonomy, and a typo that silently mints "Anuaa" is how a brand list
+     *    stops being a brand list.
+     *
+     * 3. MONEY COULD NOT BE ENTERED, AND WAS MULTIPLIED AS A FLOAT.
+     *    `price_aed` was validated `integer`, so AED 99.50 was a 422 — the
+     *    operator could not type it at all — and the value that did get through
+     *    was multiplied by 100 in PHP. Money in this schema is integer fils and
+     *    the importer has always parsed AED 99.50 into 9950 by integer
+     *    arithmetic (App\Services\Import\Money documents why), so a
+     *    whole-dirham admin was never the schema's restriction: it was this
+     *    validator's. Prices now arrive as decimal STRINGS and are parsed
+     *    digit-by-digit, never through a float. `(int) (1.15 * 100)` is 114.
+     *
+     * 4. A SALE PRICE AT OR ABOVE THE REGULAR PRICE was accepted. It is not a
+     *    discount, Product::isOnSale() answers false, and the screen shows a
+     *    struck-through price that never applies. Refused, on the integers.
+     *
+     * NOT WRITABLE, at any price: `slug`, `wc_id`, `total_sales`, `rating`,
+     * `review_count`. The first two are live URL and contract surfaces —
+     * /product/{slug}/ and `?add-to-cart={wc_id}` links exist in the wild — and
+     * the last three are computed from orders and reviews. Sending one is a 422
+     * rather than a silent drop, so a caller finds out.
+     */
     public function updateProduct(Request $request, int $id)
     {
         $product = Product::find($id);
         if (!$product) return response()->json(['error' => 'not_found'], 404);
 
+        /*
+         * Refused loudly rather than ignored. `$request->validate()` drops
+         * unlisted keys, so a caller sending `slug` or `total_sales` would get
+         * {"ok":true} and no change — indistinguishable from a write that
+         * worked, which is how a caller keeps sending it for months.
+         */
+        $forbidden = array_values(array_intersect(self::PRODUCT_READONLY_FIELDS, array_keys($request->all())));
+
+        if ($forbidden !== []) {
+            return response()->json([
+                'error'   => 'read_only',
+                'message' => 'These fields are identity or computed columns and cannot be edited here: ' . implode(', ', $forbidden) . '.',
+                'errors'  => array_fill_keys($forbidden, ['Not editable.']),
+            ], 422);
+        }
+
         $data = $request->validate([
             'name'              => 'sometimes|nullable|string|max:255',
+            // Either form. The id is canonical; the name is what the live
+            // editor sends and is resolved below.
             'brand'             => 'sometimes|nullable|string|max:255',
+            'brand_id'          => 'sometimes|nullable|integer|exists:brands,id',
             'category'          => 'sometimes|nullable|string|max:255',
+            'category_id'       => 'sometimes|nullable|integer|exists:categories,id',
             'sku'               => 'sometimes|nullable|string|max:255',
             'description'       => 'sometimes|nullable|string|max:20000',
             'short_description' => 'sometimes|nullable|string|max:5000',
             'stock'             => 'sometimes|nullable|integer|min:0|max:1000000',
-            'price_aed'         => 'sometimes|nullable|integer|min:0|max:10000000',
-            'sale_aed'          => 'sometimes|nullable|integer|min:0|max:10000000',
-            'status'            => 'sometimes|string|in:active,draft,archived',
+            // Decimal strings in major units, parsed by integer arithmetic.
+            'price_aed'         => ['sometimes', 'nullable', self::MONEY_RULE],
+            'sale_aed'          => ['sometimes', 'nullable', self::MONEY_RULE],
+            'status'            => 'sometimes|string|in:' . implode(',', self::PRODUCT_STATUSES),
             'seo'               => 'sometimes|array',
         ]);
 
-        if (array_key_exists('name', $data))              $product->name = $data['name'];
-        if (array_key_exists('brand', $data))             $product->brand = $data['brand'];
-        if (array_key_exists('category', $data))          $product->category = $data['category'];
-        if (array_key_exists('sku', $data))               $product->sku = $data['sku'];
-        if (array_key_exists('description', $data))       $product->description = $data['description'];
-        if (array_key_exists('short_description', $data)) $product->short_description = $data['short_description'];
-        if (array_key_exists('stock', $data))             $product->stock = $data['stock'];
-        if (array_key_exists('status', $data))            $product->status = $data['status'];
-        if (array_key_exists('price_aed', $data))         $product->price = $data['price_aed'] === null ? null : $data['price_aed'] * 100;
-        if (array_key_exists('sale_aed', $data))          $product->sale_price = $data['sale_aed'] === null ? null : $data['sale_aed'] * 100;
-        if (array_key_exists('seo', $data))               $product->seo_json = json_encode($data['seo']);
+        $changes = [];
 
-        $product->save();
+        foreach (['name', 'sku', 'description', 'short_description', 'status'] as $key) {
+            if (array_key_exists($key, $data)) $changes[$key] = $data[$key];
+        }
+
+        if (array_key_exists('stock', $data)) {
+            $changes['stock'] = $data['stock'] === null ? null : (int) $data['stock'];
+        }
+
+        // The id form wins where both are sent: it is unambiguous and the name
+        // is only ever a lookup for it.
+        if (array_key_exists('brand', $data)) {
+            $resolved = $this->resolveTaxonomyId(\App\Models\Brand::class, $data['brand']);
+            if ($resolved === false) {
+                return $this->unknownTaxonomy('brand', $data['brand']);
+            }
+            $changes['brand_id'] = $resolved;
+        }
+
+        if (array_key_exists('brand_id', $data)) {
+            $changes['brand_id'] = $data['brand_id'] === null ? null : (int) $data['brand_id'];
+        }
+
+        if (array_key_exists('category', $data)) {
+            $resolved = $this->resolveTaxonomyId(\App\Models\Category::class, $data['category']);
+            if ($resolved === false) {
+                return $this->unknownTaxonomy('category', $data['category']);
+            }
+            $changes['category_id'] = $resolved;
+        }
+
+        if (array_key_exists('category_id', $data)) {
+            $changes['category_id'] = $data['category_id'] === null ? null : (int) $data['category_id'];
+        }
+
+        foreach (['price_aed' => 'price', 'sale_aed' => 'sale_price'] as $field => $column) {
+            if (! array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $fils = $this->filsFromMajor($data[$field]);
+
+            /*
+             * The column's real ceiling, checked here rather than discovered
+             * from the database.
+             *
+             * `products.price` and `sale_price` are `$t->integer(...)`, i.e.
+             * signed 32-bit, so anything past 2,147,483,647 fils (AED
+             * 21,474,836.47) does not fit. MySQL in strict mode raises on the
+             * insert; SQLite stores it happily — so without this the suite
+             * stays green and production 500s, which is the parity gap this
+             * repo keeps paying for. The old `max:10000000` rule was on the AED
+             * value and let AED 10,000,000 (1,000,000,000 fils) through, which
+             * is already half the column again.
+             */
+            if ($fils !== null && $fils > \App\Services\Import\Money::MAX_FILS) {
+                return response()->json([
+                    'error'   => 'money_out_of_range',
+                    'message' => 'That is more than a price column can hold (maximum '
+                        . Money::plain(\App\Services\Import\Money::MAX_FILS) . ').',
+                    'errors'  => [$field => ['Too large.']],
+                ], 422);
+            }
+
+            $changes[$column] = $fils;
+        }
+
+        if (array_key_exists('seo', $data)) {
+            // `seo_json`, not `seo`. Both columns exist on this table; see the
+            // note in getProduct().
+            $changes['seo_json'] = json_encode($data['seo']);
+        }
+
+        /*
+         * Compared on the integers, against whatever the row will hold after
+         * this write — so sending only a sale price is checked against the
+         * stored regular price rather than against nothing.
+         */
+        $nextPrice = array_key_exists('price', $changes)
+            ? $changes['price']
+            : ($product->price === null ? null : (int) $product->price);
+
+        $nextSale = array_key_exists('sale_price', $changes)
+            ? $changes['sale_price']
+            : ($product->sale_price === null ? null : (int) $product->sale_price);
+
+        if ($nextSale !== null) {
+            if ($nextPrice === null) {
+                return response()->json([
+                    'error'   => 'sale_without_price',
+                    'message' => 'A sale price needs a regular price to be a discount from.',
+                    'errors'  => ['sale_aed' => ['Set a regular price first.']],
+                ], 422);
+            }
+
+            if ($nextSale >= $nextPrice) {
+                return response()->json([
+                    'error'   => 'sale_not_a_discount',
+                    'message' => 'The sale price has to be below the regular price.',
+                    'errors'  => ['sale_aed' => ['Regular price is ' . Money::plain($nextPrice) . '.']],
+                ], 422);
+            }
+        }
+
+        if ($changes !== []) {
+            // Only the columns assembled above. Product::$guarded is empty, so
+            // fill() with anything wider than this would be mass assignment
+            // over the whole table.
+            $product->fill($changes)->save();
+        }
 
         return response()->json(['ok' => true, 'id' => $product->id]);
+    }
+
+    /**
+     * A brand or category NAME -> its id.
+     *
+     * Returns null for an empty value (clearing the field), the id for a match,
+     * and false for a name that is not in the table — which the caller turns
+     * into a 422. Never creates the row: see the note in updateProduct().
+     *
+     * Matched case-insensitively on the name, then on the slug, because the
+     * editor's <select> carries display names ("Beauty of Joseon") while some
+     * callers have the slug.
+     *
+     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $model
+     */
+    private function resolveTaxonomyId(string $model, ?string $name): int|false|null
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return null;
+        }
+
+        // Lowered on both sides rather than relying on the column's collation:
+        // MySQL's utf8mb4_unicode_ci matches case-insensitively and SQLite's
+        // default BINARY collation does not, and a lookup that behaves
+        // differently on the two engines is the parity gap this repo keeps
+        // paying for.
+        $id = $model::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->value('id');
+
+        if ($id === null) {
+            $id = $model::query()
+                ->whereRaw('LOWER(slug) = ?', [mb_strtolower($name)])
+                ->value('id');
+        }
+
+        return $id === null ? false : (int) $id;
+    }
+
+    /** The 422 for a brand or category name that is not in the table. */
+    private function unknownTaxonomy(string $field, ?string $name)
+    {
+        return response()->json([
+            'error'   => 'unknown_' . $field,
+            'message' => 'No ' . $field . ' called "' . trim((string) $name) . '". Create it in Catalog → '
+                . ($field === 'brand' ? 'Brands' : 'Categories') . ' first.',
+            'errors'  => [$field => ['Not a known ' . $field . '.']],
+        ], 422);
+    }
+
+    /**
+     * A decimal string in major units -> exact fils, by integer arithmetic.
+     *
+     * Never `(int) round($major * 100)`. A binary float cannot hold 1.15, so
+     * `(int) (1.15 * 100)` is 114, and App\Support\Money::fromMajor() — which
+     * is that expression — is deliberately not used here. The string is split
+     * on the decimal point and the two halves are combined with integer
+     * multiplication and addition, so 99.50 is 99 * 100 + 50 by construction.
+     *
+     * Digits past the currency's exponent are truncated rather than rounded:
+     * the operator typed more precision than the currency has, and rounding the
+     * last digit up is a price they did not ask for. Same rule, and the same
+     * reasoning, as CatalogProductsApiController::filsFromMajor().
+     */
+    private function filsFromMajor(mixed $value): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $text = trim((string) $value);
+
+        if ($text === '') {
+            return null;
+        }
+
+        $parts = explode('.', $text, 2);
+        $whole = $parts[0] === '' ? '0' : $parts[0];
+        $fraction = $parts[1] ?? '';
+
+        $exponent = Money::minorExponent();
+
+        $fraction = substr(str_pad($fraction, $exponent, '0'), 0, max(0, $exponent));
+
+        return ((int) $whole) * (10 ** $exponent) + ($fraction === '' ? 0 : (int) $fraction);
     }
 
     /** POST /admin-api/inventory — bulk stock save from the Inventory tab. */
@@ -300,7 +659,28 @@ class AdminController extends Controller
         return response()->json([
             'id'           => $o->id,
             'status'       => $o->status,
-            'customer'     => $c ? ['name' => $c->name, 'email' => $c->email, 'phone' => $c->phone, 'emirate' => $c->emirate, 'address' => $c->default_address] : null,
+            /*
+             * The address comes off the ORDER, not off the customer.
+             *
+             * `$c->emirate` and `$c->default_address` were read here and there
+             * are no such columns on `customers` — the emirate lives in
+             * `addresses.state` and there is no default-address column at all.
+             * Eloquent answers a missing attribute with null instead of
+             * raising, so the order modal has shown a blank emirate and a blank
+             * address on every order since it shipped, with nothing to say why.
+             *
+             * `orders.shipping_address` is the right source anyway: it is a
+             * json snapshot of where THIS order went, so an order stays correct
+             * after the customer edits their address book, and it costs no
+             * extra query because the column is already on the row.
+             */
+            'customer'     => $c ? [
+                'name'    => $c->name,
+                'email'   => $c->email,
+                'phone'   => $c->phone,
+                'emirate' => $this->addressLine($o, 'state'),
+                'address' => $this->formattedAddress($o),
+            ] : null,
             'items'        => $items,
             'subtotal_aed' => (int) round(($o->subtotal ?? 0) / 100),
             'delivery_aed' => (int) round(($o->shipping_total ?? 0) / 100),
@@ -309,6 +689,47 @@ class AdminController extends Controller
             'ship_method'  => $o->shipping_method,
             'created_at'   => $o->created_at,
         ]);
+    }
+
+    /**
+     * One field out of an order's own address snapshot.
+     *
+     * `orders.shipping_address` and `billing_address` are json columns cast to
+     * array on the model, holding the address as it was when the order was
+     * placed. Shipping first, billing as the fallback: a digital or
+     * collect-in-store order has only the latter.
+     *
+     * Note the key is `state`, which is what `addresses.state` is called and
+     * which the Phase 0 schema comments as "// Emirate". There is no `emirate`
+     * column anywhere in this database, which is exactly how the old read here
+     * managed to be blank for years without erroring.
+     */
+    private function addressLine(Order $o, string $key): ?string
+    {
+        foreach ([$o->shipping_address, $o->billing_address] as $address) {
+            if (! is_array($address)) {
+                continue;
+            }
+
+            $value = trim((string) ($address[$key] ?? ''));
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /** The order's delivery address on one line, or null when it has none. */
+    private function formattedAddress(Order $o): ?string
+    {
+        $parts = array_filter(
+            array_map(fn (string $key) => $this->addressLine($o, $key), ['line1', 'line2', 'city', 'state', 'postcode']),
+            static fn (?string $v) => $v !== null && $v !== ''
+        );
+
+        return $parts === [] ? null : implode(', ', $parts);
     }
 
     /**
@@ -615,11 +1036,39 @@ class AdminController extends Controller
             ];
         });
 
+        /*
+         * TWO SPELLINGS OF "NOT APPROVED", and the chips only counted one.
+         *
+         * The schema declares `reviews.status` as `pending | approved | spam`.
+         * This endpoint has only ever written `rejected`, which is a fourth
+         * value nothing else in the application knows — Review::scopeApproved()
+         * is `status = 'approved'`, so both spellings do hide the review, which
+         * is why nobody noticed. What did not work: a review imported from
+         * Sorina carrying the schema's own `spam` was counted in `all` and in
+         * no chip, so it was unreachable from the moderation screen, and
+         * PUT /admin-api/reviews/{id} answered 422 for it.
+         *
+         * Counted in one grouped query rather than four COUNT(*) round trips,
+         * and `spam` is reported both on its own and folded into `rejected` so
+         * the existing chip keeps meaning "not approved, not waiting".
+         *
+         * DELIBERATELY NOT NORMALISED HERE. Rewriting live `rejected` rows to
+         * `spam` is a data migration, and this lane owns the write paths rather
+         * than the reviews screen. Both spellings are accepted below until
+         * whoever owns that screen picks one.
+         */
+        $byStatus = \App\Models\Review::query()
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as n')
+            ->pluck('n', 'status')
+            ->map(fn ($n) => (int) $n);
+
         $counts = [
-            'all'      => \App\Models\Review::count(),
-            'pending'  => \App\Models\Review::where('status', 'pending')->count(),
-            'approved' => \App\Models\Review::where('status', 'approved')->count(),
-            'rejected' => \App\Models\Review::where('status', 'rejected')->count(),
+            'all'      => (int) $byStatus->sum(),
+            'pending'  => (int) ($byStatus['pending'] ?? 0),
+            'approved' => (int) ($byStatus['approved'] ?? 0),
+            'rejected' => (int) ($byStatus['rejected'] ?? 0) + (int) ($byStatus['spam'] ?? 0),
+            'spam'     => (int) ($byStatus['spam'] ?? 0),
         ];
 
         return response()->json(['reviews' => $rows, 'counts' => $counts]);
@@ -631,8 +1080,11 @@ class AdminController extends Controller
         $r = \App\Models\Review::find($id);
         if (!$r) return response()->json(['error' => 'not_found'], 404);
 
+        // `spam` is the schema's own third value and was refused here, so a
+        // review that arrived carrying it could not be moderated at all. See
+        // the note on the counts in reviews() for why both spellings stand.
         $data = $request->validate([
-            'status' => 'sometimes|string|in:pending,approved,rejected',
+            'status' => 'sometimes|string|in:pending,approved,rejected,spam',
             'reply'  => 'sometimes|nullable|string|max:5000',
         ]);
 
@@ -670,14 +1122,38 @@ class AdminController extends Controller
         $agg = Order::select('customer_id', DB::raw('count(*) as n'), DB::raw('sum(total) as s'))
             ->groupBy('customer_id')->get()->keyBy('customer_id');
 
-        $rows = Customer::orderByDesc('id')->get()->map(function (Customer $c) use ($agg) {
+        /*
+         * The emirate, from where it actually lives.
+         *
+         * `$c->emirate` was read below and `customers` has no such column —
+         * the emirate is `addresses.state`, which the Phase 0 schema comments
+         * as "// Emirate". Eloquent answers a missing attribute with null
+         * rather than raising, so this column has been blank on every row of
+         * the Customers table since it shipped and nothing said why.
+         *
+         * ONE query for the whole page, not one per customer: ordered so a
+         * default shipping address wins, and keyBy() keeps the first of each
+         * customer's rows. Sorted in PHP rather than with a window function,
+         * which neither SQLite nor the older MySQL this may meet can be
+         * assumed to have.
+         */
+        $emirates = \App\Models\Address::query()
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->get(['customer_id', 'type', 'is_default', 'state'])
+            ->sortByDesc(fn ($a) => $a->type === 'shipping' ? 1 : 0)
+            ->filter(fn ($a) => trim((string) $a->state) !== '')
+            ->groupBy('customer_id')
+            ->map(fn ($group) => trim((string) $group->first()->state));
+
+        $rows = Customer::orderByDesc('id')->get()->map(function (Customer $c) use ($agg, $emirates) {
             $a = $agg->get($c->id);
             return [
                 'id'         => $c->id,
                 'name'       => $c->name,
                 'email'      => $c->email,
                 'phone'      => $c->phone,
-                'emirate'    => $c->emirate,
+                'emirate'    => $emirates[$c->id] ?? null,
                 'orders'     => $a ? (int) $a->n : 0,
                 'spent_aed'  => $a ? (int) round(($a->s ?? 0) / 100) : 0,
                 'created_at' => $c->created_at,
