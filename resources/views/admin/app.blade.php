@@ -66,7 +66,12 @@ svg{display:block}
 ::-webkit-scrollbar-thumb:hover{background:#c3cad9;background-clip:content-box}
 
 /* ---------- layout ---------- */
-.app{display:grid;grid-template-columns:248px 1fr;height:100vh}
+/* The console fills the browser and stops at 1920px, centred beyond that.
+   It used to be full-bleed with the content capped at 1180px instead, which
+   put the cap in the wrong place: on a 1920px screen 468px of empty page sat
+   to the right of every table, and on a 2560px screen 1108px did. Measured
+   before this change at seven widths; below 1440px nothing here applies. */
+.app{display:grid;grid-template-columns:248px 1fr;height:100vh;max-width:1920px;margin-inline:auto;width:100%}
 .side{background:rgba(255,255,255,.72);backdrop-filter:blur(14px);border-right:1px solid var(--border);
   display:flex;flex-direction:column;min-height:0}
 .brand{display:flex;align-items:center;gap:11px;padding:18px 18px 14px}
@@ -147,7 +152,10 @@ svg{display:block}
 body[data-env="sandbox"] .envbar{display:flex}
 .envbar svg{width:15px;height:15px}
 
-.content{flex:1;overflow-y:auto;padding:24px;min-height:0}
+/* Fluid padding: 24px on a desktop, down to 14px on a phone, so a narrow
+   screen spends its width on content rather than on margins. clamp() rather
+   than another breakpoint because it has no edges to get wrong. */
+.content{flex:1;overflow-y:auto;padding:clamp(14px,1.4vw,24px);min-height:0}
 .view{display:none;animation:fade .3s var(--ease)}
 .view.on{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -155,7 +163,11 @@ body[data-env="sandbox"] .envbar{display:flex}
 /* ---------- components ---------- */
 .row{display:flex;align-items:center;gap:12px}
 .between{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.wrap{max-width:1180px}
+/* The 1180px cap moved up to .app, so this fills whatever the console has.
+   Long prose is still held to a readable measure where it matters -- see
+   .page-head p (680px) and .echelp (60ch) -- so widening this affects the
+   things that wanted the room (tables, card grids) and not body copy. */
+.wrap{max-width:100%;min-width:0}
 .page-head{margin-bottom:18px}
 .page-head h2{font-size:20px;font-weight:700;letter-spacing:-.015em}
 .page-head p{font-size:13px;color:var(--ink-soft);margin-top:3px;max-width:680px}
@@ -592,7 +604,10 @@ tr.invdirty{background:var(--accent-soft)}
 .skinsw-l{font-size:11px;color:#475569;line-height:1.3;display:block}
 
 /* ---------- Store · Ecommerce ---------- */
-.ecwrap{max-width:1020px}
+/* Settings pages keep a reading width -- a labelled form stretched to 1600px
+   is worse, not better -- but 1020px was tighter than it needed to be beside
+   a 1672px content column. */
+.ecwrap{max-width:1400px}
 .ecsearch input{border:1px solid #e6ebf2;border-radius:10px;padding:8px 12px;font:400 13px inherit;width:230px;background:#fbfcfe}
 .ecsearch input:focus{outline:0;border-color:#E0567B;box-shadow:0 0 0 3px rgba(224,86,123,.12);background:#fff}
 
