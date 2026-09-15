@@ -6,6 +6,7 @@ namespace App\Mail;
 
 use App\Models\Order;
 use App\Services\Invoices\InvoiceDocument;
+use App\Services\Mail\EmailBranding;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -40,9 +41,27 @@ class OrderInvoice extends Mailable
     /** @var array<string, mixed> */
     public array $doc;
 
+    /**
+     * Branding for `emails.layout`, which this template extends.
+     *
+     * Not inherited: this mailable extends Mailable directly rather than
+     * OrderMail, because an invoice is not an order-status email and does not
+     * carry an OrderEmailPresenter payload. That is fine right up until the
+     * shared layout grows something every mailable must supply -- which is what
+     * happened when it gained a branded masthead, and this email went out with
+     * an empty store name in it until the array below was added.
+     *
+     * TRUE, because this one is read by the customer: it prints the support
+     * block and the sign-off, unlike the merchant alert.
+     *
+     * @var array<string, mixed>
+     */
+    public array $brand;
+
     public function __construct(Order $order)
     {
         $this->doc = app(InvoiceDocument::class)->present($order);
+        $this->brand = EmailBranding::forMailable(true, class_basename(static::class));
     }
 
     public function envelope(): Envelope

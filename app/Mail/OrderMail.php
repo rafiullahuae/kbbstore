@@ -77,33 +77,10 @@ abstract class OrderMail extends Mailable
          * and no support block, which is exactly what shipped before this
          * release and is a long way from nothing.
          */
-        try {
-            $this->brand = app(EmailBranding::class)->present(static::CUSTOMER_FACING);
-        } catch (\Throwable $e) {
-            /*
-             * Logged, not just swallowed. A silent catch here is how a broken
-             * support block becomes an email that goes out for months looking
-             * slightly wrong with nobody able to say why -- during this lane's
-             * own work a bad regex delimiter did exactly that, and only a
-             * preview assertion caught it. One line, no body, no recipient.
-             */
-            Log::warning('order email branding failed; falling back to the plain header', [
-                'mailable' => class_basename(static::class),
-                'exception' => class_basename($e),
-                'message' => $e->getMessage(),
-            ]);
-
-            $this->brand = [
-                'customerFacing' => static::CUSTOMER_FACING,
-                'storeName' => (string) config('app.name', 'K Beauty Bliss'),
-                'wordmark' => [(string) config('app.name', 'K Beauty Bliss'), ''],
-                'logoUrl' => null,
-                'support' => [],
-                'hasSupport' => false,
-                'signature' => [],
-                'colours' => EmailBranding::PALETTE,
-            ];
-        }
+        $this->brand = EmailBranding::forMailable(
+            static::CUSTOMER_FACING,
+            class_basename(static::class)
+        );
     }
 
     /** The order number, for tests and for subject lines. */

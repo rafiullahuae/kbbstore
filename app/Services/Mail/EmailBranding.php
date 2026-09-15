@@ -98,6 +98,61 @@ class EmailBranding
      *
      * @return array<string, mixed>
      */
+    /**
+     * The branding array a Mailable needs, with the failure already handled.
+     *
+     * Every mailable that renders `emails.layout` needs a `$brand`, and the
+     * layout reads its wordmark, its colours and its support block straight out
+     * of it -- so a mailable that does not build one renders a masthead with no
+     * store name in it. That is not hypothetical: OrderInvoice extends Mailable
+     * directly rather than OrderMail, and the moment the layout grew a branded
+     * masthead its invoice email started going out with an empty wordmark,
+     * which is what this method exists to make impossible to repeat.
+     *
+     * The try/catch is the same contract OrderMail already had and the reason
+     * this is a method rather than a constructor call: branding is decoration,
+     * and decoration that throws must never be why a customer hears silence
+     * about an order they paid for. The failure is logged rather than swallowed
+     * -- a silent catch is how a broken support block becomes an email that
+     * goes out for months looking slightly wrong with nobody able to say why.
+     *
+     * @return array<string, mixed>
+     */
+    public static function forMailable(bool $customerFacing, string $mailable): array
+    {
+        try {
+            /*
+             * Resolved from the container rather than newed up: this class
+             * reads SettingsService, MailSettings and HeaderSettings, all bound
+             * scoped so one request shares one decrypted credential row and one
+             * settings snapshot. Newing it here would build a second set.
+             */
+            return app(self::class)->present($customerFacing);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning(
+                'order email branding failed; falling back to the plain header',
+                [
+                    'mailable' => $mailable,
+                    'exception' => class_basename($e),
+                    'message' => $e->getMessage(),
+                ]
+            );
+
+            $name = (string) config('app.name', 'K Beauty Bliss');
+
+            return [
+                'customerFacing' => $customerFacing,
+                'storeName' => $name,
+                'wordmark' => [$name, ''],
+                'logoUrl' => null,
+                'support' => [],
+                'hasSupport' => false,
+                'signature' => [],
+                'colours' => self::PALETTE,
+            ];
+        }
+    }
+
     public function present(bool $customerFacing = true): array
     {
         $support = $customerFacing ? $this->support() : [];
