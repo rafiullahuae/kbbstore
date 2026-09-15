@@ -622,6 +622,8 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
      * Created here rather than in the seed above because nothing else in this
      * file needs one.
      */
+    $review = Review::query()->firstOrFail();
+
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
         'type' => 'percent',
@@ -651,6 +653,10 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // Groups redemptions per coupon and counts them beside the row, which
         // is the aggregate-plus-row shape MySQL's ONLY_FULL_GROUP_BY rejects.
         'admin-api/coupons/{coupon}' => '/admin-api/coupons/' . $coupon->id,
+        // Reads one review with its product, and recomputes nothing -- but it
+        // is a parameterised admin GET and the point of this list is that no
+        // such route gets to skip the walk unexamined.
+        'admin-api/reviews/{review}' => '/admin-api/reviews/' . $review->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */

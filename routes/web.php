@@ -476,6 +476,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::get('/reviews',               [AdminController::class, 'reviews']);
         Route::put('/reviews/{id}',          [AdminController::class, 'updateReview']);
         Route::post('/reviews/bulk',         [AdminController::class, 'bulkReviews']);
+
+        // Store → Reviews → All Reviews. Required AFTER the three routes above,
+        // and on deliberately distinct paths: Laravel dispatches the first
+        // match, so an identical method+URI here would be dead code that still
+        // looked wired. Inside this group because the list returns author_email
+        // and the detail view returns the reviewer's IP.
+        require __DIR__.'/reviews-admin.php';
         Route::get('/customers',             [AdminController::class, 'customers']);
         Route::get('/quiz-leads',            [AdminController::class, 'quizLeads']);
         Route::get('/orders',                [AdminController::class, 'orders']);
