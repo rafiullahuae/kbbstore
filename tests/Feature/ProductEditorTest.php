@@ -1037,6 +1037,55 @@ it('still never leaks internal columns through the public API', function () {
 
 /* --------------------------------------------------------- the sanitiser */
 
+it('drops a hostile element WHOLE, including children the parser keeps as text', function () {
+    /*
+     * WHY THIS TEST EXISTS, which is worth spelling out because it was added
+     * after a mutation survived.
+     *
+     * Removing 'script' from RichText::DROP_WHOLE — the change that should turn
+     * `<script>alert(1)</script>` into the visible text `alert(1)` — left the
+     * whole suite GREEN. The reason is a second layer nobody designed as one:
+     * libxml hands the contents of `<script>` and `<style>` back as CDATA
+     * sections, not text nodes, and walk() removes every node that is neither
+     * an element nor a text node. So the payload died even with the tag merely
+     * unwrapped, and no consequence test could tell the two configurations
+     * apart.
+     *
+     * That redundancy is real protection, but it is also a coupling: the day
+     * someone makes walk() preserve CDATA (to stop eating something else), the
+     * DROP_WHOLE entry becomes the only thing standing there, and nothing would
+     * have told them. So both halves are pinned.
+     *
+     * The elements below are the ones where DROP_WHOLE is genuinely
+     * load-bearing: their children are ORDINARY TEXT, which walk() keeps, so
+     * unwrapping them really would promote the payload onto the page.
+     */
+    foreach ([
+        ['<form action="https://evil.test">Enter your card number</form>', 'Enter your card number'],
+        ['<iframe src="https://evil.test">Your browser cannot show this</iframe>', 'Your browser cannot show this'],
+        ['<object data="x">fallback text</object>', 'fallback text'],
+        ['<textarea>raw payload</textarea>', 'raw payload'],
+        ['<noscript>enable javascript</noscript>', 'enable javascript'],
+        ['<button onclick="x">Press me</button>', 'Press me'],
+        ['<select><option>choice</option></select>', 'choice'],
+    ] as [$payload, $childText]) {
+        expect(RichText::clean($payload))->not->toContain($childText);
+    }
+});
+
+it('keeps script and style contents out, by both of the layers that stop them', function () {
+    // Layer 1: the tag is on the drop-whole list.
+    $reflection = new ReflectionClass(RichText::class);
+    $dropWhole = $reflection->getConstant('DROP_WHOLE');
+
+    expect($dropWhole)->toContain('script', 'style', 'iframe', 'object', 'embed', 'form', 'svg');
+
+    // Layer 2: whatever the parser calls the contents, only elements and text
+    // survive the walk — and libxml calls a script body a CDATA section.
+    expect(RichText::clean('<script>alert(1)</script>'))->toBe('')
+        ->and(RichText::clean('<style>body{display:none}</style>'))->toBe('');
+});
+
 it('sanitises the strings an attacker would actually send', function () {
     foreach ([
         '<script>alert(1)</script>',
