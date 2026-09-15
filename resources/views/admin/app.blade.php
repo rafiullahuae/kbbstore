@@ -7399,7 +7399,15 @@ buildNav();
   addLogout();
 })();
 </script>
+@endverbatim
 
+{{-- Store -> New Order. Its own file so the screen can be reviewed, reverted
+     and merged without touching the rest of this one. It appends its sidebar
+     entry to the rendered nav and wraps window.go, both after the script
+     above has run. --}}
+@include('admin.partials.manual-order-screen')
+
+@verbatim
 </body>
 </html>
 
