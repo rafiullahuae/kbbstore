@@ -1,0 +1,59 @@
+{
+  "_README": [
+    "The advisories this repository has assessed and accepted, keyed by Composer's",
+    "stable `advisoryId`. The CI job 'Dependency advisories' diffs the live",
+    "`composer audit` against this file so that a genuinely new advisory stands out",
+    "instead of being lost among the known three.",
+    "",
+    "CI never fails on an advisory — a vulnerability disclosed upstream is not the",
+    "fault of the PR that happens to run next. It fails only if THIS FILE and the",
+    "audit disagree in a way a human has not looked at yet.",
+    "",
+    "Three states, all reported:",
+    "  KNOWN      - id is here and in the audit. Printed with its verdict, one line.",
+    "  NEW        - id is in the audit and not here. Loud. Assess it, then add it.",
+    "  RESOLVED   - id is here and no longer in the audit. Equally loud: it means",
+    "               upstream fixed it or the package moved, and the accepted-risk",
+    "               note below is now a lie that should be deleted.",
+    "",
+    "To accept a new advisory, add an entry with a REAL verdict — which code path",
+    "in this application reaches it, and what an attacker could do. 'Not exploited",
+    "yet' is not a verdict. See docs/DEPENDENCY-ADVISORIES.md for the long form."
+  ],
+
+  "reviewed_at": "2026-09-15",
+  "reviewed_against": "laravel/framework v11.56.1, symfony/mime v7.4.17, egulias/email-validator 4.0.4",
+
+  "accepted": {
+    "PKSA-3r5d-mb8f-1qw9": {
+      "package": "laravel/framework",
+      "title": "Laravel Framework: CRLF injection in default email rule",
+      "ghsa": "GHSA-5vg9-5847-vvmq",
+      "severity": "high",
+      "fixed_in": "12.60.0",
+      "real_exposure": "none",
+      "verdict": "Reachable in validation, unreachable at the sink. The default `email` rule does accept two CRLF-bearing forms here (measured, not assumed: \"us\\r\\ner\"@example.com and user\\r\\n @example.com). But Symfony\\Component\\Mime\\Address::__construct rejects /[\\x00-\\x1F\\x7F]/ before any header is written, and every mail path in this app goes through it. The only two senders (Customer password reset, Customer email verification) additionally read the recipient back out of the database and run App\\Rules\\StorefrontEmail over it first. Pinned by tests/Feature/DependencyAdvisoryExposureTest.php."
+    },
+
+    "PKSA-mdq4-51ck-6kdq": {
+      "package": "laravel/framework",
+      "title": "Laravel CRLF injection in default email rule",
+      "cve": "CVE-2026-48019",
+      "ghsa": "GHSA-5vg9-5847-vvmq",
+      "severity": "unscored",
+      "fixed_in": "12.60.0",
+      "real_exposure": "none",
+      "verdict": "The same defect as PKSA-3r5d-mb8f-1qw9, reported a second time through FriendsOfPHP/security-advisories rather than GitHub. Composer lists both, which is most of why 'three advisories' has always sounded worse than it is: there are two distinct defects, not three. Same verdict."
+    },
+
+    "PKSA-m5cs-t1y6-qpcs": {
+      "package": "laravel/framework",
+      "title": "Laravel Framework: Temporary Signed URL Path Confusion",
+      "ghsa": "GHSA-crmm-hgp2-wgrp",
+      "severity": "medium",
+      "fixed_in": "12.61.1",
+      "real_exposure": "none",
+      "verdict": "Unreachable by architecture. Nothing in app/ or routes/ calls signedRoute(), temporarySignedRoute(), hasValidSignature() or applies the 'signed' middleware — App\\Support\\CustomerLinkSigner replaced them deliberately, and it HMACs a canonical claim string containing no URL, so there is no path to confuse. Held by the source-tree assertion in tests/Feature/DependencyAdvisoryExposureTest.php, which fails if a lane reintroduces one."
+    }
+  }
+}
