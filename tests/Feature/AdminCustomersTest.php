@@ -808,8 +808,19 @@ it('runs a bounded number of queries on the detail page too', function () {
 
     DB::disableQueryLog();
 
-    // The customer, their orders, their addresses. Not one query per order.
-    expect($count)->toBeLessThanOrEqual(6, 'the customer detail page is running ' . $count . ' queries');
+    /*
+     * The customer, their orders, their addresses. Not one query per order.
+     *
+     * 6 -> 7: the spend figures now exclude demo orders, and DemoSeed asks once
+     * per request whether `demo_seed_log` exists before it joins to it -- the
+     * table is created lazily by DemoContentController::ensureTable(), so a
+     * build whose migration step was skipped must degrade rather than 500. That
+     * is one CONSTANT statement, which is the kind of change this bound is meant
+     * to permit; the property it exists to defend is unchanged and still pinned
+     * by the list test above, where the same count for a tenth of the rows is
+     * what "not N+1" means.
+     */
+    expect($count)->toBeLessThanOrEqual(7, 'the customer detail page is running ' . $count . ' queries');
 });
 
 /* ---------------------------------------------------------------- the screen */

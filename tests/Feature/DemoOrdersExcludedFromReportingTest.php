@@ -335,3 +335,69 @@ it('leaves every reported figure unchanged when demo orders are imported for rea
     expect($after->json('demo.excluded'))->toBeTrue()
         ->and($after->json('demo.orders'))->toBe(8);
 });
+
+/*
+ * The Customers screen the owner actually opens is /admin-api/customers/list,
+ * served by CustomersApiController -- a different controller from the legacy
+ * /admin-api/customers above. Its lifetime-spend column, its store-wide average
+ * order value and every date on it were all computed without knowing demo
+ * content or the shop's clock existed.
+ */
+it('keeps demo orders out of the Customers screen spend column', function () {
+    $admin = demoAdmin();
+    $product = demoProduct('Real Serum', 5000);
+
+    $real = demoCustomer('Real');
+    demoOrderFor($real, $product, 10000);
+
+    $fake = demoCustomer('Fake');
+    $fakeOrder = demoOrderFor($fake, $product, 90000);
+    markDemo('orders', Order::class, $fakeOrder->id);
+
+    $body = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/customers/list')
+        ->assertOk();
+
+    $rows = collect($body->json('customers'));
+
+    $realRow = $rows->firstWhere('email', $real->email);
+    expect($realRow)->not->toBeNull()
+        ->and($realRow['spend_fils'])->toBe(10000);
+
+    $fakeRow = $rows->firstWhere('email', $fake->email);
+    expect($fakeRow)->not->toBeNull()
+        ->and($fakeRow['spend_fils'])->toBe(0, 'a demo order counted towards a lifetime-spend column');
+
+    // The store-wide summary is built from the same aggregate, so it must agree.
+    expect($body->json('summary.spend_fils'))
+        ->toBe(10000, 'the store-wide lifetime revenue still includes demo orders');
+});
+
+it('dates the Customers screen on the shop clock', function () {
+    $admin = demoAdmin();
+
+    $customer = Customer::create([
+        'name' => 'Night Owl', 'first_name' => 'Night', 'last_name' => 'Owl',
+        'email' => 'owl-' . uniqid() . '@example.test', 'password' => 'secret-secret',
+        // 01:30 on the 16th in Dubai; stored as 21:30 on the 15th, UTC.
+        'created_at' => \Carbon\CarbonImmutable::parse('2026-09-15 21:30:00', 'UTC'),
+    ]);
+
+    app(\App\Services\SettingsService::class)->set(\App\Support\StoreTime::SETTING_KEY, 'Asia/Dubai');
+
+    $rows = collect($this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/customers/list')
+        ->assertOk()
+        ->json('customers'));
+
+    $row = $rows->firstWhere('email', $customer->email);
+    expect($row)->not->toBeNull();
+
+    $joined = (string) ($row['registered_at'] ?? '');
+
+    expect(substr($joined, 0, 10))->toBe('2026-09-16', "the Customers screen still shows a UTC day: {$joined}")
+        // Same wire shape as toIso8601String() produced, offset included, so
+        // the console's positional slices keep working.
+        ->and(preg_match('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}$/', $joined))
+        ->toBe(1, "the wire shape changed: {$joined}");
+});

@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Support\DemoSeed;
 use App\Support\Money;
+use App\Support\StoreTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -541,7 +543,15 @@ class CustomersApiController extends Controller
             ->groupBy('order_id')
             ->selectRaw('order_id, COALESCE(SUM(amount), 0) as refunded_fils');
 
-        $orders = DB::table('orders')
+        /*
+         * Demo orders are not spend. Store -> Demo Content seeds eight of them
+         * and logs each in `demo_seed_log`; without this they counted towards
+         * a customer's lifetime value, the store-wide average order value and
+         * every band filter on this screen, so turning demo content on moved
+         * figures the owner reads as real money. Same definition of "demo" as
+         * the Dashboard and Analytics use -- see App\Support\DemoSeed.
+         */
+        $orders = DemoSeed::excludeQuery(DB::table('orders'), Order::class, 'orders.id')
             ->leftJoinSub($refunded, 'rf', 'rf.order_id', '=', 'orders.id')
             ->whereNull('orders.deleted_at')
             ->whereNotNull('orders.customer_id')
@@ -963,7 +973,18 @@ class CustomersApiController extends Controller
             return null;
         }
 
-        return $when->toIso8601String();
+        /*
+         * Converted to the shop's clock on the way out -- every date this
+         * screen shows funnels through here, so one conversion covers the
+         * joined date, the last order and the last activity at once.
+         *
+         * CONVERTED, not reinterpreted: the instant is unchanged and the string
+         * still carries an offset, exactly as toIso8601String() did, so the
+         * console's positional slice() calls keep working. Without it these
+         * were UTC days, and a customer who first ordered at 01:30 in Dubai
+         * joined "yesterday". See App\Support\StoreTime.
+         */
+        return StoreTime::iso($when);
     }
 
     private function blankToNull(mixed $value): ?string
