@@ -47,10 +47,34 @@
     <div class="fbot">
         <div>© {{ date('Y') }} {{ $kbbSettings->get('store_name', 'K-Beauty Bliss') }} UAE</div>
         <div class="fpay"><span>Tabby</span><span>Tamara</span><span>Visa</span><span>Mastercard</span><span>Apple Pay</span><span>COD</span></div>
+        {{-- THE OWNER'S OWN PROFILES, NOT THE ONES THIS FILE WAS WRITTEN WITH.
+
+             `social_instagram`, `social_tiktok` and `social_facebook` are real
+             settings: validated in AdminController::SETTING_RULES, editable on
+             Store → Search appearance, and already published in the schema.org
+             `sameAs` node. So an owner who corrected a profile URL watched the
+             structured data change and the footer of every page go on linking
+             the old one — two things that must agree, disagreeing, with the
+             wrong half being the one shoppers can actually click.
+
+             The shipped literal stays as the fallback, so a shop that has never
+             opened that screen keeps exactly the footer it has always had. A
+             value the owner has deliberately CLEARED drops the icon instead of
+             falling back, because blank is an answer: see SupportContact's
+             header on why an empty row is not an absent one. --}}
+        @php
+            $fsoc = array_filter([
+                ['Instagram', 'IG', $kbbSettings->get('social_instagram', 'https://www.instagram.com/kbeauty.bliss/')],
+                ['TikTok',    'TT', $kbbSettings->get('social_tiktok',    'https://www.tiktok.com/@kbeauty.bliss')],
+                ['Facebook',  'FB', $kbbSettings->get('social_facebook',  'https://www.facebook.com/kbeautyblissuae')],
+            ], static fn (array $s) => trim((string) $s[2]) !== '');
+        @endphp
+        @if ($fsoc !== [])
         <div class="fsoc">
-            <a href="https://www.instagram.com/kbeauty.bliss/" aria-label="Instagram">IG</a>
-            <a href="https://www.tiktok.com/@kbeauty.bliss" aria-label="TikTok">TT</a>
-            <a href="https://www.facebook.com/kbeautyblissuae" aria-label="Facebook">FB</a>
+            @foreach ($fsoc as [$label, $short, $url])
+            <a href="{{ trim((string) $url) }}" aria-label="{{ $label }}">{{ $short }}</a>
+            @endforeach
         </div>
+        @endif
     </div>
 </div></footer>
