@@ -99,7 +99,10 @@ class CheckoutController extends Controller
         // opened. Order of precedence: what they chose, then their saved
         // address, then detection, then the store's own country. Detection
         // never overrides a person who has already said where they are.
-        $extended = app(\App\Services\ExtendedDelivery::class);
+        // (The Extended service itself is no longer resolved here: the one thing
+        // this method asked it for, the arrival estimate, is now deliveryEta()
+        // below, so the page and the country-change refresh cannot answer
+        // differently.)
         $countries = $this->countries();
 
         /*
@@ -160,7 +163,7 @@ class CheckoutController extends Controller
             'defaultCountry' => $country,
             'countryDetected' => $wasDetected,
             'unservedCountry' => $unserved,
-            'deliveryEta' => $extended->enabled() ? $extended->etaFor($country) : null,
+            'deliveryEta' => $this->deliveryEta($country),
             'deliveryText' => $this->deliveryText($country),
             'showBrowsed' => (bool) $this->settings->get('show_browsed', true),
             'browsed' => $this->browsed($request, $cart),
@@ -1083,9 +1086,27 @@ class CheckoutController extends Controller
 
         return response()->json([
             'ok' => true,
+            /*
+             * THE ARRIVAL ESTIMATE MOVES WITH THE COUNTRY TOO.
+             *
+             * This rendered the partial without $deliveryEta, and the partial's
+             * own header recorded the assumption behind that — "absent when
+             * called from the AJAX endpoint for a zone country, which has no
+             * estimate concept". The endpoint is not only asked about zone
+             * countries: it answers for every country in the shopper's own
+             * dropdown, Extended ones included. So a shopper who arrived on a
+             * country with an estimate and changed to another watched "Arrives
+             * in 5-7 days" disappear and never return, however many times they
+             * changed it back.
+             *
+             * Exactly the defect `deliveryText` below was added to this response
+             * for, one field along. Asked of deliveryEta(), the same method the
+             * page itself uses, so the two cannot answer differently.
+             */
             'deliveryHtml' => view('partials.checkout.delivery-options', [
                 'rates' => $rates,
                 'chosenRate' => $chosen,
+                'deliveryEta' => $this->deliveryEta($country),
             ])->render(),
             // The same partial the page renders, fed the freshly recomputed
             // totals — the free-shipping bar's threshold, percentage and
@@ -1479,6 +1500,55 @@ class CheckoutController extends Controller
     private function deliveryText(string $country): string
     {
         return app(\App\Support\DeliveryLine::class)->for($country);
+    }
+
+    /**
+     * "Arrives in …" for this destination, or null when there is no estimate.
+     *
+     * ── A DURATION, NOT A SENTENCE, AND THAT IS WHY THERE ARE TWO OF THESE ──
+     *
+     * Three separate lanes read `delivery_texts` and `delivery_countries.eta`
+     * as one duplicated idea waiting to be merged. They are not, and the two
+     * methods sitting here side by side are the clearest statement of it:
+     *
+     *   deliveryText()  a WHOLE SENTENCE the owner wrote, standing on its own
+     *                   under Place order, on the home page, on the product page
+     *                   and on the order confirmation. Any country. It may carry
+     *                   {country}. It is what the Gulf actually uses.
+     *
+     *   deliveryEta()   a FRAGMENT of at most 40 characters, printed after the
+     *                   fixed words "Arrives in " in the delivery options and
+     *                   nowhere else. Only while Extended delivery is on, and
+     *                   only for a country NO ZONE COVERS —
+     *                   ExtendedDeliveryApiController refuses one that a zone
+     *                   already serves, which means the Gulf can never have one.
+     *
+     * A row reading "Delivered across Saudi Arabia" records a sentence, not a
+     * number of days; folding the two together would either print "Arrives in
+     * Delivered across Saudi Arabia" or throw the sentence away to keep a
+     * duration. ProductController's `cutoff()` header refuses the same
+     * conflation for the same reason.
+     *
+     * ── COSTS NOTHING WHILE EXTENDED IS OFF ────────────────────────────────
+     *
+     * enabled() is a settings read, and ExtendedDelivery::countries() returns
+     * early on it, so `delivery_countries` is not touched at all in the shipped
+     * default state. StorefrontQueryBudgetTest's checkout ceiling was measured
+     * with Extended off and does not have to move for this.
+     *
+     * ── AND IT IS A METHOD BECAUSE TWO CALLERS NEED THE SAME ANSWER ────────
+     *
+     * The page renders it and the rates endpoint re-renders it. The endpoint
+     * used to render the delivery options WITHOUT it, so switching country made
+     * the arrival estimate vanish and never come back — the identical defect
+     * deliveryText() was extracted to fix, entering through the one door that
+     * did not go past it.
+     */
+    private function deliveryEta(string $country): ?string
+    {
+        $extended = app(\App\Services\ExtendedDelivery::class);
+
+        return $extended->enabled() ? $extended->etaFor($country) : null;
     }
 
     private function browsed(Request $request, $cart)

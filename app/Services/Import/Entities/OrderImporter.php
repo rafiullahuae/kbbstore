@@ -75,6 +75,33 @@ final class OrderImporter extends EntityImporter
         return 'orders.csv';
     }
 
+    /**
+     * NO CUSTOMER IS EMAILED ABOUT AN ORDER FROM 2023 BECAUSE THIS RAN.
+     *
+     * ImportContext::apply() saves an Order, an existing order's save fires
+     * Eloquent's `updated` event, App\Services\Mail\OrderMailObserver listens to
+     * it, and the standing rule for `shipped` and `cancelled` is ON — because
+     * that is what the shop should do when a real operator moves a real order.
+     * So a delta pass carrying the statuses a Woo store has moved to since the
+     * last export mailed real customers, at their real addresses, about parcels
+     * that arrived years ago. One message per changed row; the bigger the
+     * re-sync, the louder.
+     *
+     * A FIRST import never did this — a new row fires `created`, which the
+     * observer does not listen to — and neither does a dry run, whose whole
+     * transaction is rolled back before DB::afterCommit() fires. It is the
+     * second and every later pass, which is the pass this importer exists for.
+     *
+     * The runner reads this, holds customer status mail for the length of the
+     * entity, and reports how many messages that came to. See
+     * EntityImporter::suppressesCustomerMailBecause() for what is and is not
+     * suppressed, and why this is not solved by joining the status funnel.
+     */
+    public function suppressesCustomerMailBecause(): ?string
+    {
+        return 'an import re-states what WooCommerce already recorded, so it is not news to the customer';
+    }
+
     public function import(Row $row, ImportContext $context): void
     {
         $wcOrderId = $row->requireId('order_id', 'order_id', 'id', 'wc_order_id', 'post_id');

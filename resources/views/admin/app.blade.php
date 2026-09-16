@@ -7919,11 +7919,26 @@ function shTabs(){
   // one thing that was easy to skim past when looking for where the Gulf
   // charges live.
   const lineCount = (DLINES && DLINES.rows) ? DLINES.rows.length : 0;
+  /* TWO OF THESE TABS WRITE ABOUT DELIVERY TIME, AND THEY ARE NOT THE SAME
+     THING. Three separate reviews read them as one duplicated idea, so each
+     hint now names the other one and says what the difference is:
+
+       Delivery lines   a WHOLE SENTENCE, any country, shown under Place order
+                        and on the home page, the product page and the order
+                        confirmation.
+       Extended         a DURATION of a few words, printed after the fixed words
+                        "Arrives in" in the delivery options at checkout, only
+                        for countries added on that tab — which never includes a
+                        zone country, so the Gulf cannot have one at all.
+
+     Neither replaces the other, and a country can carry both. The Delivery
+     lines tab shows the Extended estimate beside the row when it does, so there
+     is one place to read both sentences a shopper gets. */
   const hints = {
     zones: 'Your current delivery charges — including the Gulf countries — are the cards below.',
     gift: 'An optional gift-wrap tick at checkout, and what it costs.',
-    lines: 'The sentence a shopper reads under Place order, written once per country.',
-    extended: 'Countries added here on top of your zones.'
+    lines: 'The sentence a shopper reads under Place order, written once per country. The short “Arrives in” wording for countries you added under Extended is separate, and is on that tab.',
+    extended: 'Countries added here on top of your zones. Their “Arrives in” wording is a few words shown at checkout — the full delivery sentence is on the Delivery lines tab.'
   };
   return `<div class="ectabs">
     <button class="ectab${SHTAB==='zones'?' on':''}" data-shtab="zones">Zones</button>
@@ -8331,6 +8346,39 @@ function dlPresetBar(){
   return pstBarHtml('delivery', {id:'dlPresets', filled:dlFilled});
 }
 
+/* THE OTHER PER-COUNTRY DELIVERY WORDING, SHOWN WHERE IT CAN BE READ BESIDE
+   THIS ONE.
+
+   `delivery_countries.eta` is the "Arrives in …" wording on the Extended tab.
+   It is NOT this sentence and cannot be merged with it: it is a DURATION of a
+   few words completing a fixed phrase in the delivery options, capped at 40
+   characters, only alive while Extended delivery is on, and only available for
+   countries no zone covers — the Extended tab refuses a zone country outright,
+   which is why the Gulf, the whole reason this screen exists, can never have
+   one.
+
+   What WAS wrong is that neither tab admitted the other existed, so three
+   separate reviews read two fields as one duplicate. A shopper in a country
+   that has both reads both, on one page, one under the delivery options and one
+   under Place order. This is the line that lets the owner read them together
+   before that happens.
+
+   XD is already loaded whenever this screen paints — renderShipping() awaits
+   loadExtended() before any tab is drawn — so this costs no request. It is
+   read defensively all the same: a shop with Extended off, or with the table
+   missing, must not take the Delivery lines tab down with it. */
+function dlExtendedEta(code){
+  if(!XD || !XD.on || !Array.isArray(XD.rows)) return '';
+  const row = XD.rows.filter(r => r && String(r.code||'').toUpperCase() === String(code||'').toUpperCase() && r.enabled)[0];
+  return row ? String(row.eta||'').trim() : '';
+}
+
+function dlExtendedNote(row){
+  const eta = dlExtendedEta(row.country);
+  if(!eta) return '';
+  return `<div class="dl-prev" data-dl-eta>Extended delivery also tells shoppers here: <b>Arrives in ${escHtml(eta)}</b> — edit that on the <u>Extended</u> tab.</div>`;
+}
+
 function dlRow(row, i){
   return `<div class="dl-row" data-dl-row="${i}">
     <select data-dl-country="${i}">${dlCountrySelect(row.country)}</select>
@@ -8338,6 +8386,7 @@ function dlRow(row, i){
            placeholder="What shoppers in this country are told">
     <button type="button" class="dl-x" data-dl-remove="${i}" aria-label="Remove this country">&times;</button>
     ${dlPreview(row)}
+    ${dlExtendedNote(row)}
   </div>`;
 }
 

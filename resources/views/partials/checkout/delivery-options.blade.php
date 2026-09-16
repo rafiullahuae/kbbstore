@@ -4,8 +4,21 @@
     when the country changes renders the exact same markup the page itself
     does, rather than a second copy that could drift from it.
 
-    Inputs: $rates, $chosenRate. $deliveryEta is optional — absent when called
-    from the AJAX endpoint for a zone country, which has no estimate concept.
+    Inputs: $rates, $chosenRate, $deliveryEta.
+
+    $deliveryEta IS NOW PASSED BY BOTH CALLERS, and the note that used to stand
+    here — "absent when called from the AJAX endpoint for a zone country, which
+    has no estimate concept" — was the bug. The endpoint answers for every
+    country in the shopper's dropdown, Extended ones included, so a shopper who
+    changed country watched "Arrives in 5-7 days" vanish and never come back.
+    CheckoutController::deliveryEta() is the one answer both callers ask for.
+
+    It is still guarded rather than assumed: null and empty both mean "there is
+    nothing true to say about arrival here", which is the ordinary state of a
+    zone country and of a shop with Extended delivery switched off. An arrival
+    estimate is a DURATION and is not the delivery line — that is a whole
+    sentence, written on the Delivery lines tab, and it is rendered by
+    partials/checkout/delivery-line.blade.php under Place order.
 --}}
 @forelse ($rates as $i => $rate)
     <ul id="shipping_method" class="woocommerce-shipping-methods">

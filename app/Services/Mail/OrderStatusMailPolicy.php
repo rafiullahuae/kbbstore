@@ -129,7 +129,83 @@ class OrderStatusMailPolicy
      */
     private ?bool $forRequest = null;
 
+    /**
+     * Why customer mail is being held back right now, or null when it is not.
+     *
+     * NOT A THIRD KIND OF DECISION. The two above are somebody CHOOSING whether
+     * a customer hears about a change. This is the opposite: a statement that
+     * the writes happening right now are not events in the customer's life at
+     * all, so there is nothing to tell them about. The WooCommerce importer
+     * re-syncs historical statuses onto orders that already exist, and every one
+     * of those saves fires Eloquent's `updated` event and reaches this class —
+     * which is how re-running an import could tell a real person that the order
+     * they placed in 2023 had just shipped.
+     *
+     * IT OUTRANKS EVERYTHING, including a per-order `notify` tick. Nothing that
+     * could be ticked on a screen exists during an import, so the only way a
+     * decision could be in the bag at that moment is by having leaked from
+     * earlier in the process — and a leak must not be able to turn the
+     * suppression off.
+     */
+    private ?string $suppressedBecause = null;
+
+    /** How many messages the suppression has held back, for the caller to report. */
+    private int $suppressed = 0;
+
     public function __construct(private SettingsService $settings) {}
+
+    /* --------------------------------------------------- bulk, machine writes */
+
+    /**
+     * Run $work with customer status mail held back, and put it back afterwards.
+     *
+     * ── WHAT THIS SUPPRESSES, EXACTLY ──────────────────────────────────────
+     *
+     * The status-change email to the CUSTOMER, and nothing else. Refund mail is
+     * driven by the `refunds` row settling rather than by a status column and
+     * never passes through here; the merchant copies, the invoice, the test send
+     * and everything else in OrderMailer are equally untouched. An import that
+     * silently muted the whole application would be a worse hazard than the one
+     * it was fixing, so the narrowness is the point and it is asserted by tests
+     * rather than described here.
+     *
+     * ── AND IT IS COUNTED ──────────────────────────────────────────────────
+     *
+     * suppressedCount() rises once per message held back, so the caller can say
+     * so out loud. The importer does: the run's report carries a note naming the
+     * number of customers who were not written to. Silence that nobody can see
+     * afterwards is indistinguishable from mail that failed.
+     *
+     * ── try/finally, DELIBERATELY ──────────────────────────────────────────
+     *
+     * This service is bound `scoped`, which in a CLI import means it lives as
+     * long as the process. A suppression that leaked past an import that threw
+     * would leave the shop unable to email anybody for the rest of that process,
+     * with nothing on any screen to say why. The previous value is restored
+     * rather than null, so nesting cannot silently un-suppress an outer run.
+     *
+     * @template T
+     *
+     * @param  callable():T  $work
+     * @return T
+     */
+    public function whileSuppressed(string $reason, callable $work): mixed
+    {
+        $previous = $this->suppressedBecause;
+        $this->suppressedBecause = $reason;
+
+        try {
+            return $work();
+        } finally {
+            $this->suppressedBecause = $previous;
+        }
+    }
+
+    /** How many customer messages have been held back in this process so far. */
+    public function suppressedCount(): int
+    {
+        return $this->suppressed;
+    }
 
     /* ------------------------------------------------------- the standing rule */
 
@@ -247,6 +323,20 @@ class OrderStatusMailPolicy
     public function shouldNotify(Order $order, string $status): bool
     {
         if (! $this->supported($status)) {
+            return false;
+        }
+
+        /*
+         * BEFORE the decisions, not after. See $suppressedBecause: a bulk or
+         * per-order `notify` that had leaked into this process from earlier must
+         * not be able to turn an import's suppression back on. Counted here
+         * rather than at the send, because this is the point at which a message
+         * that would have gone out stops going out, and the count is what the
+         * importer reports to the owner.
+         */
+        if ($this->suppressedBecause !== null) {
+            $this->suppressed++;
+
             return false;
         }
 
