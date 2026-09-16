@@ -6213,50 +6213,132 @@ document.addEventListener('click', async e=>{
    means the later definition wins, so while this was here the real screen
    was defined and then immediately overwritten. */
 
-/* ---------- Theme ---------- */
+/* ---------- Theme ----------
+   ===== LANE DJ ==============================================================
+
+   EIGHT CARDS, EIGHT TOASTS - AND FIVE OF THE EIGHT WERE ALREADY BUILT.
+
+   Every card here carried onclick="toast('<name> - builder opens in Phase 2')".
+   The lane before this one left them deliberately, reasoning that promising a
+   future phase is a milder claim than asserting a present fact. That reasoning
+   is sound as far as it goes, and it does not go far enough: a promise that
+   something will arrive in Phase 2 is still false when the thing arrived
+   already and is two clicks away in the same sidebar. The owner pressed
+   "Homepage" on his theme screen, was told to wait for Phase 2, and had a
+   working Homepage editor the whole time. Same for the header, the mega menu,
+   the product page and the cart panel.
+
+   So this is a signpost now, the same shape Settings was given one lane ago,
+   and every card goes where it says:
+
+       Header            Appearance -> Header. Bar, logo, icons, navigation.
+       Mega Menu         Store -> Mega Menu. The visual menu builder.
+       Mobile Header     Appearance -> Mobile Header.
+       Homepage          Appearance -> Homepage. Sections, rails, promos.
+       Product page      Appearance -> Product page.
+       Cart panel        Appearance -> Cart panel. The slide-out cart.
+       Shop Filters      Storefront -> Shop Filters.
+
+   Each was opened and driven before being linked, rather than assumed from the
+   name of its render function.
+
+   THE CAPTIONS CHANGED TOO, because three of them promised more than the
+   screen behind them delivers. "Cart & Checkout" became "Cart panel": there is
+   a designer for the slide-out cart and there is none for checkout, and one
+   card covering both would have re-made this screen's original mistake one
+   level down. "Shop & Filters" no longer says "AJAX grid, off-canvas filters,
+   search" - that screen is an honest "not built yet" page which explains that
+   the panel is fixed and that the catalogue is what moves it, so the caption
+   now says that instead of describing a builder that does not exist.
+
+   THE THREE THAT ARE NOT BUILT say so, rather than being given a card that
+   goes somewhere almost-right. Typography, Colours and Performance have
+   nothing behind them anywhere in this application: there is no font setting,
+   no colour editor and no performance switch, in this console or out of it.
+   The palette printed above them is read from nothing and cannot be edited
+   here - those seven values are hard-coded in resources/css/kbb/*.css, which
+   is precisely why there is no Colours screen to send anyone to. It is shown
+   because it is true and useful to see, and it is labelled as fixed.
+   ========================================================================= */
 function renderTheme(){
   $('#content').innerHTML=`<div class="wrap">
-    <div class="page-head"><h2>K-Beauty Bliss Theme</h2><p>One place for all design, layout and storefront settings. The storefront keeps its rose identity; this is the engine that controls it.</p></div>
+    <div class="page-head"><h2>K-Beauty Bliss Theme</h2><p>This is not a screen of its own. Your storefront&rsquo;s design is set on the screens that own each part of it, and this page is the index of where each part lives.</p></div>
     <div class="card pad" style="margin-bottom:18px">
-      <div class="between"><b style="font-size:14px">Brand tokens</b><span class="pill grey">storefront palette</span></div>
+      <div class="between"><b style="font-size:14px">Brand tokens</b><span class="pill grey">fixed in the theme</span></div>
       <div class="swatches" style="margin-top:14px">
         ${['#E0567B|Rose','#C13E63|Deep','#A82F53|Ink rose','#FFF0F4|Soft','#FCE0E8|Blush','#BE8E2E|Gold','#2A2228|Ink'].map(s=>{const[c,n]=s.split('|');return `<div class="sw" style="background:${c}"><span>${n}</span></div>`}).join('')}
       </div>
-      <div style="height:14px"></div>
+      <p style="font-size:12px;color:var(--ink-soft);margin-top:12px;line-height:1.55">These are the colours your storefront actually uses. They are part of the theme&rsquo;s stylesheet rather than a setting, so they are shown here to be read, not changed &mdash; altering them is a code change.</p>
     </div>
-    <div class="sec-title">Theme areas</div>
+    <div class="sec-title">Where your design is set</div>
     <div class="tcards">
-      ${[['Header & Mega Menu','Logo, nav, visual mega-menu builder','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],
-        ['Homepage','Sections, hero, rails, promos','<rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>'],
-        ['Product Page','Gallery, swatches, sticky add-to-cart','<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/>'],
-        ['Shop & Filters','AJAX grid, off-canvas filters, search','<path d="M3 5h18M6 12h12M10 19h4"/>'],
-        ['Cart & Checkout','Cart panel, progress checkout','<circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M2 3h3l2.5 13h10L20 7H6"/>'],
-        ['Typography','Fonts, scale, weights','<path d="M4 7V5h16v2M9 19h6M12 5v14"/>'],
-        ['Colours','Link & accent palette, tokens','<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/>'],
-        ['Performance','Load only what is used','<path d="M5 13c-1.5 1.5-2 5-2 5s3.5-.5 5-2M14.5 4.5C18 3 21 3 21 3s0 3-1.5 6.5C18 13 14 16 12 17l-5-5c1-2 4-6 7.5-7.5z"/>']
-      ].map(t=>`<div class="tcard" onclick="toast('${t[0]} — builder opens in Phase 2')"><div class="ti">${ic(t[2])}</div><b>${t[0]}</b><p>${t[1]}</p></div>`).join('')}
+      ${[['Header','header','The top bar, your logo, the icons beside it and the main navigation.','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],
+        ['Mega Menu','megamenu','The drop-down menu builder &mdash; columns, links, images and what each one points at.','<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M4 11h6v9H4zM14 11h6v4h-6z"/>'],
+        ['Mobile Header','mobilehdr','The same bar as it appears on a phone: spacing, the search field and the divider under it.','<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M7 7h10"/>'],
+        ['Homepage','homepage','The sections your front page is built from, what order they run in, and the promos inside them.','<rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>'],
+        ['Product page','productpage','How a single product is laid out &mdash; the gallery, the buy box and what sits under them.','<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/>'],
+        ['Cart panel','cartpanel','The slide-out cart: its size, what it lists, how it behaves and the wording inside it.','<circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M2 3h3l2.5 13h10L20 7H6"/>'],
+        ['Shop Filters','shopfilters','What decides the filter panel on your shop page. The panel itself is fixed; your catalogue is what moves it.','<path d="M3 5h18M6 12h12M10 19h4"/>']
+      ].map(t=>`<div class="tcard" onclick="go('${t[1]}')"><div class="ti">${ic(t[3])}</div><b>${t[0]}</b><p>${t[2]}</p></div>`).join('')}
+    </div>
+    <div class="sec-title">Not built yet</div>
+    <div class="card pad">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><b style="font-size:13px">Typography</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">There is no font setting anywhere in this application. The storefront&rsquo;s typefaces, sizes and weights are part of its stylesheet, so changing them is a code change rather than something this console can offer.</p></div>
+        <div><b style="font-size:13px">Colours</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">The palette above is the real one, and it is fixed in the theme&rsquo;s stylesheet. There is no colour editor behind this console and nothing here writes a palette, so there is no screen to send you to.</p></div>
+        <div><b style="font-size:13px">Performance</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">Nothing in this application lets you switch parts of the storefront on or off to make it lighter. Your shop is no slower than it was &mdash; there was simply never anything behind this card.</p></div>
+      </div>
     </div>
   </div>`;
 }
 
-/* ---------- Users ---------- */
+/* ---------- Users ----------
+   ===== LANE DJ ==============================================================
+
+   THREE MEMBERS OF STAFF WHO DO NOT EXIST.
+
+   What stood here drew a table of "Rafi / Owner / 2FA On", "Store Manager /
+   Manager / 2FA Off" and "Support Agent / Support / Invited", built out of a
+   urow() helper from seven string literals per row. It read nothing. The
+   install has real rows in `admin_users` and a real role on each one, and none
+   of the three names above was ever one of them. Beside them sat an "Invite
+   user" button whose whole body was toast('Invite flow - Phase 0 build').
+
+   That is worse here than on any other screen in this console. "Who can sign
+   in to my shop" is a security question, and the answer given was three names
+   somebody typed. An owner checking whether an ex-employee still had access
+   would have been told about a "Support Agent" who was never issued an
+   account, and reassured by a "2FA On" pill for a second factor this
+   application does not have - there is no TOTP, no OTP column, no second
+   factor anywhere in this codebase. The only other mention of 2FA in this file
+   is a Phase 6 roadmap row that correctly lists it as something to build.
+
+   IT WAS ALREADY DEAD, AND THAT IS THE DANGEROUS PART. The real screen has
+   existed since the baseline: `window.renderUsers` in the live-wiring block
+   below reads GET /admin-api/users and renders the actual accounts, their
+   actual roles and emails, with no 2FA column at all. Because that assignment
+   runs later than this declaration, it wins, and the table above was never
+   what the owner saw - which is exactly why it survived: it is invisible until
+   the day it isn't.
+
+   It is one throw away from being visible. Everything from `window.render-
+   Customers` to `window.renderUsers` lives in the second <script> block; a
+   runtime error anywhere in that block before the assignment leaves THIS
+   function standing, and go('users') then renders the fiction with nothing on
+   the page to say so. Verified by injecting one throw at the head of that
+   block: the console came back up, navigation still worked, and Users & Roles
+   showed Store Manager, Support Agent and "2FA On".
+
+   So the declaration is kept - removing the name outright would make the
+   dispatch object in go() throw a ReferenceError while building, and take
+   every OTHER screen down with it - and its body is now the same sentence the
+   frame screens already use when the script did not finish starting up. The
+   failure mode goes from "invents three colleagues" to "says it could not
+   load". urow() went with the table; it had no other caller.
+   ========================================================================= */
 function renderUsers(){
-  $('#content').innerHTML=`<div class="wrap">
-    <div class="between" style="margin-bottom:16px"><div class="page-head" style="margin:0"><h2>Users & Roles</h2><p>Staff accounts and what each can do. Customer accounts (with imported logins) live in the Customers module.</p></div><button class="btn" onclick="toast('Invite flow — Phase 0 build')">${ic('<path d="M12 5v14M5 12h14"/>')} Invite user</button></div>
-    <div class="card"><table>
-      <thead><tr><th>User</th><th>Role</th><th>2FA</th><th>Status</th></tr></thead>
-      <tbody>
-        ${urow('Rafi','RA','Owner','green','On','green','Active')}
-        ${urow('Store Manager','SM','Manager','amber','Off','green','Active')}
-        ${urow('Support Agent','SA','Support','amber','Off','grey','Invited')}
-      </tbody></table></div>
-    <div class="sec-title">Roles</div>
-    <div class="mod-grid">
-      ${['Owner|Full access to everything','Manager|Catalog, orders, customers, marketing','Support|Orders & customers (read + reply)','Content Editor|Pages, blog, media'].map(r=>{const[n,d]=r.split('|');return `<div class="mod"><div class="mic">${ic(I.shield)}</div><div><div class="mname">${n}</div><div class="mdesc">${d}</div></div></div>`}).join('')}
-    </div>
-  </div>`;
+  $('#content').innerHTML=frameStartupHTML('Users & Roles');
 }
-const urow=(n,av,role,r2,f,sc,st)=>`<tr><td><div class="row"><div class="avatar" style="width:30px;height:30px">${av}</div><b>${n}</b></div></td><td>${role}</td><td><span class="pill ${r2}">${f}</span></td><td><span class="pill ${sc}">${st}</span></td></tr>`;
 
 /* ---------- Settings ----------
    ===== LANE DH ==============================================================
@@ -14211,31 +14293,105 @@ buildNav();
   }
   window.renderAnalytics = renderAnalytics;
 
-  /* ---------- Users & Roles (real admin accounts) ---------- */
+  /* ---------- Users & Roles (real admin accounts) ----------
+     ===== LANE DJ ============================================================
+
+     This screen was already real - it reads GET /admin-api/users and renders
+     the actual rows of `admin_users`. The fabricated table that used to be
+     declared for this name in the first <script> block is gone; see the Lane DJ
+     region beside renderUsers() up there for why it was dangerous while dead.
+
+     WHAT WAS WRONG DOWN HERE was one line: `catch(e){ ADMINS=[]; }`. Every
+     failure became an empty list, and an empty list renders "No users."
+
+     /admin-api/users is users.manage, which AdminCapabilities grants to `owner`
+     alone. So a manager opening this screen got a 403 from
+     EnforceAdminCapability, the catch turned it into [], and the screen told
+     him his shop has no staff accounts at all. That is the same defect as the
+     invented table, arrived at from the other side: the first one made up
+     colleagues, this one made them all disappear. Either way the one screen
+     whose subject is "who can sign in to my shop" answered with fiction, and
+     this half of it was live.
+
+     A refusal is now printed rather than swallowed. EnforceAdminCapability
+     already answers /admin-api/* with a JSON body whose `message` names the
+     capability in a sentence, and api() already attaches the status and that
+     parsed body to the Error it throws. The refusal panel prints that sentence,
+     the same way the health card does, and it shows no table and no Add user
+     button - because a role that cannot read the list certainly cannot add to
+     it, and offering the button would only produce a second 403.
+
+     An empty list with no error is treated as a fault, not as an answer: you
+     are signed in as one of these accounts, so zero of them is not a state the
+     table should present as normal.
+
+     THE ROLE DESCRIPTIONS were also rewritten to match what the map actually
+     grants. They are documentation printed next to a live list, and they were
+     narrower than the truth - "Pages, blog, media" for an editor that also
+     holds the whole catalogue. The wording now follows the four-role summary in
+     AdminCapabilities' own header comment, so the screen and the map say the
+     same thing. Nothing here grants anything; the map is the only thing that
+     does. */
   var ADMINS=[];
+  var USERS_ERR=null;
   var ROLE_OPTS=[['owner','Owner'],['manager','Manager'],['support','Support'],['editor','Content Editor']];
+  var ROLE_NOTES=[
+    'Owner|Everything, always. Only an owner can reach staff accounts, payment keys, site settings and core updates.',
+    'Manager|Runs the shop: orders, refunds, customers, the catalogue, content, marketing and shipping. Not site settings, payment keys, staff accounts or updates.',
+    'Support|Answers customers: reads orders and customers, adds notes, moves an order along and moderates reviews. Touches no money, deletes nothing, exports nothing.',
+    'Content Editor|Works on the storefront: the catalogue, pages, blog, media and the review furniture. Sees no customer, no order and no money.'
+  ];
   function roleBadge(r){ var m={owner:'green',manager:'amber',support:'grey',editor:'grey'}[r]||'grey'; var lbl=(ROLE_OPTS.filter(function(o){return o[0]===r;})[0]||[r,r])[1]; return '<span class="pill '+m+'"><span class="d"></span>'+lbl+'</span>'; }
   function roleSelect(id, sel){ return '<select class="inp" id="'+id+'" style="width:100%">'+ROLE_OPTS.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===sel?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'; }
+  function rolesGridHTML(){
+    return '<div class="sec-title">Roles</div><div class="mod-grid">'+
+      ROLE_NOTES.map(function(r){var p=r.split('|');return '<div class="mod"><div class="mic">'+ic(I.shield)+'</div><div><div class="mname">'+sesc(p[0])+'</div><div class="mdesc">'+sesc(p[1])+'</div></div></div>';}).join('')+
+      '</div>';
+  }
 
   window.renderUsers = async function(){
-    try{ var d=await api('/admin-api/users'); ADMINS=d.users||[]; }catch(e){ ADMINS=[]; }
-    document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="between" style="margin-bottom:16px"><div class="page-head" style="margin:0"><h2>Users &amp; Roles</h2><p>Staff accounts and what each can do. Customer accounts live in the Customers module.</p></div>'+
+    USERS_ERR=null;
+    try{ var d=await api('/admin-api/users'); ADMINS=d.users||[]; }
+    catch(e){ ADMINS=[]; USERS_ERR={ status:(e&&e.status)||0, message:(e&&e.body&&e.body.message)||'' }; }
+
+    var head='<div class="wrap"><div class="between" style="margin-bottom:16px"><div class="page-head" style="margin:0"><h2>Users &amp; Roles</h2><p>Staff accounts and what each can do. Customer accounts live in the Customers module.</p></div>';
+
+    /* Refused: print the sentence the server sent, offer nothing that would
+       only be refused again. */
+    if(USERS_ERR && USERS_ERR.status===403){
+      document.querySelector('#content').innerHTML = head+'</div>'+
+        '<div class="card pad"><b style="font-size:14px">You cannot see the staff list</b>'+
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6">'+
+        sesc(USERS_ERR.message||'Your role does not have the "users.manage" permission.')+
+        '</p><p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6">Staff accounts are owner-only. Nothing is wrong with your store and nothing is hidden from the owner &mdash; this one list is not yours to read, and adding, editing or removing an account is refused for the same reason. Ask an owner if you need access changed.</p></div>'+
+        rolesGridHTML()+'</div>';
+      return;
+    }
+
+    /* Any other failure is a failure, and says so rather than rendering an
+       empty shop. */
+    if(USERS_ERR){
+      document.querySelector('#content').innerHTML = head+'</div>'+
+        '<div class="card pad"><b style="font-size:14px">The staff list could not be loaded</b>'+
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6">The server answered '+sesc(String(USERS_ERR.status||'nothing'))+' when this screen asked for your staff accounts, so what you would be looking at is not a list of them. Reload the page; if it keeps happening the accounts themselves are unaffected &mdash; it is this screen that cannot read them.</p></div>'+
+        rolesGridHTML()+'</div>';
+      return;
+    }
+
+    document.querySelector('#content').innerHTML = head+
       '<button class="btn" id="usr_add">'+ic('<path d="M12 5v14M5 12h14"/>')+' Add user</button></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Added</th><th></th></tr></thead><tbody>'+
       (ADMINS.length? ADMINS.map(function(u){
-        return '<tr><td><div class="row"><span class="pthumb" style="background:'+sesc(tcol(u.name||u.email))+';width:30px;height:30px;font-size:10px">'+sesc(initials(u.name||u.email))+'</span><b style="font-size:12.5px">'+sesc((u.name||'\u2014'))+(u.is_self?' <span class="pbrand" style="display:inline">(you)</span>':'')+'</b></div></td>'+
+        return '<tr><td><div class="row"><span class="pthumb" style="background:'+sesc(tcol(u.name||u.email))+';width:30px;height:30px;font-size:10px">'+sesc(initials(u.name||u.email))+'</span><b style="font-size:12.5px">'+sesc((u.name||'—'))+(u.is_self?' <span class="pbrand" style="display:inline">(you)</span>':'')+'</b></div></td>'+
           '<td style="font-size:12px">'+sesc(u.email)+'</td>'+
           '<td>'+roleBadge(u.role)+'</td>'+
           '<td style="font-size:11.5px;color:var(--ink-soft)">'+(u.created_at||'').slice(0,10)+'</td>'+
           '<td><div class="row" style="gap:5px"><button class="btn ghost sm" data-uedit="'+u.id+'">Edit</button>'+
           '<button class="btn ghost sm" data-upass="'+u.id+'">Reset password</button>'+
           (u.is_self?'':'<button class="btn ghost sm" data-udel="'+u.id+'">Delete</button>')+'</div></td></tr>';
-      }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:30px">No users.</td></tr>')+
+      }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:30px">No accounts came back. You are signed in as one of them, so this is a fault rather than an empty list &mdash; reload the page.</td></tr>')+
       '</tbody></table></div>'+
-      '<div class="sec-title">Roles</div><div class="mod-grid">'+
-      ['Owner|Full access to everything','Manager|Catalog, orders, customers, marketing','Support|Orders & customers (read + reply)','Content Editor|Pages, blog, media'].map(function(r){var p=r.split('|');return '<div class="mod"><div class="mic">'+ic(I.shield)+'</div><div><div class="mname">'+p[0]+'</div><div class="mdesc">'+p[1]+'</div></div></div>';}).join('')+
-      '</div></div>';
+      rolesGridHTML()+'</div>';
     document.getElementById('usr_add').onclick=addUser;
     document.querySelectorAll('#content [data-uedit]').forEach(function(b){ b.onclick=function(){ editUser(+b.dataset.uedit); }; });
     document.querySelectorAll('#content [data-upass]').forEach(function(b){ b.onclick=function(){ resetUserPassword(+b.dataset.upass); }; });

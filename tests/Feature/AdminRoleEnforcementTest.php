@@ -331,3 +331,64 @@ it('lets every role reach the console shell, or the role cannot work at all', fu
 
     expect($status !== 403)->toBeTrue("{$role} cannot open the admin console at all");
 })->with(['owner', 'manager', 'support', 'editor'])->group('role-enforcement');
+
+/* ------------------------------------- 5. what the staff list hands back */
+
+/**
+ * LANE DJ — the staff list is a list of people who can sign in, so every row it
+ * reads is by definition a row with a usable credential in it.
+ *
+ * `admin_users` carries `password` and `remember_token`. The screen shows a
+ * name, an email, a role and a date. CustomersApiController already learned
+ * this lesson on the customers table and carries an explicit select() with a
+ * comment saying why; AdminController::users() now does the same, so the hashes
+ * are never loaded rather than merely never printed.
+ *
+ * WHAT THIS ACTUALLY CATCHES, stated honestly, because it is narrower than it
+ * looks. Today the method hands back an array it builds field by field, so no
+ * model-level setting can leak anything through it: adding makeVisible(-
+ * ['password']) to the query changes nothing about the response, and this test
+ * goes green on that mutation. What it catches is the realistic regression —
+ * the day somebody returns the rows themselves instead of the built array,
+ * which is the shorter and more obvious way to write this method and the way
+ * it would be written by anyone adding a column in a hurry. Mutating the body
+ * to `->get()` with no map() fails it on the first loop below.
+ *
+ * $hidden is deliberately not what is asserted either. AdminUser::$hidden lists
+ * both columns and would cover that mutation on its own today — but $hidden is
+ * a serialisation rule, one edit to that array away from not applying, and it
+ * does nothing about a hash sitting in memory in the meantime. The select() in
+ * the method is the belt for that half; this is the braces, on the response the
+ * browser actually receives.
+ */
+it('never hands a password hash or a remember token to the staff list', function () {
+    $owner = areUser('owner', 'List');
+    $other = areUser('manager', 'List');
+
+    $response = test()->actingAs($owner, 'admin')->get('/admin-api/users');
+
+    $response->assertOk();
+
+    $body = $response->getContent();
+
+    // The list has to be a real list, or every assertion below passes on an
+    // empty response and proves nothing.
+    expect(str_contains($body, $other->email))
+        ->toBeTrue('the staff list did not contain the accounts it is supposed to list');
+
+    foreach (['password', 'legacy_password', 'remember_token'] as $column) {
+        expect(str_contains($body, $column))
+            ->toBeFalse('the staff list response carries a "'.$column.'" field');
+    }
+
+    // The stored hash itself, not only the key it would arrive under: a rename
+    // of the field would sail straight past the loop above.
+    foreach ([$owner, $other] as $account) {
+        $hash = $account->fresh()->getAuthPassword();
+
+        expect($hash)->not->toBe('', 'the fixture has no stored hash, so this proves nothing');
+
+        expect(str_contains($body, $hash))
+            ->toBeFalse('the staff list response contains a stored password hash');
+    }
+})->group('role-enforcement');
