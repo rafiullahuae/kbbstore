@@ -393,6 +393,31 @@ final class AdminCapabilities
         ['GET', 'admin-api/newsletter/export', 'marketing.export'],
         ['*', 'admin-api/newsletter', 'marketing.manage'],
         ['*', 'admin-api/marketing-pixels', 'marketing.manage'],
+        /*
+         * Reading a coupon, its usage report and the product/category lookup
+         * the editor searches with are all marketing.view. WRITING one is
+         * marketing.manage, because a coupon is money: whoever can create
+         * "100% off, no minimum" can empty the shop.
+         *
+         * The write rules come FIRST. Rule order decides among matches, and
+         * `admin-api/coupons/*` would otherwise swallow
+         * `POST admin-api/coupons/manage` — a read capability granted over a
+         * create endpoint. The manage/* pair is likewise listed above the bare
+         * coupons/* so the {coupon} routes under it cannot fall through to the
+         * read rule.
+         *
+         * These arrived with the coupon editor, which was branched before the
+         * capability layer existed. The coverage test caught them unmapped and
+         * failing closed — owner-only — which is the default doing its job,
+         * but owner-only is not the answer for a screen a manager runs
+         * promotions from.
+         */
+        ['POST', 'admin-api/coupons/manage', 'marketing.manage'],
+        ['PUT', 'admin-api/coupons/manage/*', 'marketing.manage'],
+        ['DELETE', 'admin-api/coupons/manage/*', 'marketing.manage'],
+        ['GET', 'admin-api/coupons/manage/lookup', 'marketing.view'],
+        ['GET', 'admin-api/coupons/manage/*', 'marketing.view'],
+        ['GET', 'admin-api/coupons/manage', 'marketing.view'],
         ['GET', 'admin-api/coupons', 'marketing.view'],
         ['GET', 'admin-api/coupons/*', 'marketing.view'],
 
