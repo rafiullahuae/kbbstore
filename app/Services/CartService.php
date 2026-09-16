@@ -590,7 +590,38 @@ class CartService
             $shipping = 0;
         }
 
-        $total = $afterDiscount + $shipping;
+        /*
+         * THE TAXABLE BASE, and the one place it is decided.
+         *
+         * subtotal - discount + delivery. AFTER the coupon, deliberately: VAT
+         * is due on the consideration the customer actually pays, and charging
+         * it on a discount nobody paid is a real financial error rather than a
+         * display one. It is also exactly the figure VatDisplay was handed
+         * before this lane existed, so the printed line does not move by a fil
+         * when the package is applied.
+         *
+         * The COD surcharge and the gift-wrapping fee are OUTSIDE it, because
+         * they are added by the order writers after this method returns and
+         * always have been. Preserving that is what lets one computation, here,
+         * serve all four paths that write an order without any of them
+         * disagreeing — see the class header of App\Support\VatDisplay.
+         */
+        $taxableBase = $afterDiscount + $shipping;
+
+        $tax = $this->vat->quote($taxableBase, $country);
+
+        /*
+         * D-64 WAS OVERTURNED BY THE OWNER ON 2026-09-16 and this is the line
+         * where it happens: with tax_mode = 'live' and a country on an
+         * `exclusive` basis, `total` is now HIGHER than subtotal - discount +
+         * delivery. In every other state — and in the shipped default state —
+         * $tax['added'] is false and this is the identical sum it always was.
+         *
+         * App\Support\VatDisplay's header carries the owner's three messages
+         * verbatim and the reasoning in full. This is not an accident and it
+         * is not to be quietly reverted.
+         */
+        $total = $tax['total'];
 
         return [
             'item_count' => $cart->itemCount(),
@@ -598,6 +629,25 @@ class CartService
             'discount' => $discount,
             'coupon_code' => $couponCode,
             'shipping' => $shipping,
+            /*
+             * The taxable base, carried out so an order writer can record what
+             * the tax was computed ON without recomputing it and risking a
+             * different answer.
+             */
+            'taxable_base' => $taxableBase,
+            /*
+             * THE ORDER'S OWN RECORD OF ITS TAX, which is the single most
+             * important thing this lane ships. `tax_charged` goes to
+             * orders.tax_total, `tax_rate` and `tax_basis` go to the columns of
+             * those names — so an invoice reprinted next year reprints at the
+             * rate that was charged, not at whatever the shop's settings say by
+             * then. Both are null in display mode, which leaves every reader
+             * downstream on exactly the branch it took before this lane.
+             */
+            'tax_charged' => $tax['charged'],
+            'tax_rate' => $tax['mode'] === \App\Support\VatDisplay::MODE_LIVE ? $tax['rate'] : null,
+            'tax_basis' => $tax['mode'] === \App\Support\VatDisplay::MODE_LIVE ? $tax['basis'] : null,
+            'tax_added' => $tax['added'],
             'total' => $total,
             'free_shipping_threshold' => $threshold,
             'free_shipping_remaining' => $toFree,
@@ -606,22 +656,24 @@ class CartService
             // would tell two different stories about one basket.
             'free_shipping_percent' => $threshold ? min(100, (int) round($subtotal / $threshold * 100)) : null,
             /*
-             * Display only — never added to the total. (D-64)
+             * THE PRINTED LINE, computed on the base rather than on the total.
+             *
+             * On an inclusive or flat basis the two are the same number, which
+             * is why nothing moves for an existing shop. On an exclusive basis
+             * they are not: the tax is 15% OF the base, not 15% of a total that
+             * already contains it, and computing it on $total would print
+             * 13.04 where 15.00 was charged.
              *
              * The DESTINATION country, resolved above from the argument or the
-             * cart, so the printed rate follows the address rather than the
-             * shop's default. This is the one place the country has to reach
+             * cart, so the rate follows the address rather than the shop's
+             * default. This is the one place the country has to reach
              * VatDisplay: every caller of totals() goes through it — the cart
              * page, the drawer, the checkout summary, the country-change
              * refresh behind /api/checkout/rates, and ManualOrderBuilder — so
              * none of them can disagree with another about what the receipt
              * says.
-             *
-             * A raised rate still changes only the printed figure. If this line
-             * ever starts moving 'total' above, VAT has been made chargeable
-             * and D-64 has been overturned by accident.
              */
-            'vat' => $this->vat->line($total, $country),
+            'vat' => $this->vat->line($taxableBase, $country),
         ];
     }
 }

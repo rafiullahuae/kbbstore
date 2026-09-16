@@ -247,6 +247,12 @@ class CartController extends Controller
             'shipping' => 0, 'total' => 0, 'free_shipping_threshold' => null,
             'free_shipping_remaining' => null, 'free_shipping_unlocked' => false,
             'free_shipping_percent' => null, 'vat' => null,
+            // The same keys CartService::totals() returns, so a partial that
+            // reads one of them off an empty basket finds the key rather than
+            // an undefined-index notice. An empty basket is taxed at nothing on
+            // no basis, which is what nulls here say.
+            'taxable_base' => 0, 'tax_charged' => 0, 'tax_rate' => null,
+            'tax_basis' => null, 'tax_added' => false,
         ];
 
         return [

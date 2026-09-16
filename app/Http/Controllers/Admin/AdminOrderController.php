@@ -171,14 +171,41 @@ class AdminOrderController extends Controller
             'shipping_total_aed' => Money::toAed($order->shipping_total),
             'fee_total_aed' => Money::toAed($order->fee_total),
             'total_aed' => Money::toAed($order->total),
-            // VAT is a display line only (decision D-64) — never stored, never
-            // added to the total, computed fresh from the real order total
-            // via the same VatDisplay service the checkout page itself uses,
-            // so the two can never quietly drift apart. VatDisplay's own
-            // 'formatted' field is raw HTML meant for server-rendered Blade
-            // (Money::format() wraps it in <span> tags) — wrong for this JSON
-            // response, so only the label and a converted AED amount are used.
+            /*
+             * THE ORDER'S OWN TAX RECORD FIRST — Lane CU.
+             *
+             * This computed the line fresh from the live settings, which was
+             * right while VAT was a display line at one global rate (D-64).
+             * The owner overturned that on 2026-09-16 and rates now vary by
+             * country and can be edited, so a recomputation here would show
+             * staff a figure the customer was never charged. An order that has
+             * a record of its own is read from that record; one that has none
+             * — everything placed before this lane — falls back to exactly the
+             * computation that was here.
+             *
+             * VatDisplay's own 'formatted' field is raw HTML meant for
+             * server-rendered Blade (Money::format() wraps it in <span> tags)
+             * — wrong for this JSON response, so only the label and a
+             * converted AED amount are used.
+             */
             'vat' => (function () use ($vat, $order) {
+                $recorded = \App\Support\OrderTax::recorded($order);
+
+                if ($recorded !== null) {
+                    if ($recorded['fils'] <= 0) {
+                        return null;
+                    }
+
+                    $rule = new \App\Support\TaxRule($recorded['rate'], $recorded['basis']);
+
+                    return [
+                        'label' => $recorded['added']
+                            ? 'VAT at ' . $rule->printableRate() . '% (added to the total)'
+                            : 'VAT at ' . $rule->printableRate() . '% (included in the total)',
+                        'amount_aed' => Money::toAed($recorded['fils']),
+                    ];
+                }
+
                 $line = $vat->line($order->total);
 
                 return $line ? ['label' => $line['label'], 'amount_aed' => Money::toAed($line['amount'])] : null;

@@ -2148,25 +2148,35 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .bd-actions .btn{width:100%;justify-content:center}
 }
 
-/* ---- VAT by country · inside Business Details (Lane CP) ------------------
-   A table of country -> rate, with the line each one will actually print
-   beside it. Four columns on a desktop and a stack on a phone, by the same
-   auto-fit reasoning as .bd-grid above: a fixed track floor is what made this
-   screen overflow at 390px before, so the breakpoint here re-lays the row
-   rather than letting it scroll sideways. */
+/* ---- Tax by country · the Tax tab of Business Details --------------------
+   Lane CP built this as a rates-only table under Business Details. Lane CU
+   gave every row a BASIS as well — the owner asked to "set inclusive" for one
+   country and "exclusive" for another — and moved the whole thing onto a tab
+   of its own, which is where he went looking for it.
+
+   Five columns on a desktop and a stack on a phone, by the same auto-fit
+   reasoning as .bd-grid: a fixed track floor is what made this screen overflow
+   at 390px before, so the breakpoint re-lays the row rather than letting it
+   scroll sideways. */
 .vr-wrap{display:grid;gap:11px;min-width:0}
 .vr-wrap > *{min-width:0}
 .vr-tbl{display:grid;gap:0;border:1px solid var(--border);border-radius:var(--r-xs);overflow:hidden;min-width:0}
-.vr-row{display:grid;grid-template-columns:minmax(0,1.3fr) 104px minmax(0,1.5fr) 34px;
+.vr-row{display:grid;grid-template-columns:minmax(0,1.1fr) 90px 156px minmax(0,1.4fr) 34px;
         gap:10px;align-items:center;padding:9px 11px;min-width:0}
 .vr-row + .vr-row{border-top:1px solid var(--border)}
 .vr-head{background:var(--bg-soft,rgba(127,127,127,.06));font-size:11px;font-weight:650;
          letter-spacing:.02em;text-transform:uppercase;color:var(--ink-soft)}
 .vr-name{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vr-row input[type=number]{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+.vr-row input[type=number],.vr-row select{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
         padding:7px 9px;font:inherit;font-size:12.5px;border:1px solid var(--border);
         border-radius:var(--r-xs);background:var(--surface);color:var(--ink)}
-.vr-row input[type=number]:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.vr-row input[type=number]:focus,.vr-row select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+/* A row whose basis CHARGES the customer extra is marked, because that is the
+   one state on this screen that moves money and it must not look like the
+   other two. */
+.vr-row.vr-charges{background:var(--warn-soft,rgba(224,86,123,.07))}
+.vr-charges .vr-name::after{content:" · adds to the total";font-weight:600;font-size:10.5px;
+        color:var(--danger,#c0392b);letter-spacing:.01em}
 /* The receipt preview. Quiet, and clipped rather than wrapped, so a long
    custom vat_label cannot make one row four lines tall. */
 .vr-prev{font-size:11.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2179,23 +2189,39 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .vr-add select,.vr-add input{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
         padding:8px 10px;font:inherit;font-size:12.5px;border:1px solid var(--border);
         border-radius:var(--r-xs);background:var(--surface);color:var(--ink);text-overflow:ellipsis}
-.vr-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
-.vr-chip{font:inherit;font-size:11.5px;padding:5px 10px;border-radius:99px;cursor:pointer;
-         border:1px dashed var(--border);background:transparent;color:var(--ink-2)}
-.vr-chip:hover{border-style:solid;border-color:var(--accent);color:var(--accent)}
+/* NO PRESET STYLES HERE. The one-click bar on this tab is the shared one —
+   .pst-* further up, rendered by pstBarHtml() and driven by
+   App\Support\CountryPresets — so the tax screen and the delivery screen look
+   identical rather than similar. A .vr-preset block lived here for exactly one
+   lane and is gone; a second set of chip styles is a second thing to keep in
+   step with the theme. */
 @media (max-width:640px){
-  /* Name, rate and the remove button stay on ONE line and the preview drops
-     underneath them. Both of the latter are placed explicitly: left to
-     auto-placement the full-width preview takes row 2 and pushes the little
-     × onto a row of its own, which reads as a stray button under the row it
-     belongs to rather than as part of it. */
+  /* Name, rate and the remove button stay on ONE line; the basis takes the
+     next row and the preview the one after. All three are placed explicitly:
+     left to auto-placement the full-width preview takes row 2 and pushes the
+     little × onto a row of its own, which reads as a stray button under the
+     row it belongs to rather than as part of it. */
   .vr-row{grid-template-columns:minmax(0,1fr) 88px 30px;row-gap:6px}
-  .vr-row .vr-prev{grid-column:1 / -1;grid-row:2}
+  .vr-row select{grid-column:1 / -1;grid-row:2}
+  .vr-row .vr-prev{grid-column:1 / -1;grid-row:3}
   .vr-row .vr-del{grid-column:3;grid-row:1}
   .vr-head{display:none}
   .vr-add{grid-template-columns:minmax(0,1fr) 88px;row-gap:8px}
   .vr-add .btn{grid-column:1 / -1;width:100%;justify-content:center}
 }
+/* ---- Business Details tabs ----------------------------------------------
+   "ALSO i can not see the TAX seperate tab on the Business Setting page."
+   He asked for a separate tab for Tax and came here to find it. Both panels
+   are RENDERED and one is hidden, never destroyed: the single Save button
+   posts every field on this screen, and a field removed from the DOM would be
+   read as an empty string and saved over. */
+.bd-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.bd-tab{font:inherit;font-size:13px;font-weight:600;padding:8px 15px;border-radius:99px;cursor:pointer;
+        border:1px solid var(--border);background:transparent;color:var(--ink-2)}
+.bd-tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.bd-panel[hidden]{display:none}
+.bd-jump{font:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:99px;cursor:pointer;
+        border:1px solid var(--accent);background:transparent;color:var(--accent)}
 
 /* ---- SEO & Meta · Settings tab ------------------------------------------ */
 .sm-wrap{display:grid;gap:16px;min-width:0}
@@ -2367,7 +2393,7 @@ const NAV=[
      render a one-item section as a bare top-level link with no .nav-group
      wrapper at all, and the two injected entries would land outside any group. */
   {sec:'Catalog',group:true,items:[['catalog','Catalog',I.catalog]]},
-  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['import','Store Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['mail','Mail','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>']]},
+  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['tax','Tax','<path d="M4 4h12l4 4v12H4z"/><path d="M8 10h8M8 14h5"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['import','Store Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['mail','Mail','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>']]},
   /* Content. These three sat in Store while every one of them set its
      breadcrumb to 'Content' — the sidebar said one thing and the page said
      another, and the rest of the repo already calls them "Content → Media
@@ -2557,7 +2583,7 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
    second one. */
-'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
+'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
    and 'posts' open the same screen. The id stays routable for #blog and
    ?go=blog, and it names that screen honestly rather than a second one. */
 'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
@@ -8044,6 +8070,7 @@ var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
    the JavaScript below. */
 var KBB_PRESETS = @json([
     \App\Support\CountryPresets::DELIVERY => \App\Support\CountryPresets::forConsole(\App\Support\CountryPresets::DELIVERY),
+    \App\Support\CountryPresets::TAX => \App\Support\CountryPresets::forConsole(\App\Support\CountryPresets::TAX),
 ]);
 @verbatim
 
@@ -13692,25 +13719,24 @@ buildNav();
   var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @verbatim
 
-  /* SUGGESTIONS, NOT VALUES. Nothing here is saved until the owner clicks one
-     and then saves the screen, and the screen says on its face that confirming
-     them is his job.
+  /* SUGGESTIONS, NOT VALUES — and DERIVED, not restated.
 
-     These are the commonly-cited standard rates for the Gulf as at September
-     2026 and they are NOT authoritative: rates change, this shop is not a tax
-     authority, and a wrong percentage printed on a receipt is worse than no
-     percentage at all. Qatar and Kuwait had not implemented a domestic VAT,
-     which is why they are offered as 0 — the line simply does not print at a
-     zero rate. Sources are recorded in the lane's report rather than here,
-     because a URL in a template rots without anyone noticing. */
-  var KBB_VAT_SUGGESTIONS = [
-    { code:'SA', rate:'15', note:'commonly cited' },
-    { code:'AE', rate:'5',  note:'commonly cited' },
-    { code:'BH', rate:'10', note:'commonly cited' },
-    { code:'OM', rate:'5',  note:'commonly cited' },
-    { code:'QA', rate:'0',  note:'no VAT reported' },
-    { code:'KW', rate:'0',  note:'no VAT reported' }
-  ];
+     This was a list of six rates written out here. It is now read off the
+     shared preset group, App\Support\CountryPresets::TAX, which is where the
+     delivery lines get theirs and where any later per-country table will get
+     its own. Two lists of tax rates in one console is two lists to keep right,
+     and the one that goes stale is the one nobody is looking at.
+
+     The name survives because it is what the console calls the per-country VAT
+     suggestions and a test pins that the screen still offers them. What it no
+     longer is, is a second source of truth: change a rate in CountryPresets and
+     it changes here, in the chips, and in the "fill in all" button together.
+
+     Nothing here is saved. A chip fills the box; the box is what the owner
+     reads; Save changes is what publishes. */
+  var KBB_VAT_SUGGESTIONS = ((KBB_PRESETS && KBB_PRESETS.tax ? KBB_PRESETS.tax.rows : []) || [])
+    .map(function(r){ return { code:r.code, rate:String(r.value||'') }; });
+
   function curFind(code){ code=String(code||'').toUpperCase(); for(var i=0;i<KBB_CURRENCIES.length;i++){ if(KBB_CURRENCIES[i].code===code) return KBB_CURRENCIES[i]; } return null; }
   function curSymbol(){ var s=SETTINGS.currency_symbol; if(s!=null&&String(s).trim()!=='') return String(s); var c=curFind(SETTINGS.currency||'AED'); return c?c.symbol:''; }
   function curSelect(){
@@ -13745,45 +13771,96 @@ buildNav();
       '<div class="bd-sec-d">'+description+'</div></div>'+body+'</section>';
   }
 
-  /* ---------- VAT by country (Lane CP) -------------------------------------
-     The owner asked for both halves of one idea: "give us option to choose the
-     percentage of VAT across each country or for All countries at once."
+  /* ---------- Tax by country (Lane CP, extended by Lane CU) ----------------
+     The owner asked for both halves of one idea, twice over. First:
 
-     ALL COUNTRIES AT ONCE IS NOT A NEW CONTROL. It is the VAT rate field in the
-     band above, unchanged — it applies wherever a country has no rate of its
-     own. This band is only the exceptions, and it ships EMPTY, so a shop that
-     never opens it behaves exactly as it always did.
+       "give us option to choose the percentage of VAT across each country or
+        for All countries at once."
 
-     WHY THE TABLE IS EMPTY AND THE FIGURES ARE ONLY CHIPS. The owner wrote
-     "Saudi there's 15% i think". We are not a tax authority, rates change, and
-     a wrong rate printed on a receipt is worse than no rate — so nothing is
-     pre-saved. The chips fill a row in one click and still have to be saved
-     deliberately, and the note says whose job it is to confirm them.
+     and then, on 2026-09-16:
 
-     WHAT THE PREVIEW IS FOR. VAT here is a DISPLAY LINE (D-64): it is printed
-     and never charged, and the default basis is inclusive. So raising a rate
-     does not raise what the shopper pays — it only reprints the same gross as
-     a bigger tax portion. The preview column spells that out in the owner's own
-     money: the words the receipt will carry, and what they come to on an AED
-     100 order. He can see before saving that 15% takes AED 13.04 out of the
-     same AED 100 that 5% took AED 4.76 out of. */
+       "also i will need control to inclusive VAT or exclusive."
+       "across each country, for example for uae the vat i can set inclusive,
+        for Saudi i can set exclusive and so on as per my requirements."
 
-  /* code -> rate string. Setting::map() hands the console raw column values, so
-     this row arrives as the JSON object the validator stored. */
+     ALL COUNTRIES AT ONCE IS NOT A NEW CONTROL. It is the Default rate and
+     Default basis above, unchanged — they apply wherever a country has no row
+     of its own. This table is only the exceptions, and it ships EMPTY, so a
+     shop that never opens it behaves exactly as it always did.
+
+     WHY EVERY ROW HAS A BASIS NOW. Exclusive VAT has exactly one meaning: the
+     tax is added on top, and the customer pays more. There is no version of an
+     inclusive/exclusive switch that leaves the line display-only, so decision
+     D-64 has been overturned — by the owner, deliberately. What protects him
+     from that landing by surprise is the switch above this table: until Tax
+     mode is set to "Applied to orders", every row here is printed and nothing
+     is charged, exactly as before.
+
+     WHY THE FIGURES ARE ONLY SUGGESTIONS. The owner wrote "Saudi there's 15% i
+     think". We are not a tax authority, rates change, and a wrong rate printed
+     on a receipt is worse than no rate — so nothing is pre-saved. The presets
+     fill rows in one click and still have to be saved deliberately, and the
+     note says whose job confirming them is.
+
+     WHY A PRESET NEVER SETS "EXCLUSIVE". A preset knows a rate; it cannot know
+     how this business prices. Every preset row lands on the shop's own default
+     basis, so clicking every preset on this screen and saving can never start
+     charging a customer more. Turning a row exclusive is a deliberate act on a
+     control of its own. */
+
+  /* code -> rate string, and code -> basis string. Setting::map() hands the
+     console raw column values, so both rows arrive as the JSON objects their
+     validators stored. */
   var VAT_RATES = {};
+  var VAT_BASES = {};
+
+  /* The basis column's vocabulary, and the only place it is written down in
+     the console. It mirrors App\Support\TaxRule::BASES. */
+  var KBB_VAT_BASIS_LABELS = {
+    inclusive: 'Inclusive — price already includes it',
+    exclusive: 'Exclusive — added on top',
+    flat: 'Printed only — charges nothing'
+  };
+
+  function vatParseMap(raw){
+    if(raw==null||raw==='') return {};
+    var parsed = null;
+    try{ parsed = (typeof raw==='string') ? JSON.parse(raw) : raw; }catch(e){ parsed = null; }
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) return {};
+    return parsed;
+  }
 
   function vatRatesLoad(){
     VAT_RATES = {};
-    var raw = SETTINGS.vat_country_rates;
-    if(raw==null||raw==='') return;
-    var parsed = null;
-    try{ parsed = (typeof raw==='string') ? JSON.parse(raw) : raw; }catch(e){ parsed = null; }
-    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) return;
-    Object.keys(parsed).forEach(function(code){
+    VAT_BASES = {};
+
+    var rates = vatParseMap(SETTINGS.vat_country_rates);
+    Object.keys(rates).forEach(function(code){
       code = String(code).toUpperCase();
-      if(KBB_VAT_COUNTRIES[code]) VAT_RATES[code] = String(parsed[code]);
+      if(KBB_VAT_COUNTRIES[code]) VAT_RATES[code] = String(rates[code]);
+    });
+
+    /* The RATE MAP IS THE TABLE and this is a column on it, which is the same
+       rule VatDisplay::countryBases() applies server-side: a basis for a
+       country with no rate is a row the owner cannot see, so it is dropped
+       rather than quietly applied. */
+    var bases = vatParseMap(SETTINGS.vat_country_bases);
+    Object.keys(bases).forEach(function(code){
+      code = String(code).toUpperCase();
+      var basis = String(bases[code]||'').toLowerCase();
+      if((code in VAT_RATES) && KBB_VAT_BASIS_LABELS[basis]) VAT_BASES[code] = basis;
     });
   }
+
+  /* The shop's default basis — what a row uses until it is given one, and what
+     every preset lands on. Unknown values read as inclusive, the same
+     fail-closed reading TaxRule::make() applies. */
+  function vatDefaultBasis(){
+    var b = String(SETTINGS.vat_basis||'').toLowerCase();
+    return KBB_VAT_BASIS_LABELS[b] ? b : 'inclusive';
+  }
+
+  function vatBasisOf(code){ return VAT_BASES[code] || vatDefaultBasis(); }
 
   /* The same trimming VatDisplay::label() does, so the preview is the string
      the storefront will actually print: 5.00 -> 5, 7.50 -> 7.5, 15.00 -> 15. */
@@ -13800,21 +13877,43 @@ buildNav();
     return String(tpl).split('{rate}').join(vatPrintableRate(rate));
   }
 
-  /* The portion of an AED 100 order the line will show — the figure that makes
-     the display-only consequence visible. Mirrors VatDisplay::amount(). */
-  function vatPreviewAmount(rate){
+  /* The portion of an AED 100 order the line will show. Mirrors
+     App\Support\TaxRule::taxOn() — inclusive takes the tax OUT of the 100,
+     exclusive and flat both compute it ON the 100; exclusive is the only one
+     that then raises what is paid. */
+  function vatPreviewAmount(rate, basis){
     var r = parseFloat(rate);
     if(!isFinite(r)||r<=0) return null;
-    var fils = (SETTINGS.vat_basis==='flat') ? (10000*r/100) : (10000*r/(100+r));
+    var fils = (basis==='inclusive') ? (10000*r/(100+r)) : (10000*r/100);
     return (Math.round(fils)/100).toFixed(2);
   }
 
-  function vatPreviewCell(rate){
+  /* One sentence saying what an AED 100 order does under this row — the figure
+     that makes the consequence of the basis visible before it is saved. */
+  function vatPreviewCell(rate, basis){
     var r = parseFloat(rate);
     if(!isFinite(r)||r<=0) return '<span class="vr-prev">No VAT line is printed at 0%.</span>';
-    var amount = vatPreviewAmount(rate);
-    return '<span class="vr-prev" title="'+sesc(vatPreviewLine(rate))+'">'+sesc(vatPreviewLine(rate))+
-      ' &middot; AED 100 shows '+sesc(amount)+'</span>';
+    var amount = vatPreviewAmount(rate, basis);
+    var live = String(SETTINGS.tax_mode||'display')==='live';
+    var text;
+    if(basis==='exclusive'){
+      text = live
+        ? vatPreviewLine(rate)+' · AED 100 becomes AED '+(100+parseFloat(amount)).toFixed(2)
+        : vatPreviewLine(rate)+' · would add AED '+amount+' once tax is switched on';
+    }else if(basis==='flat'){
+      text = vatPreviewLine(rate)+' · prints AED '+amount+', charges nothing';
+    }else{
+      text = vatPreviewLine(rate)+' · AED 100 shows AED '+amount+' of it as VAT';
+    }
+    return '<span class="vr-prev" title="'+sesc(text)+'">'+sesc(text)+'</span>';
+  }
+
+  function vatBasisSelect(code){
+    var cur = vatBasisOf(code);
+    return '<select data-vat-basis="'+sesc(code)+'" aria-label="How VAT applies in '+sesc(KBB_VAT_COUNTRIES[code])+'">'+
+      Object.keys(KBB_VAT_BASIS_LABELS).map(function(b){
+        return '<option value="'+sesc(b)+'"'+(b===cur?' selected':'')+'>'+sesc(KBB_VAT_BASIS_LABELS[b])+'</option>';
+      }).join('')+'</select>';
   }
 
   /* Countries not yet in the table, by NAME, alphabetically — the owner picks
@@ -13832,76 +13931,131 @@ buildNav();
     codes.sort(function(a,b){ return KBB_VAT_COUNTRIES[a].localeCompare(KBB_VAT_COUNTRIES[b]); });
 
     if(!codes.length){
-      return '<div class="vr-tbl"><div class="vr-empty">No country has a rate of its own yet, so every country shows the VAT rate above.</div></div>';
+      return '<div class="vr-tbl"><div class="vr-empty">No country has a rate of its own yet, so every country uses the default rate and basis above.</div></div>';
     }
 
     return '<div class="vr-tbl">'+
-      '<div class="vr-row vr-head"><span>Country</span><span>Rate&nbsp;%</span><span>What the receipt will say</span><span></span></div>'+
+      '<div class="vr-row vr-head"><span>Country</span><span>Rate&nbsp;%</span><span>How it applies</span><span>What this does</span><span></span></div>'+
       codes.map(function(c){
-        return '<div class="vr-row" data-vat-row="'+sesc(c)+'">'+
+        var basis = vatBasisOf(c);
+        var charges = (basis==='exclusive') && parseFloat(VAT_RATES[c])>0;
+        return '<div class="vr-row'+(charges?' vr-charges':'')+'" data-vat-row="'+sesc(c)+'">'+
           '<span class="vr-name">'+sesc(KBB_VAT_COUNTRIES[c])+'</span>'+
           '<input type="number" min="0" max="100" step="0.01" value="'+sesc(VAT_RATES[c])+'" data-vat-rate="'+sesc(c)+'" aria-label="VAT rate for '+sesc(KBB_VAT_COUNTRIES[c])+'">'+
-          vatPreviewCell(VAT_RATES[c])+
+          vatBasisSelect(c)+
+          vatPreviewCell(VAT_RATES[c], basis)+
           '<button type="button" class="vr-del" data-vat-del="'+sesc(c)+'" title="Remove '+sesc(KBB_VAT_COUNTRIES[c])+'" aria-label="Remove '+sesc(KBB_VAT_COUNTRIES[c])+'">&times;</button>'+
         '</div>';
       }).join('')+
     '</div>';
   }
 
-  function vatChips(){
-    var pending = KBB_VAT_SUGGESTIONS.filter(function(s){ return KBB_VAT_COUNTRIES[s.code] && !(s.code in VAT_RATES); });
-    if(!pending.length) return '';
-    return '<div class="vr-chips">'+pending.map(function(s){
-      return '<button type="button" class="vr-chip" data-vat-sugg="'+sesc(s.code)+'">+ '+
-        sesc(KBB_VAT_COUNTRIES[s.code])+' '+sesc(s.rate)+'% <span style="opacity:.7">('+sesc(s.note)+')</span></button>';
-    }).join('')+'</div>';
+  /* THE ONE-CLICK WAY IN, and it is the SHARED one.
+
+     "i want you to make the deliver lines automatic same in tax. like user
+      just just click to select."
+
+     So clicking is the primary way this table is filled, and the bar that does
+     it is pstBarHtml/pstBind — the same one the Delivery lines screen uses,
+     driven by App\Support\CountryPresets. A second implementation of "offer
+     the owner one-click preset rows for a country table" is two things to keep
+     in step, and this project has already had to merge two screens that had
+     drifted apart.
+
+     WHAT IS DELIBERATELY NOT SHARED IS THE TONE, and it lives in the group's
+     own `note` rather than here: a delivery sentence is the owner's to state
+     and cannot be wrong, while a tax rate is a fact about the world he is
+     answerable for and a wrong one prints on a receipt.
+
+     A PRESET NEVER SETS A BASIS. apply() below writes the rate and lands the
+     row on the shop's own default basis, so clicking every chip on this screen
+     and saving cannot start charging a customer more. Turning a row Exclusive
+     is a deliberate act on a control of its own. */
+  function vatPresetBar(){
+    return pstBarHtml('tax', {
+      id: 'taxPresets',
+      // What the chips compare against: the row's current rate, or null when
+      // the country has no row at all.
+      filled: function(code){ return (code in VAT_RATES) ? String(VAT_RATES[code]) : null; },
+    });
   }
 
   function vatRatesBand(){
-    return bdSec('VAT shown on the receipt, by country',
-      'The VAT rate above applies to every country at once. Add a country here only when it should show a different percentage — Saudi Arabia, say, while everywhere else keeps the rate above.',
+    return bdSec('Tax by country',
+      'The default rate and basis above apply to every country at once. Add a country here only when it should be different — Saudi Arabia charged on top, say, while everywhere else keeps the default.',
       '<div class="vr-wrap" id="vatRatesBand">'+
+        vatPresetBar()+
         '<div id="vat_rates_table">'+vatRatesTable()+'</div>'+
-        '<div class="bd-label" style="margin-top:2px">Add a country</div>'+
+        '<div class="bd-label" style="margin-top:2px">Or add one by hand</div>'+
         '<div class="vr-add" id="vat_rates_add">'+vatAddSelect()+
           '<input type="number" id="vat_add_rate" min="0" max="100" step="0.01" placeholder="Rate %" aria-label="VAT rate for the country being added">'+
           '<button type="button" class="btn" id="vat_add_btn">Add</button>'+
         '</div>'+
-        '<div id="vat_rates_chips">'+vatChips()+'</div>'+
-        '<div class="bd-note"><b>These are the rates printed on the receipt, and they are yours to get right.</b> ' +
-          'The suggestions above are figures commonly quoted for the Gulf — they are a starting point, not tax advice, and you should confirm them for your business before saving. ' +
-          'Rates change, and a wrong percentage on a receipt is worse than none.<br><br>' +
-          '<b>Changing a rate here does not change what the customer is charged.</b> The VAT line is printed, not added: at 5% an AED 100 order shows AED 4.76 of VAT, and at 15% the same order shows AED 13.04. ' +
-          'The customer pays AED 100 either way, so a higher rate here means a smaller amount left for the shop on that sale, not a bigger one.</div>'+
+        '<div class="bd-note"><b>These are the rates printed on your receipts, and they are yours to get right.</b> ' +
+          'Rates change, a wrong percentage on a receipt is worse than none, and the note above the chips says whose job checking them is.<br><br>' +
+          '<b>Inclusive</b> means the price on the product page already contains the tax: the customer pays AED 100 and AED 4.76 of it is VAT at 5%. ' +
+          '<b>Exclusive</b> means the tax is added on top: at 15% the same AED 100 basket is charged AED 115. ' +
+          '<b>Printed only</b> shows a figure and charges nothing, which is what this shop did everywhere until now.<br><br>' +
+          'Nothing on this tab charges anybody until <b>Tax mode</b> above is set to <b>Applied to orders</b>.</div>'+
       '</div>');
   }
 
-  /* One delegated listener for the whole band — Rule 27, and the table is
-     re-rendered on every change so per-row handlers would not survive anyway. */
   function vatRatesBind(){
     var band = document.getElementById('vatRatesBand');
     if(!band) return;
 
+    /* Read every rate box back into VAT_RATES before anything repaints.
+       pstBind() calls this FIRST on every interaction of the preset bar, and it
+       has to: the owner may have typed into a box since the last paint, and a
+       repaint that has not read those boxes back throws his typing away. The
+       basis selects are read the same way, for the same reason. */
+    var harvest = function(){
+      band.querySelectorAll('[data-vat-rate]').forEach(function(box){
+        VAT_RATES[box.getAttribute('data-vat-rate')] = String(box.value||'').trim();
+      });
+      band.querySelectorAll('[data-vat-basis]').forEach(function(sel){
+        VAT_BASES[sel.getAttribute('data-vat-basis')] = String(sel.value||'').toLowerCase();
+      });
+    };
+
     var repaint = function(){
       document.getElementById('vat_rates_table').innerHTML = vatRatesTable();
-      document.getElementById('vat_rates_chips').innerHTML = vatChips();
       var sel = document.getElementById('vat_add_country');
       if(sel) sel.outerHTML = vatAddSelect();
+      /* The chips say "already in the box below" for a country whose row now
+         matches, and the "fill in all" button counts what is still pending, so
+         the bar is rebuilt with the table rather than left claiming six when
+         two are already there. */
+      var bar = document.getElementById('taxPresets');
+      if(bar) bar.outerHTML = vatPresetBar();
+      pstBind('taxPresets', taxPresetOpts);
     };
+
+    /* One object, so the binding made here and the one remade on every repaint
+       cannot drift. pstBind neither fetches nor saves; apply() puts a value in
+       the in-memory table and Save changes is what publishes it. */
+    var taxPresetOpts = {
+      filled: function(code){ return (code in VAT_RATES) ? String(VAT_RATES[code]) : null; },
+      harvest: harvest,
+      apply: function(code, value){
+        VAT_RATES[code] = String(value);
+        /* THE DEFAULT BASIS, NEVER EXCLUSIVE. A preset knows a rate; it cannot
+           know how this business prices. An existing row keeps whatever basis
+           it already had, because filling in a rate is not a reason to undo a
+           decision the owner made about that country. */
+        if(!(code in VAT_BASES)) VAT_BASES[code] = vatDefaultBasis();
+      },
+      repaint: repaint,
+      done: function(n){
+        toast(n + (n===1 ? ' country filled in' : ' countries filled in') + ' — check the rates, then Save changes');
+      },
+    };
+
+    pstBind('taxPresets', taxPresetOpts);
 
     band.addEventListener('click', function(ev){
       var del = ev.target.closest('[data-vat-del]');
-      if(del){ delete VAT_RATES[del.getAttribute('data-vat-del')]; repaint(); return; }
-
-      var sugg = ev.target.closest('[data-vat-sugg]');
-      if(sugg){
-        var code = sugg.getAttribute('data-vat-sugg');
-        var hit = KBB_VAT_SUGGESTIONS.filter(function(s){ return s.code===code; })[0];
-        /* Filled in, NOT saved. It reaches the database only when the owner
-           presses Save changes, like every other field on this screen. */
-        if(hit){ VAT_RATES[code] = hit.rate; repaint(); }
-        return;
-      }
+      if(del){ var d=del.getAttribute('data-vat-del'); delete VAT_RATES[d]; delete VAT_BASES[d]; repaint(); return; }
 
       if(ev.target.closest('#vat_add_btn')){
         var pick = document.getElementById('vat_add_country');
@@ -13910,6 +14064,7 @@ buildNav();
         var typed = String(rate.value||'').trim();
         if(typed===''){ toast('Enter a rate for '+KBB_VAT_COUNTRIES[pick.value]); return; }
         VAT_RATES[pick.value] = typed;
+        VAT_BASES[pick.value] = vatDefaultBasis();
         rate.value='';
         repaint();
       }
@@ -13923,14 +14078,26 @@ buildNav();
       var code = box.getAttribute('data-vat-rate');
       VAT_RATES[code] = String(box.value||'').trim();
       var cell = box.parentNode.querySelector('.vr-prev');
-      if(cell) cell.outerHTML = vatPreviewCell(VAT_RATES[code]);
+      if(cell) cell.outerHTML = vatPreviewCell(VAT_RATES[code], vatBasisOf(code));
+      box.parentNode.classList.toggle('vr-charges', vatBasisOf(code)==='exclusive' && parseFloat(VAT_RATES[code])>0);
+    });
+
+    /* The basis is a <select>, which fires 'change' and not 'input' in every
+       browser worth naming. The whole row is repainted rather than just the
+       preview, because switching to Exclusive also turns the row's warning
+       state on. */
+    band.addEventListener('change', function(ev){
+      var sel = ev.target.closest('[data-vat-basis]');
+      if(!sel) return;
+      VAT_BASES[sel.getAttribute('data-vat-basis')] = String(sel.value||'').toLowerCase();
+      document.getElementById('vat_rates_table').innerHTML = vatRatesTable();
     });
   }
 
-  /* The wire value: a JSON object of code -> rate, which is what the
-     'ratemap' rule in AdminController::SETTING_RULES validates. Rows left
-     blank are dropped rather than sent as empty strings, so clearing a box and
-     saving is how a country goes back to the global rate. */
+  /* The wire values: two JSON objects of code -> value, which is what the
+     'ratemap' and 'basismap' rules in AdminController::SETTING_RULES
+     validate. Rows left blank are dropped rather than sent as empty strings,
+     so clearing a box and saving is how a country goes back to the default. */
   function vatRatesPayload(){
     var out = {};
     Object.keys(VAT_RATES).forEach(function(code){
@@ -13940,26 +14107,69 @@ buildNav();
     return JSON.stringify(out);
   }
 
-  async function renderStoreSettings(){
+  /* Only for countries that survive into the rate payload, so the two rows can
+     never describe different tables. */
+  function vatBasesPayload(){
+    var rates = JSON.parse(vatRatesPayload());
+    var out = {};
+    Object.keys(rates).forEach(function(code){
+      out[code] = vatBasisOf(code);
+    });
+    return JSON.stringify(out);
+  }
+
+  /* ---------- Business Details, in two tabs -------------------------------
+     "ALSO i can not see the TAX seperate tab on the Business Setting page.
+      please check and fix."
+
+     He asked for "a seperate tab for 'Tax'" and came to Business Details to
+     look for it, because that is where the VAT rate he already knew about sat.
+     So the tab is here, on this screen, and the sidebar carries a Tax entry
+     that opens this screen on it.
+
+     BOTH PANELS ARE RENDERED AND ONE IS HIDDEN, never destroyed. There is a
+     single Save button for the whole screen and it reads every field by id; a
+     field that is not in the DOM reads as '' through sval() and would be saved
+     over the value it is not showing. Hiding is the cheap, safe version of
+     that; unmounting is the version that silently blanks the store name
+     because the owner happened to be on the other tab. */
+  var BD_TAB = 'business';
+
+  function bdTabs(){
+    return '<div class="bd-tabs" id="bdTabs">'+
+      '<button type="button" class="bd-tab'+(BD_TAB==='business'?' on':'')+'" data-bdtab="business">Business</button>'+
+      '<button type="button" class="bd-tab'+(BD_TAB==='tax'?' on':'')+'" data-bdtab="tax">Tax</button>'+
+      '</div>';
+  }
+
+  async function renderStoreSettings(tab){
     await loadSettings();
+    var taxLive = String(SETTINGS.tax_mode||'display')==='live';
+    if(tab==='tax'||tab==='business') BD_TAB = tab;
     // Before the markup is built: vatRatesBand() renders from VAT_RATES.
     vatRatesLoad();
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Business Details</h2>'+
-      '<p>The handful of values the whole shop is built on — what the business is called, what money it takes and what delivery costs. Everything here reaches the storefront and the checkout total the moment it is saved.</p></div>'+
+      '<p>The handful of values the whole shop is built on — what the business is called, what money it takes, what delivery costs and what tax it charges. Everything here reaches the storefront and the checkout total the moment it is saved.</p></div>'+
+      bdTabs()+
       '<div class="bd-wrap"><div class="bd-card">'+
 
+      '<div class="bd-panel" data-bdpanel="business"'+(BD_TAB==='business'?'':' hidden')+'>'+
       bdSec('Store identity',
-        'The name, the tax rate and the clock every invoice, email and checkout total is built from. Come here when the business name changes, the VAT rate moves, or the shop trades from a different city.',
+        'The name, the money and the clock every invoice, email and checkout total is built from. Come here when the business name changes, the shop starts taking a different currency, or it trades from a different city.',
         '<div class="bd-grid">'+
           bdField('set_store_name','Store name',
             '<input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'">',
             'Shown in the browser tab, in emails and on invoices.')+
           bdField('set_currency','Currency',curSelect(),
             'Picking one fills in its symbol and decimals below.')+
-          bdField('set_vat','VAT rate (%)',
-            '<input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'">',
-            'Used for every country at once, unless one is given its own rate below.')+
+          /* WHERE THE VAT RATE WENT. It was a field right here, and the owner
+             knows it was. Removing it without saying so would be a dead end on
+             the one screen he was told to look at, so its place is kept and it
+             points at the tab that now owns it. */
+          bdField('set_vat_jump','VAT rate (%)',
+            '<button type="button" class="bd-jump" data-bdtab="tax">Now on the Tax tab →</button>',
+            'The rate, whether it is included or added on top, and a rate per country all live together on the Tax tab.')+
           /* THE CLOCK EVERY DATE IN THE PANEL IS READ ON.
 
              Storage stays UTC and this never changes it — see
@@ -13985,11 +14195,6 @@ buildNav();
             ],'Asia/Dubai'),
             'Which day an order counts towards, on every screen and document. Nothing already recorded is altered.')+
         '</div>')+
-
-      /* Its own band directly under the field it qualifies, so "all countries
-         at once" and "this country instead" read as two halves of one setting
-         rather than as two screens. */
-      vatRatesBand()+
 
       bdSec('How prices are printed',
         'How every price on the storefront is written — the symbol, where it sits and how many decimals. Choosing a currency above fills these in, and you can still override any of them.',
@@ -14020,7 +14225,7 @@ buildNav();
         '<div class="bd-grid">'+
           bdField('set_free_ship','Free-shipping threshold',
             '<input id="set_free_ship" type="number" step="1" value="'+money2aed('free_ship')+'">',
-            'Delivery is free once the cart subtotal reaches this.')+
+            'Delivery is free once the cart subtotal reaches this. Measured on the product total before any tax, so it means the same thing in every country.')+
           bdField('set_delivery','Flat delivery fee',
             '<input id="set_delivery" type="number" step="1" value="'+money2aed('delivery_flat')+'">',
             'Charged on every order below the threshold.')+
@@ -14028,11 +14233,77 @@ buildNav();
             '<input id="set_cod" type="number" step="1" value="'+money2aed('cod_fee')+'">',
             'Added when the shopper chooses to pay on delivery.')+
         '</div>')+
+      '</div>'+
+
+      '<div class="bd-panel" data-bdpanel="tax"'+(BD_TAB==='tax'?'':' hidden')+'>'+
+      /* THE TAX MODE SWITCH, and the single most consequential control on
+         this screen. Until it says "Applied to orders" the whole tab is a
+         printing preference and nothing below it can charge anybody — which
+         is how this feature ships, so that applying the update changes
+         nothing at all until the owner comes here and decides otherwise.
+
+         WRITTEN OUT HERE rather than in a helper of its own, because the
+         single Save button below reads every field by id through sval() and
+         AdminScreenSectionsTest checks that each id it posts is DRAWN in
+         this function. A field drawn somewhere this function cannot be seen
+         to draw is a field that guard stops watching — and the failure it
+         watches for is a save that quietly overwrites a setting with ''. */
+      bdSec('How tax works on this shop',
+        'One switch decides whether the rates below are printed on the receipt or actually applied to what the customer pays. It arrives set to printing only, exactly as this shop has always behaved.',
+        '<div class="bd-grid">'+
+          bdField('set_tax_mode','Tax mode',
+            seoSel('set_tax_mode',SETTINGS.tax_mode,[
+              ['display','Printed only — show VAT on the receipt, charge nothing'],
+              ['live','Applied to orders — use the rates below for real']
+            ],'display'),
+            'Switch this to “Applied to orders” only when the rates and bases below are the ones you want to trade on.')+
+          bdField('set_vat_enabled','Show the VAT line',
+            seoSel('set_vat_enabled',(SETTINGS.vat_enabled==null||SETTINGS.vat_enabled===''||SETTINGS.vat_enabled==='1'||SETTINGS.vat_enabled===1||SETTINGS.vat_enabled===true)?'1':'0',[
+              ['1','Yes — show it in the cart and at checkout'],
+              ['0','No — say nothing about VAT']
+            ],'1'),
+            'Turning this off also stops any tax being charged. A tax the customer cannot see is not one this shop will add.')+
+          bdField('set_vat','Default rate (%)',
+            '<input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'">',
+            'Used for every country at once, unless one is given its own rate below.')+
+          bdField('set_vat_basis','Default basis',
+            seoSel('set_vat_basis',SETTINGS.vat_basis,[
+              ['inclusive','Inclusive — the price already includes it'],
+              ['exclusive','Exclusive — added on top of the price'],
+              ['flat','Printed only — charges nothing']
+            ],'inclusive'),
+            'What the default rate does. Only “Exclusive” raises what the customer pays.')+
+          bdField('set_vat_label','Wording on the receipt',
+            '<input id="set_vat_label" value="'+sesc(SETTINGS.vat_label==null?"You\'re paying VAT ({rate}%)":SETTINGS.vat_label)+'">',
+            'Use {rate} where the percentage should appear.')+
+        '</div>'+
+        (taxLive
+          ? '<div class="bd-note"><b>Tax is being applied to real orders.</b> Every country on an Exclusive basis below is charging its rate on top of the basket, and every order records the rate and basis it was charged at, so old receipts keep saying what they said on the day.</div>'
+          : '<div class="bd-note"><b>Nothing here is being charged.</b> The VAT line is printed beside the total and the total is unaffected, which is how this shop has always worked. Set Tax mode to “Applied to orders” when you are ready for the rates below to be real — and check them first, because from that moment an Exclusive country charges more.</div>'))+
+      vatRatesBand()+
+      '</div>'+
 
       '</div>'+
       '<div class="bd-actions"><button class="btn" id="set_save_biz">Save changes</button></div>'+
       '</div></div>';
     vatRatesBind();
+
+    /* One listener for the tab strip and for the pointer button beside where
+       the VAT rate used to be — both carry data-bdtab, so "take me to Tax"
+       means one thing on this screen however it is asked for. */
+    document.querySelector('#content').addEventListener('click', function(ev){
+      var t = ev.target.closest('[data-bdtab]');
+      if(!t) return;
+      BD_TAB = t.getAttribute('data-bdtab');
+      document.querySelectorAll('[data-bdpanel]').forEach(function(p){
+        p.hidden = p.getAttribute('data-bdpanel') !== BD_TAB;
+      });
+      document.querySelectorAll('.bd-tab').forEach(function(b){
+        b.classList.toggle('on', b.getAttribute('data-bdtab') === BD_TAB);
+      });
+      window.scrollTo(0,0);
+    });
+
     /* Picking a currency fills in its symbol and decimals; both stay editable. */
     var curSel=document.getElementById('set_currency');
     if(curSel) curSel.onchange=function(){
@@ -14041,13 +14312,44 @@ buildNav();
       if(symEl){ symEl.value=c.symbol; symEl.placeholder=c.symbol; }
       if(decEl) decEl.value=String(c.decimals);
     };
+
+    /* The default basis is what every preset row lands on and what the
+       per-country previews compare against, so changing it has to repaint the
+       table below rather than leaving it describing the old default. */
+    var basisSel=document.getElementById('set_vat_basis');
+    if(basisSel) basisSel.onchange=function(){
+      SETTINGS.vat_basis = basisSel.value;
+      var tbl=document.getElementById('vat_rates_table');
+      if(tbl) tbl.innerHTML = vatRatesTable();
+      /* The preset bar compares chips against the rows, not against the
+         default basis, so it does not need rebuilding here — only the table,
+         whose previews and warning stripes read the default. */
+    };
+
+    var modeSel=document.getElementById('set_tax_mode');
+    if(modeSel) modeSel.onchange=function(){
+      SETTINGS.tax_mode = modeSel.value;
+      var tbl=document.getElementById('vat_rates_table');
+      if(tbl) tbl.innerHTML = vatRatesTable();
+    };
+
     document.getElementById('set_save_biz').onclick=async function(){
       var payload={
         store_name: sval('set_store_name'), currency: sval('set_currency'), vat_rate: sval('set_vat'),
         store_timezone: sval('set_store_timezone'),
-        // A JSON object string, not an array: checkSetting() refuses arrays
-        // outright, and 'ratemap' unpacks and validates this key by key.
+        // The Tax tab. Every one of these needs a line in
+        // AdminController::SETTING_RULES or the endpoint answers ok and writes
+        // nothing — the standing warning at the top of that list.
+        tax_mode: sval('set_tax_mode'),
+        vat_enabled: sval('set_vat_enabled'),
+        vat_basis: sval('set_vat_basis'),
+        vat_label: sval('set_vat_label'),
+        // JSON object strings, not arrays: checkSetting() refuses arrays
+        // outright, and 'ratemap' / 'basismap' unpack and validate them key by
+        // key. The two describe one table and are built from one source, so a
+        // country cannot have a basis without a rate.
         vat_country_rates: vatRatesPayload(),
+        vat_country_bases: vatBasesPayload(),
         currency_symbol: sval('set_currency_symbol'),
         currency_symbol_render: sval('set_currency_symbol_render'),
         currency_position: sval('set_currency_position'),
@@ -14061,9 +14363,9 @@ buildNav();
       catch(e){
         /* The endpoint validates all of it and writes none of it when one
            value is wrong, and says which. Showing that beats "check
-           connection" \u2014 nothing was saved and the owner needs to know what to
+           connection" — nothing was saved and the owner needs to know what to
            change, not to go and look at his router. */
-        toast((e && e.body && e.body.message) ? e.body.message : 'Save failed \u2014 check connection');
+        toast((e && e.body && e.body.message) ? e.body.message : 'Save failed — check connection');
       }
     };
   }
@@ -16803,7 +17105,11 @@ buildNav();
     if(id==='customers'){ _go(id); return renderCustomers(); }
     if(id==='quiz-leads'){ _go(id); return renderQuizLeads(); }
     if(id==='rev-all'){ _go(id); return renderReviews(); }
-    if(id==='store-settings'){ _go(id); return renderStoreSettings(); }
+    if(id==='store-settings'){ _go(id); return renderStoreSettings('business'); }
+    /* The sidebar's Tax row opens Business Details on its Tax tab —
+       one screen, two ways in, so the word he is looking for is both
+       in the list and on the page it takes him to. */
+    if(id==='tax'){ _go(id); return renderStoreSettings('tax'); }
     if(id==='payments'){ _go(id); return renderPayments(); }
     if(id==='seo'){ _go(id); return renderSeo(); }
     if(id==='analytics'){ _go(id); return renderAnalytics(); }

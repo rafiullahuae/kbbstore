@@ -66,7 +66,6 @@ class EcommerceApiController extends Controller
                     'coupon' => ['Coupon hint', 'The suggested code above the contact section.', 'pct', ['checkout_coupon', 'checkout_coupon_text', 'checkout_coupon_color']],
                     'mobile' => ['Mobile layout', 'The place-order box shoppers see on a phone.', 'phone', ['checkout_thumbs_style', 'mobile_sticky_bar', 'backtocart_style']],
                     'fees' => ['Fees', 'Charges added at checkout.', 'pct', ['cod_enabled', 'cod_fee']],
-                    'tax' => ['VAT line', 'The inclusive-VAT note under the order total. Display only — never added to the total.', 'pct', ['vat_enabled', 'vat_rate', 'vat_basis', 'vat_label']],
                 ],
                 'fields' => [
                     'checkout_single_name'  => ['bool', 'Single full-name field', true, 'Off splits it into first and last name.'],
@@ -77,10 +76,22 @@ class EcommerceApiController extends Controller
                     // field lives with the fee it belongs beside, without a
                     // second place deciding whether COD is offered.
                     'cod_enabled'           => ['bool', 'Enable Cash on Delivery', true, 'Offered as a payment method at checkout when on.'],
-                    'vat_enabled'           => ['bool', 'Show the VAT line', true, ''],
-                    'vat_rate'              => ['int', 'VAT rate', 5, 'Per cent. Informational — see App\\Support\\VatDisplay for how it is calculated.'],
-                    'vat_basis'             => ['select', 'How the rate is applied', 'inclusive', 'Inclusive: the price already contains the tax. Flat: rate x total, a rounder figure some merchants prefer.', ['inclusive' => 'Inclusive (price already contains it)', 'flat' => 'Flat (rate × total)']],
-                    'vat_label'             => ['text', 'VAT line text', "You're paying VAT ({rate}%)", 'Use {rate} where the percentage should appear.'],
+                    /*
+                     * THE VAT FIELDS HAVE MOVED — Lane CU.
+                     *
+                     * vat_enabled, vat_rate, vat_basis and vat_label used to be
+                     * a "VAT line" section here. They are now on Store ->
+                     * Business Details -> Tax, beside the per-country table and
+                     * the switch that decides whether tax is charged at all,
+                     * because the owner asked for "a seperate tab for 'Tax'"
+                     * and went to Business Details to look for it.
+                     *
+                     * They are NOT left here as well. Two screens editing one
+                     * setting is how the shop ends up with two answers to one
+                     * question, and a value saved on the screen the owner is
+                     * not looking at is a change he cannot see. Their values are
+                     * untouched: only which screen writes them has changed.
+                     */
                     /*
                      * BLANK DEFAULTS, deliberately. These were 'GLOW30' and
                      * 'Need more discount? Try {code} for 30% off ✨' — an

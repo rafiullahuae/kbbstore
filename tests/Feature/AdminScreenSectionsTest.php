@@ -55,7 +55,16 @@ function laneCdSlice(string $from, string $to): string
 
 function laneCdStoreSettings(): string
 {
-    return laneCdSlice('async function renderStoreSettings(){', "document.getElementById('set_save_biz').onclick");
+    /*
+     * The declaration WITHOUT its argument list. It was
+     * `renderStoreSettings(){` until Lane CU gave the screen a Business tab
+     * and a Tax tab and the function an argument saying which to open on.
+     * That moved the anchor and this file's own guard caught it — "cannot find
+     * … — this check is blind" — which is the guard working. Anchoring on the
+     * name alone is what stops the next argument doing the same, and it is
+     * still unambiguous: there is one renderStoreSettings in the console.
+     */
+    return laneCdSlice('async function renderStoreSettings(', "document.getElementById('set_save_biz').onclick");
 }
 
 function laneCdSeoSettings(): string

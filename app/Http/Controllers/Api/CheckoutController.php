@@ -254,7 +254,40 @@ class CheckoutController extends Controller
 
             $delivery = (int) $rate['cost'];
             $codFee   = $data['method'] === 'cod' ? $codFeeCfg : 0;
-            $total    = $subtotal + $delivery + $codFee;
+
+            /*
+             * TAX, ON THIS PATH TOO, AND FOR THE SAME DESTINATION.
+             *
+             * A tax engine that runs on the storefront checkout and not here
+             * produces orders whose totals do not add up — this endpoint
+             * creates real orders, takes real payments and is PUBLIC (see
+             * CLAUDE.md: every /api/* endpoint is unauthenticated), so it is
+             * not a side door that may lag behind.
+             *
+             * It cannot call CartService::totals(): this path never builds a
+             * Cart, prices its lines straight from the catalogue and supports
+             * no coupon, which is why `discount_total` below is 0. So it asks
+             * VatDisplay the same question totals() asks, on the same taxable
+             * base — subtotal minus discount (nil here) plus delivery, with the
+             * COD surcharge outside it, exactly as the storefront computes it.
+             *
+             * BEFORE the Payment & Shipping Rules window and the gateway's own
+             * availableFor() check, deliberately: both measure the ORDER TOTAL,
+             * and on an exclusive basis the total is the tax-inclusive one the
+             * driver actually collects. Asking them about a pre-tax figure
+             * would offer Cash on delivery for an order that is over the
+             * ceiling by the time it is placed.
+             *
+             * Lane CQ owns the stock handling on this endpoint. Nothing here
+             * touches stock, the lines, or the gateway hand-off.
+             */
+            $taxableBase = $subtotal + $delivery;
+            $tax = app(\App\Support\VatDisplay::class)->quote(
+                $taxableBase,
+                $data['customer']['country'] ?? null,
+            );
+
+            $total = $tax['total'] + $codFee;
 
             // Payment & Shipping Rules applies here too. This endpoint takes a
             // method straight from the request, so leaving it out would make it
@@ -349,7 +382,13 @@ class CheckoutController extends Controller
                 'discount_total'   => 0,
                 'shipping_total'   => $delivery,
                 'fee_total'        => $codFee,
-                'tax_total'        => 0,
+                // The same three columns the storefront checkout writes, from
+                // the same quote, so an order placed here and one placed there
+                // record their tax identically. 0 / null / null in the shipped
+                // default state, which is what this row held before.
+                'tax_total'        => (int) $tax['charged'],
+                'tax_rate'         => $tax['mode'] === \App\Support\VatDisplay::MODE_LIVE ? $tax['rate'] : null,
+                'tax_basis'        => $tax['mode'] === \App\Support\VatDisplay::MODE_LIVE ? $tax['basis'] : null,
                 'total'            => $total,
                 // The rate's own title, as place() writes it — not the raw
                 // `ship_method` slug off the request. This column is what the

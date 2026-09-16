@@ -43,6 +43,14 @@ class Order extends Model
             'shipping_total' => 'int',
             'fee_total' => 'int',
             'tax_total' => 'int',
+            /*
+             * NOT cast to float. Null is the load-bearing value here: it means
+             * "this order predates the tax engine, or was placed while the shop
+             * was only printing a VAT line" — and every reader branches on
+             * that to keep behaving exactly as it did. `'float'` would turn a
+             * null column into 0.0 and tell those readers the order was taxed
+             * at nought per cent, which is a different and untrue statement.
+             */
             'total' => 'int',
         ];
     }
