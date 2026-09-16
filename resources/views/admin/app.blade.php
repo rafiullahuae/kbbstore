@@ -8973,10 +8973,42 @@ buildNav();
 (function(){
   var SEL = '.cbx';
 
+  function tidy(s){
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
+
+  /* The words a screen has already put beside the box. Two shapes exist and a
+     third will: the older screens wrap the box and its words in one <label>,
+     and the ones rebuilt to the Coupons standard put the box and a sibling
+     <div> holding a title and some help inside a row. So this does not hard-
+     code either -- it climbs a few levels, stopping the moment it reaches a
+     node holding more than one tick box (past that point the text belongs to a
+     list, not to this box), and prefers a dedicated title element over the
+     whole row so the help paragraph does not end up in the name. */
+  var TITLE_SEL = '.sm-opt-t, .ce-opt-t, .mlf-opt-t, .bd-opt-t, b, strong';
+
   function labelText(el){
     var host = el.closest('label, .catopt');
-    if (!host) return '';
-    return (host.textContent || '').replace(/\s+/g, ' ').trim();
+    if (host) {
+      var direct = tidy(host.textContent);
+      if (direct) return direct;
+    }
+
+    var node = el.parentElement;
+    for (var hops = 0; node && hops < 3; hops++) {
+      if (node.querySelectorAll('.cbx').length > 1) break;
+
+      var title = node.querySelector(TITLE_SEL);
+      var t = title ? tidy(title.textContent) : '';
+      if (t) return t;
+
+      t = tidy(node.textContent);
+      if (t && t.length <= 120) return t;
+
+      node = node.parentElement;
+    }
+
+    return '';
   }
 
   function nameFor(el){
@@ -8984,9 +9016,12 @@ buildNav();
     if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return '';
     if (el.getAttribute('title')) return '';
 
-    var t = labelText(el);
-    if (t) return t;
-
+    /* The boxes inside a table come FIRST, before any attempt to read words off
+       the page, because there are no words to read: a select-all sits alone in
+       a <th> and a row tick sits alone in a <td>. Left to the climb below,
+       select-all reaches the header row -- whose only tick box it is -- and
+       comes back named "ProductSKUBrandStatusStockPriceCategories...", which is
+       measurably worse than no name at all. */
     if (el.id === 'olAll' || el.id === 'cuAll' || el.id === 'cplAll') {
       return 'Select every row on this page';
     }
@@ -8995,7 +9030,8 @@ buildNav();
         el.hasAttribute('data-rsel')) {
       return 'Select this row';
     }
-    return '';
+
+    return labelText(el);
   }
 
   /* The state the box is actually in, not the state we last set. */
