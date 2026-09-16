@@ -43,14 +43,23 @@ use Illuminate\Support\Facades\Log;
  */
 class OrderStatusChanged extends OrderMail
 {
+    use BrandedSubject;
+
     /**
      * The statuses worth an email, and exactly what each one says.
+     *
+     * THE SUBJECT TAKES TWO PLACEHOLDERS, NUMBERED — Lane DI. `%1$s` is the
+     * store's name and `%2$s` is the order number. It used to be one `%s` with
+     * the shop's name spelled out beside it, which is why renaming the shop
+     * left two subjects claiming the old one. Numbered rather than positional
+     * so a subject in another language can put them in the other order, and so
+     * that reading this table says which is which.
      *
      * @var array<string, array{0:string,1:string,2:string}>  status => [subject, heading, body]
      */
     public const WORDING = [
         'shipped' => [
-            'Your K Beauty Bliss order %s is on its way',
+            'Your %1$s order %2$s is on its way',
             'Your order is on its way',
             /*
              * STILL THE DEFAULT, AND NO LONGER THE ONLY POSSIBILITY. The second
@@ -64,7 +73,7 @@ class OrderStatusChanged extends OrderMail
             'Your order has left us and is with the courier. Delivery in the UAE normally takes one to three working days from dispatch.',
         ],
         'cancelled' => [
-            'Your K Beauty Bliss order %s has been cancelled',
+            'Your %1$s order %2$s has been cancelled',
             'Your order has been cancelled',
             'This order has been cancelled and nothing further will be sent.',
         ],
@@ -385,7 +394,7 @@ class OrderStatusChanged extends OrderMail
         [$subject] = self::WORDING[$this->status];
 
         return new Envelope(
-            subject: sprintf($subject, $this->orderNumber()),
+            subject: sprintf($subject, $this->brandName(), $this->orderNumber()),
         );
     }
 

@@ -84,5 +84,24 @@ Delivery method: {!! $doc['deliveryMethod'] !!}
 
 {!! $doc['seller']['footer'] !!}
 @endif
+{{-- THE SIGN-OFF, FROM THE SAME PLACE THE HTML HALF READS IT — Lane DI.
 
-— K Beauty Bliss
+     This line was the shop's name spelled out, while emails/layout.blade.php
+     — the HTML part of this same message — printed `$brand['signature']`. So one
+     message could go out signed two different ways: an owner who set a signature
+     on Store → Mail, or who renamed the shop, changed the HTML half and not this
+     one, and a customer comparing the two halves would find the shop calling
+     itself two things.
+
+     The lines and the guard are `emails/partials/support-text.blade.php`'s,
+     which is what every other customer-facing text part uses. That partial is
+     not included wholesale here because it also prints the support block, and
+     whether the emailed invoice grows one is a separate decision from whether
+     its two halves sign the same way. EmailBranding::signature() always returns
+     at least one line unless branding could not be read at all, in which case
+     the HTML half prints nothing either. --}}
+@if (! empty($brand['signature']))
+@foreach ($brand['signature'] as $line)
+{!! $line !!}
+@endforeach
+@endif

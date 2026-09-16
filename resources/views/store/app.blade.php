@@ -553,8 +553,18 @@ footer p{font-size:13px;line-height:1.6;max-width:34ch}
       </div>
       <div>
         <h5>Reach Us</h5>
-        <a href="#" onclick="return false">+971 58 505 2611</a>
-        <a href="#" onclick="return false">info@kbeautybliss.com</a>
+        {{-- The "Reach Us" block, from settings rather than from two literals
+             — Lane DI. This page is served by PageController, so the number and
+             the address here were a fifth and sixth copy of contact details the
+             owner could not change anywhere. The address is printed only when
+             there is one, the way EmailBranding declines to print an empty
+             support channel: a blank line under a heading that promises a way
+             to reach somebody is worse than a shorter block. --}}
+        <a href="#" onclick="return false">{{ \App\Support\SupportContact::phone() }}</a>
+        @php $supportEmail = \App\Support\SupportContact::email(); @endphp
+        @if ($supportEmail !== '')
+          <a href="mailto:{{ $supportEmail }}">{{ $supportEmail }}</a>
+        @endif
         <a href="#" onclick="return false">WhatsApp · 24/7</a>
         <a href="#" onclick="return false">Instagram · TikTok · FB</a>
       </div>

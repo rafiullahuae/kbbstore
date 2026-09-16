@@ -5,9 +5,13 @@
         <div class="fcol">
             <div class="logo" style="font-size:24px;margin-bottom:12px">K-Beauty<span>Bliss</span></div>
             <p>Authentic Korean beauty, curated for the UAE.</p>
-            @php $phone = $kbbSettings->get('brand_whatsapp', '+971585052611'); @endphp
-            <div class="fcontact">📞 {{ $kbbSettings->get('support_phone', '+971 58 505 2611') }}</div>
-            <a class="wa" href="https://wa.me/{{ preg_replace('/\D/', '', (string) $phone) }}">
+            {{-- Both numbers now come from App\Support\SupportContact, which is
+                 the one place the shipped values live. The printed line and the
+                 dialled link were two different settings with two different
+                 literals; they are still two accessors, because the two
+                 surfaces print the number differently and always have. --}}
+            <div class="fcontact">📞 {{ \App\Support\SupportContact::phone() }}</div>
+            <a class="wa" href="https://wa.me/{{ \App\Support\SupportContact::whatsappDigits() }}">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Z"/></svg>
                 Chat on WhatsApp
             </a>

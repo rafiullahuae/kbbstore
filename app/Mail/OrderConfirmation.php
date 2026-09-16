@@ -21,10 +21,12 @@ use Illuminate\Mail\Mailables\Envelope;
  */
 class OrderConfirmation extends OrderMail
 {
+    use BrandedSubject;
+
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your K Beauty Bliss order ' . $this->orderNumber(),
+            subject: 'Your ' . $this->brandName() . ' order ' . $this->orderNumber(),
         );
     }
 

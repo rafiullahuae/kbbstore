@@ -38,6 +38,8 @@ use Illuminate\Mail\Mailables\Envelope;
  */
 class OrderInvoice extends Mailable
 {
+    use BrandedSubject;
+
     /** @var array<string, mixed> */
     public array $doc;
 
@@ -68,10 +70,12 @@ class OrderInvoice extends Mailable
     {
         $reference = (string) $this->doc['invoiceReference'];
 
+        $store = $this->brandName();
+
         return new Envelope(
             subject: $reference !== ''
-                ? 'Invoice ' . $reference . ' for your K Beauty Bliss order ' . $this->doc['orderNumber']
-                : 'Invoice for your K Beauty Bliss order ' . $this->doc['orderNumber'],
+                ? 'Invoice ' . $reference . ' for your ' . $store . ' order ' . $this->doc['orderNumber']
+                : 'Invoice for your ' . $store . ' order ' . $this->doc['orderNumber'],
         );
     }
 

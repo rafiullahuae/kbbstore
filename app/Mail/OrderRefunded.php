@@ -30,6 +30,8 @@ use Illuminate\Mail\Mailables\Envelope;
  */
 class OrderRefunded extends OrderMail
 {
+    use BrandedSubject;
+
     public int $amountFils;
 
     public string $amountHtml;
@@ -152,7 +154,7 @@ class OrderRefunded extends OrderMail
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Refund sent for your K Beauty Bliss order ' . $this->orderNumber(),
+            subject: 'Refund sent for your ' . $this->brandName() . ' order ' . $this->orderNumber(),
         );
     }
 

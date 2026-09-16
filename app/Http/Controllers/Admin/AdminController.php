@@ -1425,7 +1425,32 @@ class AdminController extends Controller
         'currency' => ['code', 'Currency', 3],
         'currency_symbol' => ['text', 'Currency symbol'],
         'currency_position' => ['enum', 'Symbol position', \App\Support\Money::POSITIONS],
-        'currency_decimals' => ['int', 'Currency decimals', [0, 4]],
+        /*
+         * `optint` AND NOT `int`, AND THE DIFFERENCE IS A MONEY BUG — Lane DI.
+         *
+         * The box on Store → Business Details → Currency carries the
+         * placeholder "blank — whole numbers", nothing seeds this key, and
+         * App\Support\Money's own header documents "no `currency_decimals` row"
+         * as a supported, shipped state. So blank is not an empty field the
+         * owner forgot: it is the value this store runs on.
+         *
+         * Under `int` it was refused — and because updateSettings() validates
+         * the whole tab and writes none of it when one value fails, a fresh
+         * shop could not save its STORE NAME. The owner typed his name, pressed
+         * Save and was told "Nothing was saved. “Currency decimals” must be a
+         * whole number." about a box he had never touched.
+         *
+         * WHY BLANK IS STORED AS '' AND NOT COERCED TO '0'. Money::config()
+         * maps both an absent row and an empty one to null, and null is NOT the
+         * same as 0 there — see Money::displayDecimals() and ::minorExponent().
+         * null means "print whole dirhams, but keep reading the stored integers
+         * as hundredths"; 0 means "this currency HAS no minor unit", which
+         * makes minorExponent() 0 and every amount in the database read back a
+         * hundred times too large. AED 199, stored as 19900 fils, would print
+         * as 19,900. Coercing a blank box to 0 is the money bug, not the
+         * refusal it replaces.
+         */
+        'currency_decimals' => ['optint', 'Currency decimals', [0, 4]],
         'currency_symbol_render' => ['enum', 'Symbol rendering', \App\Support\Money::RENDER_MODES],
 
         'vat_rate' => ['pct', 'VAT rate'],
@@ -1563,7 +1588,22 @@ class AdminController extends Controller
         'merchant_ship_country' => ['code', 'Ship-to country', 2],
         'merchant_ship_cost' => ['aed', 'Shipping cost'],
         'merchant_ship_free_over' => ['aed', 'Free shipping over'],
-        'merchant_return_days' => ['int', 'Return window', [0, 3650]],
+        /*
+         * `optint` for the same reason, found by the same sweep — Lane DI.
+         *
+         * This is a plain number box on Store → Search appearance → Google
+         * Merchant. Clearing it posts '' and, under `int`, refused the WHOLE
+         * SEO tab: the owner's title template, his descriptions and his
+         * verification tokens all discarded because he emptied a box whose own
+         * help text says a zero there publishes no return policy.
+         *
+         * Blank is unambiguous here. App\Support\Seo reads it as
+         * `(int) ($s['merchant_return_days'] ?? 0)`, and `(int) ''` is 0, so an
+         * empty row, an absent row and a typed 0 are the same value to the only
+         * reader this key has — all three mean "publish no return policy".
+         * Nothing is guessed at by accepting the blank.
+         */
+        'merchant_return_days' => ['optint', 'Return window', [0, 3650]],
 
         /*
          * ── WHO IS ISSUING THE INVOICE — Lane DG ────────────────────────────
@@ -1652,6 +1692,53 @@ class AdminController extends Controller
         'invoice_website' => ['weburl', 'Website on invoices'],
         'invoice_footer' => ['text', 'Invoice footer'],
         'invoice_doctype' => ['text', 'What the invoice calls itself'],
+
+        /*
+         * ── HOW A CUSTOMER REACHES THIS SHOP — Lane DI ──────────────────────
+         *
+         * Three keys that are read in five places and were written in none.
+         * `support_email` and `brand_whatsapp` are worse than unwritten: they
+         * are SEEDED, with this shop's real production address and real
+         * production number, so every install carries somebody's actual contact
+         * details with no box anywhere in this console to change them.
+         *
+         * WHY THE BUSINESS TAB AND NOT THE INVOICE TAB. The Invoice tab holds
+         * eight keys that are about one document. These three are not:
+         *
+         *   - `support_email` is InvoiceDocument::seller()'s fallback for
+         *     `invoice_email` — so it is the value the invoice uses when the
+         *     invoice's own box is blank. A fallback shown beside the thing it
+         *     is a fallback for is two email boxes on one tab whose difference
+         *     an owner has to be told; a fallback shown one tab up, under the
+         *     shop's own details, is where the invoice goes looking.
+         *   - `brand_whatsapp` is on EVERY PAGE OF THE STOREFRONT — the header
+         *     chip, the footer button, the mobile menu — and in the support
+         *     block of every customer email (EmailBranding::support()). Filing
+         *     the number that runs the shop's chat button under "Invoice" would
+         *     say it was an invoice field, which it is not.
+         *   - `support_phone` is the number the header and footer PRINT.
+         *
+         * AND NOT STORE → MAIL, which is where the second candidate was. Mail
+         * already has `mail_support_email` and `mail_support_whatsapp`, and
+         * those are deliberately narrower: they are what the EMAIL FOOTER says,
+         * overriding these. Putting the shop-wide values on the same screen as
+         * their per-channel overrides makes Mail the home of a fact half its
+         * readers are not emails. The shop-wide fact belongs with the shop's
+         * name, timezone and currency; the mail-only override stays on Mail.
+         *
+         * `text` FOR BOTH NUMBERS, for the reason `invoice_phone` is text: the
+         * seller block, the header and the footer print them verbatim and a UAE
+         * shop writes a number four defensible ways. `email` for the address,
+         * so the three places that decide what an address is — this rule,
+         * MailSettings::replyToAddress() and EmailBranding::support() — keep
+         * agreeing. All three accept blank, and blank means "go back to what
+         * the shop shipped with" rather than "print an empty line": see
+         * App\Support\SupportContact, which is the one place those shipped
+         * values now live.
+         */
+        'support_email' => ['email', 'Support email address'],
+        'support_phone' => ['text', 'Phone number shown on the site'],
+        'brand_whatsapp' => ['text', 'WhatsApp number'],
     ];
 
     /** PUT /admin-api/settings — upsert a whitelisted set of store settings. */
@@ -2097,6 +2184,52 @@ class AdminController extends Controller
                     ? $ok($value)
                     : $no("“{$label}” must be a registration number — letters, digits, "
                         . 'spaces and hyphens, up to 40 characters.');
+
+            /*
+             * ── A WHOLE NUMBER, OR NOTHING AT ALL — Lane DI ─────────────────
+             *
+             * `int` with one addition: an empty value is accepted and stored as
+             * ''. Everything else about it — the digits-only shape, the bounds,
+             * the messages — is `int`'s, deliberately, because the two must not
+             * drift apart.
+             *
+             * A SEPARATE TYPE AND NOT A LOOSENING OF `int`. Whether blank is a
+             * legitimate answer is a property of the KEY, not of "being a
+             * number": `merchant_return_days` has a documented meaning for an
+             * empty value and `currency_decimals` ships empty by design, while
+             * a bound like `[0, 4]` on a key whose reader has no empty case
+             * would be turned by a blanket loosening into a silent way to store
+             * nothing and be told it saved. That is the exact failure the note
+             * at the top of SETTING_RULES exists to warn about, and this repo
+             * has recorded it more than once. Opting in per key keeps the
+             * decision where it can be read.
+             *
+             * '' AND NOT '0', AND NOT A DELETED ROW. Both readers that use this
+             * type already treat an empty value exactly as they treat an absent
+             * one — Money::config() collapses null and '' to null before it
+             * does anything else, and Seo's `(int)` cast makes '' and a missing
+             * key both 0 — so storing the empty string needs nothing new from
+             * either of them and needs no delete path in SettingsService, whose
+             * whole job here is to flush two caches on write. What the row does
+             * carry is the fact that the owner looked at the box and chose the
+             * blank, which an absent row cannot say.
+             */
+            case 'optint':
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                [$min, $max] = (array) $extra;
+
+                if (preg_match('/^-?\d+$/', $value) !== 1) {
+                    return $no("“{$label}” must be a whole number, or blank.");
+                }
+
+                $n = (int) $value;
+
+                return ($n >= $min && $n <= $max)
+                    ? $ok((string) $n)
+                    : $no("“{$label}” must be between {$min} and {$max}.");
         }
 
         return $no("“{$label}” could not be checked.");
