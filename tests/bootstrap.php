@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 /**
  * The suite's bootstrap. Named by phpunit.xml and phpunit-mysql.xml in place of
- * vendor/autoload.php. It gives this process its own copy of the two things
- * every process in this checkout otherwise shares and destroys for the others:
- * the database it migrates, and the directory it compiles Blade into.
+ * vendor/autoload.php. It gives this process its own copy of everything every
+ * process in this checkout otherwise shares and destroys for the others: the
+ * database it migrates, the directory it compiles Blade into, the package
+ * manifest it reads, and the two roots it writes to -- storage/ and the public
+ * web root.
+ *
+ * Taken together those are the whole of it. Two suites can now run at the same
+ * time, from one worktree or from two, and neither can observe the other.
  *
  * Why here, and why it has to be here. PHPUnit applies <php><env> and then
  * loads the bootstrap script -- in that order, see TextUI\Application::run(),
@@ -26,7 +31,7 @@ declare(strict_types=1);
  * the override arrives through a name of its own, KBB_TEST_DB, which nothing
  * else in the project reads and no framework sets by accident.
  *
- * The four incidents this closes:
+ * The five incidents this closes:
  *
  * 1. phpunit-mysql.xml hard-codes `kbb_test`, and every concurrent worktree
  *    shared it. Two lanes running the MySQL suite at once destroy each other:
@@ -58,10 +63,20 @@ declare(strict_types=1);
  *    another process lands a fatal in a test that has nothing to do with
  *    packages. See the comment on APP_PACKAGES_CACHE below.
  *
- * Nothing here can be asserted from inside itself, so
- * tests/Feature/SuiteIsolationTest.php asserts the outcome from the other end:
+ * 5. storage/ and the public web root are shared, and two tests EMPTY them --
+ *    AdminImportScreenTest purges storage/app/import in beforeEach and again in
+ *    afterEach, MediaLibraryTest empties public/uploads. Each is right about its
+ *    own run and fatal to anybody else's: the other run's uploaded CSV goes
+ *    between the write and the read. This was the sole cause of all eleven
+ *    filesystem failures left over once 1-4 were closed. See the comment on
+ *    LARAVEL_STORAGE_PATH and KBB_PUBLIC_PATH below.
+ *
+ * Nothing here can be asserted from inside itself, so the outcome is asserted
+ * from the other end instead. tests/Feature/SuiteIsolationTest.php covers 1-4:
  * that the connection the app actually opened is the database that was asked
  * for, and that the views it compiles are its own.
+ * tests/Feature/WritableRootIsolationTest.php covers 5, and does it by
+ * performing the purge rather than by reading the variable back.
  */
 
 require_once __DIR__.'/../vendor/autoload.php';
@@ -162,37 +177,173 @@ require_once __DIR__.'/../vendor/autoload.php';
     });
 
     /*
-     * THE WEB ROOT, so a suite run can find the built assets.
+     * THE WRITABLE ROOTS, one pair per process.
      *
-     * bootstrap/app.php ends with
-     * usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/.../public_html/kbb-upgrade')
-     * because on the live host the web root is a DIFFERENT directory from the
-     * application root -- the standing arrangement recorded in CLAUDE.md, and
-     * that hard-coded path is the server's, not this checkout's. Nothing sets
-     * the variable locally, so every suite run resolved publicPath() to a
-     * directory that does not exist here, and @vite() could not read
-     * public/build/manifest.json:
+     * storage/ and the public web root are the two directories the application
+     * WRITES to, and every process in this checkout shared both. The suite does
+     * not merely read them: several tests empty them, on purpose, because a
+     * backfill or an import can only be asserted against a directory whose
+     * contents the test put there.
+     *
+     *     tests/Feature/AdminImportScreenTest.php   purges storage/app/import
+     *                                               in beforeEach AND afterEach
+     *     tests/Feature/MediaLibraryTest.php        empties public/uploads
+     *
+     * So two runs at once delete each other's fixtures between the upload and
+     * the read, and the second run fails somewhere with no relation to the
+     * deletion:
+     *
+     *     fopen(.../storage/app/import/woo/customers.csv):
+     *     Failed to open stream: No such file or directory
+     *
+     * Measured: two concurrent runs of AdminImportScreenTest alone, against
+     * SEPARATE databases, fail 5 and 8 of 29. The sharpest one to lose is the
+     * security assertion at AdminImportScreenTest:313 -- "the uploaded filename
+     * never decides where the file goes" -- which fails because the file it just
+     * proved was at the one correct path has been deleted by the other run. A
+     * shared workspace does not merely make that property flaky, it makes it
+     * unprovable.
+     *
+     * Four more fixed paths collide the same way, and are fixed by the same
+     * move: CustomerPasswordResetTest:453 (logs/lane-l-reset-test.log) and the
+     * three browser previews at AdminProductPickerBrowserTest:80,
+     * PaymentsGatewayTabsTest:288 and AdminMobileOverflowTest:78, each of which
+     * builds and then rm -rf's a directory named for its lane and not for its
+     * process.
+     *
+     * WHY THE ROOT AND NOT THE CALLERS. The alternative considered was to give
+     * App\Services\ImportConsole\ImportWorkspace an overridable root and point
+     * it somewhere private per process. It was rejected for one reason that
+     * decides it: the property under test at AdminImportScreenTest:313 and :318
+     * is that an importer writes to a single literal destination that the code
+     * chose, and the test states it as the literal
+     * storage_path('app/import/woo/brands.csv'). Threading a root through the
+     * service replaces that literal with an indirection which agrees with
+     * whatever the service does -- the assertion still passes, and no longer
+     * catches the bug it exists to catch. Moving the root underneath leaves
+     * every such literal spelled exactly as it is, in the test and in the
+     * application, and changes no file under app/ at all. It also fixes the
+     * class rather than one member of it: storage/app/updates/{backups,scratch},
+     * storage/app/import/runs, storage/framework/cache and storage/logs are all
+     * shared and mutable today, and none of them needed naming here.
+     *
+     * WHY THIS IS NOT THE useStoragePath() THE PREVIOUS LANE REJECTED. Its
+     * objection was that useStoragePath() has to run before bootstrap(), so
+     * parent::createApplication() could not be used and a framework method would
+     * have to be reimplemented under every test in the suite. That is true of
+     * useStoragePath() and irrelevant here, because the framework already reads
+     * this from the environment and no call is needed:
+     *
+     *     Illuminate\Foundation\Application::storagePath()   (Laravel 11)
+     *         if (isset($_ENV['LARAVEL_STORAGE_PATH'])) { ... }
+     *         if (isset($_SERVER['LARAVEL_STORAGE_PATH'])) { ... }
+     *
+     * which is the same seam, and the same file, as the VIEW_COMPILED_PATH and
+     * APP_PACKAGES_CACHE above. createApplication() is untouched.
+     *
+     * The second objection -- that storage/catalog/products.json is real source
+     * data outside the suite's control -- is answered rather than argued with:
+     * catalog is symlinked back to the checkout's own, so it reads identically.
+     * (Nothing resolves it through storage_path() today; it is packaging source
+     * data that tools/kbb-manifest.php reads by relative path. The symlink is so
+     * that staying true stops depending on that remaining so.)
+     *
+     * public/ is the same move through this project's own seam, KBB_PUBLIC_PATH,
+     * which bootstrap/app.php already reads with getenv() -- hence putenv() and
+     * not $_ENV alone. Only build/ is tracked under public/, so only build/ is
+     * linked back; uploads/ and anything else a test writes is scratch by
+     * definition. Note that this overrides a KBB_PUBLIC_PATH exported for the
+     * run: that is the point, since a value shared by two runs is the bug. The
+     * tests that boot a preview subprocess pass their own KBB_PUBLIC_PATH
+     * explicitly and are unaffected.
+     *
+     * Asserted from the other end, as the previous lane's were, in
+     * tests/Feature/WritableRootIsolationTest.php: not "the variable is set",
+     * but "a purge of the shared path deletes what is in it and does not touch
+     * mine".
+     */
+    $sweepTree = static function (string $dir) use (&$sweepTree): void {
+        foreach (glob($dir.'/*') ?: [] as $entry) {
+            /*
+             * is_dir() follows symlinks, and storage/catalog and public/build
+             * are symlinks into the checkout. Recursing through one would
+             * delete tracked files.
+             */
+            is_dir($entry) && ! is_link($entry) ? $sweepTree($entry) : @unlink($entry);
+        }
+
+        @rmdir($dir);
+    };
+
+    $roots = dirname(__DIR__).'/storage/framework/testing';
+
+    if (! is_dir($roots)) {
+        @mkdir($roots, 0o755, true);
+    }
+
+    // Whatever a SIGKILLed run left behind. A day is far longer than any run,
+    // so this can never reach a tree another process is still using.
+    foreach (glob($roots.'/roots-*') ?: [] as $stale) {
+        if (is_dir($stale) && ! is_link($stale) && filemtime($stale) < time() - 86400) {
+            $sweepTree($stale);
+        }
+    }
+
+    $root = $roots.'/roots-'.getmypid().'-'.bin2hex(random_bytes(4));
+
+    /*
+     * The subdirectories Laravel expects to find rather than create. A missing
+     * storage/framework/sessions or storage/logs is not a clear error when it
+     * arrives, it is a write failure inside whatever was being rendered.
+     */
+    foreach ([
+        'storage/app/public',
+        'storage/framework/cache/data',
+        'storage/framework/sessions',
+        'storage/framework/testing',
+        'storage/framework/views',
+        'storage/logs',
+        'public',
+    ] as $child) {
+        @mkdir($root.'/'.$child, 0o755, true);
+    }
+
+    /*
+     * The two directories under these roots that are tracked content rather
+     * than scratch. Linked, never copied: a copy is a second version of a file
+     * git knows about, which is the mistake relocate_public_assets exists to
+     * undo.
+     *
+     * public/build in particular is load-bearing and its absence does not look
+     * like a missing symlink. @vite() reads public/build/manifest.json through
+     * publicPath(), and without it every page carrying a bundled stylesheet
+     * answers 500:
      *
      *     Illuminate\Foundation\ViteException: Unable to locate file in Vite
      *     manifest: resources/css/kbb/kbb-banner.css.
      *
-     * Seven tests in BrandEditorAndPageBannerTest answered 500 because of it,
-     * and they answered 500 for a reason that has nothing to do with brands,
-     * banners or anything else they assert. A lane that exported the variable
-     * in its shell saw green; the next lane, in a fresh shell, saw seven reds
-     * and a stack trace pointing at the framework. That is a false red the
-     * suite should never have been able to produce, and it costs whoever hits
-     * it the time to work out that the suite, not the code, is misconfigured.
-     *
-     * Defaulted, not forced: an explicit KBB_PUBLIC_PATH still wins, which is
-     * what PublicAssetRelocationTest relies on when it hands a subprocess a
-     * throwaway web root of its own.
+     * Seven tests in BrandEditorAndPageBannerTest fail that way, none of them
+     * saying anything about assets. That is also what the suite did before
+     * these roots existed at all, because bootstrap/app.php falls back to the
+     * LIVE HOST's web root when KBB_PUBLIC_PATH is unset -- a directory no
+     * checkout has. Whoever exported the variable saw green and the next shell
+     * saw seven reds.
      */
-    $publicPath = getenv('KBB_PUBLIC_PATH');
-
-    if (! is_string($publicPath) || trim($publicPath) === '') {
-        $put('KBB_PUBLIC_PATH', dirname(__DIR__).'/public');
+    foreach ([
+        'storage/catalog' => dirname(__DIR__).'/storage/catalog',
+        'public/build' => dirname(__DIR__).'/public/build',
+    ] as $link => $target) {
+        if (is_dir($target) && ! file_exists($root.'/'.$link)) {
+            @symlink($target, $root.'/'.$link);
+        }
     }
+
+    $put('LARAVEL_STORAGE_PATH', $root.'/storage');
+    $put('KBB_PUBLIC_PATH', $root.'/public');
+
+    register_shutdown_function(static function () use ($root, $sweepTree): void {
+        $sweepTree($root);
+    });
 
     $requested = getenv('KBB_TEST_DB');
     $requested = is_string($requested) ? trim($requested) : '';
