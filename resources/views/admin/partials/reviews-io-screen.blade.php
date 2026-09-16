@@ -266,7 +266,7 @@
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = 'Reviews';
-    if (title) title.textContent = 'Export / Import';
+    if (title) title.textContent = 'Review Import / Export';
 
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
@@ -591,7 +591,7 @@
     var html = '<div class="rio-wrap">';
 
     html += '<div class="rio-card"><div>' +
-            '<h2 class="rio-title">Export / Import</h2>' +
+            '<h2 class="rio-title">Review Import / Export</h2>' +
             '<p class="rio-sub">Take your reviews out as a spreadsheet, or bring the ones from your old ' +
             'WooCommerce shop in. Importing the same file twice will not duplicate anything.</p>' +
             '</div></div>';

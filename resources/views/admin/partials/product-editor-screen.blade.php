@@ -569,17 +569,35 @@
   function addNavEntry(){
     if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
 
-    var anchor = document.querySelector('#nav [data-go="catalog"]')
-              || document.querySelector('#nav [data-go="orders"]');
-    if (!anchor) return;
+    /* The old code was `anchor = querySelector('[data-go="catalog"]') ||
+       querySelector('[data-go="orders"]'); if (!anchor) return;` — two
+       problems the nav audit named.
 
+       The `return` is the first: a screen that removes itself from the sidebar
+       when one other entry is renamed, silently, with no error anywhere. The
+       owner would simply never find the product editor again and would have no
+       way to tell that from it never having shipped.
+
+       The `orders` fallback was the second: it put the product editor in the
+       Store group beside Orders, which is not what it is. There is a Catalog
+       group now, so the fallbacks stay inside it and the last resort is the
+       sidebar root — visible and wrong beats invisible. */
     var b = document.createElement('button');
     b.className = 'nav-item';
     b.dataset.go = SCREEN;
     b.innerHTML = icon('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>')
                 + '<span>Product editor</span>';
     b.onclick = function(){ window.go(SCREEN); };
-    anchor.parentNode.insertBefore(b, anchor.nextSibling);
+
+    var anchor = document.querySelector('#nav [data-go="catalog"]');
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(b, anchor.nextSibling);
+      return;
+    }
+
+    var group = document.querySelector('#nav .nav-group[data-sec="Catalog"] .nav-sub')
+             || document.querySelector('#nav');
+    if (group) group.appendChild(b);
   }
 
   /* ------------------------------------------------------------ the route */
