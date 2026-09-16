@@ -18,9 +18,16 @@ declare(strict_types=1);
  */
 
 it('never claims a route file is unmounted when it is required', function () {
-    // Owned by a lane still in flight; this lane must not edit it.
-    $laneOwned = ['catalog-product-create-admin.php'];
-
+    /*
+     * There is no exemption list any more.
+     *
+     * catalog-product-create-admin.php used to be exempt here as "owned by a
+     * lane still in flight". That lane (AT) has landed: the file is now a
+     * tombstone that registers nothing, and its header says exactly that
+     * instead of claiming to be unmounted. An exemption kept past the reason
+     * for it is the same defect this test exists to catch, one level up — a
+     * file nobody checks because a comment says not to.
+     */
     $wiring = file_get_contents(base_path('routes/web.php'))
         . file_get_contents(base_path('routes/api.php'));
 
@@ -28,10 +35,6 @@ it('never claims a route file is unmounted when it is required', function () {
 
     foreach (glob(base_path('routes/*.php')) as $file) {
         $name = basename($file);
-
-        if (in_array($name, $laneOwned, true)) {
-            continue;
-        }
 
         $body = (string) file_get_contents($file);
 

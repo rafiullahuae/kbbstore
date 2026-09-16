@@ -34,9 +34,11 @@ use Illuminate\Support\Facades\Route as RouteFacade;
  * goes in one array below, and ProductEditorTest reads the middleware back off
  * the REGISTERED routes rather than trusting this file's intent.
  *
- * A deliberate sibling of Tests\Support\CatalogProductCreateRoutes rather than
- * a shared base class or an edit to it: that file belongs to Lane AK and is not
- * this one's to change.
+ * This was written as a deliberate sibling of Tests\Support\CatalogProductCreateRoutes
+ * rather than as a shared base class, because that file belonged to Lane AK. Lane
+ * AT has since retired Lane AK's create screen and deleted that fixture, so this
+ * is now the only one of its kind — and the duplication the comment was excusing
+ * is gone with it.
  */
 final class ProductEditorRoutes
 {

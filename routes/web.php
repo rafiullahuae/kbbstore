@@ -378,12 +378,6 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // nested /catalog/products/... would be decided by where this line sits.
         require __DIR__.'/catalog-products-admin.php';
 
-        // Adding a product, and setting its image. Same guarded group: these
-        // add rows to the catalogue and replace photographs on products the
-        // shop is already selling. The prefix is catalog-product- (singular),
-        // one character off the file above, so the two cannot shadow each
-        // other whatever order these requires land in.
-        require __DIR__.'/catalog-product-create-admin.php';
 
         // Catalog → Product editor: the full editor (gallery, categories, rich
         // description, SEO, scheduled publishing). Distinct prefix from the

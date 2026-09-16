@@ -289,7 +289,7 @@ class ProductEditorApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate(
-            $this->rules(creating: true),
+            $this->rules(creating: true, payload: $request->all()),
             $this->messages()
         );
 
@@ -330,7 +330,7 @@ class ProductEditorApiController extends Controller
         }
 
         $data = $request->validate(
-            $this->rules(creating: false),
+            $this->rules(creating: false, payload: $request->all()),
             $this->messages()
         );
 
@@ -348,7 +348,48 @@ class ProductEditorApiController extends Controller
 
     /* ---------------------------------------------------------------- rules */
 
-    private function rules(bool $creating): array
+    /**
+     * An image URL this store is willing to put in a src attribute.
+     *
+     * The retired create form carried this check (safeImageUrl(): http(s) or a
+     * site-relative path, everything else refused) and the editor that replaced
+     * it validated `string|max:500` and nothing more. Retiring the old screen
+     * therefore removed a guard rather than consolidating it, which is the
+     * failure mode a subtractive change has to be watched for. Restored here,
+     * on the three fields that end up in a src or a meta tag.
+     *
+     * The specific shape it refuses is `data:image/svg+xml`, which is a
+     * scriptable document wearing an image's name, plus `javascript:` and any
+     * other scheme. An SVG loaded through <img> does not execute script in a
+     * current browser, so this is defence in depth rather than a hole anyone
+     * can walk through today — but the value is operator-supplied, it is
+     * stored, and where it gets rendered next is not this method's to assume.
+     */
+    private static function imageUrlRule(): \Closure
+    {
+        return static function (string $attribute, $value, \Closure $fail): void {
+            $url = trim((string) $value);
+
+            if ($url === '') {
+                return;
+            }
+
+            // A site-relative path is the common case: /media/whatever.jpg.
+            if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
+                return;
+            }
+
+            $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+            if ($scheme === 'http' || $scheme === 'https') {
+                return;
+            }
+
+            $fail('An image has to be an http(s) address or a path on this site.');
+        };
+    }
+
+    private function rules(bool $creating, array $payload = []): array
     {
         $money = ['nullable', 'string', MajorUnits::shape()];
 
@@ -364,7 +405,20 @@ class ProductEditorApiController extends Controller
             // schedule is meaningless and a schedule with no date is a product
             // that never launches.
             'published_at' => ['nullable', 'date', 'required_if:status,scheduled'],
-            'is_visible' => ['sometimes', 'boolean'],
+            /*
+             * Published and invisible at once is a product that saves cleanly
+             * and then appears nowhere -- not the shop, not its category, not
+             * the sitemap -- while the editor cheerfully says "Published".
+             * The retired create form refused it (publishableOrRefused) and
+             * the editor that replaced it did not, so consolidating the two
+             * screens dropped a rule. Restored on both paths by living in
+             * rules(), which store() and save() share.
+             */
+            'is_visible' => ['sometimes', 'boolean', static function (string $attribute, $value, \Closure $fail) use (&$payload) {
+                if ((bool) $value === false && ($payload['status'] ?? null) === 'publish') {
+                    $fail('A published product has to be visible. Set the status to Private to keep it off the shop.');
+                }
+            }],
             'featured' => ['sometimes', 'boolean'],
             'position' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100000'],
 
@@ -386,9 +440,9 @@ class ProductEditorApiController extends Controller
             'ingredients' => ['sometimes', 'nullable', 'string', 'max:100000'],
             'how_to_use' => ['sometimes', 'nullable', 'string', 'max:100000'],
 
-            'image' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'image' => ['sometimes', 'nullable', 'string', 'max:500', self::imageUrlRule()],
             'images' => ['sometimes', 'array', 'max:24'],
-            'images.*' => ['string', 'max:500'],
+            'images.*' => ['string', 'max:500', self::imageUrlRule()],
             'image_alts' => ['sometimes', 'nullable', 'array'],
             'image_alts.*' => ['nullable', 'string', 'max:250'],
 
@@ -396,7 +450,7 @@ class ProductEditorApiController extends Controller
             'seo.title' => ['nullable', 'string', 'max:200'],
             'seo.desc' => ['nullable', 'string', 'max:400'],
             'seo.canonical' => ['nullable', 'string', 'max:500', 'url'],
-            'seo.og_image' => ['nullable', 'string', 'max:500'],
+            'seo.og_image' => ['nullable', 'string', 'max:500', self::imageUrlRule()],
             'seo.noindex' => ['nullable', 'boolean'],
         ];
 
