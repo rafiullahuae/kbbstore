@@ -295,10 +295,26 @@ class PaymentRefunder
         $order->refresh();
 
         if ($this->refundedFils($order) >= $this->capturedFils($order) && $order->status !== 'refunded') {
-            Order::query()->whereKey($order->getKey())
-                ->update(['status' => 'refunded', 'updated_at' => now()]);
-
-            $order->refresh();
+            /*
+             * Through App\Services\Orders\OrderStatus, and this is the path
+             * that most needed it: a query-builder update fires no model events
+             * at all, so the one status change in this application with real
+             * money behind it was the one nothing could observe.
+             *
+             * What the funnel adds is that the sale being undone undoes the
+             * coupon use that paid for it. A PARTIAL refund still changes
+             * nothing here — it does not reach this branch, because the status
+             * only moves when everything captured has gone back — and that is
+             * the right answer as well as the existing one: the customer keeps
+             * the goods and the order, so they keep having used the code. The
+             * reasoning is written out in full on OrderStatus::RELEASES_COUPON.
+             */
+            app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $order,
+                'refunded',
+                by: $by ?: 'system',
+                reason: 'Everything captured on this order has been refunded.',
+            );
         }
 
         return RefundOutcome::applied($refund, $result);

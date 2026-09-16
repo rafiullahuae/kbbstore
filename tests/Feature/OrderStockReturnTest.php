@@ -464,16 +464,26 @@ it('returns stock through the orders list bulk action too', function () {
 it('has every order-status write site calling the one rule', function () {
     /*
      * THE GUARD THAT MATTERS MOST, and the reason this lane could be written at
-     * all. Store\CheckoutController::place() records at length why coupon
-     * redemptions are not released on cancellation: `orders.status` is written
-     * from four places, no two of them the same way, and a rule hooked to some
-     * of them makes the books disagree depending on which screen the operator
-     * used. A fifth site appearing unhooked is exactly how that comes back.
+     * all. Store\CheckoutController::place() recorded at length why coupon
+     * redemptions were not released on cancellation: `orders.status` was
+     * written from several places, no two of them the same way, and a rule
+     * hooked to some of them makes the books disagree depending on which screen
+     * the operator used. A site appearing unhooked is exactly how that comes
+     * back.
      *
-     * Read off the FILES. Each name below is a file that writes the column;
-     * each must mention OrderTransitionStock. This is coarse on purpose — it
-     * cannot tell a correct call from a wrong one — but it is the thing that
-     * fails the day somebody adds a screen and forgets.
+     * WHAT THIS ASKS HAS MOVED UP ONE FLOOR, and the reason is worth stating
+     * because the guard is the same guard. This lane wired each write site to
+     * OrderTransitionStock directly, five copies of one call, because there was
+     * nothing else to wire it to. App\Services\Orders\OrderStatus now is that
+     * thing: every site below moves a status through it, and it makes the stock
+     * call once on their behalf. So the question the guard asks is "does this
+     * site go through the funnel", plus "does the funnel still call the rule" —
+     * which together are what "every site calls the one rule" now means, and
+     * which cannot be satisfied by a site that quietly writes the column itself.
+     *
+     * Read off the FILES, coarsely and on purpose: it cannot tell a correct
+     * call from a wrong one, but it fails the day somebody adds a screen and
+     * forgets.
      */
     $sites = [
         'app/Http/Controllers/Admin/AdminController.php',
@@ -482,15 +492,22 @@ it('has every order-status write site calling the one rule', function () {
         'app/Http/Controllers/Store/CheckoutController.php',
         'app/Http/Controllers/Api/CheckoutController.php',
         'app/Services/Payments/PaymentConfirmer.php',
+        'app/Services/Payments/PaymentRefunder.php',
+        'app/Services/Payments/Gateways/CashOnDelivery.php',
     ];
 
     $unhooked = [];
 
     foreach ($sites as $relative) {
-        if (! str_contains(file_get_contents(base_path($relative)), 'OrderTransitionStock')) {
+        if (! str_contains(file_get_contents(base_path($relative)), 'Orders\\OrderStatus')) {
             $unhooked[] = $relative;
         }
     }
 
-    expect($unhooked)->toBe([], 'These write an order status without going through the one rule: ' . implode(', ', $unhooked));
+    expect($unhooked)->toBe([], 'These write an order status without going through the funnel: ' . implode(', ', $unhooked));
+
+    $funnel = file_get_contents(base_path('app/Services/Orders/OrderStatus.php'));
+
+    expect(str_contains($funnel, 'OrderTransitionStock'))
+        ->toBeTrue('The funnel every site goes through no longer asks what a transition costs the shelf.');
 });

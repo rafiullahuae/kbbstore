@@ -587,31 +587,12 @@ class CheckoutController extends Controller
         $start = $gateway->start($order);
 
         if (! $start->ok()) {
-            // The order stays, marked failed, so the shopper can retry and
-            // support can see what happened. $start->message is written for a
-            // shopper — gateways never put an API error body in it.
-            $was = (string) $order->status;
-
-            $order->forceFill(['status' => 'failed'])->save();
-
             /*
-             * Hand the units back, for the same reason the coupon use is handed
-             * back below: the payment never started, so nothing is going to
-             * ship, and the order row is deliberately kept rather than rolled
-             * back. Without this the shelf is short by a basket that will never
-             * leave the building, and the retry this failed order exists to
-             * allow would be refused by stock the shopper themselves are
-             * holding.
+             * The order stays, marked failed, so the shopper can retry and
+             * support can see what happened. $start->message is written for a
+             * shopper — gateways never put an API error body in it.
              *
-             * Unlike the coupon release, this is NOT only safe here. The rule
-             * lives in OrderTransitionStock and the cancellation paths call the
-             * same one — see the note below for what changed and what did not.
-             */
-            app(\App\Services\Orders\OrderTransitionStock::class)
-                ->applied((int) $order->id, $was, 'failed');
-
-            /*
-             * Hand the coupon use back.
+             * THE COUPON USE IS HANDED BACK, AND NOT BY THIS METHOD ANY MORE.
              *
              * The payment never started, so the discount was never given. If
              * the use stayed spent, a shopper whose card was declined would
@@ -619,44 +600,31 @@ class CheckoutController extends Controller
              * happen — and their retry, which is the whole reason the failed
              * order is kept, would be refused by the limit they just consumed.
              *
-             * This is safe to do here, and ONLY here, because the failure is
-             * synchronous: the same request that recorded the redemption a
-             * moment ago is undoing it, so there is no path where the release
-             * is missed and no window where another order can interleave.
+             * This method used to release it here itself, and a long note in
+             * this place set out why cancellation and refund could NOT be
+             * treated the same way: there was no single place an order's status
+             * changed. It moved in OrdersApiController::bulkStatus() through a
+             * mass update that bypassed Eloquent entirely, in
+             * AdminOrderController, in PaymentRefunder when money actually
+             * moved, and in the gateway webhooks. A release hooked to some of
+             * those and not the others would have made usage_count disagree
+             * with the redemption rows depending on which screen the operator
+             * used.
              *
-             * CANCELLATION AND REFUND ARE STILL NOT TREATED THIS WAY FOR
-             * COUPONS, and the reason has changed from "there is nowhere to
-             * put it" to "the question is the owner's, not the code's".
-             *
-             * The argument for releasing them is real — a cancelled order cost
-             * the shop nothing, and a public code could be exhausted by placing
-             * and cancelling orders. What used to stop it was that there is no
-             * single place an order's status changes: it moves in
-             * OrdersApiController::bulkStatus() via a mass
-             * Order::whereIn(...)->update(), which bypasses Eloquent events
-             * entirely; in AdminController::updateOrderStatus; in
-             * AdminOrderController::runAction; and in PaymentRefunder when
-             * money actually moves. A release hooked to some of those and not
-             * the others would make usage_count disagree with the redemption
-             * rows depending on which screen the operator happened to use.
-             *
-             * THE CHOKE POINT NOW EXISTS. App\Services\Orders\
-             * OrderTransitionStock is called from every one of those sites and
-             * is the single place that decides what a status change means, for
-             * stock. CouponService::releaseRedemptions() could be hooked to it
-             * in one line.
-             *
-             * It has not been, because the two questions are not the same one.
-             * Units are a physical fact — they are either in the stock room or
-             * they are not, and a cancelled order that never shipped left them
-             * there. A redemption is a record of a code having been ACCEPTED,
-             * and whether a customer who places and cancels an order should get
-             * their one use of WELCOME10 back is a policy the owner holds a
-             * view on and this code does not. So it stays a permanent record,
-             * the owner can see redemptions and their orders on Store →
-             * Coupons, and the wiring is waiting for their answer.
+             * That single place now exists — App\Services\Orders\OrderStatus
+             * — and every one of those writers goes through it. So this path
+             * stops being special: it states the transition, and the funnel
+             * decides what a `failed` order owes the shopper, using the same
+             * rule a cancellation and a full refund get. There is exactly one
+             * answer to "was this code given back", and
+             * `coupon_redemptions.released_at` is where it is written down.
              */
-            $this->coupons->releaseRedemptions((int) $order->id);
+            app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $order,
+                'failed',
+                by: 'system',
+                reason: 'The payment could not be started.',
+            );
 
             return back()->withInput()->withErrors(
                 $start->message ?? 'We could not start that payment. Please try another method.'

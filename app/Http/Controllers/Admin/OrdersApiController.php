@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\OrderNote;
 use App\Services\Payments\PaymentRefunder;
 use App\Support\DemoSeed;
 use App\Support\Money;
@@ -17,7 +16,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -306,9 +304,23 @@ class OrdersApiController extends Controller
      * reported back by name rather than the whole call failing: the operator
      * asked for the selection, and the safe half of it is still what they meant.
      *
-     * Every change writes an order note, in one insert for the whole batch, so
-     * the detail screen's history shows who did it and when. A bulk edit with no
-     * trace is how a store ends up unable to explain its own numbers.
+     * Every change writes an order note, so the detail screen's history shows
+     * who did it and when. A bulk edit with no trace is how a store ends up
+     * unable to explain its own numbers.
+     *
+     * ONE ORDER AT A TIME, THROUGH App\Services\Orders\OrderStatus, and that is
+     * a deliberate trade of statements for correctness. What stood here was a
+     * single mass whereIn()->update(), kept as one statement on the argument
+     * that looping is hundreds — which was true, and was also why this screen
+     * had to send its own emails and insert its own notes: a mass update fires
+     * no model events, so the observer that tells the customer never saw it.
+     * Now that a cancellation also has to hand a coupon use back per order, and
+     * the release must know each order's own previous status, the work is
+     * per-order whatever shape the write takes. So it goes through the one
+     * funnel, the emails come back to the observer that every other screen
+     * uses, and the note is written by the thing that made the change. The
+     * selection is capped at BULK_MAX; the cost is bounded and paid once per
+     * order that actually moves.
      */
     public function bulkStatus(Request $request): JsonResponse
     {
@@ -329,7 +341,7 @@ class OrdersApiController extends Controller
 
         /*
          * Recorded before anything is written, and read by
-         * OrderMailer::statusChanged() through notifyStatus() below. It is the
+         * OrderMailer::statusChanged() through the observer. It is the
          * same override the single-order screen sets, applied to every order in
          * the batch rather than to one — deliberately the SAME mechanism, so
          * that "do not email anybody about this" means the same thing whether
@@ -347,13 +359,6 @@ class OrdersApiController extends Controller
 
         $changeable = [];
         $skipped = [];
-
-        // The status each changed order was in before this call, kept because
-        // the mass update below destroys it and OrderTransitionStock needs it:
-        // whether units go back depends on where the order came FROM, not only
-        // on where it is going. A shipped order moved to cancelled has its
-        // parcel with the customer; a pending one has it on the shelf.
-        $wasById = [];
 
         foreach ($orders as $order) {
             $current = (string) $order->status;
@@ -377,32 +382,13 @@ class OrdersApiController extends Controller
             }
 
             $changeable[] = (int) $order->id;
-            $wasById[(int) $order->id] = $current;
         }
 
-        if ($changeable !== []) {
-            Order::query()->whereIn('id', $changeable)->update([
-                'status' => $status,
-                'updated_at' => now(),
-            ]);
+        $statuses = app(\App\Services\Orders\OrderStatus::class);
+        $author = auth('admin')->user()?->name ?: 'Admin';
 
-            $this->noteAll($changeable, 'Status set to ' . $status . ' from the orders list.');
-
-            /*
-             * The stock consequence of the change just made.
-             *
-             * This mass update fires no Eloquent events — that is recorded in
-             * OrderMailObserver's header as something it cannot see — so there
-             * is no observer that could do this and it has to be called. The
-             * rule itself is not here: OrderTransitionStock decides, and the
-             * single-order screens call the same method, so forty orders
-             * cancelled from this list cost the shelf exactly what forty
-             * cancelled one at a time would.
-             */
-            app(\App\Services\Orders\OrderTransitionStock::class)
-                ->appliedMany($wasById, $status);
-
-            $this->notifyStatus($changeable, $status);
+        foreach ($changeable as $id) {
+            $statuses->moveTo($id, $status, by: $author, reason: 'Set from the orders list.');
         }
 
         return response()->json([
@@ -816,106 +802,23 @@ class OrdersApiController extends Controller
         };
     }
 
-    /**
-     * One note against each of a batch of orders, in a single insert.
+    /*
+     * The two helpers that stood here are gone, and their absence is the point.
      *
-     * @param  list<int>  $ids
+     * notifyStatus() existed because a mass update fires no model events, so
+     * this screen had to ask OrderMailer::statusChanged() itself — the bug it
+     * was written for was marking one order dispatched emailing the customer
+     * and marking forty emailing nobody, silently. noteAll() existed because
+     * the same mass update could not write its own history.
+     *
+     * Both were the cost of writing the column here. The write now happens in
+     * App\Services\Orders\OrderStatus, as a model save, so the observer every
+     * other screen relies on sees a bulk change exactly as it sees a single
+     * one, and the note is written beside the change that caused it. Nothing
+     * about the behaviour this screen promises has been dropped; it is being
+     * provided by the thing that makes the change instead of being remembered
+     * by the thing that asks for it.
      */
-    /**
-     * Tell the customers whose orders just moved.
-     *
-     * WHY THIS IS HERE AND NOT LEFT TO THE OBSERVER. Every other place
-     * `orders.status` is written goes through Eloquent, so OrderMailObserver's
-     * `updated` hook catches it and the customer is emailed. This one does not:
-     * the line above is a single `Order::query()->whereIn(...)->update()`, and a
-     * query-builder update fires NO model events at all.
-     *
-     * The consequence was the worst kind of silent: marking ONE order shipped
-     * from the detail screen emailed the customer, and marking FORTY shipped
-     * from the list — the way anybody actually dispatches a day's orders —
-     * emailed nobody. No error, no log line, no difference on screen. The
-     * operator had every reason to believe the customers had been told, and the
-     * orders with the biggest batches were the ones most likely to be silent.
-     * Exactly the shape of the "every order email going to a log file" fault
-     * this store has already had once.
-     *
-     * The mass update is KEPT. Looping Eloquent saves over a selection of up to
-     * BULK_MAX orders to get the events would turn one statement into hundreds,
-     * and the batched note insert below exists for the same reason. The write
-     * stays one statement; the notification is asked for explicitly.
-     *
-     * IT GOES THROUGH OrderMailer::statusChanged(), the same method the observer
-     * calls — not a second copy of the decision. Which statuses have wording,
-     * which module switch governs them, and what the email says are all decided
-     * there, once, so this path and the single-order path cannot drift into
-     * telling customers different things. A status with no wording (processing,
-     * onhold) sends nothing, and a switched-off module still sends nothing.
-     *
-     * Only the orders in $changeable are notified, and an order already AT the
-     * requested status never enters that list — so repeating a bulk action does
-     * not email anybody twice.
-     *
-     * NOTHING HERE MAY THROW. This runs after the status has already been
-     * written and the note recorded; an exception would turn a completed bulk
-     * action into a 500 and tell the operator their dispatch failed when it did
-     * not. OrderMailer already swallows transport failures — this catches
-     * everything else, per order, so one order with a broken address cannot cost
-     * the other thirty-nine their email.
-     *
-     * @param  list<int>  $ids
-     */
-    private function notifyStatus(array $ids, string $status): void
-    {
-        /*
-         * A COST GUARD, NOT A CORRECTNESS ONE — said plainly because deleting it
-         * changes no behaviour and a later reader deserves to know that before
-         * they decide it is dead code.
-         *
-         * Correctness lives in OrderMailer::statusChanged(), which asks
-         * handles() itself and sends nothing for a status with no wording. What
-         * this saves is the work of finding out: without it, marking 200 orders
-         * `processing` would select all 200 rows and hydrate their line items
-         * purely to hand each one to a method that returns immediately. The
-         * statuses most used in bulk are exactly the silent ones.
-         */
-        if (! \App\Mail\OrderStatusChanged::handles($status)) {
-            return;
-        }
-
-        $mailer = app(\App\Services\Mail\OrderMailer::class);
-
-        Order::query()->whereIn('id', $ids)->with('items')->get()
-            ->each(function (Order $order) use ($mailer, $status): void {
-                try {
-                    $mailer->statusChanged($order, $status);
-                } catch (\Throwable $e) {
-                    Log::error('bulk status mail failed', [
-                        'order' => $order->order_number,
-                        'status' => $status,
-                        'exception' => class_basename($e),
-                    ]);
-                }
-            });
-    }
-
-    private function noteAll(array $ids, string $content): void
-    {
-        if ($ids === []) {
-            return;
-        }
-
-        $author = auth('admin')->user()?->name ?: 'Admin';
-        $now = now();
-
-        OrderNote::query()->insert(array_map(fn (int $id) => [
-            'order_id' => $id,
-            'author' => $author,
-            'is_customer_note' => false,
-            'content' => $content,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ], $ids));
-    }
 
     /* ------------------------------------------------------------ formatting */
 

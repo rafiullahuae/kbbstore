@@ -412,27 +412,25 @@ class CheckoutController extends Controller
             $start = $gateway->start($order);
 
             if (! $start->ok()) {
-                $was = (string) $order->status;
+                // Through the funnel — App\Services\Orders\OrderStatus — for
+                // the same reason the storefront path uses it: a `failed` order
+                // gives back whatever it was holding, and the two checkouts
+                // must not answer that differently. This endpoint applies no
+                // discount today, so there is nothing to release; that is a
+                // fact about this path, not a rule of its own, and the day it
+                // does apply one it is already handled.
+                app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                    $order,
+                    'failed',
+                    by: 'system',
+                    reason: 'The payment could not be started.',
+                );
 
-                $order->forceFill(['status' => 'failed'])->save();
-
-                /*
-                 * Put the units back.
-                 *
-                 * The payment never started, so nothing is going to be shipped,
-                 * and unlike the storefront this failure does not roll the
-                 * order back — the response below returns from inside the
-                 * transaction, which commits. Without this the units are off
-                 * the shelf for an order that will never move, and the next
-                 * caller is refused stock the shop is holding.
-                 *
-                 * The rule is not spelled out here on purpose: cancelled and
-                 * failed mean the same thing to the shelf, and deciding that in
-                 * two places is how the two come to disagree. See
-                 * OrderTransitionStock.
-                 */
-                app(\App\Services\Orders\OrderTransitionStock::class)
-                    ->applied((int) $order->id, $was, 'failed');
+                // The units go back on the shelf as well. That call stood
+                // here until the funnel existed; it is inside OrderStatus now,
+                // so this path and every cancellation reach OrderTransitionStock
+                // by the same road — which is what deciding it in two places was
+                // always going to cost.
 
                 return response()->json([
                     'ok' => false,
