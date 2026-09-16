@@ -18,6 +18,11 @@ class Coupon extends Model
             'excluded_product_ids' => 'array',
             'category_ids' => 'array',
             'excluded_category_ids' => 'array',
+            // Same shape as the four above: a JSON list of ids, null for "no
+            // restriction". Read by CouponService::eligibleItems() against
+            // products.brand_id.
+            'brand_ids' => 'array',
+            'excluded_brand_ids' => 'array',
             'allowed_emails' => 'array',
             'free_shipping' => 'bool',
             'individual_use' => 'bool',
@@ -26,6 +31,11 @@ class Coupon extends Model
             'expires_at' => 'datetime',
             'amount' => 'int',
             'usage_count' => 'int',
+            // NULL is "no cap" and must stay distinguishable from 0, which is
+            // "discount nothing". Laravel's integer cast leaves null alone, so
+            // the `=== null` test in CouponService::cappedLines() keeps meaning
+            // what it reads on both engines.
+            'limit_usage_to_x_items' => 'int',
         ];
     }
 

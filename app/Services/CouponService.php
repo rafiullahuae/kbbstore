@@ -78,11 +78,43 @@ class CouponService
         return ['ok' => true, 'coupon' => $coupon, 'error' => null];
     }
 
+    /**
+     * Whether the applied coupon pays for delivery.
+     *
+     * coupons.free_shipping arrived in the WooCommerce import and, until this
+     * lane, was read by nothing: the coupon editor drew it as a disabled box
+     * and said on the screen that the shop did not apply it. It does now, in
+     * CartService::totals().
+     *
+     * Through withRules() rather than straight off the attribute, and that is
+     * not belt-and-braces. The three storefront paths eager-load the relation
+     * as `coupon:id,code,type,amount`, so on the instance totals() actually
+     * holds, free_shipping is ABSENT and reads null. That direction fails
+     * closed — the shopper is charged for delivery a coupon promised them —
+     * which is the cheaper of the two failures but still the wrong answer, and
+     * it would show up as "the cart page charges shipping and the confirmation
+     * email does not" depending on which instance each one happened to load.
+     */
+    public function grantsFreeShipping(Coupon $coupon): bool
+    {
+        return (bool) $this->withRules($coupon)->free_shipping;
+    }
+
     /** Discount in fils. Never exceeds the eligible subtotal. */
     public function discountFor(Coupon $coupon, Cart $cart): int
     {
-        $items = $this->eligibleItems($coupon, $cart);
-        $eligibleSubtotal = (int) $items->sum(fn ($i) => $i->lineTotal());
+        // Before anything reads a rule off it. eligibleItems() does this for
+        // itself, but the item cap below is read HERE, on this variable, and a
+        // partial instance would report no cap at all — the same fail-open
+        // withRules() exists to stop, one frame further out.
+        $coupon = $this->withRules($coupon);
+
+        $lines = $this->cappedLines($coupon, $this->eligibleItems($coupon, $cart));
+        $eligibleSubtotal = 0;
+
+        foreach ($lines as $line) {
+            $eligibleSubtotal += $line['unit_price'] * $line['quantity'];
+        }
 
         if ($eligibleSubtotal <= 0) {
             return 0;
@@ -117,7 +149,13 @@ class CouponService
              * positive value, which is what round() did.
              */
             'percent' => intdiv($eligibleSubtotal * (int) $coupon->amount + 5000, 10000),
-            'fixed_product' => (int) $items->sum(fn ($i) => min($coupon->amount, $i->unit_price) * $i->quantity),
+            // Per UNIT, and never more than the unit itself costs. $line's
+            // quantity is already the capped one, so the allowance is spent
+            // here without being tracked a second time.
+            'fixed_product' => array_sum(array_map(
+                fn (array $line) => min((int) $coupon->amount, $line['unit_price']) * $line['quantity'],
+                $lines
+            )),
             default => (int) $coupon->amount,                                        // fixed_cart
         };
 
@@ -304,13 +342,20 @@ class CouponService
     }
 
     /**
-     * The columns eligibleItems() reads to decide what a code may discount.
+     * The columns the pricing path reads to decide what a code may discount,
+     * how many units of it, and whether it also pays for delivery.
      *
      * Named here because the storefront does NOT select them. Every path that
      * reaches discountFor() — CartController::loadCart(),
      * Store\CheckoutController::loadCart() and CartDrawerComposer — eager-loads
      * the relation as `coupon:id,code,type,amount`, the four columns a discount
      * arithmetic needs, and hands that instance straight in.
+     *
+     * ADDING A RULE MEANS ADDING IT HERE, and the cost of forgetting is not an
+     * error, it is money. An unselected attribute reads null, a null rule is
+     * skipped, and the code discounts more of the basket than the owner fenced
+     * it to. The note on withRules() below sets this out at length; these are
+     * the names it checks against.
      */
     private const RULE_COLUMNS = [
         'exclude_sale_items',
@@ -318,7 +363,94 @@ class CouponService
         'excluded_product_ids',
         'category_ids',
         'excluded_category_ids',
+        'brand_ids',
+        'excluded_brand_ids',
+        // Not an eligibility rule — a cap on how many eligible UNITS get
+        // priced — but read off the same instance in discountFor() and it
+        // fails open in exactly the same way, so it is guarded the same way.
+        'limit_usage_to_x_items',
+        // Likewise not eligibility: read by grantsFreeShipping() for
+        // CartService::totals(). Absent it reads null and the shopper is
+        // charged for delivery the coupon promised.
+        'free_shipping',
     ];
+
+    /**
+     * The eligible lines, expanded to (unit_price, quantity) pairs and
+     * truncated to the coupon's item allowance.
+     *
+     * WHICH UNITS A CAP DISCOUNTS IS A REAL DECISION, NOT AN IMPLEMENTATION
+     * DETAIL. "Limit usage to 2 items" against a basket holding an AED 100
+     * serum and three AED 60 toners has to choose two of those four units, and
+     * the three plausible choices pay out three different amounts. This shop
+     * takes the CHEAPEST eligible units first, ties broken by cart line id.
+     *
+     * Two reasons.
+     *
+     * It is the merchant-protective reading. A cap exists to bound what a code
+     * can cost; when it binds, the shop should pay the smaller of the figures
+     * available, not the larger. The owner sets "2 items" to limit exposure,
+     * so the limit resolves in favour of the limit.
+     *
+     * And it does not depend on the order the shopper clicked things into the
+     * basket. Cart order is not a property of the basket the owner can reason
+     * about: it changes when a line is removed and re-added, and a cart page
+     * and a checkout that load the items in different orders would price the
+     * same basket differently. Sorting by price makes the answer a function of
+     * what is in the basket and nothing else, which is what lets
+     * CartService::totals() and Store\CheckoutController::place() agree.
+     *
+     * The tie-break on line id is there so that two units at the same price
+     * still resolve deterministically rather than on whatever order the
+     * database handed the rows back in — the same reason the coupon editor
+     * settles duplicate codes itself rather than leaving it to the engine.
+     *
+     * NEVER MUTATES THE CART. The quantities here are copies. $cart->items
+     * holds live models that CartService::totals() has already summed for the
+     * basket subtotal and that later callers re-read; reducing a quantity on
+     * one of those to express a cap would silently shrink the basket itself.
+     *
+     * @param  \Illuminate\Support\Collection  $items
+     * @return array<int, array{unit_price: int, quantity: int}>
+     */
+    private function cappedLines(Coupon $coupon, $items): array
+    {
+        $lines = $items->map(fn ($i) => [
+            'unit_price' => (int) $i->unit_price,
+            'quantity' => (int) $i->quantity,
+            'id' => (int) $i->getKey(),
+        ])->values()->all();
+
+        // NULL is no cap, which is what every coupon on this shop holds: the
+        // WooCommerce import never wrote the column and the migration that
+        // added it defaulted it to NULL for exactly that reason.
+        if ($coupon->limit_usage_to_x_items === null) {
+            return $lines;
+        }
+
+        $allowance = max(0, (int) $coupon->limit_usage_to_x_items);
+
+        usort($lines, fn ($a, $b) => [$a['unit_price'], $a['id']] <=> [$b['unit_price'], $b['id']]);
+
+        $capped = [];
+
+        foreach ($lines as $line) {
+            if ($allowance <= 0) {
+                break;
+            }
+
+            $take = min($line['quantity'], $allowance);
+
+            if ($take <= 0) {
+                continue;
+            }
+
+            $capped[] = ['unit_price' => $line['unit_price'], 'quantity' => $take];
+            $allowance -= $take;
+        }
+
+        return $capped;
+    }
 
     /**
      * The coupon row with its eligibility rules on it, re-read if they are not.
@@ -352,7 +484,7 @@ class CouponService
         return $coupon;
     }
 
-    /** Items the coupon may discount, after product/category include and exclude rules. */
+    /** Items the coupon may discount, after product/category/brand include and exclude rules. */
     private function eligibleItems(Coupon $coupon, Cart $cart)
     {
         $coupon = $this->withRules($coupon);
@@ -372,6 +504,25 @@ class CouponService
             }
 
             if ($coupon->excluded_product_ids && in_array($product->id, $coupon->excluded_product_ids, true)) {
+                return false;
+            }
+
+            /*
+             * Brands, off products.brand_id — a column that has existed since
+             * the initial schema and that no coupon rule read until now. Cast
+             * because an unbranded product is null and the id lists hold ints:
+             * (int) null is 0, which matches no brand id, so an unbranded item
+             * is correctly outside a brand-restricted code and correctly NOT
+             * caught by an exclusion. No relation is touched, so this costs
+             * nothing per line, unlike the category clause below it.
+             */
+            $brandId = (int) $product->brand_id;
+
+            if ($coupon->brand_ids && ! in_array($brandId, $coupon->brand_ids, true)) {
+                return false;
+            }
+
+            if ($coupon->excluded_brand_ids && in_array($brandId, $coupon->excluded_brand_ids, true)) {
                 return false;
             }
 

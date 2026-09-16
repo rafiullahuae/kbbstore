@@ -393,7 +393,20 @@ class CheckoutController extends Controller
                     'shipping_address' => $address,
                     'subtotal' => $totals['subtotal'],
                     'discount_total' => $totals['discount'],
-                    'shipping_total' => (int) $rate['cost'],
+                    // From the totals this request already computed, not from
+                    // the raw rate. The two were the same number until a
+                    // coupon could carry free_shipping; now CartService::
+                    // totals() zeroes the delivery line for such a code, and
+                    // `total` below is built on that zero. Taking shipping_total
+                    // off $rate['cost'] here would leave the order stating AED
+                    // 20 of delivery against a total that does not contain it —
+                    // one order disagreeing with itself by the whole rate, on
+                    // the invoice, in the confirmation email and in the
+                    // accounts. ManualOrderBuilder has always written
+                    // $totals['shipping']; this is the storefront half catching
+                    // up. Every other case is unchanged, because with no such
+                    // coupon totals() returns the rate it was handed.
+                    'shipping_total' => (int) $totals['shipping'],
                     'fee_total' => $fee,
                     'tax_total' => 0,   // VAT is display-only (D-64)
                     'total' => $totals['total'] + $fee,

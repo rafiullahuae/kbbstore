@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
@@ -32,18 +33,36 @@ use Illuminate\Validation\ValidationException;
  * the owner sets and the shop quietly ignores is worse than no field at all —
  * it is a discount the owner believes is fenced and is not. So:
  *
- *   - "Limit usage to X items" is NOT here. There is no column, and honouring
- *     one would mean changing discountFor(). See the lane report.
- *   - Brands / Exclude brands are NOT here, for the same two reasons.
- *   - "Allow free shipping" is shown but NOT WRITABLE. coupons.free_shipping
- *     exists and the import filled it, but `grep -rn free_shipping app/` finds
- *     only shipping METHODS and the order-value threshold — no coupon ever
- *     grants free delivery on this shop. The screen shows what the import left
- *     there and says plainly that it is not applied; this endpoint ignores the
- *     field on the way in, so the value cannot be made to lie.
- *   - "Individual use only" is likewise not writable: carts.coupon_id is a
- *     single nullable FK, so a basket has only ever held one coupon and the
+ *   - "Individual use only" is not writable: carts.coupon_id is a single
+ *     nullable FK, so a basket has only ever held one coupon and the
  *     restriction is unconditionally in force for every code.
+ *
+ * THREE FIELDS THAT USED TO BE ON THAT LIST AND ARE NOT ANY MORE. They were
+ * refused for one reason — CouponService did not enforce them — and that reason
+ * has been removed rather than worked around. Each is now a live control here
+ * because each is now a rule the till actually applies:
+ *
+ *   - "Limit usage to X items" writes coupons.limit_usage_to_x_items, which
+ *     CouponService::discountFor() truncates the eligible lines against before
+ *     it prices anything. Empty box -> NULL -> no cap, which is what every
+ *     imported row holds. Where a cap BINDS it discounts the cheapest eligible
+ *     units first; cappedLines() sets out why.
+ *   - Brands / Exclude brands write coupons.brand_ids and
+ *     excluded_brand_ids, which eligibleItems() compares against
+ *     products.brand_id — the same shape, and the same "empty means NULL means
+ *     no restriction" rule, as the four product and category lists beside them.
+ *   - "Allow free shipping" writes coupons.free_shipping, which
+ *     CartService::totals() now reads to zero the delivery line, and which
+ *     Store\CheckoutController::place() honours because it takes the order's
+ *     shipping_total from those same totals. The column always existed and the
+ *     import always filled it; what was missing was anything that read it.
+ *
+ * All four of the new rule columns are named in CouponService::RULE_COLUMNS.
+ * That is not optional bookkeeping: the storefront eager-loads the coupon as
+ * `coupon:id,code,type,amount`, an unselected attribute reads null, and a null
+ * rule is SKIPPED — so a rule missing from that list is a restriction the owner
+ * sets on this screen and the shop silently ignores, which is the precise
+ * failure this docblock's first paragraph is about.
  *
  * MONEY AND PERCENT ARE NOT THE SAME NUMBER. `coupons.amount` holds hundredths
  * of a percent for a percentage coupon (35% -> 3500) and minor units — fils —
@@ -213,6 +232,8 @@ class CouponAdminApiController extends Controller
                 'excluded_products' => $this->labelProducts($model->excluded_product_ids),
                 'categories' => $this->labelCategories($model->category_ids),
                 'excluded_categories' => $this->labelCategories($model->excluded_category_ids),
+                'brands' => $this->labelBrands($model->brand_ids),
+                'excluded_brands' => $this->labelBrands($model->excluded_brand_ids),
             ],
         ]);
     }
@@ -228,7 +249,11 @@ class CouponAdminApiController extends Controller
      */
     public function lookup(Request $request): JsonResponse
     {
-        $kind = $request->query('kind') === 'category' ? 'category' : 'product';
+        $kind = match ($request->query('kind')) {
+            'category' => 'category',
+            'brand' => 'brand',
+            default => 'product',
+        };
         $search = trim((string) $request->query('q', ''));
 
         // `ids` resolves a stored selection back to names when the editor opens
@@ -256,6 +281,28 @@ class CouponAdminApiController extends Controller
                     'id' => (int) $c->id,
                     'label' => (string) $c->name,
                     'hint' => (string) ($c->path ?? ''),
+                ])->all(),
+            ]);
+        }
+
+        if ($kind === 'brand') {
+            $rows = Brand::query()
+                ->when($ids !== [], fn ($q) => $q->whereIn('id', $ids))
+                ->when($ids === [] && $search !== '', fn ($q) => $q->whereRaw(
+                    'LOWER(name) LIKE ?',
+                    ['%' . str_replace(['%', '_'], ['\%', '\_'], mb_strtolower($search)) . '%']
+                ))
+                ->orderBy('name')
+                ->limit(self::LOOKUP_LIMIT)
+                ->get(['id', 'name', 'slug']);
+
+            return response()->json([
+                'ok' => true,
+                'kind' => 'brand',
+                'items' => $rows->map(fn ($b) => [
+                    'id' => (int) $b->id,
+                    'label' => (string) $b->name,
+                    'hint' => (string) ($b->slug ?? ''),
                 ])->all(),
             ]);
         }
@@ -413,6 +460,20 @@ class CouponAdminApiController extends Controller
             'usage_limit' => ['nullable', 'integer', 'min:1', 'max:4294967295'],
             'usage_limit_per_user' => ['nullable', 'integer', 'min:1', 'max:4294967295'],
 
+            /*
+             * WooCommerce's "limit usage to X items", now that CouponService
+             * honours it. min:1 rather than min:0 on purpose: a cap of zero is
+             * a code that discounts nothing, which is a coupon switched off
+             * written in a way nobody would recognise as one. Leaving the box
+             * empty is how you say "no cap", and that stores NULL.
+             */
+            'limit_usage_to_x_items' => ['nullable', 'integer', 'min:1', 'max:4294967295'],
+
+            // Enforced since this lane: CartService::totals() zeroes the
+            // delivery line for a code carrying it. Writable for the same
+            // reason it is now shown ungreyed — the shop keeps the promise.
+            'free_shipping' => ['sometimes', 'boolean'],
+
             'product_ids' => ['nullable', 'array'],
             'product_ids.*' => ['integer'],
             'excluded_product_ids' => ['nullable', 'array'],
@@ -421,6 +482,10 @@ class CouponAdminApiController extends Controller
             'category_ids.*' => ['integer'],
             'excluded_category_ids' => ['nullable', 'array'],
             'excluded_category_ids.*' => ['integer'],
+            'brand_ids' => ['nullable', 'array'],
+            'brand_ids.*' => ['integer'],
+            'excluded_brand_ids' => ['nullable', 'array'],
+            'excluded_brand_ids.*' => ['integer'],
 
             'allowed_emails' => ['nullable', 'array'],
             'allowed_emails.*' => ['string', 'max:190'],
@@ -504,8 +569,33 @@ class CouponAdminApiController extends Controller
             'maximum_amount' => $this->moneyToStorage($input['maximum_amount'] ?? null),
             'exclude_sale_items' => $request->boolean('exclude_sale_items'),
 
+            /*
+             * WRITTEN ONLY WHEN THE FORM ACTUALLY POSTS IT, which is why the
+             * rule above is `sometimes` and why this is not a plain
+             * $request->boolean().
+             *
+             * boolean() reads a missing key as FALSE. The screen drew this box
+             * disabled for as long as the shop did not enforce the flag, and a
+             * disabled input posts nothing — so an unconditional write here
+             * would clear coupons.free_shipping on every single save made from
+             * a screen that had not yet been un-greyed. Every coupon carrying
+             * the flag arrived in the WooCommerce import and nothing else sets
+             * it, so that loss would be silent and permanent, and the owner's
+             * first sign of it would be a customer charged for delivery a code
+             * promised them.
+             *
+             * Absent therefore means "leave it as it is", which is exactly what
+             * this endpoint did before the flag was enforceable. On a new
+             * coupon there is nothing to keep, so it falls to the column's own
+             * default of false.
+             */
+            'free_shipping' => $request->has('free_shipping')
+                ? $request->boolean('free_shipping')
+                : (bool) ($existing->free_shipping ?? false),
+
             'usage_limit' => $this->nullableInt($input['usage_limit'] ?? null),
             'usage_limit_per_user' => $this->nullableInt($input['usage_limit_per_user'] ?? null),
+            'limit_usage_to_x_items' => $this->nullableInt($input['limit_usage_to_x_items'] ?? null),
 
             // An empty selection is stored as NULL, not as []. CouponService
             // reads these with a plain truthiness test — `if ($coupon->
@@ -517,6 +607,8 @@ class CouponAdminApiController extends Controller
             'excluded_product_ids' => $this->idList($input['excluded_product_ids'] ?? null),
             'category_ids' => $this->idList($input['category_ids'] ?? null),
             'excluded_category_ids' => $this->idList($input['excluded_category_ids'] ?? null),
+            'brand_ids' => $this->idList($input['brand_ids'] ?? null),
+            'excluded_brand_ids' => $this->idList($input['excluded_brand_ids'] ?? null),
 
             'allowed_emails' => $emails === [] ? null : $emails,
         ];
@@ -674,6 +766,12 @@ class CouponAdminApiController extends Controller
             'usage_count' => $used,
             'usage_limit' => $limit,
             'usage_limit_per_user' => $coupon->usage_limit_per_user === null ? null : (int) $coupon->usage_limit_per_user,
+            // NULL is "no cap" and has to survive the round trip as NULL: the
+            // editor prints an empty box for it, and CouponService::
+            // cappedLines() tells NULL from 0 with `=== null`.
+            'limit_usage_to_x_items' => $coupon->limit_usage_to_x_items === null
+                ? null
+                : (int) $coupon->limit_usage_to_x_items,
             'remaining' => $limit === null ? null : max(0, $limit - $used),
 
             'starts_at' => $coupon->starts_at?->toDateString(),
@@ -731,6 +829,33 @@ class CouponAdminApiController extends Controller
             'id' => (int) $id,
             'label' => $found->has($id) ? (string) $found[$id]->name : ('Category #' . $id . ' (deleted)'),
             'hint' => $found->has($id) ? (string) ($found[$id]->path ?? '') : 'no longer in the catalogue',
+            'missing' => ! $found->has($id),
+        ])->all();
+    }
+
+    /**
+     * Brand ids -> picker chips, the same way products and categories do it.
+     *
+     * Including the "(deleted)" case, and for the same reason spelled out in
+     * labelProducts(): deleting a brand nulls products.brand_id but leaves the
+     * id sitting in the coupon's JSON column for ever, where
+     * CouponService::eligibleItems() keeps comparing against it. An id the
+     * editor dropped silently would make the screen disagree with the till.
+     *
+     * @param  array<int, int>|null  $ids
+     */
+    private function labelBrands(?array $ids): array
+    {
+        if (! $ids) {
+            return [];
+        }
+
+        $found = Brand::whereIn('id', $ids)->get(['id', 'name', 'slug'])->keyBy('id');
+
+        return collect($ids)->map(fn ($id) => [
+            'id' => (int) $id,
+            'label' => $found->has($id) ? (string) $found[$id]->name : ('Brand #' . $id . ' (deleted)'),
+            'hint' => $found->has($id) ? (string) ($found[$id]->slug ?? '') : 'no longer in the catalogue',
             'missing' => ! $found->has($id),
         ])->all();
     }

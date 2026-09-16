@@ -427,7 +427,39 @@ class CartService
         $threshold = $this->shipping->freeShippingThreshold($country, $state);
         $toFree = $threshold === null ? null : max(0, $threshold - $afterDiscount);
 
+        /*
+         * FREE DELIVERY FROM THE COUPON ITSELF.
+         *
+         * coupons.free_shipping arrived in the WooCommerce import and, until
+         * this lane, nothing read it: the coupon editor drew the box disabled
+         * and said on the screen that the shop priced delivery only from the
+         * shipping method and the order-value threshold. Now the flag means
+         * what it says.
+         *
+         * Zeroed HERE rather than in ShippingService because this is the only
+         * place that knows both halves. ratesFor() is asked what a destination
+         * costs and has never been handed a cart, let alone a coupon; teaching
+         * it about coupons would put a discount rule inside the method the
+         * header bar, the shipping admin and the manual-order builder all call
+         * for a plain price list. Here the rate has already been chosen and is
+         * simply not charged.
+         *
+         * And zeroing the LINE, not dropping the rate, is deliberate: the
+         * shopper still picked a delivery method and the order still records
+         * which one, exactly as an order over the free-delivery threshold
+         * does. It is the cost that goes to zero.
+         *
+         * Every caller of totals() gets this for free — the cart page, the
+         * drawer, the checkout summary, ManualOrderBuilder and
+         * Store\CheckoutController::place() — which is what stops the cart
+         * page and the order that follows it disagreeing.
+         */
         $shipping = $shippingCost ?? 0;
+
+        if ($cart->coupon && $this->coupons->grantsFreeShipping($cart->coupon)) {
+            $shipping = 0;
+        }
+
         $total = $afterDiscount + $shipping;
 
         return [
