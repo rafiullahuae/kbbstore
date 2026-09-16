@@ -604,3 +604,38 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout:has(#payment_method_cod:checked) .js-fee-row{display:flex}
 .kbb-checkout:has(#payment_method_cod:checked) .js-total-row{display:none}
 .kbb-checkout:has(#payment_method_cod:checked) .js-total-row-fee{display:flex}
+
+/* ==========================================================================
+   Mobile polish - Lane BM. Scoped to <=900px; desktop is untouched.
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  /* .co-q had no CSS anywhere in the codebase, so the order-summary quantity
+     steppers rendered as bare UA buttons: 22x23px, on the checkout page.
+     Styled here to match the cart's stepper rather than left to the browser. */
+  .kbb-checkout .qty .co-q{
+    width:44px;height:44px;min-width:44px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:18px;line-height:1;
+    border:1px solid var(--line,#E8DCE2);border-radius:10px;
+    background:#fff;color:var(--ink-2,#5E545A);cursor:pointer;
+  }
+  .kbb-checkout .qty{display:inline-flex;align-items:center;gap:8px}
+  .kbb-checkout .qty span{min-width:24px;text-align:center}
+
+  /* The remove control was a bare 22px glyph button. */
+  .kbb-checkout .co-rm{
+    width:44px;height:44px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:15px;line-height:1;background:none;border:0;cursor:pointer;
+  }
+
+  /* Form controls: a 44px minimum so the touch target matches the field. */
+  .kbb-checkout .input-text,
+  .kbb-checkout select,
+  .kbb-checkout textarea{min-height:44px}
+
+  /* Labels sat 4px above their field; give the pair a little more room so the
+     label is not mistaken for the one below it. */
+  .kbb-checkout label{margin-bottom:6px}
+}

@@ -2717,3 +2717,41 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
     background:linear-gradient(180deg,var(--mh-dv,rgba(42,34,40,.16)),transparent);
   }
 }
+
+/* ==========================================================================
+   Mobile polish — Lane BM
+   --------------------------------------------------------------------------
+   Everything below is inside a max-width media query, so the desktop
+   rendering at >=901px is byte-for-byte what it was.
+
+   Measured at 360/390/430 in Chromium with isMobile+hasTouch. The numbers in
+   the comments are the BEFORE heights that these rules correct; a phone has no
+   hover and no mouse pointer, so a 15px-tall link is not a control a thumb can
+   hit. 44px is the floor Apple and Google both publish.
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  /* Header icon buttons were 36x36 (set just above, at this same breakpoint). */
+  .ib{width:44px;height:44px}
+
+  /* The compact header search collapsed to a 19px-tall field: .rs-compact
+     zeroes the padding that .search-in input relies on for its height. */
+  .search-in{min-height:44px}
+  .search-in input{min-height:40px}
+  .sbox input{min-height:44px}
+
+  /* Footer link columns rendered as 20.8px-tall blocks with no padding, so
+     consecutive links sat 0px apart — a thumb cannot pick one out. */
+  .fcol a{padding:9px 0;margin-bottom:0;min-height:44px;display:flex;align-items:center}
+  .fcol a.wa{min-height:0;display:inline-flex}
+
+  /* Slide-out menu rows: .mm-it was 39.4px, .mrow 15px with no padding. */
+  .mm-it{min-height:44px}
+  .mnav-list .mrow{display:flex;align-items:center;min-height:44px;padding:6px 14px}
+  .mnav-search input{min-height:44px}
+  .mm-srch input{min-height:44px}
+
+  /* A price must never split its symbol from its digits. "AED 1,299" wrapped
+     to "AED" / "1,299" inside a 127px card column. */
+  .woocommerce-Price-amount{white-space:nowrap}
+}
