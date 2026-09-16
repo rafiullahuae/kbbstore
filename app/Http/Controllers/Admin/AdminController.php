@@ -1491,6 +1491,21 @@ class AdminController extends Controller
         'gift_enabled' => ['flag', 'Gift wrapping'],
         'gift_fee' => ['fils', 'Gift-wrap fee'],
 
+        /*
+         * The per-country delivery line (Store -> Delivery & Shipping ->
+         * Delivery lines), read by App\Support\DeliveryLine.
+         *
+         * `rows` and not `text`: this value is a list of
+         * ['country' => 'XX', 'text' => '...'] and checkRows() is the only
+         * thing in this file that will take one. Until this line existed the
+         * key was not on this list at all, which — by the note at the top of
+         * this constant — meant a Save that reported success and wrote
+         * nothing. Nothing wrote it, so the escape hatch
+         * CheckoutController::deliveryText() promised the owner for the Gulf
+         * had no screen behind it.
+         */
+        'delivery_texts' => ['rows', 'Delivery lines by country'],
+
         // Social profiles, feeding schema.org sameAs.
         'social_facebook' => ['text', 'Facebook URL'],
         'social_instagram' => ['text', 'Instagram URL'],
@@ -1602,12 +1617,26 @@ class AdminController extends Controller
      * and the alternative — the old behaviour — was to store something that
      * read back as zero and charge customers accordingly.
      *
-     * @return array{value: ?string, error: ?string}
+     * The value is a string for every type but `rows`, which is the one shape
+     * here that is genuinely a list — see checkRows().
+     *
+     * @return array{value: mixed, error: ?string}
      */
     private function checkSetting(string $type, string $label, mixed $raw, mixed $extra): array
     {
         $ok = static fn (string $v): array => ['value' => $v, 'error' => null];
         $no = static fn (string $m): array => ['value' => null, 'error' => $m];
+
+        /*
+         * `rows` is handled BEFORE the single-value guard below, because it is
+         * the one type whose value legitimately is an array. Everything else
+         * still falls through the guard: settings.value is text, and an array
+         * arriving for a `text` or `fils` key is a malformed payload, not a
+         * value to stringify.
+         */
+        if ($type === 'rows') {
+            return $this->checkRows($label, $raw);
+        }
 
         // Arrays and objects are not settings values; the column is text.
         if (is_array($raw) || is_object($raw)) {
@@ -1788,6 +1817,87 @@ class AdminController extends Controller
         }
 
         return $no("“{$label}” could not be checked.");
+    }
+
+    /**
+     * A list of `['country' => 'XX', 'text' => '…']` rows.
+     *
+     * THE ONE TYPE HERE WHOSE VALUE IS NOT A SINGLE STRING, and it exists
+     * because `delivery_texts` — the per-country delivery line — is genuinely a
+     * list and had no way through this endpoint at all. That is not a cosmetic
+     * gap: the note on SETTING_RULES says a key missing from that list is
+     * skipped while the endpoint still answers `ok`, so the screen would have
+     * said "Saved" and written nothing, every time, forever. The setting had one
+     * reader in the whole codebase and no writer anywhere.
+     *
+     * SettingsService::set() json-encodes a non-scalar and its decode() reads it
+     * back as an array, so the round trip is the service's own and nothing here
+     * hand-rolls it.
+     *
+     * EVERY ROW IS CHECKED AND A BAD ONE REFUSES THE WHOLE PAYLOAD, rather than
+     * being dropped quietly. A dropped row is the silent-corruption shape this
+     * whole method exists to end: the operator types a line, presses Save, is
+     * told it saved, and the row is simply not there when the screen reloads.
+     * The country code is checked against App\Support\Countries::NAMES and not
+     * merely for being two letters, because the screen offers a picker built
+     * from exactly that list — anything else did not come from the screen.
+     *
+     * AN EMPTY LIST IS A VALID VALUE and means "no country has a line of its
+     * own". It has to be: removing the last row is the only way back to the
+     * shipped behaviour, and treating [] as "nothing supplied" would leave the
+     * old rows in place with the screen reporting otherwise.
+     *
+     * @return array{value: mixed, error: ?string}
+     */
+    private function checkRows(string $label, mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return ['value' => null, 'error' => "“{$label}” must be a list of countries."];
+        }
+
+        $clean = [];
+
+        foreach ($raw as $row) {
+            if (! is_array($row)) {
+                return ['value' => null, 'error' => "“{$label}” has a row that is not a country and a line."];
+            }
+
+            // is_scalar before the cast, not after: `(string) []` is a PHP
+            // warning and a literal "Array", which would then be refused for
+            // the wrong reason and leave a line in the log that says nothing
+            // about the payload that caused it.
+            $rawCode = $row['country'] ?? '';
+            $rawText = $row['text'] ?? '';
+
+            if (! is_scalar($rawCode) || ! is_scalar($rawText)) {
+                return ['value' => null, 'error' => "“{$label}” has a row whose country or line is not text."];
+            }
+
+            $code = strtoupper(trim((string) $rawCode));
+            $text = trim((string) $rawText);
+
+            if (! array_key_exists($code, \App\Support\Countries::NAMES)) {
+                return ['value' => null, 'error' => "“{$label}” has a row for “{$code}”, which is not a country on the list."];
+            }
+
+            if (isset($clean[$code])) {
+                return ['value' => null, 'error' => "“{$label}” has two rows for "
+                    . \App\Support\Countries::NAMES[$code] . '. Each country can have one line.'];
+            }
+
+            // settings.value is longText, but this string is printed into a
+            // delivery band and under a button — a thousand characters is far
+            // past anything that reads as a delivery promise, and the bound is
+            // what stops a paste accident becoming the storefront's layout.
+            if (mb_strlen($text) > 1000) {
+                return ['value' => null, 'error' => "“{$label}” has a line longer than 1,000 characters for "
+                    . \App\Support\Countries::NAMES[$code] . '.'];
+            }
+
+            $clean[$code] = ['country' => $code, 'text' => $text];
+        }
+
+        return ['value' => array_values($clean), 'error' => null];
     }
 
     /**

@@ -101,26 +101,44 @@ class CheckoutController extends Controller
         // never overrides a person who has already said where they are.
         $extended = app(\App\Services\ExtendedDelivery::class);
         $countries = $this->countries();
-        $detected = $extended->detect($request);
 
-        $country = old('billing_country')
-            ?? $address?->country
-            ?? (isset($countries[$detected]) ? $detected : null)
-            ?? (string) $this->settings->get('store_country', 'AE');
+        /*
+         * Through App\Support\ShopperCountry, which is now the only thing in
+         * the application that answers "where is this shopper?" — the home
+         * page asks it too, and used to ask nobody at all and print a UAE
+         * delivery promise to the world. The precedence this controller had is
+         * unchanged and is documented there: what they chose on this request,
+         * then what they chose on an earlier one, then a geo guess, then the
+         * store's own country. The saved address is handed IN rather than
+         * fetched there, because it is the one tier that costs a query and the
+         * storefront must not pay for it on every page.
+         */
+        $resolved = \App\Support\ShopperCountry::for($request, $address?->country);
 
-        // Only badge it as detected when nothing else supplied the answer and
-        // the guess actually landed on a country this shop delivers to.
-        $wasDetected = $detected !== null
-            && isset($countries[$detected])
-            && old('billing_country') === null
-            && $address?->country === null;
+        /*
+         * A GUESS IS FILTERED AGAINST THE SHOP'S OWN LIST; A STATEMENT IS NOT.
+         * That asymmetry is deliberate and predates this class. A country the
+         * shopper typed or saved is used as given even if no zone covers it,
+         * so the page can go on to say "we do not deliver there yet"; a guess
+         * that lands somewhere undeliverable must not silently become the
+         * selected country.
+         */
+        $country = ($resolved->guessed() && ! isset($countries[$resolved->code]))
+            ? (string) $this->settings->get('store_country', 'AE')
+            : $resolved->code;
+
+        // Only badge it as detected when nothing the shopper said supplied the
+        // answer and the guess actually landed on a country this shop delivers
+        // to. A remembered choice is not a detection and never wore this badge.
+        $wasDetected = $resolved->source === \App\Support\ShopperCountry::HEADER
+            && isset($countries[$resolved->code]);
 
         // Detection found somewhere this shop does not deliver to. Said
         // plainly rather than silently falling back to the store's own
         // country and letting the shopper find out at the payment step.
-        $unserved = ($detected !== null && ! isset($countries[$detected])
-                && old('billing_country') === null && $address?->country === null)
-            ? $detected
+        $unserved = ($resolved->source === \App\Support\ShopperCountry::HEADER
+                && ! isset($countries[$resolved->code]))
+            ? $resolved->code
             : null;
 
         [$rates, $chosen, $totals] = $this->rateContext($cart, $country, old('billing_state') ?? $address?->state);
@@ -1022,6 +1040,20 @@ class CheckoutController extends Controller
             return response()->json(['ok' => false, 'error' => 'We do not deliver there yet.'], 422);
         }
 
+        /*
+         * THE ONE PLACE A SHOPPER'S CHOICE IS RECORDED. This endpoint is what
+         * the country selector calls, so reaching it means a person picked a
+         * country — the only signal in the application that is a statement
+         * rather than a guess. Remembering it here is what makes the rest of
+         * the shop agree with the checkout: change the country to Saudi Arabia
+         * and the home page stops promising UAE delivery too, on the next page
+         * they load, instead of the two screens contradicting each other.
+         *
+         * Only a country that passed the check above is remembered, so the
+         * session can never hold somewhere this shop does not deliver to.
+         */
+        \App\Support\ShopperCountry::remember($request, $country);
+
         [$rates, $chosen, $totals] = $this->rateContext($cart, $country, $data['state'] ?? null);
 
         return response()->json([
@@ -1396,43 +1428,23 @@ class CheckoutController extends Controller
     /**
      * The line under Place order, for the country this parcel is going to.
      *
-     * THE DEFAULT IS A UAE PROMISE AND IS ONLY OFFERED TO THE UAE.
+     * Kept as a one-line delegation rather than deleted, because it is the name
+     * three call sites in this file use and because the rule it enforces has
+     * not changed at all — only its address. The reasoning that used to live
+     * here, in full, is now the class doc comment of App\Support\DeliveryLine:
+     * the default is a UAE promise, it is offered to the UAE alone, nothing is
+     * invented for anywhere else, and an explicit `delivery_texts` row still
+     * wins for any country.
      *
-     * `delivery_default_text` is "1–3 days fast delivery all over UAE" — the
-     * owner's own wording, and true of the only destination it names. It used
-     * to be the fallback for EVERY country, so a shopper in Saudi Arabia being
-     * charged the AED 150 Gulf rate on this very screen was told, in writing,
-     * that their order arrives in one to three days anywhere in the UAE. Not
-     * merely irrelevant to them: it is a delivery promise, and it was the wrong
-     * one.
-     *
-     * This is the same repair App\Mail\OrderStatusChanged already made to the
-     * dispatch email, for the same reason and with the same restraint: nothing
-     * is invented to put in its place. No Gulf delivery window has been
-     * measured, and a "five to eight days" written here to fill the gap would
-     * be the same class of untruth in the other direction. The line is simply
-     * not shown — partials/checkout/delivery-line.blade.php already renders
-     * nothing for an empty string — until the owner writes one.
-     *
-     * AND THEY CAN. An explicit `delivery_texts` row still wins for any
-     * country, including the UAE, so the escape hatch for the Gulf is the
-     * screen that already exists rather than a code change.
+     * IT MOVED BECAUSE THE HOME PAGE NEEDED THE SAME ANSWER. That page printed
+     * `delivery_default_text` to every visitor on earth with no country check,
+     * so the rule was true of the checkout and false of the first page of the
+     * shop. A private method on this controller could not be the one rule the
+     * whole shop obeys, and two copies of it would have drifted.
      */
     private function deliveryText(string $country): string
     {
-        $rows = (array) $this->settings->get('delivery_texts', []);
-
-        foreach ($rows as $row) {
-            if (($row['country'] ?? '') === $country) {
-                return (string) ($row['text'] ?? '');
-            }
-        }
-
-        if (strtoupper($country) !== strtoupper((string) $this->settings->get('store_country', 'AE'))) {
-            return '';
-        }
-
-        return (string) $this->settings->get('delivery_default_text', '1–3 days fast delivery all over UAE');
+        return app(\App\Support\DeliveryLine::class)->for($country);
     }
 
     private function browsed(Request $request, $cart)

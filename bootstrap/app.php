@@ -15,6 +15,42 @@ return Application::configure(basePath: dirname(__DIR__))
         // Unauthenticated back-office requests go to the admin login, not /login.
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
 
+        /*
+         * THE ONE COOKIE THE BROWSER WRITES, AND THEREFORE THE ONE THAT MUST
+         * NOT BE ENCRYPTED.
+         *
+         * resources/js/kbb/app.js sets `kbb_tz` to the visitor's IANA time zone
+         * — the only geo signal this application has that does not depend on
+         * the host putting a country header on the request. EncryptCookies
+         * expects every incoming cookie to carry Laravel's own encryption
+         * envelope and silently drops anything that does not decrypt, so a
+         * cookie written in JavaScript arrives as nothing at all.
+         *
+         * IT WAS ARRIVING AS NOTHING. ExtendedDelivery::detect() has read this
+         * cookie since it was written, and the value it read was always null:
+         * the time-zone tier of country detection has never once fired in a
+         * browser. Measured through the real middleware stack — the same zone
+         * sent plaintext (as a browser sends it) resolved to no country, and
+         * sent through the test helper that marks a cookie "do not decrypt"
+         * resolved correctly. Nothing errored, which is why it went unnoticed:
+         * a missing signal and a signal that says "I don't know" look the same
+         * from here.
+         *
+         * SAFE TO EXEMPT, and safe in the way that matters. The value is an
+         * IANA zone name the visitor's own browser chose and could set to
+         * anything regardless; nothing is authorised or charged on the strength
+         * of it. ExtendedDelivery maps it through a fixed table, so a value not
+         * on that table becomes null rather than a country, and
+         * App\Support\ShopperCountry then requires the result to be two
+         * letters. There is no secret in it to protect and no decision resting
+         * on it to subvert.
+         *
+         * Everything else stays encrypted: the session, the cart token and the
+         * remembered-login cookie are all written by the server and all carry
+         * something worth protecting.
+         */
+        $middleware->encryptCookies(except: ['kbb_tz']);
+
         // Baseline security headers on every web response.
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeaders::class,
