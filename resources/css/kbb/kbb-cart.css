@@ -118,3 +118,11 @@
 
   .kbb-cartpage .conti{display:inline-flex;align-items:center;min-height:44px}
 }
+
+/* Mobile polish, second pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+  /* "Continue shopping" was 20px tall. */
+  .kbb-cartpage .backlink{min-height:44px}
+  /* The line-item product name link was 192x15. */
+  .kbb-cartpage .cn a{display:inline-block;padding:5px 0}
+}

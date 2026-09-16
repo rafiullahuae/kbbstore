@@ -355,5 +355,32 @@ img{max-width:100%}
   /* A card name clamped to 2 lines dropped ~3 lines of a long product title.
      Allow a third line on a phone, where the column is narrowest and the name
      is the only thing distinguishing two jars of the same brand. */
-  .cname{-webkit-line-clamp:3;min-height:0}
+  .cname{-webkit-line-clamp:3}
+}
+
+/* Mobile polish, second pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+
+  /* Pagination had no CSS anywhere in the repo: the page links rendered as
+     bare 8.9x16px anchors. Paging a category on a phone was a lottery. */
+  .page-numbers{
+    min-width:44px;min-height:44px;
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:0 10px;border:1px solid var(--line,#E8DCE2);border-radius:10px;
+    font-size:14px;font-weight:600;background:#fff;color:var(--ink,#2A2228);
+  }
+  .page-numbers.current{background:var(--pink-soft,#FCEFF4);color:var(--pink-deep,#B4517A);border-color:transparent}
+  .pagination,.pag{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+  /* Filter drawer controls were all in the low 30s. */
+  .ftog{min-height:44px;padding:8px 0}
+  .fclose{width:44px;height:44px}
+  .mobi-filter{min-height:44px}
+  .sortsel select{min-height:44px}
+
+  /* The card title is a third route to the product (the image and the Add to
+     cart button are the other two), but it is still a link a thumb aims at.
+     Padding rather than min-height, so the 3-line clamp above still governs
+     how much of a long name is shown. */
+  .cname{padding:5px 0}
 }

@@ -639,3 +639,20 @@ body.woocommerce-checkout main#content>p:empty{display:none}
      label is not mistaken for the one below it. */
   .kbb-checkout label{margin-bottom:6px}
 }
+
+/* Mobile polish, second pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+  /* "Back to shop" was 17.4px; "Go back to cart" 38.8px. */
+  .kbb-checkout .backlink{min-height:44px}
+  .kbb-checkout .co-tocart{min-height:44px}
+}
+
+/* Mobile polish, third pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+  /* The account / gift / WhatsApp opt-ins are 17x17 checkboxes. The label
+     wraps each one, so giving the label a 44px row makes the whole line the
+     target, and the box itself is enlarged to match a fingertip. */
+  .kbb-checkout .form-row label.kbb-acct-opt,
+  .kbb-checkout .form-row label.kbb-gift-opt{min-height:44px}
+  .kbb-checkout input[type=checkbox]{width:22px;height:22px}
+}

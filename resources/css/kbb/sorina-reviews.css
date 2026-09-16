@@ -177,3 +177,10 @@
 .sr-badge-split .sr-bmeta small{font-size:12px;color:var(--sr-soft,#a07f77);font-weight:600}
 .sr-badge-empty{opacity:.92}
 .sr-badge-empty .sr-blabel{font-style:italic}
+
+/* Mobile polish - Lane BM. Scoped to <=900px; desktop is untouched. */
+@media (max-width: 900px) {
+  /* Rating filter chips were 31px tall; the write-a-review button 42px. */
+  .sr-chip{min-height:44px;display:inline-flex;align-items:center}
+  .sr-write{min-height:44px}
+}
