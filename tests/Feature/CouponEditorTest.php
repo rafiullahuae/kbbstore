@@ -830,22 +830,48 @@ it('is pulled into the admin console', function () {
         ->toBeTrue('app.blade.php does not include the coupon editor screen');
 });
 
-it('says plainly which WooCommerce fields this shop does not apply', function () {
+it('offers no field the pricing code does not enforce', function () {
     $screen = (string) file_get_contents(resource_path('views/admin/partials/coupon-editor-screen.blade.php'));
+    $service = (string) file_get_contents(base_path('app/Services/CouponService.php'));
+    $cart = (string) file_get_contents(base_path('app/Services/CartService.php'));
 
     /*
-     * The three honest gaps. Each is named ON THE SCREEN rather than left out
-     * silently, because the owner knows the WooCommerce editor and will look
-     * for them: a field that is missing with no explanation reads as a bug, and
-     * a field that is present but ignored is worse — a restriction they believe
-     * is fenced and is not.
+     * This test used to assert the opposite: that free shipping, the item cap
+     * and the brand pickers were each drawn inert and labelled as unapplied,
+     * because the shop had no column or no pricing code behind them. All three
+     * are enforced now, so the assertion is inverted rather than deleted — the
+     * diff of this file is the before and after of that gap.
+     *
+     * The rule it protects is unchanged and is the one that matters: a
+     * restriction the owner sets and the till ignores is worse than a missing
+     * field, because they believe the code is fenced when it is not. So each
+     * live field is checked against the code that honours it, not merely
+     * against its own markup.
      */
-    expect(str_contains($screen, 'not applied by this shop'))
-        ->toBeTrue('free shipping is not marked as unapplied')
-        ->and(str_contains($screen, '"Limit usage to X items" is not available'))
-        ->toBeTrue('the missing item cap is not explained')
-        ->and(str_contains($screen, 'already true of every code'))
-        ->toBeTrue('individual use is not explained as unconditional');
+    expect(str_contains($screen, "data-check=\"free_shipping\""))
+        ->toBeTrue('free shipping is not editable, so the owner cannot use it');
+    expect(str_contains($cart, 'grantsFreeShipping'))
+        ->toBeTrue('the editor offers free shipping but CartService does not zero the delivery line');
+
+    expect(str_contains($screen, "textInput('limit_usage_to_x_items'"))
+        ->toBeTrue('the item cap is not an editable field');
+    expect(str_contains($service, 'cappedLines'))
+        ->toBeTrue('the editor offers an item cap but CouponService does not apply one');
+
+    expect(str_contains($screen, "field:'brand_ids'"))
+        ->toBeTrue('the brand picker is missing');
+    expect(str_contains($service, 'brand_ids'))
+        ->toBeTrue('the editor offers brand restrictions but CouponService does not read them');
+
+    /*
+     * The one remaining WooCommerce field this shop genuinely cannot honour,
+     * and it is still explained on screen rather than left as a gap the owner
+     * wonders about. carts.coupon_id is a single nullable foreign key, so a
+     * basket has only ever held one coupon: the restriction is unconditionally
+     * in force and a box that could be unticked would be fiction.
+     */
+    expect(str_contains($screen, 'already true of every code'))
+        ->toBeTrue('individual use is no longer explained as unconditional');
 });
 
 it('lets the coupon editor shrink below its content on a phone', function () {

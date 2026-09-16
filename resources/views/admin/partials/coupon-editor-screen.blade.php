@@ -27,9 +27,11 @@
         carts.coupon_id is a single nullable foreign key, so a basket has only
         ever held one coupon: the restriction is unconditionally in force for
         every code and a box that could be unticked would be fiction.
-      * "Limit usage to X items" is absent. There is no column for it and
-        honouring one would mean changing discountFor(). Said plainly on the
-        Usage limits tab rather than left as a gap the owner wonders about.
+      * "Limit usage to X items", the brand pickers and "Allow free shipping"
+        were all shown-but-inert for a while, because no column or no pricing
+        code existed behind them. All three are live now — see
+        CouponService::cappedLines(), its brand clauses in eligibleItems(), and
+        the free-shipping block in CartService::totals().
 
     Its own file rather than more lines inside a 14,000-line Blade: several
     lanes edit that file at once, and a screen that lives on its own can be
@@ -260,7 +262,11 @@
     {key:'categories',         field:'category_ids',          kind:'category', label:'Product categories',
      help:'Only products in these categories are discounted.'},
     {key:'excluded_categories',field:'excluded_category_ids', kind:'category', label:'Exclude categories',
-     help:'Products in these categories are never discounted by this code.'}
+     help:'Products in these categories are never discounted by this code.'},
+    {key:'brands',             field:'brand_ids',             kind:'brand',    label:'Product brands',
+     help:'Only products from these brands are discounted. Leave empty for no restriction.'},
+    {key:'excluded_brands',    field:'excluded_brand_ids',    kind:'brand',    label:'Exclude brands',
+     help:'Products from these brands are never discounted by this code.'}
   ];
 
   /* ------------------------------------------------------------- plumbing */
@@ -429,6 +435,8 @@
       usage_limit:'', usage_limit_per_user:'',
       allowed_emails:'',
       products:[], excluded_products:[], categories:[], excluded_categories:[],
+      brands:[], excluded_brands:[],
+      limit_usage_to_x_items:'',
       usage_count:0, redemptions:0, deletable:true, status:'active', imported:false
     };
   }
@@ -474,6 +482,9 @@
         excluded_products: c.excluded_products || [],
         categories: c.categories || [],
         excluded_categories: c.excluded_categories || [],
+        brands: c.brands || [],
+        excluded_brands: c.excluded_brands || [],
+        limit_usage_to_x_items: c.limit_usage_to_x_items === null ? '' : String(c.limit_usage_to_x_items),
         usage_count: c.usage_count,
         redemptions: c.redemptions,
         deletable: c.deletable,
@@ -513,12 +524,16 @@
       minimum_amount: draft.minimum_amount || null,
       maximum_amount: draft.maximum_amount || null,
       exclude_sale_items: !!draft.exclude_sale_items,
+      free_shipping: !!draft.free_shipping,
       usage_limit: draft.usage_limit === '' ? null : draft.usage_limit,
       usage_limit_per_user: draft.usage_limit_per_user === '' ? null : draft.usage_limit_per_user,
+      limit_usage_to_x_items: draft.limit_usage_to_x_items === '' ? null : draft.limit_usage_to_x_items,
       product_ids: draft.products.map(function(p){ return p.id; }),
       excluded_product_ids: draft.excluded_products.map(function(p){ return p.id; }),
       category_ids: draft.categories.map(function(p){ return p.id; }),
       excluded_category_ids: draft.excluded_categories.map(function(p){ return p.id; }),
+      brand_ids: draft.brands.map(function(p){ return p.id; }),
+      excluded_brand_ids: draft.excluded_brands.map(function(p){ return p.id; }),
       allowed_emails: draft.allowed_emails.split(/[\s,;]+/).filter(function(s){ return s !== ''; })
     };
   }
@@ -565,8 +580,8 @@
   /* Which tab a given column's message belongs under. */
   function tabFor(field){
     if (!field) return null;
-    if (/^(usage_limit|usage_limit_per_user)$/.test(field)) return 'limits';
-    if (/^(minimum_amount|maximum_amount|exclude_sale_items|product_ids|excluded_product_ids|category_ids|excluded_category_ids|allowed_emails)/.test(field)) return 'restrictions';
+    if (/^(usage_limit|usage_limit_per_user|limit_usage_to_x_items)$/.test(field)) return 'limits';
+    if (/^(minimum_amount|maximum_amount|exclude_sale_items|product_ids|excluded_product_ids|category_ids|excluded_category_ids|brand_ids|excluded_brand_ids|allowed_emails)/.test(field)) return 'restrictions';
     return 'general';
   }
 
@@ -767,14 +782,21 @@
       + '</div>'
 
       /* Drawn, disabled, and explained. See the file docblock: the column
-         exists and the import filled it, but nothing in this application reads
-         it, so an editable box here would be a promise the shop does not keep.
-         The endpoint ignores the field on the way in. */
+         was unenforceable for a long time and the box was drawn disabled. It
+         is enforced now -- CartService::totals() zeroes the delivery line for
+         a coupon carrying it -- so the box is live.
+
+         NOTE FOR ANYONE DISABLING IT AGAIN: a disabled input posts nothing,
+         and boolean('free_shipping') reads a missing key as false. While this
+         box was disabled, an unconditional write would have cleared the flag
+         on every save, silently, on the only rows that carry it. The endpoint
+         therefore writes it only when the form actually posts the key. Keep
+         that guard. */
       + '<div class="ce-wide ce-note">'
         + '<div class="ce-check">'
-          + '<input type="checkbox" disabled' + (draft.free_shipping ? ' checked' : '') + '>'
-          + '<div><b>Allow free shipping</b> — not applied by this shop.<br>'
-          + 'This box shows what WooCommerce had recorded against the code. Delivery on this site is priced by the shipping method for the destination and by the free-delivery order threshold; no coupon affects it. The setting is shown so you can see what came across, and it cannot be changed here, because ticking it would not do anything.</div>'
+          + '<input type="checkbox" data-check="free_shipping"' + (draft.free_shipping ? ' checked' : '') + '>'
+          + '<div><b>Allow free shipping</b><br>'
+          + 'Delivery is not charged on an order using this code. It overrides the shipping rate for the destination, so the customer pays nothing for delivery however much they spend.</div>'
         + '</div>'
       + '</div>'
       + '</div>';
@@ -807,7 +829,7 @@
       + '<label class="ce-label">' + esc(p.label) + '</label>'
       + '<div class="ce-picker">'
         + chips
-        + '<input class="ce-input" data-search="' + esc(p.key) + '" data-kind="' + esc(p.kind) + '" type="search" placeholder="Search ' + esc(p.kind === 'product' ? 'products' : 'categories') + ' to add" autocomplete="off">'
+        + '<input class="ce-input" data-search="' + esc(p.key) + '" data-kind="' + esc(p.kind) + '" type="search" placeholder="Search ' + esc({product:'products', category:'categories', brand:'brands'}[p.kind] || p.kind) + ' to add" autocomplete="off">'
         + found_html
       + '</div>'
       + '<div class="ce-help">' + esc(p.help) + '</div>'
@@ -862,13 +884,12 @@
               'How many times one shopper may redeem it, counted by the email on the order. Leave empty for no limit. <b>Checked once an email address is known</b>, which at the basket a guest has not given yet — so it bites at checkout.',
               textInput('usage_limit_per_user', 'inputmode="numeric" placeholder="no limit"'), 'usage_limit_per_user')
 
-      /* The honest gap. WooCommerce has this field; this shop has no column for
-         it and no code that could honour one, so it is named and explained
-         rather than drawn as a box that does nothing. */
-      + '<div class="ce-wide ce-note">'
-        + '<b>"Limit usage to X items" is not available.</b><br>'
-        + 'In WooCommerce this capped how many of the matching items one redemption could discount. This shop has nowhere to record it and nothing that would apply it, so rather than offer a box that silently does nothing, it is left out. A percentage or fixed-product code currently discounts <b>every</b> eligible item in the basket.'
-      + '</div>'
+      /* Was an explanatory note while there was no column and no code to
+         honour one. Both exist now: coupons.limit_usage_to_x_items, applied in
+         CouponService::cappedLines(). */
+      + field('Limit usage to X items',
+              'The most items one use of this code may discount. Leave empty for no limit. Where it bites, the <b>cheapest</b> matching items are the ones discounted &mdash; that costs the shop least and gives the same answer whatever order things went into the basket.',
+              textInput('limit_usage_to_x_items', 'inputmode="numeric" placeholder="no limit"'), 'limit_usage_to_x_items')
 
       + '<div class="ce-wide ce-note is-plain">'
         + '<b>Both limits are enforced twice.</b><br>'
