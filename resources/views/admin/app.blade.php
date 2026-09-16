@@ -1892,11 +1892,35 @@ const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
   {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings]]},
   {sec:'Safety',items:[['debug','Debug & Monitor',I.debug,'live'],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
-  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['catalog','Catalog',I.catalog],['import','Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['blog','Blog','<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],['posts','Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],['mail','Mail','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>'],['p-content','Content & Pages',I.content,'lock']]},
+  /* Catalog is its own group, and `group:true` keeps it one even while it holds
+     a single built-in entry.
+
+     Two screens inject themselves in here at include time — the product editor
+     and Categories & Brands — and both already set the breadcrumb to 'Catalog'
+     and try to open `.nav-group[data-sec="Catalog"]`. That group had never
+     existed, so the breadcrumb named a group the sidebar did not have and the
+     expand was a no-op. It exists now. Without `group:true` buildNav would
+     render a one-item section as a bare top-level link with no .nav-group
+     wrapper at all, and the two injected entries would land outside any group. */
+  {sec:'Catalog',group:true,items:[['catalog','Catalog',I.catalog]]},
+  {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['import','Store Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['mail','Mail','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>']]},
+  /* Content. These three sat in Store while every one of them set its
+     breadcrumb to 'Content' — the sidebar said one thing and the page said
+     another, and the rest of the repo already calls them "Content → Media
+     Library" and "Content → HTML Blocks". The group the code always meant now
+     exists, so the two agree.
+
+     'blog' is gone from here on purpose. It and 'posts' were two rows that
+     opened the same screen: go() routes both to renderPosts() and FRAME_SRC
+     mapped both to kbb-admin-blog.html. Clicking "Blog" landed on a page
+     headed "Posts", which is how an owner concludes the blog screen was never
+     built. One row now. The 'blog' id still routes — TITLES and the live
+     wiring keep it — so #blog and ?go=blog reach the same screen as before. */
+  {sec:'Content',items:[['posts','Blog Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>']]},
   {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
   {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>','lock'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
-  {sec:'Reviews',items:[['rev-all','All Reviews','<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/>','3'],['rev-add','Bulk Add','<path d="M12 5v14M5 12h14"/>'],['rev-likes','Bulk Likes','<path d="M7 11v9H4v-9z"/><path d="M7 11l4-7a2 2 0 0 1 2 2v3h5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7"/>'],['rev-assign','Assign / Duplicate',I.copy],['rev-io','Export / Import','<path d="M8 7h11l-3-3M16 17H5l3 3"/>'],['rev-badge','Badge Themes','<path d="M12 2l4 4-4 4-4-4z"/><path d="M4 12l8 8 8-8"/>'],['rev-capsule','Rating Capsule','<path d="M12 21s-7-4.5-9.5-9A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9z"/>'],['rev-settings','Review Settings',I.settings]]},
+  {sec:'Reviews',items:[['rev-all','All Reviews','<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/>','3'],['rev-add','Bulk Add','<path d="M12 5v14M5 12h14"/>'],['rev-likes','Bulk Likes','<path d="M7 11v9H4v-9z"/><path d="M7 11l4-7a2 2 0 0 1 2 2v3h5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7"/>'],['rev-assign','Assign / Duplicate',I.copy],['rev-io','Review Import / Export','<path d="M8 7h11l-3-3M16 17H5l3 3"/>'],['rev-badge','Badge Themes','<path d="M12 2l4 4-4 4-4-4z"/><path d="M4 12l8 8 8-8"/>'],['rev-capsule','Rating Capsule','<path d="M12 21s-7-4.5-9.5-9A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9z"/>'],['rev-settings','Review Settings',I.settings]]},
   {sec:'Storefront',items:[['shopfilters','Shop Filters','<path d="M4 5h16l-6 7v5l-4 2v-7z"/>']]},
   {sec:'Core Updates',items:[['updates','Core Updates','<path d=\"M21 12a9 9 0 1 1-3-6.7\"/><path d=\"M21 3v6h-6\"/><path d=\"M12 8v5l3 2\"/>']]}
 ];
@@ -1906,8 +1930,12 @@ function navItemHTML([id,name,icon,tag]){
 }
 function buildNav(){
   $('#nav').innerHTML=NAV.map((g,gi)=>{
-    if(g.items.length===1){
-      // Single-item groups render as a plain top-level link. The last one is
+    if(g.items.length===1 && !g.group){
+      // Single-item groups render as a plain top-level link, unless the section
+      // asks to stay a group with `group:true` — which Catalog does, because
+      // partials insert their own entries into it after this runs and a bare
+      // link has no .nav-group for them to land in.
+      // The last one is
       // tagged so CSS can pin it to the bottom of the sidebar — a selector on
       // .nav-group would never match, because no .nav-group is created here.
       const html = navItemHTML(g.items[0]);
@@ -1931,7 +1959,20 @@ function syncNavOpen(id){
   });
 }
 
-const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],modules:['Platform','Modules'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Store','Catalog'],import:['Store','Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Export / Import'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],'blog':['Content','Blog'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
+/* Breadcrumb and page title per screen: [group, title].
+
+   The group here is the sidebar group the entry actually sits in, and the title
+   is the entry's own label. When the two drift, the owner clicks one word and
+   the page answers with another — which is the whole complaint this map is now
+   pinned against in AdminNavAndIdsTest.
+
+   `modules` used to be declared twice in this object: once as ['Platform',…]
+   and again, later, as ['Store',…]. The second silently won, so anyone editing
+   the first saw nothing change. One declaration now. */
+const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
+   and 'posts' open the same screen. The id stays routable for #blog and
+   ?go=blog, and it names that screen honestly rather than a second one. */
+'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -2508,6 +2549,7 @@ function paintEcom(){
       </div>
       <div class="ectabs">${ECOM.tabs.map((x,i)=>
         `<button class="ectab${i===ETAB?' on':''}" data-ectab="${i}">${escHtml(x.label)}<span class="ct">${x.count}</span></button>`).join('')}</div>
+      <p class="ectabs-hint">Every storefront setting is here, split by what it affects — one tab per area, and the number on each is how many settings it holds. Nothing is hidden on the tabs you are not looking at; use Search settings above to jump straight to one.</p>
     </div>
 
     <div class="ecbody">${t.sections.map(sec=>{
@@ -6578,7 +6620,7 @@ function impPaint(){
   const anyFile=s.files.some(f=>f.present);
 
   $('#content').innerHTML=impCss()+'<div class="wrap impwrap">'
-    +'<div class="page-head"><h2>Import / Export</h2><p>Bring your WooCommerce store across — categories, brands, products, customers, orders and order lines. '
+    +'<div class="page-head"><h2>Store Import / Export</h2><p>Bring your WooCommerce store across — categories, brands, products, customers, orders and order lines. '
     +'Upload the exports, look at what <b>would</b> happen, fix anything it refuses, then import for real. '
     +'Nothing is written until you press Import.</p></div>'
     +impBanner(run)
@@ -8468,7 +8510,7 @@ buildNav();
     try{ posts = (await api('/admin-api/posts')).posts; }catch(e){ posts = null; }
 
     if(posts === null){
-      document.querySelector('#content').innerHTML = '<div class="wrap"><div class="page-head"><h2>Posts</h2></div>'+
+      document.querySelector('#content').innerHTML = '<div class="wrap"><div class="page-head"><h2>Blog Posts</h2></div>'+
         '<p style="padding:24px;color:var(--sale,#c0392b)">Could not load posts.</p></div>';
       return;
     }
@@ -8476,7 +8518,7 @@ buildNav();
     var statusColor = function(s){ return s==='published' ? 'green' : 'grey'; };
 
     document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Posts</h2><p>Every article on the Journal blog. Editing happens on the real page for now — click Preview to open it.</p></div>'+
+      '<div class="wrap"><div class="page-head"><h2>Blog Posts</h2><p>Every article on the Journal blog. Editing happens on the real page for now — click Preview to open it.</p></div>'+
       '<div class="card" style="overflow:auto"><table><thead><tr><th>Title</th><th>Tag</th><th>Author</th><th>Status</th><th>Published</th><th></th></tr></thead><tbody>'+
       (posts.length ? posts.map(function(p){
         return '<tr><td><b>'+sesc(p.title)+'</b></td>'+
@@ -11598,6 +11640,10 @@ buildNav();
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>SEO &amp; Meta</h2><p>Site-wide search-engine settings. These render into every storefront page\u2019s &lt;head&gt; and power the sitemap, robots.txt and structured data.</p></div>'+
       '<div class="subtabs"><button class="subtab'+(seoTab==='settings'?' on':'')+'" data-st="settings">Settings</button><button class="subtab'+(seoTab==='redirects'?' on':'')+'" data-st="redirects">Redirects &amp; 404s</button><button class="subtab'+(seoTab==='schema'?' on':'')+'" data-st="schema">Schema Inspector</button><button class="subtab'+(seoTab==='audit'?' on':'')+'" data-st="audit">Catalogue Audit</button></div>'+
+      /* What the four tabs are and why they are one screen. The owner asked
+         this of Catalog and it is the same question here: a tab strip that only
+         names itself leaves you clicking each one to find out. */
+      '<p class="ectabs-hint">Four views of the same thing — how this shop looks to Google. <b>Settings</b> is what you write; <b>Redirects &amp; 404s</b> catches old WooCommerce addresses so a link from Google still lands somewhere; <b>Schema Inspector</b> and <b>Catalogue Audit</b> only read, and report what Google is being told and which products are missing something.</p>'+
       '<div id="seoTabBody"></div></div>';
     $$('#content .subtab').forEach(function(b){ b.onclick=function(){ seoTab=b.dataset.st; renderSeo(); }; });
     if(seoTab==='redirects') return renderSeoRedirects();
