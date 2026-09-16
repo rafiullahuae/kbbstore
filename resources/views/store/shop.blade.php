@@ -132,7 +132,11 @@
 
         <div class="grid" id="grid" data-cols="{{ $cols }}">
             @forelse ($products as $product)
-                <x-product-card :product="$product" />
+                {{-- The first tile is the Largest Contentful Paint element on
+                     this page at 1280 and the first thing in the grid on a
+                     phone, so its photograph is the one request worth
+                     prioritising. Every other card is lazy. --}}
+                <x-product-card :product="$product" :eager="$loop->first" />
             @empty
                 <div class="empty" style="grid-column:1/-1"><b>No products match those filters</b>Try removing a filter or clearing all.</div>
             @endforelse
