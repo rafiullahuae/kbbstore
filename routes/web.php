@@ -532,6 +532,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         require __DIR__.'/reviews-screens-admin.php';
         Route::get('/customers',             [AdminController::class, 'customers']);
         Route::get('/quiz-leads',            [AdminController::class, 'quizLeads']);
+
+        /*
+         * The write half of Quiz Leads — marking a lead contacted or closed.
+         * Its own file, like the other admin route groups, so a lane can add
+         * to it without touching this one. It must sit INSIDE this admin-api
+         * group: the routes carry no middleware of their own, and outside the
+         * group they would be public writes to the leads table.
+         */
+        require __DIR__ . '/quiz-leads-admin.php';
         Route::get('/orders',                [AdminController::class, 'orders']);
         Route::get('/orders/{id}',           [AdminController::class, 'order']);
         Route::get('/orders/{id}/detail',    [\App\Http\Controllers\Admin\AdminOrderController::class, 'show']);

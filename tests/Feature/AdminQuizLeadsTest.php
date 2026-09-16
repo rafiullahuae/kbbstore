@@ -33,6 +33,24 @@ use Tests\Support\QuizLeadsAdminRoutes;
 
 /* ------------------------------------------------------------------ fixtures */
 
+/*
+ * Declared here as well as in AdminAnalyticsTest, each guarded, because Pest
+ * puts test-file functions in the global namespace. This file called it
+ * without defining it and passed only because that file loaded first; alone,
+ * all ten of its tests errored on "Call to undefined function anAdminUser()".
+ */
+if (! function_exists('anAdminUser')) {
+    function anAdminUser(): \App\Models\AdminUser
+    {
+        return \App\Models\AdminUser::create([
+            'name' => 'A Owner',
+            'email' => 'a-owner-' . uniqid() . '@example.test',
+            'password' => 'secret-secret',
+            'role' => 'owner',
+        ]);
+    }
+}
+
 /** Wire this lane's route file and sign in — the normal case. */
 function asQuizAdmin(): void
 {

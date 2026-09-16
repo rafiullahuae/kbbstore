@@ -63,5 +63,10 @@ it('never claims a route file is unmounted when it is required', function () {
         }
     }
 
-    expect($lying)->toBe([]);
+    expect($lying)->toBe(
+        [],
+        'these route files are required by web.php or api.php but still say they are not: '
+        . implode(', ', $lying)
+        . ' — a header that lies about mounting is how a route ends up mounted twice, or never'
+    );
 });
