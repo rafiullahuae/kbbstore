@@ -94,7 +94,13 @@
                     trim(($shipping['first_name'] ?? '') . ' ' . ($shipping['last_name'] ?? '')),
                     $shipping['line1'] ?? null,
                     trim(implode(', ', array_filter([$shipping['city'] ?? null, $shipping['state'] ?? null]))),
-                    $shipping['country'] ?? null,
+                    // The column stores a two-letter code, which is a database
+                    // value and not the last line of anybody's address. The
+                    // code itself is kept when it is one we have no name for,
+                    // rather than dropping the line altogether.
+                    ($c = $shipping['country'] ?? null)
+                        ? (\App\Support\Countries::NAMES[strtoupper((string) $c)] ?? $c)
+                        : null,
                     $shipping['phone'] ?? null,
                 ], fn ($line) => trim((string) $line) !== ''));
             @endphp
@@ -106,7 +112,13 @@
 
                     <dl class="co-facts">
                         <div class="co-fact"><dt>Order number</dt><dd>#{{ $order->order_number }}</dd></div>
-                        <div class="co-fact"><dt>Total paid</dt><dd>{!! Money::format((int) $order->total) !!}</dd></div>
+                        {{-- "Total paid" was printed over every order, including
+                             a cash-on-delivery one where not a dirham has moved.
+                             The application's own record disagrees with that:
+                             CashOnDelivery deliberately leaves `paid_at` null and
+                             says why — "No money has moved; the courier collects
+                             it" — so `paid_at` is what decides the word here. --}}
+                        <div class="co-fact"><dt>{{ $order->paid_at ? 'Total paid' : 'Total to pay' }}</dt><dd>{!! Money::format((int) $order->total) !!}</dd></div>
                         <div class="co-fact"><dt>Payment</dt><dd>{{ $order->paymentLabel() }}</dd></div>
                         <div class="co-fact"><dt>Delivery</dt><dd>{{ $order->shipping_method }}</dd></div>
                     </dl>

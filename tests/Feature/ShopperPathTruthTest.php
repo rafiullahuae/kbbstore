@@ -487,6 +487,70 @@ it('answers when a sold-out option is tapped', function () {
     expect($shipped)->toBeTrue('No committed bundle answers a tap on a sold-out option — public/build was not rebuilt.');
 });
 
+/*
+|------------------------------------------------------------------------------
+| 9. The order-received page
+|------------------------------------------------------------------------------
+*/
+
+/** An order this browser session is allowed to see, the way place() grants it. */
+function cfReceived(array $attributes = [])
+{
+    $order = \App\Models\Order::create(array_merge([
+        'order_number' => '90001',
+        'email' => 'buyer@example.com',
+        'status' => 'processing',
+        'currency' => 'AED',
+        'billing_address' => ['first_name' => 'Layla', 'last_name' => 'Hassan', 'line1' => '12 Marina Walk', 'city' => 'Dubai', 'state' => 'Dubai', 'country' => 'AE'],
+        'shipping_address' => ['first_name' => 'Layla', 'last_name' => 'Hassan', 'line1' => '12 Marina Walk', 'city' => 'Dubai', 'state' => 'Dubai', 'country' => 'AE'],
+        'subtotal' => 13000, 'discount_total' => 0, 'shipping_total' => 2000,
+        'fee_total' => 0, 'tax_total' => 0, 'total' => 15000,
+        'shipping_method' => 'Delivery Charges',
+        'payment_method' => 'cod',
+        'payment_method_title' => 'Cash on delivery',
+    ], $attributes));
+
+    return test()
+        ->withSession(['kbb_orders_viewable' => [$order->order_number]])
+        ->get('/checkout/success?order=' . $order->order_number);
+}
+
+it('does not tell a cash-on-delivery customer they have paid', function () {
+    /*
+     * The confirmation printed "TOTAL PAID" over the order total for every
+     * order, including a cash-on-delivery one where not a dirham has moved.
+     * The application's own record disagrees with the page: CashOnDelivery
+     * deliberately leaves `paid_at` null, and says why in its class comment —
+     * "No money has moved; the courier collects it."
+     *
+     * Seen on a real order placed through the preview: "TOTAL PAID AED 63 /
+     * PAYMENT Cash on delivery".
+     */
+    $html = cfReceived(['paid_at' => null])->assertOk()->getContent();
+
+    expect(str_contains($html, 'Total paid'))
+        ->toBeFalse('The order-received page tells a customer who has paid nothing yet that they have paid.');
+
+    expect(str_contains($html, 'Total to pay'))
+        ->toBeTrue('An unpaid order needs a label of its own, not silence where the total used to be.');
+});
+
+it('still says paid when the money has actually arrived', function () {
+    $html = cfReceived(['order_number' => '90002', 'payment_method' => 'stripe', 'paid_at' => now()])
+        ->assertOk()->getContent();
+
+    expect(str_contains($html, 'Total paid'))
+        ->toBeTrue('A settled card order no longer says the money arrived.');
+});
+
+it('prints the delivery country by name, not by code', function () {
+    // "AE" on the last line of an address is a database value, not an address.
+    $html = cfReceived(['order_number' => '90003'])->assertOk()->getContent();
+
+    expect(str_contains($html, 'United Arab Emirates'))
+        ->toBeTrue('The delivery address ends in a two-letter code rather than the country.');
+});
+
 it('does not call the pre-delivery figure a Total without saying so', function () {
     /*
      * CartController::payload() calls totals() with no shipping cost, so the
