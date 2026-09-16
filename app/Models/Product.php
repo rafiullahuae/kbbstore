@@ -65,9 +65,16 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class)->orderBy('position');
     }
 
+    /**
+     * The attribute values this product offers.
+     *
+     * Named explicitly for the same reason as ProductVariant::attributeValues():
+     * the convention gives `attribute_value_product` and the schema creates
+     * `product_attribute_value`. Same latent 500, one table along.
+     */
     public function attributeValues()
     {
-        return $this->belongsToMany(AttributeValue::class);
+        return $this->belongsToMany(AttributeValue::class, 'product_attribute_value');
     }
 
     public function reviews()

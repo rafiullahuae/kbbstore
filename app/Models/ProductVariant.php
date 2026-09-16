@@ -21,9 +21,35 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class);
     }
 
+    /**
+     * The size/shade values this variant is defined by.
+     *
+     * THE PIVOT TABLE IS NAMED EXPLICITLY, because Laravel's convention does
+     * not produce the name this schema uses. belongsToMany() sorts the two
+     * model names alphabetically -- attribute_value + product_variant ->
+     * `attribute_value_product_variant` -- and 0001_01_01_000000_create_kbb_schema
+     * creates `product_variant_attribute_value`. That table does not exist, so
+     * the relation threw "no such table" every time it was touched:
+     *
+     *   - Store\ProductController eager-loads variants.attributeValues, so ANY
+     *     product page for a product with at least one variant returned a 500.
+     *   - Store\CheckoutController eager-loads items.variant.attributeValues,
+     *     so the checkout died on any basket holding a variant line.
+     *   - store/cart-inner.blade.php calls $item->variant?->label(), which reads
+     *     the same relation, so the cart page died too.
+     *
+     * The column names were always right; only the table name was wrong. The
+     * admin's AttributesApiController has been querying the real table by name
+     * through the query builder all along, which is why the schema side is the
+     * authority here and the model is the half that moves.
+     *
+     * Invisible until now only because nothing in the seeders or the suite ever
+     * created a ProductVariant row. The moment the owner adds a size or a shade
+     * to a product in the admin, that product's page stops loading.
+     */
     public function attributeValues()
     {
-        return $this->belongsToMany(AttributeValue::class);
+        return $this->belongsToMany(AttributeValue::class, 'product_variant_attribute_value');
     }
 
     /**
