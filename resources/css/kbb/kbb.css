@@ -2717,3 +2717,111 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
     background:linear-gradient(180deg,var(--mh-dv,rgba(42,34,40,.16)),transparent);
   }
 }
+
+/* ==========================================================================
+   Mobile polish — Lane BM
+   --------------------------------------------------------------------------
+   Everything below is inside a max-width media query, so the desktop
+   rendering at >=901px is byte-for-byte what it was.
+
+   Measured at 360/390/430 in Chromium with isMobile+hasTouch. The numbers in
+   the comments are the BEFORE heights that these rules correct; a phone has no
+   hover and no mouse pointer, so a 15px-tall link is not a control a thumb can
+   hit. 44px is the floor Apple and Google both publish.
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  /* Header icon buttons were 36x36 (set just above, at this same breakpoint). */
+  .ib{width:44px;height:44px}
+
+  /* The compact header search collapsed to a 19px-tall field: .rs-compact
+     zeroes the padding that .search-in input relies on for its height. */
+  .search-in{min-height:44px}
+  .search-in input{min-height:40px}
+  .sbox input{min-height:44px}
+
+  /* Footer link columns rendered as 20.8px-tall blocks with no padding, so
+     consecutive links sat 0px apart — a thumb cannot pick one out. */
+  .fcol a{padding:9px 0;margin-bottom:0;min-height:44px;display:flex;align-items:center}
+  .fcol a.wa{min-height:0;display:inline-flex}
+
+  /* Slide-out menu rows: .mm-it was 39.4px, .mrow 15px with no padding. */
+  .mm-it{min-height:44px}
+  .mnav-list .mrow{display:flex;align-items:center;min-height:44px;padding:6px 14px}
+  .mnav-search input{min-height:44px}
+  .mm-srch input{min-height:44px}
+
+  /* A price must never split its symbol from its digits. "AED 1,299" wrapped
+     to "AED" / "1,299" inside a 127px card column. */
+  .woocommerce-Price-amount{white-space:nowrap}
+}
+
+/* Mobile polish, second pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+
+  /* Cart drawer stepper. .kc-qty button sizes itself from --cp-step, which the
+     admin sets per store (CartPanel::stepper_size) and which defaults to 22px.
+     max() keeps a larger admin setting and only enforces the 44px floor. */
+  .kc-qty button{width:max(44px,var(--cp-step,22px));height:max(44px,var(--cp-step,22px))}
+  .kc-qty span{min-width:max(32px,var(--cp-step,22px))}
+
+  /* Drawer and menu close buttons were 28x28. */
+  .kc-x{width:44px;height:44px}
+  .mm-x{width:44px;height:44px}
+  .kc-tab{min-height:44px}
+
+  /* .addbtn lives in kbb.css as well as the shop sheet, so this is the rule
+     that reaches the related-product cards on the product page - that page
+     loads kbb-product.css, not kbb-shop.css. */
+  .addbtn{min-height:44px}
+
+  /* Breadcrumb links were 15px tall. Handled here rather than in
+     kbb-product.css so the product page is covered from the shared sheet. */
+  .crumb a{display:inline-block;padding:6px 0;min-height:32px}
+
+  /* Footer social icons were 34x34; the WhatsApp button 38.8px. */
+  .fsoc a{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  .fcol a.wa{min-height:44px}
+
+  /* Home "All sets" style pills were 33.6px. */
+  .kbb-home .lnk{min-height:44px;display:inline-flex;align-items:center}
+
+  /* The wordmark is a link back to the home page. */
+  .logo{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+}
+
+/* Mobile polish, third pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+
+  /* The cart drawer's per-line remove button was 10.9x13 - the smallest
+     control on the storefront, and it deletes something. */
+  .kc-rm{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:15px}
+
+  /* Drawer footer buttons were 41.2px. */
+  .kc-btns .btn-ghost,.kc-btns .cobtn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+
+  /* Drawer/announcement close buttons were 32-34px. */
+  .dwh .x,.msub-h .x{width:44px;height:44px;display:grid;place-items:center}
+
+  /* Card titles: kbb-shop.css does not load on the product page, so the
+     related-product cards there need the same rule from this shared sheet.
+     min-height keeps the grid aligned and gives a one-line name a real target. */
+  /* Doubled like .gwish above: kbb-shop.css sets .cname{min-height:34px} and
+     loads after this sheet, so a single class would lose the cascade on the
+     shop and category pages while winning on the product page - two different
+     card heights for the same component. */
+  .cname.cname{min-height:44px;padding:5px 0}
+
+  /* Breadcrumbs, including the product page's (that page's own sheet is owned
+     by another lane, so this is set from here). */
+  .crumb a{min-height:44px}
+
+  /* .gwish is defined in kbb-product.css, which loads after this sheet, so the
+     class is doubled to win on specificity rather than editing that file. */
+  .gwish.gwish{width:44px;height:44px}
+
+  /* Home skin-quiz: the radio itself is 13x13, but the label wraps it, so the
+     label is the honest target. */
+  .kbb-home .q-o{min-height:44px}
+  .kbb-home .q-next{min-height:44px}
+}

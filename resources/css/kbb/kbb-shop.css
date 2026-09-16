@@ -329,3 +329,56 @@ img{max-width:100%}
 .mega a{border-radius:10px}
 .mega a:hover{background:var(--pink-soft);color:var(--pink-deep)}
 .mega-brands{border-radius:0 0 16px 16px}
+
+/* ==========================================================================
+   Mobile polish — Lane BM. Scoped to <=900px; desktop is untouched.
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  /* Add to cart sat at exactly 40px — the one control on the card a shopper
+     actually aims for. */
+  .addbtn{height:auto;min-height:44px}
+
+  /* Filter/price chips were 34px tall and 7px apart, so neighbouring chips
+     overlapped a fingertip. Taller, and far enough apart to pick one. */
+  .pchip{min-height:44px;display:inline-flex;align-items:center}
+  .pchips{gap:10px}
+
+  /* Sidebar filter options were 32.3px. */
+  .fopt{min-height:44px;display:flex;align-items:center}
+
+  /* Breadcrumb links were 15px tall. Give the row some height without
+     changing the type. */
+  .crumb{padding:14px 0 6px}
+  .crumb a{display:inline-block;padding:6px 0}
+
+  /* A card name clamped to 2 lines dropped ~3 lines of a long product title.
+     Allow a third line on a phone, where the column is narrowest and the name
+     is the only thing distinguishing two jars of the same brand. */
+  .cname{-webkit-line-clamp:3}
+}
+
+/* Mobile polish, second pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+
+  /* Pagination had no CSS anywhere in the repo: the page links rendered as
+     bare 8.9x16px anchors. Paging a category on a phone was a lottery. */
+  .page-numbers{
+    min-width:44px;min-height:44px;
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:0 10px;border:1px solid var(--line,#E8DCE2);border-radius:10px;
+    font-size:14px;font-weight:600;background:#fff;color:var(--ink,#2A2228);
+  }
+  .page-numbers.current{background:var(--pink-soft,#FCEFF4);color:var(--pink-deep,#B4517A);border-color:transparent}
+  .pagination,.pag{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+  /* Filter drawer controls were all in the low 30s. */
+  .ftog{min-height:44px;padding:8px 0}
+  .fclose{width:44px;height:44px}
+  .mobi-filter{min-height:44px}
+  .sortsel select{min-height:44px}
+
+  /* The card title's touch size is set once, in kbb.css, as .cname.cname -
+     doubled so it wins over the .cname{min-height:34px} above regardless of
+     sheet order. Nothing to add here. */
+}

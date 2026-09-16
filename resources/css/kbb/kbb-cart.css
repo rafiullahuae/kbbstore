@@ -98,3 +98,31 @@
   .kbb-cartpage .cwas{font-size:11px}
   .kbb-cartpage .ship{padding:12px 14px}
 }
+
+/* ==========================================================================
+   Mobile polish — Lane BM. Scoped to <=900px; desktop is untouched.
+   ========================================================================== */
+@media (max-width: 900px) {
+
+  /* The quantity stepper was 28x28 per button. Changing how many of something
+     you are buying is the single most-used control on this page. */
+  .kbb-cartpage .qty button{width:44px;height:44px;font-size:18px}
+  .kbb-cartpage .qty span{min-width:40px;font-size:14px}
+
+  /* "Remove" was 11px type with no padding, sitting 7.3px from the stepper. */
+  .kbb-cartpage .crm{display:inline-flex;align-items:center;min-height:44px;padding:0 6px;font-size:12px}
+
+  /* Coupon apply sat flush against its field. */
+  .kbb-cartpage .coupon input{min-height:44px}
+  .kbb-cartpage .coupon button{min-height:44px;padding:0 16px}
+
+  .kbb-cartpage .conti{display:inline-flex;align-items:center;min-height:44px}
+}
+
+/* Mobile polish, second pass - Lane BM. Still <=900px only. */
+@media (max-width: 900px) {
+  /* "Continue shopping" was 20px tall. */
+  .kbb-cartpage .backlink{min-height:44px}
+  /* The line-item product name link was 192x15. */
+  .kbb-cartpage .cn a{display:inline-block;padding:5px 0}
+}
