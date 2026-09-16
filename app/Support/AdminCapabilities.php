@@ -299,6 +299,10 @@ final class AdminCapabilities
         ['GET', 'admin-api/customers', 'customers.view'],
         ['GET', 'admin-api/customers/list', 'customers.view'],
         ['GET', 'admin-api/customers/*', 'customers.view'],
+        // Write rule before the read rule, or the wildcard GET below would be
+        // reached first for the same path and a `support` account could move a
+        // lead's status on a customers.view capability.
+        ['PUT', 'admin-api/quiz-leads/*', 'customers.manage'],
         ['GET', 'admin-api/quiz-leads', 'customers.view'],
 
         // --------------------------------------------------------------- catalogue
