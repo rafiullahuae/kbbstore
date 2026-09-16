@@ -70,11 +70,47 @@ final class RichText
         'h2' => [], 'h3' => [], 'h4' => [], 'h5' => [], 'h6' => [],
         'blockquote' => [],
         'hr' => [],
-        'a' => ['href', 'title'],
-        'img' => ['src', 'alt', 'width', 'height'],
+        'a' => ['href', 'title', 'target', 'rel', 'class'],
+        'img' => ['src', 'alt', 'width', 'height', 'class', 'loading'],
         'table' => [], 'thead' => [], 'tbody' => [], 'tfoot' => [],
         'tr' => [], 'th' => [], 'td' => [],
+
+        /*
+         * Added because the owner asked to be able to paste real markup and
+         * keep it — a description copied from a supplier sheet or a previous
+         * shop arrives full of these, and unwrapping them turned a laid-out
+         * description into one grey slab.
+         *
+         * Every one of them is inert: they carry no behaviour, no navigation
+         * and no resource loading. That is the line, and it is why `script`,
+         * `iframe` and friends stay in DROP_WHOLE below however much anyone
+         * would like a video embed — an iframe is a page under someone else's
+         * control rendered inside this one.
+         */
+        'div' => ['class'], 'span' => ['class'],
+        'figure' => ['class'], 'figcaption' => ['class'],
+        'small' => [], 'mark' => [], 'abbr' => ['title'],
+        'code' => [], 'pre' => [], 'kbd' => [], 'samp' => [],
+        'dl' => [], 'dt' => [], 'dd' => [],
+        'caption' => [], 'colgroup' => [], 'col' => ['span'],
+        'section' => ['class'], 'article' => ['class'], 'aside' => ['class'],
     ];
+
+    /**
+     * Attributes any allowed tag may keep, on top of its own list.
+     *
+     * `class` only, and deliberately not `style` or `id`. `class` can do
+     * nothing on its own — it names a rule the storefront's own stylesheet
+     * either has or does not. `style` is different in kind: an inline
+     * `position:fixed` with a large `z-index` is an invisible layer over the
+     * whole page, which is a clickjacking primitive rather than a formatting
+     * choice, and `id` lets pasted markup silently collide with the theme's
+     * own anchors and form labels.
+     *
+     * If the owner needs specific inline styling, the honest answer is a named
+     * class backed by a real rule, not a hole here.
+     */
+    private const ALLOWED_ON_ANY = ['class'];
 
     /**
      * Tags removed with everything inside them.
@@ -238,7 +274,7 @@ final class RichText
     /** Strip every attribute the tag is not explicitly allowed to keep. */
     private static function attributes(DOMElement $element, string $tag): void
     {
-        $allowed = self::ALLOWED[$tag];
+        $allowed = array_merge(self::ALLOWED[$tag], self::ALLOWED_ON_ANY);
 
         foreach (iterator_to_array($element->attributes ?? []) as $attribute) {
             $name = strtolower($attribute->nodeName);

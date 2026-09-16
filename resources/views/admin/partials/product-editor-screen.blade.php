@@ -188,6 +188,38 @@
    alt-text inputs under the 130px that makes a sentence typeable; above it the
    main column at 1280 (~650px here) splits to a 260px preview and a ~370px
    list, and at 1920 (~1290px) the list gets over 1000px. */
+.peo-rte-code{display:block;width:100%;box-sizing:border-box;border:0;outline:0;resize:vertical;
+              padding:12px;min-height:160px;background:var(--surface,#fff);color:inherit;
+              font:400 12.5px/1.65 var(--mono,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace);
+              white-space:pre;overflow:auto;min-width:0}
+.peo-rte-code[hidden]{display:none}
+.peo-rte-bar button.on{background:var(--surface,#fff);border-color:#1f7d52;color:#1f7d52}
+.peo-rte-bar button[disabled]{opacity:.35;cursor:default}
+.peo-rte-bar button[disabled]:hover{background:none;border-color:transparent}
+
+/* ---- upload progress ---- */
+.peo-ups{display:grid;gap:8px;margin-top:11px;min-width:0}
+.peo-up-head{font-size:11.5px;font-weight:600;color:var(--ink-soft,#6b7280)}
+.peo-up{display:grid;gap:5px;min-width:0}
+.peo-up-top{display:flex;gap:10px;align-items:baseline;justify-content:space-between;min-width:0}
+.peo-up-name{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peo-up-pct{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-soft,#6b7280);flex:none}
+.peo-up-track{height:6px;border-radius:999px;background:var(--surface-2,#f2f4fb);overflow:hidden}
+/* Width is set inline by paintUploads(); the transition keeps a jump from one
+   progress event to the next from reading as a glitch. */
+.peo-up-track > i{display:block;height:100%;width:0;border-radius:999px;
+                  background:var(--accent,#15a85a);transition:width .18s linear}
+.peo-up.is-done .peo-up-pct{color:var(--accent-ink,#0b6e3a)}
+.peo-up.is-bad .peo-up-track > i{background:#b4443c}
+.peo-up.is-bad .peo-up-pct{color:#b4443c}
+@media (prefers-reduced-motion: reduce){.peo-up-track > i{transition:none}}
+
+/* ---- category search ---- */
+.peo-catq{margin:0 0 9px}
+.peo-catlist{max-height:240px;overflow:auto;min-width:0;
+             border:1px solid var(--border,#e6e6e6);border-radius:9px;padding:7px 9px}
+.peo-catlist .peo-check[hidden]{display:none}
+
 .peo-mediawrap{container-type:inline-size;min-width:0}
 .peo-media{display:grid;gap:16px;align-items:start;min-width:0}
 .peo-media > *{min-width:0}
@@ -328,11 +360,20 @@
 .peo-panel[data-peo-panel="stock"]{--peo-hue:#0369a1}
 
 .peo-card{position:relative;overflow:hidden}
-/* The vertical rail down the left edge is gone — the owner asked for it out.
-   The heading colour and the wash under it stay, which is what was actually
-   doing the work of telling one panel from the next; the rail was a second
-   statement of the same thing. No padding-left inset either, now that there is
-   nothing at the card's edge for the text to clear. */
+
+/* The vertical rail is OFF by default — the owner asked for it out — and can be
+   switched back on per browser from the editor's toolbar. It is gated on an
+   attribute on the editor's own wrapper rather than a body class, so nothing
+   outside this screen can be affected by it either way.
+
+   Off is the base state and on is what the attribute adds, so a browser that
+   cannot read the stored preference gets the layout the owner asked for rather
+   than the one they rejected. */
+.peo-wrap[data-peo-rails="1"] .peo-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--peo-hue,#6366f1);opacity:.85}
+.peo-wrap[data-peo-rails="1"] .peo-card{padding-left:18px}
+
 .peo-card::after{content:'';position:absolute;left:0;right:0;top:0;height:74px;
                  pointer-events:none;z-index:0;
                  background:transparent;
@@ -416,6 +457,36 @@
   var model = null;      // the product being edited, or null on the picker
   var listing = null;    // picker results
   var query = '';
+  /* The Categories panel's own search. Not persisted and not part of the
+     model: it is a way of looking at the list, not a property of the product,
+     and an operator who reopens a product should see all of its categories. */
+  var catQuery = '';
+
+  /* A per-browser display preference, kept in localStorage rather than in the
+     database. It changes nothing about the product, nothing another operator
+     would want imposed on them, and nothing worth a round trip on every page
+     load — the same reasoning the arrange mode uses for not persisting itself.
+
+     Wrapped, because localStorage throws rather than returning null in a
+     private window and in a browser with site data blocked. A throw here would
+     take the whole screen down for a stripe. */
+  var rails = (function(){
+    try { return localStorage.getItem('kbb.peo.rails') === '1'; } catch (e) { return false; }
+  })();
+
+  function setRails(on){
+    rails = !!on;
+    try { localStorage.setItem('kbb.peo.rails', rails ? '1' : '0'); } catch (e) {}
+    var wrap = document.querySelector('#content .peo-wrap');
+    if (wrap) wrap.setAttribute('data-peo-rails', rails ? '1' : '0');
+    var b = document.querySelector('#content #peo-rails');
+    if (b) {
+      b.setAttribute('aria-pressed', rails ? 'true' : 'false');
+      b.textContent = rails ? 'Stripes on' : 'Stripes off';
+      b.style.borderColor = rails ? '#1f7d52' : '';
+      b.style.color = rails ? '#1f7d52' : '';
+    }
+  }
   var banner = null;
   var busy = false;
   var dirty = false;
@@ -726,29 +797,181 @@
   }
 
   /* ------------------------------------------------------------- uploads */
-  async function upload(file){
-    var fd = new FormData();
-    fd.append('file', file);
-    fd.append('folder', 'products');
+  /* XMLHttpRequest, not fetch, and the reason is the only reason:
+     fetch cannot report UPLOAD progress. Its body is consumed opaquely, so the
+     best a fetch-based uploader can do is a spinner that means "something is
+     happening" — which for a shop owner pushing six product photographs over a
+     domestic connection is indistinguishable from a hung page.
+     XMLHttpRequest exposes upload.onprogress, so the bar below shows bytes
+     actually accepted by the server rather than an animation.
 
-    // Posted to the ONE upload endpoint this application has. A second one is
-    // what the brands and catalog route files each went out of their way to
-    // avoid: two of them drift, and the one that drifts is the one with the
-    // content-type, size and SVG rules in it.
-    var r = await api('/media/upload', {method: 'POST', body: fd});
-    return r && r.url;
+     Everything else is unchanged: same ONE upload endpoint, same folder, same
+     CSRF header the api() helper sends. A second upload path is what the brands
+     and catalog route files each went out of their way to avoid — two of them
+     drift, and the one that drifts is the one with the content-type, size and
+     SVG rules in it. This is not a second path; it is the same request made by
+     a different transport. */
+  function upload(file, onProgress){
+    return new Promise(function(resolve, reject){
+      var fd = new FormData();
+      fd.append('file', file);
+      fd.append('folder', 'products');
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', apiBase() + '/media/upload', true);
+      xhr.withCredentials = true;
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('X-XSRF-TOKEN', cookie('XSRF-TOKEN'));
+
+      if (xhr.upload && typeof onProgress === 'function') {
+        xhr.upload.onprogress = function(e){
+          // lengthComputable is false for a chunked request; reporting a
+          // fabricated percentage there would be worse than reporting none.
+          if (e.lengthComputable && e.total > 0) {
+            onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+          }
+        };
+        /* The bar reaching 100% means "your file is with the server", not
+           "the server accepted it" — the response is still to come, and it can
+           still be a 422. Hence the cap at 99 above and this line on load. */
+        xhr.upload.onload = function(){ onProgress(99); };
+      }
+
+      xhr.onload = function(){
+        var body = null;
+        try { body = JSON.parse(xhr.responseText); } catch (e) { body = null; }
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          if (typeof onProgress === 'function') onProgress(100);
+          resolve(body && body.url);
+          return;
+        }
+
+        // Shaped like the error api() throws, so message() reads it the same.
+        var err = new Error('api /media/upload -> ' + xhr.status);
+        err.status = xhr.status;
+        err.body = body;
+        reject(err);
+      };
+
+      xhr.onerror = function(){ reject(new Error('The upload could not reach the server.')); };
+      xhr.onabort = function(){ reject(new Error('Upload cancelled.')); };
+
+      xhr.send(fd);
+    });
+  }
+
+  /* One row per file being uploaded: {name, size, pct, state}.
+     state is 'waiting' | 'sending' | 'done' | 'failed'. */
+  var uploads = [];
+
+  function uploadPanelHTML(){
+    if (!uploads.length) return '';
+
+    var rows = uploads.map(function(u, i){
+      var pct = u.state === 'done' ? 100 : (u.pct || 0);
+      var label = u.state === 'failed' ? (u.error || 'Failed')
+                : u.state === 'done' ? 'Done'
+                : u.state === 'waiting' ? 'Waiting…'
+                : pct + '%';
+
+      return '<div class="peo-up' + (u.state === 'failed' ? ' is-bad' : '')
+        +      (u.state === 'done' ? ' is-done' : '') + '" data-up="' + i + '">'
+        + '<div class="peo-up-top">'
+        +   '<span class="peo-up-name">' + esc(u.name) + '</span>'
+        +   '<span class="peo-up-pct">' + esc(label) + '</span>'
+        + '</div>'
+        /* aria-valuenow as well as the width, so the bar is not a purely
+           visual fact — a screen reader gets the same number. */
+        + '<div class="peo-up-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"'
+        +      ' aria-valuenow="' + pct + '" aria-label="' + esc(u.name) + '">'
+        +   '<i style="width:' + pct + '%"></i>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    var done = uploads.filter(function(u){ return u.state === 'done'; }).length;
+    var failed = uploads.filter(function(u){ return u.state === 'failed'; }).length;
+
+    return '<div class="peo-ups" id="peo-ups">'
+      + '<div class="peo-up-head">Uploading ' + uploads.length
+      +   (uploads.length === 1 ? ' image' : ' images')
+      +   ' — ' + done + ' done'
+      +   (failed ? ', ' + failed + ' failed' : '')
+      + '</div>' + rows + '</div>';
+  }
+
+  /* Patched in place rather than through render(). A full render on every
+     progress event would rebuild every contenteditable pane in the screen
+     dozens of times a second and throw away whatever the operator was typing
+     in one of them. This touches only the bar's width and its two labels. */
+  function paintUploads(){
+    var box = document.querySelector('#content #peo-ups');
+    if (!box) return;
+
+    uploads.forEach(function(u, i){
+      var row = box.querySelector('[data-up="' + i + '"]');
+      if (!row) return;
+
+      var pct = u.state === 'done' ? 100 : (u.pct || 0);
+      var bar = row.querySelector('.peo-up-track > i');
+      var track = row.querySelector('.peo-up-track');
+      var lab = row.querySelector('.peo-up-pct');
+
+      if (bar) bar.style.width = pct + '%';
+      if (track) track.setAttribute('aria-valuenow', String(pct));
+      if (lab) {
+        lab.textContent = u.state === 'failed' ? (u.error || 'Failed')
+                        : u.state === 'done' ? 'Done'
+                        : u.state === 'waiting' ? 'Waiting…'
+                        : pct + '%';
+      }
+      row.className = 'peo-up'
+        + (u.state === 'failed' ? ' is-bad' : '')
+        + (u.state === 'done' ? ' is-done' : '');
+    });
+
+    var head = box.querySelector('.peo-up-head');
+    if (head) {
+      var done = uploads.filter(function(u){ return u.state === 'done'; }).length;
+      var failed = uploads.filter(function(u){ return u.state === 'failed'; }).length;
+      head.textContent = 'Uploading ' + uploads.length
+        + (uploads.length === 1 ? ' image' : ' images')
+        + ' — ' + done + ' done' + (failed ? ', ' + failed + ' failed' : '');
+    }
   }
 
   async function takeFiles(files, asMain){
     var list = Array.prototype.slice.call(files || []);
     if (!list.length) return;
 
+    uploads = list.map(function(f){
+      return { name: f.name || 'image', size: f.size || 0, pct: 0, state: 'waiting' };
+    });
+
     busy = true; banner = null; render();
 
+    /* Sequential, not parallel, and deliberately. Six photographs uploaded at
+       once over a domestic uplink share the same bandwidth, so all six bars
+       crawl together and none finishes until nearly all of them do — the
+       operator watches six stalled bars. One at a time, each finishes at a
+       readable pace and the first photograph is usable while the rest go up.
+       It also keeps gallery ORDER equal to the order the files were chosen,
+       which parallel uploads would scramble by completion time. */
     for (var i = 0; i < list.length; i++) {
+      var row = uploads[i];
+      row.state = 'sending';
+      paintUploads();
+
       try {
-        var u = await upload(list[i]);
-        if (!u) continue;
+        var u = await upload(list[i], (function(r){
+          return function(pct){ r.pct = pct; paintUploads(); };
+        })(row));
+
+        if (!u) { row.state = 'failed'; row.error = 'No image came back'; paintUploads(); continue; }
+
+        row.state = 'done'; row.pct = 100;
+        paintUploads();
 
         if (asMain) {
           model.image = u;
@@ -758,11 +981,26 @@
         }
         dirty = true;
       } catch (e) {
-        banner = message(e, 'That image could not be uploaded.');
-        break;
+        /* One bad file no longer abandons the rest. The old loop broke on the
+           first failure, so choosing six images where the third was a 12MB
+           PNG silently dropped images four, five and six — with a banner that
+           said one image could not be uploaded. Each row now carries its own
+           outcome and the run continues. */
+        row.state = 'failed';
+        row.error = (message(e, 'Failed') || 'Failed').slice(0, 60);
+        paintUploads();
       }
     }
 
+    var failed = uploads.filter(function(u){ return u.state === 'failed'; });
+
+    banner = failed.length
+      ? (failed.length === uploads.length
+          ? 'None of those images could be uploaded. ' + (failed[0].error || '')
+          : failed.length + ' of ' + uploads.length + ' images could not be uploaded; the rest were added.')
+      : null;
+
+    uploads = [];
     busy = false; render();
   }
 
@@ -775,7 +1013,19 @@
   function collect(){
     if (!model) return;
 
+    /* Whichever pane the operator is actually in is the one that holds their
+       work. Reading .peo-rte-area unconditionally would throw away everything
+       typed in the HTML view — the written view still holds the markup from
+       before the switch, so the save would look successful and silently revert
+       the edit. That is the worst shape of bug: no error, no clue. */
+    document.querySelectorAll('#content .peo-rte-code').forEach(function(code){
+      if (code.hidden) return;
+      model[code.dataset.code] = code.value;
+    });
+
     document.querySelectorAll('#content .peo-rte-area').forEach(function(el){
+      var code = document.querySelector('#content .peo-rte-code[data-code="' + el.dataset.field + '"]');
+      if (code && !code.hidden) return;    // the HTML view is the live one
       model[el.dataset.field] = el.innerHTML;
     });
 
@@ -816,14 +1066,21 @@
     ['createLink', '🔗', 'Link'],
     ['unlink', '⛓', 'Remove link'],
     ['sep'],
-    ['removeFormat', 'Clear', 'Clear formatting']
+    ['removeFormat', 'Clear', 'Clear formatting'],
+    ['sep'],
+    /* Handled separately in the click handler — it is not an execCommand, it
+       swaps which of the two panes is showing. */
+    ['code', '&lt;/&gt;', 'Edit the HTML directly']
   ];
 
   function rte(field, label, hint, placeholder, html){
     var bar = RTE_BUTTONS.map(function(b){
       if (b[0] === 'sep') return '<i class="peo-sep"></i>';
+      /* b[1] is markup for the code button (&lt;/&gt;) and plain text for the
+         rest. It is authored in this file, never operator input, so it is the
+         one place here that is written through rather than escaped. */
       return '<button type="button" data-cmd="' + esc(b[0]) + '" title="' + esc(b[2]) + '">'
-           + esc(b[1]) + '</button>';
+           + b[1] + '</button>';
     }).join('');
 
     return '<div class="peo-card">'
@@ -833,9 +1090,17 @@
       +   '<div class="peo-rte-bar">' + bar + '</div>'
       +   '<div class="peo-rte-area" contenteditable="true" data-field="' + esc(field) + '" '
       +        'data-ph="' + esc(placeholder) + '">' + (html || '') + '</div>'
+      /* The HTML view. A plain textarea, because the point of it is to show
+         the markup exactly as it is — escaped on the way in so that typing
+         <p> shows <p> rather than making a paragraph. It sits alongside the
+         written view rather than replacing it, so switching back and forth
+         loses nothing. */
+      +   '<textarea class="peo-rte-code" data-code="' + esc(field) + '" spellcheck="false" hidden>'
+      +     esc(html || '')
+      +   '</textarea>'
       +   '<div class="peo-rte-foot">'
       +     '<span data-words="' + esc(field) + '"></span>'
-      +     '<span>Formatting is cleaned when you save.</span>'
+      +     '<span class="peo-rte-mode">Paste from anywhere — use &lt;/&gt; to edit the HTML.</span>'
       +   '</div>'
       + '</div></div>';
   }
@@ -925,6 +1190,9 @@
       + '<div style="height:10px"></div>'
       + '<button class="peo-drop" id="peo-galdrop"><b>Add gallery images</b>Drop them here, or tap to choose</button>'
       + '<input type="file" id="peo-galfile" accept="image/*" multiple hidden>'
+      /* Directly under the drop target, which is where the operator is looking
+         at the moment the upload starts. */
+      + uploadPanelHTML()
       + '</section>';
   }
 
@@ -985,12 +1253,28 @@
         + '<div class="peo-empty"><b>No categories yet</b>Create one under Catalog → Categories first.</div></div>';
     }
 
-    var list = cats.map(function(c){
+    /* Filtered by the search box, EXCEPT that a ticked category is always
+       shown. A product filed in six categories, with a search narrowing the
+       list to one, would otherwise show one tick and hide five — and the
+       operator would have no way to know what the product is actually in
+       without clearing the box. A selection you cannot see is a selection you
+       cannot undo. */
+    var q = catQuery.trim().toLowerCase();
+    var shown = cats.filter(function(c){
+      if (model.category_ids.indexOf(c.id) !== -1) return true;
+      return !q || String(c.name).toLowerCase().indexOf(q) !== -1;
+    });
+
+    var list = shown.map(function(c){
       var on = model.category_ids.indexOf(c.id) !== -1;
       return '<label class="peo-check">'
         + '<input type="checkbox" data-cat="' + c.id + '"' + (on ? ' checked' : '') + '>'
         + '<span>' + esc(c.name) + '</span></label>';
     }).join('');
+
+    if (!shown.length) {
+      list = '<div class="peo-note" style="padding:10px 2px">No category matches “' + esc(catQuery) + '”.</div>';
+    }
 
     var options = model.category_ids.map(function(id){
       var c = cats.filter(function(x){ return x.id === id; })[0];
@@ -1002,7 +1286,19 @@
     return '<div class="peo-card">'
       + '<h3>Categories</h3>'
       + '<p class="peo-hint">A product can sit in as many as you like. It appears on every one of their pages.</p>'
-      + '<div style="max-height:220px;overflow:auto;min-width:0">' + list + '</div>'
+      /* The search box appears once the list is long enough to need it. Below
+         that it is a control that costs a line and saves nothing. */
+      + (cats.length > 8
+          ? '<input class="peo-in peo-catq" id="peo-catq" type="search" autocomplete="off" '
+            + 'placeholder="Search ' + cats.length + ' categories…" value="' + esc(catQuery) + '">'
+          : '')
+      + '<div class="peo-catlist">' + list + '</div>'
+      + '<div class="peo-note peo-catnote"' + (q && shown.length ? '' : ' hidden') + '>'
+      +   (q && shown.length
+            ? 'Showing ' + shown.length + ' of ' + cats.length
+              + '. Ticked categories stay visible while you search.'
+            : '')
+      + '</div>'
       + '<div class="peo-fld" style="margin-top:12px"><label>Main category</label>'
       + '<select class="peo-sel" data-bind="primary_category_id">'
       +   (options || '<option value="">Tick a category first</option>')
@@ -1397,6 +1693,12 @@
         + (canReset
             ? '<button class="peo-btn" id="peo-arrreset" title="Put every panel back where this build puts it">Reset layout</button>'
             : '')
+        /* Beside Arrange, because both are "how this screen looks to me"
+           rather than anything about the product. */
+        + '<button class="peo-btn" id="peo-rails" aria-pressed="' + (rails ? 'true' : 'false') + '"'
+        +   ' title="Show or hide the coloured stripe down the left of each panel"'
+        +   (rails ? ' style="border-color:#1f7d52;color:#1f7d52"' : '') + '>'
+        +   (rails ? 'Stripes on' : 'Stripes off') + '</button>'
         + '<button class="peo-btn" id="peo-arrange"' + (arranging ? ' style="border-color:#1f7d52;color:#1f7d52"' : '') + '>'
         +   (arranging ? 'Done arranging' : 'Arrange') + '</button>'
         + pill(model.status)
@@ -1420,7 +1722,8 @@
     var active = document.querySelector('.side .nav-item.on');
     if (!active || active.dataset.go !== SCREEN) return;
 
-    host.innerHTML = '<div class="peo-wrap">' + (model ? editorView() : pickerView()) + '</div>';
+    host.innerHTML = '<div class="peo-wrap" data-peo-rails="' + (rails ? '1' : '0') + '">'
+      + (model ? editorView() : pickerView()) + '</div>';
     bind();
   }
 
@@ -1524,6 +1827,94 @@
     });
 
     /* ---- images ---- */
+    /* Category search — filtered IN PLACE, never by re-rendering.
+       A full render() on each keystroke rebuilds the input the operator is
+       typing into, which loses focus and the caret; restoring both afterwards
+       is a fiddle that this avoids entirely. catQuery is still kept up to date,
+       so a render triggered by anything else reproduces the same filter. */
+    /* The written view and the HTML view are two ways of editing one value, so
+       each switch copies the live pane into the other one first. Nothing is
+       parsed or cleaned here: what the operator typed is what the other pane
+       receives, and RichText::clean() on the server remains the single place
+       markup is judged. */
+    document.querySelectorAll('#content .peo-rte').forEach(function(box){
+      var btn  = box.querySelector('[data-cmd="code"]');
+      var area = box.querySelector('.peo-rte-area');
+      var code = box.querySelector('.peo-rte-code');
+      var mode = box.querySelector('.peo-rte-mode');
+      if (!btn || !area || !code) return;
+
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+
+        var toCode = code.hidden;
+
+        if (toCode) {
+          code.value = area.innerHTML;
+          code.style.height = Math.max(160, area.offsetHeight) + 'px';
+        } else {
+          area.innerHTML = code.value;
+        }
+
+        code.hidden = !toCode;
+        area.hidden = toCode;
+
+        /* Every other button drives the written view and does nothing to a
+           textarea, so they are disabled rather than left looking live. */
+        box.querySelectorAll('.peo-rte-bar button').forEach(function(b){
+          if (b !== btn) b.disabled = toCode;
+        });
+
+        btn.setAttribute('aria-pressed', toCode ? 'true' : 'false');
+        btn.classList.toggle('on', toCode);
+        if (mode) {
+          mode.innerHTML = toCode
+            ? 'Editing the HTML. Press &lt;/&gt; again to go back.'
+            : 'Paste from anywhere — use &lt;/&gt; to edit the HTML.';
+        }
+
+        (toCode ? code : area).focus();
+        markDirty();
+      });
+
+      code.addEventListener('input', markDirty);
+    });
+
+    var railsBtn = document.querySelector('#content #peo-rails');
+    if (railsBtn) railsBtn.addEventListener('click', function(){ setRails(!rails); });
+
+    var catq = document.querySelector('#content #peo-catq');
+
+    if (catq) {
+      catq.addEventListener('input', function(){
+        catQuery = catq.value;
+        var q = catQuery.trim().toLowerCase();
+        var listBox = document.querySelector('#content .peo-catlist');
+        if (!listBox) return;
+
+        var labels = listBox.querySelectorAll('.peo-check');
+        var visible = 0;
+
+        Array.prototype.forEach.call(labels, function(lab){
+          var box = lab.querySelector('input[data-cat]');
+          var ticked = box && box.checked;
+          var name = (lab.textContent || '').trim().toLowerCase();
+          // Ticked categories always stay visible — see categoriesView().
+          var show = ticked || !q || name.indexOf(q) !== -1;
+          lab.hidden = !show;
+          if (show) visible++;
+        });
+
+        var note = document.querySelector('#content .peo-catnote');
+        if (note) {
+          note.hidden = !q;
+          note.textContent = visible
+            ? 'Showing ' + visible + ' of ' + labels.length + '. Ticked categories stay visible while you search.'
+            : 'No category matches “' + catQuery + '”.';
+        }
+      });
+    }
+
     var mainFile = document.querySelector('#content #peo-mainfile');
     on('#peo-mainpick', 'click', function(){ if (mainFile) mainFile.click(); });
     if (mainFile) mainFile.addEventListener('change', function(){ takeFiles(mainFile.files, true); });
@@ -1638,6 +2029,12 @@
     if (!area) return;
 
     box.querySelectorAll('.peo-rte-bar button').forEach(function(b){
+      /* The HTML button is not an execCommand — it swaps which pane is
+         showing, and its own listener does that. Claiming it here too would
+         focus the written pane the instant the operator asked for the HTML
+         one, and run execCommand('code') into the bargain. */
+      if (b.dataset.cmd === 'code') return;
+
       b.onclick = function(e){
         e.preventDefault();
         area.focus();
@@ -1663,15 +2060,43 @@
       dirty = true; markDirty(); words(area);
     });
 
-    /* Paste as PLAIN TEXT.
-       Pasting from Word or a browser carries a mountain of markup, and while
-       the server strips all of it on save, the owner would spend the minutes
-       in between looking at a pane that does not resemble what they will get.
-       Stripping it here means what is on screen is what is stored. */
+    /* Paste KEEPS its markup, which reverses what this did before.
+       It used to force plain text, on the reasoning that Word's markup would
+       be stripped on save anyway so showing it in between was misleading. The
+       owner has asked for the opposite and is right about the cost: pasting a
+       formatted description from a supplier sheet, a previous site or another
+       shop arrived as one grey slab, and rebuilding every heading, list and
+       link by hand is the work this box exists to avoid.
+
+       The browser's own paste is therefore allowed to run, EXCEPT that
+       text/html is preferred explicitly so a source offering both does not get
+       flattened. RichText::clean() on the server is still the only thing that
+       decides what may be stored — this changes what reaches the editor, not
+       what reaches the database, and the two disagreeing is exactly what the
+       HTML view is there to make visible. */
     area.addEventListener('paste', function(e){
+      var cd = e.clipboardData || window.clipboardData;
+      if (!cd) return;                        // let the browser handle it
+
+      var html = '';
+      try { html = cd.getData('text/html') || ''; } catch (err) { html = ''; }
+
+      if (!html) return;                      // plain text: nothing to improve on
+
       e.preventDefault();
-      var text = (e.clipboardData || window.clipboardData).getData('text/plain');
-      document.execCommand('insertText', false, text);
+
+      /* Fragments copied from a browser arrive wrapped in a full document with
+         <head>, and some sources include a <style> block that would otherwise
+         land in the pane as visible CSS. Taking the body's contents is what
+         every editor does here; the server still judges the result. */
+      var doc = null;
+      try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch (err) { doc = null; }
+
+      var frag = doc && doc.body ? doc.body.innerHTML : html;
+
+      if (!document.execCommand('insertHTML', false, frag)) {
+        document.execCommand('insertText', false, cd.getData('text/plain'));
+      }
     });
 
     words(area);
