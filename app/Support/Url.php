@@ -60,6 +60,24 @@ final class Url
         return self::$base = '';
     }
 
+    /**
+     * Drop the memo so the next base() re-derives it.
+     *
+     * Needed because the memo is process-level and base() reads the REQUEST
+     * when no KBB_BASE_PATH is configured. One request per process under
+     * PHP-FPM hides that completely; anything serving two requests from one
+     * process — the test suite, a queue worker, Octane — would otherwise
+     * prefix the second request's links with the first request's base. In the
+     * suite that is an order dependency: whichever test resolved it first
+     * decides the prefix for every test after it, including tests that set
+     * kbb.base_path themselves. Tests\Support\StaticMemos calls this between
+     * tests; nothing in the application needs to.
+     */
+    public static function forgetBase(): void
+    {
+        self::$base = null;
+    }
+
     /** Test seam, and used by the cart diagnostics. */
     public static function debugBase(): array
     {
