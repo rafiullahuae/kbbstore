@@ -485,8 +485,14 @@ class CheckoutController extends Controller
                  * The whole basket is refused rather than trimmed. The reasoning
                  * for that choice, and what was rejected, is in
                  * CartService::claimStock().
+                 *
+                 * THE ORDER IS PASSED so that what leaves the shelf is recorded
+                 * against it in `order_stock_claims`. That record is the only
+                 * thing that makes a return possible later: it is what tells a
+                 * cancellation which units this order actually took, as opposed
+                 * to which units its lines now say it should have.
                  */
-                $this->carts->claimStock($cart);
+                $this->carts->claimStock($cart, $order);
 
                 foreach ($cart->items as $item) {
                     $p = $item->product;
@@ -584,7 +590,25 @@ class CheckoutController extends Controller
             // The order stays, marked failed, so the shopper can retry and
             // support can see what happened. $start->message is written for a
             // shopper — gateways never put an API error body in it.
+            $was = (string) $order->status;
+
             $order->forceFill(['status' => 'failed'])->save();
+
+            /*
+             * Hand the units back, for the same reason the coupon use is handed
+             * back below: the payment never started, so nothing is going to
+             * ship, and the order row is deliberately kept rather than rolled
+             * back. Without this the shelf is short by a basket that will never
+             * leave the building, and the retry this failed order exists to
+             * allow would be refused by stock the shopper themselves are
+             * holding.
+             *
+             * Unlike the coupon release, this is NOT only safe here. The rule
+             * lives in OrderTransitionStock and the cancellation paths call the
+             * same one — see the note below for what changed and what did not.
+             */
+            app(\App\Services\Orders\OrderTransitionStock::class)
+                ->applied((int) $order->id, $was, 'failed');
 
             /*
              * Hand the coupon use back.
@@ -600,29 +624,37 @@ class CheckoutController extends Controller
              * moment ago is undoing it, so there is no path where the release
              * is missed and no window where another order can interleave.
              *
-             * CANCELLATION AND REFUND ARE DELIBERATELY NOT TREATED THIS WAY.
+             * CANCELLATION AND REFUND ARE STILL NOT TREATED THIS WAY FOR
+             * COUPONS, and the reason has changed from "there is nowhere to
+             * put it" to "the question is the owner's, not the code's".
              *
              * The argument for releasing them is real — a cancelled order cost
              * the shop nothing, and a public code could be exhausted by placing
-             * and cancelling orders. What stops it being done here is that
-             * there is no single place an order's status changes. It moves in
+             * and cancelling orders. What used to stop it was that there is no
+             * single place an order's status changes: it moves in
              * OrdersApiController::bulkStatus() via a mass
              * Order::whereIn(...)->update(), which bypasses Eloquent events
-             * entirely; in AdminOrderController; in PaymentRefunder when money
-             * actually moves; and in the gateway webhooks. A release hooked to
-             * some of those and not the others would make usage_count disagree
-             * with the redemption rows depending on which screen the operator
-             * happened to use — two paths that disagree, which is the exact
-             * failure this lane was opened to repair, reintroduced one layer
-             * down. It is the same reasoning ManualOrderBuilder gives for not
-             * decrementing stock on one path only.
+             * entirely; in AdminController::updateOrderStatus; in
+             * AdminOrderController::runAction; and in PaymentRefunder when
+             * money actually moves. A release hooked to some of those and not
+             * the others would make usage_count disagree with the redemption
+             * rows depending on which screen the operator happened to use.
              *
-             * So a redemption is a permanent record of a code having been
-             * accepted on an order, and releasing one on cancellation needs a
-             * single choke point for status transitions first. Until then the
-             * owner can see the redemptions and their orders on Store →
-             * Coupons and judge for themselves; CouponService::
-             * releaseRedemptions() is ready for that change when it comes.
+             * THE CHOKE POINT NOW EXISTS. App\Services\Orders\
+             * OrderTransitionStock is called from every one of those sites and
+             * is the single place that decides what a status change means, for
+             * stock. CouponService::releaseRedemptions() could be hooked to it
+             * in one line.
+             *
+             * It has not been, because the two questions are not the same one.
+             * Units are a physical fact — they are either in the stock room or
+             * they are not, and a cancelled order that never shipped left them
+             * there. A redemption is a record of a code having been ACCEPTED,
+             * and whether a customer who places and cancels an order should get
+             * their one use of WELCOME10 back is a policy the owner holds a
+             * view on and this code does not. So it stays a permanent record,
+             * the owner can see redemptions and their orders on Store →
+             * Coupons, and the wiring is waiting for their answer.
              */
             $this->coupons->releaseRedemptions((int) $order->id);
 

@@ -345,6 +345,13 @@ class OrdersApiController extends Controller
         $changeable = [];
         $skipped = [];
 
+        // The status each changed order was in before this call, kept because
+        // the mass update below destroys it and OrderTransitionStock needs it:
+        // whether units go back depends on where the order came FROM, not only
+        // on where it is going. A shipped order moved to cancelled has its
+        // parcel with the customer; a pending one has it on the shelf.
+        $wasById = [];
+
         foreach ($orders as $order) {
             $current = (string) $order->status;
 
@@ -367,6 +374,7 @@ class OrdersApiController extends Controller
             }
 
             $changeable[] = (int) $order->id;
+            $wasById[(int) $order->id] = $current;
         }
 
         if ($changeable !== []) {
@@ -376,6 +384,20 @@ class OrdersApiController extends Controller
             ]);
 
             $this->noteAll($changeable, 'Status set to ' . $status . ' from the orders list.');
+
+            /*
+             * The stock consequence of the change just made.
+             *
+             * This mass update fires no Eloquent events — that is recorded in
+             * OrderMailObserver's header as something it cannot see — so there
+             * is no observer that could do this and it has to be called. The
+             * rule itself is not here: OrderTransitionStock decides, and the
+             * single-order screens call the same method, so forty orders
+             * cancelled from this list cost the shelf exactly what forty
+             * cancelled one at a time would.
+             */
+            app(\App\Services\Orders\OrderTransitionStock::class)
+                ->appliedMany($wasById, $status);
 
             $this->notifyStatus($changeable, $status);
         }

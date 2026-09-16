@@ -76,6 +76,33 @@ class CheckoutController extends Controller
         // be inside the write.
         $carts = app(CartService::class);
 
+        try {
+            return $this->write($data, $orderNumber, $carts);
+        } catch (\App\Services\StockUnavailable $e) {
+            /*
+             * Something in the basket is gone, or there are fewer left than
+             * were asked for. The transaction rolled back, so there is no
+             * order, no line, nothing off the shelf and no customer row.
+             *
+             * 422 WITH THIS BODY, and not the 500 an uncaught RuntimeException
+             * would give. `{ok: false, error: <sentence>}` is the shape every
+             * other refusal on this endpoint already uses — the shipping
+             * refusal, the COD window, the unavailable gateway — so a headless
+             * caller that handles one handles this. The sentence is the one
+             * StockClaim writes for a shopper: it names the product and, where
+             * stock is counted, says how many are actually left, which is what
+             * a caller needs to correct the basket and try again.
+             */
+            return response()->json([
+                'ok' => false,
+                'error' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /** The placing transaction itself. Split out only so the catch above can sit outside it. */
+    private function write(array $data, string $orderNumber, CartService $carts)
+    {
         return DB::transaction(function () use ($data, $orderNumber, $carts) {
             $settings   = Setting::map();
             $codFeeCfg  = (int) ($settings['cod_fee'] ?? 0);            // fils
@@ -83,6 +110,19 @@ class CheckoutController extends Controller
             // recompute subtotal from the catalog — client prices are ignored
             $subtotal = 0;
             $lines = [];
+
+            /*
+             * The same list StockClaim takes from the storefront's basket, built
+             * here from the request shape instead. Collected in this loop rather
+             * than derived from $lines later so that the label in a refusal is
+             * the product's own name, off the row this loop already has.
+             *
+             * `variant_id` is null on every line because this endpoint's request
+             * shape is a slug and a quantity and has no variant in it at all —
+             * the same reason unitPriceFor() is called with null above.
+             */
+            $claimLines = [];
+
             foreach ($data['items'] as $it) {
                 // visible(), not a bare slug lookup. Without it a draft,
                 // private or hidden product could be ordered through this
@@ -145,6 +185,13 @@ class CheckoutController extends Controller
                     'brand'      => $p->brand?->name,
                     'qty'        => $it['qty'],
                     'unit_price' => $unit,
+                ];
+
+                $claimLines[] = [
+                    'product_id' => (int) $p->id,
+                    'variant_id' => null,
+                    'quantity'   => (int) $it['qty'],
+                    'label'      => (string) $p->name,
                 ];
             }
 
@@ -313,6 +360,36 @@ class CheckoutController extends Controller
                 'payment_method'   => $data['method'],
             ]);
 
+            /*
+             * THE STOCK CLAIM, and the reason this endpoint is no longer a way
+             * to buy the same single jar repeatedly.
+             *
+             * `/api/*` IS UNAUTHENTICATED — CLAUDE.md says so in as many words —
+             * so every gap here is a gap anyone on the internet can walk
+             * through. What stood above is still there and still runs: a
+             * product whose `stock_status` is `outofstock` is refused before
+             * any of this. What was missing is everything to do with the
+             * COUNTED figure. This endpoint never looked at `stock`, never
+             * decremented it, and never marked a shelf empty, so the flag check
+             * was the entire defence — and the flag only moves when the owner
+             * flips it by hand or when something decrements the last unit.
+             * Nothing did. One jar, one `instock` row, and as many real orders
+             * as anybody cared to POST.
+             *
+             * DELIBERATELY IN THE SAME PLACE place() PUTS IT: after the order
+             * row, before the lines, inside the transaction, and before
+             * $gateway->start() below. StockUnavailable propagates out of
+             * DB::transaction() and rolls back the order and the customer row
+             * with it, so a refused call has written nothing and asked nothing
+             * of a payment provider. The catch is OUTSIDE the transaction for
+             * exactly that reason — catching it in here and returning a
+             * response would commit the order it is refusing.
+             *
+             * The order id is passed so the claim is recorded and can be given
+             * back if this order is later cancelled.
+             */
+            app(\App\Services\StockClaim::class)->claim($claimLines, (int) $order->id);
+
             foreach ($lines as $l) {
                 // `qty` is not a column either; the line table calls it
                 // `quantity`, and wants subtotal/total per line.
@@ -335,7 +412,27 @@ class CheckoutController extends Controller
             $start = $gateway->start($order);
 
             if (! $start->ok()) {
+                $was = (string) $order->status;
+
                 $order->forceFill(['status' => 'failed'])->save();
+
+                /*
+                 * Put the units back.
+                 *
+                 * The payment never started, so nothing is going to be shipped,
+                 * and unlike the storefront this failure does not roll the
+                 * order back — the response below returns from inside the
+                 * transaction, which commits. Without this the units are off
+                 * the shelf for an order that will never move, and the next
+                 * caller is refused stock the shop is holding.
+                 *
+                 * The rule is not spelled out here on purpose: cancelled and
+                 * failed mean the same thing to the shelf, and deciding that in
+                 * two places is how the two come to disagree. See
+                 * OrderTransitionStock.
+                 */
+                app(\App\Services\Orders\OrderTransitionStock::class)
+                    ->applied((int) $order->id, $was, 'failed');
 
                 return response()->json([
                     'ok' => false,

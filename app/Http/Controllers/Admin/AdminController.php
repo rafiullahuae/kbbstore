@@ -2371,9 +2371,17 @@ class AdminController extends Controller
             $request->has('notify') ? $request->boolean('notify') : null,
         );
 
+        $was = (string) $o->status;
+
         $o->status = $data['status'];
         $o->updated_at = now()->toISOString();
         $o->save();
+
+        // What this costs or credits the shelf is decided in one place for all
+        // four sites that write this column — see OrderTransitionStock. Called
+        // after the save, and it cannot throw.
+        app(\App\Services\Orders\OrderTransitionStock::class)
+            ->applied((int) $o->id, $was, (string) $o->status);
 
         return response()->json(['ok' => true, 'id' => $o->id, 'status' => $o->status]);
     }
