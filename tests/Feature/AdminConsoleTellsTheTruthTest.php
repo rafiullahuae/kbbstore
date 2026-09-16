@@ -140,3 +140,188 @@ it('says which of the two Meta Pixel boxes is the one that fires', function () u
     expect(str_contains($code, 'Stored, but no storefront page fires it.'))
         ->toBeTrue('The SEO screen must not present a dead pixel box as a working one.');
 });
+
+
+/* ==========================================================================
+ * LANE DH — four more screens that were describing machinery they do not have.
+ *
+ * Same file, same stripped-source helper, on purpose. The notes left in
+ * app.blade.php beside each fix below necessarily quote the claim that was
+ * removed, so a plain search of that file would find the words in the
+ * explanation and pass or fail for the wrong reason. $lddSource() strips HTML
+ * and block comments first; every assertion here goes through it.
+ * ========================================================================== */
+
+/**
+ * The dashboard's health card and the whole of Safety → Debug & Monitor.
+ *
+ * Six hrow() literals under a green pill reading "All core OK", and six more
+ * under an amber one reading "2 need setup". An App server with a 120ms
+ * average, a database doing 4ms reads in WAL mode — on an install whose
+ * production database is MySQL — a Storefront API that was operational and a
+ * Sandbox that was in sync with a sandbox this application does not have.
+ * Nothing measured any of them, so the card read the same on the morning every
+ * product page was 500ing as it did on a good day.
+ */
+it('invents no service health on the dashboard or on Debug & Monitor', function () use ($lddSource) {
+    $code = $lddSource();
+
+    foreach ([
+        'All core OK',
+        'WAL · healthy',
+        'WAL · 4ms reads',
+        '120ms avg',
+        '2 need setup',
+        'Database (SQLite)',
+        "hrow('green','Storefront API','operational')",
+        "hrow('green','Sandbox','in sync')",
+        "hrow('amber','Stripe','keys not added')",
+        "hrow('amber','Tabby / Tamara','not configured')",
+    ] as $claim) {
+        expect(str_contains($code, $claim))
+            ->toBeFalse('a health panel still states "'.$claim.'", which nothing behind it measures');
+    }
+});
+
+/**
+ * And the replacement has to start blank. A card that renders a tick before
+ * anything has been checked is the same defect with better plumbing: the owner
+ * cannot tell "we looked and it is fine" from "we have not looked".
+ */
+it('starts the health card at not-checked and fills it from the endpoint', function () use ($lddSource) {
+    $code = $lddSource();
+
+    expect(str_contains($code, 'Not checked yet'))
+        ->toBeTrue('the health card has to say it has not run before it has run');
+
+    expect(str_contains($code, "api('/admin-api/health')"))
+        ->toBeTrue('the card has to be filled from the real check, not from literals');
+
+    // The rows and the pill are written by shPaint() and by nothing else.
+    expect(str_contains($code, 'function shPaint()'))
+        ->toBeTrue('the one painter both screens share is gone');
+});
+
+/**
+ * Debug & Monitor's error console listed three errors that never happened,
+ * each with an invented count and age, and its "Copy report for Claude" button
+ * opened a diagnostic naming a Stripe failure at modules/payments/api.js:48 —
+ * a file that does not exist in this application — for a request of AED 549.78
+ * that nobody ever made.
+ */
+it('lists no error that did not happen', function () use ($lddSource) {
+    $code = $lddSource();
+
+    foreach ([
+        'PaymentGateway: Stripe keys missing',
+        'Image 404 on import preview',
+        'SMTP not configured — email queued',
+        'PaymentGateway: Stripe secret key missing',
+        'modules/payments/api.js:48',
+        'add Stripe secret key in Payments settings',
+    ] as $invented) {
+        expect(str_contains($code, $invented))
+            ->toBeFalse('Debug & Monitor still reports the invented error "'.$invented.'"');
+    }
+});
+
+/**
+ * The Copy report button copied nothing. It closed the modal and raised a
+ * toast saying the report had been copied, so whatever the owner pasted was
+ * whatever he had copied last.
+ */
+it('does not claim to have copied a report it never put on the clipboard', function () use ($lddSource) {
+    $code = $lddSource();
+
+    expect(str_contains($code, "toast('Report copied — paste it to Claude')"))
+        ->toBeFalse('the copy button still reports a copy it does not make');
+
+    expect(str_contains($code, 'navigator.clipboard.writeText(text)'))
+        ->toBeTrue('the copy button has to actually copy');
+});
+
+/**
+ * The sidebar badge. navItemHTML() rendered a literal 3 for any NAV row tagged
+ * 'live', and Debug & Monitor was the only row that carried the tag. Not a
+ * count of anything — three, always, on every install, beside a screen whose
+ * three errors were themselves typed in. The bell in the top bar had the same
+ * problem: a red dot in the markup that nothing ever set or cleared.
+ */
+it('shows no alert count that is not a count of anything', function () use ($lddSource) {
+    $code = $lddSource();
+
+    expect(str_contains($code, '<span class="cnt">3</span>'))
+        ->toBeFalse('the sidebar still prints a hard-coded alert badge');
+
+    expect(str_contains($code, "tag==='live'"))
+        ->toBeFalse('the branch that printed the hard-coded badge is still reachable');
+
+    expect(str_contains($code, "'Debug & Monitor',I.debug,'live'"))
+        ->toBeFalse('the Debug row still carries the tag that drew the badge');
+
+    expect(str_contains($code, '</svg><span class="dot"></span></button>'))
+        ->toBeFalse('the top-bar bell still carries a permanently lit alert dot');
+});
+
+/**
+ * Shop Filters kept its configuration in a `let` in this file and its Save
+ * button was a toast. There is no shop-filters endpoint and no shop-filters
+ * setting; resources/views/store/shop.blade.php renders four fixed groups and
+ * reads no configuration at all. The owner could switch Brand off, press Save,
+ * be told it saved, and the shop never differed by a pixel.
+ */
+it('offers no Save on Shop Filters, because nothing stores what it would save', function () use ($lddSource) {
+    $code = $lddSource();
+
+    expect(str_contains($code, "toast('Shop filters saved (preview)')"))
+        ->toBeFalse('the Shop Filters Save button still reports a save that never happens');
+
+    expect(str_contains($code, 'Shop Filters isn&rsquo;t built yet'))
+        ->toBeTrue('Shop Filters has to say what it is, as Meta & Facebook does');
+
+    // And the controls that pretended to configure it went with the button.
+    foreach (['SF_CONCERNS', 'renderSFGroups', 'renderSFPrev'] as $orphan) {
+        expect(str_contains($code, $orphan))
+            ->toBeFalse('"'.$orphan.'" is left behind with nothing to save it');
+    }
+});
+
+/**
+ * Platform → Settings offered six cards — Store details, Regional,
+ * Localisation, Notifications, Security, API & Keys — each of which raised a
+ * toast and opened nothing. Four of the six subjects exist in this console
+ * already, under other names, fully wired; the screen is the index of those
+ * now, and says plainly that the other two are not built.
+ *
+ * SCOPED TO renderSettings(). "Phase 0 build" still appears elsewhere in this
+ * console — Users & Roles has an Invite user button that raises it — and that
+ * screen is another lane's. A file-wide search here would either fail on
+ * somebody else's defect or, worse, be softened until it stopped catching this
+ * one.
+ */
+it('opens a real screen from every Settings card it still shows', function () use ($lddSource) {
+    $code = $lddSource();
+
+    $from = strpos($code, 'function renderSettings()');
+    $to = strpos($code, 'function renderDebug()');
+
+    expect($from !== false && $to !== false && $to > $from)
+        ->toBeTrue('renderSettings() and renderDebug() are no longer where this test looks for them');
+
+    $screen = substr($code, $from, $to - $from);
+
+    expect(str_contains($screen, 'toast('))
+        ->toBeFalse('a Settings card still answers a press with a message and nothing else');
+
+    foreach (['store-settings', 'tax', 'mail', 'payments', 'shipping', 'seo'] as $id) {
+        expect(str_contains($screen, "'".$id."',"))
+            ->toBeTrue('the Settings index no longer routes to '.$id);
+    }
+
+    // The two with nothing behind them say so, rather than pointing somewhere
+    // almost-right.
+    expect(str_contains($screen, 'This shop is in English only.'))
+        ->toBeTrue('Localisation has to say it is not built');
+    expect(str_contains($screen, 'cannot be edited from this console'))
+        ->toBeTrue('Security settings has to say it is not built');
+});

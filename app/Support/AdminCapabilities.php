@@ -253,6 +253,20 @@ final class AdminCapabilities
         // ------------------------------------------------------------- diagnostics
         ['GET', 'admin-api/schema-inspect', 'system.diagnostics'],
         ['GET', 'admin-api/catalogue-audit', 'system.diagnostics'],
+        /*
+         * The storefront health check — routes/health-admin.php.
+         *
+         * Diagnostics and not dashboard.view, though the card that runs it
+         * sits on the dashboard, because of what a FAILURE says: the exception
+         * message and the application file and line it came from. That is the
+         * same thing the raw error log gives, one page at a time, and the log
+         * is owner-only two rows up. A support account that cannot read the log
+         * must not be handed the interesting lines out of it.
+         *
+         * The console asks, is told no in the words EnforceAdminCapability
+         * returns, and prints them. It does not guess.
+         */
+        ['GET', 'admin-api/health', 'system.diagnostics'],
         // Not under /admin-api: the cart debug view lives in the storefront's
         // own prefix and was given auth:admin after it was found returning the
         // five most recently active carts site-wide.

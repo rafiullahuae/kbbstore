@@ -2322,7 +2322,13 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
       <div class="themewrap">
         <button class="iconbtn" id="themeBtn" title="Console theme" onclick="go('console')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22a10 10 0 1 1 9-14c0 3-3 3-5 3s-3 2-2 4 1 3-2 3z"/><circle cx="8.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="15.5" cy="10.5" r="1"/></svg></button>
       </div>
-      <button class="iconbtn" onclick="go('debug')" title="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+      <!-- LANE DH. The red dot on this bell was a <span class="dot"> in the
+           markup, never added and never removed by anything. It was lit on the
+           day the console was written and it has been lit ever since, so the
+           one signal the top bar has for "something needs you" has never once
+           meant it. Nothing in this application raises an alert, so the bell
+           keeps its route to Debug & Monitor and loses the claim. -->
+      <button class="iconbtn" onclick="go('debug')" title="Debug & Monitor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
       <div class="userchip"><div class="avatar">R</div><div><b>Rafi</b><small>Owner</small></div></div>
     </div>
     <!-- LANE DD. This strip promised that edits made while the switch above
@@ -2393,7 +2399,7 @@ const ADMIN_BASE = window.location.pathname.replace(/\/+$/, '');
 const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
   {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings]]},
-  {sec:'Safety',items:[['debug','Debug & Monitor',I.debug,'live'],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
+  {sec:'Safety',items:[['debug','Debug & Monitor',I.debug],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
   /* Catalog is its own group, and `group:true` keeps it one even while it holds
      a single built-in entry.
 
@@ -2430,8 +2436,17 @@ const NAV=[
   {sec:'Storefront',items:[['shopfilters','Shop Filters','<path d="M4 5h16l-6 7v5l-4 2v-7z"/>']]},
   {sec:'Core Updates',items:[['updates','Core Updates','<path d=\"M21 12a9 9 0 1 1-3-6.7\"/><path d=\"M21 3v6h-6\"/><path d=\"M12 8v5l3 2\"/>']]}
 ];
+/* LANE DH - the 'live' tag and its badge are gone.
+   Debug & Monitor was the only NAV row that carried it, and the branch it
+   selected rendered a literal <span class="cnt">3</span>. Not a count of
+   anything: three, always, on every install, beside a screen whose three
+   errors were themselves typed in. An owner who cleared them would have seen
+   the same 3. A tag that can only ever print one number is not a tag, so the
+   branch went with the row that used it; 'lock' and the free-text tags below
+   are untouched and still work. buildNav()'s group badge sums only tags that
+   are entirely digits, so no group badge changes either. */
 function navItemHTML([id,name,icon,tag]){
-  let extra='';if(tag==='lock')extra=`<span class="tag">soon</span>`;else if(tag==='live')extra=`<span class="cnt">3</span>`;else if(tag)extra=`<span class="tag">${tag}</span>`;
+  let extra='';if(tag==='lock')extra=`<span class="tag">soon</span>`;else if(tag)extra=`<span class="tag">${tag}</span>`;
   return `<button class="nav-item${tag==='lock'?' locked':''}" data-go="${id}">${ic(icon)}<span>${name}</span>${extra}</button>`;
 }
 function buildNav(){
@@ -2640,17 +2655,36 @@ function renderDash(){
       ${kpi(I.orders,'#e0922f','var(--amber-soft)','Orders completed','—','of all orders placed')}
     </div>
     <div class="grid2" style="margin-top:16px">
+      <!-- LANE DH. This card was headed "System health" over a green pill
+           reading "All core OK" and six hrow() string literals, hydrated by
+           nothing: an App server that was operational, a "Database (SQLite)"
+           that was WAL and healthy on an install whose production database is
+           MySQL, a Storefront API that was operational, and a Sandbox that was
+           in sync with a sandbox this application does not have. Every one of
+           them said the same thing on the morning every product page was
+           500ing, because none of them was ever measured.
+
+           It is the storefront health CHECK now, and it starts blank. Pressing
+           Check now calls GET /admin-api/health, which renders all eight public
+           pages in this process and reports what each returned; the rows and
+           the pill are written from that answer and from nothing else. It does
+           not run on load, because eight page renders is not the price of
+           opening the dashboard - see the cost note in HealthApiController.
+
+           The Payments and Email / SMTP rows are gone rather than rewritten.
+           This check cannot see whether a gateway or a mail transport is
+           configured, and a row that reports it anyway is the defect being
+           removed here wearing a different label. Store -> Payments and Store
+           -> Mail are the screens that really know. -->
       <div class="card pad">
-        <div class="between"><b style="font-size:14px">System health</b><span class="pill green"><span class="d"></span>All core OK</span></div>
-        <div class="health" style="margin-top:14px">
-          ${hrow('green','App server','operational')}
-          ${hrow('green','Database (SQLite)','WAL · healthy')}
-          ${hrow('green','Storefront API','operational')}
-          ${hrow('amber','Payments','not configured')}
-          ${hrow('amber','Email / SMTP','not configured')}
-          ${hrow('green','Sandbox','in sync')}
+        <div class="between"><b style="font-size:14px">Storefront health</b><span class="pill grey" id="shPill"><span class="d"></span>Not checked yet</span></div>
+        <div id="shRows" style="margin-top:14px">
+          <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.55">Nothing has been checked yet. <b>Check now</b> opens all eight public pages of the shop — home, shop, a product, a category, cart, checkout, the journal and the review wall — and reports exactly what each one returns. Run it after every update.</p>
         </div>
-        <button class="btn ghost sm" style="margin-top:14px" onclick="go('debug')">Open Debug & Monitor →</button>
+        <div class="row" style="margin-top:14px;gap:9px;flex-wrap:wrap">
+          <button class="btn sm" id="shRun" onclick="kbbHealthRun()">Check now</button>
+          <button class="btn ghost sm" onclick="go('debug')">Open Debug & Monitor →</button>
+        </div>
       </div>
       <div class="card pad">
         <b style="font-size:14px">Build progress</b>
@@ -6224,70 +6258,227 @@ function renderUsers(){
 }
 const urow=(n,av,role,r2,f,sc,st)=>`<tr><td><div class="row"><div class="avatar" style="width:30px;height:30px">${av}</div><b>${n}</b></div></td><td>${role}</td><td><span class="pill ${r2}">${f}</span></td><td><span class="pill ${sc}">${st}</span></td></tr>`;
 
-/* ---------- Settings ---------- */
+/* ---------- Settings ----------
+   ===== LANE DH ==============================================================
+
+   SIX CARDS, SIX TOASTS. Store details, Regional, Localisation, Notifications,
+   Security and API & Keys each carried onclick="toast('... - Phase 0 build')".
+   Every one of them opened nothing. A card captioned "Encrypted credentials
+   store" that does nothing when pressed is not a placeholder: it is a screen
+   telling the owner his settings live somewhere he can reach, and then not
+   taking him there.
+
+   BUILT, OR SAID PLAINLY? Said plainly - with one qualification that changes
+   what the screen is for. Four of the six subjects DO exist in this console,
+   under other names, fully wired:
+
+       Store details   Store -> Business Details. Store name, currency, the
+                       shop's time zone, delivery and COD fees, tax. Written
+                       through PUT /admin-api/settings, which validates each
+                       key against AdminController::SETTING_RULES.
+       Regional        the same screen: currency, symbol, decimals, position,
+                       time zone, and the Tax tab beside them.
+       Notifications   Store -> Mail. The transport, the addresses mail is
+                       sent from and replied to, and the delivery log.
+       API & Keys      Store -> Payments. The Stripe, Tabby and Tamara
+                       credentials, encrypted at rest.
+
+   So this was never an unbuilt screen. It was a second front door to four
+   built ones that nobody had connected, sitting one section above them in the
+   same sidebar. It is a signpost now, and every row goes where it says.
+
+   The other two are not built and say so, rather than being given a card that
+   goes somewhere almost-right. There is no localisation feature in this
+   application - no second language, no RTL switch, no translation store - and
+   no security settings: sessions, password rules and login protection are
+   framework defaults and are not editable from anywhere in this console. The
+   nearest true thing to the Security card was Users & Roles, and pointing at
+   it would be the wrong answer, because what that card offered is not there
+   either.
+
+   WHAT WAS REJECTED. Building six real panels here, on the grounds that four
+   of the subjects have settings behind them already. That would be a second
+   editor for keys a screen further down the sidebar already owns - two places
+   writing store_name, two places holding the Stripe secret, and no way for the
+   owner to know which one he last saved. The map is the honest version and it
+   is also the smaller one.
+
+   The precedent is renderSandbox() and renderMeta() directly: say what is true
+   of this install, then hand over the screen that really does the job.
+   ========================================================================= */
 function renderSettings(){
   $('#content').innerHTML=`<div class="wrap">
-    <div class="page-head"><h2>Settings</h2><p>Global configuration. Each module also keeps its own settings — this is the platform-level base.</p></div>
+    <div class="page-head"><h2>Settings</h2><p>This is not a screen of its own. The shop&rsquo;s configuration is kept on the screens that use it, and this page is the index of where each part lives.</p></div>
+    <div class="sec-title">Where your settings are</div>
     <div class="tcards">
-      ${[['Store details','Name, logo, contact, address','<path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>'],
-        ['Regional','Country, currency, units, timezone','<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/>'],
-        ['Localisation','Languages, RTL, translations','<path d="M4 5h7M9 3v2c0 4-2 7-5 8M5 9c0 3 3 5 6 6M13 19l4-9 4 9M14.5 16h5"/>'],
-        ['Notifications','Admin alerts & channels','<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>'],
-        ['Security','Sessions, passwords, login rules','<path d="M12 2 4 5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V5z"/>'],
-        ['API & Keys','Encrypted credentials store','<path d="M21 2l-2 2m-7 7a5 5 0 1 1-7 7 5 5 0 0 1 7-7zM15 7l4 4"/>']
-      ].map(t=>`<div class="tcard" onclick="toast('${t[0]} settings — Phase 0 build')"><div class="ti">${ic(t[2])}</div><b>${t[0]}</b><p>${t[1]}</p></div>`).join('')}
+      ${[['Business Details','store-settings','Store name, currency and how prices are printed, the shop&rsquo;s time zone, delivery and cash-on-delivery fees.','<path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>'],
+        ['Tax','tax','The VAT rate, whether it is included in prices or added on top, and a rate per country. The Tax tab of Business Details.','<path d="M4 4h12l4 4v12H4z"/><path d="M8 10h8M8 14h5"/>'],
+        ['Mail','mail','Who email is sent from, who a reply goes to, the transport it leaves through, and the log of what was sent.','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],
+        ['Payments','payments','Your Stripe, Tabby and Tamara keys. Held encrypted; this is the only screen that can read or change them.','<path d="M21 2l-2 2m-7 7a5 5 0 1 1-7 7 5 5 0 0 1 7-7zM15 7l4 4"/>'],
+        ['Delivery &amp; Shipping','shipping','What delivery costs, per country, and which countries the shop ships to at all.','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],
+        ['SEO &amp; Meta','seo','The site name, the titles and descriptions search engines read, verification tokens and your analytics ID.','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>']
+      ].map(t=>`<div class="tcard" onclick="go('${t[1]}')"><div class="ti">${ic(t[3])}</div><b>${t[0]}</b><p>${t[2]}</p></div>`).join('')}
+    </div>
+    <div class="sec-title">Not built yet</div>
+    <div class="card pad">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><b style="font-size:13px">Localisation</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">This shop is in English only. There is no second language, no right-to-left mode and no translation store anywhere in the application, so there is nothing here to switch on.</p></div>
+        <div><b style="font-size:13px">Security settings</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">Sessions, password rules and login protection are the framework&rsquo;s defaults and cannot be edited from this console &mdash; changing them is a code change, not a setting. Your shop is no less protected than it was: there is simply no screen for it, and there was never one behind this card.</p></div>
+      </div>
     </div>
   </div>`;
 }
 
-/* ---------- Debug & Monitor ---------- */
+/* ---------- Debug & Monitor ----------
+   ===== LANE DH ==============================================================
+
+   THIS WHOLE SCREEN WAS TYPED IN.
+
+   The Service health card was six hrow() literals under an amber pill reading
+   "2 need setup": an App server averaging 120ms, a Database doing 4ms reads in
+   WAL mode, a Storefront API that was operational, and three amber rows for
+   Stripe, Tabby / Tamara and SMTP. Not one was measured. The database line was
+   also wrong about the engine - production is MySQL.
+
+   Under it, an "Error console" headed "3 open" listed three errors that had
+   never happened, each with an invented count and age, and each with a Report
+   button. The Report button and the "Copy report for Claude" button both
+   opened the same modal, which handed the owner a diagnostic naming a Stripe
+   secret-key failure at modules/payments/api.js:48 - a file that does not
+   exist in this application, describing a request for AED 549.78 that nobody
+   ever made. Its Copy report button copied nothing: it closed the modal and
+   raised a toast that said the report had been copied.
+
+   So an owner whose product pages were all 500ing opened Debug & Monitor and
+   was told the site was fine and that his only problem was a Stripe key.
+
+   WHAT IS HERE NOW is the check that was already written and routed nowhere.
+   app/Http/Controllers/Admin/HealthApiController.php renders all eight public
+   pages in-process and reports each status, and for a failure the exception
+   message and the file and line in this application that raised it. It is on
+   GET /admin-api/health (routes/health-admin.php). The card below is that
+   answer and nothing else, the report is built from that answer, and the copy
+   button copies.
+
+   NOTHING IS SAID ABOUT STRIPE, TABBY OR SMTP, here or on the dashboard. This
+   check cannot see them. The real error log - the tail of
+   storage/logs/laravel.log, which this screen never once offered - is one
+   click away instead, because that is the thing that actually knows.
+
+   err() went with the three errors it drew; it had no other caller.
+   ========================================================================= */
 function renderDebug(){
   go._cur='debug';
   $('#content').innerHTML=`<div class="wrap">
-    <div class="page-head"><h2>Debug & Monitor</h2><p>The site's eyes. Catches errors across the whole stack and can hand you a report written for Claude — so a breakage becomes an instant fix.</p></div>
+    <div class="page-head"><h2>Debug & Monitor</h2><p>Opens every public page of your shop from inside the server and tells you what each one returns. It is a check you run, not a monitor that watches &mdash; nothing here is measured until you press the button.</p></div>
     <div class="card pad" style="margin-bottom:16px">
-      <div class="between"><b style="font-size:14px">Service health</b><span class="pill amber"><span class="d"></span>2 need setup</span></div>
-      <div class="health" style="margin-top:14px">
-        ${hrow('green','App server','120ms avg')}${hrow('green','Database','WAL · 4ms reads')}
-        ${hrow('green','Storefront API','operational')}${hrow('amber','Stripe','keys not added')}
-        ${hrow('amber','Tabby / Tamara','not configured')}${hrow('amber','Email / SMTP','not configured')}
+      <div class="between"><b style="font-size:14px">Storefront health</b><span class="pill grey" id="shPill"><span class="d"></span>Not checked yet</span></div>
+      <div id="shRows" style="margin-top:14px">
+        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.55">Nothing has been checked yet. <b>Check now</b> loads the home page, the shop, one product, one category, the cart, the checkout, the journal and the review wall, and reports what each one returns. When a page fails you get the error and the file and line it came from.</p>
+      </div>
+      <div class="row" style="margin-top:14px;gap:9px;flex-wrap:wrap">
+        <button class="btn sm" id="shRun" onclick="kbbHealthRun()">Check now</button>
+        <button class="btn ghost sm" onclick="kbbOpenErrorLog()">Open the error log &rarr;</button>
       </div>
     </div>
-    <div class="between" style="margin-bottom:12px"><b style="font-size:14px">Error console</b><div class="row"><span class="pill grey">grouped</span><span class="pill red">3 open</span></div></div>
-    <div class="errs">
-      ${err('warn','PaymentGateway: Stripe keys missing','Payments','sandbox',2,'5m ago')}
-      ${err('err','Image 404 on import preview','Catalog','sandbox',1,'12m ago')}
-      ${err('warn','SMTP not configured — email queued','Email/SMTP','sandbox',5,'18m ago')}
-    </div>
-    <div class="card pad" style="margin-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <div style="flex:1;min-width:240px"><b style="font-size:13.5px">Found a bug on live?</b><div style="font-size:12px;color:var(--ink-soft);margin-top:3px">Generate a complete, secret-redacted diagnostic written for Claude, then send it over for an immediate fix.</div></div>
+    <div class="card pad" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px"><b style="font-size:13.5px">Found a bug on live?</b><div style="font-size:12px;color:var(--ink-soft);margin-top:3px">Run the check above, then copy its result and send it over. The report is that check's result and nothing more &mdash; if a page is failing, it carries the error and the line.</div></div>
       <button class="btn" onclick="reportModal()">${ic(I.copy)} Copy report for Claude</button>
     </div>
   </div>`;
 }
-const err=(sev,title,mod,env,cnt,when)=>`<div class="err"><span class="sev ${sev}">${sev==='crit'?'critical':sev}</span><div style="flex:1;min-width:0"><div class="etitle">${title}</div><div class="emeta"><span>${ic('<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/>')} ${mod}</span><span>env: ${env}</span><span>×${cnt}</span><span>${when}</span></div></div><button class="btn ghost sm" onclick="reportModal()">Report</button></div>`;
+
+/* The tail of storage/logs/laravel.log, on the route that has served it since
+   before this screen existed. It sits one level inside the admin path, which is
+   configurable, so the URL is built from where this page actually is rather
+   than from a literal. Owner-only, like the health check: both hand back the
+   same class of detail. */
+function kbbHealthLogUrl(){
+  return window.location.pathname.replace(/\/+$/,'') + '/kbb-health-log';
+}
+function kbbOpenErrorLog(){
+  window.open(kbbHealthLogUrl(), '_blank', 'noopener');
+}
+
+/* The report the owner sends on. It is a transcript of the last check this
+   browser ran -- no check, no report, because there is nothing to write down.
+   Built as plain text so that what is on the screen and what lands on the
+   clipboard are the same characters. */
+function kbbHealthReportText(){
+  const h = window.KBB_HEALTH;
+  if(!h || (!h.data && !h.error)) return null;
+  const lines = ['// KBB storefront health check'];
+  lines.push('checked_at: ' + (h.at ? h.at.toISOString() : 'unknown'));
+  if(h.error){
+    lines.push('result: the check could not be run');
+    lines.push('reason: ' + h.error);
+    return lines.join('\n');
+  }
+  lines.push('pages_checked: ' + h.data.checked);
+  lines.push('pages_failing: ' + h.data.failed);
+  lines.push('');
+  (h.data.results||[]).forEach(function(r){
+    lines.push((r.ok ? 'ok   ' : 'FAIL ') + ('HTTP ' + r.status).padEnd(10) + ' ' + r.path);
+    if(!r.ok && r.error) lines.push('       error: ' + r.error);
+    if(!r.ok && r.where) lines.push('       where: ' + r.where);
+  });
+  return lines.join('\n');
+}
 
 function reportModal(){
-  openModal(`<div class="modal-h">${ic(I.copy)}<b>Diagnostic report for Claude</b><button class="x" onclick="closeModal()">${ic('<path d="M18 6 6 18M6 6l12 12"/>')}</button></div>
+  const text = kbbHealthReportText();
+  if(text === null){
+    openModal(`<div class="modal-h">${ic(I.copy)}<b>Nothing to report yet</b><button class="x" onclick="closeModal()">${ic('<path d="M18 6 6 18M6 6l12 12"/>')}</button></div>
+    <div class="modal-b">
+      <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.6">There is no report until a check has been run. Press <b>Check now</b> on this screen or on the dashboard, then come back &mdash; the report is that check's result written out, so there is nothing honest to put in it beforehand.</p>
+      <div class="row" style="margin-top:16px;justify-content:flex-end;gap:9px">
+        <button class="btn ghost" onclick="closeModal()">Close</button>
+        <button class="btn" onclick="closeModal();go('debug');kbbHealthRun()">Run the check</button>
+      </div>
+    </div>`);
+    return;
+  }
+  openModal(`<div class="modal-h">${ic(I.copy)}<b>Storefront health report</b><button class="x" onclick="closeModal()">${ic('<path d="M18 6 6 18M6 6l12 12"/>')}</button></div>
   <div class="modal-b">
-    <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">Secrets are redacted automatically. Copy this and send it to Claude for an immediate fix.</p>
-    <div class="report"><span class="c">// KBB diagnostic · auto-generated</span>
-<span class="k">error</span>: <span class="v">"PaymentGateway: Stripe secret key missing"</span>
-<span class="k">severity</span>: <span class="v">"warning"</span>
-<span class="k">module</span>: <span class="v">"payments"</span>
-<span class="k">route</span>: <span class="v">"POST /api/payments/intent"</span>
-<span class="k">environment</span>: <span class="v">"sandbox"</span>
-<span class="k">version</span>: <span class="v">"0.1.0"</span>
-<span class="k">file</span>: <span class="v">"modules/payments/api.js:48"</span>
-<span class="k">breadcrumb</span>: [<span class="v">"checkout.start"</span>, <span class="v">"payment.select:stripe"</span>, <span class="v">"intent.create"</span>]
-<span class="k">request</span>: { amount: 549.78, currency: <span class="v">"AED"</span>, key: <span class="c">"[redacted]"</span> }
-<span class="k">stack</span>: <span class="c">at createIntent (api.js:48) › at route (api.js:12)</span>
-<span class="k">suggestion</span>: <span class="v">"add Stripe secret key in Payments settings"</span></div>
+    <p style="font-size:12.5px;color:var(--ink-soft);margin-bottom:12px">The result of the last check on this screen. It carries no keys, no customer data and no passwords &mdash; only page addresses and the errors they returned.</p>
+    <div class="report" id="shReport">${escHtml(text)}</div>
     <div class="row" style="margin-top:16px;justify-content:flex-end;gap:9px">
       <button class="btn ghost" onclick="closeModal()">Close</button>
-      <button class="btn" onclick="closeModal();toast('Report copied — paste it to Claude')">${ic(I.copy)} Copy report</button>
+      <button class="btn" onclick="kbbCopyReport()">${ic(I.copy)} Copy report</button>
     </div>
   </div>`);
+}
+
+/* It copies. The button this replaces closed the modal and raised "Report
+   copied - paste it to Claude" without touching the clipboard, so the owner
+   pasted whatever he had copied last. The toast is raised from the result now,
+   and a refusal says so instead of claiming success. */
+async function kbbCopyReport(){
+  const text = kbbHealthReportText();
+  if(text === null){ closeModal(); return; }
+  let ok = false;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    }
+  }catch(e){ ok = false; }
+  if(!ok){
+    /* Clipboard access is refused outside a secure context and in some
+       embedded previews. execCommand is the old path and still works there. */
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly','');
+      ta.style.position='fixed'; ta.style.top='-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    }catch(e){ ok = false; }
+  }
+  closeModal();
+  toast(ok ? 'Report copied' : 'Could not copy — select the report text and copy it by hand');
 }
 
 /* ---------- Sandbox & Deploy ----------
@@ -9058,62 +9249,86 @@ function renderMeta(){
 }
 window.lblSync=lblSync;
 
-/* ===================== SHOP FILTERS (storefront panel control) ===================== */
-const SF_LABELS={category:'Category',brand:'Brand',price:'Price',concern:'Skin concern',offers:'Offers'};
-const SF_MANUAL={category:true,brand:true,concern:true,price:false,offers:false};
-const SF_CONCERNS=['Hydration','Brightening','Acne','Soothing','Anti-aging','Pores','Sun protection'];
-const SF_ITEMS={category:()=>CAT_CATEGORIES.map(c=>c[0]),brand:()=>CAT_BRANDS.map(b=>b[0]),concern:()=>SF_CONCERNS};
-let SFCFG={order:['category','brand','price','concern','offers'],on:{category:true,brand:true,price:true,concern:true,offers:true},mode:{category:'all',brand:'all',concern:'all'},picks:{category:new Set(),brand:new Set(),concern:new Set()},sticky:true,cols:'4',counts:true};
+/* ===================== SHOP FILTERS =====================
+   ===== LANE DH ==============================================================
+
+   THIS SCREEN SAVED NOTHING AND SAID IT HAD.
+
+   Its whole configuration was SFCFG, a `let` in this file: the order of the
+   groups, which were switched on, whether each showed everything or a
+   hand-picked list, a sticky-panel toggle, a product-count toggle and a
+   default column count. The Save changes button was
+   onclick="toast('Shop filters saved (preview)')". There is no shop-filters
+   endpoint, no shop-filters setting and no migration for one. An owner could
+   switch Brand off, reorder the panel, hand-pick eleven categories, press Save,
+   read that it had saved, reload the console and find every one of those
+   choices gone - and the storefront had never differed by a pixel either way.
+
+   BUILT, OR SAID PLAINLY? Said plainly, and this was the close one. The test
+   was whether a real backing store existed and Save was the only missing
+   piece. It does not, and Save is not:
+
+     - The storefront panel is FIXED MARKUP. resources/views/store/shop.blade.php
+       renders four groups unconditionally - Category, Brand, Price, Offers -
+       and reads no configuration of any kind. Nothing anywhere consumes a
+       filter setting, because there is none to consume.
+
+     - This screen offered a FIFTH group, "Skin concern", over seven values
+       typed into SF_CONCERNS. The shop cannot filter by concern and has no
+       concern taxonomy: the only "concerns" column in the schema is free text
+       on a quiz submission. That group could not have been made to work by
+       saving anything.
+
+     - "Default grid columns" is not a stored setting either. Facets::columns()
+       reads ?cols= off the query string and defaults to 4; there is nowhere to
+       save a default to.
+
+     - "Sticky panel" and "Show product counts" describe how the panel already
+       behaves, unconditionally. Counts are always printed and the panel is
+       always sticky.
+
+   So wiring the Save button would have meant writing a settings key, an
+   endpoint, a reader on the shop page, a per-group allowlist the sidebar query
+   knows nothing about, and a skin-concern taxonomy. That is a feature. Wiring
+   Save alone would have been worse than what was there: today the toast at
+   least says "(preview)", whereas a Save that stored JSON nothing reads would
+   turn Brand off in the console and leave Brand on the shop, with the console
+   insisting it had been saved - the same lie, one layer further down, and
+   harder to find.
+
+   WHAT THE SCREEN SAYS INSTEAD is what really decides that panel today, which
+   is not nothing: which categories and brands appear, and in what order, comes
+   straight from the catalogue. ShopController orders both lists by the curated
+   `position` the Catalog reorder writes, then by size, and shows only entries
+   that have visible products. That is a real lever the owner has and did not
+   know about, and it was being hidden behind a screen pretending to be a
+   different one.
+
+   SFCFG, SF_LABELS, SF_MANUAL, SF_CONCERNS, SF_ITEMS, renderSFGroups() and
+   renderSFPrev() went with the screen that drew them; they had no other
+   caller. The .sf* rules in the stylesheet are left alone deliberately - they
+   are dead now, but the stylesheet is the most contended block in this file and
+   a purely cosmetic edit there is not worth the merge.
+   ========================================================================= */
 function renderShopFilters(){
   $('#content').innerHTML=`<div class="wrap">
-    <div class="page-head"><h2>Shop Filters</h2><p>Control exactly what appears in the storefront filter panel — turn groups on or off, reorder them, and hand-pick which categories, brands and concerns show.</p></div>
-    <div class="grid2-sf">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div class="card pad"><div class="pe-h" style="margin-bottom:6px">Filter groups</div><div id="sfGroups"></div></div>
-        <div class="card pad"><div class="pe-h" style="margin-bottom:12px">Panel display</div>
-          <div class="pref"><div class="pl"><b>Sticky panel</b><small>Keeps filters in view while the page scrolls</small></div><div class="tog${SFCFG.sticky?' on':''}" data-sf="sticky"></div></div>
-          <div class="pref"><div class="pl"><b>Show product counts</b><small>e.g. “Serums (64)”</small></div><div class="tog${SFCFG.counts?' on':''}" data-sf="counts"></div></div>
-          <div class="pref" style="border:0"><div class="pl"><b>Default grid columns</b><small>Shoppers can still switch</small></div><div class="sfseg" id="sfCols">${['2','3','4'].map(c=>`<button data-c="${c}" class="${SFCFG.cols===c?'on':''}">${c}</button>`).join('')}</div></div>
-          <button class="btn" style="margin-top:14px" onclick="toast('Shop filters saved (preview)')">Save changes</button>
-        </div>
-      </div>
-      <div class="card pad sfprev"><div class="pe-h" style="margin-bottom:4px">Storefront preview</div><div id="sfPrev"></div></div>
-    </div></div>`;
-  renderSFGroups();renderSFPrev();
-  $$('#content .tog[data-sf]').forEach(t=>t.onclick=()=>{SFCFG[t.dataset.sf]=!SFCFG[t.dataset.sf];t.classList.toggle('on');renderSFPrev();});
-  $$('#sfCols button').forEach(b=>b.onclick=()=>{SFCFG.cols=b.dataset.c;$$('#sfCols button').forEach(x=>x.classList.toggle('on',x===b));});
-}
-function renderSFGroups(){
-  const box=$('#sfGroups');
-  box.innerHTML=SFCFG.order.map((g,i)=>{
-    const manual=SF_MANUAL[g], mode=SFCFG.mode[g], on=SFCFG.on[g];
-    let checks='';
-    if(manual&&on&&mode==='manual'){checks=`<div class="sfchecks">${SF_ITEMS[g]().map(it=>`<span class="tagchip${SFCFG.picks[g].has(it)?' on':''}" data-pick="${g}" data-v="${it}">${it}</span>`).join('')}</div>`;}
-    return `<div class="sfrow">
-      <div class="sfmv"><button data-mv="up" data-i="${i}">${ic('<path d="m6 15 6-6 6 6"/>')}</button><button data-mv="down" data-i="${i}">${ic('<path d="m6 9 6 6 6-6"/>')}</button></div>
-      <div style="flex:1;min-width:0"><b style="font-size:13.5px">${SF_LABELS[g]}</b>${manual?`<div style="font-size:11px;color:var(--ink-soft)">${mode==='all'?'Showing all':SFCFG.picks[g].size+' selected'}</div>`:`<div style="font-size:11px;color:var(--ink-soft)">Fixed options</div>`}</div>
-      ${manual?`<div class="sfseg" data-modeg="${g}"><button data-m="all" class="${mode==='all'?'on':''}">Show all</button><button data-m="manual" class="${mode==='manual'?'on':''}">Manual</button></div>`:''}
-      <div class="tog${on?' on':''}" data-on="${g}"></div>
-    </div>${checks}`;
-  }).join('');
-  $$('#sfGroups .sfmv button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,j=b.dataset.mv==='up'?i-1:i+1;if(j<0||j>=SFCFG.order.length)return;[SFCFG.order[i],SFCFG.order[j]]=[SFCFG.order[j],SFCFG.order[i]];renderSFGroups();renderSFPrev();});
-  $$('#sfGroups .tog[data-on]').forEach(t=>t.onclick=()=>{SFCFG.on[t.dataset.on]=!SFCFG.on[t.dataset.on];renderSFGroups();renderSFPrev();});
-  $$('#sfGroups .sfseg[data-modeg] button').forEach(b=>b.onclick=()=>{SFCFG.mode[b.closest('.sfseg').dataset.modeg]=b.dataset.m;renderSFGroups();renderSFPrev();});
-  $$('#sfGroups .tagchip[data-pick]').forEach(c=>c.onclick=()=>{const g=c.dataset.pick,s=SFCFG.picks[g];s.has(c.dataset.v)?s.delete(c.dataset.v):s.add(c.dataset.v);renderSFGroups();renderSFPrev();});
-}
-function renderSFPrev(){
-  const box=$('#sfPrev');
-  const groups=SFCFG.order.filter(g=>SFCFG.on[g]);
-  if(!groups.length){box.innerHTML=`<p style="font-size:12px;color:var(--ink-soft)">All filter groups are hidden.</p>`;return;}
-  box.innerHTML=groups.map(g=>{
-    let items=[];
-    if(g==='price')items=['Under AED 50','50–100','100–200','200+'];
-    else if(g==='offers')items=['On sale','In stock'];
-    else{const all=SF_ITEMS[g]();items=SFCFG.mode[g]==='manual'?[...SFCFG.picks[g]]:all;}
-    if(!items.length)items=['(none selected)'];
-    const shown=items.slice(0,8);
-    return `<div class="fg"><div class="fgt">${SF_LABELS[g]}</div><div class="tagchips">${shown.map(t=>`<span class="tagchip">${t}${SFCFG.counts&&g!=='price'&&g!=='offers'&&t!=='(none selected)'?'':''}</span>`).join('')}${items.length>8?`<span class="tagchip" style="opacity:.6">+${items.length-8}</span>`:''}</div></div>`;
-  }).join('');
+    <div class="ph">
+      <div class="pic">${ic(I.modules)}</div>
+      <h3>Shop Filters isn&rsquo;t built yet</h3>
+      <p>This screen let you reorder the storefront&rsquo;s filter panel, switch groups off and hand-pick what each one lists. None of it was ever saved and none of it ever reached the shop &mdash; the Save button only showed a message. Rather than leave a button that lies, the screen says so.</p>
+      <p>The filter panel on <b>/shop/</b> is fixed: Category, Brand, Price and Offers, in that order, on every visit.</p>
+    </div>
+    <div class="card pad" style="margin-top:18px">
+      <b style="font-size:14px">What does change it today</b>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6">The Category and Brand groups are built from your catalogue, so the catalogue is where they are controlled:</p>
+      <ul style="font-size:12.5px;color:var(--ink-soft);margin:10px 0 0 18px;line-height:1.7">
+        <li>A category or brand appears in the panel only while it has products that are on sale to the public. Empty ones are left out on their own.</li>
+        <li>The order is the one you set in <b>Catalog</b> &mdash; reordering categories or brands there moves them in the shop&rsquo;s filter panel too. Anything you have not reordered falls back to biggest first for categories, A&ndash;Z for brands.</li>
+        <li>The panel lists up to 30 categories and 40 brands.</li>
+      </ul>
+      <button class="btn" style="margin-top:16px" onclick="go('catalog')">Catalog &rarr;</button>
+    </div>
+  </div>`;
 }
 window.renderShopFilters=renderShopFilters;
 
@@ -9137,6 +9352,10 @@ $$('#envtog button').forEach(b=>b.onclick=()=>{
 /* LANE DD — window.deploy and window.rollback are gone with the two buttons
    that were their only callers. See the note above renderSandbox(). */
 window.go=go;window.toast=toast;window.reportModal=reportModal;window.closeModal=closeModal;
+/* LANE DH - the two Debug & Monitor handlers that are named in an inline
+   onclick. kbbHealthRun is exported where it is defined, in the live-wiring
+   block below, because that is where api() is. */
+window.kbbOpenErrorLog=kbbOpenErrorLog;window.kbbCopyReport=kbbCopyReport;
 
 /* ---------- console settings + theme ---------- */
 /* id, name, gradient, bg, surface, accent, line, ink, accentSoft */
@@ -10200,6 +10419,115 @@ buildNav();
       }).join('');
     }
   }
+
+  /* ---------- LANE DH · storefront health check ----------------------------
+     The one implementation both screens use. The Dashboard's "Storefront
+     health" card and Safety -> Debug & Monitor render the same two ids -
+     #shPill and #shRows - and only one of them is ever on screen, so the
+     painter needs no notion of which screen it is on. Whichever one you pressed
+     the button on, the answer is the same answer.
+
+     IT LIVES HERE, in the live-wiring block, because this is where api() is:
+     the one helper that fixes up '/admin-api/...' for the subdirectory the live
+     site is deployed into, attaches the CSRF token and hands back the parsed
+     error body of a refusal.
+
+     NOTHING POLLS IT. There is no interval and no call on load. One call
+     renders eight complete pages inside the worker serving it (276ms cold on
+     the SQLite demo catalogue, more on the live shop) and the route carries
+     throttle:6,1. It runs when the owner presses the button, and not otherwise.
+
+     A REFUSAL IS PRINTED, NOT GUESSED AT. The route is system.diagnostics -
+     owner-only - and EnforceAdminCapability answers a role that does not hold
+     it with a JSON body whose `message` names the capability in a sentence. A
+     manager pressing Check now reads that sentence. He does not read a green
+     tick, which is the whole defect this card was built to remove: a tick that
+     means "we did not check" is not a milder version of a lie about health, it
+     is the same one. */
+  function shEl(id){ return document.getElementById(id); }
+
+  function shPaint(){
+    var pill = shEl('shPill'), rows = shEl('shRows');
+    if(!pill || !rows) return;                 // the owner moved to another screen
+    var h = window.KBB_HEALTH || {};
+
+    function setPill(cls, text){
+      pill.className = 'pill ' + cls;
+      pill.innerHTML = '<span class="d"></span>' + sesc(text);
+    }
+
+    if(h.running){
+      setPill('grey', 'Checking…');
+      rows.innerHTML = '<p style="font-size:12.5px;color:var(--ink-soft)">Opening every public page…</p>';
+      return;
+    }
+
+    if(h.error){
+      setPill('red', 'Could not check');
+      rows.innerHTML = '<p style="font-size:12.5px;color:var(--sale,#c0392b);line-height:1.55">' + sesc(h.error) + '</p>';
+      return;
+    }
+
+    if(!h.data){ return; }                     // never run: leave the screen's own copy
+
+    var d = h.data;
+    if(d.failed) setPill('red', d.failed + ' of ' + d.checked + ' failing');
+    else setPill('green', 'All ' + d.checked + ' pages OK');
+
+    var html = '<div class="health">' + (d.results||[]).map(function(r){
+      var dot = r.ok ? 'green' : 'red';
+      if(r.ok){
+        return '<div class="hrow"><span class="hd ' + dot + '"></span><b>' + sesc(r.label) +
+               '</b><small>HTTP ' + sesc(r.status) + '</small></div>';
+      }
+      /* A failure spans both columns and carries what the check actually
+         learned: the exception message, and the file and line in this
+         application that raised it. That pair is the whole reason the endpoint
+         exists, and it is what gets pasted into the report. */
+      var detail = '<div style="flex-basis:100%;margin-left:19px;font-size:11.5px;color:var(--ink-soft);line-height:1.5;word-break:break-word">' +
+        sesc(r.path) +
+        (r.error ? '<br>' + sesc(r.error) : '') +
+        (r.where ? '<br><code style="font-size:11px">' + sesc(r.where) + '</code>' : '') +
+        '</div>';
+      return '<div class="hrow" style="grid-column:1/-1;flex-wrap:wrap;align-items:flex-start">' +
+             '<span class="hd ' + dot + '" style="margin-top:3px"></span><b>' + sesc(r.label) +
+             '</b><small>HTTP ' + sesc(r.status) + '</small>' + detail + '</div>';
+    }).join('') + '</div>';
+
+    html += '<p style="font-size:11.5px;color:var(--ink-faint);margin-top:11px;line-height:1.5">Checked ' +
+      sesc(h.at ? h.at.toLocaleTimeString() : 'just now') +
+      '. This is what those pages returned at that moment — it is a check you ran, not a monitor that keeps watching.</p>';
+
+    rows.innerHTML = html;
+  }
+
+  async function kbbHealthRun(){
+    var btn = shEl('shRun');
+    if(btn && btn.disabled) return;            // already in flight
+    if(btn){ btn.disabled = true; btn.dataset.label = btn.textContent; btn.textContent = 'Checking…'; }
+
+    window.KBB_HEALTH = {running:true, at:null, data:null, error:null};
+    shPaint();
+
+    var next = {running:false, at:new Date(), data:null, error:null};
+    try{
+      next.data = await api('/admin-api/health');
+    }catch(e){
+      /* Each of these is a different thing to tell the owner, and "could not
+         check" on its own sends him to look at his wifi over a permission. */
+      if(e.body && e.body.message)      next.error = e.body.message;
+      else if(e.status === 429)         next.error = 'That is a lot of checks in one minute. Each one opens eight pages of your shop, so it is rate-limited — wait a moment and press it again.';
+      else if(e.status === 404)         next.error = 'The health check is not installed on this server yet. It arrives with the next update package.';
+      else if(e.status === 419)         next.error = 'Your session has expired. Reload this page and sign in again.';
+      else                              next.error = 'The check could not be run: ' + (e.message || 'no answer from the server') + '.';
+    }
+    window.KBB_HEALTH = next;
+
+    if(btn){ btn.disabled = false; btn.textContent = btn.dataset.label || 'Check again'; }
+    shPaint();
+  }
+
+  window.kbbHealthRun = kbbHealthRun;
 
   /* ---------- Orders screen (new; built from the admin's own tokens) ---------- */
   var ORDER_STATUSES=['draft','pending','processing','onhold','shipped','completed','cancelled','refunded','failed'];
