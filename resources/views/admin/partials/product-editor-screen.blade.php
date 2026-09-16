@@ -164,6 +164,42 @@
 .peo-main-img img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
 .peo-main-cap{display:flex;gap:8px;padding:8px 10px;border-top:1px solid var(--border,#e6e6e6);flex-wrap:wrap}
 
+/* Main image and gallery SIDE BY SIDE inside one Images panel.
+
+   A viewport media query is the wrong instrument here and was tried first. The
+   panel's width is not a function of the viewport alone: it depends on which
+   column the operator has dragged it into, and .peo-grid keeps a 320px sidebar
+   from 901px up. At a 901px viewport the main column is about 473px, which a
+   `min-width:901px` rule would have declared wide enough -- and the gallery
+   half would have been 195px, leaving each alt-text box about 27px. That is
+   the same defect the comment above this one is about, reintroduced from the
+   other direction.
+
+   So the question asked is the one that actually matters: how wide is THIS
+   PANEL. Container queries answer it whichever column the panel sits in.
+
+   The single-column rule is the BASE, and the two-column rule is what the
+   query adds. A browser that does not understand @container therefore renders
+   exactly what this screen rendered before -- stacked -- rather than a broken
+   two-column grid. Degrading to today's layout is the whole reason the
+   fallback is arranged this way round.
+
+   620px is where the split starts paying. Below it the gallery half takes the
+   alt-text inputs under the 130px that makes a sentence typeable; above it the
+   main column at 1280 (~650px here) splits to a 260px preview and a ~370px
+   list, and at 1920 (~1290px) the list gets over 1000px. */
+.peo-mediawrap{container-type:inline-size;min-width:0}
+.peo-media{display:grid;gap:16px;align-items:start;min-width:0}
+.peo-media > *{min-width:0}
+.peo-media h4{margin:0 0 3px;font-size:12px;font-weight:700;letter-spacing:.04em;
+              text-transform:uppercase;color:var(--ink-soft,#6b7280)}
+@container (min-width:620px){
+  /* Fixed left track, not a fraction: the preview is capped at 260px by
+     .peo-main-img anyway, so a fractional track would only ever add dead space
+     between the two halves at wide widths. */
+  .peo-media{grid-template-columns:260px minmax(0,1fr)}
+}
+
 /* The gallery is a LIST, not a grid of thumbnails, and that is a decision
    about alt text rather than about looks. Every shot carries its own alt, the
    alt is a sentence, and a sentence needs a full-width box to be typed into --
@@ -835,10 +871,10 @@
     var body = model.images.length
       ? '<div class="peo-gal" id="peo-gal">' + tiles + '</div>'
       : '<div class="peo-empty"><b>No gallery images yet</b>'
-        + 'The main image above is shown first. Add more and they appear after it, in this order.</div>';
+        + 'The main image is shown first. Add more and they appear after it, in this order.</div>';
 
-    return '<div class="peo-card">'
-      + '<h3>Gallery</h3>'
+    return '<section class="peo-media-gal">'
+      + '<h4>Gallery</h4>'
       + '<p class="peo-hint">Drag the handle to reorder, or use ↑ ↓. This is the order customers see, '
       +   'after the main image. The description under each photo is what Google Images and screen '
       +   'readers read — write what is actually in the shot.</p>'
@@ -846,6 +882,26 @@
       + '<div style="height:10px"></div>'
       + '<button class="peo-drop" id="peo-galdrop"><b>Add gallery images</b>Drop them here, or tap to choose</button>'
       + '<input type="file" id="peo-galfile" accept="image/*" multiple hidden>'
+      + '</section>';
+  }
+
+  /* The panel the operator actually sees. mainImageView() and galleryView()
+     each return a half rather than their own card, so the two sit in one grid
+     and cannot be dragged apart -- which is the point: they are one job.
+
+     Every id inside them (peo-mainpick, peo-mainrm, peo-mainfile, peo-galdrop,
+     peo-galfile, peo-gal) is unchanged and still appears exactly once in the
+     document, so the delegated handlers and the drag-and-drop wiring below
+     bind to the same elements they always did. */
+  function imagesView(){
+    return '<div class="peo-card">'
+      + '<h3>Images</h3>'
+      + '<p class="peo-hint">The main image is the one customers see first, on the shop grid and at the '
+      +   'top of the product page. Everything in the gallery follows it, in the order shown.</p>'
+      + '<div class="peo-mediawrap"><div class="peo-media">'
+      +   mainImageView()
+      +   galleryView()
+      + '</div></div>'
       + '</div>';
   }
 
@@ -854,8 +910,8 @@
       ? '<img src="' + url(model.image) + '" alt="">'
       : '<div class="peo-ph">No main image yet</div>';
 
-    return '<div class="peo-card">'
-      + '<h3>Main image</h3>'
+    return '<section class="peo-media-main">'
+      + '<h4>Main image</h4>'
       + '<p class="peo-hint">The first picture customers see, on the shop grid and at the top of the product page.</p>'
       + '<div class="peo-main-img">' + box
       +   '<div class="peo-main-cap">'
@@ -871,7 +927,7 @@
             +   'Left empty, the shop uses the brand and product name.</div></div>'
           : '')
       + '<input type="file" id="peo-mainfile" accept="image/*" hidden>'
-      + '</div>';
+      + '</section>';
   }
 
   function categoriesView(){
@@ -1071,8 +1127,17 @@
 
   var PANELS = [
     { key: 'basics',     label: 'Basics',            col: 'main', view: basicsView },
-    { key: 'main_image', label: 'Main image',        col: 'main', view: function(){ return mainImageView(); } },
-    { key: 'gallery',    label: 'Gallery',           col: 'main', view: function(){ return galleryView(); } },
+    /* One panel, not two. The owner asked for the main image and the gallery
+       beside each other; leaving them as separate draggable panels would have
+       let an arrangement put them back in a stack, or in different columns,
+       and the request would hold only until someone dragged something.
+
+       'main_image' and 'gallery' are retired keys. reconcile() drops names it
+       does not recognise and appends registry panels a saved document has
+       never heard of, so an operator who had already arranged this screen
+       keeps every other panel where they put it and finds Images appended to
+       the main column -- a stale preference, not a broken screen. */
+    { key: 'images',     label: 'Images',            col: 'main', view: function(){ return imagesView(); } },
     { key: 'short_description', label: 'Short description', col: 'main', view: function(){
         return rte('short_description', 'Short description',
           'The summary beside the price. One or two lines.',

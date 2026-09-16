@@ -422,8 +422,23 @@ it('keeps the screen\'s panel registry internally consistent', function () {
     $cols = array_column($panels, 2);
 
     // Every panel the two-column editor actually has.
-    expect($keys)->toHaveCount(13);
+    expect($keys)->toHaveCount(12);
     expect(array_unique($keys))->toHaveCount(count($keys), 'a panel key is listed twice');
+
+    /*
+     * The main image and the gallery are ONE panel, and the count above is not
+     * what enforces that -- a count is satisfied by any twelve keys. These are.
+     *
+     * Splitting them back into two draggable panels is the specific regression
+     * worth naming: the owner asked for the two beside each other, and as
+     * separate panels an arrangement could put them back in a stack, or in
+     * different columns, at which point the request holds only until somebody
+     * drags something. Merging them is what makes "side by side" a property of
+     * the screen rather than of one operator's saved preference.
+     */
+    expect($keys)->toContain('images');
+    expect($keys)->not->toContain('main_image');
+    expect($keys)->not->toContain('gallery');
 
     foreach ($keys as $key) {
         // The same rule the endpoint validates against, so a key that renders
