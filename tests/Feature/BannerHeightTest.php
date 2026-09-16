@@ -99,3 +99,49 @@ it('makes the phone banner shorter too, not just the desktop one', function () {
 
     expect((int) $t[1])->toBeLessThanOrEqual(24, "the phone tint banner's padding is back to {$t[1]}px");
 });
+
+it('lifts banner type off the photograph in both tones', function () {
+    /*
+     * The owner: "text on the banner should have background shadow type, so it
+     * will not merge into background image."
+     *
+     * The scrim darkens the corner the copy sits in, but a gradient cannot know
+     * what is under any one letter — a blown-out white highlight behind white
+     * type still swallows it. So the type carries its own shadow as well.
+     *
+     * Only the full-bleed style: it is the only one where copy sits over a
+     * photograph. Split puts it on a solid panel and tint has no image, so a
+     * shadow there would be decoration on a surface that does not need it.
+     *
+     * TONE-AWARE, which is the part worth pinning. The owner chooses the type
+     * colour: light type needs a dark halo, dark type a white one. A blanket
+     * dark shadow would smear under dark type on a pale photograph — worse than
+     * the problem it set out to fix. Verified in Chromium against a
+     * deliberately hostile high-key image with white patches behind the
+     * heading; both tones read clearly.
+     */
+    $css = bannerCss();
+
+    expect(preg_match('/\.kbb-banner--full \.kbb-banner__heading\{\s*text-shadow:([^;]+);/', $css, $light))
+        ->toBe(1, 'the full-bleed heading has no text shadow, so light type merges into a pale photo');
+
+    expect(str_contains($light[1], 'rgba(0,0,0'))
+        ->toBeTrue("light type's shadow is not dark, so it cannot lift it off a bright image: {$light[1]}");
+
+    expect(preg_match('/\.kbb-banner--full\.kbb-banner--dark \.kbb-banner__heading\{\s*text-shadow:([^;]+);/', $css, $dark))
+        ->toBe(1, 'dark type has no tone-specific shadow, so it inherits the dark one and smears');
+
+    expect(str_contains($dark[1], 'rgba(255,255,255'))
+        ->toBeTrue("dark type's shadow is not a light halo: {$dark[1]}");
+
+    // The subheading too — it is smaller and thinner, so it merges first.
+    expect(preg_match('/\.kbb-banner--full \.kbb-banner__sub\{\s*text-shadow:/', $css))
+        ->toBe(1, 'the subheading has no shadow, and being lighter weight it merges before the heading does');
+
+    /*
+     * And NOT on the styles that do not need it. A shadow on type sitting on a
+     * solid panel is grime.
+     */
+    expect(preg_match('/\.kbb-banner--(split|tint)[^{]*\.kbb-banner__(heading|sub)\{[^}]*text-shadow/', $css))
+        ->toBe(0, 'a shadow was added to type that sits on a solid panel, where it only dirties the edge');
+});

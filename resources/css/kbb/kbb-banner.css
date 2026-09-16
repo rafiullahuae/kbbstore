@@ -131,10 +131,12 @@
                               rgba(18,12,16,0) 62%);
 }
 
+/* Light type is the default, so this doubles as the no-tone fallback. */
 .kbb-banner--full .kbb-banner__heading{
-  /* Belt and braces over the scrim: a blown-out white sky behind white type is
-     the one case a gradient cannot fix on its own. */
-  text-shadow:0 1px 2px rgba(18,12,16,.34), 0 10px 32px rgba(18,12,16,.28);
+  text-shadow:0 1px 2px rgba(0,0,0,.55), 0 3px 18px rgba(0,0,0,.4);
+}
+.kbb-banner--full .kbb-banner__sub{
+  text-shadow:0 1px 2px rgba(0,0,0,.5), 0 2px 12px rgba(0,0,0,.35);
 }
 
 /* The dark-type variant. For a soft, high-key photograph where white type
@@ -148,8 +150,28 @@
                               rgba(255,255,255,0) 62%);
 }
 
+/* ---------------------------------------------------- type over a photograph
+
+   The scrim darkens (or lightens) the whole corner the copy sits in, but a
+   gradient cannot know what is under any one letter: a pale highlight in the
+   photo behind a white heading still swallows it. So the type carries its own
+   shadow as well, and only on the full-bleed style, because that is the only
+   one where copy sits over an image at all — split puts it on a solid panel
+   and tint has no photograph.
+
+   Two layers each, doing different jobs: a tight 1-2px offset that separates
+   the glyph edge from whatever is immediately behind it, and a wide, soft halo
+   that lifts the whole word off a busy background. Tuned to stay invisible on
+   a plain photo and only show up where it is earning its keep.
+
+   Tone-aware, because the owner picks the type colour. Light type gets a dark
+   shadow; dark type gets a white halo. A blanket dark shadow would put a dirty
+   smear under dark type on a pale photograph — worse than the problem. */
 .kbb-banner--full.kbb-banner--dark .kbb-banner__heading{
-  text-shadow:0 1px 2px rgba(255,255,255,.5);
+  text-shadow:0 1px 2px rgba(255,255,255,.75), 0 3px 18px rgba(255,255,255,.55);
+}
+.kbb-banner--full.kbb-banner--dark .kbb-banner__sub{
+  text-shadow:0 1px 2px rgba(255,255,255,.7), 0 2px 12px rgba(255,255,255,.5);
 }
 
 /* ------------------------------------------------------------------- 2. SPLIT

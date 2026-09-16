@@ -148,6 +148,8 @@
               min-width:0;box-sizing:border-box;padding:18px;margin:auto}
 .ct-modal-h{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px;min-width:0}
 .ct-modal-h b{font-size:15px;min-width:0;overflow-wrap:anywhere}
+.ct-link{border:0;background:none;padding:0;font:inherit;color:var(--accent,#15a85a);
+         text-decoration:underline;cursor:pointer}
 .ct-x{border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:var(--ink-soft,#6b7280);flex:0 0 auto}
 .ct-modal-f{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px;min-width:0}
 
@@ -415,8 +417,9 @@
 
     return '<div class="ct-card">'
       + '<div class="ct-head"><div style="min-width:0">'
-      + '<div class="ct-title">Brands</div>'
+      + '<div class="ct-title">Brand order</div>'
       + '<div class="ct-sub">Drag to set the order they appear in the shop filter. '
+      + 'Adding, renaming, banners and deleting are on the <button type="button" class="ct-link" id="ct-tobrands">Brands</button> screen. '
       + 'Brand pages are /shop/?filter_brands=… — a query parameter, not a path (URL contract U-05).</div>'
       + '</div></div>'
       + '<div style="margin-top:13px;min-width:0">' + body + '</div>'
@@ -878,6 +881,11 @@
     wireModal();
   }
 
+  function wireBrandsLink(){
+    var b = document.getElementById('ct-tobrands');
+    if (b) b.onclick = function(){ window.go('brands-manager'); };
+  }
+
   function wireModal(){
     if (!modal) return;
     modal.querySelectorAll('[data-close]').forEach(function(b){ b.onclick = closeModal; });
@@ -887,6 +895,8 @@
   function wire(){
     var host = document.getElementById('ct-root');
     if (!host) return;
+
+    wireBrandsLink();
 
     host.querySelectorAll('[data-tab]').forEach(function(b){
       b.onclick = function(){
@@ -957,7 +967,7 @@
     b.className = 'nav-item';
     b.dataset.go = SCREEN;
     b.innerHTML = icon('<path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/>')
-                + '<span>Categories &amp; Brands</span>';
+                + '<span>Categories</span>';
     b.onclick = function(){ window.go(SCREEN); };
     anchor.parentNode.insertBefore(b, anchor.nextSibling);
   }
@@ -979,7 +989,7 @@
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = 'Catalog';
-    if (title) title.textContent = 'Categories & Brands';
+    if (title) title.textContent = 'Categories';
 
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
