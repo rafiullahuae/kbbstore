@@ -372,6 +372,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // moves every product out of a category.
         require __DIR__.'/categories-brands-admin.php';
 
+        // Content → Media Library: the grid of every image uploaded through the
+        // admin, its search, and what each image is used by before deleting it.
+        require __DIR__.'/media-library-admin.php';
+
         // Catalog → Products: the list, inline edits, the detail panel, guarded
         // bulk actions and the filtered CSV export. Flat paths on purpose —
         // /admin-api/products/{id} above carries no constraint on {id}, so a
