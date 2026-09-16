@@ -24,8 +24,10 @@ use App\Support\Url;
  *
  *   WhatsApp   Store → Mail, else `brand_whatsapp` (the footer and the phone
  *              menu already use it), else `whatsapp` (the header block).
- *   Email      Store → Mail, else the From address — derived from APP_URL when
- *              the owner has not typed one, see MailSettings::fromAddress().
+ *   Email      Store → Mail's support email, else the Reply-To address, else
+ *              the From address AS TYPED. Never the `no-reply@<domain>` that
+ *              MailSettings::fromAddress() derives from APP_URL when the From
+ *              box is blank — see support() for the measurement.
  *   Instagram  Store → Mail, else `social_instagram` from Store → Business
  *              Details, which is where the SEO screen already saves it.
  *   Logo       `org_logo`, the one logo image this store keeps — the same file
@@ -291,9 +293,62 @@ class EmailBranding
             }
         }
 
+        /*
+         * ── "EMAIL US · no-reply@…" — Lane DG ───────────────────────────────
+         *
+         * This chain ended in $this->mail->fromAddress(), and fromAddress()
+         * DERIVES `no-reply@<domain>` from APP_URL whenever the From box is
+         * empty — which is the shipped state of Store → Mail, deliberately,
+         * because the server transport needs nothing filled in.
+         *
+         * MEASURED, not read off the code, because on the test box APP_URL has
+         * no dot and fromAddress() returns '' — so the whole defect is
+         * invisible to this suite unless APP_URL is set to a real domain first.
+         * With `https://kbeautybliss.com` and nothing else configured, the
+         * support block rendered, verbatim:
+         *
+         *     Email us   no-reply@kbeautybliss.com
+         *     <a href="mailto:no-reply@kbeautybliss.com">no-reply@kbeautybliss.com</a>
+         *
+         * A block headed "We are here if you need us", inviting a customer to
+         * write, with a live mailto: to a mailbox named for not being read.
+         * That is the same claim the footer's "reply to this message" sentence
+         * was removed for — the invitation was taken out of the layout and left
+         * standing two rows above it.
+         *
+         * WORSE, AND THIS IS WHAT DECIDED THE SHAPE OF THE FIX: setting
+         * `mail_reply_to` did not help. The owner naming the mailbox he
+         * actually reads, in the box whose own help text says "Where a
+         * customer's reply to an order email goes", still printed
+         * no-reply@kbeautybliss.com under "Email us".
+         *
+         * So two changes, and they answer different states:
+         *
+         *   `mail_reply_to` JOINS THE CHAIN, second. It is a real mailbox the
+         *       owner named for this exact purpose, it is already validated on
+         *       the way in and again on the way out, and preferring it is
+         *       strictly better than printing nothing.
+         *
+         *   THE DERIVED ADDRESS LEAVES IT. `get('mail_from_address')` is the
+         *       address the owner TYPED; fromAddress() is that value OR a
+         *       no-reply@ synthesised from APP_URL. Reading the stored row
+         *       keeps every shop that typed a From address exactly as it was
+         *       and drops only the synthesised one — which is not a mailbox
+         *       anybody chose and not one anybody answers.
+         *
+         * Showing nothing is the right answer in that last case rather than a
+         * softer label: this file's own header says a channel with no value is
+         * simply not printed, because an empty row in a support block is worse
+         * than a shorter block. An address nobody reads is an empty row that
+         * looks full.
+         *
+         * A SHOP THAT HAS SET A REAL SUPPORT EMAIL IS UNAFFECTED — that value
+         * is still first and nothing below it is consulted.
+         */
         $email = $this->firstFilled([
             $this->mail->get('mail_support_email'),
-            $this->mail->fromAddress(),
+            $this->mail->replyToAddress(),
+            $this->mail->get('mail_from_address'),
         ]);
 
         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) !== false) {
