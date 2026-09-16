@@ -97,6 +97,30 @@ final class MediaBackfill
             if ($rows !== []) {
                 Media::query()->insert($rows);
                 $added += count($rows);
+
+                /*
+                 * Record what these files are used by.
+                 *
+                 * insert() above is a QUERY-BUILDER bulk insert, so no
+                 * Eloquent `created` event fires and the Media hook in
+                 * MediaUsageWriter never sees these rows. Left there, every
+                 * file this catalogues would have a media row and no usage
+                 * rows — which reads as "unused" on the Media Library and
+                 * invites the operator to delete an image that is on the
+                 * shop. That is the one direction of drift that is actually
+                 * dangerous, so it is closed here rather than left to the
+                 * reconcile command.
+                 *
+                 * Re-read rather than reused: insert() does not give the rows
+                 * back their ids, and syncMedia needs them.
+                 */
+                MediaUsageWriter::syncMedia(
+                    Media::query()
+                        ->select(['id', 'filename', 'path'])
+                        ->whereIn('path', array_column($rows, 'path'))
+                        ->get()
+                        ->all()
+                );
             }
         }
 
