@@ -147,3 +147,53 @@ it('gives each api order its own number', function () {
 
     expect($numbers->unique())->toHaveCount(2);
 });
+
+/**
+ * The public checkout endpoint had no collision check whatsoever. (Lane BA)
+ *
+ * Its allocation was `10000 + MAX(id) + 1`, and its docblock claimed that
+ * continued from "whatever is already there" and kept imported WooCommerce
+ * orders safe. It did neither: it never read `order_number` at all. One
+ * imported order numbered near the id range, or any SOFT-DELETED order holding
+ * the number it computed — still very much present in the UNIQUE index, and
+ * invisible to a default-scoped query — and this endpoint raised SQLSTATE
+ * 23000 on the insert. Unlike the other two placement paths it had no search
+ * and no retry, so there was nothing to recover it.
+ *
+ * It now allocates from App\Services\Orders\OrderNumbers, before the
+ * transaction opens. Both rows below are the ones that used to break it.
+ */
+it('places an order past an imported number and a trashed one', function () {
+    PaymentProvider::create(['id' => 'cod', 'title' => 'Cash on delivery', 'enabled' => true, 'mode' => 'test', 'position' => 0]);
+
+    // The number the old formula would have produced for the next id, held by
+    // an order that has been trashed. Its number is still in the index.
+    $trashed = Order::create([
+        'order_number' => '10002',
+        'email' => 'trashed@example.com',
+        'status' => 'cancelled', 'currency' => 'AED',
+        'subtotal' => 100, 'discount_total' => 0, 'shipping_total' => 0,
+        'fee_total' => 0, 'tax_total' => 0, 'total' => 100,
+    ]);
+    $trashed->delete();
+
+    // And an import, far ahead of the ids.
+    Order::create([
+        'order_number' => '48231',
+        'email' => 'imported@example.com',
+        'status' => 'completed', 'currency' => 'AED',
+        'subtotal' => 100, 'discount_total' => 0, 'shipping_total' => 0,
+        'fee_total' => 0, 'tax_total' => 0, 'total' => 100,
+    ]);
+
+    $response = test()->postJson('/api/checkout/session', sessionPayload(apiProduct()))
+        ->assertStatus(201);
+
+    $number = (int) $response->json('order_number');
+
+    // Above everything already in the table, trashed rows included, and not
+    // one of them.
+    expect($number)->toBeGreaterThan(48231);
+
+    expect(Order::withTrashed()->where('order_number', (string) $number)->count())->toBe(1);
+});

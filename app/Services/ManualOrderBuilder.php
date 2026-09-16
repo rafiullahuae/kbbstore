@@ -132,6 +132,7 @@ class ManualOrderBuilder
         private CouponService $coupons,
         private ShippingService $shipping,
         private SettingsService $settings,
+        private \App\Services\Orders\OrderNumbers $orderNumbers,
     ) {}
 
     /* ===================================================================
@@ -231,21 +232,60 @@ class ManualOrderBuilder
      */
     public function create(array $input, ?string $author = null): array
     {
-        try {
-            $order = DB::transaction(function () use ($input, $author) {
-                return $this->createWithin($input, $author);
-            });
-        } catch (ManualOrderFailure $e) {
-            // The draft cart and anything else written inside the transaction
-            // is already gone; the operator gets the service's own wording.
-            return ['ok' => false, 'error' => $e->getMessage(), 'order' => null];
+        $lastDuplicate = null;
+
+        /*
+         * Allocate, place, and on a duplicate number allocate AGAIN — from out
+         * here, where the retry can see what other processes have committed.
+         *
+         * That last clause is the entire fix. insertOrder() used to mint the
+         * number from a MAX() read taken INSIDE the transaction and retry eight
+         * times against the unique index; under MySQL's REPEATABLE READ all
+         * eight attempts were served the same snapshot, so all eight computed
+         * the same number, all eight were refused, and the operator's order
+         * failed outright whenever another order was being placed at the same
+         * moment. Two real processes measured it at eight lost orders in eight
+         * rounds (tests/Feature/OrderNumberRaceTest.php).
+         *
+         * Each pass here begins a NEW transaction, so its allocation and its
+         * insert both see current data. App\Services\Orders\OrderNumbers has
+         * the rest of the reasoning, including why allocating takes no lock.
+         *
+         * THREE PASSES, not eight. The sequence hands out a distinct number to
+         * every caller, so reaching this loop at all means something outside it
+         * — an import writing explicit WooCommerce numbers — took the number in
+         * between. That is rare and self-correcting: the sequence has already
+         * moved past it. A number that is still refused three times running is
+         * a broken table, and a longer loop would only take longer to say so.
+         */
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $orderNumber = $this->orderNumbers->allocate();
+
+            try {
+                $order = DB::transaction(function () use ($input, $author, $orderNumber) {
+                    return $this->createWithin($input, $author, $orderNumber);
+                });
+
+                return ['ok' => true, 'error' => null, 'order' => $order];
+            } catch (ManualOrderFailure $e) {
+                // The draft cart and anything else written inside the
+                // transaction is already gone; the operator gets the service's
+                // own wording. Not a numbering problem, so not retried.
+                return ['ok' => false, 'error' => $e->getMessage(), 'order' => null];
+            } catch (QueryException $e) {
+                if (! $this->isDuplicateOrderNumber($e)) {
+                    throw $e;
+                }
+
+                $lastDuplicate = $e;
+            }
         }
 
-        return ['ok' => true, 'error' => null, 'order' => $order];
+        throw $lastDuplicate ?? new \RuntimeException('Could not allocate an order number.');
     }
 
     /** The body of create(), run inside the transaction. */
-    private function createWithin(array $input, ?string $author): Order
+    private function createWithin(array $input, ?string $author, string $orderNumber): Order
     {
         $cart = $this->buildDraftCart($input);
         $priced = $this->price($cart, $input);
@@ -259,7 +299,7 @@ class ManualOrderBuilder
         $totals = $priced['totals'];
         $fee = $priced['fee'];
 
-        $order = $this->insertOrder([
+        $order = $this->insertOrder($orderNumber, [
             'customer_id' => $customer->id,
             'email' => mb_strtolower((string) $customer->email),
             'phone' => $address['phone'] ?? $customer->phone,
@@ -611,59 +651,65 @@ class ManualOrderBuilder
     }
 
     /**
-     * Insert the order, allocating an order_number nothing already holds.
+     * Insert the order under a number that has already been allocated.
      *
-     * The allocation is Store\CheckoutController::nextOrderNumber()'s, and it
-     * has to stay that way or the two paths will collide with each other: the
-     * highest of "10000 + the largest id" and "the largest order_number",
-     * walked forward until something is free. The second candidate is what
-     * makes imported WooCommerce orders safe — they keep their own numbers, and
-     * an id-derived guess alone lands straight on top of one.
+     * THE ALLOCATION NO LONGER HAPPENS HERE, and that is the whole point. This
+     * method used to compute the number itself, from
      *
-     * That method is private on the checkout controller, so the rule is
-     * repeated here rather than the controller being edited. If it changes,
-     * this has to change with it.
+     *     max(10000 + MAX(id), (int) MAX(order_number))
      *
-     * What is added: order_number is UNIQUE, and two operators saving in the
-     * same second both read the same maximum. The insert is retried against the
-     * unique index, which is the only thing that actually knows.
+     * walked forward to the first free number, and retried the insert eight
+     * times against the unique index when it lost. Every part of that ran
+     * inside create()'s transaction, where MySQL's REPEATABLE READ served each
+     * of the eight attempts the same snapshot — so all eight computed the same
+     * number, all eight were refused, and the operator's order failed. Two real
+     * processes measured it at eight lost orders in eight rounds before the
+     * change; see tests/Feature/OrderNumberRaceTest.php.
+     *
+     * App\Services\Orders\OrderNumbers now allocates, from a sequence row, by
+     * compare-and-swap, and create() calls it BEFORE opening the transaction so
+     * that a retry can actually see another process's commit.
+     *
+     * THE RETRY STAYS, one level up. Nothing promises the number is still free
+     * when we get here — an import writing explicit WooCommerce numbers can
+     * take it in between — so a duplicate key is still possible, and it is
+     * still the unique index that has the last word. What has changed is that
+     * retrying now means allocating again from outside the transaction, which
+     * is the caller's job because only the caller owns the transaction
+     * boundary.
      */
-    private function insertOrder(array $attributes): Order
+    private function insertOrder(string $orderNumber, array $attributes): Order
     {
-        $lastError = null;
+        return Order::create($attributes + ['order_number' => $orderNumber]);
+    }
 
-        for ($attempt = 0; $attempt < 8; $attempt++) {
-            $candidate = max(
-                10000 + (int) Order::withTrashed()->max('id'),
-                (int) Order::withTrashed()->max('order_number'),
-            );
-
-            // Bounded, like the checkout's own loop: a thousand consecutive
-            // taken numbers means something a retry should not paper over.
-            $number = null;
-
-            for ($i = 0; $i < 1000; $i++) {
-                $next = (string) (++$candidate);
-
-                if (! Order::withTrashed()->where('order_number', $next)->exists()) {
-                    $number = $next;
-                    break;
-                }
-            }
-
-            if ($number === null) {
-                $number = (string) $candidate . random_int(100, 999);
-            }
-
-            try {
-                return Order::create($attributes + ['order_number' => $number]);
-            } catch (QueryException $e) {
-                // Lost the race between the check and the insert. Look again.
-                $lastError = $e;
-            }
+    /**
+     * Was this the unique index refusing our order number, or something else?
+     *
+     * Narrow on purpose. `orders` carries three unique indexes — order_number,
+     * wc_order_id and invoice_number — and retrying the placement is only ever
+     * the right answer for the first. Catching every integrity violation would
+     * silently re-run a placement that failed for a reason a retry cannot fix,
+     * and catching every QueryException would hide a schema error behind three
+     * identical failures.
+     *
+     * Matched on the index name, which both engines put in the message
+     * (`orders_order_number_unique`), with the bare column name as a fallback
+     * for a server whose index was re-created under another name — the repair
+     * migration in this repo has done exactly that to another table. SQLSTATE
+     * 23000 alone is not enough to conclude anything, so it is required as well
+     * as, not instead of, the name.
+     */
+    private function isDuplicateOrderNumber(QueryException $e): bool
+    {
+        if ((string) $e->getCode() !== '23000') {
+            return false;
         }
 
-        throw $lastError ?? new \RuntimeException('Could not allocate an order number.');
+        $message = $e->getMessage();
+
+        return str_contains($message, 'orders_order_number_unique')
+            || str_contains($message, 'order_number');
     }
 
     /**

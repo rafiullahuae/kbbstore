@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Services\Orders\OrderNumbers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -39,7 +40,16 @@ class CheckoutController extends Controller
             'method'           => 'required|string|in:cod,stripe,tabby,tamara',
         ]);
 
-        return DB::transaction(function () use ($data) {
+        /*
+         * BEFORE the transaction, for the reason Store\CheckoutController::place()
+         * gives at length: an order number read from inside the placing
+         * transaction comes out of that transaction's snapshot, so two
+         * simultaneous placements compute the same one and the loser dies on
+         * the unique index.
+         */
+        $orderNumber = $this->nextOrderNumber();
+
+        return DB::transaction(function () use ($data, $orderNumber) {
             $settings   = Setting::map();
             $freeShip   = (int) ($settings['free_ship'] ?? 20000);      // fils
             $codFeeCfg  = (int) ($settings['cod_fee'] ?? 0);            // fils
@@ -165,7 +175,7 @@ class CheckoutController extends Controller
             ];
 
             $order = Order::create([
-                'order_number'     => $this->nextOrderNumber(),
+                'order_number'     => $orderNumber,
                 'customer_id'      => $c->id,
                 'email'            => mb_strtolower($data['customer']['email']),
                 'phone'            => $data['customer']['phone'] ?? null,
@@ -235,14 +245,37 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Sequential, continuing from whatever is already there.
+     * The next free order number.
      *
-     * The same rule as Store\CheckoutController::nextOrderNumber(): imported
-     * WooCommerce orders keep their own numbers, so a new one must not collide
-     * with them.
+     * WHAT THIS USED TO BE, and why it was the worst of the three:
+     *
+     *     return (string) (10000 + (int) Order::max('id') + 1);
+     *
+     * Its docblock claimed it continued "from whatever is already there" and
+     * that imported WooCommerce orders were safe from it. It did neither. It
+     * never looked at `order_number` at all, so it did not continue from
+     * anything — it derived a number from the primary key and hoped. An
+     * imported order numbered 48231, or any soft-deleted order holding the
+     * number it computed, and this endpoint raised SQLSTATE 23000 on the
+     * insert. The other two paths at least searched for a free number; this one
+     * had no check and no retry.
+     *
+     * It also ran INSIDE the placing transaction, so it carried the snapshot
+     * race as well: two callers at once computed the same number and one lost
+     * its order.
+     *
+     * All of it is now App\Services\Orders\OrderNumbers', and session()
+     * allocates before opening the transaction — which is the part that matters
+     * and the reason this is not called from in there.
+     *
+     * THIS ENDPOINT IS UNAUTHENTICATED. `/api/*` is public (CLAUDE.md says so
+     * in as many words), so it is reachable by anyone and shares one sequence
+     * with the storefront and the back office. That is correct — one shop, one
+     * series of order numbers — and it is why the allocator has to be safe
+     * under concurrency rather than merely usually right.
      */
     private function nextOrderNumber(): string
     {
-        return (string) (10000 + (int) Order::max('id') + 1);
+        return app(OrderNumbers::class)->allocate();
     }
 }
