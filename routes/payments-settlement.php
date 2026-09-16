@@ -7,10 +7,15 @@ declare(strict_types=1);
 | Payment settlement admin API — capture (Lane O)
 |------------------------------------------------------------------------------
 |
-| NOT YET WIRED. CLAUDE.md forbids editing routes/web.php, so this file ships
-| with its mounting instruction here instead of mounted.
+| WIRED. Mounted from routes/web.php inside the admin-api group, beside
+| payments-admin.php. The instructions below are the historical record of how
+| it got there, kept because they name the group it must stay inside.
 |
-| INTEGRATOR: add ONE line to routes/web.php, inside the EXISTING `admin-api`
+| This header said it was unmounted until now, with the word order "NOT YET
+| WIRED" rather than the two phrasings a sweep of fourteen other files matched
+| -- which is why it survived that sweep. The guard now matches this shape too.
+|
+| Originally: add ONE line to routes/web.php, inside the EXISTING `admin-api`
 | group — the one opened at line 233 with
 |
 |     Route::prefix('admin-api')->middleware(\App\Http\Middleware\NoStoreAdminApi::class)->group(function () {

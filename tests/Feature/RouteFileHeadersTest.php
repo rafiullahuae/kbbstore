@@ -38,8 +38,22 @@ it('never claims a route file is unmounted when it is required', function () {
 
         $body = (string) file_get_contents($file);
 
-        $claimsUnmounted = str_contains($body, 'NOT LOADED YET')
-            || str_contains($body, 'NOT WIRED YET');
+        /*
+         * Matched on a pattern, not on two exact strings.
+         *
+         * The first version of this test looked for the literals 'NOT LOADED
+         * YET' and 'NOT WIRED YET', which is how routes/payments-settlement.php
+         * survived the sweep that fixed fourteen files: it said "NOT YET
+         * WIRED". Same claim, different word order, invisible to the guard.
+         *
+         * So: not/never, then wired/loaded/mounted/required/registered in
+         * either order, with an optional "yet" on either side. Case
+         * insensitive, since these are prose headers.
+         */
+        $claimsUnmounted = (bool) preg_match(
+            '/\bnot\s+(?:yet\s+)?(?:wired|loaded|mounted|required|registered)(?:\s+yet)?\b/i',
+            $body
+        );
 
         // How web.php and api.php mount a sibling: require __DIR__.'/<name>';
         $isRequired = str_contains($wiring, "/{$name}'");

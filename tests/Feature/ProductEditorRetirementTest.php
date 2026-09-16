@@ -131,23 +131,28 @@ it('has deleted the retired controller class, not merely unrouted it', function 
         ->toBeFalse();
 });
 
-it('leaves the route file inert rather than deleted, because web.php still requires it', function () {
+it('removes the retired route file and its require together', function () {
     /*
-     * routes/web.php is not this lane's file to edit and still carries
-     * `require __DIR__.'/catalog-product-create-admin.php';`. A require of a
-     * path that does not exist is a FATAL error, not a missing feature — it
-     * would take the storefront down with the admin. So the file stays, empty
-     * of routes, until the integrator removes both together.
+     * This asserted the opposite while the lane was building: routes/web.php
+     * was not its file to edit and still carried the require, and a require of
+     * a path that does not exist is a FATAL error, not a missing feature -- it
+     * would take the storefront down with the admin. So the file stayed as an
+     * inert tombstone until the integrator could remove both together.
+     *
+     * The integrator has. Inverted, because the old assertion would now pin a
+     * dead file into the tree forever, and because THIS is the pairing that
+     * actually matters: neither may exist without the other. A require with no
+     * file is a fatal boot error; a file with no require is dead code that
+     * still looks wired.
      */
     $file = base_path('routes/catalog-product-create-admin.php');
+    $web = (string) file_get_contents(base_path('routes/web.php'));
 
-    expect(file_exists($file))->toBeTrue('web.php still requires this file');
+    expect(file_exists($file))->toBeFalse('the retired route file is still on disk')
+        ->and($web)->not->toContain('catalog-product-create-admin.php');
 
-    $source = (string) file_get_contents($file);
-
-    // Not one live Route:: registration left in it.
-    expect(preg_match('/^\s*Route::/m', $source))->toBe(0, 'the tombstone still registers a route')
-        ->and($source)->toContain('RETIRED');
+    // And the application still boots, which is the thing a bad require breaks.
+    expect(app('router')->getRoutes()->getRoutes())->not->toBeEmpty();
 });
 
 /* ----------------------------------------------------- the survivor is intact */

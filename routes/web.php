@@ -385,6 +385,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // path is the one to retire once this screen has been used in anger.
         require __DIR__.'/product-editor-admin.php';
 
+        // The product editor's per-admin panel arrangement. Same guarded
+        // group: it reads and writes a preference row keyed to the signed-in
+        // admin, so it must never be reachable without one.
+        require __DIR__.'/editor-layout-admin.php';
+
         // Growth & Marketing → Marketing Pixels.
         Route::get('/marketing-pixels',  [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'show']);
         Route::post('/marketing-pixels', [\App\Http\Controllers\Admin\MarketingPixelsApiController::class, 'save']);
