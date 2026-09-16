@@ -7,8 +7,12 @@ declare(strict_types=1);
 | Store → Orders  (Lane V)
 |------------------------------------------------------------------------------
 |
-| NOT WIRED YET. CLAUDE.md forbids this lane from editing routes/web.php, so the
-| file ships unmounted and the integrator adds ONE line, inside the EXISTING
+| WIRED. This file is required from routes/web.php (or routes/api.php) and
+| its routes serve live traffic. The wiring note below is kept as the
+| record of where that require belongs.
+|
+| CLAUDE.md forbade this lane from editing routes/web.php, so the
+| file shipped unmounted and the integrator added ONE line, inside the EXISTING
 | admin-api group in routes/web.php — the group that already carries
 | `auth:admin` (opened at line 174) and NoStoreAdminApi (opened at line 233) —
 | beside the other requires:
