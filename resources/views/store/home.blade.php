@@ -157,17 +157,49 @@
        is where the band gets them, so the two strips of one page cannot
        disagree. Either is dropped when the shop has nothing true to say, which
        for the ticker costs nothing: the remaining chips simply scroll. --}}
+  {{-- AND SO DID THE FIRST CHIP, WHICH OUTLIVED THE COMMENT ABOVE — Lane DL.
+
+       Its default was an anniversary sale and a discount code, typed into this
+       template and shown to everyone. UnbackedClaimsTest already pins that
+       exact code, as the default of `checkout_coupon`, for being offered at the
+       moment of payment by a shop that had not got it; this was the same
+       literal one scroll higher, on the front page, where more people saw it.
+
+       It was not a placeholder waiting for an owner either. NOTHING IN THIS
+       APPLICATION WRITES `home_ticker`: it is in neither
+       AdminController::SETTING_RULES nor EcommerceApiController's schema nor
+       SettingsSeeder, and no ->set() names it. So the invented default was the
+       shipped and only value, unchangeable and unremovable from any screen.
+
+       Now it is a chip like the other two: shown when the owner has written
+       one, dropped when he has not, with nothing invented in its place. --}}
+  @php
+    $tickerChips = [];
+
+    if (($ownTicker = trim((string) $settings->get('home_ticker', ''))) !== '') {
+        $tickerChips[] = '🎁 ' . $ownTicker;
+    }
+
+    if ($homeFreeShip !== null) {
+        $tickerChips[] = 'Free delivery over <b>' . Money::format($homeFreeShip, 0) . '</b>';
+    }
+
+    if ($homeDeliveryText !== '') {
+        $tickerChips[] = e($homeDeliveryText);
+    }
+  @endphp
+  {{-- No chips means no strip. An empty scrolling bar is not a smaller claim
+       than a false one, it is just furniture — the same rule the trust row's
+       delivery card follows when it has nothing to say. --}}
+  @if ($tickerChips !== [])
   <div class="tick {{ $sections->classFor('ticker') }}"><div>
     @for ($i = 0; $i < 2; $i++)
-      <span>🎁 {!! $settings->get('home_ticker', 'Anniversary <b>30% off</b> — code <b>GLOW30</b> at checkout') !!}</span><span>·</span>
-      @if ($homeFreeShip !== null)
-        <span>Free delivery over <b>{!! Money::format($homeFreeShip, 0) !!}</b></span><span>·</span>
-      @endif
-      @if ($homeDeliveryText !== '')
-        <span>{{ $homeDeliveryText }}</span><span>·</span>
-      @endif
+      @foreach ($tickerChips as $chip)
+        <span>{!! $chip !!}</span><span>·</span>
+      @endforeach
     @endfor
   </div></div>
+  @endif
   @endunless
 </div></section>
 @endunless
