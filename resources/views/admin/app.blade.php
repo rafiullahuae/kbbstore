@@ -6526,9 +6526,18 @@ function renderSandbox(){
 }
 
 /* ---------- placeholder (future modules) ---------- */
+/* LANE DF. Lifted out of renderPlaceholder() so that something other than
+   renderPlaceholder can ASK which `p-` ids are real. The deep-link boot needs
+   exactly that question: go() routes every id beginning `p-` straight in here,
+   and an id that is not in this map leaves `m` undefined, so the next line
+   throws. Reached from a click that can only come from a card this console
+   drew, that never happened. Reached from an ADDRESS, which anybody can type,
+   it would take down the rest of the console's start-up with it — the boot
+   block is not inside a try. So the boot admits a `p-` id only if it is a key
+   here, and the map has to be visible to it to be asked. */
+const PLACEHOLDERS={'p-catalog':['Catalog','products, categories, brands, attributes','P1'],'p-orders':['Orders','orders, refunds, invoices','P3'],'p-cust':['Customers','accounts, addresses, reviews','P3'],'p-mkt':['Growth & Marketing','coupons, loyalty, routines, video, WhatsApp','P2–P4'],'p-content':['Content & Pages','page builder, blog, forms','P5']};
 function renderPlaceholder(id){
-  const map={'p-catalog':['Catalog','products, categories, brands, attributes','P1'],'p-orders':['Orders','orders, refunds, invoices','P3'],'p-cust':['Customers','accounts, addresses, reviews','P3'],'p-mkt':['Growth & Marketing','coupons, loyalty, routines, video, WhatsApp','P2–P4'],'p-content':['Content & Pages','page builder, blog, forms','P5']};
-  const m=map[id];$('#crumb').textContent='Store';$('#ptitle').textContent=m[0];
+  const m=PLACEHOLDERS[id];$('#crumb').textContent='Store';$('#ptitle').textContent=m[0];
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
   $('#content').innerHTML=`<div class="wrap"><div class="ph">
     <div class="pic">${ic(I.modules)}</div>
@@ -6607,6 +6616,41 @@ function renderPlaceholder(id){
    None of these ids is re-rendered by the override further down THIS file; all
    are live the same, which is why path 1 above applies to them. */
 const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings','htmlblocks','rev-add','rev-likes','rev-io','rev-badge','rev-capsule','rev-assign']);
+
+/* ===== LANE DF · the OTHER way a link misses its screen ====================
+   LIVE_RENDERED above is the set of ids whose deep link landed on a CARD — the
+   "could not be loaded" one, which at least admitted something was wrong. This
+   set is the ids whose deep link landed on the DASHBOARD, under their own
+   breadcrumb, saying nothing at all. The owner clicks Media Library in the
+   sidebar and gets the Media Library; he follows a link to it and gets a page
+   headed "Content · Media Library" whose body is the dashboard, with no error
+   anywhere on it. There is nothing on that screen for him to report.
+
+   The mechanism is one line of go(): its dispatch object ends `||renderDash`,
+   so an id that is routable — in TITLES, with a sidebar row — but has no entry
+   in that object silently becomes the dashboard. Both of these ids have a real
+   renderer; it is simply installed LATER in the document than the boot that
+   navigates to them. 'media' is drawn by admin/partials/media-library-screen,
+   'tax' by the live-wiring script at the foot of this file, and neither exists
+   yet a few lines after buildNav().
+
+   WHY A SECOND SET RATHER THAN A WIDER TEST. The obvious shape is to ask "could
+   the go() that just ran draw this at all?", and Lane DA wrote that, measured
+   it and withdrew it. It also catches 'rev-all' and 'customers', which draw
+   themselves from `cur` further down this file — and renderReviews() awaits
+   rvLoad() BEFORE it paints, so the deep-link marker was still in place when
+   the replay ran and All Reviews was drawn twice on two runs out of three. A
+   screen that paints synchronously cannot lose that race; a screen that awaits
+   first always can. Naming the set keeps every id in it one that has NO painter
+   of its own to race — the replay is the only thing that will ever draw it.
+
+   NOT A LIST SOMEONE HAS TO REMEMBER. AdminNavAndIdsTest derives this set from
+   the file — every TITLES id that misses go()'s dispatch object, the two frame
+   maps and the `p-` branch, less the ids that boot themselves from `cur` — and
+   fails if this literal has drifted from it in either direction. Adding a
+   screen to TITLES and forgetting to wire it up fails there, which is the whole
+   point: the defect was silent, so the guard must not be. ===== */
+const LATE_RENDERED=new Set(['media','tax']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -9980,12 +10024,21 @@ buildNav();
   const q = new URLSearchParams(window.location.search).get('go');
   const h = (window.location.hash || '').replace('#', '');
   const asked = q || h;
-  const target = asked && TITLES[asked] ? asked : 'dash';
+  /* TITLES is the console's own list of addressable screens; PLACEHOLDERS is
+     the five `p-` ids, which are a real destination with a real card and were
+     reachable by clicking inside the console but not by link. Anything else
+     falls back to the dashboard, which is the honest answer to an address that
+     names no screen. */
+  const target = asked && (TITLES[asked] || PLACEHOLDERS[asked]) ? asked : 'dash';
 
   go(target);
 
-  /* Exactly the ids mountFrame() answers with frameStartupHTML. */
-  if(!LIVE_RENDERED.has(target)) return;
+  /* LIVE_RENDERED: the ids mountFrame() answers with frameStartupHTML.
+     LATE_RENDERED: the ids go() answers with the DASHBOARD, because its
+     dispatch object has no entry for them and ends `||renderDash`. Two
+     different wrong screens, one replay — and see the note on LATE_RENDERED
+     for why neither set may contain an id that draws itself after an await. */
+  if(!LIVE_RENDERED.has(target) && !LATE_RENDERED.has(target)) return;
 
   /* Inside #content, never on it: a dataset attribute on #content itself would
      survive innerHTML and report every screen as undrawn for ever. A child

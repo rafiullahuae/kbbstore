@@ -121,7 +121,17 @@ it('still navigates the moment it reads the address, so a click and the first pa
         ->toBeTrue('the boot no longer reads ?go=')
         ->and(str_contains($code, 'window.location.hash'))
         ->toBeTrue('the boot no longer reads the #fragment')
-        ->and(str_contains($code, 'TITLES[asked] ? asked :'))
+        /*
+         * Lane DF widened what counts as "an id the console knows" from TITLES
+         * alone to TITLES plus PLACEHOLDERS, because the five `p-` ids have a
+         * real card of their own that no link could reach. What this assertion
+         * is for is unchanged: an address the console does NOT know must still
+         * be rejected rather than followed. See the p- guard in
+         * AdminNavAndIdsTest for why the check is a map lookup and not a
+         * prefix test — a prefix test hands renderPlaceholder an id with no
+         * card, and it throws during start-up.
+         */
+        ->and(str_contains($code, '(TITLES[asked] || PLACEHOLDERS[asked]) ? asked :'))
         ->toBeTrue('the boot no longer rejects an id the console does not know, so a typo would route somewhere')
         ->and(preg_match('/\n\s*go\(target\);/', $code))
         ->toBe(1, 'the immediate navigation is gone or has been deferred — the ten screens that boot off the state it leaves would fire against a console that never navigated');
@@ -197,15 +207,25 @@ it('arms the replay from LIVE_RENDERED rather than from a list of ids written be
      * and updated one copy, and the failure would be silent — a screen that
      * cannot be linked to, which is the defect this file is about.
      */
-    expect(preg_match('/if\(!LIVE_RENDERED\.has\(target\)\) return;/', $code))
-        ->toBe(1, 'the replay is no longer armed from LIVE_RENDERED, so it either misses screens that get the startup card or fires for screens that do not');
+    /*
+     * Lane DF added the SECOND set. LIVE_RENDERED is the ids whose link landed
+     * on the startup card; LATE_RENDERED is the ids whose link landed on the
+     * DASHBOARD, because go()'s dispatch object has no entry for them and ends
+     * `||renderDash` — 'media' and 'tax', the defect reported here and left.
+     * Two different wrong screens, one replay. Neither set may contain an id
+     * that draws itself after an await; AdminNavAndIdsTest derives both rules
+     * from the console rather than restating them.
+     */
+    expect(preg_match('/if\(!LIVE_RENDERED\.has\(target\) && !LATE_RENDERED\.has\(target\)\) return;/', $code))
+        ->toBe(1, 'the replay is no longer armed from LIVE_RENDERED and LATE_RENDERED, so it either misses screens that land on the wrong screen or fires for screens that do not');
 
     $ids = ['orders', 'payments', 'analytics', 'seo', 'blog', 'posts', 'store-settings', 'quiz-leads',
-        'rev-settings', 'htmlblocks', 'rev-add', 'rev-likes', 'rev-io', 'rev-badge', 'rev-capsule', 'rev-assign'];
+        'rev-settings', 'htmlblocks', 'rev-add', 'rev-likes', 'rev-io', 'rev-badge', 'rev-capsule', 'rev-assign',
+        'media', 'tax'];
 
     foreach ($ids as $id) {
         expect(str_contains($code, "'".$id."'"))
-            ->toBeFalse("the boot names '{$id}' itself instead of asking LIVE_RENDERED, so the two lists can drift apart");
+            ->toBeFalse("the boot names '{$id}' itself instead of asking the set it belongs to, so the two lists can drift apart");
     }
 });
 
@@ -458,15 +478,47 @@ function driveDeepLinks(array $preview, string $chrome, array $ids): array
     return $decoded;
 }
 
-/** The sixteen, read out of the console rather than typed here. */
-function dlLiveRenderedIds(): array
+/** Members of one of the console's armed sets, read out of it rather than typed here. */
+function dlSetIds(string $name): array
 {
     $html = view('admin.app')->render();
 
-    expect(preg_match('/const LIVE_RENDERED=new Set\(\[(.*?)\]\);/s', $html, $m))
-        ->toBe(1, 'LIVE_RENDERED is no longer a literal Set, so this test cannot tell which screens it covers');
+    expect(preg_match('/const '.preg_quote($name, '/').'=new Set\(\[(.*?)\]\);/s', $html, $m))
+        ->toBe(1, "{$name} is no longer a literal Set, so this test cannot tell which screens it covers");
 
     preg_match_all("/'([^']+)'/", $m[1], $ids);
+
+    return $ids[1];
+}
+
+/** The sixteen whose link landed on the startup card. */
+function dlLiveRenderedIds(): array
+{
+    return dlSetIds('LIVE_RENDERED');
+}
+
+/**
+ * The ids whose link landed on the DASHBOARD under their own heading — Lane
+ * DF's half of the same defect, and the one with no error on it at all.
+ */
+function dlLateRenderedIds(): array
+{
+    return dlSetIds('LATE_RENDERED');
+}
+
+/**
+ * The five `p-` ids. They have no sidebar row and no TITLES entry: what the
+ * browser half checks for them is that the address opens the honest "isn't
+ * installed yet" card that was written for them, rather than the dashboard.
+ */
+function dlPlaceholderIds(): array
+{
+    $html = view('admin.app')->render();
+
+    expect(preg_match('/const PLACEHOLDERS=\{(.*?)\};/s', $html, $m))
+        ->toBe(1, 'PLACEHOLDERS is no longer a literal object, so this test cannot tell which `p-` ids are real');
+
+    preg_match_all("/'(p-[a-z]+)'\s*:/", $m[1], $ids);
 
     return $ids[1];
 }
@@ -482,19 +534,30 @@ it('opens every screen by its own address, in a real browser', function () {
     }
 
     $live = dlLiveRenderedIds();
+    $late = dlLateRenderedIds();
+    $placeholders = dlPlaceholderIds();
 
     expect($live)->not->toBeEmpty();
+    expect($late)->not->toBeEmpty();
+    expect($placeholders)->not->toBeEmpty();
 
-    // A few that are NOT in the set, as controls: 'dash' is what an unknown
+    // A few that are NOT in either set, as controls: 'dash' is what an unknown
     // address falls back to, and the other three are drawn by the go() that
-    // exists at boot, so they were never part of this defect and must stay out
-    // of it.
-    $controls = ['dash', 'modules', 'updates', 'customers'];
+    // exists at boot or by their own boot, so they were never part of this
+    // defect and must stay out of it. 'customers' is the important one — it
+    // draws itself from `cur` and is deliberately unarmed, so if arming the
+    // LATE_RENDERED ids ever started arming it too, its counts move here.
+    $controls = ['dash', 'modules', 'updates', 'customers', 'rev-all'];
+
+    // The ids whose deep link drew the DASHBOARD rather than the screen. What
+    // the assertions below can see for them is the same as for the card ids:
+    // the address and the click open the same thing, and it is painted once.
+    $armed = array_merge($live, $late);
 
     $preview = bootDeepLinkPreview();
 
     try {
-        $r = driveDeepLinks($preview, $chrome, array_merge($live, $controls));
+        $r = driveDeepLinks($preview, $chrome, array_merge($armed, $placeholders, $controls));
 
         expect($r['ok'])->toBeTrue((string) ($r['error'] ?? ''));
         expect($r['pageErrors'] ?? [])->toBe([], 'the console threw while being driven');
@@ -535,12 +598,34 @@ it('opens every screen by its own address, in a real browser', function () {
              * is a static string with no request and no handler behind it. Two
              * more would mean the screen itself was drawn twice.
              */
-            if ($row['hasRow'] && in_array($id, $live, true)) {
+            if ($row['hasRow'] && in_array($id, $armed, true)) {
                 expect($row['queryWrites'])->toBe(
                     $row['clickWrites'] + 1,
                     "?go={$id} painted #content {$row['queryWrites']} times against {$row['clickWrites']} for a click: "
                     .json_encode($row['queryWriteHeads'])
                 );
+            }
+
+            /* ---- LANE DF · AND NOT THE DASHBOARD ----
+             * The variant with no error on it. ?go=media used to draw the
+             * dashboard under the heading "Content · Media Library": the right
+             * heading, the wrong screen, and nothing anywhere on it to tell the
+             * owner so. Comparing the heading with the click cannot see that,
+             * because the heading was already right; comparing the BODY can.
+             */
+            if (in_array($id, $late, true)) {
+                expect(str_contains($row['query'], 'This is the foundation'))
+                    ->toBeFalse("?go={$id} opens the dashboard under the heading \"{$row['queryHead']}\" — the right heading over the wrong screen, which is the defect with no error on it");
+            }
+
+            /* The `p-` ids have no row to compare against, so the card they
+             * were written for is named directly. Before this it was the
+             * dashboard for all five. */
+            if (in_array($id, $placeholders, true)) {
+                expect(str_contains($row['query'], "isn't installed yet"))
+                    ->toBeTrue("?go={$id} does not open the \"isn't installed yet\" card written for it: {$row['query']}");
+                expect(str_contains($row['hash'], "isn't installed yet"))
+                    ->toBeTrue("#{$id} does not open the \"isn't installed yet\" card written for it: {$row['hash']}");
             }
         }
     } finally {

@@ -1535,3 +1535,406 @@ it('draws exactly one sidebar row, one tab strip and one explanation for the pai
         ->toBeFalse('review-capsule-screen registers a sidebar row again');
 });
 
+
+/* ═══════════ Lane DF · an id that is routable but has no renderer ═══════════
+ *
+ * Lane DA fixed the deep links whose screens showed an error card. This is the
+ * WORSE variant of the same defect, which it found on the way and left: a link
+ * that shows no error at all.
+ *
+ * Measured in Chromium against a preview of this checkout, logged in as an
+ * owner, before the fix:
+ *
+ *   click "Media Library" in the sidebar
+ *     -> heading "Content · Media Library", body "Media Library — Every image
+ *        uploaded through the admin…"
+ *   open /admin?go=media
+ *     -> heading "Content · Media Library", body "This is the foundation. Real
+ *        numbers appear once your WooCommerce data is imported in Phase 1…"
+ *
+ * The second is the DASHBOARD under the Media Library's own heading. There is
+ * no error on it, nothing to reload and nothing for the owner to report — which
+ * is strictly worse than the card Lane DA removed, because the card at least
+ * admitted something had gone wrong. 'tax' did exactly the same thing and had
+ * not been reported by anybody.
+ *
+ * THE MECHANISM IS ONE OPERATOR. go()'s dispatch object ends `||renderDash`, so
+ * an id that is routable — in TITLES, with a sidebar row — but absent from that
+ * object silently becomes the dashboard. Both ids have a real renderer; it is
+ * installed LATER in the document than the boot that navigates to them.
+ *
+ * WHAT THESE GUARDS PIN. Not the two ids: the RELATIONSHIP. The set of ids that
+ * fall through to renderDash is derived from the file here and compared with
+ * LATE_RENDERED in both directions, so a screen added to TITLES tomorrow
+ * without a renderer fails this file rather than shipping a silent dashboard,
+ * and an id that gains a renderer cannot be left in the set for ever.
+ *
+ * And the race Lane DA measured, and withdrew its own wider fix over, is
+ * written down as an assertion rather than as a warning: no id that draws
+ * itself from `cur` may be armed for the replay, because renderReviews() awaits
+ * rvLoad() before it paints and was drawn TWICE on two runs out of three when
+ * it was.
+ */
+
+/**
+ * JavaScript with its comments removed.
+ *
+ * EVERY ASSERTION BELOW RUNS ON THIS. The console explains itself using the
+ * names of the things it uses — LATE_RENDERED, renderDash, TITLES — so a
+ * str_contains against the raw text goes green against a block whose code was
+ * deleted and whose prose was left behind. Six lanes have now been caught by
+ * some version of that.
+ */
+function navAuditCodeOnly(string $js): string
+{
+    // Block comments first, so a // inside one cannot confuse the second pass.
+    $js = (string) preg_replace('#/\*.*?\*/#s', ' ', $js);
+
+    // Then line comments, only where // opens one: never inside a URL, which
+    // is always preceded by a colon.
+    return (string) preg_replace('#(^|[\s;{(])//[^\n]*#m', '$1', $js);
+}
+
+/** go()'s dispatch object — the id => renderer map that ends `||renderDash`. */
+function navAuditDispatchIds(): array
+{
+    $src = navAuditSrc();
+    $at = strpos($src, '[id]||renderDash)()');
+
+    expect($at)->not->toBeFalse(
+        "go()'s dispatch object no longer ends `||renderDash`, so this file cannot tell which ids fall through to the dashboard"
+    );
+
+    $block = navAuditCodeOnly(navAuditBlock($src, strrpos(substr($src, 0, (int) $at), '({') ?: 0));
+    preg_match_all("/'?([a-zA-Z0-9-]+)'?\s*:\s*render[A-Za-z]+/", $block, $m);
+
+    return $m[1];
+}
+
+/** Members of a `const NAME=new Set([...])`, read from the literal. */
+function navAuditSetMembers(string $name): array
+{
+    $src = navAuditSrc();
+
+    expect(preg_match('/const '.preg_quote($name, '/').'=new Set\(\[(.*?)\]\);/s', $src, $m))
+        ->toBe(1, "{$name} is no longer a literal Set, so this file cannot read which ids it covers");
+
+    preg_match_all("/'([^']+)'/", $m[1], $ids);
+
+    return $ids[1];
+}
+
+/**
+ * Ids that draw themselves by testing the console's own `cur`.
+ *
+ * Conservative on purpose: ANY `cur === 'x'` test in the file counts, not only
+ * the two that run at parse time. The set is used to keep ids OUT of the
+ * replay, so over-collecting is safe and under-collecting is the bug.
+ */
+function navAuditSelfBootIds(): array
+{
+    preg_match_all("/cur\s*===?\s*'([a-z0-9-]+)'/i", navAuditSrc(), $m);
+
+    return array_values(array_unique($m[1]));
+}
+
+/**
+ * The ids the go() that runs at boot cannot draw.
+ *
+ * Derived, never listed. go() answers an id from exactly four places — the
+ * frame map, the reviews-frame map, the `p-` branch and its own dispatch
+ * object — and anything else in TITLES reaches `||renderDash`. Less the ids
+ * that draw themselves from `cur`, which need no replay and must not get one.
+ */
+function navAuditFallsThroughToDash(): array
+{
+    $drawn = array_merge(
+        navAuditDispatchIds(),
+        navAuditMapKeys('FRAME_SRC'),
+        navAuditMapKeys('REV_SRC'),
+        navAuditSelfBootIds(),
+    );
+
+    $out = [];
+
+    foreach (array_keys(navAuditTitles()) as $id) {
+        if (str_starts_with($id, 'p-') || in_array($id, $drawn, true)) {
+            continue;
+        }
+        $out[] = $id;
+    }
+
+    sort($out);
+
+    return $out;
+}
+
+/** The deep-link boot block, sliced by its own markers. */
+function navAuditDeepLinkRegion(): string
+{
+    $src = navAuditSrc();
+
+    $at = strpos($src, 'LANE DA · deep links · BEGIN');
+    expect($at)->not->toBeFalse('the deep-link boot region was renamed or removed');
+
+    $end = strpos($src, 'LANE DA · deep links · END', (int) $at);
+    expect($end)->not->toBeFalse('the deep-link boot region has no end marker');
+
+    // From the `/*` that opens the region's banner, so the comment stripper
+    // sees a complete comment rather than a run of prose with no delimiter.
+    $start = strrpos(substr($src, 0, (int) $at), '/*');
+
+    return substr($src, (int) $start, (int) $end - (int) $start);
+}
+
+it('never lets a routable id open the dashboard under another screen\'s name', function () {
+    /*
+     * The guard the whole lane is for. An id in TITLES has a breadcrumb, a page
+     * title and usually a sidebar row: it is a screen the console admits to
+     * having. If go() cannot draw it and nothing replays it, following its link
+     * puts the DASHBOARD under its heading and says nothing.
+     *
+     * Compared in both directions. A missing entry is the defect. A stale one
+     * is the next lane believing there is a net under an id that no longer
+     * needs one.
+     */
+    $expected = navAuditFallsThroughToDash();
+    $armed = navAuditSetMembers('LATE_RENDERED');
+    sort($armed);
+
+    $unarmed = array_values(array_diff($expected, $armed));
+    $stale = array_values(array_diff($armed, $expected));
+
+    $why = [];
+
+    foreach ($unarmed as $id) {
+        $t = navAuditTitles()[$id];
+        $why[] = sprintf(
+            '  %-16s is in TITLES as "%s · %s" but has no entry in go()\'s dispatch object, no frame and no boot'
+            ."\n                   of its own, so ?go={$id} draws renderDash() under that heading and says nothing."
+            .' Add it to LATE_RENDERED, or give go() a renderer for it.',
+            $id, $t[0], $t[1]
+        );
+    }
+
+    foreach ($stale as $id) {
+        $why[] = sprintf(
+            '  %-16s is in LATE_RENDERED but go() can already draw it, so the replay fires for a screen that is'
+            ."\n                   already painted — drop it from the set.",
+            $id
+        );
+    }
+
+    expect($why === [])->toBeTrue(
+        count($why)." id(s) the console can be asked for do not open their own screen:\n".implode("\n", $why)."\n"
+    );
+});
+
+it('never arms the replay for a screen that draws itself after an await', function () {
+    /*
+     * The failure Lane DA measured and withdrew its own wider fix over, written
+     * down so the next lane inherits the measurement rather than the intention.
+     *
+     * The replay reads one signal: a marker inside #content that any real
+     * render destroys. A screen that paints synchronously has destroyed it
+     * before the replay's task runs, so the replay is a no-op. A screen that
+     * AWAITS first has not, so the replay fires while that screen's own load is
+     * still in flight and both paint. ?go=rev-all drew All Reviews twice on two
+     * runs out of three when it was armed, because renderReviews() awaits
+     * rvLoad() before its first innerHTML.
+     *
+     * Every id that draws itself from `cur` is therefore kept out of both armed
+     * sets. That is a superset of the ids that await — 'customers' paints
+     * before its await and would survive — but a screen that already has a
+     * painter never needs a second one, so the cheap rule is the safe one.
+     */
+    $selfBooted = navAuditSelfBootIds();
+
+    expect($selfBooted)->not->toBeEmpty(
+        'nothing in the console draws itself from `cur` any more, so this guard is asserting against an empty set'
+    );
+
+    foreach (['LATE_RENDERED', 'LIVE_RENDERED'] as $set) {
+        $clash = array_values(array_intersect(navAuditSetMembers($set), $selfBooted));
+
+        expect($clash)->toBe([], sprintf(
+            '%s arms %s, which draw(s) themselves from `cur`. If that painter awaits before its first'
+            ." innerHTML the replay fires into the gap and the screen renders twice — measured on 'rev-all'.",
+            $set, implode(', ', $clash)
+        ));
+    }
+});
+
+it('keeps the screens that draw themselves from cur, because nothing else draws them', function () {
+    /*
+     * The other half of the rule above, and half the reason the per-screen boot
+     * hooks in this console were NOT deleted when the central replay landed.
+     *
+     * 'customers' and 'rev-all' are in neither armed set, on purpose — so these
+     * two lines are not redundant with the replay, they are the only thing that
+     * draws either screen from a link. Deleting one as a tidy-up restores the
+     * silent dashboard for it, and the obvious repair (arm it instead) is the
+     * double render for 'rev-all'.
+     */
+    $code = navAuditCodeOnly(navAuditSrc());
+
+    foreach (['customers', 'rev-all'] as $id) {
+        expect(preg_match("/if\(typeof cur !== 'undefined' && cur === '".preg_quote($id, '/')."'\)\{[^}]*render/", $code))
+            ->toBe(1, "'{$id}' no longer draws itself from `cur` at parse time, and it is in neither armed set, so a link to it now opens the dashboard");
+    }
+});
+
+it('opens the placeholder a p- link names, rather than the dashboard', function () {
+    /*
+     * The same defect one map along. renderPlaceholder() draws an honest
+     * "isn't installed yet" card for five ids and go() routes every `p-` id to
+     * it, so clicking one inside the console has always worked. The boot,
+     * though, admitted an address only if TITLES had it, and none of the five
+     * is in TITLES — so ?go=p-catalog opened the dashboard instead of the card
+     * that was written for exactly this question.
+     *
+     * The boot has to ASK the map rather than test the prefix. An id starting
+     * `p-` that is NOT in it leaves renderPlaceholder's `m` undefined and the
+     * next line throws, and the boot block is not inside a try: a stray
+     * ?go=p-anything would take the rest of the console's start-up with it.
+     */
+    $src = navAuditSrc();
+
+    expect(preg_match('/const PLACEHOLDERS=\{/', $src))
+        ->toBe(1, "renderPlaceholder's map is not a const the boot can ask, so a `p-` link cannot be checked before it is followed");
+
+    $fn = navAuditCodeOnly(navAuditFn('renderPlaceholder'));
+
+    expect(str_contains($fn, 'PLACEHOLDERS[id]'))
+        ->toBeTrue('renderPlaceholder no longer reads the shared PLACEHOLDERS map, so the boot and the renderer can disagree about which `p-` ids are real');
+
+    expect(preg_match('/const map=\{/', $fn))
+        ->toBe(0, 'renderPlaceholder has its own copy of the map again, which is the second list the boot cannot see');
+
+    // And the boot admits them, by asking that map.
+    $boot = navAuditCodeOnly(navAuditDeepLinkRegion());
+
+    expect(preg_match('/PLACEHOLDERS\[asked\]/', $boot))
+        ->toBe(1, 'the deep-link boot no longer admits a `p-` address, so every one of those links opens the dashboard');
+
+    expect(preg_match("/startsWith\('p-'\)/", $boot))
+        ->toBe(0, 'the boot tests the `p-` PREFIX rather than the map, so ?go=p-anything reaches renderPlaceholder with no card to draw and throws during start-up');
+});
+
+it('lets every sidebar row be linked to, not only clicked', function () {
+    /*
+     * The general statement of the defect from the owner's end: a row he can
+     * click is a screen he can be sent a link to. A row whose id the boot does
+     * not admit falls back to 'dash', which is the silent dashboard again —
+     * this time without even the right heading.
+     *
+     * NAV's own rows only. The rows partials inject — Categories, Brands,
+     * Manage Coupons, and the product editor that keeps itself out — set their
+     * own breadcrumb and title in their own file and are deliberately not in
+     * TITLES; question 4 above checks those against their partial instead.
+     * They are NOT linkable today and that is the one gap this lane leaves
+     * open knowingly: each is a sub-screen opened from inside another screen,
+     * and a bare link to the product editor names no product.
+     */
+    $titles = navAuditTitles();
+    $unlinkable = [];
+
+    foreach (navAuditEntries() as $e) {
+        if ($e['source'] !== 'NAV in app.blade.php') {
+            continue;
+        }
+        if (! isset($titles[$e['id']])) {
+            $unlinkable[] = sprintf(
+                '  %-16s is a row labelled "%s" with no TITLES entry, so ?go=%s falls back to the dashboard  [%s]',
+                $e['id'], $e['label'], $e['id'], $e['source']
+            );
+        }
+    }
+
+    expect($unlinkable === [])->toBeTrue(
+        count($unlinkable)." sidebar row(s) cannot be linked to:\n".implode("\n", $unlinkable)."\n"
+    );
+});
+
+it('arms the replay from the two named sets rather than from ids written beside it', function () {
+    /*
+     * Both sets, asked rather than copied. A hand-written list inside the boot
+     * would be correct until the next lane added a screen to one of them and
+     * updated the other copy, and the failure would be silent — a screen that
+     * cannot be linked to, which is the whole defect.
+     */
+    $boot = navAuditCodeOnly(navAuditDeepLinkRegion());
+
+    expect(preg_match('/if\(!LIVE_RENDERED\.has\(target\) && !LATE_RENDERED\.has\(target\)\) return;/', $boot))
+        ->toBe(1, 'the replay is no longer armed from both LIVE_RENDERED and LATE_RENDERED, so it misses one of the two ways a link lands on the wrong screen');
+
+    foreach (array_merge(navAuditSetMembers('LIVE_RENDERED'), navAuditSetMembers('LATE_RENDERED')) as $id) {
+        expect(str_contains($boot, "'".$id."'"))
+            ->toBeFalse("the boot names '{$id}' itself instead of asking the set, so the two lists can drift apart");
+    }
+});
+
+it('keeps the per-screen boot hooks the central replay does not replace', function () {
+    /*
+     * THE DECISION ON THE TEN COPIES, recorded where a tidy-up will trip over
+     * it rather than in a commit message nobody reads.
+     *
+     * Ten screens solved this defect for themselves before the central replay
+     * existed: six partials with a bootIfCurrent() of their own, covering eight
+     * screen ids between them, plus 'customers' and 'rev-all' drawing
+     * themselves from `cur` in app.blade.php. Lane DA called them "redundant
+     * after this, not wrong" and left them. They are not all redundant:
+     *
+     *   - 'customers' and 'rev-all' are in NEITHER armed set. Nothing else
+     *     draws them from a link at all, and arming 'rev-all' is the double
+     *     render that was measured. Those two are load bearing. The test above
+     *     pins them.
+     *   - The eight ids the six partials cover are all in LIVE_RENDERED, so the
+     *     replay WOULD draw them. Removing their hooks is safe for
+     *     correctness — and it moves each screen's first paint from parse time
+     *     to a task queued after DOMContentLoaded, for no gain, in seven files
+     *     other lanes are editing. Two of the six read the ADDRESS rather than
+     *     the sidebar because their id has no row to read ('rev-capsule',
+     *     'rev-likes'), so they are not even copies of one another.
+     *
+     * So: left in place, deliberately. The count is pinned so that removing
+     * them is a decision someone takes rather than a diff that slips through
+     * while the replay looks like it covers everything.
+     */
+    $hooks = [];
+
+    foreach (navAuditPartials() as $partial) {
+        $code = navAuditCodeOnly(navAuditPartialSrc($partial));
+
+        if (preg_match('/function bootIfCurrent\(\)/', $code)) {
+            $hooks[] = $partial;
+        }
+    }
+
+    sort($hooks);
+
+    expect($hooks)->toBe([
+        'html-blocks-screen',
+        'review-assign-screen',
+        'review-badges-screen',
+        'review-bulk-screens',
+        'review-settings-screen',
+        'reviews-io-screen',
+    ], 'the per-screen bootIfCurrent() hooks have changed. Removing one is safe only for an id in LIVE_RENDERED, which the central replay covers; check this list against that set before updating it.');
+
+    // Each one covers an id the replay also covers, which is what makes it a
+    // tidy-up rather than a fix. An id in neither set has nothing behind it.
+    $live = navAuditSetMembers('LIVE_RENDERED');
+
+    foreach ($hooks as $partial) {
+        $p = navAuditPartialSrc($partial);
+        preg_match_all("/var (?:SCREENS?|ALIAS|ADD|LIKES)\s*=\s*'([^']+)'/", $p, $m);
+
+        expect($m[1])->not->toBeEmpty("{$partial} has a bootIfCurrent() but claims no screen id");
+
+        foreach ($m[1] as $id) {
+            expect(in_array($id, $live, true))
+                ->toBeTrue("{$partial} boots '{$id}', which is not in LIVE_RENDERED — so that hook is the ONLY thing drawing it from a link and must not be removed as redundant");
+        }
+    }
+});

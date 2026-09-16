@@ -74,6 +74,14 @@ async function readState(page) {
     const el = document.querySelector('#content');
     return {
       text: el ? el.innerText : '((no #content))',
+      /* Lane DF. The bar above #content, because the defect this file was
+         extended for is not a wrong MESSAGE, it is a wrong SCREEN under the
+         right heading: ?go=media drew the dashboard beneath "Content · Media
+         Library". Reading #content alone cannot tell that apart from an owner
+         who simply asked for the dashboard, and the heading is the whole
+         reason the failure was silent. */
+      crumb: (document.querySelector('#crumb') || {}).textContent || '',
+      ptitle: (document.querySelector('#ptitle') || {}).textContent || '',
       writes: (window.__writes || []).slice(),
       fetches: (window.__fetches || []).slice(),
       /* The marker the deep-link boot drops. If it is still here, nothing drew
@@ -153,10 +161,12 @@ try {
       await page.evaluate(i => document.querySelector('.side .nav-item[data-go="' + i + '"]').click(), id);
       const s = await readState(page);
       row.click = clip(s.text);
+      row.clickHead = s.crumb + ' · ' + s.ptitle;
       row.clickWrites = s.writes.length;
       row.clickRepeatFetches = repeatedFetches(s.fetches);
     } else {
       row.click = '((no sidebar row))';
+      row.clickHead = '((no sidebar row))';
       row.clickWrites = null;
       row.clickRepeatFetches = [];
     }
@@ -166,6 +176,7 @@ try {
     await page.goto(BASE + '/admin?go=' + encodeURIComponent(id), { waitUntil: 'domcontentloaded' });
     const q = await readState(page);
     row.query = clip(q.text);
+    row.queryHead = q.crumb + ' · ' + q.ptitle;
     row.queryWrites = q.writes.length;
     row.queryWriteHeads = q.writes.map(w => w.slice(0, 50));
     row.queryRepeatFetches = repeatedFetches(q.fetches);
@@ -177,6 +188,7 @@ try {
     await page.goto(BASE + '/admin#' + encodeURIComponent(id), { waitUntil: 'domcontentloaded' });
     const h = await readState(page);
     row.hash = clip(h.text);
+    row.hashHead = h.crumb + ' · ' + h.ptitle;
     row.hashWrites = h.writes.length;
     row.hashRepeatFetches = repeatedFetches(h.fetches);
 
