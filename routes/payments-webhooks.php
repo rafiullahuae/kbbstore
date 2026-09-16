@@ -7,8 +7,12 @@ declare(strict_types=1);
 | Payment webhooks — Phase 11 (Lane D)
 |------------------------------------------------------------------------------
 |
-| NOT LOADED YET. CLAUDE.md forbids this lane from editing routes/web.php or
-| routes/api.php, so the integrator wires it up. One line, inside
+| LOADED. This file is required from routes/web.php (or routes/api.php) and
+| its routes serve live traffic. The wiring note below is kept as the
+| record of where that require belongs.
+|
+| CLAUDE.md forbade this lane from editing routes/web.php or
+| routes/api.php, so the integrator wired it up. One line, inside
 | routes/api.php:
 |
 |     require __DIR__ . '/payments-webhooks.php';

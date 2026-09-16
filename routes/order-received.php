@@ -7,8 +7,12 @@ declare(strict_types=1);
 | Order-received page — Lane G
 |------------------------------------------------------------------------------
 |
-| NOT LOADED YET. CLAUDE.md forbids this lane from editing routes/web.php, so
-| the integrator wires it up. One line, at the top level of routes/web.php,
+| LOADED. This file is required from routes/web.php (or routes/api.php) and
+| its routes serve live traffic. The wiring note below is kept as the
+| record of where that require belongs.
+|
+| CLAUDE.md forbade this lane from editing routes/web.php, so
+| the integrator wired it up. One line, at the top level of routes/web.php,
 | beside the existing `require __DIR__ . '/kbb-brands-blog.php';` near the end
 | of the file:
 |

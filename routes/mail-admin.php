@@ -7,8 +7,12 @@ declare(strict_types=1);
 | Mail admin API — Store → Mail (Lane J)
 |------------------------------------------------------------------------------
 |
-| NOT LOADED YET. CLAUDE.md forbids this lane from editing routes/web.php, so
-| the integrator wires it up. One line, INSIDE the existing admin-api group in
+| LOADED. This file is required from routes/web.php (or routes/api.php) and
+| its routes serve live traffic. The wiring note below is kept as the
+| record of where that require belongs.
+|
+| CLAUDE.md forbade this lane from editing routes/web.php, so
+| the integrator wired it up. One line, INSIDE the existing admin-api group in
 | routes/web.php — the one already carrying `auth:admin` and NoStoreAdminApi —
 | directly below the payments require at routes/web.php:284 (the line reading
 | `require __DIR__.'/payments-admin.php';`) on the branch this was written
