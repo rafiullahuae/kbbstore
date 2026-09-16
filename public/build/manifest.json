@@ -30,7 +30,7 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-RnaO7aY8.css",
+    "file": "assets/kbb-CA-HIVj-.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
@@ -40,12 +40,12 @@
     "isEntry": true
   },
   "resources/js/kbb/app.js": {
-    "file": "assets/app-DYVjuViZ.js",
+    "file": "assets/app-CVwju_7c.js",
     "name": "app",
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
     "css": [
-      "assets/kbb-RnaO7aY8.css"
+      "assets/kbb-CA-HIVj-.css"
     ]
   }
 }
