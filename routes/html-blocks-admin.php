@@ -7,18 +7,14 @@ declare(strict_types=1);
 | HTML Blocks admin API — Lane BC
 |------------------------------------------------------------------------------
 |
-| NOT YET LOADED. CLAUDE.md forbids this lane from editing routes/web.php, so
-| the integrator wires it up. One line, inside the EXISTING admin-api group in
-| routes/web.php — the one opened at around line 263 by
+| Mounted by routes/web.php, beside the media-library require, inside the
+| EXISTING admin-api group — the one opened by
 |
 |     Route::prefix('admin-api')->middleware(\App\Http\Middleware\NoStoreAdminApi::class)->group(...)
 |
-| which itself sits inside `Route::middleware('auth:admin')`. Put it beside the
-| brands-admin require, at around line 323:
+| which itself sits inside `Route::middleware('auth:admin')`.
 |
-|     require __DIR__.'/html-blocks-admin.php';
-|
-| IT MUST GO INSIDE THAT GROUP, and the reason is sharper here than for most
+| IT MUST STAY INSIDE THAT GROUP, and the reason is sharper here than for most
 | lanes. `content` is HTML that store/page.blade.php and store/post.blade.php
 | render UNESCAPED into the storefront. An unguarded POST to /admin-api/blocks
 | is therefore not "a stranger editing some content" — it is stored

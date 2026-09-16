@@ -37,6 +37,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\Support\CatalogProductsAdminRoutes;
 use Tests\Support\CustomersAdminRoutes;
 use Tests\Support\MediaLibraryRoutes;
+use Tests\Support\HtmlBlocksAdminRoutes;
 use Tests\Support\OrdersAdminRoutes;
 use Tests\Support\SqlShape;
 
@@ -617,6 +618,12 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
     // one that wrote the query.
     MediaLibraryRoutes::wire(app());
 
+    // Content → HTML Blocks (Lane BC). Wired for the same reason: its routes
+    // ship in their own file, and GET /admin-api/blocks/{block} resolves where
+    // each block is used by scanning pages and posts — a parameterised admin
+    // GET that must not skip this walk unexamined.
+    HtmlBlocksAdminRoutes::wire(app());
+
     $admin = guardAdmin();
 
     $product = Product::query()->firstOrFail();
@@ -651,6 +658,13 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
     ]);
 
     $product->forceFill(['image' => '/uploads/products/guard-shot.png'])->save();
+
+    $block = \App\Models\Block::create([
+        'name' => 'Guard Block',
+        'slug' => 'guard-block-' . uniqid(),
+        'content' => '<p>Guard</p>',
+        'status' => 'published',
+    ]);
 
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
@@ -698,6 +712,14 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
          * unexamined.
          */
         'admin-api/media/{media}' => '/admin-api/media/' . $media->id,
+        /*
+         * Reads one block and then resolves WHERE IT IS PLACED, scanning
+         * pages.content and posts.body with the renderer's own regex. Same
+         * shape as the media row above: no aggregate, no GROUP BY, listed
+         * because it is a parameterised admin GET and nothing of that shape
+         * skips this walk unexamined.
+         */
+        'admin-api/blocks/{block}' => '/admin-api/blocks/' . $block->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */

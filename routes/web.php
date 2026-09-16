@@ -376,6 +376,10 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // admin, its search, and what each image is used by before deleting it.
         require __DIR__.'/media-library-admin.php';
 
+        // Content → HTML Blocks: reusable snippets placed into pages and posts
+        // with [kbb_block slug="…"].
+        require __DIR__.'/html-blocks-admin.php';
+
         // Catalog → Products: the list, inline edits, the detail panel, guarded
         // bulk actions and the filtered CSV export. Flat paths on purpose —
         // /admin-api/products/{id} above carries no constraint on {id}, so a

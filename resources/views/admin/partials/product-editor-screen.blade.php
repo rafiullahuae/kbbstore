@@ -191,8 +191,6 @@
 .peo-mediawrap{container-type:inline-size;min-width:0}
 .peo-media{display:grid;gap:16px;align-items:start;min-width:0}
 .peo-media > *{min-width:0}
-.peo-media h4{margin:0 0 3px;font-size:12px;font-weight:700;letter-spacing:.04em;
-              text-transform:uppercase;color:var(--ink-soft,#6b7280)}
 @container (min-width:620px){
   /* Fixed left track, not a fraction: the preview is capped at 260px by
      .peo-main-img anyway, so a fractional track would only ever add dead space
@@ -298,6 +296,51 @@
    enough to stretch the whole console if this line is dropped.
 --------------------------------------------------------------------------- */
 .peo-panel{display:grid;gap:6px;min-width:0;align-content:start}
+
+/* ---- colour ----------------------------------------------------------------
+   A hue per panel, set on the wrapper that already carries the panel key and
+   read by the card inside it, so the two Images cards pick up one hue without
+   either of them naming it.
+
+   Restraint is the point: the hue appears as a 3px rail down the left of the
+   card, the heading, and a wash under the header that is a few percent of the
+   colour. The card stays white, the inputs stay untouched, and nothing changes
+   the meaning of the green the save button and the toggles already use. A
+   product editor is a screen an operator stares at all day; the colour is there
+   to tell the panels apart at a glance, not to decorate.
+
+   Every value goes through the hue token, so re-hueing a panel is one line and
+   cannot leave a heading one colour and its rail another. color-mix is declared
+   AFTER a solid fallback, so a browser without it gets the plain card rather
+   than a transparent one. */
+.peo-panel{--peo-hue:#6366f1}
+.peo-panel[data-peo-panel="basics"]{--peo-hue:#2563eb}
+.peo-panel[data-peo-panel="images"]{--peo-hue:#7c3aed}
+.peo-panel[data-peo-panel="short_description"]{--peo-hue:#0891b2}
+.peo-panel[data-peo-panel="description"]{--peo-hue:#0891b2}
+.peo-panel[data-peo-panel="ingredients"]{--peo-hue:#0d9488}
+.peo-panel[data-peo-panel="how_to_use"]{--peo-hue:#0d9488}
+.peo-panel[data-peo-panel="seo"]{--peo-hue:#b45309}
+.peo-panel[data-peo-panel="publish"]{--peo-hue:#15803d}
+.peo-panel[data-peo-panel="categories"]{--peo-hue:#c026d3}
+.peo-panel[data-peo-panel="brand"]{--peo-hue:#c026d3}
+.peo-panel[data-peo-panel="pricing"]{--peo-hue:#b45309}
+.peo-panel[data-peo-panel="stock"]{--peo-hue:#0369a1}
+
+.peo-card{position:relative;overflow:hidden}
+.peo-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+                  background:var(--peo-hue,#6366f1);opacity:.85}
+.peo-card::after{content:'';position:absolute;left:0;right:0;top:0;height:74px;
+                 pointer-events:none;z-index:0;
+                 background:transparent;
+                 background:linear-gradient(180deg,
+                   color-mix(in srgb, var(--peo-hue,#6366f1) 7%, transparent),
+                   transparent)}
+.peo-card > *{position:relative;z-index:1}
+.peo-card h3{color:var(--peo-hue,#6b7280)}
+/* The rail needs the text off the card's edge, and the gallery's own tiles
+   already sit at 8px, so this is the only place the inset is added. */
+.peo-card{padding-left:18px}
 .peo-panel > *{min-width:0}
 
 /* The per-panel arrange toolbar. It is also the drag handle -- see the note in
@@ -873,8 +916,8 @@
       : '<div class="peo-empty"><b>No gallery images yet</b>'
         + 'The main image is shown first. Add more and they appear after it, in this order.</div>';
 
-    return '<section class="peo-media-gal">'
-      + '<h4>Gallery</h4>'
+    return '<section class="peo-card peo-media-gal">'
+      + '<h3>Gallery</h3>'
       + '<p class="peo-hint">Drag the handle to reorder, or use ↑ ↓. This is the order customers see, '
       +   'after the main image. The description under each photo is what Google Images and screen '
       +   'readers read — write what is actually in the shot.</p>'
@@ -894,15 +937,19 @@
      document, so the delegated handlers and the drag-and-drop wiring below
      bind to the same elements they always did. */
   function imagesView(){
-    return '<div class="peo-card">'
-      + '<h3>Images</h3>'
-      + '<p class="peo-hint">The main image is the one customers see first, on the shop grid and at the '
-      +   'top of the product page. Everything in the gallery follows it, in the order shown.</p>'
-      + '<div class="peo-mediawrap"><div class="peo-media">'
-      +   mainImageView()
-      +   galleryView()
-      + '</div></div>'
-      + '</div>';
+    /* TWO CARDS, side by side — not one card with two halves in it. The owner
+       asked for two separate boxes and got a single bordered panel with two
+       headings inside; from the outside that reads as one thing that happens to
+       be split, which is not what was asked for.
+
+       They still travel as ONE panel in the arrangement, which is the point of
+       wrapping them rather than registering two: two registered panels could be
+       dragged apart, or into different columns, and "side by side" would hold
+       only until somebody moved something. */
+    return '<div class="peo-mediawrap"><div class="peo-media">'
+      + mainImageView()
+      + galleryView()
+      + '</div></div>';
   }
 
   function mainImageView(){
@@ -910,8 +957,8 @@
       ? '<img src="' + url(model.image) + '" alt="">'
       : '<div class="peo-ph">No main image yet</div>';
 
-    return '<section class="peo-media-main">'
-      + '<h4>Main image</h4>'
+    return '<section class="peo-card peo-media-main">'
+      + '<h3>Main image</h3>'
       + '<p class="peo-hint">The first picture customers see, on the shop grid and at the top of the product page.</p>'
       + '<div class="peo-main-img">' + box
       +   '<div class="peo-main-cap">'

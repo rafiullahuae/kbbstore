@@ -18,11 +18,24 @@ function peoScreen(): string
     );
 }
 
-it('renders the main image and the gallery inside one grid, main first', function () {
+it('renders the main image and the gallery as two separate cards in one grid', function () {
     $blade = peoScreen();
 
     // One panel, one grid, both halves inside it.
     expect($blade)->toContain("'<div class=\"peo-mediawrap\"><div class=\"peo-media\">'");
+
+    /*
+     * TWO CARDS, not one card split down the middle. The owner asked for two
+     * separate boxes and was first given a single bordered panel with two
+     * headings inside it, which from the outside reads as one thing that
+     * happens to be divided. Each half carries .peo-card in its own right.
+     *
+     * They still travel as ONE registered panel — see the registry — so an
+     * arrangement cannot pull them apart or put them in different columns.
+     * Two cards is what it looks like; one panel is what it behaves as.
+     */
+    expect($blade)->toContain("'<section class=\"peo-card peo-media-main\">'")
+        ->and($blade)->toContain("'<section class=\"peo-card peo-media-gal\">'");
 
     $open  = strpos($blade, 'function imagesView(){');
     $close = strpos($blade, 'function mainImageView(){');
