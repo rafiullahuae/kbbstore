@@ -203,7 +203,14 @@ it('renders the same figures the printable invoice does, to the fil', function (
 
     expect($doc['totalFils'])->toBe(47350);
 
-    expect($html)->toContain('Tax Invoice')
+    /*
+     * "Invoice", not "Tax Invoice" — Lane DE. The heading is
+     * InvoiceDocument::docType() now, and this order carries no tax and no TRN,
+     * so the document does not claim to be a tax document. InvoiceDocTypeTest
+     * covers every state of that decision.
+     */
+    expect($html)->toContain('>Invoice</div>')
+        ->and($html)->not->toContain('Tax Invoice')
         ->and($html)->toContain('01000')
         ->and($html)->toContain($order->order_number)
         // 47350 fils at the currency's real precision, not the storefront's
@@ -240,7 +247,10 @@ it('carries a plain-text part with no markup in it', function () {
 
     $text = (string) view($content->text, array_merge($mailable->buildViewData(), $content->with))->render();
 
-    expect($text)->toContain('TAX INVOICE')
+    // Upper-cased docType(), not a literal — Lane DE. No tax, no TRN, so the
+    // text part heads the document the same way the HTML part does.
+    expect($text)->toContain('INVOICE')
+        ->and($text)->not->toContain('TAX INVOICE')
         ->and($text)->toContain('01000')
         ->and($text)->toContain('473.50')
         ->and($text)->not->toContain('<span')

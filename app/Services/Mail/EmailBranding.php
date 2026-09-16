@@ -148,6 +148,9 @@ class EmailBranding
                 'support' => [],
                 'hasSupport' => false,
                 'signature' => [],
+                // No address means no invitation to reply. The safe answer when
+                // branding could not be read is the one that promises nothing.
+                'replyTo' => '',
                 'colours' => self::PALETTE,
             ];
         }
@@ -165,6 +168,26 @@ class EmailBranding
             'support' => $support,
             'hasSupport' => $support !== [],
             'signature' => $customerFacing ? $this->signature() : [],
+            /*
+             * WHETHER THE FOOTER MAY INVITE A REPLY.
+             *
+             * The layout used to invite one unconditionally, and the audit lane
+             * removed the sentence because nothing in this application set a
+             * Reply-To: the reply went to the From address, which is
+             * `no-reply@<domain>` on an install that has left the From box
+             * empty — the shipped state. MailSettings::replyToAddress() answers
+             * '' until the owner enters an address, and the sentence is printed
+             * only when it does not.
+             *
+             * The address itself, not a boolean, so the template can name it if
+             * it ever wants to and so a test can read back what was configured.
+             *
+             * CUSTOMER-FACING ONLY. The merchant's new-order alert goes to the
+             * person who packs the boxes, and telling him he may reply to
+             * himself is the same nonsense as telling him an order was placed
+             * using his email address — which the footer already declines to do.
+             */
+            'replyTo' => $customerFacing ? $this->mail->replyToAddress() : '',
             'colours' => self::PALETTE,
         ];
     }

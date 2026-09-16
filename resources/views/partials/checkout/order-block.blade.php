@@ -54,7 +54,15 @@
      via :has() on the page's outer wrapper, the same technique already
      driving the selected-option highlight on the payment list itself. No JS
      needed for this part; the country-change refresh in checkout.js keeps
-     the number itself correct (see js-total-fee below). --}}
+     the number itself correct (see js-total-fee below).
+
+     AND THIS ONE STAYS CSS, deliberately — Lane DE. Everything else on this
+     page that is rendered-and-hidden now uses the `hidden` attribute, but
+     `hidden` states a fact about one moment and this row's visibility is a
+     live function of which payment radio is checked. Expressing it with an
+     attribute would mean adding JavaScript to something that already works
+     with none, on the one part of the checkout where a stale bundle would
+     leave a shopper looking at the wrong Total. --}}
 <div class="sumrow js-fee-row"><span>Cash-on-delivery fee</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils) !!}</span></div>
 @endif
 
@@ -70,8 +78,33 @@
      .js-gift-row above is: the country-change refresh switches between them,
      and an element that is not in the page cannot be unhidden. Changing the
      destination from an inclusive country to an exclusive one has to move the
-     line as well as its figure. --}}
-<div class="sumrow vat js-vat-row vat-add"@if (! ($totals['vat'] && $totals['vat']['added'])) style="display:none" @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
+     line as well as its figure.
+
+     HIDDEN WITH THE ATTRIBUTE, like the gift row above it and the delivery line
+     below — Lane DE.
+
+     These two carried `style="display:none"` instead, and had to: an author
+     rule (`.kbb-checkout .sumrow{display:flex}`) beats the user agent's
+     `[hidden]{display:none}` whatever its specificity, so the attribute did
+     nothing on this page. store/checkout.blade.php now ships
+     `.kbb-checkout [hidden]{display:none!important}`, and an author !important
+     declaration outranks an inline one, so `hidden` is the stronger of the two
+     mechanisms here as well as the clearer one. This partial now hides rows
+     exactly one way.
+
+     THE PAYMENT-DRIVEN ROWS BELOW ARE DELIBERATELY NOT CONVERTED. `.js-fee-row`
+     and the two Total rows are shown and hidden by kbb-checkout.css through
+     `:has(#payment_method_cod:checked)` — a live function of what the shopper
+     has selected, with no JavaScript in the loop at all. An attribute is a
+     static fact about one moment; it cannot express "while that radio is
+     checked", and replacing the selector with script would be adding JavaScript
+     to something that works without any.
+
+     resources/js/kbb/checkout.js sets `.hidden` on these rows to match. THE TWO
+     MUST SHIP TOGETHER: the compiled bundle under public/build is what runs on
+     the server, so this Blade change needs the rebuilt asset in the same
+     package. CheckoutHiddenRowsTest pins both halves in source. --}}
+<div class="sumrow vat js-vat-row vat-add"@if (! ($totals['vat'] && $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
 <div class="sumrow tot js-total-row"><span>Total</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils) !!}</span></div>
 {{-- THE COD TOTAL IS NOT CONDITIONAL ON THERE BEING A COD FEE.
 
@@ -102,7 +135,7 @@
      switching country moved the figure to 13.04 and left "You're paying VAT
      (5%)" printed beside it: a receipt contradicting itself. Both halves move
      together. --}}
-<div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) style="display:none" @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
+<div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
 
 @if ($withActions ?? true)
     <button type="button" class="place" data-place="1">Place order</button>

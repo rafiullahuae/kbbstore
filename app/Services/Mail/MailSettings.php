@@ -107,6 +107,59 @@ class MailSettings
          * is another lane's hardcoded array and has no entry for this key.
          */
         'mail_cancelled_refund_note' => ['text', 'Cancelled orders: what you tell a paid customer about their money', 'Added to the cancellation email ONLY when the order was paid and no refund has been recorded against it yet — e.g. how you send the money back and how long it takes. Leave blank and the email says nothing beyond the amount and that no refund has been recorded.'],
+
+        /*
+         * ── What the dispatch email says about how long delivery takes ──
+         *
+         * App\Mail\OrderStatusChanged carried this as a constant: a UAE delivery
+         * window in a PHP file, while the owner's own editable delivery wording
+         * lives in `delivery_default_text` and is read only by
+         * App\Support\DeliveryLine. Rewrite that line and the dispatch email
+         * went on saying the old thing for ever.
+         *
+         * IT IS A SECOND BOX AND NOT A REUSE OF THAT ONE, because the two
+         * sentences are measured from different events — this from DISPATCH,
+         * the storefront's from the ORDER — and on this shop the gap between
+         * them is configured (`dispatch_cutoff_hour`, `dispatch_days`) rather
+         * than notional. OrderStatusChanged::SHIPPED_TIMING_KEY sets out the
+         * whole argument. The label says which clock it is on, because a box
+         * that does not say so invites exactly the substitution that was
+         * refused.
+         *
+         * SHIPPED BLANK: blank means the email says what it says today, to the
+         * byte.
+         */
+        'mail_shipped_timing_note' => ['text', 'Dispatch email: how long delivery takes AFTER DISPATCH', 'Printed after "Your order has left us and is with the courier." on orders going to the UAE. Measured from the moment the parcel leaves you — not from when the order was placed, which is what the delivery line under Place order (Store → Delivery & Shipping) measures, so the two are separate boxes on purpose. Leave blank and the email keeps its current wording. Orders outside the UAE are given no window at all, because none has been measured.'],
+
+        /*
+         * ── Where a customer's reply goes ──
+         *
+         * Nothing in this application set a Reply-To. A reply therefore went to
+         * the From address, and fromAddress() derives `no-reply@<domain>` from
+         * APP_URL whenever the From box is empty — which is the shipped state of
+         * this screen, deliberately, because the server transport needs nothing
+         * filled in. So the footer's invitation to reply, "it reaches us", was
+         * on the shipped configuration an invitation to write to a mailbox named
+         * for not being read. The audit lane removed the sentence rather than
+         * leave the claim standing.
+         *
+         * This is the other half of that repair: an address the owner can set,
+         * wired into the mailer by MailConfigurator, and the invitation restored
+         * in emails/layout.blade.php ONLY while this box has something in it.
+         * Blank by default, and the sentence appears only when the address does.
+         *
+         * A SEPARATE FIELD RATHER THAN THE FROM ADDRESS, for the same reason
+         * `mail_merchant_address` is separate: on a shared host the From must be
+         * a mailbox on this domain or the relay rejects the message, while the
+         * place a customer's reply should land is wherever the owner actually
+         * reads his mail. The two are different jobs.
+         *
+         * Validated in save() below rather than in MailApiController's rule
+         * list, which is another lane's hardcoded array — see
+         * `mail_merchant_address`. An unvalidated address here is a customer
+         * reply that bounces.
+         */
+        'mail_reply_to' => ['text', 'Reply-To address', 'Where a customer\'s reply to an order email goes. Set this and every order email invites the customer to reply and says the reply reaches you. Leave it blank and no such invitation is printed, because with the From box empty this store sends as no-reply@ and a reply would reach nobody.'],
     ];
 
     /*
@@ -188,6 +241,8 @@ class MailSettings
         'mail_support_email' => 255,
         'mail_support_instagram' => 200,
         'mail_cancelled_refund_note' => 400,
+        'mail_shipped_timing_note' => 400,
+        'mail_reply_to' => 255,
     ];
 
     /** Where the last test-send outcome is kept. Not a credential; a plain setting. */
@@ -316,6 +371,31 @@ class MailSettings
     }
 
     /**
+     * The address a customer's reply should go to, or ''.
+     *
+     * NOTHING IS DERIVED HERE, and that is the difference between this and
+     * fromAddress(). A From address has to exist for a message to leave the
+     * server at all, so one is computed from APP_URL when the owner has not
+     * typed one. A Reply-To does not have to exist, and the only address that
+     * could be guessed for it is the same no-reply mailbox the missing From
+     * falls back to — which is precisely the address the footer's invitation to
+     * reply was removed for pointing at. So a blank box means no Reply-To
+     * header and no invitation, rather than a header that sends the customer
+     * somewhere nobody reads.
+     *
+     * Re-checked on the way OUT as well as on the way in. save() refuses a
+     * malformed address, but this row can also arrive from an older build, a
+     * hand-edited database or a half-applied package, and what it feeds is a
+     * header on every order email.
+     */
+    public function replyToAddress(): string
+    {
+        $value = trim((string) $this->get('mail_reply_to'));
+
+        return $value !== '' && filter_var($value, FILTER_VALIDATE_EMAIL) !== false ? $value : '';
+    }
+
+    /**
      * Can a message actually be attempted?
      *
      * Host, username, password and a from address. Port and encryption have
@@ -418,12 +498,19 @@ class MailSettings
             }
 
             /*
-             * The one field this class validates itself. See the SCHEMA entry:
-             * MailApiController's rule list is in another lane's file and has no
-             * entry for it, and an unvalidated address here is an alert nobody
-             * ever receives. Blank is allowed and means "fall back to From".
+             * The two fields this class validates itself. See their SCHEMA
+             * entries: MailApiController's rule list is in another lane's file
+             * and has no entry for either, and an unvalidated address here is an
+             * alert nobody ever receives or a customer reply that bounces.
+             * Blank is allowed in both cases and means "there is no such
+             * address" — for the merchant alert, fall back to From; for
+             * Reply-To, set no header and print no invitation to reply.
+             *
+             * The bad value is DROPPED rather than written: keeping the previous
+             * address is a working mailbox, and storing "not an address" is a
+             * header the transport refuses.
              */
-            if ($key === 'mail_merchant_address'
+            if (in_array($key, ['mail_merchant_address', 'mail_reply_to'], true)
                 && $value !== ''
                 && filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
                 continue;

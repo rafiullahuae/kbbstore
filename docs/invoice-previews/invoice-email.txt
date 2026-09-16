@@ -1,4 +1,4 @@
-TAX INVOICE
+INVOICE
 Invoice 01000
 Order KBB-10427
 Issued 15 September 2026

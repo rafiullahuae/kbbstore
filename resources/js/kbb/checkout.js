@@ -281,14 +281,27 @@ export function initCheckout() {
             const vatAdded = !!(data.vat && data.vat.added);
 
             //
-            // An INLINE style and not the `hidden` attribute, deliberately:
-            // `.kbb-checkout .sumrow` sets `display:flex` in an author
-            // stylesheet, and an author rule beats the user-agent's
-            // `[hidden]{display:none}` whatever its specificity. This is also
-            // the mechanism this block already used before the row could move.
+            // THE `hidden` ATTRIBUTE, not an inline style — Lane DE.
+            //
+            // This used to set `style.display`, and had to: `.kbb-checkout
+            // .sumrow{display:flex}` is an author rule, and an author rule
+            // beats the user agent's `[hidden]{display:none}` whatever its
+            // specificity, so the attribute did nothing on this page.
+            // store/checkout.blade.php now ships
+            // `.kbb-checkout [hidden]{display:none!important}`, which outranks
+            // an inline declaration as well, so the attribute is both the
+            // clearer mechanism and the stronger one. The gift row and the
+            // delivery line above already use it; this is the page hiding
+            // things exactly one way.
+            //
+            // The inline display is REMOVED rather than blanked, so a row
+            // rendered by a build that predates this one — an update package
+            // applied without a rebuilt bundle — is still governed by the
+            // attribute alone and cannot be left half-hidden by both.
             document.querySelectorAll('.js-vat-row').forEach((row) => {
-                const wanted = data.vat && row.classList.contains('vat-add') === vatAdded;
-                row.style.display = wanted ? '' : 'none';
+                const wanted = !!data.vat && row.classList.contains('vat-add') === vatAdded;
+                row.hidden = !wanted;
+                row.style.removeProperty('display');
             });
 
             document.querySelectorAll('.js-vat').forEach((el) => {

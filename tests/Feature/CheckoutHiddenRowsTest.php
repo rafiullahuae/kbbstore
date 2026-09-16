@@ -34,6 +34,37 @@ declare(strict_types=1);
  * selector rather than to the rule. The fix in store/checkout.blade.php is now
  * one rule for the page, and this file measures it.
  *
+ * ── AND THE PAGE NOW HIDES ROWS TWO WAYS, NOT THREE — Lane DE ───────────────
+ *
+ * partials/checkout/order-block.blade.php had grown a third mechanism. It hid
+ * the gift row with `hidden`, the tax lane's two VAT rows with an inline
+ * `style="display:none"`, and the cash-on-delivery fee row with a CSS `:has()`
+ * selector. The middle one existed only because `hidden` did not work here; the
+ * page rule above made it work, so the two VAT rows now use the attribute like
+ * everything else — and an author `!important` declaration outranks an inline
+ * one, so the attribute is the stronger mechanism as well as the clearer one.
+ *
+ * THE COD ROWS ARE STILL CSS, AND CORRECTLY SO. `.js-fee-row` and the two Total
+ * rows are shown by `:has(#payment_method_cod:checked)`: their visibility is a
+ * live function of what the shopper has selected, with no JavaScript anywhere in
+ * the loop. `hidden` states a fact about one moment and cannot express that, and
+ * replacing the selector with script would add JavaScript to the one part of
+ * this page that works without any. Both facts are measured below rather than
+ * argued: the VAT rows are asserted to compute `none` FROM THE ATTRIBUTE, and
+ * the fee row to compute `none` WITHOUT one.
+ *
+ * ── THE BLADE AND THE BUNDLE HAVE TO SHIP TOGETHER ──────────────────────────
+ *
+ * resources/js/kbb/checkout.js reveals the VAT rows on a country change, and it
+ * now sets `.hidden` rather than `style.display`. The server runs the compiled
+ * bundle this repo tracks under public/build, which only the integrator
+ * rebuilds — so a package carrying the Blade change without the rebuilt asset
+ * would render a row hidden by an attribute that the old bundle never clears,
+ * and a shopper switching to an exclusive-tax country would see a Total with no
+ * VAT row above it. The last test in this file pins both halves in source so the
+ * pair cannot drift; the rebuild itself is the integrator's, and is called out
+ * in the lane report.
+ *
  * ── WHY THIS NEEDS A BROWSER AND WHY IT SKIPS ───────────────────────────────
  *
  * A cascade claim cannot be settled by reading the stylesheet, and Pest has no
@@ -97,8 +128,20 @@ function hrPrereqs(): array
  * for a shopper who picked it from the selector. DeliveryLine has nothing for
  * SA and returns '', which is what puts `hidden` on the delivery row.
  */
-function hrCheckoutHtml(): string
+function hrCheckoutHtml(int $codFeeFils = 0): string
 {
+    /*
+     * The fee row is only RENDERED above a zero fee (the admin's own default is
+     * zero), so a test that wants to measure it has to ask for one. Every other
+     * caller passes nothing and gets the page exactly as before.
+     */
+    if ($codFeeFils > 0) {
+        app(SettingsService::class)->set('cod_fee', $codFeeFils);
+        app(SettingsService::class)->flush();
+        SettingsService::forgetMemo();
+        App\Models\Setting::flushMap();
+    }
+
     $product = Product::create([
         'slug' => 'hr-' . Str::random(8),
         'name' => 'Rice Probiotics Toner',
@@ -315,51 +358,232 @@ it('computes display:none for every row the checkout marked hidden, at 1280 and 
     }
 });
 
-/* --------------------------------------------------------------- structural */
+it('computes display:none for the VAT row hidden by the attribute rather than by a style', function () {
+    /*
+     * THE ROWS THAT USED TO CARRY AN INLINE STYLE — Lane DE.
+     *
+     * `.vat-add` belongs above the Total and is drawn only for an EXCLUSIVE
+     * destination, where the tax was added to the figures above it; `.vat-note`
+     * belongs under the Total and is the "of which" line for an inclusive or
+     * printed-only basis. Exactly one is ever on screen, and this shop ships in
+     * display mode, so the note is the visible one.
+     *
+     * The measurement that matters is the pair: the hidden one carries the
+     * attribute and computes `none`, and the visible one computes `flex` — from
+     * the SAME `.kbb-checkout .sumrow{display:flex}` rule that used to defeat
+     * the attribute. If the page rule were missing the first assertion would
+     * fail; if it were too broad the second would.
+     */
+    ['chrome' => $chrome, 'missing' => $missing] = hrPrereqs();
 
-/**
- * What CI can carry: the rule exists, and it is the general one.
- *
- * Asserted against the checkout document rather than against a file, because
- * what matters is that the rule reaches the page the shopper loads. It lives in
- * this page's own inline <style> and not in resources/css: the server runs a
- * compiled bundle that this repo tracks and only the integrator rebuilds, so a
- * rule added to kbb-checkout.css would do nothing in production until somebody
- * remembered to build it. An inline rule ships with the Blade file.
- */
-it('ships one rule that makes hidden mean hidden for the whole checkout', function () {
-    app(SettingsService::class)->flush();
+    if ($missing !== []) {
+        test()->markTestSkipped('Needs real Chromium: ' . implode('; ', $missing) . '.');
+    }
 
     $html = hrCheckoutHtml();
 
-    expect(str_contains($html, '.kbb-checkout [hidden]{display:none!important}'))
-        ->toBeTrue('The checkout has no rule restoring the hidden attribute over its own display rules.');
+    expect(preg_match('/<div class="sumrow vat js-vat-row vat-add"\s+hidden/', $html))
+        ->toBe(1, 'the fixture did not produce a hidden .vat-add row');
+    expect(stripos($html, 'js-vat-row vat-add" style="display:none"'))
+        ->toBeFalse('the VAT row is still hidden with an inline style');
+
+    $preview = hrServe($html);
+
+    try {
+        foreach ([[1280, 900], [390, 844]] as [$width, $height]) {
+            $result = hrMeasure($preview['base'], $chrome, $width, $height, ['.js-vat-row.vat-add', '.js-vat-row.vat-note']);
+
+            $add = $result['elements']['.js-vat-row.vat-add'] ?? [];
+            $note = $result['elements']['.js-vat-row.vat-note'] ?? [];
+
+            expect($add)->not->toBeEmpty("no .vat-add row on the page at {$width}px");
+            expect($note)->not->toBeEmpty("no .vat-note row on the page at {$width}px");
+
+            foreach ($add as $i => $el) {
+                expect($el['hiddenAttribute'])->toBeTrue(".vat-add #{$i} is not hidden by the attribute at {$width}px");
+                expect($el['display'])->toBe('none', "the exclusive-tax VAT row is on screen at {$width}px on a shop that added no tax");
+                expect($el['height'])->toBe(0, "the exclusive-tax VAT row occupies height at {$width}px");
+            }
+
+            /*
+             * THE CONTROL FOR THIS TEST. The visible twin proves the author
+             * display rule really is in force on these very elements, so the
+             * `none` above is the attribute winning rather than a page that
+             * loaded with no stylesheet at all. Not `each`: the block is
+             * rendered twice, desktop and mobile, and the copy for the other
+             * viewport is legitimately display:none.
+             */
+            expect(in_array('flex', array_column($note, 'display'), true))
+                ->toBeTrue("the .vat-note row is hidden too at {$width}px, so nothing states the VAT on this checkout");
+
+            foreach ($note as $i => $el) {
+                expect($el['hiddenAttribute'])->toBeFalse(".vat-note #{$i} is hidden although this shop prints a VAT note");
+            }
+        }
+    } finally {
+        $preview['stop']();
+    }
+});
+
+it('leaves the cash-on-delivery rows to CSS, which switches them live', function () {
+    /*
+     * THE ONE MECHANISM THAT IS NOT CONVERTED, MEASURED RATHER THAN ARGUED.
+     *
+     * kbb-checkout.css hides `.js-fee-row` and `.js-total-row-fee` outright and
+     * shows them — swapping the Total for the fee-inclusive Total as it goes —
+     * under `.kbb-checkout:has(#payment_method_cod:checked)`. Not one of those
+     * three rows carries a `hidden` attribute, and not one of them may: which
+     * of them is on screen is decided by the radio the shopper has selected, in
+     * the browser, after the page was served. An attribute is a fact about the
+     * moment the server rendered, and the server does not know what they will
+     * pick.
+     *
+     * Cash on delivery is the selected option on this fixture, so the fee row
+     * and the fee-inclusive Total are the visible pair and the plain Total is
+     * the hidden one. That is the selector doing its work on live state, which
+     * is exactly the property `hidden` cannot carry — and it is measured here in
+     * the same breath as the assertion that none of the three was hidden by the
+     * server.
+     */
+    ['chrome' => $chrome, 'missing' => $missing] = hrPrereqs();
+
+    if ($missing !== []) {
+        test()->markTestSkipped('Needs real Chromium: ' . implode('; ', $missing) . '.');
+    }
+
+    $html = hrCheckoutHtml(1500);
+
+    expect(str_contains($html, 'class="sumrow js-fee-row"'))
+        ->toBeTrue('the fixture did not produce a cash-on-delivery fee row to measure');
+    // The selected option, read off the radio itself. Matched on the element
+    // rather than on the word "checked", which appears in this document's own
+    // inline stylesheet as part of the `:has()` selector under test.
+    expect(preg_match('/<input id="payment_method_cod"[^>]*\schecked\b/', $html))
+        ->toBe(1, 'cash on delivery is not the selected option on this fixture, so the selector below is measured against nothing');
+
+    $preview = hrServe($html);
+
+    try {
+        foreach ([[1280, 900], [390, 844]] as [$width, $height]) {
+            $result = hrMeasure($preview['base'], $chrome, $width, $height, ['.js-fee-row', '.js-total-row', '.js-total-row-fee']);
+
+            $fee = $result['elements']['.js-fee-row'] ?? [];
+            $plainTotal = $result['elements']['.js-total-row'] ?? [];
+            $feeTotal = $result['elements']['.js-total-row-fee'] ?? [];
+
+            expect($fee)->not->toBeEmpty("no .js-fee-row on the page at {$width}px");
+            expect($plainTotal)->not->toBeEmpty("no .js-total-row on the page at {$width}px");
+            expect($feeTotal)->not->toBeEmpty("no .js-total-row-fee on the page at {$width}px");
+
+            // None of the three was hidden by the server. An attribute on any
+            // of them would mean somebody had "unified" a row that must not be.
+            foreach (['fee row' => $fee, 'plain Total' => $plainTotal, 'fee Total' => $feeTotal] as $what => $els) {
+                foreach ($els as $i => $el) {
+                    expect($el['hiddenAttribute'])
+                        ->toBeFalse("{$what} #{$i} has grown a hidden attribute; which of these is shown belongs to the payment selection, not to the server");
+                }
+            }
+
+            // And the selector really is switching them. Not `each`: the block
+            // is rendered twice and the copy for the other viewport is
+            // legitimately display:none at this width.
+            expect(in_array('flex', array_column($fee, 'display'), true))
+                ->toBeTrue("the cash-on-delivery fee row is off screen at {$width}px although COD is selected and a fee is charged");
+            expect(in_array('flex', array_column($feeTotal, 'display'), true))
+                ->toBeTrue("the fee-inclusive Total is off screen at {$width}px although COD is selected");
+            expect(array_column($plainTotal, 'display'))
+                ->not->toContain('flex', "both Totals are on screen at {$width}px, so the checkout shows two different Totals at once");
+        }
+    } finally {
+        $preview['stop']();
+    }
 });
 
 /**
- * The two rows are RENDERED and hidden, never omitted.
+ * The page hides rows TWO ways, and each row is on the right one — Lane DE.
  *
- * This is the half the hiding exists for. checkout.js reveals both from the
- * country-change and gift endpoints, and an element that is not on the page
- * cannot be unhidden — a shopper who arrived with no gift wrapping and then
- * ticked the box would watch the Total rise with no line saying why.
+ * Read off the rendered document rather than off the partial, because what
+ * matters is the markup the shopper's browser receives. Matched at the element
+ * with preg_match_all and never by a bare class search: this page inlines a
+ * stylesheet, and a search for `js-vat-row` would happily match a selector.
  */
-it('renders the gift row and the delivery line even when both are hidden', function () {
+it('hides every server-rendered row with the attribute, and only the payment rows with CSS', function () {
     $html = hrCheckoutHtml();
 
-    // Anchored at the element. A bare class search would match the stylesheet,
-    // which is inlined into this document.
-    preg_match_all('/<div class="sumrow js-gift-row"([^>]*)>/', $html, $gift);
-    preg_match_all('/<div class="kbb-delivery-line"([^>]*)>/', $html, $line);
+    // 1. Nothing on this page hides itself with an inline display any more.
+    preg_match_all('/<div class="sumrow[^"]*"([^>]*)>/', $html, $rows);
 
-    expect($gift[0])->not->toBeEmpty('The gift row is omitted rather than hidden; JavaScript has nothing to reveal.');
-    expect($line[0])->not->toBeEmpty('The delivery line is omitted rather than hidden; JavaScript has nothing to reveal.');
+    expect($rows[0])->not->toBeEmpty('no summary rows were rendered, so this proves nothing');
 
-    foreach ($gift[1] as $attributes) {
-        expect(str_contains($attributes, 'hidden'))->toBeTrue('The gift row is on screen at a zero fee.');
+    foreach ($rows[1] as $i => $attributes) {
+        expect(stripos($attributes, 'display:none'))
+            ->toBeFalse("summary row #{$i} still hides itself with an inline style: {$attributes}");
     }
 
-    foreach ($line[1] as $attributes) {
-        expect(str_contains($attributes, 'hidden'))->toBeTrue('The empty delivery line is on screen.');
+    // 2. Both VAT rows are rendered, and the one that is off belongs to the
+    //    attribute. Exactly one of the pair is ever shown.
+    preg_match_all('/<div class="sumrow vat js-vat-row (vat-add|vat-note)"([^>]*)>/', $html, $vat, PREG_SET_ORDER);
+
+    expect($vat)->not->toBeEmpty('the VAT rows are omitted rather than hidden; the country-change refresh has nothing to reveal');
+
+    foreach ($vat as $match) {
+        // `.vat-add` is the exclusive-tax row and this shop adds no tax, so it
+        // is the hidden one; `.vat-note` states the portion and is shown.
+        $shouldBeHidden = $match[1] === 'vat-add';
+
+        expect(str_contains($match[2], 'hidden'))
+            ->toBe($shouldBeHidden, "the {$match[1]} row is on the wrong side of the Total for this shop's tax mode");
     }
+
+    // 3. And the payment-driven rows carry no attribute at all, because CSS
+    //    owns them. An attribute here would be a row frozen at whatever the
+    //    server guessed the shopper would pick.
+    foreach (['js-total-row', 'js-total-row-fee'] as $class) {
+        preg_match_all('/<div class="sumrow tot ' . $class . '"([^>]*)>/', $html, $tot);
+
+        expect($tot[0])->not->toBeEmpty("no .{$class} on the page");
+
+        foreach ($tot[1] as $i => $attributes) {
+            expect(str_contains($attributes, 'hidden'))
+                ->toBeFalse(".{$class} #{$i} was hidden by the server; which Total is shown is the payment selection's business");
+        }
+    }
+});
+
+/**
+ * The Blade and the bundle say the same thing about these rows.
+ *
+ * THE PAIR THAT MUST SHIP TOGETHER. The server runs the compiled bundle this
+ * repo tracks under public/build, and only the integrator rebuilds it — so the
+ * Blade rendering `hidden` and the script clearing `style.display` would leave
+ * a shopper who switches to an exclusive-tax country looking at a Total with no
+ * VAT row above it. Asserted against the SOURCE, which is what a package
+ * carries; whether the bundle was rebuilt is the integrator's check and not one
+ * a test in this repo can make without running a build it is forbidden to run.
+ *
+ * T_COMMENT and T_DOC_COMMENT are not stripped here because this is JavaScript
+ * and PHP's tokenizer does not read it. Instead the match is anchored to the
+ * assignment itself — `row.hidden =` — which cannot appear in prose by accident
+ * the way a quoted sentence can.
+ */
+it('drives the VAT rows from the attribute in checkout.js as well as in the Blade', function () {
+    $js = (string) file_get_contents(resource_path('js/kbb/checkout.js'));
+
+    // The block that switches the two rows, found by the selector it queries.
+    $at = strpos($js, ".querySelectorAll('.js-vat-row')");
+
+    expect($at)->not->toBeFalse('checkout.js no longer switches the VAT rows at all');
+
+    $block = substr($js, $at, 400);
+
+    expect(str_contains($block, 'row.hidden ='))
+        ->toBeTrue('checkout.js does not set the hidden attribute on the VAT rows, which the Blade now relies on');
+    expect(preg_match('/row\.style\.display\s*=/', $block))
+        ->toBe(0, 'checkout.js still writes an inline display on the VAT rows, which the page rule now overrides');
+
+    // And the Blade half, so the two cannot drift apart in either direction.
+    $blade = (string) file_get_contents(resource_path('views/partials/checkout/order-block.blade.php'));
+
+    expect(preg_match('/js-vat-row[^"]*"@if \(.*?\) hidden @endif/', $blade))
+        ->toBeGreaterThan(0, 'the order block no longer hides the VAT rows with the attribute checkout.js drives');
 });

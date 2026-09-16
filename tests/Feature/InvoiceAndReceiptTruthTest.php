@@ -36,14 +36,14 @@ declare(strict_types=1);
  *
  * ── 3. WHAT IS DELIBERATELY NOT TOUCHED HERE ────────────────────────────────
  *
- * TAX. The invoice is headed "Tax Invoice", prints an "Includes VAT at 5%" note
- * and a TRN when the owner has entered one, while `tax_total` is written 0 by
- * this application and VatDisplay computes the note as display only (D-64). Lane
- * CU is building a real tax engine; this file states what the document says
- * today so that work has something to wire to, and changes none of it. The
- * assertions below are therefore about the note being a PORTION of the total and
- * never an addition to it — which is the property that must survive whatever
- * replaces VatDisplay.
+ * TAX. The invoice prints an "Includes VAT at 5%" note and a TRN when the owner
+ * has entered one, while `tax_total` is written 0 by this application. Lane CU
+ * then built the real tax engine and Lane DE made the HEADING conditional on it
+ * — see InvoiceDocument::docType() and InvoiceDocTypeTest — so the document no
+ * longer calls itself a tax document on an order that was charged no tax. The
+ * assertions below are unchanged and are about the note being a PORTION of the
+ * total and never an addition to it, which is the property that had to survive
+ * both of those changes and did.
  *
  * ── 4. TWO CLAIMS REMOVED FROM EVERY ORDER EMAIL ────────────────────────────
  *
@@ -57,10 +57,16 @@ declare(strict_types=1);
  *   status pill, which changes when an operator types a new status.
  *
  *   REPLYING. The footer of every customer-facing order email invited the
- *   customer to reply "— it reaches us". Nothing in this application sets a
+ *   customer to reply "— it reaches us". Nothing in this application set a
  *   Reply-To header, and MailSettings::fromAddress() derives `no-reply@<domain>`
  *   whenever the owner has left the From box blank, which is the shipped
  *   default. The reply reached a mailbox named for not being read.
+ *
+ *   Lane DE built the missing half: a Reply-To box on Store → Mail, written
+ *   into `mail.reply_to` by MailConfigurator, and the invitation restored in
+ *   the footer ONLY while an address is configured. The case pinned here is
+ *   still the shipped one — no address, so no sentence. MailReplyToTest carries
+ *   the other side.
  */
 
 use App\Mail\OrderInvoice;
@@ -345,29 +351,34 @@ it('offers no parcel tracking, because this shop has none to offer', function ()
 });
 
 it('does not invite a reply to a mailbox nobody reads', function () {
-    // THE TWO FACTS THE CLAIM DEPENDED ON, ASSERTED RATHER THAN ASSUMED.
-    //
-    // First: nothing in this application sets a Reply-To header, so a reply
-    // goes to the From address and nowhere else. Asserted by walking app/,
-    // because the absence of a call is not something a request can observe.
-    $replyTo = 0;
+    /*
+     * THE CLAIM HAS A SWITCH BEHIND IT NOW — Lane DE.
+     *
+     * This test used to prove the invitation could not be true by walking app/
+     * for a `replyTo(` call and finding none. That walk has been removed rather
+     * than kept, because it no longer proves what it says: Store → Mail has a
+     * Reply-To box, MailConfigurator writes it into `mail.reply_to`, and a
+     * global address is applied by MailManager when it builds a mailer rather
+     * than by a call in this codebase — so counting call sites would report
+     * "nothing sets a Reply-To" about an application that does.
+     *
+     * What is asserted instead is the state this fixture is actually in, which
+     * is the shipped one: no From address and NO REPLY-TO ADDRESS, so a reply
+     * would go to the `no-reply@` mailbox MailSettings derives from APP_URL —
+     * and, in that state, the footer says nothing about replying. The other
+     * half, that the sentence comes back once an address is configured and that
+     * the header really is on the message, is MailReplyToTest's.
+     */
+    $mail = app(\App\Services\Mail\MailSettings::class);
 
-    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(app_path())) as $file) {
-        if ($file->isFile() && $file->getExtension() === 'php' && str_contains((string) file_get_contents($file->getPathname()), 'replyTo(')) {
-            $replyTo++;
-        }
-    }
-
-    expect($replyTo)->toBe(0, 'something now sets a Reply-To, so the invitation to reply could be restored');
-
-    // Second: the owner has set no From address, which is the shipped state of
-    // Store → Mail — the server transport needs nothing filled in, which is why
-    // it is the default. MailSettings then derives one from APP_URL, named
-    // no-reply, or returns nothing at all when APP_URL has no domain in it.
-    expect(app(\App\Services\Mail\MailSettings::class)->get('mail_from_address'))
+    // The shipped state of Store → Mail: the server transport needs nothing
+    // filled in, which is why it is the default.
+    expect($mail->get('mail_from_address'))
         ->toBe('', 'the fixture no longer reproduces an unconfigured mail screen');
+    expect($mail->replyToAddress())
+        ->toBe('', 'the fixture has a Reply-To, so this is no longer the unconfigured case');
 
-    $derived = app(\App\Services\Mail\MailSettings::class)->fromAddress();
+    $derived = $mail->fromAddress();
 
     expect($derived === '' || str_starts_with($derived, 'no-reply@'))
         ->toBeTrue('the From address is now a mailbox somebody might actually read: ' . $derived);

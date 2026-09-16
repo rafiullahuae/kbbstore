@@ -92,6 +92,42 @@ class MailConfigurator
                 'mail.from.name' => $this->settings->get('mail_from_name') ?: config('app.name'),
             ]);
         }
+
+        /*
+         * WHERE A CUSTOMER'S REPLY GOES.
+         *
+         * Nothing in this application set one until now, so a reply went to the
+         * From address — and that is `no-reply@<domain>`, derived from APP_URL,
+         * on an install that has not filled the From box in. The footer's
+         * invitation to reply was removed for exactly that reason; this is the
+         * half that lets it come back.
+         *
+         * `mail.reply_to` AND NOT `mail.mailers.kbb.reply_to`. MailManager reads
+         * `Arr::get($config, $type, config('mail.'.$type))` when it builds a
+         * mailer, so a key on the mailer entry would only reach the `kbb`
+         * mailer, and both the test suite and a developer box run on a different
+         * one (MAIL_MAILER). The global is what `mail.from` already uses two
+         * lines above, and a Reply-To that only applies on production is a
+         * Reply-To nobody can check.
+         *
+         * NOT CLEARED WHEN BLANK, because there is nothing to clear: no
+         * Reply-To is set by config/mail.php, by env, or by any Mailable in this
+         * app. A mailer built earlier in this request keeps the value it was
+         * built with either way, which is what refresh() purges for.
+         */
+        $replyTo = $this->settings->replyToAddress();
+
+        if ($replyTo !== '') {
+            config([
+                'mail.reply_to' => [
+                    'address' => $replyTo,
+                    // The From name, because it is the same shop answering. A
+                    // second name box would be a second thing to keep in step
+                    // with the one the customer already sees as the sender.
+                    'name' => $this->settings->get('mail_from_name') ?: config('app.name'),
+                ],
+            ]);
+        }
     }
 
     /**
@@ -179,6 +215,27 @@ class MailConfigurator
         // safe to call unconditionally -- and without it, saving the form and
         // pressing Send Test in the same request would test the old host.
         Mail::purge(self::MAILER);
+
+        /*
+         * And whatever the framework's default actually is.
+         *
+         * MailManager memoises a built mailer and applies the global addresses
+         * -- From, and now Reply-To -- at the moment it BUILDS it. On this
+         * deployment the default is `kbb` and the line above has already dealt
+         * with it. Everywhere else it is not: the suite runs on `array` and a
+         * developer box on whatever MAIL_MAILER says, so a mailer built before
+         * the owner pressed Save would keep sending with the previous Reply-To
+         * for the rest of the request -- which is exactly the shape of bug that
+         * makes a settings screen look like it saved and did nothing.
+         *
+         * purge() on a mailer that was never built is a no-op, so the cost of
+         * being right here is one array lookup.
+         */
+        $default = (string) config('mail.default');
+
+        if ($default !== '' && $default !== self::MAILER) {
+            Mail::purge($default);
+        }
     }
 
     /**

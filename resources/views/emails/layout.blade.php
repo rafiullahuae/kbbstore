@@ -46,6 +46,25 @@
 @php
     $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE;
     [$markInk, $markAccent] = $brand['wordmark'] ?? ['', ''];
+
+    /*
+     * The footer's invitation to reply, or ''. The footer at the bottom of this
+     * file explains at length when it may be said at all.
+     *
+     * DECIDED HERE RATHER THAN WITH A DIRECTIVE DOWN THERE, for a reason that is
+     * about diffs and not about taste: a Blade directive on a line of its own
+     * leaves that line's indentation in the rendered output. An @if around the
+     * sentence would therefore change the whitespace of EVERY order email —
+     * including the ones with no Reply-To configured, which are meant to be
+     * untouched by this package — and every committed preview under
+     * docs/email-previews would churn along with them, which is how a reviewer
+     * learns to stop reading those diffs. Appending a string that is empty
+     * appends nothing, so the unconfigured footer is byte-identical to the one
+     * this replaces.
+     */
+    $replyInvitation = ($brand['replyTo'] ?? '') !== ''
+        ? ' Reply to this message if anything looks wrong — it reaches us.'
+        : '';
 @endphp
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};margin:0;padding:0;">
     <tr>
@@ -154,27 +173,34 @@
                                          placed using this email address" is nonsense addressed to the
                                          one person who already knows why.
 
-                                         THE INVITATION TO REPLY IS GONE, because a reply reaches
-                                         nobody on an install that has not been configured.
+                                         THE INVITATION TO REPLY IS CONDITIONAL, AND THIS IS WHY.
 
-                                         Nothing in this application sets a Reply-To header — there is
-                                         no replyTo() call anywhere in app/ and config/mail.php has no
-                                         entry for one — so a reply goes to the From address, and
-                                         MailSettings::fromAddress() derives `no-reply@<domain>` from
-                                         APP_URL whenever the owner has left the From box empty. That
-                                         is the default state of this screen, deliberately: the server
-                                         transport needs nothing filled in, which is the whole reason
-                                         it is the default. So the sentence promising that a reply
-                                         "reaches us" was, on the shipped configuration, an invitation
-                                         to write to a mailbox named for not being read.
+                                         It used to be unconditional, and it was withdrawn: nothing in
+                                         this application set a Reply-To header, so a reply went to the
+                                         From address, and MailSettings::fromAddress() derives
+                                         `no-reply@<domain>` from APP_URL whenever the owner has left
+                                         the From box empty. That is the default state of that screen,
+                                         deliberately — the server transport needs nothing filled in,
+                                         which is the whole reason it is the default. So the sentence
+                                         was, on the shipped configuration, an invitation to write to a
+                                         mailbox named for not being read.
 
-                                         Nothing invented in its place. The support block above this
-                                         one already prints the channels the owner HAS configured —
-                                         WhatsApp, email, Instagram — each one omitted when it has no
-                                         value, and each one a real address rather than a guess about
+                                         There is now a Reply-To box on Store → Mail.
+                                         MailConfigurator sets `mail.reply_to` from it, so a reply
+                                         really does reach the owner — and EmailBranding hands this
+                                         template the address, empty until he enters one. The sentence
+                                         appears only when the address does, which is the same shape as
+                                         every other claim in these templates: the support block prints
+                                         a channel only where there is a value behind it, the PAID line
+                                         appears only on an order that was paid, and the cancellation
+                                         email states a refund only where a refund row exists.
+
+                                         Still nothing invented in its place when the box is blank. The
+                                         support block above already prints the channels the owner HAS
+                                         configured, each one a real address rather than a guess about
                                          where this message came from. --}}
                                     @if ($brand['customerFacing'] ?? true)
-                                        You are receiving this because an order was placed with {{ $brand['storeName'] ?? '' }} using this email address.
+                                        You are receiving this because an order was placed with {{ $brand['storeName'] ?? '' }} using this email address.{{ $replyInvitation }}
                                     @else
                                         This is your store's new-order alert. It goes to the address set under Store → Mail,
                                         and you can switch it off under Store → Modules → Order emails.
