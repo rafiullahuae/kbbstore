@@ -736,6 +736,132 @@ something half-right.
 - **A guard is decor until it fails.** Every guard added in this phase was verified by reverting
   the fix and watching it go red.
 
+## Phase 8c — Telling the truth  *(2.60.126 → .185)*
+
+Sixty packages, and they nearly all share one shape: **a screen or a document
+confidently stating something the code does not do.** None of these were
+crashes. Crashes get reported; these were found by looking for disagreements
+between two things that must agree — a control and its writer, a renderer and
+its feed, a claim and its mechanism, a setting and its reader, a route and its
+capability.
+
+### Money that was wrong
+
+- [x] **The shop could sell the same jar twice.** Nothing re-checked stock between
+      the basket and the payment, and **no order path had ever reduced a stock
+      count**. `CartService::claimStock()` now takes the units at the instant the
+      order is written, under a row lock with the condition repeated in the UPDATE
+      and the affected row count checked. Refuses the whole order, by name, before
+      any gateway is touched — *2.60.179*
+- [x] **The unauthenticated `/api` order endpoint was the remaining way to
+      oversell** — it checked the sold-out flag and never the count. Extracted to
+      `App\Services\StockClaim` so both checkouts call one routine rather than
+      keeping two copies — *2.60.182*
+- [x] **Cancelled orders never returned their stock.** `order_stock_claims`
+      records which shelf lost how many units for which order, so a return credits
+      exactly what was taken and an imported or back-office order gets nothing
+      invented for it. `released_at`, claimed under an affected-row check, makes a
+      double cancellation credit once — *2.60.182*
+- [x] **Coupon redemptions were never released.** Cancel, decline or refund in
+      full and the customer had still "used" their code — a one-per-customer code
+      gone for good on a sale that never happened. Nine status-writing sites now
+      go through `App\Services\Orders\OrderStatus` — *2.60.183*
+- [x] **Demo orders counted as real revenue.** Switching Demo Content on added
+      roughly AED 2,000 of invented sales to the dashboard, analytics, AOV and
+      customer lifetime spend, and switching it off took them away again with
+      nothing saying why. `App\Support\DemoSeed` excludes them from every figure
+      while leaving them on the lists, marked — *2.60.178*
+- [x] **Editing an order added `tax_total` unconditionally**, which is right for an
+      exclusive order and wrong for an inclusive one, so an inclusive order's first
+      edit inflated its total by the tax already inside the price. Re-prices from
+      the rate recorded **on the order** — *2.60.186*
+
+### The shop's own clock
+
+- [x] **Every date in the admin was a UTC day**, four hours behind Dubai, so any
+      order placed between midnight and 4am was filed under the previous day — on
+      the dashboard, on each chart bar, on the invoice and on the customer's
+      confirmation email. `App\Support\StoreTime` converts for display and
+      **never reinterprets what is stored**; `APP_TIMEZONE` stays UTC, because
+      moving it would shift every historical order rather than convert it. The zone
+      is a setting, Store → Business Details, default Asia/Dubai — *2.60.178*
+- [x] Date filters on Customers and Orders still matched a typed date against the
+      UTC calendar day while the rows beside them were already shown on Dubai time,
+      so the screen disagreed with itself — *2.60.183*
+
+### Promises made to the wrong country
+
+Each of these was found and removed separately, and the last one is the general
+lesson: **a single global sentence is structurally incapable of being
+country-aware.**
+
+- [x] The checkout told a Saudi shopper, in writing, that their order arrives in
+      one to three days anywhere in the UAE — *earlier*
+- [x] The home page said it to **every visitor in the world** — *2.60.181*
+- [x] The product page's trust chip was loaded and waiting: blank, but the settings
+      screen suggested UAE wording that every country would then have read.
+      Re-sourced from `delivery_texts` and the global setting deleted — *2.60.183*
+- [x] The product page's dispatch countdown gave every visitor an arrival date
+      built from `dispatch_days`, a UAE transit time. It keeps the dispatch half —
+      true wherever the parcel goes — and drops the arrival half outside the store
+      country — *2.60.183*
+- [x] "Free delivery over AED 199" was shown site-wide while the Gulf zone already
+      carried AED 1,600, and three home-page places had the figure **typed into the
+      page** so they would have gone on advertising the old one to UAE shoppers
+      too. Five meta descriptions promised next-day UAE delivery to every visitor
+      and to Google — *2.60.183*
+- [x] `App\Support\ShopperCountry` is now the only answer to "where is this
+      shopper": explicit choice, session, geo signal, `store_country`, returning
+      the code *and* which tier answered — *2.60.181*
+
+### Claims with nothing behind them
+
+- [x] "Easy 14-day returns" — no such policy exists anywhere in this shop — *2.60.179*
+- [x] "4.8 · loved by 2,300+ UAE customers" at the payment step, typed into the
+      code, on a shop with no reviews — *2.60.179*
+- [x] GLOW30 advertised whether or not the coupon existed, and clickable, so
+      tapping it returned "That code is not valid" from the page that had just
+      recommended it — *2.60.179*
+- [x] The cancellation email promised every customer their refund was on its way
+      and that a second email would follow. Cancelling starts no refund here. It
+      now looks the order up and says which of three things is true of it — *2.60.184*
+- [x] The emailed invoice said "Paid by" on **every** invoice, including the
+      cash-on-delivery ones sent before the courier collects — *2.60.184*
+- [x] A dispatch email promised tracking this shop does not have; every footer
+      invited a reply to an address nothing sets — *2.60.184*
+- [x] **The Live / Sandbox switch** told the owner changes were held back from the
+      live shop until he deployed. There is one shop; every save went straight into
+      it. **Sandbox & Deploy** showed five passing safety checks, a Deploy button, a
+      Rollback button and a promised database backup — the checks were string
+      literals and `deploy()` was a `setTimeout` setting a boolean — *2.60.186*
+- [x] The dashboard's "live feed" printed three invented events stamped "just now"
+      for ever on a shop with no orders — *2.60.186*
+- [x] Pinterest and Baidu verification boxes saved a token and emitted no tag, so
+      neither service could ever verify the shop — *2.60.186*
+
+### Built because the owner asked
+
+- [x] **Analytics date filters** — All time / Today / This week / This month /
+      This year / Custom range, with every box on the screen following the same
+      range and each card printing the period it covers. `App\Support\AnalyticsRange`
+      owns every boundary and bucket — *2.60.179*
+- [x] **Per-country VAT**, then **a real tax engine**: a default rate and basis
+      plus per-country exceptions each carrying **its own rate and its own basis**
+      (inclusive, exclusive or printed-only), behind a `tax_mode` switch that ships
+      **off** so applying it changes nothing. The rate and basis are recorded on
+      the order, never looked up at print time — *2.60.180, .183*
+- [x] **Per-country delivery lines** with a screen to write them in, and one-click
+      Gulf presets carrying the owner's own figures — *2.60.181, .183*
+- [x] **A link into the admin opens the screen it names.** Seven screens answered a
+      bookmark with "the admin script did not finish starting up" — *2.60.185*
+
+### Performance, measured not assumed
+
+- [x] The home page's review wall sorted all 7,650 approved reviews to show four —
+      41ms, growing with every review collected. Indexed: **41ms → 0.3ms**, and
+      constant. The brand index spent four of its six queries asking the database to
+      describe itself — *2.60.183*
+
 ## Phase 9 — Content pages
 
 - [x] Privacy, terms, New In, Best Sellers, Super Sale, Under 54 AED, Wishlist
@@ -1171,6 +1297,13 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
 | ▲25 | **Design work approved in preview was not fully carried into the shipped code, twice, on the same feature.** A vertical divider between mega-menu columns was shown, iterated on, and approved across several rounds of real preview files — and was never actually present in either of the two packages that followed. Caught only because Rafi compared the live result directly against the preview file rather than trusting the release notes. No systemic fix proposed yet beyond the general lesson: a preview being real and interactive (per the standing rule) proves the *design* was tested, not that it was *shipped* — those need to be checked separately, especially when a change spans several back-to-back small packages |
 | ▲26 | **A package being built, packaged, signed, and handed over is not the same as it being applied — and nothing was checking for the difference.** Five packages (2.60.37 through 2.60.41) were delivered as finished work over several turns; the live server was genuinely still at 2.60.36 the entire time, stuck exactly where the Core Updates screen broke (▲ entries above). Every status claim in between assumed success from a successful *handover*, not a verified *install*. Only surfaced because Rafi separately uploaded the real server files for a GitHub sync, and a direct file comparison caught it — not anything in the update flow itself. **No fix shipped yet.** The real gap: nothing after delivering a zip ever asks "did this actually land," and for a project shipping this many incremental patches, that assumption compounding silently for five versions in a row is exactly the failure mode to design against next — a version number visibly confirmed post-apply, not just a package handed over, should probably gate any packages after it |
 | ▲27 | **Two live, working secrets — `kbb-doctor.php`'s access token and a second one in `kbb-recover.php` that hadn't been directly confirmed before — were captured in plain text the moment those files were actually read**, during the same file comparison that found ▲26. Redacted before anything touched GitHub, private repo or not — a credential live on the production server right now has no business sitting in git history in the clear, regardless of who can see the repo. Doesn't change the standing rotation item already in this register; confirms it's still live and now shows exactly where the second token lives too |
+
+| ▲28 | **The defect this project actually has is a screen stating what the code does not do.** Twenty-odd separate instances were found across 2.60.126–.185 by one method, and it is worth naming as a method rather than a run of luck: look for **disagreements between two things that must agree** — a control and the code that saves it, a template field and the endpoint that feeds it, a sentence of help text and the mechanism it describes, a setting and its reader, a route and its capability entry. Every one of these was invisible to normal use: nothing crashed, nothing errored, and several had been wrong since the day they shipped. A badge the Orders table had rendered since Demo Content launched, fed by an endpoint that never sent the field, had **never once appeared**. Cross-check mechanically wherever possible — a script listing every `id="set_*"` against every key in the save payload finds things reading never will |
+| ▲29 | **`public/build` is tracked as the record of server state, and `npx vite build` empties it.** A rebuild deletes ~34 historical hashed assets git knows about, and a package that deletes files is exactly what took the product pages down in 2.60.102–.106. The discipline: rebuild, then `git checkout --` every path showing `D`, so the commit adds the new bundle and moves one line of the manifest. Separately, **running the full test suite has been observed to delete a tracked asset from that directory** — check `git status --short public/build` before every commit and never `git add -A` without looking |
+| ▲30 | **`bootstrap/` cannot reach the server, so a fix that needs it does not exist in production.** `BuildPackage::NEVER_SHIP` excludes it because UpdateGuard forbids it — a bad `bootstrap/app.php` stops the application booting and would leave the updater unable to roll itself back — and the host has no shell. This was found the expensive way: the `kbb_tz` cookie-encryption exemption is correct, shippable nowhere, and would have tested green for ever because the suite boots the real `bootstrap/app.php`. The fix that works reads `$_COOKIE` directly, and there is a test that fails if anyone reverts to the version that only works locally |
+| ▲31 | **A regex guard reads comments and quoted strings as code.** Six separate lanes wrote a guard that then failed on its own explanatory prose — the file describes the bug it fixed, and the guard finds the description. Strip `T_COMMENT`/`T_DOC_COMMENT` with `token_get_all()`, or assert on rendered output where a comment cannot reach. Related: **a class-name search of rendered admin HTML also matches the page's inlined CSS**, so assert on elements with `preg_match_all`, never on a bare class name |
+| ▲32 | **Verify a lane's headline claim independently before merging it.** Counts and diagnoses arrive confidently and are sometimes wrong in ways that change the remedy: "sixteen screens cannot be deep-linked" was seven; "149 hand-typed colours need fixing" was thirteen, and most of the rest were *correct* colours whose conversion would have made text unreadable; "two screens hold duplicate delivery wording" was two tabs of one screen holding two different kinds of value, where no country could have used one field for both. Each of those was caught by the next lane checking rather than inheriting. A confident report is a hypothesis |
+| ▲33 | **A preview that serves stale bytes will send you chasing a defect that does not exist.** Several hours went into an admin screen that "had not changed", which was a dev server started before the merge, on a port a kill had not actually freed. Before trusting any preview: confirm the listening PID is the process you started (`ss -ltnp`, then `/proc/<pid>/cwd`), clear compiled views, and check one string you know changed. Never `pkill` broadly — one lane killed another lane's server that way |
 
 ## Questions still unanswered
 
