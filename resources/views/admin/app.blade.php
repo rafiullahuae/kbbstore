@@ -412,6 +412,11 @@ input.inp[type=file]{padding:6px 9px}
 .odmain{min-width:0}
 .odside{min-width:0}
 .odcard{background:#fff;border:1px solid var(--border);border-radius:13px;box-shadow:0 1px 2px rgba(18,21,31,.04),0 1px 10px rgba(18,21,31,.03);overflow:hidden}
+/* A line item's photograph, or the tinted initials when the product has none
+   or has been deleted. Was an empty grey square with no fallback at all. */
+.odthumb{width:36px;height:36px;border-radius:8px;overflow:hidden;display:grid;place-items:center;
+         font-size:10px;font-weight:800;color:#fff}
+.odthumb img{width:100%;height:100%;object-fit:cover;display:block}
 /* The Customer note card's body.
    This class was written into the markup and never given a rule, so the card
    had NO horizontal padding: the gift pill, both labels and the message box
@@ -9179,6 +9184,22 @@ buildNav();
 
   /* ===== LANE V · Store · Orders — END ===== */
 
+  /* The "add a product" type-ahead on the order detail screen, built once and
+     re-attached whenever the screen is redrawn. See wireOrderDetail below. */
+  var odPicker = null, odPickerOrder = null;
+
+  /** Put one of the picked products on the order that is open. */
+  async function odAddItem(productId){
+    try{
+      var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+odPickerOrder+'/items'),{method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
+        body:JSON.stringify({product_id:parseInt(productId,10), quantity:1})});
+      var j = await r.json();
+      if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.'); return; }
+      toast('Product added'); renderOrderDetail(odPickerOrder);
+    }catch(e){ toast('Could not add that product.'); }
+  }
+
   /**
    * The detailed order page, built from Rafi's own WooCommerce reference
    * screenshot. Card-stack layout, every section open by default (his
@@ -9354,6 +9375,26 @@ buildNav();
       '</div></div>';
   }
 
+  /*
+   * The line item's photograph, and a real placeholder when there is none.
+   *
+   * `image` on a line item is the LIVE product's image (AdminOrderController::
+   * show reads $item->product?->image) -- order_items snapshots the name, the
+   * brand, the SKU and the price but not the picture. So it is legitimately
+   * empty for a line whose product has no photograph or has since been deleted,
+   * and that is precisely the case that drew an empty grey square. The tinted
+   * initials are the same square the product picker draws, from the same
+   * tint(), so the row and the suggestion that created it match.
+   */
+  function odItemThumb(it){
+    var label = it.brand || it.name || '?';
+    var mark = String(it.name||'?').trim().split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase() || '?';
+    var tint = window.kbbProductPickerTint ? window.kbbProductPickerTint(label) : 'var(--surface-2)';
+
+    return '<div class="odthumb" style="background:'+sesc(tint)+'" data-mark="'+sesc(mark)+'">'+
+      (it.image?'<img src="'+sesc(it.image)+'" alt="" loading="lazy">':sesc(mark))+'</div>';
+  }
+
   function odItemsCard(o){
     var editable = !!o.editable;
     var rows = o.items.map(function(it){
@@ -9366,8 +9407,7 @@ buildNav();
       var removeCell = editable
         ? '<button class="btn ghost sm oditemdel" data-itemid="'+it.id+'" style="color:var(--sale,#c0392b);padding:4px 9px">Remove</button>'
         : '';
-      return '<tr><td style="width:44px"><div style="width:36px;height:36px;border-radius:8px;background:var(--surface-2);overflow:hidden">'+
-        (it.image?'<img src="'+sesc(it.image)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div></td>'+
+      return '<tr><td style="width:44px">'+odItemThumb(it)+'</td>'+
         '<td><b style="font-size:12.5px">'+sesc(it.name)+'</b><div class="pbrand">'+sesc(it.brand||'')+'</div></td>'+
         '<td>'+priceCell+'</td><td>'+qtyCell+'</td><td><b>AED '+it.total_aed+'</b></td>'+(editable?'<td>'+removeCell+'</td>':'')+'</tr>';
     }).join('');
@@ -9527,6 +9567,15 @@ buildNav();
   function wireOrderDetail(o){
     var id = o.id;
 
+    // A product photograph whose URL no longer resolves falls back to the
+    // initials rather than the browser's broken-image icon.
+    document.querySelectorAll('#content .odthumb img').forEach(function(img){
+      img.onerror = function(){
+        var holder = img.parentNode;
+        if(holder) holder.textContent = holder.dataset.mark||'';
+      };
+    });
+
     // Collapse/expand — sections start open (Rafi's choice); this just toggles.
     document.querySelectorAll('#content .odtoggle').forEach(function(t){
       t.onclick = function(){
@@ -9630,41 +9679,35 @@ buildNav();
         };
       });
 
-      var searchInp = document.getElementById('odAddProductSearch');
-      var resultsBox = document.getElementById('odAddProductResults');
-      var searchT;
-      if(searchInp){
-        searchInp.oninput = function(){
-          clearTimeout(searchT);
-          var q = searchInp.value.trim();
-          if(q.length<2){ resultsBox.style.display='none'; return; }
-          searchT = setTimeout(async function(){
-            try{
-              var data = await api('/admin-api/catalog/products?search='+encodeURIComponent(q)+'&per_page=8');
-              var list = data.products||[];
-              resultsBox.innerHTML = list.length ? list.map(function(p){
-                return '<div class="odaddrow" data-pid="'+p.id+'" style="padding:9px 12px;cursor:pointer;font-size:12.5px;border-bottom:1px solid var(--border)">'+
-                  '<b>'+sesc(p.name)+'</b><div style="color:var(--ink-faint);font-size:11px">'+sesc(p.brand||'')+' \u00b7 AED '+(p.sale_price||p.price)+'</div></div>';
-              }).join('') : '<div style="padding:12px;color:var(--ink-faint);font-size:12.5px">No products found.</div>';
-              resultsBox.style.display='block';
-              document.querySelectorAll('#content .odaddrow').forEach(function(row){
-                row.onclick = async function(){
-                  try{
-                    var r = await fetch(fixAdminApiUrl('/admin-api/orders/'+id+'/items'),{method:'POST',credentials:'same-origin',
-                      headers:{'Content-Type':'application/json','X-XSRF-TOKEN':cookie('XSRF-TOKEN'),Accept:'application/json'},
-                      body:JSON.stringify({product_id:parseInt(row.dataset.pid,10), quantity:1})});
-                    var j = await r.json();
-                    if(!r.ok || j.ok===false){ toast(j.message||'Could not add that product.'); return; }
-                    toast('Product added'); renderOrderDetail(id);
-                  }catch(e){ toast('Could not add that product.'); }
-                };
-              });
-            }catch(e){ resultsBox.style.display='none'; }
-          }, 300);
-        };
-        document.addEventListener('click', function(e){
-          if(!resultsBox.contains(e.target) && e.target!==searchInp) resultsBox.style.display='none';
-        });
+      /*
+       * "Add a product to this order" is the SAME picker New Order uses --
+       * admin/partials/product-picker.blade.php -- so the two screens search,
+       * highlight, key and draw their thumbnails identically. What was here
+       * before had none of that: no keyboard selection, no images, and a fresh
+       * document-level click listener added on EVERY render of the order, each
+       * one holding that render's detached nodes for as long as the console
+       * stayed open. The picker owns exactly one such listener for its life.
+       */
+      if(document.getElementById('odAddProductSearch') && typeof window.kbbProductPicker==='function'){
+        if(!odPicker){
+          odPicker = window.kbbProductPicker({
+            input:'#odAddProductSearch',
+            results:'#odAddProductResults',
+            listId:'odAddProductList',
+            minChars:2,
+            search: async function(term){
+              var data = await api('/admin-api/catalog/products?search='+encodeURIComponent(term)+'&per_page=8');
+              return data.products||[];
+            },
+            rowMeta: function(p){ return [p.brand||'', p.sku||''].filter(Boolean).join(' \u00b7 '); },
+            rowSide: function(p){ return 'AED '+(p.sale_price!=null?p.sale_price:p.price); },
+            onPick: function(p){ odAddItem(p.id); }
+          });
+        }
+        // A different order means a different basket: nothing typed against the
+        // last one should be waiting in the box for this one.
+        if(odPickerOrder!==id){ odPicker.reset(); odPickerOrder = id; }
+        odPicker.attach();
       }
     }
 
@@ -14085,6 +14128,14 @@ buildNav();
      calls window.kbbPickMedia and a partial cannot call a global that a later
      partial defines. It defines one global and touches nothing else. --}}
 @include('admin.partials.media-picker')
+
+{{-- The shared product type-ahead, used by New Order below and by "add a
+     product to this order" on the order detail screen above. Included here,
+     beside the media picker and for the same reason: it defines one global,
+     window.kbbProductPicker, and every caller of it runs later — the order
+     detail screen builds its picker when an order is opened, long after this
+     document has finished loading. --}}
+@include('admin.partials.product-picker')
 
 @include('admin.partials.manual-order-screen')
 

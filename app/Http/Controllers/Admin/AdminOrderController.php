@@ -85,7 +85,20 @@ class AdminOrderController extends Controller
         PaymentRefunder $refunder,
     ): JsonResponse
     {
-        $order = Order::withTrashed()->with(['items', 'notes'])->find($id);
+        /*
+         * items.product, and only three columns of it.
+         *
+         * order_items snapshots the name, brand, SKU and price of what was sold
+         * but not its photograph, so the line item's `image` below is the LIVE
+         * product's. Read lazily that was one SELECT per line every time an
+         * order was opened; named here it is one for the whole order. The
+         * product may legitimately be gone — order_items.product_id is
+         * nullOnDelete — which is exactly the case the screen now draws initials
+         * for instead of an empty square.
+         */
+        $order = Order::withTrashed()
+            ->with(['items.product:id,image,slug', 'notes'])
+            ->find($id);
 
         if ($order === null) {
             return response()->json(['error' => 'not_found'], 404);
@@ -815,7 +828,23 @@ class AdminOrderController extends Controller
 
         $total = (int) ($this->aggregate($query, 'count(*) as aggregate')?->aggregate ?? 0);
 
+        /*
+         * An explicit allowlist, never the whole row.
+         *
+         * `products` also carries `description` — a page of HTML per row — plus
+         * seo, seo_json, meta_feed and custom_tabs, none of which a suggestion
+         * row shows. Selecting * shipped all of it, ten rows at a time, on every
+         * keystroke of a type-ahead. The columns here are exactly what the
+         * payload below reads: the five identity/display fields, `brand_id` for
+         * the brand relation to hang off, and the four price columns
+         * effectivePrice() needs to honour a sale window.
+         */
         $rows = (clone $query)
+            ->select([
+                'id', 'name', 'sku', 'image', 'brand_id',
+                'price', 'sale_price', 'sale_starts_at', 'sale_ends_at',
+                'stock', 'stock_status',
+            ])
             ->with(['brand:id,name', 'variants'])
             ->orderBy('name')
             ->forPage($page, self::PAGE)

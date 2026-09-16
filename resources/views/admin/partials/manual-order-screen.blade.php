@@ -55,17 +55,11 @@
 .mo-search input{width:100%;border:1px solid var(--border);border-radius:10px;
                  padding:10px 12px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
 .mo-search input:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+/* The frame only. The rows inside it are the shared picker's (.kpp-hit, in
+   admin/partials/product-picker.blade.php), so the two order screens cannot
+   drift into two different-looking lists again. */
 .mo-results{margin-top:8px;border:1px solid var(--border);border-radius:10px;overflow:hidden auto;max-height:260px}
 .mo-results:empty{display:none}
-.mo-hit{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 11px;
-        border-bottom:1px solid var(--border-2);background:var(--surface);transition:.12s}
-.mo-hit:last-child{border-bottom:0}
-.mo-hit:hover{background:var(--surface-2)}
-.mo-hit-main{flex:1;min-width:0}
-.mo-hit-main b{display:block;font-size:12.5px;font-weight:600;line-height:1.25;
-               overflow-wrap:anywhere}
-.mo-hit-main span{display:block;font-size:11px;color:var(--ink-soft);overflow-wrap:anywhere}
-.mo-hit-side{flex:none;font-size:11.5px;font-weight:700;color:var(--ink-2)}
 
 /* The chosen customer. */
 .mo-chosen{display:flex;gap:11px;align-items:flex-start;background:var(--accent-soft);
@@ -94,6 +88,9 @@
 .mo-lines{border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .mo-line{display:flex;gap:10px;align-items:center;padding:10px 11px;border-bottom:1px solid var(--border-2);flex-wrap:wrap}
 .mo-line:last-child{border-bottom:0}
+.mo-line-th{width:34px;height:34px;border-radius:8px;flex:none;overflow:hidden;display:grid;
+            place-items:center;font-size:10px;font-weight:800;color:#fff}
+.mo-line-th img{width:100%;height:100%;object-fit:cover;display:block}
 .mo-line-main{flex:1 1 150px;min-width:0}
 .mo-line-main b{display:block;font-size:12.5px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
 .mo-line-main span{display:block;font-size:10.5px;color:var(--ink-soft);overflow-wrap:anywhere}
@@ -355,34 +352,36 @@
   }
 
   /* --------------------------------------------------------------- search */
-  var custTimer = null, prodTimer = null;
 
-  function debounce(which, fn){
-    var slot = which === 'cust' ? 'custTimer' : 'prodTimer';
-    clearTimeout(which === 'cust' ? custTimer : prodTimer);
-    var t = setTimeout(fn, 220);
-    if (which === 'cust') custTimer = t; else prodTimer = t;
-  }
+  /*
+   * Both searches on this screen are the shared picker. The customer one is
+   * here for the same reason as the product one and not because it was asked
+   * for: it sat in the same card, was wiped by the same re-render, and would
+   * have been the next thing reported. Customers have no photograph, so the
+   * picker draws its usual initials square for them — which is how the console
+   * already draws a customer everywhere else.
+   */
+  var custPicker = null;
 
-  async function searchCustomers(q){
-    var box = document.querySelector('#moCustResults');
-    if (!box) return;
-    if (!q) { box.innerHTML = ''; return; }
-    try {
-      var d = await api('/manual-orders/customers?q=' + encodeURIComponent(q));
-      box.innerHTML = d.customers.length ? d.customers.map(function(c){
-        return '<button type="button" class="mo-hit" data-cust="' + c.id + '">' +
-          '<span class="mo-hit-main"><b>' + esc(c.name) + '</b>' +
-          '<span>' + esc(c.email) + (c.phone ? ' · ' + esc(c.phone) : '') + '</span></span>' +
-          '<span class="mo-hit-side">' + c.orders_count + '</span></button>';
-      }).join('') : '<div class="mo-empty">No customer matches that. Add them below.</div>';
-      box.querySelectorAll('[data-cust]').forEach(function(b){
-        b.onclick = function(){ pickCustomer(d.customers.filter(function(c){
-          return String(c.id) === b.dataset.cust; })[0]); };
-      });
-    } catch (e) {
-      box.innerHTML = '<div class="mo-empty">Search failed.</div>';
-    }
+  function customerPicker(){
+    if (custPicker) return custPicker;
+    if (typeof window.kbbProductPicker !== 'function') return null;
+
+    custPicker = window.kbbProductPicker({
+      input: '#moCustSearch',
+      results: '#moCustResults',
+      listId: 'moCustList',
+      emptyText: 'No customer matches that. Add them below.',
+      search: async function(term){
+        var d = await api('/manual-orders/customers?q=' + encodeURIComponent(term));
+        return d.customers || [];
+      },
+      rowMeta: function(c){ return c.email + (c.phone ? ' · ' + c.phone : ''); },
+      rowSide: function(c){ return String(c.orders_count); },
+      onPick: pickCustomer
+    });
+
+    return custPicker;
   }
 
   function pickCustomer(c){
@@ -403,27 +402,42 @@
     requote();
   }
 
-  async function searchProducts(q){
-    var box = document.querySelector('#moProdResults');
-    if (!box) return;
-    if (!q) { box.innerHTML = ''; return; }
-    try {
-      var d = await api('/manual-orders/products?q=' + encodeURIComponent(q));
-      box.innerHTML = d.products.length ? d.products.map(function(p){
-        return '<button type="button" class="mo-hit" data-prod="' + p.id + '">' +
-          '<span class="mo-hit-main"><b>' + esc(p.name) + '</b>' +
-          '<span>' + esc(p.sku || 'no SKU') + (p.brand ? ' · ' + esc(p.brand) : '') +
-          (p.stock_status === 'instock' ? '' : ' · out of stock') + '</span></span>' +
-          '<span class="mo-hit-side">' + aed(p.price_fils) + '</span></button>';
-      }).join('') : '<div class="mo-empty">Nothing in the catalogue matches that.</div>';
-      box.querySelectorAll('[data-prod]').forEach(function(b){
-        b.onclick = function(){
-          addLine(d.products.filter(function(p){ return String(p.id) === b.dataset.prod; })[0]);
-        };
-      });
-    } catch (e) {
-      box.innerHTML = '<div class="mo-empty">Search failed.</div>';
-    }
+  /*
+   * The product type-ahead, which is admin/partials/product-picker.blade.php.
+   *
+   * It is built ONCE and re-attached after every render(), rather than being
+   * rebuilt with the screen. That is the whole fix for "it appears and
+   * disappears instantly": this screen paints itself and THEN awaits
+   * /manual-orders/bootstrap, so the operator is typing into a form that is
+   * about to be replaced wholesale by boot()'s render(). The picker keeps the
+   * query, the suggestions and the caret outside the DOM the screen throws
+   * away, and attach() puts them back. Images, keyboard selection and Escape
+   * all live in that file, shared with the order detail screen.
+   */
+  var picker = null;
+
+  function productPicker(){
+    if (picker) return picker;
+    if (typeof window.kbbProductPicker !== 'function') return null;
+
+    picker = window.kbbProductPicker({
+      input: '#moProdSearch',
+      results: '#moProdResults',
+      listId: 'moProdList',
+      openDisplay: 'block',
+      search: async function(term){
+        var d = await api('/manual-orders/products?q=' + encodeURIComponent(term));
+        return d.products || [];
+      },
+      rowMeta: function(p){
+        return (p.sku || 'no SKU') + (p.brand ? ' · ' + p.brand : '') +
+               (p.stock_status === 'instock' ? '' : ' · out of stock');
+      },
+      rowSide: function(p){ return aed(p.price_fils); },
+      onPick: addLine
+    });
+
+    return picker;
   }
 
   function addLine(p){
@@ -433,12 +447,10 @@
       existing.qty = Math.min(99, existing.qty + 1);
     } else {
       lines.push({product_id:p.id, variant_id:null, name:p.name, sku:p.sku,
-                  unit_price:p.price_fils, qty:1});
+                  image:p.image || null, unit_price:p.price_fils, qty:1});
     }
-    var input = document.querySelector('#moProdSearch');
-    if (input) input.value = '';
-    var box = document.querySelector('#moProdResults');
-    if (box) box.innerHTML = '';
+    // The picker clears itself before it calls this, so there is no box to
+    // empty here — render() rebuilds it and attach() repaints it from state.
     render();
     requote();
   }
@@ -642,12 +654,28 @@
       '<div style="margin-top:12px">' + linesHTML() + '</div></div>';
   }
 
+  /* The same square the suggestion rows use, so a line the operator has just
+     added looks like the row they clicked. `image` is the product's own URL,
+     carried on the line since it was picked; a product with none gets the
+     console's tinted initials rather than a broken-image icon. */
+  function lineThumb(l){
+    var label = String(l.name || '?');
+    var tint = window.kbbProductPickerTint ? window.kbbProductPickerTint(label) : '#E0567B';
+    var mark = label.trim().split(/\s+/).map(function(w){ return w[0] || ''; })
+                 .join('').slice(0, 2).toUpperCase() || '?';
+
+    return '<span class="mo-line-th" style="background:' + esc(tint) + '" data-mark="' + esc(mark) + '">' +
+      (l.image ? '<img src="' + esc(l.image) + '" alt="" loading="lazy">' : esc(mark)) +
+      '</span>';
+  }
+
   function linesHTML(){
     if (!lines.length) {
       return '<div class="mo-lines"><div class="mo-empty">Nothing added yet.</div></div>';
     }
     return '<div class="mo-lines">' + lines.map(function(l, i){
       return '<div class="mo-line">' +
+        lineThumb(l) +
         '<span class="mo-line-main"><b>' + esc(l.name) + '</b>' +
         '<span>' + esc(l.sku || 'no SKU') + ' · ' + aed(l.unit_price) + ' each</span></span>' +
         '<span class="mo-qty">' +
@@ -927,6 +955,14 @@
         requote();
       };
     });
+    // A URL that no longer resolves falls back to the initials rather than
+    // drawing the browser's broken-image icon on the order being keyed in.
+    document.querySelectorAll('.mo-line-th img').forEach(function(img){
+      img.onerror = function(){
+        var holder = img.parentNode;
+        if (holder) holder.textContent = holder.dataset.mark || '';
+      };
+    });
   }
 
   function wireCoupon(){
@@ -966,11 +1002,13 @@
     wireLines();
     wireTotals();
 
-    var cs = document.querySelector('#moCustSearch');
-    if (cs) cs.oninput = function(){ debounce('cust', function(){ searchCustomers(cs.value.trim()); }); };
+    // Re-bound, never rebuilt: the query and the open suggestions belong to the
+    // pickers, not to this DOM.
+    var cp = customerPicker();
+    if (cp) cp.attach();
 
-    var ps = document.querySelector('#moProdSearch');
-    if (ps) ps.oninput = function(){ debounce('prod', function(){ searchProducts(ps.value.trim()); }); };
+    var p = productPicker();
+    if (p) p.attach();
 
     var nu = document.querySelector('#moCustNew');
     if (nu) nu.onclick = function(){ newCustomer = true; customer = null; errors = {}; render(); };
