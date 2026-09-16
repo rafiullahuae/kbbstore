@@ -382,6 +382,15 @@ input.inp[type=file]{padding:6px 9px}
 .cbx{width:18px;height:18px;border:1.5px solid var(--border);border-radius:5px;display:grid;place-items:center;cursor:pointer;background:var(--surface);flex-shrink:0}
 .cbx.on{background:var(--accent);border-color:var(--accent)}
 .cbx svg{width:12px;height:12px;color:#fff;opacity:0}.cbx.on svg{opacity:1}
+/* The focus ring for a tick box, added with the keyboard support at the foot of
+   this file. --ink rather than --accent: an .on box is already filled with
+   --accent, so an accent ring on it is a green line on a green square and the
+   focused box looks identical to the unfocused one next to it. A dark ring
+   reads on both states and on every theme, since every theme redefines
+   --accent but none of them moves --ink off near-black.
+   :focus-visible, not :focus — a mouse click on a tick box must not leave a
+   ring behind it, which is what made the same rule get reverted on .ectog. */
+.cbx:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .bulkbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--accent-soft);border:1px solid var(--border);border-radius:11px;margin-bottom:12px;font-size:13px;font-weight:600;color:var(--accent-ink)}
 .pthumb{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:11px;flex-shrink:0;color:#fff}
 .pname{font-size:13px;font-weight:600;line-height:1.2}
@@ -1801,6 +1810,124 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .paytab{gap:6px}
   .paytab-t{max-width:38vw}
 }
+
+/* ---------- LANE CJ · Store · Mail — screen styles — BEGIN -----------------
+   PREFIX. Every selector below is mlf-, and mlf- appears nowhere else in this
+   repo — grepped across resources/views and the whole tree before it was
+   picked, because two lanes have already chosen a prefix another screen was
+   quietly using and restyled each other's work by accident.
+
+   WHY THE SCREEN NEEDED ITS OWN PREFIX AT ALL. Mail was laid out with .mmrow
+   and .mmlbl. Those are not Mail's: Modules, Mega Menu, Ecommerce, Payment &
+   Shipping Rules and Delivery & Shipping render them too — 86 .mmrow call
+   sites in this file against Mail's handful. The screen therefore could not be
+   relaid out without moving five screens that did not ask to move, which is
+   why the audit's finding sat unfixed. These rules are Mail's alone and no
+   other screen can be reached from them.
+
+   WHY TOKENS, WHICH IS THE WHOLE POINT OF THE EXERCISE. This console ships
+   five themes; each one redefines --accent and its relatives on
+   :root[data-theme="..."]. A hex literal does not follow. The old Mail markup
+   carried fourteen of them — nine #7b8697 for its help text, #1f9d55 and
+   #d64545 for the test result — so the screen simply stopped matching the rest
+   of the admin the moment anyone picked a theme, and would drift again after
+   any change to the palette. Every colour here is a var(). The fallback after
+   each comma is the same belt-and-braces the Coupons screen uses, so a stray
+   render outside the console still gets a sane colour rather than none.
+
+   MIN-WIDTH:0 EVERYWHERE, for the reason written out at length on the Coupons
+   screen: a grid or flex child defaults to min-width:auto, which means "at
+   least as wide as my content", so one long value refuses to shrink and drags
+   #content wider than the phone instead of wrapping. Measured on #content, not
+   documentElement — body is overflow-x:hidden, so the document is never wider
+   than the viewport however broken a screen is. */
+
+.mlf-wrap{display:grid;gap:0;min-width:0}
+.mlf-wrap > *{min-width:0}
+
+.mlf-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e9f2);
+          border-radius:var(--r,18px);padding:18px 20px;min-width:0;
+          box-shadow:var(--sh-s,none)}
+
+/* ---- sections ----
+   Each band says what it decides (the heading) and when you would touch it
+   (one line under it), then shows its fields. A hairline between bands, not a
+   box around each, so the groups are legible without the screen turning into a
+   stack of cards. This is the shape the Coupons screen set. */
+.mlf-sec{display:grid;gap:14px;min-width:0}
+.mlf-sec > *{min-width:0}
+.mlf-sec + .mlf-sec{margin-top:22px;padding-top:20px;
+                    border-top:1px solid var(--border,#e6e9f2)}
+.mlf-sec-h{display:grid;gap:3px;min-width:0}
+.mlf-sec-t{font-size:13.5px;font-weight:650;color:var(--ink,#101729)}
+.mlf-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#626c80);max-width:78ch}
+
+/* ---- fields ----
+   auto-fit with a min() floor, not a bare minmax(240px,1fr): a fixed 240px
+   track cannot go below 240px, so two of them plus the gap demand more than a
+   390px phone has and the row overflows instead of stacking. With min() the
+   same row is two equal columns on a laptop and two full-width boxes on a
+   phone — which is what "paired fields sharing a row and a width" has to mean
+   on both. */
+.mlf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));
+          gap:14px;min-width:0}
+.mlf-grid > *{min-width:0}
+.mlf-field{display:grid;gap:5px;min-width:0}
+.mlf-field > *{min-width:0}
+.mlf-label{font-size:12.5px;font-weight:600;color:var(--ink,#101729)}
+/* Help is secondary and stays secondary — smaller, lighter, and capped at a
+   readable measure so it can never spread into the paragraph under every box
+   that this screen used to carry. Anything longer than a line belongs in the
+   section description above, not here. */
+.mlf-help{font-size:11.5px;line-height:1.45;color:var(--ink-soft,#626c80);max-width:62ch}
+
+.mlf-input,.mlf-select{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+          padding:8px 10px;font:inherit;font-size:13px;color:inherit;
+          border:1px solid var(--border,#e6e9f2);border-radius:var(--r-xs,9px);
+          background:var(--surface,#fff)}
+.mlf-input:focus,.mlf-select:focus{outline:2px solid var(--accent,#15a85a);outline-offset:1px;
+          border-color:var(--accent,#15a85a)}
+/* A select's intrinsic width is its widest OPTION, which sets a floor no media
+   query can argue with. Pinned so the transport picker cannot widen its row. */
+.mlf-select{max-width:100%;text-overflow:ellipsis}
+
+/* ---- a tick and its sentence, as one quiet row ----
+   A real <input type="checkbox">, which is what the status list already used
+   and what the Coupons screen uses for new work: focusable, operable and
+   correctly described by the browser with no ARIA at all. */
+.mlf-opt{display:flex;gap:10px;align-items:flex-start;min-width:0;padding:9px 0}
+.mlf-opt > *{min-width:0}
+.mlf-opt input{margin:2px 0 0;flex:0 0 auto;accent-color:var(--accent,#15a85a)}
+.mlf-opt-t{display:block;font-size:12.5px;font-weight:600;color:var(--ink,#101729)}
+.mlf-opt-d{display:block;font-size:11.5px;line-height:1.45;color:var(--ink-soft,#626c80);margin-top:2px}
+.mlf-opt input:disabled ~ div .mlf-opt-t{color:var(--ink-soft,#626c80);font-weight:600}
+.mlf-opt + .mlf-opt{border-top:1px solid var(--border-2,#eef0f6)}
+
+/* ---- the test result ----
+   The stripe carried #1f9d55 / #d64545 inline. Those are --green and --red,
+   two shades off, so the one part of this screen that has to read as pass or
+   fail was the part least likely to match the theme around it. */
+.mlf-result{border-left:3px solid var(--border,#e6e9f2);padding:9px 13px;
+            border-radius:0 var(--r-xs,9px) var(--r-xs,9px) 0;
+            background:rgba(127,127,127,.03);min-width:0}
+.mlf-result.is-ok{border-left-color:var(--green,#15a85a)}
+.mlf-result.is-bad{border-left-color:var(--red,#e3493f)}
+.mlf-result b{font-size:13px;color:var(--ink,#101729)}
+.mlf-result-when{color:var(--ink-soft,#626c80);font-size:12.5px;margin-top:2px}
+/* white-space:pre-wrap and word-break keep the transport's own words readable
+   without letting a long SMTP error widen the screen. */
+.mlf-result-msg{margin-top:6px;font-size:12.5px;line-height:1.5;
+                white-space:pre-wrap;word-break:break-word;min-width:0}
+.mlf-result-err{margin-top:6px;font-size:12px;color:var(--ink-soft,#626c80);
+                white-space:pre-wrap;word-break:break-word;min-width:0}
+.mlf-muted{margin:0;color:var(--ink-soft,#626c80);font-size:12.5px;line-height:1.5}
+.mlf-sep{margin-top:22px;padding-top:20px;border-top:1px solid var(--border,#e6e9f2)}
+
+@media (max-width:640px){
+  .mlf-card{padding:15px 15px}
+  .mlf-sec + .mlf-sec{margin-top:18px;padding-top:16px}
+}
+/* ---------- LANE CJ · Store · Mail — screen styles — END ------------------ */
 
 /* ===== LANE CD — two screens given the Coupons treatment ===================
    Business Details (.bd-) and SEO & Meta's Settings tab (.sm-) are laid out
@@ -8457,34 +8584,135 @@ async function renderMail(){
       : why==='500' ? 'The server errored. Check storage/logs/laravel.log.' : 'The request did not complete.';
     $('#content').innerHTML=`<div class="wrap"><div class="card" style="padding:22px">
       <b>Could not load the mail settings.</b>
-      <p style="margin:6px 0 12px;color:#7b8697;font-size:12.5px">${escHtml(hint)} <code>${escHtml(why)}</code></p>
+      <p class="mlf-muted" style="margin:6px 0 12px">${escHtml(hint)} <code>${escHtml(why)}</code></p>
       <button class="btn small" onclick="renderMail()">Retry</button></div></div>`;
     return;
   }
   paintMail();
 }
 
-function mailField(f){
-  const lbl=`<div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>`;
+/* ---------------------------------------------------------------------------
+   HOW THE SCREEN IS ORGANISED (LANE CJ).
+
+   It was one flat list of fourteen boxes under a single heading, each with a
+   paragraph of explanation beneath it, and every colour on it written as a hex
+   literal. The list is now four titled bands, each saying in one line when you
+   would touch it, with fields that belong together sharing a row and therefore
+   a width — the standard the Coupons editor sets, applied here.
+
+   THE GROUPS ARE A DISPLAY ORDER AND NOTHING ELSE. The server decides which
+   fields exist (MailSettings::SCHEMA) and this table only says where each one
+   is drawn. That matters because of the failure mode this whole screen is
+   afraid of: a field that disappears from the form does not throw — it is
+   simply absent from collect(), and the next Save writes a blank over whatever
+   was stored. So mailSections() below renders the leftovers too. Add a key to
+   SCHEMA and name it in no group and it still appears, in its own band at the
+   foot, rather than silently vanishing. The test for that is in
+   MailAdminScreenTest.
+
+   WHERE THE LONG EXPLANATION WENT. Only one of the server's help strings is a
+   genuine paragraph: mail_transport's, which is four sentences about which of
+   the three sending modes to pick. That is not help for a box, it is the
+   subject of the band — so the band uses it as its description and the field
+   under it carries no help line at all. The text is still the server's, read
+   from f.help; it is not duplicated here and cannot drift out of step with it.
+--------------------------------------------------------------------------- */
+const MAIL_SECTIONS=[
+  { title:'How email leaves this store',
+    /* Description comes from mail_transport's own help — see above. */
+    descFrom:'mail_transport',
+    rows:[['mail_transport']] },
+
+  { title:'Mail server',
+    desc:'Only needed if you picked the dedicated-SMTP option above. Every value here comes from your hosting control panel.',
+    rows:[['mail_host','mail_port'],
+          ['mail_username','mail_password'],
+          ['mail_encryption','mail_timeout']] },
+
+  { title:'Who the message comes from',
+    desc:'The name and address customers see on everything the shop sends, and the inbox your own new-order alerts go to.',
+    rows:[['mail_from_address','mail_from_name'],
+          ['mail_merchant_address']] },
+
+  { title:'What customers see at the foot',
+    desc:'Printed under every order email. Leave any of them blank and the storefront’s own details are used instead.',
+    rows:[['mail_support_email','mail_support_whatsapp'],
+          ['mail_support_instagram','mail_signature']] },
+];
+
+function mailControl(f){
   if(f.options)
-    return `<div class="mmrow">${lbl}<select class="inp" data-mail="${escAttr(f.key)}">${
-      f.options.map(o=>`<option value="${escAttr(o)}"${o===f.value?' selected':''}>${escHtml(o)}</option>`).join('')}</select></div>`;
+    return `<select class="mlf-select" id="${escAttr('mlf_'+f.key)}" data-mail="${escAttr(f.key)}">${
+      f.options.map(o=>`<option value="${escAttr(o)}"${o===f.value?' selected':''}>${escHtml(o)}</option>`).join('')}</select>`;
   if(f.type==='secret')
-    return `<div class="mmrow">${lbl}<input type="password" autocomplete="new-password" data-mail="${escAttr(f.key)}"
-      placeholder="${f.has_value?'Stored — leave blank to keep it':'Not set'}"></div>`;
-  return `<div class="mmrow">${lbl}<input type="text" value="${escAttr(String(f.value??''))}" data-mail="${escAttr(f.key)}"></div>`;
+    return `<input class="mlf-input" type="password" autocomplete="new-password" id="${escAttr('mlf_'+f.key)}" data-mail="${escAttr(f.key)}"
+      placeholder="${f.has_value?'Stored — leave blank to keep it':'Not set'}">`;
+  return `<input class="mlf-input" type="text" value="${escAttr(String(f.value??''))}" id="${escAttr('mlf_'+f.key)}" data-mail="${escAttr(f.key)}">`;
+}
+
+/* `showHelp` is false only for the field whose help has become its band's
+   description, so the same sentence is never printed twice. */
+function mailField(f,showHelp){
+  const id=escAttr('mlf_'+f.key);
+  const help=(showHelp===false||!f.help) ? '' : `<div class="mlf-help">${escHtml(f.help)}</div>`;
+  return `<div class="mlf-field">
+    <label class="mlf-label" for="${id}">${escHtml(f.label)}</label>
+    ${mailControl(f)}
+    ${help}
+  </div>`;
+}
+
+function mailSections(fields){
+  const byKey={}; fields.forEach(f=>{ byKey[f.key]=f; });
+  const used={};
+  const out=[];
+
+  MAIL_SECTIONS.forEach(sec=>{
+    const rows=sec.rows.map(keys=>{
+      const cells=keys.filter(k=>byKey[k]).map(k=>{
+        used[k]=true;
+        return mailField(byKey[k], k!==sec.descFrom);
+      });
+      return cells.length ? `<div class="mlf-grid">${cells.join('')}</div>` : '';
+    }).filter(Boolean);
+
+    if(!rows.length) return;
+
+    const desc = sec.descFrom && byKey[sec.descFrom] && byKey[sec.descFrom].help
+      ? byKey[sec.descFrom].help
+      : (sec.desc||'');
+
+    out.push(`<section class="mlf-sec">
+      <div class="mlf-sec-h"><div class="mlf-sec-t">${escHtml(sec.title)}</div>${
+        desc?`<div class="mlf-sec-d">${escHtml(desc)}</div>`:''}</div>
+      ${rows.join('')}
+    </section>`);
+  });
+
+  /* Anything SCHEMA declares that no group above names. Never dropped: a field
+     missing from the form is a setting the next Save blanks. */
+  const rest=fields.filter(f=>!used[f.key]);
+  if(rest.length){
+    out.push(`<section class="mlf-sec">
+      <div class="mlf-sec-h"><div class="mlf-sec-t">Other settings</div>
+        <div class="mlf-sec-d">Added to this store after this screen was laid out. They save exactly like the rest.</div></div>
+      ${rest.map(f=>`<div class="mlf-grid">${mailField(f,true)}</div>`).join('')}
+    </section>`);
+  }
+
+  return out.join('');
 }
 
 /* The outcome of the last test, kept server-side so it outlives the tab that
    pressed the button. */
 function mailLastTest(){
   const t=MAILCFG.last_test;
-  if(!t) return `<p style="margin:0;color:#7b8697;font-size:12.5px">No test has ever been run on this server.</p>`;
+  if(!t) return `<p class="mlf-muted">No test has ever been run on this server.</p>`;
   const when=(()=>{ try{ return new Date(t.at).toLocaleString(); }catch(e){ return t.at; } })();
-  return `<div style="border-left:3px solid ${t.ok?'#1f9d55':'#d64545'};padding:8px 12px">
+  return `<div class="mlf-result ${t.ok?'is-ok':'is-bad'}">
     <b>${t.ok?'Last test succeeded':'Last test failed'}</b>
-    <div style="color:#7b8697;font-size:12.5px;margin-top:2px">${escHtml(when)} → ${escHtml(String(t.to||''))}</div>
-    <div style="margin-top:6px;font-size:12.5px;white-space:pre-wrap;word-break:break-word">${escHtml(String(t.message||''))}</div>
+    <div class="mlf-result-when">${escHtml(when)} → ${escHtml(String(t.to||''))}</div>
+    <div class="mlf-result-msg">${escHtml(String(t.message||''))}</div>
   </div>`;
 }
 
@@ -8496,27 +8724,33 @@ function paintMail(){
     ? `<div class="banner" style="margin-bottom:14px"><div><b>Nothing is being sent.</b> Mail is going to the Laravel log. Set <b>Send using</b> to <code>smtp</code> for real delivery.</div></div>`
     : '';
 
-  $('#content').innerHTML=`<div class="wrap">
+  $('#content').innerHTML=`<div class="wrap mlf-wrap">
     <div class="page-head"><h2>Mail</h2><p>The mailbox this store sends from. Settings come from the hosting control panel; the password is stored encrypted and is never shown again.</p></div>
     ${warn}${logNote}
-    <div class="sec-title">Outgoing mail server</div>
-    <div class="card mmcard"><div class="mmbody">${MAILCFG.fields.map(mailField).join('')}</div></div>
+    <div class="card mlf-card">${mailSections(MAILCFG.fields)}</div>
     <div class="ecsave">
       <span class="ecdirty" id="mlDirty" style="visibility:hidden">Unsaved changes</span>
       <button class="btn primary" id="mlSave">Save changes</button>
     </div>
 
     <div class="sec-title">Order status emails</div>
-    <div class="card pad">
-      <p style="margin:0 0 12px;color:#7b8697;font-size:12.5px">Which status changes email the customer automatically. You can still override this on any single order, from the order&rsquo;s own page.</p>
-      <div id="mlStatusEmails"><p style="margin:0;color:#7b8697;font-size:12.5px">Loading…</p></div>
+    <div class="card mlf-card">
+      <div class="mlf-sec-h" style="margin-bottom:10px">
+        <div class="mlf-sec-d">Which status changes email the customer automatically. You can still override this on any single order, from the order&rsquo;s own page.</div>
+      </div>
+      <div id="mlStatusEmails"><p class="mlf-muted">Loading…</p></div>
     </div>
 
     <div class="sec-title">Send a test</div>
-    <div class="card pad">
-      <div class="mmrow"><div class="mmlbl"><b>Send a test message to</b><span>Save first. The send happens while you wait — the result below is what the mail server actually said, not a queued job.</span></div>
-        <input type="email" id="mlTo" placeholder="you@example.com"></div>
-      <div style="margin-top:10px"><button class="btn primary" id="mlTest">Send test message</button></div>
+    <div class="card mlf-card">
+      <div class="mlf-grid">
+        <div class="mlf-field">
+          <label class="mlf-label" for="mlTo">Send a test message to</label>
+          <input class="mlf-input" type="email" id="mlTo" placeholder="you@example.com">
+          <div class="mlf-help">Save first. The result below is what the mail server actually said, not a queued job.</div>
+        </div>
+      </div>
+      <div style="margin-top:12px"><button class="btn primary" id="mlTest">Send test message</button></div>
       <div id="mlResult" style="margin-top:14px">${mailLastTest()}</div>
     </div>
   </div>`;
@@ -8554,7 +8788,7 @@ async function loadStatusEmails(){
     paintStatusEmails((await r.json()).statuses||[]);
   }catch(e){
     const why=String(e.message||e);
-    host.innerHTML=`<p style="margin:0;color:#7b8697;font-size:12.5px">Could not load the status list. ${
+    host.innerHTML=`<p class="mlf-muted">Could not load the status list. ${
       why==='404' ? 'The admin route is not registered — the cache-clearing migration for this release may not have run.' : ''
       } <code>${escHtml(why)}</code></p>`;
   }
@@ -8564,16 +8798,17 @@ function paintStatusEmails(rows){
   const host=$('#mlStatusEmails');
   if(!host) return;
   host.innerHTML=rows.map(row=>`
-    <label class="mmrow" style="display:flex;align-items:flex-start;gap:9px;cursor:${row.supported?'pointer':'default'};padding:7px 0">
-      <input type="checkbox" data-status-email="${escAttr(row.status)}" style="margin-top:3px"${
+    <label class="mlf-opt" style="cursor:${row.supported?'pointer':'default'}">
+      <input type="checkbox" data-status-email="${escAttr(row.status)}"${
         row.enabled?' checked':''}${row.supported?'':' disabled'}>
-      <span style="line-height:1.45"><b>${escHtml(row.label)}</b>
-        <span style="display:block;color:#7b8697;font-size:12.5px">${escHtml(
+      <div>
+        <span class="mlf-opt-t">${escHtml(row.label)}</span>
+        <span class="mlf-opt-d">${escHtml(
           row.supported
             ? 'Emails the customer when an order moves to this status.'
             : row.reason
         )}</span>
-      </span>
+      </div>
     </label>`).join('');
 
   host.querySelectorAll('[data-status-email]').forEach(box=>{
@@ -8638,26 +8873,26 @@ function bindMail(){
     if(!to){ toast('Enter an address to send to'); return; }
     const box=$('#mlResult');
     test.disabled=true;
-    box.innerHTML=`<p style="margin:0;color:#7b8697;font-size:12.5px">Connecting to the mail server…</p>`;
+    box.innerHTML=`<p class="mlf-muted">Connecting to the mail server…</p>`;
     try{
       const r=await fetch(mailBase()+'/test',{method:'POST',credentials:'same-origin',
         headers:{'Content-Type':'application/json','X-XSRF-TOKEN':uToken(),Accept:'application/json'},
         body:JSON.stringify({to})});
       if(r.status===429){
-        box.innerHTML=`<div style="border-left:3px solid #d64545;padding:8px 12px"><b>Too many attempts</b>
-          <div style="font-size:12.5px;margin-top:4px">The test-send is rate limited. Wait a minute and try again.</div></div>`;
+        box.innerHTML=`<div class="mlf-result is-bad"><b>Too many attempts</b>
+          <div class="mlf-result-msg">The test-send is rate limited. Wait a minute and try again.</div></div>`;
         return;
       }
       const d=await r.json();
       // Verbatim. A summary here would throw away the only useful part.
-      box.innerHTML=`<div style="border-left:3px solid ${d.ok?'#1f9d55':'#d64545'};padding:8px 12px">
+      box.innerHTML=`<div class="mlf-result ${d.ok?'is-ok':'is-bad'}">
         <b>${d.ok?(d.status==='sent'?'The mail server accepted it':'Written to the log — nothing sent'):'Send failed'}</b>
-        <div style="margin-top:6px;font-size:12.5px;white-space:pre-wrap;word-break:break-word">${escHtml(String(d.message||''))}</div>
-        ${d.error?`<div style="margin-top:6px;font-size:12px;color:#7b8697;white-space:pre-wrap;word-break:break-word"><code>${escHtml(String(d.error))}</code></div>`:''}
+        <div class="mlf-result-msg">${escHtml(String(d.message||''))}</div>
+        ${d.error?`<div class="mlf-result-err"><code>${escHtml(String(d.error))}</code></div>`:''}
       </div>`;
     }catch(e){
-      box.innerHTML=`<div style="border-left:3px solid #d64545;padding:8px 12px"><b>The request did not complete</b>
-        <div style="font-size:12.5px;margin-top:4px">${escHtml(String(e.message||e))}</div></div>`;
+      box.innerHTML=`<div class="mlf-result is-bad"><b>The request did not complete</b>
+        <div class="mlf-result-msg">${escHtml(String(e.message||e))}</div></div>`;
     }
     finally{ test.disabled=false; }
   };
@@ -8676,6 +8911,191 @@ buildNav();
   const target = q || h;
   go(target && TITLES[target] ? target : 'dash');
 })();
+
+/* ===== LANE CJ · Admin · keyboard-operable tick boxes — BEGIN ===============
+   Every tick box in this console is a <span class="cbx"> with a click handler.
+   A span is not focusable and does not answer the keyboard, so before this
+   block ran, NOBODY WITHOUT A MOUSE COULD CHANGE ANY OF THESE SETTINGS — the
+   column pickers, the bulk-select columns, the SEO switches, the redirect
+   enable flags, the product-editor panes. Forty-eight of them across a dozen
+   screens.
+
+   WHY THE SPANS STAYED SPANS. A real <input type="checkbox"> is the more
+   correct control and it is what the Coupons screen uses for new work. It was
+   not the right change HERE, and the reason is the payload, not the markup:
+   every reader of these controls asks `el.classList.contains('on')` and every
+   writer calls `el.classList.toggle('on')` — including the save handlers that
+   build the SEO settings body, the column-visibility maps and the bulk
+   selection sets. Swapping the element means rewriting all forty-eight call
+   sites plus the `.cbx.on` rules and the `[data-olcol]`-style selectors, in the
+   single most contended file in the repo, to change something the user cannot
+   see. A dropped field there does not throw — it silently blanks a stored
+   setting on the next save. So the element, the ids, the data attributes, the
+   class-based state and every save handler are untouched, and the missing half
+   — the keyboard — is added once, here, for all of them.
+
+   WHAT "PROPERLY" MEANS, AND WHY role= ALONE WAS REFUSED BEFORE. A previous
+   lane found this and deliberately did not add role="checkbox" on its own,
+   because a role without key handling makes the DOM promise something untrue.
+   The promise is only kept if all four arrive together, so all four are here:
+     * focusable            — tabindex="0"
+     * operable             — Space and Enter, below
+     * truthfully described — aria-checked, kept in step by a MutationObserver
+                              rather than set once; screens toggle the class
+                              from their own code and from whole re-renders,
+                              and an aria-checked that only this block updated
+                              would drift out of step with the box on screen
+     * visible when focused — .cbx:focus-visible, up with the .cbx rules
+
+   ACTIVATION GOES THROUGH .click(). Not a private toggle path: the handlers
+   this console already binds are `el.onclick`, and delegated listeners watch
+   for real clicks on #content. Dispatching a click makes the keyboard and the
+   mouse the same code path, so they cannot drift apart later.
+
+   THE DOUBLE-FIRE TRAP, CHECKED. The .ectog keydown a few thousand lines up
+   carries a scar: a global keydown that calls .click() on a control which also
+   has its own keydown fires twice, the state flips and flips back, and the
+   control is dead. That is why that one is narrowed to .ectog[data-ec]. It is
+   safe to be broad here for the opposite reason — .cbx has no keydown handler
+   anywhere in this console (that is the bug), so this is the only one. If a
+   screen ever adds its own, it must narrow this selector the same way.
+
+   NAMING. A <span> inside a <label> is not named by that label: labels name
+   form controls, and this is not one. So the name is taken from the wrapping
+   label's text where there is one, from the title where the markup already
+   set one, and from a fixed phrase for the row/select-all boxes in tables,
+   which have no text of their own.
+
+   SCOPE NOTE, REPORTED NOT FIXED: clicking the WORDS beside one of these does
+   nothing either, for the same reason — the label has no control to forward to.
+   That is a separate change to forty-odd call sites and is not in this lane.
+--------------------------------------------------------------------------- */
+(function(){
+  var SEL = '.cbx';
+
+  function tidy(s){
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
+
+  /* The words a screen has already put beside the box. Two shapes exist and a
+     third will: the older screens wrap the box and its words in one <label>,
+     and the ones rebuilt to the Coupons standard put the box and a sibling
+     <div> holding a title and some help inside a row. So this does not hard-
+     code either -- it climbs a few levels, stopping the moment it reaches a
+     node holding more than one tick box (past that point the text belongs to a
+     list, not to this box), and prefers a dedicated title element over the
+     whole row so the help paragraph does not end up in the name. */
+  var TITLE_SEL = '.sm-opt-t, .ce-opt-t, .mlf-opt-t, .bd-opt-t, b, strong';
+
+  function labelText(el){
+    var host = el.closest('label, .catopt');
+    if (host) {
+      var direct = tidy(host.textContent);
+      if (direct) return direct;
+    }
+
+    var node = el.parentElement;
+    for (var hops = 0; node && hops < 3; hops++) {
+      if (node.querySelectorAll('.cbx').length > 1) break;
+
+      var title = node.querySelector(TITLE_SEL);
+      var t = title ? tidy(title.textContent) : '';
+      if (t) return t;
+
+      t = tidy(node.textContent);
+      if (t && t.length <= 120) return t;
+
+      node = node.parentElement;
+    }
+
+    return '';
+  }
+
+  function nameFor(el){
+    // Already named by the markup; do not overrule it.
+    if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return '';
+    if (el.getAttribute('title')) return '';
+
+    /* The boxes inside a table come FIRST, before any attempt to read words off
+       the page, because there are no words to read: a select-all sits alone in
+       a <th> and a row tick sits alone in a <td>. Left to the climb below,
+       select-all reaches the header row -- whose only tick box it is -- and
+       comes back named "ProductSKUBrandStatusStockPriceCategories...", which is
+       measurably worse than no name at all. */
+    if (el.id === 'olAll' || el.id === 'cuAll' || el.id === 'cplAll') {
+      return 'Select every row on this page';
+    }
+    if (el.hasAttribute('data-olsel') || el.hasAttribute('data-cusel') ||
+        el.hasAttribute('data-rvsel') || el.hasAttribute('data-cpsel') ||
+        el.hasAttribute('data-rsel')) {
+      return 'Select this row';
+    }
+
+    return labelText(el);
+  }
+
+  /* The state the box is actually in, not the state we last set. */
+  function sync(el){
+    el.setAttribute('aria-checked', el.classList.contains('on') ? 'true' : 'false');
+  }
+
+  function enhance(el){
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'checkbox');
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    var n = nameFor(el);
+    if (n) el.setAttribute('aria-label', n);
+    sync(el);
+  }
+
+  function enhanceWithin(node){
+    if (!node || node.nodeType !== 1) return;
+    if (node.matches && node.matches(SEL)) enhance(node);
+    if (node.querySelectorAll) {
+      var found = node.querySelectorAll(SEL), i;
+      for (i = 0; i < found.length; i++) enhance(found[i]);
+    }
+  }
+
+  /* Screens are re-rendered by replacing innerHTML wholesale, so newly drawn
+     boxes have to be picked up as they appear rather than once at load. */
+  var mo = new MutationObserver(function(records){
+    for (var i = 0; i < records.length; i++) {
+      var r = records[i];
+      if (r.type === 'attributes') {
+        if (r.target.matches && r.target.matches(SEL)) sync(r.target);
+        continue;
+      }
+      for (var j = 0; j < r.addedNodes.length; j++) enhanceWithin(r.addedNodes[j]);
+    }
+  });
+
+  function start(){
+    enhanceWithin(document.body);
+    mo.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (e.defaultPrevented) return;
+    var box = e.target;
+    if (!box || !box.matches || !box.matches(SEL)) return;
+    if (e.key !== ' ' && e.key !== 'Spacebar' && e.key !== 'Enter') return;
+    // Space scrolls the page and Enter submits a form if we let them through.
+    e.preventDefault();
+    box.click();
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+/* ===== LANE CJ · Admin · keyboard-operable tick boxes — END ================ */
 </script>
 <script>
 /* ============================================================================
