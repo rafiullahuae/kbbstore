@@ -70,3 +70,29 @@ Route::post('/mail', [MailApiController::class, 'save']);
  */
 Route::post('/mail/test', [MailApiController::class, 'test'])
     ->middleware('throttle:6,1');
+
+/*
+|------------------------------------------------------------------------------
+| Which status changes email the customer (Lane BS)
+|------------------------------------------------------------------------------
+|
+|     GET  /admin-api/mail/status-emails
+|     POST /admin-api/mail/status-emails      {status, enabled}
+|
+| Added to THIS file rather than to routes/web.php, per CLAUDE.md, and to this
+| file rather than a new one because it is the same screen's data: these two
+| sit inside the admin-api group that already carries `auth:admin` and
+| NoStoreAdminApi, which is the whole reason the require above is where it is.
+|
+| Mounted under /mail/ and not /orders/ deliberately. It is store-wide mail
+| configuration — "does a dispatch email go out at all" — not a fact about any
+| order, and the per-order tick box that reads the same answer travels on the
+| status-change request itself (`notify`) rather than through an endpoint of its
+| own. See App\Services\Mail\OrderStatusMailPolicy for why there is one answer
+| and not two.
+|
+| No throttle. Unlike /mail/test these send nothing; they read and write a
+| module toggle, and the admin guard is the control that matters.
+*/
+Route::get('/mail/status-emails', [\App\Http\Controllers\Admin\OrderEmailPolicyController::class, 'show']);
+Route::post('/mail/status-emails', [\App\Http\Controllers\Admin\OrderEmailPolicyController::class, 'save']);

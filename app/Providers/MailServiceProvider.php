@@ -46,6 +46,21 @@ class MailServiceProvider extends ServiceProvider
         $this->app->scoped(MailTester::class);
         $this->app->scoped(OrderMailer::class);
 
+        /*
+         * SCOPED IS LOAD-BEARING HERE, not a performance choice like the rest.
+         *
+         * OrderStatusMailPolicy carries the operator's "email the customer
+         * about this change" tick for the order in front of them, recorded by
+         * the controller BEFORE the status is saved and read by
+         * OrderMailObserver a moment later — and an Eloquent observer never
+         * sees the request. One instance per request is the whole of what
+         * connects the two. Bound transient, the controller would decide on one
+         * copy and the observer would consult an empty one, and the tick box
+         * would silently do nothing: the exact fault CLAUDE.md records this
+         * project shipping three times.
+         */
+        $this->app->scoped(\App\Services\Mail\OrderStatusMailPolicy::class);
+
         $this->app->afterResolving('mail.manager', function ($manager) {
             /*
              * First, because it must happen whatever the settings lookup below

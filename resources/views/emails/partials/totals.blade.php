@@ -33,3 +33,15 @@
         </tr>
     @endforeach
 </table>
+
+@if (($order['vatNote'] ?? null) !== null)
+    {{-- A portion OF the total, never an addition to it (decision D-64), so it
+         sits UNDER the rule rather than among the rows above it — the figures
+         above still add up to what was charged, and this says how much of that
+         was tax. Same figure and same wording as the checkout page showed, from
+         the same App\Support\VatDisplay; the invoice restates the same fils in
+         an accountant's phrasing. See OrderEmailPresenter::vatNote(). --}}
+    <p style="margin:7px 0 0;text-align:right;font-size:12.5px;color:{{ $c['muted'] }};">
+        {{ $order['vatNote']['label'] }}: {!! $order['vatNote']['html'] !!}
+    </p>
+@endif

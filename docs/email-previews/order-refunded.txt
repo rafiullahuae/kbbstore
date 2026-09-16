@@ -1,13 +1,12 @@
 Hello Aisha Khan,
 
-YOUR REFUND IS ON ITS WAY
+YOUR REFUND HAS BEEN APPROVED
 
-We have sent AED 199.00 back to the payment method you used for order
-KBB-10427. This is a partial refund — the rest of the order is
-unaffected.
-
-Refunds usually appear on a card statement within five to ten working days,
-depending on your bank.
+We have approved a refund of AED 199.00 on order KBB-10427. This is a
+partial refund — the rest of the order is unaffected. You paid by Cash
+on delivery, which we cannot refund automatically, so we will arrange
+the money with you directly. If you have not heard from us, reply to
+this message and we will sort it out.
 
 Refunded: AED 199.00
 Order total: AED 473.00
@@ -32,6 +31,8 @@ Gift wrapping: AED 15.00
 Cash on delivery fee: AED 15.00
 Total: AED 473.00
 
+You're paying VAT (5%): AED 22.52
+
 DELIVERY ADDRESS
 Aisha Khan
 Apartment 1204, Marina Heights
@@ -48,9 +49,6 @@ Love from all of us x
 
 ORDER NOTE
 Please ring the doorbell twice — the buzzer is broken.
-
-If the money has not reached you in ten working days, reply to this message with
-order number KBB-10427 and we will chase it.
 
 WE ARE HERE IF YOU NEED US
 A real person answers. Ask us anything — a question about your order, or

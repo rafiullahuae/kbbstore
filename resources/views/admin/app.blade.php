@@ -8174,6 +8174,12 @@ function paintMail(){
       <button class="btn primary" id="mlSave">Save changes</button>
     </div>
 
+    <div class="sec-title">Order status emails</div>
+    <div class="card pad">
+      <p style="margin:0 0 12px;color:#7b8697;font-size:12.5px">Which status changes email the customer automatically. You can still override this on any single order, from the order&rsquo;s own page.</p>
+      <div id="mlStatusEmails"><p style="margin:0;color:#7b8697;font-size:12.5px">Loading…</p></div>
+    </div>
+
     <div class="sec-title">Send a test</div>
     <div class="card pad">
       <div class="mmrow"><div class="mmlbl"><b>Send a test message to</b><span>Save first. The send happens while you wait — the result below is what the mail server actually said, not a queued job.</span></div>
@@ -8183,6 +8189,84 @@ function paintMail(){
     </div>
   </div>`;
   bindMail();
+  loadStatusEmails();
+}
+
+/* ---------------------------------------------------------------------------
+   Which status changes email the customer.
+
+   FETCHED SEPARATELY FROM THE REST OF THIS SCREEN, on purpose. The mail
+   settings above answer "can this server send at all"; a failure there has to
+   be loud and stop the page. This list answers a narrower question, and a store
+   whose SMTP is half-configured still needs to be able to read and change it.
+   Failing independently means one broken half does not black out the other.
+
+   EVERY STATUS IS LISTED, INCLUDING THE ONES THAT CANNOT EMAIL. The store has
+   nine statuses and a customer message was written for two of them. Hiding the
+   other seven would leave the owner looking for Processing and concluding the
+   screen was incomplete; showing them as dead tick boxes would be the toggle
+   that silently does nothing, which this project has shipped three times. So
+   they are listed, disabled, each with the server's own reason beside it.
+
+   The tick writes immediately rather than joining the Save button above. It is
+   one boolean with an endpoint of its own, there is nothing to batch it with,
+   and a checkbox that needs a second press elsewhere to mean anything is how
+   settings get lost.
+--------------------------------------------------------------------------- */
+async function loadStatusEmails(){
+  const host=$('#mlStatusEmails');
+  if(!host) return;
+  try{
+    const r=await fetch(mailBase()+'/status-emails',{credentials:'same-origin',headers:{Accept:'application/json'}});
+    if(!r.ok) throw new Error(r.status);
+    paintStatusEmails((await r.json()).statuses||[]);
+  }catch(e){
+    const why=String(e.message||e);
+    host.innerHTML=`<p style="margin:0;color:#7b8697;font-size:12.5px">Could not load the status list. ${
+      why==='404' ? 'The admin route is not registered — the cache-clearing migration for this release may not have run.' : ''
+      } <code>${escHtml(why)}</code></p>`;
+  }
+}
+
+function paintStatusEmails(rows){
+  const host=$('#mlStatusEmails');
+  if(!host) return;
+  host.innerHTML=rows.map(row=>`
+    <label class="mmrow" style="display:flex;align-items:flex-start;gap:9px;cursor:${row.supported?'pointer':'default'};padding:7px 0">
+      <input type="checkbox" data-status-email="${escAttr(row.status)}" style="margin-top:3px"${
+        row.enabled?' checked':''}${row.supported?'':' disabled'}>
+      <span style="line-height:1.45"><b>${escHtml(row.label)}</b>
+        <span style="display:block;color:#7b8697;font-size:12.5px">${escHtml(
+          row.supported
+            ? 'Emails the customer when an order moves to this status.'
+            : row.reason
+        )}</span>
+      </span>
+    </label>`).join('');
+
+  host.querySelectorAll('[data-status-email]').forEach(box=>{
+    box.onchange=async function(){
+      const status=box.getAttribute('data-status-email');
+      const wanted=box.checked;
+      try{
+        const r=await fetch(mailBase()+'/status-emails',{
+          method:'POST', credentials:'same-origin',
+          headers:{'Content-Type':'application/json',Accept:'application/json',
+                   'X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')||{}).content||''},
+          body:JSON.stringify({status:status,enabled:wanted}),
+        });
+        const body=await r.json();
+        if(!r.ok||!body.ok) throw new Error(body.message||r.status);
+        // Repainted from the server's answer rather than left as the browser
+        // drew it: the tick has to reflect what was actually stored.
+        paintStatusEmails(body.statuses||[]);
+        toast(wanted?'Customers will be emailed on '+status:'Customers will not be emailed on '+status);
+      }catch(e){
+        box.checked=!wanted;
+        toast(String(e.message||'Could not save that.'));
+      }
+    };
+  });
 }
 
 function bindMail(){
@@ -9163,6 +9247,78 @@ buildNav();
     return '<div class="odcard">'+odCardHead('Customer note')+'<div class="odcardbody">'+body+'</div></div>';
   }
 
+  /*
+    "Email the customer about this change", beside the status dropdown.
+
+    WHAT IT IS FOR. The store's standing rule says which statuses email a
+    customer at all (Store → Mail → order status emails). This is the exception
+    to that rule, for the order in front of you: untick it and this one save
+    stays quiet; tick it and this one save sends even though the rule is off.
+    It is never stored — it travels with the status change as `notify` and is
+    gone with the response.
+
+    IT RE-TICKS ITSELF WHEN THE STATUS CHANGES, which is the whole reason this
+    is a function and not a static string. Pre-ticking it once at render time
+    would leave "email the customer" ticked while the operator moved the
+    dropdown from Shipped (which emails) to Processing (which never does), and
+    the tick would be a promise the store cannot keep. odNotifySync() below is
+    wired to the dropdown's own change event.
+
+    A STATUS WITH NO MESSAGE DISABLES IT AND SAYS WHY. There is no customer
+    email for Processing, Completed, Refunded and the rest — OrderStatusChanged
+    carries wording for Shipped and Cancelled only, and the reasons are the
+    server's, printed here rather than invented in the browser. A tick box that
+    silently does nothing is the fault this project has already shipped three
+    times; a disabled one that explains itself is not that.
+
+    Wording and markup follow the New Order screen's "Email the customer a
+    confirmation" box — checkbox, label, small print underneath — so the two
+    places an operator decides about email look like each other.
+  */
+  function odStatusEmailRow(o, status){
+    var rows = o.status_emails || [];
+    for(var i=0;i<rows.length;i++){ if(rows[i].status===status) return rows[i]; }
+    return {status:status, supported:false, enabled:false, reason:''};
+  }
+
+  function odNotifyFieldHTML(o){
+    var row = odStatusEmailRow(o, o.status);
+    return '<div class="odfld" id="odNotifyFld">'+
+      '<label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-weight:500">'+
+        '<input type="checkbox" id="odNotify" style="margin-top:2px"'+
+          (row.supported && row.enabled ? ' checked' : '')+
+          (row.supported ? '' : ' disabled')+'>'+
+        '<span>Email the customer about this change'+
+          '<small id="odNotifyWhy" style="display:block;color:var(--ink-faint);font-weight:400;line-height:1.45">'+
+            sesc(odNotifyReason(row))+
+          '</small>'+
+        '</span>'+
+      '</label>'+
+    '</div>';
+  }
+
+  function odNotifyReason(row){
+    if(!row.supported) return row.reason || 'There is no customer email for this status.';
+    return row.enabled
+      ? 'On by default for this status. Untick to change the status quietly, just this once.'
+      : 'Switched off for this status in Store → Mail. Tick to send it anyway, just this once.';
+  }
+
+  /* Keep the box honest as the dropdown moves. See odNotifyFieldHTML. */
+  function odNotifySync(o){
+    var sel = document.getElementById('odStatusSel');
+    var box = document.getElementById('odNotify');
+    var why = document.getElementById('odNotifyWhy');
+    if(!sel || !box || !why) return;
+    var apply = function(){
+      var row = odStatusEmailRow(o, sel.value);
+      box.disabled = !row.supported;
+      box.checked = row.supported && row.enabled;
+      why.textContent = odNotifyReason(row);
+    };
+    sel.addEventListener('change', apply);
+  }
+
   function odOverviewAddressesCard(o){
     var c = o.customer||{};
     var b = o.billing_address||{}, s = o.shipping_address||{};
@@ -9176,6 +9332,7 @@ buildNav();
         '<div class="odfld"><label>Date created</label>'+
         '<div class="odtimegrid"><input class="odinp" id="odDateCreated" value="'+sesc((o.created_at||'').slice(0,10))+'"><input class="odinp" id="odTimeH" value="'+sesc((o.created_at||'').slice(11,13))+'"><input class="odinp" id="odTimeM" value="'+sesc((o.created_at||'').slice(14,16))+'"></div></div>'+
         '<div class="odfld"><label>Status</label>'+seoSel2('odStatusSel', o.status, ORDER_STATUSES.map(function(s){return [s, s.charAt(0).toUpperCase()+s.slice(1)];}))+'</div>'+
+        odNotifyFieldHTML(o)+
         '<div class="odfld" style="margin-bottom:0"><label>Customer'+(c.id?' &middot; <a href="#" id="odCustHist" style="color:#E08A1A;font-weight:600">Order history</a>':'')+'</label>'+
         (c.id ? '<div class="odcustchip"><span>'+sesc(c.name)+'</span></div>' : '<div class="odcustchip"><span style="color:var(--ink-faint)">Guest checkout</span></div>')+
         '</div>'+
@@ -9381,10 +9538,24 @@ buildNav();
       };
     });
 
+    odNotifySync(o);
+
     document.getElementById('odUpdate').onclick = async function(){
       var status = document.getElementById('odStatusSel').value;
-      try{ await api('/admin-api/orders/'+id+'/status',{method:'PUT',body:JSON.stringify({status:status})});
-        toast('Order updated'); renderOrderDetail(id);
+      var box = document.getElementById('odNotify');
+      var body = {status:status};
+      /*
+        `notify` is sent only when the box is live. A disabled box carries no
+        decision — the status it belongs to has no customer email at all — and
+        posting `notify:false` for it would look like the operator chose
+        silence when the screen never offered them a choice. Omitted means
+        "no view expressed", which is what the server reads every caller
+        written before this field as meaning.
+      */
+      if(box && !box.disabled) body.notify = box.checked;
+      try{ await api('/admin-api/orders/'+id+'/status',{method:'PUT',body:JSON.stringify(body)});
+        toast(body.notify === false ? 'Order updated · no email sent' : 'Order updated');
+        renderOrderDetail(id);
       }catch(e){ toast('Update failed'); }
     };
 

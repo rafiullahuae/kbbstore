@@ -1510,7 +1510,26 @@ class AdminController extends Controller
 
         $data = $request->validate([
             'status' => 'required|string|in:draft,pending,processing,onhold,shipped,completed,cancelled,refunded,failed',
+            // "Email the customer about this change", as ticked on the order
+            // screen. Absent means the operator expressed no view and the
+            // standing per-status rule decides, which is what every caller
+            // written before this field existed means.
+            'notify' => 'sometimes|nullable|boolean',
         ]);
+
+        /*
+         * RECORDED BEFORE THE SAVE, because the save is what sends.
+         *
+         * OrderMailObserver fires on `updated` and it never sees a request, so
+         * the operator's choice has to be waiting for it. OrderStatusMailPolicy
+         * is bound scoped for exactly this: the instance this line writes to is
+         * the instance OrderMailer reads a moment later. Nothing is persisted —
+         * it governs this one save and is gone with the response.
+         */
+        app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor(
+            $o,
+            $request->has('notify') ? $request->boolean('notify') : null,
+        );
 
         $o->status = $data['status'];
         $o->updated_at = now()->toISOString();

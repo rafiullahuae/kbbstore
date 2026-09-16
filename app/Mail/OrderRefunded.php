@@ -38,6 +38,59 @@ class OrderRefunded extends OrderMail
 
     public bool $isPartial;
 
+    /**
+     * Did a gateway actually push this money back, or did we only write it down?
+     *
+     * CASH ON DELIVERY IS THIS STORE'S ORDINARY PAYMENT METHOD, AND IT HAS NO
+     * REFUND API. PaymentRefunder says so in as many words: a provider whose
+     * gateway does not implement SettlesPayments "still gets a recorded refund —
+     * the ledger entry a manual bank transfer needs" and settles it
+     * `recorded_only`, with the note "return the money by hand". Nothing has
+     * moved at that point. A person has to.
+     *
+     * The email did not know that. It told every refunded customer, in the same
+     * words, that we had "sent [the amount] back to the payment method you
+     * used" and that it "usually appears on a card statement within five to ten
+     * working days, depending on your bank". For a customer who handed cash to a
+     * courier that is three untruths in one sentence: nothing was sent, there is
+     * no payment method to send it to, and there is no card statement for it to
+     * appear on. The worst part is the ten working days — it buys the store ten
+     * days of a customer waiting quietly for money that is not coming unless
+     * somebody remembers to send it.
+     *
+     * IT IS NOT ASKED AS `payment_method === 'cod'`, AND IT IS NOT ASKED OF THE
+     * INTERFACE EITHER. The obvious two answers are both wrong here:
+     *
+     *   - an `=== 'cod'` would be a second copy of a fact that lives in the
+     *     gateway, and a build that ships a new provider before its refund half
+     *     would go on promising those customers a card refund;
+     *   - `instanceof SettlesPayments` LOOKS like the right predicate — it is
+     *     the one PaymentRefunder branches on — but CashOnDelivery implements
+     *     that interface. It has a refund() method; the method returns
+     *     `recorded_only` and a summary reading "Cash on delivery has nothing to
+     *     call — return the money by hand". Implementing the contract is not the
+     *     same claim as moving money, and using it here sent exactly the wrong
+     *     answer for exactly the case this exists for.
+     *
+     * THE RECORDED FACT IS THE REFERENCE. Every gateway in this build that can
+     * really push a refund refuses to report success without the provider's own
+     * refund id: Stripe requires `is_string($refundId)` and a status of
+     * succeeded or pending, Tabby and Tamara both `return SettlementResult::failed`
+     * when their refund id is null. CashOnDelivery passes null, and so does
+     * PaymentRefunder's own fallback for a gateway with no settlement code at
+     * all. PaymentRefunder::settle() then writes that reference to the refund
+     * row. So on a SUCCEEDED refund, a null `provider_ref` means precisely one
+     * thing: no provider acknowledged it, because none was asked.
+     *
+     * It is also the safe direction to be wrong in. A future gateway that
+     * somehow settled without a reference would get the recorded-only wording —
+     * "we will arrange the money with you directly, reply if you have not heard
+     * from us" — which is a customer being invited to check on money that is
+     * already on its way. The reverse, which is what shipped, is a customer
+     * being told to wait ten working days for money nobody has sent.
+     */
+    public bool $settledByGateway;
+
     public function __construct(Order $order, Refund $refund)
     {
         parent::__construct($order);
@@ -92,6 +145,8 @@ class OrderRefunded extends OrderMail
         $ceiling = $refunder->capturedFils($order) ?: (int) $order->total;
 
         $this->isPartial = $refunder->refundedFils($order) < $ceiling;
+
+        $this->settledByGateway = trim((string) $refund->provider_ref) !== '';
     }
 
     public function envelope(): Envelope
