@@ -79,7 +79,17 @@ export function initCheckout() {
             const invalid = form.querySelector(':invalid');
 
             if (invalid) {
-                invalid.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                /* 'instant', not 'smooth'. kbb.css sets `html{scroll-behavior:
+                   smooth}` globally, so an animated scroll is still in flight
+                   when focus() and reportValidity() run a line later — and
+                   reportValidity() then does its OWN minimal scroll, which
+                   top-aligns the field under the sticky .co-head and undoes the
+                   centring. Instant finishes first, so by the time the browser
+                   looks, the field is already where it should be and it has
+                   nothing to correct. The clearance under the sticky header is
+                   scroll-margin-top in kbb-checkout.css, which is the property
+                   for exactly this and also fixes anchor jumps. */
+                invalid.scrollIntoView({ block: 'center', behavior: 'instant' });
                 invalid.focus({ preventScroll: true });
                 form.reportValidity();
                 return;
