@@ -1801,6 +1801,164 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .paytab{gap:6px}
   .paytab-t{max-width:38vw}
 }
+
+/* ===== LANE CD — two screens given the Coupons treatment ===================
+   Business Details (.bd-) and SEO & Meta's Settings tab (.sm-) are laid out
+   the way resources/views/admin/partials/coupon-editor-screen.blade.php lays
+   out coupons: titled bands, each saying in one line when you would touch it,
+   and field pairs that share a row and a width.
+
+   ANALYTICS WAS THE THIRD AND IS NOT HERE. Lane customers-analytics rebuilt
+   that screen to the same standard while this was being written, and theirs
+   also subtracts partial refunds from revenue — a correctness fix this had no
+   part of. Two implementations of one screen is how the withdrawn packages
+   2.60.102-.106 reverted three files, so this one was dropped whole at the
+   merge rather than half-merged. Analytics' own .an- rules are theirs, written
+   inside renderAnalytics(); nothing in this block names them.
+
+   TWO PREFIXES RATHER THAN ONE SHARED SET, on purpose. The two blocks below
+   are near-identical and that is the point: a single .kbb-sec used by two
+   screens is one edit away from restyling the other, and this file is edited
+   by several lanes at once. Every rule here starts with the prefix of exactly
+   one screen and appears nowhere else in the console.
+
+   Business Details is .bd- and not the obvious .bz- because .bz- is already
+   the Brands editor's, over in admin/partials/brands-editor-screen.blade.php,
+   and three of its names (.bz-wrap, .bz-card, .bz-note) are ones this screen
+   would have wanted too. A prefix is only a guarantee if somebody checks it is
+   free; grep the whole of resources/views before adding a third.
+
+   THE LAYOUT RULE BOTH ARE BUILT ON. A grid or flex item's default min-width
+   is `auto` — "at least as wide as my content". A <select> whose widest option
+   is 240px therefore sets a 240px floor on its track that no media query can
+   reach, and a wide table stretches the whole column rather than scrolling
+   inside its own box. Every grid and flex container below carries min-width:0
+   AND passes it to its children.
+
+   WHAT THIS REPLACED, measured in Chromium at a 390px viewport before the
+   change: .g2 is `grid-template-columns:1fr 1fr` with no breakpoint anywhere,
+   so both screens drew two 145px columns on a phone — the currency select read
+   "AED — UAE Dirha" with the rest clipped, and the dirham-glyph note ran to
+   twelve lines in a 170px gutter. Neither screen overflowed #content; both
+   squeezed, which is why the overflow walk never saw them. The grids below are
+   auto-fit with a min() floor, so a track gives way instead.
+
+   The console measures sideways overflow on #content, not documentElement —
+   body is overflow-x:hidden, so the document is never wider than the viewport
+   however broken a screen is.
+   ========================================================================= */
+
+/* ---- Business Details --------------------------------------------------- */
+.bd-wrap{display:grid;gap:16px;min-width:0}
+.bd-wrap > *{min-width:0}
+.bd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+         box-shadow:var(--sh-s);padding:18px;min-width:0}
+.bd-sec{display:grid;gap:13px;min-width:0}
+.bd-sec > *{min-width:0}
+/* A hairline between bands rather than a box around each one: the groups stay
+   visible and the screen stays one form instead of three. */
+.bd-sec + .bd-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
+.bd-sec-h{display:grid;gap:3px;min-width:0}
+.bd-sec-t{font-size:13.5px;font-weight:650}
+.bd-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft);max-width:78ch}
+/* auto-fit with a min() floor rather than minmax(240px,1fr): the latter cannot
+   go below 240px per track, so two fields plus the gap demand more than a
+   390px phone has and the row overflows instead of stacking. */
+.bd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:14px;min-width:0}
+.bd-grid > *{min-width:0}
+.bd-field{display:grid;gap:5px;min-width:0;align-content:start}
+.bd-field > *{min-width:0}
+.bd-label{font-size:12.5px;font-weight:600}
+/* Help is secondary and stays secondary: one short line, capped at a readable
+   measure so it can never spread into a paragraph the eye has to cross before
+   it finds the next label. Anything longer belongs in the section description
+   or in a single note at the foot of the band. */
+.bd-help{font-size:11.5px;color:var(--ink-soft);line-height:1.45;max-width:62ch}
+.bd-field input,.bd-field select,.bd-field textarea{
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+  padding:9px 11px;font:inherit;font-size:13px;border:1px solid var(--border);
+  border-radius:var(--r-xs);background:var(--surface);color:var(--ink)}
+.bd-field input:focus,.bd-field select:focus,.bd-field textarea:focus{
+  outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+/* A select's intrinsic width is its widest OPTION, which sets a floor no media
+   query can reach — this is what clipped "AED — UAE Dirham" on a phone. */
+.bd-field select{text-overflow:ellipsis}
+.bd-note{border:1px solid var(--border);border-left:3px solid var(--ink-faint);
+         border-radius:var(--r-xs);padding:11px 13px;min-width:0;
+         font-size:12px;line-height:1.55;color:var(--ink-soft)}
+.bd-note b{color:var(--ink-2)}
+.bd-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;min-width:0}
+.bd-actions > *{min-width:0}
+@media (max-width:640px){
+  .bd-card{padding:14px}
+  .bd-sec + .bd-sec{margin-top:18px;padding-top:16px}
+  .bd-actions .btn{width:100%;justify-content:center}
+}
+
+/* ---- SEO & Meta · Settings tab ------------------------------------------ */
+.sm-wrap{display:grid;gap:16px;min-width:0}
+.sm-wrap > *{min-width:0}
+.sm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+         box-shadow:var(--sh-s);padding:18px;min-width:0}
+.sm-sec{display:grid;gap:13px;min-width:0}
+.sm-sec > *{min-width:0}
+.sm-sec + .sm-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
+.sm-sec-h{display:grid;gap:3px;min-width:0}
+.sm-sec-t{font-size:13.5px;font-weight:650}
+.sm-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft);max-width:78ch}
+.sm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:14px;min-width:0}
+.sm-grid > *{min-width:0}
+/* One short control with nothing to pair it with. Stretched across the full
+   row a two-option select reads as a mistake; this holds it to one column's
+   worth of the same rhythm, and gives way to the full width on a phone where
+   one column IS the row. */
+.sm-grid.is-solo{max-width:min(100%,480px)}
+.sm-field{display:grid;gap:5px;min-width:0;align-content:start}
+.sm-field > *{min-width:0}
+.sm-label{font-size:12.5px;font-weight:600}
+.sm-help{font-size:11.5px;color:var(--ink-soft);line-height:1.45;max-width:62ch}
+.sm-field input,.sm-field select,.sm-field textarea{
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+  padding:9px 11px;font:inherit;font-size:13px;border:1px solid var(--border);
+  border-radius:var(--r-xs);background:var(--surface);color:var(--ink)}
+.sm-field input:focus,.sm-field select:focus,.sm-field textarea:focus{
+  outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sm-field select{text-overflow:ellipsis}
+.sm-field textarea{min-height:76px;resize:vertical}
+.sm-field textarea.is-code{font-family:var(--mono);font-size:12px;min-height:96px}
+/* imgUploadField() draws five screens across the console and is not this
+   lane's to change, so its .fld wrapper is neutralised here instead — inside
+   this prefix only, where it cannot reach the other four. */
+.sm-grid .fld{margin-bottom:0;min-width:0}
+.sm-grid .fld > label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.sm-grid .fld input{max-width:100%;min-width:0}
+.sm-grid .fld .description{font-size:11.5px;color:var(--ink-soft);line-height:1.45}
+/* A switch and its explanation as one quiet row, rather than a bold <label>
+   with a paragraph under it that reads like a warning between two fields. */
+.sm-opt{display:flex;gap:10px;align-items:flex-start;min-width:0;padding:11px 13px;
+        border:1px solid var(--border);border-radius:var(--r-sm);background:rgba(127,127,127,.03)}
+.sm-opt > *{min-width:0}
+.sm-opt .cbx{margin-top:1px}
+.sm-opt-t{display:block;font-size:12.5px;font-weight:600;cursor:pointer}
+.sm-opt .sm-help{margin-top:3px}
+.sm-opts{display:grid;gap:9px;min-width:0}
+.sm-opts > *{min-width:0}
+.sm-note{border:1px solid var(--border);border-left:3px solid var(--ink-faint);
+         border-radius:var(--r-xs);padding:11px 13px;min-width:0;
+         font-size:12px;line-height:1.55;color:var(--ink-soft)}
+.sm-note b{color:var(--ink-2)}
+.sm-links{display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.sm-links > *{min-width:0}
+/* These two are <a> elements wearing .btn, and nothing in .btn turns off the
+   anchor underline — they came out looking like links inside buttons. */
+.sm-links .btn{text-decoration:none}
+.sm-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;min-width:0}
+.sm-actions > *{min-width:0}
+@media (max-width:640px){
+  .sm-card{padding:14px}
+  .sm-sec + .sm-sec{margin-top:18px;padding-top:16px}
+  .sm-actions .btn{width:100%;justify-content:center}
+}
 </style>
 </head>
 <body data-env="live">
@@ -12000,29 +12158,92 @@ buildNav();
     return '<select class="inp" id="set_currency" style="width:100%">'+out+'</select>';
   }
 
+  /* ---------- Business Details (Lane CD: hierarchy and layout only) ----------
+     Three titled bands instead of three cards with a bare bold word on top,
+     each saying in one line when the owner would come here. Every field is the
+     one that was here before, with the same id, and the save handler below is
+     untouched: the payload it posts is the same eleven keys in the same order.
+
+     WHAT CHANGED AND WHY. The old markup used .g2, which is
+     `grid-template-columns:1fr 1fr` with no breakpoint anywhere in the console
+     — so on a 390px phone this screen drew two 145px columns and the currency
+     select read "AED — UAE Dirha" with the rest clipped. .bd-grid is auto-fit
+     with a min() floor and stacks instead. The four-line note about the dirham
+     glyph sat under one input of a pair, which dragged that side of the row
+     four lines deeper than the other; it is now one note at the foot of its
+     band, where it reads as background rather than as an instruction attached
+     to a box. VAT no longer floats alone at 220px with dead space beside it —
+     it takes a track in its own band's grid like everything else. */
+  function bdField(id,label,control,help){
+    return '<div class="bd-field"><label class="bd-label" for="'+id+'">'+label+'</label>'+control+
+      (help?'<div class="bd-help">'+help+'</div>':'')+'</div>';
+  }
+  function bdSec(title,description,body){
+    return '<section class="bd-sec"><div class="bd-sec-h"><div class="bd-sec-t">'+title+'</div>'+
+      '<div class="bd-sec-d">'+description+'</div></div>'+body+'</section>';
+  }
+
   async function renderStoreSettings(){
     await loadSettings();
     document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Business Details</h2><p>Core store configuration. These values drive the storefront and checkout totals.</p></div>'+
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Store</b>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Store name</label><input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'"></div>'+
-      '<div class="fld"><label>Currency</label>'+curSelect()+'</div></div>'+
-      '<div class="fld" style="max-width:220px"><label>VAT rate (%)</label><input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'"></div></div>'+
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Currency display</b>'+
-      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">How prices are printed everywhere on the storefront. Choosing a currency above fills in its symbol and decimals — you can still override the symbol.</p>'+
-      '<div class="g2"><div class="fld"><label>Symbol</label><input id="set_currency_symbol" value="'+sesc(SETTINGS.currency_symbol)+'" placeholder="'+sesc(curSymbol())+'">'+
-      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Leave blank to use the selected currency’s own symbol.</p></div>'+
-      '<div class="fld"><label>Symbol rendering</label>'+seoSel('set_currency_symbol_render',SETTINGS.currency_symbol_render,[['unicode','Unicode character — correct, may show an empty box'],['svg','Drawn glyph (SVG) — always renders']],'unicode')+
-      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">The dirham sign “⃃” was accepted by Unicode in July 2025 and ships in Unicode 18.0 (September 2026), so most devices have no font glyph for it yet and draw an empty box instead. <b>Unicode</b> is the default because it puts the real character in the page — right for copy-paste, screen readers and search engines. If the empty box bothers you, switch to <b>Drawn glyph</b>: the storefront then draws the symbol itself and it always renders.</p></div></div>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Symbol position</label>'+seoSel('set_currency_position',SETTINGS.currency_position,[['before','Before the number — '+sesc(curSymbol())+'199'],['before_space','Before, with a space — '+sesc(curSymbol())+' 199'],['after','After the number — 199'+sesc(curSymbol())],['after_space','After, with a space — 199 '+sesc(curSymbol())]],'before')+'</div>'+
-      '<div class="fld"><label>Decimal places</label><input id="set_currency_decimals" type="number" min="0" max="4" step="1" value="'+sesc(SETTINGS.currency_decimals)+'" placeholder="blank — whole numbers">'+
-      '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Drives both what is printed and how stored amounts are read back (2 = hundredths, which is how every amount already in the database is stored). Leave blank to keep the current whole-dirham display.</p></div></div></div>'+
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Shipping &amp; COD</b>'+
-      '<p style="font-size:11.5px;color:var(--ink-soft);margin:4px 0 12px">All amounts in AED. Free shipping applies when the cart subtotal reaches the threshold.</p>'+
-      '<div class="g2"><div class="fld"><label>Free-shipping threshold (AED)</label><input id="set_free_ship" type="number" step="1" value="'+money2aed('free_ship')+'"></div>'+
-      '<div class="fld"><label>Flat delivery fee (AED)</label><input id="set_delivery" type="number" step="1" value="'+money2aed('delivery_flat')+'"></div></div>'+
-      '<div class="fld" style="max-width:220px"><label>COD fee (AED)</label><input id="set_cod" type="number" step="1" value="'+money2aed('cod_fee')+'"></div></div>'+
-      '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_biz">Save changes</button></div></div>';
+      '<div class="wrap"><div class="page-head"><h2>Business Details</h2>'+
+      '<p>The handful of values the whole shop is built on — what the business is called, what money it takes and what delivery costs. Everything here reaches the storefront and the checkout total the moment it is saved.</p></div>'+
+      '<div class="bd-wrap"><div class="bd-card">'+
+
+      bdSec('Store identity',
+        'The name and tax rate every invoice, email and checkout total is built from. Come here when the business name changes or the VAT rate moves.',
+        '<div class="bd-grid">'+
+          bdField('set_store_name','Store name',
+            '<input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'">',
+            'Shown in the browser tab, in emails and on invoices.')+
+          bdField('set_currency','Currency',curSelect(),
+            'Picking one fills in its symbol and decimals below.')+
+          bdField('set_vat','VAT rate (%)',
+            '<input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'">',
+            'Applied to checkout totals. Leave at 0 for none.')+
+        '</div>')+
+
+      bdSec('How prices are printed',
+        'How every price on the storefront is written — the symbol, where it sits and how many decimals. Choosing a currency above fills these in, and you can still override any of them.',
+        '<div class="bd-grid">'+
+          bdField('set_currency_symbol','Symbol',
+            '<input id="set_currency_symbol" value="'+sesc(SETTINGS.currency_symbol)+'" placeholder="'+sesc(curSymbol())+'">',
+            'Leave blank to use the selected currency’s own symbol.')+
+          bdField('set_currency_symbol_render','Symbol rendering',
+            seoSel('set_currency_symbol_render',SETTINGS.currency_symbol_render,[['unicode','Unicode character — correct, may show an empty box'],['svg','Drawn glyph (SVG) — always renders']],'unicode'),
+            'See the note below before changing this.')+
+        '</div>'+
+        /* Two to a row rather than four in one auto-fit grid. Four 230px
+           tracks plus their gaps come to 962px and this card's inner width is
+           957px, which is close enough that the row is one browser's rounding
+           away from becoming three-and-one. An explicit pair cannot do that. */
+        '<div class="bd-grid">'+
+          bdField('set_currency_position','Symbol position',
+            seoSel('set_currency_position',SETTINGS.currency_position,[['before','Before the number — '+sesc(curSymbol())+'199'],['before_space','Before, with a space — '+sesc(curSymbol())+' 199'],['after','After the number — 199'+sesc(curSymbol())],['after_space','After, with a space — 199 '+sesc(curSymbol())]],'before'),
+            'Each option shows what 199 would look like.')+
+          bdField('set_currency_decimals','Decimal places',
+            '<input id="set_currency_decimals" type="number" min="0" max="4" step="1" value="'+sesc(SETTINGS.currency_decimals)+'" placeholder="blank — whole numbers">',
+            'Also how stored amounts are read back. Blank keeps whole dirhams.')+
+        '</div>'+
+        '<div class="bd-note">The dirham sign “⃣” was accepted by Unicode in July 2025 and ships in Unicode 18.0 (September 2026), so most devices have no font glyph for it yet and draw an empty box instead. <b>Unicode</b> is the default because it puts the real character in the page — right for copy-paste, screen readers and search engines. If the empty box bothers you, switch to <b>Drawn glyph</b>: the storefront then draws the symbol itself and it always renders. <b>2 decimal places</b> means hundredths, which is how every amount already in the database is stored.</div>')+
+
+      bdSec('Delivery and cash on delivery',
+        'What the shop charges to get an order to the door, and the basket size at which it stops charging. All three amounts are in AED.',
+        '<div class="bd-grid">'+
+          bdField('set_free_ship','Free-shipping threshold',
+            '<input id="set_free_ship" type="number" step="1" value="'+money2aed('free_ship')+'">',
+            'Delivery is free once the cart subtotal reaches this.')+
+          bdField('set_delivery','Flat delivery fee',
+            '<input id="set_delivery" type="number" step="1" value="'+money2aed('delivery_flat')+'">',
+            'Charged on every order below the threshold.')+
+          bdField('set_cod','Cash-on-delivery fee',
+            '<input id="set_cod" type="number" step="1" value="'+money2aed('cod_fee')+'">',
+            'Added when the shopper chooses to pay on delivery.')+
+        '</div>')+
+
+      '</div>'+
+      '<div class="bd-actions"><button class="btn" id="set_save_biz">Save changes</button></div>'+
+      '</div></div>';
     /* Picking a currency fills in its symbol and decimals; both stay editable. */
     var curSel=document.getElementById('set_currency');
     if(curSel) curSel.onchange=function(){
@@ -12185,71 +12406,214 @@ buildNav();
     return renderSeoSettings();
   }
 
+  /* ---------- SEO & Meta · Settings (Lane CD: hierarchy and layout only) ----
+     Seven cards, each headed by a bare bold word and none of them saying when
+     you would touch it, become two cards that name the question they answer
+     and eight bands underneath that name their own. Every field is the one
+     that was here before, with the same id; the save handler below is
+     untouched and posts the same thirty-eight keys.
+
+     WHAT CHANGED AND WHY. The old markup used .g2, which is
+     `grid-template-columns:1fr 1fr` with no breakpoint anywhere in the
+     console, so this screen drew two 145px columns on a 390px phone.
+     "Title separator" was pinned at 120px inside a 1fr track, leaving a third
+     of the row empty beside it; the ship-to country box at 100px did the same.
+     .sm-grid is auto-fit with a min() floor, and nothing carries a width of
+     its own any more, so a pair shares a row and a width or it stacks.
+     The three tick boxes each had a bold label with a paragraph under it,
+     which read as three warnings wedged between fields; they are quiet opt
+     rows now. The long explanations that were under an input have moved up
+     into the band description or down into one note. */
+  function smField(id,label,control,help){
+    return '<div class="sm-field"><label class="sm-label" for="'+id+'">'+label+'</label>'+control+
+      (help?'<div class="sm-help">'+help+'</div>':'')+'</div>';
+  }
+  function smSec(title,description,body){
+    return '<section class="sm-sec"><div class="sm-sec-h"><div class="sm-sec-t">'+title+'</div>'+
+      '<div class="sm-sec-d">'+description+'</div></div>'+body+'</section>';
+  }
+  /* A tick and its one line, as a quiet row rather than a bold label with a
+     paragraph under it. The box keeps its id and stays the only thing that
+     toggles, exactly as before. */
+  function smOpt(cbxId,on,title,help){
+    return '<div class="sm-opt"><span class="cbx'+(on?' on':'')+'" id="'+cbxId+'">'+ic(I.check)+'</span>'+
+      '<div><span class="sm-opt-t">'+title+'</span>'+(help?'<div class="sm-help">'+help+'</div>':'')+'</div></div>';
+  }
+
   async function renderSeoSettings(){
     await loadSettings(); var S=SETTINGS;
     var base=(location.origin||'');
     document.getElementById('seoTabBody').innerHTML =
+      '<div class="sm-wrap">'+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Search appearance</b>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Site URL (canonical base)</label><input id="seo_site_url" value="'+sesc(S.site_url)+'" placeholder="https://kbeautybliss.com"></div>'+
-      '<div class="fld"><label>Site name</label><input id="seo_sitename" value="'+sesc(S.seo_site_name||S.store_name)+'" placeholder="K-Beauty Bliss"></div></div>'+
-      '<div class="g2"><div class="fld"><label>Title separator</label><input id="seo_sep" value="'+sesc(S.seo_separator||'|')+'" style="max-width:120px"></div>'+
-      '<div class="fld"><label>Title template</label><input id="seo_tpl" value="'+sesc(S.seo_title_template||'{title} {sep} {sitename}')+'" placeholder="{title} {sep} {sitename}"></div></div>'+
-      '<div class="fld"><label>Homepage title</label><input id="seo_home_t" value="'+sesc(S.seo_home_title)+'" placeholder="K-Beauty Bliss \u2014 Korean skincare for the UAE"></div>'+
-      '<div class="fld"><label>Homepage meta description</label><textarea id="seo_home_d" class="inp" style="width:100%;min-height:60px">'+sesc(S.seo_home_description)+'</textarea></div>'+
-      '<div class="fld"><label>Default meta description (fallback)</label><textarea id="seo_def_d" class="inp" style="width:100%;min-height:60px">'+sesc(S.seo_default_description)+'</textarea></div>'+
-      '<div class="g2"><div class="fld"><label>Search engines</label>'+seoSel('seo_robots_i',S.robots_index,[['index','Index (allow ranking)'],['noindex','Noindex (hide from search)']],'index')+'</div>'+
-      '<div class="fld"><label>Follow links</label>'+seoSel('seo_robots_f',S.robots_follow,[['follow','Follow'],['nofollow','Nofollow']],'follow')+'</div></div></div>'+
+      '<div class="sm-card">'+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Social (Open Graph &amp; Twitter)</b>'+
-      '<p class="description" style="margin:4px 0 0">The share image and title/description below apply everywhere a link is shared \u2014 Facebook, LinkedIn, WhatsApp, Pinterest, iMessage \u2014 they all read the same Open Graph tags. Twitter/X alone uses its own separate card format, which is why it gets its own field just below.</p>'+
-      '<div class="g2" style="margin-top:12px">'+imgUploadField('seo_og_img',S.og_default_image,'Default share image (1200\u00d7630)','seo')+
-      '<div class="fld"><label>Twitter / X handle</label><input id="seo_tw" value="'+sesc(S.twitter_handle)+'" placeholder="@kbeautybliss"></div></div></div>'+
+      smSec('Search appearance',
+        'The words Google prints in a result, and the address it prints them under. This is the band to edit when the shop is renamed or the homepage pitch changes.',
+        '<div class="sm-grid">'+
+          smField('seo_site_url','Site URL (canonical base)',
+            '<input id="seo_site_url" value="'+sesc(S.site_url)+'" placeholder="https://kbeautybliss.com">',
+            'The one address every page says it really lives at.')+
+          smField('seo_sitename','Site name',
+            '<input id="seo_sitename" value="'+sesc(S.seo_site_name||S.store_name)+'" placeholder="K-Beauty Bliss">',
+            'What {sitename} becomes in the template below.')+
+        '</div>'+
+        /* Two to a row, deliberately, rather than four in one auto-fit grid:
+           at this console's width a fourth 230px track misses fitting by two
+           pixels, so the row silently became three-and-one and the rhythm
+           broke. An explicit pair is a pair at every width. */
+        '<div class="sm-grid">'+
+          smField('seo_sep','Title separator',
+            '<input id="seo_sep" value="'+sesc(S.seo_separator||'|')+'">',
+            'What {sep} becomes. Usually | or —.')+
+          smField('seo_tpl','Title template',
+            '<input id="seo_tpl" value="'+sesc(S.seo_title_template||'{title} {sep} {sitename}')+'" placeholder="{title} {sep} {sitename}">',
+            'Used on every page that has no title of its own.')+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_home_t','Homepage title',
+            '<input id="seo_home_t" value="'+sesc(S.seo_home_title)+'" placeholder="K-Beauty Bliss — Korean skincare for the UAE">',
+            'The homepage ignores the template and uses this.')+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_home_d','Homepage meta description',
+            '<textarea id="seo_home_d" class="inp"></textarea>',
+            'The sentence under the homepage result. Around 155 characters.')+
+          smField('seo_def_d','Default meta description',
+            '<textarea id="seo_def_d" class="inp"></textarea>',
+            'Used wherever a page has written none of its own.')+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_robots_i','Search engines',
+            seoSel('seo_robots_i',S.robots_index,[['index','Index (allow ranking)'],['noindex','Noindex (hide from search)']],'index'),
+            'Noindex takes the whole shop out of search results.')+
+          smField('seo_robots_f','Follow links',
+            seoSel('seo_robots_f',S.robots_follow,[['follow','Follow'],['nofollow','Nofollow']],'follow'),
+            'Whether link credit passes to the pages you link to.')+
+        '</div>')+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Social profile links</b>'+
-      '<p class="description" style="margin:4px 0 0">Linked into your Organization schema below (as <code>sameAs</code>) so Google can confirm these are genuinely your official profiles \u2014 helps your Knowledge Panel and brand search results. Leave any blank you do not have.</p>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Facebook</label><input id="seo_soc_fb" value="'+sesc(S.social_facebook)+'" placeholder="https://facebook.com/kbeautybliss"></div>'+
-      '<div class="fld"><label>Instagram</label><input id="seo_soc_ig" value="'+sesc(S.social_instagram)+'" placeholder="https://instagram.com/kbeautybliss"></div></div>'+
-      '<div class="g2"><div class="fld"><label>TikTok</label><input id="seo_soc_tt" value="'+sesc(S.social_tiktok)+'" placeholder="https://tiktok.com/@kbeautybliss"></div>'+
-      '<div class="fld"><label>Pinterest</label><input id="seo_soc_pin" value="'+sesc(S.social_pinterest)+'" placeholder="https://pinterest.com/kbeautybliss"></div></div>'+
-      '<div class="g2"><div class="fld"><label>LinkedIn</label><input id="seo_soc_li" value="'+sesc(S.social_linkedin)+'" placeholder="https://linkedin.com/company/kbeautybliss"></div>'+
-      '<div class="fld"><label>YouTube</label><input id="seo_soc_yt" value="'+sesc(S.social_youtube)+'" placeholder="https://youtube.com/@kbeautybliss"></div></div></div>'+
+      smSec('Sharing a link',
+        'What appears when somebody pastes a link to this shop into a chat or a post. Facebook, LinkedIn, WhatsApp, Pinterest and iMessage all read the same Open Graph tags; Twitter/X alone uses its own card, which is why it has a field of its own.',
+        '<div class="sm-grid">'+
+          imgUploadField('seo_og_img',S.og_default_image,'Default share image (1200×630)','seo')+
+          smField('seo_tw','Twitter / X handle',
+            '<input id="seo_tw" value="'+sesc(S.twitter_handle)+'" placeholder="@kbeautybliss">',
+            'With the @. Credits the shop on shared cards.')+
+        '</div>')+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Organization (schema.org)</b>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Organization name</label><input id="seo_org_name" value="'+sesc(S.org_name||S.store_name)+'"></div>'+
-      '<div class="fld"><label>Type</label>'+seoSel('seo_org_type',S.org_type,[['Organization','Organization'],['OnlineStore','OnlineStore'],['Store','Store'],['LocalBusiness','LocalBusiness']],'Organization')+'</div></div>'+
-      imgUploadField('seo_org_logo',S.org_logo,'Logo','seo')+'</div>'+
+      smSec('Social profiles',
+        'Your official accounts, linked into the Organization schema below so Google can confirm they are genuinely yours — it is what feeds the Knowledge Panel and brand searches. Leave blank any you do not have.',
+        '<div class="sm-grid">'+
+          smField('seo_soc_fb','Facebook','<input id="seo_soc_fb" value="'+sesc(S.social_facebook)+'" placeholder="https://facebook.com/kbeautybliss">')+
+          smField('seo_soc_ig','Instagram','<input id="seo_soc_ig" value="'+sesc(S.social_instagram)+'" placeholder="https://instagram.com/kbeautybliss">')+
+          smField('seo_soc_tt','TikTok','<input id="seo_soc_tt" value="'+sesc(S.social_tiktok)+'" placeholder="https://tiktok.com/@kbeautybliss">')+
+          smField('seo_soc_pin','Pinterest','<input id="seo_soc_pin" value="'+sesc(S.social_pinterest)+'" placeholder="https://pinterest.com/kbeautybliss">')+
+          smField('seo_soc_li','LinkedIn','<input id="seo_soc_li" value="'+sesc(S.social_linkedin)+'" placeholder="https://linkedin.com/company/kbeautybliss">')+
+          smField('seo_soc_yt','YouTube','<input id="seo_soc_yt" value="'+sesc(S.social_youtube)+'" placeholder="https://youtube.com/@kbeautybliss">')+
+        '</div>')+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Verification &amp; tracking</b>'+
-      '<div class="g2" style="margin-top:12px"><div class="fld"><label>Google Search Console</label><input id="seo_gsv" value="'+sesc(S.google_site_verification)+'" placeholder="verification token"></div>'+
-      '<div class="fld"><label>Bing Webmaster</label><input id="seo_bing" value="'+sesc(S.bing_site_verification)+'" placeholder="verification token"></div></div>'+
-      '<div class="g2"><div class="fld"><label>Pinterest</label><input id="seo_pin" value="'+sesc(S.pinterest_site_verification)+'" placeholder="verification token"></div>'+
-      '<div class="fld"><label>Baidu</label><input id="seo_baidu" value="'+sesc(S.baidu_site_verification)+'" placeholder="verification token"></div></div>'+
-      '<div class="g2"><div class="fld"><label>Google Analytics ID</label><input id="seo_ga" value="'+sesc(S.ga)+'" placeholder="G-XXXXXXXXXX"></div>'+
-      '<div class="fld"><label>Meta (Facebook) Pixel</label><input id="seo_pixel" value="'+sesc(S.meta_pixel)+'" placeholder="123456789012345"></div></div></div>'+
+      smSec('Business identity',
+        'Who search engines are told this shop belongs to, in schema.org terms. Set it once; it rarely changes after that.',
+        '<div class="sm-grid">'+
+          smField('seo_org_name','Organization name',
+            '<input id="seo_org_name" value="'+sesc(S.org_name||S.store_name)+'">',
+            'The legal or trading name, not the tagline.')+
+          smField('seo_org_type','Type',
+            seoSel('seo_org_type',S.org_type,[['Organization','Organization'],['OnlineStore','OnlineStore'],['Store','Store'],['LocalBusiness','LocalBusiness']],'Organization'),
+            'OnlineStore is right for a shop with no shopfront.')+
+          imgUploadField('seo_org_logo',S.org_logo,'Logo','seo')+
+        '</div>')+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Merchant listing (rich product results)</b>'+
-      '<p class="description" style="margin:4px 0 12px">Adds brand, condition, shipping and return policy to every product schema \u2014 what actually unlocks price and star ratings showing directly in Google, and eligibility for AI Shopping. Off by default: wrong shipping or return terms going out to search engines is worse than none at all, so this only turns on once you have confirmed the numbers below are accurate.</p>'+
-      '<div class="fld"><label><span class="cbx'+(String(S.enable_merchant)==='1'?' on':'')+'" id="seo_merchant_cbx">'+ic(I.check)+'</span> Enable merchant listing on every product</label></div>'+
-      '<div class="g2" style="margin-top:10px"><div class="fld"><label>Condition</label>'+seoSel('seo_merch_cond',S.merchant_condition,[['NewCondition','New'],['UsedCondition','Used'],['RefurbishedCondition','Refurbished']],'NewCondition')+'</div>'+
-      '<div class="fld"><label>Ship-to country</label><input id="seo_merch_country" value="'+sesc(S.merchant_ship_country||'AE')+'" maxlength="2" style="max-width:100px;text-transform:uppercase"></div></div>'+
-      '<div class="g2"><div class="fld"><label>Shipping cost (AED)</label><input id="seo_merch_cost" type="number" step="0.01" value="'+sesc(S.merchant_ship_cost||'0')+'"></div>'+
-      '<div class="fld"><label>Free shipping over (AED, 0 = never)</label><input id="seo_merch_freeover" type="number" step="1" value="'+sesc(S.merchant_ship_free_over||'0')+'"></div></div>'+
-      '<div class="fld" style="margin-bottom:0;max-width:220px"><label>Return window (days, 0 = no policy shown)</label><input id="seo_merch_returndays" type="number" value="'+sesc(S.merchant_return_days||'0')+'"></div></div>'+
+      '</div>'+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Search-engine support</b>'+
-      '<div class="fld" style="margin-top:12px"><label><span class="cbx'+(String(S.indexnow_on)==='1'?' on':'')+'" id="seo_indexnow_cbx">'+ic(I.check)+'</span> Instant indexing (IndexNow)</label>'+
-      '<p class="description" style="margin:6px 0 0">Auto-submits new/updated product and blog URLs to Bing, Yandex, Naver, Seznam &amp; Yep the moment they publish. Google is not part of IndexNow \u2014 it uses your sitemap instead.'+(String(S.indexnow_on)==='1'?(' Key file: <a href="'+base+'/'+sesc(S.indexnow_key||'')+'.txt" target="_blank">'+sesc(S.indexnow_key||'(generated on first use)')+'.txt \u2197</a>'):'')+'</p></div>'+
-      '<div class="fld"><label><span class="cbx'+(String(S.llms_enabled)!=='0'?' on':'')+'" id="seo_llms_cbx">'+ic(I.check)+'</span> Publish <a href="'+base+'/llms.txt" target="_blank">/llms.txt</a> for AI crawlers</label></div>'+
-      '<div class="fld" style="margin-bottom:0"><label><span class="cbx'+(String(S.crawl_clean)!=='0'?' on':'')+'" id="seo_crawlclean_cbx">'+ic(I.check)+'</span> Crawl-budget cleanup</label>'+
-      '<p class="description" style="margin:6px 0 0">Filtered and sorted views of the shop (by brand, price, in-stock, sort order) point their canonical tag back at the clean category URL, so search engines consolidate ranking signals there instead of treating every filter combination as a separate page. Paginated pages keep their own canonical \u2014 only filters and sort collapse, page 2 onward still index normally.</p></div></div>'+
+      '<div class="sm-card">'+
 
-      '<div class="card pad" style="margin-bottom:16px"><b style="font-size:13px">Sitemap &amp; robots</b>'+
-      '<div class="row" style="gap:8px;margin:10px 0 12px"><a class="btn ghost sm" href="'+base+'/sitemap.xml" target="_blank">View sitemap.xml</a><a class="btn ghost sm" href="'+base+'/robots.txt" target="_blank">View robots.txt</a></div>'+
-      '<div class="fld"><label>XML sitemap</label>'+seoSel('seo_sitemap',S.sitemap_enabled,[['1','Enabled'],['0','Disabled']],'1')+'</div>'+
-      '<div class="fld" style="margin:0"><label>robots.txt (leave blank for the smart default)</label><textarea id="seo_robots_txt" class="inp" style="width:100%;min-height:90px;font-family:ui-monospace,monospace;font-size:12px" placeholder="User-agent: *\nAllow: /">'+sesc(S.robots_txt)+'</textarea></div></div>'+
+      smSec('Rich product results',
+        'Adds brand, condition, shipping and return terms to every product’s schema — what unlocks prices and stars showing directly in Google, and eligibility for AI Shopping. Off until you have confirmed the numbers below, because wrong shipping or return terms going out to search engines is worse than none at all.',
+        '<div class="sm-opts">'+
+          smOpt('seo_merchant_cbx',String(S.enable_merchant)==='1','Enable merchant listing on every product',
+            'Publishes the four values below on every product page.')+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_merch_cond','Condition',
+            seoSel('seo_merch_cond',S.merchant_condition,[['NewCondition','New'],['UsedCondition','Used'],['RefurbishedCondition','Refurbished']],'NewCondition'),
+            'What every product is sold as.')+
+          smField('seo_merch_country','Ship-to country',
+            '<input id="seo_merch_country" value="'+sesc(S.merchant_ship_country||'AE')+'" maxlength="2" style="text-transform:uppercase">',
+            'Two-letter code, e.g. AE.')+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_merch_cost','Shipping cost (AED)',
+            '<input id="seo_merch_cost" type="number" step="0.01" value="'+sesc(S.merchant_ship_cost||'0')+'">',
+            'The figure quoted in the result, before any threshold.')+
+          smField('seo_merch_freeover','Free shipping over (AED)',
+            '<input id="seo_merch_freeover" type="number" step="1" value="'+sesc(S.merchant_ship_free_over||'0')+'">',
+            '0 means delivery is never free.')+
+        '</div>'+
+        '<div class="sm-grid is-solo">'+
+          smField('seo_merch_returndays','Return window (days)',
+            '<input id="seo_merch_returndays" type="number" value="'+sesc(S.merchant_return_days||'0')+'">',
+            '0 publishes no return policy at all.')+
+        '</div>')+
 
-      '<div class="row" style="justify-content:flex-end"><button class="btn" id="set_save_seo">Save SEO settings</button></div>';
+      smSec('Sitemap & robots',
+        'The two files every crawler asks for first. Open them in a tab to see exactly what is being served right now.',
+        '<div class="sm-grid">'+
+          smField('seo_sitemap','XML sitemap',
+            seoSel('seo_sitemap',S.sitemap_enabled,[['1','Enabled'],['0','Disabled']],'1'),
+            'How Google finds new products and posts.')+
+          /* The setting and the way to check it, on one row: the pair is the
+             point, and it keeps a two-option select off a 957px line. */
+          '<div class="sm-field"><span class="sm-label">Check what is being served</span>'+
+            '<div class="sm-links">'+
+              '<a class="btn ghost sm" href="'+base+'/sitemap.xml" target="_blank">sitemap.xml \u2197</a>'+
+              '<a class="btn ghost sm" href="'+base+'/robots.txt" target="_blank">robots.txt \u2197</a>'+
+            '</div>'+
+            '<div class="sm-help">Opens the live file in a new tab.</div></div>'+
+        '</div>'+
+        '<div class="sm-grid">'+
+          smField('seo_robots_txt','robots.txt',
+            '<textarea id="seo_robots_txt" class="inp is-code" placeholder="User-agent: *\nAllow: /"></textarea>',
+            'Leave blank for the smart default. Only edit if you know the syntax.')+
+        '</div>')+
+
+      smSec('Crawling and AI',
+        'Three switches that change what crawlers are told to fetch, and how quickly. Sensible as they are — come here only if something specific needs turning off.',
+        '<div class="sm-opts">'+
+          smOpt('seo_indexnow_cbx',String(S.indexnow_on)==='1','Instant indexing (IndexNow)',
+            'Submits new and updated URLs to Bing, Yandex, Naver, Seznam and Yep the moment they publish. Google is not part of IndexNow — it uses the sitemap.'+
+            (String(S.indexnow_on)==='1'?(' Key file: <a href="'+base+'/'+sesc(S.indexnow_key||'')+'.txt" target="_blank">'+sesc(S.indexnow_key||'(generated on first use)')+'.txt ↗</a>'):''))+
+          smOpt('seo_llms_cbx',String(S.llms_enabled)!=='0','Publish <a href="'+base+'/llms.txt" target="_blank">/llms.txt</a> for AI crawlers',
+            'A plain-text summary of the shop, for assistants that look for one.')+
+          smOpt('seo_crawlclean_cbx',String(S.crawl_clean)!=='0','Crawl-budget cleanup',
+            'Filtered and sorted shop views point their canonical back at the clean category URL, so ranking signals gather there instead of scattering across every filter combination. Page 2 onward still index normally.')+
+        '</div>')+
+
+      smSec('Verification & tracking',
+        'Tokens each service hands you once, to prove the shop is yours. Paste and forget — nothing here changes how the storefront behaves.',
+        '<div class="sm-grid">'+
+          smField('seo_gsv','Google Search Console','<input id="seo_gsv" value="'+sesc(S.google_site_verification)+'" placeholder="verification token">')+
+          smField('seo_bing','Bing Webmaster','<input id="seo_bing" value="'+sesc(S.bing_site_verification)+'" placeholder="verification token">')+
+          smField('seo_pin','Pinterest','<input id="seo_pin" value="'+sesc(S.pinterest_site_verification)+'" placeholder="verification token">')+
+          smField('seo_baidu','Baidu','<input id="seo_baidu" value="'+sesc(S.baidu_site_verification)+'" placeholder="verification token">')+
+          smField('seo_ga','Google Analytics ID','<input id="seo_ga" value="'+sesc(S.ga)+'" placeholder="G-XXXXXXXXXX">')+
+          smField('seo_pixel','Meta (Facebook) Pixel','<input id="seo_pixel" value="'+sesc(S.meta_pixel)+'" placeholder="123456789012345">')+
+        '</div>')+
+
+      '</div>'+
+
+      '<div class="sm-actions"><button class="btn" id="set_save_seo">Save SEO settings</button></div>'+
+      '</div>';
+
+    /* The three textareas are filled by property rather than interpolated
+       into the markup. sesc() already escapes '<', so the old inline form was
+       safe -- but it was safe only because of a helper three hundred lines
+       away, and a textarea is the one control where getting that wrong spills
+       the rest of the screen into the page as visible text. Setting .value
+       cannot be got wrong by anyone editing this later. */
+    document.getElementById('seo_home_d').value = S.seo_home_description || '';
+    document.getElementById('seo_def_d').value = S.seo_default_description || '';
+    document.getElementById('seo_robots_txt').value = S.robots_txt || '';
 
     document.getElementById('seo_indexnow_cbx').onclick=function(){ this.classList.toggle('on'); };
     document.getElementById('seo_llms_cbx').onclick=function(){ this.classList.toggle('on'); };
