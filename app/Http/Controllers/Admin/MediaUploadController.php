@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Media;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -137,16 +138,93 @@ class MediaUploadController extends Controller
             return response()->json(['ok' => false, 'message' => 'Upload failed — check folder permissions.'], 500);
         }
 
+        $path = 'uploads/' . $folder . '/' . $filename;
+
         // Same double base-path bug already caught and fixed in the
         // IndexNow submission hook: site_url already includes any
         // subfolder the app lives under (e.g. /kbb-upgrade), so combining
         // it with Url::to() — which adds that same prefix a second time —
         // produces a broken, 404-ing URL. Built by hand instead, matching
-        // that same fix.
-        $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? config('app.url')), '/');
-        $url = $base . '/uploads/' . $folder . '/' . $filename;
+        // that same fix — now in Media::urlFor(), which is the single place
+        // that knows how an uploaded path becomes a URL. The Media Library
+        // renders thumbnails through the same function, so the grid and the
+        // editor can never disagree about where a file is.
+        $url = Media::urlFor($path);
 
-        return response()->json(['ok' => true, 'url' => $url, 'filename' => $filename]);
+        return response()->json([
+            'ok' => true,
+            'url' => $url,
+            'filename' => $filename,
+            // Whether the file also became a row in the library. Reported
+            // rather than assumed — see record().
+            'recorded' => $this->record($path, $filename, $detected, $destination, $file->getClientOriginalName()),
+        ]);
+    }
+
+    /**
+     * Record the upload in the media library, and say whether it worked.
+     *
+     * WHY THIS IS HERE AND NOT IN A SECOND ENDPOINT. Before this, NOTHING in
+     * the application ever wrote a row to `media` — the table has existed since
+     * the original schema, for the WooCommerce import, and `Media::` had zero
+     * call sites anywhere in the tree. Uploads happened constantly and left no
+     * trace in the database at all, which is why there was nothing for a Media
+     * Library screen to list. This is the shared upload path used by the
+     * product gallery, brand logos, category images and the SEO share image, so
+     * recording here records all four. CLAUDE.md and the route file for the
+     * categories screen both say the same thing: one upload path, no second
+     * one, because two that drift is a trap this repo has avoided twice.
+     *
+     * WHY A FAILURE HERE DOES NOT FAIL THE REQUEST. By the time this runs the
+     * file is already written into the public web root and is already being
+     * served. Returning 500 now would tell the operator the upload failed while
+     * the image sat there working, and they would upload it again — the file is
+     * the artefact, the row is the catalogue of it. So the row is best-effort,
+     * and `recorded` in the response says which way it went instead of leaving
+     * it silent. Nothing in the console depends on the row to finish the
+     * upload; the library simply re-acquires anything missing on the next
+     * backfill.
+     */
+    private function record(string $path, string $filename, string $mime, string $destination, string $clientName): bool
+    {
+        try {
+            $size = @filesize($destination);
+
+            // getimagesize() reads the header only. It returns false for SVG,
+            // which has no pixel dimensions, and those rows keep null width and
+            // height rather than a fabricated 0.
+            $dimensions = @getimagesize($destination);
+
+            Media::create([
+                'filename' => $filename,
+                /*
+                 * The name the operator knows the file by, kept ONLY so the
+                 * library can be searched by it. It never decides anything: not
+                 * the stored filename, not the extension, not the served
+                 * Content-Type. Every one of those is settled above from the
+                 * file's own bytes, which is the defect this endpoint already
+                 * had once and must not grow back.
+                 *
+                 * basename() because a browser is free to send a path, and
+                 * truncated to the column width so an absurd name cannot make a
+                 * successful upload fail at the insert. It is rendered through
+                 * the screen's HTML escaper like every other operator string.
+                 */
+                'original_name' => mb_substr(basename(str_replace('\\', '/', $clientName)), 0, 255) ?: null,
+                'path' => $path,
+                'mime' => $mime,
+                'size' => is_int($size) && $size > 0 ? $size : null,
+                'width' => is_array($dimensions) ? (int) $dimensions[0] : null,
+                'height' => is_array($dimensions) ? (int) $dimensions[1] : null,
+                'alt' => '',
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 
     /**

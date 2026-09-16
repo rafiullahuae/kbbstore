@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Tests\Support\CatalogProductsAdminRoutes;
 use Tests\Support\CustomersAdminRoutes;
+use Tests\Support\MediaLibraryRoutes;
 use Tests\Support\OrdersAdminRoutes;
 use Tests\Support\SqlShape;
 
@@ -609,6 +610,13 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
     // route file this test cannot make anybody account for.
     CatalogProductsAdminRoutes::wire(app());
 
+    // Content → Media Library (Lane AX). Wired here for exactly that reason:
+    // its routes ship in their own file for the integrator to mount, and until
+    // somebody mounts them this guard would let GET /admin-api/media/{media}
+    // through unexamined — then fail on the integrator's commit instead of the
+    // one that wrote the query.
+    MediaLibraryRoutes::wire(app());
+
     $admin = guardAdmin();
 
     $product = Product::query()->firstOrFail();
@@ -623,6 +631,26 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
      * file needs one.
      */
     $review = Review::query()->firstOrFail();
+
+    /*
+     * One media row for the Media Library detail route below. Created here
+     * rather than in the seed because nothing else in this file needs one, and
+     * attached to a product so the usage resolution actually has something to
+     * find — driving it against an image nobody uses would exercise the empty
+     * branch and prove the least interesting half.
+     */
+    $media = \App\Models\Media::create([
+        'filename' => 'guard-shot.png',
+        'original_name' => 'Guard Shot.png',
+        'path' => 'uploads/products/guard-shot.png',
+        'mime' => 'image/png',
+        'size' => 4096,
+        'width' => 800,
+        'height' => 600,
+        'alt' => '',
+    ]);
+
+    $product->forceFill(['image' => '/uploads/products/guard-shot.png'])->save();
 
     $coupon = Coupon::create([
         'code' => 'GUARD-' . uniqid(),
@@ -661,6 +689,15 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // and its SEO blob for the editor — several joins and a json column,
         // which is exactly the shape that has produced a dialect failure here.
         'admin-api/product-editor-load/{id}' => '/admin-api/product-editor-load/' . $product->id,
+        /*
+         * Reads one image and then resolves WHERE IT IS USED, which walks every
+         * product, brand and category — three cursor()ed queries whose results
+         * are matched in PHP. No aggregate and no GROUP BY, so it is not the
+         * 1140 shape; it is here because it is a parameterised admin GET and
+         * the point of this list is that no such route skips the walk
+         * unexamined.
+         */
+        'admin-api/media/{media}' => '/admin-api/media/' . $media->id,
     ];
 
     /** Route URI => why driving it here would prove nothing. */

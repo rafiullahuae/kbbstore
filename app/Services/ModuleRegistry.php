@@ -59,10 +59,43 @@ class ModuleRegistry
      *               screen. A second switch for the same thing is how a control
      *               ends up half working, so this one is shown but not offered.
      *   todo      — the feature is not ported yet. A switch would do nothing.
+     *   screen    — not a switch at all. A built admin screen that this page
+     *               lists so the owner can see it exists and open it. Always
+     *               on; there is nothing to turn off.
      *
      * It is maintained by hand as each module is wired, and the alternative — a
      * toggle that silently does nothing — is exactly the fault this project has
      * hit three times.
+     *
+     * WHY `screen` EXISTS, added with the Media Library (Lane AX).
+     *
+     * The owner asked why Media and Reviews are missing from this page. They
+     * were missing because REGISTRY had no key for either — an omission, not a
+     * status — and this page iterates REGISTRY and nothing else, so neither
+     * could ever appear however well built it was.
+     *
+     * The two turned out to need DIFFERENT answers, which is the whole point of
+     * having a status field at all:
+     *
+     *   - Reviews already has a switch, on Appearance → Product page. It is
+     *     `elsewhere`, and the long note on that row says where and why.
+     *
+     *   - The Media Library has no switch anywhere, and should not get one.
+     *     It could not be `live`: `live` means a switch something reads, and
+     *     Phase3ModuleSwitchesTest enforces exactly that — it greps app/ and
+     *     resources/views/ for moduleEnabled('<key>') and fails any `live` row
+     *     without one. Writing a reader purely to satisfy that grep would be
+     *     fabricating the evidence the test exists to check, and gating an
+     *     admin screen behind a toggle the owner could switch off and then not
+     *     find is hostile. It could not be `elsewhere` either: the console
+     *     renders that as "Switched in <screen>", and there is no switch on the
+     *     Media Library to be switched in, so the owner would be told something
+     *     false.
+     *
+     * `screen` says the true thing — this is built, it is always on, here is
+     * the way to it — and the console renders it as that, with no switch drawn
+     * at all rather than an inert one sitting in the grey "off" position beside
+     * the words "always on".
      */
     public const REGISTRY = [
         // ── Checkout ──
@@ -108,6 +141,16 @@ class ModuleRegistry
         'mega_menu' => ['store', 'Mega Menu', 'Drives the header mega panels from the admin using the theme\'s own design — category columns, brands and editor\'s picks — plus a mobile slide-in overlay. Off by default.', false, 'Store → Mega Menu', 'megamenu', 'header', 'nav', 'The panels that drop from the category bar, and the phone overlay.', 'live'],
         'notification_bar' => ['store', 'Notification Bar', 'A dismissible announcement bar at the top of every page. Replaces the Cosmetics plugin. Off by default — turn on and set your message.', false, 'Its own screen', '', 'header', 'top', 'A dismissible strip above the header on every page.', 'live'],
         'product_labels' => ['store', 'Product Labels', 'Configurable Sale / New / Sold-out / Bestseller badges on product cards. Off by default — the theme’s built-in badges show until you turn it on.', false, 'Catalogue → Product Labels', 'labels', 'grid', 'card', 'Sale, New, Sold-out and Bestseller badges on product cards.', 'live'],
+        /*
+         * The Media Library, in 'Store & content' because that is what it is:
+         * it is not a catalogue feature, it holds the images for products,
+         * brands, categories AND the SEO share image, and the console files it
+         * under Content.
+         *
+         * `site` / `all` for the hover card, which renders "nothing visible" —
+         * correct, since this changes nothing a shopper ever sees.
+         */
+        'media_library' => ['store', 'Media Library', 'The grid of every image uploaded through the admin, with search by name, by upload date and by the product, brand or category using it — plus what each image is used by before you delete it. Always on: this is a screen, not a switch.', true, 'Content → Media Library', 'media', 'site', 'all', 'An admin screen. Nothing visible on the storefront.', 'screen'],
         // ── Payments & shipping ──
         'pay_ship_rules' => ['payship', 'Payment & Shipping Rules', 'Limit Cash on Delivery by order value and hide paid delivery when free is available. Consolidates conditional payment/shipping plugins. Off by default.', false, 'Store → Payment & Shipping Rules', 'payship', 'checkout', 'mid', 'Hides Cash on delivery and paid delivery when your rules say so.', 'live'],
         /*
@@ -187,6 +230,40 @@ class ModuleRegistry
         'brands' => ['catalogue', 'Brands', 'Brand taxonomy with logos, brand pages and a [kbb_brands] directory. Works with WooCommerce’s native brand taxonomy. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Brand pages, logos and the brand directory.', 'todo'],
         'wishlist' => ['catalogue', 'Wishlist', 'Lets shoppers save products (works for guests too, via cookie). Heart button on cards/product pages plus a [kbb_wishlist] page. Off by default.', false, 'Its own screen', '', 'grid', 'card', 'The heart on every product card, and the wishlist page.', 'live'],
         'recently_viewed' => ['catalogue', 'Recently Viewed', 'Shows each shopper the products they just looked at (cookie-based, guests included). Auto-placed on product/cart pages plus a [kbb_recently_viewed] shortcode. Off by default.', false, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'mid', 'The Browsed tab in the cart panel, and a rail on the product page.', 'elsewhere'],
+        /*
+         * Reviews, in 'Catalogue' because a review hangs off a product and the
+         * row sits beside the wishlist and cross-sell rows that do the same.
+         *
+         * It is REAL and has been for some time: renderReviews() in the Lane AM
+         * region of app.blade.php renders 'rev-all' live in the console,
+         * ReviewsApiController serves the moderation endpoints, and the
+         * storefront shows reviews on every product page. It was absent from
+         * this screen for one reason only — nobody ever added the key.
+         *
+         * `elsewhere`, NOT `screen`, and the difference is load-bearing.
+         *
+         * Reviews ALREADY HAS AN ON/OFF SWITCH. ProductSections::REGISTRY
+         * carries its own 'reviews' entry (app/Services/ProductSections.php:33,
+         * default on), and resources/views/store/product.blade.php:213 gates the
+         * whole section on it — an `unless` on $modules->hidden('reviews').
+         * That switch is edited from Appearance → Product page, and
+         * HomepageSections carries a separate 'reviews' entry for the homepage
+         * wall.
+         *
+         * So a `screen` row here would print "Always on — a screen, not a
+         * switch" about a feature the owner can switch off on another screen,
+         * which is simply false; and a `live` row would draw a SECOND, working
+         * toggle for the same feature, stored in module_toggles where nothing
+         * reads it. Two switches for one thing, and whichever the operator
+         * flipped last would appear to do nothing — the exact fault the status
+         * field exists to prevent.
+         *
+         * `elsewhere` prints "Switched in Appearance → Product page" and links
+         * there, which is the true statement and the useful one. Shaped to match
+         * recently_viewed, vat_line and cod_fee, which are `elsewhere` for the
+         * same reason.
+         */
+        'reviews' => ['catalogue', 'Reviews', 'Customer reviews on the product page — score summary, filters and review cards — plus the moderation screens under Reviews. The on/off switch lives with the rest of the product page sections; this row is here so you can find it.', true, 'Appearance → Product page', 'productpage', 'product', 'bottom', 'The reviews section near the foot of the product page.', 'elsewhere'],
         'frequently_bought' => ['catalogue', 'Frequently Bought Together', 'A “Complete your routine” block on product pages — the main item plus matches (from WooCommerce cross-sells or the same category), with one-click add-all. Lifts average order value. Off by default.', false, 'Its own screen', '', 'product', 'mid', 'The Complete your routine block on the product page.', 'live'],
         // ── Marketing ──
         'marketing_pixels' => ['marketing', 'Marketing Pixels', 'Meta Pixel, Google (GA4) and TikTok tags with standard e-commerce events (view, checkout, purchase). Off by default — add your IDs to activate.', false, 'Growth & Marketing → Marketing Pixels', 'pixels', 'site', 'all', 'Meta, GA4 and TikTok tags on every page. Nothing visible.', 'live'],
