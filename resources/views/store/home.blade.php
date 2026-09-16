@@ -61,9 +61,44 @@
   </div>
 
   @unless ($sections->hidden('delivery'))
+  {{-- THE DELIVERY SENTENCE BELONGS TO THE VISITOR'S COUNTRY, NOT TO EVERYONE.
+
+       This band used to print the stored default here unconditionally, to every
+       visitor on earth, with no country check of any kind. That default is the
+       owner's own wording about the United Arab Emirates, so a shopper in
+       Riyadh was given a delivery promise about a country they are not in — on
+       the first page of the shop, while the checkout had already been repaired
+       to say nothing to them. One store, two answers, and the louder one wrong.
+
+       App\Support\DeliveryLine is now the single reader of that rule and
+       App\Support\ShopperCountry the single answer to where the shopper is, so
+       this page and the checkout cannot disagree. Both are safe to call from
+       here: neither issues a query of its own, and both answer for a request
+       with no session and no geo signal at all.
+
+       AN EMPTY ANSWER IS A REAL ANSWER and means say nothing. Nothing is
+       invented to fill the gap — no delivery window has been measured for
+       anywhere outside the UAE, and a plausible-looking guess printed here
+       would be the same untruth in the other direction.
+
+       The free-delivery threshold below keeps its place either way: it is true
+       wherever the shopper is standing. It carries the separator now, so
+       suppressing the sentence cannot leave a stray dot in front of it.
+
+       BLOCK FORM, NOT @php(...) — for the reason this file already records
+       thirty lines from the top: Blade pairs @php/@endphp with one non-greedy
+       regex over the whole template, so an inline @php(...) sitting above the
+       newsletter section's block pairs with THAT block's @endphp and swallows
+       every @unless and @foreach in between. The page then 500s hundreds of
+       lines below the actual mistake. Confirmed here the hard way: written
+       inline, this exact line compiled to an unterminated `<?php (` and the
+       home page died with "unexpected token class". --}}
+  @php
+    $homeDeliveryText = \App\Support\DeliveryLine::here();
+  @endphp
   <div class="delivery {{ $sections->classFor('delivery') }}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h13v10H2z"/><path d="M15 10h4l3 3.5V17h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg>
-    <b>{{ $settings->get('delivery_default_text', '1–3 days delivery all over UAE') }}</b><span>·</span>
+    @if ($homeDeliveryText !== '')<b>{{ $homeDeliveryText }}</b><span>·</span>@endif
     <span>Free delivery over {!! Money::format((int) $settings->get('free_shipping_threshold', 19900)) !!}</span>
   </div>
   @endunless

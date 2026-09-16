@@ -1162,6 +1162,41 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .shamt i{font-style:normal;font-size:11px;color:#7b8697}
 .shamt input{width:88px;border:1px solid #dfe4ec;border-radius:7px;padding:5px 9px;font-size:12px;text-align:right}
 .shamt u{text-decoration:none;font-size:10.5px;color:#8b94a3;white-space:nowrap}
+/* ---- Delivery & Shipping · Delivery lines (Lane CO) ---------------------
+   One row per country: which country, and the sentence shoppers there read.
+   .dl- and not .sh-, because a Zones row is a toggle plus two money boxes and
+   this is a picker plus a sentence — sharing the class would mean every future
+   change to one silently reshaping the other.
+
+   Grid rather than flex, with a min() floor on the text column and an explicit
+   stack under 640px. The console has no breakpoint on its .g2 helper, which is
+   how Business Details ended up drawing two 145px columns on a 390px phone with
+   the currency select reading "AED — UAE Dirha"; a fixed two-column row here
+   would do the same to a field meant to hold a whole sentence. */
+.dl-row{display:grid;grid-template-columns:minmax(150px,210px) minmax(0,1fr) auto;
+        gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #f2f4f8}
+.dl-row:last-child{border-bottom:0}
+.dl-row select,.dl-row input{width:100%;border:1px solid #dfe4ec;border-radius:7px;
+        padding:6px 9px;font-size:12px;background:#fff}
+.dl-row input{font-weight:600}
+.dl-x{border:1px solid #e6e9ef;background:#fff;border-radius:7px;width:28px;height:28px;
+      line-height:1;font-size:15px;color:#8b94a3;cursor:pointer;flex:none}
+.dl-x:hover{border-color:#f0c2c2;color:#c0554f}
+.dl-head{display:grid;grid-template-columns:minmax(150px,210px) minmax(0,1fr) auto;gap:10px;
+         font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:#8b94a3;
+         padding-bottom:7px;border-bottom:1px solid #eef1f6}
+.dl-empty{background:#F7F8FB;border:1px dashed #dfe4ec;border-radius:10px;padding:16px;
+          text-align:center;font-size:12px;color:#7b8697}
+.dl-note{background:#F7F8FB;border:1px solid #eef1f6;border-radius:10px;padding:10px 12px;
+         font-size:11.5px;color:#7b8697;line-height:1.55;margin-top:12px}
+.dl-note b{color:#4a5464}
+@media (max-width:640px){
+  .dl-head{display:none}
+  .dl-row{grid-template-columns:1fr auto;grid-template-areas:"country remove" "text text";row-gap:7px}
+  .dl-row > :nth-child(1){grid-area:country}
+  .dl-row > :nth-child(2){grid-area:text}
+  .dl-row > :nth-child(3){grid-area:remove}
+}
 .shpv-wrap{background:#F7F8FB;border:1px solid #eef1f6;border-radius:10px;padding:10px}
 .shpv{display:flex;flex-direction:column;gap:6px}
 .shpv-r{display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -7659,6 +7694,7 @@ function shIntro(){
 function paintShipping(){
   if(SHTAB==='extended'){ paintExtended(); return; }
   if(SHTAB==='gift'){ paintGift(); return; }
+  if(SHTAB==='lines'){ paintDeliveryLines(); return; }
   $('#content').innerHTML=`<div class="wrap ecwrap">
     <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Delivery &amp; Shipping</h2>
       ${shIntro()}</div>
@@ -7738,12 +7774,20 @@ function shTabs(){
   // A short caption under the strip, not just the bare word "Zones" — the
   // one thing that was easy to skim past when looking for where the Gulf
   // charges live.
+  const lineCount = (DLINES && DLINES.rows) ? DLINES.rows.length : 0;
+  const hints = {
+    zones: 'Your current delivery charges — including the Gulf countries — are the cards below.',
+    gift: 'An optional gift-wrap tick at checkout, and what it costs.',
+    lines: 'The sentence a shopper reads under Place order, written once per country.',
+    extended: 'Countries added here on top of your zones.'
+  };
   return `<div class="ectabs">
     <button class="ectab${SHTAB==='zones'?' on':''}" data-shtab="zones">Zones</button>
     <button class="ectab${SHTAB==='extended'?' on':''}" data-shtab="extended">Extended${XD&&XD.on?'<span class="ecn">on</span>':''}</button>
     <button class="ectab${SHTAB==='gift'?' on':''}" data-shtab="gift">Gift wrapping${GIFT&&GIFT.gift_enabled==='1'?'<span class="ecn">on</span>':''}</button>
+    <button class="ectab${SHTAB==='lines'?' on':''}" data-shtab="lines">Delivery lines${lineCount?'<span class="ecn">'+lineCount+'</span>':''}</button>
   </div>
-  <p class="ectabs-hint">${SHTAB==='zones'?'Your current delivery charges — including the Gulf countries — are the cards below.':SHTAB==='gift'?'An optional gift-wrap tick at checkout, and what it costs.':'Countries added here on top of your zones.'}</p>`;
+  <p class="ectabs-hint">${hints[SHTAB]||hints.zones}</p>`;
 }
 
 /* ---------- Store · Delivery & Shipping · Gift wrapping ----------
@@ -7759,6 +7803,11 @@ function shTabs(){
  * directly, the same way loadExtended() talks to its own endpoint.
  */
 let GIFT=null;
+
+/* Declared beside GIFT and XD rather than with the block that uses it, because
+   shTabs() below reads its length for the tab's count badge and the three tab
+   states belong in one place. */
+let DLINES=null;
 
 function giftBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/settings'; }
 
@@ -7851,6 +7900,228 @@ async function paintGift(){
       toast('Gift wrapping saved');
       GIFT = null;
       paintGift();
+    }catch(e){ toast('Save failed \u2014 check connection'); }
+  };
+}
+
+/* ---------- Store \u00b7 Delivery & Shipping \u00b7 Delivery lines ----------
+ *
+ * THE SCREEN THE CODE ALREADY PROMISED AND DID NOT HAVE.
+ *
+ * App\Support\DeliveryLine reads a setting called `delivery_texts` \u2014 a row per
+ * country, each with the sentence shoppers there read under Place order \u2014 and
+ * an explicit row wins for any country. That was the documented escape hatch
+ * for the Gulf, and it had NO WRITER anywhere in the codebase: no form, no
+ * seeder, no validation rule. The owner was told he could write a line for
+ * Saudi Arabia and there was nowhere to type it.
+ *
+ * WHY IT LIVES HERE. It is a delivery promise about a destination, so it
+ * belongs beside the charge for that destination, on the screen the owner
+ * already opens to change what delivery costs \u2014 the same reasoning that put
+ * Gift wrapping on this screen rather than on Business Details.
+ *
+ * Self-contained, for the reason the Gift block spells out: SETTINGS, sval()
+ * and loadSettings() belong to the Business Details block, which is a different
+ * script scope, and reaching for them from here throws a ReferenceError that
+ * takes the whole Delivery & Shipping screen down with it.
+ *
+ * NOTHING IS SEEDED AND NOTHING IS SUGGESTED. No delivery window outside the
+ * UAE has ever been measured, so this screen opens empty and every country goes
+ * on behaving exactly as it does today until the owner types a sentence
+ * himself. A helpful-looking placeholder reading "5\u20138 days to Saudi Arabia"
+ * would be the untruth DeliveryLine's whole doc comment exists to prevent, and
+ * a placeholder is one Tab key away from becoming a saved value.
+ */
+function dlBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/settings'; }
+
+/* The full country list, from App\Support\Countries \u2014 the same table the
+   checkout's own picker and the Extended tab are built from, so a code chosen
+   here is one the storefront can name. Emitted rather than fetched because
+   /admin-api/extended-delivery deliberately REMOVES the zone countries from its
+   list, and the zone countries (the UAE and the Gulf) are precisely the ones
+   this screen exists to write a line for. */
+@endverbatim
+var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
+@verbatim
+
+async function loadDeliveryLines(){
+  let raw = [], storeCountry = '';
+  try{
+    const r = await fetch(dlBase(), {credentials:'same-origin', headers:{Accept:'application/json'}});
+    if(!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    raw = (d.settings || {}).delivery_texts;
+    // Read, not assumed: the empty state names the shop's own country, and this
+    // shop is only the UAE by default.
+    storeCountry = String((d.settings || {}).store_country || '').toUpperCase();
+  }catch(e){ raw = []; }
+
+  /* GET /admin-api/settings answers from Setting::map(), which hands back the
+     stored column VERBATIM \u2014 it does not json-decode the way SettingsService
+     does for the storefront. So this value arrives as a JSON string, and would
+     arrive as an array if that ever changes. Both are handled rather than one
+     being assumed, because the wrong guess here is a screen that silently
+     shows no rows above a database that has several. */
+  if(typeof raw === 'string'){
+    try{ raw = JSON.parse(raw); }catch(e){ raw = []; }
+  }
+
+  DLINES = {
+    storeCountry: storeCountry,
+    rows: Array.isArray(raw) ? raw.filter(r=>r && typeof r === 'object').map(r=>({
+      country: String(r.country||'').toUpperCase(),
+      text: String(r.text||'')
+    })) : []
+  };
+
+  return DLINES;
+}
+
+function dlCountrySelect(current){
+  const codes = Object.keys(KBB_COUNTRY_NAMES).sort((a,b)=>KBB_COUNTRY_NAMES[a].localeCompare(KBB_COUNTRY_NAMES[b]));
+  let seen = false;
+  /* The NAME first and the code after it, because the owner is choosing
+     "Saudi Arabia", not "SA" \u2014 the code is there to confirm what was stored,
+     not to be read for meaning. */
+  let out = codes.map(c=>{
+    if(c===current) seen = true;
+    return '<option value="'+c+'"'+(c===current?' selected':'')+'>'+escHtml(KBB_COUNTRY_NAMES[c])+' ('+c+')</option>';
+  }).join('');
+  /* A code already stored that is no longer on the list keeps its place rather
+     than silently becoming the first country in the alphabet when the row is
+     saved again. */
+  if(!seen && current) out = '<option value="'+escAttr(current)+'" selected>'+escHtml(current)+'</option>' + out;
+  return out;
+}
+
+function dlRow(row, i){
+  return `<div class="dl-row" data-dl-row="${i}">
+    <select data-dl-country="${i}">${dlCountrySelect(row.country)}</select>
+    <input type="text" data-dl-text="${i}" maxlength="1000" value="${escAttr(row.text)}"
+           placeholder="What shoppers in this country are told">
+    <button type="button" class="dl-x" data-dl-remove="${i}" aria-label="Remove this country">&times;</button>
+  </div>`;
+}
+
+async function paintDeliveryLines(){
+  if(!DLINES) await loadDeliveryLines();
+
+  const rows = DLINES.rows;
+
+  $('#content').innerHTML=`<div class="wrap ecwrap">
+    <div class="echd"><h2 style="margin:0 0 3px;font-size:20px;letter-spacing:-.015em">Delivery &amp; Shipping</h2>
+      ${shIntro()}</div>
+    ${shTabs()}
+    <div class="card mdcard">
+      <div class="mmhd"><b>Delivery lines by country</b><span>Shown under Place order, and on the home page</span></div>
+      <div style="padding:16px 18px 18px">
+        <p class="mdesc" style="margin:0 0 14px">Write one sentence per country and shoppers there see that
+          sentence instead of the general one. A country with no line here is told <b>nothing at all</b> about
+          delivery time \u2014 which is deliberate, and better than telling someone in Riyadh about delivery in the UAE.</p>
+        ${rows.length ? `<div class="dl-head"><span>Country</span><span>What shoppers there are told</span><span></span></div>
+        <div id="dlRows">${rows.map(dlRow).join('')}</div>`
+        : `<div class="dl-empty" id="dlRows">No country has a line of its own yet, so the general delivery line is
+             used in ${escHtml(KBB_COUNTRY_NAMES[DLINES.storeCountry] || 'your own country')} and nothing is said anywhere else.</div>`}
+        <div style="margin-top:13px"><button type="button" class="btn ghost" id="dlAdd" style="font-size:12px;padding:7px 12px">+ Add a country</button></div>
+        <div class="dl-note"><b>The general line</b> \u2014 the one used where no country has its own \u2014 is
+          <b>Ecommerce &rarr; Delivery &rarr; Delivery message</b>. It is only ever shown to shoppers in your own
+          store country, because it names that country. Leave a line here empty to say nothing in that country at all.</div>
+      </div>
+    </div>
+    <div class="ecsave">
+      <span class="ecdirty" id="dlDirty" style="visibility:hidden">Unsaved changes</span>
+      <button class="btn primary" id="dlSave">Save changes</button>
+    </div>
+  </div>`;
+
+  bindShTabs();
+
+  const dirty=()=>{ const d=document.getElementById('dlDirty'); if(d) d.style.visibility='visible'; };
+
+  /* Read the DOM back into DLINES before any repaint, so typing in a row and
+     then adding or removing another does not throw the typing away. That is
+     the whole reason this screen keeps its state in one place rather than
+     reading the inputs only at Save. */
+  const harvest=()=>{
+    $$('[data-dl-row]').forEach(el=>{
+      const i = Number(el.dataset.dlRow);
+      if(!DLINES.rows[i]) return;
+      const sel = el.querySelector('[data-dl-country]'), txt = el.querySelector('[data-dl-text]');
+      if(sel) DLINES.rows[i].country = sel.value;
+      if(txt) DLINES.rows[i].text = txt.value;
+    });
+  };
+
+  $$('[data-dl-country],[data-dl-text]').forEach(el=>{ el.oninput = dirty; el.onchange = dirty; });
+
+  $$('[data-dl-remove]').forEach(b=>b.onclick=()=>{
+    harvest();
+    DLINES.rows.splice(Number(b.dataset.dlRemove), 1);
+    dirty();
+    paintDeliveryLines();
+    const d=document.getElementById('dlDirty'); if(d) d.style.visibility='visible';
+  });
+
+  document.getElementById('dlAdd').onclick=()=>{
+    harvest();
+    /* The first country not already spoken for, so adding two rows in a row
+       cannot produce two rows for the same country \u2014 which the server refuses
+       rather than silently merging. */
+    const taken = DLINES.rows.map(r=>r.country);
+    const next = Object.keys(KBB_COUNTRY_NAMES).sort((a,b)=>KBB_COUNTRY_NAMES[a].localeCompare(KBB_COUNTRY_NAMES[b]))
+      .find(c=>taken.indexOf(c) === -1);
+    if(!next){ toast('Every country already has a line.'); return; }
+    DLINES.rows.push({country: next, text: ''});
+    paintDeliveryLines();
+    const d=document.getElementById('dlDirty'); if(d) d.style.visibility='visible';
+  };
+
+  document.getElementById('dlSave').onclick=async function(){
+    harvest();
+
+    const taken = {};
+    for(const row of DLINES.rows){
+      if(taken[row.country]){
+        toast('Two rows for ' + (KBB_COUNTRY_NAMES[row.country]||row.country) + ' \u2014 each country can have one line.');
+        return;
+      }
+      taken[row.country] = true;
+    }
+
+    try{
+      const r = await fetch(dlBase(), {
+        method:'PUT',
+        credentials:'same-origin',
+        headers:{
+          'Accept':'application/json',
+          'Content-Type':'application/json',
+          'X-XSRF-TOKEN': giftCookie('XSRF-TOKEN')
+        },
+        body: JSON.stringify({settings: {delivery_texts: DLINES.rows}})
+      });
+      const res = await r.json().catch(()=>({}));
+
+      /* The server names the field it refused; showing that instead of a
+         generic failure is the difference between fixing a row and guessing. */
+      if(!r.ok){
+        toast(res.message || res.error || 'Not saved \u2014 check the lines above.');
+        return;
+      }
+      /* SAVE REPORTS SUCCESS EVEN WHEN IT SKIPPED EVERY KEY \u2014 the failure mode
+         AdminController::SETTING_RULES warns about in its own comment, and the
+         one this key would have hit before it was added to that list. The
+         counts are the only trustworthy part of the answer, so they are what is
+         checked, exactly as the Gift tab checks them. */
+      if(res.rejected && res.rejected.length){
+        toast('Not saved: '+res.rejected.join(', ')+' \u2014 the server rejected these keys');
+        return;
+      }
+      if(res.saved === 0){ toast('Nothing was saved \u2014 check the server log'); return; }
+
+      const d=document.getElementById('dlDirty'); if(d) d.style.visibility='hidden';
+      toast('Delivery lines saved');
+      DLINES = null;
+      paintDeliveryLines();
     }catch(e){ toast('Save failed \u2014 check connection'); }
   };
 }
