@@ -231,7 +231,35 @@
                 In stock · ready to ship
             @endif
         </div>
-        @if ($cutoff)<div class="{{ $modules->classFor('cutoff') }} deliver">Order within <b id="cutoff">{{ $cutoff['remaining'] }}</b> for delivery by <b>{{ $cutoff['date'] }}</b></div>@endif
+        {{-- THE ARRIVAL DATE IS ONLY OFFERED WHERE ARRIVAL IS KNOWN.
+
+             This said "for delivery by ..." to everybody. The date is the
+             dispatch date plus `dispatch_days`, one global number describing
+             the shop's own country, so a shopper in Riyadh was handed a
+             transit time nobody has measured — the same wrong promise removed
+             from the checkout, the dispatch email and the home page before it.
+
+             ProductController::cutoff() now answers with a null `date` outside
+             the shop's own country and the sentence keeps the half that is
+             still true: when the parcel LEAVES is a fact about the warehouse's
+             working week, not about the destination. Nothing is invented to
+             replace the half that went. --}}
+        {{-- A DIRECTIVE NEEDS A NON-WORD CHARACTER AFTER IT AS WELL AS BEFORE,
+             which is the other half of the trap this file already records
+             twenty lines below. Written closed-up as `@else` followed
+             immediately by the word "Order", Blade reads the whole thing as a
+             directive named `elseOrder`, compiles nothing for it and drops the
+             branch — the page still renders, still returns 200, and simply
+             says less than it should. Hence the line breaks. --}}
+        @if ($cutoff)
+        <div class="{{ $modules->classFor('cutoff') }} deliver">
+            @if ($cutoff['date'] !== null)
+                Order within <b id="cutoff">{{ $cutoff['remaining'] }}</b> for delivery by <b>{{ $cutoff['date'] }}</b>
+            @else
+                Order within <b id="cutoff">{{ $cutoff['remaining'] }}</b> to ship on <b>{{ $cutoff['ship'] }}</b>
+            @endif
+        </div>
+        @endif
 
         <div class="buyrow">
           <div class="{{ $modules->classFor('quantity') }} qty"><button type="button" data-q="-1">−</button><span id="qtyVal">1</span><button type="button" data-q="1">+</button><input type="hidden" name="quantity" id="qtyInput" value="1"></div>
@@ -252,9 +280,37 @@
            Nothing is invented in their place: each is now a line the owner
            writes in Store → Ecommerce, and until they do, it is not shown.
            The other two stay — authenticity is what this shop is, and the
-           pay-later methods are the gateways it actually offers. --}}
+           pay-later methods are the gateways it actually offers.
+
+           AND THE DELIVERY ONE HAD NO COUNTRY CHECK EITHER.
+
+           `trust_delivery_text` replaced the literal with the owner's own
+           words, which fixed the "nothing records it" half and left the
+           "wrong country" half exactly where it was: one global string, shown
+           to every visitor on earth, with the admin screen suggesting a UAE
+           sentence to type into it. Blank by default, so nothing false was on
+           the page yet — the defect was armed rather than firing.
+
+           A SINGLE GLOBAL STRING CANNOT BE MADE COUNTRY-AWARE. It can only
+           ever be true of one country and the shop has no way of knowing
+           which, so the chip is not gated, it is re-sourced. It reads
+           App\Support\DeliveryLine, which is already the only reader of the
+           per-country wording for the home page and the checkout, through
+           App\Support\ShopperCountry, which is already the only answer to
+           where the shopper is standing. Neither issues a query and both
+           answer for a request with no session and no geo signal at all.
+
+           ONE SCREEN WRITES THE SENTENCE — Store → Delivery & Shipping →
+           Delivery lines — so this page cannot contradict the other two, and
+           `trust_delivery_text` is gone rather than left inert beside it. Two
+           screens both claiming to set "the delivery line" is the duplication
+           this project has had to merge twice already.
+
+           AN EMPTY ANSWER IS A REAL ANSWER and means show no chip. Nothing is
+           invented to fill the gap: no delivery window outside the shop's own
+           country has been measured, and the owner types one when it has. --}}
       @php
-          $trustDelivery = trim((string) $settings->get('trust_delivery_text', ''));
+          $trustDelivery = \App\Support\DeliveryLine::here();
           $trustReturns  = trim((string) $settings->get('trust_returns_text', ''));
       @endphp
       <div class="{{ $modules->classFor('trust') }} trust">

@@ -115,7 +115,7 @@ class ProductController extends Controller
             'reviews' => $reviews,
             'related' => $this->related($product),
             'settings' => $this->settings,
-            'cutoff' => $this->cutoff(),
+            'cutoff' => $this->cutoff($request),
             'bundles' => app(\App\Services\BundleService::class)->forProduct($product),
             'tabs' => $this->tabs($product),
             'modules' => app(ProductSections::class),
@@ -355,12 +355,53 @@ class ProductController extends Controller
     }
 
     /**
-     * "Order within 4h 12m for delivery by Tue, 30 Jun".
+     * The dispatch countdown — TWO CLAIMS, AND ONLY ONE OF THEM TRAVELS.
      *
-     * Orders placed before the cutoff ship the same working day. Friday is the
-     * UAE weekend, so a Thursday-evening order lands on Sunday.
+     * This rendered "Order within 4h 12m for delivery by Tue, 30 Jun" to every
+     * visitor on earth, and it is two different statements wearing one
+     * sentence:
+     *
+     *   WHEN THE PARCEL LEAVES — the countdown and `ship` below. It is
+     *   `dispatch_cutoff_hour` and the Friday rule, and both of those describe
+     *   the shop's OWN working week: orders placed before the cutoff go out the
+     *   same working day, and nothing goes out on the UAE weekend. That is a
+     *   fact about the warehouse and it is true whatever the destination is, so
+     *   every shopper keeps it.
+     *
+     *   WHEN THE PARCEL ARRIVES — `date`, which is that dispatch date plus
+     *   `dispatch_days`. `dispatch_days` is ONE GLOBAL NUMBER and its default of
+     *   2 describes delivery inside the UAE. Added to an order bound for Riyadh
+     *   it is a transit time nobody has measured, printed in bold as a date, to
+     *   a shopper who is being charged the Gulf rate on the very next screen.
+     *   That is the same wrong promise App\Support\DeliveryLine removed from the
+     *   checkout, App\Mail\OrderStatusChanged from the dispatch email and Lane
+     *   CO from the home page.
+     *
+     * SO THE ARRIVAL DATE IS OFFERED TO THE ONE COUNTRY `dispatch_days`
+     * DESCRIBES, and that is `store_country` rather than a hard-coded 'AE' — a
+     * shop that moves takes its transit time with it. Everywhere else `date` is
+     * null and the view says when the parcel ships and stops talking.
+     *
+     * NOTHING IS INVENTED TO FILL THE GAP. Per-country dispatch days were the
+     * obvious alternative and were rejected: no Saudi or Kuwaiti transit time
+     * has ever been measured, so the table would ship empty and behave exactly
+     * as this does, while adding a SECOND per-country delivery screen beside
+     * `delivery_texts` — the duplication this lane removed from the trust chip
+     * in the same pass.
+     *
+     * AND A DELIVERY LINE IS NOT A TRANSIT TIME. "Show the arrival date wherever
+     * the owner has written a `delivery_texts` row" looks like the careful rule
+     * and is not: a row reading "Delivered across Saudi Arabia" records a
+     * sentence, not a number of days, so borrowing `dispatch_days` on the
+     * strength of it would invent precisely the number this refuses to invent.
+     * ProductPagePromisesTest pins that.
+     *
+     * COSTS NO QUERY. ShopperCountry reads the request, the session and one
+     * header, and falls back to `store_country`, which SettingsService serves
+     * from the snapshot this page has already taken. StorefrontQueryBudgetTest
+     * holds the product page to 13 and this does not move it.
      */
-    private function cutoff(): ?array
+    private function cutoff(Request $request): ?array
     {
         if (! $this->settings->moduleEnabled('dispatch_cutoff', true)) {
             return null;
@@ -379,10 +420,17 @@ class ProductController extends Controller
             $ship->addDay();
         }
 
-        $eta = $ship->copy()->addDays((int) $this->settings->get('dispatch_days', 2));
+        $home = strtoupper(trim((string) $this->settings->get('store_country', 'AE')));
+        $here = \App\Support\ShopperCountry::for($request)->code;
 
-        if ($eta->isFriday()) {
-            $eta->addDay();
+        $eta = null;
+
+        if ($here === $home) {
+            $eta = $ship->copy()->addDays((int) $this->settings->get('dispatch_days', 2));
+
+            if ($eta->isFriday()) {
+                $eta->addDay();
+            }
         }
 
         // Carbon 3 returns a float from diffInMinutes(); intdiv() takes ints
@@ -391,7 +439,8 @@ class ProductController extends Controller
 
         return [
             'remaining' => intdiv($mins, 60) . 'h ' . ($mins % 60) . 'm',
-            'date' => $eta->format('D, j M'),
+            'ship' => $ship->format('D, j M'),
+            'date' => $eta?->format('D, j M'),
         ];
     }
 
