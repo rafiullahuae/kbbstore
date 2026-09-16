@@ -7,11 +7,8 @@ declare(strict_types=1);
 | Review Settings admin API — Store → Reviews → Review Settings — Lane BB
 |------------------------------------------------------------------------------
 |
-| NOT LOADED YET. CLAUDE.md forbids this lane from editing routes/web.php, so
-| the require below is the integrator's to add. Delete the two words above when
-| you add it — tests/Feature/RouteFileHeadersTest.php fails any route file that
-| goes on calling itself unmounted once web.php requires it, and it matches on a
-| pattern, not on a literal, so rewording is not a way around it.
+| Mounted by routes/web.php. CLAUDE.md forbids this lane from editing routes/web.php, so
+| the require in web.php was the integrator's to add, and has been added.
 |
 | ONE LINE, inside the EXISTING admin-api group in routes/web.php — the one
 | opened by

@@ -504,6 +504,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // looked wired. Inside this group because the list returns author_email
         // and the detail view returns the reviewer's IP.
         require __DIR__.'/reviews-admin.php';
+
+        // Store → Reviews → Review Settings: the screen for the sr_* keys the
+        // product page has always read and nothing has ever written. On
+        // /admin-api/review-settings, NOT /admin-api/reviews/settings — the
+        // Route::put('/reviews/{id}') above is untyped and unconstrained, so
+        // it matches "settings" as an id and this file would never be reached.
+        require __DIR__.'/review-settings-admin.php';
         Route::get('/customers',             [AdminController::class, 'customers']);
         Route::get('/quiz-leads',            [AdminController::class, 'quizLeads']);
         Route::get('/orders',                [AdminController::class, 'orders']);

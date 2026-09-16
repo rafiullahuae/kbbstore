@@ -57,14 +57,26 @@
    A grid item's default min-width is auto -- "at least as wide as my content"
    -- so a card refuses to shrink below its widest child and drags the whole
    column out past the viewport with no way to scroll back. */
-.rvs-wrap{display:grid;gap:16px;min-width:0;max-width:880px}
+/* 1400px, matching .ecwrap on the sibling settings screens rather than the
+   880px this started at. The owner has already reported the console leaving a
+   band of empty space down the right-hand side, and a screen that stops at
+   880px inside a 1672px content column at 1920 is that complaint again --
+   worse for sitting next to Payments, which fills the width.
+
+   Widening a label column is not free, though: .rvs-row is `1fr auto`, so at
+   1400px the hint text under each label would set to about 1250px, which is
+   roughly three times a readable line. The measure is capped below instead, so
+   the CONTROLS move out to the right edge where they are easy to hit and the
+   PROSE keeps a sane line length. Widening without that cap would have traded
+   one complaint for an unreadable one. */
+.rvs-wrap{display:grid;gap:16px;min-width:0;max-width:1400px}
 .rvs-wrap > *{min-width:0}
 
 .rvs-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
           border-radius:var(--r,12px);padding:16px;min-width:0}
 .rvs-card + .rvs-card{margin-top:0}
 .rvs-legend{font-weight:650;font-size:14px;margin:0 0 3px}
-.rvs-legend-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0 0 14px}
+.rvs-legend-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0 0 14px;max-width:80ch}
 
 .rvs-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
 .rvs-title{font-weight:650;font-size:15px;margin:0}
@@ -76,8 +88,8 @@
          padding:11px 0;border-top:1px solid var(--border,#e6e6e6);min-width:0}
 .rvs-row:first-of-type{border-top:0}
 .rvs-row > *{min-width:0}
-.rvs-lab{font-size:13.5px;font-weight:600}
-.rvs-hint{color:var(--ink-soft,#6b7280);font-size:12px;margin-top:2px;line-height:1.45}
+.rvs-lab{font-size:13.5px;font-weight:600;max-width:72ch}
+.rvs-hint{color:var(--ink-soft,#6b7280);font-size:12px;margin-top:2px;line-height:1.45;max-width:72ch}
 .rvs-ctl{display:flex;align-items:center;gap:8px;justify-self:end}
 
 @media (max-width:560px){
