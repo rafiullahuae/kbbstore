@@ -91,67 +91,6 @@ a{color:inherit;text-decoration:none}
 .gthumb{position:relative}
 .gthumb-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
 
-/* Thumbnails BESIDE the main frame, from 881px up -- the same breakpoint .pdp
-   and .gallery already switch on, so the gallery never sits between two
-   layouts.
-
-   Left, not right. The buy box is the right-hand column, so a right-hand rail
-   would run a strip of 66px squares straight up against the price and the Add
-   to cart button: two columns of small, busy elements touching, with the
-   photograph pushed away from the thing it is meant to sell. On the left the
-   reading order down the page is thumbnails -> photograph -> price -> buy,
-   secondary to primary, and the hero stays adjacent to the buy box. It is also
-   what a shopper has already learned from every large storefront.
-
-   The rail is taken OUT OF FLOW rather than made a second grid or flex track,
-   and that is the load-bearing detail. As an in-flow track its own content
-   height would feed back into the row and, for a product with more shots than
-   fit, stretch the column taller than the photograph -- a rail hanging below
-   the frame with nothing beside it. Absolute with top:0;bottom:0 inverts the
-   dependency: the frame alone sizes .gallery, and the rail is told that height.
-   .gallery is position:sticky, which establishes the containing block, so no
-   position:relative has to be added to a rule that phone width also reads.
-
-   padding-left is what the frame loses, so the two never overlap; box-sizing is
-   border-box globally, so it comes off the frame's width and the square shrinks
-   to match. :has() scopes all of it to a gallery that actually HAS a rail --
-   a single-shot product renders no .gthumbs at all, and must not be left with
-   78px of empty gutter down its side. */
-@media(min-width:881px){
-  .gallery:has(.gthumbs){padding-left:78px}
-  .gallery:has(.gthumbs) .gthumbs{
-    position:absolute;left:0;top:0;bottom:0;width:66px;
-    margin-top:0;flex-direction:column;flex-wrap:nowrap;
-    /* More shots than the rail is tall scroll inside it. min-height:0 and a
-       non-shrinking thumb are both required: without them eight 66px squares
-       are squashed to fit instead of overflowing, and the scrollbar -- the only
-       thing telling a shopper there are more -- never appears. */
-    min-height:0;overflow-y:auto;overscroll-behavior:contain;
-    scrollbar-width:thin;scrollbar-color:var(--line) transparent;
-  }
-  .gallery:has(.gthumbs) .gthumb{flex:0 0 auto}
-
-  /* The frame is 3:4 here, and only here. Moving the strip out from under the
-     frame is what forces it: the strip's own 66px (142px when it wrapped to
-     two rows) was holding the column up, so a square frame beside a rail
-     leaves the gallery 484px tall against a 715px buy box -- measured at 1280,
-     a 231px hole where there used to be 75px. Side by side and a square frame
-     cannot both hold at this wrap width; the frame is what gives.
-
-     It costs no photograph any pixels. The frame's WIDTH is unchanged by the
-     ratio, and object-fit:contain scales to whichever edge binds first, so for
-     anything squarer than 3:4 -- every square shot, every landscape swatch --
-     width binds and the shot renders at exactly the size it would in a square
-     frame. Only a portrait taller than 3:4 changes, and it gets BIGGER: the
-     900x1100 fixture goes from 460x562 in the old full-width square to 484x592
-     here. What grows is the empty margin inside the frame, and that buys back
-     162px of column: the gap measures 69px against the old layout's 75px.
-
-     Revert by deleting this one rule if the shop would rather have the square
-     back and keep the hole. */
-  .gallery:has(.gthumbs) .gmain{aspect-ratio:3/4}
-}
-
 /* buy box */
 .bb-brand{font-size:12px;font-weight:700;color:var(--pink-deep);text-transform:uppercase;letter-spacing:.05em}
 .bb-title{font-size:25px;font-weight:600;letter-spacing:-.01em;line-height:1.28;margin:7px 0 11px}
