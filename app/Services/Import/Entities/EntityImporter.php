@@ -37,6 +37,32 @@ abstract class EntityImporter
     abstract public function import(Row $row, ImportContext $context): void;
 
     /**
+     * Why this entity's writes must not email a customer, or null when they can.
+     *
+     * AN IMPORT IS NOT AN EVENT IN A CUSTOMER'S LIFE. Re-syncing a status that
+     * WooCommerce recorded in 2023 onto the order that already holds it is
+     * bookkeeping; the customer was told at the time, by WooCommerce, and
+     * telling them again years later is a message about the importer rather than
+     * about their parcel. `orders` answers this; nothing else does yet.
+     *
+     * THE ANSWER IS A SENTENCE, not a boolean, because the runner puts it in the
+     * report. An import that quietly stopped sending mail would be its own
+     * hazard — the owner would find out by noticing that nobody had been written
+     * to — so the suppression says what it is and counts what it held back.
+     *
+     * WHY THIS IS NOT DONE BY ROUTING THROUGH App\Services\Orders\OrderStatus,
+     * which is the funnel every other status write in this application goes
+     * through and does have an off-switch. The importer is deliberately NOT on
+     * that funnel: it would write a history note per row — thousands of them —
+     * and hand back coupon uses WooCommerce has already accounted for. Getting
+     * an off-switch by joining the funnel would buy this at the price of both.
+     */
+    public function suppressesCustomerMailBecause(): ?string
+    {
+        return null;
+    }
+
+    /**
      * Whatever has to happen once the entity's rows are all in.
      *
      * Only categories use it, to recompute the cached `depth` and `path`

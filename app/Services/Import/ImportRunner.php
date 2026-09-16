@@ -13,6 +13,7 @@ use App\Services\Import\Entities\OrderItemImporter;
 use App\Services\Import\Entities\ProductImporter;
 use App\Services\Import\Sources\CsvRowSource;
 use App\Services\Import\Sources\RowSource;
+use App\Services\Mail\OrderStatusMailPolicy;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -122,7 +123,64 @@ final class ImportRunner
                 continue;
             }
 
-            $this->runEntity($importer, new CsvRowSource($path), $options, $context, $progress);
+            $this->withCustomerMailHeld(
+                $importer,
+                $context,
+                fn () => $this->runEntity($importer, new CsvRowSource($path), $options, $context, $progress),
+            );
+        }
+    }
+
+    /**
+     * Run one entity with customer mail held back, when that entity says its
+     * writes are not news to a customer — and say afterwards how many messages
+     * that came to.
+     *
+     * AN IMPORT IS NOT AN EVENT IN A CUSTOMER'S LIFE. Saving an existing order
+     * fires Eloquent's `updated` event, OrderMailObserver listens to it, and the
+     * standing rule for `shipped` and `cancelled` is ON — so re-syncing the
+     * statuses a Woo store has moved to since the last export mailed real
+     * people about parcels that arrived years ago.
+     *
+     * WHY IT IS HERE AND NOT IN THE ENTITY. The observer sends through
+     * DB::afterCommit(), so the message is decided when the BATCH COMMITS, not
+     * when the row is written. A suppression wrapped around one row would
+     * already have been lifted by the time it mattered. The entity boundary is
+     * the smallest one that contains every commit the entity makes.
+     *
+     * WHAT IS SUPPRESSED is OrderStatusMailPolicy's business and is narrow:
+     * status mail to the customer, nothing else. Refund mail, the merchant
+     * copies and the invoice are untouched.
+     *
+     * AND THE OWNER IS TOLD. The count goes into the entity's report as an
+     * ordinary note, which the console and the command both already print.
+     * Silence nobody can see afterwards is indistinguishable from mail that
+     * failed, and this import exists to be run on real customer data.
+     */
+    private function withCustomerMailHeld(EntityImporter $importer, ImportContext $context, callable $work): void
+    {
+        $because = $importer->suppressesCustomerMailBecause();
+
+        if ($because === null) {
+            $work();
+
+            return;
+        }
+
+        $policy = app(OrderStatusMailPolicy::class);
+        $before = $policy->suppressedCount();
+
+        try {
+            $policy->whileSuppressed($because, $work);
+        } finally {
+            $held = $policy->suppressedCount() - $before;
+
+            if ($held > 0) {
+                $context->report->for($importer->name())->note(
+                    $held.' customer'.($held === 1 ? ' was' : 's were').' not emailed about a status this '
+                    .'import changed, because '.$because
+                );
+            }
         }
     }
 

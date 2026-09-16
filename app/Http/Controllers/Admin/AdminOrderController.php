@@ -19,7 +19,9 @@ use App\Services\Payments\PaymentRefunder;
 use App\Support\AggregatesQueries;
 use App\Support\Fils;
 use App\Support\Money;
+use App\Support\OrderTax;
 use App\Support\StoreTime;
+use App\Support\TaxRule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -592,13 +594,130 @@ class AdminOrderController extends Controller
         return null;
     }
 
-    /** Recomputes subtotal/total from the order's own line items after any add/update/remove — never trusts a client-sent total. */
+    /**
+     * Recomputes subtotal, tax and total from the order's own line items after
+     * any add/update/remove — never trusting a client-sent total.
+     *
+     * ── DOES EDITING AN ORDER RE-PRICE IT? YES, AND IT HAS TO ───────────────
+     *
+     * This method used to write
+     *
+     *     total = subtotal + shipping + fee + tax_total - discount
+     *
+     * with `tax_total` left exactly as the checkout wrote it. While `tax_total`
+     * was always 0 that was harmless. It is not harmless now: App\Support\OrderTax
+     * and the `tax_mode` switch mean an order can carry a real tax figure, and
+     * an operator who adds a line to one of those left the tax describing a
+     * subtotal that no longer exists — an invoice whose own column of figures
+     * does not add up.
+     *
+     * The alternative — leave the tax alone, on the grounds that an edit must
+     * never change what a customer was charged — was rejected, because it does
+     * not achieve that. The subtotal and the total move either way; the only
+     * thing not re-pricing preserves is a tax figure that has stopped describing
+     * the goods. An operator who adds a bottle of toner has changed the supply,
+     * and the document has to say so.
+     *
+     * ── AT THE ORDER'S OWN RATE AND BASIS, NEVER AT TODAY'S SETTINGS ────────
+     *
+     * The rule comes from OrderTax::recorded(), which reads `orders.tax_rate`
+     * and `orders.tax_basis` — the figures snapshotted when the order was
+     * placed. Nothing here consults VatDisplay or the settings table. That is
+     * the whole point of OrderTax's existence: the invoice and the receipt both
+     * used to recompute at print time, so raising a rate reprinted last year's
+     * invoices at the new one. An edit screen that looked the rate up live would
+     * be the same defect wearing different clothes.
+     *
+     * ── THE THREE BASES ARE THREE DIFFERENT SUMS ───────────────────────────
+     *
+     *   exclusive   tax is ADDED on top.       total = base + tax
+     *   inclusive   tax is INSIDE the price.   total = base
+     *   flat        printed, never charged.    total = base, tax_total 0
+     *
+     * TaxRule::grossOf() is the one place that distinction lives, so this asks
+     * it rather than restating it. The old sum added `tax_total` unconditionally
+     * and so was wrong for `inclusive` as well: the first edit of an inclusive
+     * order inflated its total by the tax already contained in it.
+     *
+     * ── AN ORDER WITH NO TAX RECORD KEEPS THE SUM IT ALWAYS HAD ────────────
+     *
+     * recorded() answers null for every order placed before the tax engine,
+     * every order placed in the shipped `display` mode and every imported
+     * WooCommerce order. Those take the legacy branch byte for byte — which
+     * matters most for the imported ones, because they carry a real Woo
+     * `tax_total` with no rate beside it that has to keep being added exactly
+     * as it always was.
+     *
+     * ── AND THE OPERATOR IS TOLD ───────────────────────────────────────────
+     *
+     * A tax figure that moves writes a private order note, into the history the
+     * order screen already draws. Not a confirmation dialog: the re-price is a
+     * consequence of the edit rather than a second decision, and a modal between
+     * an operator and a line they are correcting is a modal they learn to click
+     * through. A note is what is still there tomorrow when somebody asks why the
+     * total changed.
+     */
     private function recalcTotals(Order $order): void
     {
         $subtotal = (int) $order->items()->sum('total');
         $order->subtotal = $subtotal;
-        $order->total = $subtotal + $order->shipping_total + $order->fee_total + $order->tax_total - $order->discount_total;
+
+        $recorded = OrderTax::recorded($order);
+
+        if ($recorded === null) {
+            $order->total = $subtotal + $order->shipping_total + $order->fee_total
+                + $order->tax_total - $order->discount_total;
+            $order->save();
+
+            return;
+        }
+
+        $rule = new TaxRule($recorded['rate'], $recorded['basis']);
+
+        // OrderTax::base() reads the columns just written, so this is the base
+        // AFTER the edit: subtotal - discount + shipping, the identical
+        // expression CartService::totals() taxes.
+        $base = OrderTax::base($order);
+        $was = (int) $order->tax_total;
+
+        /*
+         * `flat` charges nothing and contains nothing, so its column stays 0 —
+         * exactly what the checkout writes for it. OrderTax::recorded()
+         * recomputes the figure a flat order PRINTS from the rate, and does it
+         * on demand, so there is nothing here to keep in step with it.
+         */
+        $order->tax_total = $rule->basis === TaxRule::FLAT ? 0 : $rule->taxOn($base);
+
+        $order->total = $rule->grossOf($base) + (int) $order->fee_total;
         $order->save();
+
+        if ((int) $order->tax_total !== $was) {
+            $this->noteTaxRecalculated($order, $was, (int) $order->tax_total, $rule);
+        }
+    }
+
+    /**
+     * The order's own history, told that its tax moved and on what authority.
+     *
+     * Deliberately names the rate and the basis it used. "The tax changed" is
+     * not something an operator can check; "recalculated at 15% exclusive, the
+     * rate recorded on this order" is, and it is the sentence that makes it
+     * obvious if the figure ever does come from somewhere else.
+     */
+    private function noteTaxRecalculated(Order $order, int $was, int $now, TaxRule $rule): void
+    {
+        OrderNote::create([
+            'order_id' => $order->getKey(),
+            'author' => auth('admin')->user()?->name ?: 'Admin',
+            'is_customer_note' => false,
+            'content' => sprintf(
+                'Tax recalculated after the items changed: %s → %s at %s%% %s, the rate recorded on this order when it was placed.',
+                Money::plain($was),
+                Money::plain($now),
+                $rule->printableRate(),
+                $rule->basis,
+            ),
+        ]);
     }
 
     public function addItem(Request $request, int $id): JsonResponse
