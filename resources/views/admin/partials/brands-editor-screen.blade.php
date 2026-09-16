@@ -291,11 +291,6 @@
     return '<img class="bz-thumb" id="' + id + '" alt=""' + (url ? ' src="' + esc(url) + '"' : '') + '>';
   }
 
-  function icon(d){
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
-           'stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex:0 0 auto">' + d + '</svg>';
-  }
-
   function byId(list, id){
     for (var i = 0; i < list.length; i++) {
       if (Number(list[i].id) === Number(id)) return list[i];
@@ -1049,21 +1044,27 @@
   }
 
   /* -------------------------------------------------------- sidebar entry */
+  /*
+   * Through the shared helper in app.blade.php. This file was modelled on
+   * category-tree and inherited its `[data-go="products"]` fallback, which has
+   * never matched anything -- there has never been a 'products' row in this
+   * console. It read like a net and was decoration, and it is gone.
+   *
+   * 'category-tree' is the real preference: Brands sits directly under
+   * Categories. It is injected by another partial rather than declared in NAV,
+   * so 'catalog' follows it as the half that is always there. Neither is load
+   * bearing any more -- if both were renamed the helper would still put this
+   * row at the end of the Catalog group, and if that group went too it would
+   * add the row anyway and log which name it could not find.
+   */
   function addNavEntry(){
-    if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
-
-    var anchor = document.querySelector('#nav [data-go="category-tree"]')
-              || document.querySelector('#nav [data-go="catalog"]')
-              || document.querySelector('#nav [data-go="products"]');
-    if (!anchor) return;
-
-    var b = document.createElement('button');
-    b.className = 'nav-item';
-    b.dataset.go = SCREEN;
-    b.innerHTML = icon('<path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 0-7.1 5 5 0 0 1 7.1 0L12 7.8l1.5-1.5a5 5 0 0 1 7.1 7.1Z"/>')
-                + '<span>Brands</span>';
-    b.onclick = function(){ window.go(SCREEN); };
-    anchor.parentNode.insertBefore(b, anchor.nextSibling);
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label:  'Brands',
+      icon:   '<path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 0-7.1 5 5 0 0 1 7.1 0L12 7.8l1.5-1.5a5 5 0 0 1 7.1 7.1Z"/>',
+      group:  'Catalog',
+      after:  ['category-tree', 'catalog']
+    });
   }
 
   /* ------------------------------------------------------------ the route */

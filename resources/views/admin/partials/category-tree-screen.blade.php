@@ -248,11 +248,6 @@
 
   function say(msg){ try { window.toast(msg); } catch (e) {} }
 
-  function icon(d){
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
-           'stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex:0 0 auto">' + d + '</svg>';
-  }
-
   /* ------------------------------------------------------------ tree maths */
   function kidsOf(parentId){
     return cats.filter(function(c){
@@ -481,12 +476,22 @@
     var host = document.getElementById('ct-root');
     if (!host) return;
 
+    /* The owner asked, of the Catalog screen, what a row of tab names is for
+       and why the tabs are one screen. It is the same question here and it
+       deserves the same answer on the page rather than in a lane report, so
+       the strip carries a caption. `ectabs-hint` is the console's existing
+       class for exactly this, styled in app.blade.php, so this reads like the
+       other explained tab strips instead of inventing a second look. */
     var tabs = '<div class="ct-tabs">'
       + [['categories','Categories'],['brands','Brands'],['redirects','URLs that moved']].map(function(t){
           return '<button class="ct-tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">'
                + esc(t[1]) + '</button>';
         }).join('')
-      + '</div>';
+      + '</div>'
+      + '<p class="ectabs-hint">Three ways into the same catalogue structure, which is why they are one screen rather than three. '
+      + '<b>Categories</b> is the tree shoppers browse and the order they see it in; <b>Brands</b> is the other way into the same '
+      + 'products; <b>URLs that moved</b> is every old WooCommerce address that now needs somewhere to land \u2014 renaming or '
+      + 'merging a category on the first tab is what puts a row on the third one.</p>';
 
     var view = tab === 'categories' ? categoriesView()
              : tab === 'brands' ? brandsView()
@@ -954,22 +959,28 @@
   }
 
   /* -------------------------------------------------------- sidebar entry */
+  /*
+   * Through the shared helper in app.blade.php.
+   *
+   * Anchored to the Catalog entry: this is the screen the owner opens to
+   * merchandise, and Catalog is the group they already open for it.
+   *
+   * The old second half was `|| querySelector('[data-go="products"]')`, and
+   * this file is where that spread from. There has never been a 'products' row
+   * in this console, so it was decoration that read like a fallback -- the
+   * audit's words, and the reason the next person to rename 'catalog' would
+   * have believed there was a net under them. The real net is the helper: the
+   * end of the Catalog group, then the sidebar itself, with a console error
+   * naming this screen if it gets that far.
+   */
   function addNavEntry(){
-    if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
-
-    // Anchored to the Catalog entry: this is the screen the owner opens to
-    // merchandise, and Catalog is the group they already open for it.
-    var anchor = document.querySelector('#nav [data-go="catalog"]')
-              || document.querySelector('#nav [data-go="products"]');
-    if (!anchor) return;
-
-    var b = document.createElement('button');
-    b.className = 'nav-item';
-    b.dataset.go = SCREEN;
-    b.innerHTML = icon('<path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/>')
-                + '<span>Categories</span>';
-    b.onclick = function(){ window.go(SCREEN); };
-    anchor.parentNode.insertBefore(b, anchor.nextSibling);
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label:  'Categories',
+      icon:   '<path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H3z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/>',
+      group:  'Catalog',
+      after:  'catalog'
+    });
   }
 
   /* ------------------------------------------------------------ the route */

@@ -560,44 +560,28 @@
 
   function say(msg){ try { window.toast(msg); } catch (e) {} }
 
-  function icon(d){
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" ' +
-           'stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">' + d + '</svg>';
-  }
-
   /* -------------------------------------------------------- sidebar entry */
+  /*
+   * One shared helper, in app.blade.php, rather than a fifth hand-rolled copy
+   * of "find an anchor, build a button, insert it, and give up quietly if the
+   * anchor moved".
+   *
+   * The old code here was `anchor = querySelector('[data-go="catalog"]') ||
+   * querySelector('[data-go="orders"]'); if (!anchor) return;`. The `return`
+   * meant renaming the Catalog row took the product editor out of the sidebar
+   * with no error anywhere, and the `orders` fallback put the editor in the
+   * Store group, which is not what it is. kbbAddNavEntry keeps the row inside
+   * the group its own breadcrumb names, falls back to the end of that group,
+   * and if even the group is gone it still adds the row and says so out loud.
+   */
   function addNavEntry(){
-    if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
-
-    /* The old code was `anchor = querySelector('[data-go="catalog"]') ||
-       querySelector('[data-go="orders"]'); if (!anchor) return;` — two
-       problems the nav audit named.
-
-       The `return` is the first: a screen that removes itself from the sidebar
-       when one other entry is renamed, silently, with no error anywhere. The
-       owner would simply never find the product editor again and would have no
-       way to tell that from it never having shipped.
-
-       The `orders` fallback was the second: it put the product editor in the
-       Store group beside Orders, which is not what it is. There is a Catalog
-       group now, so the fallbacks stay inside it and the last resort is the
-       sidebar root — visible and wrong beats invisible. */
-    var b = document.createElement('button');
-    b.className = 'nav-item';
-    b.dataset.go = SCREEN;
-    b.innerHTML = icon('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>')
-                + '<span>Product editor</span>';
-    b.onclick = function(){ window.go(SCREEN); };
-
-    var anchor = document.querySelector('#nav [data-go="catalog"]');
-    if (anchor && anchor.parentNode) {
-      anchor.parentNode.insertBefore(b, anchor.nextSibling);
-      return;
-    }
-
-    var group = document.querySelector('#nav .nav-group[data-sec="Catalog"] .nav-sub')
-             || document.querySelector('#nav');
-    if (group) group.appendChild(b);
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label:  'Product editor',
+      icon:   '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+      group:  'Catalog',
+      after:  'catalog'
+    });
   }
 
   /* ------------------------------------------------------------ the route */

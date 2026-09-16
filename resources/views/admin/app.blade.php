@@ -1959,6 +1959,121 @@ function syncNavOpen(id){
   });
 }
 
+/* ---------- one supported way to add a sidebar row ---------- */
+/*
+ * A screen that ships as its own partial cannot be listed in NAV: buildNav()
+ * has already run by the time the partial loads, and NAV does not know the
+ * partial exists. So each of them registers its own row afterwards.
+ *
+ * Five partials used to do that by hand, with five copies of the same four
+ * steps — find an anchor row with `#nav [data-go="..."]`, build a <button>,
+ * paste in the icon markup and the class name, insert the button — and, every
+ * one of them, the same last line: `if (!anchor) return;`.
+ *
+ * That line is the reason this function exists. It means renaming ONE row in
+ * NAV removes a DIFFERENT screen from the sidebar, silently: no error, no
+ * warning, nothing anywhere. An owner cannot tell a screen that quietly left
+ * the menu from a screen that never shipped, which is precisely the wrong
+ * conclusion they drew about the coupon editor. Three of the five chains had
+ * already drifted onto anchors that do not exist without anyone noticing,
+ * because nothing says so when they do not resolve.
+ *
+ *   kbbAddNavEntry({screen, label, icon, group, after})
+ *
+ *   screen  the data-go id. Also the duplicate key: a second call for a row
+ *           that is already in the sidebar adds nothing and returns the row
+ *           that is already there. Partials register on DOMContentLoaded and
+ *           again if they load after it, so that is the normal path, not a
+ *           fault.
+ *   label   the row's visible text.
+ *   icon    inner SVG markup, the same paths NAV items carry. Drawn with ic(),
+ *           so an injected row and a built-in row are the same markup rather
+ *           than two drifting copies of it.
+ *   group   the NAV section this row belongs in, named by its `sec`. The group
+ *           is never CREATED here, only joined: a group invented at this point
+ *           would be a second place that decides the sidebar's shape, and
+ *           TITLES, the breadcrumbs and buildNav would all still be using the
+ *           first one.
+ *   after   preferred anchor id, or an array of them tried in order. Optional.
+ *
+ * Placement degrades, in this order, instead of giving up:
+ *
+ *   1. after the first `after` row that is inside `group` — the intended spot;
+ *   2. at the end of `group` — right section, wrong position, no complaint;
+ *   3. after the first `after` row wherever it turns out to be — wrong
+ *      section, and it SAYS so;
+ *   4. at the end of #nav — visible and wrong beats invisible, and it says so.
+ *
+ * Only steps 3 and 4 are failures, and both are loud: a console.error naming
+ * the screen, the group it wanted and the anchors it tried. Returning quietly
+ * is the one thing this function will not do, because that is the behaviour it
+ * replaced. It returns null only when there is no sidebar to add to at all.
+ */
+function kbbAddNavEntry(opts){
+  const o = opts || {};
+  const screen = o.screen;
+
+  if (!screen) {
+    console.error('kbbAddNavEntry: called with no screen id, so no sidebar row was added.', o);
+    return null;
+  }
+
+  const nav = $('#nav');
+  if (!nav) {
+    console.error('kbbAddNavEntry: "' + screen + '" has no sidebar to join — this document has no #nav. The screen is still routable; it simply has no row.');
+    return null;
+  }
+
+  // Already registered. Scoped to #nav on purpose: a screen may draw its own
+  // [data-go] buttons inside #content, and those are links, not sidebar rows.
+  const already = nav.querySelector('[data-go="' + screen + '"]');
+  if (already) return already;
+
+  const b = document.createElement('button');
+  b.className = 'nav-item';
+  b.dataset.go = screen;
+  b.innerHTML = ic(o.icon || '') + '<span>' + (o.label || screen) + '</span>';
+  b.onclick = () => window.go(screen);
+
+  const sub = o.group ? nav.querySelector('.nav-group[data-sec="' + o.group + '"] .nav-sub') : null;
+  const after = o.after == null ? [] : (Array.isArray(o.after) ? o.after : [o.after]);
+  const find = (id) => nav.querySelector('[data-go="' + id + '"]');
+
+  // 1. the intended position: an anchor that is in the group this row claims.
+  //    A row that named a group only lands here if that group exists and holds
+  //    the anchor. Accepting the anchor when the group has gone would be step 1
+  //    quietly doing step 3's job, and step 3 is the one that reports.
+  for (const id of after) {
+    const a = find(id);
+    if (!a || !a.parentNode) continue;
+    if (o.group && !(sub && sub.contains(a))) continue;
+    a.parentNode.insertBefore(b, a.nextSibling);
+    return b;
+  }
+
+  // 2. the group itself. The anchor moved or was renamed; the section the
+  //    row's own breadcrumb names is still there, so that is where it goes.
+  if (sub) { sub.appendChild(b); return b; }
+
+  // 3. the anchor wherever it actually ended up — wrong section, but next to
+  //    something related and still reachable.
+  for (const id of after) {
+    const a = find(id);
+    if (a && a.parentNode) {
+      a.parentNode.insertBefore(b, a.nextSibling);
+      console.error('kbbAddNavEntry: "' + screen + '" asked for the "' + o.group + '" group, which this sidebar does not have. The row is sitting next to "' + id + '" instead, in whatever section that is. Add the group to NAV or correct `group` where "' + screen + '" registers.');
+      return b;
+    }
+  }
+
+  // 4. last resort. Nothing it named exists; pin it to the end of the sidebar
+  //    rather than drop it, and say exactly what could not be found.
+  nav.appendChild(b);
+  console.error('kbbAddNavEntry: "' + screen + '" could not be placed — no "' + o.group + '" group and none of its anchors (' + (after.join(', ') || 'none given') + ') are in the sidebar. The row is pinned to the bottom of #nav so the screen is still reachable. Something renamed a NAV row; fix `group`/`after` where "' + screen + '" registers.');
+  return b;
+}
+window.kbbAddNavEntry = kbbAddNavEntry;
+
 /* Breadcrumb and page title per screen: [group, title].
 
    The group here is the sidebar group the entry actually sits in, and the title
