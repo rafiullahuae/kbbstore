@@ -12,6 +12,7 @@ use App\Support\ReviewStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -255,6 +256,7 @@ class ReviewsApiController extends Controller
             // App\Support\ProductRating.
             if ($before !== (string) $row->status) {
                 ProductRating::refresh([$row->product_id]);
+                self::forgetHomeWall();
             }
 
             return response()->json([
@@ -304,6 +306,7 @@ class ReviewsApiController extends Controller
             }
 
             ProductRating::refresh($productIds);
+            self::forgetHomeWall();
 
             return response()->json([
                 'build' => self::BUILD,
@@ -316,6 +319,29 @@ class ReviewsApiController extends Controller
         } catch (\Throwable $e) {
             return $this->failed($e);
         }
+    }
+
+    /**
+     * Drop the homepage's cached review wall.
+     *
+     * Store\HomeController wraps that wall in Cache::remember('kbb.home.reviews',
+     * 900, ...) and it aggregates every APPROVED review shop-wide. Moderation
+     * changes exactly that set, and nothing here evicted the key — so for up to
+     * fifteen minutes after approving or rejecting a review the homepage showed
+     * one set of reviews while the product pages showed another, with the owner
+     * having no way to tell which was right or that anything was stale.
+     *
+     * ProductRating::refresh() above does not cover it: that writes the
+     * denormalised pair on `products`, which is a different reader.
+     *
+     * Deliberately unconditional on the bulk path. Working out whether any of
+     * the rows that actually changed were approved-or-were-approved costs a
+     * second query to save one cache write, and a wrong answer there is the
+     * stale homepage all over again.
+     */
+    private static function forgetHomeWall(): void
+    {
+        Cache::forget('kbb.home.reviews');
     }
 
     /* ---------------------------------------------------------------- export */

@@ -519,6 +519,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // Route::put('/reviews/{id}') above is untyped and unconstrained, so
         // it matches "settings" as an id and this file would never be reached.
         require __DIR__.'/review-settings-admin.php';
+
+        // Store → Reviews → Bulk Add / Bulk Likes. On /admin-api/review-bulk/*
+        // rather than nested under /reviews/, for the same reason the review
+        // settings routes are: the PUT /reviews/{id} below is untyped and
+        // unconstrained and would swallow a nested path as an id.
+        require __DIR__.'/review-bulk-admin.php';
         Route::get('/customers',             [AdminController::class, 'customers']);
         Route::get('/quiz-leads',            [AdminController::class, 'quizLeads']);
         Route::get('/orders',                [AdminController::class, 'orders']);
