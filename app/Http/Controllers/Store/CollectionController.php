@@ -141,9 +141,18 @@ class CollectionController extends Controller
      */
     private function seoCtx(Request $request, string $title, string $intro, int $total, int $page): array
     {
+        /*
+         * NO DELIVERY PROMISE IN A META DESCRIPTION — the same removal, and the
+         * same reasoning, as ShopController::seoDescription(), whose docblock
+         * carries it in full. Both halves ended in a transit time attached to
+         * one country, on every collection page and in the search result Google
+         * shows for it, and the window they named is not the one the shop
+         * records. Nothing replaces the clause: what is left is a count of real
+         * rows.
+         */
         $description = $total > 0
-            ? "{$intro} {$total} authentic Korean skincare products at K-Beauty Bliss, with next-day UAE delivery."
-            : "{$intro} Authentic Korean skincare at K-Beauty Bliss, with next-day UAE delivery.";
+            ? "{$intro} {$total} authentic Korean skincare products at K-Beauty Bliss."
+            : "{$intro} Authentic Korean skincare at K-Beauty Bliss.";
 
         // SeoSettings, not Setting::map(): the latter memoises in a
         // process-level static as well as the cache, and a page rendered

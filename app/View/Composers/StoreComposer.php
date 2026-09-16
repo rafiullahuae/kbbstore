@@ -88,14 +88,35 @@ class StoreComposer
             'kbbCartCount' => $cart?->itemCount() ?? 0,
             'kbbWishlistCount' => $this->wishlistCount(),
 
-            // Header extras. Cached, since the header is on every page and none
-            // of this varies per visitor.
+            /*
+             * Header extras — and ONE of them is cached, which is not what this
+             * comment used to say.
+             *
+             * It read "Cached, since the header is on every page and none of
+             * this varies per visitor" over a block of four keys, of which
+             * exactly one goes through Cache::remember(). The other three are
+             * computed per request and always were. That mattered the moment a
+             * value here started varying per visitor: read literally, the
+             * comment invites the next reader to wrap the lot in one global
+             * cache key, and the first shopper to warm it would decide what
+             * every other shopper is told.
+             *
+             * kbbProductCount IS cached, and may be: it is a count of the
+             * catalogue, identical for everyone.
+             *
+             * kbbFreeShipThreshold IS NOT, and must never be. It is the
+             * free-delivery figure for the country THIS VISITOR is in — the
+             * announcement bar prints it on every page of the site — and it was
+             * resolved from `store_country`, the shop's own country, so a
+             * shopper in Riyadh was quoted the Dubai threshold. It is memoised
+             * on the Request (see ShippingService::thresholdHere()), which is
+             * per visitor by construction: nothing it computes can outlive the
+             * request that asked.
+             */
             'kbbProductCount' => Cache::remember('kbb.count.products', 900,
                 fn () => Product::query()->visible()->count()),
             'kbbTrending' => $this->trending(),
-            'kbbFreeShipThreshold' => $this->shipping->freeShippingThreshold(
-                (string) $this->settings->get('store_country', 'AE')
-            ),
+            'kbbFreeShipThreshold' => $this->shipping->thresholdHere($this->request),
             // Emitted only when it differs from the design default, matching the
             // theme, which ships no override in the common case.
             'kbbAccent' => Color::isValidHex($accent) && strtolower($accent) !== '#e0567b'

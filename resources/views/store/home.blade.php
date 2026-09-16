@@ -60,6 +60,30 @@
     <div class="sdots" id="sdots"></div>
   </div>
 
+  {{-- RESOLVED ONCE FOR THE WHOLE HERO, because the band and the ticker below
+       it make the SAME TWO CLAIMS and used to make them from four different
+       sources. Hoisted above the band's own @unless so that hiding the band in
+       Appearance → Sections cannot leave the ticker reading an undefined
+       variable.
+
+       Both are per-visitor and neither costs a query: DeliveryLine reads the
+       settings snapshot the page has already taken, and the threshold is
+       memoised on the Request by ShippingService::thresholdHere(), which the
+       header has already asked for on this very page.
+
+       BLOCK FORM, NOT @php(...) — for the reason this file already records
+       thirty lines from the top: Blade pairs @php/@endphp with one non-greedy
+       regex over the whole template, so an inline @php(...) sitting above the
+       newsletter section's block pairs with THAT block's @endphp and swallows
+       every @unless and @foreach in between. The page then 500s hundreds of
+       lines below the actual mistake. Confirmed here the hard way: written
+       inline, this exact line compiled to an unterminated `<?php (` and the
+       home page died with "unexpected token class". --}}
+  @php
+    $homeDeliveryText = \App\Support\DeliveryLine::here();
+    $homeFreeShip = app(\App\Services\ShippingService::class)->thresholdHere();
+  @endphp
+
   @unless ($sections->hidden('delivery'))
   {{-- THE DELIVERY SENTENCE BELONGS TO THE VISITOR'S COUNTRY, NOT TO EVERYONE.
 
@@ -81,34 +105,67 @@
        anywhere outside the UAE, and a plausible-looking guess printed here
        would be the same untruth in the other direction.
 
-       The free-delivery threshold below keeps its place either way: it is true
-       wherever the shopper is standing. It carries the separator now, so
-       suppressing the sentence cannot leave a stray dot in front of it.
+       THE THRESHOLD IS PER-COUNTRY TOO, which is where this band was left half
+       repaired. The note that used to stand here said the free-delivery figure
+       "keeps its place either way: it is true wherever the shopper is
+       standing". That reasoning does not survive contact with this shop's own
+       configuration. Production runs two zones with two different thresholds —
+       199 for the UAE and 1,600 for the Gulf — and a shop on Extended Delivery
+       carries a `free_from` PER COUNTRY. One figure cannot be true of both.
 
-       BLOCK FORM, NOT @php(...) — for the reason this file already records
-       thirty lines from the top: Blade pairs @php/@endphp with one non-greedy
-       regex over the whole template, so an inline @php(...) sitting above the
-       newsletter section's block pairs with THAT block's @endphp and swallows
-       every @unless and @foreach in between. The page then 500s hundreds of
-       lines below the actual mistake. Confirmed here the hard way: written
-       inline, this exact line compiled to an unterminated `<?php (` and the
-       home page died with "unexpected token class". --}}
-  @php
-    $homeDeliveryText = \App\Support\DeliveryLine::here();
-  @endphp
+       And the figure printed here was not even the shop's. It came from the
+       `free_shipping_threshold` SETTING, which has no admin screen and no
+       writer anywhere in this application: the owner edits the real number on
+       Store → Shipping, where it lives on the free-shipping method, and this
+       band went on printing the stale default at every visitor including the
+       UAE ones. A number nobody can edit, describing a country not everybody
+       is in.
+
+       Both halves now come from the one reader each — the sentence from
+       DeliveryLine, the figure from ShippingService::thresholdHere() — and each
+       is dropped when there is nothing true to say. When both are empty the
+       band is not rendered at all: an icon with no words beside it reads as a
+       broken page rather than as restraint.
+
+       The separator belongs to the SECOND half and is only printed when there
+       is a first half in front of it, so suppressing either one cannot leave a
+       stray dot behind. --}}
+  @if ($homeDeliveryText !== '' || $homeFreeShip !== null)
   <div class="delivery {{ $sections->classFor('delivery') }}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h13v10H2z"/><path d="M15 10h4l3 3.5V17h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg>
-    @if ($homeDeliveryText !== '')<b>{{ $homeDeliveryText }}</b><span>·</span>@endif
-    <span>Free delivery over {!! Money::format((int) $settings->get('free_shipping_threshold', 19900)) !!}</span>
+    @if ($homeDeliveryText !== '')<b>{{ $homeDeliveryText }}</b>@endif
+    @if ($homeFreeShip !== null)
+      @if ($homeDeliveryText !== '')<span>·</span>@endif
+      <span>Free delivery over {!! Money::format($homeFreeShip) !!}</span>
+    @endif
   </div>
+  @endif
   @endunless
 
   @unless ($sections->hidden('ticker'))
+  {{-- THE TICKER MADE THE SAME TWO CLAIMS AS THE BAND ABOVE IT, AND MADE THEM UP.
+
+       Two hard-coded spans, looped twice, shown to everyone. The delivery
+       sentence named one country, the way the band above did before it was
+       repaired — and the free-delivery figure was a literal typed into this
+       template, so it did not read the shop's threshold at all. That second one
+       is a plain bug with no country question attached: the owner raises the
+       real threshold on Store → Shipping and this line goes on advertising the
+       old one, to every visitor including the UAE ones it was written for.
+
+       Both now come from the two values resolved at the top of this hero, which
+       is where the band gets them, so the two strips of one page cannot
+       disagree. Either is dropped when the shop has nothing true to say, which
+       for the ticker costs nothing: the remaining chips simply scroll. --}}
   <div class="tick {{ $sections->classFor('ticker') }}"><div>
     @for ($i = 0; $i < 2; $i++)
       <span>🎁 {!! $settings->get('home_ticker', 'Anniversary <b>30% off</b> — code <b>GLOW30</b> at checkout') !!}</span><span>·</span>
-      <span>Free delivery over <b>AED 199</b></span><span>·</span>
-      <span>1–3 day delivery across the UAE</span><span>·</span>
+      @if ($homeFreeShip !== null)
+        <span>Free delivery over <b>{!! Money::format($homeFreeShip, 0) !!}</b></span><span>·</span>
+      @endif
+      @if ($homeDeliveryText !== '')
+        <span>{{ $homeDeliveryText }}</span><span>·</span>
+      @endif
     @endfor
   </div></div>
   @endunless
@@ -310,7 +367,27 @@
         <div><b>{{ number_format($catalogueCount) }}</b><span>products stocked</span></div>
         <div><b>{{ $brandTotal }}</b><span>Korean brands</span></div>
         <div><b>{{ $reviews['total'] > 999 ? round($reviews['total'] / 1000, 1) . 'k+' : $reviews['total'] }}</b><span>verified reviews</span></div>
-        <div><b>1–3</b><span>day delivery</span></div>
+        {{-- A DELIVERY WINDOW WAS THE FOURTH STAT HERE, AND IT IS GONE.
+
+             The other three are counted from the database — products stocked,
+             brands carried, reviews approved. This one was two digits typed
+             into a template: a transit time, presented in the same row and the
+             same weight as three measured figures, to every visitor on earth.
+             It named no country, which made it worse rather than better, since
+             the number it quoted describes exactly one.
+
+             It is REMOVED rather than made per-country, because there is
+             nothing to make it out of. A stat tile wants a NUMBER, and the only
+             record this shop keeps of delivery anywhere is a SENTENCE the owner
+             writes on Store → Delivery & Shipping → Delivery lines. Deriving
+             "1–3" from a row that reads "Delivered across Saudi Arabia" would
+             be inventing the very figure this refuses to invent — the
+             alternative ProductPagePromisesTest already pins by name for the
+             product page's arrival date.
+
+             The delivery promise still has three places to appear, all of them
+             fed by that one sentence. It does not need a fourth wearing a
+             number's clothes. --}}
       </div>
       <a class="lnk" style="display:inline-block;margin-top:18px" href="{{ Url::to('/about/') }}">Our story</a>
     </div>
@@ -361,14 +438,50 @@
 
 {{-- TRUST --}}
 @unless ($sections->hidden('trust'))
+{{-- THE DELIVERY CARD SAID TWO THINGS AND RECORDED NEITHER.
+
+     Its title named one country's shipping and its line under it carried both a
+     transit time and a free-delivery figure, all four words of it typed into
+     this array. The figure was the same stale literal the ticker carried, so
+     the card advertised a threshold the owner cannot edit here, beside a
+     delivery speed true of one destination, to every visitor of the shop.
+
+     Rebuilt from the two things this application actually records: the
+     owner's delivery sentence for wherever the shopper is (Store → Delivery &
+     Shipping → Delivery lines) and the free-delivery threshold of their own
+     country (Store → Shipping, or Extended Delivery's per-country `free_from`).
+     Whichever of the two exists is shown; when neither does, the CARD ITSELF IS
+     NOT RENDERED and the row closes up to three. A trust card is a promise, and
+     a promise with nothing behind it is the one thing this row must not carry.
+
+     The title is "Delivery" rather than "Fast delivery": "fast" is an
+     unmeasured claim about a destination whose transit time this shop has not
+     recorded, and the line underneath already says whatever IS known.
+
+     Recomputed here rather than read from the hero's variables: Appearance →
+     Sections can hide the hero, and a card that 500s when the owner turns off
+     an unrelated strip is a worse defect than the one this fixes. It costs
+     nothing — both values are memoised for the life of the request. --}}
+@php
+    $trustFreeShip = app(\App\Services\ShippingService::class)->thresholdHere();
+    $trustDelivery = trim(implode(' · ', array_filter([
+        \App\Support\DeliveryLine::here(),
+        $trustFreeShip === null ? null : 'Free over ' . Money::plain($trustFreeShip, 0),
+    ])));
+
+    $trustCards = [];
+
+    if ($trustDelivery !== '') {
+        $trustCards[] = ['Delivery', $trustDelivery, '<path d="M2 7h13v10H2z"/><path d="M15 10h4l3 3.5V17h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/>'];
+    }
+
+    $trustCards[] = ['Secure payments', 'Card, Tabby, Tamara and COD', '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'];
+    $trustCards[] = ['100% original', 'Direct from brands and trusted suppliers', '<path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>'];
+    $trustCards[] = ['24/7 support', 'WhatsApp +971 58 505 2611', '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'];
+@endphp
 <section class="sec {{ $sections->classFor('trust') }}" style="padding-top:0"><div class="wrap">
   <div class="trust"><div class="g">
-    @foreach ([
-        ['Fast UAE shipping', '1–3 days, free over AED 199', '<path d="M2 7h13v10H2z"/><path d="M15 10h4l3 3.5V17h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/>'],
-        ['Secure payments', 'Card, Tabby, Tamara and COD', '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'],
-        ['100% original', 'Direct from brands and trusted suppliers', '<path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>'],
-        ['24/7 support', 'WhatsApp +971 58 505 2611', '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],
-    ] as [$t, $d, $icon])
+    @foreach ($trustCards as [$t, $d, $icon])
       <div class="i"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{!! $icon !!}</svg></span>
         <div><b>{{ $t }}</b><span>{{ $d }}</span></div></div>
     @endforeach

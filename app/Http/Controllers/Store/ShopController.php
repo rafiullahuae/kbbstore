@@ -380,21 +380,53 @@ class ShopController extends Controller
         return $base . ($category ? $category->url() : '/shop/');
     }
 
+    /**
+     * NO DELIVERY PROMISE IN A META DESCRIPTION.
+     *
+     * All three of these ended in a transit time attached to one country, and
+     * this is the description on the category archive, the search results and
+     * /shop — so it went to every visitor of those pages AND into the search
+     * result Google shows for them.
+     *
+     * It was the hardest delivery promise left anywhere in this application,
+     * for two reasons rather than one. It named a country, like the checkout,
+     * the home page, the order confirmation and the product page before their
+     * repairs. And the window it named is one the shop does not record and does
+     * not agree with: `delivery_default_text`, the owner's own wording, is
+     * "1–3 days fast delivery all over UAE". A shopper in Dubai who chose this
+     * shop from a search result offering a one-day window has been told two
+     * different things by one shop before they have clicked anything.
+     *
+     * A META DESCRIPTION CANNOT BE PER-VISITOR, which is why the machinery the
+     * rest of this lane uses is deliberately NOT applied here. There is one
+     * description per URL, a crawler is one of the readers, and varying it by a
+     * guessed geo header would mean serving search engines something different
+     * from shoppers — for a promise, which is the worst thing to do it with.
+     *
+     * So the clause is removed rather than localised, and nothing replaces it:
+     * everything these still say is a count of real rows.
+     *
+     * THE ONE THIS LANE DID NOT TOUCH is `seo_default_description`, the
+     * site-wide fallback, which also carries a delivery claim. That one is the
+     * owner's to write — it is a real field on Store → SEO (SETTING_RULES:
+     * 'seo_default_description' => ['text', 'Default description']) — and
+     * rewriting a setting he may already have edited is not this lane's to do.
+     */
     private function seoDescription(?Category $category, string $search, int $total): string
     {
         if ($category) {
             $count = $total ? "{$total} authentic Korean skincare picks" : 'authentic Korean skincare';
 
-            return "Shop {$category->name} at K-Beauty Bliss — {$count}, next-day UAE delivery.";
+            return "Shop {$category->name} at K-Beauty Bliss — {$count}.";
         }
 
         if ($search !== '') {
             $result = $total === 1 ? 'result' : 'results';
 
-            return "\"{$search}\" — {$total} {$result} at K-Beauty Bliss, authentic Korean skincare with next-day UAE delivery.";
+            return "\"{$search}\" — {$total} {$result} at K-Beauty Bliss, authentic Korean skincare.";
         }
 
-        return "Browse every K-Beauty Bliss product — {$total} authentic Korean skincare picks, from serums to beauty devices, next-day UAE delivery.";
+        return "Browse every K-Beauty Bliss product — {$total} authentic Korean skincare picks, from serums to beauty devices.";
     }
 
     private function heading(?Category $category, string $search): array

@@ -183,17 +183,47 @@ it('shows the owner-written line on the home page once he has written one', func
         ->toBeTrue('A delivery line the owner wrote for Saudi Arabia never reached the home page.');
 });
 
-it('leaves the free-delivery half of the home band alone when there is no promise to make', function () {
+it('keeps the free-delivery half of the home band when the shopper has a threshold of their own', function () {
     /*
-     * "Say nothing" must mean the delivery SENTENCE, not the whole band: the
-     * free-delivery threshold underneath it is true everywhere and is the only
-     * other thing that band carries. Hiding it too would be a second untruth by
-     * omission, and would leave a stray separator behind.
+     * AMENDED BY LANE CZ, and the amendment is the point.
+     *
+     * This case used to assert that the figure survives for ANY visitor, on
+     * the grounds that "the free-delivery threshold is true everywhere". That
+     * reasoning does not survive this shop's own configuration: production
+     * runs 199 for the UAE and 1,600 for the Gulf, and Extended Delivery
+     * carries a `free_from` per country. One figure is not true of both, and
+     * the number this band printed was the UAE's, to everyone.
+     *
+     * What the case was really protecting is intact and still asserted here:
+     * "say nothing" means the delivery SENTENCE, not the whole band. Where the
+     * shopper's own country HAS a threshold, it is shown — and it is THEIRS.
      */
+    ShippingMethod::create([
+        'shipping_zone_id' => ShippingZone::where('name', 'Gulf Countries')->value('id'),
+        'type' => 'free_shipping', 'title' => 'Free delivery',
+        'cost' => 0, 'min_amount' => 160000, 'enabled' => true, 'position' => 1,
+    ]);
+
     $html = $this->withHeader('CF-IPCountry', 'SA')->get('/')->assertOk()->getContent();
 
     expect(str_contains($html, 'Free delivery over'))
         ->toBeTrue('Suppressing the UAE promise also took the free-delivery threshold off the home page.');
+
+    expect(str_contains($html, '1,600'))
+        ->toBeTrue('The Gulf shopper was shown a free-delivery figure that is not the one their own zone records.');
+});
+
+it('makes no free-delivery claim to a country the shop offers none in', function () {
+    /*
+     * The other half, and the defect the amendment above uncovered. Neither
+     * zone in this fixture carries a free-shipping method, so there is no such
+     * offer for anybody — and the band still printed one, because the template
+     * fell back to a figure of its own when the shop had none to give.
+     */
+    $html = $this->withHeader('CF-IPCountry', 'SA')->get('/')->assertOk()->getContent();
+
+    expect(str_contains($html, 'Free delivery over'))
+        ->toBeFalse('The home page advertised free delivery in a country where the shop records no such offer.');
 });
 
 /*

@@ -205,6 +205,58 @@ class ShippingService
         return $free && $free->min_amount ? (int) $free->min_amount : null;
     }
 
+    /**
+     * The same threshold, for WHEREVER THIS VISITOR IS STANDING.
+     *
+     * WHY THIS EXISTS. The storefront advertises a free-delivery figure in four
+     * places — the announcement bar on every page, the home page's delivery
+     * band, its ticker and its trust row — and every one of them used to name
+     * the shop's own country or, worse, a number typed into the Blade. The
+     * figure is per-destination: production runs 199 for the UAE and 1,600 for
+     * the Gulf, and a shop on Extended Delivery carries a `free_from` per
+     * country. So a shopper in Riyadh was shown the Dubai number.
+     *
+     * One method rather than four call sites, for the same reason
+     * App\Support\DeliveryLine exists: four readers of one rule is four places
+     * for it to drift. This is the FIGURE; DeliveryLine is the SENTENCE.
+     *
+     * NULL IS A REAL ANSWER and means the shop records no free delivery where
+     * this visitor is. Nothing is invented to fill it — every caller drops the
+     * claim instead. The old announcement bar did the opposite: with no
+     * free-shipping method configured at all it still printed a figure of its
+     * own, so a shop that had never offered free delivery advertised it.
+     *
+     * COSTS NOTHING TO ASK TWICE. Memoised on the Request, keyed by the country
+     * it answered for, so the composer and the home page share one answer and a
+     * country changing mid-request (the checkout's selector, through
+     * ShopperCountry::remember()) simply misses the memo and re-asks. On the
+     * Request rather than in a class static, deliberately: a process-level
+     * static is the trap CLAUDE.md records against Setting::map(), correct
+     * under PHP-FPM and wrong in a queue worker or a test process.
+     *
+     * AND IT MUST NEVER BE CACHED IN A SHARED CACHE. See the note above the
+     * header extras in App\View\Composers\StoreComposer: a per-visitor value
+     * behind a global cache key means every shopper is shown whichever country
+     * happened to warm it.
+     */
+    public function thresholdHere(?\Illuminate\Http\Request $request = null): ?int
+    {
+        $request ??= request();
+
+        $country = \App\Support\ShopperCountry::for($request)->code;
+        $key = 'kbb.free_ship_threshold.' . $country;
+
+        if ($request->attributes->has($key)) {
+            return $request->attributes->get($key);
+        }
+
+        $threshold = $this->freeShippingThreshold($country);
+
+        $request->attributes->set($key, $threshold);
+
+        return $threshold;
+    }
+
     /** How much more is needed to unlock free delivery. Zero once unlocked. */
     public function amountToFreeShipping(?string $country, ?string $state, int $subtotalFils): ?int
     {
