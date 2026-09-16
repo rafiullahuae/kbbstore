@@ -53,6 +53,10 @@
 .kbb-checkout .co-fact{min-width:0}
 .kbb-checkout .co-fact dt{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:3px}
 .kbb-checkout .co-fact dd{margin:0;font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.45;overflow-wrap:anywhere}
+/* The recorded delivery window, under the rate name it belongs to. Its own
+   line at every width: at 390px the two-column facts grid is already tight,
+   and a window running on after "Free delivery" reads as part of the name. */
+.kbb-checkout .co-fact .co-when{display:block;font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
 .kbb-checkout .co-gift{background:var(--pink-soft);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:12.5px;line-height:1.5;color:var(--ink-2)}
 .kbb-checkout .co-gift b{display:block;color:var(--ink);margin-bottom:3px}
 .kbb-checkout .co-acct{margin-top:2px}
@@ -120,7 +124,14 @@
                              it" — so `paid_at` is what decides the word here. --}}
                         <div class="co-fact"><dt>{{ $order->paid_at ? 'Total paid' : 'Total to pay' }}</dt><dd>{!! Money::format((int) $order->total) !!}</dd></div>
                         <div class="co-fact"><dt>Payment</dt><dd>{{ $order->paymentLabel() }}</dd></div>
-                        <div class="co-fact"><dt>Delivery</dt><dd>{{ $order->shipping_method }}</dd></div>
+                        {{-- The rate name answered "what did I pay for", never
+                             "when does it come" — which is the question a
+                             shopper actually has on this screen. The window is
+                             the one already recorded per country in
+                             `delivery_texts` and shown under Place order, for
+                             this order's own destination, so a country with no
+                             line recorded still gets none. --}}
+                        <div class="co-fact"><dt>Delivery</dt><dd>{{ $order->shipping_method }}@if (trim((string) ($deliveryText ?? '')) !== '')<span class="co-when">{{ $deliveryText }}</span>@endif</dd></div>
                     </dl>
                 </div>
 

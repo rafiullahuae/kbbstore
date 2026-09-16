@@ -242,10 +242,25 @@
 @endunless
       </form>
 
+      {{-- TWO OF THESE FOUR WERE PROMISES NOTHING RECORDED.
+           "Fast UAE delivery" and "Easy 14-day returns" were literals here.
+           No returns window exists anywhere in this application — not a
+           setting, not a page, not a policy row — and the delivery one was
+           shown to a Gulf shopper as readily as to a UAE one, which is the
+           exact claim Lane CF removed from the checkout and
+           App\Mail\OrderStatusChanged removed from the dispatch email.
+           Nothing is invented in their place: each is now a line the owner
+           writes in Store → Ecommerce, and until they do, it is not shown.
+           The other two stay — authenticity is what this shop is, and the
+           pay-later methods are the gateways it actually offers. --}}
+      @php
+          $trustDelivery = trim((string) $settings->get('trust_delivery_text', ''));
+          $trustReturns  = trim((string) $settings->get('trust_returns_text', ''));
+      @endphp
       <div class="{{ $modules->classFor('trust') }} trust">
         <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg> 100% authentic</div>
-        <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13v10H3z"/><path d="M16 10h4l1 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg> Fast UAE delivery</div>
-        <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 5v4h4"/></svg> Easy 14-day returns</div>
+        @if ($trustDelivery !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13v10H3z"/><path d="M16 10h4l1 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg> {{ $trustDelivery }}</div>@endif
+        @if ($trustReturns !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 5v4h4"/></svg> {{ $trustReturns }}</div>@endif
         <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg> Tabby &amp; Tamara</div>
       </div>
       <div class="{{ $modules->classFor('paychips') }} paychips"><span>Tabby</span><span>Tamara</span><span>Visa</span><span>Mastercard</span><span>Apple Pay</span><span>COD</span></div>
