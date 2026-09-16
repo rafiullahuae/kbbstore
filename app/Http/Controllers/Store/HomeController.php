@@ -112,7 +112,30 @@ class HomeController extends Controller
             }
 
             return [
+                /*
+                 * THE COLUMNS THE CARD RENDERS, NAMED.
+                 *
+                 * This was a bare ->get(), so every row arrived carrying
+                 * `author_email` and `ip`. CLAUDE.md names those two columns
+                 * specifically and ApiSecurityTest exists because each of them
+                 * leaked in production; nothing on this page prints either, so
+                 * the widest thing the wall could do with them was hand them to
+                 * a template and hope. An explicit list also means a column
+                 * added to `reviews` later is private here until someone
+                 * decides otherwise — the same rule Product::toApi() follows.
+                 *
+                 * `id` and `product_id` are in the list because they are load
+                 * bearing rather than printed: product_id is what the eager
+                 * load on the line below matches on, and dropping it leaves
+                 * every card without its product name.
+                 *
+                 * Store\ProductController's review list has named its columns
+                 * this way since it was written. This is the same list, minus
+                 * the three the home card has no markup for.
+                 */
                 'items' => Review::query()->approved()
+                    ->select(['id', 'product_id', 'author_name', 'rating', 'content',
+                        'verified', 'helpful', 'created_at'])
                     ->whereNotNull('content')
                     ->with('product:id,name,slug')
                     ->latest('created_at')

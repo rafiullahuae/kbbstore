@@ -73,10 +73,36 @@ final class ProductVisibility
      *
      * $table qualifies the column names for a caller that has joined products
      * to something else and would otherwise get an ambiguous-column error.
+     *
+     * ONE READ OF THE COLUMN LIST, NOT ONE PER COLUMN.
+     *
+     * The four guards below used to be four Schema::hasColumn() calls, and each
+     * of those is a round trip to information_schema — four questions about one
+     * table, asked one column at a time, on every call. The cost landed on real
+     * pages: /korean-skincare-brands is in the main navigation and ran SIX
+     * queries of which these were FOUR, and /sitemap.xml — which a crawler
+     * fetches far more often than a shopper fetches anything — ran eighteen of
+     * which twelve were introspection. Two thirds of the brand index's database
+     * work was the database describing itself.
+     *
+     * information_schema is also the worst place to spend a query on shared
+     * hosting. It is not a table but a view over server-wide metadata, so on a
+     * host where one MySQL instance carries every tenant's schemas the cost
+     * scales with the NEIGHBOURS' tables, not with this shop's.
+     *
+     * STILL READ FRESH ON EVERY CALL, and deliberately not memoised in a
+     * static. The comment above says raw() is callable from a migration and
+     * against a partially-migrated schema, and that is exactly where a
+     * process-level memo answers with the shape the table had before the ALTER
+     * — the Setting::map() trap CLAUDE.md records, moved into the one helper
+     * that must survive a schema mid-change. One read per call is correct under
+     * every caller and is still a quarter of the queries.
      */
     public static function raw(mixed $query, string $table = 'products'): mixed
     {
-        $has = static fn (string $column): bool => \Illuminate\Support\Facades\Schema::hasColumn('products', $column);
+        $columns = array_flip(\Illuminate\Support\Facades\Schema::getColumnListing('products'));
+
+        $has = static fn (string $column): bool => isset($columns[$column]);
 
         $col = static fn (string $column): string => $table === '' ? $column : $table . '.' . $column;
 
