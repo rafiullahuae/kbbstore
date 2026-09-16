@@ -302,9 +302,16 @@ export function initCart() {
         }
     });
 
-    // Enter in the coupon field should apply it, not submit anything.
+    /* Enter in the coupon field should apply it, not submit anything.
+     *
+     * The id here was `cartCoupon`, which is not rendered anywhere in this
+     * application: the cart page's field is `#kbbCartCoupon`
+     * (store/cart-inner.blade.php) and the drawer has no coupon input at all.
+     * So this listener matched nothing, ever — and the field is not inside a
+     * form, so the browser had no fallback either. A shopper typed a discount
+     * code, pressed Enter, and absolutely nothing happened. */
     document.addEventListener('keydown', async (event) => {
-        if (event.key === 'Enter' && event.target.id === 'cartCoupon') {
+        if (event.key === 'Enter' && event.target.id === 'kbbCartCoupon') {
             event.preventDefault();
             if (event.target.value.trim()) await post('/coupon', { code: event.target.value.trim() });
         }

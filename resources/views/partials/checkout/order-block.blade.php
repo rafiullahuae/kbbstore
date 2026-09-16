@@ -34,20 +34,43 @@
         : 0;
 @endphp
 
+{{-- GIFT WRAPPING IS ITS OWN CHARGE AND HAS ITS OWN ROW, ALWAYS.
+
+     This row used to sit inside the `$codFeeFils > 0` guard below, next to the
+     Cash-on-delivery fee, as though the two were one feature. They are not: the
+     Total on this block has always been `total + giftFee`, whatever the COD fee
+     is. The admin's own default for `cod_fee` is zero
+     (EcommerceApiController's schema row), so on a shop that charges nothing
+     extra for cash the shopper ticked "This order is a gift", watched the Total
+     rise by the gift fee, and found no line anywhere on the page saying why.
+
+     Hidden, not omitted, when nothing is being charged: checkout.js unhides it
+     from the gift endpoint's answer, and an element that is not there cannot be
+     unhidden. --}}
+<div class="sumrow js-gift-row"@if ($giftFeeFils <= 0) hidden @endif><span>Gift wrapping</span><span class="js-gift">{!! \App\Support\Money::format($giftFeeFils) !!}</span></div>
+
 @if ($codFeeFils > 0)
 {{-- Visible only while Cash on delivery is the selected option — pure CSS,
      via :has() on the page's outer wrapper, the same technique already
      driving the selected-option highlight on the payment list itself. No JS
      needed for this part; the country-change refresh in checkout.js keeps
      the number itself correct (see js-total-fee below). --}}
-<div class="sumrow js-gift-row"@if ($giftFeeFils <= 0) hidden @endif><span>Gift wrapping</span><span class="js-gift">{!! \App\Support\Money::format($giftFeeFils) !!}</span></div>
 <div class="sumrow js-fee-row"><span>Cash-on-delivery fee</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils) !!}</span></div>
 @endif
 
 <div class="sumrow tot js-total-row"><span>Total</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils) !!}</span></div>
-@if ($codFeeFils > 0)
+{{-- THE COD TOTAL IS NOT CONDITIONAL ON THERE BEING A COD FEE.
+
+     kbb-checkout.css hides `.js-total-row` and shows `.js-total-row-fee`
+     whenever #payment_method_cod is checked — unconditionally, because CSS
+     cannot see what the fee is. While this row was only rendered for a fee
+     above zero, a shop taking cash on delivery with no surcharge showed the
+     shopper a checkout with NO TOTAL AT ALL: subtotal, delivery, VAT, then
+     straight to Place order. Measured in Chromium at 390px and 1280px.
+
+     With a fee of zero the two rows simply carry the same number, which is the
+     truth, and exactly one of them is ever on screen. --}}
 <div class="sumrow tot js-total-row-fee"><span>Total</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils) !!}</span></div>
-@endif
 
 @if ($totals['vat'])
     {{-- Display only. Never added to the total (D-64). --}}

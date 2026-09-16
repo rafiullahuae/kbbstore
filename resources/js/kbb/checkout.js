@@ -45,10 +45,56 @@ export function initCheckout() {
             return;
         }
 
-        // Place order — both the summary button and the sticky bar submit the
-        // one real form, so there is a single submission path.
+        /*
+         * Place order — both the summary button and the sticky bar submit the
+         * one real form, so there is a single submission path.
+         *
+         * WHY THE INVALID FIELD IS TAKEN IN HAND HERE.
+         *
+         * `reportValidity()` alone is supposed to scroll the first invalid
+         * control into view and focus it. On this page, at a phone viewport, it
+         * does neither. Measured in Chromium at 390x844 with every field filled
+         * but the email: pressing Place order took the page from scrollY 1868
+         * to scrollY 0, left #billing_email at 883px — below the fold of an
+         * 844px viewport — and left document.activeElement on <body>. So the
+         * shopper tapped the button, the page jumped somewhere else, nothing
+         * was highlighted, nothing was focused, and no order was placed. A
+         * button that appears to do nothing is the single most expensive thing
+         * a checkout can do.
+         *
+         * The cause is structural and is why this cannot be left to the
+         * browser: the button lives in .kbb-mobile-order, which is rendered
+         * AFTER the form fields in the document, so the control that needs
+         * attention is always far above the one being pressed.
+         *
+         * scrollIntoView first, then focus. focus() alone scrolls too, but it
+         * scrolls the minimum distance, which parks the field under the sticky
+         * header; 'center' puts it where a person is looking. reportValidity()
+         * is still called, and still last, so the browser's own bubble lands on
+         * a field that is by then on screen.
+         */
         if (event.target.closest('[data-place]')) {
             event.preventDefault();
+
+            const invalid = form.querySelector(':invalid');
+
+            if (invalid) {
+                /* 'instant', not 'smooth'. kbb.css sets `html{scroll-behavior:
+                   smooth}` globally, so an animated scroll is still in flight
+                   when focus() and reportValidity() run a line later — and
+                   reportValidity() then does its OWN minimal scroll, which
+                   top-aligns the field under the sticky .co-head and undoes the
+                   centring. Instant finishes first, so by the time the browser
+                   looks, the field is already where it should be and it has
+                   nothing to correct. The clearance under the sticky header is
+                   scroll-margin-top in kbb-checkout.css, which is the property
+                   for exactly this and also fixes anchor jumps. */
+                invalid.scrollIntoView({ block: 'center', behavior: 'instant' });
+                invalid.focus({ preventScroll: true });
+                form.reportValidity();
+                return;
+            }
+
             if (form.reportValidity()) form.submit();
             return;
         }
@@ -117,6 +163,28 @@ export function initCheckout() {
     });
 
     /*
+     * Enter in the discount-code field applies the code.
+     *
+     * There was no handler for this at all, and the field sits inside
+     * #kbbCheckoutForm — a form with no submit button, so the browser's own
+     * implicit submission declines too (more than one field blocks it). The
+     * result was the most natural gesture on the page doing nothing whatever:
+     * type GLOW30, press Enter, no discount, no error, no movement. Confirmed
+     * in Chromium at 390 and 1280 — Apply worked, Enter did not.
+     *
+     * preventDefault regardless of whether the field has anything in it, so an
+     * empty field can never become a stray form submission either.
+     */
+    document.addEventListener('keydown', async (event) => {
+        if (event.key !== 'Enter' || event.target.id !== 'kbb_coupon_code') return;
+
+        event.preventDefault();
+
+        const code = event.target.value.trim();
+        if (code) await changeCoupon(code, false);
+    });
+
+    /*
      * No reload on the address fields.
      *
      * Emirate is a free-text field, and a text input fires `change` when it
@@ -168,6 +236,18 @@ export function initCheckout() {
             // charges for delivery, because the bar itself never moved when
             // the price above it did.
             document.querySelectorAll('.kbb-freeship-slot').forEach((el) => { el.innerHTML = data.freeshipHtml; });
+
+            // The delivery promise under Place order is per-country as well.
+            // textContent, not innerHTML: this is operator-supplied copy and
+            // this file has no business turning it back into markup. An empty
+            // answer hides the line rather than leaving an empty truck icon.
+            if (typeof data.deliveryText === 'string') {
+                document.querySelectorAll('.kbb-delivery-line').forEach((el) => {
+                    el.hidden = data.deliveryText === '';
+                    const span = el.querySelector('span');
+                    if (span) span.textContent = data.deliveryText;
+                });
+            }
 
             // Two copies of the totals exist on this page — the summary
             // column and the mobile box — so every match is updated, not just

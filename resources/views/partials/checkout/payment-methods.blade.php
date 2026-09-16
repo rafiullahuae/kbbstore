@@ -26,6 +26,21 @@
         : ($payIds[0] ?? null);
 @endphp
 @if (!empty($payNotice))<p class="pay-note pay-moved" role="status" aria-live="polite">{{ $payNotice }}</p>@endif
+@if ($gateways === [] && empty($payNotice))
+{{-- A CHECKOUT WITH NOTHING TO PAY WITH SAYS SO.
+
+     PaymentProviderSeeder installs all four gateways switched off, so a shop
+     that has not yet been through Store → Payments renders this step as an
+     empty list under a live Place order button. Pressing it answered "The
+     payment method field is required." — a validation message about a field
+     that was never on the page, which reads as the shopper's mistake. Walked
+     end to end in Chromium: zero radios, that sentence, no way forward.
+
+     The wording is the one fragments() already uses when the last method is
+     withdrawn by a quantity change, so the page says the same thing however
+     the shopper arrives at it. --}}
+<p class="pay-note pay-empty" role="status" aria-live="polite">No payment method is available for this order total. Please contact us and we will take your order directly.</p>
+@endif
             <ul class="wc_payment_methods payment_methods methods">
             @if (!empty($codHidden))<p class="pay-note">{{ $codHidden }}</p>@endif
             @foreach ($gateways as $g)

@@ -59,6 +59,9 @@
 .kbb-cartpage .srow.tot{border-top:1px solid var(--line);margin-top:8px;padding-top:14px;font-size:17px;font-weight:800;color:var(--ink)}
 .kbb-cartpage .srow .free{color:var(--green);font-weight:700}
 .kbb-cartpage .srow.disc{color:var(--green);font-weight:600}
+/* "Delivery calculated at checkout" — a caption under the Total, not another
+   figure, so it sits quietly and takes no top padding away from the button. */
+.kbb-cartpage .srow.note{justify-content:flex-start;font-size:11.5px;color:var(--muted);padding:2px 0 0}
 .kbb-cartpage .coupon{display:flex;gap:8px;margin:14px 0;background:linear-gradient(135deg,#EEF8F1,#fff);border:1.4px dashed #BFE0CD;border-radius:12px;padding:10px}
 .kbb-cartpage .coupon input{flex:1;min-width:0;border:1.4px solid #C9E7D5;border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13px;background:#fff}
 .kbb-cartpage .coupon input:focus{outline:none;border-color:#2E9E6B;box-shadow:0 0 0 3px rgba(46,158,107,.12)}
