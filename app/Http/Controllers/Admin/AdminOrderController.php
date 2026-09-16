@@ -19,6 +19,7 @@ use App\Services\Payments\PaymentRefunder;
 use App\Support\AggregatesQueries;
 use App\Support\Fils;
 use App\Support\Money;
+use App\Support\StoreTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -112,13 +113,25 @@ class AdminOrderController extends Controller
             'status' => $order->status,
             'trashed' => $order->trashed(),
             'editable' => in_array($order->status, self::EDITABLE_STATUSES, true),
-            'created_at' => optional($order->created_at)->toAtomString(),
+            /*
+             * SHOP-LOCAL, not UTC. This was `toAtomString()` on the Eloquent
+             * cast, which is `config('app.timezone')` — UTC — so an order
+             * placed at 01:30 in Dubai opened here showing the previous day,
+             * both in the "Date created" boxes (which slice this string
+             * positionally) and anywhere else the drawer prints it.
+             *
+             * Same wire SHAPE as before — `Y-m-d\TH:i:sP`, offset included —
+             * so every existing slice() in the console keeps working; only the
+             * offset it carries has changed, from +00:00 to the shop's. The
+             * stored instant is untouched; see App\Support\StoreTime.
+             */
+            'created_at' => StoreTime::iso($order->created_at),
             'currency' => $order->currency,
 
             'payment_method' => $order->payment_method,
             'payment_method_title' => $order->payment_method_title,
             'transaction_id' => $order->transaction_id,
-            'paid_at' => optional($order->paid_at)->toAtomString(),
+            'paid_at' => StoreTime::iso($order->paid_at),
             'ip_address' => $order->ip_address,
 
             'billing_address' => $order->billing_address,
@@ -172,7 +185,7 @@ class AdminOrderController extends Controller
             })(),
 
             'invoice_number' => $order->invoice_number,
-            'invoiced_at' => optional($order->invoiced_at)->toAtomString(),
+            'invoiced_at' => StoreTime::iso($order->invoiced_at),
             // Where the two printable documents live, built by the controller
             // that serves them so there is one definition of each path and the
             // admin console never has to assemble one out of string pieces.
@@ -196,7 +209,7 @@ class AdminOrderController extends Controller
                 'status' => $r->status,
                 'failure_code' => $r->failure_code,
                 'provider_ref' => $r->provider_ref,
-                'created_at' => optional($r->created_at)->toAtomString(),
+                'created_at' => StoreTime::iso($r->created_at),
             ]),
             // Only refunds that hold money. Summing every row would count
             // failures, which would quietly reduce what can still be refunded.
@@ -214,7 +227,7 @@ class AdminOrderController extends Controller
                 'author' => $n->author,
                 'is_customer_note' => $n->is_customer_note,
                 'content' => $n->content,
-                'created_at' => optional($n->created_at)->toAtomString(),
+                'created_at' => StoreTime::iso($n->created_at),
             ]),
 
             'customer_history' => $this->customerHistory($order->customer_id, $order->email),
@@ -270,7 +283,7 @@ class AdminOrderController extends Controller
 
         return response()->json(['ok' => true, 'note' => [
             'id' => $note->id, 'author' => $note->author, 'content' => $note->content,
-            'is_customer_note' => false, 'created_at' => $note->created_at->toAtomString(),
+            'is_customer_note' => false, 'created_at' => StoreTime::iso($note->created_at),
         ]]);
     }
 

@@ -50,7 +50,11 @@ class OrderEmailPresenter
     {
         return [
             'number' => (string) ($order->order_number ?: $order->id),
-            'placedAt' => optional($order->created_at)->format('j F Y') ?: '',
+            // The shop's clock, not UTC — an order placed at 01:30 in Dubai
+            // is stored as 21:30 the previous day, so the confirmation email
+            // told the customer they had ordered yesterday. See
+            // App\Support\StoreTime.
+            'placedAt' => \App\Support\StoreTime::formatDate($order->created_at),
             'status' => (string) $order->status,
             'customerName' => $this->customerName($order),
             'items' => $this->items($order),
