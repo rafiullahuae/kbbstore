@@ -880,9 +880,12 @@ class CheckoutController extends Controller
             'on' => $on,
             'giftFee' => \App\Support\Money::format($gift),
             'total' => \App\Support\Money::format((int) $totals['total'] + $gift),
-            'totalWithFee' => $cod > 0
-                ? \App\Support\Money::format((int) $totals['total'] + $cod + $gift)
-                : null,
+            // Always sent, never null. `.js-total-row-fee` is the row the CSS
+            // puts on screen whenever Cash on delivery is selected, whatever
+            // the fee is (see order-block.blade.php), so a null here left the
+            // ONLY visible total stale the moment a COD shopper ticked the
+            // gift box on a shop with no COD surcharge.
+            'totalWithFee' => \App\Support\Money::format((int) $totals['total'] + $cod + $gift),
         ]);
     }
 
@@ -960,13 +963,16 @@ class CheckoutController extends Controller
             // it is never wrong after switching country while Cash on
             // delivery happens to be selected. The fee itself is flat and
             // never changes; only the total under it does.
+            //
+            // Sent whether or not there IS a fee. `.js-total-row-fee` is what
+            // the stylesheet shows while Cash on delivery is selected, however
+            // small the surcharge, so withholding this number when the fee is
+            // zero left the shopper's only visible total showing the previous
+            // country's figure.
             'totalWithFee' => (function () use ($totals, $request) {
                 $fee = (int) $this->settings->get('cod_fee', 0);
-                $gift = $this->giftFee($request);
 
-                return $fee > 0
-                    ? \App\Support\Money::format((int) $totals['total'] + $fee + $gift)
-                    : null;
+                return \App\Support\Money::format((int) $totals['total'] + $fee + $this->giftFee($request));
             })(),
             'vat' => $totals['vat'] ? ['label' => $totals['vat']['label'], 'formatted' => $totals['vat']['formatted']] : null,
         ]);
@@ -1291,6 +1297,31 @@ class CheckoutController extends Controller
         return $zoneCountries + $extra;
     }
 
+    /**
+     * The line under Place order, for the country this parcel is going to.
+     *
+     * THE DEFAULT IS A UAE PROMISE AND IS ONLY OFFERED TO THE UAE.
+     *
+     * `delivery_default_text` is "1–3 days fast delivery all over UAE" — the
+     * owner's own wording, and true of the only destination it names. It used
+     * to be the fallback for EVERY country, so a shopper in Saudi Arabia being
+     * charged the AED 150 Gulf rate on this very screen was told, in writing,
+     * that their order arrives in one to three days anywhere in the UAE. Not
+     * merely irrelevant to them: it is a delivery promise, and it was the wrong
+     * one.
+     *
+     * This is the same repair App\Mail\OrderStatusChanged already made to the
+     * dispatch email, for the same reason and with the same restraint: nothing
+     * is invented to put in its place. No Gulf delivery window has been
+     * measured, and a "five to eight days" written here to fill the gap would
+     * be the same class of untruth in the other direction. The line is simply
+     * not shown — partials/checkout/delivery-line.blade.php already renders
+     * nothing for an empty string — until the owner writes one.
+     *
+     * AND THEY CAN. An explicit `delivery_texts` row still wins for any
+     * country, including the UAE, so the escape hatch for the Gulf is the
+     * screen that already exists rather than a code change.
+     */
     private function deliveryText(string $country): string
     {
         $rows = (array) $this->settings->get('delivery_texts', []);
@@ -1299,6 +1330,10 @@ class CheckoutController extends Controller
             if (($row['country'] ?? '') === $country) {
                 return (string) ($row['text'] ?? '');
             }
+        }
+
+        if (strtoupper($country) !== strtoupper((string) $this->settings->get('store_country', 'AE'))) {
+            return '';
         }
 
         return (string) $this->settings->get('delivery_default_text', '1–3 days fast delivery all over UAE');

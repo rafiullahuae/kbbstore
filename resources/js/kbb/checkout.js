@@ -117,6 +117,28 @@ export function initCheckout() {
     });
 
     /*
+     * Enter in the discount-code field applies the code.
+     *
+     * There was no handler for this at all, and the field sits inside
+     * #kbbCheckoutForm — a form with no submit button, so the browser's own
+     * implicit submission declines too (more than one field blocks it). The
+     * result was the most natural gesture on the page doing nothing whatever:
+     * type GLOW30, press Enter, no discount, no error, no movement. Confirmed
+     * in Chromium at 390 and 1280 — Apply worked, Enter did not.
+     *
+     * preventDefault regardless of whether the field has anything in it, so an
+     * empty field can never become a stray form submission either.
+     */
+    document.addEventListener('keydown', async (event) => {
+        if (event.key !== 'Enter' || event.target.id !== 'kbb_coupon_code') return;
+
+        event.preventDefault();
+
+        const code = event.target.value.trim();
+        if (code) await changeCoupon(code, false);
+    });
+
+    /*
      * No reload on the address fields.
      *
      * Emirate is a free-text field, and a text input fires `change` when it

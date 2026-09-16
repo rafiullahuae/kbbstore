@@ -105,6 +105,13 @@
             @endif
 
             <div class="srow tot"><span>Total</span><span>{!! \App\Support\Money::format($totals['total']) !!}</span></div>
+            {{-- CartController::payload() calls totals() with no shipping cost,
+                 so this figure is the subtotal less any discount and nothing
+                 else. A basket of AED 130 read "Total AED 130" here and became
+                 AED 150 on the very next screen. The number is right; the word
+                 beside it was not, and one line is cheaper than a shopper
+                 discovering the difference at the payment step. --}}
+            <div class="srow note">Delivery calculated at checkout</div>
             <a class="cobtn" href="{{ Url::to('/checkout/') }}">Proceed to checkout →</a>
             <a class="conti" href="{{ Url::to('/shop/') }}">or continue shopping</a>
             <div class="paylogos"><span>Visa</span><span>Mastercard</span><span>Tabby</span><span>Tamara</span><span>Apple Pay</span><span>COD</span></div>
