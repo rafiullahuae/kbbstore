@@ -137,6 +137,19 @@
    that #content cannot hide. */
 .mlib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,100%),1fr));
            gap:12px;min-width:0}
+/* An explicit column count, set inline by the chooser. Auto — no property at
+   all — keeps the auto-fill behaviour this grid has always had, which is also
+   what a browser that never receives the property falls back to. */
+.mlib-grid[style*="--mlib-cols"]{grid-template-columns:repeat(var(--mlib-cols),minmax(0,1fr))}
+ /* colpick, NOT cols — .mlib-cols is already taken further down this file for
+   the detail dialog's two-column layout, and reusing it would have made every
+   column button a two-column grid and the dialog a row of buttons. */
+.mlib-colpick{display:flex;gap:4px;align-items:center;flex:none}
+.mlib-colpick button{font:inherit;font-size:12px;font-weight:600;min-width:30px;padding:6px 7px;
+                     border-radius:7px;border:1px solid var(--border,#e6e9f2);
+                     background:var(--surface,#fff);color:var(--ink-soft,#626c80);cursor:pointer}
+.mlib-colpick button.on{border-color:var(--accent,#15a85a);color:var(--accent-ink,#0b6e3a);
+                        background:var(--accent-soft,#e7f7ee)}
 .mlib-grid > *{min-width:0}
 
 .mlib-tile{border:1px solid var(--border,#e6e9f2);border-radius:11px;overflow:hidden;
@@ -235,6 +248,53 @@
   /* ---------------------------------------------------------------- state */
   var data = null;          // the last successful grid response
   var state = {page: 1, q: '', from: '', to: '', attached: '', attached_q: ''};
+
+  /* How many tiles across. A way of looking at the library rather than a
+     property of anything in it, so it lives in localStorage per browser and
+     never reaches the server. Wrapped because localStorage throws in a private
+     window and a throw here would take the screen down for a preference. */
+  var COLS = ['auto', 4, 6, 8, 10];
+
+  var cols = (function(){
+    try {
+      var v = localStorage.getItem('kbb.mlib.cols');
+      if (v === 'auto') return 'auto';
+      var n = parseInt(v, 10);
+      return COLS.indexOf(n) !== -1 ? n : 'auto';
+    } catch (e) { return 'auto'; }
+  })();
+
+  function colsBar(){
+    return '<span class="mlib-colpick" role="group" aria-label="Columns">'
+      + COLS.map(function(c){
+          return '<button type="button" data-mlib-cols="' + c + '"'
+            + (String(c) === String(cols) ? ' class="on"' : '')
+            + ' aria-pressed="' + (String(c) === String(cols) ? 'true' : 'false') + '"'
+            + ' title="' + (c === 'auto' ? 'As many as fit' : c + ' columns') + '">'
+            + (c === 'auto' ? 'Auto' : c) + '</button>';
+        }).join('')
+      + '</span>';
+  }
+
+  /* Set on the grid rather than re-rendering: a repaint would cost a request
+     and throw away the operator's scroll position for a column count. */
+  function applyCols(){
+    var g = document.querySelector('#content .mlib-grid');
+    if (!g) return;
+    if (cols === 'auto') g.style.removeProperty('--mlib-cols');
+    else g.style.setProperty('--mlib-cols', String(cols));
+  }
+
+  function setCols(v){
+    cols = v;
+    try { localStorage.setItem('kbb.mlib.cols', String(v)); } catch (e) {}
+    applyCols();
+    document.querySelectorAll('#content .mlib-colpick button').forEach(function(b){
+      var on = b.dataset.mlibCols === String(v);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
   var busy = false;
   var extraOpen = false;    // phone only; above 700px CSS shows the panel regardless
   var seq = 0;              // guards against an out-of-order response painting
@@ -324,8 +384,21 @@
     if (state.from) p.push('from=' + encodeURIComponent(state.from));
     if (state.to) p.push('to=' + encodeURIComponent(state.to));
     if (state.attached) p.push('attached=' + encodeURIComponent(state.attached));
-    if (state.attached && state.attached !== 'unused' && state.attached_q) {
+    /* The owner search no longer requires a "Used by" to be chosen first.
+       Typing a product name is the most direct thing an owner can do — they
+       know the product, not which kind of thing it is — and making them pick
+       a category of owner before they may type its name was a step that
+       existed only because the query was built that way. With no kind chosen
+       the endpoint searches every kind, which is what 'any' means.
+
+       Still suppressed for 'unused', where it would contradict itself: an
+       image nothing uses has no owner whose name could match. */
+    if (state.attached !== 'unused' && state.attached_q) {
       p.push('attached_q=' + encodeURIComponent(state.attached_q));
+
+      // The endpoint keys the owner search off `attached`, so a search with no
+      // kind chosen has to say "any" explicitly rather than send nothing.
+      if (!state.attached) p.push('attached=any');
     }
     if (state.page > 1) p.push('page=' + state.page);
     return p.length ? ('?' + p.join('&')) : '';
@@ -373,6 +446,7 @@
       + '<div><div class="mlib-title">Media Library</div>'
       + '<div class="mlib-sub">Every image uploaded through the admin — product photos, brand logos, '
       + 'category images and the SEO share image all land here.</div></div>'
+      + colsBar()
       + '<button class="mlib-btn" id="mlib-rescan"' + (busy ? ' disabled' : '') + '>Rescan folder</button>'
       + '</div>'
       + '<div class="mlib-stats" style="margin-top:14px">'
@@ -402,7 +476,10 @@
     // The owner box only means something for the three that HAVE an owner;
     // offering it beside "Not used anywhere" would be a control that does
     // nothing, which is the fault this project has hit three times.
-    var ownerable = state.attached && state.attached !== 'unused';
+    /* Enabled unless the operator has asked for images nothing uses, where an
+       owner name is a contradiction rather than a filter. Everything else —
+       including no kind chosen at all — searches owners by name. */
+    var ownerable = state.attached !== 'unused';
 
     // How many of the folded-away filters are actually set, so the toggle can
     // say so — a collapsed panel silently narrowing the grid is how somebody
@@ -426,7 +503,7 @@
 
       + '<div class="mlib-field"><label for="mlib-attachedq">Name of the product, brand or category</label>'
       + '<input id="mlib-attachedq" type="search"'
-      + ' placeholder="' + (ownerable ? 'e.g. COSRX' : 'pick a Used by first') + '"'
+      + ' placeholder="' + (ownerable ? 'e.g. COSRX, or a product name' : 'not used by anything') + '"'
       + ' value="' + esc(state.attached_q) + '"' + (ownerable ? '' : ' disabled') + '></div>'
 
       + '<div class="mlib-field"><label for="mlib-from">Uploaded from</label>'
@@ -573,6 +650,16 @@
 
     on('mlib-prev', 'click', function(){ if (state.page > 1) { state.page--; load(); } });
     on('mlib-next', 'click', function(){ if (data && state.page < data.pages) { state.page++; load(); } });
+
+    document.querySelectorAll('#content .mlib-colpick button').forEach(function(b){
+      b.addEventListener('click', function(){
+        setCols(b.dataset.mlibCols === 'auto' ? 'auto' : parseInt(b.dataset.mlibCols, 10));
+      });
+    });
+
+    // The stored choice has to be re-applied after every render, because the
+    // grid element is new each time and carries no inline property of its own.
+    applyCols();
 
     on('mlib-rescan', 'click', rescan);
 

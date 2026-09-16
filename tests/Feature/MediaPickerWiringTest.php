@@ -100,8 +100,18 @@ it('uses only endpoints that already existed', function () {
      */
     $picker = pickerSrc();
 
-    expect($picker)->toContain("api('/media?page=")
+    expect($picker)->toContain("api('/media?' + qs.join('&'))")
         ->and($picker)->toContain("'/media/upload'");
+
+    /*
+     * The filter parameters are the ones the endpoint already accepts, which
+     * is the whole reason this feature needed no backend change. Named here so
+     * that adding a filter the server does not read — the classic "control
+     * that silently does nothing" — fails rather than ships.
+     */
+    foreach (['page=', 'q=', 'attached=', 'attached_q=', 'from=', 'to='] as $param) {
+        expect(str_contains($picker, $param))->toBeTrue("the picker never sends {$param}");
+    }
 
     // Nothing invented, and nothing reaching past the admin-api prefix.
     expect(preg_match_all("/apiBase\(\) \+ '\/[a-z\-\/]+/", $picker, $m))->toBeGreaterThan(0);
