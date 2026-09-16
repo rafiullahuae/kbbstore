@@ -13,6 +13,25 @@ use Illuminate\Support\Facades\RateLimiter;
 class ProductController extends Controller
 {
     /** GET /api/products */
+    /**
+     * The columns toApi() actually publishes, and nothing else.
+     *
+     * `id` is here because it is the model key — not published, but Eloquent
+     * wants it. Everything else is exactly the field list in Product::toApi().
+     * `brand` is absent on purpose: toApi() reports it only when the relation
+     * is loaded, this endpoint has never loaded it, and eager-loading it here
+     * would change what the endpoint RETURNS rather than what it costs.
+     *
+     * Kept next to the query rather than on the model: this is a statement
+     * about one endpoint's cost, and a second caller wanting different columns
+     * should say so itself rather than widening this list.
+     */
+    private const INDEX_COLUMNS = [
+        'id', 'slug', 'name', 'price', 'sale_price', 'image', 'images',
+        'rating', 'review_count', 'stock_status', 'short_description',
+    ];
+
+    /** GET /api/products */
     public function index()
     {
         // 'active' matched nothing -- products use 'publish'. The bug was
@@ -20,7 +39,25 @@ class ProductController extends Controller
         // endpoint returned an empty array, so nobody noticed it had no
         // visibility rules either. scopeVisible() applies both status and
         // is_visible, and the model's soft deletes are honoured automatically.
+        //
+        // NAMED COLUMNS, AND THE REASON IS COST, NOT TIDINESS. This endpoint is
+        // unauthenticated (CLAUDE.md: "/api/* is unauthenticated") and carries
+        // no throttle, so anyone may call it as often as they like. With no
+        // select() Eloquent hydrated every column of every visible product --
+        // including `description`, which the product editor accepts up to
+        // 200,000 characters of, plus `ingredients`, `how_to_use` and the SEO
+        // blob -- and then discarded all of it, because toApi() publishes ten
+        // named fields and none of those is one of them. Measured at 250
+        // products with a 20KB description each: 6MB through memory to emit
+        // 54KB of JSON, on shared hosting, for free, to anybody.
+        //
+        // The row COUNT is still unbounded, deliberately and not fixed here:
+        // resources/views/store/category.blade.php fetches this endpoint and
+        // filters the whole catalogue client-side, so a cap would silently drop
+        // products off a real page and a throttle would 429 real visitors.
+        // Paginating it means changing that consumer in the same package.
         $rows = Product::visible()
+            ->select(self::INDEX_COLUMNS)
             ->orderBy('position')
             ->get()
             ->map(fn (Product $p) => $p->toApi());
