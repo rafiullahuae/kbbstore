@@ -157,7 +157,39 @@ class ExtendedDelivery
             }
         }
 
+        /*
+         * THE RAW COOKIE, NOT THE DECRYPTED ONE, AND THIS IS NOT BELT-AND-BRACES.
+         *
+         * `kbb_tz` is written by resources/js/kbb/app.js in the BROWSER, so it
+         * arrives without Laravel's encryption envelope. EncryptCookies drops
+         * anything that does not decrypt and never says so, which is why this
+         * tier read null on every request the site has ever served: a signal
+         * that never arrives and a signal that says "I don't know" look
+         * identical from here. bootstrap/app.php now exempts the cookie, and
+         * that exemption is correct — but it CANNOT REACH THE LIVE SERVER.
+         * UpdateGuard forbids `bootstrap/` in a package outright (a bad
+         * bootstrap stops the application booting, which would leave the
+         * updater unable to roll itself back), and the host has no shell. So on
+         * production the exemption is not there and the decrypted bag is empty.
+         *
+         * $_COOKIE is the request as PHP received it. No middleware touches it,
+         * so it carries the value whether or not the exemption is in place, and
+         * this line is what makes the tier work on the server rather than only
+         * in a checkout. The decrypted bag is still consulted first, so a value
+         * Laravel did decrypt is preferred.
+         *
+         * Nothing is trusted on the strength of it. The value is mapped through
+         * TIMEZONE_COUNTRY below — a fixed table — so anything not on that
+         * table becomes null rather than a country, and the visitor could have
+         * set their browser's time zone to whatever they liked in any case.
+         * Length-capped before it is used as an array key, so a megabyte of
+         * cookie is not carried around to be thrown away.
+         */
         $zone = (string) $request->cookie('kbb_tz', '');
+
+        if ($zone === '' && isset($_COOKIE['kbb_tz']) && is_string($_COOKIE['kbb_tz'])) {
+            $zone = substr(urldecode($_COOKIE['kbb_tz']), 0, 64);
+        }
 
         if ($zone !== '') {
             $code = self::TIMEZONE_COUNTRY[$zone] ?? null;
