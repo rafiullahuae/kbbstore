@@ -11252,6 +11252,11 @@ buildNav();
       '<div id="'+id+'_prompt" style="font-size:12px;color:var(--ink-soft)">'+(hasImg?'Click to replace':'Click to upload, or drag an image here')+'</div>'+
       '<div id="'+id+'_status" style="font-size:11.5px;color:var(--ink-soft);margin-top:4px"></div>'+
       '</div>'+
+      /* Choosing from the library is offered FIRST because it is the answer
+         most of the time: the owner's complaint was uploading the same
+         photograph again for every field that wanted it. The drop zone above
+         still uploads directly, so nothing that worked before stops working. */
+      '<div style="margin-top:7px"><button type="button" class="btn ghost" id="'+id+'_lib" style="font-size:12px;padding:6px 10px">Choose from Media Library</button></div>'+
       '<input type="hidden" id="'+id+'" value="'+sesc(curUrl)+'">'+
       '<p class="description" style="margin:6px 0 0"><a href="#" id="'+id+'_manual" style="font-size:11.5px">or paste a URL directly</a></p>'+
       '<input id="'+id+'_url" class="inp" style="display:none;margin-top:6px" value="'+sesc(curUrl)+'" placeholder="https://…"></div>';
@@ -11271,11 +11276,32 @@ buildNav();
       try{
         var fd=new FormData(); fd.append('file',file); fd.append('folder',folder||'seo');
         var res=await api('/admin-api/media/upload',{method:'POST',body:fd});
-        hidden.value=res.url; urlInput.value=res.url;
-        img.src=res.url; img.style.display='block'; preview.style.display='block';
-        prompt.textContent='Click to replace'; status.textContent='Uploaded';
+        applyUrl(res.url); status.textContent='Uploaded';
         setTimeout(function(){status.textContent='';},1800);
       }catch(e){ status.textContent='Upload failed — check connection'; }
+    }
+
+    /* One place that puts a url into the field, whether it came from an upload
+       or from the library, so the two can never drift into setting different
+       halves of it. */
+    function applyUrl(url){
+      if(!url) return;
+      hidden.value=url; urlInput.value=url;
+      img.src=url; img.style.display='block'; preview.style.display='block';
+      prompt.textContent='Click to replace';
+    }
+
+    var libBtn=document.getElementById(id+'_lib');
+    if(libBtn){
+      libBtn.onclick=function(e){
+        e.preventDefault();
+        if(typeof window.kbbPickMedia!=='function'){ status.textContent='Media Library is unavailable'; return; }
+        window.kbbPickMedia({
+          title:label||'Choose an image',
+          folder:folder||'seo',
+          onPick:function(urls){ applyUrl(urls[0]); status.textContent='Chosen'; setTimeout(function(){status.textContent='';},1500); }
+        });
+      };
     }
 
     fileInput.onchange=function(){ doUpload(fileInput.files[0]); };
@@ -13821,6 +13847,11 @@ buildNav();
      and merged without touching the rest of this one. It appends its sidebar
      entry to the rendered nav and wraps window.go, both after the script
      above has run. --}}
+{{-- The shared media picker. FIRST, because every screen partial below it
+     calls window.kbbPickMedia and a partial cannot call a global that a later
+     partial defines. It defines one global and touches nothing else. --}}
+@include('admin.partials.media-picker')
+
 @include('admin.partials.manual-order-screen')
 
 {{-- Store -> Coupons. Same arrangement and for the same reason as the screen

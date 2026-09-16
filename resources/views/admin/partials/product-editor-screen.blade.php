@@ -1068,8 +1068,10 @@
     ['sep'],
     ['removeFormat', 'Clear', 'Clear formatting'],
     ['sep'],
-    /* Handled separately in the click handler — it is not an execCommand, it
-       swaps which of the two panes is showing. */
+    /* Both handled outside the execCommand dispatcher below: 'image' opens the
+       shared picker and inserts what comes back, 'code' swaps which of the two
+       panes is showing. */
+    ['image', '🖼', 'Insert an image from the Media Library'],
     ['code', '&lt;/&gt;', 'Edit the HTML directly']
   ];
 
@@ -1222,7 +1224,10 @@
       +   'readers read — write what is actually in the shot.</p>'
       + body
       + '<div style="height:10px"></div>'
-      + '<button class="peo-drop" id="peo-galdrop"><b>Add gallery images</b>Drop them here, or tap to choose</button>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:9px">'
+      +   '<button class="peo-btn" id="peo-gallib">Choose from Media Library</button>'
+      + '</div>'
+      + '<button class="peo-drop" id="peo-galdrop"><b>Or upload new images</b>Drop them here, or tap to choose</button>'
       + '<input type="file" id="peo-galfile" accept="image/*" multiple hidden>'
       /* Directly under the drop target, which is where the operator is looking
          at the moment the upload starts. */
@@ -1264,6 +1269,7 @@
       + '<p class="peo-hint">The first picture customers see, on the shop grid and at the top of the product page.</p>'
       + '<div class="peo-main-img">' + box
       +   '<div class="peo-main-cap">'
+      +     '<button class="peo-btn" id="peo-mainlib">Choose</button>'
       +     '<button class="peo-btn" id="peo-mainpick">' + (model.image ? 'Replace' : 'Upload') + '</button>'
       +     (model.image ? '<button class="peo-btn peo-danger" id="peo-mainrm">Remove</button>' : '')
       +   '</div>'
@@ -1445,6 +1451,7 @@
       +   '<input class="peo-in" data-bind="seo.canonical" value="' + esc(seo.canonical || '') + '" '
       +     'placeholder="Leave empty unless this page duplicates another"></div>'
       + '<div class="peo-fld"><label>Share image</label>'
+      +   '<button class="peo-btn" type="button" id="peo-oglib" style="margin-bottom:7px">Choose from Media Library</button>'
       +   '<input class="peo-in" data-bind="seo.og_image" id="peo-og" value="' + esc(seo.og_image || '') + '" '
       +     'placeholder="Uses the main image if empty">'
       +   '<div style="height:7px"></div>'
@@ -1879,6 +1886,66 @@
       var mode = box.querySelector('.peo-rte-mode');
       if (!btn || !area || !code) return;
 
+      var imgBtn = box.querySelector('[data-cmd="image"]');
+
+      if (imgBtn) {
+        imgBtn.addEventListener('click', function(e){
+          e.preventDefault();
+
+          if (typeof window.kbbPickMedia !== 'function') return;
+
+          /* The caret is lost the moment focus moves to the dialog, so the
+             range is saved here and restored before inserting. Without it the
+             image lands wherever the browser last had a selection — commonly
+             the very start of a different description box. */
+          var sel = window.getSelection();
+          var range = (sel && sel.rangeCount && area.contains(sel.anchorNode))
+            ? sel.getRangeAt(0).cloneRange()
+            : null;
+
+          window.kbbPickMedia({
+            title: 'Insert an image',
+            note: 'It is placed where the cursor is, and stays in your Media Library.',
+            multiple: true,
+            folder: 'products',
+            onPick: function(urls){
+              if (!urls.length) return;
+
+              if (code.hidden) {
+                area.focus();
+
+                if (range) {
+                  var s2 = window.getSelection();
+                  s2.removeAllRanges();
+                  s2.addRange(range);
+                }
+
+                var html = urls.map(function(u){
+                  return '<img src="' + esc(u) + '" alt="">';
+                }).join('');
+
+                if (!document.execCommand('insertHTML', false, html)) {
+                  area.innerHTML += html;
+                }
+
+                model[area.dataset.field] = area.innerHTML;
+              } else {
+                // The HTML view is showing, so the markup goes in as text.
+                var tag = urls.map(function(u){
+                  return '<img src="' + u + '" alt="">';
+                }).join('\n');
+
+                var at = code.selectionStart;
+                code.value = code.value.slice(0, at) + tag + code.value.slice(code.selectionEnd);
+                model[code.dataset.code] = code.value;
+              }
+
+              dirty = true; markDirty(); words(area);
+            }
+          });
+        });
+      }
+
       btn.addEventListener('click', function(e){
         e.preventDefault();
 
@@ -1914,6 +1981,93 @@
 
       code.addEventListener('input', markDirty);
     });
+
+    /* ---- the Media Library picker -------------------------------------
+       Four controls, one dialog. Each hands the picker a callback and takes
+       urls back; none of them knows anything about how the picker works, and
+       the picker knows nothing about the product. The direct-upload paths
+       below are untouched, so dragging a file onto the gallery still works
+       exactly as it did — the owner asked for a way to STOP re-uploading, not
+       for uploading to be taken away.
+
+       Every one of these guards on the global existing. The picker is its own
+       partial, and a package that shipped this screen without it would
+       otherwise throw on the first click rather than simply not working. */
+    function pickerReady(){ return typeof window.kbbPickMedia === 'function'; }
+
+    var mainLib = document.querySelector('#content #peo-mainlib');
+    if (mainLib) {
+      mainLib.addEventListener('click', function(e){
+        e.preventDefault();
+        if (!pickerReady()) { banner = 'The Media Library is not available on this screen.'; render(); return; }
+        window.kbbPickMedia({
+          title: 'Choose the main image',
+          folder: 'products',
+          onPick: function(urls){
+            if (!urls.length) return;
+            model.image = urls[0];
+            dirty = true;
+            render();
+          }
+        });
+      });
+    }
+
+    var galLib = document.querySelector('#content #peo-gallib');
+    if (galLib) {
+      galLib.addEventListener('click', function(e){
+        e.preventDefault();
+        if (!pickerReady()) { banner = 'The Media Library is not available on this screen.'; render(); return; }
+        window.kbbPickMedia({
+          title: 'Add gallery images',
+          note: 'Pick as many as you like. They are added after the main image, in the order shown here.',
+          multiple: true,
+          folder: 'products',
+          onPick: function(urls){
+            var added = 0;
+
+            urls.forEach(function(u){
+              /* The same two rules the upload path applies: never twice, and
+                 never a second copy of the main image. Without them, choosing
+                 from the library is the easiest way there is to file one
+                 photograph in a gallery three times. */
+              if (u && u !== model.image && model.images.indexOf(u) === -1) {
+                model.images.push(u);
+                added++;
+              }
+            });
+
+            if (added) { dirty = true; }
+            else { banner = urls.length === 1
+                ? 'That image is already on this product.'
+                : 'Those images are already on this product.'; }
+
+            render();
+          }
+        });
+      });
+    }
+
+    var ogLib = document.querySelector('#content #peo-oglib');
+    if (ogLib) {
+      ogLib.addEventListener('click', function(e){
+        e.preventDefault();
+        if (!pickerReady()) { banner = 'The Media Library is not available on this screen.'; render(); return; }
+        window.kbbPickMedia({
+          title: 'Choose the share image',
+          note: 'Shown when this product is shared on Facebook, WhatsApp or X.',
+          folder: 'products',
+          onPick: function(urls){
+            var box = document.querySelector('#content #peo-og');
+            if (!box || !urls.length) return;
+            box.value = urls[0];
+            collect();
+            markDirty();
+            snippet();
+          }
+        });
+      });
+    }
 
     var railsBtn = document.querySelector('#content #peo-rails');
     if (railsBtn) railsBtn.addEventListener('click', function(){ setRails(!rails); });
@@ -2068,7 +2222,7 @@
          showing, and its own listener does that. Claiming it here too would
          focus the written pane the instant the operator asked for the HTML
          one, and run execCommand('code') into the bargain. */
-      if (b.dataset.cmd === 'code') return;
+      if (b.dataset.cmd === 'code' || b.dataset.cmd === 'image') return;
 
       b.onclick = function(e){
         e.preventDefault();
