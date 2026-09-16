@@ -161,6 +161,39 @@ require_once __DIR__.'/../vendor/autoload.php';
         @rmdir($manifests);
     });
 
+    /*
+     * THE WEB ROOT, so a suite run can find the built assets.
+     *
+     * bootstrap/app.php ends with
+     * usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/.../public_html/kbb-upgrade')
+     * because on the live host the web root is a DIFFERENT directory from the
+     * application root -- the standing arrangement recorded in CLAUDE.md, and
+     * that hard-coded path is the server's, not this checkout's. Nothing sets
+     * the variable locally, so every suite run resolved publicPath() to a
+     * directory that does not exist here, and @vite() could not read
+     * public/build/manifest.json:
+     *
+     *     Illuminate\Foundation\ViteException: Unable to locate file in Vite
+     *     manifest: resources/css/kbb/kbb-banner.css.
+     *
+     * Seven tests in BrandEditorAndPageBannerTest answered 500 because of it,
+     * and they answered 500 for a reason that has nothing to do with brands,
+     * banners or anything else they assert. A lane that exported the variable
+     * in its shell saw green; the next lane, in a fresh shell, saw seven reds
+     * and a stack trace pointing at the framework. That is a false red the
+     * suite should never have been able to produce, and it costs whoever hits
+     * it the time to work out that the suite, not the code, is misconfigured.
+     *
+     * Defaulted, not forced: an explicit KBB_PUBLIC_PATH still wins, which is
+     * what PublicAssetRelocationTest relies on when it hands a subprocess a
+     * throwaway web root of its own.
+     */
+    $publicPath = getenv('KBB_PUBLIC_PATH');
+
+    if (! is_string($publicPath) || trim($publicPath) === '') {
+        $put('KBB_PUBLIC_PATH', dirname(__DIR__).'/public');
+    }
+
     $requested = getenv('KBB_TEST_DB');
     $requested = is_string($requested) ? trim($requested) : '';
 

@@ -20,6 +20,13 @@ class SettingsSeeder extends Seeder
             'store_name' => 'K-Beauty Bliss',
             'currency' => 'AED',
             'store_country' => 'AE',
+
+            // The shop trades from Dubai, so every date in the admin panel and
+            // on every document is read on Dubai's clock. Storage stays UTC and
+            // APP_TIMEZONE stays UTC with it — this is a DISPLAY setting, read
+            // by App\Support\StoreTime, whose header explains why flipping the
+            // application timezone instead would move every historical order.
+            'store_timezone' => 'Asia/Dubai',
             'support_email' => 'info@kbeautybliss.com',
             'brand_whatsapp' => '+971585052611',
             'brand_accent' => '#E0567B',

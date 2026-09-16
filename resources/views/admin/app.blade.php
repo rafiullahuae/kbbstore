@@ -8763,7 +8763,11 @@ buildNav();
        refunded order stayed in the revenue figure for ever. */
     setKpi('Revenue (30d)', 'AED '+s.revenue_30d_aed.toLocaleString(),
       s.refunds_30d_aed ? ('net of AED '+s.refunds_30d_aed.toLocaleString()+' refunded') : 'last 30 days, net of refunds');
-    setKpi('Orders', s.orders.toLocaleString(), s.paid_orders+' paid');
+    /* "Today" is the shop's own calendar day, not the server's. Storage is
+       UTC; App\Support\StoreTime decides which local day a stored instant falls
+       in, so an order placed at 01:30 in Dubai counts towards today rather than
+       towards yesterday, which is where a UTC day would have filed it. */
+    setKpi('Orders', s.orders.toLocaleString(), (s.today? s.today.orders+' today \u00b7 ' : '')+s.paid_orders+' paid');
     setKpi('Customers', s.customers.toLocaleString(), 'total accounts');
     /* Named for what it measures. See the comment on the tile in renderDash():
        this is not a conversion rate and nothing here tracks sessions. */
@@ -8771,7 +8775,10 @@ buildNav();
     setKpi('Orders completed', conv+'%', s.paid_orders+' of '+s.orders+' reached a real status');
 
     var banner = document.querySelector('#content .banner div');
-    if(banner) banner.innerHTML = 'Live data. <b>'+s.products+'</b> products, <b>'+s.orders+'</b> orders, <b>'+s.customers+'</b> customers. '+(s.low_stock? ('<b>'+s.low_stock+'</b> low on stock.') : 'Stock levels healthy.');
+    /* Demo orders are excluded from every money figure on this screen, so the
+       screen has to say so — otherwise switching Demo Content on and off moves
+       the revenue and nothing explains why. */
+    if(banner) banner.innerHTML = 'Live data. <b>'+s.products+'</b> products, <b>'+s.orders+'</b> orders, <b>'+s.customers+'</b> customers. '+(s.low_stock? ('<b>'+s.low_stock+'</b> low on stock.') : 'Stock levels healthy.')+((s.demo&&s.demo.excluded)? (' <b>'+s.demo.orders+'</b> demo orders are excluded from these figures.') : '');
 
     var cards = Array.prototype.slice.call(document.querySelectorAll('#content .card.pad'));
     var feedCard = cards.filter(function(c){ return /Recent activity/.test(c.textContent); })[0];
@@ -9241,6 +9248,11 @@ buildNav();
           '<div class="pbrand">' +
             (o.wc_order_id ? 'Woo #' + o.wc_order_id : '#' + o.id) +
             (o.trashed ? ' · <span style="color:var(--red)">in the trash</span>' : '') +
+            /* Demo orders stay on this list — showing them is what the Demo
+               Content feature is for — but they are excluded from every money
+               figure on the Dashboard and in Analytics, so the row has to admit
+               which it is. */
+            (o.is_demo ? ' · <span style="color:var(--ink-faint)">demo</span>' : '') +
           '</div></td>' +
         '<td><div class="row" style="min-width:0">' +
           '<span class="pthumb" style="background:' + sesc(tcol(olLabel(o))) + ';width:32px;height:32px;font-size:10px">' + sesc(initials(olLabel(o))) + '</span>' +
@@ -12052,7 +12064,7 @@ buildNav();
       /* --- section 2: the chart --- */
       '<div class="an-card">'+
         '<div class="an-sec-h"><div class="an-sec-t">Revenue \u2014 last 14 days</div>'+
-        '<div class="an-sec-d">Each bar is one day, by the date the order was placed, net of anything refunded on it.</div></div>'+
+        '<div class="an-sec-d">Each bar is one day in '+sesc(a.timezone||'Asia/Dubai')+' time, by the date the order was placed, net of anything refunded on it.'+((a.demo&&a.demo.excluded)? ' Demo orders are excluded.' : '')+'</div></div>'+
         '<div class="an-scale"><span>Tallest bar <b>'+sesc(anMoney(peak))+'</b></span>'+
         '<span>These 14 days <b>'+sesc(anMoney(windowTotal))+'</b></span></div>'+
         (daily.length? '<div class="an-chart">'+bars+'</div><div class="an-xaxis">'+xs+'</div>'
@@ -12217,7 +12229,7 @@ buildNav();
       '<div class="bd-wrap"><div class="bd-card">'+
 
       bdSec('Store identity',
-        'The name and tax rate every invoice, email and checkout total is built from. Come here when the business name changes or the VAT rate moves.',
+        'The name, the tax rate and the clock every invoice, email and checkout total is built from. Come here when the business name changes, the VAT rate moves, or the shop trades from a different city.',
         '<div class="bd-grid">'+
           bdField('set_store_name','Store name',
             '<input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'">',
@@ -12227,6 +12239,30 @@ buildNav();
           bdField('set_vat','VAT rate (%)',
             '<input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'">',
             'Applied to checkout totals. Leave at 0 for none.')+
+          /* THE CLOCK EVERY DATE IN THE PANEL IS READ ON.
+
+             Storage stays UTC and this never changes it — see
+             App\Support\StoreTime. What this decides is which calendar day a
+             stored instant is shown under: the dashboard's "today", each bar of
+             the fourteen-day chart, the date printed on an invoice and on the
+             customer's confirmation email. Left unset the shop reads Dubai,
+             which is where it trades.
+
+             A short list, not the whole tz database: every zone the shop could
+             plausibly keep is here, and a free-text box is a way to mistype
+             "Asia/Dubai" and have the panel quietly fall back without saying
+             so. The server still validates whatever arrives. */
+          bdField('set_store_timezone','Time zone',
+            seoSel('set_store_timezone',SETTINGS.store_timezone,[
+              ['Asia/Dubai','Dubai — UAE (UTC+4)'],
+              ['Asia/Muscat','Muscat — Oman (UTC+4)'],
+              ['Asia/Riyadh','Riyadh — Saudi Arabia (UTC+3)'],
+              ['Asia/Kuwait','Kuwait (UTC+3)'],
+              ['Asia/Qatar','Doha — Qatar (UTC+3)'],
+              ['Asia/Bahrain','Manama — Bahrain (UTC+3)'],
+              ['UTC','UTC — no offset']
+            ],'Asia/Dubai'),
+            'Which day an order counts towards, on every screen and document. Nothing already recorded is altered.')+
         '</div>')+
 
       bdSec('How prices are printed',
@@ -12281,6 +12317,7 @@ buildNav();
     document.getElementById('set_save_biz').onclick=async function(){
       var payload={
         store_name: sval('set_store_name'), currency: sval('set_currency'), vat_rate: sval('set_vat'),
+        store_timezone: sval('set_store_timezone'),
         currency_symbol: sval('set_currency_symbol'),
         currency_symbol_render: sval('set_currency_symbol_render'),
         currency_position: sval('set_currency_position'),
