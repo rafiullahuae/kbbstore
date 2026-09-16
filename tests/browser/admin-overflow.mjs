@@ -39,9 +39,18 @@ const PROBE_W = Number(process.env.KBB_BROWSER_PROBE_W || 1672);
  * Every screen the admin's own go() router can render.
  *
  * Deliberately the whole list and not the four that were reported: the point
- * of a walk is that it catches the fifth. Frame screens (FRAME_SRC), the `p-`
- * placeholders and the `rev-` review frames are out — they are iframes, so
- * their content is not this document's to measure.
+ * of a walk is that it catches the fifth. The `p-` placeholders and the `rev-`
+ * review frames are out — they are iframes, so their content is not this
+ * document's to measure.
+ *
+ * THE LAST THREE ARE NOT IN FRAME_SRC'S SENSE ANYMORE. When this list was
+ * written, 'analytics', 'store-settings' and 'seo' were frame screens and were
+ * excluded on that ground. They are in LIVE_RENDERED now — a later window.go
+ * override draws all three in this document, no iframe involved — so the
+ * ground for excluding them has gone, and with it the reason they were the
+ * only heavily-used screens nothing measured. All three squeezed rather than
+ * overflowed at 390px, which is a defect this walk cannot see; it can see the
+ * next one, which is why they belong here.
  */
 const SCREENS = [
   'dash', 'updates', 'layout', 'bundles', 'homepage', 'productpage',
@@ -50,6 +59,7 @@ const SCREENS = [
   'payship', 'mail', 'shipping', 'pages-store', 'pages-user', 'theme', 'users',
   'settings', 'debug', 'sandbox', 'console', 'catalog', 'import', 'labels',
   'pixels', 'meta', 'shopfilters', 'democontent',
+  'analytics', 'store-settings', 'seo',
 ];
 
 const fail = (msg) => {
