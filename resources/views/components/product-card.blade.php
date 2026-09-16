@@ -6,7 +6,7 @@
     .prate / .pprice, so almost none of the card CSS matched and every grid on
     the site rendered unstyled.
 --}}
-@props(['product'])
+@props(['product', 'eager' => false])
 
 @php
     // Catalogue → Wishlist. The heart is markup only until the module is on.
@@ -45,8 +45,33 @@
         }
     }
 
+    // The photograph is a real <img> now, not a CSS background on .ph.
+    //
+    // It was a white background with the photograph painted over it by the
+    // background shorthand, centred and contained. The same three things were
+    // wrong with it that were already fixed on the product page (see
+    // partials/product-gallery.blade.php, which this now matches):
+    //
+    //  * loading="lazy" has no background-image equivalent, so every photograph
+    //    in the grid was fetched the moment the page opened. Measured on /shop
+    //    against a 671-product catalogue: 21 photographs, 4.4MB, of which four
+    //    are above the fold on a 390px phone. The other seventeen were paid for
+    //    by a shopper who may never scroll to them.
+    //  * the preload scanner cannot see a URL that exists only inside a style
+    //    attribute, so the largest element in the grid was undiscoverable until
+    //    the stylesheet had been parsed.
+    //  * a crawler treats a background as decoration, so no product photograph
+    //    in any grid on this site could be indexed by Google Images, and a
+    //    screen reader was told nothing at all.
+    //
+    // .ph keeps its own background for the no-photograph case and stays a
+    // CSS-sized box -- a fixed 180-pixel frame -- which is what reserves the
+    // space; the <img> is absolutely positioned inside it and therefore cannot
+    // move anything, whatever order the bytes arrive in. Containing the image
+    // inside that frame is the exact equivalent of the shorthand it replaces,
+    // so the framing is unchanged: letterboxed, never cropped.
     $phStyle = $img
-        ? "background:#fff url('" . e($img) . "') center/contain no-repeat"
+        ? 'background:#fff'
         : 'background:' . \App\Support\Gradient::for($brand . $name);
 
     $binit = $img
@@ -58,6 +83,18 @@
 
 <div class="pc">
     <div class="ph" style="{{ $phStyle }}" onclick="location.href='{{ $link }}'">
+        @if ($img)
+            {{-- `eager` is passed by the page that knows this card is the first
+                 one in its grid, which is the LCP candidate at both widths.
+                 Everything else is lazy: a browser still fetches a lazy image
+                 that is already inside the viewport, so the cards beside this
+                 one are not delayed -- what lazy buys is the rest of the page,
+                 which is most of it. Related products and every other grid get
+                 the default, because none of them is ever the LCP. --}}
+            <img class="ph-img" src="{{ $img }}" alt="{{ $product->altFor($img) }}"
+                 @if ($eager) loading="eager" fetchpriority="high" @else loading="lazy" @endif
+                 decoding="async">
+        @endif
         {!! $binit !!}
         {!! $label !!}
         @if ($kbbQuickView)

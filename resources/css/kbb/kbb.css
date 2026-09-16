@@ -52,7 +52,33 @@
   .mbar .wrap{display:flex;align-items:center;gap:2px}
   .mbar{--nav-scale:1}
   .navitem{position:relative}
-  .navlink{display:inline-flex;align-items:center;gap:calc(6px * var(--nav-scale));padding:13px calc(13px * var(--nav-scale));font-size:calc(13px * var(--nav-scale));font-weight:600;color:var(--ink);cursor:pointer;position:relative;white-space:nowrap}
+  /* THE LINE BOX IS NOT ALLOWED TO DEPEND ON --nav-scale, AND THAT IS THE
+     WHOLE POINT OF THE FIXED line-height BELOW.
+
+     nav-fit.js lowers --nav-scale once the bundle has run, so that eleven
+     top-level menu items fit on one row. Everything it touches here is
+     horizontal -- gap, side padding, the underline insets -- except
+     font-size, and font-size used to drag the line box down with it: the
+     links measured 47px tall on first paint and 41px once the script had
+     run. Six pixels off the height of the bar moved main#content, the
+     footer and every section below them up the page, in one shift, after
+     first paint. Measured at 1280x800 that shift alone scored 0.236 on the
+     home page and 0.143 on the shop -- a failing Cumulative Layout Shift,
+     caused by nothing the shopper did and nothing they could see.
+
+     It only ever happened on desktop, which is why it hid for so long:
+     under 1000px .mbar is display:none, fitNavBar() returns early on a
+     zero-width bar, and the phone measured a clean 0.000.
+
+     19.5px is 13px x 1.5 -- the line box the unscaled font already
+     produced -- so first paint is pixel-identical to before and it is the
+     shrunken state that now matches it instead of the other way round. The
+     inline children (.ind at 8px, .npill at 8.5px) were never scaled, so
+     the link's height is now the same at every scale. Do not fold the scale
+     variable into this value, or into padding's first component: either
+     change reintroduces the shift, and GridPhotoLoadingTest fails if you
+     do. */
+  .navlink{display:inline-flex;align-items:center;gap:calc(6px * var(--nav-scale));padding:13px calc(13px * var(--nav-scale));font-size:calc(13px * var(--nav-scale));line-height:19.5px;font-weight:600;color:var(--ink);cursor:pointer;position:relative;white-space:nowrap}
   .navlink .ind{font-size:8px;opacity:.5;transition:transform .2s}
   .navitem:hover>.navlink .ind{transform:rotate(180deg)}
   .navlink .npill{font-size:8.5px;font-weight:800;color:#fff;border-radius:5px;padding:1px 5px;letter-spacing:.03em}
@@ -214,6 +240,25 @@
   .pc{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-m);overflow:hidden;transition:.2s var(--ease);display:flex;flex-direction:column}
   .pc:hover{box-shadow:var(--sh-m);transform:translateY(-4px)}
   .pc .ph{height:180px;position:relative;display:grid;place-items:center;color:#fff;cursor:pointer}
+  /* The card photograph. Same swap, and the same reasoning, as .gmain-img in
+     kbb-product.css: a CSS background became a real <img> so it can be lazy,
+     indexed and described, and object-fit:contain is the exact equivalent of
+     the `center/contain no-repeat` shorthand it replaces.
+
+     WHAT KEEPS CUMULATIVE LAYOUT SHIFT AT ZERO HERE, and it is not the img.
+     .ph above is a fixed 180-pixel box -- a frame whose size is settled by the
+     stylesheet before a single byte of any photograph has arrived -- and this
+     rule takes the img out of flow inside it. Nothing in the card can move when
+     an image decodes, arrives late, or 404s, which is the one thing the old
+     background got right and the conversion had to keep. Do not give .ph an
+     `auto` height, and do not make this img a flow child: either change makes
+     the tile's height depend on the file and reintroduces the shift.
+
+     Absolute rather than a grid item for the second reason .gmain-img is: .ph
+     is display:grid;place-items:center and .binit is its centred child, so a
+     flow img would be laid out beside the fallback initials rather than
+     sharing the frame with them. */
+  .pc .ph-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
   .pc .binit{font-weight:700;font-size:13px;text-align:center;line-height:1.35;text-shadow:0 1px 6px rgba(0,0,0,.12)}
   .pc .lbl{position:absolute;top:12px;left:12px;font-size:10px;font-weight:700;color:#fff;border-radius:99px;padding:4px 10px}
   .pc .heart{position:absolute;top:11px;right:11px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;color:var(--ink)}
