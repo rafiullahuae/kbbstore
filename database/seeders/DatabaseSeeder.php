@@ -20,6 +20,12 @@ class DatabaseSeeder extends Seeder
             // migration. Every row has wc_id = null, so the Migrator cannot
             // confuse these with real products.
             DemoCatalogueSeeder::class,
+            // Real rows in `reviews` for those products. MUST follow the
+            // catalogue: it seeds `products.rating` and `products.review_count`
+            // to zero and this is what fills them in, from the approved rows,
+            // via App\Support\ProductRating. Run the other way round and every
+            // demo product is left advertising no reviews while carrying them.
+            DemoReviewsSeeder::class,
         ]);
     }
 }
