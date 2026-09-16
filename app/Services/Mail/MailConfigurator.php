@@ -112,12 +112,29 @@ class MailConfigurator
     /**
      * Manager instances this process has already registered the driver on.
      *
-     * Keyed by object id, because the point is "ensure this manager knows the
-     * driver", not "overwrite whatever it knows".
+     * A WeakMap KEYED BY THE MANAGER ITSELF, not by spl_object_id().
      *
-     * @var array<int, true>
+     * This was `array<int, true>` keyed on spl_object_id($manager), and that is
+     * unsound: PHP reuses an object id the moment the object it belonged to is
+     * freed. Proved directly — five Probe objects created and released in
+     * sequence all reported id 1. So a FRESH MailManager could land on the id of
+     * a retired one, be treated as already registered, and never learn the
+     * kbb-server transport. The next send then threw "Unsupported mail transport
+     * [kbb-server]" — the owner's original symptom, from a different cause.
+     *
+     * Non-deterministic by nature, because it depends on allocation history:
+     * MailTransportOrderingTest failed intermittently and moved in and out of
+     * failing as unrelated tests were added, which is how it was finally caught.
+     * Under PHP-FPM one manager per request mostly hides it; a queue worker that
+     * rebuilds the manager is where it silently costs a real order email.
+     *
+     * WeakMap holds no strong reference, so an entry disappears with its
+     * manager and a new object can never match a dead key. Same "ensure, don't
+     * replace" semantics as before, minus the collision.
+     *
+     * @var \WeakMap<object, true>
      */
-    private static array $registered = [];
+    private static ?\WeakMap $registered = null;
 
     /**
      * Teach a mail manager about the server transport, once per instance.
@@ -139,13 +156,13 @@ class MailConfigurator
      */
     public static function registerTransports($manager): void
     {
-        $id = spl_object_id($manager);
+        self::$registered ??= new \WeakMap();
 
-        if (isset(self::$registered[$id])) {
+        if (isset(self::$registered[$manager])) {
             return;
         }
 
-        self::$registered[$id] = true;
+        self::$registered[$manager] = true;
 
         $manager->extend(
             ServerMailTransport::NAME,
