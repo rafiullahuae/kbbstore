@@ -123,3 +123,54 @@ it('recomputes the seeded columns to what the reviews table actually holds', fun
     expect((int) $fresh->review_count)->toBe(0)
         ->and((float) $fresh->rating)->toBe(0.0);
 });
+
+it('retires a fabricated rating but leaves an imported one it cannot account for', function () {
+    /*
+     * The migration's scope, asserted through the same query it runs.
+     *
+     * Two products carry "4.9 / 3,204" and no reviews. One is a placeholder
+     * this repo's seeder invented (wc_id null) — that pair is fiction and goes.
+     * The other came from WooCommerce, which keeps its own rating meta; nothing
+     * in this repo writes that combination, but the live catalogue predates
+     * this repo and a migration that guesses wrong there deletes a real figure
+     * on a host with no shell to restore it from.
+     *
+     * The third product is imported AND has a real review, which is always
+     * safe to recompute because the answer comes from the rows.
+     */
+    $seeded = truthProduct(['rating' => 4.9, 'review_count' => 3204]);
+    $imported = truthProduct(['rating' => 4.9, 'review_count' => 3204, 'wc_id' => 55501]);
+    $importedWithReview = truthProduct(['rating' => 4.9, 'review_count' => 3204, 'wc_id' => 55502]);
+
+    Review::create([
+        'product_id' => $importedWithReview->id,
+        'author_name' => 'Shopper',
+        'rating' => 4,
+        'content' => 'A real imported review.',
+        'status' => 'approved',
+    ]);
+
+    // Exactly the selection the migration makes.
+    $ids = Product::withTrashed()
+        ->where(function ($q): void {
+            $q->whereNull('wc_id')
+                ->orWhereIn('id', function ($sub): void {
+                    $sub->select('product_id')->from('reviews')->whereNotNull('product_id');
+                });
+        })
+        ->pluck('id')
+        ->all();
+
+    ProductRating::refresh($ids);
+
+    expect((int) $seeded->fresh()->review_count)
+        ->toBe(0, 'the invented pair survived on a placeholder product');
+
+    expect((int) $imported->fresh()->review_count)
+        ->toBe(3204, 'an imported rating with no rows behind it was destroyed');
+
+    expect((int) $importedWithReview->fresh()->review_count)
+        ->toBe(1, 'an imported product with a real review was not recomputed from it');
+    expect((float) $importedWithReview->fresh()->rating)
+        ->toBe(4.0, 'the recomputed average does not match the one real review');
+});

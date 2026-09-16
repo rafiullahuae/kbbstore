@@ -28,6 +28,28 @@ use Illuminate\Support\Facades\DB;
  * the owner approves or imports a review for a product, that product's numbers
  * come back on their own.
  *
+ * SCOPE, AND WHY IT IS NARROWER THAN "EVERY PRODUCT".
+ *
+ * This recomputes two sets and no others:
+ *
+ *   - products with `wc_id IS NULL` — the placeholders this repo's own seeder
+ *     invented. There is nothing to protect there; the fabricated pair is
+ *     exactly what has to go.
+ *   - products that HAVE review rows, imported or not. Recomputing those is
+ *     always safe: the answer is derived from the rows themselves.
+ *
+ * What it leaves alone is an imported product carrying a rating with no review
+ * rows behind it. Nothing in this repo writes that combination — the
+ * WooCommerce importer never touches either column, and the only writers are
+ * ProductRating::refresh() and the demo seeder — but the live catalogue was
+ * populated before this repo existed, and I cannot inspect it from here. If
+ * such a row does exist, its rating came from WooCommerce's own rating meta,
+ * and zeroing it would be this migration destroying data it does not own.
+ * 2026_10_04_000000_normalise_review_statuses declined that same reach for the
+ * same reason, and 2026_10_11_000002_seed_demo_reviews scopes to `wc_id IS
+ * NULL` for it too. A stale figure on a card is a smaller harm than a real one
+ * deleted with no way to get it back on a host with no shell.
+ *
  * Re-runnable: refresh() recomputes from the reviews table rather than
  * adjusting, so running this twice gives the same answer. No schema change and
  * no AFTER clause.
@@ -42,6 +64,14 @@ return new class extends Migration
 
         Product::withTrashed()
             ->select('id')
+            ->where(function ($q): void {
+                $q->whereNull('wc_id')
+                    ->orWhereIn('id', function ($sub): void {
+                        $sub->select('product_id')
+                            ->from('reviews')
+                            ->whereNotNull('product_id');
+                    });
+            })
             ->orderBy('id')
             ->chunkById(500, function ($rows) use (&$touched): void {
                 $ids = $rows->pluck('id')->all();
