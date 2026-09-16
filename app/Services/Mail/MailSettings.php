@@ -83,6 +83,30 @@ class MailSettings
         'mail_support_email' => ['text', 'Support email address', 'Where a customer should write for help. Blank uses the From address above.'],
         'mail_support_instagram' => ['text', 'Instagram', 'Your handle (@kbeauty.bliss) or the full profile link. Blank uses the one saved under Store → Business Details.'],
         'mail_signature' => ['text', 'Signature', 'Signed at the foot of every order email, e.g. "With love, the K Beauty Bliss team". Type a | where you want a new line. Blank prints the store name.'],
+
+        /*
+         * ── What a customer is told about money when an order is cancelled ──
+         *
+         * SHIPPED BLANK, AND THAT IS THE POINT. The cancellation email used to
+         * carry a sentence of its own about the money coming back. Cancelling an
+         * order in this application starts no refund — PaymentRefunder is a
+         * separate action an operator takes deliberately — so that sentence was
+         * describing something nobody had done, and the customer waited for it.
+         * App\Mail\OrderStatusChanged sets the whole thing out at length.
+         *
+         * What the email now says is only what the order's own rows record: a
+         * refund that really is on the books, or that nothing was ever taken, or
+         * that money was taken and no refund has been recorded. In that last
+         * case, and ONLY that case, whatever is typed here is printed after it.
+         * It is the one place in this flow where a person has to say what
+         * happens next, because the application cannot know: no refund policy is
+         * written down anywhere in this shop, and a default invented here would
+         * be the same untruth in a different hand.
+         *
+         * A cap, like the four above it, because MailApiController's rule list
+         * is another lane's hardcoded array and has no entry for this key.
+         */
+        'mail_cancelled_refund_note' => ['text', 'Cancelled orders: what you tell a paid customer about their money', 'Added to the cancellation email ONLY when the order was paid and no refund has been recorded against it yet — e.g. how you send the money back and how long it takes. Leave blank and the email says nothing beyond the amount and that no refund has been recorded.'],
     ];
 
     /*
@@ -154,15 +178,16 @@ class MailSettings
      * Caps for the fields MailApiController has no validation rule for.
      *
      * Every other key on this screen is bounded by that controller's `$checks`
-     * array. These four were added by a later lane and that file is not this
-     * lane's to edit, so the bound lives here -- an unbounded operator string
-     * rendered into every order email is a footgun whoever finds it.
+     * array. These were added by later lanes and that file is not this lane's to
+     * edit, so the bound lives here -- an unbounded operator string rendered
+     * into every order email is a footgun whoever finds it.
      */
     public const MAX_LENGTHS = [
         'mail_signature' => 500,
         'mail_support_whatsapp' => 60,
         'mail_support_email' => 255,
         'mail_support_instagram' => 200,
+        'mail_cancelled_refund_note' => 400,
     ];
 
     /** Where the last test-send outcome is kept. Not a credential; a plain setting. */
