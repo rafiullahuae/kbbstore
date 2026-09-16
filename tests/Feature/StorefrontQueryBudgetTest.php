@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use App\Models\Brand;
+use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Product;
+use App\Services\CartService;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -53,10 +55,31 @@ use Illuminate\Support\Str;
  * measurements, which then differ only by the data.
  */
 
-/** The per-request memo really is per-request in production; reset it like one. */
+/**
+ * Start each measured request the way PHP-FPM starts a real one.
+ *
+ * TWO KINDS OF PER-REQUEST STATE, and forgetting either one flatters the page.
+ *
+ * SettingsService::$memo is a plain static, so it survives anything.
+ *
+ * The other kind is subtler and cost this file a wrong answer. CartService,
+ * SettingsService and (Lane BQ) the shipping lookups are `scoped` bindings:
+ * production throws the whole container away between requests, so scoped means
+ * per request. A TEST process keeps ONE container across many requests, and
+ * nothing in Laravel's test client resets scoped instances — so the second
+ * request through a page was reusing the first one's memos and reporting a
+ * count no real visitor ever gets. Measured directly while adding the cart and
+ * checkout pages below: /checkout read 7 with the leak and 11 without it, and
+ * the homepage 2 against 4. The ceilings in this file are the honest numbers.
+ *
+ * What is deliberately NOT reset is the cache store. That is shared between
+ * requests in production too — a file cache on this host — so a warm cache is
+ * the normal case, not a measurement artifact. See the warm-up note below.
+ */
 function budgetReset(): void
 {
     SettingsService::forgetMemo();
+    app()->forgetScopedInstances();
 }
 
 /**
@@ -111,14 +134,44 @@ function budgetBucket(): object
     return $bucket;
 }
 
-/** Query count for one request. */
-function budgetCount(string $path, ?int $customerId = null): int
+/**
+ * Query count for one request.
+ *
+ * `$cartToken` puts a real basket in the visitor's hands. /cart and /checkout
+ * are the two pages whose cost is ENTIRELY about the lines in the bag, and
+ * until it was added this file measured /cart empty and did not measure
+ * /checkout at all — so the six queries the cart page spent re-fetching its own
+ * lines, and the eight the checkout spent re-asking for the same shipping zone,
+ * were invisible here.
+ */
+function budgetCount(string $path, ?int $customerId = null, ?string $cartToken = null): int
 {
     $bucket = budgetBucket();
     budgetReset();
     $bucket->n = 0;
 
-    $test = test();
+    /*
+     * EVERY request states its cart cookie, including the ones that have no
+     * cart.
+     *
+     * Laravel's test client accumulates cookies for the life of the TEST, not
+     * the request: one withUnencryptedCookie() and every later get() in the
+     * same test carries it. So the moment the cart pages below were added, the
+     * homepage silently started being measured with a six-line basket in hand
+     * and read 7 queries instead of 2 -- and it would have read something
+     * different again if the pages were listed in another order. A budget that
+     * depends on where its page sits in a list is not a budget.
+     *
+     * The no-cart case sends a token that matches nothing rather than no cookie
+     * at all, deliberately. That is the state every shopper is in right after
+     * checking out -- the cart row is marked `converted` and the browser keeps
+     * the cookie -- so it is the common case, and it is the one that used to
+     * cost two `select * from carts` per page instead of one.
+     */
+    $test = test()
+        ->withCredentials()
+        ->withoutMiddleware(\Illuminate\Cookie\Middleware\EncryptCookies::class)
+        ->withUnencryptedCookie(CartService::COOKIE, $cartToken ?? 'budget-no-such-cart');
 
     if ($customerId !== null) {
         // The session key the customer guard reads — not actingAs(), which
@@ -129,6 +182,12 @@ function budgetCount(string $path, ?int $customerId = null): int
     $test->get($path)->assertSuccessful();
 
     return $bucket->n;
+}
+
+/** One entry of budgetPages(), measured. */
+function budgetRun(array $page): int
+{
+    return budgetCount($page[0], $page[1], $page[3] ?? null);
 }
 
 /** Catalogue, content, and a customer with an order — the realistic fixture. */
@@ -191,9 +250,37 @@ function budgetSeed(): array
         'city' => 'Dubai', 'country' => 'AE',
     ]);
 
+    /*
+     * A basket with SIX DIFFERENT PRODUCTS in it.
+     *
+     * Six rather than one because the cost being measured is per line: a cart
+     * of one hides a per-line product lookup completely, and /cart and
+     * /checkout are the two pages where that is the whole cost. Six distinct
+     * products, so the lines cannot be batched by accident.
+     *
+     * Not attached to the customer above -- a guest basket, carried by the
+     * cookie, which is how the overwhelming majority of them arrive.
+     */
+    $cart = Cart::create([
+        'token' => (string) Str::uuid(),
+        'currency' => 'AED',
+        'status' => 'active',
+        'shipping_country' => 'AE',
+        'last_activity_at' => now(),
+    ]);
+
+    foreach (Product::query()->visible()->limit(6)->get() as $line) {
+        $cart->items()->create([
+            'product_id' => $line->id,
+            'quantity' => 2,
+            'unit_price' => $line->effectivePrice(),
+        ]);
+    }
+
     return [
         'customer' => $customer,
         'order' => $order,
+        'cart' => $cart,
         'brand' => Brand::query()->first(),
         'category' => Category::query()->first(),
         'product' => Product::query()->visible()->first(),
@@ -228,61 +315,168 @@ function budgetGrow(int $count, Brand $brand, Category $category): void
 /**
  * Every storefront page worth measuring, with the ceiling it must stay under.
  *
- * The budgets are the measured counts with headroom, not aspirations. A page
- * that legitimately needs more should have this number raised deliberately, in
- * a commit that says why.
+ * The budgets are the measured counts plus two, not aspirations. A page that
+ * legitimately needs more should have this number raised deliberately, in a
+ * commit that says why.
+ *
+ * WHAT THE NUMBERS WERE AND ARE. Lane BQ, measured by this file on this
+ * fixture — 24 demo products, a six-line basket, a customer with an order —
+ * with the per-request reset budgetReset() now does. Ceilings are set from the
+ * AFTER column, and every one of them is BELOW the corresponding BEFORE, so
+ * undoing any of the four changes fails the page that change was for:
+ *
+ *                       before  after  ceiling
+ *   home                   7      3       5
+ *   shop                  10      6       8
+ *   shop sorted           10      6       8
+ *   shop filtered         11      7       9
+ *   category              12      7       9
+ *   brand index           16     12      14
+ *   brand page            11      7       9
+ *   product               15     11      13
+ *   collection (each)     10      6       8
+ *   cart, empty           10      4       6
+ *   cart, six lines       15      8      10
+ *   checkout              25     14      16
+ *   cart drawer            3      1       3
+ *   checkout success       7      3       5
+ *   wishlist               7      3       5
+ *   content page           8      4       6
+ *   my account             8      4       6
+ *   account orders         9      5       7
+ *   track order            7      3       5
+ *   quick view, journal, article, search suggest, review wall,
+ *   skin quiz, sitemap                 unchanged
+ *
+ * The four changes behind that, all of them removing repeated work rather than
+ * skipping any:
+ *
+ *   - THE SHIPPING ZONES ARE READ ONCE AND CACHED. Every page on the site asks
+ *     for the store country's free-delivery threshold, for the header bar, and
+ *     each ask cost two queries — the zone, then its methods. /checkout asked
+ *     four times. Nothing is stale: the three models evict on write.
+ *
+ *   - A CART THAT IS NOT THERE IS REMEMBERED. `select * from carts where token
+ *     = ? and status = ?` ran TWICE on every page for a visitor whose cookie
+ *     names no active cart, because only a hit was memoised. That is the state
+ *     every shopper is in immediately after checking out.
+ *
+ *   - THE CART'S LINES ARE LOADED ONCE. CartController, CheckoutController and
+ *     CartDrawerComposer each ran the same `load()` of lines, products and
+ *     brands; `load()` re-queries whether or not the relation is there.
+ *
+ *   - THE CATEGORY ARCHIVE LOOKS ITS CATEGORY UP ONCE. CategoryArchiveController
+ *     resolved it to choose between 200, 301 and 404 and then handed
+ *     ShopController the slug to resolve again.
  */
 function budgetPages(array $seed): array
 {
     return [
-        'home'              => ['/', null, 60],
-        'shop'              => ['/shop', null, 25],
-        'shop sorted'       => ['/shop?orderby=price', null, 25],
-        'shop filtered'     => ['/shop?filter_brands=' . $seed['brand']->slug, null, 25],
-        'category'          => ['/product-category/' . $seed['category']->slug, null, 25],
-        'brand index'       => ['/korean-skincare-brands', null, 20],
-        'brand page'        => ['/korean-skincare-brands/' . $seed['brand']->slug, null, 25],
-        'product'           => ['/product/' . $seed['product']->slug, null, 30],
-        'quick view'        => ['/quick-view/' . $seed['product']->id, null, 15],
-        'collection new-in' => ['/new-in', null, 25],
-        'collection best'   => ['/best-sellers', null, 25],
-        'collection sale'   => ['/super-sale', null, 25],
-        'collection budget' => ['/everything-under-54-aed', null, 25],
-        'cart'              => ['/cart', null, 25],
-        'cart drawer'       => ['/api/cart/drawer', null, 15],
-        'checkout success'  => ['/checkout/success', null, 15],
-        'journal'           => ['/skincare-guide', null, 15],
-        'article'           => ['/budget-article-0', null, 15],
-        'search suggest'    => ['/api/search?q=serum', null, 15],
-        'wishlist'          => ['/my-wishlist', null, 15],
-        'review wall'       => ['/reviews', null, 10],
-        'skin quiz'         => ['/skin-quiz', null, 10],
-        'content page'      => ['/about', null, 15],
-        'my account'        => ['/my-account', $seed['customer']->id, 20],
-        'account orders'    => ['/my-account/orders', $seed['customer']->id, 20],
-        'account order'     => ['/my-account/orders/' . $seed['order']->id, $seed['customer']->id, 20],
-        'account addresses' => ['/my-account/edit-address', $seed['customer']->id, 20],
-        'track order'       => ['/track-my-order', null, 15],
+        //                   path                                          customer  ceiling  cart cookie
+        'home'              => ['/', null, 5],
+        'shop'              => ['/shop', null, 8],
+        'shop sorted'       => ['/shop?orderby=price', null, 8],
+        'shop filtered'     => ['/shop?filter_brands=' . $seed['brand']->slug, null, 9],
+        'category'          => ['/product-category/' . $seed['category']->slug, null, 9],
+        'brand index'       => ['/korean-skincare-brands', null, 14],
+        'brand page'        => ['/korean-skincare-brands/' . $seed['brand']->slug, null, 9],
+        'product'           => ['/product/' . $seed['product']->slug, null, 13],
+        'quick view'        => ['/quick-view/' . $seed['product']->id, null, 4],
+        'collection new-in' => ['/new-in', null, 8],
+        'collection best'   => ['/best-sellers', null, 8],
+        'collection sale'   => ['/super-sale', null, 8],
+        'collection budget' => ['/everything-under-54-aed', null, 8],
+        'cart'              => ['/cart', null, 6],
+        /*
+         * The two pages a shopper reaches WITH A BASKET, which is the only
+         * state in which either of them costs anything, and neither of which
+         * this file measured before. /cart was only ever requested empty and
+         * /checkout not at all, so the cart page re-fetching its own six lines
+         * and the checkout asking four times for one shipping zone were
+         * invisible here while both were live.
+         *
+         * Fourth element: the cookie that carries the basket. budgetCartIsReal()
+         * below checks that it is actually arriving.
+         */
+        'cart with lines'   => ['/cart', null, 10, $seed['cart']->token],
+        'checkout'          => ['/checkout', null, 16, $seed['cart']->token],
+        'cart drawer'       => ['/api/cart/drawer', null, 3],
+        'checkout success'  => ['/checkout/success', null, 5],
+        'journal'           => ['/skincare-guide', null, 3],
+        'article'           => ['/budget-article-0', null, 4],
+        'search suggest'    => ['/api/search?q=serum', null, 3],
+        'wishlist'          => ['/my-wishlist', null, 5],
+        'review wall'       => ['/reviews', null, 2],
+        'skin quiz'         => ['/skin-quiz', null, 2],
+        'content page'      => ['/about', null, 6],
+        'my account'        => ['/my-account', $seed['customer']->id, 6],
+        'account orders'    => ['/my-account/orders', $seed['customer']->id, 7],
+        'account order'     => ['/my-account/orders/' . $seed['order']->id, $seed['customer']->id, 7],
+        'account addresses' => ['/my-account/edit-address', $seed['customer']->id, 6],
+        'track order'       => ['/track-my-order', null, 5],
         'sitemap'           => ['/sitemap.xml', null, 30],
     ];
 }
+
+/**
+ * The basket pages are measured WITH A BASKET — checked, not assumed.
+ *
+ * A ceiling only means something if the page it names is doing the work the
+ * ceiling is about. /cart and /checkout with an empty bag render an entirely
+ * different, much cheaper page, and they answer 200 doing it, so a fixture
+ * whose cookie failed to arrive would sail under any ceiling and report
+ * nothing. That is not hypothetical: Laravel's test client accumulates cookies
+ * across a test rather than per request, and while these two pages were being
+ * added a third one silently measured the no-basket page under the name of the
+ * basket one.
+ *
+ * So the fixture is asserted rather than trusted: with lines in the bag both
+ * pages must cost strictly MORE than the empty cart page. If the cookie ever
+ * stops arriving, this fails and says so, instead of the ceilings quietly
+ * becoming decoration.
+ */
+it('measures the basket pages with a basket in hand', function () {
+    $seed = budgetSeed();
+    $pages = budgetPages($seed);
+
+    foreach ($pages as $page) {
+        budgetRun($page);
+    }
+
+    $empty = budgetRun($pages['cart']);
+    $full = budgetRun($pages['cart with lines']);
+    $checkout = budgetRun($pages['checkout']);
+
+    expect($full > $empty)->toBeTrue(
+        "/cart ran {$full} queries with six lines in the bag and {$empty} with none. "
+        . 'Equal counts mean the cart cookie is not reaching the page and the '
+        . 'ceiling below is measuring the empty-cart render.'
+    );
+
+    expect($checkout > $empty)->toBeTrue(
+        "/checkout ran {$checkout} queries and the empty cart page {$empty}. "
+        . '/checkout redirects to /cart when the bag is empty, so a count this '
+        . 'low means the fixture is not arriving.'
+    );
+});
 
 it('keeps every storefront page inside its query budget', function () {
     $seed = budgetSeed();
     $pages = budgetPages($seed);
 
     // Warm the process-level caches first; see the file header.
-    foreach ($pages as [$path, $customerId, $_]) {
-        budgetCount($path, $customerId);
+    foreach ($pages as $page) {
+        budgetRun($page);
     }
 
     $over = [];
 
-    foreach ($pages as $label => [$path, $customerId, $budget]) {
-        $count = budgetCount($path, $customerId);
+    foreach ($pages as $label => $page) {
+        $count = budgetRun($page);
+        $budget = $page[2];
 
         if ($count > $budget) {
-            $over[] = sprintf('%s (%s) ran %d queries, budget %d', $label, $path, $count, $budget);
+            $over[] = sprintf('%s (%s) ran %d queries, budget %d', $label, $page[0], $count, $budget);
         }
     }
 
@@ -294,13 +488,13 @@ it('does not run more queries when the catalogue triples', function () {
     $pages = budgetPages($seed);
 
     // Warm, then measure at the seeded catalogue size.
-    foreach ($pages as [$path, $customerId, $_]) {
-        budgetCount($path, $customerId);
+    foreach ($pages as $page) {
+        budgetRun($page);
     }
 
     $before = [];
-    foreach ($pages as $label => [$path, $customerId, $_]) {
-        $before[$label] = budgetCount($path, $customerId);
+    foreach ($pages as $label => $page) {
+        $before[$label] = budgetRun($page);
     }
 
     // 24 demo products -> 84, all on the same brand and category so that the
@@ -326,19 +520,19 @@ it('does not run more queries when the catalogue triples', function () {
      * deleting the eager load in ShopController and watching /shop, the
      * category archive and the filtered shop all fail this assertion.
      */
-    foreach ($pages as [$path, $customerId, $_]) {
-        budgetCount($path, $customerId);
+    foreach ($pages as $page) {
+        budgetRun($page);
     }
 
     $grew = [];
-    foreach ($pages as $label => [$path, $customerId, $_]) {
-        $after = budgetCount($path, $customerId);
+    foreach ($pages as $label => $page) {
+        $after = budgetRun($page);
 
         if ($after !== $before[$label]) {
             $grew[] = sprintf(
                 '%s (%s): %d queries at 24 products, %d at 84 — the page is doing work per row',
                 $label,
-                $path,
+                $page[0],
                 $before[$label],
                 $after
             );

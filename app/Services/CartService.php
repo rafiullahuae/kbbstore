@@ -50,6 +50,64 @@ class CartService
      */
     private ?Cart $resolved = null;
 
+    /**
+     * Has something in THIS request already loaded the cart's display
+     * relations — the lines, their products, those products' brands, the
+     * variants and the coupon?
+     *
+     * Three places load exactly that set and each used to load it from
+     * scratch: CartController::loadCart(), CheckoutController::loadCart(), and
+     * CartDrawerComposer, which fills the mini-cart panel the layout renders on
+     * EVERY page. `load()` re-queries whether or not the relation is already
+     * there, so /cart fetched its lines, products and brands twice over and
+     * /checkout did the same — six wasted queries between the two pages.
+     *
+     * The flag, not `relationLoaded()`, because the three column lists differ
+     * slightly and "already loaded" has to mean "loaded by one of these", not
+     * "loaded by anything at all". The controllers load the superset; the
+     * composer is the one that stands down.
+     *
+     * Every mutator below clears it, so the reload after an add, a quantity
+     * change or a removal still happens. That is the whole reason the
+     * controllers keep loading unconditionally and only the composer reads
+     * this: the composer always runs last, during the render, after whatever
+     * the controller did.
+     */
+    private bool $displayLoaded = false;
+
+    /** Called by whoever has just loaded the display relations. */
+    public function markDisplayLoaded(): void
+    {
+        $this->displayLoaded = true;
+    }
+
+    public function displayLoaded(): bool
+    {
+        return $this->displayLoaded;
+    }
+
+    /**
+     * Has a create:false lookup in this request already come back empty?
+     *
+     * "No cart" is an answer too, and not remembering it cost a second
+     * `select * from carts where token = ? and status = ?` on EVERY page: the
+     * layout composer asks once for the header badge and the drawer composer
+     * asks again a moment later, and with nothing to memoise both went to the
+     * database.
+     *
+     * The case is not rare. A cart is marked `converted` the moment an order is
+     * placed, and the browser keeps the cookie, so every page a customer visits
+     * after checking out — until something creates them a new cart — carries a
+     * token that matches no active row. Same for a cart the cleanup job has
+     * abandoned.
+     *
+     * Only ever consulted for create:false. A create:true call still goes
+     * through resolve(), which is what the original comment here was protecting:
+     * remembering the miss must never stop a cart being created later in the
+     * same request.
+     */
+    private bool $resolvedMiss = false;
+
     /** The active cart for this request, created on demand. */
     public function current(Request $request, bool $create = true): ?Cart
     {
@@ -57,12 +115,19 @@ class CartService
             return $this->resolved;
         }
 
+        if ($this->resolvedMiss && ! $create) {
+            return null;
+        }
+
         $cart = $this->resolve($request, $create);
 
         // Only remember a real cart. Caching "no cart" would stop one being
-        // created later in the same request.
+        // created later in the same request -- hence $resolvedMiss, which is
+        // deliberately a different fact and only answers create:false.
         if ($cart !== null) {
             $this->resolved = $cart;
+        } elseif (! $create) {
+            $this->resolvedMiss = true;
         }
 
         return $cart;
@@ -72,6 +137,8 @@ class CartService
     public function forget(): void
     {
         $this->resolved = null;
+        $this->resolvedMiss = false;
+        $this->displayLoaded = false;
     }
 
     /**
@@ -91,12 +158,29 @@ class CartService
         return $this->resolved;
     }
 
+    /**
+     * The cart row, and nothing else.
+     *
+     * This used to be `Cart::with('items.product', 'items.variant')`, which
+     * fetched every line and every whole product row — `description` is a
+     * longText, `seo`, `meta_feed` and `custom_tabs` are json — on every page
+     * that carries a cart cookie. Nothing downstream kept them: both
+     * CartController::loadCart() and CheckoutController::loadCart() call
+     * `load()` on the same relations a moment later with a narrow column list,
+     * and `load()` re-queries regardless, so the eager set was fetched and then
+     * immediately overwritten. Two queries and several KB a page, discarded.
+     *
+     * Whatever still needs the lines asks for them: itemCount() reads
+     * `$cart->items` (one batched query), totals() calls loadMissing() for the
+     * products, variants and coupon before it prices anything, and the two
+     * controllers load the display set explicitly. None of that is per-row.
+     */
     private function resolve(Request $request, bool $create): ?Cart
     {
         $customer = $request->user('customer');
 
         if ($customer) {
-            $cart = Cart::with('items.product', 'items.variant')
+            $cart = Cart::query()
                 ->where('customer_id', $customer->id)
                 ->where('status', 'active')
                 ->latest('id')
@@ -112,7 +196,7 @@ class CartService
         $token = $request->cookie(self::COOKIE);
 
         if ($token) {
-            $cart = Cart::with('items.product', 'items.variant')
+            $cart = Cart::query()
                 ->where('token', $token)
                 ->where('status', 'active')
                 ->first();
@@ -128,6 +212,8 @@ class CartService
 
         return $create ? $this->create($customer?->id) : null;
     }
+
+
 
     /**
      * The unit price to store on a line.
@@ -151,6 +237,8 @@ class CartService
 
     public function create(?int $customerId = null): Cart
     {
+        $this->resolvedMiss = false;
+
         $cart = Cart::create([
             'token' => (string) Str::uuid(),
             'customer_id' => $customerId,
@@ -192,6 +280,8 @@ class CartService
 
     public function add(Cart $cart, Product $product, int $quantity = 1, ?ProductVariant $variant = null): CartItem
     {
+        // The lines just changed, so whatever was loaded for display is stale.
+        $this->displayLoaded = false;
         $quantity = max(1, min(99, $quantity));
         $unitPrice = $variant?->effectivePrice() ?? $product->effectivePrice();
 
@@ -224,6 +314,7 @@ class CartService
 
     public function updateQuantity(Cart $cart, int $itemId, int $quantity): void
     {
+        $this->displayLoaded = false;
         $item = $cart->items()->find($itemId);
         if (! $item) {
             return;
@@ -247,12 +338,14 @@ class CartService
 
     public function remove(Cart $cart, int $itemId): void
     {
+        $this->displayLoaded = false;
         $cart->items()->where('id', $itemId)->delete();
         $cart->forceFill(['last_activity_at' => now()])->save();
     }
 
     public function clear(Cart $cart): void
     {
+        $this->displayLoaded = false;
         $cart->items()->delete();
         $cart->forceFill(['coupon_id' => null, 'last_activity_at' => now()])->save();
     }
