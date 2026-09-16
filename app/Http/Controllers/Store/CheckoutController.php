@@ -182,6 +182,56 @@ class CheckoutController extends Controller
             return redirect(Url::redirect('/cart/'))->withErrors('Your bag is empty.');
         }
 
+        /*
+         * RE-CHECK THE COUPON AGAINST THE BASKET BEING BOUGHT, NOT THE ONE IT
+         * WAS APPLIED TO.
+         *
+         * validate() used to run in exactly two places -- CartController::
+         * coupon() and couponUpdate() below -- both of which are "the shopper
+         * just typed a code". Nothing ran it again afterwards, and nothing
+         * clears cart.coupon_id when the basket changes: updateQuantity() and
+         * remove() in CartService touch neither. The cart cookie lives 30 days.
+         *
+         * So the discount that reached `orders.discount_total` was priced by
+         * CartService::totals() -> CouponService::discountFor(), which applies
+         * the product and category rules and nothing else. Expiry, minimum
+         * spend, maximum spend and the allowed-email list were enforced on the
+         * cart page and nowhere else. Apply a code at AED 500, empty the
+         * basket to AED 50, press Place Order, and a minimum-spend of AED 500
+         * paid out against AED 50 -- the whole basket free, and the shop still
+         * paying the courier. An expired code kept working for as long as the
+         * cart survived.
+         *
+         * usage_limit and usage_limit_per_user were the only two already
+         * re-checked here, and only as a side effect of recordRedemption()
+         * re-reading the row under a lock to settle the race.
+         *
+         * This is the check the admin's own path has always made:
+         * ManualOrderBuilder::price() re-runs validate() before it prices
+         * anything, for the reason written beside it there. The storefront is
+         * where the real money is and it was the half that did not.
+         *
+         * Refusing rather than silently dropping the code matches what already
+         * happens when CouponExhausted is thrown below: the shopper is told in
+         * the coupon's own words and keeps their basket, rather than being
+         * charged a total they never agreed to.
+         *
+         * The email is the one being ordered under, which is what makes the
+         * allowed-emails and per-user rules mean anything for a guest -- at
+         * the moment the code was applied there may have been no email at all.
+         */
+        if ($cart->coupon) {
+            $check = $this->coupons->validate(
+                $cart->coupon->code,
+                $cart,
+                $data['billing_email'],
+            );
+
+            if (! $check['ok']) {
+                return back()->withInput()->withErrors($check['error']);
+            }
+        }
+
         // The single "Full name" field is split on save, exactly as the theme does.
         [$first, $last] = $this->splitName($data['billing_first_name'], $data['billing_last_name'] ?? null);
 
