@@ -91,6 +91,11 @@
                 </div>
                 @if ($r->title)<h4 class="sr-h">{{ $r->title }}</h4>@endif
                 <p class="sr-tx">{{ $r->content }}</p>
+                {{-- ?? null, because the demo reviews are fixture objects with no such
+                     property and a plain object throws on one it does not have. --}}
+                @if ($r->reply ?? null)
+                    <div class="sr-reply"><b>Reply from K-Beauty Bliss</b> {{ $r->reply }}</div>
+                @endif
                 @if ($nph)
                     <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; @endphp<span class="sr-ph"@if ($more) data-more="+{{ $more }}"@endif><img src="{{ $u }}" alt="" loading="lazy"></span>@endforeach</div>
                 @endif

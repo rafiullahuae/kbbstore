@@ -55,7 +55,15 @@ class ProductController extends Controller
         $reviewLimit = (int) ReviewSettings::get($this->settings, 'sr_max_reviews');
 
         $reviews = Review::query()
-            ->select('id', 'author_name', 'rating', 'title', 'content', 'verified', 'created_at', 'images', 'helpful')
+            /*
+             * `reply` is here because the shop now prints it. The admin has
+             * always offered a reply box, stored what was typed and put it in
+             * both exports — and the product page never selected the column,
+             * so no reply has ever been seen by a shopper. The admin's own
+             * placeholder said "Shown publicly under the review", which made
+             * it a promise rather than an oversight.
+             */
+            ->select('id', 'author_name', 'rating', 'title', 'content', 'verified', 'created_at', 'images', 'helpful', 'reply')
             ->where('product_id', $product->id)
             ->approved();
 

@@ -11831,23 +11831,18 @@ buildNav();
       '<button class="x" onclick="closeModal()">✕</button></div>' +
       '<div class="modal-b">' +
       '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">' + rvStars(r.rating) + ' · ' + sesc(r.title || '') + '</div>' +
-      '<textarea class="inp" id="rvReplyTxt" style="width:100%;min-height:96px" placeholder="Your answer to this reviewer…">' + sesc(r.reply || '') + '</textarea>' +
-      /* THE PLACEHOLDER USED TO READ "Shown publicly under the review…" AND IT
-         IS NOT. resources/views/partials/reviews.blade.php renders the author,
-         the stars, the title, the body, the photos, the date and the helpful
-         count, and nothing else — Store\ProductController does not even SELECT
-         `reply` into the collection it passes. Verified against a real render:
-         a reply saved here appears nowhere on the product page.
-
-         Saying so here rather than quietly dropping the field. The reply is
-         stored, it is shown on this screen, and BOTH CSV exports carry it, so
-         it is not lost work — it is simply not published yet. Printing it on
-         the storefront is a three-line change in two files this lane does not
-         own; it is written out in the lane report. Take this line out in the
-         same commit that lands it. */
+      '<textarea class="inp" id="rvReplyTxt" style="width:100%;min-height:96px" placeholder="Shown publicly under the review on the product page…">' + sesc(r.reply || '') + '</textarea>' +
+      /* The placeholder promises publication, and now the shop delivers it.
+         For a long time it did not: the admin stored a reply, showed it here
+         and exported it, while Store\ProductController never SELECTed the
+         column and partials/reviews.blade.php never printed it — so no reply
+         had ever been seen by a shopper. A lane proved that against a real
+         render and replaced this line with an apology; the storefront half
+         landed in the same package, so the apology goes and the promise comes
+         back. ReviewScreensRepaintTest fails if the two drift apart again. */
       '<p style="font-size:11.5px;color:var(--ink-soft);margin:7px 0 0;line-height:1.45">' +
-      'Saved with the review and included in both CSV exports. ' +
-      'The product page does not print replies yet — shoppers will not see this.</p>' +
+      'Shown under the review on the product page, saved with it, and included ' +
+      'in both CSV exports.</p>' +
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">' +
       '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
       '<button class="btn" id="rvReplySave">Save reply</button></div></div>');
