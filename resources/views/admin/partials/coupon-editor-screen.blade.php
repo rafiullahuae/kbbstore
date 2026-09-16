@@ -76,6 +76,8 @@
 .ce-head > *{min-width:0}
 .ce-title{font-weight:650;font-size:15px}
 .ce-sub{color:var(--ink-soft,#6b7280);font-size:12.5px}
+.ce-link{border:0;background:none;padding:0;font:inherit;color:var(--accent,#15a85a);
+         text-decoration:underline;cursor:pointer}
 
 .ce-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
 .ce-stats > *{min-width:0}
@@ -325,11 +327,17 @@
   function addNavEntry(){
     if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
 
-    /* Anchored beneath the read-only Coupons entry, which is the one the owner
-       already opens looking for this. Its own label rather than "Coupons"
-       again: two identical entries doing different things is how the owner
-       ended up believing there was no editor. */
-    var anchor = document.querySelector('#nav [data-go="coupon-usage"]')
+    /* ONE entry called "Coupons", not two.
+       This screen first shipped as a second item, "Manage Coupons", sitting
+       under the read-only "Coupons" usage report. The owner applied the
+       package, opened "Coupons" -- the name they were looking for -- got the
+       old read-only report, and reasonably concluded the editor had not
+       shipped. Two sidebar entries whose names do not tell you which one does
+       the thing is a worse failure than the missing screen it replaced.
+       So this takes over the "Coupons" name and position, and the usage
+       report is reached from a link inside it. */
+    var usage = document.querySelector('#nav [data-go="coupon-usage"]');
+    var anchor = usage
               || document.querySelector('#nav [data-go="order-new"]')
               || document.querySelector('#nav [data-go="orders"]');
     if (!anchor) return;
@@ -338,9 +346,13 @@
     b.className = 'nav-item';
     b.dataset.go = SCREEN;
     b.innerHTML = icon('<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M12 9v6"/><path d="M9 12h6"/>')
-                + '<span>Manage Coupons</span>';
+                + '<span>Coupons</span>';
     b.onclick = function(){ window.go(SCREEN); };
     anchor.parentNode.insertBefore(b, anchor.nextSibling);
+
+    // The usage report keeps its screen and its route; it just stops being a
+    // second thing in the sidebar competing for the same name.
+    if (usage && usage.parentNode) usage.parentNode.removeChild(usage);
   }
 
   /* ------------------------------------------------------------ the route */
@@ -358,7 +370,7 @@
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = 'Store';
-    if (title) title.textContent = 'Manage Coupons';
+    if (title) title.textContent = 'Coupons';
 
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
@@ -670,7 +682,8 @@
       + '<div class="ce-card">'
       + '<div class="ce-head">'
         + '<div><div class="ce-title">All coupons</div>'
-        + '<div class="ce-sub">Create a code, change one, or take one down. Redemption history lives on the Coupons screen above.</div></div>'
+        + '<div class="ce-sub">Create a code, change one, or take one down. '
+          + '<button type="button" class="ce-link" id="ce-usage">See who has used them</button>.</div></div>'
         + '<button class="ce-btn is-primary" id="ce-add">'
           + icon('<path d="M12 5v14"/><path d="M5 12h14"/>') + 'Add Coupon</button>'
       + '</div>'
@@ -1003,6 +1016,10 @@
     if (add) add.onclick = startCreate;
     var addEmpty = document.querySelector('#ce-add-empty');
     if (addEmpty) addEmpty.onclick = startCreate;
+
+    // The usage report is no longer in the sidebar, so this is the way to it.
+    var usage = document.querySelector('#ce-usage');
+    if (usage) usage.onclick = function(){ window.go('coupon-usage'); };
 
     var gen = document.querySelector('#ce-gen');
     if (gen) gen.onclick = function(){
