@@ -355,6 +355,23 @@ class MediaLibraryApiController extends Controller
             if ($ownerQuery !== '') {
                 $rows->where(function ($w) use ($attached, $ownerQuery) {
                     foreach ($attached === 'any' ? MediaUsage::TYPES : [$attached] as $kind) {
+                        /*
+                         * 'site' has no owning row and therefore no name to
+                         * search. Its usages are settings — the default share
+                         * image and the organisation logo — so an owner-name
+                         * search simply does not apply to them, and they are
+                         * skipped rather than matched against nothing.
+                         *
+                         * Skipping is the correct half of the two: including
+                         * them would make every owner search also return the
+                         * site images, which is the "filter that quietly
+                         * matches everything" this block's own comment above
+                         * exists to warn against.
+                         */
+                        if (! isset(self::MODELS[$kind])) {
+                            continue;
+                        }
+
                         $w->orWhere(function ($k) use ($kind, $ownerQuery) {
                             $k->where('media_usages.owner_type', $kind)
                                 ->whereIn('media_usages.owner_id', $this->ownerIds($kind, $ownerQuery));

@@ -80,7 +80,24 @@ use App\Models\Product;
 final class MediaUsage
 {
     /** The owner kinds this can answer for, in the order the screen offers them. */
-    public const TYPES = ['product', 'brand', 'category'];
+    public const TYPES = ['product', 'brand', 'category', 'site'];
+
+    /**
+     * Site-wide images: settings keys whose value is a URL the storefront
+     * publishes, with the wording the Media Library prints for each.
+     *
+     * These have no owning ROW, which is why they needed a fourth kind rather
+     * than an extra column on an existing one. Without them an image used only
+     * as the shop's default share image, or as the logo in its Organization
+     * schema, read as unused — and the delete guard reads this list, so the
+     * Media Library offered to delete a file every share preview on the site
+     * depends on. Seo.php publishes the first at line 139 and 326 and the
+     * second at 369.
+     */
+    private const SITE_KEYS = [
+        'og_default_image' => 'Default share image',
+        'org_logo' => 'Organisation logo',
+    ];
 
     /**
      * Every reference in the store, keyed by the filename it points at.
@@ -95,7 +112,17 @@ final class MediaUsage
         $out = [];
 
         if ($type === null || $type === 'product') {
-            $q = Product::query()->select(['id', 'name', 'image', 'images']);
+            /*
+             * `seo` is selected as well, for the share image.
+             *
+             * An image used ONLY as a product's share image used to read as
+             * unused here, and the delete guard reads this — so the Media
+             * Library offered to delete a file that Seo.php:161 was publishing
+             * to Facebook and WhatsApp as og:image. Nothing on screen said
+             * otherwise; the image simply stopped loading in every share
+             * preview, which is the kind of breakage nobody notices for weeks.
+             */
+            $q = Product::query()->select(['id', 'name', 'image', 'images', 'seo']);
 
             if ($owner !== null) {
                 SearchTerms::whereLike($q, 'name', $owner);
@@ -115,6 +142,46 @@ final class MediaUsage
 
             foreach ($q->cursor() as $b) {
                 self::collect($out, 'brand', $b);
+            }
+        }
+
+        if ($type === null || $type === 'site') {
+            /*
+             * One settings read, not a table walk — and only when the caller
+             * has not narrowed to a named owner, because these have no name to
+             * match against. Setting::map() memoises in a process static as
+             * well as the cache (CLAUDE.md), which is exactly right here: the
+             * grid resolves usage once per render.
+             */
+            if ($owner === null) {
+                /*
+                 * SeoSettings::map(), which is what Seo.php itself reads at
+                 * lines 139, 326 and 369. Setting::map() is a different store
+                 * and comes back empty for these keys — using it here made the
+                 * site images look unused while the storefront was publishing
+                 * them, which is the very bug this walk exists to close.
+                 */
+                $settings = \App\Services\Seo\SeoSettings::map();
+
+                foreach (self::SITE_KEYS as $key => $label) {
+                    $raw = $settings[$key] ?? null;
+
+                    if (! is_string($raw) || self::key($raw) === '') {
+                        continue;
+                    }
+
+                    $out[self::key($raw)][] = [
+                        'type' => 'site',
+                        // Settings have no row id. Zero is used consistently and
+                        // never looked up, and the name carries the meaning.
+                        'id' => 0,
+                        'name' => 'Site settings',
+                        'field' => $label,
+                        'column' => $key,
+                        'path' => self::normalise($raw),
+                        'raw' => $raw,
+                    ];
+                }
             }
         }
 
@@ -204,6 +271,21 @@ final class MediaUsage
 
             foreach ((is_array($gallery) ? $gallery : []) as $i => $url) {
                 $add('Gallery image '.((int) $i + 1), 'images', $url);
+            }
+
+            /*
+             * The share image, which is a key inside the `seo` json column
+             * rather than a column of its own. Recorded under the column name
+             * `seo` because that is the column a writer would have to touch,
+             * which is what media_usages.field means everywhere else here.
+             *
+             * Products whose seo is null — the common case — cost nothing:
+             * is_array() short-circuits and $add refuses a non-string anyway.
+             */
+            $seo = $row->seo;
+
+            if (is_array($seo) && isset($seo['og_image'])) {
+                $add('Share image', 'seo', $seo['og_image']);
             }
 
             return;
