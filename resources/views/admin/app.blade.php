@@ -5692,9 +5692,25 @@ function renderPlaceholder(id){
    without these entries every visit fired a HEAD that could only 404 and was
    then painted over by the real screen a moment later.
 
-   None of these four ids is re-rendered by the override further down THIS
-   file; all are live the same, which is why path 1 above applies to them. */
-const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings','htmlblocks','rev-add','rev-likes']);
+   'rev-io', 'rev-badge', 'rev-capsule' and 'rev-assign' join them on exactly
+   the same grounds (Lane BE). They are drawn by admin/partials/
+   reviews-io-screen, review-badges-screen, review-capsule-screen and
+   review-assign-screen, each included after this document's script and each
+   wrapping window.go the way the other lane screens do. Their entries in
+   REV_SRC point at kbb-admin-exportimport.html, kbb-admin-badgethemes.html,
+   kbb-capsule-editor.html and kbb-admin-assign.html -- four more files this
+   repo has never shipped -- so without this every visit fired a HEAD that could
+   only 404 and was then painted over by the real screen a moment later.
+
+   With Lane BD's two and Lane BE's four, NO id in REV_SRC still goes through
+   mountFrame(): every one of the eight Reviews screens is rendered in this
+   document now. The REV_SRC entries are kept rather than deleted so that
+   nothing which reads that map -- goTab(), a bookmark, a later lane -- finds a
+   hole where a Reviews id used to be.
+
+   None of these ids is re-rendered by the override further down THIS file; all
+   are live the same, which is why path 1 above applies to them. */
+const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings','htmlblocks','rev-add','rev-likes','rev-io','rev-badge','rev-capsule','rev-assign']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -13901,6 +13917,31 @@ buildNav();
      further up, without which mountFrame would still probe for those two
      missing files on every visit. --}}
 @include('admin.partials.review-bulk-screens')
+{{-- Reviews -> Export / Import, Badge Themes, Rating Capsule and
+     Assign / Duplicate (Lane BE). Same arrangement as the screens above: one
+     file each, one wrapper around window.go each.
+
+     None of them appends a sidebar entry. All four ids have been in the NAV
+     const and in TITLES all along -- what they never had was a screen, only a
+     REV_SRC entry pointing at kbb-admin-exportimport.html,
+     kbb-admin-badgethemes.html, kbb-capsule-editor.html and
+     kbb-admin-assign.html, four files this repo has never shipped. Adding
+     entries here would give the owner each row twice.
+
+     Paired with the four additions to LIVE_RENDERED further up, without which
+     mountFrame would still probe for those missing files on every visit.
+
+     Badge Themes and Rating Capsule are two screens over ONE set of seven
+     settings -- they ask different questions of it (what it looks like, versus
+     where it appears and what is in it) and they save through one endpoint, so
+     they cannot disagree. Every key was already read by
+     resources/views/store/product.blade.php; none is new. See
+     App\Support\ReviewBadgeSettings, which also records that Store -> Ecommerce
+     -> Product page writes the same rows. --}}
+@include('admin.partials.reviews-io-screen')
+@include('admin.partials.review-badges-screen')
+@include('admin.partials.review-capsule-screen')
+@include('admin.partials.review-assign-screen')
 
 @verbatim
 </body>
