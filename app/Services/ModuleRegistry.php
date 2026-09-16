@@ -42,6 +42,19 @@ class ModuleRegistry
         'payship'     => 'Payments & shipping',
         'email'       => 'Order emails',
         'catalogue'   => 'Catalogue',
+        /*
+         * Its own group, for one row, deliberately. Reviews was filed under
+         * Catalogue on the reasoning that a review hangs off a product — true,
+         * and useless to the person looking for it. The owner went to this
+         * screen specifically to find Reviews, scanned the group headings, and
+         * reported it missing. It was not missing; it was under a heading they
+         * had no reason to open.
+         *
+         * Reviews is its own section in the console's own nav, with its own
+         * eight screens. A reader who thinks of it that way is right, and this
+         * page should agree with the nav rather than with the schema.
+         */
+        'reviews'     => 'Reviews',
         'marketing'   => 'Marketing',
         'performance' => 'Performance',
         'seo'         => 'SEO',
@@ -263,7 +276,7 @@ class ModuleRegistry
          * recently_viewed, vat_line and cod_fee, which are `elsewhere` for the
          * same reason.
          */
-        'reviews' => ['catalogue', 'Reviews', 'Customer reviews on the product page — score summary, filters and review cards — plus the moderation screens under Reviews. The on/off switch lives with the rest of the product page sections; this row is here so you can find it.', true, 'Appearance → Product page', 'productpage', 'product', 'bottom', 'The reviews section near the foot of the product page.', 'elsewhere'],
+        'reviews' => ['reviews', 'Reviews', 'Customer reviews on the product page — score summary, filters and review cards — plus the moderation screens under Reviews. The on/off switch lives with the rest of the product page sections; this row is here so you can find it.', true, 'Appearance → Product page', 'productpage', 'product', 'bottom', 'The reviews section near the foot of the product page.', 'elsewhere'],
         'frequently_bought' => ['catalogue', 'Frequently Bought Together', 'A “Complete your routine” block on product pages — the main item plus matches (from WooCommerce cross-sells or the same category), with one-click add-all. Lifts average order value. Off by default.', false, 'Its own screen', '', 'product', 'mid', 'The Complete your routine block on the product page.', 'live'],
         // ── Marketing ──
         'marketing_pixels' => ['marketing', 'Marketing Pixels', 'Meta Pixel, Google (GA4) and TikTok tags with standard e-commerce events (view, checkout, purchase). Off by default — add your IDs to activate.', false, 'Growth & Marketing → Marketing Pixels', 'pixels', 'site', 'all', 'Meta, GA4 and TikTok tags on every page. Nothing visible.', 'live'],

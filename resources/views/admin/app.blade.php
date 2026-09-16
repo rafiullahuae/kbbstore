@@ -5693,12 +5693,45 @@ function frameExists(url){
 
 /* The 'isn't installed yet' card, in the shape renderPlaceholder already uses
    for p-content — one pattern for "not built", not a second one. */
-function frameNotBuiltHTML(title){
+/* What each unbuilt screen should actually say for itself.
+
+   The owner hit this on Bulk Likes: the card said "isn't installed yet" and
+   offered one button, Open Modules, and the Modules screen has no row for any
+   of these. So the only action the card offered led somewhere that could not
+   help, and the owner reported the Modules screen as broken — reasonably,
+   because the card had just sent them there.
+
+   A screen with nothing useful to say gets no button rather than a button to
+   nowhere. The two entries below say more than that, and are the reason this
+   map exists at all: Bulk Add and Bulk Likes are not "not built yet", they are
+   screens whose entire function is to manufacture reviews and manufacture
+   "helpful" counts on them. That is a decision for the owner, not a backlog
+   item, and the card is where they are actually standing when they need to
+   know it. */
+const NOT_BUILT_NOTE={
+  'rev-add':{
+    body:`This screen would create review text in bulk and attach it to your products — reviews no customer wrote. Publishing invented reviews as though they were real is against UAE consumer-protection rules and the EU rules that follow your international orders, and the same content feeds the star rating Google shows for your shop.<br><br>It has deliberately not been built. If you want it anyway, say so and it will be built — it is your store and your call, and it is a call worth making on purpose rather than by finding a button.`,
+    heading:'Bulk Add has not been built, on purpose',
+  },
+  'rev-likes':{
+    body:`This screen would add "helpful" votes to reviews in bulk — votes no shopper cast. It is the same problem as inventing the reviews themselves: it makes a review look more trusted than your customers actually made it.<br><br>It has deliberately not been built. If you want it anyway, say so and it will be built — it is your store and your call.`,
+    heading:'Bulk Likes has not been built, on purpose',
+  },
+};
+
+function frameNotBuiltHTML(title,id){
+  const note=NOT_BUILT_NOTE[id];
+  if(note){
+    return `<div class="wrap"><div class="ph">
+      <div class="pic">${ic(I.modules)}</div>
+      <h3>${escHtml(note.heading)}</h3>
+      <p>${note.body}</p>
+    </div></div>`;
+  }
   return `<div class="wrap"><div class="ph">
     <div class="pic">${ic(I.modules)}</div>
     <h3>${escHtml(title)} isn't installed yet</h3>
-    <p>This screen was drawn up as a standalone page that was never built, and no copy of it is installed on this server. Nothing is wrong with your store and nothing is missing from it — this one screen simply does not exist yet.</p>
-    <button class="btn" onclick="go('modules')">Open Modules →</button>
+    <p>This screen was drawn up as a standalone page that was never built, and no copy of it is installed on this server. Nothing is wrong with your store and nothing is missing from it — this one screen simply does not exist yet, and it is on the list.</p>
   </div></div>`;
 }
 /* Lane AM's wording for 'rev-all', reused verbatim so the two agree. */
@@ -5718,7 +5751,7 @@ function mountFrame(id,src,title,query){
     if(cur!==id)return;   // the owner moved on while we were asking
     box.innerHTML=ok
       ? `<iframe src="${escAttr(url)}" title="${escAttr(title)}" style="width:100%;height:calc(100vh - 116px);border:0;display:block;background:var(--bg)"></iframe>`
-      : frameNotBuiltHTML(title);
+      : frameNotBuiltHTML(title,id);
   });
 }
 
