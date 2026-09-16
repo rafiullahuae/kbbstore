@@ -33,6 +33,8 @@
     $price   = $product->effectivePrice();
     $out     = $product->stock_status !== 'instock';
     $off     = $onSale ? $product->discountPercent() : 0;
+    // $out is finished below, once the variants are in hand: a variable product
+    // whose every option is sold out is sold out, whatever the parent row says.
 
     $grad    = Gradient::for($brand . $product->name);
     // Gallery entries are now labelled shots, not bare URLs; the partial
@@ -43,6 +45,26 @@
 
     $variants = $product->variants;
     $isVar    = $variants->isNotEmpty();
+
+    /* THE OPTION THE PAGE ARMS THE BUTTON WITH HAS TO BE ONE THAT CAN BE BOUGHT.
+
+       The hidden variation_id below was `$variants->first()?->id` regardless of
+       stock, and only option 0 was ever given the `on` class, and only when it
+       happened to be in stock. So a product whose first size is sold out
+       rendered with NO option highlighted, an enabled Add to cart, and a hidden
+       field pointing at the sold-out size — and pdp.js declines a click on an
+       `.oos` row outright, so tapping it does nothing at all. The only way the
+       shopper learned was to press Add and be refused by the server.
+
+       `$buyable` is the first option actually on the shelf; when every option
+       is gone it is null and $out below becomes true, which is the same fact a
+       simple product's `outofstock` already states. */
+    $buyable  = $isVar ? $variants->first(fn ($v) => $v->inStock()) : null;
+
+    /* Nothing left to choose is the same thing as nothing left to sell. Without
+       this the stock line said "In stock · ready to ship" over a list where
+       every row was tagged Sold out, and the button stayed live. */
+    $out      = $out || ($isVar && $buyable === null);
 
     // Bundles are variants carrying a savings tag, exactly as the design does.
     $hasBundle = $variants->contains(fn ($v) => (bool) $v->tag);
@@ -149,12 +171,19 @@
               $oos   = ! $v->inStock();
               $voff  = ($vreg > 0 && $vsale < $vreg) ? (int) round((1 - $vsale / $vreg) * 100) : 0;
             @endphp
-            <div class="variant{{ 0 === $n && ! $oos ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale) }}">
+            {{-- Selected by identity, not by index: the highlighted row is the
+                 first one that can be bought, which is the same row the hidden
+                 field below is set to. `0 === $n` selected nothing at all when
+                 option 0 was sold out. --}}
+            <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale) }}">
               @if ($v->image)<span class="vsw" style="background-image:url('{{ $v->image }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: 'Option ' . ($n + 1) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg) !!}</s>@endif{!! Money::format($vsale) !!}</span>@if ($oos)<span class="vtag sold">Sold out</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">Save {{ $voff }}%</span>@endif
             </div>
           @endforeach
         </div>
-        <input type="hidden" name="variation_id" id="kbbVarId" value="{{ $variants->first()?->id }}">
+        {{-- The option Add to cart posts when the shopper touches nothing. It
+             has to be one the shop can actually sell, or the first press of the
+             button is always refused. --}}
+        <input type="hidden" name="variation_id" id="kbbVarId" value="{{ ($buyable ?? $variants->first())?->id }}">
         @elseif ($bundles)
         {{-- Quantity bundles: the same product at a better rate for buying more.
              Generated from the tier table, so every product has them without
@@ -174,7 +203,21 @@
             // count is genuinely known and genuinely low — an invented urgency
             // message is the fastest way to lose a customer's trust.
             $lowAt = (int) $settings->get('low_stock_at', 5);
-            $left  = $product->stock_quantity;
+            /* `stock`, not `stock_quantity`.
+             *
+             * There is no `stock_quantity` column on `products` and no accessor
+             * of that name on the model — ProductImporter reads the WooCommerce
+             * field `stock_quantity` and writes it to `stock`, which is what the
+             * schema calls it. Eloquent answers null for an attribute it does
+             * not have, so `is_numeric($left)` was false for every product in
+             * the catalogue and "Only N left · order soon" had never rendered
+             * once, for anybody. The owner's `low_stock_at` setting drove
+             * nothing at all.
+             *
+             * The guards around it are unchanged, and they are the point: the
+             * count has to be genuinely known and genuinely low. An invented
+             * urgency message is the fastest way to lose a customer's trust. */
+            $left  = $product->manage_stock ? $product->stock : null;
             $low   = ! $out && $lowAt > 0 && is_numeric($left) && $left > 0 && $left <= $lowAt;
         @endphp
         {{-- Each directive needs a non-word character before its @, or Blade

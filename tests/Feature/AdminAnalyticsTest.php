@@ -44,6 +44,20 @@ use Illuminate\Support\Facades\DB;
 
 /* ------------------------------------------------------------------ fixtures */
 
+/*
+ * Guarded, because Pest declares test-file functions in the GLOBAL namespace.
+ *
+ * AdminQuizLeadsTest calls anAdminUser() but does not define it — it passed
+ * only because this file happened to load first in a full run, and every one
+ * of its ten tests errored with "Call to undefined function anAdminUser()"
+ * when run on its own. A test file that needs a sibling loaded first is a test
+ * file that reports differently depending on what else ran, which is the
+ * property this suite has already lost time to.
+ *
+ * Declaring it if-not-already-declared, in both places, makes each file
+ * runnable alone without either owning the other.
+ */
+if (! function_exists('anAdminUser')) {
 function anAdminUser(): AdminUser
 {
     return AdminUser::create([
@@ -52,6 +66,7 @@ function anAdminUser(): AdminUser
         'password' => 'secret-secret',
         'role' => 'owner',
     ]);
+}
 }
 
 function asAnalyticsAdmin(): void

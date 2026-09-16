@@ -38,6 +38,15 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* slim secure-checkout header strip (design .head) */
 .kbb-checkout .co-head{background:#fff;border-bottom:1px solid var(--line-2);position:sticky;top:0;z-index:30}
+/* .co-head is sticky, so anything scrolled to the top of the viewport lands
+   UNDER it. scroll-margin-top is the property for exactly that: it tells every
+   scroll-into-view — the browser's own on an invalid field, ours on Place
+   order, and any anchor jump — to stop this far short. Measured against the
+   header's own box: 14px padding, a 20px logo, 14px padding, plus room to see
+   the label above the field. */
+.kbb-checkout .form-row input,
+.kbb-checkout .form-row select,
+.kbb-checkout .form-row textarea{scroll-margin-top:96px}
 .kbb-checkout .co-head .in{max-width:1040px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px}
 .kbb-checkout .co-head .logo{font-weight:800;font-size:20px;color:var(--pink-deep);letter-spacing:-.02em}
 .kbb-checkout .co-head .logo span{color:var(--ink)}

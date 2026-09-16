@@ -32,6 +32,19 @@ export function initPdp() {
            owns the gallery, and two handlers for one click is how this
            happened. */
 
+        /* A sold-out option answers, rather than absorbing the tap.
+           Declining silently is indistinguishable from a page that has stopped
+           responding: the row does not highlight, the price does not move, and
+           nothing says why. The row already carries a "Sold out" tag, but a
+           shopper who has just pressed it is looking for a reaction, not a
+           label they have evidently already missed. */
+        const dead = event.target.closest('.variant.oos');
+        if (dead) {
+            const name = dead.querySelector('.vn')?.textContent?.trim();
+            window.kbbToast?.(name ? `${name} is sold out — please choose another option.` : 'That option is sold out.');
+            return;
+        }
+
         // Option selection — a variant, or a quantity bundle.
         const variant = event.target.closest('.variant');
         if (variant && !variant.classList.contains('oos')) {

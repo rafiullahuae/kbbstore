@@ -17,11 +17,24 @@
 
     force="true" matters: without it PHPUnit leaves an already-exported
     DB_CONNECTION alone and the run silently falls back to SQLite — exactly
-    the false green this file exists to prevent.
+    the false green this file exists to prevent. So force stays on everything,
+    including DB_DATABASE, and the one value a lane actually needs to change
+    arrives under a name of its own instead:
+
+        KBB_TEST_DB=kbb_test_ce vendor/bin/pest -c phpunit-mysql.xml
+
+    tests/bootstrap.php applies it. PHPUnit runs this <php> block BEFORE the
+    bootstrap script, so that is the only point at which a forced value can
+    still be changed — and it is changed by a variable nothing else reads,
+    rather than by deleting the force that protects the rest of the file.
+
+    The database below is the default, and it is SHARED. Two worktrees running
+    this config at once without KBB_TEST_DB drop the schema under each other
+    mid-run and report hundreds of failures belonging to neither of them.
 -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true">
     <testsuites>
         <testsuite name="Feature">

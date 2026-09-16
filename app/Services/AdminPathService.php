@@ -40,6 +40,21 @@ class AdminPathService
         return self::$memo ??= self::resolve();
     }
 
+    /**
+     * Drop the memo so the next current() re-reads the setting.
+     *
+     * set() already does this for its own write. This is for the other way the
+     * value changes underneath the memo: a row written straight into `settings`
+     * or a cache that was cleared — which is what a test does, and what makes
+     * the memo an order dependency in a long-lived process. Whichever test
+     * resolved the admin path first would otherwise decide it for every test
+     * after it.
+     */
+    public static function forgetMemo(): void
+    {
+        self::$memo = null;
+    }
+
     private static function resolve(): string
     {
         $fromEnv = trim((string) env('KBB_ADMIN_PATH', ''), '/');

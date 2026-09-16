@@ -79,8 +79,9 @@
 .rvs-legend-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0 0 14px;max-width:80ch}
 
 .rvs-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+.rvs-headrow{display:grid;gap:3px;min-width:0;padding:0 2px}
 .rvs-title{font-weight:650;font-size:15px;margin:0}
-.rvs-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:3px 0 0}
+.rvs-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0;max-width:78ch;line-height:1.5}
 
 /* One row per setting. Label column is flexible and the control column is
    fixed-ish; at 390px they stack instead of squeezing the control to nothing. */
@@ -350,11 +351,14 @@
 
     var html = '<div class="rvs-wrap">';
 
-    html += '<div class="rvs-card"><div class="rvs-head"><div>' +
-            '<h2 class="rvs-title">Review Settings</h2>' +
-            '<p class="rvs-sub">How the review section behaves on every product page. ' +
-            'Changes apply to the storefront as soon as you save.</p>' +
-            '</div></div></div>';
+    /* The screen's own heading as a header ROW, not a bordered card. The bar
+       above #content already carries the name; a full-width card repeating it
+       pushed the first real control below the fold on a phone. */
+    html += '<div class="rvs-headrow">' +
+            '<div class="rvs-title">Review Settings</div>' +
+            '<div class="rvs-sub">How the review section behaves on every product page. ' +
+            'Changes reach the storefront as soon as you save.</div>' +
+            '</div>';
 
     if (banner) {
       html += '<div class="rvs-banner' + (banner.kind === 'ok' ? ' rvs-ok' : '') + '">' +

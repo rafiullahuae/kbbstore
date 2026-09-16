@@ -172,6 +172,21 @@ it('gives the coupon screens exactly one sidebar entry between them', function (
  */
 const ALIASED_SCREENS = [
     'blog' => 'posts',
+
+    /*
+     * The second consolidation, by Lane CG, and the same shape as the first.
+     *
+     * Bulk Add ('rev-add') and Bulk Likes ('rev-likes') were two sidebar rows
+     * over one controller, one route prefix (/admin-api/review-bulk/*), one
+     * capability, one CSS prefix and one partial — which says in its own header
+     * that they are "one feature with two entry points". They are now one row,
+     * Bulk Tools, with the two halves as tabs.
+     *
+     * 'rev-likes' keeps the id, so #rev-likes and ?go=rev-likes still open the
+     * feature with the Helpful votes tab showing, and its TITLES entry names
+     * the screen it actually opens rather than a second one that is gone.
+     */
+    'rev-likes' => 'rev-add',
 ];
 
 /*

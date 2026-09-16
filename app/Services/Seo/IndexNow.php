@@ -22,33 +22,52 @@ class IndexNow
 {
     private const ENDPOINT = 'https://api.indexnow.org/IndexNow';
 
+    /**
+     * The key resolved for this process, or null if it has not been asked for.
+     *
+     * A class property rather than a `static` inside key(), for the same reason
+     * Setting::$memo is one: a function-local static cannot be reached from
+     * anywhere, so nothing could ever clear it. That made key() an order
+     * dependency with no way out — whichever test asked first minted or read a
+     * key, and every test afterwards got THAT key however the settings table
+     * had since been seeded. StorefrontRouteWalkTest has a comment recording
+     * the workaround it had to adopt (ask the application, never the seeder).
+     * forgetKey() is the seam that was missing; the suite calls it between
+     * tests, and nothing in the application needs to.
+     */
+    private static ?string $resolved = null;
+
     /** The key, generating and persisting one on first use rather than requiring a manual step. */
     public static function key(): string
     {
-        static $resolved = null;
-
         // Once resolved once in this request, stick with it — Setting::map()
-        // caches its own result in a function-local static that flushMap()
-        // can't reach, so without this, generating a key and then reading it
-        // back in the same request (e.g. the key-file route calling this
-        // right after a submission just generated one) could see the stale,
-        // pre-write settings snapshot and mint a second, different key.
-        if ($resolved !== null) {
-            return $resolved;
+        // caches its own result in a process-level memo, so without this,
+        // generating a key and then reading it back in the same request (e.g.
+        // the key-file route calling this right after a submission just
+        // generated one) could see the stale, pre-write settings snapshot and
+        // mint a second, different key.
+        if (self::$resolved !== null) {
+            return self::$resolved;
         }
 
         $settings = Setting::map();
         $key = $settings['indexnow_key'] ?? '';
 
         if (self::validKey($key)) {
-            return $resolved = $key;
+            return self::$resolved = $key;
         }
 
         $key = Str::lower(Str::random(32));
         Setting::query()->updateOrCreate(['key' => 'indexnow_key'], ['value' => $key]);
         Setting::flushMap();
 
-        return $resolved = $key;
+        return self::$resolved = $key;
+    }
+
+    /** Drop the resolved key so the next key() reads the settings table again. */
+    public static function forgetKey(): void
+    {
+        self::$resolved = null;
     }
 
     /** 8–128 chars, letters/numbers/dashes only — the protocol's own constraint on the key. */

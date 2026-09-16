@@ -7,14 +7,20 @@ declare(strict_types=1);
 | Store → Quiz Leads  (Lane CH)
 |------------------------------------------------------------------------------
 |
-| NOT YET WIRED. CLAUDE.md forbids this lane from editing routes/web.php, so
-| this file ships unmounted and the integrator adds ONE line, inside the
-| EXISTING admin-api group in routes/web.php — the group that already carries
-| `web`, `auth:admin` and NoStoreAdminApi — directly BELOW the line that is
-| already there:
+| Mounted from routes/web.php, inside the EXISTING admin-api group — the group
+| that already carries `web`, `auth:admin` and NoStoreAdminApi — directly below
+| the read route:
 |
 |     Route::get('/quiz-leads',            [AdminController::class, 'quizLeads']);
-|     require __DIR__.'/quiz-leads-admin.php';          // <- add this
+|     require __DIR__ . '/quiz-leads-admin.php';
+|
+| (It shipped unmounted, because the lane that wrote it may not edit
+| routes/web.php; the integrator added that line. RouteFileHeadersTest is what
+| made this paragraph get updated rather than left stale — it fails any route
+| file that web.php requires while the file still describes itself as
+| unmounted. Note that the guard reads the whole file, so do not quote the old
+| wording here to explain it: quoting it IS the claim, as far as a regex is
+| concerned. That mistake was made once already, right here.)
 |
 | THAT GROUP, AND NOTHING ELSE. A quiz lead carries a shopper's name, email
 | address and phone number, and the route below WRITES. /api/* in this app is

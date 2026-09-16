@@ -37,8 +37,14 @@ Thumbs.db
 *.before-patch-*
 app/*.zip
 
-# Test database
+# Test databases. testing.sqlite is the developer's own; database/testing/ is
+# where tests/bootstrap.php puts the per-process file each suite run migrates.
 /database/testing.sqlite
+/database/testing/
+
+# PHPUnit's result cache. Untracked deliberately: it is what --order-by=defects
+# reads, so committing one machine's copy would reorder everybody else's run.
+/.phpunit.result.cache
 
 # Agent worktrees — transient checkouts created per lane, never committed
 /.claude/worktrees/

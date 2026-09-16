@@ -73,11 +73,38 @@
 .rbk-wrap > *{min-width:0}
 
 .rbk-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
-          border-radius:var(--r,12px);padding:16px;min-width:0}
-.rbk-legend{font-weight:650;font-size:14px;margin:0 0 3px}
-.rbk-legend-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0 0 14px;max-width:80ch}
+          border-radius:var(--r,12px);padding:16px;min-width:0;box-shadow:var(--sh-s,none)}
+
+/* The screen's own heading and its tab strip, as a header row rather than a
+   bordered card. A full-width card repeating the title already in the bar above
+   #content pushed the first real control below the fold on a phone. */
+.rbk-head{display:grid;gap:3px;min-width:0;padding:0 2px}
 .rbk-title{font-weight:650;font-size:15px;margin:0}
-.rbk-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:3px 0 0;max-width:80ch}
+.rbk-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0;max-width:78ch;line-height:1.5}
+
+/* Two tabs over one feature. flex-wrap so the strip never widens the column at
+   390px; the hairline is the strip's own baseline, as on the Coupons screen. */
+.rbk-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border,#e6e6e6);
+          margin:12px 0 0;min-width:0}
+.rbk-tabs > *{min-width:0}
+.rbk-tab{padding:9px 13px;font:inherit;font-size:13px;border:0;background:transparent;
+         color:var(--ink-soft,#6b7280);cursor:pointer;border-bottom:2px solid transparent;
+         margin-bottom:-1px;white-space:nowrap}
+.rbk-tab.rbk-on{color:inherit;font-weight:650;border-bottom-color:var(--accent,#15a85a)}
+
+/* A titled band: what it decides, one line on when you would touch it, then the
+   controls — with a hairline between bands rather than a box around each one.
+   The same shape as .ce-sec on the Coupons screen. */
+.rbk-sec{display:grid;gap:13px;min-width:0}
+.rbk-sec > *{min-width:0}
+.rbk-sec + .rbk-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border,#e6e6e6)}
+.rbk-sec-h{display:grid;gap:3px;min-width:0}
+.rbk-sec-t{font-size:13.5px;font-weight:650}
+.rbk-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}
+
+/* :empty so the "showing the first N" line leaves no gap when there is no more
+   to show, and the chip row none when nothing is selected. */
+.rbk-sec > .rbk-hint:empty,.rbk-sec > .rbk-chips:empty{display:none}
 
 /* The one notice. A quiet panel, not an alert: it states what the content is
    and then gets out of the way. It does not block anything and it is not
@@ -230,6 +257,15 @@
   var LIKES = 'rev-likes';
   var SCREENS = [ADD, LIKES];
 
+  /* THE SIDEBAR ROW THAT STANDS FOR BOTH IDS.
+     There is one row now, 'rev-add', labelled Bulk Tools. 'rev-likes' is still
+     a routable id — a bookmark, #rev-likes, ?go=rev-likes — it simply has no
+     row of its own any more, so the highlight and the "is this screen showing"
+     check must both look at ROW rather than at the id that was asked for.
+     Without this, go('rev-likes') put .on on nothing, render() found no active
+     row and returned early, and the screen painted nothing at all. */
+  var ROW = ADD;
+
   var BASE = window.location.pathname.replace(/\/+$/, '');
 
   /* ---------------------------------------------------------------- state */
@@ -358,11 +394,11 @@
     banner = null;
 
     document.querySelectorAll('.side .nav-item').forEach(function(b){
-      b.classList.toggle('on', b.dataset.go === id);
+      b.classList.toggle('on', b.dataset.go === ROW);
     });
     document.querySelectorAll('#nav .nav-group').forEach(function(g){
       var has = [].slice.call(g.querySelectorAll('.nav-item')).some(function(b){
-        return b.dataset.go === id;
+        return b.dataset.go === ROW;
       });
       g.classList.toggle('open', has);
     });
@@ -370,7 +406,12 @@
     var crumb = document.querySelector('#crumb');
     var title = document.querySelector('#ptitle');
     if (crumb) crumb.textContent = 'Reviews';
-    if (title) title.textContent = (id === ADD) ? 'Bulk Add' : 'Bulk Likes';
+    /* One title for both tabs, and it is the sidebar row's own label. The row,
+       the breadcrumb and the heading must agree or the owner is certain they
+       clicked the wrong entry; which HALF they are on is what the tab strip is
+       for. TITLES in app.blade.php names both ids 'Bulk Tools' for the same
+       reason. */
+    if (title) title.textContent = 'Bulk Tools';
 
     var side = document.querySelector('#side');
     if (side) side.classList.remove('open');
@@ -383,11 +424,19 @@
     return undefined;
   };
 
-  /* ----------------------------------------------------------------- data */
+  /* ----------------------------------------------------------------- data
+
+     load() DOES NOT render() ANY MORE, except when the shape of the page
+     changes — which is when a banner appears or goes. Every other outcome only
+     changes the rows inside the product picker, and the search box that
+     triggered the reload sits outside them. It used to render twice per
+     keystroke-pause, replacing the input the owner was typing into: measured in
+     Chromium, document.activeElement was BODY 250ms after typing stopped. */
   async function load(){
     var mine = ++seq;
+    var hadBanner = !!banner;
     busy = true;
-    render();
+    paintPicker();
 
     try {
       var body = await api('/review-bulk/options' + (search ? ('?q=' + encodeURIComponent(search)) : ''));
@@ -405,7 +454,11 @@
         ? 'The bulk review endpoints are not registered on this server yet. Clear the route cache and reload.'
         : 'Could not load products (' + (e.status || 'network') + ').'};
     } finally {
-      if (mine === seq) { busy = false; render(); }
+      if (mine === seq) {
+        busy = false;
+        if (hadBanner !== !!banner) render();
+        else paintPicker();
+      }
     }
   }
 
@@ -529,6 +582,17 @@
            '<div class="rbk-ctl">' + control + '</div></div>';
   }
 
+  /* A titled band: what it decides, ONE line on when you would touch it, then
+     the controls. Bands are separated by a hairline inside one card rather than
+     each getting a bordered card of its own — the Coupons screen's .ce-sec,
+     which is the standard this console now holds screens to. Bulk Add drew
+     seven separate boxes for one form. */
+  function sec(title, desc, body){
+    return '<div class="rbk-sec"><div class="rbk-sec-h">' +
+      '<div class="rbk-sec-t">' + esc(title) + '</div>' +
+      '<div class="rbk-sec-d">' + desc + '</div></div>' + body + '</div>';
+  }
+
   function sw(key, on){
     return '<label class="rbk-sw"><input type="checkbox" data-rbk-bool="' + esc(key) + '"' +
            (on ? ' checked' : '') + '><i></i></label>';
@@ -545,6 +609,39 @@
              '>' + esc(o[1]) + '</option>';
     }).join('');
     return '<select class="rbk-sel" data-rbk-enum="' + esc(key) + '">' + out + '</select>';
+  }
+
+  /* THE TAB STRIP, and why these two are one screen.
+
+     Bulk Add and Bulk Likes were two sidebar rows over one controller
+     (ReviewBulkApiController), one route prefix (/admin-api/review-bulk/*), one
+     capability (reviews.manage), one CSS prefix and one partial — this file
+     already said, in its own header, that they are "one feature with two entry
+     points". They also share the product picker and the notice block. An owner
+     who wants one usually wants the other in the same sitting, and the menu
+     carried them as if they were unrelated screens.
+
+     Both ids still route. 'rev-likes' keeps its TITLES entry and go('rev-likes')
+     still lands here with the Helpful votes tab open, so #rev-likes, ?go=rev-likes
+     and any bookmark work exactly as before. Nothing was removed but the second
+     row. */
+  function tabs(){
+    return '<div class="rbk-tabs">' +
+      [[ADD, 'Add reviews'], [LIKES, 'Helpful votes']].map(function(t){
+        return '<button type="button" class="rbk-tab' + (screen === t[0] ? ' rbk-on' : '') +
+               '" data-rbk-tab="' + esc(t[0]) + '">' + esc(t[1]) + '</button>';
+      }).join('') +
+      '</div>';
+  }
+
+  function head(){
+    return '<div class="rbk-head">' +
+      '<div class="rbk-title">Bulk review tools</div>' +
+      '<div class="rbk-sub">Two jobs over the same products: writing review rows yourself, and ' +
+      'setting the &ldquo;helpful&rdquo; count on reviews that are already here. Neither is ' +
+      'something a customer did.</div>' +
+      tabs() +
+      '</div>';
   }
 
   /* The notice. One per screen, at the top, stating what the content is. It is
@@ -580,10 +677,12 @@
       '</div>';
   }
 
-  function picker(){
+  /* The picker's rows, alone, so paintPicker() can replace them without taking
+     the search box above them with it. */
+  function pickerRows(){
     if (!opts) {
-      return '<div class="rbk-pick"><div class="rbk-pick-empty">' +
-             (busy ? 'Loading products…' : 'Products are unavailable.') + '</div></div>';
+      return '<div class="rbk-pick-empty">' +
+             (busy ? 'Loading products…' : 'Products are unavailable.') + '</div>';
     }
 
     var rows = opts.products.map(function(p){
@@ -601,20 +700,87 @@
       rows = '<div class="rbk-pick-empty">No products match “' + esc(search) + '”.</div>';
     }
 
-    var chips = pickedIds().map(function(id){
+    return rows;
+  }
+
+  function pickerChips(){
+    return pickedIds().map(function(id){
       return '<span class="rbk-chip"><span>' + esc(picked[id]) + '</span>' +
              '<button type="button" data-rbk-unpick="' + id + '" title="Remove">×</button></span>';
     }).join('');
+  }
 
+  function pickerMore(){
+    return (opts && opts.truncated)
+      ? 'Showing the first ' + opts.products.length + ' products — search to reach the rest.'
+      : '';
+  }
+
+  /* THE SEARCH BOX LIVES OUTSIDE EVERY REPAINTED REGION.
+
+     It used to be inside the block that load() replaced. Typing a product name
+     debounced into load(), load() set busy and called render(), and render()
+     rewrote the whole of #content — so 250ms after the owner stopped typing the
+     input they were typing into was replaced by a new one and the caret went to
+     <body>. Measured in Chromium: after typing "Anua" and waiting,
+     document.activeElement was BODY.
+
+     Now only #rbk-picklist, #rbk-pickmore and #rbk-chips are ever repainted.
+     The input is never one of them. */
+  function picker(){
     return '<div class="rbk-pick">' +
       '<div class="rbk-pick-search">' +
       '<input class="rbk-txt" type="search" id="rbk-search" placeholder="Search products by name, SKU or id" ' +
       'value="' + esc(search) + '"></div>' +
-      '<div class="rbk-pick-list">' + rows + '</div>' +
+      '<div class="rbk-pick-list" id="rbk-picklist">' + pickerRows() + '</div>' +
       '</div>' +
-      (opts.truncated ? '<div class="rbk-hint">Showing the first ' + opts.products.length +
-        ' products — search to reach the rest.</div>' : '') +
-      (chips ? '<div class="rbk-chips">' + chips + '</div>' : '');
+      '<div class="rbk-hint" id="rbk-pickmore">' + pickerMore() + '</div>' +
+      '<div class="rbk-chips" id="rbk-chips">' + pickerChips() + '</div>';
+  }
+
+  function paintPicker(){
+    var list = document.querySelector('#rbk-picklist');
+    if (!list) return render();
+
+    keepFocus(function(){
+      list.innerHTML = pickerRows();
+      var more = document.querySelector('#rbk-pickmore');
+      if (more) more.innerHTML = pickerMore();
+    });
+
+    bindPicks();
+  }
+
+  function paintChips(){
+    var box = document.querySelector('#rbk-chips');
+    if (!box) return;
+    box.innerHTML = pickerChips();
+    bindUnpick();
+  }
+
+  /* Remember which field has the caret and where, run a repaint, put it back.
+     Cheap enough to wrap every repaint in, and it means no future caller has to
+     remember that this screen has live text inputs on it. */
+  function keepFocus(paint){
+    var el = document.activeElement;
+    var id = el && el.id ? el.id : null;
+    var start = null;
+    var end = null;
+
+    if (id) {
+      try { start = el.selectionStart; end = el.selectionEnd; } catch (e) {}
+    }
+
+    paint();
+
+    if (!id) return;
+    var again = document.getElementById(id);
+    if (!again || again === el) return;
+
+    again.focus();
+    if (start !== null) {
+      try { again.setSelectionRange(start, end); } catch (e) {}
+    }
   }
 
   function starMix(){
@@ -640,93 +806,68 @@
     var planned = plannedRows();
     var over = planned > L.max_rows;
 
-    var html = '';
-
-    html += '<div class="rbk-card"><h2 class="rbk-title">Bulk Add</h2>' +
-      '<p class="rbk-sub">Create review rows against one or more products, from names and text ' +
-      'you supply.</p></div>';
-
-    html += notice();
+    var html = head() + notice();
 
     if (banner) {
       html += '<div class="rbk-banner' + (banner.kind === 'ok' ? ' rbk-ok' : '') + '">' +
               esc(banner.text) + '</div>';
     }
 
+    var body = '';
+
     /* ---- what they attach to ---- */
-    html += '<div class="rbk-card">' +
-      '<p class="rbk-legend">Products</p>' +
-      '<p class="rbk-legend-sub">Each selected product gets its own set of reviews. The figures ' +
-      'beside each name are the review count and star average it carries right now.</p>' +
+    body += sec('Products',
+      'Each product gets its own set. The figures are its review count and star average today.',
       picker() +
-      '<div class="rbk-row rbk-wide" style="margin-top:12px">' +
+      '<div class="rbk-row">' +
       '<div><div class="rbk-lab">Reviews per product</div>' +
-      '<div class="rbk-hint">At most ' + L.max_rows + ' rows in one go, across every product ' +
-      'selected. A bigger batch is several passes, deliberately: one request that inserts ' +
-      'thousands of rows is how a shared host falls over.</div></div>' +
+      '<div class="rbk-hint">At most ' + L.max_rows + ' rows per pass, across every product.</div></div>' +
       '<div class="rbk-ctl">' + num('per_product', add.per_product, 1, L.max_rows) +
       ' <span class="rbk-note' + (over ? ' rbk-over' : '') + '">' +
       '<span class="rbk-count">' + planned + '</span> of ' + L.max_rows + ' rows' +
-      (over ? ' — too many' : '') + '</span></div></div>' +
-      '</div>';
+      (over ? ' — too many' : '') + '</span></div></div>');
 
     /* ---- what they look like ---- */
-    html += '<div class="rbk-card">' +
-      '<p class="rbk-legend">Ratings and dates</p>' +
-      '<p class="rbk-legend-sub">The star for each review is drawn from the mix below. Weights are ' +
-      'relative — 70/22/6/1/1 and 7/2.2/0.6/0.1/0.1 mean the same thing.</p>' +
+    body += sec('Ratings and dates',
+      'Weights are relative: 70/22/6/1/1 and 7/2.2/0.6/0.1/0.1 mean the same thing.',
       starMix() +
-      '<div class="rbk-row rbk-wide" style="margin-top:14px">' +
+      '<div class="rbk-row">' +
       '<div><div class="rbk-lab">Dated between</div>' +
-      '<div class="rbk-hint">Each review gets its own moment inside this window, so they do not ' +
-      'all carry the same timestamp. Neither end may be in the future — a review dated tomorrow ' +
-      'sorts above every real one and is the most obvious tell there is. Left empty, the window ' +
-      'is the last 90 days.</div></div>' +
+      '<div class="rbk-hint">Each review gets its own moment in the window. Empty is the last 90 days.</div></div>' +
       '<div class="rbk-ctl">' +
       '<input class="rbk-date" type="date" data-rbk-text="date_from" value="' + esc(add.date_from) + '">' +
       '<span class="rbk-note">to</span>' +
       '<input class="rbk-date" type="date" data-rbk-text="date_to" value="' + esc(add.date_to) + '">' +
-      '</div></div>' +
-      '</div>';
+      '</div></div>');
 
     /* ---- the text ---- */
-    html += '<div class="rbk-card">' +
-      '<p class="rbk-legend">The text</p>' +
-      '<p class="rbk-legend-sub">One entry per line, up to ' + L.max_pool + ' lines each. Entries are ' +
-      'shuffled and dealt out evenly, so every line is used once before any line is used twice. ' +
-      'HTML is stripped when it is saved.</p>' +
+    body += sec('The text',
+      'One entry per line, up to ' + L.max_pool + ' lines each. Lines are shuffled and dealt out ' +
+      'evenly, and HTML is stripped when they are saved.',
       '<div class="rbk-row rbk-wide"><div><div class="rbk-lab">Reviewer names</div>' +
       '<div class="rbk-hint">' + lines(add.authors).length + ' name(s). Required.</div></div>' +
       '<div class="rbk-ctl"><textarea class="rbk-area" data-rbk-text="authors" ' +
       'placeholder="Aisha K.&#10;Mariam&#10;Sara H.">' + esc(add.authors) + '</textarea></div></div>' +
       '<div class="rbk-row rbk-wide"><div><div class="rbk-lab">Review bodies</div>' +
-      '<div class="rbk-hint">' + lines(add.bodies).length + ' line(s). Required. Up to 5,000 ' +
-      'characters each.</div></div>' +
+      '<div class="rbk-hint">' + lines(add.bodies).length + ' line(s). Required, up to 5,000 characters each.</div></div>' +
       '<div class="rbk-ctl"><textarea class="rbk-area" data-rbk-text="bodies">' +
       esc(add.bodies) + '</textarea></div></div>' +
       '<div class="rbk-row rbk-wide"><div><div class="rbk-lab">Titles</div>' +
-      '<div class="rbk-hint">' + lines(add.titles).length + ' line(s). Optional — leave empty and ' +
-      'the reviews carry no headline, which is what the storefront shows for most real ones.</div></div>' +
+      '<div class="rbk-hint">' + lines(add.titles).length + ' line(s). Optional — most real reviews carry none.</div></div>' +
       '<div class="rbk-ctl"><textarea class="rbk-area" data-rbk-text="titles" style="min-height:88px">' +
-      esc(add.titles) + '</textarea></div></div>' +
-      '</div>';
+      esc(add.titles) + '</textarea></div></div>');
 
     /* ---- how they land ---- */
-    html += '<div class="rbk-card">' +
-      '<p class="rbk-legend">How they land</p>' +
-      '<p class="rbk-legend-sub">Whether the reviews are published straight away or wait in the ' +
-      'moderation queue.</p>' +
-      row('Status', 'A review a shopper writes arrives as <strong>Awaiting approval</strong>, and ' +
-        'that is the default here so the two match. <strong>Approved</strong> publishes ' +
-        'immediately: the reviews show on the product page and the star average and review count ' +
-        'on your shop cards are recalculated in the same request. Either way you can change it ' +
-        'later under All Reviews.',
+    body += sec('How they land',
+      'Published straight away, or waiting in the moderation queue. Either can be changed later ' +
+      'under All Reviews.',
+      row('Status', 'A shopper&rsquo;s review arrives awaiting approval, so that is the default here.',
         select('status', add.status, [['pending','Awaiting approval'],['approved','Approved — live now']])) +
       row('Verified-buyer tick',
-        'Adds the green “✓ Verified” badge beside the name, which on a real review means the ' +
-        'reviewer’s order was matched. Off by default.',
-        sw('verified', add.verified)) +
-      '</div>';
+        'The green &ldquo;✓ Verified&rdquo; badge, which on a real review means the order was matched.',
+        sw('verified', add.verified)));
+
+    html += '<div class="rbk-card">' + body + '</div>';
 
     html += '<div class="rbk-card rbk-actions">' +
       '<button class="rbk-btn" id="rbk-create"' + ((working || over || planned < 1) ? ' disabled' : '') + '>' +
@@ -737,10 +878,9 @@
 
     if (result && result.products) {
       html += '<div class="rbk-card">' +
-        '<p class="rbk-legend">After the recalculation</p>' +
-        '<p class="rbk-legend-sub">What your shop cards and the “rating” and “popular” sorts now ' +
-        'print for each product. Read back from the products table after the request, not ' +
-        'predicted.</p>' +
+        '<div class="rbk-sec-t">After the recalculation</div>' +
+        '<div class="rbk-sec-d" style="margin-bottom:12px">What your shop cards now print, read back ' +
+        'from the products table rather than predicted.</div>' +
         '<div class="rbk-scroll"><table class="rbk-table"><thead><tr>' +
         '<th>Product</th><th class="rbk-n">Reviews</th><th class="rbk-n">Rating</th>' +
         '</tr></thead><tbody>' +
@@ -765,70 +905,50 @@
     var L = limits();
     var byProduct = likes.scope === 'product';
 
-    var html = '';
-
-    html += '<div class="rbk-card"><h2 class="rbk-title">Bulk Likes</h2>' +
-      '<p class="rbk-sub">Set the “helpful” count on existing reviews.</p></div>';
-
-    html += notice();
+    var html = head() + notice();
 
     if (banner) {
       html += '<div class="rbk-banner' + (banner.kind === 'ok' ? ' rbk-ok' : '') + '">' +
               esc(banner.text) + '</div>';
     }
 
+    var body = '';
+
     /* ---- which reviews ---- */
-    html += '<div class="rbk-card">' +
-      '<p class="rbk-legend">Which reviews</p>' +
-      '<p class="rbk-legend-sub">Either every review on the products you pick, or an explicit list ' +
-      'of review ids — the ids All Reviews shows and its CSV export carries.</p>' +
+    body += sec('Which reviews',
+      'Every review on the products you pick, or an explicit list of ids — the ids All Reviews ' +
+      'shows and its CSV export carries.',
       row('Choose by', 'Products, or ids pasted in.',
         select('scope', likes.scope, [['product','Product'],['ids','Review ids']])) +
-      '</div>';
+      (byProduct
+        ? picker()
+        : '<div class="rbk-row rbk-wide"><div><div class="rbk-lab">Review ids</div>' +
+          '<div class="rbk-hint">Separated by anything — commas, spaces or new lines. ' +
+          ids(likes.ids).length + ' so far.</div></div>' +
+          '<div class="rbk-ctl"><textarea class="rbk-area" data-rbk-ltext="ids" style="min-height:96px" ' +
+          'placeholder="1201, 1202, 1203">' + esc(likes.ids) + '</textarea></div></div>'));
 
-    if (byProduct) {
-      html += '<div class="rbk-card">' +
-        '<p class="rbk-legend">Products</p>' +
-        '<p class="rbk-legend-sub">Every review on these products that matches the filters below.</p>' +
-        picker() + '</div>';
-    } else {
-      html += '<div class="rbk-card">' +
-        '<p class="rbk-legend">Review ids</p>' +
-        '<p class="rbk-legend-sub">Separated by anything — commas, spaces or new lines. ' +
-        ids(likes.ids).length + ' id(s) so far.</p>' +
-        '<textarea class="rbk-area" data-rbk-ltext="ids" style="min-height:96px" ' +
-        'placeholder="1201, 1202, 1203">' + esc(likes.ids) + '</textarea></div>';
-    }
-
-    html += '<div class="rbk-card">' +
-      '<p class="rbk-legend">Filters</p>' +
-      '<p class="rbk-legend-sub">Which of the matching reviews are actually touched.</p>' +
-      row('Only', 'A shopper can only vote on an <strong>approved</strong> review — ' +
-        'the storefront answers 404 for anything else — so that is the default. Widen it if you ' +
-        'want counts in place before you approve a batch.',
+    body += sec('Filters',
+      'Which of the matching reviews are actually touched.',
+      row('Only', 'A shopper can only vote on an approved review, so that is the default.',
         select('status', likes.status, [
           ['approved','Approved reviews'],
           ['pending','Awaiting approval'],
           ['spam','Spam'],
           ['any','Any status']
         ])) +
-      row('At most', 'Ceiling on how many reviews one pass touches, newest first. ' +
-        'The server never touches more than ' + L.likes_max_reviews + ' whatever this says.',
-        num('limit', likes.limit, 1, L.likes_max_reviews)) +
-      '</div>';
+      row('At most', 'Newest first. The server never touches more than ' + L.likes_max_reviews + '.',
+        num('limit', likes.limit, 1, L.likes_max_reviews)));
 
-    html += '<div class="rbk-card">' +
-      '<p class="rbk-legend">The count</p>' +
-      '<p class="rbk-legend-sub">Each review gets its own number drawn from the range, so they do ' +
-      'not all end up on the same figure.</p>' +
-      row('Mode', '<strong>Add</strong> leaves any genuine votes in place and raises the number. ' +
-        '<strong>Set</strong> replaces it, which discards whatever real votes the review had.',
+    body += sec('The count',
+      'Each review gets its own number from the range, so they do not all land on one figure.',
+      row('Mode', '<strong>Add</strong> keeps any genuine votes. <strong>Set</strong> discards them.',
         select('mode', likes.mode, [['add','Add to the current count'],['set','Set the count to']])) +
-      row('Between', 'Inclusive, both ends. The highest count this will ever write is ' +
-        L.likes_ceiling + '.',
+      row('Between', 'Inclusive. The highest this will ever write is ' + L.likes_ceiling + '.',
         num('min', likes.min, 0, L.likes_ceiling) + '<span class="rbk-note">and</span>' +
-        num('max', likes.max, 0, L.likes_ceiling)) +
-      '</div>';
+        num('max', likes.max, 0, L.likes_ceiling)));
+
+    html += '<div class="rbk-card">' + body + '</div>';
 
     html += '<div class="rbk-card rbk-actions">' +
       '<button class="rbk-btn" id="rbk-apply"' + (working ? ' disabled' : '') + '>' +
@@ -838,7 +958,7 @@
       '</div>';
 
     if (result && typeof result.affected === 'number' && !result.products) {
-      html += '<div class="rbk-card"><p class="rbk-legend">Last pass</p>' +
+      html += '<div class="rbk-card"><div class="rbk-sec-t">Last pass</div>' +
         '<div class="rbk-scroll"><table class="rbk-table"><thead><tr>' +
         '<th>Reviews matched</th><th class="rbk-n">Updated</th></tr></thead><tbody>' +
         '<tr><td>' + (result.matched || 0) + '</td>' +
@@ -864,7 +984,10 @@
     var active = document.querySelector('.side .nav-item.on');
     if (!active || SCREENS.indexOf(active.dataset.go) === -1) return;
 
-    screen = active.dataset.go;
+    /* The sidebar carries ONE row now, so `screen` is the tab the owner last
+       asked for — set by the go() wrapper above, or by a tab click — and the
+       highlighted row is only the fallback for a first paint. */
+    if (SCREENS.indexOf(screen) === -1) screen = active.dataset.go;
 
     host.innerHTML = '<div class="rbk-wrap">' +
       (screen === ADD ? addScreen() : likesScreen()) + '</div>';
@@ -875,8 +998,55 @@
   /* ------------------------------------------------------------------ bind */
   function form(){ return screen === ADD ? add : likes; }
 
+  /* THE PRODUCT LIST IS NOT REDRAWN WHEN A BOX IS TICKED.
+
+     It used to be: every tick called render(), which rewrote #content. The row
+     under the finger was removed and rebuilt mid-tap — Playwright reported
+     "Element is not attached to the DOM" on a plain .check() — and the search
+     box lost its caret with it. A tick changes two things on this screen: the
+     chips under the list, and the planned-rows counter. Both are patched. */
+  function bindPicks(){
+    document.querySelectorAll('[data-rbk-pick]').forEach(function(el){
+      el.onchange = function(){
+        var id = el.dataset.rbkPick;
+        if (el.checked) { picked[id] = el.dataset.rbkName; }
+        else { delete picked[id]; }
+        paintChips();
+        repaintCounts();
+      };
+    });
+  }
+
+  function bindUnpick(){
+    document.querySelectorAll('[data-rbk-unpick]').forEach(function(el){
+      el.onclick = function(){
+        var id = el.dataset.rbkUnpick;
+        delete picked[id];
+
+        // The row in the list, if it is on screen, unticks itself rather than
+        // the whole list being rebuilt to say so.
+        var box = document.querySelector('[data-rbk-pick="' + id + '"]');
+        if (box) box.checked = false;
+
+        paintChips();
+        repaintCounts();
+      };
+    });
+  }
+
   function bind(){
     var f = form();
+
+    document.querySelectorAll('[data-rbk-tab]').forEach(function(el){
+      el.onclick = function(){
+        if (screen === el.dataset.rbkTab) return;
+        screen = el.dataset.rbkTab;
+        result = null;
+        banner = null;
+
+        render();
+      };
+    });
 
     document.querySelectorAll('[data-rbk-bool]').forEach(function(el){
       el.onchange = function(){ f[el.dataset.rbkBool] = el.checked; };
@@ -915,18 +1085,8 @@
       };
     });
 
-    document.querySelectorAll('[data-rbk-pick]').forEach(function(el){
-      el.onchange = function(){
-        var id = el.dataset.rbkPick;
-        if (el.checked) { picked[id] = el.dataset.rbkName; }
-        else { delete picked[id]; }
-        render();
-      };
-    });
-
-    document.querySelectorAll('[data-rbk-unpick]').forEach(function(el){
-      el.onclick = function(){ delete picked[el.dataset.rbkUnpick]; render(); };
-    });
+    bindPicks();
+    bindUnpick();
 
     var s = document.querySelector('#rbk-search');
     if (s) {
@@ -994,13 +1154,55 @@
      on renderReviewFrame() and paints the startup message. Nothing has been
      drawn at this point in parsing, so rendering here is not a flicker: it is
      the first thing the browser paints. */
+  /* Which of the two the address bar asked for, if either.
+
+     ?go=rev-likes and #rev-likes are navigated by the boot block at the end of
+     the FIRST script in this document, which runs before this file is parsed.
+     That block calls the console's own go(), which highlights the row whose
+     data-go matches the id — and 'rev-likes' has no row of its own any more,
+     so NOTHING is highlighted and the check below would find no screen to
+     paint. Reading the address directly is the other half of keeping the id
+     routable after its row was merged away. */
+  function requested(){
+    var q = '';
+    try { q = new URLSearchParams(window.location.search).get('go') || ''; } catch (e) {}
+    var h = String(window.location.hash || '').replace(/^#/, '');
+    var id = q || h;
+
+    return SCREENS.indexOf(id) !== -1 ? id : null;
+  }
+
   function bootIfCurrent(){
+    var asked = requested();
     var active = document.querySelector('.side .nav-item.on');
-    if (active && SCREENS.indexOf(active.dataset.go) !== -1) {
-      screen = active.dataset.go;
-      render();
-      load();
-    }
+    var showing = active && SCREENS.indexOf(active.dataset.go) !== -1;
+
+    if (!asked && !showing) return;
+
+    /* `screen` may already have been set by the go() wrapper. The address bar
+       is next, and the highlighted row is the last resort — reading the row
+       first would drop a ?go=rev-likes bookmark onto the Add reviews tab. */
+    if (SCREENS.indexOf(screen) === -1) screen = asked || active.dataset.go;
+
+    /* The row the merged screen lives under, highlighted by hand for the
+       bookmark case where the console's go() could not find one. */
+    document.querySelectorAll('.side .nav-item').forEach(function(b){
+      b.classList.toggle('on', b.dataset.go === ROW);
+    });
+    document.querySelectorAll('#nav .nav-group').forEach(function(g){
+      var has = [].slice.call(g.querySelectorAll('.nav-item')).some(function(b){
+        return b.dataset.go === ROW;
+      });
+      g.classList.toggle('open', has);
+    });
+
+    var crumb = document.querySelector('#crumb');
+    var title = document.querySelector('#ptitle');
+    if (crumb) crumb.textContent = 'Reviews';
+    if (title) title.textContent = 'Bulk Tools';
+
+    render();
+    load();
   }
 
   if (document.readyState === 'loading') {
