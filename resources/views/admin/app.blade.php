@@ -1803,7 +1803,7 @@ const NAV=[
   {sec:'Store',items:[['modules','Modules','<path d="M4 7h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M13 13h7v7h-7z"/>'],['megamenu','Mega Menu','<path d="M3 5h18M3 5v4h18V5M7 13h10M7 17h6"/>'],['ecommerce','Ecommerce','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>'],['payship','Payment & Shipping Rules','<path d="M3 7h18v10H3z"/><path d="M3 11h18"/><circle cx="7.5" cy="14" r="1"/>'],['shipping','Delivery & Shipping','<path d="M2 6h11v9H2z"/><path d="M13 9h4.5l3.5 3.5V15h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>'],['catalog','Catalog',I.catalog],['import','Import / Export',I.sandbox],['orders','Orders',I.orders],['payments','Payments','<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'],['analytics','Analytics','<path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/>'],['search','Site Search','<circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/>'],['seo','SEO & Meta','<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/><path d="m22 20-1.5-1.5"/>'],['blog','Blog','<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>'],['posts','Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>'],['mail','Mail','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['store-settings','Business Details',I.settings],['customers','Customers',I.cust],['quiz-leads','Quiz Leads','<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>'],['p-content','Content & Pages',I.content,'lock']]},
   {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
-  {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
+  {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>','lock'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
   {sec:'Reviews',items:[['rev-all','All Reviews','<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/>','3'],['rev-add','Bulk Add','<path d="M12 5v14M5 12h14"/>'],['rev-likes','Bulk Likes','<path d="M7 11v9H4v-9z"/><path d="M7 11l4-7a2 2 0 0 1 2 2v3h5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7"/>'],['rev-assign','Assign / Duplicate',I.copy],['rev-io','Export / Import','<path d="M8 7h11l-3-3M16 17H5l3 3"/>'],['rev-badge','Badge Themes','<path d="M12 2l4 4-4 4-4-4z"/><path d="M4 12l8 8 8-8"/>'],['rev-capsule','Rating Capsule','<path d="M12 21s-7-4.5-9.5-9A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9z"/>'],['rev-settings','Review Settings',I.settings]]},
   {sec:'Storefront',items:[['shopfilters','Shop Filters','<path d="M4 5h16l-6 7v5l-4 2v-7z"/>']]},
   {sec:'Core Updates',items:[['updates','Core Updates','<path d=\"M21 12a9 9 0 1 1-3-6.7\"/><path d=\"M21 3v6h-6\"/><path d=\"M12 8v5l3 2\"/>']]}
@@ -5517,6 +5517,79 @@ function renderPlaceholder(id){
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
+/* ===== LANE AV — the standalone .html screens ================================
+   Every entry in FRAME_SRC and REV_SRC names a standalone HTML file that this
+   repo does not ship and never has. Established, not assumed: none of the names
+   is tracked in git on any branch, none is anywhere on this filesystem, and the
+   Master Plan recorded the same finding at 2.60.71 — traced from the owner's own
+   404 screenshot, taken inside the LIVE admin panel, of `kbb-admin-blog.html`.
+   That screenshot is the one piece of direct evidence anybody has about the
+   production web root, and it says the file is not there either.
+
+   It is only one of the names, though. The web root is a different directory
+   from the application root (bootstrap/app.php's usePublicPath), so this tree
+   cannot see it and cannot prove the negative for the other eight. Nothing below
+   assumes an answer; the two paths are each correct whichever way it falls.
+
+   1. Screens a later window.go override re-renders for real (LIVE_RENDERED)
+      must not draw a frame at all. Drawing one fired a request for a file that
+      is not there and was overwritten a moment later: a guaranteed 404 on every
+      single visit, for markup no one ever saw. They now get the honest message
+      Lane AM wrote for 'rev-all', which is visible only in the case it describes
+      — the live wiring failing to start — and costs no request at all.
+
+   2. Screens with no live renderer ASK the server whether the file is there
+      before deciding. Present: it is shown, which is the case where these files
+      did survive in the production web root. Absent: the screen says so plainly
+      rather than rendering an empty iframe. A blank screen reads as "the
+      software is broken"; this cannot go blank either way.
+   ========================================================================== */
+const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads']);
+const FRAME_PROBE=new Map();
+
+/* One request per file per page load, shared by every later visit to the screen.
+   A HEAD that the host refuses outright (405) is retried as a GET, so a server
+   that only dislikes the method cannot be mistaken for a missing file. */
+function frameExists(url){
+  if(!FRAME_PROBE.has(url)){
+    FRAME_PROBE.set(url,fetch(url,{method:'HEAD',credentials:'same-origin'})
+      .then(r=>r.status===405?fetch(url,{credentials:'same-origin'}).then(r2=>r2.ok):r.ok)
+      .catch(()=>false));
+  }
+  return FRAME_PROBE.get(url);
+}
+
+/* The 'isn't installed yet' card, in the shape renderPlaceholder already uses
+   for p-content — one pattern for "not built", not a second one. */
+function frameNotBuiltHTML(title){
+  return `<div class="wrap"><div class="ph">
+    <div class="pic">${ic(I.modules)}</div>
+    <h3>${escHtml(title)} isn't installed yet</h3>
+    <p>This screen was drawn up as a standalone page that was never built, and no copy of it is installed on this server. Nothing is wrong with your store and nothing is missing from it — this one screen simply does not exist yet.</p>
+    <button class="btn" onclick="go('modules')">Open Modules →</button>
+  </div></div>`;
+}
+/* Lane AM's wording for 'rev-all', reused verbatim so the two agree. */
+function frameStartupHTML(title){
+  return `<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">${escHtml(title)} could not be loaded — the admin script did not finish starting up. Reload the page.</p></div>`;
+}
+
+function mountFrame(id,src,title,query){
+  const box=$('#content');
+  if(LIVE_RENDERED.has(id)){box.innerHTML=frameStartupHTML(title);return;}
+  const url=src+(query?('?'+query):'');
+  /* Never empty, not even for the instant the probe is in flight, and true
+     whichever way the probe lands. */
+  box.innerHTML=`<div class="wrap"><p style="padding:24px;color:var(--ink-soft)">Checking for ${escHtml(title)}…</p></div>`;
+  const giveUp=new Promise(r=>setTimeout(()=>r(false),4000));
+  Promise.race([frameExists(url),giveUp]).then(ok=>{
+    if(cur!==id)return;   // the owner moved on while we were asking
+    box.innerHTML=ok
+      ? `<iframe src="${escAttr(url)}" title="${escAttr(title)}" style="width:100%;height:calc(100vh - 116px);border:0;display:block;background:var(--bg)"></iframe>`
+      : frameNotBuiltHTML(title);
+  });
+}
+
 /* ---------- Store screens that load as standalone files (iframe) ---------- */
 /* 'customers' is deliberately NOT in here any more — see the Lane T region.
    These entries load a standalone HTML file that this repo does not ship, so
@@ -5528,7 +5601,7 @@ function renderFrame(id,query){
   cur=id;
   const t=TITLES[id]||['Store',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
-  $('#content').innerHTML=`<iframe src="${FRAME_SRC[id]}${query?('?'+query):''}" title="${t[1]}" style="width:100%;height:calc(100vh - 116px);border:0;display:block;background:var(--bg)"></iframe>`;
+  mountFrame(id,FRAME_SRC[id],t[1],query);
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 function goTab(id,tab){ if(FRAME_SRC[id])return renderFrame(id,'tab='+encodeURIComponent(tab)); return go(id); }
@@ -5558,7 +5631,7 @@ function renderReviewFrame(id){
     $('#content').scrollTop=0;$('#side').classList.remove('open');
     return;
   }
-  $('#content').innerHTML=`<iframe src="${REV_SRC[id]}" title="${t[1]}" style="width:100%;height:calc(100vh - 116px);border:0;display:block;background:var(--bg)"></iframe>`;
+  mountFrame(id,REV_SRC[id],t[1]);
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
@@ -7536,18 +7609,32 @@ function lblSync(){const chip=$('#lblChip');if(!chip)return;const el=$('#lblName
 
 /* ===================== META & FACEBOOK ===================== */
 function renderMeta(){
-  $('#content').innerHTML=`<div class="wrap"><div class="page-head"><h2>Meta &amp; Facebook</h2><p>Pixel tracking, Conversions API and your product catalog feed for Facebook &amp; Instagram Shops and ads.</p></div>
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <div class="card pad"><div class="between"><div class="row"><span class="lbl-card-thumb" style="background:#1877f2">f</span><div><b style="font-size:13.5px">Meta connection</b><div style="font-size:11.5px;color:var(--ink-soft)">Not connected — link your Business account to enable Pixel, CAPI and Catalog.</div></div></div><button class="btn" onclick="toast('Connect Meta (preview)')">Connect Facebook</button></div></div>
-      <div class="metarow">
-        ${peCard('Meta Pixel',`<div class="fld"><label>Pixel ID</label><input placeholder="e.g. 1234567890"></div><div class="fld" style="margin:0"><label>Events tracked</label><div class="tagchips">${['PageView','ViewContent','AddToCart','InitiateCheckout','Purchase'].map(e=>`<span class="tagchip on">${e}</span>`).join('')}</div></div>`)}
-        ${peCard('Conversions API · server-side',`<div class="fld"><label>Access token</label><input type="password" value="••••••••••••"></div><div class="fld"><label>Test event code</label><input placeholder="TEST12345"></div><label class="row" style="gap:8px;font-size:12.5px;cursor:pointer"><span class="cbx on">${ic(I.check)}</span> Send server events with deduplication</label>`)}
-      </div>
-      ${peCard('Catalog / Product feed',`<div class="g2"><div class="fld"><label>Catalog ID</label><input placeholder="e.g. 9876543210"></div><div class="fld"><label>Auto-sync</label><label class="row" style="gap:8px;font-size:12.5px;cursor:pointer;padding-top:9px"><span class="cbx on">${ic(I.check)}</span> Keep catalog in sync automatically</label></div></div><div class="fld"><label>Feed URL</label><div class="row" style="gap:8px"><input style="flex:1" readonly value="https://kbeautybliss.com/feed/meta-catalog.xml"><button class="btn ghost sm" onclick="toast('Copied')">Copy</button></div></div><div class="pubrow"><span>Last synced</span><b>—</b></div><div class="pubrow"><span>Products in feed</span><b>642</b></div><div class="pubrow" style="border:0"><span>Status</span><b style="color:var(--accent-strong)">Ready</b></div><button class="btn" style="margin-top:12px" onclick="toast('Sync started (preview)')">${ic(I.rocket)} Sync catalog now</button>`)}
-      ${peCard('Catalog field mapping',`<div class="card" style="box-shadow:none"><table><thead><tr><th>Meta field</th><th></th><th>KBB field</th></tr></thead><tbody>${[['id','sku'],['title','name'],['description','short_description'],['availability','stock_status'],['condition','new'],['price','price'],['sale_price','sale_price'],['brand','brand'],['google_product_category','category_map'],['image_link','featured_image']].map(m=>`<tr><td style="font-family:var(--mono);font-size:11.5px">${m[0]}</td><td style="color:var(--ink-faint)">${ic('<path d="M5 12h14M13 6l6 6-6 6"/>')}</td><td><span class="pill green">${m[1]}</span></td></tr>`).join('')}</tbody></table></div>`)}
-      ${peCard('Sync rules',`<label class="row" style="gap:8px;font-size:12.5px;cursor:pointer;margin-bottom:10px"><span class="cbx on">${ic(I.check)}</span> Exclude out-of-stock products</label><label class="row" style="gap:8px;font-size:12.5px;cursor:pointer;margin-bottom:10px"><span class="cbx on">${ic(I.check)}</span> Exclude drafts &amp; hidden products</label><label class="row" style="gap:8px;font-size:12.5px;cursor:pointer"><span class="cbx">${ic(I.check)}</span> Send sale price only during scheduled sales</label>`)}
-    </div></div>`;
-  wireCbx('#content');wireChips('#content');
+  /* ===== LANE AV =============================================================
+     This screen rendered nothing at all: it called peCard() five times and
+     peCard is defined nowhere in this repo, so it threw before the innerHTML
+     assignment ever ran.
+
+     Defining peCard would have been the one-line fix and would have been the
+     wrong one. What the five cards contained was invented: "Products in feed:
+     642" (this store has ~2,400 products and no feed), a Feed URL
+     — kbeautybliss.com/feed/meta-catalog.xml — that no route serves, "Status:
+     Ready" for a connection that does not exist, a masked Access token that was
+     literally a string of bullet characters, and a "Sync catalog now" button
+     whose entire action was a toast reading "(preview)". Every input was
+     unbound: there is no Meta settings key, no /admin-api endpoint and no
+     catalog-feed code anywhere in this tree. The fix would have replaced a blank
+     screen with a confident one telling a shop owner fabricated numbers about
+     his own business, which is worse than blank, not better.
+
+     So it says what is true. The Meta integration is not built. When somebody
+     builds it, this function is where it goes.
+     ========================================================================= */
+  $('#content').innerHTML=`<div class="wrap"><div class="ph">
+    <div class="pic">${ic(I.modules)}</div>
+    <h3>Meta &amp; Facebook isn't installed yet</h3>
+    <p>Pixel tracking, the Conversions API and the Facebook &amp; Instagram product feed are planned, but none of them is built yet — so there is nothing here to switch on and nothing is being sent to Meta. Your store is unaffected.</p>
+    <button class="btn" onclick="go('pixels')">Marketing Pixels →</button>
+  </div></div>`;
 }
 window.lblSync=lblSync;
 
