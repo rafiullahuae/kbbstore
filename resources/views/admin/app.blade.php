@@ -1757,6 +1757,45 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .apform.fs-noicons .lead{display:none}
 .apform.fs-noicons .fld.ico input{padding-left:10px}
 .apform.fs-noicons .fld.ico label{left:10px}
+
+/* ---------- Store · Payments — one tab per gateway ----------
+   `pay` prefix, and every selector below is used by this screen alone.
+
+   The bar itself reuses .ectabs/.ectab from the Ecommerce family rather than
+   inventing a third tab style: this screen is already an .ecwrap and renders
+   .ecopt/.ecctl/.echelp rows, so it belongs to that family visually.
+
+   What it deliberately does NOT reuse is the `data-ectab` ATTRIBUTE. Ecommerce
+   binds a document-level click listener on [data-ectab] that sets ETAB and
+   calls paintEcom(), which rewrites #content with the Ecommerce screen. A
+   Payments tab carrying that attribute would repaint the console with somebody
+   else's page on every click. Same lesson as the bare .ectog overlap recorded
+   beside that listener: the class is shared, the data-* key is owned.
+
+   .ectabs is also what keeps the bar off the 390px overflow report — it is
+   `overflow-x:auto`, so a row of tabs wider than the phone scrolls inside
+   itself instead of widening #content. */
+.paytabs{margin-top:14px;margin-bottom:16px}
+.paypane[hidden]{display:none!important}
+/* The gateway's state, on the tab, so a collapsed gateway is never a gateway
+   whose state you cannot see. Colours match payStatus(): the card and the tab
+   read from the same function and cannot disagree. */
+.paydot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:#c8cfda}
+.paydot.green{background:#15a85a}
+.paydot.amber{background:#e0922f}
+.paydot.grey{background:#c8cfda}
+/* Live vs sandbox is the one piece of state on this screen that moves real
+   money, so it is spelled out rather than left to a dot. */
+.paylive{font-size:9.5px;font-weight:800;letter-spacing:.05em;color:#b4123c;
+         background:#ffe7ee;border-radius:99px;padding:1px 6px;flex:0 0 auto}
+.paytab.on .paylive{background:#ffd9e4}
+.paydirty{color:#e0922f;font-size:16px;line-height:0;flex:0 0 auto}
+.paydirty[hidden]{display:none}
+.paytab-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){
+  .paytab{gap:6px}
+  .paytab-t{max-width:38vw}
+}
 </style>
 </head>
 <body data-env="live">
@@ -13006,6 +13045,85 @@ buildNav();
      it. It appears on this screen and nowhere else. */
   var PAYG=[];
 
+  /* ---------- one tab per gateway ----------
+     The list is PAYG, straight off the endpoint, which is GatewayRegistry
+     ::all(). Nothing here names a gateway: add one to the registry and it gets
+     a tab, a pane and a status light with no edit to this file.
+
+     WHY THE PANES ARE HIDDEN AND NOT RE-RENDERED. Save on this screen is PER
+     GATEWAY -- paySave() reads the live DOM for one id and POSTs it alone --
+     so a tab switch that rebuilt the markup would silently discard whatever
+     the operator had typed into the tab they were leaving. Every gateway's
+     card is therefore rendered once and switching only flips `hidden`. The
+     nodes are never destroyed, so an unsaved edit survives a tab switch by
+     construction rather than by being copied somewhere and copied back. */
+  var PAYTAB='';          /* active gateway id */
+  var PAYBASE={};         /* per-gateway snapshot of the values as painted */
+  var PAY_TAB_KEY='kbb.payments.tab';
+
+  /* Deep link. The console addresses a screen as `#<id>` (and `?go=<id>`), and
+     go(id,sub) already carries a sub-tab for Catalog, so a gateway tab is
+     `#payments/<id>` -- the same address one level deeper.
+
+     It is read rather than passed because the sub argument cannot survive the
+     trip: manual-order, coupon-usage, category-tree and product-editor each
+     wrap window.go as `function(id)`, so any second argument is dropped before
+     it reaches this screen's dispatch. The hash is the one channel all four
+     wrappers leave alone. */
+  function payHashTab(){
+    var m=/^payments\/([A-Za-z0-9_.-]{1,40})$/.exec(String(location.hash||'').replace(/^#/,''));
+    return m?m[1]:'';
+  }
+
+  /* The console addresses a screen two ways, `#<id>` and `?go=<id>`, so the
+     gateway gets both: `?go=payments&tab=stripe` is the form that survives
+     being pasted somewhere that eats fragments. The shared boot already routes
+     `?go=payments`, so this half needs no hook of its own. */
+  function payQueryTab(){
+    try{
+      var q=new URLSearchParams(location.search);
+      return q.get('go')==='payments' ? (q.get('tab')||'') : '';
+    }catch(e){ return ''; }
+  }
+
+  function payLinkTab(){ return payHashTab()||payQueryTab(); }
+
+  /* Does the address name this screen at all, with or without a gateway?
+     `#payments`, `#payments/stripe` and `?go=payments` all count. */
+  function payAddressed(){
+    var h=String(location.hash||'').replace(/^#/,'');
+    if(h==='payments'||/^payments\//.test(h)) return true;
+    try{ return new URLSearchParams(location.search).get('go')==='payments'; }catch(e){ return false; }
+  }
+
+  function payStoredTab(){
+    try{ return localStorage.getItem(PAY_TAB_KEY)||''; }catch(e){ return ''; }
+  }
+
+  function payKnown(id){
+    for(var i=0;i<PAYG.length;i++){ if(PAYG[i].id===id) return true; }
+    return false;
+  }
+
+  /* Never trusted as a string, only matched against ids the endpoint returned,
+     so a hand-typed hash can select a tab and nothing else. */
+  function payResolveTab(){
+    var want=payLinkTab();
+    if(payKnown(want)) return want;
+    want=payStoredTab();
+    if(payKnown(want)) return want;
+    return PAYG.length?PAYG[0].id:'';
+  }
+
+  function payRememberTab(id){
+    try{ localStorage.setItem(PAY_TAB_KEY,id); }catch(e){}
+    /* replaceState, not location.hash: assigning the hash pushes a history
+       entry per tab click and would make Back walk the tab bar instead of
+       leaving the screen. It fires no hashchange either, so nothing re-routes
+       underneath us. */
+    try{ history.replaceState(null,'',location.pathname+location.search+'#payments/'+id); }catch(e){}
+  }
+
   /* The URL secret is generated on first save, never typed. Drawing it as an
      empty password box would only invite someone to overwrite it; it is shown
      as part of the webhook URL instead, with a Regenerate button. */
@@ -13028,6 +13146,134 @@ buildNav();
     if(!g.configured) return 'Not set up. Its credentials are missing, so it reports itself unavailable and shoppers never see it — checkout does not fail, the option simply is not there. Fill in the fields below and save.';
     if(!g.enabled) return 'Set up, but switched off. Turn it on to offer it at checkout.';
     return 'Set up and switched on. Shoppers see this option at checkout.';
+  }
+
+  /* A gateway with no credential fields has no mode select either (COD), so it
+     has no live/sandbox state to report and must not be labelled as if it did. */
+  function payIsLive(g){ return g.mode==='live' && g.fields.length>0; }
+
+  /* ---------- unsaved-change detection ----------
+     Compared against the values as painted rather than tracked with a flag: a
+     flag set on the first keystroke stays set after the operator types a value
+     and then types it back, and this indicator is the only thing telling them
+     a collapsed tab is holding an edit. */
+  function paySnapshot(id){
+    var tog=document.querySelector('[data-payen="'+id+'"]');
+    var t=document.getElementById('pay_title_'+id);
+    var m=document.getElementById('pay_mode_'+id);
+    var snap={
+      enabled:tog?tog.classList.contains('on'):false,
+      title:t?t.value:'',
+      mode:m?m.value:'',
+      fields:{}
+    };
+    document.querySelectorAll('[data-payg="'+id+'"]').forEach(function(el){
+      snap.fields[el.dataset.payf]=el.value;
+    });
+    return snap;
+  }
+
+  function paySameSnap(a,b){
+    if(!a||!b) return true;
+    if(a.enabled!==b.enabled||a.title!==b.title||a.mode!==b.mode) return false;
+    var ka=Object.keys(a.fields);
+    if(ka.length!==Object.keys(b.fields).length) return false;
+    for(var i=0;i<ka.length;i++){ if(a.fields[ka[i]]!==b.fields[ka[i]]) return false; }
+    return true;
+  }
+
+  function payIsDirty(id){ return !paySameSnap(PAYBASE[id], paySnapshot(id)); }
+
+  /* Every gateway currently holding an edit, so a repaint can put them back. */
+  function payCapturePending(){
+    var out={};
+    PAYG.forEach(function(g){ if(payIsDirty(g.id)) out[g.id]=paySnapshot(g.id); });
+    return out;
+  }
+
+  function payRestorePending(pending){
+    Object.keys(pending||{}).forEach(function(id){
+      var s=pending[id];
+      var tog=document.querySelector('[data-payen="'+id+'"]');
+      if(tog){
+        tog.classList.toggle('on',!!s.enabled);
+        tog.setAttribute('aria-checked',s.enabled?'true':'false');
+      }
+      var t=document.getElementById('pay_title_'+id); if(t) t.value=s.title;
+      var m=document.getElementById('pay_mode_'+id); if(m&&s.mode) m.value=s.mode;
+      document.querySelectorAll('[data-payg="'+id+'"]').forEach(function(el){
+        if(Object.prototype.hasOwnProperty.call(s.fields,el.dataset.payf)){
+          el.value=s.fields[el.dataset.payf];
+        }
+      });
+      payMsg(id,'Unsaved change');
+    });
+    payRefreshTabs();
+  }
+
+  /* ---------- the tab bar ----------
+     Each tab carries the state the card would have shown, because a tab that
+     hides a gateway whose state you need is worse than the long page it
+     replaced: the status dot (the same payStatus() the card header uses), a
+     LIVE chip when this gateway is pointed at a production API, and an amber
+     bullet while it holds an unsaved edit. */
+  function payTabLabel(g){
+    var bits=[g.title, payStatus(g)[1]];
+    if(payIsLive(g)) bits.push('live mode');
+    return bits.join(' — ');
+  }
+
+  function payTabBar(){
+    return '<div class="ectabs paytabs" role="tablist" aria-label="Payment gateways">'+
+      PAYG.map(function(g){
+        var on=g.id===PAYTAB;
+        return '<button type="button" class="ectab paytab'+(on?' on':'')+'"'+
+          ' id="pay_tab_'+sesc(g.id)+'" data-paytab="'+sesc(g.id)+'"'+
+          ' role="tab" aria-controls="pay_pane_'+sesc(g.id)+'"'+
+          ' aria-selected="'+(on?'true':'false')+'" tabindex="'+(on?'0':'-1')+'"'+
+          ' aria-label="'+sesc(payTabLabel(g))+'" title="'+sesc(payTabLabel(g))+'">'+
+          '<span class="paydot '+sesc(payStatus(g)[0])+'" aria-hidden="true"></span>'+
+          '<span class="paytab-t">'+sesc(g.title)+'</span>'+
+          (payIsLive(g)?'<span class="paylive">LIVE</span>':'')+
+          '<span class="paydirty" id="pay_tabdirty_'+sesc(g.id)+'" aria-hidden="true" hidden>&bull;</span>'+
+          '</button>';
+      }).join('')+'</div>';
+  }
+
+  /* Repaints only the tab bar's own indicators — never the panes, which hold
+     the operator's typing. */
+  function payRefreshTabs(){
+    PAYG.forEach(function(g){
+      var d=document.getElementById('pay_tabdirty_'+g.id);
+      if(!d) return;
+      var dirty=payIsDirty(g.id);
+      if(dirty) d.removeAttribute('hidden'); else d.setAttribute('hidden','');
+      var tab=document.getElementById('pay_tab_'+g.id);
+      if(tab){
+        var label=payTabLabel(g)+(dirty?' — unsaved changes':'');
+        tab.setAttribute('aria-label',label);
+        tab.setAttribute('title',label);
+      }
+    });
+  }
+
+  function payShowTab(id,remember){
+    if(!payKnown(id)) return;
+    PAYTAB=id;
+    PAYG.forEach(function(g){
+      var pane=document.getElementById('pay_pane_'+g.id);
+      if(pane){
+        if(g.id===id) pane.removeAttribute('hidden'); else pane.setAttribute('hidden','');
+      }
+      var tab=document.getElementById('pay_tab_'+g.id);
+      if(tab){
+        tab.classList.toggle('on',g.id===id);
+        tab.setAttribute('aria-selected',g.id===id?'true':'false');
+        tab.setAttribute('tabindex',g.id===id?'0':'-1');
+      }
+    });
+    if(remember!==false) payRememberTab(id);
+    payRefreshTabs();
   }
 
   function payField(gid,f){
@@ -13123,24 +13369,46 @@ buildNav();
     var unconfigured=PAYG.filter(function(g){ return g.enabled && !g.configured; });
     var ready=PAYG.filter(function(g){ return g.enabled && g.configured; });
 
-    document.querySelector('#content').innerHTML=
-      '<div class="wrap ecwrap mmwrap">'+
-      '<div class="page-head"><h2>Payments</h2>'+
-      '<p>Credentials for each payment method. A gateway is offered at checkout only when it is switched on <i>and</i> its credentials are stored — an unconfigured one reports itself unavailable rather than failing on the shopper.</p></div>'+
+    /* Kept across a repaint so saving does not throw the operator back to the
+       first gateway; only re-resolved when it names nothing that exists. */
+    if(!payKnown(PAYTAB)) PAYTAB=payResolveTab();
 
+    document.querySelector('#content').innerHTML=
+      '<div class="wrap ecwrap mmwrap" data-payscreen="1">'+
+      '<div class="page-head"><h2>Payments</h2>'+
+      '<p>Credentials for each payment method, one tab per gateway. A gateway is offered at checkout only when it is switched on <i>and</i> its credentials are stored — an unconfigured one reports itself unavailable rather than failing on the shopper.</p></div>'+
+
+      /* ABOVE the tab bar, deliberately. These two warnings are about gateways
+         the operator is not currently looking at, so putting them inside a
+         pane would hide the one thing tabs must not hide. */
       (ready.length===0
         ? '<div class="nlwarn">No payment method is both configured and switched on, so checkout currently has nothing to offer.</div>'
         : '')+
       (unconfigured.length
         ? '<div class="nlwarn">'+unconfigured.length+' gateway'+(unconfigured.length===1?' is':'s are')+
           ' switched on but missing credentials — '+sesc(unconfigured.map(function(g){ return g.title; }).join(', '))+
-          '. '+(unconfigured.length===1?'It is':'They are')+' hidden at checkout until the fields below are filled in.</div>'
+          '. '+(unconfigured.length===1?'It is':'They are')+' hidden at checkout until the fields are filled in. Their tabs are marked amber.</div>'
         : '')+
 
-      PAYG.map(payCard).join('')+
+      payTabBar()+
+
+      /* Every card, every time. Only `hidden` differs — see the note on PAYTAB
+         above for why a tab switch must not re-render these. */
+      PAYG.map(function(g){
+        return '<div class="paypane" id="pay_pane_'+sesc(g.id)+'" role="tabpanel"'+
+          ' aria-labelledby="pay_tab_'+sesc(g.id)+'"'+(g.id===PAYTAB?'':' hidden')+'>'+
+          payCard(g)+'</div>';
+      }).join('')+
       '</div>';
 
+    /* The baseline every dirty check is measured against: the values exactly as
+       just painted, read back out of the DOM so the comparison is like for
+       like (a secret box paints blank and its baseline is blank). */
+    PAYBASE={};
+    PAYG.forEach(function(g){ PAYBASE[g.id]=paySnapshot(g.id); });
+
     bindPayments();
+    payRefreshTabs();
   }
 
   function payMsg(id,text){
@@ -13151,6 +13419,14 @@ buildNav();
   async function renderPayments(){
     var body=document.querySelector('#content');
     if(!body) return;
+
+    /* Entering the screen with `#payments/<id>` in the address means somebody
+       was sent to that gateway, so the link wins over the remembered tab.
+       Validated in paintPayments() against the ids the endpoint actually
+       returned — an unknown one falls back rather than painting an empty pane.
+       An address of plain `#payments` leaves the remembered tab alone. */
+    PAYTAB=payLinkTab()||PAYTAB;
+
     body.innerHTML='<div class="wrap"><div class="page-head"><h2>Payments</h2><p>Loading gateways…</p></div></div>';
     try{
       var d=await api('/admin-api/payments');
@@ -13214,7 +13490,19 @@ buildNav();
         throw new Error(why||('Request failed ('+r.status+')'));
       }
       toast(note||(g.title+' saved'));
+
+      /* A successful save reloads the whole screen from the endpoint, which is
+         what keeps `configured`, the webhook URL and the status lights honest.
+         It also rebuilds every pane — so any edit the operator has waiting in
+         ANOTHER gateway's tab is taken with it. On the old one-long-page screen
+         that was at least visible; behind tabs it would be silent, which is the
+         one failure that would make this feature worse than what it replaces.
+         Captured before the repaint, put back after it. */
+      var pending=payCapturePending();
+      delete pending[id];
+
       await renderPayments();
+      payRestorePending(pending);
     }catch(e){
       payMsg(id,'');
       toast('Could not save — '+e.message);
@@ -13222,13 +13510,66 @@ buildNav();
     }
   }
 
+  /* One gateway's controls were touched: say so on the card and light the tab,
+     so the change is visible whether or not that pane is the open one. */
+  function payTouched(id){
+    payMsg(id, payIsDirty(id) ? 'Unsaved change' : '');
+    payRefreshTabs();
+  }
+
   function bindPayments(){
+    /* Bound on the screen's own wrapper, never on document. Two separate bugs
+       on this console came from document-level listeners matching another
+       screen's markup (a bare .ectog, a bare data-open); the wrapper is
+       replaced wholesale on every repaint, so these cannot outlive the screen
+       or reach anything outside it. */
+    var wrap=document.querySelector('[data-payscreen]');
+
+    if(wrap){
+      wrap.addEventListener('click',function(e){
+        var tb=e.target.closest ? e.target.closest('[data-paytab]') : null;
+        if(tb){ e.preventDefault(); payShowTab(tb.dataset.paytab); }
+      });
+
+      /* Left/Right walk the bar, Home/End jump to its ends — the roving
+         tabindex set in payShowTab() is what makes Tab leave the bar instead
+         of stepping through every gateway. */
+      wrap.addEventListener('keydown',function(e){
+        var tb=e.target.closest ? e.target.closest('[data-paytab]') : null;
+        if(!tb) return;
+        var ids=PAYG.map(function(g){ return g.id; });
+        var i=ids.indexOf(tb.dataset.paytab);
+        if(i<0) return;
+        var next=null;
+        if(e.key==='ArrowRight') next=ids[(i+1)%ids.length];
+        else if(e.key==='ArrowLeft') next=ids[(i-1+ids.length)%ids.length];
+        else if(e.key==='Home') next=ids[0];
+        else if(e.key==='End') next=ids[ids.length-1];
+        if(!next) return;
+        e.preventDefault();
+        payShowTab(next);
+        var el=document.getElementById('pay_tab_'+next);
+        if(el) el.focus();
+      });
+
+      /* Typing anywhere in a pane re-evaluates that gateway's tab marker. The
+         target tells us which gateway without a listener per input. */
+      var touch=function(e){
+        var el=e.target;
+        if(!el||!el.dataset) return;
+        var id=el.dataset.payg||el.dataset.paytitle||el.dataset.paymode;
+        if(id) payTouched(id);
+      };
+      wrap.addEventListener('input',touch);
+      wrap.addEventListener('change',touch);
+    }
+
     document.querySelectorAll('[data-payen]').forEach(function(el){
       var flip=function(){
         var on=!el.classList.contains('on');
         el.classList.toggle('on',on);
         el.setAttribute('aria-checked',on?'true':'false');
-        payMsg(el.dataset.payen,'Unsaved change');
+        payTouched(el.dataset.payen);
       };
       el.onclick=flip;
       el.onkeydown=function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); } };
@@ -13273,6 +13614,56 @@ buildNav();
       };
     });
   }
+
+  /* ---------- Payments deep link on first load ----------
+     Two separate reasons this screen has to claim its own address.
+
+     `#payments/stripe` is not in TITLES, so the console's boot matcher — which
+     understands `#<id>` and `?go=<id>` and looks the value up there — falls
+     through to the dashboard. That much is expected: the gateway is a level
+     deeper than anything that matcher was written for.
+
+     The second reason is a standing bug this lane did not cause and is fixing
+     only for its own screen. That boot block runs at the END OF THE FIRST
+     SCRIPT, where go() is still the original — and the original's dispatch
+     table has no entry for `payments`, because Payments (like Orders,
+     Analytics, SEO, Blog, Posts, Business Details and Quiz Leads — the whole
+     LIVE_RENDERED set) is wired up by the wrapper installed in the SECOND
+     script, further down this file. So even a plain `?go=payments` lands on
+     the dashboard today. Widening the shared matcher would touch every one of
+     those screens at once, which is not this lane's to do; claiming the
+     address here fixes Payments and leaves the other seven exactly as they
+     are, reported rather than quietly changed.
+
+     Deferred by a tick so it runs after the four partials further down have
+     each wrapped window.go — calling it synchronously here would route through
+     a half-built chain. */
+  (function(){
+    if(payAddressed()){
+      setTimeout(function(){
+        try{ if(typeof window.go==='function') window.go('payments'); }catch(e){}
+      },0);
+    }
+
+    /* And the same address arriving at an ALREADY-OPEN console.
+       Changing only the fragment is a same-document navigation: no reload, no
+       scripts re-run, so the boot above never sees it. Without this, pasting
+       `#payments/stripe` into the address bar of an open console does nothing
+       at all — which is precisely the case a link is for.
+
+       Only payments-shaped fragments are acted on, so this cannot disturb any
+       other screen's address. payRememberTab() uses replaceState, which fires
+       no hashchange, so a tab click cannot re-enter here. */
+    window.addEventListener('hashchange',function(){
+      var want=payHashTab();
+      if(!want) return;
+      if(document.querySelector('[data-payscreen]') && payKnown(want)){
+        payShowTab(want,false);   // already here: just move, do not re-address
+        return;
+      }
+      try{ if(typeof window.go==='function') window.go('payments'); }catch(e){}
+    });
+  })();
 
   /* ---------- Route interception: hydrate dash, render new screens ---------- */
   var _go = window.go;
