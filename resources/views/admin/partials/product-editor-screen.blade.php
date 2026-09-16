@@ -328,8 +328,11 @@
 .peo-panel[data-peo-panel="stock"]{--peo-hue:#0369a1}
 
 .peo-card{position:relative;overflow:hidden}
-.peo-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-                  background:var(--peo-hue,#6366f1);opacity:.85}
+/* The vertical rail down the left edge is gone — the owner asked for it out.
+   The heading colour and the wash under it stay, which is what was actually
+   doing the work of telling one panel from the next; the rail was a second
+   statement of the same thing. No padding-left inset either, now that there is
+   nothing at the card's edge for the text to clear. */
 .peo-card::after{content:'';position:absolute;left:0;right:0;top:0;height:74px;
                  pointer-events:none;z-index:0;
                  background:transparent;
@@ -338,9 +341,6 @@
                    transparent)}
 .peo-card > *{position:relative;z-index:1}
 .peo-card h3{color:var(--peo-hue,#6b7280)}
-/* The rail needs the text off the card's edge, and the gallery's own tiles
-   already sit at 8px, so this is the only place the inset is added. */
-.peo-card{padding-left:18px}
 .peo-panel > *{min-width:0}
 
 /* The per-panel arrange toolbar. It is also the drag handle -- see the note in
