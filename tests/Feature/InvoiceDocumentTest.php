@@ -262,7 +262,13 @@ it('prints the whole invoice for an admin', function () {
         ->assertOk()
         ->getContent();
 
-    expect($html)->toContain('Tax Invoice')
+    /*
+     * "Invoice", not "Tax Invoice" — Lane DE. This order carries no tax record
+     * and no TRN, and InvoiceDocument::docType() will not head a document as a
+     * tax document on nothing. InvoiceDocTypeTest covers the whole decision.
+     */
+    expect($html)->toContain('>Invoice</div>')
+        ->and($html)->not->toContain('Tax Invoice')
         ->and($html)->toContain($order->order_number)
         // The allocated number, zero padded.
         ->and($html)->toContain('01000')

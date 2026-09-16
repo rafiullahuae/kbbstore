@@ -52,6 +52,15 @@ class OrderStatusChanged extends OrderMail
         'shipped' => [
             'Your K Beauty Bliss order %s is on its way',
             'Your order is on its way',
+            /*
+             * STILL THE DEFAULT, AND NO LONGER THE ONLY POSSIBILITY. The second
+             * sentence is a delivery window for one country, and the owner can
+             * now rewrite it on Store → Mail without a code change — see
+             * SHIPPED_TIMING_KEY below. Left alone here so that "nothing moves
+             * until he edits it" is a property of this constant rather than a
+             * promise about a reconstruction: bodyFor() returns this string,
+             * byte for byte, while the box is blank.
+             */
             'Your order has left us and is with the courier. Delivery in the UAE normally takes one to three working days from dispatch.',
         ],
         'cancelled' => [
@@ -181,8 +190,59 @@ class OrderStatusChanged extends OrderMail
      * than reworded: a claim with nothing behind it is not softened, and the
      * email already links to the order and says plainly what that link can and
      * cannot do.
+     *
+     * It is SHIPPED_DISPATCHED with nothing after it, and that is the point:
+     * the only sentence certainly true of a parcel whose destination this order
+     * does not record is that it has gone.
      */
-    private const SHIPPED_UNKNOWN = 'Your order has left us and is with the courier.';
+    private const SHIPPED_UNKNOWN = self::SHIPPED_DISPATCHED;
+
+    /**
+     * The half of the dispatch email that is true of every destination.
+     *
+     * One copy of it, because all three branches open with it and a fourth
+     * spelling of the same sentence is a fourth place to correct it.
+     */
+    private const SHIPPED_DISPATCHED = 'Your order has left us and is with the courier.';
+
+    /**
+     * WHAT THE DISPATCH EMAIL SAYS ABOUT TIMING, AND WHY IT IS A SECOND BOX.
+     *
+     * The constant in WORDING['shipped'] above is a delivery promise for one
+     * country, written in a PHP file. The owner's own editable UAE wording lives
+     * in `delivery_default_text` (Store → Delivery & Shipping → Delivery lines)
+     * and is read by App\Support\DeliveryLine and by nothing else. So the day he
+     * rewrites his delivery line, this email goes on saying the old thing, and
+     * nothing anywhere notices the two have parted company.
+     *
+     * IT IS NOT THE SAME SENTENCE AND MAY NOT BE SUBSTITUTED FOR IT. The two are
+     * anchored to different events:
+     *
+     *   this one              measured FROM DISPATCH. It is sent at the moment
+     *                         the parcel leaves.
+     *   delivery_default_text measured FROM THE ORDER. It is printed under Place
+     *                         order, before the order exists.
+     *
+     * On this shop that gap is a configured quantity rather than a quibble:
+     * Store → Ecommerce → Delivery carries `dispatch_cutoff_hour` (15) and
+     * `dispatch_days`, and the product page builds an arrival date out of both
+     * precisely because ordering and dispatching are not the same moment. An
+     * order placed at 16:00 on a Thursday is not dispatched that day. Printing
+     * the storefront's line here would therefore quietly shorten a promise, in
+     * the direction that gets a shop complained about.
+     *
+     * So it is its own box on Store → Mail, labelled for the clock it is
+     * measured on, and SHIPPED BLANK. Blank means this email says exactly what
+     * it says today — bodyFor() returns WORDING['shipped'][2] untouched — so a
+     * shop that applies the package and never opens the screen tells every
+     * customer precisely what it told them before.
+     *
+     * IT GOVERNS THE HOME-COUNTRY BRANCH ONLY. SHIPPED_ABROAD deliberately
+     * quotes no window, because no Gulf transit time has been measured; a box
+     * that filled that silence would be the invention the previous lane refused
+     * to make. If the owner wants a Gulf figure it needs a measured one first.
+     */
+    public const SHIPPED_TIMING_KEY = 'mail_shipped_timing_note';
 
     /** The store's own country: the one destination WORDING['shipped'] describes. */
     private const HOME_COUNTRY = 'AE';
@@ -279,10 +339,39 @@ class OrderStatusChanged extends OrderMail
         $country = (string) ($this->order['destinationCountry'] ?? '');
 
         return match (true) {
-            $country === self::HOME_COUNTRY => $default,
+            $country === self::HOME_COUNTRY => $this->homeShippedBody($default),
             $country === '' => self::SHIPPED_UNKNOWN,
             default => self::SHIPPED_ABROAD,
         };
+    }
+
+    /**
+     * The home-country dispatch sentence: the owner's timing line, or today's.
+     *
+     * $default is WORDING['shipped'][2] and is returned UNTOUCHED while the box
+     * is blank, which is the shipped state — see SHIPPED_TIMING_KEY for why the
+     * storefront's delivery line is not read here instead.
+     *
+     * GUARDED, for the reason refundSentenceFor() is guarded and OrderMail's
+     * header gives about branding: this reads the settings table, and a table
+     * read that fails must not be why a customer hears nothing about a parcel
+     * that has already left. The fallback is the constant, so the failure costs
+     * the wording the owner typed and nothing else.
+     */
+    private function homeShippedBody(string $default): string
+    {
+        try {
+            $note = trim((string) app(SettingsService::class)->get(self::SHIPPED_TIMING_KEY, ''));
+        } catch (\Throwable $e) {
+            Log::warning('dispatch timing note unavailable', [
+                'exception' => class_basename($e),
+                'message' => $e->getMessage(),
+            ]);
+
+            return $default;
+        }
+
+        return $note === '' ? $default : self::SHIPPED_DISPATCHED . ' ' . $note;
     }
 
     /** Is this a status a customer gets told about at all? */

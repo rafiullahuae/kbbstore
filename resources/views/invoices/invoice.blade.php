@@ -21,7 +21,14 @@
         </div>
 
         <div class="what">
-            <div class="doctype">Tax Invoice</div>
+            {{-- NOT A LITERAL. Whether this document may call itself a tax
+                 document depends on whether tax was actually charged on the
+                 order and whether the seller has a registration number to put
+                 under his name — and what the right phrase is at all is the
+                 owner's question for his accountant, answered in
+                 `invoice_doctype`. InvoiceDocument::docType() carries the
+                 whole argument. --}}
+            <div class="doctype">{{ $doc['docType'] }}</div>
             <div class="docmeta">
                 @if ($doc['invoiceReference'] !== '')
                     <div class="row">Invoice <b>{{ $doc['invoiceReference'] }}</b></div>

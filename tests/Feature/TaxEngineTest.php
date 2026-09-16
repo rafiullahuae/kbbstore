@@ -876,10 +876,20 @@ it('draws an exclusive tax above the Total and an inclusive one below it', funct
     expect($addAt)->toBeLessThan((int) $totalAt, 'an exclusive tax is printed under the total it is part of');
     expect($noteAt)->toBeGreaterThan((int) $totalAt);
 
-    // The adding row is the visible one; the note is hidden.
-    expect(preg_match('/js-vat-row vat-add"[^>]*style="display:none"/', $html))
+    /*
+     * The adding row is the visible one; the note is hidden.
+     *
+     * Asserted on the `hidden` ATTRIBUTE rather than on an inline
+     * `style="display:none"` — Lane DE. Both rows carried the style because the
+     * attribute did nothing on this page until store/checkout.blade.php began
+     * shipping `.kbb-checkout [hidden]{display:none!important}`; they now use
+     * the attribute, like the gift row and the delivery line beside them. What
+     * is being asserted is unchanged: exactly one of the pair is on screen, and
+     * it is the one on the correct side of the Total.
+     */
+    expect(preg_match('/js-vat-row vat-add"[^>]*hidden/', $html))
         ->toBe(0, 'the row that carries the charged tax is hidden');
-    expect(preg_match('/js-vat-row vat-note"[^>]*style="display:none"/', $html))
+    expect(preg_match('/js-vat-row vat-note"[^>]*hidden/', $html))
         ->toBe(1, 'both VAT rows are visible at once');
 });
 

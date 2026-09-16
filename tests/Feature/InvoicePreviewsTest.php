@@ -170,7 +170,19 @@ it('renders the invoice, the packing slip and the emailed invoice, and saves the
         ->assertOk()
         ->getContent();
 
-    expect($invoice)->toContain('Tax Invoice')
+    /*
+     * "Invoice", not "Tax Invoice" — Lane DE.
+     *
+     * The heading used to be a literal. It is now InvoiceDocument::docType(),
+     * which makes the tax-document claim only when the order really carries tax
+     * that was charged or contained AND a TRN is recorded. This preview order
+     * has the TRN and `tax_total` 0, which is the shipped state of the shop
+     * (`tax_mode` is 'display'), so the honest heading is the plain word. The
+     * owner overrides it with `invoice_doctype` once his accountant has told
+     * him what this document is called; see InvoiceDocTypeTest.
+     */
+    expect($invoice)->toContain('>Invoice<')
+        ->and($invoice)->not->toContain('Tax Invoice')
         ->and($invoice)->toContain('KBB-10427')
         ->and($invoice)->toContain('01000')
         ->and($invoice)->toContain('473.50')

@@ -13,7 +13,11 @@
 @extends('emails.layout')
 
 @section('body')
-    <div style="font-size:19px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin:0 0 4px;">Tax Invoice</div>
+    {{-- The same heading the printable page prints, from the same array, for
+         the same reason every other figure here comes from it: the invoice in
+         the inbox and the invoice on the printer may not disagree about what
+         kind of document they are. InvoiceDocument::docType() decides. --}}
+    <div style="font-size:19px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin:0 0 4px;">{{ $doc['docType'] }}</div>
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin:0 0 18px;">
         <tr>

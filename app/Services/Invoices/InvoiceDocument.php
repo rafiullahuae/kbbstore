@@ -111,6 +111,10 @@ class InvoiceDocument
             'email' => trim((string) $order->email),
             'phone' => trim((string) $order->phone),
 
+            // What this document calls itself. See docType() — it is the one
+            // claim on an invoice that a developer may not settle alone.
+            'docType' => $this->docType($order),
+
             'items' => $this->items($order),
             'itemCount' => (int) $order->items->sum('quantity'),
             'totals' => $this->totals($order),
@@ -169,6 +173,92 @@ class InvoiceDocument
             'website' => $this->setting('invoice_website'),
             'footer' => $this->setting('invoice_footer'),
         ];
+    }
+
+    /**
+     * What the document calls itself, at the top of the page.
+     *
+     * ── WHY THIS IS NOT A LITERAL ANY MORE ──────────────────────────────────
+     *
+     * Both templates were headed "Tax Invoice", unconditionally, on every
+     * order. While `tax_total` was always 0 and the VAT figure was a display
+     * note under the Total, that was an empty phrase on a document that made no
+     * tax claim anywhere else. App\Support\OrderTax ended that: one invoice is
+     * now three different documents, and only two of them state a tax that was
+     * actually charged or actually contained.
+     *
+     * ── THE DECISION THIS METHOD DOES NOT MAKE ──────────────────────────────
+     *
+     * "Tax Invoice" is a term of art in the UAE and the wider GCC and it
+     * usually implies a TRN. What a VAT-registered shop's invoice must be
+     * headed, whether a zero-rated or out-of-scope sale still takes that
+     * heading, and whether a "Simplified Tax Invoice" is what this shop issues
+     * below the threshold, are questions for the owner and his accountant. They
+     * are not questions a developer may answer by picking a phrase, and no tax
+     * document convention is invented here.
+     *
+     * `invoice_doctype` is where that answer goes. Blank by default, printed
+     * verbatim when filled in, and it wins in every state — including the
+     * untaxed one, because the person who asked an accountant knows something
+     * this code does not. It sits beside `invoice_trn`, `invoice_address` and
+     * `invoice_footer`, the other seller-identity rows this class reads and no
+     * screen yet writes.
+     *
+     * ── AND THE DEFAULT, WHICH IS RESTRAINT ─────────────────────────────────
+     *
+     * Until he answers, the document claims only what is on it. The stronger
+     * heading needs BOTH halves of what it asserts:
+     *
+     *   tax that was really charged or really contained  — a recorded basis of
+     *       `inclusive` or `exclusive` with a figure above zero, or an imported
+     *       WooCommerce order carrying its own `tax_total`. NOT `flat`, which
+     *       is printed and never charged, and not the shipped display mode,
+     *       where `tax_basis` is NULL and nothing was taken.
+     *
+     *   a registration number under the seller's name — `invoice_trn`, which
+     *       ships blank. A document headed as a tax document by a seller who
+     *       has stated no registration number is a claim with nothing behind
+     *       it, and this project prints none of those.
+     *
+     * Anything short of both is headed "Invoice", which is true of every
+     * invoice ever issued and is what the document is either way. The VAT note
+     * and the VAT row are untouched by this method: the figures are stated
+     * exactly as before, whatever the heading says.
+     */
+    public function docType(Order $order): string
+    {
+        $chosen = $this->setting('invoice_doctype');
+
+        if ($chosen !== '') {
+            return $chosen;
+        }
+
+        return $this->statesChargedTax($order) && $this->setting('invoice_trn') !== ''
+            ? 'Tax Invoice'
+            : 'Invoice';
+    }
+
+    /**
+     * Does this document state a tax that was actually charged or contained?
+     *
+     * The same two branches totals() and vatNote() take, asked as one question.
+     * `flat` answers false by design — TaxRule's header is explicit that it
+     * charges nothing and contains nothing, and the screen offers it as
+     * "Printed only — charges nothing".
+     */
+    private function statesChargedTax(Order $order): bool
+    {
+        $recorded = \App\Support\OrderTax::recorded($order);
+
+        if ($recorded !== null) {
+            return $recorded['basis'] !== \App\Support\TaxRule::FLAT && $recorded['fils'] > 0;
+        }
+
+        // No record of its own: an order placed before the tax engine, or
+        // placed while the shop is in display mode. A non-zero `tax_total` on
+        // one of those is an imported WooCommerce order's real tax, already
+        // inside `total` and printed as an authoritative row above.
+        return (int) $order->tax_total !== 0;
     }
 
     /**

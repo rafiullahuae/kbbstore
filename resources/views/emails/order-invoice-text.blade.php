@@ -15,7 +15,10 @@
     an inline @if leaves stray indentation behind. Invisible in HTML, not in a
     document somebody files.
 --}}
-TAX INVOICE
+{{-- Upper-cased here rather than stored that way: the heading is the owner's
+     own words when he has set `invoice_doctype`, and this part's headings are
+     all capitals. mb_ because the phrase may not be ASCII. --}}
+{!! mb_strtoupper($doc['docType']) !!}
 @if ($doc['invoiceReference'] !== '')
 Invoice {!! $doc['invoiceReference'] !!}
 @endif
