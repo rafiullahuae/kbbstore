@@ -819,8 +819,18 @@ it('runs a bounded number of queries on the detail page too', function () {
      * to permit; the property it exists to defend is unchanged and still pinned
      * by the list test above, where the same count for a tenth of the rows is
      * what "not N+1" means.
+     *
+     * 7 -> 8: the row now carries `is_demo`, so the serialiser reads the demo
+     * id set once per request (DemoSeed::idsFor, memoised on the controller
+     * instance). Same shape as the statement above it and admitted on the same
+     * terms: ONE statement whatever the customer has on them -- this fixture
+     * hangs 40 orders and 5 addresses off one customer precisely so that an
+     * accidental per-row lookup would show up here as 47-odd rather than 8.
+     * The alternative was to carry the flag on the list and not on the detail
+     * screen the list links to, which is the kind of half-truth this lane was
+     * opened to remove.
      */
-    expect($count)->toBeLessThanOrEqual(7, 'the customer detail page is running ' . $count . ' queries');
+    expect($count)->toBeLessThanOrEqual(8, 'the customer detail page is running ' . $count . ' queries');
 });
 
 /* ---------------------------------------------------------------- the screen */

@@ -8,7 +8,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderNote;
 use App\Services\Payments\PaymentRefunder;
+use App\Support\DemoSeed;
 use App\Support\Money;
+use App\Support\StoreTime;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -598,15 +601,30 @@ class OrdersApiController extends Controller
         $from = trim((string) $request->query('from', ''));
         $to = trim((string) $request->query('to', ''));
 
-        // An imported order can have any date at all, including one years old.
-        // whereDate rather than a string comparison so a date-only bound is
-        // inclusive of the whole day on both dialects.
-        if ($from !== '') {
-            $query->whereDate('orders.created_at', '>=', $from);
+        /*
+         * An imported order can have any date at all, including one years old.
+         *
+         * A SHOP-LOCAL DAY AGAINST A UTC COLUMN -- the same defect the
+         * Customers screen carried, in the same shape, fixed the same way.
+         * The owner types a date on the shop's clock; `orders.created_at`
+         * holds a UTC instant. Comparing the two as calendar days filed an
+         * order placed at 01:30 Dubai under the previous day, while the row
+         * beside it showed the Dubai date StoreTime::iso() renders into
+         * `created_at`. The list and the filter described different days.
+         *
+         * shopDayStartUtc() converts each shop-local boundary to the UTC
+         * instant it actually falls at, and the range is HALF-OPEN so the
+         * operator's last day is included whole at any column precision.
+         */
+        $fromAt = $this->shopDayStartUtc($from);
+        $toAt = $this->shopDayStartUtc($to, 1);
+
+        if ($fromAt !== null) {
+            $query->where('orders.created_at', '>=', $fromAt);
         }
 
-        if ($to !== '') {
-            $query->whereDate('orders.created_at', '<=', $to);
+        if ($toAt !== null) {
+            $query->where('orders.created_at', '<', $toAt);
         }
 
         // Order value, in whole dirhams on the wire and fils in the comparison.
@@ -902,6 +920,23 @@ class OrdersApiController extends Controller
     /* ------------------------------------------------------------ formatting */
 
     /**
+     * The demo-seeded order ids, read once per request.
+     *
+     * Memoised on the INSTANCE rather than in a static, for the reason given
+     * on the twin in CustomersApiController: a controller is built per request,
+     * so the memo expires exactly when the answer might.
+     *
+     * @var array<int, true>|null
+     */
+    private ?array $demoOrderIds = null;
+
+    /** @return array<int, true> */
+    private function demoOrderIds(): array
+    {
+        return $this->demoOrderIds ??= DemoSeed::idsFor(Order::class);
+    }
+
+    /**
      * One row, as an explicit allowlist of fields.
      *
      * Nothing here is the model, and the two JSON address blobs selected for
@@ -914,6 +949,7 @@ class OrdersApiController extends Controller
         $status = (string) $o->status;
         $total = (int) $o->total;
         $refunded = (int) $o->refunded_fils;
+        $demo = $this->demoOrderIds();
 
         $billing = $this->address($o->billing_address);
         $shipping = $this->address($o->shipping_address);
@@ -974,6 +1010,21 @@ class OrdersApiController extends Controller
             'paid_at' => $this->iso($o->paid_at),
             'completed_at' => $this->iso($o->completed_at),
             'trashed' => $o->deleted_at !== null,
+            /*
+             * FIGURES EXCLUDE DEMO ROWS; LISTS SHOW THEM AND SAY SO.
+             *
+             * The Orders table has drawn a "demo" badge from `o.is_demo` since
+             * Demo Content shipped, but that badge was DEAD: the screen moved
+             * to /admin-api/orders-list, and this serialiser -- an explicit
+             * allowlist -- never carried the field. Only the superseded
+             * AdminController::orders() did, and nothing calls it. So a seeded
+             * order sat on the live list looking exactly like a real one while
+             * being left out of every money figure on the Dashboard and in
+             * Analytics, which is the same silence the Customers list was
+             * carrying. Same definition of "demo" everywhere -- see
+             * App\Support\DemoSeed, which answers from `demo_seed_log`.
+             */
+            'is_demo' => isset($demo[(int) $o->id]),
         ];
     }
 
@@ -1124,6 +1175,42 @@ class OrdersApiController extends Controller
     private function uniqueIds(array $ids): array
     {
         return array_values(array_unique(array_map('intval', $ids)));
+    }
+
+    /**
+     * The UTC instant at which a shop-local calendar day begins, for a date the
+     * operator typed into a filter box -- or null when they typed nothing, or
+     * nothing usable.
+     *
+     * The twin of CustomersApiController::shopDayStartUtc(), which carries the
+     * long form of the argument. In short: storage is UTC, the owner reads and
+     * types Dubai, and this is the query-bound direction of that conversion --
+     * see App\Support\StoreTime. $plusDays gives the start of the day AFTER
+     * the one typed, so a closing bound covers the operator's whole last day
+     * without naming a last second the column's precision might outrun; the
+     * step is taken on the shop's clock so a DST zone cannot make the next day
+     * 23 or 25 hours. The result is handed to the builder as a CarbonImmutable
+     * and never as a string, because SQLite compares TEXT and 'T' sorts above
+     * ' '. A bound that is not a real Y-m-d is treated as absent; the screen's
+     * inputs are `type="date"` and cannot produce one.
+     */
+    private function shopDayStartUtc(string $day, int $plusDays = 0): ?CarbonImmutable
+    {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) !== 1) {
+            return null;
+        }
+
+        try {
+            $local = CarbonImmutable::createFromFormat('!Y-m-d', $day, StoreTime::timezone());
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! $local instanceof CarbonImmutable) {
+            return null;
+        }
+
+        return StoreTime::startOfDayUtc($local->addDays($plusDays)->format('Y-m-d'));
     }
 
     private function clampPerPage(int $requested): int
