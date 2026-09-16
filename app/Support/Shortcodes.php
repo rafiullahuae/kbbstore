@@ -174,20 +174,38 @@ final class Shortcodes
             match ($a['source'] ?? '') {
                 'bestsellers' => $q->orderByDesc('total_sales'),
                 'new' => $q->latest('id'),
-                'sale' => $q->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price'),
+                'sale' => EffectivePrice::whereOnSale($q),
                 'featured' => $q->where('featured', true),
                 'top_rated' => $q->where('review_count', '>', 0)->orderByDesc('rating'),
                 'in_stock' => $q->where('stock_status', 'instock'),
                 default => null,
             };
 
-            if (! empty($a['min_price'])) {
-                $q->whereRaw('COALESCE(NULLIF(sale_price, 0), price) >= ?', [(int) $a['min_price'] * 100]);
-            }
+            /*
+             * min_price / max_price, in AED, against the price the shopper is
+             * charged.
+             *
+             * TWO THINGS WERE WRONG HERE. The bound was built as
+             * `(int) $a['min_price'] * 100`, and the cast binds tighter than
+             * the multiply: `min_price="12.50"` became 12 * 100 = 1200, so half
+             * the dirham was silently dropped off every bound with a decimal in
+             * it. Fils::parse() is the house parser and never routes the digits
+             * through a float; it answers null on anything it will not accept,
+             * and an unparseable bound is dropped rather than turned into zero,
+             * because a min of zero matches everything and a max of zero
+             * matches nothing — both silent, both wrong.
+             *
+             * And the column expression was this file's own
+             * `COALESCE(NULLIF(sale_price, 0), price)`, which ignored
+             * sale_starts_at / sale_ends_at entirely: a sale scheduled for next
+             * week was already discounting today's filter. EffectivePrice is
+             * Product::effectivePrice() in SQL, window included, and is the
+             * same expression the shop's own price facet now uses.
+             */
+            $min = ! empty($a['min_price']) ? Fils::parse((string) $a['min_price']) : null;
+            $max = ! empty($a['max_price']) ? Fils::parse((string) $a['max_price']) : null;
 
-            if (! empty($a['max_price'])) {
-                $q->whereRaw('COALESCE(NULLIF(sale_price, 0), price) <= ?', [(int) $a['max_price'] * 100]);
-            }
+            EffectivePrice::whereRange($q, $min, $max);
 
             if (! empty($a['category'])) {
                 $slugs = array_map('trim', explode(',', $a['category']));
@@ -204,7 +222,8 @@ final class Shortcodes
             }
 
             if (! empty($a['on_sale'])) {
-                $q->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price');
+                // Product::isOnSale() in SQL — see EffectivePrice::whereOnSale().
+                EffectivePrice::whereOnSale($q);
             }
 
             // An explicit order wins; otherwise the source's own order stands.
@@ -214,8 +233,12 @@ final class Shortcodes
                 match ($a['orderby'] ?? 'date') {
                     'popularity' => $q->orderByDesc('total_sales'),
                     'rating' => $q->orderByDesc('rating'),
-                    'price' => $q->orderBy('price', $dir),
-                    'price-desc' => $q->orderByDesc('price'),
+                    // The charged price, matching the min_price / max_price
+                    // filter above and the shop's own sort. Ordering on the
+                    // `price` column put a markdown where its pre-sale figure
+                    // belonged.
+                    'price' => EffectivePrice::orderBy($q, $dir),
+                    'price-desc' => EffectivePrice::orderBy($q, 'desc'),
                     'name' => $q->orderBy('name', $dir),
                     'random' => $q->inRandomOrder(),
                     'menu_order' => $q->orderBy('position'),

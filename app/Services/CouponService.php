@@ -276,9 +276,60 @@ class CouponService
         }
     }
 
+    /**
+     * The columns eligibleItems() reads to decide what a code may discount.
+     *
+     * Named here because the storefront does NOT select them. Every path that
+     * reaches discountFor() — CartController::loadCart(),
+     * Store\CheckoutController::loadCart() and CartDrawerComposer — eager-loads
+     * the relation as `coupon:id,code,type,amount`, the four columns a discount
+     * arithmetic needs, and hands that instance straight in.
+     */
+    private const RULE_COLUMNS = [
+        'exclude_sale_items',
+        'product_ids',
+        'excluded_product_ids',
+        'category_ids',
+        'excluded_category_ids',
+    ];
+
+    /**
+     * The coupon row with its eligibility rules on it, re-read if they are not.
+     *
+     * THE BUG THIS EXISTS TO STOP. An attribute that was never selected reads
+     * null on an Eloquent model — no error, no warning — so on a partial
+     * instance `product_ids` is null and `if ($coupon->product_ids && ...)`
+     * is skipped, `exclude_sale_items` is null and the sale check is skipped,
+     * and so on for all five. Every rule fails OPEN: a code restricted to one
+     * product discounted the entire basket, and the inflated figure went
+     * through CartService::totals() into `orders.discount_total` and into the
+     * redemption row. It is the same defect lockForRedemption() below already
+     * guards the usage limits against, on the same instances, for the same
+     * reason — that method's note spells it out — and the money at stake here
+     * is larger, because a discount is not a refusal, it is a payment.
+     *
+     * The re-read is conditional on the attributes being absent, so the
+     * complete rows that validate() and the admin screens hand in cost nothing.
+     * A cart with a coupon applied pays one extra SELECT per render.
+     */
+    private function withRules(Coupon $coupon): Coupon
+    {
+        $present = $coupon->getAttributes();
+
+        foreach (self::RULE_COLUMNS as $column) {
+            if (! array_key_exists($column, $present)) {
+                return Coupon::whereKey($coupon->getKey())->first() ?? $coupon;
+            }
+        }
+
+        return $coupon;
+    }
+
     /** Items the coupon may discount, after product/category include and exclude rules. */
     private function eligibleItems(Coupon $coupon, Cart $cart)
     {
+        $coupon = $this->withRules($coupon);
+
         return $cart->items->filter(function ($item) use ($coupon) {
             $product = $item->product;
             if (! $product) {

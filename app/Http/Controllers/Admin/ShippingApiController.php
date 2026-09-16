@@ -27,14 +27,26 @@ class ShippingApiController extends Controller
     public function show(): JsonResponse
     {
         try {
-            $zones = ShippingZone::with(['locations', 'methods' => fn ($q) => $q->orderBy('position')])
+            /*
+             * allMethods(), not methods().
+             *
+             * methods() is the STOREFRONT's relation and carries
+             * `where('enabled', true)` so a switched-off rate can never be
+             * offered or charged. Reading it here meant a method disappeared
+             * from this screen the instant it was unticked and saved — and
+             * save() below only updates ids the browser posts back, which are
+             * the ids this method returned. Turning a delivery method off was
+             * therefore permanent from the admin's side. See the note on
+             * ShippingZone::allMethods().
+             */
+            $zones = ShippingZone::with(['locations', 'allMethods'])
                 ->orderBy('position')
                 ->get()
                 ->map(fn (ShippingZone $z) => [
                     'id' => $z->id,
                     'name' => $z->name,
                     'locations' => $z->locations->pluck('code')->all(),
-                    'methods' => $z->methods->map(fn (ShippingMethod $m) => [
+                    'methods' => $z->allMethods->map(fn (ShippingMethod $m) => [
                         'id' => $m->id,
                         'type' => $m->type,
                         'title' => $m->title,
