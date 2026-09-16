@@ -14743,6 +14743,36 @@ buildNav();
             'Which day an order counts towards, on every screen and document. Nothing already recorded is altered.')+
         '</div>')+
 
+      /* ── HOW CUSTOMERS REACH YOU — Lane DI ──────────────────────────────
+         Three settings that were read in five places and written in none. Two
+         of them are SEEDED with this shop's real address and real number, so
+         every install has been printing somebody's actual contact details on
+         every page with no box anywhere to change them.
+
+         ON THE BUSINESS TAB and not the Invoice tab, because only one of the
+         three is about an invoice and even that one is a FALLBACK for the
+         Invoice tab's own box — a fallback belongs one level up from the thing
+         that falls back to it, not beside it. The WhatsApp number is on every
+         page of the storefront and in every customer email; filing it under
+         "Invoice" would say it was an invoice field.
+
+         The placeholders show what the shop prints today when the box is
+         blank, so an owner can see what he is replacing before he replaces it.
+         Clearing a box goes back to that, rather than to an empty line. */
+      bdSec('How customers reach you',
+        'The phone number and email address the shop shows to customers. The WhatsApp number runs the chat buttons in the header, the footer and the mobile menu; the email is what an invoice falls back to when the Invoice tab’s own box is blank.',
+        '<div class="bd-grid">'+
+          bdField('set_support_phone','Phone number',
+            '<input id="set_support_phone" value="'+sesc(SETTINGS.support_phone)+'" placeholder="+971 58 505 2611">',
+            'Printed in the site header and at the foot of every page. Written exactly as you type it.')+
+          bdField('set_brand_whatsapp','WhatsApp number',
+            '<input id="set_brand_whatsapp" value="'+sesc(SETTINGS.brand_whatsapp)+'" placeholder="+971585052611">',
+            'What the “Chat on WhatsApp” buttons open. Spaces and brackets are fine — the link uses the digits.')+
+          bdField('set_support_email','Support email',
+            '<input id="set_support_email" type="email" value="'+sesc(SETTINGS.support_email)+'" placeholder="info@kbeautybliss.com">',
+            'Printed on invoices when the Invoice tab has no address of its own.')+
+        '</div>')+
+
       bdSec('How prices are printed',
         'How every price on the storefront is written — the symbol, where it sits and how many decimals. Choosing a currency above fills these in, and you can still override any of them.',
         '<div class="bd-grid">'+
@@ -15008,7 +15038,15 @@ buildNav();
         invoice_phone: sval('set_invoice_phone'),
         invoice_website: sval('set_invoice_website'),
         invoice_footer: sval('set_invoice_footer'),
-        invoice_doctype: sval('set_invoice_doctype')
+        invoice_doctype: sval('set_invoice_doctype'),
+        /* How customers reach you (Lane DI). Same reason as the two blocks
+           above: without a line in AdminController::SETTING_RULES these are
+           dropped while the endpoint still answers ok. All three are sent every
+           time, blank included, so clearing a box is a way of going back to
+           what the shop shipped with. */
+        support_phone: sval('set_support_phone'),
+        brand_whatsapp: sval('set_brand_whatsapp'),
+        support_email: sval('set_support_email')
 
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('Business details saved'); }

@@ -9,7 +9,14 @@
     use App\Support\Url;
     $hd = app(\App\Services\HeaderSettings::class);
     $h = $hd->all();
-    $whatsapp = (string) $kbbSettings->get('whatsapp', '+971 58 505 2611');
+    /*
+     * The chip is a WhatsApp button, so it DIALS the WhatsApp number and PRINTS
+     * the number the rest of the chrome prints. Both used to come from
+     * `whatsapp` — a setting nothing seeds and nothing writes, so the literal
+     * beside it was what every shop showed. See App\Support\SupportContact.
+     */
+    $whatsapp = \App\Support\SupportContact::phone();
+    $whatsappDigits = \App\Support\SupportContact::whatsappDigits();
 @endphp
 
 @php
@@ -74,7 +81,7 @@
 
       @if ($h['support_show'])
         <div class="hinfo">
-          <a class="hi hiwa" href="https://wa.me/{{ preg_replace('/\D+/', '', $whatsapp) }}">
+          <a class="hi hiwa" href="https://wa.me/{{ $whatsappDigits }}">
             <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.8.7.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.1.1-.3 0-.4l-.7-1.7c-.2-.4-.4-.4-.5-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3 1 2.6 1.1 2.8.1.2 1.9 3 4.7 4.1 1.7.6 2.3.7 3.1.6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1 0-.1-.2-.2-.4-.3Z"/></svg></span>
             <span class="tx"><b>{{ $h['support_label'] }}</b><span>{{ $whatsapp }}</span></span>
           </a>

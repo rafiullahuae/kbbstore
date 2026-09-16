@@ -477,7 +477,11 @@
 
     $trustCards[] = ['Secure payments', 'Card, Tabby, Tamara and COD', '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'];
     $trustCards[] = ['100% original', 'Direct from brands and trusted suppliers', '<path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>'];
-    $trustCards[] = ['24/7 support', 'WhatsApp +971 58 505 2611', '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'];
+    /* A FOURTH COPY OF THE SHOP'S PHONE NUMBER — Lane DI. This card sits on the
+       home page of every shop and carried the number as a literal, so an owner
+       who changed it in the header still advertised the old one here. Same
+       source as the header chip and the footer: App\Support\SupportContact. */
+    $trustCards[] = ['24/7 support', 'WhatsApp ' . \App\Support\SupportContact::phone(), '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'];
 @endphp
 <section class="sec {{ $sections->classFor('trust') }}" style="padding-top:0"><div class="wrap">
   <div class="trust"><div class="g">
