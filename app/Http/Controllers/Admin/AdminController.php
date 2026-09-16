@@ -68,14 +68,71 @@ class AdminController extends Controller
      */
     private const MONEY_RULE = 'regex:/^\d{1,9}(\.\d{1,4})?$/';
 
+    /**
+     * Fils handed back against orders that still count as revenue.
+     *
+     * WHY THIS EXISTS. PaymentRefunder moves an order to 'refunded' only once
+     * the refunds cover the whole captured amount — see the comment above the
+     * status update in PaymentRefunder::settle(), which says so in as many
+     * words. A PARTIAL refund deliberately leaves the order 'completed', so it
+     * stays inside Order::REAL_STATUSES and its FULL total kept counting as
+     * revenue on the dashboard, in Analytics and in the average order value.
+     * AED 400 handed back to a customer was still revenue for ever.
+     *
+     * WHICH REFUND ROWS. PaymentRefunder::COUNTED — settled, or in flight and
+     * reserved. Not the failed attempts, which are recorded precisely so the
+     * merchant can see that no money moved. This is the same definition the
+     * order detail screen's `refunded_total_aed` uses, so the two screens
+     * cannot tell the owner two different things about the same order.
+     *
+     * DELETED ORDERS. Built from the `refunds` table, so Order's SoftDeletes
+     * global scope does not apply — whereNull('orders.deleted_at') is doing
+     * real work here, exactly as it is on the top-products join below.
+     *
+     * @return \Illuminate\Database\Query\Builder
+     */
+    private static function countedRefunds()
+    {
+        return \Illuminate\Support\Facades\DB::table('refunds')
+            ->join('orders', 'orders.id', '=', 'refunds.order_id')
+            ->whereNull('orders.deleted_at')
+            ->whereIn('orders.status', self::REVENUE_STATUSES)
+            ->whereIn('refunds.status', \App\Services\Payments\PaymentRefunder::COUNTED);
+    }
+
     /** GET /admin-api/stats — dashboard KPIs + recent orders. */
     public function stats()
     {
-        $since = now()->subDays(30)->toISOString();
+        /*
+         * A datetime, not an ISO-8601 string.
+         *
+         * This was `now()->subDays(30)->toISOString()`, which is
+         * '2026-08-17T10:00:00.000000Z'. Both engines got it wrong, differently:
+         *
+         *   SQLite compares it to a stored '2026-08-17 11:00:00' as TEXT, and
+         *   ' ' (0x20) sorts below 'T' (0x54) — so every order on the boundary
+         *   day fell out of the window and the dashboard under-reported.
+         *
+         *   MySQL parses it, but raises warning 1292 'Incorrect datetime value'
+         *   on every dashboard load, and would reject it outright under a
+         *   stricter mode.
+         *
+         * Handing the Carbon instance to the builder lets the grammar format it
+         * for the connection, which is right on both.
+         */
+        $since = now()->subDays(30);
 
-        $revenue30 = (int) Order::whereIn('status', self::REVENUE_STATUSES)
+        $grossRevenue30 = (int) Order::whereIn('status', self::REVENUE_STATUSES)
             ->where('created_at', '>=', $since)
             ->sum('total');
+
+        // Netted against the same window, so the dashboard and Analytics cannot
+        // disagree about what the store actually took. See countedRefunds().
+        $refunds30 = (int) self::countedRefunds()
+            ->where('orders.created_at', '>=', $since)
+            ->sum('refunds.amount');
+
+        $revenue30 = max(0, $grossRevenue30 - $refunds30);
 
         $ordersTotal   = Order::count();
         $customers     = Customer::count();
@@ -83,7 +140,16 @@ class AdminController extends Controller
         $lowStock      = Product::whereNotNull('stock')->where('stock', '>', 0)->where('stock', '<=', 15)->count();
         $outStock      = Product::whereNotNull('stock')->where('stock', '=', 0)->count();
 
-        // simple conversion proxy: paid orders / total orders (only meaningful once traffic is tracked)
+        /*
+         * NOT a conversion rate, and no longer labelled as one.
+         *
+         * This is paid orders / all orders — the share of orders that reached a
+         * real status rather than being cancelled, failed or left as a draft.
+         * Conversion is orders per SESSION and nothing in this application
+         * tracks sessions, so a "Conversion 87%" tile was telling the owner
+         * that 87% of visitors bought something. The screen now calls it what
+         * it is: how many orders completed.
+         */
         $paid = Order::whereIn('status', self::REVENUE_STATUSES)->count();
 
         /*
@@ -105,6 +171,10 @@ class AdminController extends Controller
 
         return response()->json([
             'revenue_30d_aed' => (int) round($revenue30 / 100),
+            // Reported, not merely subtracted: a figure that silently shrank
+            // would be as hard to trust as one that silently did not.
+            'gross_revenue_30d_aed' => (int) round($grossRevenue30 / 100),
+            'refunds_30d_aed' => (int) round($refunds30 / 100),
             'orders'          => $ordersTotal,
             'customers'       => $customers,
             'products'        => $products,
@@ -794,8 +864,22 @@ class AdminController extends Controller
             ->selectRaw('COUNT(*) as n, COALESCE(SUM(total), 0) as revenue')
             ->first();
 
-        $revenueTotal = (int) ($totals->revenue ?? 0);       // fils
+        $grossRevenue = (int) ($totals->revenue ?? 0);       // fils
         $paidCount    = (int) ($totals->n ?? 0);
+
+        /*
+         * Revenue is NET of refunds, and the average order value is computed
+         * from the net figure. See countedRefunds() for why a partially
+         * refunded order is still sitting in REAL_STATUSES with its full total.
+         *
+         * max(0, ...) is belt and braces: PaymentRefunder refuses a refund that
+         * would exceed what was captured, so the difference cannot go negative
+         * through this application — but an imported Woo refund does not pass
+         * through that check, and a negative "revenue" is a worse answer than a
+         * clamped one.
+         */
+        $refundTotal  = (int) self::countedRefunds()->sum('refunds.amount');
+        $revenueTotal = max(0, $grossRevenue - $refundTotal);
         $aov          = $paidCount ? intdiv($revenueTotal, $paidCount) : 0;
         $ordersTotal  = (int) Order::query()->count();
 
@@ -805,17 +889,58 @@ class AdminController extends Controller
         $days = [];
         for ($i = 13; $i >= 0; $i--) $days[now()->subDays($i)->format('Y-m-d')] = 0;
 
+        $windowFrom = now()->subDays(13)->startOfDay();
+
         $window = (clone $paidQuery)
-            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
-            ->get(['created_at', 'total']);
+            ->where('created_at', '>=', $windowFrom)
+            ->get(['id', 'created_at', 'total']);
+
+        /*
+         * Refunds netted into the day of the ORDER, not the day of the refund.
+         *
+         * So a bar reads "what the store kept from the orders placed that day",
+         * which is the question an owner asks of a 14-day sales chart, and — as
+         * a side effect — can never go negative and put a bar below the axis.
+         * One grouped query for the whole window, not one per order.
+         */
+        $windowRefunds = [];
+        if ($window->isNotEmpty()) {
+            /*
+             * selectRaw()->get(), not pluck() with a raw value column: pluck()
+             * reads the value off the result row by the STRING it was given, so
+             * a raw aggregate expression becomes a property name and the query
+             * dies with "Undefined property: stdClass::$amount), 0)". Both the
+             * grouped column and the aggregate are named in the select, which
+             * is what MySQL's ONLY_FULL_GROUP_BY wants — the 1140 this codebase
+             * has already paid for twice.
+             */
+            $windowRefunds = self::countedRefunds()
+                ->whereIn('refunds.order_id', $window->pluck('id')->all())
+                ->groupBy('refunds.order_id')
+                ->selectRaw('refunds.order_id as order_id, COALESCE(SUM(refunds.amount), 0) as refunded')
+                ->get()
+                ->mapWithKeys(fn ($r) => [(int) $r->order_id => (int) $r->refunded])
+                ->all();
+        }
 
         foreach ($window as $o) {
             $d = substr((string) $o->created_at, 0, 10);
-            if (array_key_exists($d, $days)) $days[$d] += (int) $o->total;
+            if (!array_key_exists($d, $days)) continue;
+            $days[$d] += max(0, (int) $o->total - (int) ($windowRefunds[$o->id] ?? 0));
         }
 
         $daily = [];
         foreach ($days as $d => $v) $daily[] = ['date' => $d, 'revenue_aed' => (int) round($v / 100)];
+
+        /*
+         * The chart's own scale, stated rather than implied.
+         *
+         * The bars were drawn against the tallest of them with no axis and no
+         * number anywhere on the card, so fourteen days of AED 90 looked
+         * exactly like fourteen days of AED 90,000 — the shape of a chart that
+         * implies a trend that is not there. The screen now prints the peak.
+         */
+        $dailyPeak = $daily ? max(array_column($daily, 'revenue_aed')) : 0;
 
         // Status breakdown (all statuses present), grouped by the database.
         $status = Order::query()
@@ -851,11 +976,22 @@ class AdminController extends Controller
             ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as units')
             ->first()->units ?? 0);
 
+        /*
+         * Revenue per product is the LINE TOTAL, not the list price.
+         *
+         * SUM(unit_price * quantity) is what the line would have cost at full
+         * price. `order_items.total` is what the line was actually charged at,
+         * after any discount the pricing code applied — the column the invoice
+         * and the order screen both read. A product only ever sold inside a
+         * coupon or a bundle reported revenue the store never took, and the
+         * Top products table could not be reconciled with the Revenue KPI at
+         * the top of the same screen.
+         */
         $top = (clone $itemQuery)
             ->groupBy('order_items.name', 'order_items.brand')
             ->selectRaw('order_items.name as name, order_items.brand as brand,'
                 . ' COALESCE(SUM(order_items.quantity), 0) as units,'
-                . ' COALESCE(SUM(order_items.unit_price * order_items.quantity), 0) as revenue')
+                . ' COALESCE(SUM(order_items.total), 0) as revenue')
             ->orderByDesc('revenue')
             ->limit(8)
             ->get()
@@ -870,11 +1006,18 @@ class AdminController extends Controller
 
         return response()->json([
             'revenue_total_aed' => (int) round($revenueTotal / 100),
+            'gross_revenue_aed' => (int) round($grossRevenue / 100),
+            'refunds_total_aed' => (int) round($refundTotal / 100),
             'orders_total'      => $ordersTotal,
             'paid_orders'       => $paidCount,
             'aov_aed'           => (int) round($aov / 100),
             'units_sold'        => $unitsSold,
             'daily'             => $daily,
+            'daily_peak_aed'    => $dailyPeak,
+            // Named rather than described in prose, so the screen can print the
+            // list it actually sums and cannot drift out of step with it the
+            // way the old "processing, on-hold and completed" copy had.
+            'revenue_statuses'  => array_values(self::REVENUE_STATUSES),
             'status_breakdown'  => $status,
             'top_products'      => $top,
         ]);
@@ -1469,8 +1612,18 @@ class AdminController extends Controller
         return response()->json(['customers' => $rows]);
     }
 
+    /**
+     * The states a quiz lead can be moved through.
+     *
+     * `quiz_submissions.status` is a free-form string that defaults to 'new',
+     * and nothing has ever written anything else to it — the screen had no way
+     * to record that a lead had been rung. An allowlist rather than a free text
+     * field so the chip counts on the screen have a fixed set to count.
+     */
+    public const QUIZ_LEAD_STATUSES = ['new', 'contacted', 'converted', 'closed'];
+
     /** GET /admin-api/quiz-leads — skin-quiz submissions / leads. */
-    public function quizLeads()
+    public function quizLeads(Request $request)
     {
         $decode = function ($v) {
             if (is_array($v)) return $v;
@@ -1482,7 +1635,46 @@ class AdminController extends Controller
             return [];
         };
 
-        $rows = \App\Models\QuizSubmission::orderByDesc('id')->get()->map(function ($q) use ($decode) {
+        $query = \App\Models\QuizSubmission::query();
+
+        /*
+         * Search, which this screen did not have.
+         *
+         * The owner opens Quiz Leads because somebody has just phoned, and the
+         * three things they have to hand are a name, an email and a number.
+         * Phone is matched on DIGITS ONLY on both sides: a lead captured as
+         * '+971 50 123 4567' has to be findable by typing '501234567', which is
+         * how the number appears on a phone screen. REPLACE is in both dialects
+         * and takes no date function, so nothing here is SQLite-only.
+         */
+        $term = trim((string) $request->query('q', ''));
+
+        if ($term !== '') {
+            $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $term) . '%';
+            $digits = preg_replace('/\D+/', '', $term);
+
+            $query->where(function ($w) use ($like, $digits) {
+                $w->where('name', 'like', $like)
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('skin_type', 'like', $like);
+
+                if ($digits !== '') {
+                    $stripped = "REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), ' ', ''), '-', ''), '(', ''), ')', '')";
+                    $w->orWhereRaw("REPLACE($stripped, '+', '') LIKE ?", ['%' . $digits . '%']);
+                }
+            });
+        }
+
+        $status = (string) $request->query('status', '');
+        if (in_array($status, self::QUIZ_LEAD_STATUSES, true)) {
+            $query->where('status', $status);
+        }
+
+        if ($request->boolean('expert')) {
+            $query->where('expert_requested', true);
+        }
+
+        $rows = $query->orderByDesc('id')->get()->map(function ($q) use ($decode) {
             $concerns = $decode($q->concerns);
             $routines = $decode($q->recommended_routines);
             return [
@@ -1494,12 +1686,142 @@ class AdminController extends Controller
                 'concerns'    => $concerns,
                 'recommended' => array_map(fn ($r) => is_array($r) ? ($r['name'] ?? ($r['title'] ?? '')) : $r, $routines),
                 'expert'      => (bool) $q->expert_requested,
+                // The words the customer actually typed when asking for a
+                // consultation. The screen flagged the request and hid the
+                // request, which made the flag almost useless: the owner could
+                // see that somebody wanted help and not what they wanted.
+                'expert_message' => $q->expert_message,
                 'status'      => $q->status ?: 'new',
                 'created_at'  => $q->created_at,
             ];
         });
 
-        return response()->json(['leads' => $rows]);
+        return response()->json([
+            'leads' => $rows,
+            'statuses' => self::QUIZ_LEAD_STATUSES,
+            'summary' => $this->quizLeadSummary(),
+        ]);
+    }
+
+    /**
+     * How the quiz is actually doing — over EVERY lead, not the filtered page.
+     *
+     * A lead counts as converted when an order in Order::REAL_STATUSES exists
+     * on the same email address and was placed AFTER the quiz was filled in.
+     * Both halves matter and both are the difference between a real figure and
+     * a flattering one:
+     *
+     *   AFTER, because an existing customer who takes the skin quiz on Tuesday
+     *   was not converted by it on the Monday before. Matching on email alone
+     *   would have counted the store's best customers as quiz conversions and
+     *   made the quiz look like its most effective channel.
+     *
+     *   REAL_STATUSES, because a cancelled order is not a conversion, for the
+     *   same reason it is not revenue.
+     *
+     * This is attribution by the only identifier the two tables share and it is
+     * not claimed to be more than that: a lead who orders from a different
+     * address is missed, and the figure is a floor rather than an estimate. The
+     * screen says so in one line rather than printing a bare percentage.
+     *
+     * Two queries whatever the lead count: the leads' emails, then the orders
+     * on those emails.
+     *
+     * @return array{total:int, converted:int, converted_pct:int, expert:int, new:int}
+     */
+    private function quizLeadSummary(): array
+    {
+        $leads = \App\Models\QuizSubmission::query()
+            ->whereNotNull('email')
+            ->where('email', '!=', '')
+            ->get(['id', 'email', 'created_at']);
+
+        $total = (int) \App\Models\QuizSubmission::query()->count();
+
+        $converted = 0;
+
+        if ($leads->isNotEmpty()) {
+            /*
+             * Both spellings go into the IN list.
+             *
+             * The map below compares lowercased, but the IN list is matched by
+             * the DATABASE, and SQLite's `=` on TEXT is case-sensitive while
+             * MySQL's utf8mb4_unicode_ci is not. Sending only the lowercased
+             * form would quietly drop a lead whose email was stored with a
+             * capital on one engine and not the other — a conversion figure
+             * that is right in tests and wrong in production.
+             */
+            $emails = $leads->pluck('email')
+                ->flatMap(fn ($e) => [trim((string) $e), mb_strtolower(trim((string) $e))])
+                ->filter(fn ($e) => $e !== '')
+                ->unique()
+                ->values();
+
+            /*
+             * The EARLIEST real order per email, so the comparison below is
+             * "did they ever order after the quiz" rather than "was their most
+             * recent order after the quiz". Grouped in SQL: both the grouped
+             * column and the aggregate are named, which is what ONLY_FULL_GROUP_BY
+             * wants and what the 1140 that took the Customers screen down twice
+             * was about.
+             */
+            $firstOrder = Order::query()
+                ->whereIn('status', self::REVENUE_STATUSES)
+                // Bounded by the LEADS' addresses, not the whole orders table.
+                // There are far fewer quiz submissions than orders on this shop,
+                // so this is the small side of the join; without it the grouped
+                // scan reads every order the store has ever taken to answer a
+                // question about a few hundred of them.
+                ->whereIn('email', $emails->all())
+                ->groupBy('email')
+                ->selectRaw('email, MIN(created_at) as first_at')
+                ->get()
+                ->mapWithKeys(fn ($r) => [mb_strtolower(trim((string) $r->email)) => (string) $r->first_at]);
+
+            $seen = [];
+
+            foreach ($leads as $lead) {
+                $email = mb_strtolower(trim((string) $lead->email));
+                if ($email === '' || isset($seen[$email])) continue;
+
+                $orderedAt = $firstOrder[$email] ?? null;
+                if ($orderedAt === null) continue;
+
+                // Parsed rather than string-compared: `orders.created_at` and
+                // `quiz_submissions.created_at` are not guaranteed to be
+                // written in the same format — QuizController::store() writes
+                // an ISO-8601 string into created_at, which SQLite keeps
+                // verbatim and MySQL truncates.
+                if (\Illuminate\Support\Carbon::parse($orderedAt)->greaterThanOrEqualTo($lead->created_at)) {
+                    $seen[$email] = true;
+                    $converted++;
+                }
+            }
+        }
+
+        return [
+            'total' => $total,
+            'converted' => $converted,
+            'converted_pct' => $total > 0 ? (int) round($converted * 100 / $total) : 0,
+            'expert' => (int) \App\Models\QuizSubmission::query()->where('expert_requested', true)->count(),
+            'new' => (int) \App\Models\QuizSubmission::query()->where('status', 'new')->count(),
+        ];
+    }
+
+    /** PUT /admin-api/quiz-leads/{id} — record that a lead has been worked. */
+    public function updateQuizLead(Request $request, int $id)
+    {
+        $lead = \App\Models\QuizSubmission::find($id);
+        if (!$lead) return response()->json(['error' => 'not_found'], 404);
+
+        $data = $request->validate([
+            'status' => 'required|string|in:' . implode(',', self::QUIZ_LEAD_STATUSES),
+        ]);
+
+        $lead->status = $data['status'];
+        $lead->save();
+
+        return response()->json(['ok' => true, 'id' => $lead->id, 'status' => $lead->status]);
     }
 
     /** PUT /admin-api/orders/{id}/status — change an order's status. */
