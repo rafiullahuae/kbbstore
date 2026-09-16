@@ -507,7 +507,11 @@ input.inp[type=file]{padding:6px 9px}
 .odfld label{display:block;font-size:10.5px;color:var(--ink-2);margin-bottom:6px;font-weight:600}
 .odinp,.odcard select{width:100%;padding:10px 12px;border:1.5px solid #D8DCE3;border-radius:8px;font-size:12.5px;color:var(--ink);background:#FAFBFC;font-family:inherit;font-weight:500;box-shadow:inset 0 1px 2px rgba(18,21,31,.03)}
 .odinp:focus,.odcard select:focus{outline:none;border-color:#E08A1A;background:#fff;box-shadow:0 0 0 3px #FFF3E0}
-.odtimegrid{display:grid;grid-template-columns:1.3fr .7fr .7fr;gap:7px}
+/* A PRINTED value, not an input. "Date created" used to be three boxes that
+   nothing saved; see odShopDateTime(). Deliberately carries none of the
+   .odinp border, background or focus ring, so the field cannot read as
+   editable to somebody who has not been told that it is not. */
+.odreadonly{font-size:12.5px;color:var(--ink);font-weight:600;line-height:1.6;padding:2px 0}
 .odaddr{font-size:11.5px;line-height:1.8;color:var(--ink-2)}
 .odaddr a{color:#E08A1A;text-decoration:none;font-weight:500}
 .odaddr .odname{font-weight:700;color:var(--ink)}
@@ -10582,6 +10586,43 @@ buildNav();
     sel.addEventListener('change', apply);
   }
 
+  /*
+   * WHEN THIS WAS THREE INPUT BOXES.
+   *
+   * "Date created" rendered a date box and two time boxes, pre-filled from the
+   * order, and NOTHING read them back: there was no handler, no request and no
+   * endpoint -- AdminOrderController has no method that accepts a created date,
+   * and no route posts one. Typing in them and navigating away lost the edit
+   * silently, and the screen gave the operator every reason to believe it had
+   * been saved. That is the same defect as a figure that states something the
+   * code does not do, which is the class of bug this panel keeps turning up.
+   *
+   * It is printed rather than wired, deliberately. An order's created_at is not
+   * a cosmetic label: it is the bucket key for the 14-day chart, the dashboard
+   * and Analytics windows, and the "placed between" filter on the Orders list.
+   * Letting it be retyped would let an operator move money between reporting
+   * periods and quietly restate figures the owner has already read as settled,
+   * so it is a write path that needs validation, an audit note and a permission
+   * before it needs an input box -- and nobody has asked for the ability. The
+   * honest small change is to stop claiming to offer it.
+   *
+   * Formatted from the string's own characters and NOT via `new Date(...)`.
+   * StoreTime::iso() already emits this instant on the SHOP's clock with its
+   * offset attached, so slicing reads the shop's wall clock exactly; handing it
+   * to the browser's Date would re-render it in the VIEWER's timezone, which
+   * puts the display back on a different clock from the rest of the screen --
+   * the very bug App\Support\StoreTime exists to close.
+   */
+  var OD_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function odShopDateTime(iso){
+    var s = String(iso||'');
+    if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return '\u2014';
+    var mo = OD_MONTHS[parseInt(s.slice(5,7),10)-1];
+    if(!mo) return '\u2014';
+    return sesc(String(parseInt(s.slice(8,10),10))+' '+mo+' '+s.slice(0,4)+' at '+s.slice(11,16));
+  }
+
   function odOverviewAddressesCard(o){
     var c = o.customer||{};
     var b = o.billing_address||{}, s = o.shipping_address||{};
@@ -10593,7 +10634,7 @@ buildNav();
       '<div class="odcolcell">'+
         '<div class="odcollabel">GENERAL</div>'+
         '<div class="odfld"><label>Date created</label>'+
-        '<div class="odtimegrid"><input class="odinp" id="odDateCreated" value="'+sesc((o.created_at||'').slice(0,10))+'"><input class="odinp" id="odTimeH" value="'+sesc((o.created_at||'').slice(11,13))+'"><input class="odinp" id="odTimeM" value="'+sesc((o.created_at||'').slice(14,16))+'"></div></div>'+
+        '<div class="odreadonly">'+odShopDateTime(o.created_at)+'</div></div>'+
         '<div class="odfld"><label>Status</label>'+seoSel2('odStatusSel', o.status, ORDER_STATUSES.map(function(s){return [s, s.charAt(0).toUpperCase()+s.slice(1)];}))+'</div>'+
         odNotifyFieldHTML(o)+
         '<div class="odfld" style="margin-bottom:0"><label>Customer'+(c.id?' &middot; <a href="#" id="odCustHist" style="color:#E08A1A;font-weight:600">Order history</a>':'')+'</label>'+
@@ -11431,7 +11472,14 @@ buildNav();
           '<div style="min-width:0"><div class="pname" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px">' +
             (c.name ? sesc(c.name) : '<span style="color:var(--ink-faint)">No name on record</span>') +
             (c.trashed ? ' <span class="pill grey">Trashed</span>' : '') + '</div>' +
-          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px">' + sesc(c.email) + '</div></div></div></td>' +
+          '<div class="pbrand" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px">' + sesc(c.email) +
+            /* Demo customers stay on this list — showing them is what the Demo
+               Content feature is for — but they are left out of every money
+               figure, and their spend column is computed from real orders only,
+               so the row would otherwise read AED 0 with nothing saying why.
+               Same badge, same wording and same place as the Orders table. */
+            (c.is_demo ? ' · <span style="color:var(--ink-faint)">demo</span>' : '') +
+          '</div></div></div></td>' +
         cols.map(function(col){ return cuCell(col[0], c); }).join('') +
         '<td style="white-space:nowrap">' + (c.trashed
           ? '<button class="btn ghost sm" data-curestore="' + c.id + '">Restore</button>'

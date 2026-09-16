@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Support\DemoSeed;
 use App\Support\Money;
 use App\Support\StoreTime;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -668,15 +669,36 @@ class CustomersApiController extends Controller
         $from = trim((string) $request->query('from', ''));
         $to = trim((string) $request->query('to', ''));
 
-        // An imported customer can have no registration date at all. A date
-        // filter excludes them, which is correct; the unfiltered list still
-        // shows them, with an em dash rather than a crash.
-        if ($from !== '') {
-            $query->whereDate('customers.created_at', '>=', $from);
+        /*
+         * An imported customer can have no registration date at all. A date
+         * filter excludes them, which is correct; the unfiltered list still
+         * shows them, with an em dash rather than a crash.
+         *
+         * A SHOP-LOCAL DAY AGAINST A UTC COLUMN. The owner types a date on the
+         * shop's clock; `customers.created_at` holds a UTC instant. Comparing
+         * the two as calendar days -- which is what the date-only builder
+         * helper used here did -- filed a customer who registered at 01:30
+         * Dubai under the previous day, while the row beside it showed the
+         * Dubai date StoreTime::iso() renders into `registered_at`. The screen
+         * disagreed with itself at both edges of every range, which is worse
+         * than being uniformly wrong: neither number could be trusted because
+         * they could not both be right.
+         *
+         * shopDayStartUtc() converts each shop-local boundary to the UTC
+         * instant it actually falls at. The range is HALF-OPEN -- `to` becomes
+         * the start of the day after the one typed -- so the operator's last
+         * day is included whole at any column precision. A closing bound of
+         * 23:59:59 silently drops the last second of it on MySQL's DATETIME(6).
+         */
+        $fromAt = $this->shopDayStartUtc($from);
+        $toAt = $this->shopDayStartUtc($to, 1);
+
+        if ($fromAt !== null) {
+            $query->where('customers.created_at', '>=', $fromAt);
         }
 
-        if ($to !== '') {
-            $query->whereDate('customers.created_at', '<=', $to);
+        if ($toAt !== null) {
+            $query->where('customers.created_at', '<', $toAt);
         }
 
         $spendMin = $request->query('spend_min');
@@ -703,6 +725,56 @@ class CustomersApiController extends Controller
         }
 
         return $query;
+    }
+
+    /**
+     * The UTC instant at which a shop-local calendar day begins, for a date the
+     * operator typed into a filter box -- or null when they typed nothing, or
+     * nothing usable.
+     *
+     * WHY THIS EXISTS. Storage is UTC and the owner reads and types Dubai; see
+     * App\Support\StoreTime for the whole argument, including why moving
+     * APP_TIMEZONE would reinterpret every stored instant instead of converting
+     * it. This is the query-bound direction of that conversion.
+     *
+     * $plusDays lets a caller ask for the start of the day AFTER the one typed,
+     * which is how a closing bound covers the whole of the operator's last day
+     * without naming a last second that the column's precision might outrun.
+     * The step is taken on the SHOP's clock and re-read as a date rather than
+     * by adding 24 hours to a UTC instant, so a zone with a DST transition
+     * (none in Dubai, but the zone is a setting and Europe/London is a legal
+     * value) cannot make "the next day" 23 or 25 hours long.
+     *
+     * The result is a CarbonImmutable and is handed to the builder as one,
+     * NEVER as a string: SQLite compares TEXT, and 'T' (0x54) sorts above
+     * ' ' (0x20), so an ISO-8601 string bound drops the whole boundary day
+     * there while MySQL coerces it and does not.
+     *
+     * A bound that is not a real Y-m-d is treated as absent rather than as a
+     * bound matching nothing. The screen's inputs are `type="date"`, so they
+     * can only ever send Y-m-d or empty and this path is unreachable from the
+     * UI; a hand-made request that reached it used to return a silently empty
+     * list, which is the same confidently-wrong screen this lane is here to
+     * remove. Ignoring the malformed half shows the operator more rows than
+     * they asked for, never fewer, and never 500s.
+     */
+    private function shopDayStartUtc(string $day, int $plusDays = 0): ?CarbonImmutable
+    {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) !== 1) {
+            return null;
+        }
+
+        try {
+            $local = CarbonImmutable::createFromFormat('!Y-m-d', $day, StoreTime::timezone());
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! $local instanceof CarbonImmutable) {
+            return null;
+        }
+
+        return StoreTime::startOfDayUtc($local->addDays($plusDays)->format('Y-m-d'));
     }
 
     private function segment(Request $request): string
@@ -885,6 +957,28 @@ class CustomersApiController extends Controller
     /* ------------------------------------------------------------ formatting */
 
     /**
+     * The demo-seeded customer ids, read once per request.
+     *
+     * Memoised on the INSTANCE, not in a static: a controller is constructed
+     * per request, so the memo lasts exactly as long as the answer can be
+     * relied on. A process-level static would be the trap CLAUDE.md records
+     * against Setting::map() -- a queue worker or a test process would hold
+     * one answer across a seed or a removal.
+     *
+     * Null means "not asked yet", which is not the same as the empty array
+     * that means "nothing has been seeded".
+     *
+     * @var array<int, true>|null
+     */
+    private ?array $demoCustomerIds = null;
+
+    /** @return array<int, true> */
+    private function demoCustomerIds(): array
+    {
+        return $this->demoCustomerIds ??= DemoSeed::idsFor(Customer::class);
+    }
+
+    /**
      * One row, as an explicit allowlist of fields.
      *
      * Nothing here is the model. `customers` holds a bcrypt hash, a WordPress
@@ -907,6 +1001,8 @@ class CustomersApiController extends Controller
         if ($name === '') {
             $name = trim(((string) ($c->first_name ?? '')) . ' ' . ((string) ($c->last_name ?? '')));
         }
+
+        $demo = $this->demoCustomerIds();
 
         return [
             'id' => (int) $c->id,
@@ -934,6 +1030,25 @@ class CustomersApiController extends Controller
             'state' => $this->blankToNull($c->addr_state),
             'country' => $this->blankToNull($c->addr_country),
             'trashed' => $c->deleted_at !== null,
+            /*
+             * FIGURES EXCLUDE DEMO ROWS; LISTS SHOW THEM AND SAY SO.
+             *
+             * Store -> Demo Content seeds sample customers so the panel can be
+             * explored before real data exists, and putting them on screens is
+             * the whole point of the feature -- hiding them would break it. So
+             * a demo customer stays on this list and carries the fact, and the
+             * screen badges it.
+             *
+             * It matters here more than on most lists because the spend column
+             * beside it is computed from REAL orders only (see rowQuery), so a
+             * demo customer reads AED 0 lifetime spend. Without this flag that
+             * row is indistinguishable from a real shopper who has never
+             * bought anything, and the owner has no way to tell which of the
+             * two they are looking at. Same definition of "demo" as the
+             * Dashboard, Analytics and the Orders list use -- App\Support\DemoSeed,
+             * which answers from `demo_seed_log` rather than a column.
+             */
+            'is_demo' => isset($demo[(int) $c->id]),
         ];
     }
 
