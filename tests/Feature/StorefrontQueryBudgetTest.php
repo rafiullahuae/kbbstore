@@ -368,6 +368,21 @@ function budgetGrow(int $count, Brand $brand, Category $category): void
  *   - THE CATEGORY ARCHIVE LOOKS ITS CATEGORY UP ONCE. CategoryArchiveController
  *     resolved it to choose between 200, 301 and 404 and then handed
  *     ShopController the slug to resolve again.
+ *
+ * LANE CW, later. Every ceiling above was re-measured on both engines and two
+ * of them were carrying slack rather than a budget — the brand index at 14
+ * against a measured 6, the sitemap at 30 against a measured 20. Both are noted
+ * at their entries below, with the one change behind them: ProductVisibility::
+ * raw() read the products column list once instead of asking about four columns
+ * one at a time, which took four information_schema queries off every caller.
+ *
+ * Lane CW's other two changes are deliberately INVISIBLE to this file, which is
+ * why they are pinned in StorefrontCostTest instead. Two indexes on `reviews`
+ * cut the home page's review wall from 41.1ms to 0.3ms and its star
+ * distribution from 28.3ms to 2.0ms without moving any count — a budget
+ * measures queries, not rows examined. And the account panel's typeface is no
+ * longer fetched on a guest page, which is a request the browser makes and the
+ * database never hears about.
  */
 function budgetPages(array $seed): array
 {
@@ -378,7 +393,31 @@ function budgetPages(array $seed): array
         'shop sorted'       => ['/shop?orderby=price', null, 8],
         'shop filtered'     => ['/shop?filter_brands=' . $seed['brand']->slug, null, 9],
         'category'          => ['/product-category/' . $seed['category']->slug, null, 9],
-        'brand index'       => ['/korean-skincare-brands', null, 14],
+        /*
+         * 14 -> 8 (Lane CW).
+         *
+         * Two separate things were loose here. The page measured 6 against a
+         * ceiling of 14, so eight queries could appear on it without this file
+         * noticing — twice the page's actual cost as slack.
+         *
+         * And four of the six it did run were `select column_name ... from
+         * information_schema.columns where table_name = 'products'`:
+         * ProductVisibility::raw() guards four conditions on four separate
+         * Schema::hasColumn() calls, so a main-navigation page spent two thirds
+         * of its database work on MySQL describing its own columns. raw() now
+         * reads the column list once. MySQL 8 -> 5.
+         *
+         * 7, not the file's usual measured-plus-two, and the one exception in
+         * it. The two engines disagree by one here — SQLite answers hasColumn
+         * from a pragma that DB::listen never sees, so it measures 6 where
+         * MySQL measures 5 — and the ceiling has to hold on both, which puts
+         * the floor at 6. At 8 the old MySQL count of 8 still fits, so a
+         * ceiling set by the usual rule would pass against the very code this
+         * entry was tightened for. Proven by reverting raw(): at 8 the suite is
+         * green, at 7 it fails with "brand index (/korean-skincare-brands) ran
+         * 8 queries, budget 7". One of slack on the engine that governs it.
+         */
+        'brand index'       => ['/korean-skincare-brands', null, 7],
         'brand page'        => ['/korean-skincare-brands/' . $seed['brand']->slug, null, 9],
         'product'           => ['/product/' . $seed['product']->slug, null, 13],
         'quick view'        => ['/quick-view/' . $seed['product']->id, null, 4],
@@ -414,7 +453,26 @@ function budgetPages(array $seed): array
         'account order'     => ['/my-account/orders/' . $seed['order']->id, $seed['customer']->id, 7],
         'account addresses' => ['/my-account/edit-address', $seed['customer']->id, 6],
         'track order'       => ['/track-my-order', null, 5],
-        'sitemap'           => ['/sitemap.xml', null, 30],
+        /*
+         * 30 -> 22 (Lane CW).
+         *
+         * Ten queries of slack on a URL a crawler fetches far more often than
+         * any shopper fetches anything. Measured: 20 on SQLite, 15 on MySQL,
+         * where it was 18 before ProductVisibility::raw() stopped asking about
+         * its four columns one at a time. Twelve of that eighteen were schema
+         * introspection; only six fetched anything a sitemap contains.
+         *
+         * 22 is the higher engine plus the file's standard two. SQLite is the
+         * higher one because its pragma-based hasColumn IS visible to
+         * DB::listen while MySQL's information_schema queries were the ones
+         * removed — so on SQLite this number did not move, and the ceiling is
+         * set by the engine the change did not help.
+         *
+         * Five Schema::hasTable/hasColumn calls in SeoFilesController itself
+         * are still one query each and are left alone: that file belongs to the
+         * SEO lane. See the report.
+         */
+        'sitemap'           => ['/sitemap.xml', null, 22],
     ];
 }
 

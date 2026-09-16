@@ -97,7 +97,45 @@ $kbbSeoCtx = array_merge([
     {{-- Only emitted when the accent differs from the design default. --}}
     <style id="kbb-brand-accent">:root,.kbb-checkout,.kbb-cart{--pink:{{ $kbbAccent['base'] }};--pink-deep:{{ $kbbAccent['deep'] }};}</style>
 @endif
-    @php $apFont = app(\App\Services\AccountPanel::class)->fontHref(); @endphp
+    {{--
+        The account panel's welcome typeface, and ONLY for someone who can see
+        it.
+
+        This link was emitted on every page, so every visitor to /shop,
+        /product, /cart and /checkout fetched a SECOND render-blocking Google
+        Fonts stylesheet — Cormorant Garamond by default, since that is what
+        AccountPanel::SCHEMA ships as `welcome_font` — plus the WOFF2 files
+        behind it.
+
+        The only thing that face ever styles is `.ap-greet`, and
+        partials/account-panel.blade.php renders that element inside `@auth`. A
+        signed-out visitor could never see a glyph of it, and storefront traffic
+        is overwhelmingly signed out.
+
+        WHAT THIS IS AND IS NOT WORTH, measured rather than assumed. It is one
+        fewer render-blocking request in <head> on every guest page — 15 -> 14
+        on the home page, 28 -> 27 on /shop, 11 -> 10 on a product page, at
+        both 1280 and 390. It is NOT a saved origin: Poppins comes from the
+        same fonts.googleapis.com, so the connection is open either way. And it
+        is NOT the WOFF2 files, because a browser fetches a face only when
+        something on the page uses it, and on a guest page nothing does.
+
+        One blocking request is still worth removing here. A <head> stylesheet
+        has to be fetched and parsed before the first paint, this host has no
+        CDN in front of it, and the request buys a visitor who is signed out
+        precisely nothing.
+
+        The gate is deliberately WIDER than the element it protects: either
+        guard signed in is enough, while the greeting additionally needs the
+        default guard and the account menu switched on. Too wide leaves an
+        unused stylesheet on a few signed-in pages; too narrow takes the font
+        off a page that renders the greeting. Only the second is a defect, so
+        the test in StorefrontCostTest pins both directions.
+    --}}
+    @php
+        $apSignedIn = auth()->check() || auth()->guard('customer')->check();
+        $apFont = $apSignedIn ? app(\App\Services\AccountPanel::class)->fontHref() : null;
+    @endphp
     @if ($apFont)<link rel="stylesheet" href="{{ $apFont }}">@endif
     {!! app(\App\Services\MarketingPixels::class)->baseTags() !!}
     {!! app(\App\Services\MarketingPixels::class)->addToCart() !!}
