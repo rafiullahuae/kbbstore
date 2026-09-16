@@ -14348,13 +14348,23 @@ buildNav();
     return '<div class="bd-tabs" id="bdTabs">'+
       '<button type="button" class="bd-tab'+(BD_TAB==='business'?' on':'')+'" data-bdtab="business">Business</button>'+
       '<button type="button" class="bd-tab'+(BD_TAB==='tax'?' on':'')+'" data-bdtab="tax">Tax</button>'+
+      /* THE THIRD TAB — Lane DG. Eight settings that decide who the invoice
+         says it is from had a reader and no writer: not one of them was in
+         AdminController::SETTING_RULES and not one was drawn anywhere in this
+         console, so the owner's legal business name and address could not be
+         put on his own invoices at all, and `invoice_trn` — which is half of
+         what lets the document call itself a Tax Invoice — could not be
+         entered. A tab and not a sidebar row: this is what the business is
+         called and where it trades, which is the sentence at the top of this
+         very screen. */
+      '<button type="button" class="bd-tab'+(BD_TAB==='invoice'?' on':'')+'" data-bdtab="invoice">Invoice</button>'+
       '</div>';
   }
 
   async function renderStoreSettings(tab){
     await loadSettings();
     var taxLive = String(SETTINGS.tax_mode||'display')==='live';
-    if(tab==='tax'||tab==='business') BD_TAB = tab;
+    if(tab==='tax'||tab==='business'||tab==='invoice') BD_TAB = tab;
     // Before the markup is built: vatRatesBand() renders from VAT_RATES.
     vatRatesLoad();
     document.querySelector('#content').innerHTML =
@@ -14485,11 +14495,100 @@ buildNav();
           bdField('set_vat_label','Wording on the receipt',
             '<input id="set_vat_label" value="'+sesc(SETTINGS.vat_label==null?"You\'re paying VAT ({rate}%)":SETTINGS.vat_label)+'">',
             'Use {rate} where the percentage should appear.')+
+          /* A TRN IS A TAX NUMBER AND THIS IS THE TAX TAB, so this is where the
+             owner comes looking for it — the same reasoning that put the Tax
+             tab on this screen in the first place. It is entered on the Invoice
+             tab, beside the name and address it is printed under, and this
+             points at it rather than drawing a second box for one setting.
+             `data-bdtab` is what the single tab listener below reads, so this
+             needs no handler of its own. */
+          bdField('set_trn_jump','Tax registration number (TRN)',
+            '<button type="button" class="bd-jump" data-bdtab="invoice">Now on the Invoice tab \u2192</button>',
+            'Your TRN is printed on the invoice under your business name, so it is entered there with the rest of your business details.')+
         '</div>'+
         (taxLive
           ? '<div class="bd-note"><b>Tax is being applied to real orders.</b> Every country on an Exclusive basis below is charging its rate on top of the basket, and every order records the rate and basis it was charged at, so old receipts keep saying what they said on the day.</div>'
           : '<div class="bd-note"><b>Nothing here is being charged.</b> The VAT line is printed beside the total and the total is unaffected, which is how this shop has always worked. Set Tax mode to “Applied to orders” when you are ready for the rates below to be real — and check them first, because from that moment an Exclusive country charges more.</div>'))+
       vatRatesBand()+
+      '</div>'+
+
+      /* ---------- The Invoice tab (Lane DG) --------------------------------
+         "his legal business name and address are not on his invoices, and he
+          has no way to put them there."
+
+         App\Services\Invoices\InvoiceDocument::seller() has read eight settings
+         since the day it was written. None of them was in
+         AdminController::SETTING_RULES, so PUT /admin-api/settings rejected
+         every one as an unknown key, and no field for any of them was drawn
+         anywhere in this console. A reader with no writer: the invoice printed
+         the fallbacks for ever and there was no box to change them in.
+
+         WHY A TAB HERE RATHER THAN A ROW IN THE SIDEBAR. This screen's own
+         heading says it holds "the handful of values the whole shop is built on
+         — what the business is called". The legal name, the trading address and
+         the tax registration number ARE that, and the Store name box on the
+         Business tab already tells the owner it is "shown … on invoices". A
+         sidebar row would be a twenty-first Store entry for a screen he fills in
+         once, and it would split one idea — who this business is — across two
+         places. The Tax tab is the precedent: the owner went looking for tax on
+         Business Details, so tax lives on Business Details.
+
+         AND IT IS REACHABLE FROM WHERE HE WOULD LOOK. A TRN is a tax number and
+         the Tax tab is where he would look for it, so that tab carries a
+         pointer to this one, the same way the Business tab keeps the VAT rate's
+         old place and points at Tax. Both pointers are `data-bdtab`, which the
+         one tab listener below already understands.
+
+         EVERY BOX SHIPS BLANK AND NOTHING IS INVENTED HERE. seller() falls back
+         for each one, so an owner who never opens this tab gets exactly the
+         invoice he gets today, to the byte. */
+      '<div class="bd-panel" data-bdpanel="invoice"'+(BD_TAB==='invoice'?'':' hidden')+'>'+
+      bdSec('Who the invoice comes from',
+        'The name, address and contact details printed at the top of every invoice and packing slip. Leave a box empty and that line simply does not appear — nothing here is guessed at or filled in for you.',
+        '<div class="bd-grid">'+
+          bdField('set_invoice_business_name','Business name',
+            '<input id="set_invoice_business_name" value="'+sesc(SETTINGS.invoice_business_name)+'" placeholder="'+sesc(SETTINGS.store_name||'')+'">',
+            'Your legal trading name, if it differs from the store name. Blank uses the store name.')+
+          bdField('set_invoice_phone','Phone',
+            '<input id="set_invoice_phone" value="'+sesc(SETTINGS.invoice_phone)+'" placeholder="+971 …">',
+            'Printed under your name. Any format you would write on a letterhead.')+
+        '</div>'+
+        '<div class="bd-grid">'+
+          bdField('set_invoice_email','Email',
+            '<input id="set_invoice_email" type="email" value="'+sesc(SETTINGS.invoice_email)+'" placeholder="info@example.com">',
+            'Where a customer holding this invoice should write to you.')+
+          bdField('set_invoice_website','Website',
+            '<input id="set_invoice_website" value="'+sesc(SETTINGS.invoice_website)+'" placeholder="kbeautybliss.com">',
+            'With or without https:// — whichever you would print.')+
+        '</div>'+
+        '<div class="bd-grid">'+
+          bdField('set_invoice_address','Address',
+            '<textarea id="set_invoice_address" rows="4" placeholder="Office 1902, Burlington Tower&#10;Business Bay, Dubai&#10;United Arab Emirates">'+sesc(SETTINGS.invoice_address)+'</textarea>',
+            'One line per line, exactly as you want it printed.')+
+        '</div>')+
+
+      bdSec('Tax registration, and what the document calls itself',
+        'Two settings that decide the two words at the top of the page. Both are yours and your accountant’s to answer — this shop will not put a tax claim on a document on your behalf.',
+        '<div class="bd-grid">'+
+          bdField('set_invoice_trn','Tax registration number (TRN)',
+            '<input id="set_invoice_trn" value="'+sesc(SETTINGS.invoice_trn)+'" placeholder="blank — nothing is printed">',
+            'Printed under your name as “TRN …”, and beside the VAT line. Blank prints neither.')+
+          bdField('set_invoice_doctype','What the invoice calls itself',
+            '<input id="set_invoice_doctype" value="'+sesc(SETTINGS.invoice_doctype)+'" placeholder="blank — decided from the order">',
+            'Printed at the top of the page, word for word. Blank lets the rule below decide.')+
+        '</div>'+
+        /* THE RULE THIS BOX OVERRIDES, spelled out, because overriding it is
+           the whole point of the box and an owner cannot consent to something
+           he has not been told. */
+        '<div class="bd-note">Left blank, the heading is worked out from the order itself: it reads <b>Tax Invoice</b> only when tax was really charged or is really contained in the total <b>and</b> a TRN is entered above — otherwise it reads <b>Invoice</b>, which is true of every invoice. Typing something in the second box overrides that in every case and prints exactly what you type. “Tax Invoice”, “Simplified Tax Invoice” and the rest are terms with legal meanings in the UAE and the GCC; what yours must say is a question for your accountant, not for this shop.</div>')+
+
+      bdSec('The small print at the foot',
+        'Anything you want at the bottom of every invoice — payment terms, your returns policy, bank details. It is printed as typed, and blank prints nothing at all.',
+        '<div class="bd-grid">'+
+          bdField('set_invoice_footer','Invoice footer',
+            '<textarea id="set_invoice_footer" rows="3" placeholder="blank — nothing is printed">'+sesc(SETTINGS.invoice_footer)+'</textarea>',
+            'Shown on the invoice only. The packing slip never carries it.')+
+        '</div>')+
       '</div>'+
 
       '</div>'+
@@ -14565,7 +14664,23 @@ buildNav();
         currency_decimals: sval('set_currency_decimals'),
         free_ship: String(Math.round((parseFloat(sval('set_free_ship'))||0)*100)),
         delivery_flat: String(Math.round((parseFloat(sval('set_delivery'))||0)*100)),
-        cod_fee: String(Math.round((parseFloat(sval('set_cod'))||0)*100))
+        cod_fee: String(Math.round((parseFloat(sval('set_cod'))||0)*100)),
+        /* The Invoice tab (Lane DG). Every one of these had a reader in
+           App\Services\Invoices\InvoiceDocument and no writer anywhere, and
+           they are posted here for the same reason the Tax tab's keys are:
+           a key with no line in AdminController::SETTING_RULES is dropped
+           while this endpoint still answers ok, which is the standing warning
+           at the top of that list and how "Saved" comes to mean nothing.
+           All eight are sent every time, blank included, so clearing a box is
+           a way of taking a line off the invoice. */
+        invoice_business_name: sval('set_invoice_business_name'),
+        invoice_address: sval('set_invoice_address'),
+        invoice_trn: sval('set_invoice_trn'),
+        invoice_email: sval('set_invoice_email'),
+        invoice_phone: sval('set_invoice_phone'),
+        invoice_website: sval('set_invoice_website'),
+        invoice_footer: sval('set_invoice_footer'),
+        invoice_doctype: sval('set_invoice_doctype')
 
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('Business details saved'); }

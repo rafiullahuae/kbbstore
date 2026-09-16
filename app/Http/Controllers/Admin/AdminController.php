@@ -1564,6 +1564,94 @@ class AdminController extends Controller
         'merchant_ship_cost' => ['aed', 'Shipping cost'],
         'merchant_ship_free_over' => ['aed', 'Free shipping over'],
         'merchant_return_days' => ['int', 'Return window', [0, 3650]],
+
+        /*
+         * ── WHO IS ISSUING THE INVOICE — Lane DG ────────────────────────────
+         *
+         * Eight keys that App\Services\Invoices\InvoiceDocument::seller() and
+         * ::docType() have read since the day they were written, and that
+         * NOTHING in this application has ever been able to write. Not "were
+         * validated loosely" — absent from this list entirely, which by the
+         * standing warning at the top of this constant means every one of them
+         * was REJECTED by updateSettings() as an unknown key while the screen
+         * that never rendered them could not have posted them anyway.
+         *
+         * What that cost, in the owner's terms: his legal business name and his
+         * trading address are not on the invoices he sends, and there was no
+         * box anywhere in this console to put them in. `invoice_trn` is worse
+         * than cosmetic — docType() prints "Tax Invoice" only when tax was
+         * really charged or really contained AND a registration number is
+         * recorded, so with no way to record one the heading read "Invoice" for
+         * ever, whatever his accountant told him.
+         *
+         * They are written by the Invoice tab of Store → Business Details, and
+         * InvoiceIdentitySettingsTest saves through this endpoint and reads
+         * every value back OFF A RENDERED INVOICE rather than out of the
+         * settings table — the round trip is the property, not the row.
+         *
+         * EVERY ONE SHIPS BLANK and every reader already falls back, so a shop
+         * that never opens the tab prints exactly what it printed before.
+         *
+         * ── WHY THESE RULES AND NOT `text` FOR ALL EIGHT ────────────────────
+         *
+         * The note at the top of this list is emphatic that a bound has to come
+         * from the consumer rather than from taste, and that a wrong limit
+         * blocks a legitimate value. Measured against that, five of these eight
+         * genuinely have no shape their reader depends on:
+         *
+         *   name / address / footer / doctype / phone → `text`
+         *
+         * A phone number is `text` and not a pattern because the seller block
+         * prints it verbatim and a UAE shop writes one four defensible ways
+         * ("+971 58 505 2611", "058 505 2611", a landline and a mobile with a
+         * slash between them). There is nothing here to check it against and
+         * refusing one of those forms would be inventing a convention.
+         *
+         * `invoice_doctype` is `text` for a stronger reason than "no shape":
+         * it is printed VERBATIM as the document's heading and it overrides
+         * docType()'s own rule. It is the owner's exact words, after he has
+         * asked his accountant what a shop of his size in his emirate must call
+         * the document — so it may not be normalised, case-folded or held to an
+         * enum of phrases this project made up. Only `trim()` applies, which is
+         * what every key here gets and what docType() itself already does on
+         * read (its `!== ''` check depends on it).
+         *
+         * The other three are given a rule because their consumer has one:
+         *
+         *   `invoice_trn`  IS LOAD-BEARING, not decoration. It is the second
+         *       half of the condition that lets the document call itself a tax
+         *       document, so anything non-empty in this box changes the heading
+         *       on every invoice the shop issues. `ident` is deliberately NOT
+         *       "fifteen digits": the UAE TRN is 15 and so is the Saudi VAT
+         *       number, but this shop delivers across the GCC and beyond and a
+         *       15-digit rule would refuse a legitimate registration number
+         *       from anywhere that numbers them differently. What it does
+         *       refuse is the shape that is never a registration number and
+         *       always a mistake — a sentence, a pasted address, a newline.
+         *
+         *   `invoice_email`  is an address a customer reads off a printed page
+         *       and types into their mail client. A malformed one is not a
+         *       cosmetic defect: it is a customer who cannot reach the shop.
+         *       Checked with filter_var, which is what MailSettings::
+         *       replyToAddress() and EmailBranding::support() already use, so
+         *       the three agree about what an address is.
+         *
+         *   `invoice_website`  is checked for the shape of a web address and
+         *       NOT required to carry a scheme, because "kbeautybliss.com" is
+         *       what an owner types and exactly what belongs on an invoice —
+         *       demanding "https://" would be the wrong limit this list's own
+         *       header warns about. What `weburl` refuses is whitespace, a
+         *       scheme other than http(s), and anything with no dot in it,
+         *       which is to say prose typed into the wrong box.
+         */
+        'invoice_business_name' => ['text', 'Business name on invoices'],
+        'invoice_address' => ['text', 'Business address on invoices'],
+        'invoice_trn' => ['ident', 'Tax registration number (TRN)'],
+        'invoice_email' => ['email', 'Email address on invoices'],
+        'invoice_phone' => ['text', 'Phone number on invoices'],
+        'invoice_website' => ['weburl', 'Website on invoices'],
+        'invoice_footer' => ['text', 'Invoice footer'],
+        'invoice_doctype' => ['text', 'What the invoice calls itself'],
     ];
 
     /** PUT /admin-api/settings — upsert a whitelisted set of store settings. */
@@ -1903,6 +1991,112 @@ class AdminController extends Controller
                 ksort($map);
 
                 return $ok((string) json_encode($map, JSON_FORCE_OBJECT));
+
+            /*
+             * ── THE THREE RULES THE INVOICE IDENTITY KEYS NEEDED — Lane DG ──
+             *
+             * Every one of them accepts a BLANK VALUE, and that is not an
+             * oversight. All eight invoice keys ship empty, every reader in
+             * InvoiceDocument falls back, and clearing a box has to be a way of
+             * saying "take this off my invoice". A rule that refused '' would
+             * make the TRN, the email and the website one-way doors.
+             */
+
+            case 'email':
+                /*
+                 * An address printed on a document a customer reads and types
+                 * into their mail client.
+                 *
+                 * filter_var and not a regex of our own, and not Laravel's
+                 * `email` validation rule either: CLAUDE.md records three open
+                 * advisories against this framework version and one of them is
+                 * CRLF injection in that rule. This value is never handed to a
+                 * mail header — the seller block prints it as a text node — but
+                 * filter_var refuses a newline anyway, which is the property
+                 * that keeps it that way if somebody later makes it a Reply-To.
+                 *
+                 * The same check MailSettings::replyToAddress() and
+                 * EmailBranding::support() already apply, so all three agree
+                 * about what an address is rather than each having an opinion.
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                return filter_var($value, FILTER_VALIDATE_EMAIL) !== false
+                    ? $ok($value)
+                    : $no("“{$label}” must be an email address, like info@example.com.");
+
+            case 'weburl':
+                /*
+                 * A web address as a human writes one on a letterhead.
+                 *
+                 * NO SCHEME IS REQUIRED, deliberately. "kbeautybliss.com" is
+                 * what an owner types into this box and exactly what belongs
+                 * printed under his name; demanding "https://" would refuse the
+                 * commonest correct answer, which is the wrong-limit failure
+                 * SETTING_RULES' own header warns about. A scheme IS accepted,
+                 * because a pasted address carries one.
+                 *
+                 * What is refused: whitespace and control characters (a line of
+                 * prose typed into the wrong box), a scheme that is not http or
+                 * https (`javascript:` and `data:` are not websites — the
+                 * seller block prints this as text today, and the check is here
+                 * so that stays safe if it ever becomes an href), and a value
+                 * with no dot in it, which is not a domain.
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                if (preg_match('/[\s\x00-\x1F\x7F]/', $value) === 1) {
+                    return $no("“{$label}” must be a web address with no spaces, like kbeautybliss.com.");
+                }
+
+                // A scheme is anything before the first ':' that looks like one.
+                // Checked before the dot rule, so "javascript:alert(1)" is told
+                // what is wrong with it rather than being told it needs a dot.
+                if (preg_match('~^([A-Za-z][A-Za-z0-9+.-]*):~', $value, $m) === 1
+                    && ! in_array(strtolower($m[1]), ['http', 'https'], true)) {
+                    return $no("“{$label}” must be a web address — only http:// and https:// links can be printed.");
+                }
+
+                return str_contains($value, '.')
+                    ? $ok($value)
+                    : $no("“{$label}” must be a web address, like kbeautybliss.com.");
+
+            case 'ident':
+                /*
+                 * A short registration identifier — today, `invoice_trn`.
+                 *
+                 * THIS ONE CHANGES A HEADING. InvoiceDocument::docType() prints
+                 * "Tax Invoice" only when tax was really charged or contained
+                 * AND this value is non-empty, so whatever lands here is a
+                 * statement the shop makes about itself on every invoice it
+                 * issues. That is why it is not `text`.
+                 *
+                 * NOT "FIFTEEN DIGITS". The UAE TRN is fifteen digits and so is
+                 * the Saudi VAT number, but this shop delivers well beyond both
+                 * and a jurisdiction that numbers its registrations differently
+                 * would be locked out by a rule written for one country. Letters
+                 * are allowed for the same reason. Spaces, hyphens and slashes
+                 * are allowed because registrations are commonly written with
+                 * them and reformatting the owner's own number would be the
+                 * "helpful" normalisation this lane is not doing anywhere.
+                 *
+                 * 40 characters is not a guess at a format; it is the length
+                 * past which this has stopped being an identifier and started
+                 * being a sentence in the wrong box — which, unchecked, would
+                 * silently re-head every invoice in the shop.
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                return preg_match('/^[A-Za-z0-9][A-Za-z0-9 \/-]{0,39}$/', $value) === 1
+                    ? $ok($value)
+                    : $no("“{$label}” must be a registration number — letters, digits, "
+                        . 'spaces and hyphens, up to 40 characters.');
         }
 
         return $no("“{$label}” could not be checked.");
