@@ -11433,38 +11433,65 @@ buildNav();
   function seoSel(id,cur,opts,dflt){ cur=(cur==null||cur==='')?dflt:cur; return '<select class="inp" id="'+id+'" style="width:100%">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===cur?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'; }
 
   /**
-   * A real upload widget — click-to-browse (or drag a file onto it) with a
-   * live preview — replacing a raw "paste a URL" text field so a
-   * non-technical store owner never has to know how to host an image
-   * somewhere else first. Falls back to a plain URL input underneath for
-   * anyone who already has one.
+   * THE ONE IMAGE FIELD. Five screens are drawn by this function — the SEO
+   * share image, the organisation logo, a brand logo, a category image and an
+   * attribute swatch — so the shape of the control is decided here once for
+   * all of them. Converting the helper rather than its five callers is also
+   * what keeps a sixth caller from being born raw.
+   *
+   * CLICKING THE ZONE OPENS THE MEDIA LIBRARY. It used to open the browser's
+   * own file dialog, through a transparent <input type="file"> stretched over
+   * the whole zone, and that is the bug the owner reported twice in the same
+   * words: a file dialog can only send a file from this computer, so an image
+   * already in the library had to be hunted down and uploaded a second time.
+   * The picker lists what is already there and carries its own "Upload new",
+   * which files a new image in the library and then selects it — so uploading
+   * is still one dialog away, it simply cannot produce a duplicate any more.
+   *
+   * NOTHING THAT WORKED BEFORE STOPS WORKING. Dragging a file onto the zone
+   * still uploads it straight away (a drop carries its own files and needs no
+   * input element), and it goes to the same /admin-api/media/upload, so a
+   * dropped file lands in the library too. "or paste a URL directly" is
+   * untouched. The value written is what it always was: a URL string in the
+   * hidden input #<id>, which every caller reads with sval(id).
    */
   function imgUploadField(id,curUrl,label,folder){
     var hasImg = curUrl && curUrl.trim()!=='';
     return '<div class="fld"><label>'+label+'</label>'+
-      '<div class="imgup" id="'+id+'_zone" style="border:1.5px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;position:relative">'+
-      '<input type="file" id="'+id+'_file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" style="position:absolute;inset:0;opacity:0;cursor:pointer">'+
+      '<div class="imgup" id="'+id+'_zone" role="button" tabindex="0" style="border:1.5px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;position:relative">'+
       '<div id="'+id+'_preview" style="'+(hasImg?'':'display:none')+';margin-bottom:8px"><img src="'+sesc(curUrl)+'" style="max-height:70px;max-width:100%;border-radius:6px;display:'+(hasImg?'block':'none')+';margin:0 auto"></div>'+
-      '<div id="'+id+'_prompt" style="font-size:12px;color:var(--ink-soft)">'+(hasImg?'Click to replace':'Click to upload, or drag an image here')+'</div>'+
+      '<div id="'+id+'_prompt" style="font-size:12px;color:var(--ink-soft)">'+(hasImg?'Click to replace from the Media Library':'Click to choose from the Media Library, or drag an image here')+'</div>'+
       '<div id="'+id+'_status" style="font-size:11.5px;color:var(--ink-soft);margin-top:4px"></div>'+
       '</div>'+
-      /* Choosing from the library is offered FIRST because it is the answer
-         most of the time: the owner's complaint was uploading the same
-         photograph again for every field that wanted it. The drop zone above
-         still uploads directly, so nothing that worked before stops working. */
+      /* The same action as clicking the zone, spelled out. The zone reads as a
+         drop target to some operators and as a button to others; the labelled
+         button removes the guess. */
       '<div style="margin-top:7px"><button type="button" class="btn ghost" id="'+id+'_lib" style="font-size:12px;padding:6px 10px">Choose from Media Library</button></div>'+
       '<input type="hidden" id="'+id+'" value="'+sesc(curUrl)+'">'+
       '<p class="description" style="margin:6px 0 0"><a href="#" id="'+id+'_manual" style="font-size:11.5px">or paste a URL directly</a></p>'+
       '<input id="'+id+'_url" class="inp" style="display:none;margin-top:6px" value="'+sesc(curUrl)+'" placeholder="https://…"></div>';
   }
 
-  function wireImgUpload(id,folder){
-    var zone=document.getElementById(id+'_zone'), fileInput=document.getElementById(id+'_file'),
+  /* label is passed so the picker's heading can name the field the operator
+     just clicked. It used to be read as a free variable in here, where no such
+     binding exists — a ReferenceError that killed the click before the dialog
+     could open. Optional, so the five existing two-argument calls keep working. */
+  function wireImgUpload(id,folder,label){
+    var zone=document.getElementById(id+'_zone'),
         hidden=document.getElementById(id), preview=document.getElementById(id+'_preview'),
         img=preview?preview.querySelector('img'):null, prompt=document.getElementById(id+'_prompt'),
         status=document.getElementById(id+'_status'), manualLink=document.getElementById(id+'_manual'),
         urlInput=document.getElementById(id+'_url');
     if(!zone) return;
+
+    /* Read back off the rendered <label> when the caller did not pass one, so
+       none of the five existing call sites has to change — several of them sit
+       in screens other lanes are editing right now, and a field's own label is
+       the same string imgUploadField was given anyway. */
+    if(!label){
+      var lab=zone.parentNode?zone.parentNode.querySelector('label'):null;
+      label=lab?(lab.textContent||'').trim():'';
+    }
 
     async function doUpload(file){
       if(!file) return;
@@ -11484,23 +11511,34 @@ buildNav();
       if(!url) return;
       hidden.value=url; urlInput.value=url;
       img.src=url; img.style.display='block'; preview.style.display='block';
-      prompt.textContent='Click to replace';
+      prompt.textContent='Click to replace from the Media Library';
+    }
+
+    /* One opener, shared by the labelled button and by the zone itself, so the
+       two can never drift into doing different things. */
+    function openLibrary(e){
+      if(e) e.preventDefault();
+      if(typeof window.kbbPickMedia!=='function'){ status.textContent='Media Library is unavailable'; return; }
+      window.kbbPickMedia({
+        title:label||'Choose an image',
+        note:'Pick one already in the library, or upload a new one \u2014 it joins the library first.',
+        folder:folder||'seo',
+        onPick:function(urls){
+          if(!urls||!urls.length) return;
+          applyUrl(urls[0]); status.textContent='Chosen'; setTimeout(function(){status.textContent='';},1500);
+        }
+      });
     }
 
     var libBtn=document.getElementById(id+'_lib');
-    if(libBtn){
-      libBtn.onclick=function(e){
-        e.preventDefault();
-        if(typeof window.kbbPickMedia!=='function'){ status.textContent='Media Library is unavailable'; return; }
-        window.kbbPickMedia({
-          title:label||'Choose an image',
-          folder:folder||'seo',
-          onPick:function(urls){ applyUrl(urls[0]); status.textContent='Chosen'; setTimeout(function(){status.textContent='';},1500); }
-        });
-      };
-    }
+    if(libBtn) libBtn.onclick=openLibrary;
 
-    fileInput.onchange=function(){ doUpload(fileInput.files[0]); };
+    /* The zone is where the operator's eye and cursor already are. It opens the
+       library, which is what the transparent file input over it used to
+       pre-empt. Keyboard too — it is a button now, so it has to behave like one. */
+    zone.onclick=openLibrary;
+    zone.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ openLibrary(e); } };
+
     zone.ondragover=function(e){ e.preventDefault(); zone.style.borderColor='var(--accent)'; };
     zone.ondragleave=function(){ zone.style.borderColor='var(--border)'; };
     zone.ondrop=function(e){ e.preventDefault(); zone.style.borderColor='var(--border)'; if(e.dataTransfer.files[0]) doUpload(e.dataTransfer.files[0]); };

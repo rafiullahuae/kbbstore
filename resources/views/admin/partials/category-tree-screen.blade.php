@@ -648,13 +648,31 @@
         + (isNew ? '' : '<p class="ct-note">This category and everything under it are not offered — a category cannot sit inside itself. '
           + 'Moving it rewrites the address of every sub-category too; each old address becomes a redirect.</p>')
       + '</div>'
-      + '<div class="ct-fld"><label for="ct-image">Image URL</label>'
+      /* THE LIBRARY IS THE WAY IN, NOT A SECOND ONE.
+         This field used to be a bare browser "Choose File" sitting next to the
+         URL box, and it is the control in the owner's screenshot. A raw file
+         input can only ever do one thing — send a file from this computer — so
+         an image already in the library had to be found, downloaded and sent
+         again. The button below opens the shared picker, which lists what is
+         already there AND carries its own "Upload new" that files the new image
+         in the library before selecting it. Nothing is lost: the address box is
+         still here and still editable, so a URL that lives somewhere else can
+         still be pasted straight in. */
+      + '<div class="ct-fld"><label for="ct-image">Image</label>'
         + '<div style="display:flex;gap:9px;align-items:center;min-width:0">'
-        + '<img class="ct-thumb" id="ct-thumb" alt="" src="' + esc(cat.image || '') + '">'
-        + '<input id="ct-image" style="flex:1 1 auto;min-width:0" value="' + esc(cat.image || '') + '" placeholder="https://…">'
+        /* Hidden until there is something to show. src="" resolves to the page
+           itself, which the browser then draws as a broken-image icon — and a
+           category with no image yet is the normal case, so the field opened
+           looking like a failure. */
+        + '<img class="ct-thumb" id="ct-thumb" alt=""' + (cat.image ? '' : ' style="display:none"')
+        +   ' src="' + esc(cat.image || '') + '">'
+        + '<button type="button" class="ct-btn" id="ct-lib" style="flex:0 0 auto">Choose from Media Library</button>'
         + '</div>'
-        + '<p class="ct-note"><input type="file" id="ct-file" accept="image/*" style="margin-top:7px;font-size:12px"> '
-        + 'Uploads through the console’s one media endpoint.</p></div>'
+        + '<label for="ct-image" class="ct-note" style="display:block;margin-top:7px">Image address</label>'
+        + '<input id="ct-image" style="width:100%;min-width:0" value="' + esc(cat.image || '') + '" placeholder="https://…">'
+        + '<p class="ct-note">Pick one already in the library, or upload a new one from inside it — '
+        + 'either way it joins the library first, so no photograph has to be uploaded twice. '
+        + 'An address from elsewhere can still be pasted in above.</p></div>'
       + '<div class="ct-fld"><label for="ct-desc">Description</label>'
         + '<textarea id="ct-desc" rows="3">' + esc(cat.description || '') + '</textarea>'
         + '<p class="ct-note">Shown under the heading on the category page.</p></div>'
@@ -673,30 +691,48 @@
       + '</div>'
     );
 
-    var file = document.getElementById('ct-file');
-    if (file) {
-      file.onchange = async function(){
-        if (!file.files || !file.files[0]) return;
-        var fd = new FormData();
-        fd.append('file', file.files[0]);
-        try {
-          var r = await fetch(endpoint('/media/upload'), {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {'Accept':'application/json', 'X-XSRF-TOKEN': cookie('XSRF-TOKEN')},
-            body: fd
-          });
-          var j = await r.json();
-          if (!r.ok) throw new Error((j && j.message) || 'Upload failed');
-          var url = j.url || (j.data && j.data.url) || '';
-          if (url) {
-            document.getElementById('ct-image').value = url;
-            document.getElementById('ct-thumb').src = url;
-            say('Image uploaded');
+    /* One place that writes the image into the dialog, whichever way it
+       arrived — the picker, or the operator typing an address. The saved value
+       is unchanged by any of this: it is still the URL string read out of
+       #ct-image by val('ct-image') below, exactly as the direct upload used to
+       leave there. */
+    function applyImage(url){
+      if (!url) return;
+      var box = document.getElementById('ct-image');
+      var thumb = document.getElementById('ct-thumb');
+      if (box) box.value = url;
+      if (thumb) { thumb.src = url; thumb.style.display = ''; }
+    }
+
+    var lib = document.getElementById('ct-lib');
+    if (lib) {
+      lib.onclick = function(e){
+        e.preventDefault();
+
+        /* The picker is its own partial, included before this one. Guarded
+           rather than assumed: a package that shipped this screen without it
+           would otherwise throw on the first click, which reads to the operator
+           as a dead button with no explanation. */
+        if (typeof window.kbbPickMedia !== 'function') { say('The Media Library is not available.'); return; }
+
+        window.kbbPickMedia({
+          title: 'Choose the category image',
+          note: 'Pick one already in the library, or upload a new one — it joins the library first.',
+          folder: 'categories',
+          onPick: function(urls){
+            if (!urls || !urls.length) return;
+            applyImage(urls[0]);
+            say('Image chosen');
           }
-        } catch (e) { say(e.message); }
+        });
       };
     }
+
+    /* Typing or pasting an address keeps the thumbnail honest. Previously only
+       an upload could move it, so a pasted URL saved a picture the dialog was
+       never showing. */
+    var imgBox = document.getElementById('ct-image');
+    if (imgBox) imgBox.oninput = function(){ applyImage(imgBox.value); };
 
     document.getElementById('ct-save').onclick = async function(){
       var parent = val('ct-parent');

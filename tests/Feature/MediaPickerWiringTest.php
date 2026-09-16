@@ -77,9 +77,10 @@ it('reaches every image field through that one module', function () {
 it('leaves every direct upload path alone', function () {
     /*
      * "Without disturbing anything existing" was explicit. Choosing from the
-     * library is an ADDITION: the drop zones, the file inputs and the upload
-     * endpoint all still work, because an owner with a photograph that is not
-     * in the library yet must not be forced through a dialog to add it.
+     * library is an ADDITION: the product editor's drop zones, its file inputs
+     * and the upload endpoint all still work, because an owner with a
+     * photograph that is not in the library yet must not be forced through a
+     * dialog to add it.
      */
     $editor = editorSrc();
 
@@ -87,8 +88,24 @@ it('leaves every direct upload path alone', function () {
         expect(str_contains($editor, $id))->toBeTrue("{$id} was removed");
     }
 
-    expect(consoleSrc())->toContain("id=\"'+id+'_file\"")
-        ->and(consoleSrc())->toContain('zone.ondrop');
+    /*
+     * The console's shared image field is the exception, and deliberately so.
+     * Its file input was not a control the operator could see: it was a
+     * transparent one stretched across the whole drop zone, so CLICKING THE
+     * ZONE opened the browser's file dialog and there was no way to reach the
+     * library from the place the cursor already was. That is the "raw Choose
+     * File" the owner reported. Clicking now opens the picker — which carries
+     * its own Upload new — and the capability that input provided is kept by
+     * the two paths asserted here: dropping a file still uploads it directly,
+     * and the URL box still takes an address from anywhere.
+     *
+     * AdminMediaPickerEverywhereTest is what enforces the absence going
+     * forward, across every screen rather than just this one.
+     */
+    expect(consoleSrc())->not->toContain("id=\"'+id+'_file\"");
+
+    expect(consoleSrc())->toContain('zone.ondrop')
+        ->and(consoleSrc())->toContain("id=\"'+id+'_url\"");
 });
 
 it('uses only endpoints that already existed', function () {
