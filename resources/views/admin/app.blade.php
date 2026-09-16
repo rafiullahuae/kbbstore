@@ -5675,8 +5675,18 @@ function renderPlaceholder(id){
    foot of this file. Without this entry mountFrame() would probe for
    kbb-admin-reviews-settings.html -- a file this repo has never shipped -- on
    every single visit, and paint the not-built card a moment before the live
-   screen overwrote it. */
-const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings']);
+   screen overwrote it.
+
+   'htmlblocks' is here on the same grounds (Lane BC): it is drawn by
+   admin/partials/html-blocks-screen.blade.php, which is included after this
+   document's script and wraps window.go the way the other lane screens do. Its
+   entry in FRAME_SRC points at kbb-admin-blocks.html, another file this repo
+   has never shipped, so without this every visit fired a HEAD that could only
+   404 and was then painted over by the real screen a moment later.
+
+   Neither id is re-rendered by the override further down THIS file; both are
+   live all the same, which is why path 1 above applies to them. */
+const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings','htmlblocks']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -13845,6 +13855,17 @@ buildNav();
      FRAME_SRC above rather than left to be shadowed by this override, so
      goTab('media') cannot still reach for the missing file. --}}
 @include('admin.partials.media-library-screen')
+{{-- Content -> HTML Blocks (Lane BC). Same arrangement as the screens above:
+     its own file, its own wrapper around window.go.
+
+     It appends NO sidebar entry, unlike the four above it. 'htmlblocks' has
+     been in NAV and in TITLES all along — what it never had was a screen, only
+     a FRAME_SRC entry pointing at kbb-admin-blocks.html, which this repo has
+     never shipped. Adding an entry here would give the owner the row twice.
+
+     Paired with the 'htmlblocks' addition to LIVE_RENDERED further up, without
+     which mountFrame would still probe for that missing file on every visit. --}}
+@include('admin.partials.html-blocks-screen')
 
 @verbatim
 </body>

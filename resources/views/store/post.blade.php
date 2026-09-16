@@ -90,7 +90,12 @@
       {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$post->tag] ?? '✨' }}
     @endif
   </div>
-  <div class="abody">{!! $post->body ?: '<p>' . e($post->excerpt) . '</p>' !!}</div>
+  {{-- @shortcodes for the same reason as store/page.blade.php: the directive
+       names posts explicitly and no view was using it, so [kbb_products] or
+       [kbb_block] in an article body reached the reader as literal text. The
+       excerpt fallback keeps its e() — it is plain text from the admin list
+       and is not markup. --}}
+  <div class="abody">@shortcodes($post->body ?: '<p>' . e($post->excerpt) . '</p>')</div>
   @verbatim
 </article>
 @endverbatim
