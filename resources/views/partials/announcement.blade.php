@@ -1,8 +1,24 @@
 {{--
     T-CHROME-2. Hidden when the Notification Bar module takes over, exactly as in
     the theme — the module renders its own bar at the top of the page and two
-    stacked bars would look like a mistake. That module is off by default, so
-    this is the branch a stock install runs, on every page, to every visitor.
+    stacked bars would look like a mistake.
+
+    NOTHING INCLUDES THIS FILE (Lane DM). Three source comments described this
+    strip as appearing "on every page, to every visitor" — this one, the header
+    of ShippingService::thresholdHere() and the note over kbbFreeShipThreshold
+    in StoreComposer — and tests/Feature/SitewideDeliveryClaimsTest renders it
+    directly and asserts on its strings as shipped chrome. It is included by no
+    layout and no page: `@include('partials.announcement')` appears nowhere in
+    resources/views. The .anno rule survives in three stylesheets, so it was
+    site chrome once.
+
+    That matters for the two claims below rather than for the delivery figure.
+    "Pay later with Tabby & Tamara" and "100% authentic K-beauty" are live
+    marketing claims that nobody has reviewed, and they go out to every visitor
+    of the site the moment anyone adds one include line — quietly, because the
+    comments here say that is already the case. Whoever wires this up owes both
+    claims a check first: Tabby and Tamara must actually be enabled as payment
+    methods, and "100% authentic" is a statement about sourcing, not a slogan.
 
     THE FREE-DELIVERY FIGURE IS THE VISITOR'S OWN, OR IT IS NOT SHOWN.
 

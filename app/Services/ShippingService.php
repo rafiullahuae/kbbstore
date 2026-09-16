@@ -209,9 +209,15 @@ class ShippingService
      * The same threshold, for WHEREVER THIS VISITOR IS STANDING.
      *
      * WHY THIS EXISTS. The storefront advertises a free-delivery figure in four
-     * places — the announcement bar on every page, the home page's delivery
-     * band, its ticker and its trust row — and every one of them used to name
-     * the shop's own country or, worse, a number typed into the Blade. The
+     * places — partials/announcement.blade.php, the home page's delivery band,
+     * its ticker and its trust row — and every one of them used to name the
+     * shop's own country or, worse, a number typed into the Blade.
+     *
+     * (The first of those four is not actually live: no layout includes
+     * partials/announcement.blade.php. This comment said "the announcement bar
+     * on every page" and Lane DM corrected it. The rule below is unchanged —
+     * the other three callers are real, and the partial will need it if it is
+     * ever wired back up.) The
      * figure is per-destination: production runs 199 for the UAE and 1,600 for
      * the Gulf, and a shop on Extended Delivery carries a `free_from` per
      * country. So a shopper in Riyadh was shown the Dubai number.

@@ -345,8 +345,14 @@ function budgetGrow(int $count, Brand $brand, Category $category): void
  *   my account             8      4       6
  *   account orders         9      5       7
  *   track order            7      3       5
- *   quick view, journal, article, search suggest, review wall,
- *   skin quiz, sitemap                 unchanged
+ *   quick view, journal, article, search suggest,
+ *   skin quiz                          unchanged
+ *
+ * Lane DM, later, raised two of them for work the pages did not previously do:
+ * the review wall from 2 to 6 because it now reads the reviews table instead of
+ * serving twelve invented customers from a JavaScript array, and the sitemap
+ * from 22 to 24 because it now checks whether there is a review to advertise.
+ * Both are annotated at their entries below.
  *
  * The four changes behind that, all of them removing repeated work rather than
  * skipping any:
@@ -445,7 +451,41 @@ function budgetPages(array $seed): array
         'article'           => ['/budget-article-0', null, 4],
         'search suggest'    => ['/api/search?q=serum', null, 3],
         'wishlist'          => ['/my-wishlist', null, 5],
-        'review wall'       => ['/reviews', null, 2],
+        /*
+         * 2 -> 6 (Lane DM), and the two queries are the page's whole point.
+         *
+         * /reviews cost 2 because it read NOTHING. The page was twelve invented
+         * customers in a JavaScript array with a client-side average over them;
+         * a database that contained a real approved review could not change a
+         * pixel of it. It now renders from `reviews`, which costs:
+         *
+         *   1  SELECT rating, COUNT(*) ... GROUP BY rating   (the headline,
+         *      the stars and the distribution, from one reading)
+         *   1  the page of cards
+         *   1  the eager load of their products, on a page that HAS cards
+         *
+         * Measured on this fixture, which seeds no reviews: 4. Measured again
+         * in ReviewWallTruthTest against 5 approved reviews and then against
+         * 200, each on its own product so the eager load has work to do: 4 and
+         * 4 — flat. That flatness is pinned there rather than here, because
+         * this fixture has no reviews to grow and a budget alone cannot catch
+         * an N+1 on a page whose table is empty.
+         *
+         * 6 is the measured 4 plus this file's standard two. A single query per
+         * card would put a twelve-card page at 15 and fail here at once.
+         *
+         * Both of those queries are the ones
+         * 2026_10_30_000000_index_review_wall_and_clear_caches.php added
+         * indexes for -- (status, created_at) for the cards and (status,
+         * rating) for the distribution -- measured there at 0.3ms and 2.0ms
+         * against 7,650 approved reviews.
+         *
+         * NOT CACHED, deliberately: see the header of App\Support\ReviewWall.
+         * A sixth cache key would mean a sixth Cache::forget('kbb.home.reviews')
+         * beside the five that already exist in five files this lane does not
+         * own.
+         */
+        'review wall'       => ['/reviews', null, 6],
         'skin quiz'         => ['/skin-quiz', null, 2],
         'content page'      => ['/about', null, 6],
         'my account'        => ['/my-account', $seed['customer']->id, 6],
@@ -472,7 +512,15 @@ function budgetPages(array $seed): array
          * are still one query each and are left alone: that file belongs to the
          * SEO lane. See the report.
          */
-        'sitemap'           => ['/sitemap.xml', null, 22],
+        /*
+         * 22 -> 24 (Lane DM). SeoFilesController now asks whether the shop has
+         * an approved review with text in it before submitting /reviews/ to
+         * search engines, rather than advertising a page that was twelve
+         * invented customers. That is one hasTable and one EXISTS, measured at
+         * 22 on SQLite where it was 20, so the entry above had exactly zero
+         * slack left rather than the two this file's rule asks for.
+         */
+        'sitemap'           => ['/sitemap.xml', null, 24],
     ];
 }
 

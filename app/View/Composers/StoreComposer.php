@@ -106,7 +106,11 @@ class StoreComposer
              *
              * kbbFreeShipThreshold IS NOT, and must never be. It is the
              * free-delivery figure for the country THIS VISITOR is in — the
-             * announcement bar prints it on every page of the site — and it was
+             * home page's delivery band, its ticker and its trust row all print
+             * it, as would partials/announcement.blade.php if any layout
+             * included it, which none does (this comment used to say the
+             * announcement bar prints it "on every page of the site"; Lane DM
+             * corrected that) — and it was
              * resolved from `store_country`, the shop's own country, so a
              * shopper in Riyadh was quoted the Dubai threshold. It is memoised
              * on the Request (see ShippingService::thresholdHere()), which is
