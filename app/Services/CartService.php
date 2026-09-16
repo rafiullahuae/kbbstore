@@ -422,10 +422,37 @@ class CartService
         $country ??= $cart->shipping_country;
         $state ??= $cart->shipping_state;
 
-        // The free-shipping bar measures the discounted subtotal, matching the
-        // theme: a coupon should not push a customer back below the threshold.
+        /*
+         * THE BAR IS MEASURED ON THE SAME SUBTOTAL THAT QUALIFIES FOR THE RATE.
+         *
+         * This measured `$afterDiscount` while the rate that is actually
+         * CHARGED is chosen from the GROSS subtotal: every caller of
+         * ShippingService::ratesFor() — Store\CheckoutController::place(), its
+         * rateContext(), Api\CheckoutController and ManualOrderBuilder::price()
+         * — passes the pre-coupon sum. So the two halves of the same screen
+         * disagreed:
+         *
+         *     basket AED 220, coupon -AED 40, free over AED 199
+         *       charged   -> qualified on AED 220 -> delivery AED 0
+         *       displayed -> "You're AED 19.00 away from free delivery", 90%
+         *
+         * The shopper was asked to spend AED 19 more for something the line
+         * item beside it had already given them free.
+         *
+         * THE CHARGE IS NOT WHAT CHANGED, and deliberately so. Qualifying on
+         * the gross subtotal is the customer-favouring half of the split
+         * ManualOrderBuilder::price() documents — it is what stops a coupon
+         * pushing a basket back under the threshold and re-imposing a delivery
+         * charge the shopper had already earned. That is right, and it stays.
+         *
+         * What was wrong was this label claiming the same motive — "a coupon
+         * should not push a customer back below the threshold" — while
+         * measuring the one basis that can push them below it. Gross is never
+         * below net, so this is never the less generous reading; it is simply
+         * the honest one.
+         */
         $threshold = $this->shipping->freeShippingThreshold($country, $state);
-        $toFree = $threshold === null ? null : max(0, $threshold - $afterDiscount);
+        $toFree = $threshold === null ? null : max(0, $threshold - $subtotal);
 
         /*
          * FREE DELIVERY FROM THE COUPON ITSELF.
@@ -472,7 +499,9 @@ class CartService
             'free_shipping_threshold' => $threshold,
             'free_shipping_remaining' => $toFree,
             'free_shipping_unlocked' => $threshold !== null && $toFree === 0,
-            'free_shipping_percent' => $threshold ? min(100, (int) round($afterDiscount / $threshold * 100)) : null,
+            // Same basis as $toFree above, or the bar's fill and its caption
+            // would tell two different stories about one basket.
+            'free_shipping_percent' => $threshold ? min(100, (int) round($subtotal / $threshold * 100)) : null,
             // Display only — never added to the total. (D-64)
             'vat' => $this->vat->line($total),
         ];

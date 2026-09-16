@@ -245,10 +245,17 @@
           @if ($postCover)
             <img src="{{ $postCover }}" alt="{{ $post->title }}" width="640" height="400" loading="lazy">
           @endif
-          @if ($post->category)<span class="chip">{{ $post->category }}</span>@endif</div>
+          {{-- `tag`, `body` and readMinutes(): the same correction as `cover`
+               above, for the three fields that were missed when it was made.
+               There is no posts.category, no posts.content and no
+               posts.read_minutes, so the chip never drew, an article with no
+               excerpt printed an empty paragraph, and `?? 5` was not a
+               fallback but the only branch -- every article on this page
+               claimed five minutes whatever its length. --}}
+          @if ($post->tag)<span class="chip">{{ $post->tag }}</span>@endif</div>
         <h3>{{ $post->title }}</h3>
-        <p>{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->excerpt ?: $post->content)), 110) }}</p>
-        <span class="meta">{{ $post->read_minutes ?? 5 }} min read · {{ $post->published_at?->format('j M') }}</span>
+        <p>{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->excerpt ?: $post->body)), 110) }}</p>
+        <span class="meta">{{ $post->readMinutes() }} min read · {{ $post->published_at?->format('j M') }}</span>
       </a>
     @endforeach
   </div>

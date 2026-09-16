@@ -96,8 +96,18 @@ it('creates a real order through the api checkout session', function () {
     expect($order->order_number)->not->toBeNull()
         ->and($order->email)->toBe('api-buyer@example.com')
         ->and($order->payment_method)->toBe('cod')
-        // 2 x د.إ150 = د.إ300, in fils
-        ->and($order->subtotal)->toBe(30000)
+        /*
+         * 2 x د.إ142.50 = د.إ285.00, in fils.
+         *
+         * NOT 2 x د.إ150. This basket is two of the same product, which is
+         * the 2-pack bundle every simple product's page offers at 5% off, and
+         * the endpoint now prices its lines through
+         * CartService::unitPriceFor() like the storefront does — see
+         * ApiBundlePricingTest for the divergence this closed. The figure
+         * asserted here was the endpoint's old answer, which was د.إ15.00
+         * MORE than the page quoted for the identical basket.
+         */
+        ->and($order->subtotal)->toBe(28500)
         // CashOnDelivery::start() moved it on without marking it paid.
         ->and($order->status)->toBe('processing')
         ->and($order->paid_at)->toBeNull();
@@ -107,8 +117,8 @@ it('creates a real order through the api checkout session', function () {
 
     expect($item)->not->toBeNull()
         ->and($item->quantity)->toBe(2)
-        ->and($item->unit_price)->toBe(15000)
-        ->and($item->total)->toBe(30000);
+        ->and($item->unit_price)->toBe(14250)
+        ->and($item->total)->toBe(28500);
 
     // And the response carries the number the success page keys off.
     $response->assertJsonStructure(['ok', 'order_id', 'orderId', 'order_number', 'redirect']);

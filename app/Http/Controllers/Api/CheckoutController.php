@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Services\CartService;
 use App\Services\Orders\OrderNumbers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,7 +71,12 @@ class CheckoutController extends Controller
          */
         $orderNumber = $this->nextOrderNumber();
 
-        return DB::transaction(function () use ($data, $orderNumber) {
+        // Resolved outside the transaction: it is the storefront's pricing
+        // service, asked only to price a line, and nothing about it needs to
+        // be inside the write.
+        $carts = app(CartService::class);
+
+        return DB::transaction(function () use ($data, $orderNumber, $carts) {
             $settings   = Setting::map();
             $codFeeCfg  = (int) ($settings['cod_fee'] ?? 0);            // fils
 
@@ -96,11 +102,39 @@ class CheckoutController extends Controller
                     abort(422, "Out of stock: {$p->name}");
                 }
 
-                // effectivePrice(), not sale_price ?? price. The raw column
-                // ignores sale_starts_at and sale_ends_at, so an expired sale
-                // kept selling at the sale price and a future one sold early.
-                // Money, quietly, in both directions.
-                $unit = $p->effectivePrice();
+                /*
+                 * CartService::unitPriceFor(), not effectivePrice() alone.
+                 *
+                 * effectivePrice() was already the right answer for the SALE
+                 * WINDOW — "not sale_price ?? price. The raw column ignores
+                 * sale_starts_at and sale_ends_at, so an expired sale kept
+                 * selling at the sale price and a future one sold early. Money,
+                 * quietly, in both directions." — and it still is. What it does
+                 * not know about is QUANTITY.
+                 *
+                 * Quantity bundles are generated for the whole catalogue from
+                 * one tier table, so every simple product's page offers a
+                 * 2-pack at 5% off and a 3-pack at 10%. The storefront charges
+                 * that rate because CartService::add() prices every line
+                 * through unitPriceFor(). This endpoint did not, so three
+                 * bottles of a AED 150 serum cost AED 405.00 on the product
+                 * page and AED 450.00 here — AED 45 over the advertised price,
+                 * on a public endpoint, with the order written.
+                 *
+                 * It erred towards the shop, which is why it survived. That is
+                 * also why it is the worse direction: the figure the customer
+                 * was shown is the figure they agreed to.
+                 *
+                 * DEFERRED rather than reimplemented, for the reason
+                 * unitPriceFor()'s own comment gives — one place recomputes
+                 * what a line costs, from the catalogue and never from the
+                 * request (Rule 23). It is also the only place that knows
+                 * bundles are a simple-product offer and that the whole module
+                 * can be switched off under Store → Modules. `null` for the
+                 * variant because this endpoint takes a slug and a quantity and
+                 * has no variant in its request shape at all.
+                 */
+                $unit = $carts->unitPriceFor($p, null, (int) $it['qty']);
 
                 $subtotal += $unit * $it['qty'];
                 $lines[] = [
