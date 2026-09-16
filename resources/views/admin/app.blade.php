@@ -1920,7 +1920,7 @@ const NAV=[
   {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
   {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>','lock'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
-  {sec:'Reviews',items:[['rev-all','All Reviews','<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/>','3'],['rev-add','Bulk Add','<path d="M12 5v14M5 12h14"/>'],['rev-likes','Bulk Likes','<path d="M7 11v9H4v-9z"/><path d="M7 11l4-7a2 2 0 0 1 2 2v3h5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 16.8 20H7"/>'],['rev-assign','Assign / Duplicate',I.copy],['rev-io','Review Import / Export','<path d="M8 7h11l-3-3M16 17H5l3 3"/>'],['rev-badge','Badge Themes','<path d="M12 2l4 4-4 4-4-4z"/><path d="M4 12l8 8 8-8"/>'],['rev-capsule','Rating Capsule','<path d="M12 21s-7-4.5-9.5-9A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9z"/>'],['rev-settings','Review Settings',I.settings]]},
+  {sec:'Reviews',items:[['rev-all','All Reviews','<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 21l1.1-6.5L2.6 9.8l6.5-.9z"/>'],['rev-add','Bulk Tools','<path d="M12 5v14M5 12h14"/>'],['rev-assign','Assign / Duplicate',I.copy],['rev-io','Review Import / Export','<path d="M8 7h11l-3-3M16 17H5l3 3"/>'],['rev-badge','Badge Themes','<path d="M12 2l4 4-4 4-4-4z"/><path d="M4 12l8 8 8-8"/>'],['rev-capsule','Rating Capsule','<path d="M12 21s-7-4.5-9.5-9A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9z"/>'],['rev-settings','Review Settings',I.settings]]},
   {sec:'Storefront',items:[['shopfilters','Shop Filters','<path d="M4 5h16l-6 7v5l-4 2v-7z"/>']]},
   {sec:'Core Updates',items:[['updates','Core Updates','<path d=\"M21 12a9 9 0 1 1-3-6.7\"/><path d=\"M21 3v6h-6\"/><path d=\"M12 8v5l3 2\"/>']]}
 ];
@@ -2084,7 +2084,7 @@ window.kbbAddNavEntry = kbbAddNavEntry;
    `modules` used to be declared twice in this object: once as ['Platform',…]
    and again, later, as ['Store',…]. The second silently won, so anyone editing
    the first saw nothing change. One declaration now. */
-const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Add'],'rev-likes':['Reviews','Bulk Likes'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
+const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],'rev-badge':['Reviews','Badge Themes'],'rev-capsule':['Reviews','Rating Capsule'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
    and 'posts' open the same screen. The id stays routable for #blog and
    ?go=blog, and it names that screen honestly rather than a second one. */
 'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
@@ -11037,9 +11037,21 @@ buildNav();
     var s = document.createElement('style');
     s.id = 'rvStyle';
     s.textContent =
-      '.rv-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}' +
-      '.rv-tools .inp{min-width:0}' +
-      '.rv-search{flex:1 1 210px;min-width:0}' +
+      /* The header, then a hairline, then the controls that filter what is
+         under it — the arrangement the Coupons screen settled on. */
+      '.rv-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0;' +
+        'margin:14px 0 12px;padding-top:14px;border-top:1px solid var(--border)}' +
+      /* A select is as wide as its WIDEST OPTION and no media query can reach
+         that floor, so "Any product" — whose options are whole product names —
+         took half the row while the search box it sits beside was the narrowest
+         thing on the screen. The three filters now share one basis and elide. */
+      '.rv-tools .inp{flex:0 1 178px;min-width:0;max-width:100%;text-overflow:ellipsis}' +
+      /* .rv-tools .rv-search, not .rv-search: the search box carries BOTH
+         classes, and the two-class selector above would otherwise out-specify a
+         single-class one and pin the search to the filters' width. Measured at
+         1280: the box came out 178px and its placeholder was elided. */
+      '.rv-tools .rv-search{flex:1 1 260px;min-width:0}' +
+      '.rv-tools .btn{margin-left:auto}' +
       '.rv-card{border:1px solid var(--border);border-radius:11px;background:var(--surface);padding:13px 14px;margin-bottom:10px}' +
       '.rv-card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}' +
       '.rv-top{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start}' +
@@ -11125,9 +11137,12 @@ buildNav();
     var rows = (d && d.reviews) || [];
     var products = (d && d.products) || [];
 
+    /* "All Reviews", not "Reviews". The sidebar row and the bar above #content
+       both say All Reviews; a heading that says something else is the defect
+       AdminNavAndIdsTest was written for, one level further in. */
     var head =
-      '<div class="page-head"><h2>Reviews</h2>' +
-      '<p>Approve what belongs on the storefront and refuse what does not. Only approved reviews are shown to shoppers, and only approved reviews count towards a product’s score.</p></div>';
+      '<div class="page-head"><h2>All Reviews</h2>' +
+      '<p>Only approved reviews reach shoppers, and only approved reviews count towards a product’s score.</p></div>';
 
     if(RV.err){
       document.querySelector('#content').innerHTML =
@@ -11426,7 +11441,23 @@ buildNav();
       '<button class="x" onclick="closeModal()">✕</button></div>' +
       '<div class="modal-b">' +
       '<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">' + rvStars(r.rating) + ' · ' + sesc(r.title || '') + '</div>' +
-      '<textarea class="inp" id="rvReplyTxt" style="width:100%;min-height:96px" placeholder="Shown publicly under the review…">' + sesc(r.reply || '') + '</textarea>' +
+      '<textarea class="inp" id="rvReplyTxt" style="width:100%;min-height:96px" placeholder="Your answer to this reviewer…">' + sesc(r.reply || '') + '</textarea>' +
+      /* THE PLACEHOLDER USED TO READ "Shown publicly under the review…" AND IT
+         IS NOT. resources/views/partials/reviews.blade.php renders the author,
+         the stars, the title, the body, the photos, the date and the helpful
+         count, and nothing else — Store\ProductController does not even SELECT
+         `reply` into the collection it passes. Verified against a real render:
+         a reply saved here appears nowhere on the product page.
+
+         Saying so here rather than quietly dropping the field. The reply is
+         stored, it is shown on this screen, and BOTH CSV exports carry it, so
+         it is not lost work — it is simply not published yet. Printing it on
+         the storefront is a three-line change in two files this lane does not
+         own; it is written out in the lane report. Take this line out in the
+         same commit that lands it. */
+      '<p style="font-size:11.5px;color:var(--ink-soft);margin:7px 0 0;line-height:1.45">' +
+      'Saved with the review and included in both CSV exports. ' +
+      'The product page does not print replies yet — shoppers will not see this.</p>' +
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap">' +
       '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
       '<button class="btn" id="rvReplySave">Save reply</button></div></div>');
@@ -14426,6 +14457,16 @@ buildNav();
 @include('admin.partials.review-badges-screen')
 @include('admin.partials.review-capsule-screen')
 @include('admin.partials.review-assign-screen')
+
+{{-- Reviews -> the sidebar queue badge (Lane CG). LAST of the Reviews
+     includes, because it wraps window.go and re-reads the count after every
+     navigation; wrapping before the screens above would put it underneath
+     their own wrappers and it would stop seeing a move between them.
+
+     It registers NO screen and NO sidebar row. All it does is replace the
+     literal '3' that used to be typed into the All Reviews NAV entry with the
+     number of reviews actually waiting — see the note in the file. --}}
+@include('admin.partials.review-queue-badge')
 
 @verbatim
 </body>

@@ -90,10 +90,45 @@ it('adds no second sidebar entry for ids the nav already has', function () {
         ->and($partial)->not->toContain('insertBefore')
         ->and($partial)->not->toContain('insertAdjacentHTML');
 
+    /*
+     * REWRITTEN BY LANE CG, and the reason is worth keeping.
+     *
+     * This used to read
+     *
+     *     expect($console)->toContain("['rev-add','Bulk Add'")
+     *         ->and($console)->toContain("['rev-likes','Bulk Likes'");
+     *
+     * which pinned the exact two NAV rows rather than the property the test is
+     * named after. Bulk Add and Bulk Likes are now ONE row, 'rev-add', labelled
+     * Bulk Tools, with the two halves as tabs: they share a controller, a route
+     * prefix, a capability, a CSS prefix, this partial, the product picker and
+     * the notice block, and this file's own header already called them "one
+     * feature with two entry points".
+     *
+     * What actually must hold is unchanged and is what is asserted now: the
+     * partial builds no sidebar button of its own, exactly ONE row in the whole
+     * console opens these two ids, and 'rev-likes' is still routable — so
+     * #rev-likes, ?go=rev-likes and any bookmark still reach the feature. The
+     * menu got shorter; nothing was deleted.
+     */
     $console = bdConsole();
 
-    expect($console)->toContain("['rev-add','Bulk Add'")
-        ->and($console)->toContain("['rev-likes','Bulk Likes'");
+    preg_match_all("/\['(rev-add|rev-likes)','([^']+)'/", $console, $rows, PREG_SET_ORDER);
+
+    expect($rows)->toHaveCount(1, 'Bulk Add and Bulk Likes are two sidebar rows again');
+    expect($rows[0][1])->toBe('rev-add');
+    expect($rows[0][2])->toBe('Bulk Tools');
+
+    // Still routable, so consolidating the menu did not remove the feature.
+    expect(str_contains($console, "'rev-likes':['Reviews','Bulk Tools']"))
+        ->toBeTrue("go('rev-likes') no longer names the screen it opens");
+
+    expect(str_contains(bdPartial(), "var LIKES = 'rev-likes';"))
+        ->toBeTrue("the partial no longer claims 'rev-likes', so ?go=rev-likes is a dead link");
+
+    // And the tab strip that replaced the second row really is drawn.
+    expect(str_contains($partial, "data-rbk-tab="))
+        ->toBeTrue('the two halves were merged into one screen with no way to switch between them');
 });
 
 it('leaves routes/web.php alone, as this lane is required to', function () {
