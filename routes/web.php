@@ -318,6 +318,21 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // the settlement read exposes what an authorisation is still worth.
         require __DIR__.'/payments-settlement.php';
 
+        // The storefront health check behind Dashboard → Check now and Safety →
+        // Debug & Monitor. Inside this group and nowhere else: when a page is
+        // broken it answers with the exception message and the application file
+        // and line that threw, which is the same class of thing as the raw error
+        // log. Its capability is system.diagnostics, which is owner-only for
+        // that reason — a support account that cannot read the log must not be
+        // handed the interesting lines out of it.
+        //
+        // The require goes INSIDE this group rather than beside it because
+        // RouteRegistrar::middleware() REPLACES rather than appends: a chained
+        // ->middleware() on a fresh registration silently drops NoStoreAdminApi,
+        // and the lane that wrote this hit exactly that and had an anonymous
+        // caller run the check.
+        require __DIR__.'/health-admin.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';
