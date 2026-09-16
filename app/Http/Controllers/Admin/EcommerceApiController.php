@@ -128,18 +128,55 @@ class EcommerceApiController extends Controller
                     'review_badge_colour'   => ['colour', 'Star colour', '#E8A33D', ''],
                 ],
             ],
-            'search' => [
-                'label' => 'Search',
-                'sections' => [
-                    'behaviour' => ['Suggestion behaviour', 'When the box appears and how much it shows.', 'find', ['search_min_chars', 'search_limit_products', 'search_limit_categories', 'search_limit_brands']],
-                ],
-                'fields' => [
-                    'search_min_chars'        => ['int', 'Minimum characters', 2, 'Below this, no request is made.'],
-                    'search_limit_products'   => ['int', 'Product suggestions', 6, 'Zero hides the group.'],
-                    'search_limit_categories' => ['int', 'Category suggestions', 3, 'Zero hides the group.'],
-                    'search_limit_brands'     => ['int', 'Brand suggestions', 3, 'Zero hides the group.'],
-                ],
-            ],
+            /*
+             * THERE IS NO 'search' TAB HERE ANY MORE. Store -> Site Search owns
+             * search, and this one could not have worked even in principle.
+             *
+             * It offered four fields. The audit found one of them,
+             * `search_limit_products`, had no reader anywhere in the codebase.
+             * The other three are read — but not from where this screen wrote
+             * them, so all four were inert:
+             *
+             *   HeaderSettings keeps every one of its fields INSIDE a single
+             *   settings row called `header_settings`, a JSON blob, and
+             *   SearchController reads them through it. save() below calls
+             *   SettingsService::set($name, ...), which writes a TOP-LEVEL
+             *   settings row named `search_min_chars`. Nothing ever reads that
+             *   row. The screen still showed the value back, because show()
+             *   reads it from the same top-level key it wrote -- which is
+             *   exactly why this survived: it round-tripped perfectly and
+             *   changed nothing.
+             *
+             * Measured through the real endpoints before removing it:
+             * POST /admin-api/ecommerce {search_limit_categories: 0} answers
+             * ok:true, and HeaderSettings::get('search_limit_categories') still
+             * returns 3. POST /admin-api/site-search {search_results_max: 3}
+             * changes the panel from 5 products to 3 immediately.
+             *
+             * ON THE DUPLICATE OWNERSHIP, which is what let a field like this
+             * exist: Site Search is the owner and this screen is not. It says
+             * so in its own docblock, it validates against
+             * HeaderSettings::SCHEMA so an unknown key is refused with a 422
+             * rather than silently stored, and its writes reach the search
+             * code. Nothing is lost by dropping this tab -- `search_min_chars`,
+             * `search_limit_categories` and `search_limit_brands` are all on
+             * Site Search already, and the working equivalent of
+             * `search_limit_products` is `search_results_max`, which is also
+             * there and is what actually sets the product count.
+             *
+             * The help text was wrong as well: "Zero hides the group" was not
+             * true of `search_limit_products` under any value, since nothing
+             * read it. It IS true of the Site Search fields, whose readers
+             * guard on `if ($n = ...)`.
+             *
+             * The values already written to those dead rows are DELETED by
+             * 2026_10_07_000000_clear_caches_ecommerce_search_tab, not copied
+             * into header_settings. Copying them would change live search
+             * behaviour on upgrade for a setting the operator was never
+             * actually applying -- a silent change of the shape this repo has
+             * been bitten by before. They never took effect; they should not
+             * start now.
+             */
         ];
     }
 
@@ -191,13 +228,8 @@ class EcommerceApiController extends Controller
                     . '<div class="ecmr" style="border-top:1px solid #e9edf3;margin-top:6px;padding-top:9px"><span style="font-weight:800">Total</span><span style="font-weight:800">د.إ1,055</span></div>',
                 'legend' => ['Shown only when the shopper selects cash on delivery, and applied server-side so it cannot be skipped.'],
             ],
-            'behaviour' => [
-                'caption' => 'How the suggestion box behaves',
-                'stage' => '<div style="font-size:12.5px;line-height:1.9"><div>Typing <b>s</b> → <span style="color:#7b8697">no request sent</span></div>'
-                    . $ring('<div>Typing <b>su</b> → <span style="color:#1F7D52;font-weight:600">suggestions requested</span></div>')
-                    . '<div style="margin-top:6px">Typing <b>sun</b> → <span style="color:#1F7D52;font-weight:600">refreshed</span></div></div>',
-                'legend' => ['The character threshold. Requests are debounced at 180ms and cached for 5 minutes regardless.'],
-            ],
+            // The 'behaviour' preview went with the Search tab it illustrated.
+            // It described a threshold this screen was not able to set.
 
 
             'basics' => [
