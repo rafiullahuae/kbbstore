@@ -159,13 +159,23 @@ it('gives the coupon screens exactly one sidebar entry between them', function (
  * ALIASED_SCREENS — ids that legitimately reach a renderer named after a
  * DIFFERENT screen, so question 4 must not read the mismatch as a bug.
  *
- * There is exactly one, and it is the consolidation this audit made: 'blog' and
+ * The first is the consolidation this audit made: 'blog' and
  * 'posts' were two sidebar rows that opened the same screen — go() routes both
  * to renderPosts() and FRAME_SRC mapped both to kbb-admin-blog.html. Clicking
  * "Blog" landed on a page headed "Posts", which is precisely how an owner
  * decides a screen was never built. 'posts' keeps the row; 'blog' keeps the id,
  * so #blog and ?go=blog still work, and its TITLES entry now names the screen
  * it actually opens rather than a second one that does not exist.
+ *
+ * The second is the same shape, one lane later and one menu group down.
+ * 'rev-badge' ("Badge Themes") and 'rev-capsule' ("Rating Capsule") were two
+ * sidebar rows over ONE set of seven settings saved through ONE endpoint — so
+ * alike that each screen carried a card telling the owner the other one held
+ * the same settings, which is a screen apologising for the menu. They are one
+ * screen with two tabs now, called Rating Badge: 'rev-badge' keeps the row,
+ * 'rev-capsule' keeps the id, so #rev-capsule and ?go=rev-capsule still work
+ * and open the merged screen with the Rating capsule tab already selected.
+ * Both TITLES entries name that one screen.
  *
  * Keep this honest: an entry belongs here only when the SAME screen is reached
  * under a second id on purpose. It is not a place to park a mismatch.
@@ -187,6 +197,18 @@ const ALIASED_SCREENS = [
      * the screen it actually opens rather than a second one that is gone.
      */
     'rev-likes' => 'rev-add',
+
+    /*
+     * The third consolidation, by Lane CL. Badge Themes ('rev-badge') and
+     * Rating Capsule ('rev-capsule') were two sidebar rows editing the SAME
+     * seven settings, and each screen carried a note telling the owner the
+     * other one held them too. They are now one row, Rating Badge, with the
+     * two questions as tabs.
+     *
+     * 'rev-capsule' keeps the id, so #rev-capsule and ?go=rev-capsule still
+     * open the merged screen on the Rating capsule tab.
+     */
+    'rev-capsule' => 'rev-badge',
 ];
 
 /*
@@ -1379,5 +1401,137 @@ it('keeps the product editor out of the sidebar only over its own dead body', fu
 
     expect(str_contains($code, 'nav.appendChild(b)'))
         ->toBeTrue('kbbAddNavEntry lost its last-resort append — visible and wrong beats invisible');
+});
+
+/* ═══════════ Lane CL · Badge Themes + Rating Capsule are one screen ═══════════ */
+
+/*
+ * THE LAST PAIR OF ROWS THAT DID NOT DISTINGUISH THEMSELVES.
+ *
+ * 'rev-badge' ("Badge Themes") and 'rev-capsule' ("Rating Capsule") were two
+ * sidebar rows over ONE set of seven settings saved through ONE endpoint. Each
+ * screen carried a card telling the owner the other one held the same settings
+ * — a screen apologising for the menu. They are one screen with two tabs now.
+ *
+ * ALIASED_SCREENS above records the alias, and the guard beside it re-checks the
+ * general property: the alias routes, the real id has a row, the alias has not,
+ * and both TITLES entries name the same screen. What is pinned HERE is the part
+ * that guard cannot see — the two things the merge needed that are not obvious,
+ * and that a later edit could quietly undo while every other test stayed green.
+ *
+ * Assertions are written as preg_match(...) === 1 or str_contains(...) folded
+ * into toBeTrue('message'). Pest reads toContain's and toHaveKey's second
+ * argument as another needle or an expected value rather than as a message, and
+ * toMatch prints the entire subject before the message — and the subject here
+ * is a 900KB console.
+ */
+
+it('lets the retired Rating Capsule id open the merged screen on the right tab', function () {
+    /*
+     * FIX ONE OF TWO, AND THE ONE THAT SHOWS. go() in app.blade.php marks the
+     * sidebar row whose data-go matches the id it was handed. 'rev-capsule' has
+     * no row any more, so asking for it marks nothing — and the merged screen's
+     * render() refuses to paint when its own row is not the current one, which
+     * leaves the owner looking at a blank screen under a correct title. Both
+     * ids must therefore mark the SAME row.
+     */
+    $p = navAuditPartialSrc('review-badges-screen');
+
+    expect(preg_match("/var SCREEN\s*=\s*'rev-badge'/", $p))
+        ->toBe(1, 'the merged screen no longer claims rev-badge, which is the id that still has a sidebar row');
+
+    expect(preg_match("/var ALIAS\s*=\s*'rev-capsule'/", $p))
+        ->toBe(1, 'the merged screen no longer claims rev-capsule, so ?go=rev-capsule falls through to the frame machinery and draws the "could not be loaded" card');
+
+    // go() must hand BOTH ids to this screen rather than passing one on.
+    expect(preg_match('/id\s*!==\s*SCREEN\s*&&\s*id\s*!==\s*ALIAS/', $p))
+        ->toBe(1, 'window.go no longer intercepts both ids — one of the two entrances to this screen is gone');
+
+    // …and the row it marks is SCREEN's, for either id. A toggle written
+    // against the id that was asked for is the bug: it marks nothing for the
+    // retired one.
+    expect(preg_match("/classList\.toggle\('on',\s*b\.dataset\.go\s*===\s*SCREEN\)/", $p))
+        ->toBe(1, "the merged screen marks the row matching the id it was given rather than always SCREEN's row, so the retired id highlights nothing and paints nothing");
+
+    // Each id lands on the tab the screen it replaced used to be.
+    expect(preg_match("/'rev-badge':\s*'themes'/", $p))
+        ->toBe(1, 'rev-badge no longer opens the Badge themes tab');
+    expect(preg_match("/'rev-capsule':\s*'capsule'/", $p))
+        ->toBe(1, 'rev-capsule no longer opens the Rating capsule tab, so an old bookmark lands on the wrong half of the screen');
+});
+
+it('makes the merged screen read the address itself, because the console navigates before it exists', function () {
+    /*
+     * FIX TWO OF TWO, AND THE ONE THAT DOES NOT SHOW UNTIL A BOOKMARK IS USED.
+     * app.blade.php's deep-link block runs go(?go= / #) immediately after
+     * buildNav(), near the top of the document — long before this partial is
+     * parsed, so the override it installs is not there yet and never sees the
+     * id. For 'rev-badge' that survives, because go() marks its row and the
+     * sidebar check finds it. For 'rev-capsule' there is no row to mark and
+     * nothing to find. Reading the address is what closes the gap.
+     */
+    $p = navAuditPartialSrc('review-badges-screen');
+
+    expect(str_contains($p, 'URLSearchParams') && str_contains($p, 'window.location.hash'))
+        ->toBeTrue('the merged screen no longer reads ?go= and # itself at boot, so a bookmark to the retired id lands on the frame machinery\'s "could not be loaded" card');
+
+    expect(preg_match('/asked\s*===\s*SCREEN\s*\|\|\s*asked\s*===\s*ALIAS/', $p))
+        ->toBe(1, 'the boot check no longer accepts both ids from the address');
+
+    /*
+     * And the ordering that makes it work: the address is consulted BEFORE the
+     * sidebar is. The other way round, the sidebar check finds nothing marked
+     * for the retired id, returns, and the address is never reached.
+     */
+    $boot = strpos($p, 'function bootIfCurrent()');
+    expect($boot)->not->toBeFalse('bootIfCurrent() is gone');
+
+    $body = navAuditBlock($p, $boot);
+
+    expect(strpos($body, 'addressed()') < strpos($body, '.nav-item.on'))
+        ->toBeTrue('bootIfCurrent() checks the sidebar before the address, so the retired id returns early and never opens the screen');
+});
+
+it('draws exactly one sidebar row, one tab strip and one explanation for the pair', function () {
+    /*
+     * COUNTED, NOT SEARCHED. A bare search for a class name in a rendered
+     * console also matches that console's own inlined CSS, which is how a
+     * sibling screen's audit passed this week while the element it was looking
+     * for was not on the page at all. So each of these counts ELEMENTS.
+     */
+    $console = navAuditSrc();
+    $p = navAuditPartialSrc('review-badges-screen');
+
+    // One NAV row across the two ids, and it is rev-badge's.
+    expect(preg_match_all("/\['rev-badge',/", $console))
+        ->toBe(1, 'rev-badge has gained or lost its NAV row');
+    expect(preg_match_all("/\['rev-capsule',/", $console))
+        ->toBe(0, 'the Rating Capsule sidebar row is back — that is two rows for one screen, which is the bug this merge removed');
+
+    // The strip is mapped from TABS rather than hand-written, so the buttons
+    // and the id→tab map cannot disagree about which tabs exist.
+    expect(preg_match_all("/\['themes',\s*'[^']+'\],\s*\['capsule',\s*'[^']+'\]/", $p))
+        ->toBe(1, 'TABS is no longer exactly the two tabs Badge Themes and Rating Capsule became');
+
+    expect(preg_match_all('/class="rbt-tabs"/', $p))
+        ->toBe(1, 'the merged screen draws more than one tab strip, or none');
+
+    // One explanation, in the class the console already uses for it.
+    expect(preg_match_all('/class="ectabs-hint"/', $p))
+        ->toBe(1, 'the merged screen has no single ectabs-hint caption saying what the two tabs are and why they are one screen');
+
+    /*
+     * The retired screen's file is kept — the console still includes it by name
+     * and it records where the screen went — but it must stay inert. A second
+     * claimant for either id is the two-rows bug wearing a different hat.
+     */
+    $old = navAuditPartialSrc('review-capsule-screen');
+
+    expect(str_contains($old, 'window.go ='))
+        ->toBeFalse('review-capsule-screen wraps window.go again, so two files now answer for rev-capsule');
+    expect(preg_match("/var SCREEN\s*=/", $old))
+        ->toBe(0, 'review-capsule-screen claims a screen id again');
+    expect(str_contains($old, 'function addNavEntry()'))
+        ->toBeFalse('review-capsule-screen registers a sidebar row again');
 });
 
