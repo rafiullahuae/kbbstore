@@ -75,8 +75,12 @@ by luck:
 - Laravel 11 carries three open advisories (CRLF injection in the email rule,
   signed-URL path confusion). Fixing them means a 12.x upgrade. CI reports them
   without blocking.
-- `QuizController::expertRequest` takes a bare `{id}` with no ownership check —
-  any lead can be modified by enumerating IDs.
+- `Api\QuizController::expertRequest` used to take a bare `{id}` with no
+  ownership check. It now takes the signed handle `QuizSubmission::publicToken()`
+  issues at capture time; `findByPublicToken()` looks the row up *before* it
+  checks the signature and compares with `hash_equals`, so a forged token and an
+  id that was never issued do the same work and return the same 404. Keep both
+  halves — branching differently on the two restores the id oracle.
 - `package.json` defines no `build` script, so asset builds are manual
   (`npx vite build`). CI does not build assets.
 - Unsigned update packages are accepted (`KBB_UPDATE_SECRET` unset) — a
