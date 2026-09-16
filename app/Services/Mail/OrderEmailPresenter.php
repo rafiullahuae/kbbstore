@@ -7,6 +7,7 @@ namespace App\Services\Mail;
 use App\Models\Order;
 use App\Support\Money;
 use App\Support\Url;
+use App\Support\VatDisplay;
 
 /**
  * One order, turned into the exact strings an email prints.
@@ -54,11 +55,13 @@ class OrderEmailPresenter
             'customerName' => $this->customerName($order),
             'items' => $this->items($order),
             'totals' => $this->totals($order),
+            'vatNote' => $this->vatNote($order),
             'totalFils' => (int) $order->total,
             'totalHtml' => self::html((int) $order->total),
             'totalPlain' => self::plain((int) $order->total),
             'address' => $this->address($order->shipping_address ?: $order->billing_address),
             'deliveryMethod' => trim((string) $order->shipping_method) ?: 'Standard delivery',
+            'destinationCountry' => $this->destinationCountry($order),
             'paymentLabel' => $order->paymentLabel(),
             'giftNote' => $order->is_gift ? trim((string) $order->gift_note) : '',
             'customerNote' => trim((string) $order->customer_note),
@@ -190,6 +193,92 @@ class OrderEmailPresenter
             'plain' => self::plain($row[1]),
             'strong' => $row[2],
         ], $rows);
+    }
+
+    /**
+     * "You're paying VAT (5%)" — the line the checkout page already showed,
+     * printed on the receipt as well. Or null, when there is nothing true to say.
+     *
+     * WHY THE RECEIPT WAS SILENT ABOUT TAX UNTIL NOW, AND WHY THAT WAS A BUG.
+     * The VAT row in totals() above is gated on `tax_total`, and this store
+     * always writes that column 0 — VAT is a display line, never charged, never
+     * added to a total, never stored (decision D-64, App\Support\VatDisplay).
+     * So the gate was not a condition, it was a closed door: the shopper was
+     * shown an inclusive-VAT line at checkout, the formal tax invoice carried
+     * VAT and the TRN, and the one document in between — the receipt the
+     * customer actually keeps — mentioned tax nowhere at all.
+     *
+     * THIS IS A NOTE, NOT A ROW, and the distinction is the whole of D-64. It
+     * is rendered under the Total rather than among the rows that add up to it,
+     * because it is a portion OF that total and adding it as a row would make
+     * the column of figures stop summing to what was charged. Nothing here
+     * writes `tax_total`; the totals above are untouched.
+     *
+     * NULL IN TWO CASES, each a reason to say nothing rather than something
+     * untrue — the same two InvoiceDocument::vatNote() answers null to:
+     *
+     *   - the order carries its own `tax_total`. That is an imported order with
+     *     real tax already printed as a real row, and a second computed figure
+     *     beside it would be two different tax numbers on one receipt.
+     *   - VatDisplay has nothing to return: the owner switched the line off, the
+     *     rate is zero, or the portion rounds to nothing.
+     *
+     * THE FIGURE IS VatDisplay'S AND THE WORDING IS VatDisplay'S. One source of
+     * truth with the checkout page, so the two cannot drift; the label is
+     * label(), the shopper's own second-person sentence, because this is read by
+     * the shopper. (The invoice restates the same figure as "Includes VAT at
+     * 5%", which suits a document an accountant reads — see InvoiceDocument.)
+     *
+     * Only the RENDERING differs, and it has to: VatDisplay::line() formats at
+     * the storefront's display precision, which rounds, and a receipt may not
+     * round. The fils integer is taken and re-rendered at the currency's real
+     * precision like every other figure in this class. See the header.
+     *
+     * @return array{label:string,fils:int,html:string,plain:string}|null
+     */
+    private function vatNote(Order $order): ?array
+    {
+        if ((int) $order->tax_total !== 0) {
+            return null;
+        }
+
+        $line = app(VatDisplay::class)->line((int) $order->total);
+
+        if ($line === null) {
+            return null;
+        }
+
+        return [
+            'label' => (string) $line['label'],
+            'fils' => (int) $line['amount'],
+            'html' => self::html((int) $line['amount']),
+            'plain' => self::plain((int) $line['amount']),
+        ];
+    }
+
+    /**
+     * Where the parcel is actually going, as an upper-case ISO code, or ''.
+     *
+     * The shipping address first and the billing address as the fallback — the
+     * same choice address() makes, so the code and the printed lines can never
+     * describe two different places.
+     *
+     * It exists because this store does not only ship to the UAE.
+     * ShippingSeeder has carried a Gulf zone (SA, KW, QA, BH, OM) from the
+     * start, and OrderStatusChanged used to tell every one of those customers
+     * how long delivery takes "in the UAE". Empty is an honest answer and the
+     * templates treat it as one: an order with no country recorded gets no
+     * delivery estimate rather than a guessed one.
+     */
+    private function destinationCountry(Order $order): string
+    {
+        $address = $order->shipping_address ?: $order->billing_address;
+
+        if (! is_array($address)) {
+            return '';
+        }
+
+        return strtoupper(trim((string) ($address['country'] ?? '')));
     }
 
     /**

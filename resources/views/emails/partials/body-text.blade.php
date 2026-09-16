@@ -46,6 +46,12 @@ TOTALS
 @foreach ($order['totals'] as $row)
 {!! $row['label'] !!}: {!! $row['plain'] !!}
 @endforeach
+@if (($order['vatNote'] ?? null) !== null)
+{{-- Below the rows, not among them: a portion OF the total, never an addition
+     to it (D-64). The blank line above it separates it from the figures that
+     do add up. See OrderEmailPresenter::vatNote(). --}}
+{!! $order['vatNote']['label'] !!}: {!! $order['vatNote']['plain'] !!}
+@endif
 
 DELIVERY ADDRESS
 @forelse ($order['address'] as $line)

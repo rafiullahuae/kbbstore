@@ -22,6 +22,7 @@
  */
 
 use App\Http\Controllers\Admin\MailApiController;
+use App\Http\Controllers\Admin\OrderEmailPolicyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -67,28 +68,56 @@ function mountedAsDocumented(): Illuminate\Support\Collection
     });
 }
 
-it('defines the three routes the mail screen needs and no others', function () {
-    $routes = mountedAsDocumented();
+/**
+ * Every route this file is allowed to define, and the controller behind each.
+ *
+ * An allowlist rather than a count, because the count is the part that stops
+ * meaning anything the moment a second lane adds a line. What this is really
+ * guarding is that NOTHING UNEXPECTED mounts into the admin-api group through
+ * this file — POST /admin-api/mail/test makes the server send mail to an
+ * address the caller chooses, and the reason for the whole file is that such a
+ * thing must never appear outside the guard.
+ *
+ * Lane BS added the last two: the per-status order-email switches. They belong
+ * here because they are the same screen's data and the same guarded group —
+ * see the header block above them in routes/mail-admin.php.
+ *
+ * @var array<string, class-string>
+ */
+const MAIL_ROUTE_OWNERS = [
+    'GET admin-api/mail' => MailApiController::class,
+    'POST admin-api/mail' => MailApiController::class,
+    'POST admin-api/mail/test' => MailApiController::class,
+    'GET admin-api/mail/status-emails' => OrderEmailPolicyController::class,
+    'POST admin-api/mail/status-emails' => OrderEmailPolicyController::class,
+];
 
-    expect($routes)->toHaveCount(3);
+it('defines the routes the mail screen needs and no others', function () {
+    $routes = mountedAsDocumented();
 
     $uris = $routes->map(fn ($r) => $r->methods()[0] . ' ' . $r->uri())->all();
 
-    expect($uris)->toContain('GET admin-api/mail')
-        ->toContain('POST admin-api/mail')
-        ->toContain('POST admin-api/mail/test');
+    sort($uris);
+    $expected = array_keys(MAIL_ROUTE_OWNERS);
+    sort($expected);
+
+    expect($uris)->toBe($expected);
 });
 
 it('points every route at an action that exists', function () {
     foreach (mountedAsDocumented() as $route) {
+        $uri = $route->methods()[0] . ' ' . $route->uri();
         $action = $route->getAction('controller');
 
-        expect($action)->toStartWith(MailApiController::class . '@');
+        $owner = MAIL_ROUTE_OWNERS[$uri] ?? null;
+
+        expect($owner)->not->toBeNull('an unlisted route is mounted at ' . $uri)
+            ->and($action)->toStartWith($owner . '@');
 
         [, $method] = explode('@', $action);
 
         // A wired route cannot 500 on a typo'd action.
-        expect(method_exists(MailApiController::class, $method))->toBeTrue();
+        expect(method_exists($owner, $method))->toBeTrue();
     }
 });
 
@@ -131,7 +160,15 @@ it('rejects an unauthenticated caller of the test-send endpoint', function () {
 it('rejects an unauthenticated caller of the read and write endpoints too', function () {
     mountedAsDocumented();
 
-    foreach ([['GET', '/admin-api/mail'], ['POST', '/admin-api/mail']] as [$method, $uri]) {
+    foreach ([
+        ['GET', '/admin-api/mail'],
+        ['POST', '/admin-api/mail'],
+        // The per-status order-email switches. The write half decides whether
+        // the store's customers hear about a dispatch at all, so it is guarded
+        // for the same reason the rest of this file is.
+        ['GET', '/admin-api/mail/status-emails'],
+        ['POST', '/admin-api/mail/status-emails'],
+    ] as [$method, $uri]) {
         $request = Request::create($uri, $method);
         $request->headers->set('Accept', 'application/json');
 

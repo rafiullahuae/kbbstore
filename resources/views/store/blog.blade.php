@@ -37,7 +37,9 @@
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:34px 0 56px}
   .post{border:1px solid var(--line-2);border-radius:var(--r-l);overflow:hidden;text-decoration:none;color:var(--ink);transition:.2s var(--ease);display:flex;flex-direction:column;background:#fff}
   .post:hover{box-shadow:var(--sh-m);transform:translateY(-3px)}
-  .cover{aspect-ratio:16/10;background:var(--cream);position:relative;display:grid;place-items:center;font-size:40px}
+  .cover{aspect-ratio:16/10;background:var(--cream);position:relative;display:grid;place-items:center;font-size:40px;overflow:hidden}
+  /* object-fit:cover reproduces the `center/cover` the CSS background had. */
+  .cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   .cover .ptag{position:absolute;top:12px;left:12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:#fff;color:var(--pink-deep);padding:4px 10px;border-radius:99px}
   .pbody{padding:18px 18px 20px;display:flex;flex-direction:column;flex:1}
   .pdate{font-size:11.5px;color:var(--muted);margin-bottom:7px}
@@ -91,8 +93,21 @@
   {{-- Posts live at the site root, one slug per post — the Phase 9 decision.
        The /skincare-guide/{slug}/ form this app used is now a 301. --}}
   <a class="post" data-tag="{{ $p->tag }}" href="{{ \App\Support\Url::to('/' . $p->slug . '/') }}">
-    <div class="cover" style="{{ $p->cover && (str_contains($p->cover, 'gradient') || str_contains($p->cover, '#') || str_contains($p->cover, 'url')) ? 'background:' . $p->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
-      @if(!$p->cover || !(str_contains($p->cover, 'url') || str_contains($p->cover, 'http')))
+    {{-- A real <img> so the cover photographs are indexable, with the emoji
+         placeholder kept for the posts that have no photograph. The <img>
+         comes before .ptag in the DOM on purpose: both are absolutely
+         positioned, .ptag carries no z-index, and painting order is what keeps
+         the tag on top of the photograph. --}}
+    @php
+      $coverSrc = \App\Support\CoverImage::src($p->cover);
+    @endphp
+    <div class="cover" style="background:{{ \App\Support\CoverImage::background($p->cover) }}">
+      @if($coverSrc)
+        {{-- The first card is the one most likely to be the largest element in
+             view on arrival, so it loads eagerly; the rest are below it. --}}
+        <img src="{{ $coverSrc }}" alt="{{ $p->title }}" width="800" height="500"
+             loading="{{ $loop->first ? 'eager' : 'lazy' }}">
+      @else
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}
       @endif
       @if($p->tag)<span class="ptag">{{ $p->tag }}</span>@endif

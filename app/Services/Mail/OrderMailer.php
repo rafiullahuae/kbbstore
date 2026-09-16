@@ -92,6 +92,23 @@ class OrderMailer
         return $this->settings->moduleEnabled('email_order_refunded', true);
     }
 
+    /**
+     * Which status changes email, and the per-order exception to it.
+     *
+     * Resolved lazily rather than injected, because the policy resolves THIS
+     * class back — it asks shippedEnabled() and cancelledEnabled() above rather
+     * than reading the two keys a second time, so that each module key keeps
+     * exactly one reader in this application. Two scoped services that
+     * construct each other would not resolve; two scoped services that fetch
+     * each other on use resolve fine, and both are the request's own instance,
+     * which is what carries the operator's per-order decision from the
+     * controller to the observer.
+     */
+    private function statusPolicy(): OrderStatusMailPolicy
+    {
+        return app(OrderStatusMailPolicy::class);
+    }
+
     // ------------------------------------------------------------------
     // The sends
     // ------------------------------------------------------------------
@@ -308,13 +325,28 @@ class OrderMailer
             return;
         }
 
-        $enabled = match ($status) {
-            'shipped' => $this->shippedEnabled(),
-            'cancelled' => $this->cancelledEnabled(),
-            default => false,
-        };
-
-        if (! $enabled) {
+        /*
+         * THE ONE GATE, AND THE ONE PLACE IT MAY LIVE.
+         *
+         * `orders.status` is written from five places, and one of them —
+         * OrdersApiController::bulkStatus — is a query-builder `update()` that
+         * fires no model events at all. That is how bulk status changes once
+         * emailed nobody in this store: marking one order shipped from the
+         * detail screen sent an email, marking forty from the list sent none,
+         * with no error and no difference on screen. A per-status switch
+         * implemented in the order-detail controller would have exactly that
+         * hole, and it would be invisible in exactly the same way.
+         *
+         * So it is asked HERE, in the method both the observer and the bulk
+         * path already call, and every writer is governed by it whether or not
+         * it knows OrderStatusMailPolicy exists.
+         *
+         * The policy folds together the standing per-status rule (the module
+         * switches read literally below, which is what Phase3ModuleSwitchesTest
+         * greps for) and the operator's decision about THIS order, if they took
+         * one on the screen they were looking at.
+         */
+        if (! $this->statusPolicy()->shouldNotify($order, $status)) {
             return;
         }
 

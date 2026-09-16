@@ -10,6 +10,30 @@
 @section('content')
 <div class="kbb-home">
 
+{{-- The home page rendered no <h1> at all. The first hero slide's headline is
+     the right one to promote — it is the largest, first thing on the page and
+     it says what the site sells — so that is what becomes the <h1> below.
+
+     But the hero is a section the owner can switch off from the admin, and the
+     headline lives inside a @foreach over the banners, so "promote the heading"
+     alone would give the page one <h1>, several, or none depending on
+     configuration. The flag settles it in one place: the slide loop emits the
+     <h1> only on the first pass and only when it is going to run at all, and
+     this fallback covers the case where it will not. Exactly one, always. --}}
+{{-- Block form, not @php(...). This file already has a @php ... @endphp block
+     down in the newsletter section, and Blade pairs those with one non-greedy
+     regex over the whole template: an INLINE @php(...) above a block has no
+     @endphp of its own, so it pairs with that block's, and everything in
+     between — 300 lines, every @unless and @foreach on this page — is stored
+     as one raw PHP block and never compiled. The page 500s on an "unexpected
+     endif" three hundred lines below the actual mistake. --}}
+@php
+  $heroCarriesH1 = ! $sections->hidden('hero') && count($banners) > 0;
+@endphp
+@unless ($heroCarriesH1)
+  <h1 class="kbb-h1-quiet">{{ $settings->get('site_title', 'K-Beauty Bliss — authentic Korean skincare in the UAE') }}</h1>
+@endunless
+
 {{-- HERO --}}
 @unless ($sections->hidden('hero'))
 <section class="sec {{ $sections->classFor('hero') }}" style="padding-top:14px"><div class="wrap">
@@ -19,7 +43,11 @@
         <a class="sl" href="{{ Url::to($b['url']) }}" style="background:{{ $b['gradient'] }}">
           <div class="sl-t">
             <span class="k">{{ $b['kicker'] }}</span>
-            <h2>{!! $b['heading'] !!}</h2>
+            @if ($loop->first)
+              <h1>{!! $b['heading'] !!}</h1>
+            @else
+              <h2>{!! $b['heading'] !!}</h2>
+            @endif
             <p>{{ $b['text'] }}</p>
             <span class="b">{{ $b['button'] }}</span>
           </div>
@@ -159,7 +187,15 @@
     <a class="lnk" href="{{ Url::to('/shop/') }}">Discover more</a></div>
   <div class="ugc">
     @foreach ($rails['best1']->take(4) as $p)
-      <a href="{{ $p->url() }}"><div class="im" style="background:{{ $p->image ? "#fff url('" . e($p->image) . "') center/cover" : Gradient::for($p->name) }}">
+      {{-- These tiles are product photographs, so they are the images on this
+           page with the most to gain from being indexable. altFor() is the
+           catalogue's own alt: the curated image_alts entry when the editor has
+           written one, otherwise ProductTitle's derived "Brand Product" — which
+           is why this does not simply repeat $p->name. --}}
+      <a href="{{ $p->url() }}"><div class="im" style="background:{{ $p->image ? '#fff' : Gradient::for($p->name) }}">
+        @if ($p->image)
+          <img src="{{ $p->image }}" alt="{{ $p->altFor($p->image) }}" width="400" height="400" loading="lazy">
+        @endif
         <span class="shop"><b>{{ $p->name }}</b><span>{!! Money::format($p->effectivePrice()) !!}</span></span></div></a>
     @endforeach
   </div>
@@ -195,7 +231,20 @@
   <div class="blog">
     @foreach ($posts as $post)
       <a class="bl" href="{{ Url::to('/' . $post->slug . '/') }}">
-        <div class="im" style="background:{{ $post->image ? "#fff url('" . e($post->image) . "') center/cover" : Gradient::for($post->title) }}">
+        {{-- `cover`, not `image`. There is no posts.image column — see the
+             Post::saved hook in AppServiceProvider, which says so for the same
+             reason — and Eloquent returns null for a missing attribute instead
+             of failing, so this rail has been drawing the gradient placeholder
+             for every article no matter what photograph the post carried.
+             Converting the background to an <img> without correcting the column
+             would have shipped an <img> that is never emitted. --}}
+        @php
+          $postCover = \App\Support\CoverImage::src($post->cover);
+        @endphp
+        <div class="im" style="background:{{ $postCover ? '#fff' : Gradient::for($post->title) }}">
+          @if ($postCover)
+            <img src="{{ $postCover }}" alt="{{ $post->title }}" width="640" height="400" loading="lazy">
+          @endif
           @if ($post->category)<span class="chip">{{ $post->category }}</span>@endif</div>
         <h3>{{ $post->title }}</h3>
         <p>{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->excerpt ?: $post->content)), 110) }}</p>

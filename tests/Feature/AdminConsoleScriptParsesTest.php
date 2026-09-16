@@ -42,6 +42,7 @@ it('parses every script block in the admin console', function () {
         'resources/views/admin/partials/manual-order-screen.blade.php',
         'resources/views/admin/partials/category-tree-screen.blade.php',
         'resources/views/admin/partials/coupon-usage-screen.blade.php',
+        'resources/views/admin/partials/coupon-editor-screen.blade.php',
         'resources/views/admin/partials/reviews-io-screen.blade.php',
         'resources/views/admin/partials/review-badges-screen.blade.php',
         'resources/views/admin/partials/review-capsule-screen.blade.php',

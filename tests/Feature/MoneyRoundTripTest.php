@@ -68,7 +68,14 @@ function mrtAdmin(): AdminUser
         'name' => 'MRT Owner',
         'email' => 'mrt-owner-'.$n.'@kbeautybliss.test',
         'password' => 'password',
-        'role' => 'admin',
+        // 'admin' was not one of the four roles admin_users.role has ever
+        // carried (owner|manager|support|editor, per AdminController's own
+        // validator) — it could only ever get into the table by going around
+        // that validator, as this helper does. It read as an owner while the
+        // column meant nothing; now that EnforceAdminCapability reads it, an
+        // unrecognised role reaches nothing, which is the correct closed
+        // answer and not what this file is testing.
+        'role' => 'owner',
     ]);
 }
 
