@@ -446,3 +446,35 @@ it('dates the order drawer the same way as the order list', function () {
     expect($drawer->json('created_at'))->toBe($list['created_at'])
         ->and(substr((string) $drawer->json('created_at'), 0, 10))->toBe('2026-09-16');
 });
+
+/*
+ * The Orders screen's own drawer — /admin-api/orders/{id}/detail, a different
+ * controller from the one above — is where the owner actually reads an order's
+ * date, and its "Date created" boxes slice this string positionally. It emitted
+ * `toAtomString()`, i.e. UTC, so it showed the previous day for a late-night
+ * order. The wire SHAPE must not change while the zone does, or every slice()
+ * in the admin console breaks at once.
+ */
+it('dates the order detail drawer on the shop clock without changing the wire shape', function () {
+    $admin = tzAdmin();
+    $order = tzOrder('2026-09-15 21:30:00');
+    $order->forceFill(['paid_at' => CarbonImmutable::parse('2026-09-15 21:40:00', 'UTC')])->save();
+
+    setZone('Asia/Dubai');
+
+    $detail = $this->actingAs($admin, 'admin')
+        ->getJson('/admin-api/orders/' . $order->id . '/detail')
+        ->assertOk();
+
+    $createdAt = (string) $detail->json('created_at');
+
+    // Shop-local day and wall clock, which is what the three boxes read.
+    expect(substr($createdAt, 0, 10))->toBe('2026-09-16', 'the order drawer still shows the UTC day')
+        ->and(substr($createdAt, 11, 2))->toBe('01')
+        ->and(substr($createdAt, 14, 2))->toBe('30')
+        ->and(substr((string) $detail->json('paid_at'), 0, 10))->toBe('2026-09-16');
+
+    // Still Y-m-d\TH:i:sP with an offset, exactly as toAtomString() was.
+    expect(preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/', $createdAt))
+        ->toBe(1, "the wire shape changed, which breaks every slice() in the console: {$createdAt}");
+});
