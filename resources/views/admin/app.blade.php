@@ -5684,9 +5684,17 @@ function renderPlaceholder(id){
    has never shipped, so without this every visit fired a HEAD that could only
    404 and was then painted over by the real screen a moment later.
 
-   Neither id is re-rendered by the override further down THIS file; both are
-   live all the same, which is why path 1 above applies to them. */
-const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings','htmlblocks']);
+   'rev-add' and 'rev-likes' are here on the same grounds (Lane BD): both are
+   drawn by admin/partials/review-bulk-screens.blade.php, included after this
+   document's script, which wraps window.go the way the other lane screens do.
+   Their REV_SRC entries point at kbb-admin-bulkadd.html and
+   kbb-admin-bulklikes.html, two more files this repo has never shipped, so
+   without these entries every visit fired a HEAD that could only 404 and was
+   then painted over by the real screen a moment later.
+
+   None of these four ids is re-rendered by the override further down THIS
+   file; all are live the same, which is why path 1 above applies to them. */
+const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings','htmlblocks','rev-add','rev-likes']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -13873,6 +13881,26 @@ buildNav();
      Paired with the 'htmlblocks' addition to LIVE_RENDERED further up, without
      which mountFrame would still probe for that missing file on every visit. --}}
 @include('admin.partials.html-blocks-screen')
+
+{{-- Reviews -> Bulk Add and Reviews -> Bulk Likes (Lane BD). Same arrangement
+     as the screens above: its own file, its own wrapper around window.go.
+
+     TWO ids in ONE partial, unlike every screen above it. They share a
+     controller, a product picker, an API helper, a notice block and every line
+     of CSS; split in two that is one copy each of all of it, and two copies
+     drift. The reason the convention exists -- several lanes editing
+     app.blade.php at once -- is served by the file being separate at all.
+
+     It appends NO sidebar entry. 'rev-add' and 'rev-likes' have been in NAV and
+     in TITLES all along; what they never had was a screen, only REV_SRC entries
+     pointing at kbb-admin-bulkadd.html and kbb-admin-bulklikes.html, which this
+     repo has never shipped. Adding entries here would give the owner each row
+     twice.
+
+     Paired with the 'rev-add' and 'rev-likes' additions to LIVE_RENDERED
+     further up, without which mountFrame would still probe for those two
+     missing files on every visit. --}}
+@include('admin.partials.review-bulk-screens')
 
 @verbatim
 </body>
