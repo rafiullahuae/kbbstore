@@ -280,7 +280,7 @@ it('never lets the editor write the redemption counter', function () {
     expect(Coupon::find($id)->usage_count)->toBe(7);
 });
 
-it('leaves free shipping and individual use exactly as the import left them', function () {
+it('leaves free shipping and individual use exactly as the import left them when the form does not post them', function () {
     $coupon = Coupon::create([
         'code' => 'IMPORTED',
         'type' => 'percent',
@@ -290,13 +290,20 @@ it('leaves free shipping and individual use exactly as the import left them', fu
     ]);
 
     /*
-     * Neither column is enforced anywhere in this application — free delivery
-     * comes from a shipping method or the order-value threshold, and a basket
-     * holds one coupon by construction (carts.coupon_id is a single FK). The
-     * screen shows both as facts rather than controls, and the endpoint accepts
-     * neither, so a value that arrived from WooCommerce survives an edit
-     * untouched instead of being quietly cleared by a form that does not draw
-     * an editable box for it.
+     * individual_use is not enforceable as a choice — a basket holds one coupon
+     * by construction (carts.coupon_id is a single FK) — so the screen states
+     * it as a fact and the endpoint never writes it.
+     *
+     * free_shipping IS enforced now (CartService::totals() zeroes the delivery
+     * line for a code carrying it), but this payload does not mention it, and a
+     * field the form does not post must not be taken as "false". The box was
+     * drawn DISABLED for as long as the flag was unenforceable, and a disabled
+     * input posts nothing — so an endpoint that read a missing key as false
+     * would clear coupons.free_shipping on every save made from a screen that
+     * had not yet been un-greyed. Every row carrying the flag arrived in the
+     * WooCommerce import and nothing else sets it, so the loss would be silent
+     * and permanent. Absent means "leave it alone"; see the next test for the
+     * posted case.
      */
     ceditorPut($coupon->id, ['code' => 'IMPORTED', 'amount' => '10'])
         ->assertOk();
@@ -305,6 +312,28 @@ it('leaves free shipping and individual use exactly as the import left them', fu
 
     expect($coupon->free_shipping)->toBeTrue()
         ->and($coupon->individual_use)->toBeTrue();
+});
+
+it('writes free shipping when the form does post it', function () {
+    $coupon = Coupon::create([
+        'code' => 'IMPORTEDFREE',
+        'type' => 'percent',
+        'amount' => 1000,
+        'free_shipping' => true,
+    ]);
+
+    // The un-greyed box, unticked. This is the owner deciding, rather than a
+    // form staying quiet, so it is honoured — and CouponItemLimitAndBrandsTest
+    // proves the same value then reaches the delivery line.
+    ceditorPut($coupon->id, ['code' => 'IMPORTEDFREE', 'amount' => '10'] + ['free_shipping' => false])
+        ->assertOk();
+
+    expect($coupon->refresh()->free_shipping)->toBeFalse();
+
+    ceditorPut($coupon->id, ['code' => 'IMPORTEDFREE', 'amount' => '10'] + ['free_shipping' => true])
+        ->assertOk();
+
+    expect($coupon->refresh()->free_shipping)->toBeTrue();
 });
 
 /* ========================================================== 3. DUPLICATES */
