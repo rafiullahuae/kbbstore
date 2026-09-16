@@ -188,6 +188,9 @@
   var seq = 0;
   var modal = null;
 
+  // Escape is bound once for the life of the screen, not once per dialog.
+  var escBound = false;
+
   /* ------------------------------------------------------------- plumbing */
   function cookie(n){
     var m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)');
@@ -568,6 +571,30 @@
     modal.className = 'ct-modal';
     modal.innerHTML = '<div class="ct-modal-box">' + html + '</div>';
     modal.addEventListener('click', function(ev){ if (ev.target === modal) closeModal(); });
+
+    /*
+     * WIRE THE CLOSE BUTTONS HERE, not in the callers.
+     *
+     * Every dialog on this screen puts `<button class="ct-x" data-close>` in
+     * its header, and wiring them was left to whoever opened the dialog. The
+     * edit path called wireModal() afterwards; the ADD path did not, so the X
+     * on "Add category" did nothing at all and the only way out was Cancel or
+     * the backdrop. Same for any dialog added later by someone who did not
+     * know the rule.
+     *
+     * Doing it where the markup is inserted means a caller cannot forget. The
+     * Escape key is wired for the same reason: a modal you cannot dismiss with
+     * Escape is a trap for anyone not using a mouse.
+     */
+    modal.querySelectorAll('[data-close]').forEach(function(b){ b.onclick = closeModal; });
+
+    if (!escBound) {
+        document.addEventListener('keydown', function(ev){
+            if (ev.key === 'Escape' && modal) closeModal();
+        });
+        escBound = true;
+    }
+
     document.body.appendChild(modal);
     return modal;
   }

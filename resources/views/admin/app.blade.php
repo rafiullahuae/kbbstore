@@ -1844,7 +1844,16 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 <script>
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const ic=(p)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${p}</svg>`;
+/* width/height are PRESENTATION ATTRIBUTES, deliberately, not a style attribute.
+   An <svg> with a viewBox and no size has no intrinsic dimensions, so inside a
+   flex row it stretches to whatever is going spare -- which is how the "no
+   longer editable" note on a completed order drew an info icon roughly 650px
+   across. The admin CSS only sizes svg inside particular containers
+   (.nav-item svg, .btn svg, .iconbtn svg and a dozen more), so every ic() used
+   outside one of those was unsized; this one was simply the most visible.
+   Presentation attributes sit below author CSS in the cascade, so all of those
+   rules still win and nothing that was already sized moves. */
+const ic=(p)=>`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8">${p}</svg>`;
 const I={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   modules:'<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><path d="M17 13v8M13 17h8"/>',
