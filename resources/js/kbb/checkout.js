@@ -263,6 +263,12 @@ export function initCheckout() {
             }
             document.querySelectorAll('.js-subtotal').forEach((el) => { el.innerHTML = data.subtotal; });
 
+            // The VAT line, both halves of it. The rate can differ by country,
+            // and the LABEL is where the percentage is printed — vat_label is
+            // "You're paying VAT ({rate}%)". Updating only the amount was
+            // invisible while one rate applied everywhere; with a per-country
+            // rate set it left "You're paying VAT (5%)" sitting beside the 15%
+            // figure. The endpoint has always sent the label; nothing read it.
             document.querySelectorAll('.js-vat').forEach((el) => {
                 const row = el.closest('.sumrow');
                 if (data.vat) {
@@ -272,6 +278,15 @@ export function initCheckout() {
                     row.style.display = 'none';
                 }
             });
+
+            // textContent, not innerHTML: this is operator-supplied copy out of
+            // the settings table, and this file has no business turning it back
+            // into markup — the same rule the delivery line above follows.
+            if (data.vat && typeof data.vat.label === 'string') {
+                document.querySelectorAll('.js-vat-label').forEach((el) => {
+                    el.textContent = data.vat.label;
+                });
+            }
         } catch {
             window.kbbToast?.('Could not update delivery for that country — please try again.');
             if (slot) slot.innerHTML = '<div class="kbb-delivery-loading">Loading delivery options…</div>';

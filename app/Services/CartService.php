@@ -751,8 +751,23 @@ class CartService
             // Same basis as $toFree above, or the bar's fill and its caption
             // would tell two different stories about one basket.
             'free_shipping_percent' => $threshold ? min(100, (int) round($subtotal / $threshold * 100)) : null,
-            // Display only — never added to the total. (D-64)
-            'vat' => $this->vat->line($total),
+            /*
+             * Display only — never added to the total. (D-64)
+             *
+             * The DESTINATION country, resolved above from the argument or the
+             * cart, so the printed rate follows the address rather than the
+             * shop's default. This is the one place the country has to reach
+             * VatDisplay: every caller of totals() goes through it — the cart
+             * page, the drawer, the checkout summary, the country-change
+             * refresh behind /api/checkout/rates, and ManualOrderBuilder — so
+             * none of them can disagree with another about what the receipt
+             * says.
+             *
+             * A raised rate still changes only the printed figure. If this line
+             * ever starts moving 'total' above, VAT has been made chargeable
+             * and D-64 has been overturned by accident.
+             */
+            'vat' => $this->vat->line($total, $country),
         ];
     }
 }
