@@ -79,11 +79,15 @@ use Illuminate\Support\Str;
  * What this deliberately does NOT do
  * ---------------------------------------------------------------------------
  *
- *  - It does not decrement stock. Neither does a website order: there is no
- *    stock movement anywhere in Store\CheckoutController::place(). Adding it
- *    on this path only would make a back-office order and a web order mean
- *    different things to the inventory count, which is worse than neither
- *    doing it. This wants fixing for both paths at once, in its own change.
+ *  - It does not decrement stock. THE WEBSITE PATH NOW DOES: Lane CM added
+ *    CartService::claimStock(), which Store\CheckoutController::place() calls
+ *    inside the placing transaction, so a storefront order refuses what is not
+ *    there and takes what is. This path was left alone deliberately rather than
+ *    by oversight — a back-office order is typed by someone holding the stock
+ *    room's own facts, and the operator screen offers no way to see or override
+ *    a refusal, so claiming stock here would block an order the operator knows
+ *    is fillable. The order note below says so on the record. Wiring it up is
+ *    its own change, and it needs the operator screen to move with it.
  *
  *  - It does not apply a manual, ad-hoc discount. CartService::totals() derives
  *    discount from the coupon and nothing else, so an arbitrary "take 15 off"
@@ -737,7 +741,7 @@ class ManualOrderBuilder
         // Said on the record rather than only in a report, because the packer
         // reading this order is the person who would otherwise assume the
         // count had moved.
-        $lines[] = 'Stock was not adjusted — no order path in this build moves stock.';
+        $lines[] = 'Stock was not adjusted — a back-office order does not move the count, though a website order now does.';
 
         $order->notes()->create([
             'author' => $author ?: 'Back office',
