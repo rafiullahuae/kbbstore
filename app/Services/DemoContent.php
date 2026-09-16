@@ -138,16 +138,38 @@ class DemoContent
             ['K-beauty face masks: the ultimate guide', 'Masks', 'Coming home after a long day in Dubai and indulging in a skin-rejuvenating treatment.', 6],
             ['Heartleaf extract: transforming K-beauty', 'Ingredients', 'One ingredient has quietly risen to become a staple in Korean formulations.', 5],
         ])->map(fn ($r) => new class($r) {
-            public string $title, $category, $excerpt, $slug;
-            public ?string $image = null, $content = null;
-            public int $read_minutes;
+            /*
+             * THE REAL COLUMN NAMES, because fill() concatenates these objects
+             * onto a collection of actual Post models and the rail's markup has
+             * to serve both from one expression.
+             *
+             * They used to be `category`, `content` and `image`. `posts` calls
+             * those `tag`, `body` and `cover`, and the home rail was corrected
+             * to read `cover` — at which point these stand-ins, which have no
+             * such property, stopped being merely inconsistent and started
+             * throwing "Undefined property" on the home page whenever demo
+             * content was switched on. A plain object is not Eloquent: there is
+             * no null for a field that is not there.
+             */
+            public string $title, $tag, $excerpt, $slug;
+            public ?string $cover = null, $body = null;
             public bool $demo = true;
             public $published_at;
+
+            /** The minutes the fixture states, since it has no body to measure. */
+            private int $minutes;
+
             public function __construct(array $r)
             {
-                [$this->title, $this->category, $this->excerpt, $this->read_minutes] = $r;
+                [$this->title, $this->tag, $this->excerpt, $this->minutes] = $r;
                 $this->slug = \Illuminate\Support\Str::slug($r[0]);
                 $this->published_at = now()->subDays(random_int(5, 60));
+            }
+
+            /** Post::readMinutes(), answered the same way for a stand-in. */
+            public function readMinutes(): int
+            {
+                return $this->minutes;
             }
         });
     }

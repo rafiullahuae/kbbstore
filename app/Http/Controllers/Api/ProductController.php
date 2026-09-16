@@ -25,10 +25,29 @@ class ProductController extends Controller
      * Kept next to the query rather than on the model: this is a statement
      * about one endpoint's cost, and a second caller wanting different columns
      * should say so itself rather than widening this list.
+     *
+     * `sale_starts_at` and `sale_ends_at` ARE SELECTED AND ARE NOT PUBLISHED.
+     * They are the schedule on `sale_price`, and toApi() needs them to decide
+     * whether the markdown is live: quoting `sale_price` raw advertised sales
+     * that had ended and sales that had not opened, while
+     * Api\CheckoutController charged effectivePrice() and got it right.
+     *
+     * Leaving them out is not the safe, narrow choice it looks like. Eloquent
+     * returns null for a column it never selected, and two null bounds read as
+     * "no start, no end" — a sale that is always on. The omission FAILED OPEN
+     * on the very endpoint the bug was reported against.
+     * Product::advertisedSalePrice() now refuses to advertise a sale whose
+     * window it cannot see, so dropping these two columns again turns the
+     * expired-sale bug into a missing-sale bug: wrong, but loud, and caught by
+     * ApiAdvertisedPriceTest rather than shipped.
+     *
+     * Two datetimes are the cheapest columns on this table; the cost argument
+     * above is about `description` and the SEO blob, which stay out.
      */
     private const INDEX_COLUMNS = [
         'id', 'slug', 'name', 'price', 'sale_price', 'image', 'images',
         'rating', 'review_count', 'stock_status', 'short_description',
+        'sale_starts_at', 'sale_ends_at',
     ];
 
     /** GET /api/products */

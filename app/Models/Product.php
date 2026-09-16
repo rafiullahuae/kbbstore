@@ -96,6 +96,10 @@ class Product extends Model
      * method never existed: its status filter matched no rows, so the closure
      * never ran and the missing method never surfaced. Fixing the filter in
      * 2.60.105 turned that into a 500 on every /api/products request.
+     *
+     * `sale_price` IS THE ADVERTISED SALE, NOT THE STORED COLUMN. See
+     * advertisedSalePrice() below. The shape is unchanged — the same eleven
+     * keys, pinned by ApiProductIndexCostTest — only the lying stopped.
      */
     public function toApi(): array
     {
@@ -104,7 +108,7 @@ class Product extends Model
             'name'              => $this->name,
             'brand'             => $this->relationLoaded('brand') ? $this->brand?->name : null,
             'price'             => $this->price,
-            'sale_price'        => $this->sale_price,
+            'sale_price'        => $this->advertisedSalePrice(),
             'image'             => $this->image,
             'images'            => $this->images,
             'rating'            => $this->rating,
@@ -236,6 +240,60 @@ class Product extends Model
         }
 
         return (int) $this->sale_price;
+    }
+
+    /**
+     * The sale price to ADVERTISE, or null when there is no live sale.
+     *
+     * WHY THIS IS NOT `$this->sale_price`. That column is a stored markdown
+     * with a schedule beside it, and toApi() published it raw. So the public
+     * feed quoted a sale that ended last month, and one that opens next week,
+     * while Api\CheckoutController — the write half of the same public surface
+     * — charged effectivePrice() and got it right. Advertised price and
+     * charged price disagreed on an unauthenticated endpoint. The rule here is
+     * simply: publish what will be charged.
+     *
+     * A sale is worth advertising only when it is a reduction that is live
+     * NOW, so the answer is effectivePrice() whenever that differs from
+     * `price`, and null otherwise. `sale_price` equal to `price` is not a sale
+     * and gets no strikethrough; a `sale_price` ABOVE `price` is not one
+     * either, but effectivePrice() charges it, so it is quoted rather than
+     * hidden — the endpoint's job is to stop the two figures diverging, not to
+     * second-guess a badly entered price.
+     *
+     * AND IT REFUSES TO GUESS WHEN THE WINDOW WAS NOT SELECTED.
+     *
+     * Api\ProductController::index hydrates an explicit column list, because
+     * the endpoint is public and unthrottled. If `sale_starts_at` and
+     * `sale_ends_at` are not in it, Eloquent answers null for both — and a
+     * window check reads two nulls as "no start bound, no end bound", i.e. a
+     * sale that is always on. That FAILS OPEN: the expired sale keeps being
+     * advertised, on the exact endpoint the defect lives on, and silently,
+     * because /api/products/{slug} selects whole rows and would still test
+     * green. It is the trap CouponService::withRules() documents for coupon
+     * rules, one model along.
+     *
+     * So an absent window is treated as "no sale I can vouch for", never as an
+     * unbounded one. The column list IS widened (the window is selected there
+     * now, and not published), and this guard is the second half: it makes
+     * narrowing that list again a loud failure rather than a quiet lie.
+     */
+    public function advertisedSalePrice(): ?int
+    {
+        if ($this->sale_price === null) {
+            return null;
+        }
+
+        $attributes = $this->getAttributes();
+
+        if (! array_key_exists('sale_starts_at', $attributes)
+            || ! array_key_exists('sale_ends_at', $attributes)) {
+            return null;
+        }
+
+        $effective = $this->effectivePrice();
+
+        return $effective === (int) $this->price ? null : $effective;
     }
 
     public function isOnSale(): bool
