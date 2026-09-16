@@ -25,7 +25,11 @@
   --kbb-banner-tint:#e0567b;
 
   --kbb-banner-radius:20px;
-  --kbb-banner-pad:clamp(20px, 5vw, 56px);
+  /* Halved with the ratios below. The owner asked for thin banners; the
+     padding is what actually sets the height of the tint style and what
+     stops the other two from being a photograph with a caption crammed
+     into it, so it has to come down with them or nothing gets shorter. */
+  --kbb-banner-pad:clamp(12px, 2.4vw, 26px);
 
   position:relative;
   isolation:isolate;              /* keeps the scrim's z-index local */
@@ -83,7 +87,9 @@
 
 .kbb-banner__heading{
   font-family:var(--sans, "Poppins", system-ui, sans-serif);
-  font-size:clamp(26px, 4.6vw, 52px);
+  /* Scaled down with the band. At the old size a two-line heading was
+     taller than the whole banner now is. */
+  font-size:clamp(20px, 2.8vw, 34px);
   font-weight:700;
   line-height:1.08;
   letter-spacing:-.025em;
@@ -94,9 +100,9 @@
 }
 
 .kbb-banner__sub{
-  font-size:clamp(14px, 1.5vw, 17px);
-  line-height:1.55;
-  margin:12px 0 0;
+  font-size:clamp(13px, 1.2vw, 15px);
+  line-height:1.45;
+  margin:6px 0 0;
   overflow-wrap:anywhere;
 }
 
@@ -111,7 +117,7 @@
    still decides the height and the reserved box is honest. */
 .kbb-banner--full > *{grid-area:1 / 1}
 
-.kbb-banner--full .kbb-banner__media{--kbb-banner-ratio:5 / 2}
+.kbb-banner--full .kbb-banner__media{--kbb-banner-ratio:5 / 1}
 
 .kbb-banner__scrim{
   z-index:1;
@@ -157,7 +163,7 @@
 
 .kbb-banner__split > *{min-width:0}
 
-.kbb-banner--split .kbb-banner__media{--kbb-banner-ratio:4 / 3}
+.kbb-banner--split .kbb-banner__media{--kbb-banner-ratio:8 / 3}
 
 /* The image stretches to whichever track is taller, so the two sides always
    meet at the same bottom edge however long the subheading runs. */
@@ -213,11 +219,15 @@
   /* Nothing here has an intrinsic height — there is no image to reserve space
      for — so the ratio is declared on the box itself, with a minimum so the
      copy is never clipped at 360px. */
-  aspect-ratio:5 / 2;
-  min-height:200px;
+  aspect-ratio:10 / 2;
+  min-height:100px;
 }
 
-.kbb-banner--tint .kbb-banner__heading{font-size:clamp(28px, 5.4vw, 60px)}
+/* Tint's whole point was large type, but at 60px the heading wrapped to two
+   lines and set the band's height on its own — the one style where the copy,
+   not a ratio, decides how tall the banner is. Scaled with the rest so 'thin'
+   means thin here too. */
+.kbb-banner--tint .kbb-banner__heading{font-size:clamp(22px, 3.2vw, 38px)}
 
 .kbb-banner--tint.kbb-banner--dark .kbb-banner__wash{
   background:
@@ -264,7 +274,7 @@
   /* Split stops being a split. Side by side below this the copy track is
      narrower than its own measure and the heading breaks every other word. */
   .kbb-banner__split{grid-template-columns:minmax(0, 1fr)}
-  .kbb-banner--split .kbb-banner__media{--kbb-banner-ratio:16 / 9}
+  .kbb-banner--split .kbb-banner__media{--kbb-banner-ratio:32 / 9}
   .kbb-banner--split .kbb-banner__media,
   .kbb-banner--split .kbb-banner__img{height:auto}
 }
@@ -278,10 +288,15 @@
 
   .kbb-banner--flush{width:100%}
 
-  /* A 5:2 photograph at 360px is 144px tall and the copy does not fit on it.
-     Taller crop, and the copy gets its own room. */
-  .kbb-banner--full .kbb-banner__media{--kbb-banner-ratio:4 / 3}
-  .kbb-banner--tint .kbb-banner__inner{aspect-ratio:auto;min-height:0;padding-block:34px}
+  /* Still a wider crop than the desktop one — a 5:1 strip at 360px is 72px
+     tall and a two-word heading does not sit in it — but half of what it
+     was, because the owner wants the phone banner short too. The copy
+     scales down with it rather than overflowing. */
+  .kbb-banner--full .kbb-banner__media{--kbb-banner-ratio:8 / 3}
+  .kbb-banner--full .kbb-banner__heading,
+  .kbb-banner--split .kbb-banner__heading,
+  .kbb-banner--tint .kbb-banner__heading{font-size:clamp(18px, 5.2vw, 24px)}
+  .kbb-banner--tint .kbb-banner__inner{aspect-ratio:auto;min-height:0;padding-block:18px}
   .kbb-banner__copy{max-width:none}
 }
 
