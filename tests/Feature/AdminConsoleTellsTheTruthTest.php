@@ -293,11 +293,12 @@ it('offers no Save on Shop Filters, because nothing stores what it would save', 
  * already, under other names, fully wired; the screen is the index of those
  * now, and says plainly that the other two are not built.
  *
- * SCOPED TO renderSettings(). "Phase 0 build" still appears elsewhere in this
- * console — Users & Roles has an Invite user button that raises it — and that
- * screen is another lane's. A file-wide search here would either fail on
- * somebody else's defect or, worse, be softened until it stopped catching this
- * one.
+ * SCOPED TO renderSettings(), and kept that way. When this was written "Phase 0
+ * build" still appeared elsewhere in the console — Users & Roles had an Invite
+ * user button that raised it — and a file-wide search would have failed on
+ * another lane's defect, or been softened until it stopped catching this one.
+ * Lane DJ has since removed that button; the scope stays, because the next
+ * screen to grow a toast should fail its own test and not this one.
  */
 it('opens a real screen from every Settings card it still shows', function () use ($lddSource) {
     $code = $lddSource();
@@ -324,4 +325,158 @@ it('opens a real screen from every Settings card it still shows', function () us
         ->toBeTrue('Localisation has to say it is not built');
     expect(str_contains($screen, 'cannot be edited from this console'))
         ->toBeTrue('Security settings has to say it is not built');
+});
+
+/**
+ * ---------------------------------------------------------------------------
+ * LANE DJ — Platform → Users & Roles, and Platform → K-Beauty Bliss Theme
+ * ---------------------------------------------------------------------------
+ *
+ * The Users screen is the one screen in this console where being wrong is a
+ * security question rather than a cosmetic one, and it was wrong from both
+ * ends at once.
+ *
+ * INVENTED STAFF. A renderUsers() in the first <script> block drew "Rafi /
+ * Owner / 2FA On", "Store Manager / Manager" and "Support Agent / Support /
+ * Invited" out of a urow() helper taking seven literals a row, beside an
+ * "Invite user" button whose body was toast('Invite flow — Phase 0 build').
+ * None of those three was ever a row in `admin_users`.
+ *
+ * It was dead code — window.renderUsers in the second block overwrites the
+ * name and reads the real endpoint — and that is what made it worth removing
+ * rather than leaving. Verified by injecting a single `throw` at the head of
+ * the second block: the console still came up, the sidebar still navigated,
+ * and Users & Roles rendered the three invented people with "2FA On" and
+ * nothing anywhere on the page to say the live wiring had failed. One runtime
+ * error in an unrelated screen was the whole distance between the owner and a
+ * fabricated answer to "who can get into my shop".
+ *
+ * THE COLUMN THAT CANNOT BE TRUE. There is no second factor in this
+ * application: no TOTP, no OTP column, no secret, no enrolment, no verify
+ * step, nowhere. The only correct mention of 2FA in the console is the Phase 6
+ * roadmap row that lists it as something to build, which is why the assertion
+ * below is on the table header rather than on the string — a file-wide search
+ * for "2FA" would force the roadmap to lie about what is coming in order to
+ * pass.
+ *
+ * A REFUSAL IS NOT AN EMPTY SHOP. The live screen's `catch` turned every
+ * failure into `ADMINS=[]`, which renders "No users." /admin-api/users is
+ * users.manage — owner-only — so a manager opening the screen was told his
+ * shop has no staff accounts at all. Same defect as the invented table,
+ * reached from the other side.
+ */
+it('invents no members of staff on the one screen about who can sign in', function () use ($lddSource) {
+    $code = $lddSource();
+
+    foreach (['Store Manager', 'Support Agent', 'Invite flow'] as $fiction) {
+        expect(str_contains($code, $fiction))
+            ->toBeFalse('The staff list still names "'.$fiction.'", who has no row in admin_users.');
+    }
+
+    expect(str_contains($code, 'urow('))
+        ->toBeFalse('urow() built the invented rows and has no other caller; it must go with them.');
+
+    // The fallback that stands when the live wiring does not run has to say so
+    // rather than draw anything. The name itself must survive: go()'s dispatch
+    // object references renderUsers while it is being built, so deleting the
+    // declaration outright would throw a ReferenceError and take every other
+    // screen down with it.
+    expect(preg_match('/function renderUsers\(\)\s*\{\s*\$\(\'#content\'\)\.innerHTML=frameStartupHTML/', $code))
+        ->toBe(1, 'the placeholder renderUsers() must render the startup-failure notice and nothing else');
+});
+
+it('claims no second factor, because this application has none', function () use ($lddSource) {
+    $code = $lddSource();
+
+    expect(str_contains($code, '<th>2FA</th>'))
+        ->toBeFalse('A 2FA column is printed for a second factor that does not exist anywhere in this codebase.');
+
+    // Nothing in the application implements one, which is what makes the
+    // column unprintable rather than merely unpopulated.
+    $app = [];
+    foreach (['app', 'database/migrations', 'routes'] as $dir) {
+        foreach (glob(base_path($dir).'/{,*/,*/*/,*/*/*/}*.php', GLOB_BRACE) ?: [] as $f) {
+            $app[] = file_get_contents($f);
+        }
+    }
+    $all = implode("\n", $app);
+    foreach (['totp', 'otp_secret', 'two_factor', 'twoFactor'] as $needle) {
+        expect(stripos($all, $needle))
+            ->toBeFalse('"'.$needle.'" now exists — if a second factor was built, the column may come back.');
+    }
+});
+
+it('tells a refused role it is refused, rather than showing it an empty shop', function () use ($lddSource) {
+    $code = $lddSource();
+
+    $from = strpos($code, 'window.renderUsers = async function');
+    $to = strpos($code, 'function addUser()');
+
+    expect($from !== false && $to !== false && $to > $from)
+        ->toBeTrue('the live Users screen is no longer where this test looks for it');
+
+    $screen = substr($code, $from, $to - $from);
+
+    expect(str_contains($screen, 'No users.'))
+        ->toBeFalse('A refusal still renders as "No users.", which tells a manager the shop has no staff.');
+
+    expect(str_contains($screen, 'USERS_ERR.status===403'))
+        ->toBeTrue('The screen has to separate "you may not read this" from "there is nothing to read".');
+
+    // The sentence EnforceAdminCapability sends names the capability; the
+    // screen prints that rather than inventing its own wording.
+    expect(str_contains($screen, 'USERS_ERR.message'))
+        ->toBeTrue('The refusal must print the message the server sent.');
+
+    // A role that cannot read the list is not offered a button that would only
+    // be refused again.
+    expect(preg_match('/status===403[\s\S]{0,1400}?usr_add/', $screen))
+        ->toBe(0, 'the refused view must not render the Add user button');
+});
+
+/**
+ * Platform → K-Beauty Bliss Theme offered eight cards, every one of them
+ * answering a press with toast('… — builder opens in Phase 2').
+ *
+ * A promise about a future phase is a milder claim than a false statement of
+ * present fact, and that is a good reason to leave one alone — right up to the
+ * point where the thing being promised already exists. Seven of these eight
+ * subjects are built and were built before the card was written: Header, Mega
+ * Menu, Mobile Header, Homepage, Product page and Cart panel are live editors,
+ * and Shop Filters is an honest "not built yet" page that explains what really
+ * decides the filter panel. Each was opened and driven in a browser before it
+ * was linked here.
+ *
+ * Typography, Colours and Performance have nothing behind them anywhere, and
+ * say so.
+ */
+it('opens a real screen from every Theme card it still shows', function () use ($lddSource) {
+    $code = $lddSource();
+
+    $from = strpos($code, 'function renderTheme()');
+    $to = strpos($code, 'function renderUsers()');
+
+    expect($from !== false && $to !== false && $to > $from)
+        ->toBeTrue('renderTheme() and renderUsers() are no longer where this test looks for them');
+
+    $screen = substr($code, $from, $to - $from);
+
+    expect(str_contains($screen, 'toast('))
+        ->toBeFalse('a Theme card still answers a press with a message and nothing else');
+
+    expect(str_contains($screen, 'Phase 2'))
+        ->toBeFalse('a Theme card still promises a phase for a screen that is already built');
+
+    foreach (['header', 'megamenu', 'mobilehdr', 'homepage', 'productpage', 'cartpanel', 'shopfilters'] as $id) {
+        expect(str_contains($screen, "'".$id."',"))
+            ->toBeTrue('the Theme index no longer routes to '.$id);
+    }
+
+    // The three with nothing behind them say so.
+    expect(str_contains($screen, 'There is no font setting anywhere in this application.'))
+        ->toBeTrue('Typography has to say it is not built');
+    expect(str_contains($screen, 'There is no colour editor behind this console'))
+        ->toBeTrue('Colours has to say it is not built');
+    expect(str_contains($screen, 'there was simply never anything behind this card'))
+        ->toBeTrue('Performance has to say it is not built');
 });

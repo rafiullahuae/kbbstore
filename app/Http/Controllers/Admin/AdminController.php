@@ -1286,18 +1286,37 @@ class AdminController extends Controller
         ]);
     }
 
-    /** GET /admin-api/users — list back-office accounts. */
+    /**
+     * GET /admin-api/users — list back-office accounts.
+     *
+     * AN EXPLICIT SELECT, for the same reason CustomersApiController carries
+     * one: `admin_users` also holds `password` and `remember_token`, and this
+     * endpoint is the staff list, so the row it reads is by definition the row
+     * of somebody who can sign in to the shop. `AdminUser::$hidden` covers the
+     * two of them on the way out, but $hidden is a serialisation rule — it
+     * stops a hash being printed, it does not stop it being fetched, and it is
+     * one `makeVisible()`, one `toArray()` on a related model or one future
+     * edit to $hidden away from not applying. Naming the five columns this
+     * screen actually shows means the hashes are never loaded at all, so no
+     * later change to how this array is built can leak one.
+     *
+     * The response shape is unchanged.
+     */
     public function users()
     {
         $me = \Illuminate\Support\Facades\Auth::guard('admin')->id();
-        $rows = \App\Models\AdminUser::orderBy('id')->get()->map(fn ($u) => [
-            'id'         => $u->id,
-            'name'       => $u->name,
-            'email'      => $u->email,
-            'role'       => $u->role,
-            'is_self'    => $u->id === $me,
-            'created_at' => $u->created_at,
-        ]);
+        $rows = \App\Models\AdminUser::query()
+            ->select(['id', 'name', 'email', 'role', 'created_at'])
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($u) => [
+                'id'         => $u->id,
+                'name'       => $u->name,
+                'email'      => $u->email,
+                'role'       => $u->role,
+                'is_self'    => $u->id === $me,
+                'created_at' => $u->created_at,
+            ]);
         return response()->json(['users' => $rows]);
     }
 
