@@ -7,7 +7,9 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Support\DemoSeed;
 use App\Support\Money;
+use App\Support\StoreTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,14 @@ use Illuminate\Support\Facades\DB;
  */
 class AdminController extends Controller
 {
+    /*
+     * The one summary helper, not a fourth variant of it. `selectRaw()` APPENDS
+     * to the select list rather than replacing it, which is the MySQL 1140 that
+     * has reached production twice; see the trait's own comment for the three
+     * distinct ways the hand-rolled form breaks.
+     */
+    use \App\Support\AggregatesQueries;
+
     // Kept here as an alias so nothing else in this file needs touching —
     // the actual definition now lives on Order::REAL_STATUSES, shared with
     // Catalog → Reorder / Products' order-count. See that constant's own
@@ -89,40 +99,62 @@ class AdminController extends Controller
      * global scope does not apply — whereNull('orders.deleted_at') is doing
      * real work here, exactly as it is on the top-products join below.
      *
+     * DEMO ORDERS. Excluded on the same terms as the gross figure they are
+     * netted against. Netting real refunds out of a gross that included
+     * invented orders — or the reverse — would produce a number that is
+     * neither, and the mismatch would be invisible.
+     *
      * @return \Illuminate\Database\Query\Builder
      */
     private static function countedRefunds()
     {
-        return \Illuminate\Support\Facades\DB::table('refunds')
+        $q = \Illuminate\Support\Facades\DB::table('refunds')
             ->join('orders', 'orders.id', '=', 'refunds.order_id')
             ->whereNull('orders.deleted_at')
             ->whereIn('orders.status', self::REVENUE_STATUSES)
             ->whereIn('refunds.status', \App\Services\Payments\PaymentRefunder::COUNTED);
+
+        return DemoSeed::excludeQuery($q, Order::class, 'orders.id');
     }
 
-    /** GET /admin-api/stats — dashboard KPIs + recent orders. */
+    /**
+     * GET /admin-api/stats — dashboard KPIs + recent orders.
+     *
+     * TWO MORE THINGS WERE WRONG HERE, on top of the refund netting above.
+     *
+     * 1. DEMO ORDERS COUNTED AS REAL MONEY. Store -> Demo Content seeds eight
+     *    sample orders and logs each one in `demo_seed_log`; nothing here knew
+     *    that log existed, so switching demo content on added invented revenue
+     *    to every tile and switching it off took it away, with nothing on the
+     *    screen saying so. Every count below now excludes them — and the
+     *    response SAYS how many it left out, because an owner who seeded demo
+     *    data on purpose is owed an explanation for why the dashboard did not
+     *    move. See App\Support\DemoSeed.
+     *
+     * 2. "THE LAST 30 DAYS" WAS 30 UTC DAYS. The shop is in Dubai. The window
+     *    now opens at MIDNIGHT on the shop's own clock 30 days ago, so its
+     *    oldest day is a whole day and the figure does not creep between
+     *    refreshes. There is a `today` block computed the same way, because the
+     *    owner's "today" and a UTC "today" are four hours apart.
+     *    See App\Support\StoreTime.
+     *
+     * The bound stays a Carbon rather than an ISO-8601 string, for the reason
+     * the previous lane recorded here and found the hard way: SQLite compares
+     * such a string as TEXT and drops the boundary day, MySQL warns 1292. Both
+     * bounds below are CarbonImmutable in UTC, derived from shop-local
+     * midnight — never a shop-local date string against a UTC column, which is
+     * the exact mismatch the timezone work is about.
+     */
     public function stats()
     {
-        /*
-         * A datetime, not an ISO-8601 string.
-         *
-         * This was `now()->subDays(30)->toISOString()`, which is
-         * '2026-08-17T10:00:00.000000Z'. Both engines got it wrong, differently:
-         *
-         *   SQLite compares it to a stored '2026-08-17 11:00:00' as TEXT, and
-         *   ' ' (0x20) sorts below 'T' (0x54) — so every order on the boundary
-         *   day fell out of the window and the dashboard under-reported.
-         *
-         *   MySQL parses it, but raises warning 1292 'Incorrect datetime value'
-         *   on every dashboard load, and would reject it outright under a
-         *   stricter mode.
-         *
-         * Handing the Carbon instance to the builder lets the grammar format it
-         * for the connection, which is right on both.
-         */
-        $since = now()->subDays(30);
+        $paidReal = fn () => DemoSeed::exclude(
+            Order::query()->whereIn('status', self::REVENUE_STATUSES),
+            Order::class,
+        );
 
-        $grossRevenue30 = (int) Order::whereIn('status', self::REVENUE_STATUSES)
+        $since = StoreTime::windowStartUtc(30);
+
+        $grossRevenue30 = (int) $paidReal()
             ->where('created_at', '>=', $since)
             ->sum('total');
 
@@ -134,11 +166,30 @@ class AdminController extends Controller
 
         $revenue30 = max(0, $grossRevenue30 - $refunds30);
 
-        $ordersTotal   = Order::count();
-        $customers     = Customer::count();
-        $products      = Product::count();
-        $lowStock      = Product::whereNotNull('stock')->where('stock', '>', 0)->where('stock', '<=', 15)->count();
-        $outStock      = Product::whereNotNull('stock')->where('stock', '=', 0)->count();
+        /*
+         * Today, on the shop's clock, as one bounded aggregate rather than two
+         * round trips. Netted the same way as the 30-day figure beside it — a
+         * tile that counted a refunded sale as today's revenue would be the
+         * same defect the window above was just fixed for.
+         */
+        $dayStart = StoreTime::startOfDayUtc();
+        $dayEnd   = $dayStart->addDay();
+
+        $todayRow = $this->aggregate(
+            $paidReal()->where('created_at', '>=', $dayStart)->where('created_at', '<', $dayEnd),
+            'COUNT(*) as n, COALESCE(SUM(total), 0) as revenue',
+        );
+
+        $todayRefunds = (int) self::countedRefunds()
+            ->where('orders.created_at', '>=', $dayStart)
+            ->where('orders.created_at', '<', $dayEnd)
+            ->sum('refunds.amount');
+
+        $ordersTotal   = DemoSeed::exclude(Order::query(), Order::class)->count();
+        $customers     = DemoSeed::exclude(Customer::query(), Customer::class)->count();
+        $products      = DemoSeed::exclude(Product::query(), Product::class)->count();
+        $lowStock      = DemoSeed::exclude(Product::query(), Product::class)->whereNotNull('stock')->where('stock', '>', 0)->where('stock', '<=', 15)->count();
+        $outStock      = DemoSeed::exclude(Product::query(), Product::class)->whereNotNull('stock')->where('stock', '=', 0)->count();
 
         /*
          * NOT a conversion rate, and no longer labelled as one.
@@ -150,24 +201,31 @@ class AdminController extends Controller
          * that 87% of visitors bought something. The screen now calls it what
          * it is: how many orders completed.
          */
-        $paid = Order::whereIn('status', self::REVENUE_STATUSES)->count();
+        $paid = $paidReal()->count();
 
         /*
          * Eager-loaded. `Customer::find($o->customer_id)` inside the map was one
          * extra SELECT per recent order — bounded at eight here, unbounded in
          * orders() below, which is the same mistake without the limit. Both are
          * now one query for the whole set.
+         *
+         * `created_at` goes out as a shop-local ISO-8601 string WITH its offset
+         * rather than as a bare Carbon. The feed does `.slice(0, 10)` on this
+         * value, and Carbon's default serialisation is a UTC `...Z`, so an
+         * order placed at 01:30 Dubai showed the previous day's date. Carrying
+         * the offset makes both slicing it and `new Date()` correct.
          */
-        $recent = Order::with('customer:id,name')->orderByDesc('id')->limit(8)->get()->map(function (Order $o) {
-            $c = $o->customer;
-            return [
-                'id'         => $o->id,
-                'customer'   => $c->name ?? 'Guest',
-                'total_aed'  => (int) round(($o->total ?? 0) / 100),
-                'status'     => $o->status,
-                'created_at' => $o->created_at,
-            ];
-        });
+        $recent = DemoSeed::exclude(Order::query(), Order::class)
+            ->with('customer:id,name')->orderByDesc('id')->limit(8)->get()->map(function (Order $o) {
+                $c = $o->customer;
+                return [
+                    'id'         => $o->id,
+                    'customer'   => $c->name ?? 'Guest',
+                    'total_aed'  => (int) round(($o->total ?? 0) / 100),
+                    'status'     => $o->status,
+                    'created_at' => StoreTime::iso($o->created_at),
+                ];
+            });
 
         return response()->json([
             'revenue_30d_aed' => (int) round($revenue30 / 100),
@@ -182,6 +240,13 @@ class AdminController extends Controller
             'low_stock'       => $lowStock,
             'out_of_stock'    => $outStock,
             'recent'          => $recent,
+            'timezone'        => StoreTime::zone(),
+            'today'           => [
+                'date'        => StoreTime::today()->format('Y-m-d'),
+                'orders'      => (int) ($todayRow->n ?? 0),
+                'revenue_aed' => (int) round(max(0, ((int) ($todayRow->revenue ?? 0)) - $todayRefunds) / 100),
+            ],
+            'demo'            => DemoSeed::disclosure(),
         ]);
     }
 
@@ -689,7 +754,15 @@ class AdminController extends Controller
             ->selectRaw('order_id, COUNT(*) as n')
             ->pluck('n', 'order_id');
 
-        $rows = $orders->map(function (Order $o) use ($lineCounts) {
+        /*
+         * A LIST, so demo orders stay on it — that is what Demo Content is for
+         * — but each one says what it is. The money FIGURES on the Dashboard
+         * and Analytics leave them out; see App\Support\DemoSeed for why the
+         * answer comes from `demo_seed_log` rather than a column on `orders`.
+         */
+        $demoOrderIds = DemoSeed::idsFor(Order::class);
+
+        $rows = $orders->map(function (Order $o) use ($lineCounts, $demoOrderIds) {
             $c = $o->customer;
             return [
                 'id'         => $o->id,
@@ -700,11 +773,24 @@ class AdminController extends Controller
                 'total_aed'  => (int) round(($o->total ?? 0) / 100),
                 'status'     => $o->status,
                 'ship_method'=> $o->shipping_method,
-                'created_at' => $o->created_at,
+                'is_demo'    => isset($demoOrderIds[$o->id]),
+                /*
+                 * Shop-local ISO-8601, offset included. This was a bare Carbon,
+                 * which serialises as '2026-09-15T21:30:00.000000Z' — and the
+                 * screen slices the first ten characters off it, so an order
+                 * placed at 01:30 in Dubai was dated the previous day on the
+                 * Orders table, on its row in Recent activity, and nowhere did
+                 * anything say the date was a UTC one.
+                 */
+                'created_at' => StoreTime::iso($o->created_at),
             ];
         });
 
-        return response()->json(['orders' => $rows]);
+        return response()->json([
+            'orders'   => $rows,
+            'timezone' => StoreTime::zone(),
+            'demo'     => DemoSeed::disclosure(),
+        ]);
     }
 
     /**
@@ -784,7 +870,10 @@ class AdminController extends Controller
             'cod_fee_aed'  => (int) round(($o->fee_total ?? 0) / 100),
             'total_aed'    => (int) round(($o->total ?? 0) / 100),
             'ship_method'  => $o->shipping_method,
-            'created_at'   => $o->created_at,
+            // Shop-local, offset carried — the same treatment as the Orders
+            // list this drawer opens from, so the two cannot show an order two
+            // different dates.
+            'created_at'   => StoreTime::iso($o->created_at),
         ]);
     }
 
@@ -858,7 +947,18 @@ class AdminController extends Controller
      */
     public function analytics()
     {
-        $paidQuery = Order::query()->whereIn('status', self::REVENUE_STATUSES);
+        /*
+         * Demo orders are not sales. Store -> Demo Content seeds eight of them
+         * and logs each in `demo_seed_log`; every figure on this screen used to
+         * include them, so importing demo content inflated the revenue, the
+         * average order value and the top-products table, and removing it
+         * deflated them again with nothing saying why. Excluded here and
+         * disclosed in the payload — see App\Support\DemoSeed.
+         */
+        $paidQuery = DemoSeed::exclude(
+            Order::query()->whereIn('status', self::REVENUE_STATUSES),
+            Order::class,
+        );
 
         $totals = (clone $paidQuery)
             ->selectRaw('COUNT(*) as n, COALESCE(SUM(total), 0) as revenue')
@@ -881,15 +981,42 @@ class AdminController extends Controller
         $refundTotal  = (int) self::countedRefunds()->sum('refunds.amount');
         $revenueTotal = max(0, $grossRevenue - $refundTotal);
         $aov          = $paidCount ? intdiv($revenueTotal, $paidCount) : 0;
-        $ordersTotal  = (int) Order::query()->count();
+        $ordersTotal  = (int) DemoSeed::exclude(Order::query(), Order::class)->count();
 
-        // Daily revenue for the last 14 days. `created_at` is compared as a
-        // date rather than grouped by one, so no dialect-specific date function
-        // is needed and only the window's rows are read.
-        $days = [];
-        for ($i = 13; $i >= 0; $i--) $days[now()->subDays($i)->format('Y-m-d')] = 0;
+        /*
+         * Daily revenue for the last 14 days, ON THE SHOP'S CALENDAR.
+         *
+         * Every bar used to be a UTC day: the bucket keys came from
+         * `now()->format('Y-m-d')` under an app timezone of UTC, and each order
+         * was filed by `substr((string) $o->created_at, 0, 10)` — the first ten
+         * characters of its stored UTC timestamp. An order placed at 01:30 in
+         * Dubai is stored as 21:30 the previous day, so it landed in
+         * YESTERDAY's bar. Four hours of every day's sales, every day, on the
+         * wrong bar.
+         *
+         * Both halves move together, which is the only way this is safe: the
+         * keys are shop-local days (recentDayKeys), each order is filed by the
+         * shop-local day its stored instant falls in (dayKey), and the window
+         * opens at the UTC instant of shop-local midnight on the oldest of them
+         * (startOfDayUtc). A key built in one zone and a bound built in the
+         * other is precisely the bug being fixed here.
+         *
+         * Still bucketed in PHP, deliberately and for the original reason:
+         * grouping by day in SQL needs DATE()/strftime(), strftime() is
+         * SQLite-only, and Tests\Support\SqlShape rejects it. Doing it in SQL
+         * would ALSO have to name the timezone in the dialect's own way
+         * (CONVERT_TZ on MySQL, nothing at all on SQLite), so PHP is not merely
+         * the portable choice here, it is the only correct one.
+         */
+        $days = array_fill_keys(StoreTime::recentDayKeys(14), 0);
 
-        $windowFrom = now()->subDays(13)->startOfDay();
+        /*
+         * The UTC instant at which the OLDEST BUCKET begins on the shop's
+         * clock. `now()->subDays(13)->startOfDay()` was shop-agnostic - UTC
+         * midnight - so the window and the buckets it fills disagreed by the
+         * offset, and the first bar was missing its first four hours.
+         */
+        $windowFrom = StoreTime::startOfDayUtc(array_key_first($days));
 
         $window = (clone $paidQuery)
             ->where('created_at', '>=', $windowFrom)
@@ -899,8 +1026,8 @@ class AdminController extends Controller
          * Refunds netted into the day of the ORDER, not the day of the refund.
          *
          * So a bar reads "what the store kept from the orders placed that day",
-         * which is the question an owner asks of a 14-day sales chart, and — as
-         * a side effect — can never go negative and put a bar below the axis.
+         * which is the question an owner asks of a 14-day sales chart, and - as
+         * a side effect - can never go negative and put a bar below the axis.
          * One grouped query for the whole window, not one per order.
          */
         $windowRefunds = [];
@@ -911,7 +1038,7 @@ class AdminController extends Controller
              * a raw aggregate expression becomes a property name and the query
              * dies with "Undefined property: stdClass::$amount), 0)". Both the
              * grouped column and the aggregate are named in the select, which
-             * is what MySQL's ONLY_FULL_GROUP_BY wants — the 1140 this codebase
+             * is what MySQL's ONLY_FULL_GROUP_BY wants - the 1140 this codebase
              * has already paid for twice.
              */
             $windowRefunds = self::countedRefunds()
@@ -924,8 +1051,19 @@ class AdminController extends Controller
         }
 
         foreach ($window as $o) {
-            $d = substr((string) $o->created_at, 0, 10);
-            if (!array_key_exists($d, $days)) continue;
+            /*
+             * The shop's calendar day, not the stored UTC one.
+             *
+             * This was `substr((string) $o->created_at, 0, 10)` - the first ten
+             * characters of the stored UTC timestamp. An order placed at 01:30
+             * in Dubai is stored as 21:30 the previous day, so it landed in
+             * YESTERDAY's bar: four hours of every day's sales, every day, on
+             * the wrong bar. dayKey() converts the instant to the shop's clock
+             * first, and $windowFrom above is built from the same clock, so the
+             * key and the bound can never be computed in different zones.
+             */
+            $d = StoreTime::dayKey($o->created_at);
+            if ($d === null || !array_key_exists($d, $days)) continue;
             $days[$d] += max(0, (int) $o->total - (int) ($windowRefunds[$o->id] ?? 0));
         }
 
@@ -943,7 +1081,7 @@ class AdminController extends Controller
         $dailyPeak = $daily ? max(array_column($daily, 'revenue_aed')) : 0;
 
         // Status breakdown (all statuses present), grouped by the database.
-        $status = Order::query()
+        $status = DemoSeed::exclude(Order::query(), Order::class)
             ->groupBy('status')
             ->selectRaw('status, COUNT(*) as n')
             ->pluck('n', 'status')
@@ -967,10 +1105,22 @@ class AdminController extends Controller
          * out of paid_orders and revenue_total above, and the two halves of the
          * screen would disagree with each other.
          */
-        $itemQuery = OrderItem::query()
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->whereNull('orders.deleted_at')
-            ->whereIn('orders.status', self::REVENUE_STATUSES);
+        /*
+         * DemoSeed::exclude() is told `orders` explicitly, not left to infer
+         * the table from the model. This builder's model is OrderItem, so the
+         * default would qualify the subquery against `order_items.id` and
+         * suppress whichever LINE happened to share an id with a demo order —
+         * quietly deleting real units from a real product's row. The demo
+         * marker is on the ORDER, so the column compared has to be `orders.id`.
+         */
+        $itemQuery = DemoSeed::exclude(
+            OrderItem::query()
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->whereNull('orders.deleted_at')
+                ->whereIn('orders.status', self::REVENUE_STATUSES),
+            Order::class,
+            'orders',
+        );
 
         $unitsSold = (int) ((clone $itemQuery)
             ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as units')
@@ -1020,6 +1170,8 @@ class AdminController extends Controller
             'revenue_statuses'  => array_values(self::REVENUE_STATUSES),
             'status_breakdown'  => $status,
             'top_products'      => $top,
+            'timezone'          => StoreTime::zone(),
+            'demo'              => DemoSeed::disclosure(),
         ]);
     }
 
@@ -1140,6 +1292,22 @@ class AdminController extends Controller
      */
     public const SETTING_RULES = [
         'store_name' => ['text', 'Store name'],
+
+        /*
+         * The shop's own wall clock, read by App\Support\StoreTime.
+         *
+         * A SETTING and not a constant, and deliberately NOT `APP_TIMEZONE`.
+         * This value decides how stored instants are DISPLAYED — the
+         * dashboard's "today", each bar of the 14-day chart, the date on an
+         * invoice. It never changes what is stored, which stays UTC; flipping
+         * `config('app.timezone')` instead would reinterpret every historical
+         * timestamp in the store rather than converting it. StoreTime's header
+         * has the full reasoning and a test pins the distinction.
+         *
+         * `tz` and not `enum`: a curated list would be one more place to be
+         * out of date, and the tz database is the authoritative answer.
+         */
+        'store_timezone' => ['tz', 'Time zone'],
 
         // Currency display (Store -> Business Details -> Currency). Every one of
         // these has to be here or Save reports success and writes nothing.
@@ -1334,6 +1502,20 @@ class AdminController extends Controller
                 return in_array($value, (array) $extra, true)
                     ? $ok($value)
                     : $no("“{$label}” must be one of: " . implode(', ', (array) $extra) . '.');
+
+            case 'tz':
+                /*
+                 * An IANA timezone identifier, checked against the tz database
+                 * itself rather than a list kept here. "Dubai" and "GMT+4" are
+                 * both refused: the first is not an identifier, and the second
+                 * is a fixed offset that would be wrong for half the year in
+                 * any zone that observes DST. The message names the shape
+                 * rather than listing four hundred identifiers at somebody who
+                 * mistyped one.
+                 */
+                return StoreTime::isValidZone($value) && (str_contains($value, '/') || $value === 'UTC')
+                    ? $ok($value)
+                    : $no("“{$label}” must be a timezone name like Asia/Dubai.");
 
             case 'code':
                 $len = (int) $extra;
@@ -1566,7 +1748,15 @@ class AdminController extends Controller
         $real = Order::REAL_STATUSES;
         $marks = implode(',', array_fill(0, count($real), '?'));
 
-        $agg = Order::select('customer_id')
+        /*
+         * Demo orders are excluded here too, and it has to be here and not only
+         * on the dashboard: a demo customer's lifetime spend is invented money
+         * against an invented person, and the dashboard's revenue tile and this
+         * screen's column are the two figures the owner is most likely to add
+         * up by hand and expect to reconcile.
+         */
+        $agg = DemoSeed::exclude(Order::query(), Order::class)
+            ->select('customer_id')
             ->selectRaw('count(*) as n')
             ->selectRaw("coalesce(sum(case when status in ($marks) then total else 0 end), 0) as s", $real)
             ->groupBy('customer_id')->get()->keyBy('customer_id');
@@ -1595,7 +1785,24 @@ class AdminController extends Controller
             ->groupBy('customer_id')
             ->map(fn ($group) => trim((string) $group->first()->state));
 
-        $rows = Customer::orderByDesc('id')->get()->map(function (Customer $c) use ($agg, $emirates) {
+        /*
+         * FIGURES EXCLUDE DEMO ROWS; LISTS SHOW THEM AND SAY SO.
+         *
+         * This is a list, and the entire point of Demo Content is to put rows
+         * on screens so the panel can be explored before real data exists —
+         * hiding them would break the feature it is meant to serve. So the demo
+         * customers stay, carrying `is_demo`, and the screen badges them.
+         *
+         * Their spend column is nevertheless computed from real orders only
+         * (see $agg above), so a demo row reads AED 0 next to its badge rather
+         * than contributing invented money to a column an owner might add up.
+         * The dashboard's customer COUNT — a figure, not a list — leaves them
+         * out entirely, and `demo` below is what lets this screen explain the
+         * difference instead of the owner discovering it.
+         */
+        $demoCustomerIds = DemoSeed::idsFor(Customer::class);
+
+        $rows = Customer::orderByDesc('id')->get()->map(function (Customer $c) use ($agg, $emirates, $demoCustomerIds) {
             $a = $agg->get($c->id);
             return [
                 'id'         => $c->id,
@@ -1605,11 +1812,19 @@ class AdminController extends Controller
                 'emirate'    => $emirates[$c->id] ?? null,
                 'orders'     => $a ? (int) $a->n : 0,
                 'spent_aed'  => $a ? (int) round(($a->s ?? 0) / 100) : 0,
-                'created_at' => $c->created_at,
+                'is_demo'    => isset($demoCustomerIds[$c->id]),
+                // Shop-local and offset-carrying, for the same reason as
+                // the dashboard's recent feed: the screen slices the first
+                // ten characters off this string.
+                'created_at' => StoreTime::iso($c->created_at),
             ];
         });
 
-        return response()->json(['customers' => $rows]);
+        return response()->json([
+            'customers' => $rows,
+            'timezone'  => StoreTime::zone(),
+            'demo'      => DemoSeed::disclosure(),
+        ]);
     }
 
     /**

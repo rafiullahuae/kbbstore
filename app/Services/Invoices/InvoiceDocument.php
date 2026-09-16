@@ -7,6 +7,7 @@ namespace App\Services\Invoices;
 use App\Models\Order;
 use App\Services\SettingsService;
 use App\Support\Money;
+use App\Support\StoreTime;
 use App\Support\VatDisplay;
 
 /**
@@ -87,9 +88,20 @@ class InvoiceDocument
             'orderStatus' => (string) $order->status,
             'invoiceNumber' => $invoiceNumber,
             'invoiceReference' => $invoiceNumber === null ? '' : InvoiceNumbers::format($invoiceNumber),
-            'invoicedAt' => optional($order->invoiced_at)->format('j F Y') ?: '',
-            'placedAt' => optional($order->created_at)->format('j F Y') ?: '',
-            'paidAt' => optional($order->paid_at)->format('j F Y') ?: '',
+            /*
+             * Dated on the SHOP'S clock, not on UTC.
+             *
+             * These were `->format('j F Y')` on the Eloquent cast, and that
+             * cast is in `config('app.timezone')`, which is UTC. An order
+             * placed at 01:30 in Dubai is stored as 21:30 the previous day, so
+             * its invoice — the document the customer keeps and the tax
+             * authority may read — was dated a day early. StoreTime converts
+             * the stored instant for display; it does not reinterpret it, and
+             * there is a test pinning that distinction.
+             */
+            'invoicedAt' => StoreTime::formatDate($order->invoiced_at),
+            'placedAt' => StoreTime::formatDate($order->created_at),
+            'paidAt' => StoreTime::formatDate($order->paid_at),
 
             'seller' => $this->seller(),
             'billTo' => $this->address($order->billing_address),
