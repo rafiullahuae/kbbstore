@@ -391,6 +391,14 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // admin, its search, and what each image is used by before deleting it.
         require __DIR__.'/media-library-admin.php';
 
+        // Content → Media Library → "Make phone-sized copies": the tally, and
+        // the bounded batch that walks the existing catalogue making the
+        // smaller copies a phone actually downloads. Same group and the same
+        // reason as the media library itself — it reads and writes files under
+        // the web root. Its paths sit under admin-api/media, so the capability
+        // map's existing content.manage entry covers them.
+        require __DIR__.'/image-sizes-admin.php';
+
         // Content → HTML Blocks: reusable snippets placed into pages and posts
         // with [kbb_block slug="…"].
         require __DIR__.'/html-blocks-admin.php';
