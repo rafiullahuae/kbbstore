@@ -174,33 +174,43 @@ const NOT_IN_NAV = ['console'];
 
 /*
  * DEAD_ANCHORS — fallback anchors that name a sidebar row which has never
- * existed. Harmless only for as long as the SAME chain also reaches a row that
- * is in NAV, which the guard below re-checks rather than assumes.
+ * existed, or no longer does. Harmless only for as long as the SAME chain also
+ * reaches a row that is in NAV, which the guard below re-checks rather than
+ * assumes.
  *
- * Listed rather than fixed because category-tree-screen.blade.php belongs to
- * another lane. It reads `[data-go="catalog"] || [data-go="products"]`; there
- * has never been a 'products' entry in this console, so the second half has
- * always been decoration. It reads like a working fallback, which is the only
- * reason it is worth writing down: the next person to rename 'catalog' will
- * believe there is a net under them.
+ * This list had three entries and has one. It shrank because the thing it was
+ * describing got fixed: the audit's recommendation was one shared helper
+ * instead of five hand-rolled copies of the same anchor lookup, and
+ * kbbAddNavEntry() in app.blade.php is that helper. A dead anchor used to be
+ * worth writing down because it READ like a net when there was none under it.
+ * The helper is a real net — the named group, then the sidebar root, and a
+ * console error naming the screen if it gets that far — so an anchor that
+ * exists only for decoration is now simply deleted where it is found.
+ *
+ *   'category-tree' => ['products']   dropped: the partial calls the helper
+ *   'brands-manager' => ['products']  dropped: the partial calls the helper
+ *
+ * Neither ever matched anything; there has never been a 'products' row in this
+ * console. brands-editor had inherited it by being modelled on category-tree,
+ * which is what made the pattern, not the two files, the thing to fix.
  */
 const DEAD_ANCHORS = [
-    'category-tree' => ['products'],
-
-    // And already copied once: brands-editor-screen.blade.php, which landed
-    // after this audit began, anchors `category-tree || catalog || products`.
-    // The live half is 'catalog', so the screen appears; the third is the same
-    // decoration inherited from the file it was modelled on. Worth recording
-    // precisely because it spread — the pattern is what needs fixing, in one
-    // shared helper, not each copy of it.
-    'brands-manager' => ['products'],
-
-    // Created by the coupon fix itself, and worth knowing about. The editor
-    // anchors `coupon-usage || order-new || orders`; making the usage screen's
-    // registration inert turned the FIRST link of that chain into a dead one.
-    // Nothing breaks — 'orders' is in NAV and the editor still lands beside it
-    // — but the editor no longer sits where the comment above it says it does,
-    // and the next person to read that chain will believe it does.
+    /*
+     * The one that stays, and only because this lane may not touch the file
+     * that would fix it.
+     *
+     * coupon-editor-screen.blade.php is owned by another lane right now (it is
+     * being redesigned), so its registration is still hand-rolled and still
+     * reads `coupon-usage || order-new || orders`. 'coupon-usage' went dead
+     * when the coupon fix made the usage screen's own registration inert — the
+     * fix created this entry. Nothing breaks: 'orders' is in NAV, and the
+     * chain's live half still puts the editor beside it.
+     *
+     * The replacement call is written out in the lane report for the
+     * integrator to apply; when it lands, `after` becomes
+     * ['order-new', 'orders'] and this entry goes with it. The honesty guard
+     * below fails the moment that happens, so it cannot be forgotten.
+     */
     'coupon-editor' => ['coupon-usage'],
 ];
 
@@ -349,12 +359,57 @@ function navAuditEntries(): array
          * inside the coupon editor instead. Reading it as a row would give the
          * sidebar an entry with no label and no anchors — which is how this
          * check first reported it, and the report was wrong, not the code.
+         *
+         * A registration is live in one of two shapes now: the shared helper
+         * (`kbbAddNavEntry({...})`, the supported one) or the hand-rolled
+         * button a partial builds itself. Both are read here, because the
+         * point of every guard below is the sidebar the owner actually sees,
+         * and during the conversion both shapes are in the tree at once.
          */
-        if (! str_contains($body, 'nav-item')) {
+        $usesHelper = str_contains($body, 'kbbAddNavEntry(');
+        if (! $usesHelper && ! str_contains($body, 'nav-item')) {
             continue;
         }
 
         preg_match("/var SCREEN\s*=\s*'([^']+)'/", $p, $id);
+
+        if ($usesHelper) {
+            /*
+             * The helper's options object says everything this audit needs,
+             * in one place and in the partial's own words:
+             *
+             *   screen  the row's id (normally the SCREEN constant)
+             *   label   what the owner reads
+             *   group   the NAV section it joins — never one it invents
+             *   after   preferred anchor id, or an ordered list of them
+             */
+            $call = navAuditBlock($body, strpos($body, 'kbbAddNavEntry('), '{', '}');
+
+            preg_match("/screen:\s*'([^']+)'/", $call, $screenLit);
+            preg_match("/label:\s*'((?:[^'\\\\]|\\\\.)*)'/", $call, $label);
+            preg_match("/group:\s*'([^']+)'/", $call, $group);
+
+            // `after` is one id or an ordered array of them; both reduce to a
+            // list, which is what every anchor guard below already expects.
+            $anchors = [];
+            if (preg_match("/after:\s*(\[[^\]]*\]|'[^']*')/", $call, $after)) {
+                preg_match_all("/'([a-z0-9-]+)'/i", $after[1], $ids);
+                $anchors = $ids[1];
+            }
+
+            $out[] = [
+                'id' => $screenLit[1] ?? ($id[1] ?? ''),
+                'label' => html_entity_decode($label[1] ?? '', ENT_QUOTES | ENT_HTML5),
+                'group' => $group[1] ?? '',
+                'source' => 'partials/'.$partial.'.blade.php',
+                'visible_group' => true,
+                'anchors' => array_values(array_unique($anchors)),
+                'helper' => true,
+            ];
+
+            continue;
+        }
+
         preg_match("/<span>(.*?)<\/span>/", $body, $label);
         preg_match_all('/\[data-go="([a-z0-9-]+)"\]/', $body, $anchors);
         preg_match('/nav-group\[data-sec="([^"]+)"\]/', $p, $group);
@@ -366,6 +421,7 @@ function navAuditEntries(): array
             'source' => 'partials/'.$partial.'.blade.php',
             'visible_group' => true,
             'anchors' => array_values(array_unique($anchors[1])),
+            'helper' => false,
         ];
     }
 
@@ -624,11 +680,12 @@ it('keeps the ALIASED_SCREENS allowlist honest', function () {
 
 it('never lets a screen drop out of the sidebar because an anchor was renamed', function () {
     /*
-     * FOUND BY THE AUDIT, not by a failure. Every self-registering partial ends
-     * its anchor lookup with `if (!anchor) return;`. Rename one NAV entry and
-     * the screen anchored to it stops appearing — no error, no console warning,
-     * nothing. The owner cannot tell that from the screen never having shipped,
-     * which is exactly the conclusion they drew about the coupon editor.
+     * FOUND BY THE AUDIT, not by a failure. Every self-registering partial used
+     * to end its anchor lookup with `if (!anchor) return;`. Rename one NAV
+     * entry and the screen anchored to it stops appearing — no error, no
+     * console warning, nothing. The owner cannot tell that from the screen
+     * never having shipped, which is exactly the conclusion they drew about
+     * the coupon editor.
      *
      * The guard: each partial's anchor chain must contain at least one id that
      * is in NAV. Not merely one that happens to exist — an id injected by
@@ -636,6 +693,14 @@ it('never lets a screen drop out of the sidebar because an anchor was renamed', 
      * chain resting on one is an ordering accident. coupon-editor anchors on
      * 'coupon-usage' (injected) and that is fine, because the chain also
      * reaches 'orders', which is in NAV and always there.
+     *
+     * kbbAddNavEntry() (section 7) changed the CONSEQUENCE, not the rule. A
+     * row registered through the helper no longer vanishes when its anchors
+     * go: it falls back to the group it names, then to the sidebar itself, and
+     * reports. A row still registered by hand does vanish. So the report below
+     * says which of the two a given screen is facing — both are bugs, and
+     * calling the milder one "vanishes" would be the kind of message that
+     * teaches a reader to distrust the test.
      */
     $navIds = [];
     foreach (navAuditEntries() as $e) {
@@ -653,16 +718,19 @@ it('never lets a screen drop out of the sidebar because an anchor was renamed', 
         $inNav = array_values(array_intersect($e['anchors'], $navIds));
         if ($inNav === []) {
             $fragile[] = sprintf(
-                "  %-16s [%s]\n      anchors on %s — none of which is in NAV, so this row exists only by @include order",
+                "  %-16s [%s]\n      anchors on %s — none of which is in NAV, so this row exists only by @include order\n      consequence: %s",
                 $e['id'],
                 $e['source'],
-                $e['anchors'] === [] ? '(nothing)' : implode(', ', $e['anchors'])
+                $e['anchors'] === [] ? '(nothing)' : implode(', ', $e['anchors']),
+                ($e['helper'] ?? false)
+                    ? "registered through kbbAddNavEntry(), so the row survives — it lands at the end of the '".$e['group']."' group instead of where it means to be, and the console says so"
+                    : 'registered by hand, so the row is GONE from the sidebar with no error anywhere'
             );
         }
     }
 
     expect($fragile === [])->toBeTrue(
-        count($fragile)." screen(s) can vanish from the sidebar without an error:\n".implode("\n", $fragile)."\n"
+        count($fragile)." screen(s) rest on an anchor that is not in NAV, so renaming one row moves or removes another:\n".implode("\n", $fragile)."\n"
     );
 });
 
@@ -898,25 +966,344 @@ it('gives the Catalog group a real .nav-group for the two screens that inject in
     }
 });
 
-it('never lets the product editor answer a missing anchor by disappearing', function () {
-    // The one injecting partial this lane owns. The rest still end in
-    // `if (!anchor) return;` and are named in the lane report.
-    $pe = navAuditPartialSrc('product-editor-screen');
-    $body = navAuditBlock($pe, strpos($pe, 'function addNavEntry()'));
+/* ─── 7. one shared helper, and no partial left registering by hand ───
+ *
+ * Written by the lane that built kbbAddNavEntry(). Section 5 above found the
+ * weakness and could only describe it: five partials, five copies of "find an
+ * anchor, build a button, insert it", and five copies of `if (!anchor) return;`
+ * — so renaming ONE row in NAV silently removed a DIFFERENT screen from the
+ * menu. Three of the five chains had already drifted onto anchors that do not
+ * exist, and nothing anywhere said so.
+ *
+ * The fix is one helper in app.blade.php that every partial calls. These
+ * guards are what stop the five copies coming back one file at a time.
+ */
 
-    // Comments stripped: the body explains the bug by quoting the line that
-    // caused it, and a bare substring match reads its own explanation as a
-    // relapse.
+/*
+ * HAND_ROLLED_PENDING — partials that still build their own sidebar row
+ * because THIS lane may not edit them, not because hand-rolling is allowed.
+ * Each is being redesigned by another lane right now, so a conflicting edit
+ * here would be thrown away.
+ *
+ * The value is the replacement call, verbatim. It is written down rather than
+ * described so the integrator can paste it in without re-deriving the group
+ * and the anchor chain, and so that a reader can see exactly how much of each
+ * body is the same four lines as every other one.
+ *
+ * The honesty guard below fails the moment one of these is converted, so the
+ * entry cannot outlive the reason for it.
+ */
+const HAND_ROLLED_PENDING = [
+    'coupon-editor-screen' => "window.kbbAddNavEntry({screen: SCREEN, label: 'Coupons', icon: <the existing path markup>, group: 'Store', after: ['order-new', 'orders']}) — then keep the two lines that remove the old 'coupon-usage' row, which the helper does not do",
+    'manual-order-screen' => "window.kbbAddNavEntry({screen: SCREEN, label: 'New Order', icon: <the existing path markup>, group: 'Store', after: 'orders'})",
+];
+
+/** kbbAddNavEntry()'s body with comments stripped. */
+function navAuditHelperCode(): string
+{
+    static $code = null;
+    if ($code !== null) {
+        return $code;
+    }
+
+    $body = navAuditFn('kbbAddNavEntry');
+
+    // The helper's own comments quote `if (!anchor) return;` to explain what it
+    // replaced. A bare substring match would read that explanation as a relapse.
     $code = (string) preg_replace('#/\*.*?\*/#s', ' ', $body);
     $code = (string) preg_replace('#//[^\n]*#', ' ', $code);
 
-    expect(preg_match('/if \(!anchor\) return;/', $code))
-        ->toBe(0, 'the product editor can silently leave the sidebar again');
+    return $code;
+}
 
-    expect(str_contains($body, '.nav-group[data-sec="Catalog"] .nav-sub'))
-        ->toBeTrue('the product editor lost its fallback into the Catalog group');
+/** Partial name (no .blade.php) for an entry's source file. */
+function navAuditPartialOf(array $entry): string
+{
+    return str_replace(['partials/', '.blade.php'], '', $entry['source']);
+}
 
-    expect(str_contains($body, "querySelector('#nav')"))
-        ->toBeTrue('the product editor lost its last-resort append — visible and wrong beats invisible');
+it('gives the console one shared way to add a sidebar row', function () {
+    $code = navAuditHelperCode();
+
+    expect($code)->not->toBe('', 'app.blade.php no longer declares kbbAddNavEntry() — every partial is back to hand-rolling its own sidebar row');
+
+    expect(str_contains(navAuditSrc(), 'window.kbbAddNavEntry = kbbAddNavEntry;'))
+        ->toBeTrue('kbbAddNavEntry is not on window, so the partials — which run in their own IIFEs — cannot reach it');
+
+    // It builds the row, and only the row.
+    expect(substr_count($code, 'createElement('))
+        ->toBe(1, 'kbbAddNavEntry builds more than one element. It may build the row button and nothing else: a group invented here would be a second place that decides the sidebar shape, and NAV, TITLES and the breadcrumbs would all still be using the first one.');
+
+    expect(str_contains($code, "createElement('button')"))
+        ->toBeTrue('kbbAddNavEntry no longer builds a <button>, so an injected row is a different element from a built-in one and .nav-item styling and the go() click wiring will not match it');
+
+    expect(str_contains($code, "b.className = 'nav-item'"))
+        ->toBeTrue('kbbAddNavEntry no longer gives the row the nav-item class, so an injected row will not look like a sidebar row');
+
+    // Drawn with ic(), the same helper navItemHTML() uses. This is the whole
+    // point of having one function: the icon markup is not copied five times.
+    expect(str_contains($code, 'ic(o.icon'))
+        ->toBeTrue('kbbAddNavEntry no longer draws its icon with ic(), so an injected row and a NAV row are two copies of the icon markup again, free to drift');
+
+    // It JOINS a group; it never makes one.
+    expect(str_contains($code, '.nav-group[data-sec="\' + o.group + \'"] .nav-sub'))
+        ->toBeTrue('kbbAddNavEntry no longer looks up the group a row names, so `group` does nothing and every injected row lands wherever its anchor happens to be');
+});
+
+it('refuses to add the same sidebar row twice', function () {
+    /*
+     * Every partial registers on DOMContentLoaded AND immediately if it loaded
+     * after that event, so the second call is the normal path, not a fault. If
+     * the helper stopped checking, the owner would get two identical rows —
+     * which is the shape of the original complaint, two entries where one
+     * screen was meant.
+     */
+    $code = navAuditHelperCode();
+
+    $look = strpos($code, '[data-go="\' + screen');
+    $make = strpos($code, 'createElement(');
+
+    expect($look !== false)->toBeTrue('kbbAddNavEntry never looks for an existing row with this screen id');
+    expect($make !== false && $look < $make)
+        ->toBeTrue('kbbAddNavEntry builds the row before checking whether the sidebar already has one, so a partial that registers twice adds the row twice');
+
+    // Scoped to the sidebar: a screen may draw its own [data-go] buttons inside
+    // #content, and those are links, not rows. Matching one of those would make
+    // the registration a no-op and the screen would have no row at all.
+    expect(str_contains($code, 'nav.querySelector(\'[data-go="\' + screen'))
+        ->toBeTrue('the duplicate check is no longer scoped to #nav, so a [data-go] button drawn inside a screen counts as a sidebar row and the real row is never added');
+});
+
+it('makes the helper report, not return silently, when it cannot place a row', function () {
+    /*
+     * THE POINT OF THE WHOLE EXERCISE.
+     *
+     * `if (!anchor) return;` did not fail — it succeeded at doing nothing. No
+     * error, no warning, no row. The owner cannot tell that from a screen that
+     * never shipped, and twice concluded exactly that.
+     *
+     * So every path out of this helper that does not leave a row in the sidebar
+     * must say so, naming the screen, and the two degraded placements (wrong
+     * section, or pinned to the bottom) must say so too.
+     */
+    $code = navAuditHelperCode();
+
+    // 1. Nothing returns null without reporting first.
+    $chunks = explode('return null;', $code);
+    array_pop($chunks);   // the text after the last one
+
+    expect($chunks)->not->toBeEmpty('kbbAddNavEntry no longer has a give-up path at all — if it cannot return null it is swallowing something else instead');
+
+    foreach ($chunks as $i => $before) {
+        expect(str_contains(substr($before, -500), 'console.error('))
+            ->toBeTrue(sprintf(
+                'kbbAddNavEntry has a `return null;` (#%d) with no console.error before it. That is the silent `if (!anchor) return;` this helper exists to replace: a screen leaves the sidebar and nothing anywhere says so.',
+                $i + 1
+            ));
+    }
+
+    // 2. Both degraded placements report as well. Four reports: no screen id,
+    //    no #nav, group missing, nothing found at all.
+    expect(substr_count($code, 'console.error('))
+        ->toBeGreaterThanOrEqual(4, 'kbbAddNavEntry lost one of its reports. A row that landed in the wrong section, or got pinned to the bottom of the sidebar because its group is gone, is a failure the owner can see but not explain — the console error is the explanation.');
+
+    // 3. Every report names the screen. "Could not place a row" is not
+    //    actionable; "could not place product-editor" is.
+    preg_match_all('/console\.error\((.*?)\);/s', $code, $m);
+    foreach ($m[1] as $arg) {
+        expect(str_contains($arg, 'screen'))
+            ->toBeTrue('a kbbAddNavEntry console.error does not name the screen it is about, so the message says something is wrong without saying which screen is missing: '.trim(substr($arg, 0, 90)));
+    }
+
+    $named = 0;
+    foreach ($m[1] as $arg) {
+        if (str_contains($arg, "' + screen + '")) {
+            $named++;
+        }
+    }
+    expect($named)->toBeGreaterThanOrEqual(3, 'kbbAddNavEntry stopped interpolating the screen id into its reports — the messages no longer name the screen that went missing');
+
+    // 4. And the last resort still ADDS the row. Reporting a failure is not a
+    //    licence to leave the screen unreachable: visible and wrong beats
+    //    invisible, which is the rule the product editor was fixed under.
+    expect(str_contains($code, 'nav.appendChild(b)'))
+        ->toBeTrue('kbbAddNavEntry lost its last-resort placement. A screen whose group and anchors are all gone is now invisible again, which is the bug, not the fix.');
+});
+
+it('registers every sidebar row through the one shared helper', function () {
+    $offenders = [];
+
+    foreach (navAuditEntries() as $e) {
+        if ($e['source'] === 'NAV in app.blade.php' || ($e['helper'] ?? false)) {
+            continue;
+        }
+        if (array_key_exists(navAuditPartialOf($e), HAND_ROLLED_PENDING)) {
+            continue;
+        }
+
+        $offenders[] = sprintf(
+            "  %-16s [%s]\n      builds its own <button>, its own copy of the icon markup and its own anchor lookup",
+            $e['id'],
+            $e['source']
+        );
+    }
+
+    expect($offenders === [])->toBeTrue(
+        count($offenders)." partial(s) register a sidebar row by hand instead of calling kbbAddNavEntry():\n".
+        implode("\n", $offenders)."\n".
+        "Each hand-rolled copy is a place `if (!anchor) return;` can come back, and a place the icon markup and the class name can drift.\n"
+    );
+});
+
+it('keeps the HAND_ROLLED_PENDING allowlist honest', function () {
+    // The allowlist exists because another lane owns those files today. The
+    // moment one is converted the entry is a lie about the tree, and a reader
+    // would believe there is still a hand-rolled registration to fix.
+    $byPartial = [];
+    foreach (navAuditEntries() as $e) {
+        if ($e['source'] !== 'NAV in app.blade.php') {
+            $byPartial[navAuditPartialOf($e)] = $e;
+        }
+    }
+
+    foreach (HAND_ROLLED_PENDING as $partial => $replacement) {
+        expect($byPartial)->toHaveKey($partial);
+
+        expect(($byPartial[$partial]['helper'] ?? false) === false)
+            ->toBeTrue("HAND_ROLLED_PENDING still lists '{$partial}', but it calls kbbAddNavEntry() now — drop the entry, and drop its DEAD_ANCHORS line with it");
+
+        expect(str_contains($replacement, 'kbbAddNavEntry('))
+            ->toBeTrue("HAND_ROLLED_PENDING lists '{$partial}' without the replacement call the integrator is supposed to apply");
+    }
+});
+
+it('leaves no partial answering a missing anchor by disappearing', function () {
+    /*
+     * The line itself, in any spelling. manual-order wrote it as
+     * `if (!orders) return;` and coupon-editor as `if (!anchor) return;`; they
+     * are the same bug with a different variable name, so this matches the
+     * shape rather than the word.
+     */
+    $silent = [];
+
+    foreach (navAuditPartials() as $partial) {
+        $p = navAuditPartialSrc($partial);
+        if (! str_contains($p, 'function addNavEntry()')) {
+            continue;
+        }
+
+        $body = navAuditBlock($p, strpos($p, 'function addNavEntry()'));
+
+        // Comments stripped: several of these bodies explain the bug by quoting
+        // the line that caused it, and a bare substring match reads an
+        // explanation as a relapse.
+        $code = (string) preg_replace('#/\*.*?\*/#s', ' ', $body);
+        $code = (string) preg_replace('#//[^\n]*#', ' ', $code);
+
+        if (! preg_match('/if\s*\(\s*!\s*[A-Za-z_$][\w$]*\s*\)\s*return\s*;/', $code, $hit)) {
+            continue;
+        }
+        if (array_key_exists($partial, HAND_ROLLED_PENDING)) {
+            continue;
+        }
+
+        $silent[] = sprintf('  %-28s %s', $partial.':', trim($hit[0]));
+    }
+
+    expect($silent === [])->toBeTrue(
+        count($silent)." partial(s) still answer a missing anchor by removing themselves from the sidebar, silently:\n".
+        implode("\n", $silent)."\n".
+        "Call kbbAddNavEntry() instead: it falls back to the group, then to the sidebar itself, and reports what it could not find.\n"
+    );
+});
+
+/*
+ * TAB_EXPLANATION_PENDING — partials that draw a tab strip and do not yet say
+ * what the tabs are for, listed only because this lane may not edit the file.
+ * The value is the sentence to add, written out so the integrator can paste it
+ * rather than invent a second answer to the owner's question.
+ */
+const TAB_EXPLANATION_PENDING = [
+    'coupon-editor-screen' => 'Three tabs, one coupon: nothing is saved until you press Save, whichever tab you are looking at. <b>General</b> is the code itself, what it takes off and when it expires; <b>Usage restriction</b> is what it may be spent on — a minimum spend, particular products or categories; <b>Usage limits</b> is how many times it may be redeemed in total and per customer. A rule set on a tab you are not looking at still applies.',
+];
+
+it('says on the page what a partial screen\'s tabs are for, too', function () {
+    /*
+     * THE OWNER'S QUESTION AGAIN, one directory over.
+     *
+     * The two guards in section 6 read app.blade.php, because that is where
+     * the twelve tab strips they were written for live. Screens that ship as
+     * their own partial were simply not looked at, and both of the tab strips
+     * down here turned out to be bare — the gap was invisible rather than
+     * absent, which is the same failure mode in the audit itself.
+     *
+     * A tab strip is a <div class="…-tabs"> whose buttons carry data-tab. The
+     * explanation is `ectabs-hint`, the caption class the console already uses
+     * for this, so an explained strip looks the same wherever it is.
+     */
+    $bare = [];
+
+    foreach (navAuditPartials() as $partial) {
+        $p = navAuditPartialSrc($partial);
+
+        if (! preg_match('/class="[a-z0-9-]*tabs"/', $p) || ! str_contains($p, 'data-tab="')) {
+            continue;
+        }
+        if (str_contains($p, 'ectabs-hint')) {
+            continue;
+        }
+        if (array_key_exists($partial, TAB_EXPLANATION_PENDING)) {
+            continue;
+        }
+
+        $bare[] = sprintf('  %s draws a tab strip and never says what the tabs are, or why they are one screen', $partial);
+    }
+
+    expect($bare === [])->toBeTrue(
+        count($bare)." partial screen(s) show the owner a row of tab names and no explanation:\n".
+        implode("\n", $bare)."\n".
+        "Add a <p class=\"ectabs-hint\"> under the strip, the same device the explained screens in app.blade.php use.\n"
+    );
+});
+
+it('keeps the TAB_EXPLANATION_PENDING allowlist honest', function () {
+    foreach (TAB_EXPLANATION_PENDING as $partial => $sentence) {
+        $p = navAuditPartialSrc($partial);
+
+        expect(preg_match('/class="[a-z0-9-]*tabs"/', $p))
+            ->toBe(1, "TAB_EXPLANATION_PENDING lists '{$partial}', which draws no tab strip any more — drop the entry");
+
+        expect(str_contains($p, 'ectabs-hint'))
+            ->toBeFalse("TAB_EXPLANATION_PENDING still lists '{$partial}', but it explains its tabs now — drop the entry");
+
+        expect(strlen($sentence) > 120)
+            ->toBeTrue("TAB_EXPLANATION_PENDING gives '{$partial}' no usable sentence, so the entry records a gap without closing it");
+    }
+});
+
+it('keeps the product editor out of the sidebar only over its own dead body', function () {
+    /*
+     * Kept from the lane that first fixed this one file, now expressed against
+     * the helper the fix moved into. The ladder it describes — preferred
+     * anchor, then the Catalog group, then the sidebar root — is no longer
+     * written in product-editor-screen.blade.php; it is written once, in
+     * kbbAddNavEntry(), and this is what pins it there.
+     */
+    $pe = navAuditPartialSrc('product-editor-screen');
+    $body = navAuditBlock($pe, strpos($pe, 'function addNavEntry()'));
+
+    expect(str_contains($body, 'kbbAddNavEntry('))
+        ->toBeTrue('the product editor hand-rolls its sidebar row again');
+
+    expect(str_contains($body, "group:  'Catalog'") || str_contains($body, "group: 'Catalog'"))
+        ->toBeTrue('the product editor no longer names the Catalog group, so it can land in the Store group beside Orders again — which is not what it is');
+
+    $code = navAuditHelperCode();
+
+    expect(str_contains($code, 'sub.appendChild(b)'))
+        ->toBeTrue('kbbAddNavEntry lost its fallback into the named group, so a renamed anchor moves the row out of the section its own breadcrumb claims');
+
+    expect(str_contains($code, 'nav.appendChild(b)'))
+        ->toBeTrue('kbbAddNavEntry lost its last-resort append — visible and wrong beats invisible');
 });
 
