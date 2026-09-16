@@ -5655,7 +5655,13 @@ function renderPlaceholder(id){
       rather than rendering an empty iframe. A blank screen reads as "the
       software is broken"; this cannot go blank either way.
    ========================================================================== */
-const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads']);
+/* 'rev-settings' is here for the same reason as the rest (Lane BB): it is
+   rendered for real, by admin/partials/review-settings-screen.blade.php at the
+   foot of this file. Without this entry mountFrame() would probe for
+   kbb-admin-reviews-settings.html -- a file this repo has never shipped -- on
+   every single visit, and paint the not-built card a moment before the live
+   screen overwrote it. */
+const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts','store-settings','quiz-leads','rev-settings']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -13762,6 +13768,17 @@ buildNav();
      mock whose controls all call toast('… (preview)') — it is a separate screen
      on its own routes (routes/product-editor-admin.php). --}}
 @include('admin.partials.product-editor-screen')
+
+{{-- Reviews -> Review Settings (Lane BB). Same arrangement as the screens
+     above: its own file and its own wrapper around window.go.
+
+     It adds NO sidebar entry, unlike the four above it — 'rev-settings' is
+     already in the NAV const and in TITLES, and a second button would give the
+     owner two. It only takes over the route, which until now rendered the
+     "isn't installed yet" card for kbb-admin-reviews-settings.html, a
+     standalone file this repo has never shipped. The id is also added to
+     LIVE_RENDERED further up, which is the other half of that takeover. --}}
+@include('admin.partials.review-settings-screen')
 
 @verbatim
 </body>

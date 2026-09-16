@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Review;
+use App\Services\SettingsService;
+use App\Support\ReviewSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -23,9 +25,19 @@ use Illuminate\Validation\Rule;
  */
 class ReviewController extends Controller
 {
+    /**
+     * The HARD ceiling on uploads per submission. Not a default and not
+     * settable: `sr_max_photos` may only tighten it, so the owner cannot turn
+     * an upload form into free disk space by typing a big number into a box.
+     * App\Support\ReviewSettings::PHOTO_CEILING mirrors this value.
+     */
     private const MAX_PHOTOS = 6;
+
     private const CAPTCHA_TTL_MINUTES = 15;
+
     private const MAX_VOTES_PER_HOUR = 60;
+
+    public function __construct(private SettingsService $settings) {}
 
     /**
      * A simple arithmetic question, answer carried in a signed, encrypted
@@ -47,13 +59,36 @@ class ReviewController extends Controller
 
     public function submit(Request $request): JsonResponse
     {
+        /*
+         * `sr_allow_submit` is now enforced HERE and not only in the markup.
+         *
+         * reviews.blade.php has consulted this key since the section was
+         * ported: false hides the "Write a Review" button and the whole submit
+         * sheet. Nothing enforced it on the way in, so the endpoint went on
+         * accepting anything posted straight at it — an owner who turned
+         * submissions off got a page that looked closed and a queue that kept
+         * filling. The setting had a reader and no teeth; this is the teeth.
+         *
+         * 403 before the rate limiter, the honeypot and the captcha, because
+         * when submissions are off there is nothing to measure, spend or check.
+         */
+        if (! ReviewSettings::get($this->settings, 'sr_allow_submit')) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Reviews are not being accepted at the moment.',
+            ], 403);
+        }
+
         // Rate-limited by IP before anything else runs — five submissions an
         // hour is generous for a genuine shopper and a real ceiling for a
         // script. Keyed on the IP alone, not the product, so someone cannot
-        // route around it by reviewing a different product each time.
+        // route around it by reviewing a different product each time. The
+        // number is `sr_rate_limit`, whose default IS five, clamped to 1..50
+        // by the schema so the control cannot be used to remove the limit.
         $key = 'review-submit:' . $request->ip();
+        $perHour = (int) ReviewSettings::get($this->settings, 'sr_rate_limit');
 
-        if (RateLimiter::tooManyAttempts($key, 5)) {
+        if (RateLimiter::tooManyAttempts($key, $perHour)) {
             return response()->json([
                 'ok' => false,
                 'error' => 'Too many reviews submitted — please try again later.',
@@ -80,6 +115,27 @@ class ReviewController extends Controller
             return response()->json(['ok' => false, 'error' => $captchaError], 422);
         }
 
+        /*
+         * `sr_allow_photos` and `sr_max_photos`, the other two keys the view
+         * consulted and the server ignored.
+         *
+         * Photos off meant the file input was not rendered — and the upload
+         * loop below still moved anything posted as sr_photos[] into
+         * public/uploads/reviews. `sr_max_photos` was worse than inert: the
+         * form printed "up to {n}" from it while validation allowed
+         * self::MAX_PHOTOS regardless, so the page said 4 and the server took
+         * 6. Both are now the same number the shopper was shown.
+         *
+         * Off is `max:0`, not a skipped rule, so a submission carrying photos
+         * is REFUSED with the ordinary 422 rather than quietly accepted with
+         * the files dropped. Silently discarding what someone uploaded is how
+         * a shopper concludes the site ate their review.
+         */
+        $photosAllowed = (bool) ReviewSettings::get($this->settings, 'sr_allow_photos');
+        $photoMax = $photosAllowed
+            ? min(self::MAX_PHOTOS, (int) ReviewSettings::get($this->settings, 'sr_max_photos'))
+            : 0;
+
         $validated = $request->validate([
             // Visible products only, not `exists:products,id`. A bare exists
             // accepted any row in the table, so a draft or hidden product --
@@ -105,7 +161,7 @@ class ReviewController extends Controller
             'author_email' => ['required', 'string', 'max:120', new \App\Rules\StorefrontEmail],
             'title' => ['nullable', 'string', 'max:120'],
             'content' => ['required', 'string', 'max:5000'],
-            'sr_photos' => ['nullable', 'array', 'max:' . self::MAX_PHOTOS],
+            'sr_photos' => ['nullable', 'array', 'max:' . $photoMax],
             'sr_photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'], // 5MB each
         ]);
 
