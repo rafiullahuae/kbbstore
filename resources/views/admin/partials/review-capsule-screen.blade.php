@@ -52,8 +52,9 @@
           border-radius:var(--r,12px);padding:16px;min-width:0}
 .rcp-legend{font-weight:650;font-size:14px;margin:0 0 3px}
 .rcp-legend-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0 0 14px;max-width:80ch;line-height:1.5}
+.rcp-headrow{display:grid;gap:3px;min-width:0;padding:0 2px}
 .rcp-title{font-weight:650;font-size:15px;margin:0}
-.rcp-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:3px 0 0;max-width:80ch;line-height:1.5}
+.rcp-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0;max-width:78ch;line-height:1.5}
 
 .rcp-row{display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:center;
          padding:11px 0;border-top:1px solid var(--border,#e6e6e6);min-width:0}
@@ -362,10 +363,13 @@
 
     var html = '<div class="rcp-wrap">';
 
-    html += '<div class="rcp-card"><div>' +
-            '<h2 class="rcp-title">Rating Capsule</h2>' +
-            '<p class="rcp-sub">The star rating that sits above the price on every product page — whether ' +
-            'it is shown, where, and what goes in it.</p></div></div>';
+    /* The screen's own heading as a header ROW, not a bordered card. The bar
+       above #content already carries the name; a full-width card repeating it
+       pushed the preview below the fold on a phone. */
+    html += '<div class="rcp-headrow">' +
+            '<div class="rcp-title">Rating Capsule</div>' +
+            '<div class="rcp-sub">The star rating above the price on every product page — whether ' +
+            'it is shown, where, and what goes in it.</div></div>';
 
     if (banner) {
       html += '<div class="rcp-banner' + (banner.kind === 'ok' ? ' rcp-ok' : '') + '">' +

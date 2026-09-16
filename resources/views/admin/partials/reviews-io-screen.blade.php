@@ -65,8 +65,9 @@
           border-radius:var(--r,12px);padding:16px;min-width:0}
 .rio-legend{font-weight:650;font-size:14px;margin:0 0 3px}
 .rio-legend-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0 0 14px;max-width:80ch;line-height:1.5}
+.rio-headrow{display:grid;gap:3px;min-width:0;padding:0 2px}
 .rio-title{font-weight:650;font-size:15px;margin:0}
-.rio-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:3px 0 0;max-width:80ch;line-height:1.5}
+.rio-sub{color:var(--ink-soft,#6b7280);font-size:12.5px;margin:0;max-width:78ch;line-height:1.5}
 
 /* One row per control. At 560px they stack rather than squeezing the control
    to nothing. */
@@ -280,7 +281,11 @@
   };
 
   /* ----------------------------------------------------------------- data */
-  async function load(){
+  /* `keep` is set by the caller that has just put a message on screen it wants
+     to survive the refresh. Reloading the totals after an import used to clear
+     the banner that said the import had worked, so a successful import of three
+     thousand reviews ended with a report card and no sentence above it. */
+  async function load(keep){
     var mine = ++seq;
     busy = true;
     render();
@@ -290,7 +295,7 @@
       if (mine !== seq) return;
       data = body;
       if (body.timezone) form.timezone = body.timezone;
-      banner = null;
+      if (!keep) banner = null;
     } catch (e) {
       if (mine !== seq) return;
       data = null;
@@ -311,15 +316,39 @@
     return apiBase() + '/reviews-io/export' + q;
   }
 
+  /* THE CHOSEN FILE IS HELD HERE, NOT IN THE INPUT ELEMENT.
+
+     A File object stays valid for as long as anything references it; the
+     <input> that produced it does not. render() rewrites #content, which
+     replaces that input with a fresh one holding nothing, and a file input's
+     selection cannot be restored from script.
+
+     run() re-renders twice — once to disable the buttons and print "Working…",
+     once to draw the report — so by the time the report was on screen the input
+     was empty while the caption under it still showed the file name. The
+     documented sequence is CHECK first and then IMPORT, and the second press
+     answered "Choose a CSV file first." with the file name printed directly
+     above the message. Reproduced in Chromium: after Check, #rio-file.files.length
+     was 0 and .rio-name still read "import-sample.csv".
+
+     Holding the File itself costs nothing and survives any number of renders.
+     bind() re-arms the input on every render and writes here; the input remains
+     the only way to CHOOSE a file, it is simply no longer the only place the
+     choice is kept. */
+  var chosen = null;
+
   async function run(mode){
     var input = document.querySelector('#rio-file');
-    var file = input && input.files && input.files[0];
+    var file = (input && input.files && input.files[0]) || chosen;
 
     if (!file) {
       banner = {kind:'err', text:'Choose a CSV file first.'};
       render();
       return;
     }
+
+    chosen = file;
+    form.filename = file.name;
 
     working = true;
     banner = null;
@@ -344,7 +373,10 @@
           : 'Imported. The product pages and the star ratings are up to date.'
       };
       say(mode === 'check' ? 'File checked' : 'Reviews imported');
-      if (mode === 'import') load();
+      /* Cleared only after a real import. A checked file is still the file the
+         owner is about to import, and dropping it here would put the defect
+         above back one line lower down. */
+      if (mode === 'import') { chosen = null; form.filename = ''; load(true); }
     } catch (e) {
       /* A 422 from the importer IS a report -- "no rating column", the row
          rejections -- and is far more useful than the status code. It is shown
@@ -590,11 +622,14 @@
 
     var html = '<div class="rio-wrap">';
 
-    html += '<div class="rio-card"><div>' +
-            '<h2 class="rio-title">Review Import / Export</h2>' +
-            '<p class="rio-sub">Take your reviews out as a spreadsheet, or bring the ones from your old ' +
-            'WooCommerce shop in. Importing the same file twice will not duplicate anything.</p>' +
-            '</div></div>';
+    /* The screen's own heading as a header ROW, not a bordered card. The bar
+       above #content already carries the name; a full-width card repeating it
+       pushed the totals below the fold on a phone. */
+    html += '<div class="rio-headrow">' +
+            '<div class="rio-title">Review Import / Export</div>' +
+            '<div class="rio-sub">Take your reviews out as a spreadsheet, or bring the ones from your old ' +
+            'WooCommerce shop in. Importing the same file twice will not duplicate anything.</div>' +
+            '</div>';
 
     if (banner) {
       html += '<div class="rio-banner' + (banner.kind === 'ok' ? ' rio-ok' : '') + '">' +
@@ -632,9 +667,11 @@
         /* NEVER render() from here. A re-render replaces the input element, and
            a file input's selection cannot be restored from script, so the file
            the owner just chose would be discarded. Only the caption is touched,
-           and it is always in the markup for that reason. run() reads the live
-           element rather than anything stashed here. */
-        form.filename = (file.files && file.files[0]) ? file.files[0].name : '';
+           and it is always in the markup for that reason. The File itself is
+           kept in `chosen`, which is what run() falls back to once a render has
+           emptied the input. */
+        chosen = (file.files && file.files[0]) || null;
+        form.filename = chosen ? chosen.name : '';
         banner = null;
 
         var label = document.querySelector('.rio-name');
