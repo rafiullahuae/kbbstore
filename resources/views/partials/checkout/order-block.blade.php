@@ -73,8 +73,18 @@
 <div class="sumrow tot js-total-row-fee"><span>Total</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils) !!}</span></div>
 
 @if ($totals['vat'])
-    {{-- Display only. Never added to the total (D-64). --}}
-    <div class="sumrow vat"><span>{{ $totals['vat']['label'] }}</span><span class="js-vat">{!! $totals['vat']['formatted'] !!}</span></div>
+    {{-- Display only. Never added to the total (D-64).
+
+         THE LABEL CARRIES THE RATE AND SO NEEDS ITS OWN HOOK.
+         vat_label is "You're paying VAT ({rate}%)" with {rate} substituted by
+         VatDisplay::label(), and the rate can now differ per country. The
+         country-change refresh in checkout.js updated `.js-vat` — the amount —
+         and nothing else, which was invisible while one global rate applied
+         everywhere. With a Saudi rate set, switching country moved the figure
+         to 13.04 and left "You're paying VAT (5%)" printed beside it: a
+         receipt contradicting itself, which is worse than not updating at all.
+         Both halves now move together. --}}
+    <div class="sumrow vat"><span class="js-vat-label">{{ $totals['vat']['label'] }}</span><span class="js-vat">{!! $totals['vat']['formatted'] !!}</span></div>
 @endif
 
 @if ($withActions ?? true)

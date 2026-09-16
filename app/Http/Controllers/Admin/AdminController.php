@@ -1430,6 +1430,25 @@ class AdminController extends Controller
 
         'vat_rate' => ['pct', 'VAT rate'],
 
+        /*
+         * The per-country VAT overrides — a JSON object of ISO code => per cent.
+         *
+         * A STRING, not an array, because checkSetting() refuses arrays and
+         * objects outright: settings.value is text and a nested value is not a
+         * setting. So the screen posts the map encoded, and 'ratemap' unpacks
+         * and checks it key by key rather than trusting it wholesale.
+         *
+         * WITHOUT THIS LINE the key would be silently dropped from every
+         * payload while updateSettings() still answered ok — the exact failure
+         * the note at the top of this list describes, and the reason
+         * tests/Feature/VatPerCountryTest.php asserts a reader sees the new
+         * rate rather than asserting a 200 came back.
+         *
+         * vat_rate above is unchanged and remains the rate for every country
+         * without an entry here: the owner's "all countries at once".
+         */
+        'vat_country_rates' => ['ratemap', 'Per-country VAT rates'],
+
         // Money, in fils. See the note above for why a decimal is refused.
         'free_ship' => ['fils', 'Free-shipping threshold'],
         'delivery_flat' => ['fils', 'Flat delivery charge'],
@@ -1703,6 +1722,69 @@ class AdminController extends Controller
                 return $this->filsFromAedText($value) <= 10000
                     ? $ok($value)
                     : $no("“{$label}” must be between 0 and 100.");
+
+            case 'ratemap':
+                /*
+                 * A JSON object of ISO country code => percentage.
+                 *
+                 * Checked ENTRY BY ENTRY, and one bad entry refuses the whole
+                 * map. The alternative — keeping the entries that parsed —
+                 * would save a table the owner did not type and show him
+                 * "Saved" over it, which is how a wrong tax rate ends up on a
+                 * receipt without anyone deciding to put it there.
+                 *
+                 * Each rate is held to the same shape as the 'pct' rule above,
+                 * for the same reason and by the same integer comparison; a
+                 * float would make the 100 bound a coin flip.
+                 *
+                 * The message names the country at fault, by name where the
+                 * shop knows it, because the screen this comes back to shows a
+                 * table and "invalid" alone would not say which row.
+                 */
+                if ($value === '' || $value === '{}' || $value === '[]') {
+                    return $ok('{}');
+                }
+
+                $decoded = json_decode($value, true);
+
+                if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
+                    return $no("“{$label}” could not be read.");
+                }
+
+                $map = [];
+
+                foreach ($decoded as $code => $rate) {
+                    $code = strtoupper(trim((string) $code));
+                    $name = \App\Support\Countries::NAMES[$code] ?? null;
+
+                    if ($name === null) {
+                        return $no("“{$label}” names a country this shop does not deliver to: {$code}.");
+                    }
+
+                    if (is_array($rate) || is_object($rate)) {
+                        return $no("“{$label}” must give {$name} a single percentage.");
+                    }
+
+                    $rate = trim((string) $rate);
+
+                    if (preg_match('/^\d+(?:\.\d{1,2})?$/', $rate) !== 1) {
+                        return $no("“{$label}” must give {$name} a percentage, with at most two decimals.");
+                    }
+
+                    if ($this->filsFromAedText($rate) > 10000) {
+                        return $no("“{$label}” must be between 0 and 100 — {$name} is {$rate}.");
+                    }
+
+                    $map[$code] = $rate;
+                }
+
+                // Sorted so the stored row does not churn on every save just
+                // because the screen happened to build the object in a
+                // different order, and FORCE_OBJECT so an empty map is stored
+                // as {} rather than [].
+                ksort($map);
+
+                return $ok((string) json_encode($map, JSON_FORCE_OBJECT));
         }
 
         return $no("“{$label}” could not be checked.");

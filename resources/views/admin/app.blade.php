@@ -2022,6 +2022,55 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .bd-actions .btn{width:100%;justify-content:center}
 }
 
+/* ---- VAT by country · inside Business Details (Lane CP) ------------------
+   A table of country -> rate, with the line each one will actually print
+   beside it. Four columns on a desktop and a stack on a phone, by the same
+   auto-fit reasoning as .bd-grid above: a fixed track floor is what made this
+   screen overflow at 390px before, so the breakpoint here re-lays the row
+   rather than letting it scroll sideways. */
+.vr-wrap{display:grid;gap:11px;min-width:0}
+.vr-wrap > *{min-width:0}
+.vr-tbl{display:grid;gap:0;border:1px solid var(--border);border-radius:var(--r-xs);overflow:hidden;min-width:0}
+.vr-row{display:grid;grid-template-columns:minmax(0,1.3fr) 104px minmax(0,1.5fr) 34px;
+        gap:10px;align-items:center;padding:9px 11px;min-width:0}
+.vr-row + .vr-row{border-top:1px solid var(--border)}
+.vr-head{background:var(--bg-soft,rgba(127,127,127,.06));font-size:11px;font-weight:650;
+         letter-spacing:.02em;text-transform:uppercase;color:var(--ink-soft)}
+.vr-name{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vr-row input[type=number]{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+        padding:7px 9px;font:inherit;font-size:12.5px;border:1px solid var(--border);
+        border-radius:var(--r-xs);background:var(--surface);color:var(--ink)}
+.vr-row input[type=number]:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+/* The receipt preview. Quiet, and clipped rather than wrapped, so a long
+   custom vat_label cannot make one row four lines tall. */
+.vr-prev{font-size:11.5px;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vr-del{width:26px;height:26px;border-radius:var(--r-xs);border:1px solid var(--border);
+        background:var(--surface);color:var(--ink-soft);font-size:15px;line-height:1;cursor:pointer;
+        display:grid;place-items:center;padding:0}
+.vr-del:hover{color:var(--danger,#c0392b);border-color:var(--danger,#c0392b)}
+.vr-empty{padding:13px;font-size:12px;color:var(--ink-soft);text-align:center}
+.vr-add{display:grid;grid-template-columns:minmax(0,1fr) 104px auto;gap:10px;align-items:center;min-width:0}
+.vr-add select,.vr-add input{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+        padding:8px 10px;font:inherit;font-size:12.5px;border:1px solid var(--border);
+        border-radius:var(--r-xs);background:var(--surface);color:var(--ink);text-overflow:ellipsis}
+.vr-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.vr-chip{font:inherit;font-size:11.5px;padding:5px 10px;border-radius:99px;cursor:pointer;
+         border:1px dashed var(--border);background:transparent;color:var(--ink-2)}
+.vr-chip:hover{border-style:solid;border-color:var(--accent);color:var(--accent)}
+@media (max-width:640px){
+  /* Name, rate and the remove button stay on ONE line and the preview drops
+     underneath them. Both of the latter are placed explicitly: left to
+     auto-placement the full-width preview takes row 2 and pushes the little
+     × onto a row of its own, which reads as a stray button under the row it
+     belongs to rather than as part of it. */
+  .vr-row{grid-template-columns:minmax(0,1fr) 88px 30px;row-gap:6px}
+  .vr-row .vr-prev{grid-column:1 / -1;grid-row:2}
+  .vr-row .vr-del{grid-column:3;grid-row:1}
+  .vr-head{display:none}
+  .vr-add{grid-template-columns:minmax(0,1fr) 88px;row-gap:8px}
+  .vr-add .btn{grid-column:1 / -1;width:100%;justify-content:center}
+}
+
 /* ---- SEO & Meta · Settings tab ------------------------------------------ */
 .sm-wrap{display:grid;gap:16px;min-width:0}
 .sm-wrap > *{min-width:0}
@@ -9148,7 +9197,19 @@ buildNav();
     }
     opts.credentials = 'same-origin';
     var r = await fetch(url, opts);
-    if(!r.ok) throw new Error('api '+url+' -> '+r.status);
+    if(!r.ok){
+      /* The thrown Error keeps exactly the message it always had, so every
+         existing catch behaves as before. The status and the parsed body are
+         ATTACHED to it, for the callers that can say something better than
+         "save failed" — PUT /admin-api/settings refuses a bad value with a
+         sentence naming the field, and that sentence used to be thrown away
+         here and replaced with "check connection", which sends the owner to
+         look at his wifi over a typo in a VAT rate. */
+      var err = new Error('api '+url+' -> '+r.status);
+      err.status = r.status;
+      try{ err.body = await r.json(); }catch(parseFailed){ err.body = null; }
+      throw err;
+    }
     return r.json();
   }
 
@@ -12895,7 +12956,33 @@ buildNav();
      currencies — see the comment in that file. */
 @endverbatim
   var KBB_CURRENCIES = @json(\App\Support\Currencies::forSelect());
+
+  /* Country code -> name, from App\Support\Countries so the console never
+     restates a country list of its own. The VAT table shows NAMES; the codes
+     exist only on the wire. */
+  var KBB_VAT_COUNTRIES = @json(\App\Support\Countries::NAMES);
+  var KBB_VAT_GCC = @json(\App\Support\Countries::REGIONS['GCC']);
 @verbatim
+
+  /* SUGGESTIONS, NOT VALUES. Nothing here is saved until the owner clicks one
+     and then saves the screen, and the screen says on its face that confirming
+     them is his job.
+
+     These are the commonly-cited standard rates for the Gulf as at September
+     2026 and they are NOT authoritative: rates change, this shop is not a tax
+     authority, and a wrong percentage printed on a receipt is worse than no
+     percentage at all. Qatar and Kuwait had not implemented a domestic VAT,
+     which is why they are offered as 0 — the line simply does not print at a
+     zero rate. Sources are recorded in the lane's report rather than here,
+     because a URL in a template rots without anyone noticing. */
+  var KBB_VAT_SUGGESTIONS = [
+    { code:'SA', rate:'15', note:'commonly cited' },
+    { code:'AE', rate:'5',  note:'commonly cited' },
+    { code:'BH', rate:'10', note:'commonly cited' },
+    { code:'OM', rate:'5',  note:'commonly cited' },
+    { code:'QA', rate:'0',  note:'no VAT reported' },
+    { code:'KW', rate:'0',  note:'no VAT reported' }
+  ];
   function curFind(code){ code=String(code||'').toUpperCase(); for(var i=0;i<KBB_CURRENCIES.length;i++){ if(KBB_CURRENCIES[i].code===code) return KBB_CURRENCIES[i]; } return null; }
   function curSymbol(){ var s=SETTINGS.currency_symbol; if(s!=null&&String(s).trim()!=='') return String(s); var c=curFind(SETTINGS.currency||'AED'); return c?c.symbol:''; }
   function curSelect(){
@@ -12930,8 +13017,205 @@ buildNav();
       '<div class="bd-sec-d">'+description+'</div></div>'+body+'</section>';
   }
 
+  /* ---------- VAT by country (Lane CP) -------------------------------------
+     The owner asked for both halves of one idea: "give us option to choose the
+     percentage of VAT across each country or for All countries at once."
+
+     ALL COUNTRIES AT ONCE IS NOT A NEW CONTROL. It is the VAT rate field in the
+     band above, unchanged — it applies wherever a country has no rate of its
+     own. This band is only the exceptions, and it ships EMPTY, so a shop that
+     never opens it behaves exactly as it always did.
+
+     WHY THE TABLE IS EMPTY AND THE FIGURES ARE ONLY CHIPS. The owner wrote
+     "Saudi there's 15% i think". We are not a tax authority, rates change, and
+     a wrong rate printed on a receipt is worse than no rate — so nothing is
+     pre-saved. The chips fill a row in one click and still have to be saved
+     deliberately, and the note says whose job it is to confirm them.
+
+     WHAT THE PREVIEW IS FOR. VAT here is a DISPLAY LINE (D-64): it is printed
+     and never charged, and the default basis is inclusive. So raising a rate
+     does not raise what the shopper pays — it only reprints the same gross as
+     a bigger tax portion. The preview column spells that out in the owner's own
+     money: the words the receipt will carry, and what they come to on an AED
+     100 order. He can see before saving that 15% takes AED 13.04 out of the
+     same AED 100 that 5% took AED 4.76 out of. */
+
+  /* code -> rate string. Setting::map() hands the console raw column values, so
+     this row arrives as the JSON object the validator stored. */
+  var VAT_RATES = {};
+
+  function vatRatesLoad(){
+    VAT_RATES = {};
+    var raw = SETTINGS.vat_country_rates;
+    if(raw==null||raw==='') return;
+    var parsed = null;
+    try{ parsed = (typeof raw==='string') ? JSON.parse(raw) : raw; }catch(e){ parsed = null; }
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) return;
+    Object.keys(parsed).forEach(function(code){
+      code = String(code).toUpperCase();
+      if(KBB_VAT_COUNTRIES[code]) VAT_RATES[code] = String(parsed[code]);
+    });
+  }
+
+  /* The same trimming VatDisplay::label() does, so the preview is the string
+     the storefront will actually print: 5.00 -> 5, 7.50 -> 7.5, 15.00 -> 15. */
+  function vatPrintableRate(rate){
+    var n = parseFloat(rate);
+    if(!isFinite(n)) return '0';
+    return n.toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+  }
+
+  /* What the receipt line will read, from the operator's own vat_label. */
+  function vatPreviewLine(rate){
+    var tpl = SETTINGS.vat_label;
+    if(tpl==null||tpl==='') tpl = "You're paying VAT ({rate}%)";
+    return String(tpl).split('{rate}').join(vatPrintableRate(rate));
+  }
+
+  /* The portion of an AED 100 order the line will show — the figure that makes
+     the display-only consequence visible. Mirrors VatDisplay::amount(). */
+  function vatPreviewAmount(rate){
+    var r = parseFloat(rate);
+    if(!isFinite(r)||r<=0) return null;
+    var fils = (SETTINGS.vat_basis==='flat') ? (10000*r/100) : (10000*r/(100+r));
+    return (Math.round(fils)/100).toFixed(2);
+  }
+
+  function vatPreviewCell(rate){
+    var r = parseFloat(rate);
+    if(!isFinite(r)||r<=0) return '<span class="vr-prev">No VAT line is printed at 0%.</span>';
+    var amount = vatPreviewAmount(rate);
+    return '<span class="vr-prev" title="'+sesc(vatPreviewLine(rate))+'">'+sesc(vatPreviewLine(rate))+
+      ' &middot; AED 100 shows '+sesc(amount)+'</span>';
+  }
+
+  /* Countries not yet in the table, by NAME, alphabetically — the owner picks
+     "Saudi Arabia", never "SA". */
+  function vatAddSelect(){
+    var codes = Object.keys(KBB_VAT_COUNTRIES).filter(function(c){ return !(c in VAT_RATES); });
+    codes.sort(function(a,b){ return KBB_VAT_COUNTRIES[a].localeCompare(KBB_VAT_COUNTRIES[b]); });
+    return '<select id="vat_add_country"><option value="">Choose a country…</option>'+
+      codes.map(function(c){ return '<option value="'+sesc(c)+'">'+sesc(KBB_VAT_COUNTRIES[c])+'</option>'; }).join('')+
+      '</select>';
+  }
+
+  function vatRatesTable(){
+    var codes = Object.keys(VAT_RATES);
+    codes.sort(function(a,b){ return KBB_VAT_COUNTRIES[a].localeCompare(KBB_VAT_COUNTRIES[b]); });
+
+    if(!codes.length){
+      return '<div class="vr-tbl"><div class="vr-empty">No country has a rate of its own yet, so every country shows the VAT rate above.</div></div>';
+    }
+
+    return '<div class="vr-tbl">'+
+      '<div class="vr-row vr-head"><span>Country</span><span>Rate&nbsp;%</span><span>What the receipt will say</span><span></span></div>'+
+      codes.map(function(c){
+        return '<div class="vr-row" data-vat-row="'+sesc(c)+'">'+
+          '<span class="vr-name">'+sesc(KBB_VAT_COUNTRIES[c])+'</span>'+
+          '<input type="number" min="0" max="100" step="0.01" value="'+sesc(VAT_RATES[c])+'" data-vat-rate="'+sesc(c)+'" aria-label="VAT rate for '+sesc(KBB_VAT_COUNTRIES[c])+'">'+
+          vatPreviewCell(VAT_RATES[c])+
+          '<button type="button" class="vr-del" data-vat-del="'+sesc(c)+'" title="Remove '+sesc(KBB_VAT_COUNTRIES[c])+'" aria-label="Remove '+sesc(KBB_VAT_COUNTRIES[c])+'">&times;</button>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }
+
+  function vatChips(){
+    var pending = KBB_VAT_SUGGESTIONS.filter(function(s){ return KBB_VAT_COUNTRIES[s.code] && !(s.code in VAT_RATES); });
+    if(!pending.length) return '';
+    return '<div class="vr-chips">'+pending.map(function(s){
+      return '<button type="button" class="vr-chip" data-vat-sugg="'+sesc(s.code)+'">+ '+
+        sesc(KBB_VAT_COUNTRIES[s.code])+' '+sesc(s.rate)+'% <span style="opacity:.7">('+sesc(s.note)+')</span></button>';
+    }).join('')+'</div>';
+  }
+
+  function vatRatesBand(){
+    return bdSec('VAT shown on the receipt, by country',
+      'The VAT rate above applies to every country at once. Add a country here only when it should show a different percentage — Saudi Arabia, say, while everywhere else keeps the rate above.',
+      '<div class="vr-wrap" id="vatRatesBand">'+
+        '<div id="vat_rates_table">'+vatRatesTable()+'</div>'+
+        '<div class="bd-label" style="margin-top:2px">Add a country</div>'+
+        '<div class="vr-add" id="vat_rates_add">'+vatAddSelect()+
+          '<input type="number" id="vat_add_rate" min="0" max="100" step="0.01" placeholder="Rate %" aria-label="VAT rate for the country being added">'+
+          '<button type="button" class="btn" id="vat_add_btn">Add</button>'+
+        '</div>'+
+        '<div id="vat_rates_chips">'+vatChips()+'</div>'+
+        '<div class="bd-note"><b>These are the rates printed on the receipt, and they are yours to get right.</b> ' +
+          'The suggestions above are figures commonly quoted for the Gulf — they are a starting point, not tax advice, and you should confirm them for your business before saving. ' +
+          'Rates change, and a wrong percentage on a receipt is worse than none.<br><br>' +
+          '<b>Changing a rate here does not change what the customer is charged.</b> The VAT line is printed, not added: at 5% an AED 100 order shows AED 4.76 of VAT, and at 15% the same order shows AED 13.04. ' +
+          'The customer pays AED 100 either way, so a higher rate here means a smaller amount left for the shop on that sale, not a bigger one.</div>'+
+      '</div>');
+  }
+
+  /* One delegated listener for the whole band — Rule 27, and the table is
+     re-rendered on every change so per-row handlers would not survive anyway. */
+  function vatRatesBind(){
+    var band = document.getElementById('vatRatesBand');
+    if(!band) return;
+
+    var repaint = function(){
+      document.getElementById('vat_rates_table').innerHTML = vatRatesTable();
+      document.getElementById('vat_rates_chips').innerHTML = vatChips();
+      var sel = document.getElementById('vat_add_country');
+      if(sel) sel.outerHTML = vatAddSelect();
+    };
+
+    band.addEventListener('click', function(ev){
+      var del = ev.target.closest('[data-vat-del]');
+      if(del){ delete VAT_RATES[del.getAttribute('data-vat-del')]; repaint(); return; }
+
+      var sugg = ev.target.closest('[data-vat-sugg]');
+      if(sugg){
+        var code = sugg.getAttribute('data-vat-sugg');
+        var hit = KBB_VAT_SUGGESTIONS.filter(function(s){ return s.code===code; })[0];
+        /* Filled in, NOT saved. It reaches the database only when the owner
+           presses Save changes, like every other field on this screen. */
+        if(hit){ VAT_RATES[code] = hit.rate; repaint(); }
+        return;
+      }
+
+      if(ev.target.closest('#vat_add_btn')){
+        var pick = document.getElementById('vat_add_country');
+        var rate = document.getElementById('vat_add_rate');
+        if(!pick||!pick.value){ toast('Choose a country first'); return; }
+        var typed = String(rate.value||'').trim();
+        if(typed===''){ toast('Enter a rate for '+KBB_VAT_COUNTRIES[pick.value]); return; }
+        VAT_RATES[pick.value] = typed;
+        rate.value='';
+        repaint();
+      }
+    });
+
+    /* 'input' rather than 'change': the preview beside the box is the whole
+       point of the column, and waiting for blur to show it defeats it. */
+    band.addEventListener('input', function(ev){
+      var box = ev.target.closest('[data-vat-rate]');
+      if(!box) return;
+      var code = box.getAttribute('data-vat-rate');
+      VAT_RATES[code] = String(box.value||'').trim();
+      var cell = box.parentNode.querySelector('.vr-prev');
+      if(cell) cell.outerHTML = vatPreviewCell(VAT_RATES[code]);
+    });
+  }
+
+  /* The wire value: a JSON object of code -> rate, which is what the
+     'ratemap' rule in AdminController::SETTING_RULES validates. Rows left
+     blank are dropped rather than sent as empty strings, so clearing a box and
+     saving is how a country goes back to the global rate. */
+  function vatRatesPayload(){
+    var out = {};
+    Object.keys(VAT_RATES).forEach(function(code){
+      var v = String(VAT_RATES[code]==null?'':VAT_RATES[code]).trim();
+      if(v!=='') out[code] = v;
+    });
+    return JSON.stringify(out);
+  }
+
   async function renderStoreSettings(){
     await loadSettings();
+    // Before the markup is built: vatRatesBand() renders from VAT_RATES.
+    vatRatesLoad();
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Business Details</h2>'+
       '<p>The handful of values the whole shop is built on — what the business is called, what money it takes and what delivery costs. Everything here reaches the storefront and the checkout total the moment it is saved.</p></div>'+
@@ -12947,7 +13231,7 @@ buildNav();
             'Picking one fills in its symbol and decimals below.')+
           bdField('set_vat','VAT rate (%)',
             '<input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'">',
-            'Applied to checkout totals. Leave at 0 for none.')+
+            'Used for every country at once, unless one is given its own rate below.')+
           /* THE CLOCK EVERY DATE IN THE PANEL IS READ ON.
 
              Storage stays UTC and this never changes it — see
@@ -12973,6 +13257,11 @@ buildNav();
             ],'Asia/Dubai'),
             'Which day an order counts towards, on every screen and document. Nothing already recorded is altered.')+
         '</div>')+
+
+      /* Its own band directly under the field it qualifies, so "all countries
+         at once" and "this country instead" read as two halves of one setting
+         rather than as two screens. */
+      vatRatesBand()+
 
       bdSec('How prices are printed',
         'How every price on the storefront is written — the symbol, where it sits and how many decimals. Choosing a currency above fills these in, and you can still override any of them.',
@@ -13015,6 +13304,7 @@ buildNav();
       '</div>'+
       '<div class="bd-actions"><button class="btn" id="set_save_biz">Save changes</button></div>'+
       '</div></div>';
+    vatRatesBind();
     /* Picking a currency fills in its symbol and decimals; both stay editable. */
     var curSel=document.getElementById('set_currency');
     if(curSel) curSel.onchange=function(){
@@ -13027,6 +13317,9 @@ buildNav();
       var payload={
         store_name: sval('set_store_name'), currency: sval('set_currency'), vat_rate: sval('set_vat'),
         store_timezone: sval('set_store_timezone'),
+        // A JSON object string, not an array: checkSetting() refuses arrays
+        // outright, and 'ratemap' unpacks and validates this key by key.
+        vat_country_rates: vatRatesPayload(),
         currency_symbol: sval('set_currency_symbol'),
         currency_symbol_render: sval('set_currency_symbol_render'),
         currency_position: sval('set_currency_position'),
@@ -13037,7 +13330,13 @@ buildNav();
 
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('Business details saved'); }
-      catch(e){ toast('Save failed \u2014 check connection'); }
+      catch(e){
+        /* The endpoint validates all of it and writes none of it when one
+           value is wrong, and says which. Showing that beats "check
+           connection" \u2014 nothing was saved and the owner needs to know what to
+           change, not to go and look at his router. */
+        toast((e && e.body && e.body.message) ? e.body.message : 'Save failed \u2014 check connection');
+      }
     };
   }
 
