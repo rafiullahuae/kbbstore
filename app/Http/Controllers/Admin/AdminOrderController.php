@@ -223,6 +223,22 @@ class AdminOrderController extends Controller
                 'real' => self::REAL_ACTIONS,
                 'placeholder' => self::PLACEHOLDER_ACTIONS,
             ],
+
+            /*
+             * What the "Email the customer about this change" tick box beside
+             * the status dropdown needs to draw itself: for every status, is
+             * there a customer message at all, does the standing rule send it,
+             * and if not, why not.
+             *
+             * Carried on the order payload rather than fetched separately
+             * because the screen needs it at the same moment it needs the
+             * order, and because one answer read once cannot disagree with
+             * itself. It is store configuration, not a fact about this order —
+             * the per-order part is the tick the operator makes, which travels
+             * back on the status-change request as `notify` and is never
+             * stored. See App\Services\Mail\OrderStatusMailPolicy.
+             */
+            'status_emails' => app(\App\Services\Mail\OrderStatusMailPolicy::class)->all(),
         ]);
     }
 
@@ -408,6 +424,15 @@ class AdminOrderController extends Controller
         }
 
         if ($action === 'cancel') {
+            // The same per-order decision the status dropdown carries, because
+            // Cancel is a status change wearing a button. Recorded before the
+            // save, which is what fires OrderMailObserver; absent means the
+            // standing rule for `cancelled` decides.
+            app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideFor(
+                $order,
+                $request->has('notify') ? $request->boolean('notify') : null,
+            );
+
             $order->update(['status' => 'cancelled']);
             return response()->json(['ok' => true, 'status' => 'cancelled']);
         }

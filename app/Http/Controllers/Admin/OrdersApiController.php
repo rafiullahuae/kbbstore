@@ -313,11 +313,28 @@ class OrdersApiController extends Controller
             'ids' => ['required', 'array', 'min:1', 'max:' . self::BULK_MAX],
             'ids.*' => ['integer'],
             'status' => ['required', 'string', 'in:' . implode(',', self::BULK_SETTABLE)],
+            // "Email the customer about this change", for the whole selection.
+            // Absent means no view was expressed and the standing per-status
+            // rule decides each one — which is what every caller written before
+            // this field existed means.
+            'notify' => ['sometimes', 'nullable', 'boolean'],
         ]);
 
         $ids = $this->uniqueIds($data['ids']);
         $status = (string) $data['status'];
         $force = $request->boolean('force');
+
+        /*
+         * Recorded before anything is written, and read by
+         * OrderMailer::statusChanged() through notifyStatus() below. It is the
+         * same override the single-order screen sets, applied to every order in
+         * the batch rather than to one — deliberately the SAME mechanism, so
+         * that "do not email anybody about this" means the same thing whether
+         * the operator is looking at one order or forty.
+         */
+        app(\App\Services\Mail\OrderStatusMailPolicy::class)->decideForRequest(
+            $request->has('notify') ? $request->boolean('notify') : null,
+        );
 
         $wasRevenue = in_array($status, Order::REAL_STATUSES, true);
 
