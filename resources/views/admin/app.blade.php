@@ -5617,6 +5617,10 @@ function renderCatalog(){
      a real listener works in both. */
   const addBtn=$('#content #catAddProduct');
   if(addBtn) addBtn.onclick=()=>{
+    /* The product editor's own create mode, which carries the gallery, the
+       categories, the SEO panel and scheduling. cpOpenCreate is the earlier,
+       narrower form and stays as the fallback. */
+    if(typeof window.peoNew==='function') { window.peoNew(); return; }
     if(typeof window.cpOpenCreate==='function') window.cpOpenCreate();
     else toast('The product form could not be loaded — reload the page.');
   };
@@ -12473,7 +12477,19 @@ buildNav();
     });
 
     $$$('#catBody [data-cpedit]').forEach(function(b){
-      b.onclick = function(){ cpOpenDetail(+b.dataset.cpedit); };
+      /* Straight into the full product editor, not the old inline panel.
+         The editor ships as its own screen (admin/partials/product-editor-
+         screen.blade.php) and its API routes were wired, but nothing ever
+         repointed THIS button at it -- so the owner kept landing on the
+         previous panel and reasonably concluded the work had not shipped.
+         cpOpenDetail stays as the fallback for the one case that matters:
+         the editor partial failing to load leaves editing possible rather
+         than leaving a dead button. */
+      b.onclick = function(){
+        var id = +b.dataset.cpedit;
+        if (typeof window.peoEdit === 'function') { window.peoEdit(id); return; }
+        cpOpenDetail(id);
+      };
     });
 
     var bulkStatus = byId('cplBulkStatus');
@@ -13551,11 +13567,12 @@ buildNav();
 
         cpToast(out.live ? 'Product added and live on the shop.' : 'Product saved.');
 
-        /* Straight into the real edit panel for the product just created, which
-           is where the operator would go next anyway — and it proves the row
-           exists rather than asserting it. */
+        /* Straight into the product editor for the product just created, which
+           is where the operator would go next anyway -- and it proves the row
+           exists rather than asserting it. Same fallback as the Edit button. */
         CP.page = 1;
-        cpOpenDetail(out.id);
+        if (typeof window.peoEdit === 'function') window.peoEdit(out.id);
+        else cpOpenDetail(out.id);
       }catch(e){
         cpShowErrors(e);
       }finally{

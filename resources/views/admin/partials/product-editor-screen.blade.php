@@ -381,10 +381,36 @@
     return undefined;
   };
 
+  /*
+   * What the screen should show once its bootstrap has arrived.
+   *
+   * Both external entry points set this and then switch screens; neither
+   * loads anything itself. That is not tidiness, it is the fix for a real
+   * race, and the race was live: peoEdit() used to call loadProduct(id)
+   * directly after window.go(). go() starts start(), which awaits the
+   * bootstrap and then falls back to loadList() when no model is set. If the
+   * bootstrap resolved first -- which it does, being the smaller request --
+   * loadList() ran, bumped the sequence counter, and loadProduct's own
+   * response was then discarded as stale by its own guard. Clicking Edit on
+   * the products list landed on the picker instead of the product, with no
+   * error anywhere. Caught by clicking it rather than by reading it.
+   *
+   * Loading after the bootstrap is also the correct order on its own terms:
+   * the category and brand pickers are drawn from it.
+   */
+  var intent = null;
+
   /* Opened straight onto one product from elsewhere in the console. */
   window.peoEdit = function(id){
+    intent = { kind: 'product', id: id };
     window.go(SCREEN);
-    loadProduct(id);
+  };
+
+  /* Opened straight onto a blank product, for the Catalog header's Add
+     product button. */
+  window.peoNew = function(){
+    intent = { kind: 'new' };
+    window.go(SCREEN);
   };
 
   /* ----------------------------------------------------------------- data */
@@ -393,6 +419,20 @@
       try { boot = await api('/product-editor-bootstrap'); }
       catch (e) { banner = message(e, 'Could not load the editor.'); render(); return; }
     }
+
+    var want = intent;
+    intent = null;
+
+    if (want && want.kind === 'product') { loadProduct(want.id); return; }
+
+    if (want && want.kind === 'new') {
+      model = blank();
+      dirty = false;
+      banner = null;
+      render();
+      return;
+    }
+
     if (!model) loadList();
   }
 
