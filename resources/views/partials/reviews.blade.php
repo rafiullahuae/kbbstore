@@ -12,13 +12,29 @@
     plugin's. Only the data expressions are translated to Eloquent.
 --}}
 @php
-    $showStars = $settings->get('sr_show_stars', true);
-    $showTabs  = $settings->get('sr_show_tabs', true);
-    $allowSub  = $settings->get('sr_allow_submit', true);
-    $showDate  = $settings->get('sr_show_date', true);
-    $cols      = max(1, (int) $settings->get('sr_grid_cols', 4));
-    $allowPhotos = (bool) $settings->get('sr_allow_photos', true);
-    $maxPhotos = (int) $settings->get('sr_max_photos', 4);
+    /*
+     * Read through App\Support\ReviewSettings rather than $settings->get()
+     * with a default typed out beside each key.
+     *
+     * These seven keys were read HERE and written NOWHERE — no seeder, no
+     * migration, no controller, no screen — because Review Settings was an
+     * iframe to a file this repo has never shipped. Now that there is a screen
+     * writing them, the defaults have to live in exactly one place or the
+     * screen and the page can disagree about what "not set" means. Every value
+     * below is identical to the literal this block used to carry; the clamping
+     * is new and applies on read, so a hand-edited row cannot put the section
+     * outside the range the screen would allow.
+     */
+    $sr = \App\Support\ReviewSettings::all($settings);
+
+    $showStars = $sr['sr_show_stars'];
+    $showTabs  = $sr['sr_show_tabs'];
+    $allowSub  = $sr['sr_allow_submit'];
+    $showDate  = $sr['sr_show_date'];
+    $cols      = $sr['sr_grid_cols'];
+    $allowPhotos = $sr['sr_allow_photos'];
+    $maxPhotos = $sr['sr_max_photos'];
+    $emptyText = $sr['sr_empty_text'];
 
     $star = fn (int $n) => implode('', array_map(
         fn ($i) => '<span class="' . ($i <= $n ? 'f' : '') . '">★</span>',
@@ -103,7 +119,7 @@
                 <script type="application/json" class="sr-data">@json($srData)</script>
             </article>
         @empty
-            <div class="sr-empty">Be the first to share your thoughts ♡</div>
+            <div class="sr-empty">{{ $emptyText }}</div>
         @endforelse
     </div>
 

@@ -10,6 +10,7 @@ use App\Models\Review;
 use App\Services\DemoContent;
 use App\Services\ProductSections;
 use App\Services\SettingsService;
+use App\Support\ReviewSettings;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -47,11 +48,22 @@ class ProductController extends Controller
 
         $summary = $this->reviewSummary($product->id);
 
+        // Store -> Reviews -> Review Settings. Both defaults below are the
+        // literals this method used to hard-code ('newest' was ->latest(), 200
+        // was ->limit(200)), so an untouched store reads exactly as before.
+        $reviewSort = (string) ReviewSettings::get($this->settings, 'sr_sort');
+        $reviewLimit = (int) ReviewSettings::get($this->settings, 'sr_max_reviews');
+
         $reviews = Review::query()
             ->select('id', 'author_name', 'rating', 'title', 'content', 'verified', 'created_at', 'images', 'helpful')
             ->where('product_id', $product->id)
-            ->approved()
-            ->latest()
+            ->approved();
+
+        // Applied through the shared helper so the admin screen's option list
+        // and the page's ORDER BY can never drift apart.
+        ReviewSettings::applySort($reviews, $reviewSort);
+
+        $reviews = $reviews
             // Not truly unlimited — reviews.blade.php's "Load more" button is
             // a client-side reveal of rows already sent, not an AJAX fetch,
             // so whatever isn't in this query is permanently unreachable no
@@ -62,8 +74,10 @@ class ProductController extends Controller
             // generous ceiling for a real catalogue, not the old accidental
             // one — a product genuinely exceeding it is an edge case worth
             // revisiting with real pagination, not the common case this
-            // needs to handle today.
-            ->limit(200)
+            // needs to handle today, and it is now the default of
+            // `sr_max_reviews` rather than a literal — the owner can lower it
+            // on a slow host or raise it, within the schema's 4..500 clamp.
+            ->limit($reviewLimit)
             ->get();
 
         // Demo reviews only when the product genuinely has none. A product with
