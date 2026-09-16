@@ -71,8 +71,42 @@ class SeoFilesController extends Controller
         $add($base . '/shop/', null, '0.9', 'daily');
         $add($base . '/reviews/', null, '0.5', 'weekly');
         $add($base . '/skin-quiz/', null, '0.5', 'monthly');
-        $add($base . '/brands/', null, '0.5', 'weekly');
+        // /brands/ 301s to /korean-skincare-brands/ (BrandController::legacyIndex,
+        // and the owner confirmed the long address is the live one). Submitting
+        // the redirect asked Google to fetch a URL it is then sent away from --
+        // exactly the defect the /shop -> /shop/ entry above was corrected for,
+        // one line below where it was corrected.
+        $add($base . '/korean-skincare-brands/', null, '0.5', 'weekly');
         $add($base . '/skincare-guide/', null, '0.6', 'weekly');
+
+        // The curated listings. Four real, indexable pages, linked from the
+        // site header, that no sitemap has ever mentioned. The keys are the
+        // route paths, not CollectionController's internal keys -- 'under-54'
+        // is served at /everything-under-54-aed.
+        foreach (['new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed'] as $collection) {
+            $add($base . '/' . $collection . '/', null, '0.6', 'daily');
+        }
+
+        // The content pages behind the footer links. Only the seven slugs
+        // routes/web.php actually routes, and only where the row is published:
+        // PageController::show() 404s anything else, and a sitemap entry that
+        // 404s is a Search Console error.
+        if (Schema::hasTable('pages')) {
+            $routed = [
+                'about', 'contact-us', 'delivery', 'faqs',
+                'privacy-policy', 'refund_returns', 'terms-and-conditions',
+            ];
+
+            $pages = DB::table('pages')
+                ->select('slug', 'updated_at')
+                ->whereIn('slug', $routed)
+                ->where('status', 'published')
+                ->get();
+
+            foreach ($pages as $page) {
+                $add($base . '/' . $page->slug . '/', $page->updated_at ?? null, '0.4', 'monthly');
+            }
+        }
 
         // Products.
         //
@@ -85,8 +119,23 @@ class SeoFilesController extends Controller
         // Trailing slash matters: Product::url() and the URL contract both use
         // /product/{slug}/, and /product/{slug} 301s to it. Without the slash
         // every entry here pointed at a redirect rather than the canonical URL.
+        // Which brands have a live product, collected below from the product
+        // query this file already runs. See the brand block further down for
+        // why it is gathered here rather than asked for separately.
+        $liveBrandIds = [];
+
         if (Schema::hasTable('products')) {
             $q = DB::table('products')->select('slug', 'updated_at');
+
+            // brand_id rides along on the query that is happening anyway. It
+            // costs nothing and it is what makes the brand block below a
+            // single extra SELECT rather than a second full pass over
+            // products with its own column probes.
+            $hasBrand = Schema::hasColumn('products', 'brand_id');
+
+            if ($hasBrand) {
+                $q->addSelect('brand_id');
+            }
 
             /*
              * One helper rather than three hand-written clauses, because a
@@ -126,6 +175,15 @@ class SeoFilesController extends Controller
 
             foreach ($q->get() as $p) {
                 if (empty($p->slug)) continue;
+
+                // Before the noindex skip: a brand carrying one product the
+                // owner has excluded from the index still has a live product
+                // and a page worth listing. The brand page is not the product
+                // page, and only the product was excluded.
+                if ($hasBrand && !empty($p->brand_id)) {
+                    $liveBrandIds[(int) $p->brand_id] = true;
+                }
+
                 if ($hasSeo && self::isNoindex($p->seo ?? null)) continue;
                 $add($base . '/product/' . $p->slug . '/', $p->updated_at ?? null, '0.8', 'weekly');
             }
@@ -150,6 +208,42 @@ class SeoFilesController extends Controller
                 if (empty($path)) continue;
 
                 $add($base . '/product-category/' . $path . '/', $c->updated_at ?? null, '0.6', 'weekly');
+            }
+        }
+
+        // Brand landing pages.
+        //
+        // /korean-skincare-brands/{slug}/ has been a real, indexable page since
+        // Phase 9 and not one of them has ever been in the sitemap -- the file
+        // listed the brand INDEX (at its redirecting address, above) and
+        // nothing else, so on a catalogue of ninety-three brands the only crawl
+        // path to a brand page was the A-Z listing and the mega menu.
+        //
+        // Only brands that actually carry a live product. A brand page with an
+        // empty grid is a thin page, and asking Google to fetch a set of them
+        // is the same crawl-budget tax the noindex-product skip above avoids.
+        // ProductVisibility::raw() is the same predicate BrandController::index
+        // counts with, so the sitemap and the page agree about what is live.
+        // The set comes out of the product loop above rather than from a
+        // second visibility-filtered pass over products: that pass would
+        // re-run ProductVisibility::raw(), whose four Schema::hasColumn()
+        // probes are each a round trip on both engines, and this file has a
+        // query budget (tests/Feature/StorefrontQueryBudgetTest). Collecting
+        // brand_id from the rows already fetched makes it one SELECT, and
+        // makes "has a live product" true by construction rather than by a
+        // second predicate that could drift from the first.
+        if ($liveBrandIds !== [] && Schema::hasTable('brands')) {
+            $brands = DB::table('brands')
+                ->select('slug', 'updated_at')
+                ->whereIn('id', array_keys($liveBrandIds))
+                ->get();
+
+            foreach ($brands as $b) {
+                if (empty($b->slug)) {
+                    continue;
+                }
+
+                $add($base . '/korean-skincare-brands/' . $b->slug . '/', $b->updated_at ?? null, '0.5', 'weekly');
             }
         }
 

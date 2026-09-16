@@ -80,7 +80,32 @@ class CollectionController extends Controller
                 ->orderByRaw('COALESCE(NULLIF(sale_price, 0), price) ASC'),
         };
 
-        $products = $query->paginate(self::PER_PAGE)->withQueryString();
+        /*
+         * The page number is read off the request rather than left to
+         * Paginator::resolveCurrentPage().
+         *
+         * That resolver is a closure the pagination service provider captured
+         * around the application instance at boot, and this project replaces
+         * that instance: warm_caches_2_60_4 runs config:cache and route:cache,
+         * each of which constructs a fresh Application and repoints the
+         * container at it (tests/Pest.php documents the same trap for
+         * request() inside a view). The resolver goes on reading the discarded
+         * app's request, so it answers page 1 for every URL -- which is
+         * precisely the thing this method now has to be right about. Reading
+         * $request, which is the request the router matched, cannot go stale.
+         */
+        $page = max(1, (int) $request->query('page', 1));
+
+        $products = $query->paginate(self::PER_PAGE, ['*'], 'page', $page)->withQueryString();
+
+        // Same rule as ShopController: a page number past the end is not a
+        // page. Here it answers 200 with an empty grid rather than a copy of
+        // page one, which is a thin page instead of a duplicate one, but the
+        // supply of them is just as unbounded and each still publishes itself
+        // as its own canonical.
+        if ($page > 1 && $page > $products->lastPage()) {
+            abort(404);
+        }
 
         return view('store.collection', [
             'key' => $key,
@@ -88,6 +113,56 @@ class CollectionController extends Controller
             'intro' => $intro,
             'products' => $products,
             'settings' => $this->settings,
+            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page),
         ]);
+    }
+
+    /**
+     * What these four pages tell a search engine about themselves.
+     *
+     * They passed no seoCtx at all, so the layout's defaults applied and all
+     * four published the same thing: the store-wide default meta description
+     * (identical to the homepage's and to every other page without one), no
+     * breadcrumb, and a canonical built from getPathInfo() — which drops the
+     * query string, so /new-in?page=2 canonicalised to /new-in.
+     *
+     * That last one is the expensive half, and Facets already carries the
+     * reasoning for the shop: collapsing page two onto page one tells Google
+     * page two does not exist, and everything only reachable from page two
+     * goes with it. On a "New In" listing that is specifically the products
+     * that have just landed. The two listings on this site should not disagree
+     * about it, and the fix is the same self-referencing canonical the shop
+     * already emits.
+     *
+     * Only ?page is carried into the canonical, not the whole query string:
+     * these listings have no facets, so any other parameter on the URL (a
+     * campaign tag, a stray ?ref=) is not a different document and must not
+     * become a different canonical.
+     */
+    private function seoCtx(Request $request, string $title, string $intro, int $total, int $page): array
+    {
+        $description = $total > 0
+            ? "{$intro} {$total} authentic Korean skincare products at K-Beauty Bliss, with next-day UAE delivery."
+            : "{$intro} Authentic Korean skincare at K-Beauty Bliss, with next-day UAE delivery.";
+
+        // SeoSettings, not Setting::map(): the latter memoises in a
+        // process-level static as well as the cache, and a page rendered
+        // before that map was first filled produced a root-relative trail
+        // inside an otherwise absolute document. Same reasoning, same fix, as
+        // Store\ProductController's seoCtx closure.
+        $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
+        $path = rtrim($request->getPathInfo(), '/') . '/';
+
+        return [
+            'description' => $description,
+            // Page one canonicalises to the clean URL — ?page=1 and the bare
+            // path are the same document, and only one of them should be it.
+            'url' => $page > 1 ? $base . $path . '?page=' . $page : $base . $path,
+            'breadcrumb' => [
+                ['name' => 'Home', 'url' => $base . '/'],
+                ['name' => 'Shop', 'url' => $base . '/shop/'],
+                ['name' => $title, 'url' => $base . $path],
+            ],
+        ];
     }
 }

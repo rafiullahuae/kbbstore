@@ -171,13 +171,28 @@ it('had no view using the shortcode directive before this lane', function () {
     // The finding this lane's placement rests on, pinned so it cannot quietly
     // come back. Both storefront content views must now run their content
     // through the engine.
+    //
+    // Either spelling counts. @shortcodes($x) is the directive and expands to
+    // exactly `echo Shortcodes::render($x)` (AppServiceProvider), so a view
+    // calling the class by name is running the same engine on the same column
+    // — which is what this test is about. The SEO lane needed the expanded
+    // HTML in hand to demote an h1 out of body copy before echoing it
+    // (App\Support\BodyHeadings), and a directive echoes rather than returns,
+    // so both views now call Shortcodes::render() directly. What must never
+    // come back is the original defect: the raw column echoed with no engine
+    // in the path at all, which printed [kbb_block ...] to the shopper
+    // verbatim.
     $page = file_get_contents(resource_path('views/store/page.blade.php'));
     $post = file_get_contents(resource_path('views/store/post.blade.php'));
 
-    expect($page)->toContain('@shortcodes($page->content)')
+    $runsEngine = fn (string $view, string $expression): bool => str_contains($view, '@shortcodes(' . $expression)
+        || str_contains($view, 'Shortcodes::render(' . $expression);
+
+    expect($runsEngine($page, '$page->content'))->toBeTrue()
         ->and($page)->not->toContain('{!! $page->content !!}');
 
-    expect($post)->toContain('@shortcodes($post->body');
+    expect($runsEngine($post, '$post->body'))->toBeTrue()
+        ->and($post)->not->toContain('{!! $post->body !!}');
 });
 
 it('serves a placed block to a shopper inside the page HTML', function () {

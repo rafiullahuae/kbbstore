@@ -173,12 +173,57 @@ final class Facets
         return self::build($params);
     }
 
+    /**
+     * Page N of the archive the visitor is actually on.
+     *
+     * build() hard-codes /shop/ as the base, which is right for the facet
+     * links (the sidebar lists the whole catalogue's categories and brands, so
+     * clicking one is a move to a different listing) and wrong here: the "next
+     * page" control on /product-category/cleansers/ was emitting
+     * /shop/?paged=2, which is not page two of Cleansers, it is page two of the
+     * entire shop.
+     *
+     * Two costs, both paid on every category and every brand-filtered archive:
+     * a shopper on page one of a category lands on the unfiltered shop when
+     * they page forward, and -- the expensive one -- a crawler following that
+     * link never reaches the second page of any category. Anything past the
+     * first page of an archive has no crawl path from that archive at all,
+     * while canonicalUrl() below is meanwhile publishing
+     * /product-category/cleansers/?paged=2 as a canonical URL that nothing on
+     * the site links to.
+     *
+     * The base is the current request's own path, so this is correct for
+     * /shop/, for a category archive and for anything else that renders the
+     * same grid, without the listing having to tell Facets where it is.
+     */
     public static function pageUrl(int $page): string
     {
         $params = self::currentParams();
         $params['paged'] = $page > 1 ? (string) $page : null;
 
-        return self::build($params);
+        return self::build($params, self::currentListingBase());
+    }
+
+    /**
+     * The archive path this request is on, prefixed for the environment.
+     *
+     * getPathInfo() is the path with the deployment's base prefix already
+     * removed, which is exactly what Url::to() expects -- going through
+     * Request::getRequestUri() instead would double the prefix on the staging
+     * host. The trailing slash is put back for the same reason the layout puts
+     * it back on the canonical: every storefront URL here carries one (U-01),
+     * and a paginator linking to the unslashed form sends both shoppers and
+     * crawlers through a redirect.
+     */
+    private static function currentListingBase(): string
+    {
+        $path = Request::instance()->getPathInfo();
+
+        if ($path === '' || $path === '/') {
+            return Url::to('/shop/');
+        }
+
+        return Url::to(rtrim($path, '/') . '/');
     }
 
     public static function clearUrl(): string
@@ -257,7 +302,14 @@ final class Facets
         ];
     }
 
-    private static function build(array $params): string
+    /**
+     * $base defaults to /shop/ so the facet links keep the behaviour they have
+     * always had: the sidebar lists every category and brand in the catalogue,
+     * so choosing one is a move to a different listing rather than a filter
+     * applied within the current one. pageUrl() passes the current archive
+     * instead — see its comment.
+     */
+    private static function build(array $params, ?string $base = null): string
     {
         $clean = [];
 
@@ -269,7 +321,7 @@ final class Facets
             $clean[$key] = is_array($value) ? implode(',', $value) : $value;
         }
 
-        $base = Url::to('/shop/');
+        $base ??= Url::to('/shop/');
 
         return $clean === [] ? $base : $base . '?' . http_build_query($clean);
     }

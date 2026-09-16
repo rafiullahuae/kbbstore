@@ -36,16 +36,42 @@ $kbbRawTitle = trim(strip_tags($__env->yieldContent('title', '')));
  * Left alone, the page served at /korean-skincare-brands/ canonicalises to
  * /korean-skincare-brands, pointing search engines at a URL one redirect away
  * from the page they are already on. Put the slash back.
+ *
+ * The slash is now put back whether or not the REQUEST carried one, and that
+ * is the correction rather than a tidy-up. Laravel's router rtrims the path
+ * before matching (Routing\Matching\UriValidator), so /cart and /cart/ both
+ * answer 200 with identical content and neither redirects to the other. While
+ * this mirrored the request, those two URLs published two different
+ * self-referencing canonicals — so the same document told Google it was two
+ * documents, and a single inbound link written without the slash was enough to
+ * split a page's signals. Every internal link, the sitemap and the URL
+ * Contract (U-01) all use the slashed form, so that is the one form this
+ * declares.
+ *
+ * Only the canonical is normalised. Nothing here changes what a URL serves, so
+ * no existing address breaks; a page that has computed its own canonical still
+ * passes it through $seoCtx and is untouched.
  */
 $kbbCanonical = Url::to($kbbPath);
-if ($kbbPath !== '/' && str_ends_with($kbbPath, '/') && ! str_ends_with($kbbCanonical, '/')) {
+if ($kbbPath !== '/' && ! str_ends_with($kbbCanonical, '/')) {
     $kbbCanonical .= '/';
 }
 
+/*
+ * The cart, the checkout, the account area, the wishlist and order tracking
+ * are per-visitor pages that robots.txt has always said should not be crawled,
+ * while every one of them was serving "index, follow" with a self-referencing
+ * canonical. See App\Support\Indexability for why the decision lives in one
+ * prefix list rather than in each of those controllers.
+ *
+ * Listed first in the merge, so a page that has a reason of its own to set
+ * noindex (or, in principle, to override it) still wins through $seoCtx.
+ */
 $kbbSeoCtx = array_merge([
     'type' => $kbbIsHome ? 'home' : 'website',
     'title' => $kbbRawTitle,
     'url' => $kbbCanonical,
+    'noindex' => \App\Support\Indexability::isPrivate($kbbPath),
 ], $seoCtx ?? []);
 @endphp
 <!DOCTYPE html>

@@ -95,7 +95,11 @@
        [kbb_block] in an article body reached the reader as literal text. The
        excerpt fallback keeps its e() — it is plain text from the admin list
        and is not markup. --}}
-  <div class="abody">@shortcodes($post->body ?: '<p>' . e($post->excerpt) . '</p>')</div>
+  {{-- BodyHeadings::demoteH1 wraps the shortcode expansion rather than the raw
+       column: a [kbb_block] can itself carry an h1, so the demotion has to see
+       the expanded HTML. The <h1> above is this page's own — an h1 in an
+       article body made two of them. See App\Support\BodyHeadings. --}}
+  <div class="abody">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($post->body ?: '<p>' . e($post->excerpt) . '</p>')) !!}</div>
   @verbatim
 </article>
 @endverbatim
