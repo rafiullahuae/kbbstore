@@ -351,6 +351,255 @@ class CartService
     }
 
     /**
+     * Take what this basket needs off the shelf, or refuse the whole order.
+     *
+     * THE GAP THIS FILLS. Both places that put something in a basket check
+     * stock at that moment — Store\CartController::add() and
+     * Store\CheckoutController::browsedAdd() both refuse anything whose
+     * stock_status is not `instock`. The last step, where the money is actually
+     * taken, checked nothing: place() walked $cart->items and wrote order
+     * lines. A basket added on Monday was sold on Friday whether or not the
+     * product still existed, and nothing in the application had ever reduced a
+     * counted stock figure, so one unit could be sold to everyone who reached
+     * the checkout.
+     *
+     * THE DECISION IS TO REFUSE THE WHOLE ORDER, and it is a decision about
+     * behaviour rather than a repair. The alternatives were:
+     *
+     *   - drop the unavailable line and take the rest. The shopper then pays
+     *     for a basket they never agreed to, at a total they never saw — and
+     *     silently, because by then the confirmation is already written.
+     *   - take the order and flag it. That is the shop accepting money for
+     *     something it knows it cannot ship, and someone has to ring the
+     *     customer afterwards.
+     *
+     * Both move money against an order the customer did not confirm. A refusal
+     * costs this sale — that cost is real and is the reason this is a decision
+     * — but it happens BEFORE the gateway is touched, the basket survives
+     * untouched, and the shopper is told in words which product is gone and
+     * what to do about it. It is also exactly what the coupon path next door
+     * already does when a code runs out mid-checkout, so one situation has one
+     * shape.
+     *
+     * MUST RUN INSIDE THE PLACING TRANSACTION, and says so rather than hoping.
+     * A decrement that can commit on its own would take units off the shelf for
+     * an order that then rolls back on the next statement.
+     *
+     * THE ROWS ARE RE-READ BY KEY, never taken off the cart's own instances.
+     * Every storefront path loads its lines through a narrow column list —
+     * CheckoutController::LINE_COLUMNS has `stock_status` and neither
+     * `manage_stock` nor `stock`, and the variant is loaded as
+     * `id,product_id,sku,price,sale_price,image,stock_status`. On those
+     * instances `manage_stock` reads null, which is falsy, so a check written
+     * against them would decide that NOTHING in the shop counts stock and pass
+     * every basket. That is the identical trap CouponService::lockForRedemption()
+     * documents, and the reason it re-reads the coupon.
+     *
+     * WHICH SHELF A LINE COMES OFF. A variant that counts its own stock is its
+     * own shelf; a variant that does not falls back to the parent product's,
+     * which is how a variable product with one shared stock figure behaves.
+     * Products that count no stock at all (`manage_stock` off) are not counted,
+     * not decremented and not marked — the only thing asked of them is the
+     * same `stock_status` question the add-to-basket paths already ask.
+     *
+     * @throws StockUnavailable  and nothing is written
+     */
+    public function claimStock(Cart $cart): void
+    {
+        if (DB::transactionLevel() === 0) {
+            throw new \LogicException(
+                'CartService::claimStock() must run inside the transaction that creates the order. '
+                . 'A decrement that can commit on its own takes units off the shelf for an order that then rolls back.'
+            );
+        }
+
+        $cart->loadMissing('items.product', 'items.variant');
+
+        /*
+         * Demand is summed PER SHELF before anything is checked.
+         *
+         * One product can legitimately appear on two lines — the same product
+         * added through the cart page and through the checkout's Browsed tab,
+         * or a variant line beside a plain one — and checking each line against
+         * the shelf on its own lets a basket of 1 + 1 buy a single remaining
+         * unit twice over.
+         */
+        $wanted = [];
+
+        foreach ($cart->items as $item) {
+            if ($item->product_id === null) {
+                continue;
+            }
+
+            $key = $item->product_variant_id !== null
+                ? 'variant:' . $item->product_variant_id
+                : 'product:' . $item->product_id;
+
+            $wanted[$key] ??= [
+                'product_id' => (int) $item->product_id,
+                'variant_id' => $item->product_variant_id !== null ? (int) $item->product_variant_id : null,
+                'quantity' => 0,
+                // Used only in the refusal sentence, so it is taken from the
+                // relations the checkout has already loaded and never fetched.
+                'label' => $this->lineLabel($item),
+            ];
+
+            $wanted[$key]['quantity'] += max(0, (int) $item->quantity);
+        }
+
+        foreach ($wanted as $line) {
+            $this->claimOne($line);
+        }
+    }
+
+    /**
+     * One shelf: checked under a lock, then decremented conditionally.
+     *
+     * BOTH HALVES ARE LOAD-BEARING and they guard different engines.
+     *
+     * lockForUpdate() is what serialises two MySQL transactions on the same
+     * row, the same way CouponService::lockForRedemption() does for a usage
+     * limit — without it both read `stock = 1`, both decide there is room, and
+     * both write. It is a no-op on SQLite, which takes one database-wide write
+     * lock instead.
+     *
+     * The decrement then repeats the condition in its own WHERE and checks how
+     * many rows it changed. That is what makes the sequence correct with no
+     * lock at all: an UPDATE ... WHERE stock >= n is atomic in its own right,
+     * so if anything did slip between the read and the write, the loser changes
+     * no rows and is refused rather than driving the column negative.
+     *
+     * @param  array{product_id:int, variant_id:?int, quantity:int, label:string}  $line
+     *
+     * @throws StockUnavailable
+     */
+    private function claimOne(array $line): void
+    {
+        $quantity = $line['quantity'];
+
+        if ($quantity < 1) {
+            return;
+        }
+
+        // Soft-deleted products are excluded by the model's own scope, so a
+        // product the owner has binned since it went in the basket arrives here
+        // as null and is refused rather than sold.
+        $product = Product::whereKey($line['product_id'])->lockForUpdate()->first();
+
+        if ($product === null) {
+            throw new StockUnavailable($line['label'] . ' is no longer available. Please remove it from your basket to continue.');
+        }
+
+        $variant = $line['variant_id'] !== null
+            ? ProductVariant::whereKey($line['variant_id'])->lockForUpdate()->first()
+            : null;
+
+        if ($line['variant_id'] !== null && $variant === null) {
+            throw new StockUnavailable($line['label'] . ' is no longer available. Please remove it from your basket to continue.');
+        }
+
+        /*
+         * The same question the add-to-basket paths ask, asked again here:
+         * `($variant?->stock_status ?? $product->stock_status) !== 'instock'`.
+         * It applies whether or not stock is counted, because this is the shape
+         * a sell-out actually takes in this shop — the owner flips the status by
+         * hand in Store → Products — and a product nobody may add to a basket
+         * is not one anybody may pay for either.
+         */
+        if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
+            throw new StockUnavailable($line['label'] . ' is sold out. Please remove it from your basket to continue.');
+        }
+
+        // The shelf: the variant's own when it counts stock, otherwise the
+        // parent's, otherwise nothing is counted and there is nothing to do.
+        if ($variant !== null && $variant->manage_stock) {
+            $this->takeFromShelf('product_variants', (int) $variant->id, $variant->stock, $quantity, $line['label']);
+
+            return;
+        }
+
+        if ($product->manage_stock) {
+            $this->takeFromShelf('products', (int) $product->id, $product->stock, $quantity, $line['label']);
+        }
+    }
+
+    /**
+     * Decrement one counted shelf, and mark it sold out when it empties.
+     *
+     * MARKING IT MATTERS AS MUCH AS THE DECREMENT. Leaving stock_status at
+     * `instock` over a zero shelf is what makes the shop go on advertising a
+     * product it cannot ship: every card, every listing and the product page
+     * itself read that column, and the next shopper gets all the way to Place
+     * order before anything says no. Setting it here is the difference between
+     * one refused checkout and a queue of them.
+     *
+     * It is deliberately one-way. Putting stock back — a restock, a cancelled
+     * order — is the owner's own action in Store → Products, and there is no
+     * single choke point for an order leaving `processing` at which a return
+     * could be hooked; the note in CheckoutController::place() about
+     * releaseRedemptions() sets out why that has to come first.
+     *
+     * @throws StockUnavailable
+     */
+    private function takeFromShelf(string $table, int $id, mixed $have, int $quantity, string $label): void
+    {
+        // NULL on a row that says it counts stock is zero, not "unlimited" —
+        // the same reading the admin's own list takes (CatalogProductsApi
+        // Controller prints `stock` as 0 for a managed product with no figure).
+        $have = (int) ($have ?? 0);
+
+        $changed = DB::table($table)
+            ->where('id', $id)
+            ->where('stock', '>=', $quantity)
+            ->update(['stock' => DB::raw('stock - ' . $quantity)]);
+
+        if ($changed !== 1) {
+            throw new StockUnavailable($this->shortfall($label, $have));
+        }
+
+        if ($have - $quantity <= 0) {
+            DB::table($table)->where('id', $id)->update(['stock_status' => 'outofstock']);
+        }
+    }
+
+    /** The sentence a shopper reads when the shelf cannot cover their basket. */
+    private function shortfall(string $label, int $have): string
+    {
+        if ($have < 1) {
+            return $label . ' is sold out. Please remove it from your basket to continue.';
+        }
+
+        return 'Only ' . $have . ' of ' . $label . ' ' . ($have === 1 ? 'is' : 'are')
+            . ' left. Please reduce the quantity in your basket to continue.';
+    }
+
+    /**
+     * What to call this line in a refusal, in the shopper's terms.
+     *
+     * Off the relations the checkout has already loaded — never a fresh query,
+     * and never the raw slug or id. attributeValues is part of
+     * CheckoutController::loadCart()'s eager load, so a variant's size or shade
+     * is free here; a line whose product row has gone falls back to the wording
+     * the order snapshot uses for the same case.
+     */
+    private function lineLabel(CartItem $item): string
+    {
+        $name = trim((string) ($item->product?->name ?? 'Item'));
+
+        if ($item->relationLoaded('variant')
+            && $item->variant !== null
+            && $item->variant->relationLoaded('attributeValues')) {
+            $label = trim($item->variant->label());
+
+            if ($label !== '') {
+                return $name . ' (' . $label . ')';
+            }
+        }
+
+        return $name;
+    }
+
+    /**
      * Fold a guest cart into the customer's cart at login.
      *
      * Quantities are summed rather than replaced, because someone who added two

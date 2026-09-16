@@ -443,6 +443,33 @@ class CheckoutController extends Controller
                     'ip_address' => $request->ip(),
                 ]);
 
+                /*
+                 * THE STOCK CHECK, and the only one that happens where the
+                 * money is.
+                 *
+                 * Everything above this line has been true since the shopper
+                 * pressed Add to cart, which may have been a fortnight ago:
+                 * CartController::add() and browsedAdd() both ask whether a
+                 * product is in stock AT THE MOMENT IT GOES IN THE BAG, and
+                 * nothing asked again. So a product that sold out in between
+                 * was sold anyway, and no counted stock figure had ever been
+                 * reduced by an order at all.
+                 *
+                 * Deliberately BEFORE the order lines are written, and inside
+                 * this transaction: StockUnavailable propagates out of
+                 * DB::transaction() and rolls back the order row, the customer
+                 * row's password, and — crucially — the coupon redemption
+                 * recorded below, so a refused placement has not spent the
+                 * shopper's one use of a code. It is also before
+                 * $gateway->start() further down, so nothing has been asked of
+                 * a payment provider.
+                 *
+                 * The whole basket is refused rather than trimmed. The reasoning
+                 * for that choice, and what was rejected, is in
+                 * CartService::claimStock().
+                 */
+                $this->carts->claimStock($cart);
+
                 foreach ($cart->items as $item) {
                     $p = $item->product;
 
@@ -489,6 +516,20 @@ class CheckoutController extends Controller
 
                 return $order;
             });
+        } catch (\App\Services\StockUnavailable $e) {
+            /*
+             * Something in the bag sold out while this shopper was on the
+             * checkout page — or the last unit went to someone who pressed
+             * Place order a moment sooner. The transaction rolled back, so
+             * there is no order, no redemption and nothing off the shelf; the
+             * basket is exactly as they left it.
+             *
+             * The message names the product and says what to do about it, and
+             * it lands above the form with everything they typed still in the
+             * fields. That is the promise this change makes: the customer is
+             * told, in words, before any money moves.
+             */
+            return back()->withInput()->withErrors($e->getMessage());
         } catch (\App\Services\CouponExhausted $e) {
             // The code ran out between this shopper applying it and pressing
             // Place Order — someone else took the last use, or this is their
@@ -644,7 +685,27 @@ class CheckoutController extends Controller
             $order = null;
         }
 
-        return view('store.checkout-success', ['order' => $order, 'settings' => $this->settings]);
+        /*
+         * WHEN THE PARCEL ARRIVES, not just what the rate is called.
+         *
+         * The confirmation showed `Delivery: Free delivery` — the rate name and
+         * nothing about timing, on the one screen a shopper reads immediately
+         * after paying and the one question they have at that moment.
+         *
+         * Nothing is invented for it. This is the SAME recorded line the
+         * checkout has been showing under Place order all along, asked of the
+         * same deliveryText(), for the country this parcel is actually going
+         * to — so a Gulf order gets no window rather than the UAE's, exactly as
+         * at checkout, and the owner's `delivery_texts` row for a country wins
+         * on both screens at once.
+         */
+        $country = (string) ($order?->shipping_address['country'] ?? '');
+
+        return view('store.checkout-success', [
+            'order' => $order,
+            'settings' => $this->settings,
+            'deliveryText' => $country === '' ? '' : $this->deliveryText($country),
+        ]);
     }
 
     /**

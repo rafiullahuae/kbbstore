@@ -81,8 +81,22 @@ class EcommerceApiController extends Controller
                     'vat_rate'              => ['int', 'VAT rate', 5, 'Per cent. Informational — see App\\Support\\VatDisplay for how it is calculated.'],
                     'vat_basis'             => ['select', 'How the rate is applied', 'inclusive', 'Inclusive: the price already contains the tax. Flat: rate x total, a rounder figure some merchants prefer.', ['inclusive' => 'Inclusive (price already contains it)', 'flat' => 'Flat (rate × total)']],
                     'vat_label'             => ['text', 'VAT line text', "You're paying VAT ({rate}%)", 'Use {rate} where the percentage should appear.'],
-                    'checkout_coupon'       => ['text', 'Suggested coupon code', 'GLOW30', 'Shown as a clickable hint.'],
-                    'checkout_coupon_text'  => ['text', 'Coupon hint text', 'Need more discount? Try {code} for 30% off ✨', 'Use {code} where the code should appear.'],
+                    /*
+                     * BLANK DEFAULTS, deliberately. These were 'GLOW30' and
+                     * 'Need more discount? Try {code} for 30% off ✨' — an
+                     * invented code and an invented percentage, pre-filled into
+                     * the form, so a shop that had never had either advertised a
+                     * 30% discount at the moment of payment and refused it the
+                     * instant the badge was tapped. Support\CheckoutCouponHint
+                     * will not advertise a code that does not exist, and this
+                     * screen no longer suggests one that does not.
+                     *
+                     * Left blank, the hint text is built from what the coupon is
+                     * really worth, so the wording cannot misstate the discount
+                     * either.
+                     */
+                    'checkout_coupon'       => ['text', 'Suggested coupon code', '', 'Shown as a clickable hint — only if a coupon with this code exists and is live.'],
+                    'checkout_coupon_text'  => ['text', 'Coupon hint text', '', 'Use {code} where the code should appear. Left blank, the line states the code’s real value.'],
                     'checkout_coupon_color' => ['colour', 'Hint colour', '#1f7d52', ''],
                     'checkout_thumbs_style' => ['select', 'Mobile order thumbnails', 'badges', '', ['badges' => 'Badges', 'stack' => 'Stack', 'names' => 'Names', 'scroll' => 'Scroll', 'rings' => 'Rings', 'total' => 'Total', 'off' => 'Off']],
                     'mobile_sticky_bar'     => ['bool', 'Sticky place-order bar on mobile', false, 'The on-page box is shown either way.'],
@@ -113,6 +127,21 @@ class EcommerceApiController extends Controller
                     'bundles' => ['Quantity bundles', 'Buy-more-save-more tiers on every product.', 'box', ['bundles_enabled']],
                     'fbt' => ['Frequently bought together', 'A companion-products block below the buy box.', 'box', ['frequently_bought', 'fbt_title', 'fbt_count']],
                     'ratings' => ['Ratings', 'How the review score is shown.', 'star', ['review_capsule_style']],
+                    /*
+                     * THE TRUST ROW WAS TWO PROMISES WITH NOTHING BEHIND THEM.
+                     *
+                     * store/product.blade.php printed "Fast UAE delivery" and
+                     * "Easy 14-day returns" as literals. No returns window is
+                     * recorded anywhere in this application, and the delivery
+                     * line was shown to a Gulf shopper as readily as a UAE one
+                     * — the same claim Lane CF removed from the checkout for
+                     * being the wrong promise.
+                     *
+                     * Nothing was invented in their place. Both are now the
+                     * owner's own words, BLANK BY DEFAULT, and the chip is not
+                     * rendered until one is written here.
+                     */
+                    'trust' => ['Trust row', 'The chips under Add to cart. Blank means the chip is not shown — write only what the shop actually does.', 'shield', ['trust_delivery_text', 'trust_returns_text']],
                 ],
                 'fields' => [
                     'bundles_enabled'       => ['bool', 'Quantity bundles', true, 'Tiers are configured in Appearance → Quantity bundles.'],
@@ -126,6 +155,8 @@ class EcommerceApiController extends Controller
                     'review_badge_label'    => ['text', 'Count wording', '{n} reviews', 'Use {n} where the number should appear.'],
                     'review_badge_sold'     => ['bool', 'Show units sold', true, 'Only appears above 1,000 sales.'],
                     'review_badge_colour'   => ['colour', 'Star colour', '#E8A33D', ''],
+                    'trust_delivery_text'   => ['text', 'Delivery chip', '', 'e.g. "1–3 day delivery in the UAE". Left blank, no delivery chip is shown.'],
+                    'trust_returns_text'    => ['text', 'Returns chip', '', 'e.g. "Easy 14-day returns". Left blank, no returns chip is shown — do not promise a window the shop does not keep.'],
                 ],
             ],
             /*

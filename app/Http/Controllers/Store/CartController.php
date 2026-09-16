@@ -256,9 +256,26 @@ class CartController extends Controller
             'promo' => $this->settings->moduleEnabled('minicart_promo', true)
                 ? (string) $this->settings->get('minicart_promo', '')
                 : '',
+            /*
+             * THE CODE IS CHECKED BEFORE IT IS ADVERTISED.
+             *
+             * This was `$this->settings->get('cart_coupon_text', 'Use code <b
+             * data-code="GLOW30">GLOW30</b> for an extra 30% off.')` — a code
+             * and a percentage both written into the default, on a shop that
+             * has never had either. The badge is clickable, so a shopper who
+             * tapped it was answered "That code is not valid." by the same
+             * panel that had just offered it; and this payload feeds the
+             * mini-cart drawer, which the layout renders on EVERY page.
+             *
+             * Support\CheckoutCouponHint holds the one set of conditions —
+             * exists, started, not expired, not exhausted — so the cart, the
+             * drawer and the checkout cannot advertise different things. It
+             * costs no query at all until the owner actually names a code.
+             */
             'couponHint' => $this->settings->moduleEnabled('coupon_hint', true)
-                ? (string) $this->settings->get('cart_coupon_text',
-                    'Use code <b data-code="GLOW30">GLOW30</b> for an extra 30% off.')
+                ? \App\Support\CheckoutCouponHint::html(
+                    \App\Support\CheckoutCouponHint::cartOffer($this->settings)
+                )
                 : '',
             // Only fetched when the drawer is being rendered for display.
             'browsed' => $request->boolean('skip_browsed') ? collect() : $this->browsed($request, $cart),
