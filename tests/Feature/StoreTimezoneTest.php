@@ -198,7 +198,7 @@ it('does not move the all-time revenue total when the shop timezone changes', fu
 
 /* ---------------------------------------------------- the chart is day buckets */
 
-it('buckets the 14-day chart on the shop is calendar day, not the UTC one', function () {
+it('buckets the chart on the shop is calendar day, not the UTC one', function () {
     $admin = tzAdmin();
 
     // Frozen so "today" is a fixed thing on both clocks. 2026-09-16 10:00 UTC
@@ -212,15 +212,27 @@ it('buckets the 14-day chart on the shop is calendar day, not the UTC one', func
 
     setZone('Asia/Dubai');
 
-    $daily = collect($this->actingAs($admin, 'admin')->getJson('/admin-api/analytics')->assertOk()->json('daily'))
-        ->keyBy('date');
+    /*
+     * An explicit fourteen-day range, because the screen no longer has one of
+     * its own: Analytics takes a period from the owner now (All time, Today,
+     * This week, month, year, or a custom range) and defaults to All time. The
+     * property under test is unchanged and has nothing to do with which period
+     * is asked for — a bar is a day on the SHOP's calendar — so the range is
+     * named here rather than assumed, and the buckets are keyed by `key`, which
+     * is what App\Support\AnalyticsRange calls a bucket.
+     */
+    $series = collect(
+        $this->actingAs($admin, 'admin')
+            ->getJson('/admin-api/analytics?period=custom&from=2026-09-03&to=2026-09-16')
+            ->assertOk()->json('series')
+    )->keyBy('key');
 
-    expect($daily->has('2026-09-16'))->toBeTrue('the chart has no bucket for today on the shop clock')
-        ->and($daily['2026-09-16']['revenue_aed'])->toBe(100, 'an order placed at 01:30 Dubai landed in the previous day is bar')
-        ->and($daily['2026-09-15']['revenue_aed'])->toBe(0);
+    expect($series->has('2026-09-16'))->toBeTrue('the chart has no bucket for today on the shop clock')
+        ->and($series['2026-09-16']['revenue_aed'])->toBe(100, 'an order placed at 01:30 Dubai landed in the previous day is bar')
+        ->and($series['2026-09-15']['revenue_aed'])->toBe(0);
 
     // The last bucket is today on the shop's clock, and there are 14 of them.
-    $dates = $daily->keys()->all();
+    $dates = $series->keys()->all();
     expect(count($dates))->toBe(14)
         ->and(end($dates))->toBe('2026-09-16');
 
@@ -231,11 +243,14 @@ it('buckets the 14-day chart on the shop is calendar day, not the UTC one', func
     Cache::flush();
     SettingsService::forgetMemo();
 
-    $utcDaily = collect($this->actingAs($admin, 'admin')->getJson('/admin-api/analytics')->assertOk()->json('daily'))
-        ->keyBy('date');
+    $utc = collect(
+        $this->actingAs($admin, 'admin')
+            ->getJson('/admin-api/analytics?period=custom&from=2026-09-03&to=2026-09-16')
+            ->assertOk()->json('series')
+    )->keyBy('key');
 
-    expect($utcDaily['2026-09-15']['revenue_aed'])->toBe(100)
-        ->and($utcDaily['2026-09-16']['revenue_aed'])->toBe(0);
+    expect($utc['2026-09-15']['revenue_aed'])->toBe(100)
+        ->and($utc['2026-09-16']['revenue_aed'])->toBe(0);
 });
 
 /*
@@ -259,13 +274,23 @@ it('opens the chart window at shop-local midnight, not UTC midnight', function (
     tzOrder('2026-09-02 20:01:00', 10000);   // 00:01 on the 3rd, Dubai -> in
     tzOrder('2026-09-02 19:59:00', 50000);   // 23:59 on the 2nd, Dubai -> out
 
-    $daily = collect($this->actingAs($admin, 'admin')->getJson('/admin-api/analytics')->assertOk()->json('daily'))
-        ->keyBy('date');
+    /*
+     * The range is named by the owner now, so the edge under test is the one
+     * the owner asked for: "from the 3rd" has to mean the 3rd ON THE SHOP'S
+     * CLOCK. A range bound built as UTC midnight would reach back four hours
+     * too far and swallow the 23:59 order below, which is the same bug this
+     * file was opened for, arriving through the filter instead of the window.
+     */
+    $series = collect(
+        $this->actingAs($admin, 'admin')
+            ->getJson('/admin-api/analytics?period=custom&from=2026-09-03&to=2026-09-16')
+            ->assertOk()->json('series')
+    )->keyBy('key');
 
-    expect($daily->keys()->first())->toBe('2026-09-03')
-        ->and($daily['2026-09-03']['revenue_aed'])->toBe(100, 'the oldest bucket missed an order placed just after shop-local midnight');
+    expect($series->keys()->first())->toBe('2026-09-03')
+        ->and($series['2026-09-03']['revenue_aed'])->toBe(100, 'the oldest bucket missed an order placed just after shop-local midnight');
 
-    $charted = collect($daily)->sum('revenue_aed');
+    $charted = collect($series)->sum('revenue_aed');
     expect($charted)->toBe(100, 'an order from before the window leaked into the chart');
 });
 
