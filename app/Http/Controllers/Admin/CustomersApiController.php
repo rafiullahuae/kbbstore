@@ -514,15 +514,56 @@ class CustomersApiController extends Controller
         $real = Order::REAL_STATUSES;
         $marks = implode(',', array_fill(0, count($real), '?'));
 
+        /*
+         * SPEND IS NET OF REFUNDS.
+         *
+         * The comment above this method already explains why spend counts only
+         * REAL_STATUSES: a cancelled order is money the store never took. A
+         * partial refund is the same fact wearing a different hat, and it was
+         * being missed. PaymentRefunder moves an order to 'refunded' only once
+         * the refunds cover the whole captured amount — see the comment on its
+         * status update, which says so in as many words — so a customer given
+         * AED 400 back on a AED 1,000 order kept the whole AED 1,000 here, in
+         * the sort-by-value order, in the summary strip and in the CSV export.
+         *
+         * That figure is what the owner uses to decide who their best customers
+         * are, so being wrong in the generous direction is not harmless: it
+         * promotes whoever returned the most.
+         *
+         * WHICH REFUND ROWS: PaymentRefunder::COUNTED — settled, or in flight
+         * and reserved, and NOT the failed attempts, which exist precisely so
+         * the merchant can see that no money moved. Same definition the order
+         * screen's `refunded_total_aed` uses and the same one the dashboard and
+         * Analytics use, so no two screens can describe one order differently.
+         */
+        $refunded = DB::table('refunds')
+            ->whereIn('status', \App\Services\Payments\PaymentRefunder::COUNTED)
+            ->groupBy('order_id')
+            ->selectRaw('order_id, COALESCE(SUM(amount), 0) as refunded_fils');
+
         $orders = DB::table('orders')
-            ->whereNull('deleted_at')
-            ->whereNotNull('customer_id')
-            ->groupBy('customer_id')
+            ->leftJoinSub($refunded, 'rf', 'rf.order_id', '=', 'orders.id')
+            ->whereNull('orders.deleted_at')
+            ->whereNotNull('orders.customer_id')
+            ->groupBy('orders.customer_id')
+            /*
+             * The CASE around the subtraction floors a line at zero rather than
+             * letting it go negative. It cannot through this application —
+             * PaymentRefunder refuses a refund beyond what was captured, and a
+             * full one takes the order out of REAL_STATUSES — but an imported
+             * WooCommerce refund never passed through that check, and one bad
+             * row must not be able to drag a customer's lifetime value below
+             * what they actually paid. Written as CASE rather than MAX()/
+             * GREATEST(), which do not mean the same thing on both engines.
+             */
             ->selectRaw(
-                "customer_id,
-                 SUM(CASE WHEN status IN ($marks) THEN 1 ELSE 0 END) as paid_orders,
-                 COALESCE(SUM(CASE WHEN status IN ($marks) THEN total ELSE 0 END), 0) as spend_fils,
-                 MAX(CASE WHEN status IN ($marks) THEN created_at END) as paid_last_at,
+                "orders.customer_id as customer_id,
+                 SUM(CASE WHEN orders.status IN ($marks) THEN 1 ELSE 0 END) as paid_orders,
+                 COALESCE(SUM(CASE WHEN orders.status IN ($marks)
+                     THEN (CASE WHEN orders.total - COALESCE(rf.refunded_fils, 0) > 0
+                                THEN orders.total - COALESCE(rf.refunded_fils, 0) ELSE 0 END)
+                     ELSE 0 END), 0) as spend_fils,
+                 MAX(CASE WHEN orders.status IN ($marks) THEN orders.created_at END) as paid_last_at,
                  COUNT(*) as all_orders",
                 array_merge($real, $real, $real)
             );
@@ -790,11 +831,23 @@ class CustomersApiController extends Controller
             return [];
         }
 
+        // Net of refunds, for the same reason and by the same definition as
+        // rowQuery() above: the "this customer has AED X of history" line on a
+        // delete confirmation must be the figure the list showed, or the owner
+        // is being asked to confirm against a number they have not seen.
+        $refunded = DB::table('refunds')
+            ->whereIn('status', \App\Services\Payments\PaymentRefunder::COUNTED)
+            ->groupBy('order_id')
+            ->selectRaw('order_id, COALESCE(SUM(amount), 0) as refunded_fils');
+
         return Order::query()
-            ->whereIn('customer_id', $ids)
-            ->whereIn('status', Order::REAL_STATUSES)
-            ->groupBy('customer_id')
-            ->selectRaw('customer_id, COUNT(*) as n, COALESCE(SUM(total), 0) as s')
+            ->leftJoinSub($refunded, 'rf', 'rf.order_id', '=', 'orders.id')
+            ->whereIn('orders.customer_id', $ids)
+            ->whereIn('orders.status', Order::REAL_STATUSES)
+            ->groupBy('orders.customer_id')
+            ->selectRaw('orders.customer_id as customer_id, COUNT(*) as n,'
+                . ' COALESCE(SUM(CASE WHEN orders.total - COALESCE(rf.refunded_fils, 0) > 0'
+                . ' THEN orders.total - COALESCE(rf.refunded_fils, 0) ELSE 0 END), 0) as s')
             ->get()
             ->mapWithKeys(fn ($r) => [(int) $r->customer_id => [
                 'orders' => (int) $r->n,

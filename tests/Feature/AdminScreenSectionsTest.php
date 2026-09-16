@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 /**
- * Three admin screens given the Coupons treatment, and what must stay true of
- * them: Analytics, Business Details, and the Settings tab of SEO & Meta.
+ * Two admin screens given the Coupons treatment, and what must stay true of
+ * them: Business Details, and the Settings tab of SEO & Meta.
  *
  * WHAT THE OWNER ASKED FOR. The Coupons screen was "completely messy — fields
  * just thrown in the page, no grouping, no headings", and the rebuild of it
@@ -15,7 +15,10 @@ declare(strict_types=1);
  * box. These assertions pin the first two, because those are the ones a later
  * edit can undo without anybody noticing.
  *
- * WHY THEY ARE STRUCTURAL. Pest has no layout engine, so the measurements are
+ * Analytics was the third and is deliberately absent: lane customers-analytics
+ * rebuilt that screen to the same standard, and it is theirs to pin.
+ *
+ * WHY THESE ARE STRUCTURAL. Pest has no layout engine, so the measurements are
  * in the commit, not here. Taken in Chromium against the real markup, before
  * and after, with the admin's own measure — #content, never documentElement,
  * because body is overflow-x:hidden and the document is never wider than the
@@ -24,12 +27,10 @@ declare(strict_types=1);
  *   Business Details 390px   currency select clipped to "AED — UAE Dirha"
  *                            .g2 is `1fr 1fr` with no breakpoint anywhere
  *   SEO & Meta       390px   the same two 145px columns
- *   Analytics        390px   four 80px figures; "AED 9,185" on two lines
- *                            `repeat(4,1fr)` in an inline style attribute
  *
- * None of the three overflowed. They squeezed — which is exactly why the
- * repo's overflow walk never saw them, and why a measurement alone would not
- * have caught it either.
+ * Neither overflowed. They squeezed — which is exactly why the repo's overflow
+ * walk never saw them, and why a measurement alone would not have caught it
+ * either.
  */
 function laneCdConsole(): string
 {
@@ -60,11 +61,6 @@ function laneCdStoreSettings(): string
 function laneCdSeoSettings(): string
 {
     return laneCdSlice('async function renderSeoSettings(){', "document.getElementById('set_save_seo').onclick");
-}
-
-function laneCdAnalytics(): string
-{
-    return laneCdSlice('async function renderAnalytics(){', 'Users & Roles (real admin accounts)');
 }
 
 /**
@@ -124,10 +120,10 @@ it('still draws every field the SEO settings save reads', function () {
  * own is what these screens already had — seven cards each headed by a bare
  * bold word — and it is not what was asked for.
  */
-it('gives every band on all three screens a one-line description', function () {
+it('gives every band on both screens a one-line description', function () {
     $src = laneCdConsole();
 
-    foreach (['anSec' => 4, 'bdSec' => 3, 'smSec' => 7] as $fn => $least) {
+    foreach (['bdSec' => 3, 'smSec' => 7] as $fn => $least) {
         // The helper itself has to emit the description slot.
         expect(preg_match('/function '.$fn.'\(title,description,body\)\{/', $src) === 1)
             ->toBeTrue("{$fn}() is gone or no longer takes a description — this check is blind.");
@@ -181,10 +177,10 @@ it('gives every band on all three screens a one-line description', function () {
  * row overflows rather than stacking. minmax(min(230px,100%), 1fr) lets a track
  * give way on a narrow screen and keeps the floor everywhere else.
  */
-it('lets every field grid on the three screens give way on a phone', function () {
+it('lets every field grid on both screens give way on a phone', function () {
     $css = laneCdConsole();
 
-    foreach (['an-stats', 'bd-grid', 'sm-grid'] as $cls) {
+    foreach (['bd-grid', 'sm-grid'] as $cls) {
         /*
          * preg_match into toBeTrue rather than toMatch with a message: on a
          * 900KB subject, toMatch's failure prints the whole file before the
@@ -202,7 +198,7 @@ it('lets every field grid on the three screens give way on a phone', function ()
     }
 });
 
-it('keeps .g2 and fixed column counts off all three screens', function () {
+it('keeps .g2 and fixed column counts off both screens', function () {
     /*
      * .g2 is `display:grid;grid-template-columns:1fr 1fr` with no media query
      * anywhere in the console, and Analytics set repeat(4,1fr) in an inline
@@ -212,7 +208,6 @@ it('keeps .g2 and fixed column counts off all three screens', function () {
     foreach ([
         'Business Details' => laneCdStoreSettings(),
         'SEO settings' => laneCdSeoSettings(),
-        'Analytics' => laneCdAnalytics(),
     ] as $name => $markup) {
         expect(str_contains($markup, 'class="g2"'))->toBeFalse(
             "{$name} is using .g2 again, which is `1fr 1fr` with no breakpoint — it will draw two 145px columns on a phone."
@@ -232,10 +227,10 @@ it('keeps .g2 and fixed column counts off all three screens', function () {
  * and passes it to its children; this is the pairing the Coupons screen was
  * rebuilt around and it is asserted here for the same reason.
  */
-it('lets every wrapper on the three screens shrink below its content', function () {
+it('lets every wrapper on both screens shrink below its content', function () {
     $css = laneCdConsole();
 
-    foreach (['an-wrap', 'an-sec', 'bd-wrap', 'bd-sec', 'bd-grid', 'bd-field', 'sm-wrap', 'sm-sec', 'sm-grid', 'sm-field'] as $cls) {
+    foreach (['bd-wrap', 'bd-sec', 'bd-grid', 'bd-field', 'sm-wrap', 'sm-sec', 'sm-grid', 'sm-field'] as $cls) {
         $q = preg_quote($cls, '/');
 
         expect(preg_match('/\.'.$q.'\{[^}]*min-width:0/', $css) === 1)
@@ -252,10 +247,10 @@ it('lets every wrapper on the three screens shrink below its content', function 
  * has to cross a paragraph before it finds the next label, which is the shape
  * of the complaint these three screens were rebuilt to answer.
  */
-it('holds help text to a readable measure on all three screens', function () {
+it('holds help text to a readable measure on both screens', function () {
     $css = laneCdConsole();
 
-    foreach (['an-sec-d' => '78ch', 'bd-help' => '62ch', 'bd-sec-d' => '78ch', 'sm-help' => '62ch', 'sm-sec-d' => '78ch'] as $cls => $measure) {
+    foreach (['bd-help' => '62ch', 'bd-sec-d' => '78ch', 'sm-help' => '62ch', 'sm-sec-d' => '78ch'] as $cls => $measure) {
         $ok = preg_match('/\.'.preg_quote($cls, '/').'\{[^}]*max-width:'.preg_quote($measure, '/').'/', $css) === 1;
 
         expect($ok)->toBeTrue(

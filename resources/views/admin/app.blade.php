@@ -1802,103 +1802,51 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .paytab-t{max-width:38vw}
 }
 
-/* ===== LANE CD — three screens given the Coupons treatment =================
-   Analytics (.an-), Business Details (.bd-) and SEO & Meta's Settings tab
-   (.sm-) are laid out the way resources/views/admin/partials/coupon-editor-
-   screen.blade.php lays out coupons: titled bands, each saying in one line
-   when you would touch it, and field pairs that share a row and a width.
+/* ===== LANE CD — two screens given the Coupons treatment ===================
+   Business Details (.bd-) and SEO & Meta's Settings tab (.sm-) are laid out
+   the way resources/views/admin/partials/coupon-editor-screen.blade.php lays
+   out coupons: titled bands, each saying in one line when you would touch it,
+   and field pairs that share a row and a width.
 
-   THREE PREFIXES RATHER THAN ONE SHARED SET, on purpose. The three blocks
-   below are near-identical and that is the point: a single .kbb-sec used by
-   three screens is one edit away from restyling the other two, and this file
-   is edited by several lanes at once. Every rule here starts with the prefix
-   of exactly one screen and appears nowhere else in the console.
+   ANALYTICS WAS THE THIRD AND IS NOT HERE. Lane customers-analytics rebuilt
+   that screen to the same standard while this was being written, and theirs
+   also subtracts partial refunds from revenue — a correctness fix this had no
+   part of. Two implementations of one screen is how the withdrawn packages
+   2.60.102-.106 reverted three files, so this one was dropped whole at the
+   merge rather than half-merged. Analytics' own .an- rules are theirs, written
+   inside renderAnalytics(); nothing in this block names them.
+
+   TWO PREFIXES RATHER THAN ONE SHARED SET, on purpose. The two blocks below
+   are near-identical and that is the point: a single .kbb-sec used by two
+   screens is one edit away from restyling the other, and this file is edited
+   by several lanes at once. Every rule here starts with the prefix of exactly
+   one screen and appears nowhere else in the console.
 
    Business Details is .bd- and not the obvious .bz- because .bz- is already
    the Brands editor's, over in admin/partials/brands-editor-screen.blade.php,
    and three of its names (.bz-wrap, .bz-card, .bz-note) are ones this screen
    would have wanted too. A prefix is only a guarantee if somebody checks it is
-   free; grep the whole of resources/views before adding a fourth.
+   free; grep the whole of resources/views before adding a third.
 
-   THE LAYOUT RULE ALL THREE ARE BUILT ON. A grid or flex item's default
-   min-width is `auto` — "at least as wide as my content". A <select> whose
-   widest option is 240px therefore sets a 240px floor on its track that no
-   media query can reach, and a wide table stretches the whole column rather
-   than scrolling inside its own box. Every grid and flex container below
-   carries min-width:0 AND passes it to its children.
+   THE LAYOUT RULE BOTH ARE BUILT ON. A grid or flex item's default min-width
+   is `auto` — "at least as wide as my content". A <select> whose widest option
+   is 240px therefore sets a 240px floor on its track that no media query can
+   reach, and a wide table stretches the whole column rather than scrolling
+   inside its own box. Every grid and flex container below carries min-width:0
+   AND passes it to its children.
 
    WHAT THIS REPLACED, measured in Chromium at a 390px viewport before the
    change: .g2 is `grid-template-columns:1fr 1fr` with no breakpoint anywhere,
-   so Business Details and SEO drew two 145px columns on a phone — the currency
-   select read "AED — UAE Dirha" with the rest clipped, and the dirham-glyph
-   note ran to twelve lines in a 170px gutter. Analytics set
-   `repeat(4,1fr)` in an inline style attribute, which no media query can
-   reach either, so its four figures were 80px wide and "AED 9,185" wrapped
-   onto two lines. Neither screen overflowed #content; both squeezed, which is
-   why the overflow walk never saw them. The grids below are auto-fit with a
-   min() floor, so a track gives way instead.
+   so both screens drew two 145px columns on a phone — the currency select read
+   "AED — UAE Dirha" with the rest clipped, and the dirham-glyph note ran to
+   twelve lines in a 170px gutter. Neither screen overflowed #content; both
+   squeezed, which is why the overflow walk never saw them. The grids below are
+   auto-fit with a min() floor, so a track gives way instead.
 
    The console measures sideways overflow on #content, not documentElement —
    body is overflow-x:hidden, so the document is never wider than the viewport
    however broken a screen is.
    ========================================================================= */
-
-/* ---- Analytics ---------------------------------------------------------- */
-.an-wrap{display:grid;gap:24px;min-width:0}
-.an-wrap > *{min-width:0}
-.an-sec{display:grid;gap:12px;min-width:0}
-.an-sec > *{min-width:0}
-.an-sec-h{display:grid;gap:3px;min-width:0}
-.an-sec-t{font-size:13.5px;font-weight:650}
-.an-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft);max-width:78ch}
-.an-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(168px,100%),1fr));gap:12px;min-width:0}
-.an-stats > *{min-width:0}
-.an-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
-         padding:14px 16px;box-shadow:var(--sh-s);min-width:0}
-/* Caption above the figure. The eye reads the small label first and then has
-   something to hang the number on; the other way round it reads four loose
-   numbers and has to go back for each one. */
-.an-stat span{display:block;font-size:11px;font-weight:650;letter-spacing:.05em;
-              text-transform:uppercase;color:var(--ink-soft)}
-.an-stat b{display:block;font-size:22px;line-height:1.25;margin-top:4px;
-           font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.an-stat i{display:block;font-style:normal;font-size:11.5px;color:var(--ink-faint);margin-top:2px}
-.an-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
-         box-shadow:var(--sh-s);min-width:0;padding:16px}
-/* The old markup put a .pad div with padding-bottom:0 inside a .card with
-   overflow:auto, which clipped the "Top products" heading against the card's
-   own top border. One padded box, one heading inside it. */
-.an-chart{display:block;width:100%;height:170px;min-width:0}
-.an-axis{display:flex;justify-content:space-between;gap:12px;min-width:0;
-         font-size:11.5px;color:var(--ink-faint);margin-top:8px}
-.an-axis > *{min-width:0}
-.an-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:8px;min-width:0}
-.an-status > *{min-width:0}
-.an-srow{display:flex;align-items:center;gap:9px;min-width:0;padding:8px 11px;
-         border:1px solid var(--border);border-radius:var(--r-sm);background:rgba(127,127,127,.03)}
-.an-srow > *{min-width:0}
-.an-sdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:var(--ink-faint)}
-.an-sdot.is-green{background:var(--green)}
-.an-sdot.is-amber{background:var(--amber)}
-.an-sdot.is-red{background:var(--red)}
-.an-sname{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.an-scount{margin-left:auto;flex:0 0 auto;font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}
-.an-table{width:100%;border-collapse:collapse;font-size:13px;min-width:0}
-.an-table th,.an-table td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--border-2);
-                          vertical-align:top;min-width:0}
-.an-table th{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-             color:var(--ink-faint);border-bottom-color:var(--border)}
-.an-table tr:last-child td{border-bottom:0}
-.an-table th.is-num,.an-table td.is-num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-/* One thing to read per row: the product, with its brand tucked under it. */
-.an-pname{font-size:13px;font-weight:600;overflow-wrap:anywhere}
-.an-pbrand{font-size:11.5px;color:var(--ink-soft);margin-top:1px;overflow-wrap:anywhere}
-.an-empty{padding:26px 10px;text-align:center;color:var(--ink-soft);font-size:13px}
-@media (max-width:640px){
-  .an-wrap{gap:20px}
-  .an-card{padding:13px}
-  .an-table th,.an-table td{padding:9px 6px}
-}
 
 /* ---- Business Details --------------------------------------------------- */
 .bd-wrap{display:grid;gap:16px;min-width:0}
@@ -2316,7 +2264,19 @@ function go(id,sub){
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
-/* ---------- Dashboard ---------- */
+/* ---------- Dashboard ----------
+   THE FOURTH TILE IS NOT "Conversion", and used to say it was. It is paid
+   orders / all orders: the share of orders that reach a real status rather than
+   being cancelled, failed or left as a draft. Conversion is orders per SESSION
+   and nothing in this application tracks sessions, so "Conversion 67%" was
+   telling the owner that 67% of the people who visited their shop bought
+   something. hydrateDash() fills it in under the new name.
+
+   The explanation lives HERE rather than beside the tile because everything
+   between this line and the end of the template literal below is inside a
+   verbatim region: a Blade comment written in there is not a comment at all,
+   it is rendered to the page as visible text. That is not hypothetical — it
+   shipped to a screenshot in this lane before being caught. */
 function renderDash(){
   $('#content').innerHTML=`<div class="wrap">
     <div class="banner">${ic('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>')}<div>This is the <b>foundation</b>. Real numbers appear once your WooCommerce data is imported in <b>Phase 1</b> — the layout, modules, and safety tools below are live and clickable now.</div></div>
@@ -2324,7 +2284,7 @@ function renderDash(){
       ${kpi(I.revenue,'#15a85a','var(--accent-soft)','Revenue (30d)','AED —','Awaiting import')}
       ${kpi(I.orders,'#3f6fe0','var(--blue-soft)','Orders','—','2,419 to import')}
       ${kpi(I.cust,'#7b6cf0','var(--violet-soft)','Customers','—','with logins preserved')}
-      ${kpi(I.revenue,'#e0922f','var(--amber-soft)','Conversion','—','tracked after launch')}
+      ${kpi(I.orders,'#e0922f','var(--amber-soft)','Orders completed','—','of all orders placed')}
     </div>
     <div class="grid2" style="margin-top:16px">
       <div class="card pad">
@@ -8797,11 +8757,18 @@ buildNav();
         }
       });
     }
-    setKpi('Revenue (30d)', 'AED '+s.revenue_30d_aed.toLocaleString(), 'last 30 days');
+    /* Net of refunds, and the tile says so when any money has gone back. A
+       partial refund leaves its order 'completed' (PaymentRefunder only moves
+       the status on a FULL refund), so before this the whole of a partly
+       refunded order stayed in the revenue figure for ever. */
+    setKpi('Revenue (30d)', 'AED '+s.revenue_30d_aed.toLocaleString(),
+      s.refunds_30d_aed ? ('net of AED '+s.refunds_30d_aed.toLocaleString()+' refunded') : 'last 30 days, net of refunds');
     setKpi('Orders', s.orders.toLocaleString(), s.paid_orders+' paid');
     setKpi('Customers', s.customers.toLocaleString(), 'total accounts');
+    /* Named for what it measures. See the comment on the tile in renderDash():
+       this is not a conversion rate and nothing here tracks sessions. */
     var conv = s.orders ? Math.round((s.paid_orders/s.orders)*100) : 0;
-    setKpi('Conversion', conv+'%', 'paid / total');
+    setKpi('Orders completed', conv+'%', s.paid_orders+' of '+s.orders+' reached a real status');
 
     var banner = document.querySelector('#content .banner div');
     if(banner) banner.innerHTML = 'Live data. <b>'+s.products+'</b> products, <b>'+s.orders+'</b> orders, <b>'+s.customers+'</b> customers. '+(s.low_stock? ('<b>'+s.low_stock+'</b> low on stock.') : 'Stock levels healthy.');
@@ -10919,27 +10886,240 @@ buildNav();
   if(typeof cur !== 'undefined' && cur === 'customers'){ window.renderCustomers(); }
   /* ===== LANE T · Store · Customers — END ===== */
 
-  /* ---------- Quiz Leads screen (new) ---------- */
-  var LEADS=[], leadFilter='all';
-  async function renderQuizLeads(){
-    try{ var d=await api('/admin-api/quiz-leads'); LEADS=d.leads||[]; }catch(e){ LEADS=[]; }
-    var expertN=LEADS.filter(function(l){return l.expert;}).length;
-    var list = leadFilter==='expert' ? LEADS.filter(function(l){return l.expert;}) : LEADS;
-    document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Quiz Leads</h2><p>Skin-quiz submissions. Flagged rows requested an expert consultation.</p></div>'+
-      '<div class="chips" style="margin:12px 0 14px">'+[['all','All \u00b7 '+LEADS.length],['expert','Expert requests \u00b7 '+expertN]].map(function(c){return '<button class="chip'+(leadFilter===c[0]?' on':'')+'" data-lf="'+c[0]+'">'+c[1]+'</button>';}).join('')+'</div>'+
-      '<div class="card" style="overflow:auto"><table><thead><tr><th>Lead</th><th>Skin type</th><th>Concerns</th><th>Recommended</th><th>Expert</th><th>Date</th></tr></thead><tbody>'+
-      (list.length? list.map(function(l){
-        return '<tr><td><div class="pname">'+sesc((l.name||'Anonymous'))+'</div><div class="pbrand">'+sesc((l.email||l.phone||''))+'</div></td>'+
-          '<td>'+sesc((l.skin_type||'\u2014'))+'</td>'+
-          '<td>'+(l.concerns&&l.concerns.length? l.concerns.map(function(x){return '<span class="tagchip" style="font-size:10px">'+x+'</span>';}).join(' ') : '\u2014')+'</td>'+
-          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(l.recommended&&l.recommended.length? l.recommended.join(', ') : '\u2014')+'</td>'+
-          '<td>'+(l.expert? '<span class="pill amber"><span class="d"></span>Requested</span>':'<span class="pill grey">\u2014</span>')+'</td>'+
-          '<td style="font-size:11.5px;color:var(--ink-soft)">'+(l.created_at||'').slice(0,10)+'</td></tr>';
-      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:34px">No quiz submissions yet.</td></tr>')+
-      '</tbody></table></div><div class="pager"><span>Showing '+list.length+' of '+LEADS.length+'</span></div></div>';
-    document.querySelectorAll('#content .chip[data-lf]').forEach(function(c){ c.onclick=function(){ leadFilter=c.dataset.lf; renderQuizLeads(); }; });
+  /* ---------- Quiz Leads screen ---------------------------------------------
+     A lead list is a worklist: the owner opens it because somebody has just
+     phoned, or because it is Tuesday and the expert requests need ringing back.
+     It could do none of that, and it had a hole in it.
+
+     THE HOLE. `concerns` and `recommended` were concatenated into this table's
+     HTML with no sesc(), while every other cell on the same row was escaped.
+     POST /api/quiz is public, unauthenticated, and validates `concerns` as
+     'nullable' \u2014 no type, no length, no content rule \u2014 so the value is whatever
+     an anonymous caller posts. That is stored cross-site scripting executing in
+     the owner's authenticated admin session, on the one screen whose entire
+     purpose is to be opened and read. Both cells go through sesc() now.
+
+     WHAT IT COULD NOT DO. No search, so finding the caller meant reading every
+     row. No status, although quiz_submissions.status exists, defaults to 'new'
+     and was already coming back from the endpoint unused \u2014 there was nowhere to
+     record that a lead had been rung. No conversion figure, so the quiz's worth
+     was unknowable from the screen that lists its output. And `expert_message`,
+     the words the customer actually typed when asking for a consultation, was
+     never sent to the browser at all: the screen showed that somebody wanted
+     help and hid what they wanted.
+
+     Search and the status filter are applied by the ENDPOINT, not in the
+     browser, so the chip counts and the rows cannot disagree; the box keeps
+     focus across the re-render, which is the defect that removed the search
+     from another screen in this console. ---------------------------------- */
+  var LEADS=[], LEAD_SUMMARY={}, LEAD_STATUSES=['new','contacted','converted','closed'];
+  var leadQuery='', leadStatus='', leadExpertOnly=false, leadBusy=false;
+  var QL_CSS_ID='ql-quiz-leads-css';
+  function qlStyle(){
+    if(document.getElementById(QL_CSS_ID)) return '';
+    return '<style id="'+QL_CSS_ID+'">'+
+      '.ql-wrap{display:grid;gap:18px;min-width:0}.ql-wrap>*{min-width:0}'+
+      '.ql-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:16px;min-width:0}'+
+      '.ql-sec-h{display:grid;gap:3px;min-width:0}'+
+      '.ql-sec-t{font-size:13.5px;font-weight:650}'+
+      '.ql-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}'+
+      '.ql-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px;min-width:0}'+
+      '.ql-stats>*{min-width:0}'+
+      '.ql-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:13px 15px;min-width:0}'+
+      '.ql-stat span{display:block;color:var(--ink-soft,#6b7280);font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.05em}'+
+      '.ql-stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums;margin-top:3px}'+
+      '.ql-stat i{display:block;font-style:normal;font-size:11.5px;color:var(--ink-soft,#6b7280);margin-top:3px;line-height:1.4}'+
+      /* The header, then a hairline, then the controls that filter what is
+         under it \u2014 so the search box belongs to the table rather than floating
+         between the title and the rows owned by neither. */
+      '.ql-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0;'+
+        'margin:14px 0 4px;padding-top:14px;border-top:1px solid var(--border,#e6e6e6)}'+
+      '.ql-toolbar>*{min-width:0}'+
+      '.ql-toolbar input[type=search]{flex:1 1 200px;min-width:0}'+
+      '.ql-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;max-width:100%;margin-top:12px}'+
+      '.ql-table{width:100%;border-collapse:collapse;font-size:13px}'+
+      '.ql-table th,.ql-table td{text-align:left;padding:10px;border-bottom:1px solid var(--border,#e6e6e6);vertical-align:top;white-space:nowrap}'+
+      '.ql-table th{font-weight:600;color:var(--ink-soft,#6b7280);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}'+
+      '.ql-table tbody tr:hover{background:rgba(127,127,127,.06)}'+
+      /* One thing to read per row: the name leads, and the way to contact them
+         rides underneath it as a link you can actually press. */
+      '.ql-name{font-weight:600}'+
+      '.ql-contact{display:block;font-size:11.5px;font-weight:400;margin-top:2px}'+
+      '.ql-contact a{color:var(--ink-soft,#6b7280);text-decoration:underline}'+
+      '.ql-tags{white-space:normal;max-width:30ch}'+
+      '.ql-tag{display:inline-block;padding:1px 7px;margin:1px 2px 1px 0;border-radius:999px;font-size:10.5px;'+
+        'border:1px solid var(--border,#e6e6e6);color:var(--ink-soft,#6b7280)}'+
+      '.ql-ask{white-space:normal;font-size:11.5px;line-height:1.45;color:var(--ink-soft,#6b7280)}'+
+      /* max-width on a <td> is ignored by table layout — the cell sizes to its
+         content and the message ran off the right edge into the scroller. A
+         block INSIDE the cell is not a table box, so its max-width is honoured
+         and the text wraps where it is told to. */
+      '.ql-msg{display:block;max-width:30ch;margin-top:5px;white-space:normal}'+
+      /* The routine under the concerns that produced it, quieter than them. */
+      '.ql-rec{display:block;margin-top:3px;font-size:11px;color:var(--ink-soft,#6b7280);line-height:1.4}'+
+      '.ql-sel{font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--border,#e6e6e6);'+
+        'border-radius:8px;background:transparent;color:inherit;min-width:0}'+
+      '.ql-empty{padding:34px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}'+
+      '.ql-note{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;max-width:72ch;margin-top:12px}'+
+    '</style>';
   }
+  function qlParams(){
+    var p=[];
+    if(leadQuery) p.push('q='+encodeURIComponent(leadQuery));
+    if(leadStatus) p.push('status='+encodeURIComponent(leadStatus));
+    if(leadExpertOnly) p.push('expert=1');
+    return p.length? '?'+p.join('&') : '';
+  }
+  async function qlLoad(){
+    try{
+      var d=await api('/admin-api/quiz-leads'+qlParams());
+      LEADS=d.leads||[]; LEAD_SUMMARY=d.summary||{}; LEAD_STATUSES=d.statuses||LEAD_STATUSES;
+    }catch(e){ LEADS=[]; LEAD_SUMMARY={}; }
+  }
+  async function renderQuizLeads(){
+    await qlLoad();
+    qlPaint();
+  }
+  function qlPaint(){
+    var s=LEAD_SUMMARY||{};
+    function stat(label,val,sub){
+      return '<div class="ql-stat"><span>'+sesc(label)+'</span><b>'+sesc(String(val))+'</b>'+
+        (sub? '<i>'+sesc(sub)+'</i>':'')+'</div>';
+    }
+
+    var rows=LEADS.length? LEADS.map(function(l){
+      var contact = l.email
+        ? '<a href="mailto:'+sesc(l.email)+'">'+sesc(l.email)+'</a>'
+        : (l.phone? '<a href="tel:'+sesc(String(l.phone).replace(/[^\d+]/g,''))+'">'+sesc(l.phone)+'</a>' : '');
+      /* sesc() on BOTH of these. See the note at the top of this screen: the
+         values come straight from a public unauthenticated POST. */
+      var tags = (l.concerns&&l.concerns.length)
+        ? l.concerns.map(function(x){ return '<span class="ql-tag">'+sesc(x)+'</span>'; }).join('')
+        : '<span style="color:var(--ink-soft)">\u2014</span>';
+      var rec = (l.recommended&&l.recommended.length)
+        ? l.recommended.map(function(x){ return sesc(x); }).join(', ')
+        : '\u2014';
+      var sel='<select class="ql-sel" data-qlstatus="'+l.id+'">'+
+        LEAD_STATUSES.map(function(st){
+          return '<option value="'+sesc(st)+'"'+((l.status||'new')===st?' selected':'')+'>'+
+            sesc(st.charAt(0).toUpperCase()+st.slice(1))+'</option>';
+        }).join('')+'</select>';
+      /* Six columns, not seven. "Recommended" rides under the concerns it was
+         derived from rather than taking a column of its own: one thing to read
+         per row, and the table keeps the DATE on screen at 1280 instead of
+         pushing it off the right-hand edge into the scroller. */
+      return '<tr>'+
+        '<td><div class="ql-name">'+sesc(l.name||'Anonymous')+'</div>'+
+          (contact? '<span class="ql-contact">'+contact+'</span>':'')+
+          (l.email&&l.phone? '<span class="ql-contact">'+sesc(l.phone)+'</span>':'')+'</td>'+
+        '<td>'+sel+'</td>'+
+        '<td>'+sesc(l.skin_type||'\u2014')+'</td>'+
+        '<td class="ql-tags">'+tags+
+          '<span class="ql-rec">'+rec+'</span></td>'+
+        /* The request AND what was asked. Showing the flag without the message
+           made the flag nearly useless. */
+        '<td class="ql-ask">'+(l.expert
+          ? '<span class="pill amber"><span class="d"></span>Requested</span>'+
+            (l.expert_message? '<span class="ql-msg">'+sesc(l.expert_message)+'</span>':'')
+          : '<span class="pill grey">\u2014</span>')+'</td>'+
+        '<td style="font-size:11.5px;color:var(--ink-soft)">'+sesc((l.created_at||'').slice(0,10))+'</td>'+
+      '</tr>';
+    }).join('') : '';
+
+    var filtered = !!(leadQuery||leadStatus||leadExpertOnly);
+
+    document.querySelector('#content').innerHTML = qlStyle() +
+      '<div class="wrap"><div class="ql-wrap">'+
+
+      '<div class="page-head" style="margin:0"><h2>Quiz Leads</h2>'+
+      '<p>Everyone who finished the skin quiz, and what to do about them.</p></div>'+
+
+      '<div class="ql-stats">'+
+        stat('Leads', (s.total||0).toLocaleString(), 'quizzes finished')+
+        stat('Not yet contacted', (s.new||0).toLocaleString(), 'still marked new')+
+        stat('Asked for an expert', (s.expert||0).toLocaleString(), 'waiting on a call back')+
+        stat('Went on to order', (s.converted||0).toLocaleString(), (s.converted_pct||0)+'% of leads')+
+      '</div>'+
+
+      '<div class="ql-card">'+
+        '<div class="ql-sec-h"><div class="ql-sec-t">Leads</div>'+
+        '<div class="ql-sec-d">Newest first. Set each one\u2019s status as you work through them.</div></div>'+
+        '<div class="ql-toolbar">'+
+          '<input type="search" class="inp" id="qlSearch" placeholder="Search name, email or phone\u2026" value="'+sesc(leadQuery)+'">'+
+          '<select class="ql-sel" id="qlStatus"><option value="">Any status</option>'+
+            LEAD_STATUSES.map(function(st){
+              return '<option value="'+sesc(st)+'"'+(leadStatus===st?' selected':'')+'>'+
+                sesc(st.charAt(0).toUpperCase()+st.slice(1))+'</option>';
+            }).join('')+'</select>'+
+          '<button class="btn ghost sm'+(leadExpertOnly?' on':'')+'" id="qlExpert" aria-pressed="'+(leadExpertOnly?'true':'false')+'">'+
+            (leadExpertOnly? '\u2713 ':'')+'Expert requests only</button>'+
+          (filtered? '<button class="btn ghost sm" id="qlClear">Clear</button>':'')+
+        '</div>'+
+        (rows
+          ? '<div class="ql-scroll"><table class="ql-table"><thead><tr><th>Lead</th><th>Status</th>'+
+            '<th>Skin type</th><th>Concerns &amp; routine</th><th>Expert request</th><th>Date</th>'+
+            '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+            '<p class="ql-note">Showing '+LEADS.length.toLocaleString()+
+            (filtered? ' of '+((s.total||0).toLocaleString())+' leads.' : ' leads.')+'</p>'
+          : '<p class="ql-empty">'+(filtered? 'No leads match this search.' : 'No quiz submissions yet.')+'</p>')+
+      '</div>'+
+
+      '<p class="ql-note">\u201cWent on to order\u201d counts a lead whose email later placed an order that '+
+      'counts as a sale. A lead who ordered under a different address is not counted, so the real number '+
+      'is at least this.</p>'+
+
+      '</div></div>';
+
+    qlBind();
+  }
+  function qlBind(){
+    var box=document.querySelector('#qlSearch');
+    if(box){
+      var t=null;
+      box.oninput=function(){
+        leadQuery=box.value;
+        clearTimeout(t);
+        t=setTimeout(async function(){
+          var pos=box.selectionStart;
+          await qlLoad();
+          qlPaint();
+          /* Focus and caret restored across the re-render. A search box that
+             loses focus after the first keystroke is a search box that vanished
+             from under the person using it \u2014 the exact defect found elsewhere
+             in this console. */
+          var again=document.querySelector('#qlSearch');
+          if(again){ again.focus(); try{ again.setSelectionRange(pos,pos); }catch(e){} }
+        }, 250);
+      };
+    }
+    var st=document.querySelector('#qlStatus');
+    if(st) st.onchange=function(){ leadStatus=st.value; renderQuizLeads(); };
+    var ex=document.querySelector('#qlExpert');
+    if(ex) ex.onclick=function(){ leadExpertOnly=!leadExpertOnly; renderQuizLeads(); };
+    var cl=document.querySelector('#qlClear');
+    if(cl) cl.onclick=function(){ leadQuery=''; leadStatus=''; leadExpertOnly=false; renderQuizLeads(); };
+
+    document.querySelectorAll('#content [data-qlstatus]').forEach(function(sel){
+      sel.onchange=async function(){
+        if(leadBusy) return;
+        leadBusy=true;
+        var id=+sel.dataset.qlstatus, want=sel.value;
+        var was=(LEADS.filter(function(l){ return l.id===id; })[0]||{}).status;
+        try{
+          await api('/admin-api/quiz-leads/'+id, {method:'PUT', body: JSON.stringify({status: want})});
+          LEADS.forEach(function(l){ if(l.id===id) l.status=want; });
+          if(typeof toast==='function') toast('Lead marked '+want);
+        }catch(e){
+          /* Put the control back to what the server still believes, rather than
+             leaving the screen showing a change that did not happen. */
+          sel.value = was || 'new';
+          if(typeof toast==='function') toast('Could not update that lead');
+        }
+        leadBusy=false;
+      };
+    });
+  }
+  window.renderQuizLeads = renderQuizLeads;
 
   /* ---------- Per-product Yoast SEO: live snippet + analysis + persist ---------- */
   var peSeo = {};
@@ -11664,103 +11844,219 @@ buildNav();
   /* ===== LANE AM · Store · Reviews · moderation — END ====================== */
 
 
-  /* ---------- Analytics (derived from real orders) ---------- */
-  /* ---------- Analytics (Lane CD: hierarchy and layout only) ----------
-     Four titled bands instead of four loose cards, each saying in one line
-     when the owner would look at it. Nothing here is interactive and nothing
-     here posts: every figure below comes from the same GET /admin-api/analytics
-     fields it always did, read in the same order.
+  /* ---------- Analytics (derived from real orders) -------------------------
+     Rebuilt to the standard the Coupons screen sets: titled sections with a
+     one-line description, one thing to read per row, and no figure on the page
+     whose definition is not stated somewhere the owner can see it.
 
-     The grid that mattered: the headline figures used to be an inline
-     `grid-template-columns:repeat(4,1fr)`, which no media query can reach, so
-     on a 390px phone each tile was 80px wide and "AED 9,185" wrapped onto two
-     lines. .an-stats is auto-fit with a min() floor and gives way instead. */
-  var AN_STATUS_TONE={completed:'is-green',shipped:'is-green',processing:'is-amber','on-hold':'is-amber',
-                      onhold:'is-amber',pending:'',cancelled:'is-red',refunded:'is-red',failed:'is-red',trash:''};
-  /* Which statuses the endpoint counts as revenue — the same list the page
-     head names, said once here so the two cannot drift apart. */
-  var AN_REVENUE_STATUSES={processing:1,'on-hold':1,onhold:1,shipped:1,completed:1};
+     WHAT WAS NUMERICALLY WRONG, and is fixed in AdminController::analytics():
 
-  function anStat(label,value,sub){
-    return '<div class="an-stat"><span>'+sesc(label)+'</span><b>'+value+'</b><i>'+sesc(sub||'')+'</i></div>';
+       Revenue counted partially refunded orders at their FULL total.
+       PaymentRefunder moves an order to 'refunded' only on a full refund, so a
+       partial one left the order 'completed' and the money it gave back stayed
+       in Revenue, in the average order value and in the chart for ever. Net and
+       gross are both shown now, with the refunded figure between them.
+
+       Top products' revenue was SUM(unit_price * quantity) \u2014 the LIST price \u2014
+       so a product only ever sold at a discount reported money the store never
+       took, and this table could not be reconciled with the KPI above it. It
+       reads order_items.total now.
+
+       The chart had no scale of any kind: no axis, no peak, no number anywhere
+       on the card. Fourteen days of AED 90 drew exactly the same picture as
+       fourteen days of AED 90,000. The peak and the window total are printed.
+
+       The description claimed revenue "counts processing, on-hold and completed
+       orders" \u2014 three of the four statuses in Order::REAL_STATUSES. It was
+       silently missing `shipped`, which on this shop is where orders sit for
+       most of their life. The endpoint now sends the list and the screen prints
+       it, so the sentence cannot drift out of step with the query again.
+
+     The grid was `repeat(4,1fr)`, which cannot go below four tracks: at 390px
+     the tiles overflowed #content sideways. auto-fit with a min() floor stacks
+     instead \u2014 the same rule the Coupons screen documents at length. --------- */
+  var AN_CSS_ID='an-analytics-css';
+  function anStyle(){
+    if(document.getElementById(AN_CSS_ID)) return '';
+    return '<style id="'+AN_CSS_ID+'">'+
+      '.an-wrap{display:grid;gap:18px;min-width:0}.an-wrap>*{min-width:0}'+
+      '.an-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:16px;min-width:0}'+
+      '.an-sec-h{display:grid;gap:3px;min-width:0;margin-bottom:14px}'+
+      '.an-sec-t{font-size:13.5px;font-weight:650}'+
+      '.an-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}'+
+      /* auto-fit + min() floor: a fixed minmax(150px,1fr) still demands 150px a
+         track, so four tiles plus gaps overflow a 390px phone. */
+      '.an-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px;min-width:0}'+
+      '.an-stats>*{min-width:0}'+
+      '.an-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:13px 15px;min-width:0}'+
+      /* Caption above the figure: the eye reads the small label first and then
+         has something to hang the number on. */
+      '.an-stat span{display:block;color:var(--ink-soft,#6b7280);font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.05em}'+
+      '.an-stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums;margin-top:3px;overflow-wrap:anywhere}'+
+      '.an-stat i{display:block;font-style:normal;font-size:11.5px;color:var(--ink-soft,#6b7280);margin-top:3px;line-height:1.4}'+
+      '.an-stat.is-out b{color:#b4443c}'+
+      /* The chart. A flex row of columns rather than one stretched SVG: the old
+         one used preserveAspectRatio="none" on a 100x100 box, so every bar's
+         corner radius was smeared to a different shape by the aspect ratio. */
+      '.an-chart{display:flex;align-items:flex-end;gap:3px;height:150px;min-width:0;padding-top:4px;'+
+        'border-bottom:1px solid var(--border,#e6e6e6)}'+
+      '.an-bar{flex:1 1 0;min-width:0;display:flex;align-items:flex-end;height:100%;border-radius:4px 4px 0 0}'+
+      '.an-bar i{display:block;width:100%;background:var(--accent,#15a85a);border-radius:4px 4px 0 0;min-height:2px}'+
+      /* A day with no sales gets a visible trough, not an invisible one: an
+         empty column and a missing column must not look alike. */
+      '.an-bar.is-zero i{background:rgba(127,127,127,.20)}'+
+      '.an-xaxis{display:flex;gap:3px;margin-top:6px;min-width:0}'+
+      '.an-xaxis span{flex:1 1 0;min-width:0;text-align:center;font-size:10px;color:var(--ink-soft,#6b7280);'+
+        'font-variant-numeric:tabular-nums;overflow:hidden}'+
+      '.an-scale{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;margin-bottom:8px;'+
+        'font-size:11.5px;color:var(--ink-soft,#6b7280)}'+
+      '.an-scale b{font-variant-numeric:tabular-nums;color:inherit}'+
+      '.an-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;min-width:0;max-width:100%}'+
+      '.an-table{width:100%;border-collapse:collapse;font-size:13px}'+
+      '.an-table th,.an-table td{text-align:left;padding:10px;border-bottom:1px solid var(--border,#e6e6e6);vertical-align:middle;white-space:nowrap}'+
+      '.an-table th{font-weight:600;color:var(--ink-soft,#6b7280);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}'+
+      '.an-table td.an-num,.an-table th.an-num{text-align:right;font-variant-numeric:tabular-nums}'+
+      '.an-table tbody tr:hover{background:rgba(127,127,127,.06)}'+
+      /* Brand rides under the product name: one thing to read per row, and the
+         table keeps its columns on a laptop. */
+      '.an-pname{font-weight:600;white-space:normal;max-width:34ch}'+
+      '.an-pbrand{display:block;font-size:11.5px;font-weight:400;color:var(--ink-soft,#6b7280);margin-top:2px}'+
+      '.an-meter{display:block;position:relative;height:5px;min-width:60px;border-radius:999px;background:rgba(127,127,127,.18);overflow:hidden}'+
+      '.an-meter i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--accent,#15a85a)}'+
+      '.an-empty{padding:30px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}'+
+      '.an-note{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;max-width:72ch;margin-top:12px}'+
+    '</style>';
   }
-
-  function anSec(title,description,body){
-    return '<section class="an-sec"><div class="an-sec-h"><div class="an-sec-t">'+sesc(title)+'</div>'+
-      '<div class="an-sec-d">'+description+'</div></div>'+body+'</section>';
+  function anMoney(v){ return 'AED ' + (Number(v)||0).toLocaleString(); }
+  /* A human list: "processing, on-hold, shipped and completed". Built from what
+     the endpoint says it summed, so this sentence cannot go stale. */
+  function anList(items){
+    var xs=(items||[]).map(function(s){ return String(s).replace('onhold','on-hold'); });
+    if(!xs.length) return '';
+    if(xs.length===1) return xs[0];
+    return xs.slice(0,-1).join(', ') + ' and ' + xs[xs.length-1];
   }
-
-  /* A status id as the owner reads it: "on-hold" is two words, not a slug. */
-  function anTitle(s){
-    return String(s||'').replace(/[-_]+/g,' ').replace(/^./,function(c){ return c.toUpperCase(); });
-  }
-
   async function renderAnalytics(){
     var a; try{ a=await api('/admin-api/analytics'); }catch(e){ a=null; }
-    if(!a){ document.querySelector('#content').innerHTML='<div class="wrap"><div class="page-head"><h2>Analytics</h2><p>Could not load analytics.</p></div></div>'; return; }
+    if(!a){
+      document.querySelector('#content').innerHTML=
+        '<div class="wrap"><div class="page-head"><h2>Analytics</h2>'+
+        '<p>Could not load analytics. Nothing is wrong with your data \u2014 the figures could not be read just now.</p></div>'+
+        '<div style="margin-top:14px"><button class="btn" onclick="renderAnalytics()">Try again</button></div></div>';
+      return;
+    }
 
-    var daily=a.daily||[]; var max=Math.max(1, Math.max.apply(null, daily.map(function(d){return d.revenue_aed;})));
-    var n=daily.length||1, bw=100/n;
-    var bars=daily.map(function(d,i){ var h=(d.revenue_aed/max)*96; return '<rect x="'+(i*bw+bw*0.15).toFixed(2)+'" y="'+(100-h).toFixed(2)+'" width="'+(bw*0.7).toFixed(2)+'" height="'+h.toFixed(2)+'" rx="0.5" fill="var(--accent)"><title>'+d.date+': AED '+d.revenue_aed.toLocaleString()+'</title></rect>'; }).join('');
-    /* A baseline, so an empty fortnight reads as a flat line rather than as a
-       blank box that could equally be a screen that failed to load. */
-    var chart='<svg class="an-chart" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Revenue per day for the last 14 days">'+
-      '<line x1="0" y1="100" x2="100" y2="100" stroke="var(--border)" stroke-width="0.6" vector-effect="non-scaling-stroke"/>'+bars+'</svg>';
-    var firstD=(daily[0]||{}).date||'', lastD=(daily[daily.length-1]||{}).date||'';
+    function stat(label,val,sub,cls){
+      return '<div class="an-stat'+(cls?' '+cls:'')+'"><span>'+sesc(label)+'</span><b>'+sesc(String(val))+'</b>'+
+        (sub?'<i>'+sesc(sub)+'</i>':'')+'</div>';
+    }
 
+    var counted = anList(a.revenue_statuses);
+
+    /* ---- the 14-day chart, drawn against a peak the screen prints ---- */
+    var daily=a.daily||[];
+    var peak=Math.max(0, Number(a.daily_peak_aed)||0);
+    var windowTotal=daily.reduce(function(t,d){ return t + (Number(d.revenue_aed)||0); }, 0);
+    var bars=daily.map(function(d){
+      var v=Number(d.revenue_aed)||0;
+      var h=peak>0 ? Math.max(v>0?3:1.5, (v/peak)*100) : 1.5;
+      return '<span class="an-bar'+(v>0?'':' is-zero')+'" title="'+sesc(d.date)+': '+anMoney(v)+'">'+
+        '<i style="height:'+h.toFixed(2)+'%"></i></span>';
+    }).join('');
+    /* Only the ends and the middle are labelled. Fourteen dates across a phone
+       overlap into an unreadable smear; three are legible and place the rest. */
+    var xs=daily.map(function(d,i){
+      var show = (i===0 || i===daily.length-1 || i===Math.floor((daily.length-1)/2));
+      return '<span>'+(show? sesc(String(d.date).slice(5)) : '')+'</span>';
+    }).join('');
+
+    /* ---- order status, as rows with a share bar rather than a pill soup ---- */
     var sb=a.status_breakdown||{};
-    var statusKeys=Object.keys(sb).sort(function(x,y){ return sb[y]-sb[x]; });
-    var statusHtml=statusKeys.length
-      ? '<div class="an-status">'+statusKeys.map(function(k){
-          return '<div class="an-srow"><span class="an-sdot '+(AN_STATUS_TONE[k]||'')+'"></span>'+
-            '<span class="an-sname">'+sesc(anTitle(k))+'</span>'+
-            '<span class="an-scount">'+Number(sb[k]).toLocaleString()+'</span></div>';
-        }).join('')+'</div>'
-      : '<div class="an-card"><p class="an-empty">No orders yet.</p></div>';
-    var counted=statusKeys.filter(function(k){ return AN_REVENUE_STATUSES[k]; }).map(anTitle);
+    var sKeys=Object.keys(sb).sort(function(x,y){ return sb[y]-sb[x]; });
+    var sTotal=sKeys.reduce(function(t,k){ return t+(Number(sb[k])||0); },0);
+    var real=(a.revenue_statuses||[]);
+    var statusRows=sKeys.length? sKeys.map(function(k){
+      var n=Number(sb[k])||0;
+      var pct=sTotal? Math.round(n*100/sTotal) : 0;
+      var counts=real.indexOf(k)!==-1;
+      return '<tr><td>'+statusPill(k)+'</td>'+
+        '<td class="an-num">'+n.toLocaleString()+'</td>'+
+        '<td style="width:34%"><span class="an-meter"><i style="width:'+pct+'%'+
+          (counts?'':';background:rgba(127,127,127,.45)')+'"></i></span></td>'+
+        '<td class="an-num">'+pct+'%</td>'+
+        '<td style="font-size:11.5px;color:var(--ink-soft)">'+(counts?'counts as revenue':'\u2014')+'</td></tr>';
+    }).join('') : '';
 
+    /* ---- top products, with each line's share of the top-eight revenue ---- */
     var tp=a.top_products||[];
-    var rows=tp.length
-      ? tp.map(function(p){
-          return '<tr><td><div class="an-pname">'+sesc(p.name)+'</div>'+
-            (p.brand?'<div class="an-pbrand">'+sesc(p.brand)+'</div>':'')+'</td>'+
-            '<td class="is-num">'+Number(p.units).toLocaleString()+'</td>'+
-            '<td class="is-num"><b>AED '+p.revenue_aed.toLocaleString()+'</b></td></tr>';
-        }).join('')
-      : '<tr><td colspan="3" class="an-empty">No sales yet.</td></tr>';
+    var tpMax=tp.reduce(function(m,p){ return Math.max(m, Number(p.revenue_aed)||0); },0);
+    var rows=tp.length? tp.map(function(p){
+      var rev=Number(p.revenue_aed)||0;
+      var w=tpMax? Math.max(2, Math.round(rev*100/tpMax)) : 0;
+      return '<tr><td><div class="an-pname">'+sesc(p.name||'\u2014')+
+          (p.brand? '<span class="an-pbrand">'+sesc(p.brand)+'</span>':'')+'</div></td>'+
+        '<td class="an-num">'+(Number(p.units)||0).toLocaleString()+'</td>'+
+        '<td class="an-num"><b>'+anMoney(rev)+'</b></td>'+
+        '<td style="width:26%"><span class="an-meter"><i style="width:'+w+'%"></i></span></td></tr>';
+    }).join('') : '';
 
-    document.querySelector('#content').innerHTML =
-      '<div class="wrap"><div class="page-head"><h2>Analytics</h2>'+
-      '<p>What the shop has actually taken. Every figure on this screen counts the same orders — processing, on hold, shipped and completed — so two bands can never disagree with each other.</p></div>'+
-      '<div class="an-wrap">'+
+    document.querySelector('#content').innerHTML = anStyle() +
+      '<div class="wrap"><div class="an-wrap">'+
 
-      anSec('Headline figures','The four numbers worth knowing before anything else. Look here first each morning.',
+      '<div class="page-head" style="margin:0"><h2>Analytics</h2>'+
+      '<p>How the shop is trading, worked out from your real orders. Revenue is net of refunds.</p></div>'+
+
+      /* --- section 1: the money --- */
+      '<div class="an-card">'+
+        '<div class="an-sec-h"><div class="an-sec-t">Sales</div>'+
+        '<div class="an-sec-d">Every order ever placed in a status that counts as a sale'+
+        (counted? ' \u2014 '+sesc(counted) : '')+'. Refunds are taken off.</div></div>'+
         '<div class="an-stats">'+
-          anStat('Revenue','AED '+a.revenue_total_aed.toLocaleString(),'across all paid orders')+
-          anStat('Orders',a.orders_total.toLocaleString(),a.paid_orders.toLocaleString()+' of them paid')+
-          anStat('Average order','AED '+a.aov_aed.toLocaleString(),'per paid order')+
-          anStat('Units sold',a.units_sold.toLocaleString(),'line items shipped')+
-        '</div>')+
+          stat('Net revenue', anMoney(a.revenue_total_aed), 'after refunds')+
+          stat('Refunded', anMoney(a.refunds_total_aed),
+               (a.refunds_total_aed? 'off '+anMoney(a.gross_revenue_aed)+' taken' : 'nothing given back'),
+               a.refunds_total_aed? 'is-out' : '')+
+          stat('Average order', anMoney(a.aov_aed), a.paid_orders? 'over '+a.paid_orders.toLocaleString()+' paid orders' : 'no paid orders yet')+
+          stat('Units sold', (a.units_sold||0).toLocaleString(), 'items across those orders')+
+        '</div>'+
+        '<p class="an-note">A part-refunded order keeps its original status, so its refund is subtracted here '+
+        'rather than removing the order. Gross before refunds was '+sesc(anMoney(a.gross_revenue_aed))+'.</p>'+
+      '</div>'+
 
-      anSec('Revenue, last 14 days','One bar per day. Come here after a campaign or a price change to see whether the fortnight moved.',
-        '<div class="an-card">'+chart+
-          '<div class="an-axis"><span>'+sesc(firstD)+'</span>'+
-          '<span>peak AED '+max.toLocaleString()+'</span>'+
-          '<span>'+sesc(lastD)+'</span></div></div>')+
+      /* --- section 2: the chart --- */
+      '<div class="an-card">'+
+        '<div class="an-sec-h"><div class="an-sec-t">Revenue \u2014 last 14 days</div>'+
+        '<div class="an-sec-d">Each bar is one day, by the date the order was placed, net of anything refunded on it.</div></div>'+
+        '<div class="an-scale"><span>Tallest bar <b>'+sesc(anMoney(peak))+'</b></span>'+
+        '<span>These 14 days <b>'+sesc(anMoney(windowTotal))+'</b></span></div>'+
+        (daily.length? '<div class="an-chart">'+bars+'</div><div class="an-xaxis">'+xs+'</div>'
+                     : '<p class="an-empty">No orders yet.</p>')+
+        (peak===0? '<p class="an-note">Nothing sold in this window, so every bar is flat.</p>':'')+
+      '</div>'+
 
-      anSec('Where the orders are',
-        counted.length
-          ? 'Every order by status. '+sesc(counted.join(', '))+' are the ones counted above — anything else is money that has not been banked.'
-          : 'Every order by status, so nothing sits unnoticed in a queue.',
-        statusHtml)+
+      /* --- section 3: order status --- */
+      '<div class="an-card">'+
+        '<div class="an-sec-h"><div class="an-sec-t">Where the orders are</div>'+
+        '<div class="an-sec-d">Every order in the shop by status, and which of them the revenue figure above includes.</div></div>'+
+        (statusRows? '<div class="an-scroll"><table class="an-table"><thead><tr><th>Status</th>'+
+          '<th class="an-num">Orders</th><th>Share</th><th class="an-num">%</th><th>Revenue</th></tr></thead>'+
+          '<tbody>'+statusRows+'</tbody></table></div>'
+        : '<p class="an-empty">No orders yet.</p>')+
+      '</div>'+
 
-      anSec('Best sellers','The eight products earning the most, by revenue rather than by units. This is the list to reorder from.',
-        '<div class="an-card"><table class="an-table"><thead><tr>'+
-          '<th>Product</th><th class="is-num">Units</th><th class="is-num">Revenue</th>'+
-          '</tr></thead><tbody>'+rows+'</tbody></table></div>')+
+      /* --- section 4: top products --- */
+      '<div class="an-card">'+
+        '<div class="an-sec-h"><div class="an-sec-t">Best sellers</div>'+
+        '<div class="an-sec-d">The eight products that brought in the most, at what each line was actually charged \u2014 not list price.</div></div>'+
+        (rows? '<div class="an-scroll"><table class="an-table"><thead><tr><th>Product</th>'+
+          '<th class="an-num">Units</th><th class="an-num">Revenue</th><th>Share</th></tr></thead>'+
+          '<tbody>'+rows+'</tbody></table></div>'
+        : '<p class="an-empty">No sales yet.</p>')+
+      '</div>'+
 
       '</div></div>';
   }
+  window.renderAnalytics = renderAnalytics;
 
   /* ---------- Users & Roles (real admin accounts) ---------- */
   var ADMINS=[];

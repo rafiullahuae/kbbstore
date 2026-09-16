@@ -43,14 +43,14 @@ const PROBE_W = Number(process.env.KBB_BROWSER_PROBE_W || 1672);
  * review frames are out — they are iframes, so their content is not this
  * document's to measure.
  *
- * THE LAST THREE ARE NOT IN FRAME_SRC'S SENSE ANYMORE. When this list was
- * written, 'analytics', 'store-settings' and 'seo' were frame screens and were
- * excluded on that ground. They are in LIVE_RENDERED now — a later window.go
- * override draws all three in this document, no iframe involved — so the
- * ground for excluding them has gone, and with it the reason they were the
- * only heavily-used screens nothing measured. All three squeezed rather than
- * overflowed at 390px, which is a defect this walk cannot see; it can see the
- * next one, which is why they belong here.
+ * THE LAST THREE ARE NOT FRAME SCREENS ANY MORE. When this list was written,
+ * 'analytics', 'store-settings' and 'seo' were in FRAME_SRC and were excluded
+ * on that ground. They are in LIVE_RENDERED now — a later window.go override
+ * draws all three in this document, no iframe involved — so the ground for
+ * excluding them has gone, and with it the reason three of the screens the
+ * owner opens daily were the only ones nothing measured. All three squeezed
+ * rather than overflowed at 390px, which is a defect this walk cannot see; it
+ * can see the next one, which is why they belong here.
  */
 const SCREENS = [
   'dash', 'updates', 'layout', 'bundles', 'homepage', 'productpage',
