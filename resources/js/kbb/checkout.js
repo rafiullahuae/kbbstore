@@ -191,6 +191,18 @@ export function initCheckout() {
             // the price above it did.
             document.querySelectorAll('.kbb-freeship-slot').forEach((el) => { el.innerHTML = data.freeshipHtml; });
 
+            // The delivery promise under Place order is per-country as well.
+            // textContent, not innerHTML: this is operator-supplied copy and
+            // this file has no business turning it back into markup. An empty
+            // answer hides the line rather than leaving an empty truck icon.
+            if (typeof data.deliveryText === 'string') {
+                document.querySelectorAll('.kbb-delivery-line').forEach((el) => {
+                    el.hidden = data.deliveryText === '';
+                    const span = el.querySelector('span');
+                    if (span) span.textContent = data.deliveryText;
+                });
+            }
+
             // Two copies of the totals exist on this page — the summary
             // column and the mobile box — so every match is updated, not just
             // the first found.

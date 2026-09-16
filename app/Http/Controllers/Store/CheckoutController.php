@@ -954,6 +954,16 @@ class CheckoutController extends Controller
                 'settings' => $this->settings,
                 'totals' => $totals,
             ])->render(),
+            // The promise under Place order belongs to the destination too, and
+            // it is the one region of the order block this endpoint does not
+            // re-render. Left alone, switching from the UAE to Saudi Arabia
+            // updated the charge to AED 150 and left "1–3 days fast delivery
+            // all over UAE" sitting under it — which is the whole defect
+            // deliveryText() was just repaired for, re-entering through the
+            // one door that does not go past it. An empty string is a real
+            // answer here and means "say nothing", so it is sent as a string
+            // and never withheld.
+            'deliveryText' => $this->deliveryText($country),
             'subtotal' => \App\Support\Money::format((int) $totals['subtotal']),
             'shipping' => $totals['shipping'] > 0
                 ? \App\Support\Money::format((int) $totals['shipping'])

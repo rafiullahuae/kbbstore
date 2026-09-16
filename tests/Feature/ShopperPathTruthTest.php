@@ -213,6 +213,28 @@ it('still shows the UAE delivery line to a UAE customer', function () {
         ->toBeTrue('The UAE delivery line disappeared for the country it actually describes.');
 });
 
+it('moves the delivery promise with the country when the selector changes', function () {
+    /*
+     * The country selector does not reload — it fetches /api/checkout/rates and
+     * swaps in the delivery options, the free-delivery bar and the totals. The
+     * line under Place order was not in that set, so switching from the UAE to
+     * Saudi Arabia updated the charge to AED 150 and left the UAE promise
+     * sitting underneath it. Reproduced in Chromium: the server-rendered page
+     * for SA was correct and the AJAX path was not.
+     */
+    $cart = cfCart();
+
+    $ae = cfShopper($cart)->postJson('/api/checkout/rates', ['country' => 'AE', 'state' => 'Dubai'])
+        ->assertOk()->json();
+    $sa = cfShopper($cart)->postJson('/api/checkout/rates', ['country' => 'SA', 'state' => 'Riyadh'])
+        ->assertOk()->json();
+
+    expect($ae)->toHaveKey('deliveryText');
+    expect(str_contains((string) $ae['deliveryText'], 'UAE'))->toBeTrue();
+    expect(str_contains((string) $sa['deliveryText'], 'UAE'))
+        ->toBeFalse('The rate refresh still hands the browser a UAE delivery promise for a Gulf destination.');
+});
+
 it('uses a delivery text the owner has written for a country over saying nothing', function () {
     // An explicit row always wins; this is the escape hatch for the Gulf.
     cfSet('delivery_texts', [['country' => 'SA', 'text' => '5-8 days to Saudi Arabia']]);
