@@ -177,7 +177,7 @@ it('does not count a failed refund attempt against revenue', function () {
     expect($a['refunds_total_aed'])->toBe(0);
 });
 
-it('nets partial refunds out of the daily revenue series too', function () {
+it('nets partial refunds out of the revenue series too', function () {
     asAnalyticsAdmin();
 
     $today = now()->format('Y-m-d');
@@ -186,9 +186,12 @@ it('nets partial refunds out of the daily revenue series too', function () {
 
     $a = test()->getJson('/admin-api/analytics')->json();
 
-    $row = collect($a['daily'])->firstWhere('date', $today);
+    // `daily` and its fixed 14-day window are gone: the chart follows the date
+    // filter now and its buckets are days, weeks or months depending on the
+    // span. See AdminAnalyticsFilterTest for the filter itself.
+    $row = collect($a['series'])->firstWhere('key', $today);
 
-    expect($row)->not->toBeNull('today must be present in the 14-day series');
+    expect($row)->not->toBeNull('today must be present in the series');
     expect($row['revenue_aed'])->toBe(600, 'the chart must agree with the KPI above it');
 });
 
@@ -276,7 +279,11 @@ it('answers zero rather than dividing by an empty set', function () {
     expect($a['aov_aed'])->toBe(0);
     expect($a['revenue_total_aed'])->toBe(0);
     expect($a['units_sold'])->toBe(0);
-    expect($a['daily'])->toHaveCount(14, 'the series is 14 days whether or not anything sold');
+
+    // A shop with no orders has no history to span, so "all time" charts today
+    // and nothing else — but it still draws an axis rather than an empty card.
+    expect($a['series'])->not->toBe([], 'the chart draws an axis whether or not anything sold');
+    expect($a['bucket'])->toBe('day', 'all time is a history view and never draws hours');
 });
 
 it('counts a shipped order as revenue, which the screen copy must not deny', function () {
@@ -303,16 +310,16 @@ it('does not call the paid-to-total order ratio a conversion rate', function () 
         ->toBeFalse('paid orders / all orders is not a conversion rate; nothing here tracks sessions');
 });
 
-it('reports a peak the 14-day chart can be read against', function () {
+it('reports a peak the chart can be read against', function () {
     asAnalyticsAdmin();
 
     anOrder(100000, 'completed', now()->format('Y-m-d') . ' 09:00:00');
 
     $a = test()->getJson('/admin-api/analytics')->json();
 
-    expect(array_key_exists('daily_peak_aed', $a))
+    expect(array_key_exists('peak_aed', $a))
         ->toBeTrue('the chart needs a stated peak or its bars have no scale');
-    expect($a['daily_peak_aed'])->toBe(1000);
+    expect($a['peak_aed'])->toBe(1000);
 });
 
 it('leaks no Blade comment into the rendered console', function () {

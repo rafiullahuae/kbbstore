@@ -11902,14 +11902,82 @@ buildNav();
      the tiles overflowed #content sideways. auto-fit with a min() floor stacks
      instead \u2014 the same rule the Coupons screen documents at length. --------- */
   var AN_CSS_ID='an-analytics-css';
+
+  /* ---------------------------------------------------------------------------
+     THE STYLESHEET GOES IN <head>, NOT INTO #content.
+
+     It used to be returned as a '<style>...' string and concatenated onto the
+     screen's markup, guarded by "if the tag already exists, return nothing".
+     Those two halves fight each other the moment a screen re-renders itself,
+     which is exactly what the date filter made this screen do:
+
+       render 1  tag absent  -> string returned, tag lands INSIDE #content
+       render 2  tag present -> '' returned, and innerHTML= wipes #content,
+                                taking the tag with it
+       render 3  tag absent  -> back it comes
+
+     So every other press of a filter button drew the screen with NO Analytics
+     CSS at all: no card padding, and `.an-scroll` losing overflow-x:auto, which
+     put the status table 4px past the edge of #content at 390px. It alternated,
+     which is the worst way for a defect to present — it looks like a rendering
+     glitch rather than a bug.
+
+     Appending to document.head instead survives any number of re-renders, and
+     anStyle() still returns '' so the call sites read the same.
+     ------------------------------------------------------------------------ */
   function anStyle(){
     if(document.getElementById(AN_CSS_ID)) return '';
-    return '<style id="'+AN_CSS_ID+'">'+
+    var tag=document.createElement('style');
+    tag.id=AN_CSS_ID;
+    tag.textContent=anCss();
+    document.head.appendChild(tag);
+    return '';
+  }
+  function anCss(){
+    return ''+
       '.an-wrap{display:grid;gap:18px;min-width:0}.an-wrap>*{min-width:0}'+
       '.an-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);padding:16px;min-width:0}'+
       '.an-sec-h{display:grid;gap:3px;min-width:0;margin-bottom:14px}'+
       '.an-sec-t{font-size:13.5px;font-weight:650}'+
       '.an-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}'+
+      /* ---------------------------------------------------------------- filter
+         The date control. A segmented row of buttons rather than a <select>,
+         because the owner switches between these six constantly and a select
+         costs two taps and hides the other five options while it is open.
+         flex-wrap, not a grid: six labels of very different widths ("Today" vs
+         "All time") in fixed tracks leaves ragged holes at 1280 and overflows
+         at 390. --------------------------------------------------------- */
+      '.an-filter{display:grid;gap:10px;min-width:0}'+
+      '.an-seg{display:flex;flex-wrap:wrap;gap:6px;min-width:0}'+
+      '.an-seg button{appearance:none;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;'+
+        'padding:7px 12px;border-radius:999px;border:1px solid var(--border,#e6e6e6);'+
+        'background:var(--surface,#fff);color:var(--ink,#111);line-height:1.2;white-space:nowrap}'+
+      '.an-seg button:hover{background:rgba(127,127,127,.08)}'+
+      '.an-seg button.is-on{background:var(--accent,#15a85a);border-color:var(--accent,#15a85a);color:#fff}'+
+      '.an-seg button:focus-visible{outline:2px solid var(--accent,#15a85a);outline-offset:2px}'+
+      /* The custom picker. Its own row so opening it never reflows the buttons
+         above, and auto-fit so the two dates and the button stack on a phone
+         instead of pushing #content sideways. */
+      '.an-custom{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:10px;'+
+        'align-items:end;min-width:0;padding-top:2px}'+
+      '.an-custom>*{min-width:0}'+
+      '.an-custom label{display:block;font-size:11px;font-weight:650;text-transform:uppercase;'+
+        'letter-spacing:.05em;color:var(--ink-soft,#6b7280);margin-bottom:4px}'+
+      '.an-custom input{width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:8px 10px;'+
+        'border-radius:var(--r,12px);border:1px solid var(--border,#e6e6e6);'+
+        'background:var(--surface,#fff);color:var(--ink,#111)}'+
+      '.an-custom button{appearance:none;cursor:pointer;font:inherit;font-size:13px;font-weight:600;'+
+        'padding:9px 14px;border-radius:var(--r,12px);border:1px solid var(--accent,#15a85a);'+
+        'background:var(--accent,#15a85a);color:#fff}'+
+      '.an-hint{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;margin:0}'+
+      '.an-bad{font-size:11.5px;color:#b4443c;line-height:1.45}'+
+      /* The period, repeated on every card. See the comment above anCardHead():
+         a screenshot of this page has to say what it covers without anyone
+         remembering which button was pressed. */
+      '.an-chip{display:inline-block;align-self:start;max-width:100%;font-size:11px;font-weight:650;'+
+        'letter-spacing:.03em;padding:3px 9px;border-radius:999px;margin-bottom:2px;'+
+        'background:rgba(127,127,127,.12);color:var(--ink-soft,#6b7280);overflow-wrap:anywhere}'+
+      '.an-busy{opacity:.45;pointer-events:none}'+
       /* auto-fit + min() floor: a fixed minmax(150px,1fr) still demands 150px a
          track, so four tiles plus gaps overflow a 390px phone. */
       '.an-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px;min-width:0}'+
@@ -11926,14 +11994,36 @@ buildNav();
          corner radius was smeared to a different shape by the aspect ratio. */
       '.an-chart{display:flex;align-items:flex-end;gap:3px;height:150px;min-width:0;padding-top:4px;'+
         'border-bottom:1px solid var(--border,#e6e6e6)}'+
+      '.an-chart.is-dense{gap:1px}'+
       '.an-bar{flex:1 1 0;min-width:0;display:flex;align-items:flex-end;height:100%;border-radius:4px 4px 0 0}'+
       '.an-bar i{display:block;width:100%;background:var(--accent,#15a85a);border-radius:4px 4px 0 0;min-height:2px}'+
       /* A day with no sales gets a visible trough, not an invisible one: an
          empty column and a missing column must not look alike. */
       '.an-bar.is-zero i{background:rgba(127,127,127,.20)}'+
+      /* A bucket that has not happened yet, drawn FULL HEIGHT and hatched.
+         The back half of an in-progress month drawn as a flat run of zeroes
+         reads as trade collapsing, which is the "chart implying a trend that is
+         not there" this card already had to fix once — and drawn as nothing at
+         all it reads as a chart that stops early for no stated reason. A faint
+         full-height hatch says "this part of the period is still to come",
+         which is the only honest thing the space can say. */
+      '.an-bar.is-future i{height:100%!important;border-radius:4px 4px 0 0;'+
+        'background:repeating-linear-gradient(135deg,rgba(127,127,127,.16) 0 3px,transparent 3px 7px)}'+
       '.an-xaxis{display:flex;gap:3px;margin-top:6px;min-width:0}'+
+      '.an-xaxis.is-dense{gap:1px}'+
+      /* overflow:VISIBLE, not hidden.
+         One tick per bar, but only every nth carries a date, so a labelled tick
+         is as narrow as its bar — about 6px on a phone with a year of weekly
+         buckets — and "29 Dec" needs thirty-odd. Clipped to the tick it read
+         "29 ", "2 M", "4 M": a row of truncated dates, which is worse than no
+         axis at all. The unlabelled ticks either side are empty, so letting a
+         label spill into them costs nothing and collides with nothing; the step
+         in renderAnalytics() keeps labels several ticks apart. The two ends
+         align inwards so neither hangs off the card. */
       '.an-xaxis span{flex:1 1 0;min-width:0;text-align:center;font-size:10px;color:var(--ink-soft,#6b7280);'+
-        'font-variant-numeric:tabular-nums;overflow:hidden}'+
+        'font-variant-numeric:tabular-nums;overflow:visible;white-space:nowrap}'+
+      '.an-xaxis span:first-child{text-align:left}'+
+      '.an-xaxis span:last-child{text-align:right}'+
       '.an-scale{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;margin-bottom:8px;'+
         'font-size:11.5px;color:var(--ink-soft,#6b7280)}'+
       '.an-scale b{font-variant-numeric:tabular-nums;color:inherit}'+
@@ -11950,8 +12040,7 @@ buildNav();
       '.an-meter{display:block;position:relative;height:5px;min-width:60px;border-radius:999px;background:rgba(127,127,127,.18);overflow:hidden}'+
       '.an-meter i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--accent,#15a85a)}'+
       '.an-empty{padding:30px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}'+
-      '.an-note{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;max-width:72ch;margin-top:12px}'+
-    '</style>';
+      '.an-note{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;max-width:72ch;margin-top:12px}';
   }
   function anMoney(v){ return 'AED ' + (Number(v)||0).toLocaleString(); }
   /* A human list: "processing, on-hold, shipped and completed". Built from what
@@ -11962,15 +12051,167 @@ buildNav();
     if(xs.length===1) return xs[0];
     return xs.slice(0,-1).join(', ') + ' and ' + xs[xs.length-1];
   }
+
+  /* ------------------------------------------------------------ the filter ---
+     The six periods, spelled here as well as on the server.
+
+     AnalyticsRange::PERIODS is the authority — it decides what the endpoint
+     will accept and refuses anything else with a 422 — but the control has to
+     draw itself before any answer has come back, and has to keep working when
+     one does not come back at all. So the labels live here and the KEYS are the
+     ones the endpoint validates against; a key added on one side and not the
+     other fails loudly rather than rendering a button that 422s.
+
+     WHAT THE WEEK MEANS. Monday to Sunday. The UAE moved its weekend to
+     Saturday-Sunday on 1 January 2022, so the working week runs Monday to
+     Friday and the calendar week runs Monday to Sunday, the same as ISO-8601.
+     The screen PRINTS the two dates beside the button, because the one way this
+     goes wrong is silently. ------------------------------------------------ */
+  var AN_PERIODS=[
+    ['all','All time','Every order the shop has ever taken'],
+    ['today','Today','Midnight to midnight'],
+    ['week','This week','Monday to Sunday'],
+    ['month','This month','The calendar month, not the last 30 days'],
+    ['year','This year','1 January to 31 December'],
+    ['custom','Custom range','Two dates you choose, both days whole']
+  ];
+
+  /* The chosen filter, kept across re-renders of the screen. */
+  var AN={ period:'all', from:'', to:'', error:'' };
+
+  function anQuery(){
+    var q='?period='+encodeURIComponent(AN.period);
+    if(AN.period==='custom') q+='&from='+encodeURIComponent(AN.from||'')+'&to='+encodeURIComponent(AN.to||'');
+    return q;
+  }
+
+  /* A card header that always says which period it is describing.
+
+     Every box on this page repeats the range. That is deliberate repetition: a
+     screenshot of Best sellers pasted into WhatsApp has to be readable on its
+     own, and "the eight products that brought in the most" means nothing
+     without the dates it covers. */
+  function anCardHead(title, desc, period){
+    var chip = period ? '<span class="an-chip">'+sesc(period.label)+' · '+sesc(period.range_label)+'</span>' : '';
+    return '<div class="an-sec-h">'+chip+'<div class="an-sec-t">'+sesc(title)+'</div>'+
+      '<div class="an-sec-d">'+desc+'</div></div>';
+  }
+
+  function anFilterBar(){
+    var seg=AN_PERIODS.map(function(p){
+      /* title, so "This week" can say WHICH week without a sentence of copy
+         beside every button. The UAE moved its weekend to Saturday-Sunday in
+         2022, so the week here runs Monday to Sunday — a decision that is only
+         dangerous if it is silent, and the chosen range's actual dates are
+         printed on every card below as well. */
+      return '<button type="button" data-an-period="'+sesc(p[0])+'" title="'+sesc(p[2])+'"'+
+        (AN.period===p[0]?' class="is-on" aria-pressed="true"':' aria-pressed="false"')+'>'+sesc(p[1])+'</button>';
+    }).join('');
+
+    /* The hint for whatever is selected, spelled out under the buttons rather
+       than left on a hover nobody on a phone can perform. */
+    var hint=(AN_PERIODS.filter(function(p){ return p[0]===AN.period; })[0]||[,,''])[2];
+
+    var custom = AN.period==='custom'
+      ? '<div class="an-custom">'+
+          '<div><label for="anFrom">From</label><input id="anFrom" type="date" value="'+sesc(AN.from)+'"></div>'+
+          '<div><label for="anTo">To</label><input id="anTo" type="date" value="'+sesc(AN.to)+'"></div>'+
+          '<div><button type="button" id="anApply">Show this range</button></div>'+
+        '</div>'
+      : '';
+
+    return '<div class="an-card"><div class="an-filter">'+
+      '<div class="an-seg" role="group" aria-label="Period">'+seg+'</div>'+
+      (hint? '<p class="an-hint">'+sesc(hint)+'</p>' : '')+
+      custom+
+      (AN.error? '<p class="an-bad">'+sesc(AN.error)+'</p>' : '')+
+    '</div></div>';
+  }
+
+  /* Wire the control up after each render. Delegation would survive re-renders
+     for free, but #content is replaced wholesale by every other screen in this
+     console and a listener left on it would fire on theirs. */
+  function anBind(){
+    var root=document.querySelector('#content');
+    if(!root) return;
+
+    root.querySelectorAll('[data-an-period]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var k=b.getAttribute('data-an-period');
+        AN.error='';
+        if(k==='custom'){
+          /* Opening the picker must not fire a request with two empty dates —
+             that is the 422. Default it to the last 30 days so the first thing
+             the owner sees is a real range they can adjust. */
+          AN.period='custom';
+          if(!AN.from || !AN.to){
+            var to=new Date(), from=new Date(); from.setDate(from.getDate()-29);
+            AN.to=anIsoDay(to); AN.from=anIsoDay(from);
+          }
+        } else {
+          AN.period=k;
+        }
+        renderAnalytics();
+      });
+    });
+
+    var apply=root.querySelector('#anApply');
+    if(apply) apply.addEventListener('click', function(){
+      var f=root.querySelector('#anFrom'), t=root.querySelector('#anTo');
+      AN.from=(f&&f.value)||''; AN.to=(t&&t.value)||'';
+      if(!AN.from || !AN.to){ AN.error='Pick both a start and an end date.'; renderAnalytics(); return; }
+      AN.error='';
+      renderAnalytics();
+    });
+  }
+
+  function anIsoDay(d){
+    /* Local Y-m-d. toISOString() would convert to UTC first and hand back
+       yesterday for anyone east of Greenwich, which is every user of this
+       shop. */
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
   async function renderAnalytics(){
-    var a; try{ a=await api('/admin-api/analytics'); }catch(e){ a=null; }
+    var content=document.querySelector('#content');
+    var a;
+    try{
+      a=await api('/admin-api/analytics'+anQuery());
+    }catch(e){
+      a=null;
+      /* A 422 means the dates were refused, not that analytics is broken, and
+         saying "could not load" for a typo sends the owner looking for a fault
+         that is not there. */
+      if(String(e&&e.message||'').indexOf('422')!==-1){
+        AN.error='That date range was not accepted. Check both dates and try again.';
+      }
+    }
+
     if(!a){
-      document.querySelector('#content').innerHTML=
-        '<div class="wrap"><div class="page-head"><h2>Analytics</h2>'+
-        '<p>Could not load analytics. Nothing is wrong with your data \u2014 the figures could not be read just now.</p></div>'+
-        '<div style="margin-top:14px"><button class="btn" onclick="renderAnalytics()">Try again</button></div></div>';
+      content.innerHTML = anStyle() +
+        '<div class="wrap"><div class="an-wrap">'+
+        '<div class="page-head" style="margin:0"><h2>Analytics</h2>'+
+        '<p>How the shop is trading, worked out from your real orders.</p></div>'+
+        anFilterBar()+
+        '<div class="an-card"><p class="an-empty">'+
+        (AN.error? 'Nothing is wrong with your data — the range above could not be read.'
+                 : 'Could not load analytics. Nothing is wrong with your data — the figures could not be read just now.')+
+        '<br><button class="btn" style="margin-top:14px" id="anRetry">Try again</button></p></div>'+
+        '</div></div>';
+      anBind();
+      var retry=content.querySelector('#anRetry');
+      if(retry) retry.addEventListener('click', function(){ AN.error=''; renderAnalytics(); });
       return;
     }
+
+    AN.error='';
+    var period=a.period||{key:'all',label:'All time',range_label:'every order the shop has ever taken'};
+
+    /* Keep the control in step with what the server actually answered: it
+       swaps a backwards custom range, so the inputs should show the dates the
+       figures were computed from, not the ones that were typed. */
+    AN.period=period.key||AN.period;
+    if(period.key==='custom'){ AN.from=period.from||AN.from; AN.to=period.to||AN.to; }
 
     function stat(label,val,sub,cls){
       return '<div class="an-stat'+(cls?' '+cls:'')+'"><span>'+sesc(label)+'</span><b>'+sesc(String(val))+'</b>'+
@@ -11978,22 +12219,33 @@ buildNav();
     }
 
     var counted = anList(a.revenue_statuses);
+    var inPeriod = period.key==='all' ? 'in the whole of the shop’s history' : 'in '+period.range_label;
 
-    /* ---- the 14-day chart, drawn against a peak the screen prints ---- */
-    var daily=a.daily||[];
-    var peak=Math.max(0, Number(a.daily_peak_aed)||0);
-    var windowTotal=daily.reduce(function(t,d){ return t + (Number(d.revenue_aed)||0); }, 0);
-    var bars=daily.map(function(d){
+    /* ---- the chart, drawn against a peak the screen prints ---- */
+    var series=a.series||[];
+    var peak=Math.max(0, Number(a.peak_aed)||0);
+    var periodTotal=Number(a.period_total_aed)||0;
+    var dense=series.length>60;
+    var futures=series.filter(function(d){ return !!d.future; }).length;
+
+    var bars=series.map(function(d){
       var v=Number(d.revenue_aed)||0;
-      var h=peak>0 ? Math.max(v>0?3:1.5, (v/peak)*100) : 1.5;
-      return '<span class="an-bar'+(v>0?'':' is-zero')+'" title="'+sesc(d.date)+': '+anMoney(v)+'">'+
+      var future=!!d.future;
+      var h=(!future && peak>0) ? Math.max(v>0?3:1.5, (v/peak)*100) : 1.5;
+      var cls=future ? ' is-future' : (v>0 ? '' : ' is-zero');
+      var tip=future ? (d.full||d.label)+' — not yet' : (d.full||d.label)+': '+anMoney(v);
+      return '<span class="an-bar'+cls+'" title="'+sesc(tip)+'">'+
         '<i style="height:'+h.toFixed(2)+'%"></i></span>';
     }).join('');
-    /* Only the ends and the middle are labelled. Fourteen dates across a phone
-       overlap into an unreadable smear; three are legible and place the rest. */
-    var xs=daily.map(function(d,i){
-      var show = (i===0 || i===daily.length-1 || i===Math.floor((daily.length-1)/2));
-      return '<span>'+(show? sesc(String(d.date).slice(5)) : '')+'</span>';
+
+    /* Only a handful of ticks are labelled. Fifty-three dates across a phone
+       overlap into an unreadable smear; six are legible and place the rest. The
+       step is computed from the bucket count, which now varies from 7 to a few
+       hundred, so it can no longer be the hard-coded "first, middle, last". */
+    var step=Math.max(1, Math.ceil(series.length/6));
+    var xs=series.map(function(d,i){
+      var show = (i % step === 0) || (i === series.length-1);
+      return '<span>'+(show? sesc(d.label||'') : '')+'</span>';
     }).join('');
 
     /* ---- order status, as rows with a share bar rather than a pill soup ---- */
@@ -12010,7 +12262,7 @@ buildNav();
         '<td style="width:34%"><span class="an-meter"><i style="width:'+pct+'%'+
           (counts?'':';background:rgba(127,127,127,.45)')+'"></i></span></td>'+
         '<td class="an-num">'+pct+'%</td>'+
-        '<td style="font-size:11.5px;color:var(--ink-soft)">'+(counts?'counts as revenue':'\u2014')+'</td></tr>';
+        '<td style="font-size:11.5px;color:var(--ink-soft)">'+(counts?'counts as revenue':'—')+'</td></tr>';
     }).join('') : '';
 
     /* ---- top products, with each line's share of the top-eight revenue ---- */
@@ -12019,68 +12271,87 @@ buildNav();
     var rows=tp.length? tp.map(function(p){
       var rev=Number(p.revenue_aed)||0;
       var w=tpMax? Math.max(2, Math.round(rev*100/tpMax)) : 0;
-      return '<tr><td><div class="an-pname">'+sesc(p.name||'\u2014')+
+      return '<tr><td><div class="an-pname">'+sesc(p.name||'—')+
           (p.brand? '<span class="an-pbrand">'+sesc(p.brand)+'</span>':'')+'</div></td>'+
         '<td class="an-num">'+(Number(p.units)||0).toLocaleString()+'</td>'+
         '<td class="an-num"><b>'+anMoney(rev)+'</b></td>'+
         '<td style="width:26%"><span class="an-meter"><i style="width:'+w+'%"></i></span></td></tr>';
     }).join('') : '';
 
-    document.querySelector('#content').innerHTML = anStyle() +
+    content.innerHTML = anStyle() +
       '<div class="wrap"><div class="an-wrap">'+
 
       '<div class="page-head" style="margin:0"><h2>Analytics</h2>'+
-      '<p>How the shop is trading, worked out from your real orders. Revenue is net of refunds.</p></div>'+
+      '<p>How the shop is trading, worked out from your real orders. Every figure below — '+
+      'the money, the chart, where the orders are and the best sellers — covers '+
+      '<b>'+sesc(period.range_label)+'</b> and nothing else. Revenue is net of refunds.</p></div>'+
+
+      anFilterBar()+
 
       /* --- section 1: the money --- */
       '<div class="an-card">'+
-        '<div class="an-sec-h"><div class="an-sec-t">Sales</div>'+
-        '<div class="an-sec-d">Every order ever placed in a status that counts as a sale'+
-        (counted? ' \u2014 '+sesc(counted) : '')+'. Refunds are taken off.</div></div>'+
+        anCardHead('Sales',
+          'Orders placed '+sesc(inPeriod)+' in a status that counts as a sale'+
+          (counted? ' — '+sesc(counted) : '')+'. Refunds are taken off.', period)+
         '<div class="an-stats">'+
-          stat('Net revenue', anMoney(a.revenue_total_aed), 'after refunds')+
+          stat('Net revenue', anMoney(a.revenue_total_aed), 'after refunds, '+period.range_label)+
           stat('Refunded', anMoney(a.refunds_total_aed),
                (a.refunds_total_aed? 'off '+anMoney(a.gross_revenue_aed)+' taken' : 'nothing given back'),
                a.refunds_total_aed? 'is-out' : '')+
-          stat('Average order', anMoney(a.aov_aed), a.paid_orders? 'over '+a.paid_orders.toLocaleString()+' paid orders' : 'no paid orders yet')+
+          stat('Average order', anMoney(a.aov_aed),
+               a.paid_orders? 'over '+a.paid_orders.toLocaleString()+' paid orders' : 'no paid orders in this period')+
           stat('Units sold', (a.units_sold||0).toLocaleString(), 'items across those orders')+
         '</div>'+
         '<p class="an-note">A part-refunded order keeps its original status, so its refund is subtracted here '+
-        'rather than removing the order. Gross before refunds was '+sesc(anMoney(a.gross_revenue_aed))+'.</p>'+
+        'rather than removing the order. Gross before refunds was '+sesc(anMoney(a.gross_revenue_aed))+'. '+
+        '<b>A refund is counted in the period of the order it came off</b>, not the day the money went back — '+
+        'so this reads "of what these orders brought in, this much went back", and it is the same rule the '+
+        'chart and the average order value follow.</p>'+
       '</div>'+
 
       /* --- section 2: the chart --- */
       '<div class="an-card">'+
-        '<div class="an-sec-h"><div class="an-sec-t">Revenue \u2014 last 14 days</div>'+
-        '<div class="an-sec-d">Each bar is one day, by the date the order was placed, net of anything refunded on it.</div></div>'+
+        anCardHead('Revenue over time',
+          sesc(a.bucket_label||'Each bar is one day')+', by the date the order was placed, net of anything '+
+          'refunded on it.', period)+
         '<div class="an-scale"><span>Tallest bar <b>'+sesc(anMoney(peak))+'</b></span>'+
-        '<span>These 14 days <b>'+sesc(anMoney(windowTotal))+'</b></span></div>'+
-        (daily.length? '<div class="an-chart">'+bars+'</div><div class="an-xaxis">'+xs+'</div>'
-                     : '<p class="an-empty">No orders yet.</p>')+
-        (peak===0? '<p class="an-note">Nothing sold in this window, so every bar is flat.</p>':'')+
+        '<span>'+sesc(period.label)+' <b>'+sesc(anMoney(periodTotal))+'</b></span></div>'+
+        (series.length? '<div class="an-chart'+(dense?' is-dense':'')+'">'+bars+'</div>'+
+                        '<div class="an-xaxis'+(dense?' is-dense':'')+'">'+xs+'</div>'
+                      : '<p class="an-empty">Nothing to chart for this period.</p>')+
+        (peak===0? '<p class="an-note">Nothing sold in this period, so every bar is flat.</p>':'')+
+        /* Only said when there is something to say: a note about hatched bars
+           on a chart with none is a sentence the owner has to check the chart
+           against before they can ignore it. */
+        (futures? '<p class="an-note">The '+futures.toLocaleString()+' hatched '+sesc(a.bucket||'day')+
+          (futures===1?'':'s')+' at the end have not happened yet. They are not a drop in trade.</p>':'')+
       '</div>'+
 
       /* --- section 3: order status --- */
       '<div class="an-card">'+
-        '<div class="an-sec-h"><div class="an-sec-t">Where the orders are</div>'+
-        '<div class="an-sec-d">Every order in the shop by status, and which of them the revenue figure above includes.</div></div>'+
+        anCardHead('Where the orders are',
+          'Every order placed '+sesc(inPeriod)+' by status, and which of them the revenue figure above '+
+          'includes.', period)+
         (statusRows? '<div class="an-scroll"><table class="an-table"><thead><tr><th>Status</th>'+
           '<th class="an-num">Orders</th><th>Share</th><th class="an-num">%</th><th>Revenue</th></tr></thead>'+
           '<tbody>'+statusRows+'</tbody></table></div>'
-        : '<p class="an-empty">No orders yet.</p>')+
+        : '<p class="an-empty">No orders in this period.</p>')+
       '</div>'+
 
       /* --- section 4: top products --- */
       '<div class="an-card">'+
-        '<div class="an-sec-h"><div class="an-sec-t">Best sellers</div>'+
-        '<div class="an-sec-d">The eight products that brought in the most, at what each line was actually charged \u2014 not list price.</div></div>'+
+        anCardHead('Best sellers',
+          'The eight products that brought in the most '+sesc(inPeriod)+', at what each line was actually '+
+          'charged — not list price.', period)+
         (rows? '<div class="an-scroll"><table class="an-table"><thead><tr><th>Product</th>'+
           '<th class="an-num">Units</th><th class="an-num">Revenue</th><th>Share</th></tr></thead>'+
           '<tbody>'+rows+'</tbody></table></div>'
-        : '<p class="an-empty">No sales yet.</p>')+
+        : '<p class="an-empty">Nothing sold in this period.</p>')+
       '</div>'+
 
       '</div></div>';
+
+    anBind();
   }
   window.renderAnalytics = renderAnalytics;
 

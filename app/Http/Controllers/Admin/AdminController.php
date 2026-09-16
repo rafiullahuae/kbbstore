@@ -830,9 +830,41 @@ class AdminController extends Controller
     }
 
     /**
-     * GET /admin-api/analytics — sales metrics derived from real orders.
+     * GET /admin-api/analytics — sales metrics derived from real orders, over a
+     * date range the owner chooses.
      *
-     * TWO THINGS WERE WRONG HERE, and only one of them was visible.
+     * THE FILTER. `?period=all|today|week|month|year|custom` plus `from`/`to`
+     * for a custom range. App\Support\AnalyticsRange owns every boundary, every
+     * chart bucket and the single timezone hook; read its docblock before
+     * changing anything about dates here. Nothing in this method works out a
+     * date for itself, on purpose: seven figures on that screen have to agree
+     * about what "this month" means, and the way they stop agreeing is one of
+     * them computing its own window.
+     *
+     * EVERY BOX OBEYS IT. Net revenue, refunded, gross, average order, units
+     * sold, orders, where the orders are, best sellers and the chart are all
+     * narrowed by the same $range. A box that ignored the filter while its
+     * neighbours honoured it would be worse than no filter, because the owner
+     * would have no way to tell which of the two numbers they were reading.
+     *
+     * A REFUND COUNTS IN THE PERIOD OF ITS ORDER, not the period the money went
+     * back in. The refund and the order carry different dates and only one of
+     * them can be the answer. It is the order's, because:
+     *
+     *   - every other figure on the page is keyed on the order, so keying this
+     *     one on the refund would make Net + Refunded stop equalling Gross, and
+     *     make the average order value divide a revenue figure that does not
+     *     belong to the orders it is divided by;
+     *   - it cannot go negative. A quiet month holding a refund against a busy
+     *     month's order would otherwise report revenue below zero and draw a bar
+     *     under the axis;
+     *   - it is what the chart has done since this screen was rebuilt, so
+     *     nothing on the page has to change its mind.
+     *
+     * Read the Refunded box as "of what these orders brought in, this much went
+     * back" — which is what the screen now says on it, in those words.
+     *
+     * TWO THINGS WERE WRONG HERE BEFORE ANY OF THAT, and only one was visible.
      *
      * 1. `$it->qty`. `order_items` has `quantity`; there is no `qty` column and
      *    never has been. Eloquent answers a missing attribute with null, so
@@ -849,16 +881,61 @@ class AdminController extends Controller
      *    max_allowed_packet. Every figure but the 14-day series is an aggregate
      *    the database can do in one statement, so it does.
      *
-     * The daily series is still bucketed in PHP, deliberately: grouping by day
-     * in SQL needs DATE()/strftime(), and strftime() is SQLite-only — one of
-     * the exact statements Tests\Support\SqlShape rejects. Only 14 days of paid
-     * orders are read for it, not the table.
+     * The series is no longer read row by row either. It is grouped in SQL by
+     * the stored HOUR — `substr(created_at, 1, 13)`, which both engines
+     * evaluate the same way, rather than DATE()/strftime(), and strftime() is
+     * one of the exact statements Tests\Support\SqlShape rejects — and the
+     * hours are then placed on the shop's own wall clock in PHP. That keeps the
+     * statement count flat whatever the range, and leaves the timezone in one
+     * place instead of inside a dialect-specific date expression.
      *
      * Money stays in integer fils until the one conversion at the end.
      */
-    public function analytics()
+    public function analytics(Request $request)
     {
-        $paidQuery = Order::query()->whereIn('status', self::REVENUE_STATUSES);
+        $filter = $request->validate([
+            'period' => ['nullable', 'string', \Illuminate\Validation\Rule::in(\App\Support\AnalyticsRange::PERIODS)],
+            // A custom range is refused rather than quietly answered as some
+            // other period: a screen showing February under a heading that says
+            // "3 - 5 Feb" is the failure this endpoint is trying to avoid.
+            // The year bounds stop a pasted or fat-fingered date turning into a
+            // chart with twenty thousand buckets in it.
+            'from' => ['nullable', 'date_format:Y-m-d', 'required_if:period,custom', 'after_or_equal:2000-01-01', 'before_or_equal:2100-01-01'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'required_if:period,custom', 'after_or_equal:2000-01-01', 'before_or_equal:2100-01-01'],
+        ]);
+
+        $period = $filter['period'] ?? \App\Support\AnalyticsRange::DEFAULT_PERIOD;
+
+        /*
+         * "All time" has no boundaries, so the CHART still needs a span: the
+         * first and last order the shop ever took. Asked for only when it is
+         * needed, and as one aggregate rather than by reading any rows.
+         */
+        $earliest = null;
+        $latest = null;
+
+        if ($period === 'all') {
+            $edges = Order::query()
+                ->whereIn('status', self::REVENUE_STATUSES)
+                ->selectRaw('MIN(created_at) as first_at, MAX(created_at) as last_at')
+                ->first();
+
+            $earliest = $edges?->first_at ? (string) $edges->first_at : null;
+            $latest = $edges?->last_at ? (string) $edges->last_at : null;
+        }
+
+        $range = \App\Support\AnalyticsRange::resolve(
+            $period,
+            $filter['from'] ?? null,
+            $filter['to'] ?? null,
+            $earliest,
+            $latest,
+        );
+
+        // Every query below is built from one of these two, and every one of
+        // them is narrowed by $range->apply(). Nothing here dates itself.
+        $paidQuery = $range->apply(Order::query()->whereIn('status', self::REVENUE_STATUSES));
+        $allOrders = $range->apply(Order::query());
 
         $totals = (clone $paidQuery)
             ->selectRaw('COUNT(*) as n, COALESCE(SUM(total), 0) as revenue')
@@ -872,65 +949,89 @@ class AdminController extends Controller
          * from the net figure. See countedRefunds() for why a partially
          * refunded order is still sitting in REAL_STATUSES with its full total.
          *
+         * The range is applied to `orders.created_at`, NOT to the refund's own
+         * created_at — the decision written out at the top of this method.
+         *
          * max(0, ...) is belt and braces: PaymentRefunder refuses a refund that
          * would exceed what was captured, so the difference cannot go negative
          * through this application — but an imported Woo refund does not pass
          * through that check, and a negative "revenue" is a worse answer than a
          * clamped one.
          */
-        $refundTotal  = (int) self::countedRefunds()->sum('refunds.amount');
+        $refundTotal  = (int) $range->apply(self::countedRefunds(), 'orders.created_at')->sum('refunds.amount');
         $revenueTotal = max(0, $grossRevenue - $refundTotal);
+        // intdiv, not division: an empty period has no orders and dividing by
+        // the count would be a 500 on a page that should read "nothing yet".
         $aov          = $paidCount ? intdiv($revenueTotal, $paidCount) : 0;
-        $ordersTotal  = (int) Order::query()->count();
+        $ordersTotal  = (int) (clone $allOrders)->selectRaw('COUNT(*) as n')->first()->n;
 
-        // Daily revenue for the last 14 days. `created_at` is compared as a
-        // date rather than grouped by one, so no dialect-specific date function
-        // is needed and only the window's rows are read.
-        $days = [];
-        for ($i = 13; $i >= 0; $i--) $days[now()->subDays($i)->format('Y-m-d')] = 0;
-
-        $windowFrom = now()->subDays(13)->startOfDay();
-
-        $window = (clone $paidQuery)
-            ->where('created_at', '>=', $windowFrom)
-            ->get(['id', 'created_at', 'total']);
+        /* ---------------------------------------------------------- the chart */
 
         /*
-         * Refunds netted into the day of the ORDER, not the day of the refund.
+         * Grouped by the stored hour in SQL, then placed on the shop's wall
+         * clock in PHP. Two statements whatever the range holds — a day, or
+         * eight years — and no dialect-specific date function in either.
          *
-         * So a bar reads "what the store kept from the orders placed that day",
-         * which is the question an owner asks of a 14-day sales chart, and — as
-         * a side effect — can never go negative and put a bar below the axis.
-         * One grouped query for the whole window, not one per order.
+         * Both the grouped expression and the aggregates are named in the
+         * select, which is what MySQL's ONLY_FULL_GROUP_BY wants: the 1140 this
+         * codebase has already paid for twice.
          */
-        $windowRefunds = [];
-        if ($window->isNotEmpty()) {
-            /*
-             * selectRaw()->get(), not pluck() with a raw value column: pluck()
-             * reads the value off the result row by the STRING it was given, so
-             * a raw aggregate expression becomes a property name and the query
-             * dies with "Undefined property: stdClass::$amount), 0)". Both the
-             * grouped column and the aggregate are named in the select, which
-             * is what MySQL's ONLY_FULL_GROUP_BY wants — the 1140 this codebase
-             * has already paid for twice.
-             */
-            $windowRefunds = self::countedRefunds()
-                ->whereIn('refunds.order_id', $window->pluck('id')->all())
-                ->groupBy('refunds.order_id')
-                ->selectRaw('refunds.order_id as order_id, COALESCE(SUM(refunds.amount), 0) as refunded')
-                ->get()
-                ->mapWithKeys(fn ($r) => [(int) $r->order_id => (int) $r->refunded])
-                ->all();
+        $hourExpr = 'substr(orders.created_at, 1, 13)';
+
+        $grossByHour = (clone $paidQuery)
+            ->from('orders')
+            ->groupByRaw($hourExpr)
+            ->selectRaw($hourExpr . ' as bucket_hour, COALESCE(SUM(orders.total), 0) as bucket_gross')
+            ->get();
+
+        /*
+         * selectRaw()->get(), not pluck() with a raw value column: pluck() reads
+         * the value off the result row by the STRING it was given, so a raw
+         * aggregate expression becomes a property name and the query dies with
+         * "Undefined property: stdClass::$amount), 0)".
+         */
+        $refundsByHour = $range->apply(self::countedRefunds(), 'orders.created_at')
+            ->groupByRaw($hourExpr)
+            ->selectRaw($hourExpr . ' as bucket_hour, COALESCE(SUM(refunds.amount), 0) as bucket_refunded')
+            ->get();
+
+        $buckets = $range->buckets();
+        $fils = array_fill_keys(array_keys($buckets), 0);
+
+        /*
+         * array_key_exists rather than a bare `$fils[$key] +=`.
+         *
+         * A key the walk did not generate used to be a 500 — "Undefined array
+         * key 2026-09-01" — which is how the month-overflow bug fixed in
+         * AnalyticsRange::buckets() announced itself on a preview with four
+         * years of orders in it. The bug is fixed at the source; this stops a
+         * future one taking the whole screen down, and
+         * AdminAnalyticsFilterTest's "the chart must add up to the KPI"
+         * assertions are what would catch the money going missing instead.
+         */
+        foreach ($grossByHour as $row) {
+            $key = $range->bucketKeyForStoredHour((string) $row->bucket_hour);
+            if ($key !== null && array_key_exists($key, $fils)) $fils[$key] += (int) $row->bucket_gross;
         }
 
-        foreach ($window as $o) {
-            $d = substr((string) $o->created_at, 0, 10);
-            if (!array_key_exists($d, $days)) continue;
-            $days[$d] += max(0, (int) $o->total - (int) ($windowRefunds[$o->id] ?? 0));
+        foreach ($refundsByHour as $row) {
+            $key = $range->bucketKeyForStoredHour((string) $row->bucket_hour);
+            if ($key !== null && array_key_exists($key, $fils)) $fils[$key] -= (int) $row->bucket_refunded;
         }
 
-        $daily = [];
-        foreach ($days as $d => $v) $daily[] = ['date' => $d, 'revenue_aed' => (int) round($v / 100)];
+        /*
+         * A bar reads "what the store kept from the orders placed in this
+         * bucket", which is the question an owner asks of a sales chart, and —
+         * as a side effect — can never go below the axis.
+         */
+        $series = [];
+        $seriesFils = 0;
+
+        foreach ($buckets as $key => $bucket) {
+            $net = max(0, $fils[$key]);
+            $seriesFils += $net;
+            $series[] = $bucket + ['revenue_aed' => (int) round($net / 100)];
+        }
 
         /*
          * The chart's own scale, stated rather than implied.
@@ -938,16 +1039,35 @@ class AdminController extends Controller
          * The bars were drawn against the tallest of them with no axis and no
          * number anywhere on the card, so fourteen days of AED 90 looked
          * exactly like fourteen days of AED 90,000 — the shape of a chart that
-         * implies a trend that is not there. The screen now prints the peak.
+         * implies a trend that is not there. The screen prints the peak and the
+         * total, and both of them name the period they belong to.
          */
-        $dailyPeak = $daily ? max(array_column($daily, 'revenue_aed')) : 0;
+        $peak = $series ? max(array_column($series, 'revenue_aed')) : 0;
 
-        // Status breakdown (all statuses present), grouped by the database.
-        $status = Order::query()
+        /*
+         * Totalled in FILS and rounded once, NOT summed from the rounded bars.
+         *
+         * Rounding each bucket to whole AED and then adding them up drifts by a
+         * dirham per bucket in the worst case: a year of weekly bars printed
+         * "This year AED 148,177" beside a Net revenue KPI of AED 148,175, two
+         * cards apart on the same screen. Two numbers that should be the same
+         * number and are not is precisely the thing that makes an owner stop
+         * trusting the page, and it is the reason this figure exists at all.
+         */
+        $seriesTotal = (int) round($seriesFils / 100);
+
+        /* -------------------------------------------- where the orders are */
+
+        // Every status present IN THE PERIOD, grouped by the database. All time
+        // was the old behaviour and is still one of the options, but it is no
+        // longer the only thing this table can say.
+        $status = (clone $allOrders)
             ->groupBy('status')
             ->selectRaw('status, COUNT(*) as n')
             ->pluck('n', 'status')
             ->map(fn ($n) => (int) $n);
+
+        /* -------------------------------------------------- best sellers */
 
         /*
          * Top products by revenue, from the paid orders' line items.
@@ -955,22 +1075,26 @@ class AdminController extends Controller
          * Grouped by name and brand in SQL. Both are in the GROUP BY, not just
          * one — MySQL under ONLY_FULL_GROUP_BY rejects a bare `brand` beside an
          * aggregate, which is the same 1140 that took the Customers screen down.
-         */
-        /*
-         * whereNull('orders.deleted_at') is not decoration.
          *
-         * Order uses SoftDeletes, so `Order::query()` carries a global scope
-         * that hides trashed rows — but a raw join to `orders` from OrderItem
-         * does NOT, because the scope belongs to the Order builder and this
-         * query is built from OrderItem. Without it a trashed order's units and
-         * revenue would reappear in these figures while the same order stayed
-         * out of paid_orders and revenue_total above, and the two halves of the
-         * screen would disagree with each other.
+         * whereNull('orders.deleted_at') is not decoration. Order uses
+         * SoftDeletes, so `Order::query()` carries a global scope that hides
+         * trashed rows — but a raw join to `orders` from OrderItem does NOT,
+         * because the scope belongs to the Order builder and this query is built
+         * from OrderItem. Without it a trashed order's units and revenue would
+         * reappear in these figures while the same order stayed out of
+         * paid_orders and revenue_total above, and the two halves of the screen
+         * would disagree with each other.
+         *
+         * The range is on `orders.created_at` for the same reason: a line is in
+         * the period its ORDER is in.
          */
-        $itemQuery = OrderItem::query()
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->whereNull('orders.deleted_at')
-            ->whereIn('orders.status', self::REVENUE_STATUSES);
+        $itemQuery = $range->apply(
+            OrderItem::query()
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->whereNull('orders.deleted_at')
+                ->whereIn('orders.status', self::REVENUE_STATUSES),
+            'orders.created_at'
+        );
 
         $unitsSold = (int) ((clone $itemQuery)
             ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as units')
@@ -1005,6 +1129,12 @@ class AdminController extends Controller
             ->all();
 
         return response()->json([
+            // What the owner asked for, and what the screen prints on every
+            // card: the period is part of the answer, not a setting beside it.
+            'period'            => $range->toArray(),
+            'bucket'            => $range->bucket(),
+            'bucket_label'      => $range->bucketLabel(),
+
             'revenue_total_aed' => (int) round($revenueTotal / 100),
             'gross_revenue_aed' => (int) round($grossRevenue / 100),
             'refunds_total_aed' => (int) round($refundTotal / 100),
@@ -1012,8 +1142,9 @@ class AdminController extends Controller
             'paid_orders'       => $paidCount,
             'aov_aed'           => (int) round($aov / 100),
             'units_sold'        => $unitsSold,
-            'daily'             => $daily,
-            'daily_peak_aed'    => $dailyPeak,
+            'series'            => $series,
+            'peak_aed'          => $peak,
+            'period_total_aed'  => $seriesTotal,
             // Named rather than described in prose, so the screen can print the
             // list it actually sums and cannot drift out of step with it the
             // way the old "processing, on-hold and completed" copy had.
