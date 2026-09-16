@@ -161,13 +161,36 @@ class ShopController extends Controller
 
         if ($active['price'] && isset(Facets::BUCKETS[$active['price']])) {
             [, $min, $max] = Facets::BUCKETS[$active['price']];
-            // Stored in fils, declared in AED.
-            if ($min !== null) { $query->where('price', '>=', $min * 100); }
-            if ($max !== null) { $query->where('price', '<=', $max * 100); }
+
+            /*
+             * Bucketed on the price the SHOPPER IS CHARGED, not on the `price`
+             * column.
+             *
+             * `price` is the pre-sale figure. Reading it here meant a product
+             * marked down from AED 200 to AED 50 printed AED 50 on its card and
+             * was then filed under "AED 150 – 300", absent from "AED 54 – 150":
+             * a shopper filtering by budget was shown everything except the
+             * discounted stock, with a Sale badge on the cards that survived.
+             *
+             * App\Support\EffectivePrice is Product::effectivePrice() in SQL,
+             * scheduling window included, so the filter and the card cannot
+             * disagree. Bucket bounds are declared in whole AED.
+             */
+            \App\Support\EffectivePrice::whereRange(
+                $query,
+                $min === null ? null : $min * 100,
+                $max === null ? null : $max * 100,
+            );
         }
 
         if ($active['sale'] === '1') {
-            $query->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price');
+            // Product::isOnSale(), not the raw columns. `sale_price IS NOT NULL
+            // AND sale_price < price` is true the moment a markdown is
+            // scheduled, so a sale set up for next week was listed under "On
+            // sale" today — at full price, with no Sale badge, because
+            // ProductLabels draws that badge from isOnSale() and the two
+            // disagreed.
+            \App\Support\EffectivePrice::whereOnSale($query);
         }
 
         if ($active['instock'] === '1') {
@@ -179,8 +202,12 @@ class ShopController extends Controller
     {
         match ($orderby) {
             'popularity' => $query->orderByDesc('total_sales'),
-            'plow' => $query->orderBy('price'),
-            'phigh' => $query->orderByDesc('price'),
+            // Same reasoning as the price bucket above: "Price: low to high"
+            // has to mean the price on the card. Sorting on the `price` column
+            // put an AED 50 markdown where AED 200 belongs, near the end of the
+            // cheapest-first list the shopper opened to find it.
+            'plow' => \App\Support\EffectivePrice::orderBy($query, 'asc'),
+            'phigh' => \App\Support\EffectivePrice::orderBy($query, 'desc'),
             'rating' => $query->orderByDesc('rating')->orderByDesc('review_count'),
             'date' => $query->orderByDesc('created_at'),
             'name' => $query->orderBy('name'),
