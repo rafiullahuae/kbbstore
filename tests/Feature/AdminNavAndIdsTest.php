@@ -80,11 +80,23 @@ it('gives the coupon screens exactly one sidebar entry between them', function (
         base_path('resources/views/admin/partials/coupon-usage-screen.blade.php')
     );
 
-    expect(str_contains($editor, "<span>Coupons</span>"))
-        ->toBeTrue('the coupon editor no longer claims the "Coupons" sidebar entry');
+    /*
+     * The label, not the markup. This asserted the literal `<span>Coupons</span>`
+     * when the screen built its own button; it now registers through
+     * kbbAddNavEntry and the helper draws the span, so the old assertion would
+     * fail on a screen that is perfectly correct.
+     */
+    expect(preg_match("/label:\s*'Coupons'/", $editor))
+        ->toBe(1, 'the coupon editor no longer claims the "Coupons" sidebar entry');
 
-    expect(str_contains($editor, '<span>Manage Coupons</span>'))
-        ->toBeFalse('the second "Manage Coupons" sidebar entry is back');
+    /*
+     * The LABEL it registers, not any mention of the words. The file's own
+     * comment explains the "Manage Coupons" duplicate it replaced, and a bare
+     * string search reads that history as a relapse — the same trap the nav
+     * helper's tests strip comments to avoid.
+     */
+    expect(preg_match("/label:\s*'Manage Coupons'|<span>Manage Coupons<\/span>/", $editor))
+        ->toBe(0, 'the second "Manage Coupons" sidebar entry is back');
 
     // The usage screen's registration must be inert, whatever it is called.
     expect(preg_match('/function addNavEntry\(\)\s*\{\s*return;/', $usage))
@@ -196,22 +208,20 @@ const NOT_IN_NAV = ['console'];
  */
 const DEAD_ANCHORS = [
     /*
-     * The one that stays, and only because this lane may not touch the file
-     * that would fix it.
+     * Empty, and the goal state.
      *
-     * coupon-editor-screen.blade.php is owned by another lane right now (it is
-     * being redesigned), so its registration is still hand-rolled and still
-     * reads `coupon-usage || order-new || orders`. 'coupon-usage' went dead
-     * when the coupon fix made the usage screen's own registration inert — the
-     * fix created this entry. Nothing breaks: 'orders' is in NAV, and the
-     * chain's live half still puts the editor beside it.
+     * Every entry here was a screen anchoring on a sidebar row that does not
+     * exist — 'products', which has never been a row in this console, and
+     * 'coupon-usage', which went dead when the coupon fix made the usage
+     * screen's own registration inert. A dead anchor is invisible while it
+     * lasts, because the fallback quietly catches it; it only shows up as a
+     * screen missing from the menu once the fallback dies too.
      *
-     * The replacement call is written out in the lane report for the
-     * integrator to apply; when it lands, `after` becomes
-     * ['order-new', 'orders'] and this entry goes with it. The honesty guard
-     * below fails the moment that happens, so it cannot be forgotten.
+     * coupon-editor was the last of them and is now registered through
+     * kbbAddNavEntry with ['order-new', 'orders'], both live NAV rows. The
+     * honesty guard below fails if an entry is added back that is not actually
+     * dead, so this list cannot quietly refill.
      */
-    'coupon-editor' => ['coupon-usage'],
 ];
 
 /*
@@ -783,6 +793,38 @@ it('keeps the DEAD_ANCHORS allowlist honest', function () {
         }
     }
 
+    /*
+     * ASSERT SOMETHING WHEN THE LIST IS EMPTY.
+     *
+     * Both allowlists are empty now, which is the goal state — but a foreach
+     * over an empty array runs no assertions at all, and Pest rightly calls a
+     * test that asserts nothing risky. It would then stay green through any
+     * change, including the list refilling with entries that are not dead.
+     * So state the property directly: no screen anchors on a row that is not
+     * in NAV unless it is listed here with a reason.
+     */
+    $undeclared = [];
+
+    /*
+     * The property is that an anchor names a row that EXISTS — not that it is
+     * in NAV. Several live rows are registered by partials rather than listed
+     * in NAV (order-new, category-tree), and anchoring on one of those is
+     * perfectly legitimate; the separate guard above is what covers the weaker
+     * ordering risk that creates. What is never acceptable is an anchor naming
+     * no screen at all, like the 'products' row that has never existed here.
+     */
+    $known = array_keys($entries);
+
+    foreach ($entries as $id => $e) {
+        foreach ($e['anchors'] ?? [] as $a) {
+            if (! in_array($a, $known, true) && ! in_array($a, DEAD_ANCHORS[$id] ?? [], true)) {
+                $undeclared[] = "{$id} anchors on '{$a}', which is not a screen at all and is not in DEAD_ANCHORS";
+            }
+        }
+    }
+
+    expect($undeclared)->toBe([], implode("\n  ", $undeclared));
+
     foreach (DEAD_ANCHORS as $screen => $anchors) {
         expect($entries)->toHaveKey($screen);
 
@@ -994,7 +1036,9 @@ it('gives the Catalog group a real .nav-group for the two screens that inject in
  * entry cannot outlive the reason for it.
  */
 const HAND_ROLLED_PENDING = [
-    'coupon-editor-screen' => "window.kbbAddNavEntry({screen: SCREEN, label: 'Coupons', icon: <the existing path markup>, group: 'Store', after: ['order-new', 'orders']}) — then keep the two lines that remove the old 'coupon-usage' row, which the helper does not do",
+    // coupon-editor-screen converted to kbbAddNavEntry; its 'coupon-usage'
+    // removal is kept by hand, because retiring another screen's row is a
+    // different job from adding your own.
     'manual-order-screen' => "window.kbbAddNavEntry({screen: SCREEN, label: 'New Order', icon: <the existing path markup>, group: 'Store', after: 'orders'})",
 ];
 
@@ -1224,7 +1268,9 @@ it('leaves no partial answering a missing anchor by disappearing', function () {
  * rather than invent a second answer to the owner's question.
  */
 const TAB_EXPLANATION_PENDING = [
-    'coupon-editor-screen' => 'Three tabs, one coupon: nothing is saved until you press Save, whichever tab you are looking at. <b>General</b> is the code itself, what it takes off and when it expires; <b>Usage restriction</b> is what it may be spent on — a minimum spend, particular products or categories; <b>Usage limits</b> is how many times it may be redeemed in total and per customer. A rule set on a tab you are not looking at still applies.',
+    // coupon-editor-screen's sentence has been applied. Empty is the goal
+    // state; the honesty guard below fails if an entry here is already on the
+    // page, so a stale entry cannot sit here unnoticed.
 ];
 
 it('says on the page what a partial screen\'s tabs are for, too', function () {
@@ -1267,6 +1313,19 @@ it('says on the page what a partial screen\'s tabs are for, too', function () {
 });
 
 it('keeps the TAB_EXPLANATION_PENDING allowlist honest', function () {
+    /*
+     * The list is empty, which is the goal — but an empty foreach asserts
+     * nothing and would stay green whatever happened. So assert the property
+     * the list exists to track: nothing is recorded as an unexplained gap that
+     * has in fact been explained, and the count of gaps is the count declared.
+     */
+    expect(TAB_EXPLANATION_PENDING)->toBeArray();
+
+    expect(count(TAB_EXPLANATION_PENDING))->toBe(
+        count(array_keys(TAB_EXPLANATION_PENDING)),
+        'TAB_EXPLANATION_PENDING is not a simple partial => sentence map any more'
+    );
+
     foreach (TAB_EXPLANATION_PENDING as $partial => $sentence) {
         $p = navAuditPartialSrc($partial);
 

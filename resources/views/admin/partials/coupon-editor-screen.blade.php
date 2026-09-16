@@ -441,8 +441,6 @@
 
   /* -------------------------------------------------------- sidebar entry */
   function addNavEntry(){
-    if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
-
     /* ONE entry called "Coupons", not two.
        This screen first shipped as a second item, "Manage Coupons", sitting
        under the read-only "Coupons" usage report. The owner applied the
@@ -452,22 +450,19 @@
        the thing is a worse failure than the missing screen it replaced.
        So this takes over the "Coupons" name and position, and the usage
        report is reached from a link inside it. */
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label:  'Coupons',
+      icon:   '<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M12 9v6"/><path d="M9 12h6"/>',
+      group:  'Store',
+      after:  ['order-new', 'orders']
+    });
+
+    /* Kept by hand, deliberately. The helper adds a row; retiring somebody
+       else's row is a different job and only this screen needs it. The usage
+       report keeps its screen and its route — it just stops being a second
+       sidebar entry competing for the same name. */
     var usage = document.querySelector('#nav [data-go="coupon-usage"]');
-    var anchor = usage
-              || document.querySelector('#nav [data-go="order-new"]')
-              || document.querySelector('#nav [data-go="orders"]');
-    if (!anchor) return;
-
-    var b = document.createElement('button');
-    b.className = 'nav-item';
-    b.dataset.go = SCREEN;
-    b.innerHTML = icon('<path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-6z"/><path d="M12 9v6"/><path d="M9 12h6"/>')
-                + '<span>Coupons</span>';
-    b.onclick = function(){ window.go(SCREEN); };
-    anchor.parentNode.insertBefore(b, anchor.nextSibling);
-
-    // The usage report keeps its screen and its route; it just stops being a
-    // second thing in the sidebar competing for the same name.
     if (usage && usage.parentNode) usage.parentNode.removeChild(usage);
   }
 
@@ -1147,6 +1142,18 @@
             return '<button class="ce-tab' + (tab === t[0] ? ' on' : '') + '" data-tab="' + t[0] + '">' + esc(t[1]) + '</button>';
           }).join('')
       + '</div>'
+
+      /* The owner asked, of the tabbed screens, what the tabs are FOR — a strip
+         of three names says nothing about why they are one screen. The most
+         important sentence is the first: people hesitate to leave a tab in case
+         they lose what they typed, and here they do not. `ectabs-hint` is the
+         console's existing caption class, used by the Ecommerce and Delivery
+         screens for exactly this. */
+      + '<p class="ectabs-hint">Three tabs, one coupon: nothing is saved until you press Save, '
+        + 'whichever tab you are looking at. <b>General</b> is the code itself, what it takes off '
+        + 'and when it expires; <b>Usage restriction</b> is what it may be spent on &mdash; a minimum '
+        + 'spend, particular products or categories; <b>Usage limits</b> is how many times it may be '
+        + 'redeemed in total and per customer. A rule set on a tab you are not looking at still applies.</p>'
 
       + (tab === 'general' ? generalTab() : (tab === 'restrictions' ? restrictionsTab() : limitsTab()))
 
