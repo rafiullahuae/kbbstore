@@ -1245,6 +1245,49 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
   .dl-row > :nth-child(2){grid-area:text}
   .dl-row > :nth-child(3){grid-area:remove}
 }
+/* ---- One-click presets for a per-country table (Lane CY) ----------------
+   .pst- and not .dl-, because this bar is NOT part of the delivery screen:
+   App\Support\CountryPresets registers a group per table and the Tax tab is
+   meant to draw its own with the same markup and the same stylesheet. A
+   .dl- prefix here would make the second caller either inherit a class named
+   for somebody else's screen or fork the CSS.
+
+   Theme tokens throughout, like the VAT band above and unlike the older .dl-
+   rules beside it: the console has a dark theme now and a chip hardcoded to
+   #fff is a white pill on a dark card.
+
+   Every chip carries the WHOLE sentence it will write. That is the point of
+   the bar — the owner reads the exact words before he commits to them — so the
+   chips wrap onto as many lines as they need and nothing is ellipsised. */
+.pst-bar{border:1px solid var(--border);border-radius:var(--r-xs,9px);
+         background:var(--bg-soft,rgba(127,127,127,.05));padding:11px 12px;margin:0 0 14px;
+         display:grid;gap:9px;min-width:0}
+.pst-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pst-t{font-size:12.5px;font-weight:700;color:var(--ink,#1d2430)}
+.pst-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.pst-chip{font:inherit;font-size:11.5px;line-height:1.45;text-align:left;padding:6px 11px;
+          border-radius:99px;cursor:pointer;border:1px dashed var(--border);
+          background:transparent;color:var(--ink-2,#5c6675);max-width:100%}
+.pst-chip:hover{border-style:solid;border-color:var(--accent);color:var(--accent)}
+.pst-chip b{font-weight:700}
+.pst-chip i{font-style:normal;opacity:.75}
+.pst-chip[aria-disabled="true"]{opacity:.45;cursor:default}
+.pst-chip[aria-disabled="true"]:hover{border-style:dashed;border-color:var(--border);color:var(--ink-2,#5c6675)}
+.pst-all{font:inherit;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:99px;
+         cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff}
+.pst-all[disabled]{opacity:.45;cursor:default}
+.pst-auto{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;line-height:1.5;
+          color:var(--ink-soft,#7b8697);cursor:pointer}
+.pst-auto input{margin:2px 0 0;flex:none}
+.pst-auto b{font-weight:700;color:var(--ink-2,#5c6675)}
+.pst-note{font-size:11px;color:var(--ink-soft,#7b8697);line-height:1.5}
+/* What a row with a placeholder in it will actually print, under the box. */
+.dl-prev{grid-column:2;font-size:11px;color:var(--ink-soft,#7b8697);line-height:1.45;
+         overflow-wrap:anywhere;margin-top:-4px}
+@media (max-width:640px){
+  .dl-prev{grid-column:1 / -1}
+  .pst-all{width:100%}
+}
 .shpv-wrap{background:#F7F8FB;border:1px solid #eef1f6;border-radius:10px;padding:10px}
 .shpv{display:flex;flex-direction:column;gap:6px}
 .shpv-r{display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -7994,7 +8037,175 @@ function dlBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\
    this screen exists to write a line for. */
 @endverbatim
 var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
+
+/* The registered preset groups, from App\Support\CountryPresets. One key per
+   per-country table in this console; only 'delivery' exists today. The Tax tab
+   adds its group to that PHP class and appears here without touching a line of
+   the JavaScript below. */
+var KBB_PRESETS = @json([
+    \App\Support\CountryPresets::DELIVERY => \App\Support\CountryPresets::forConsole(\App\Support\CountryPresets::DELIVERY),
+]);
 @verbatim
+
+/* ---------- One-click presets for a per-country table (Lane CY) -----------
+ *
+ * THE OWNER'S REQUEST, and the shape of the answer. "i want you to make the
+ * deliver lines automatic same in tax. like user just just click to select."
+ * Two screens in this console ask him to fill a table with one row per country.
+ * This is the bar that fills one of those tables from a set of suggestions —
+ * all of them at once, or one country at a time — and it is written once for
+ * both, so the delivery screen and the tax screen behave identically rather
+ * than similarly.
+ *
+ * DELIBERATELY GENERIC AND DELIBERATELY DUMB. It knows nothing about delivery,
+ * nothing about tax, and nothing about how either table is stored. It is handed
+ * a group key, a way to ask what a country's row currently says, and a way to
+ * put a value into one. A caller that has a table of country rows can use it;
+ * everything that would differ between two such tables is a callback or lives
+ * in CountryPresets on the PHP side.
+ *
+ * HOW THE TAX TAB USES IT, exactly:
+ *
+ *   1. Register a 'tax' group in App\Support\CountryPresets::GROUPS, with its
+ *      own region, its own template and its own note.
+ *   2. Add it to the KBB_PRESETS map emitted above.
+ *   3. Render pstBarHtml('tax', {id:'taxPresets', filled:codeThatReturnsTheRowsValue})
+ *      into the tab, and call pstBind('taxPresets', {...}) after painting.
+ *
+ * It does not need to touch this block, and this block does not need to know
+ * the tax tab exists.
+ *
+ * IT FILLS THE FORM. IT DOES NOT SAVE. Every chip here is a suggestion: it
+ * writes into the caller's in-memory rows and marks the screen dirty, and the
+ * value reaches the database only when the owner presses the screen's own Save
+ * button, exactly like a value he typed. That is not a nicety — the figures in
+ * a delivery group are a PROMISE the shop then has to keep, and a screen that
+ * committed one on a click would be making it on his behalf. The note under
+ * the chips says so on its face.
+ *
+ * AUTOMATIC NAMES. A group's suggestion may be a sentence with {country} in it
+ * — CountryTemplate's placeholder, the same convention as {rate} in the VAT
+ * label. A chip normally fills in the FINISHED sentence, so the owner reads and
+ * can edit the exact words that will print. The checkbox switches it to filling
+ * in the sentence with the placeholder left in, for an owner who would rather
+ * the wording follow whichever country the row is set to. Both are visible in
+ * the box; neither is hidden behind a save.
+ */
+
+/* Which groups are currently filling in the placeholder form. Per group, so
+   two tables on two screens do not share one checkbox. */
+var PST_AUTO = {};
+
+function pstGroup(key){ return KBB_PRESETS[key] || {key:key, label:'', note:'', template:'', rows:[]}; }
+
+/* The value a chip for this country would write: the finished sentence, or the
+   template with {country} still in it when the owner asked for that. */
+function pstValue(key, row){
+  return PST_AUTO[key] ? String(row.template||'') : String(row.value||'');
+}
+
+/* Which countries this bar would change, given what the table holds now.
+   `filled` answers with the row's current text, or null when it has no row. */
+function pstPending(key, filled){
+  return pstGroup(key).rows.filter(function(row){
+    var now = filled(row.code);
+    return now === null || now === undefined || String(now) !== pstValue(key, row);
+  });
+}
+
+function pstBarHtml(key, opts){
+  var g = pstGroup(key), filled = opts.filled, id = opts.id;
+  if(!g.rows.length) return '';
+
+  var pending = pstPending(key, filled);
+  var anyDynamic = g.rows.some(function(r){ return r.dynamic; });
+
+  var chips = g.rows.map(function(row){
+    var now = filled(row.code), want = pstValue(key, row);
+    var has = !(now === null || now === undefined);
+    var same = has && String(now) === want;
+    /* The WHOLE sentence on the chip. The owner is agreeing to these words, so
+       he reads them here rather than after they land in the box. */
+    var body = '<b>'+escHtml(row.name)+'</b> <i>'+escHtml('“'+want+'”')+'</i>';
+    if(same){
+      /* "already in the box", not "already saved" — the two differ until he
+         presses Save and the chip must not blur them. */
+      return '<button type="button" class="pst-chip" aria-disabled="true" disabled '+
+        'title="'+escAttr('Already in the box below for '+row.name)+'" '+
+        'data-pst-code="'+escAttr(row.code)+'">✓ '+body+'</button>';
+    }
+    return '<button type="button" class="pst-chip" data-pst-code="'+escAttr(row.code)+'" '+
+      'title="'+escAttr((has?'Replace the line for ':'Fill in ')+row.name)+'">'+
+      (has?'↺ ':'+ ')+body+'</button>';
+  }).join('');
+
+  return '<div class="pst-bar" id="'+escAttr(id)+'" data-pst-group="'+escAttr(key)+'">'+
+    '<div class="pst-hd"><span class="pst-t">'+escHtml(g.label)+'</span>'+
+      '<button type="button" class="pst-all" data-pst-all="1"'+(pending.length?'':' disabled')+'>'+
+        (pending.length ? 'Fill in all '+pending.length+' &rarr;' : 'All '+g.rows.length+' are in the boxes') +
+      '</button></div>'+
+    '<div class="pst-chips">'+chips+'</div>'+
+    (anyDynamic
+      ? '<label class="pst-auto"><input type="checkbox" data-pst-auto="1"'+(PST_AUTO[key]?' checked':'')+'>'+
+        /* The words are ONE flex item. Left as bare text nodes beside the <b>,
+           the label became three columns on a 390px phone and the sentence read
+           down the page in pieces. */
+        '<span>Keep the country name automatic — write <b>&#123;country&#125;</b> instead of the name, '+
+        'so the sentence follows whichever country the row is set to.</span></label>'
+      : '')+
+    '<div class="pst-note">'+escHtml(g.note)+'</div>'+
+  '</div>';
+}
+
+/* One delegated listener for the bar.
+ *
+ * opts.apply(code, value) puts one value into the caller's table. opts.repaint()
+ * redraws whatever needs redrawing afterwards. Nothing here fetches, and
+ * nothing here saves.
+ *
+ * opts.harvest() is called FIRST on every interaction, and a caller whose table
+ * is a set of live inputs must supply it: the owner may have typed into a box
+ * since the last paint, and a repaint that has not read those boxes back throws
+ * his typing away. That is a real bug on the delivery screen, which is why it
+ * is a hook here rather than each caller remembering. */
+function pstBind(id, opts){
+  var bar = document.getElementById(id);
+  if(!bar) return;
+  var key = bar.getAttribute('data-pst-group'), g = pstGroup(key);
+  var harvest = function(){ if(opts.harvest) opts.harvest(); };
+
+  bar.addEventListener('change', function(ev){
+    var box = ev.target.closest('[data-pst-auto]');
+    if(!box) return;
+    harvest();
+    /* Changes what the chips OFFER. It touches no row that is already in the
+       table, so ticking it is not itself an edit. */
+    PST_AUTO[key] = !!box.checked;
+    opts.repaint();
+  });
+
+  bar.addEventListener('click', function(ev){
+    if(ev.target.closest('[data-pst-all]')){
+      harvest();
+      var pending = pstPending(key, opts.filled);
+      if(!pending.length) return;
+      pending.forEach(function(row){ opts.apply(row.code, pstValue(key, row)); });
+      opts.repaint();
+      if(opts.done) opts.done(pending.length);
+      return;
+    }
+
+    var chip = ev.target.closest('[data-pst-code]');
+    if(!chip || chip.getAttribute('aria-disabled') === 'true') return;
+    harvest();
+    var code = chip.getAttribute('data-pst-code');
+    var row = g.rows.filter(function(r){ return r.code === code; })[0];
+    if(!row) return;
+    opts.apply(code, pstValue(key, row));
+    opts.repaint();
+    if(opts.done) opts.done(1);
+  });
+}
 
 async function loadDeliveryLines(){
   let raw = [], storeCountry = '';
@@ -8046,12 +8257,37 @@ function dlCountrySelect(current){
   return out;
 }
 
+/* The finished sentence for a row whose text carries {country} — the same
+   substitution App\Support\CountryTemplate::fill() does on the storefront, so
+   the words under the box are the words the shopper reads. Spelled here rather
+   than fetched because this runs on every keystroke. */
+function dlPreview(row){
+  const text = String(row.text||'');
+  if(text.indexOf('{country}') === -1) return '';
+  const name = KBB_COUNTRY_NAMES[row.country] || row.country;
+  return `<div class="dl-prev" data-dl-prev>Shoppers there read: <b>${escHtml(text.split('{country}').join(name))}</b></div>`;
+}
+
+/* This screen's half of the preset bar, and the only part of it that knows
+   what a delivery line is. `filled` answers with the row's current sentence, or
+   null when the country has no row at all — which is how a chip tells "fill
+   this in" from "replace what is there" from "already says this". */
+function dlFilled(code){
+  const row = DLINES.rows.filter(r => r.country === code)[0];
+  return row ? String(row.text) : null;
+}
+
+function dlPresetBar(){
+  return pstBarHtml('delivery', {id:'dlPresets', filled:dlFilled});
+}
+
 function dlRow(row, i){
   return `<div class="dl-row" data-dl-row="${i}">
     <select data-dl-country="${i}">${dlCountrySelect(row.country)}</select>
     <input type="text" data-dl-text="${i}" maxlength="1000" value="${escAttr(row.text)}"
            placeholder="What shoppers in this country are told">
     <button type="button" class="dl-x" data-dl-remove="${i}" aria-label="Remove this country">&times;</button>
+    ${dlPreview(row)}
   </div>`;
 }
 
@@ -8070,6 +8306,7 @@ async function paintDeliveryLines(){
         <p class="mdesc" style="margin:0 0 14px">Write one sentence per country and shoppers there see that
           sentence instead of the general one. A country with no line here is told <b>nothing at all</b> about
           delivery time \u2014 which is deliberate, and better than telling someone in Riyadh about delivery in the UAE.</p>
+        ${dlPresetBar()}
         ${rows.length ? `<div class="dl-head"><span>Country</span><span>What shoppers there are told</span><span></span></div>
         <div id="dlRows">${rows.map(dlRow).join('')}</div>`
         : `<div class="dl-empty" id="dlRows">No country has a line of its own yet, so the general delivery line is
@@ -8104,7 +8341,44 @@ async function paintDeliveryLines(){
     });
   };
 
-  $$('[data-dl-country],[data-dl-text]').forEach(el=>{ el.oninput = dirty; el.onchange = dirty; });
+  /* The preset bar. It writes into DLINES.rows and marks the screen dirty, and
+     that is ALL it does — the values go nowhere until dlSave runs, exactly as
+     if they had been typed. harvest first, or a sentence half-typed into
+     another row is lost by the repaint. */
+  pstBind('dlPresets', {
+    filled: dlFilled,
+    harvest: harvest,
+    apply: (code, value) => {
+      const row = DLINES.rows.filter(r => r.country === code)[0];
+      if(row) row.text = value; else DLINES.rows.push({country: code, text: value});
+    },
+    repaint: () => { paintDeliveryLines(); },
+    done: (n) => {
+      dirty();
+      toast(n === 1 ? 'Filled in — press Save changes to publish it'
+                    : 'Filled in ' + n + ' countries — press Save changes to publish them');
+    }
+  });
+
+  /* The line under the box, refreshed as he types rather than at blur — it is
+     the only place the finished sentence appears for a row that carries the
+     placeholder, and a preview that lags a keystroke behind is worse than
+     none. The row itself is not repainted: that would move the caret. */
+  const repreview=(el)=>{
+    const wrap = el.closest('[data-dl-row]');
+    if(!wrap) return;
+    const i = Number(wrap.dataset.dlRow);
+    if(!DLINES.rows[i]) return;
+    const html = dlPreview(DLINES.rows[i]);
+    const now = wrap.querySelector('[data-dl-prev]');
+    if(now) now.outerHTML = html;
+    else if(html) wrap.insertAdjacentHTML('beforeend', html);
+  };
+
+  $$('[data-dl-country],[data-dl-text]').forEach(el=>{
+    el.oninput = ()=>{ dirty(); harvest(); repreview(el); };
+    el.onchange = ()=>{ dirty(); harvest(); repreview(el); };
+  });
 
   $$('[data-dl-remove]').forEach(b=>b.onclick=()=>{
     harvest();

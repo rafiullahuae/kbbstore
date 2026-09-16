@@ -46,6 +46,13 @@ use App\Services\SettingsService;
  * invented defaults. Until the owner types a line for a country, that country
  * gets the behaviour it has today — the UAE its promise, everywhere else
  * silence.
+ *
+ * STILL SHIPPED EMPTY, NOW THAT THE SCREEN OFFERS SUGGESTIONS.
+ * App\Support\CountryPresets holds a set of Gulf sentences the owner can drop
+ * into the form in one click, built from figures he supplied himself. They are
+ * offered by a screen, not seeded by a migration and not defaulted here: the
+ * column is untouched until he presses Save, so a shop that applies the package
+ * and never opens the tab tells every shopper exactly what it told them before.
  */
 final class DeliveryLine
 {
@@ -69,14 +76,28 @@ final class DeliveryLine
         return app(self::class)->for(ShopperCountry::for($request)->code);
     }
 
-    /** The line for a destination, or an empty string when there is nothing true to say. */
+    /**
+     * The line for a destination, or an empty string when there is nothing true
+     * to say.
+     *
+     * ONE PLACEHOLDER, SUBSTITUTED ON THE WAY OUT. The owner asked for "the
+     * full sentence and the country name will auto change according", so a
+     * stored line may contain `{country}` and CountryTemplate::fill() replaces
+     * it with the destination's name — the same convention VatDisplay::label()
+     * already uses for `{rate}`, spelled the same way.
+     *
+     * This cannot change what any country is told today. Every line stored
+     * before this existed was typed as literal words and contains no
+     * placeholder, and a sentence with no placeholder comes back byte for byte
+     * unchanged. The substitution is a no-op until somebody writes one.
+     */
     public function for(string $country): string
     {
         $country = strtoupper(trim($country));
 
         foreach (self::rows($this->settings) as $row) {
             if (strtoupper((string) ($row['country'] ?? '')) === $country) {
-                return (string) ($row['text'] ?? '');
+                return CountryTemplate::fill((string) ($row['text'] ?? ''), $country);
             }
         }
 
@@ -84,7 +105,10 @@ final class DeliveryLine
             return '';
         }
 
-        return (string) $this->settings->get('delivery_default_text', '1–3 days fast delivery all over UAE');
+        return CountryTemplate::fill(
+            (string) $this->settings->get('delivery_default_text', '1–3 days fast delivery all over UAE'),
+            $country,
+        );
     }
 
     /**
