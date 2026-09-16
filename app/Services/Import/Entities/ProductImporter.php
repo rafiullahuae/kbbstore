@@ -9,6 +9,7 @@ use App\Services\Import\ImportContext;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Services\Import\SlugGuard;
+use App\Support\RichText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -171,8 +172,23 @@ final class ProductImporter extends EntityImporter
             'manage_stock' => $row->bool(false, 'manage_stock'),
             'stock' => $row->text('stock', 'stock_quantity') === null ? null : $row->int(0, 'stock', 'stock_quantity'),
             'stock_status' => $stockStatus,
-            'short_description' => $row->text('short_description', 'post_excerpt'),
-            'description' => $row->text('description', 'post_content'),
+            // Sanitised on the way in, not on the way out.
+            //
+            // A WooCommerce export is a THIRD-PARTY FILE. Everything else in
+            // this importer treats it that way -- statuses are mapped rather
+            // than trusted, money is parsed digit by digit, a slug goes past
+            // SlugGuard -- and these two columns were the exception, copied
+            // through verbatim into the one place the storefront prints raw:
+            // partials/product-tabs.blade.php renders both with {!! !!}.
+            //
+            // That makes this the one RichText bypass whose threat model needs
+            // no hostile admin. The owner imports a catalogue somebody else
+            // generated, every byte of post_content in it is that somebody's to
+            // choose, and the result is stored XSS on every imported product
+            // page. See App\Support\RichText for why the allowlist is the
+            // control and the editor is only a convenience.
+            'short_description' => self::cleanHtml($row->text('short_description', 'post_excerpt')),
+            'description' => self::cleanHtml($row->text('description', 'post_content')),
             'image' => $row->text('image', 'featured_image'),
             'featured' => $row->bool(false, 'featured', 'is_featured'),
             'position' => $row->int((int) ($product->position ?? 0), 'position', 'menu_order'),
@@ -320,4 +336,24 @@ final class ProductImporter extends EntityImporter
         return $raw === '' ? 'simple' : $raw;
     }
 
+    /**
+     * RichText over an imported HTML column, preserving "the export did not
+     * carry this field at all".
+     *
+     * NULL IN, NULL OUT, deliberately. Row::text() returns null for a column
+     * the export omits, and the importer's change detection compares the
+     * attribute array against the row it already has: turning a null into ''
+     * would make every product look modified on the next pass and churn the
+     * whole catalogue's updated_at. Cleaning is not supposed to be a content
+     * change, so it does not get to invent one.
+     *
+     * A non-null value is returned exactly as the allowlist leaves it, '' and
+     * all, for the same reason -- this method's job is to remove what a browser
+     * would execute, not to normalise blanks. That normalisation belongs to the
+     * editor, which has an operator in front of it.
+     */
+    private static function cleanHtml(?string $html): ?string
+    {
+        return $html === null ? null : RichText::clean($html);
+    }
 }

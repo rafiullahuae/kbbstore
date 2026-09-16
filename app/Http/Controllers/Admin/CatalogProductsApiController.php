@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Support\MajorUnits;
 use App\Support\Money;
+use App\Support\RichText;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -408,9 +409,38 @@ class CatalogProductsApiController extends Controller
 
         $changes = [];
 
-        foreach (['name', 'status', 'stock_status', 'short_description', 'description'] as $key) {
+        foreach (['name', 'status', 'stock_status'] as $key) {
             if (array_key_exists($key, $data)) {
                 $changes[$key] = $data[$key];
+            }
+        }
+
+        /*
+         * The two HTML columns go through the sanitiser, exactly as
+         * ProductEditorApiController::applyRichText() does it.
+         *
+         * `string|max:200000` above is a LENGTH check. It says nothing about
+         * what the string contains, and partials/product-tabs.blade.php prints
+         * both of these with {!! !!} on the public product page -- twice, once
+         * for the desktop panel and once for the mobile accordion. So whatever
+         * lands in the column is what a visitor's browser executes.
+         *
+         * App\Support\RichText was written to be the ONLY door into these
+         * columns and this screen was a second one standing open beside it.
+         * Being behind auth:admin is not the answer: admin_users.role is
+         * validated and stored but enforced nowhere, so every back-office
+         * account has this reach, and a sanitiser that runs on one of two
+         * write paths is a sanitiser that does not run.
+         *
+         * Blank-after-cleaning becomes NULL rather than '', so a description
+         * emptied here reads the same to tabs() as one that was never set --
+         * the editor's rule, kept identical on purpose.
+         */
+        foreach (['short_description', 'description'] as $key) {
+            if (array_key_exists($key, $data)) {
+                $clean = RichText::clean($data[$key]);
+
+                $changes[$key] = RichText::isBlank($clean) ? null : $clean;
             }
         }
 
