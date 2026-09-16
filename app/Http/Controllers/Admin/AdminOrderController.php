@@ -820,9 +820,38 @@ class AdminOrderController extends Controller
         if ($term !== '') {
             $like = '%' . $this->escapeLike($term) . '%';
 
-            $query->where(function ($q) use ($like) {
+            /*
+             * BRAND AND SLUG TOO, not just name and sku.
+             *
+             * The owner typed "anua" and got "Nothing in the catalogue matches
+             * that", while the same search on the order detail screen returned
+             * three products. Anua is a BRAND: no product name contains it, so
+             * a name-and-sku search finds nothing, and the two screens
+             * disagreed about the same catalogue.
+             *
+             * This is the set CatalogProductsApiController already searches —
+             * name, sku, slug, brand name — so the operator gets the same
+             * answer wherever they type. A staff member taking an order on the
+             * phone reaches for the brand at least as often as the product
+             * name.
+             *
+             * whereHas rather than a join: this query is cloned for a count and
+             * then again for the page, and a join would need the select list
+             * below to disambiguate every column.
+             */
+            $query->where(function ($q) use ($like, $term) {
                 $q->orWhereRaw("name LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like])
-                    ->orWhereRaw("sku LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like]);
+                    ->orWhereRaw("sku LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like])
+                    ->orWhereRaw("slug LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like])
+                    ->orWhereHas('brand', function ($b) use ($like) {
+                        $b->whereRaw("name LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like]);
+                    });
+
+                // Typing an id finds that product, as it does on the catalogue
+                // screen.
+                if (ctype_digit($term)) {
+                    $q->orWhere('id', '=', (int) $term);
+                }
             });
         }
 

@@ -312,12 +312,25 @@ class CouponAdminApiController extends Controller
             ->when($ids === [] && $search !== '', function ($q) use ($search) {
                 $term = '%' . str_replace(['%', '_'], ['\%', '\_'], mb_strtolower($search)) . '%';
 
+                /*
+                 * Brand name too. The owner searched this picker for "anua"
+                 * and got nothing: Anua is a brand, no product name contains
+                 * it, and a name-and-sku search cannot see it. Every other
+                 * product search in the admin matches the brand, so this one
+                 * disagreeing is the surprise.
+                 *
+                 * It matters more here than elsewhere, because fencing a
+                 * coupon to a brand's products is one of the main reasons to
+                 * open this picker at all.
+                 */
                 $q->where(fn ($w) => $w->whereRaw('LOWER(name) LIKE ?', [$term])
-                    ->orWhereRaw('LOWER(COALESCE(sku, \'\')) LIKE ?', [$term]));
+                    ->orWhereRaw('LOWER(COALESCE(sku, \'\')) LIKE ?', [$term])
+                    ->orWhereHas('brand', fn ($b) => $b->whereRaw('LOWER(name) LIKE ?', [$term])));
             })
+            ->with('brand:id,name')
             ->orderBy('name')
             ->limit(self::LOOKUP_LIMIT)
-            ->get(['id', 'name', 'sku']);
+            ->get(['id', 'name', 'sku', 'brand_id']);
 
         return response()->json([
             'ok' => true,
@@ -325,7 +338,11 @@ class CouponAdminApiController extends Controller
             'items' => $rows->map(fn ($p) => [
                 'id' => (int) $p->id,
                 'label' => (string) $p->name,
-                'hint' => (string) ($p->sku ?? ''),
+                // The brand is what the operator searched by, so show it back.
+                'hint' => trim(implode(' · ', array_filter([
+                    (string) ($p->brand?->name ?? ''),
+                    (string) ($p->sku ?? ''),
+                ]))),
             ])->all(),
         ]);
     }

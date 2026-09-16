@@ -132,10 +132,23 @@ it('selects the columns it needs rather than hydrating the whole row', function 
     expect($reads)->not->toBeEmpty('no row-level select against products was issued at all');
 
     foreach ($reads as $sql) {
-        $wildcard = (bool) preg_match('/select\s+(distinct\s+)?([`"]?products[`"]?\.)?\*/i', $sql);
+        /*
+         * THE OUTER SELECT LIST ONLY.
+         *
+         * Matching `select *` anywhere in the statement is too loose: an EXISTS
+         * subquery renders as `exists (select * from "brands" ...)`, which is
+         * how Eloquent compiles whereHas and is exactly the cheap shape we
+         * want — it reads no brand columns at all, the wildcard is inside an
+         * EXISTS. The loose pattern failed the moment brand-name search was
+         * added, blaming the products query for a subquery against another
+         * table. So take the column list between the leading `select` and its
+         * matching `from`, and judge only that.
+         */
+        $columns = trim((string) preg_replace('/^select\s+(.*?)\s+from\s+.*$/is', '$1', $sql));
+
+        $wildcard = (bool) preg_match('/^(distinct\s+)?([`"]?products[`"]?\.)?\*$/i', trim($columns));
         expect($wildcard)->toBeFalse("the type-ahead reads the whole product row: {$sql}");
 
-        $columns = trim((string) preg_replace('/^select\s+(.*?)\s+from\s+.*$/is', '$1', $sql));
         $heavy = str_contains($columns, 'description');
         expect($heavy)->toBeFalse("the type-ahead reads `description`, a page of HTML per suggestion: {$sql}");
     }
