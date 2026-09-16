@@ -9584,15 +9584,135 @@ function bindMail(){
 $('.side-pin .nav-item').onclick=()=>go('console');
 buildNav();
 
-/* Deep link: /{admin}?go=updates or /{admin}#updates opens that panel directly.
+/* ===== LANE DA · deep links · BEGIN ========================================
+   Deep link: /{admin}?go=updates or /{admin}#updates opens that panel directly.
    This is how the retired standalone page hands over — it redirects here rather
-   than rendering a second copy of the same screen. */
+   than rendering a second copy of the same screen.
+
+   WHAT WAS WRONG, AND FOR HOW MANY SCREENS.
+
+   This block runs HERE, a few lines after buildNav(), thousands of lines before
+   the end of the document. Sixteen of this console's screens are not drawn by
+   the go() that exists at this point: they are drawn by a LATER wrapper around
+   window.go — the one in the second script below, and one more per screen
+   partial included after it. None of those exists yet when this runs, which is
+   why mountFrame() paints frameStartupHTML for every id in LIVE_RENDERED
+   instead of reaching for a standalone file that was never shipped.
+
+   So a deep link landed on "could not be loaded — the admin script did not
+   finish starting up. Reload the page." That sentence was written for a real
+   case and it was the wrong sentence for this one: the script had not finished
+   starting up YET, rather than failed to, and reloading reproduces it exactly,
+   because the address is the cause. Clicking the same row in the sidebar has
+   always worked — by the time anyone can click, every wrapper is installed.
+   That is the whole difference between the two, and it is why this was reported
+   as "links are broken" rather than "screens are broken".
+
+   WHAT THIS DOES NOW.
+
+   The immediate go(target) is unchanged and still happens first, so the first
+   paint, `cur`, the sidebar highlight and the breadcrumb are exactly what they
+   were. That matters: ten screens already fixed this for themselves and each
+   keys off one of those three — 'rev-all' tests `cur`, Review Settings tests
+   which sidebar row is marked, Rating Badge tests the address — so any change
+   to what this leaves behind would break them.
+
+   What is added is a SECOND, CONDITIONAL pass, for the case where the
+   navigation above painted the startup card instead of a screen. A marker is
+   dropped inside #content and one replay is queued for after the document is
+   parsed. Any real render replaces #content's children, so the first thing that
+   draws destroys the marker — that is the whole test, and it needs no
+   cooperation from the screens themselves.
+
+   Marker gone: a screen claimed the address, there is nothing to do, and it
+   rendered exactly once. That is the path the nine LIVE_RENDERED screens with
+   their own bootIfCurrent() take.
+
+   Marker still there: nothing drew the screen, the startup card is what the
+   owner is looking at, so go() is called ONE more time — through the chain as
+   it now stands, complete. That is the fix, and it is the same few lines for
+   all sixteen.
+
+   WHY THE ARMING TEST IS LIVE_RENDERED AND NOT SOMETHING WIDER. It has to name
+   the case where the card was painted, and LIVE_RENDERED is exactly that case:
+   go() sends every one of those ids through renderFrame or renderReviewFrame
+   into mountFrame, which paints the card for them and only for them.
+
+   A wider test was written first and withdrawn on the evidence. It asked "could
+   the go() that just ran draw this screen at all?", which also catches ids that
+   fall off the end of go()'s dispatch table and get `||renderDash` — the
+   DASHBOARD under the right breadcrumb, with no error at all. 'media' is the
+   live example and it is a real defect, reported rather than fixed here. It
+   also caught 'rev-all' and 'customers', and those two broke it: both already
+   boot themselves, and both paint only AFTER an await. Measured in Chromium,
+   ?go=rev-all painted the All Reviews screen twice on two runs out of three —
+   the replay fired while the screen's own load was still in flight, because the
+   marker had not been overwritten yet. A screen that draws itself synchronously
+   cannot lose that race and a screen that awaits first always can, so the fix
+   is not to widen the window but to stay inside the set where the card, and
+   therefore the absence of any other claim, is the honest reading.
+
+   All sixteen ids here are safe on that test: seven have no boot of their own,
+   and the other nine paint synchronously before they load.
+
+   WHY THE PLACEHOLDER IS NOT DELETED. It was written for a real case: a partial
+   that fails to parse never installs its wrapper, and the owner has to be told
+   rather than shown a blank panel. That case is now the ONLY one it describes.
+   The replay runs, the complete chain still has no renderer for the id, and
+   go() falls back through renderFrame to the same card — true this time. It is
+   a static string with no request and no handler behind it, so re-setting it
+   costs nothing and mounts nothing.
+
+   WHY NOT DEFER THE FIRST go() INSTEAD, which was the obvious shape. Because
+   those ten existing boots run on DOMContentLoaded or during parsing, which is
+   after any point this block could defer to. Deferring the first navigation
+   would not stop them; it would only make them fire against a console that had
+   not navigated yet, and then the replay would draw each of those screens a
+   second time. Replaying LAST, and only where nothing has drawn, is the one
+   order in which the existing ten and the missing seven do not collide.
+
+   WHY NOT DELETE THOSE TEN COPIES and centralise. It is the tidier end state
+   and it is not this change: they live in seven files other lanes are editing
+   right now, and each reads a slightly different signal for its own reason
+   (Rating Badge reads the address precisely because 'rev-capsule' has no
+   sidebar row to read). They are redundant after this, not wrong, and a screen
+   added to LIVE_RENDERED tomorrow needs none of them. */
 (function(){
   const q = new URLSearchParams(window.location.search).get('go');
   const h = (window.location.hash || '').replace('#', '');
-  const target = q || h;
-  go(target && TITLES[target] ? target : 'dash');
+  const asked = q || h;
+  const target = asked && TITLES[asked] ? asked : 'dash';
+
+  go(target);
+
+  /* Exactly the ids mountFrame() answers with frameStartupHTML. */
+  if(!LIVE_RENDERED.has(target)) return;
+
+  /* Inside #content, never on it: a dataset attribute on #content itself would
+     survive innerHTML and report every screen as undrawn for ever. A child
+     element does not — it is removed by the first thing that paints. */
+  const box=$('#content');
+  if(!box) return;
+  box.insertAdjacentHTML('beforeend','<i data-kbb-deeplink hidden></i>');
+
+  let done=false;
+  function replay(){
+    if(done) return;
+    done=true;
+    if(!document.querySelector('#content [data-kbb-deeplink]')) return;   // drawn already
+    try{ if(typeof window.go==='function') window.go(target); }catch(e){}
+  }
+
+  /* setTimeout from inside the listener, not the listener itself. This block
+     registers before any partial is parsed, so its DOMContentLoaded handler
+     runs FIRST of all of them — ahead of the very bootIfCurrent()s whose result
+     it exists to read. A task queued from inside it runs after the lot. */
+  function arm(){ setTimeout(replay,0); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',arm);
+  else arm();
 })();
+/* ===== LANE DA · deep links · END ========================================== */
+
 
 /* ===== LANE CJ · Admin · keyboard-operable tick boxes — BEGIN ===============
    Every tick box in this console is a <span class="cbx"> with a click handler.
