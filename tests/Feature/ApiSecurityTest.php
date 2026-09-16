@@ -342,3 +342,57 @@ it('serves the skin quiz page', function () {
 it('serves the review wall page', function () {
     $this->get('/reviews')->assertOk();
 });
+
+/*
+ * The public review door and the storefront door must agree.
+ *
+ * Lane BG found them disagreeing: Store\ReviewController was wired to
+ * `sr_allow_submit` so that "Accept new reviews: off" refuses on the server
+ * rather than merely hiding the button, and Api\ProductController was not. The
+ * storefront answered 403 and wrote nothing; /api answered 201 and wrote a row.
+ *
+ * /api/* is unauthenticated, so it is the door a script finds first — which
+ * makes it the one where an off switch failing open costs the most.
+ */
+it('refuses an api review submission when the owner has turned reviews off', function () {
+    $p = product(['slug' => 'api-switch-target']);
+
+    app(\App\Services\SettingsService::class)->set('sr_allow_submit', false);
+    \App\Models\Setting::flushMap();
+
+    $before = Review::count();
+
+    $this->postJson("/api/products/{$p->slug}/reviews", [
+        'author' => 'Walker',
+        'rating' => 5,
+        'title'  => 'Lovely',
+        'body'   => 'Through the side door',
+    ])->assertForbidden();
+
+    expect(Review::count())->toBe($before, 'a review was written while submissions were off');
+});
+
+it('reads the per-IP review cap from the setting on the api door too', function () {
+    /*
+     * The two doors share ONE rate-limit key, deliberately, so that five
+     * submissions cannot be had from each. A shared key with two different
+     * budgets is worse than no sharing at all: the looser number wins, and the
+     * owner tightening the cap to one an hour still left five here.
+     */
+    $p = product(['slug' => 'api-cap-target']);
+
+    app(\App\Services\SettingsService::class)->set('sr_allow_submit', true);
+    app(\App\Services\SettingsService::class)->set('sr_rate_limit', 1);
+    \App\Models\Setting::flushMap();
+
+    \Illuminate\Support\Facades\RateLimiter::clear('review-submit:127.0.0.1');
+
+    $post = fn () => test()->postJson("/api/products/{$p->slug}/reviews", [
+        'author' => 'Walker',
+        'rating' => 5,
+        'body'   => 'One an hour',
+    ]);
+
+    $post()->assertCreated();
+    $post()->assertStatus(429);
+});
