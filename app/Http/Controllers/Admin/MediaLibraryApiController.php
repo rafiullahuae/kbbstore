@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Models\MediaUsageRecord;
 use App\Support\AggregatesQueries;
 use App\Support\MediaBackfill;
 use App\Support\MediaUsage;
@@ -37,6 +38,28 @@ use Illuminate\Http\Request;
  * WRITES ARE NOT PART OF THIS CLASS beyond delete. Uploading is the other
  * controller's job and stays there.
  *
+ * TWO SOURCES FOR "WHERE IS THIS IMAGE USED", AND THE SPLIT IS DELIBERATE.
+ *
+ *   - The GRID — its attachment filter and its per-tile badge — reads the
+ *     `media_usages` table. It is fast, and it is exact where the old
+ *     basename-gathering filter was broad.
+ *   - The DETAIL PANEL and DELETE read App\Support\MediaUsage::verify(),
+ *     which re-derives from the image URLs on every product, brand and
+ *     category.
+ *
+ * The reason is what each one costs when it is wrong. A stale badge is a
+ * cosmetic error on an admin screen. A stale answer in the delete guard
+ * unlinks a file that a live product page is still pointing at, which is a
+ * broken image a shopper sees — so that path never trusts a record that
+ * something else was responsible for keeping up to date. show() is derived for
+ * the same reason: it is the list the operator reads immediately before
+ * pressing Delete, and a confirmation that disagreed with the refusal would be
+ * worse than a slow one.
+ *
+ * App\Support\MediaUsageWriter keeps the table current and names the two
+ * places it can still fall behind; `php artisan media:usages-reconcile
+ * --check` reports any disagreement between the two.
+ *
  * EVERY ROUTE HERE IS UNDER auth:admin. The table carries the store's whole
  * asset list and DELETE removes files from the public web root; CLAUDE.md's
  * standing rule is that /api/* is unauthenticated, so none of this may ever go
@@ -48,6 +71,19 @@ class MediaLibraryApiController extends Controller
 
     /** Page size. Matches the 4-across grid at desktop: six full rows. */
     private const PER_PAGE = 24;
+
+    /**
+     * The model behind each owner_type string in `media_usages`.
+     *
+     * The table stores 'product' / 'brand' / 'category' rather than a class
+     * name so a dump of it reads without a class map; this is where that is
+     * turned back into something to query.
+     */
+    private const MODELS = [
+        'product' => \App\Models\Product::class,
+        'brand' => \App\Models\Brand::class,
+        'category' => \App\Models\Category::class,
+    ];
 
     /**
      * The grid.
@@ -77,14 +113,22 @@ class MediaLibraryApiController extends Controller
             ->forPage($page, self::PER_PAGE)
             ->get();
 
-        // Usage is resolved for the 24 rows on THIS page only, not for the
-        // whole table: the index() pass is the expensive part and the grid only
-        // needs a badge per tile.
-        $index = MediaUsage::index();
+        /*
+         * Badges come from `media_usages`, one query for the 24 rows on this
+         * page, where they used to come from a MediaUsage::index() pass over
+         * every product, brand and category in the store on EVERY render of
+         * this screen — not only a filtered one, which is what that class's
+         * comment used to claim.
+         *
+         * A badge is the one place a slightly stale answer is affordable. The
+         * delete guard below still asks MediaUsage::verify(), because there
+         * the cost of being wrong is a broken image on the shop.
+         */
+        $usage = $this->usageFor($items->pluck('id')->all());
 
         return response()->json([
             'ok' => true,
-            'items' => $items->map(fn (Media $m) => $this->tile($m, $index))->values(),
+            'items' => $items->map(fn (Media $m) => $this->tile($m, $usage))->values(),
             'page' => $page,
             'per_page' => self::PER_PAGE,
             'total' => $total,
@@ -94,15 +138,24 @@ class MediaLibraryApiController extends Controller
         ]);
     }
 
-    /** One image, with every place it is used. */
+    /**
+     * One image, with every place it is used.
+     *
+     * The detail panel is what the operator reads just before pressing Delete,
+     * so the list it shows is the DERIVED one — the same answer destroy() will
+     * act on. Showing a recorded list here and enforcing a derived one there
+     * would mean the confirmation and the refusal could disagree, which is a
+     * worse screen than a slow one.
+     */
     public function show(Media $media): JsonResponse
     {
         $index = MediaUsage::index();
+        $usage = MediaUsage::verify($index, (string) $media->filename, (string) $media->path);
 
         return response()->json([
             'ok' => true,
-            'item' => $this->tile($media, $index) + [
-                'usage' => MediaUsage::verify($index, (string) $media->filename, (string) $media->path),
+            'item' => $this->tile($media, [(int) $media->id => $usage]) + [
+                'usage' => $usage,
             ],
         ]);
     }
@@ -243,48 +296,179 @@ class MediaLibraryApiController extends Controller
             $query->where('media.created_at', '<=', $to.' 23:59:59');
         }
 
-        // ── by what it is attached to ────────────────────────────────────
-        // Derived, not joined; MediaUsage's class comment explains why the
-        // schema leaves no other option and what recording it properly would
-        // take. `attached_q` narrows by the OWNER's name — "every image on a
-        // COSRX product" — which is the "by product or brand or by category"
-        // half of what was asked for.
+        /*
+         * ── by what it is attached to ────────────────────────────────────
+         *
+         * RECORDED now, not derived. This used to gather every referenced
+         * FILENAME by walking the whole catalogue and match `media.filename`
+         * against that list, which was broad on purpose: two rows sharing a
+         * basename both matched, and MediaUsage's comment says so. Selecting
+         * media ids out of `media_usages` is both narrower — those rows were
+         * recorded through MediaUsage::matches(), which checks the full stored
+         * path — and cheaper.
+         *
+         * `attached_q` narrows by the OWNER's name — "every image on a COSRX
+         * product" — which is the "by product or brand or by category" half of
+         * what was asked for.
+         *
+         * ONE KNOWN INCONSISTENCY, named here rather than left to be found. A
+         * usage row whose owner was removed by a BULK Eloquent delete fires no
+         * model event and survives (see MediaUsageWriter's header). Such a row
+         * keeps its media out of `attached=unused`, while the badge built by
+         * usageFor() skips it because the owner's name cannot be looked up —
+         * so the tile can read "unused" and still be absent from the unused
+         * filter. Both halves err towards "might still be in use", which is
+         * the safe direction, and `media:usages-reconcile` clears the cause.
+         */
         $attached = (string) $request->query('attached', '');
         $ownerQuery = trim((string) $request->query('attached_q', ''));
 
         if ($attached === 'unused') {
-            $used = MediaUsage::filenames(null, null);
-
-            // whereNotIn over an empty list is a tautology in both dialects and
-            // would return everything, which happens to be the right answer:
-            // nothing references anything, so nothing is in use.
-            if ($used !== []) {
-                $query->whereNotIn('media.filename', $used);
-            }
-        } elseif ($attached === 'any' || in_array($attached, MediaUsage::TYPES, true)) {
-            $names = MediaUsage::filenames(
-                $attached === 'any' ? null : $attached,
-                $ownerQuery !== '' ? $ownerQuery : null
+            // NOT EXISTS rather than whereNotIn over a gathered list: the
+            // subquery cannot outgrow a placeholder ceiling and needs no pass
+            // over the catalogue to build.
+            $query->whereNotExists(
+                MediaUsageRecord::query()
+                    ->whereColumn('media_usages.media_id', 'media.id')
+                    ->toBase()
             );
+        } elseif ($attached === 'any' || in_array($attached, MediaUsage::TYPES, true)) {
+            $rows = MediaUsageRecord::query()->whereColumn('media_usages.media_id', 'media.id');
 
-            // An empty list here means the store genuinely has no such
-            // reference. whereIn([]) is `0 = 1` in Laravel, which is the
-            // correct empty answer rather than an accidental match-all.
-            $query->whereIn('media.filename', $names);
+            if ($attached !== 'any') {
+                $rows->where('media_usages.owner_type', $attached);
+            }
+
+            /*
+             * Narrowing by the OWNER's name — "every image on a COSRX product"
+             * — is still a lookup against the owning table, because that is
+             * where the name lives. It resolves to a list of ids per kind
+             * rather than a polymorphic join, which neither dialect does
+             * without a union.
+             *
+             * An owner search that matches nothing must yield NO media, not
+             * all of it, so the empty case is made explicit: whereIn([]) is
+             * `0 = 1` in Laravel and that is the honest answer here. A filter
+             * that silently matched everything instead is the failure
+             * CLAUDE.md records for the product `status` filter.
+             */
+            if ($ownerQuery !== '') {
+                $rows->where(function ($w) use ($attached, $ownerQuery) {
+                    foreach ($attached === 'any' ? MediaUsage::TYPES : [$attached] as $kind) {
+                        $w->orWhere(function ($k) use ($kind, $ownerQuery) {
+                            $k->where('media_usages.owner_type', $kind)
+                                ->whereIn('media_usages.owner_id', $this->ownerIds($kind, $ownerQuery));
+                        });
+                    }
+                });
+            }
+
+            $query->whereExists($rows->toBase());
         }
 
         return $query;
     }
 
     /**
+     * Where each of these media rows is used, from `media_usages`.
+     *
+     * One query for the whole page, shaped like MediaUsage::verify()'s answer
+     * so that tile() cannot tell which of the two produced it — that is what
+     * lets show() hand it the derived list instead.
+     *
+     * The owner's NAME is joined back on, because the badge names what is
+     * using the file and a row here carries only a type and an id. Three
+     * lookups, one per kind, for at most 24 tiles' worth of owners.
+     *
+     * @param  list<int>  $mediaIds
+     * @return array<int, list<array{type: string, id: int, name: string, field: string}>>
+     */
+    private function usageFor(array $mediaIds): array
+    {
+        if ($mediaIds === []) {
+            return [];
+        }
+
+        $rows = MediaUsageRecord::query()
+            ->whereIn('media_id', $mediaIds)
+            ->get(['media_id', 'owner_type', 'owner_id', 'field']);
+
+        if ($rows->isEmpty()) {
+            return [];
+        }
+
+        $names = [];
+
+        foreach (MediaUsage::TYPES as $kind) {
+            $ids = $rows->where('owner_type', $kind)->pluck('owner_id')->unique()->all();
+
+            if ($ids === []) {
+                continue;
+            }
+
+            $names[$kind] = self::MODELS[$kind]::query()
+                ->whereIn('id', $ids)
+                ->pluck('name', 'id')
+                ->all();
+        }
+
+        $out = [];
+
+        foreach ($rows as $row) {
+            $kind = (string) $row->owner_type;
+            $ownerId = (int) $row->owner_id;
+
+            /*
+             * A row whose owner has gone is SKIPPED rather than badged with a
+             * blank name. A bulk Eloquent delete fires no model events, so
+             * this table can hold rows for a product that no longer exists —
+             * MediaUsageWriter's header says where that happens and
+             * media:usages-reconcile clears it. Until then the grid agrees
+             * with the derivation, which also cannot see a deleted owner.
+             */
+            if (! isset($names[$kind][$ownerId])) {
+                continue;
+            }
+
+            $out[(int) $row->media_id][] = [
+                'type' => $kind,
+                'id' => $ownerId,
+                'name' => (string) $names[$kind][$ownerId],
+                'field' => (string) $row->field,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * The ids of owners of one kind whose name matches the operator's search.
+     *
+     * SearchTerms::whereLike for the reason its own header gives: it escapes
+     * % and _ and emits an explicit ESCAPE clause, because a backslash is
+     * MySQL's default escape and means nothing to SQLite, and the same search
+     * returned different rows in CI and in production before it existed.
+     *
+     * @return list<int>
+     */
+    private function ownerIds(string $kind, string $search): array
+    {
+        $query = self::MODELS[$kind]::query();
+
+        SearchTerms::whereLike($query, 'name', $search);
+
+        return $query->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
      * One tile's worth of an image.
      *
-     * @param  array<string, list<array{type: string, id: int, name: string, field: string, path: string}>>  $index
+     * @param  array<int, list<array{type: string, id: int, name: string, field: string}>>  $usage
      * @return array<string, mixed>
      */
-    private function tile(Media $media, array $index): array
+    private function tile(Media $media, array $usage): array
     {
-        $usage = MediaUsage::verify($index, (string) $media->filename, (string) $media->path);
+        $usage = $usage[(int) $media->id] ?? [];
 
         return [
             'id' => (int) $media->id,

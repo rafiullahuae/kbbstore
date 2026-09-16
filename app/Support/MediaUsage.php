@@ -34,19 +34,32 @@ use App\Models\Product;
  * nothing, which is the failure mode CLAUDE.md records for the product
  * `status` filter and which this lane was told not to repeat.
  *
- * WHAT IT COSTS, AND WHY THAT IS ACCEPTABLE. Answering an attachment filter
- * reads three columns off every product, brand and category — about 2,600 rows
- * on this store. One pass, three queries, no joins, and it happens only when
- * the operator actually picks an attachment filter; the default grid does not
- * call it at all.
+ * WHAT IT COSTS. Answering an attachment filter reads three columns off every
+ * product, brand and category — about 2,600 rows on this store. One pass,
+ * three queries, no joins.
  *
- * THE DURABLE FIX, deliberately NOT done here. The association should be
- * RECORDED, not derived: a `media_usages` table (media_id, owner_type,
- * owner_id, field) written when the product editor, the brand editor and the
- * category editor save. Those three save paths belong to other lanes, and
- * CLAUDE.md's ownership rule says a lane that needs another lane's file says so
- * rather than editing it. Until that exists this is the honest answer, and it
- * is honest about being derived rather than dressed up as a join.
+ * The paragraph that used to sit here said this happened "only when the
+ * operator actually picks an attachment filter; the default grid does not call
+ * it at all". That stopped being true when the grid started badging tiles:
+ * MediaLibraryApiController::index() calls index() unconditionally on every
+ * page of the library, and show() and destroy() call it once each. The cost is
+ * paid on every render of the screen, not only on a filtered one.
+ *
+ * THE DURABLE FIX, now built (Lane BF). `media_usages` records the association
+ * — media_id, owner_type, owner_id, field — and is written from the save paths
+ * and rebuilt by a backfill migration. It is an INDEX over what this class
+ * derives, not a replacement for it, and the split is deliberate:
+ *
+ *   - the grid's filter and badges read the table, which is both faster and
+ *     EXACT where the filter here is basename-broad; but
+ *   - the delete guard still calls verify() below, because a recorded row that
+ *     has gone stale would offer to delete an image that is live on the shop,
+ *     and that is the one error here that a shopper sees.
+ *
+ * matches() is the single predicate both halves apply, so the table records
+ * what verify() would have said rather than a second opinion of its own. See
+ * App\Support\MediaUsageWriter and the media:usages-reconcile command, which
+ * re-derives the table from this class and can report any disagreement.
  *
  * MATCHING IS BY FILENAME, and the one place that is imprecise is named here
  * rather than left to be discovered. Two media rows can share a basename —
@@ -57,6 +70,12 @@ use App\Models\Product;
  * re-checks the full stored path, so "is this safe to delete" is exact even
  * where the grid filter is broad. Broad is a tolerable error here; empty is
  * not.
+ *
+ * The grid filter is no longer the broad one either: it now selects media ids
+ * out of `media_usages`, which were recorded through matches() and so carry
+ * the same full-path check verify() makes. This class keeps the basename
+ * bucket because filenames() is still the honest derived answer and the
+ * reconcile command compares the two.
  */
 final class MediaUsage
 {
@@ -68,14 +87,87 @@ final class MediaUsage
      *
      * @param  string|null  $type   one of TYPES, or null for all three
      * @param  string|null  $owner  match only owners whose NAME contains this
-     * @return array<string, list<array{type: string, id: int, name: string, field: string, path: string}>>
+     * @return array<string, list<array{type: string, id: int, name: string, field: string, column: string, path: string, raw: string}>>
      */
     public static function index(?string $type = null, ?string $owner = null): array
     {
         $owner = ($owner !== null && trim($owner) !== '') ? trim($owner) : null;
         $out = [];
 
-        $add = static function (string $kind, int $id, string $name, string $field, mixed $raw) use (&$out): void {
+        if ($type === null || $type === 'product') {
+            $q = Product::query()->select(['id', 'name', 'image', 'images']);
+
+            if ($owner !== null) {
+                SearchTerms::whereLike($q, 'name', $owner);
+            }
+
+            foreach ($q->cursor() as $p) {
+                self::collect($out, 'product', $p);
+            }
+        }
+
+        if ($type === null || $type === 'brand') {
+            $q = Brand::query()->select(['id', 'name', 'logo']);
+
+            if ($owner !== null) {
+                SearchTerms::whereLike($q, 'name', $owner);
+            }
+
+            foreach ($q->cursor() as $b) {
+                self::collect($out, 'brand', $b);
+            }
+        }
+
+        if ($type === null || $type === 'category') {
+            $q = Category::query()->select(['id', 'name', 'image']);
+
+            if ($owner !== null) {
+                SearchTerms::whereLike($q, 'name', $owner);
+            }
+
+            foreach ($q->cursor() as $c) {
+                self::collect($out, 'category', $c);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The index entries for ONE owner row, in the shape index() returns.
+     *
+     * This exists so that recording a usage and deriving one are the same
+     * code. A product save cannot afford index()'s walk of the whole
+     * catalogue — during an import that would be quadratic — but it must
+     * reach the same answer for the row it is saving, so it asks for that
+     * row's slice and runs the same matches() over it.
+     *
+     * @return array<string, list<array{type: string, id: int, name: string, field: string, column: string, path: string, raw: string}>>
+     */
+    public static function indexForOwner(string $kind, object $row): array
+    {
+        $out = [];
+
+        self::collect($out, $kind, $row);
+
+        return $out;
+    }
+
+    /**
+     * Fold one owner row's image columns into $out.
+     *
+     * The ONE place that knows which columns carry an attachment and what to
+     * call them. index() and indexForOwner() share it, so a column added here
+     * is seen by the derived answer and by the recorded one at once.
+     *
+     * @param  array<string, list<array<string, mixed>>>  $out
+     */
+    private static function collect(array &$out, string $kind, object $row): void
+    {
+        $id = (int) $row->id;
+        $name = (string) ($row->name ?? '');
+
+        $add = static function (string $label, string $column, mixed $raw) use (&$out, $kind, $id, $name): void {
             if (! is_string($raw)) {
                 return;
             }
@@ -90,52 +182,42 @@ final class MediaUsage
                 'type' => $kind,
                 'id' => $id,
                 'name' => $name,
-                'field' => $field,
+                // What the screen prints. Gallery entries are numbered, so
+                // this renumbers when a gallery is reordered.
+                'field' => $label,
+                // The COLUMN the URL was read from, which does not renumber.
+                // `media_usages`.field stores this one.
+                'column' => $column,
                 'path' => self::normalise($raw),
+                // The URL exactly as the owning row stores it. verify() matches
+                // on this through matches(), and so does the media_usages
+                // index, so the recorded answer and the derived one cannot be
+                // two different opinions. See matches().
+                'raw' => $raw,
             ];
         };
 
-        if ($type === null || $type === 'product') {
-            $q = Product::query()->select(['id', 'name', 'image', 'images']);
+        if ($kind === 'product') {
+            $add('Main image', 'image', $row->image);
 
-            if ($owner !== null) {
-                SearchTerms::whereLike($q, 'name', $owner);
+            $gallery = $row->images;
+
+            foreach ((is_array($gallery) ? $gallery : []) as $i => $url) {
+                $add('Gallery image '.((int) $i + 1), 'images', $url);
             }
 
-            foreach ($q->cursor() as $p) {
-                $add('product', (int) $p->id, (string) $p->name, 'Main image', $p->image);
-
-                foreach ((is_array($p->images) ? $p->images : []) as $i => $url) {
-                    $add('product', (int) $p->id, (string) $p->name, 'Gallery image '.((int) $i + 1), $url);
-                }
-            }
+            return;
         }
 
-        if ($type === null || $type === 'brand') {
-            $q = Brand::query()->select(['id', 'name', 'logo']);
+        if ($kind === 'brand') {
+            $add('Logo', 'logo', $row->logo);
 
-            if ($owner !== null) {
-                SearchTerms::whereLike($q, 'name', $owner);
-            }
-
-            foreach ($q->cursor() as $b) {
-                $add('brand', (int) $b->id, (string) $b->name, 'Logo', $b->logo);
-            }
+            return;
         }
 
-        if ($type === null || $type === 'category') {
-            $q = Category::query()->select(['id', 'name', 'image']);
-
-            if ($owner !== null) {
-                SearchTerms::whereLike($q, 'name', $owner);
-            }
-
-            foreach ($q->cursor() as $c) {
-                $add('category', (int) $c->id, (string) $c->name, 'Category image', $c->image);
-            }
+        if ($kind === 'category') {
+            $add('Category image', 'image', $row->image);
         }
-
-        return $out;
     }
 
     /**
@@ -169,13 +251,14 @@ final class MediaUsage
     public static function verify(array $index, string $filename, string $path): array
     {
         $candidates = $index[self::key($filename)] ?? [];
-        $want = '/'.ltrim(self::normalise($path), '/');
-        $checkable = str_contains(trim($want, '/'), '/');
 
         $hits = [];
 
         foreach ($candidates as $c) {
-            if ($checkable && ! str_ends_with('/'.ltrim($c['path'], '/'), $want)) {
+            // matches(), not an inline re-check: the media_usages index calls
+            // the same predicate, so a recorded usage and a derived one are
+            // the same answer computed once rather than twice.
+            if (! self::matches((string) ($c['raw'] ?? $c['path']), $filename, $path)) {
                 continue;
             }
 
@@ -183,6 +266,44 @@ final class MediaUsage
         }
 
         return $hits;
+    }
+
+    /**
+     * Does an owner's stored URL name THIS media row?
+     *
+     * The one predicate behind both answers this codebase gives about an
+     * attachment. verify() applies it to derive usage on the fly, and
+     * App\Support\MediaUsageWriter applies it to record the same thing in
+     * `media_usages`. Having exactly one implementation is what makes the
+     * recorded table and the derived answer provably the same statement —
+     * two copies of this logic would drift the first time either was edited.
+     *
+     * Two parts, and both matter:
+     *
+     *   - the basename must match, case-folded in PHP for the reason key()
+     *     gives; and
+     *   - the media row's full stored path must be a suffix of the URL, which
+     *     is what tells two rows sharing a basename apart.
+     *
+     * The suffix half is skipped when the media row's path has no directory
+     * part left — there is then nothing to check, and demanding a match would
+     * make such a row impossible to find rather than merely broad.
+     */
+    public static function matches(string $rawUrl, string $filename, string $path): bool
+    {
+        $key = self::key($rawUrl);
+
+        if ($key === '' || $key !== self::key($filename)) {
+            return false;
+        }
+
+        $want = '/'.ltrim(self::normalise($path), '/');
+
+        if (! str_contains(trim($want, '/'), '/')) {
+            return true;
+        }
+
+        return str_ends_with('/'.ltrim(self::normalise($rawUrl), '/'), $want);
     }
 
     /**
@@ -199,8 +320,14 @@ final class MediaUsage
         return $path === '' ? '' : mb_strtolower(basename($path));
     }
 
-    /** A stored URL reduced to its path, with query string, fragment and escaping removed. */
-    private static function normalise(string $raw): string
+    /**
+     * A stored URL reduced to its path, with query string, fragment and
+     * escaping removed.
+     *
+     * Public because matches() is public and the two are one idea; nothing
+     * outside this class should be re-deriving a path any other way.
+     */
+    public static function normalise(string $raw): string
     {
         $raw = trim($raw);
 

@@ -46,6 +46,17 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        /*
+         * `media_usages` — which image belongs to which product, brand or
+         * category. One call, because the hooks themselves live with the
+         * writer rather than being spelled out here: this file is shared by
+         * every lane and four more closures in it is how it becomes
+         * unreadable. See App\Support\MediaUsageWriter for what is
+         * registered and, more importantly, for the two places the table can
+         * still fall behind.
+         */
+        \App\Support\MediaUsageWriter::listen();
+
         // Redirects & 404 manager. Both checks live here, in the exception
         // handler, rather than as real middleware — see CheckRedirects'
         // own doc comment for why that approach didn't actually work for
