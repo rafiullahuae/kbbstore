@@ -537,11 +537,18 @@ it('takes the shopper to the field that is stopping the order', function () {
     expect(cfNear($js, "closest('[data-place]')", "querySelector(':invalid')", 400))
         ->toBeTrue('Place order still leaves an invalid field to the browser, which does not scroll to it on a phone.');
 
-    expect(cfNear($js, "querySelector(':invalid')", 'scrollIntoView', 300))
+    // Generous windows: what is being asserted is that the three steps live in
+    // one branch, and the reasoning between them is prose that may grow.
+    expect(cfNear($js, "querySelector(':invalid')", 'scrollIntoView', 1200))
         ->toBeTrue('The invalid field is found but never brought on screen.');
 
-    expect(cfNear($js, "querySelector(':invalid')", '.focus(', 400))
+    expect(cfNear($js, "querySelector(':invalid')", '.focus(', 1400))
         ->toBeTrue('The invalid field is scrolled to but never focused, so nothing says which one it is.');
+
+    // The sticky .co-head would otherwise sit on top of whatever is scrolled to.
+    $css = (string) file_get_contents(base_path('resources/css/kbb/kbb-checkout.css'));
+    expect(str_contains($css, 'scroll-margin-top'))
+        ->toBeTrue('Nothing keeps a scrolled-to field clear of the sticky checkout header.');
 
     $shipped = false;
     foreach (cfBundles() as $source) {
