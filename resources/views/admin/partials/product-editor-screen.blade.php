@@ -244,6 +244,76 @@
 .peo-banner.is-bad{border:1px solid #e3c3c0;background:#fdf3f2;color:#8f3229}
 .peo-banner.is-good{border:1px solid #bfe0cd;background:#f2faf5;color:#1a6b46}
 
+/* ---------------------------------------------------------------------------
+   Panel arrangement. (Lane AS)
+
+   Every panel is wrapped in a .peo-panel rather than having its own view
+   function changed. The wrapper is what carries the arrange toolbar, the drop
+   target and the panel key, so this feature adds nothing at all to the inside
+   of a card -- no field moves, no id changes, and the save payload is
+   untouched. It also means a panel added later is arrangeable the moment it is
+   listed in the registry, without anybody remembering to add markup to it.
+
+   min-width:0 on the wrapper AND on its children, for the reason the docblock
+   at the top of this file gives: a grid item defaults to min-width:auto, which
+   is a refusal to shrink below its content, and inserting a new grid level
+   between .peo-col and .peo-card is exactly where that defect gets
+   reintroduced. The gallery's own alt-text inputs and the RTE panes are wide
+   enough to stretch the whole console if this line is dropped.
+--------------------------------------------------------------------------- */
+.peo-panel{display:grid;gap:6px;min-width:0;align-content:start}
+.peo-panel > *{min-width:0}
+
+/* The per-panel arrange toolbar. It is also the drag handle -- see the note in
+   bindArrange() for why the handle is the bar and not the whole panel. */
+.peo-arrbar{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:nowrap;
+            padding:5px 7px;border-radius:9px;
+            border:1px solid var(--border,#e6e6e6);background:var(--surface-2,#f7f8fa)}
+.peo-arrbar .peo-grip{flex:none;cursor:grab;color:var(--ink-faint,#9ca3af);font-size:15px;
+                      line-height:1;padding:2px;user-select:none}
+.peo-arrbar .peo-arrname{flex:1 1 auto;min-width:0;font-size:11.5px;font-weight:700;
+                         letter-spacing:.03em;text-transform:uppercase;
+                         color:var(--ink-soft,#6b7280);
+                         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.peo-arrbar .peo-arracts{flex:none;display:flex;gap:3px}
+
+/* 30px, not 26px like the gallery's. These are the touch targets for the whole
+   feature on a phone, where drag never fires at all, so they are the larger of
+   the two precedents this screen already sets. */
+.peo-arrbar .peo-arracts button{background:var(--surface,#fff);
+                                border:1px solid var(--border,#e6e6e6);color:inherit;
+                                min-width:30px;height:30px;border-radius:8px;font-size:13px;
+                                line-height:1;cursor:pointer;padding:0 6px}
+.peo-arrbar .peo-arracts button:hover:not([disabled]){background:rgba(31,125,82,.07);border-color:#1f7d52;color:#1f7d52}
+.peo-arrbar .peo-arracts button:focus-visible{outline:0;border-color:#1f7d52;box-shadow:0 0 0 3px rgba(31,125,82,.18)}
+.peo-arrbar .peo-arracts button[disabled]{opacity:.35;cursor:default}
+
+.peo-panel.peo-pdrag{opacity:.4}
+.peo-panel.peo-pover > .peo-card,
+.peo-panel.peo-pover > .peo-arrbar{outline:2px dashed #1f7d52;outline-offset:-2px}
+.peo-panel.peo-arranging > .peo-card{border-style:dashed}
+
+/* A column emptied of every panel still needs to be a drop target, or a layout
+   that moved everything into one column could never be undone by dragging --
+   only by Reset. */
+.peo-slot{border:1.5px dashed var(--border,#e6e6e6);border-radius:10px;padding:18px 12px;
+          text-align:center;font-size:12px;color:var(--ink-soft,#6b7280);min-width:0}
+.peo-slot.peo-pover{border-color:#1f7d52;color:#1f7d52;background:rgba(31,125,82,.04)}
+
+.peo-arrnote{border:1px solid #bfe0cd;background:#f2faf5;color:#1a6b46;
+             border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;
+             min-width:0;overflow-wrap:anywhere}
+
+/* Below the grid's own breakpoint the two columns are one stack, so "the other
+   column" is not a thing the operator can see and the button that does it is
+   removed rather than left to do something invisible. Up and down take over
+   the job there -- they step through the whole stack, across the boundary.
+   Hidden in CSS as well as skipped in the markup so a resize with the screen
+   already open cannot leave a live control behind. */
+@media(max-width:900px){
+  .peo-arrbar .peo-arracts button[data-peo-col]{display:none}
+}
+
 @media(max-width:640px){
   .peo-card{padding:13px}
   .peo-bar{padding:10px 11px}
@@ -271,6 +341,20 @@
   var busy = false;
   var dirty = false;
   var seq = 0;
+
+  /* ---- panel arrangement (Lane AS) ----------------------------------------
+     `layout` is {main:[keys], side:[keys]} and is ALWAYS a reconciled document
+     -- never whatever the server handed back. `arranging` is deliberately not
+     persisted: it is a mode, not a preference, and an operator who reloads
+     should land on their product, not on a screen full of toolbars.
+
+     `layoutSent` is the last document actually posted, as JSON, so that a
+     reorder that ends where it started does not write a row, and so a burst of
+     taps on the move buttons collapses into one request. */
+  var layout = null;
+  var arranging = false;
+  var layoutSent = null;
+  var layoutLoaded = false;
 
   /* ------------------------------------------------------------- plumbing */
   function cookie(n){
@@ -415,6 +499,11 @@
 
   /* ----------------------------------------------------------------- data */
   async function start(){
+    // The stored arrangement, before anything else, so the first paint of an
+    // editor opened from the picker is already the way the operator left it.
+    // Idempotent and non-throwing: it falls back to the default arrangement.
+    await loadLayout();
+
     if (!boot) {
       try { boot = await api('/product-editor-bootstrap'); }
       catch (e) { banner = message(e, 'Could not load the editor.'); render(); return; }
@@ -434,6 +523,7 @@
     }
 
     if (!model) loadList();
+    else render();
   }
 
   async function loadList(){
@@ -461,6 +551,12 @@
       if (mine !== seq) return;
       model = r.product;
       dirty = false;
+
+      // Clicking a row in the picker calls this directly, without going back
+      // through start(), so this is the other door the stored arrangement has
+      // to come in by. Idempotent, so the start() path pays nothing for it.
+      await loadLayout();
+      if (mine !== seq) return;
     } catch (e) {
       if (mine !== seq) return;
       banner = message(e, 'Could not open that product.');
@@ -925,69 +1021,281 @@
       + '</div>';
   }
 
+  function basicsView(){
+    var creating = !model.id;
+
+    return '<div class="peo-card">'
+      + '<h3>Basics</h3>'
+      + '<div class="peo-fld"><label>Product name</label>'
+      +   '<input class="peo-in" data-bind="name" id="peo-name" value="' + esc(model.name) + '" placeholder="e.g. Anua Heartleaf Toner"></div>'
+      + (creating
+          ? '<div class="peo-fld"><label>Web address</label>'
+            + '<input class="peo-in" data-bind="slug" id="peo-slug" value="' + esc(model.slug) + '" placeholder="anua-heartleaf-toner">'
+            + '<div class="peo-note" id="peo-slugnote">Set once. It cannot be changed after the product exists.</div></div>'
+          : '')
+      + '<div class="peo-row">'
+      +   '<div class="peo-fld"><label>SKU</label>'
+      +     '<input class="peo-in" data-bind="sku" value="' + esc(model.sku || '') + '" placeholder="Your own code"></div>'
+      +   '<div class="peo-fld"><label>Barcode (GTIN)</label>'
+      +     '<input class="peo-in" inputmode="numeric" data-bind="gtin" value="' + esc(model.gtin || '') + '" placeholder="e.g. 8809525360024"></div>'
+      + '</div>'
+      + '<div class="peo-note" style="margin:-6px 0 0">The number under the barcode — 8, 12, 13 or 14 digits. '
+      +   'Google uses it to match this product to the same item elsewhere, which your own SKU cannot do. '
+      +   'Leave it empty if the product has none.</div>'
+      + '</div>';
+  }
+
+  /* ------------------------------------------------- the panel registry ----
+
+     THE ONE LIST. Adding a panel to this screen means adding a line here and
+     nothing else: the arrange controls, the persistence, the reconciliation of
+     older saved layouts and the reset all read from it.
+
+     `col` is the DEFAULT column, used for the build's default arrangement and
+     for placing a panel that a saved layout predates. It is not where the
+     panel currently is -- that is `layout`.
+
+     Media sits in the MAIN column by default, not the sidebar, and that is a
+     decision the first screenshot forced. Every gallery row carries an
+     alt-text box, and in the 320px sidebar that box was about seventy pixels
+     of usable width — a field for writing a sentence, sized for writing a
+     word. Photographs are primary content on a product page anyway; the
+     sidebar is for the switches. The operator may now overrule all of that,
+     which is the point of the feature.
+
+     The keys are STORED VALUES. They appear in rows in admin_screen_layouts
+     and in the ordering an operator has already arranged, so renaming one
+     silently moves that panel back to its default position for everybody who
+     had moved it. Add and remove freely; rename only on purpose. */
+  var COLUMNS = ['main', 'side'];
+
+  var PANELS = [
+    { key: 'basics',     label: 'Basics',            col: 'main', view: basicsView },
+    { key: 'main_image', label: 'Main image',        col: 'main', view: function(){ return mainImageView(); } },
+    { key: 'gallery',    label: 'Gallery',           col: 'main', view: function(){ return galleryView(); } },
+    { key: 'short_description', label: 'Short description', col: 'main', view: function(){
+        return rte('short_description', 'Short description',
+          'The summary beside the price. One or two lines.',
+          'A gentle daily toner that calms redness…', model.short_description); } },
+    { key: 'description', label: 'Full description', col: 'main', view: function(){
+        return rte('description', 'Full description',
+          'The main tab on the product page. Headings, bold, lists and links all work.',
+          'Tell the customer what it does, who it suits, and what makes it worth buying…', model.description); } },
+    { key: 'ingredients', label: 'Ingredients',      col: 'main', view: function(){
+        return rte('ingredients', 'Ingredients',
+          'Shown as its own tab. Paste the INCI list here.',
+          'Water, Glycerin, Niacinamide…', model.ingredients); } },
+    { key: 'how_to_use', label: 'How to use',        col: 'main', view: function(){
+        return rte('how_to_use', 'How to use',
+          'Shown as its own tab. A short routine works best.',
+          'After cleansing, apply to a cotton pad and sweep over the face…', model.how_to_use); } },
+    { key: 'seo',        label: 'Search appearance', col: 'main', view: function(){ return seoView(); } },
+    { key: 'publish',    label: 'Publishing',        col: 'side', view: function(){ return publishView(); } },
+    { key: 'categories', label: 'Categories',        col: 'side', view: function(){ return categoriesView(); } },
+    { key: 'brand',      label: 'Brand',             col: 'side', view: function(){ return brandView(); } },
+    { key: 'pricing',    label: 'Price',             col: 'side', view: function(){ return pricingView(); } },
+    { key: 'stock',      label: 'Stock',             col: 'side', view: function(){ return stockView(); } }
+  ];
+
+  function panelByKey(key){
+    for (var i = 0; i < PANELS.length; i++) {
+      if (PANELS[i].key === key) return PANELS[i];
+    }
+    return null;
+  }
+
+  /* The arrangement this build ships. Derived from the registry rather than
+     written out a second time, so it cannot drift from it. */
+  function defaultLayout(){
+    var out = {};
+    COLUMNS.forEach(function(c){ out[c] = []; });
+    PANELS.forEach(function(p){ out[p.col].push(p.key); });
+    return out;
+  }
+
+  /* -------------------------------------------------------- reconcile -----
+
+     A SAVED ARRANGEMENT WILL OUTLIVE THE BUILD THAT WROTE IT. Someone arranges
+     their editor today; a package next month adds a panel, or retires one. Two
+     failures follow if nothing reconciles, and both of them look like a broken
+     screen rather than a stale preference:
+
+       - a key the build no longer has would be looked up, come back null, and
+         either throw or render as a hole where a panel used to be;
+       - a panel the document never mentions would simply never be rendered --
+         an operator whose editor has silently lost the field they need, with
+         no error anywhere and no way to work out that a preference did it.
+
+     So: names that are not in the registry are DROPPED, and registry panels
+     that no document mentions are APPENDED to their own default column in
+     registry order. A key listed in both columns keeps its first occurrence,
+     because rendering the same panel twice would duplicate its inputs and
+     collect() would then read whichever one the browser returned last.
+
+     The result is that this function accepts ANY input at all -- null, a
+     string, an array, a document full of names that mean nothing -- and always
+     returns a complete arrangement containing every panel exactly once. That
+     is asserted from both ends in ProductEditorLayoutTest and in the browser
+     check. The next save writes the reconciled document back, so stale names
+     age out without anybody migrating anything. */
+  function reconcile(saved){
+    var out = {};
+    var placed = {};
+
+    COLUMNS.forEach(function(c){ out[c] = []; });
+
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+      COLUMNS.forEach(function(c){
+        var list = saved[c];
+        if (!Array.isArray(list)) return;
+
+        list.forEach(function(key){
+          if (typeof key !== 'string') return;      // not a name at all
+          if (placed[key]) return;                  // already placed: duplicate
+          if (!panelByKey(key)) return;             // a panel this build removed
+          placed[key] = true;
+          out[c].push(key);
+        });
+      });
+    }
+
+    // A panel this build ADDED, that the saved document predates.
+    PANELS.forEach(function(p){
+      if (placed[p.key]) return;
+      placed[p.key] = true;
+      out[p.col].push(p.key);
+    });
+
+    return out;
+  }
+
+  /* Is the current arrangement the one the build ships? Drives whether Reset
+     is offered at all -- a button that undoes nothing is noise. */
+  function layoutIsDefault(){
+    return JSON.stringify(layout) === JSON.stringify(defaultLayout());
+  }
+
+  /* Below 900px .peo-grid collapses to a single column, so the two columns are
+     one stack and "the other column" names nothing the operator can see. Every
+     control that depends on which of the two modes we are in asks here. */
+  function narrow(){
+    try { return window.matchMedia('(max-width:900px)').matches; } catch (e) { return false; }
+  }
+
+  /* --------------------------------------------------------------- views */
+
+  function arrangeBar(p, col, i){
+    var keys = layout[col];
+    var stack = flatten();
+    var at = stack.map(function(e){ return e.key; }).indexOf(p.key);
+
+    // Up and down mean different things at the two widths, so what counts as
+    // "already at the end" does too. Wide: the end of this column. Narrow: the
+    // end of the whole stack, because the buttons step across the boundary.
+    var first = narrow() ? at <= 0 : i <= 0;
+    var last  = narrow() ? at >= stack.length - 1 : i >= keys.length - 1;
+
+    var other = col === 'main' ? 'side' : 'main';
+
+    return '<div class="peo-arrbar" draggable="true" data-peo-drag="' + esc(p.key) + '">'
+      + '<span class="peo-grip" aria-hidden="true">⠿</span>'
+      + '<span class="peo-arrname">' + esc(p.label) + '</span>'
+      + '<span class="peo-arracts">'
+      +   '<button type="button" data-peo-mv="' + esc(p.key) + ':-1"' + (first ? ' disabled' : '')
+      +     ' title="Move ' + esc(p.label) + ' up" aria-label="Move ' + esc(p.label) + ' up">↑</button>'
+      +   '<button type="button" data-peo-mv="' + esc(p.key) + ':1"' + (last ? ' disabled' : '')
+      +     ' title="Move ' + esc(p.label) + ' down" aria-label="Move ' + esc(p.label) + ' down">↓</button>'
+      +   '<button type="button" data-peo-col="' + esc(p.key) + '"'
+      +     ' title="Move ' + esc(p.label) + ' to the ' + (other === 'main' ? 'wide' : 'narrow') + ' column"'
+      +     ' aria-label="Move ' + esc(p.label) + ' to the ' + (other === 'main' ? 'wide' : 'narrow') + ' column">'
+      +     (col === 'main' ? '→' : '←') + '</button>'
+      + '</span>'
+      + '</div>';
+  }
+
+  /* One panel, wrapped. The wrapper is the drop target and carries the key;
+     the card inside is whatever the panel's own view function returned,
+     untouched. */
+  function panelHtml(p, col, i){
+    if (!p) return '';
+
+    if (!arranging) {
+      return '<div class="peo-panel" data-peo-panel="' + esc(p.key) + '">' + p.view() + '</div>';
+    }
+
+    return '<div class="peo-panel peo-arranging" data-peo-panel="' + esc(p.key) + '">'
+      + arrangeBar(p, col, i)
+      + p.view()
+      + '</div>';
+  }
+
+  function columnHtml(col){
+    var keys = layout[col];
+
+    var body = keys.map(function(key, i){
+      return panelHtml(panelByKey(key), col, i);
+    }).join('');
+
+    // An emptied column keeps a drop target while arranging, so a layout that
+    // moved everything one way can be dragged back rather than only reset.
+    if (arranging && !keys.length) {
+      body = '<div class="peo-slot" data-peo-slot="' + esc(col) + '">Drop a panel here</div>';
+    }
+
+    return '<div class="peo-col" data-peo-colname="' + esc(col) + '">' + body + '</div>';
+  }
+
+  function arrangeNote(){
+    if (!arranging) return '';
+
+    var text = narrow()
+      ? 'Drag a panel by its handle, or use ↑ ↓ — on a narrow screen the two columns '
+        + 'are shown as one list, so ↑ and ↓ step through all of it and a panel that '
+        + 'passes the join moves between the columns you would see on a wider screen.'
+      : 'Drag a panel by its handle, or use ↑ ↓ to move it within its column and '
+        + '← → to send it to the other one. Your arrangement is saved as you go, '
+        + 'for your sign-in only.';
+
+    return '<div class="peo-arrnote">' + esc(text) + '</div>';
+  }
+
   function editorView(){
     var creating = !model.id;
+
+    /* The editor can paint before the stored arrangement has come back -- a
+       render is triggered the moment a product loads, and the preference is a
+       second request. It paints on the build's default until then and repaints
+       when loadLayout() resolves, rather than blocking the product behind a
+       preference. */
+    if (!layout) layout = defaultLayout();
+
+    /* Reset is offered in the save bar whenever the arrangement differs from
+       the one the build ships -- not only inside arrange mode. A rearranged
+       layout is exactly the thing somebody mangles and then cannot undo, and
+       the undo for it should not itself be somewhere they have to find. It is
+       absent when the layout is already the default, because a button that
+       does nothing is worse than no button. */
+    var canReset = layout && !layoutIsDefault();
 
     return '<div class="peo-bar">'
         + '<button class="peo-btn" id="peo-back">← Products</button>'
         + '<div class="peo-grow"><h2>' + esc(model.name || (creating ? 'New product' : 'Untitled')) + '</h2>'
         +   '<div class="peo-sub">' + (dirty ? 'Unsaved changes' : (creating ? 'Not saved yet' : 'All changes saved')) + '</div>'
         + '</div>'
+        + (canReset
+            ? '<button class="peo-btn" id="peo-arrreset" title="Put every panel back where this build puts it">Reset layout</button>'
+            : '')
+        + '<button class="peo-btn" id="peo-arrange"' + (arranging ? ' style="border-color:#1f7d52;color:#1f7d52"' : '') + '>'
+        +   (arranging ? 'Done arranging' : 'Arrange') + '</button>'
         + pill(model.status)
         + '<button class="peo-btn peo-primary" id="peo-save"' + (busy ? ' disabled' : '') + '>'
         +   (busy ? 'Saving…' : (creating ? 'Create product' : 'Save')) + '</button>'
       + '</div>'
       + (banner ? '<div class="peo-banner is-bad">' + esc(banner) + '</div>' : '')
+      + arrangeNote()
       + '<div class="peo-grid">'
-        + '<div class="peo-col">'
-          + '<div class="peo-card">'
-            + '<h3>Basics</h3>'
-            + '<div class="peo-fld"><label>Product name</label>'
-            +   '<input class="peo-in" data-bind="name" id="peo-name" value="' + esc(model.name) + '" placeholder="e.g. Anua Heartleaf Toner"></div>'
-            + (creating
-                ? '<div class="peo-fld"><label>Web address</label>'
-                  + '<input class="peo-in" data-bind="slug" id="peo-slug" value="' + esc(model.slug) + '" placeholder="anua-heartleaf-toner">'
-                  + '<div class="peo-note" id="peo-slugnote">Set once. It cannot be changed after the product exists.</div></div>'
-                : '')
-            + '<div class="peo-row">'
-            +   '<div class="peo-fld"><label>SKU</label>'
-            +     '<input class="peo-in" data-bind="sku" value="' + esc(model.sku || '') + '" placeholder="Your own code"></div>'
-            +   '<div class="peo-fld"><label>Barcode (GTIN)</label>'
-            +     '<input class="peo-in" inputmode="numeric" data-bind="gtin" value="' + esc(model.gtin || '') + '" placeholder="e.g. 8809525360024"></div>'
-            + '</div>'
-            + '<div class="peo-note" style="margin:-6px 0 0">The number under the barcode — 8, 12, 13 or 14 digits. '
-            +   'Google uses it to match this product to the same item elsewhere, which your own SKU cannot do. '
-            +   'Leave it empty if the product has none.</div>'
-          + '</div>'
-          /* Media sits in the MAIN column, not the sidebar, and that is a
-             decision the first screenshot forced. Every gallery row carries an
-             alt-text box, and in the 320px sidebar that box was about seventy
-             pixels of usable width — a field for writing a sentence, sized for
-             writing a word. Photographs are primary content on a product page
-             anyway; the sidebar is for the switches. */
-          + mainImageView()
-          + galleryView()
-          + rte('short_description', 'Short description',
-                'The summary beside the price. One or two lines.',
-                'A gentle daily toner that calms redness…', model.short_description)
-          + rte('description', 'Full description',
-                'The main tab on the product page. Headings, bold, lists and links all work.',
-                'Tell the customer what it does, who it suits, and what makes it worth buying…', model.description)
-          + rte('ingredients', 'Ingredients',
-                'Shown as its own tab. Paste the INCI list here.',
-                'Water, Glycerin, Niacinamide…', model.ingredients)
-          + rte('how_to_use', 'How to use',
-                'Shown as its own tab. A short routine works best.',
-                'After cleansing, apply to a cotton pad and sweep over the face…', model.how_to_use)
-          + seoView()
-        + '</div>'
-        + '<div class="peo-col">'
-          + publishView()
-          + categoriesView()
-          + brandView()
-          + pricingView()
-          + stockView()
-        + '</div>'
+        + columnHtml('main')
+        + columnHtml('side')
       + '</div>';
   }
 
@@ -1041,6 +1349,9 @@
     });
 
     on('#peo-save', 'click', save);
+
+    /* ---- panel arrangement ---- */
+    bindArrange();
 
     /* ---- plain fields ---- */
     document.querySelectorAll('#content [data-bind]').forEach(function(el){
@@ -1332,6 +1643,357 @@
   }
 
   /* ---- gallery drag and drop ---- */
+  /* ============================================================ arranging ==
+
+     THE STACK, AND WHY IT IS THE SAME THING AT BOTH WIDTHS.
+
+     flatten() returns every panel in the order the ONE-COLUMN layout paints
+     them: all of `main`, then all of `side`. That is not a convenience for the
+     narrow case -- it is literally the DOM order, because .peo-grid at
+     <=900px is a single column and the two .peo-col elements stack. So the
+     narrow-width answer to "what does up and down mean" needs no separate
+     model: it is this list, and the column boundary is just a position in it.
+
+     A move on a narrow screen therefore changes at most ONE panel's column --
+     the one the operator actually moved, which takes the column of the
+     neighbour it trades places with. Everything else keeps its own. That is
+     what stops a phone reorder from quietly scrambling the desktop
+     arrangement: the operator sees a panel move one place, and one place is
+     all that moves.
+  ------------------------------------------------------------------------ */
+
+  /** @return array of {key, col} in single-column paint order. */
+  function flatten(){
+    var out = [];
+    COLUMNS.forEach(function(c){
+      layout[c].forEach(function(k){ out.push({ key: k, col: c }); });
+    });
+    return out;
+  }
+
+  /** Where a panel currently is. Null if it is not placed at all. */
+  function locate(key){
+    for (var c = 0; c < COLUMNS.length; c++) {
+      var at = layout[COLUMNS[c]].indexOf(key);
+      if (at !== -1) return { col: COLUMNS[c], i: at };
+    }
+    return null;
+  }
+
+  /** Rewrite `layout` from a flattened list, preserving order within each column. */
+  function unflatten(stack){
+    var out = {};
+    COLUMNS.forEach(function(c){ out[c] = []; });
+    stack.forEach(function(e){ if (out[e.col]) out[e.col].push(e.key); });
+    layout = out;
+  }
+
+  /* Wide: up and down move a panel inside its own column, and the column is
+     changed only by the ← → button. Two separate gestures for two separate
+     things, because on a wide screen the operator can see both columns and a
+     panel that jumped between them because it ran off the bottom would be a
+     surprise rather than a move. */
+  function moveWithinColumn(key, delta){
+    var at = locate(key);
+    if (!at) return false;
+
+    var keys = layout[at.col];
+    var to = at.i + delta;
+    if (to < 0 || to >= keys.length) return false;
+
+    keys.splice(to, 0, keys.splice(at.i, 1)[0]);
+    return true;
+  }
+
+  /* Narrow: up and down step through the whole stack, crossing the boundary.
+     Nothing here is a no-op that looks like a control -- the only time the
+     buttons refuse is at the very top and the very bottom of the stack, and
+     they are rendered disabled there. */
+  function moveFlat(key, delta){
+    var stack = flatten();
+    var i = -1;
+
+    for (var n = 0; n < stack.length; n++) {
+      if (stack[n].key === key) { i = n; break; }
+    }
+
+    var j = i + delta;
+    if (i === -1 || j < 0 || j >= stack.length) return false;
+
+    var me = stack[i];
+    var other = stack[j];
+
+    // The moved panel takes its new neighbour's column. Because j is always
+    // i±1, the reinsertion lands immediately beside `other`, so the rebuilt
+    // columns are contiguous runs and the stack order after unflatten() is the
+    // order computed here -- a panel never appears to jump two places.
+    stack.splice(i, 1);
+    me.col = other.col;
+    stack.splice(j, 0, me);
+
+    unflatten(stack);
+    return true;
+  }
+
+  function movePanel(key, delta){
+    return narrow() ? moveFlat(key, delta) : moveWithinColumn(key, delta);
+  }
+
+  /* Send a panel to the other column, keeping its position as closely as the
+     other column's length allows. Clamped rather than appended: a panel at the
+     top of the sidebar should arrive at the top of the main column, not eight
+     panels below the fold where the operator has to go looking for it. */
+  function moveColumn(key){
+    var at = locate(key);
+    if (!at) return false;
+
+    var other = at.col === 'main' ? 'side' : 'main';
+
+    layout[at.col].splice(at.i, 1);
+    layout[other].splice(Math.min(at.i, layout[other].length), 0, key);
+    return true;
+  }
+
+  /* Drop `src` into the position `dst` currently occupies, in dst's column.
+     dst is located AGAIN after src is removed, because removing src from the
+     same column shifts everything after it down by one and the pre-removal
+     index would insert a place too low. */
+  function dropOn(src, dst){
+    if (!src || !dst || src === dst) return false;
+    if (!panelByKey(src) || !panelByKey(dst)) return false;
+
+    var from = locate(src);
+    if (!from) return false;
+
+    layout[from.col].splice(from.i, 1);
+
+    var to = locate(dst);
+    if (!to) { layout[from.col].splice(from.i, 0, src); return false; }
+
+    layout[to.col].splice(to.i, 0, src);
+    return true;
+  }
+
+  function dropInColumn(src, col){
+    if (!src || COLUMNS.indexOf(col) === -1 || !panelByKey(src)) return false;
+
+    var from = locate(src);
+    if (!from) return false;
+    if (from.col === col && layout[col].length === 1) return false;
+
+    layout[from.col].splice(from.i, 1);
+    layout[col].push(src);
+    return true;
+  }
+
+  /* ------------------------------------------------- arrangement storage */
+
+  /* A layout is furniture. If it cannot be read the editor still has to open,
+     on the build's default arrangement -- the alternative is a product screen
+     that refuses to load over a preference, which is a far worse failure than
+     panels being in the wrong order. Same on write: a failed save says so and
+     leaves the screen alone rather than snapping panels back under the
+     operator's hands. */
+  async function loadLayout(){
+    if (layoutLoaded) return;
+    layoutLoaded = true;
+
+    var saved = null;
+
+    try {
+      var r = await api('/editor-layout?screen=' + encodeURIComponent(SCREEN));
+      saved = r && r.layout;
+    } catch (e) {
+      saved = null;
+    }
+
+    layout = reconcile(saved);
+    layoutSent = JSON.stringify(layout);
+  }
+
+  function saveLayout(){
+    var body = JSON.stringify(layout);
+
+    // A reorder that ended where it started writes nothing.
+    if (body === layoutSent) return;
+    layoutSent = body;
+
+    // Debounced: holding the down button, or a run of taps, is one request.
+    clearTimeout(saveLayout._t);
+    saveLayout._t = setTimeout(function(){
+      api('/editor-layout', { json: { screen: SCREEN, layout: layout } })
+        .catch(function(){
+          // Let the next change try again rather than believing it is stored.
+          layoutSent = null;
+          say('Could not save the panel arrangement.');
+        });
+    }, 350);
+  }
+
+  async function resetLayout(){
+    layout = defaultLayout();
+    layoutSent = JSON.stringify(layout);
+
+    // collect() first, for the same reason the gallery's drop does: render()
+    // replaces every contenteditable pane, and anything typed into one since
+    // the last keystroke handler would otherwise be thrown away.
+    collect();
+    render();
+
+    try {
+      await api('/editor-layout-reset', { json: { screen: SCREEN } });
+      say('Panel layout reset.');
+    } catch (e) {
+      layoutSent = null;
+      say('Could not reset the panel arrangement.');
+    }
+  }
+
+  /* Apply a move, repaint, persist. One place, so no caller can reorder
+     without saving or save without repainting. */
+  function applyMove(changed){
+    if (!changed) return;
+    collect();
+    render();
+    saveLayout();
+  }
+
+  /* -------------------------------------------------------- arrange bind */
+
+  function bindArrange(){
+    on('#peo-arrange', 'click', function(){
+      arranging = !arranging;
+      collect();
+      render();
+    });
+
+    on('#peo-arrreset', 'click', resetLayout);
+
+    if (!arranging) return;
+
+    /* The move buttons. Native <button>s, so Tab reaches them and Enter or
+       Space activates them with no key handling of this file's own, and a tap
+       is a click. That is the whole touch and keyboard path: HTML5 drag events
+       never fire on a touch screen, and the owner reviews this console on a
+       phone, so the buttons are the primary way to do this and the drag is the
+       convenience. The gallery in this same screen already sets that
+       precedent with its own ↑ ↓ beside a drag handle. */
+    document.querySelectorAll('#content [data-peo-mv]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var parts = String(b.dataset.peoMv).split(':');
+        applyMove(movePanel(parts[0], parseInt(parts[1], 10)));
+      });
+    });
+
+    document.querySelectorAll('#content [data-peo-col]').forEach(function(b){
+      b.addEventListener('click', function(){
+        // Guarded as well as hidden in CSS. A resize that crosses 900px with
+        // the screen already open would otherwise leave a live control that
+        // means nothing at the width it is being tapped at.
+        if (narrow()) return;
+        applyMove(moveColumn(b.dataset.peoCol));
+      });
+    });
+
+    /* ---- pointer drag ----
+
+       THE HANDLE IS THE TOOLBAR, NOT THE PANEL. Marking the whole .peo-panel
+       draggable would make every input, every contenteditable pane and every
+       gallery thumbnail inside it the start of a panel drag -- selecting a
+       word in the description would pick the panel up. The toolbar contains no
+       editable anything, so it can carry draggable="true" outright with no
+       mousedown/dragend dance to arm and disarm it.
+
+       Every attribute here is data-peo-*, and every id is peo-*. The console
+       is ONE document and app.blade.php binds a dozen listeners to `document`
+       itself, each claiming a bare attribute name; this screen has already
+       paid for that once, when its picker rows used data-open and every click
+       ran the Appearance screen's skin picker. */
+    var from = null;
+
+    document.querySelectorAll('#content [data-peo-drag]').forEach(function(bar){
+      bar.addEventListener('dragstart', function(e){
+        from = bar.dataset.peoDrag;
+        var panel = bar.closest('[data-peo-panel]');
+        if (panel) panel.classList.add('peo-pdrag');
+        try {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', String(from));
+        } catch (x) {}
+      });
+
+      bar.addEventListener('dragend', function(){
+        from = null;
+        document.querySelectorAll('#content .peo-pdrag').forEach(function(el){ el.classList.remove('peo-pdrag'); });
+        document.querySelectorAll('#content .peo-pover').forEach(function(el){ el.classList.remove('peo-pover'); });
+      });
+    });
+
+    document.querySelectorAll('#content [data-peo-panel]').forEach(function(panel){
+      panel.addEventListener('dragover', function(e){
+        if (from === null || panel.dataset.peoPanel === from) return;
+        e.preventDefault();
+        panel.classList.add('peo-pover');
+        try { e.dataTransfer.dropEffect = 'move'; } catch (x) {}
+      });
+
+      panel.addEventListener('dragleave', function(){ panel.classList.remove('peo-pover'); });
+
+      panel.addEventListener('drop', function(e){
+        e.preventDefault();
+        // Panels nest inside a column which is itself inside the grid; without
+        // this the column's own drop handler would run too and move the panel
+        // a second time.
+        e.stopPropagation();
+
+        var src = from || (function(){ try { return e.dataTransfer.getData('text/plain'); } catch (x) { return null; } })();
+        panel.classList.remove('peo-pover');
+        from = null;
+
+        applyMove(dropOn(src, panel.dataset.peoPanel));
+      });
+    });
+
+    document.querySelectorAll('#content [data-peo-slot]').forEach(function(slot){
+      slot.addEventListener('dragover', function(e){
+        if (from === null) return;
+        e.preventDefault();
+        slot.classList.add('peo-pover');
+        try { e.dataTransfer.dropEffect = 'move'; } catch (x) {}
+      });
+
+      slot.addEventListener('dragleave', function(){ slot.classList.remove('peo-pover'); });
+
+      slot.addEventListener('drop', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        var src = from || (function(){ try { return e.dataTransfer.getData('text/plain'); } catch (x) { return null; } })();
+        slot.classList.remove('peo-pover');
+        from = null;
+
+        applyMove(dropInColumn(src, slot.dataset.peoSlot));
+      });
+    });
+  }
+
+  /* What ↑ and ↓ do, and which of them are disabled, depends on whether the
+     grid is one column or two. Rotating a phone or dragging a window across
+     900px with the screen open would otherwise leave the previous width's
+     answer rendered -- a down arrow greyed out at the foot of a column that is
+     no longer the foot of anything. Re-rendering costs one repaint on a
+     breakpoint crossing, and only while arranging. */
+  try {
+    var mq = window.matchMedia('(max-width:900px)');
+    var onWidth = function(){
+      if (!model || !arranging) return;
+      collect();
+      render();
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onWidth);
+    else if (mq.addListener) mq.addListener(onWidth);
+  } catch (e) {}
+
   function bindDrag(){
     var grid = document.querySelector('#content #peo-gal');
     if (!grid) return;
