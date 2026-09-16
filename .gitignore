@@ -48,3 +48,10 @@ app/*.zip
 
 # Agent worktrees — transient checkouts created per lane, never committed
 /.claude/worktrees/
+
+# Phone-sized copies of the shop's photographs, written into the web root at
+# upload time and by the Media Library's batch. Generated, not source: they can
+# always be made again from the originals, they are large, and a package that
+# carried them could delete them on the next install. BuildPackage::NEVER_SHIP
+# carries the same path for the same reason.
+/public/img-cache/

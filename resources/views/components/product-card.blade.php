@@ -79,6 +79,23 @@
         : '<span class="binit">' . e(\App\Support\Gradient::initials($brand ?: $name)) . '<br>' . e($brand ?: $name) . '</span>';
 
     $canAdd = $product->stock_status === 'instock' && $product->type !== 'variable';
+
+    // A 1000x1000 photograph painted into a frame that is never wider than 399
+    // CSS pixels. What the tile can offer instead is whatever phone-sized copy
+    // of that photograph is on disk right now -- see App\Support\ImageVariants
+    // for why the copies are made when an image is uploaded rather than when a
+    // page asks for one, and why the answer is read off the filesystem.
+    //
+    // '' WHEN THERE IS NO COPY, AND THAT IS THE IMPORTANT CASE. Most of this
+    // catalogue predates the copies, and some of it will never have any -- a
+    // photograph hosted on another domain, an SVG, an original already smaller
+    // than 400px. A srcset listing a file that is not there is worse than no
+    // srcset at all: with `w` descriptors the browser picks a candidate and
+    // never looks at src, so one 404 is a blank tile with nothing to fall back
+    // to. So the attribute is emitted only when a real file backs every
+    // candidate in it, and a tile with nothing to offer renders exactly the
+    // markup it renders today.
+    $srcset = $img ? \App\Support\ImageVariants::srcsetFor($img) : '';
 @endphp
 
 <div class="pc">
@@ -92,8 +109,15 @@
                  which is most of it. Related products and every other grid get
                  the default, because none of them is ever the LCP. --}}
             <img class="ph-img" src="{{ $img }}" alt="{{ $product->altFor($img) }}"
+                 @if ($srcset !== '') srcset="{{ $srcset }}" sizes="{{ \App\Support\ImageVariants::sizesAttribute() }}" @endif
                  @if ($eager) loading="eager" fetchpriority="high" @else loading="lazy" @endif
                  decoding="async">
+            {{-- No width/height here, unchanged from the conversion that made
+                 this an <img>: .ph is height:180px at a fractional grid width,
+                 so there is no intrinsic ratio that would be true, and the
+                 image is position:absolute;inset:0 and therefore out of flow.
+                 The CSS box reserves the space; layout never asks the file how
+                 big it is, which is why srcset cannot move anything either. --}}
         @endif
         {!! $binit !!}
         {!! $label !!}

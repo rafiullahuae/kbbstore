@@ -296,6 +296,10 @@
     });
   }
   var busy = false;
+  var sizes = null;         // the phone-sized-copy tally, once it has been asked for
+  var sizing = false;       // a batch is in flight
+  var sizingMade = 0;       // copies written this run
+  var sizingSized = 0;      // photographs finished this run
   var extraOpen = false;    // phone only; above 700px CSS shows the panel regardless
   var seq = 0;              // guards against an out-of-order response painting
   var modal = null;
@@ -448,12 +452,100 @@
       + 'category images and the SEO share image all land here.</div></div>'
       + colsBar()
       + '<button class="mlib-btn" id="mlib-rescan"' + (busy ? ' disabled' : '') + '>Rescan folder</button>'
+      + '<button class="mlib-btn" id="mlib-sizes"' + (sizing ? ' disabled' : '') + '>'
+      + (sizing ? 'Making copies…' : 'Make phone-sized copies') + '</button>'
       + '</div>'
       + '<div class="mlib-stats" style="margin-top:14px">'
       + '<div class="mlib-stat"><b>' + esc(String(total)) + '</b><span>'
       + (filtered() ? 'images match' : 'images in the library') + '</span></div>'
       + '<div class="mlib-stat"><b>' + esc(bytes(size)) + '</b><span>total size</span></div>'
+      + sizesStat()
       + '</div></div>';
+  }
+
+  /* ------------------------------------------------- phone-sized copies */
+  /* A product photograph is a 1000x1000 file painted into a tile no wider than
+     399 pixels. A shopper on a phone downloads the whole thing. The fix is a
+     smaller copy of each photograph, and on this host -- no shell, no queue
+     worker, no cron -- the only thing that can make copies of the photographs
+     already in the shop is the owner, from here. See
+     App\Http\Controllers\Admin\ImageSizesApiController for what else was
+     considered and why none of it exists on this host.
+
+     The batch is driven from the browser rather than run server-side in one
+     go, because one request that resized three thousand photographs would run
+     for seven minutes and be killed by max_execution_time somewhere in the
+     middle of it. Each request below does a few seconds of work and hands back
+     a cursor. Stopping early is safe and losing the tab is safe: the work is
+     idempotent, and a photograph without its copies simply loads the full-size
+     one, exactly as every photograph does today. */
+  function sizesStat(){
+    if (!sizes) return '';
+
+    if (sizes.available === false) {
+      return '<div class="mlib-stat"><b>—</b><span>this server has no image library (GD), '
+        + 'so it cannot make smaller copies</span></div>';
+    }
+
+    if (sizing) {
+      return '<div class="mlib-stat"><b>' + esc(String(sizingSized)) + '</b>'
+        + '<span>photographs done this run — leave this tab open</span></div>';
+    }
+
+    return '<div class="mlib-stat"><b>' + esc(String(sizes.remaining)) + '</b>'
+      + '<span>' + (sizes.remaining
+        ? 'product photographs still full size on a phone'
+        : 'left to do — every product photograph has a phone-sized copy')
+      + '</span></div>';
+  }
+
+  async function loadSizes(){
+    try { sizes = await api('/media/image-sizes', 'GET'); }
+    catch (e) { sizes = null; }
+    render();
+  }
+
+  async function makeSizes(){
+    if (sizing) return;
+
+    if (!sizes) await loadSizes();
+
+    if (sizes && sizes.available === false) {
+      say('This server has no image library (GD), so it cannot make smaller copies.');
+      return;
+    }
+
+    sizing = true;
+    sizingMade = 0;
+    sizingSized = 0;
+    render();
+
+    var cursor = '';
+    /* The catalogue is walked in bounded steps, so the number of steps is
+       bounded too. This only stops a bug in the cursor from becoming an
+       infinite loop against the owner's own server. */
+    var steps = 0;
+
+    try {
+      for (;;) {
+        var j = await api('/media/image-sizes/run', 'POST', {after: cursor});
+        sizingMade += j.made;
+        sizingSized += j.sized;
+        cursor = j.cursor;
+        render();
+        if (j.done || ++steps > 5000) break;
+      }
+
+      say(sizingMade
+        ? ('Made ' + sizingMade + ' smaller cop' + (sizingMade === 1 ? 'y' : 'ies') + '.')
+        : 'Every product photograph already has its phone-sized copies.');
+    } catch (e) {
+      /* Whatever was finished before the failure stays finished. */
+      say(e.message);
+    }
+
+    sizing = false;
+    await loadSizes();
   }
 
   function filtered(){
@@ -662,6 +754,7 @@
     applyCols();
 
     on('mlib-rescan', 'click', rescan);
+    on('mlib-sizes', 'click', makeSizes);
 
     on('mlib-more', 'click', function(){ extraOpen = !extraOpen; render(); });
 
@@ -867,6 +960,11 @@
     state.page = 1;
     data = null;
     load();
+    /* Asked for once when the screen opens, so the tally is on the card
+       before the owner has to click anything to find out there is work to do.
+       Deliberately not awaited: it walks the catalogue, and the grid must not
+       wait for it. */
+    loadSizes();
     return undefined;
   };
 
