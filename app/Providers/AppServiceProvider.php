@@ -152,6 +152,101 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        /*
+         * Homepage fragment eviction.
+         *
+         * Store\HomeController serves the most-hit URL on the site out of eight
+         * Cache::remember() keys — the product rails at 600s, the brand strip,
+         * category tiles, journal row, routine, catalogue count and brand total
+         * at 900s. All eight are built from products, brands, categories and
+         * posts, and until this hook NOTHING ON ANY WRITE PATH EVICTED THEM:
+         * HomeController::flushCache() existed with no callers at all. A price
+         * edit, a sale, a `featured` toggle or an out-of-stock left the homepage
+         * advertising the old answer for up to fifteen minutes, so a shopper
+         * could click a tile at one price and land on a page at another.
+         *
+         * Bound to the MODEL rather than to each admin controller, for the same
+         * reason the IndexNow ping above is: it is the one place every write has
+         * to pass through. The review wall was evicted the other way, with a
+         * literal key copied into each controller that writes reviews, and it
+         * went stale twice because a new write path did not know to copy it.
+         * Products are written from at least six places — the editor, the
+         * catalogue grid and its three bulk actions, the reorder screen, the
+         * importer and the seeders.
+         *
+         * Guarded on wasChanged() so the editor's open-and-close, which saves
+         * without altering anything, does not throw away eight valid entries and
+         * send the next visitor through a full rebuild.
+         */
+        $homeProductColumns = [
+            'slug', 'name', 'brand_id', 'category_id', 'price', 'sale_price',
+            'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'rating',
+            'review_count', 'featured', 'type', 'total_sales', 'status', 'is_visible',
+            'deleted_at',
+        ];
+
+        /*
+         * The /shop sidebar has the same hole under a different key.
+         *
+         * ShopController::flushSidebarCache() clears kbb.shop.cats and
+         * kbb.shop.brands, both withCount(visible) tallies, and its own doc
+         * comment says "call after any catalogue write". Five admin controllers
+         * do call it — for category, brand and layout writes. NOT ONE PRODUCT
+         * WRITE PATH DOES, and a product being hidden, published, deleted or
+         * moved to another brand is exactly what those counts count. The
+         * sidebar read "Cleansers (24)" next to a grid showing 23.
+         *
+         * Narrower column list than the homepage's: these are counts, so only
+         * visibility and the brand/category a product is counted under move
+         * them. A price edit does not.
+         */
+        $visibilityColumns = ['status', 'is_visible', 'published_at', 'brand_id', 'category_id', 'deleted_at'];
+
+        \App\Models\Product::saved(function (\App\Models\Product $product) use ($homeProductColumns, $visibilityColumns) {
+            if ($product->wasRecentlyCreated || $product->wasChanged($homeProductColumns)) {
+                \App\Http\Controllers\Store\HomeController::flushCache();
+            }
+
+            if ($product->wasRecentlyCreated || $product->wasChanged($visibilityColumns)) {
+                \App\Http\Controllers\Store\ShopController::flushSidebarCache();
+            }
+        });
+
+        // Force-delete and soft-delete both land here; a restore is a save.
+        \App\Models\Product::deleted(function () {
+            \App\Http\Controllers\Store\HomeController::flushCache();
+            \App\Http\Controllers\Store\ShopController::flushSidebarCache();
+        });
+
+        \App\Models\Post::saved(function (\App\Models\Post $post) {
+            // `cover`, not `image` — the journal row renders posts.cover, and
+            // there is no posts.image at all. wasChanged() on a column that does
+            // not exist is silently never dirty, so naming the wrong one here
+            // would have left a changed cover photo stale for fifteen minutes
+            // with nothing failing anywhere.
+            if ($post->wasRecentlyCreated || $post->wasChanged(['slug', 'title', 'excerpt', 'status', 'published_at', 'cover'])) {
+                \Illuminate\Support\Facades\Cache::forget('kbb.home.posts');
+            }
+        });
+
+        \App\Models\Post::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('kbb.home.posts');
+        });
+
+        // The strip is ordered by visible product count and the total is quoted
+        // in the copy, so a rename, a new brand and a removal all move it.
+        \App\Models\Brand::saved(function (\App\Models\Brand $brand) {
+            if ($brand->wasRecentlyCreated || $brand->wasChanged(['name', 'slug', 'logo'])) {
+                \Illuminate\Support\Facades\Cache::forget('kbb.home.brands');
+                \Illuminate\Support\Facades\Cache::forget('kbb.home.brandcount');
+            }
+        });
+
+        \App\Models\Brand::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('kbb.home.brands');
+            \Illuminate\Support\Facades\Cache::forget('kbb.home.brandcount');
+        });
+
         // Auto-301 on slug change: 'updating' (not 'saved') because this
         // needs the slug's OLD value, which is only still available before
         // the write actually happens. Only for already-published items —

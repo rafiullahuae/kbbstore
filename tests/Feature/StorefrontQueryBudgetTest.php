@@ -60,24 +60,48 @@ function budgetReset(): void
 }
 
 /**
- * One DB listener for the whole process, counting into a bucket the caller
- * clears.
+ * One DB listener PER APPLICATION INSTANCE, counting into a bucket that outlives
+ * them all and that the caller clears.
  *
- * Deliberately not one DB::listen() per measurement: listeners ACCUMULATE, they
- * do not replace, so registering a fresh one each time and capturing the
- * counter by reference makes the Nth page report N times its real query count.
- * That mistake reported this suite's own /sitemap.xml at 416 queries when it
- * runs 16.
+ * There are two opposite ways to get this wrong and this function has to dodge
+ * both.
+ *
+ * Registering a listener per measurement is the first. Listeners ACCUMULATE,
+ * they do not replace, so capturing the counter by reference and re-listening
+ * each time makes the Nth page report N times its real query count. That
+ * mistake reported this suite's own /sitemap.xml at 416 queries when it runs 20.
+ *
+ * Registering exactly once for the whole process is the second, and it is the
+ * one this file actually shipped with. Pest builds a FRESH APPLICATION for every
+ * test, and the connection the listener was attached to goes with the old one.
+ * The `static $bucket` survives that refresh, so the guard saw a non-null bucket
+ * and never re-listened — from the second test onward NOTHING WAS COUNTED and
+ * every measurement was 0. Both tests below still passed: the budgets passed
+ * because 0 is under every ceiling, and the flatness test, the one this file's
+ * header calls the one that matters, passed because it compared 0 against 0.
+ * Proven directly: two queries in the first test counted 2, the same two in the
+ * second counted 0.
+ *
+ * So the listener is bound to the application instance instead. One per app,
+ * re-registered when the app is replaced: no accumulation within a test, no
+ * silence across them.
  */
 function budgetBucket(): object
 {
     static $bucket = null;
+    static $listeningOn = null;
 
     if ($bucket === null) {
         $bucket = new class
         {
             public int $n = 0;
         };
+    }
+
+    // Object identity, not a boolean: a new application means a new connection
+    // with no listener on it, and that is the only time we may register again.
+    if ($listeningOn !== app()) {
+        $listeningOn = app();
 
         DB::listen(function () use ($bucket) {
             $bucket->n++;
@@ -282,6 +306,29 @@ it('does not run more queries when the catalogue triples', function () {
     // 24 demo products -> 84, all on the same brand and category so that the
     // brand page, the category archive and the filtered shop all grow too.
     budgetGrow(60, $seed['brand'], $seed['category']);
+
+    /*
+     * Re-warm before measuring again.
+     *
+     * Writing those 60 products correctly EVICTS the homepage fragments — that
+     * is the Product::saved hook in AppServiceProvider doing its job, so that a
+     * price edit cannot leave / advertising the old one. But it means the first
+     * request after the growth loop rebuilds eight cached fragments from cold,
+     * and / measured 4 queries warm against 33 cold.
+     *
+     * That 33 is a one-time rebuild, not work per row: it does not move with the
+     * catalogue, which is the very thing this test is asking about. Counting it
+     * would report the cache eviction as an N+1 and say the page "is doing work
+     * per row" when it is doing nothing of the kind.
+     *
+     * This does not soften the test. An N+1 is per-row work on EVERY request,
+     * warm or cold, so it still shows in the measurement below — verified by
+     * deleting the eager load in ShopController and watching /shop, the
+     * category archive and the filtered shop all fail this assertion.
+     */
+    foreach ($pages as [$path, $customerId, $_]) {
+        budgetCount($path, $customerId);
+    }
 
     $grew = [];
     foreach ($pages as $label => [$path, $customerId, $_]) {
