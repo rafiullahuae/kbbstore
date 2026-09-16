@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -358,6 +359,8 @@ class OrdersApiController extends Controller
             ]);
 
             $this->noteAll($changeable, 'Status set to ' . $status . ' from the orders list.');
+
+            $this->notifyStatus($changeable, $status);
         }
 
         return response()->json([
@@ -761,6 +764,83 @@ class OrdersApiController extends Controller
      *
      * @param  list<int>  $ids
      */
+    /**
+     * Tell the customers whose orders just moved.
+     *
+     * WHY THIS IS HERE AND NOT LEFT TO THE OBSERVER. Every other place
+     * `orders.status` is written goes through Eloquent, so OrderMailObserver's
+     * `updated` hook catches it and the customer is emailed. This one does not:
+     * the line above is a single `Order::query()->whereIn(...)->update()`, and a
+     * query-builder update fires NO model events at all.
+     *
+     * The consequence was the worst kind of silent: marking ONE order shipped
+     * from the detail screen emailed the customer, and marking FORTY shipped
+     * from the list — the way anybody actually dispatches a day's orders —
+     * emailed nobody. No error, no log line, no difference on screen. The
+     * operator had every reason to believe the customers had been told, and the
+     * orders with the biggest batches were the ones most likely to be silent.
+     * Exactly the shape of the "every order email going to a log file" fault
+     * this store has already had once.
+     *
+     * The mass update is KEPT. Looping Eloquent saves over a selection of up to
+     * BULK_MAX orders to get the events would turn one statement into hundreds,
+     * and the batched note insert below exists for the same reason. The write
+     * stays one statement; the notification is asked for explicitly.
+     *
+     * IT GOES THROUGH OrderMailer::statusChanged(), the same method the observer
+     * calls — not a second copy of the decision. Which statuses have wording,
+     * which module switch governs them, and what the email says are all decided
+     * there, once, so this path and the single-order path cannot drift into
+     * telling customers different things. A status with no wording (processing,
+     * onhold) sends nothing, and a switched-off module still sends nothing.
+     *
+     * Only the orders in $changeable are notified, and an order already AT the
+     * requested status never enters that list — so repeating a bulk action does
+     * not email anybody twice.
+     *
+     * NOTHING HERE MAY THROW. This runs after the status has already been
+     * written and the note recorded; an exception would turn a completed bulk
+     * action into a 500 and tell the operator their dispatch failed when it did
+     * not. OrderMailer already swallows transport failures — this catches
+     * everything else, per order, so one order with a broken address cannot cost
+     * the other thirty-nine their email.
+     *
+     * @param  list<int>  $ids
+     */
+    private function notifyStatus(array $ids, string $status): void
+    {
+        /*
+         * A COST GUARD, NOT A CORRECTNESS ONE — said plainly because deleting it
+         * changes no behaviour and a later reader deserves to know that before
+         * they decide it is dead code.
+         *
+         * Correctness lives in OrderMailer::statusChanged(), which asks
+         * handles() itself and sends nothing for a status with no wording. What
+         * this saves is the work of finding out: without it, marking 200 orders
+         * `processing` would select all 200 rows and hydrate their line items
+         * purely to hand each one to a method that returns immediately. The
+         * statuses most used in bulk are exactly the silent ones.
+         */
+        if (! \App\Mail\OrderStatusChanged::handles($status)) {
+            return;
+        }
+
+        $mailer = app(\App\Services\Mail\OrderMailer::class);
+
+        Order::query()->whereIn('id', $ids)->with('items')->get()
+            ->each(function (Order $order) use ($mailer, $status): void {
+                try {
+                    $mailer->statusChanged($order, $status);
+                } catch (\Throwable $e) {
+                    Log::error('bulk status mail failed', [
+                        'order' => $order->order_number,
+                        'status' => $status,
+                        'exception' => class_basename($e),
+                    ]);
+                }
+            });
+    }
+
     private function noteAll(array $ids, string $content): void
     {
         if ($ids === []) {

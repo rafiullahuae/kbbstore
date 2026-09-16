@@ -15,10 +15,40 @@
 use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Product;
+use App\Models\ShippingMethod;
+use App\Models\ShippingZone;
+use App\Models\ShippingZoneLocation;
 
 beforeEach(function () {
     PaymentProvider::query()->delete();
     app(\App\Services\Payments\GatewayCredentials::class)->forget();
+
+    /*
+     * A SHIPPING ZONE, because this endpoint now prices delivery from the zones
+     * rather than from the `delivery_flat` / `free_ship` settings — see the
+     * comment at the change in Api\CheckoutController::session() and
+     * OrderLifecycleTest for the divergence that prompted it.
+     *
+     * These cases predate that and seeded no zone, which used to be invisible:
+     * the flat default (2000 fils) applied to every destination whether or not
+     * the store delivered there. Now a destination no zone covers is refused,
+     * exactly as Store\CheckoutController::place() refuses it — so a store with
+     * no zones configured cannot take an order through this endpoint either,
+     * which is the correct answer and what these tests now set up for.
+     *
+     * AED 20 flat, matching the live "All UAE" zone, so every figure asserted
+     * below is the one this suite always asserted.
+     */
+    $zone = ShippingZone::create(['name' => 'All UAE', 'position' => 0]);
+    ShippingZoneLocation::create(['shipping_zone_id' => $zone->id, 'type' => 'country', 'code' => 'AE']);
+    ShippingMethod::create([
+        'shipping_zone_id' => $zone->id,
+        'type' => 'flat_rate',
+        'title' => 'Standard delivery',
+        'cost' => 2000,
+        'enabled' => true,
+        'position' => 0,
+    ]);
 });
 
 /** products.price is integer fils, like every money column in this schema. */
