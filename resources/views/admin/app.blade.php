@@ -13876,6 +13876,19 @@ buildNav();
      anchor its nav entry beneath that one. --}}
 @include('admin.partials.coupon-usage-screen')
 
+{{-- Store -> Manage Coupons (Lane BT). Same arrangement and for the same
+     reason as the screen above: its own file, its own sidebar entry appended
+     to the rendered nav, its own wrapper around window.go. Included directly
+     after the read-only usage report so it can anchor its nav entry beneath
+     that one.
+
+     This is the screen that can CREATE, EDIT and DELETE a coupon. Until it
+     landed the console could only report on codes the WooCommerce import had
+     brought across -- there was no Add Coupon button anywhere in the admin,
+     which is exactly how the owner described it. The usage report above is
+     untouched and still answers "who redeemed this". --}}
+@include('admin.partials.coupon-editor-screen')
+
 {{-- Catalog -> Categories & Brands (Lane AQ). Same arrangement and for the
      same reason as the two screens above: its own file, its own sidebar entry
      appended to the rendered nav, its own wrapper around window.go.

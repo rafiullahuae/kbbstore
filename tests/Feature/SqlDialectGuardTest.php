@@ -695,6 +695,14 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // Groups redemptions per coupon and counts them beside the row, which
         // is the aggregate-plus-row shape MySQL's ONLY_FULL_GROUP_BY rejects.
         'admin-api/coupons/{coupon}' => '/admin-api/coupons/' . $coupon->id,
+        /*
+         * The coupon EDITOR's read of one code (Lane BT). Resolves the product
+         * and category selections out of two JSON columns and counts the
+         * redemption rows beside the row itself -- the aggregate-plus-row shape
+         * ONLY_FULL_GROUP_BY rejects, on a different table from the report
+         * above.
+         */
+        'admin-api/coupons/manage/{coupon}' => '/admin-api/coupons/manage/' . $coupon->id,
         // Reads one review with its product, and recomputes nothing -- but it
         // is a parameterised admin GET and the point of this list is that no
         // such route gets to skip the walk unexamined.
