@@ -1449,6 +1449,37 @@ class AdminController extends Controller
          */
         'vat_country_rates' => ['ratemap', 'Per-country VAT rates'],
 
+        /*
+         * The rest of the Tax tab — Lane CU.
+         *
+         * These four used to live on Store -> Ecommerce -> Checkout and were
+         * written by that screen's own endpoint. The owner asked for "a
+         * seperate tab for 'Tax'" and went looking for it on Business Details,
+         * so the whole feature is one screen there now and saves through this
+         * endpoint with the rate and the per-country table it belongs beside.
+         * A key missing from this list is dropped while the endpoint still
+         * answers ok — the standing warning at the top — which is why all four
+         * are here and not only the new one.
+         */
+        'tax_mode' => ['enum', 'Tax mode', \App\Support\VatDisplay::MODES],
+        'vat_enabled' => ['flag', 'Show the VAT line'],
+        'vat_basis' => ['enum', 'How the rate is applied', \App\Support\TaxRule::BASES],
+        'vat_label' => ['text', 'VAT line text'],
+
+        /*
+         * The per-country BASIS — a JSON object of ISO code => inclusive |
+         * exclusive | flat, the other column of the same table
+         * vat_country_rates holds the rates for.
+         *
+         * Two keys rather than one because vat_country_rates already exists, is
+         * already validated, and is already filled in on shops that have used
+         * it; changing its shape would throw away rates the owner typed. The
+         * RATE MAP IS THE TABLE and this is a column on it — VatDisplay drops a
+         * basis for a country with no rate of its own, because a country that
+         * is not in the table is not in the table.
+         */
+        'vat_country_bases' => ['basismap', 'Per-country VAT basis'],
+
         // Money, in fils. See the note above for why a decimal is refused.
         'free_ship' => ['fils', 'Free-shipping threshold'],
         'delivery_flat' => ['fils', 'Flat delivery charge'],
@@ -1811,6 +1842,64 @@ class AdminController extends Controller
                 // because the screen happened to build the object in a
                 // different order, and FORCE_OBJECT so an empty map is stored
                 // as {} rather than [].
+                ksort($map);
+
+                return $ok((string) json_encode($map, JSON_FORCE_OBJECT));
+
+            case 'basismap':
+                /*
+                 * A JSON object of ISO country code => inclusive | exclusive |
+                 * flat. The `ratemap` case above, entry by entry, for the
+                 * column beside the rate.
+                 *
+                 * ONE BAD ENTRY REFUSES THE WHOLE MAP, for the reason that case
+                 * gives at length: keeping the entries that parsed would save a
+                 * table the owner did not type and report success over it — and
+                 * here a dropped entry does not merely misprint a receipt, it
+                 * decides whether a country's shoppers are charged the tax on
+                 * top. The message names the country at fault.
+                 *
+                 * An unknown basis is refused rather than defaulted. VatDisplay
+                 * defaults one to `inclusive` when it READS the column, because
+                 * a row that arrives from an older build has to be survivable;
+                 * a value arriving from the screen is a payload this endpoint
+                 * has never emitted, and quietly storing something adjacent to
+                 * it is how a shop ends up charging a rate nobody chose.
+                 */
+                if ($value === '' || $value === '{}' || $value === '[]') {
+                    return $ok('{}');
+                }
+
+                $decoded = json_decode($value, true);
+
+                if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
+                    return $no("“{$label}” could not be read.");
+                }
+
+                $map = [];
+
+                foreach ($decoded as $code => $basis) {
+                    $code = strtoupper(trim((string) $code));
+                    $name = \App\Support\Countries::NAMES[$code] ?? null;
+
+                    if ($name === null) {
+                        return $no("“{$label}” names a country this shop does not deliver to: {$code}.");
+                    }
+
+                    if (is_array($basis) || is_object($basis)) {
+                        return $no("“{$label}” must give {$name} a single basis.");
+                    }
+
+                    $basis = strtolower(trim((string) $basis));
+
+                    if (! in_array($basis, \App\Support\TaxRule::BASES, true)) {
+                        return $no("“{$label}” must give {$name} one of: "
+                            . implode(', ', \App\Support\TaxRule::BASES) . '.');
+                    }
+
+                    $map[$code] = $basis;
+                }
+
                 ksort($map);
 
                 return $ok((string) json_encode($map, JSON_FORCE_OBJECT));

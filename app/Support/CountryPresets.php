@@ -51,6 +51,9 @@ final class CountryPresets
     /** The group the Delivery lines screen offers. */
     public const DELIVERY = 'delivery';
 
+    /** The group the Tax tab offers: a VAT rate per country. */
+    public const TAX = 'tax';
+
     /**
      * The registered groups.
      *
@@ -74,6 +77,52 @@ final class CountryPresets
                 'AE' => '1–3 days delivery all over UAE',
             ],
             'note' => 'These are your own delivery times, not measured ones. Clicking fills the boxes below; nothing reaches the shop until you press Save changes.',
+        ],
+
+        /*
+         * VAT RATES, AND THEY ARE NOT IN THE SAME CATEGORY AS THE LINES ABOVE.
+         *
+         * A delivery time is the owner's to state: he knows how long his
+         * parcels take, so the delivery group reproduces his own figures
+         * faithfully and there is nothing for anyone to check. A tax rate is a
+         * FACT ABOUT THE WORLD that he is answerable for, it changes, this shop
+         * is not a tax authority, and a wrong percentage prints on a receipt
+         * somebody files. He wrote "Saudi there's 15% i think" — which is
+         * exactly the confidence these figures deserve.
+         *
+         * So the mechanism is shared and the TONE is not. The note below says
+         * in the owner's own reading order what these are, who has to check
+         * them, and that clicking a chip changes nothing until he saves. The
+         * chips fill the boxes; the boxes are what he reads; Save is what
+         * publishes.
+         *
+         * THE SOURCE: the standard rates commonly quoted for the Gulf as at
+         * September 2026 — UAE 5%, Saudi Arabia 15%, Bahrain 10%, Oman 5%, with
+         * Kuwait and Qatar having implemented no domestic VAT, which is why the
+         * shared template is '0' and only the four with a rate override it. A
+         * zero rate prints no line at all, so offering those two costs nothing
+         * and stops the owner wondering whether they were forgotten. The
+         * citation lives in the lane's report rather than as a URL here, which
+         * would rot without anyone noticing.
+         *
+         * A RATE IS ONLY HALF A ROW. The other half is the BASIS — inclusive,
+         * exclusive or printed-only — and no preset here sets it: the console
+         * lands every filled row on the shop's own default basis. A preset
+         * knows a rate; it cannot know how this business prices, and a preset
+         * that could turn a country exclusive would be a one-click change to
+         * what customers are charged.
+         */
+        self::TAX => [
+            'label' => 'Fill in the Gulf in one click',
+            'region' => 'GCC',
+            'template' => '0',
+            'per_country' => [
+                'AE' => '5',
+                'SA' => '15',
+                'BH' => '10',
+                'OM' => '5',
+            ],
+            'note' => 'These are the rates commonly quoted for the Gulf, and they are not tax advice. Confirm them against your own registration before you save, because they print on your receipts and it is your business they describe. Clicking fills the boxes below on your default basis; nothing reaches the shop until you press Save changes.',
         ],
     ];
 

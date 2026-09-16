@@ -251,9 +251,29 @@ class InvoiceDocument
             $rows[] = [$order->paymentLabel() . ' fee', $otherFees, false];
         }
 
-        if ((int) $order->tax_total !== 0) {
-            // An imported order carrying real tax. Already inside `total`.
-            $rows[] = ['VAT', (int) $order->tax_total, false];
+        /*
+         * VAT AS A ROW — only when it was ADDED to the figures above it.
+         *
+         * This column of figures has to sum to Total. An `exclusive` order was
+         * charged the tax on top, so it belongs here; an `inclusive` order's
+         * tax is a portion of the prices already listed, so putting it here
+         * would make the column add up to more than was charged, and it goes
+         * under the Total as an "of which" note instead (see vatNote()).
+         *
+         * An order with NO tax record — everything placed before this lane, and
+         * everything placed while the shop is in display mode — takes the
+         * branch it always took: an imported WooCommerce order carrying a real
+         * `tax_total` prints it as a row, exactly as before.
+         */
+        $taxRecord = \App\Support\OrderTax::recorded($order);
+
+        if ($taxRecord === null) {
+            if ((int) $order->tax_total !== 0) {
+                // An imported order carrying real tax. Already inside `total`.
+                $rows[] = ['VAT', (int) $order->tax_total, false];
+            }
+        } elseif ($taxRecord['added'] && $taxRecord['fils'] !== 0) {
+            $rows[] = ['VAT at ' . (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate() . '%', $taxRecord['fils'], false];
         }
 
         $rows[] = ['Total', (int) $order->total, true];
@@ -282,6 +302,39 @@ class InvoiceDocument
      */
     private function vatNote(Order $order): ?array
     {
+        /*
+         * THE ORDER'S OWN RECORD FIRST, AND NOTHING LIVE BESIDE IT.
+         *
+         * This method used to ask VatDisplay at print time, which meant the
+         * rate on the document was whatever the settings said TODAY. With one
+         * global display rate that was invisible; with per-country rates the
+         * owner is free to change, it silently reprints a filed document at a
+         * rate that was never charged. App\Support\OrderTax reads what the
+         * order recorded on the day.
+         *
+         *   exclusive — already printed as a row above; a second figure under
+         *               the total would be the same tax stated twice.
+         *   inclusive — the portion of the total that is tax: this note.
+         *   flat      — printed and never charged, which is what a note is.
+         */
+        $taxRecord = \App\Support\OrderTax::recorded($order);
+
+        if ($taxRecord !== null) {
+            if ($taxRecord['added'] || $taxRecord['fils'] <= 0) {
+                return null;
+            }
+
+            $rate = (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate();
+
+            return [
+                'label' => 'Includes VAT at ' . $rate . '%',
+                'fils' => $taxRecord['fils'],
+                'html' => self::money($taxRecord['fils']),
+                'plain' => self::moneyPlain($taxRecord['fils']),
+                'trn' => $this->setting('invoice_trn'),
+            ];
+        }
+
         if ((int) $order->tax_total !== 0) {
             return null;
         }

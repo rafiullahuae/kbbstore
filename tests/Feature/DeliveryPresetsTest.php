@@ -425,15 +425,28 @@ it('says on the screen that clicking fills the form and saving is a separate act
 
 it('answers for an unregistered group instead of throwing at whoever asks', function () {
     /*
-     * The Tax tab is being built in another lane and will register its own
-     * group. Until it does, asking for one must be an empty answer rather than
-     * an exception that takes a console screen down — a half-applied package on
-     * a host with no shell is exactly the situation where these two differ.
+     * Asking for a group nobody has registered must be an empty answer rather
+     * than an exception that takes a console screen down — a half-applied
+     * package on a host with no shell is exactly the situation where those two
+     * differ, and a console that 500s is one the owner cannot use to fix
+     * anything.
+     *
+     * THE KEY HERE WAS 'tax', AND IT IS NOT ANY MORE. That was written while
+     * the Tax tab was being built in another lane; that lane has since
+     * registered CountryPresets::TAX, so 'tax' is a real group and asking for
+     * it proves nothing about the missing case. A name no group will ever
+     * carry keeps the property under test instead of retiring it — the second
+     * assertion below is what stops this drifting back into a live key.
      */
-    expect(CountryPresets::has('tax'))->toBeFalse();
-    expect(CountryPresets::codes('tax'))->toBe([]);
-    expect(CountryPresets::value('tax', 'SA'))->toBe('');
-    expect(CountryPresets::forConsole('tax')['rows'])->toBe([]);
+    expect(CountryPresets::has('not-a-registered-group'))->toBeFalse();
+    expect(CountryPresets::codes('not-a-registered-group'))->toBe([]);
+    expect(CountryPresets::value('not-a-registered-group', 'SA'))->toBe('');
+    expect(CountryPresets::forConsole('not-a-registered-group')['rows'])->toBe([]);
+
+    // And the registered ones still answer, so the check above is about an
+    // absent key rather than about the method having quietly stopped working.
+    expect(CountryPresets::has(CountryPresets::DELIVERY))->toBeTrue();
+    expect(CountryPresets::has(CountryPresets::TAX))->toBeTrue();
 });
 
 it('hands the console a finished sentence and the shape it came from, for every row', function () {

@@ -325,8 +325,22 @@ class ManualOrderBuilder
             'discount_total' => (int) $totals['discount'],
             'shipping_total' => (int) $totals['shipping'],
             'fee_total' => $fee,
-            // VAT is display-only (D-64), exactly as the checkout writes it.
-            'tax_total' => 0,
+            /*
+             * The tax as it was on the day, exactly as the checkout writes it
+             * — one computation in CartService::totals(), recorded the same
+             * way here, so a back-office order and a web order for the same
+             * basket and destination carry the same three figures.
+             *
+             * D-64 was overturned by the owner on 2026-09-16; the header of
+             * App\Support\VatDisplay carries his words and the reasoning. In
+             * the shipped default state these are 0 / null / null, which is
+             * what this row held before.
+             */
+            'tax_total' => (int) $totals['tax_charged'],
+            'tax_rate' => $totals['tax_rate'],
+            'tax_basis' => $totals['tax_basis'],
+            // Already contains the tax on an exclusive basis — totals() put it
+            // into `total`, so it is not added a second time here.
             'total' => (int) $totals['total'] + $fee,
             'shipping_method' => $priced['chosen_rate']['title'] ?? null,
             'payment_method' => $input['payment_method'],

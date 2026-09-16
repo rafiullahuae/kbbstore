@@ -58,6 +58,20 @@
 <div class="sumrow js-fee-row"><span>Cash-on-delivery fee</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils) !!}</span></div>
 @endif
 
+{{-- THE TAX ROW THAT IS PART OF THE SUM.
+
+     Drawn ABOVE the Total, because on an exclusive basis the tax was ADDED and
+     this column of figures has to add up to what is charged. The matching row
+     below the Total is the "of which" note for an inclusive or printed-only
+     basis, where the tax is a portion OF the total rather than an addition to
+     it. Exactly one of the two is ever visible.
+
+     BOTH ARE RENDERED AND ONE IS HIDDEN, never omitted, for the same reason
+     .js-gift-row above is: the country-change refresh switches between them,
+     and an element that is not in the page cannot be unhidden. Changing the
+     destination from an inclusive country to an exclusive one has to move the
+     line as well as its figure. --}}
+<div class="sumrow vat js-vat-row vat-add"@if (! ($totals['vat'] && $totals['vat']['added'])) style="display:none" @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
 <div class="sumrow tot js-total-row"><span>Total</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils) !!}</span></div>
 {{-- THE COD TOTAL IS NOT CONDITIONAL ON THERE BEING A COD FEE.
 
@@ -72,20 +86,23 @@
      truth, and exactly one of them is ever on screen. --}}
 <div class="sumrow tot js-total-row-fee"><span>Total</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils) !!}</span></div>
 
-@if ($totals['vat'])
-    {{-- Display only. Never added to the total (D-64).
+{{-- THE "OF WHICH" NOTE, under the Total and not part of it.
 
-         THE LABEL CARRIES THE RATE AND SO NEEDS ITS OWN HOOK.
-         vat_label is "You're paying VAT ({rate}%)" with {rate} substituted by
-         VatDisplay::label(), and the rate can now differ per country. The
-         country-change refresh in checkout.js updated `.js-vat` — the amount —
-         and nothing else, which was invisible while one global rate applied
-         everywhere. With a Saudi rate set, switching country moved the figure
-         to 13.04 and left "You're paying VAT (5%)" printed beside it: a
-         receipt contradicting itself, which is worse than not updating at all.
-         Both halves now move together. --}}
-    <div class="sumrow vat"><span class="js-vat-label">{{ $totals['vat']['label'] }}</span><span class="js-vat">{!! $totals['vat']['formatted'] !!}</span></div>
-@endif
+     What this row meant under D-64 — a VAT figure printed beside a total it
+     never altered — is what an INCLUSIVE basis still means: the tax is already
+     inside the prices above. A "printed only" basis means it as well, and
+     charges nothing. An EXCLUSIVE basis does not, and takes the row above the
+     Total instead.
+
+     THE LABEL CARRIES THE RATE AND SO NEEDS ITS OWN HOOK. vat_label is
+     "You're paying VAT ({rate}%)" with {rate} substituted by
+     VatDisplay::label(), and the rate differs per country. The country-change
+     refresh updated `.js-vat` — the amount — and nothing else, which was
+     invisible while one global rate applied everywhere. With a Saudi rate set,
+     switching country moved the figure to 13.04 and left "You're paying VAT
+     (5%)" printed beside it: a receipt contradicting itself. Both halves move
+     together. --}}
+<div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) style="display:none" @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
 
 @if ($withActions ?? true)
     <button type="button" class="place" data-place="1">Place order</button>

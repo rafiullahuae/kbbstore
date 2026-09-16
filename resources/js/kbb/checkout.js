@@ -269,14 +269,30 @@ export function initCheckout() {
             // invisible while one rate applied everywhere; with a per-country
             // rate set it left "You're paying VAT (5%)" sitting beside the 15%
             // figure. The endpoint has always sent the label; nothing read it.
+            // THE LINE CAN MOVE, NOT ONLY CHANGE. The page carries two VAT
+            // rows: `.vat-add` above the Total, where an exclusive tax belongs
+            // because it is part of the sum, and `.vat-note` below it, where
+            // an inclusive or printed-only figure belongs because it is a
+            // portion OF the total. Exactly one is ever shown, and which one
+            // is a property of the DESTINATION — so changing country from an
+            // inclusive one to an exclusive one has to swap them. Leaving the
+            // note in place under an exclusive total would print a column of
+            // figures that does not add up to what is being charged.
+            const vatAdded = !!(data.vat && data.vat.added);
+
+            //
+            // An INLINE style and not the `hidden` attribute, deliberately:
+            // `.kbb-checkout .sumrow` sets `display:flex` in an author
+            // stylesheet, and an author rule beats the user-agent's
+            // `[hidden]{display:none}` whatever its specificity. This is also
+            // the mechanism this block already used before the row could move.
+            document.querySelectorAll('.js-vat-row').forEach((row) => {
+                const wanted = data.vat && row.classList.contains('vat-add') === vatAdded;
+                row.style.display = wanted ? '' : 'none';
+            });
+
             document.querySelectorAll('.js-vat').forEach((el) => {
-                const row = el.closest('.sumrow');
-                if (data.vat) {
-                    el.innerHTML = data.vat.formatted;
-                    if (row) row.style.display = '';
-                } else if (row) {
-                    row.style.display = 'none';
-                }
+                if (data.vat) el.innerHTML = data.vat.formatted;
             });
 
             // textContent, not innerHTML: this is operator-supplied copy out of

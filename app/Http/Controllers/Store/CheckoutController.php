@@ -451,7 +451,32 @@ class CheckoutController extends Controller
                     // coupon totals() returns the rate it was handed.
                     'shipping_total' => (int) $totals['shipping'],
                     'fee_total' => $fee,
-                    'tax_total' => 0,   // VAT is display-only (D-64)
+                    /*
+                     * THE TAX, AS IT WAS ON THE DAY, RECORDED ON THE ORDER.
+                     *
+                     * This was `0` with the note "VAT is display-only (D-64)".
+                     * The owner overturned D-64 on 2026-09-16 — see the header
+                     * of App\Support\VatDisplay for his three messages and the
+                     * reasoning — so the column now carries the tax that is
+                     * INSIDE `total`, and the rate and basis that produced it
+                     * are written beside it.
+                     *
+                     * THE RATE AND BASIS ARE SNAPSHOTTED, NOT LOOKED UP LATER,
+                     * for the same reason `payment_method_title` and the order
+                     * line's `name` and `unit_price` are: the owner can change
+                     * Saudi Arabia from 5% to 15% next year, and last year's
+                     * invoices must not silently reprint at the new rate.
+                     *
+                     * In the shipped default state (tax_mode = 'display') all
+                     * three are 0 / null / null, which is byte-for-byte what
+                     * this row held before.
+                     */
+                    'tax_total' => (int) $totals['tax_charged'],
+                    'tax_rate' => $totals['tax_rate'],
+                    'tax_basis' => $totals['tax_basis'],
+                    // Already contains the tax when the destination is on an
+                    // exclusive basis: totals() added it to `total` there, so
+                    // adding it again here would charge it twice.
                     'total' => $totals['total'] + $fee,
                     'shipping_method' => $rate['title'],
                     'payment_method' => $data['payment_method'],
@@ -1102,7 +1127,16 @@ class CheckoutController extends Controller
 
                 return \App\Support\Money::format((int) $totals['total'] + $fee + $this->giftFee($request));
             })(),
-            'vat' => $totals['vat'] ? ['label' => $totals['vat']['label'], 'formatted' => $totals['vat']['formatted']] : null,
+            // `added` is the third thing the refresh needs and the newest: on
+            // an exclusive basis the tax row belongs ABOVE the Total, where it
+            // is part of the sum, and on every other basis below it as an "of
+            // which" note. Switching from an inclusive country to an exclusive
+            // one has to move the line, not only rewrite its figure.
+            'vat' => $totals['vat'] ? [
+                'label' => $totals['vat']['label'],
+                'formatted' => $totals['vat']['formatted'],
+                'added' => $totals['vat']['added'],
+            ] : null,
         ]);
     }
 

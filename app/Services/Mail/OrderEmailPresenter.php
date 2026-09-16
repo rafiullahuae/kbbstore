@@ -184,8 +184,22 @@ class OrderEmailPresenter
             $rows[] = [$order->paymentLabel() . ' fee', $otherFees, false];
         }
 
-        if ((int) $order->tax_total !== 0) {
-            $rows[] = ['VAT', (int) $order->tax_total, false];
+        /*
+         * VAT AS A ROW — only when it was ADDED to the figures above it. The
+         * rows in this block sum to Total, so an `inclusive` order's tax, which
+         * is a portion of the prices already listed, goes under the Total as a
+         * note instead (vatNote() below). An order with no tax record behaves
+         * exactly as it did before this lane: an imported WooCommerce order
+         * prints its real `tax_total` as a row.
+         */
+        $taxRecord = \App\Support\OrderTax::recorded($order);
+
+        if ($taxRecord === null) {
+            if ((int) $order->tax_total !== 0) {
+                $rows[] = ['VAT', (int) $order->tax_total, false];
+            }
+        } elseif ($taxRecord['added'] && $taxRecord['fils'] !== 0) {
+            $rows[] = ['VAT at ' . (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate() . '%', $taxRecord['fils'], false];
         }
 
         $rows[] = ['Total', (int) $order->total, true];
@@ -242,6 +256,37 @@ class OrderEmailPresenter
      */
     private function vatNote(Order $order): ?array
     {
+        /*
+         * THE ORDER'S OWN RECORD FIRST — see InvoiceDocument::vatNote() for the
+         * full reasoning. Asking VatDisplay live at send time means a resent
+         * receipt states whatever rate the settings hold today rather than the
+         * one the customer was charged, and per-country rates the owner can
+         * edit make that a real misstatement rather than a theoretical one.
+         *
+         * An `exclusive` order's tax is already a row in totals() above and is
+         * not restated here; only a portion OF the total belongs under it.
+         */
+        $taxRecord = \App\Support\OrderTax::recorded($order);
+
+        if ($taxRecord !== null) {
+            if ($taxRecord['added'] || $taxRecord['fils'] <= 0) {
+                return null;
+            }
+
+            $rate = (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate();
+
+            return [
+                'label' => str_replace(
+                    '{rate}',
+                    $rate,
+                    (string) app(\App\Services\SettingsService::class)->get('vat_label', "You're paying VAT ({rate}%)")
+                ),
+                'fils' => $taxRecord['fils'],
+                'html' => self::html($taxRecord['fils']),
+                'plain' => self::plain($taxRecord['fils']),
+            ];
+        }
+
         if ((int) $order->tax_total !== 0) {
             return null;
         }
