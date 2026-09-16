@@ -31,7 +31,12 @@
   .atag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink-deep);background:var(--pink-soft);padding:5px 12px;border-radius:99px}
   h1{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.18;margin:14px 0 12px}
   .ameta{font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:center;margin-bottom:22px}
-  .cover{aspect-ratio:16/8;border-radius:var(--r-l);margin-bottom:28px;display:grid;place-items:center;font-size:56px;background:var(--cream)}
+  .cover{aspect-ratio:16/8;border-radius:var(--r-l);margin-bottom:28px;display:grid;place-items:center;font-size:56px;background:var(--cream);position:relative;overflow:hidden}
+  /* The cover is a real image element when the post has a photograph. It is
+     absolutely positioned so the emoji placeholder keeps the grid centring
+     above, and object-fit:cover reproduces the `center/cover` it had as a
+     background. */
+  .cover img,.mcover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   .abody{font-size:16px;line-height:1.72;color:var(--ink)}
   .abody p{margin:0 0 18px}
   .abody h3{font-size:20px;font-weight:600;margin:28px 0 10px;letter-spacing:-.01em}
@@ -44,7 +49,7 @@
   .mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
   .mcard{border:1px solid var(--line-2);border-radius:var(--r-l);overflow:hidden;text-decoration:none;color:var(--ink);transition:.2s var(--ease)}
   .mcard:hover{box-shadow:var(--sh-m);transform:translateY(-3px)}
-  .mcover{aspect-ratio:16/10;display:grid;place-items:center;font-size:30px;background:var(--cream)}
+  .mcover{aspect-ratio:16/10;display:grid;place-items:center;font-size:30px;background:var(--cream);position:relative;overflow:hidden}
   .mc{padding:14px}.mt{font-size:14px;font-weight:600;line-height:1.35}.mtag{font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--pink-deep);margin-bottom:5px}
   footer{background:var(--ink);color:#fff;padding:34px 0;margin-top:44px}
   footer .fin{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.75)}
@@ -85,8 +90,21 @@
   @if($post->tag)<span class="atag">{{ $post->tag }}</span>@endif
   <h1>{{ $post->title }}</h1>
   <div class="ameta"><span>{{ $post->author ?: 'K-Beauty Bliss' }}</span> · <span>{{ optional($post->published_at)->format('j F Y') }}</span></div>
-  <div class="cover" style="{{ $post->cover && (str_contains($post->cover, 'gradient') || str_contains($post->cover, '#') || str_contains($post->cover, 'url')) ? 'background:' . $post->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
-    @if(!$post->cover || !(str_contains($post->cover, 'url') || str_contains($post->cover, 'http')))
+  {{-- The hero photograph is a real <img>, not a CSS background.
+       PageController::post() hands this same column to Seo::render as the
+       article's `image`, so the page publishes it as og:image and as the
+       schema.org Article.image — it tells Google there is a hero photograph
+       here. A background-image is invisible to Google Images, so what the page
+       claimed and what it could actually be indexed for did not match.
+       No loading="lazy": this is the article's opening image, above the fold
+       on every viewport, and lazy-loading the LCP element delays it. --}}
+  @php
+    $coverSrc = \App\Support\CoverImage::src($post->cover);
+  @endphp
+  <div class="cover" style="background:{{ \App\Support\CoverImage::background($post->cover) }}">
+    @if($coverSrc)
+      <img src="{{ $coverSrc }}" alt="{{ $post->title }}" width="1200" height="600" fetchpriority="high">
+    @else
       {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$post->tag] ?? '✨' }}
     @endif
   </div>
@@ -118,8 +136,15 @@
   @endverbatim
   @foreach($related as $r)
     <a class="mcard" href="{{ \App\Support\Url::to('/' . $r->slug . '/') }}">
-      <div class="mcover" style="{{ $r->cover && (str_contains($r->cover, 'gradient') || str_contains($r->cover, '#') || str_contains($r->cover, 'url')) ? 'background:' . $r->cover : 'background:linear-gradient(135deg,#FFF0F4,#FCE0E8)' }}">
-        {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$r->tag] ?? '✨' }}
+      @php
+        $relSrc = \App\Support\CoverImage::src($r->cover);
+      @endphp
+      <div class="mcover" style="background:{{ \App\Support\CoverImage::background($r->cover) }}">
+        @if($relSrc)
+          <img src="{{ $relSrc }}" alt="{{ $r->title }}" width="400" height="250" loading="lazy">
+        @else
+          {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$r->tag] ?? '✨' }}
+        @endif
       </div>
       <div class="mc"><div class="mtag">{{ $r->tag }}</div><div class="mt">{{ $r->title }}</div></div>
     </a>

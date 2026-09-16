@@ -40,7 +40,9 @@ input,textarea{font-family:inherit}
 
 .shell{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:22px 18px 50px}
 .qhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.brand{font-size:14px;font-weight:800;letter-spacing:-.01em;color:var(--pink-deep)}
+/* font-size and font-weight are set here, so the heading that carries this
+   class does not pick up the browser's 2em bold default. */
+.brand{font-size:14px;font-weight:800;letter-spacing:-.01em;color:var(--pink-deep);margin:0}
 .brand span{color:var(--ink);font-weight:600}
 .qcount{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--muted)}
 .pips{display:flex;gap:5px;margin-bottom:18px}
@@ -168,7 +170,21 @@ input,textarea{font-family:inherit}
 <div class="preview-flag">PREVIEW · front-end only</div>
 <div class="shell">
   <div class="qhead">
-    <div class="brand">K-Beauty Bliss <span>· Skin Quiz</span></div>
+@endverbatim
+    {{-- <h1>, not <div>. /skin-quiz served no heading of any level: every
+         heading on this page is written by renderStart() and the step
+         renderers into #stage, so they exist only after the script runs and
+         none of them is in the served HTML. This is the one heading the page
+         has server-side, so it is the one that carries the level. The .brand
+         rule keeps the size and weight, so the header looks exactly as it did.
+
+         The verbatim block is closed around this note and reopened after it on
+         purpose. Everything from the top of this file to the footer is one
+         verbatim region, and a Blade comment inside a verbatim region is not a
+         comment at all — it is literal text, and it was being served to every
+         visitor as part of the page. --}}
+@verbatim
+    <h1 class="brand">K-Beauty Bliss <span>· Skin Quiz</span></h1>
     <div class="qcount" id="qcount"></div>
   </div>
   <div class="pips" id="pips"></div>

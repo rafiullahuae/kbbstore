@@ -272,7 +272,19 @@ class PageController extends Controller
             'title' => $seoOverride['title'] ?? $post->title,
             'title_is_final' => !empty($seoOverride['title']),
             'description' => $seoOverride['desc'] ?? $post->excerpt ?? '',
-            'image' => $seoOverride['og_image'] ?? $post->cover,
+            /*
+             * The cover only counts as an image when it IS one. `posts.cover`
+             * is a CSS background value and most rows hold a gradient, which
+             * went out of here as-is: Seo::absolute() sees no scheme on
+             * "linear-gradient(135deg,#FFF0F4,#FCE0E8)", so it prefixed the
+             * site base and published
+             * <meta property="og:image" content="https://…/linear-gradient(…)">
+             * plus the same string as schema.org Article.image. Facebook and
+             * Twitter drop a card whose image 404s and Search Console reports
+             * the Article's as invalid. Null publishes no image at all, which
+             * is the honest answer for a post whose cover is decoration.
+             */
+            'image' => $seoOverride['og_image'] ?? \App\Support\CoverImage::src($post->cover),
             'url' => !empty($seoOverride['canonical']) ? $seoOverride['canonical'] : $canonical,
             'noindex' => !empty($seoOverride['noindex']),
             'article' => [
