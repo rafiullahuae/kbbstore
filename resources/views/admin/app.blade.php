@@ -3499,12 +3499,27 @@ function mdRow(m){
      states show the switch's position but will not let it be moved — a control
      that appears to work and does nothing is worse than one that says why. */
   const live = m.status === 'live';
+  /* 'screen' is a built admin screen listed here so the owner can see it exists
+     and open it — Media Library and Reviews. It is NOT a switch and must not be
+     labelled like one: 'elsewhere' renders "Switched in <screen>", and there is
+     no switch on either of those screens to be switched in. See the long note
+     on `screen` in App\Services\ModuleRegistry. */
   const note = m.status === 'elsewhere'
       ? `<i class="mdstat where">Switched in ${escHtml(m.screen)}</i>`
+      : m.status === 'screen' ? '<i class="mdstat where">Always on — a screen, not a switch</i>'
       : m.status === 'todo' ? '<i class="mdstat todo">Not ported yet</i>' : '';
 
+  /* A `screen` row shows NO switch. The inert switch the other two non-live
+     states use renders in the grey "off" position whatever m.on says, which
+     beside the words "Always on" is a straight contradiction — the owner reads
+     a control that looks switched off on a screen that is always there.
+     Hidden rather than removed so the row still lines up with its neighbours. */
+  const sw = m.status === 'screen'
+    ? '<span class="ectog off" style="visibility:hidden" aria-hidden="true"></span>'
+    : `<span class="ectog${m.on?' on':''}${live?'':' off'}"${live?` data-md="${escAttr(m.key)}" role="switch" aria-checked="${m.on}" tabindex="0"`:' aria-disabled="true"'}></span>`;
+
   return `<div class="mdrow${m.on?' on':''}${live?'':' inert'}">
-    <span class="ectog${m.on?' on':''}${live?'':' off'}"${live?` data-md="${escAttr(m.key)}" role="switch" aria-checked="${m.on}" tabindex="0"`:' aria-disabled="true"'}></span>
+    ${sw}
     <div class="mdlbl">
       <b>${escHtml(m.name)}</b>${m.default?'':'<i class="mdoff">off by default</i>'}${note}
       <span>${escHtml(m.desc)}</span>
@@ -3514,7 +3529,7 @@ function mdRow(m){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
       ${mdCard(m)}
     </span>
-    <select class="mddev" data-mddev="${escAttr(m.key)}"${m.on?'':' disabled'}>${devs}</select>
+    <select class="mddev" data-mddev="${escAttr(m.key)}"${(m.on && m.status!=='screen')?'':' disabled'}>${devs}</select>
   </div>`;
 }
 
@@ -5713,7 +5728,14 @@ function mountFrame(id,src,title,query){
    go('customers') from a bookmark used to render an iframe pointing at a 404
    before the live wiring replaced it. The Customers screen is rendered in this
    document now, so it does not need, and must not get, a frame. */
-const FRAME_SRC={'orders':'kbb-admin-orders.html','payments':'kbb-admin-payments.html','analytics':'kbb-admin-analytics.html','store-settings':'kbb-admin-settings.html','quiz-leads':'kbb-admin-quiz-leads.html','seo':'kbb-admin-seo.html','blog':'kbb-admin-blog.html','posts':'kbb-admin-blog.html','htmlblocks':'kbb-admin-blocks.html','media':'kbb-admin-media.html'};
+/* 'media' is deliberately NOT in here any more — see the Lane AX region at the
+   foot of this file. Its entry named kbb-admin-media.html, a standalone file
+   this repo does not ship, so go('media') drew the honest "isn't installed yet"
+   card — which is the card the owner asked about. The Media Library is rendered
+   in this document now by admin/partials/media-library-screen.blade.php, so it
+   does not need, and must not get, a frame: leaving the entry here would let
+   goTab('media') still fire a request for the missing file. */
+const FRAME_SRC={'orders':'kbb-admin-orders.html','payments':'kbb-admin-payments.html','analytics':'kbb-admin-analytics.html','store-settings':'kbb-admin-settings.html','quiz-leads':'kbb-admin-quiz-leads.html','seo':'kbb-admin-seo.html','blog':'kbb-admin-blog.html','posts':'kbb-admin-blog.html','htmlblocks':'kbb-admin-blocks.html'};
 function renderFrame(id,query){
   cur=id;
   const t=TITLES[id]||['Store',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
@@ -13779,6 +13801,17 @@ buildNav();
      standalone file this repo has never shipped. The id is also added to
      LIVE_RENDERED further up, which is the other half of that takeover. --}}
 @include('admin.partials.review-settings-screen')
+{{-- Content -> Media Library (Lane AX). Same arrangement and for the same
+     reason as the screens above: its own file, its own wrapper around
+     window.go. It needs no sidebar entry — Media Library has been in the Store
+     group of the nav all along; what it did not have was a screen.
+
+     It replaces the 'media' entry that used to sit in FRAME_SRC, which loaded
+     `kbb-admin-media.html`, a standalone page this repository has never shipped
+     and which is not on the server either. That entry has been removed from
+     FRAME_SRC above rather than left to be shadowed by this override, so
+     goTab('media') cannot still reach for the missing file. --}}
+@include('admin.partials.media-library-screen')
 
 @verbatim
 </body>
