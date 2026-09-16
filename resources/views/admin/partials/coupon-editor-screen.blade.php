@@ -84,9 +84,13 @@
 .ce-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
 .ce-stats > *{min-width:0}
 .ce-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
-         border-radius:var(--r,12px);padding:12px 14px}
-.ce-stat b{display:block;font-size:20px;line-height:1.3;font-variant-numeric:tabular-nums}
-.ce-stat span{color:var(--ink-soft,#6b7280);font-size:12px}
+         border-radius:var(--r,12px);padding:13px 15px;box-shadow:var(--sh-s,none)}
+/* Caption above the figure, not under it. The eye reads the small label first
+   and then has something to hang the number on; the other way round it reads
+   three loose numbers and has to go back for each one. */
+.ce-stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums;margin-top:3px}
+.ce-stat span{display:block;color:var(--ink-soft,#6b7280);font-size:11px;font-weight:650;
+              text-transform:uppercase;letter-spacing:.05em}
 
 /* ---- buttons ---- */
 .ce-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;font:inherit;font-size:13px;
@@ -118,9 +122,35 @@
 .ce-table th{font-weight:600;color:var(--ink-soft,#6b7280);font-size:11.5px;
              text-transform:uppercase;letter-spacing:.04em}
 .ce-table tbody tr:hover{background:rgba(127,127,127,.06)}
+.ce-table tbody td{padding-top:11px;padding-bottom:11px}
 .ce-num{font-variant-numeric:tabular-nums}
 .ce-code{font-weight:650;letter-spacing:.02em}
-.ce-rowacts{display:flex;gap:6px;flex-wrap:nowrap}
+
+/* The description rides under its code rather than taking a column of its own:
+   one thing to read per row, and the table keeps five columns on a laptop. */
+.ce-desc{display:block;max-width:34ch;margin-top:2px;font-size:11.5px;font-weight:400;
+         letter-spacing:0;color:var(--ink-soft,#6b7280);
+         overflow:hidden;text-overflow:ellipsis}
+
+/* How much of the code is spent, at a glance. An uncapped code gets no bar at
+   all rather than an empty one: "unlimited" and "untouched" must not look
+   alike. */
+.ce-meter{display:grid;gap:5px;min-width:0}
+.ce-meter-b{display:block;position:relative;height:5px;border-radius:999px;background:rgba(127,127,127,.18);
+            min-width:78px;overflow:hidden}
+.ce-meter-b i{position:absolute;inset:0 auto 0 0;border-radius:999px;background:#1f7d52}
+.ce-meter-b.is-warn i{background:#b7791f}
+.ce-meter-b.is-done i{background:#b4443c}
+
+.ce-acts{text-align:right}
+.ce-rowacts{display:flex;gap:6px;flex-wrap:nowrap;justify-content:flex-end}
+
+/* The header, then a hairline, then the controls that filter what is under it.
+   Before this the search box floated between the title and the table belonging
+   to neither. */
+.ce-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0;
+            margin:14px 0 16px;padding-top:14px;border-top:1px solid var(--border,#e6e6e6)}
+.ce-toolbar > *{min-width:0}
 
 /* ---- status pills ---- */
 .ce-pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;
@@ -148,13 +178,39 @@
 .ce-field{display:grid;gap:5px;min-width:0}
 .ce-field > *{min-width:0}
 .ce-label{font-size:12.5px;font-weight:600}
-.ce-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5}
+/* Help is secondary and it stays secondary: smaller, lighter, and capped at a
+   readable measure so it can never spread into a full-width paragraph that the
+   eye has to cross before it finds the next label. Anything longer than a line
+   or two belongs in the section description or a note, not under a box. */
+.ce-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.45;max-width:62ch}
+
+/* ---- sections ----
+   The screen is a form somebody fills in, not a list of everything the system
+   knows. Each band says what it decides (the heading), when you would touch it
+   (one line under that), and then shows its fields -- with a hairline between
+   bands so the groups are visible without a box around each one. */
+.ce-sec{display:grid;gap:13px;min-width:0}
+.ce-sec > *{min-width:0}
+.ce-sec + .ce-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border,#e6e6e6)}
+.ce-sec-h{display:grid;gap:3px;min-width:0}
+.ce-sec-t{font-size:13.5px;font-weight:650}
+.ce-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft,#6b7280);max-width:78ch}
+
+/* A switch and its explanation, as one quiet row. It used to be a bordered
+   callout sitting between two form fields, which made an ordinary checkbox
+   look like a warning. */
+.ce-opt{display:flex;gap:10px;align-items:flex-start;min-width:0;padding:11px 13px;
+        border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);
+        background:rgba(127,127,127,.03)}
+.ce-opt > *{min-width:0}
+.ce-opt input{margin:2px 0 0;flex:0 0 auto}
+.ce-opt-t{display:block;font-size:12.5px;font-weight:600;cursor:pointer}
+.ce-opt .ce-help{margin-top:3px}
 .ce-input,.ce-select,.ce-area{width:100%;max-width:100%;min-width:0;box-sizing:border-box;
         padding:8px 10px;font:inherit;font-size:13px;border:1px solid var(--border,#e6e6e6);
         border-radius:9px;background:transparent;color:inherit}
 .ce-area{min-height:70px;resize:vertical}
 .ce-input:disabled,.ce-select:disabled{opacity:.6;cursor:not-allowed}
-.ce-wide{grid-column:1/-1;min-width:0}
 
 /* A select's intrinsic width is its widest OPTION, which sets a floor no media
    query can reach. Pinned so the discount-type box cannot widen the form. */
@@ -168,9 +224,6 @@
         border:1px solid var(--border,#e6e6e6);border-left:0;border-radius:0 9px 9px 0;
         background:rgba(127,127,127,.07);color:var(--ink-soft,#6b7280)}
 
-.ce-check{display:flex;gap:9px;align-items:flex-start;min-width:0}
-.ce-check input{margin:2px 0 0;flex:0 0 auto}
-.ce-check > div{min-width:0}
 
 /* ---- the "recorded but not applied" note ---- */
 .ce-note{border:1px solid var(--border,#e6e6e6);border-left:3px solid #b7791f;border-radius:9px;
@@ -178,7 +231,32 @@
 .ce-note b{color:inherit}
 .ce-note.is-plain{border-left-color:var(--ink-soft,#6b7280)}
 
-/* ---- pickers ---- */
+/* ---- pickers ----
+   Six of these sit on one tab. Drawn as six full-width blocks each with its own
+   bold label and its own paragraph of help, they read as six unrelated screens
+   stacked on top of each other. They are one decision -- what the code applies
+   to -- asked three times, so they are laid out that way: a quiet caption per
+   subject (Products, Categories, Brands) and under it the include box beside
+   the exclude box, tinted rather than outlined so no one of them is as loud as
+   a section heading. */
+.ce-picks{display:grid;gap:16px;min-width:0}
+.ce-picks > *{min-width:0}
+.ce-pickgrp{display:grid;gap:8px;min-width:0}
+.ce-pickgrp > *{min-width:0}
+.ce-pickgrp-t{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;
+              color:var(--ink-soft,#6b7280)}
+.ce-pickpair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));
+             gap:12px;min-width:0}
+.ce-pickpair > *{min-width:0}
+.ce-pick{display:grid;gap:7px;min-width:0;padding:11px 12px;
+         border:1px solid var(--border,#e6e6e6);border-radius:var(--r,12px);
+         background:rgba(127,127,127,.025)}
+.ce-pick > *{min-width:0}
+.ce-pick-l{font-size:12px;font-weight:600}
+/* The empty state says what empty MEANS, because on a restriction field empty
+   is not "unfinished", it is "no restriction" -- the opposite reading. */
+.ce-pick-e{font-size:11.5px;color:var(--ink-soft,#6b7280);padding:1px 0}
+
 .ce-picker{display:grid;gap:7px;min-width:0}
 .ce-picker > *{min-width:0}
 .ce-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
@@ -217,6 +295,14 @@
   /* The Add Coupon button goes full width rather than sitting in a cramped
      corner: it is the control this whole screen exists to provide. */
   .ce-head .ce-btn.is-primary{width:100%;justify-content:center}
+  /* Tighter bands on a phone: the hairline is doing the separating, so the
+     space around it does not have to be as generous as on a laptop. */
+  .ce-sec + .ce-sec{margin-top:18px;padding-top:16px}
+  .ce-picks{gap:14px}
+  /* The tab strip is the only thing on this screen that may scroll sideways
+     on its own -- three tab names do not fit 390px, and wrapping them onto two
+     rows hides which one is selected. */
+  .ce-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 }
 </style>
 
@@ -254,20 +340,44 @@
   /* The four product/category rules, declared once. Every one of them is a
      list of ids in a JSON column that CouponService::eligibleItems() reads,
      and all four behave identically apart from which column they land in. */
+  /* `group` and `mode` are presentation only: they pair each include list with
+     its exclude list under one caption, so the six read as three questions
+     rather than six screens. `key`, `field` and `kind` are unchanged and are
+     what the payload and the lookup endpoint use. */
   var PICKERS = [
     {key:'products',           field:'product_ids',           kind:'product',  label:'Products',
+     group:'Products', mode:'only', empty:'Any product qualifies.',
      help:'Only these products are discounted. Anything else in the basket is priced as normal. Leave empty for no restriction.'},
     {key:'excluded_products',  field:'excluded_product_ids',  kind:'product',  label:'Exclude products',
+     group:'Products', mode:'never', empty:'Nothing is excluded.',
      help:'These products are never discounted by this code.'},
     {key:'categories',         field:'category_ids',          kind:'category', label:'Product categories',
+     group:'Categories', mode:'only', empty:'Any category qualifies.',
      help:'Only products in these categories are discounted.'},
     {key:'excluded_categories',field:'excluded_category_ids', kind:'category', label:'Exclude categories',
+     group:'Categories', mode:'never', empty:'Nothing is excluded.',
      help:'Products in these categories are never discounted by this code.'},
     {key:'brands',             field:'brand_ids',             kind:'brand',    label:'Product brands',
+     group:'Brands', mode:'only', empty:'Any brand qualifies.',
      help:'Only products from these brands are discounted. Leave empty for no restriction.'},
     {key:'excluded_brands',    field:'excluded_brand_ids',    kind:'brand',    label:'Exclude brands',
+     group:'Brands', mode:'never', empty:'Nothing is excluded.',
      help:'Products from these brands are never discounted by this code.'}
   ];
+
+  /* The caption over each pair, in the order the pairs are drawn. Taken from
+     PICKERS itself so the two can never drift apart. */
+  function pickerGroups(){
+    var order = [];
+    var byGroup = {};
+
+    PICKERS.forEach(function(p){
+      if (!byGroup[p.group]) { byGroup[p.group] = []; order.push(p.group); }
+      byGroup[p.group].push(p);
+    });
+
+    return order.map(function(name){ return {name: name, items: byGroup[name]}; });
+  }
 
   /* ------------------------------------------------------------- plumbing */
   function cookie(n){
@@ -640,10 +750,25 @@
   }
 
   function usageCell(row){
+    /* No bar at all for an uncapped code. A full bar would read as "all used
+       up" and an empty one as "never used"; neither is what no limit means. */
     if (row.usage_limit === null || row.usage_limit === undefined) {
       return '<span class="ce-num">' + esc(row.usage_count) + '</span> <span class="ce-pill">no limit</span>';
     }
-    return '<span class="ce-num">' + esc(row.usage_count) + ' / ' + esc(row.usage_limit) + '</span>';
+
+    var limit = Number(row.usage_limit) || 0;
+    var pct = limit > 0 ? Math.min(100, Math.round((Number(row.usage_count) / limit) * 100)) : 0;
+    var tone = pct >= 100 ? ' is-done' : (pct >= 80 ? ' is-warn' : '');
+
+    return '<div class="ce-meter">'
+      + '<span class="ce-num">' + esc(row.usage_count) + ' / ' + esc(row.usage_limit) + '</span>'
+      + '<span class="ce-meter-b' + tone + '"><i style="width:' + pct + '%"></i></span>'
+      + '</div>';
+  }
+
+  function statTile(label, value){
+    return '<div class="ce-stat"><span>' + esc(label) + '</span>'
+      + '<b class="ce-num">' + esc(value) + '</b></div>';
   }
 
   function listView(){
@@ -651,9 +776,9 @@
     var s = (list && list.summary) || {coupons:0, expired:0, exhausted:0};
 
     var stats = '<div class="ce-stats">'
-      + '<div class="ce-stat"><b class="ce-num">' + esc(s.coupons) + '</b><span>Coupons</span></div>'
-      + '<div class="ce-stat"><b class="ce-num">' + esc(s.expired) + '</b><span>Expired</span></div>'
-      + '<div class="ce-stat"><b class="ce-num">' + esc(s.exhausted) + '</b><span>Fully redeemed</span></div>'
+      + statTile('Coupons', s.coupons)
+      + statTile('Expired', s.expired)
+      + statTile('Fully redeemed', s.exhausted)
       + '</div>';
 
     var body;
@@ -666,18 +791,22 @@
         + '<div style="margin-top:12px"><button class="ce-btn is-primary" id="ce-add-empty">'
         + icon('<path d="M12 5v14"/><path d="M5 12h14"/>') + 'Add Coupon</button></div></div>';
     } else {
+      /* The description rides under its code instead of taking a seventh
+         column: one thing to read per row, and the table still fits a laptop
+         without the scroller having to be used. */
       body = '<div class="ce-scroll"><table class="ce-table"><thead><tr>'
-        + '<th>Code</th><th>Type</th><th>Amount</th><th>Used</th><th>Expires</th><th>Status</th><th></th>'
+        + '<th>Code</th><th>Discount</th><th>Used</th><th>Expires</th><th>Status</th><th class="ce-acts"></th>'
         + '</tr></thead><tbody>'
         + rows.map(function(c){
             return '<tr>'
-              + '<td><span class="ce-code">' + esc(c.code) + '</span></td>'
-              + '<td>' + esc(c.type_label) + '</td>'
-              + '<td class="ce-num">' + esc(c.amount_display) + '</td>'
+              + '<td><span class="ce-code">' + esc(c.code) + '</span>'
+                + (c.description ? '<span class="ce-desc">' + esc(c.description) + '</span>' : '') + '</td>'
+              + '<td><span class="ce-num">' + esc(c.amount_display) + '</span>'
+                + '<span class="ce-desc">' + esc(c.type_label) + '</span></td>'
               + '<td>' + usageCell(c) + '</td>'
               + '<td>' + (c.expires_at ? esc(c.expires_at) : '—') + '</td>'
               + '<td>' + statusPill(c) + '</td>'
-              + '<td><div class="ce-rowacts">'
+              + '<td class="ce-acts"><div class="ce-rowacts">'
                 + '<button class="ce-btn is-small" data-edit="' + esc(c.id) + '">Edit</button>'
                 /* A Delete button that is only refused when pressed is worse
                    than one that is not offered: `deletable` is false exactly
@@ -702,7 +831,10 @@
         + '<button class="ce-btn is-primary" id="ce-add">'
           + icon('<path d="M12 5v14"/><path d="M5 12h14"/>') + 'Add Coupon</button>'
       + '</div>'
-      + '<div class="ce-filters" style="margin:14px 0">'
+      /* Header, hairline, then the controls that filter what is under it. The
+         search box used to float between the title and the table, belonging to
+         neither. */
+      + '<div class="ce-filters ce-toolbar">'
         + '<input class="ce-input" id="ce-q" type="search" placeholder="Search code or description" value="' + esc(query) + '" autocomplete="off">'
         + '<select class="ce-select" id="ce-status" style="flex:0 1 190px">'
           + ['all','active','scheduled','expired','exhausted'].map(function(v){
@@ -716,6 +848,38 @@
   }
 
   /* -------------------------------------------------------------- editor */
+
+  /* A titled band. The heading says what the group decides, the line under it
+     says when you would touch it, and only then come the fields -- so the eye
+     lands on a decision rather than on the first of eleven boxes.
+
+     Every long explanation this screen used to hang under an individual input
+     lives in one of these descriptions or in a note at the foot of the band.
+     Help under a box is now one short line, because a paragraph there is a
+     wall the eye has to cross before it can find the next label. */
+  function section(title, description, body){
+    return '<section class="ce-sec">'
+      + '<div class="ce-sec-h">'
+        + '<div class="ce-sec-t">' + esc(title) + '</div>'
+        + (description ? '<div class="ce-sec-d">' + description + '</div>' : '')
+      + '</div>'
+      + body
+      + '</section>';
+  }
+
+  /* Fields that belong together, sharing one row and therefore one width.
+     .ce-grid is auto-fit, so two children are two equal tracks on a laptop and
+     two stacked full-width boxes on a phone -- and a row never mixes a field
+     from one subject with a field from another, which is how "Starts on" ended
+     up beside "Coupon amount". */
+  function row(){
+    var cells = [];
+    for (var i = 0; i < arguments.length; i++) {
+      if (arguments[i]) cells.push(arguments[i]);
+    }
+    return '<div class="ce-grid">' + cells.join('') + '</div>';
+  }
+
   function field(label, help, control, errKey){
     var err = errKey && fieldErrors[errKey];
     return '<div class="ce-field">'
@@ -723,6 +887,23 @@
       + control
       + (err ? '<div class="ce-fielderr">' + esc(err) + '</div>' : '')
       + (help ? '<div class="ce-help">' + help + '</div>' : '')
+      + '</div>';
+  }
+
+  /* A checkbox and its sentence, as one quiet row.
+
+     `bind` is the whole attribute, spelled out at the call site rather than
+     assembled from a key here. CouponEditorTest greps this file for the
+     literal data-check="free_shipping" to prove the owner can still set it;
+     an attribute built at runtime would not be there to find, and the test
+     would report a field missing that is in fact on the screen. */
+  function option(bind, checked, title, help, id){
+    return '<div class="ce-opt">'
+      + '<input type="checkbox" id="' + esc(id) + '" ' + bind + (checked ? ' checked' : '') + '>'
+      + '<div>'
+        + '<label class="ce-opt-t" for="' + esc(id) + '">' + esc(title) + '</label>'
+        + '<div class="ce-help">' + help + '</div>'
+      + '</div>'
       + '</div>';
   }
 
@@ -750,56 +931,57 @@
       + '<span>' + esc(isPercent ? '%' : meta.currency) + '</span>'
       + '</div>';
 
-    return '<div class="ce-grid">'
-      + '<div class="ce-field ce-wide">'
-        + '<label class="ce-label">Coupon code</label>'
-        + '<div class="ce-actions">'
-          + '<input class="ce-input" data-bind="code" style="flex:1 1 200px" placeholder="SUMMER20" autocapitalize="characters" autocomplete="off" value="' + esc(draft.code) + '">'
-          + '<button class="ce-btn" id="ce-gen" type="button">' + icon('<path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M20 9A8 8 0 0 0 6 6L4 8"/><path d="M4 15a8 8 0 0 0 14 3l2-2"/>') + 'Generate coupon code</button>'
-        + '</div>'
-        + (fieldErrors.code ? '<div class="ce-fielderr">' + esc(fieldErrors.code) + '</div>' : '')
-        + '<div class="ce-help">What the shopper types at the basket. Capitals are ignored — <b>SUMMER20</b> and <b>summer20</b> are the same code, and two coupons cannot share one.</div>'
+    var codeField = '<div class="ce-field">'
+      + '<label class="ce-label">Coupon code</label>'
+      + '<div class="ce-actions">'
+        + '<input class="ce-input" data-bind="code" style="flex:1 1 200px" placeholder="SUMMER20" autocapitalize="characters" autocomplete="off" value="' + esc(draft.code) + '">'
+        + '<button class="ce-btn" id="ce-gen" type="button">' + icon('<path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M20 9A8 8 0 0 0 6 6L4 8"/><path d="M4 15a8 8 0 0 0 14 3l2-2"/>') + 'Generate coupon code</button>'
       + '</div>'
-
-      + field('Discount type', typeHelp, typeSelect, 'type')
-      + field('Coupon amount',
-              isPercent
-                ? 'Up to two decimal places, so 12.5 means twelve and a half percent.'
-                : 'In ' + esc(meta.currency) + ', e.g. 25.00.',
-              amountBox, 'amount')
-
-      + field('Starts on',
-              'The first day the code works. Leave empty to start straight away.',
-              textInput('starts_at', 'type="date"'), 'starts_at')
-      + field('Expires on',
-              'The last day the code works — it keeps working all through this day and stops at midnight. A date in the past is allowed, and the list marks the code Expired.',
-              textInput('expires_at', 'type="date"'), 'expires_at')
-
-      + '<div class="ce-field ce-wide">'
-        + '<label class="ce-label">Description</label>'
-        + '<textarea class="ce-area" data-bind="description">' + esc(draft.description) + '</textarea>'
-        + '<div class="ce-help">A note for you. It is never shown to shoppers, and it is searchable from the list.</div>'
-      + '</div>'
-
-      /* Drawn, disabled, and explained. See the file docblock: the column
-         was unenforceable for a long time and the box was drawn disabled. It
-         is enforced now -- CartService::totals() zeroes the delivery line for
-         a coupon carrying it -- so the box is live.
-
-         NOTE FOR ANYONE DISABLING IT AGAIN: a disabled input posts nothing,
-         and boolean('free_shipping') reads a missing key as false. While this
-         box was disabled, an unconditional write would have cleared the flag
-         on every save, silently, on the only rows that carry it. The endpoint
-         therefore writes it only when the form actually posts the key. Keep
-         that guard. */
-      + '<div class="ce-wide ce-note">'
-        + '<div class="ce-check">'
-          + '<input type="checkbox" data-check="free_shipping"' + (draft.free_shipping ? ' checked' : '') + '>'
-          + '<div><b>Allow free shipping</b><br>'
-          + 'Delivery is not charged on an order using this code. It overrides the shipping rate for the destination, so the customer pays nothing for delivery however much they spend.</div>'
-        + '</div>'
-      + '</div>'
+      + (fieldErrors.code ? '<div class="ce-fielderr">' + esc(fieldErrors.code) + '</div>' : '')
+      + '<div class="ce-help">Capitals are ignored, and no two coupons may share a code.</div>'
       + '</div>';
+
+    var descField = '<div class="ce-field">'
+      + '<label class="ce-label">Description</label>'
+      + '<textarea class="ce-area" data-bind="description">' + esc(draft.description) + '</textarea>'
+      + '<div class="ce-help">Searchable from the list.</div>'
+      + '</div>';
+
+    /* Drawn, disabled, and explained. See the file docblock: the column
+       was unenforceable for a long time and the box was drawn disabled. It
+       is enforced now -- CartService::totals() zeroes the delivery line for
+       a coupon carrying it -- so the box is live.
+
+       NOTE FOR ANYONE DISABLING IT AGAIN: a disabled input posts nothing,
+       and boolean('free_shipping') reads a missing key as false. While this
+       box was disabled, an unconditional write would have cleared the flag
+       on every save, silently, on the only rows that carry it. The endpoint
+       therefore writes it only when the form actually posts the key. Keep
+       that guard. */
+    var freeShipping = option('data-check="free_shipping"', draft.free_shipping,
+      'Allow free shipping',
+      'Delivery is not charged on an order using this code, whatever the rate for the destination would have been.',
+      'ce-free-ship');
+
+    return section('The code',
+        'What the shopper types at the basket — and a note to yourself about why it exists. '
+          + 'The note is never shown to shoppers.',
+        codeField + descField)
+
+      + section('The discount',
+        'How much comes off, and the window in which the code works. Leave both dates empty for a code '
+          + 'that starts straight away and never expires; an expiry in the past is allowed and the list marks the code Expired.',
+        row(field('Discount type', typeHelp, typeSelect, 'type'),
+            field('Coupon amount',
+                  isPercent
+                    ? 'Two decimals allowed — 12.5 is twelve and a half percent.'
+                    : 'In ' + esc(meta.currency) + ', e.g. 25.00.',
+                  amountBox, 'amount'))
+        + row(field('Starts on', 'Empty starts it straight away.',
+                    textInput('starts_at', 'type="date"'), 'starts_at'),
+              field('Expires on', 'Works all through this day, then stops at midnight.',
+                    textInput('expires_at', 'type="date"'), 'expires_at'))
+        + freeShipping);
   }
 
   function pickerBlock(p){
@@ -813,89 +995,131 @@
             + '<button type="button" data-drop="' + esc(p.key) + '" data-id="' + esc(it.id) + '" aria-label="Remove">&times;</button>'
             + '</span>';
         }).join('') + '</div>'
-      : '<div class="ce-help">Nothing selected — no restriction.</div>';
+      /* Empty means "no restriction", not "unfinished" -- the opposite of what
+         a blank box usually says -- so each picker spells out what its own
+         empty state lets through. */
+      : '<div class="ce-pick-e">' + esc(p.empty) + '</div>';
 
     var found_html = '';
     if (found && found.length) {
+      /* `hint` is the endpoint's own "Brand · SKU" line and it stays visible:
+         the product lookup matches brand names as well as names and SKUs, so
+         the hint is often the only thing on the row explaining why a search
+         for a brand returned this product. */
       found_html = '<div class="ce-results">' + found.slice(0, 12).map(function(it){
         return '<button type="button" data-pick="' + esc(p.key) + '" data-id="' + esc(it.id) + '">'
           + esc(it.label) + (it.hint ? ' <em>' + esc(it.hint) + '</em>' : '') + '</button>';
       }).join('') + '</div>';
     } else if (found) {
-      found_html = '<div class="ce-help">Nothing found.</div>';
+      found_html = '<div class="ce-pick-e">Nothing found.</div>';
     }
 
-    return '<div class="ce-field ce-wide">'
-      + '<label class="ce-label">' + esc(p.label) + '</label>'
+    var placeholder = {
+      product: 'Search by name, brand or SKU',
+      category: 'Search categories',
+      brand: 'Search brands'
+    }[p.kind] || 'Search';
+
+    return '<div class="ce-pick">'
+      + '<div class="ce-pick-l">' + esc(p.mode === 'only' ? 'Only these' : 'Never these') + '</div>'
       + '<div class="ce-picker">'
         + chips
-        + '<input class="ce-input" data-search="' + esc(p.key) + '" data-kind="' + esc(p.kind) + '" type="search" placeholder="Search ' + esc({product:'products', category:'categories', brand:'brands'}[p.kind] || p.kind) + ' to add" autocomplete="off">'
+        + '<input class="ce-input" data-search="' + esc(p.key) + '" data-kind="' + esc(p.kind) + '" type="search" placeholder="' + esc(placeholder) + '" autocomplete="off">'
         + found_html
       + '</div>'
-      + '<div class="ce-help">' + esc(p.help) + '</div>'
+      + '</div>';
+  }
+
+  /* One subject -- products, categories or brands -- with its include list
+     beside its exclude list under a single quiet caption. */
+  function pickerGroupBlock(group){
+    return '<div class="ce-pickgrp">'
+      + '<div class="ce-pickgrp-t">' + esc(group.name) + '</div>'
+      + '<div class="ce-pickpair">' + group.items.map(pickerBlock).join('') + '</div>'
       + '</div>';
   }
 
   function restrictionsTab(){
     var cur = esc(meta.currency);
 
-    return '<div class="ce-grid">'
-      + field('Minimum spend',
-              'The basket subtotal must be at least this much. Checked against <b>everything in the basket</b>, before any discount — not just the items this code applies to. In ' + cur + '.',
-              textInput('minimum_amount', 'inputmode="decimal" placeholder="100.00"'), 'minimum_amount')
-      + field('Maximum spend',
-              'The basket subtotal must be no more than this. Same subtotal as above. In ' + cur + '.',
-              textInput('maximum_amount', 'inputmode="decimal" placeholder="500.00"'), 'maximum_amount')
+    var spend = row(
+        field('Minimum spend', 'Empty for no minimum.',
+              textInput('minimum_amount', 'inputmode="decimal" placeholder="100.00"'), 'minimum_amount'),
+        field('Maximum spend', 'Empty for no maximum.',
+              textInput('maximum_amount', 'inputmode="decimal" placeholder="500.00"'), 'maximum_amount'))
+      + option('data-check="exclude_sale_items"', draft.exclude_sale_items,
+          'Exclude sale items',
+          'Anything already reduced is left out of the discount. If that leaves nothing for the code to apply to, the code is refused.',
+          'ce-excl-sale');
 
-      + '<div class="ce-wide">'
-        + '<div class="ce-check">'
-          + '<input type="checkbox" id="ce-excl-sale" data-check="exclude_sale_items"' + (draft.exclude_sale_items ? ' checked' : '') + '>'
-          + '<div><label class="ce-label" for="ce-excl-sale">Exclude sale items</label>'
-          + '<div class="ce-help">Anything already reduced is left out of the discount. If that leaves nothing in the basket for the code to apply to, the code is refused with "that code does not apply to anything in your basket".</div></div>'
-        + '</div>'
+    var applies = '<div class="ce-picks">'
+      + pickerGroups().map(pickerGroupBlock).join('')
+      + '</div>';
+
+    var who = '<div class="ce-field">'
+        + '<label class="ce-label">Allowed emails</label>'
+        + '<textarea class="ce-area" data-bind="allowed_emails" placeholder="one address per line">' + esc(draft.allowed_emails) + '</textarea>'
+        + (fieldErrors.allowed_emails ? '<div class="ce-fielderr">' + esc(fieldErrors.allowed_emails) + '</div>' : '')
+        + '<div class="ce-help">One address per line. Empty for no restriction.</div>'
       + '</div>'
 
       /* A statement, not a control. carts.coupon_id is a single nullable
          foreign key: the basket has only ever held one coupon, so the
          restriction is in force for every code and always has been. A tickable
-         box would imply the opposite is possible. */
-      + '<div class="ce-wide ce-note is-plain">'
+         box would imply the opposite is possible. It sits at the foot of the
+         band as a footnote rather than between two inputs, where it read as a
+         warning about the field above it. */
+      + '<div class="ce-note is-plain">'
         + '<b>Individual use only</b> — already true of every code, so there is nothing to set.<br>'
         + 'A basket on this shop holds one coupon at a time. Applying a second replaces the first; codes are never stacked.'
-      + '</div>'
-
-      + PICKERS.map(pickerBlock).join('')
-
-      + '<div class="ce-field ce-wide">'
-        + '<label class="ce-label">Allowed emails</label>'
-        + '<textarea class="ce-area" data-bind="allowed_emails" placeholder="one address per line">' + esc(draft.allowed_emails) + '</textarea>'
-        + (fieldErrors.allowed_emails ? '<div class="ce-fielderr">' + esc(fieldErrors.allowed_emails) + '</div>' : '')
-        + '<div class="ce-help">One address per line. Only these shoppers may use the code — capitals are ignored. <b>It is checked once an email address is known</b>: at the basket a guest has not given one yet, so the code applies there and is refused when they enter a different address at checkout. Leave empty for no restriction.</div>'
-      + '</div>'
       + '</div>';
+
+    return section('Spend limits',
+        'How big the basket has to be. Both are checked against the <b>whole</b> subtotal before any discount — '
+          + 'not only the items this code applies to. Amounts in ' + cur + '.',
+        spend)
+
+      + section('What it applies to',
+        'Narrow the discount to certain products, categories or brands. An empty list is no restriction at all, '
+          + 'and an exclusion always beats an inclusion.',
+        applies)
+
+      + section('Who can use it',
+        'By default, anyone holding the code. A list here is checked once an email address is known — a guest at '
+          + 'the basket has not given one yet, so the code applies there and is refused at checkout.',
+        who);
   }
 
   function limitsTab(){
-    return '<div class="ce-grid">'
-      + field('Usage limit per coupon',
-              'How many times the code may be redeemed in total, across everybody. Leave empty for no limit. The count so far is <b>' + esc(draft.usage_count) + '</b>.',
-              textInput('usage_limit', 'inputmode="numeric" placeholder="no limit"'), 'usage_limit')
-      + field('Usage limit per user',
-              'How many times one shopper may redeem it, counted by the email on the order. Leave empty for no limit. <b>Checked once an email address is known</b>, which at the basket a guest has not given yet — so it bites at checkout.',
-              textInput('usage_limit_per_user', 'inputmode="numeric" placeholder="no limit"'), 'usage_limit_per_user')
+    /* The three caps sit in one row because they are one decision asked three
+       ways -- how many times, by whom, over how many items -- and the long
+       explanation that used to hang under each of them is now the band's
+       description and the note beneath it. */
+    var caps = row(
+        field('Usage limit per coupon',
+              'Across everybody. Redeemed <b>' + esc(draft.usage_count) + '</b> times so far.',
+              textInput('usage_limit', 'inputmode="numeric" placeholder="no limit"'), 'usage_limit'),
+        field('Usage limit per user',
+              'Counted by the email on the order, so it bites at checkout.',
+              textInput('usage_limit_per_user', 'inputmode="numeric" placeholder="no limit"'), 'usage_limit_per_user'),
 
-      /* Was an explanatory note while there was no column and no code to
-         honour one. Both exist now: coupons.limit_usage_to_x_items, applied in
-         CouponService::cappedLines(). */
-      + field('Limit usage to X items',
-              'The most items one use of this code may discount. Leave empty for no limit. Where it bites, the <b>cheapest</b> matching items are the ones discounted &mdash; that costs the shop least and gives the same answer whatever order things went into the basket.',
-              textInput('limit_usage_to_x_items', 'inputmode="numeric" placeholder="no limit"'), 'limit_usage_to_x_items')
+        /* Was an explanatory note while there was no column and no code to
+           honour one. Both exist now: coupons.limit_usage_to_x_items, applied
+           in CouponService::cappedLines(). */
+        field('Limit usage to X items',
+              'The most items one use may discount.',
+              textInput('limit_usage_to_x_items', 'inputmode="numeric" placeholder="no limit"'), 'limit_usage_to_x_items'));
 
-      + '<div class="ce-wide ce-note is-plain">'
-        + '<b>Both limits are enforced twice.</b><br>'
-        + 'Once when the shopper applies the code, and again inside the transaction that writes the order — against a locked row, so two shoppers holding the last use of a code cannot both spend it. Lowering a limit below the count already reached simply stops the code working; it never un-redeems an order.'
-      + '</div>'
+    var note = '<div class="ce-note is-plain">'
+        + '<b>Both usage limits are enforced twice.</b><br>'
+        + 'Once when the shopper applies the code, and again inside the transaction that writes the order — against a locked row, so two shoppers holding the last use of a code cannot both spend it. '
+        + 'Lowering a limit below the count already reached simply stops the code working; it never un-redeems an order. '
+        + 'Where the item cap bites, the <b>cheapest</b> matching items are the ones discounted — that costs the shop least and gives the same answer whatever order things went into the basket.'
       + '</div>';
+
+    return section('How often it can be used',
+      'Leave a box empty for no limit. Every one of these is a ceiling, not a target: raising one later lets the code carry on, lowering one stops it.',
+      caps + note);
   }
 
   function editorView(){

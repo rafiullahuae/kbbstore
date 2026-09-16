@@ -64,9 +64,13 @@
 
 .cu-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
 .cu-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
-         border-radius:var(--r,12px);padding:12px 14px}
-.cu-stat b{display:block;font-size:20px;line-height:1.3;font-variant-numeric:tabular-nums}
-.cu-stat span{color:var(--ink-soft,#6b7280);font-size:12px}
+         border-radius:var(--r,12px);padding:13px 15px;box-shadow:var(--sh-s,none)}
+/* Caption above the figure, matching the Coupons editor next door: the two
+   screens link to each other and a tile that reads the other way round on one
+   of them looks like a different console. */
+.cu-stat b{display:block;font-size:22px;line-height:1.25;font-variant-numeric:tabular-nums;margin-top:3px}
+.cu-stat span{display:block;color:var(--ink-soft,#6b7280);font-size:11px;font-weight:650;
+              text-transform:uppercase;letter-spacing:.05em}
 
 .cu-search{display:flex;gap:8px;flex-wrap:wrap}
 .cu-search input{flex:1 1 180px;min-width:0;padding:8px 10px;font:inherit;
@@ -288,9 +292,9 @@
     var rows = (list && list.coupons) || [];
 
     var head = '<div class="cu-stats">'
-      + '<div class="cu-stat"><b class="cu-num">' + esc((list && list.summary.coupons) || 0) + '</b><span>Coupons</span></div>'
-      + '<div class="cu-stat"><b class="cu-num">' + esc((list && list.summary.redemptions) || 0) + '</b><span>Total redemptions</span></div>'
-      + '<div class="cu-stat"><b class="cu-num">' + esc((list && list.summary.exhausted) || 0) + '</b><span>Fully redeemed</span></div>'
+      + '<div class="cu-stat"><span>Coupons</span><b class="cu-num">' + esc((list && list.summary.coupons) || 0) + '</b></div>'
+      + '<div class="cu-stat"><span>Total redemptions</span><b class="cu-num">' + esc((list && list.summary.redemptions) || 0) + '</b></div>'
+      + '<div class="cu-stat"><span>Fully redeemed</span><b class="cu-num">' + esc((list && list.summary.exhausted) || 0) + '</b></div>'
       + '</div>';
 
     var body;
