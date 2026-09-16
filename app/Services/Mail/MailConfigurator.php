@@ -47,6 +47,33 @@ class MailConfigurator
      */
     public function apply(): void
     {
+        /*
+         * Register the transport HERE as well as from the service provider.
+         *
+         * The provider does it inside afterResolving('mail.manager'), which
+         * only fires for resolutions that happen after the provider
+         * registered. mail.manager is a singleton, so if anything resolved it
+         * earlier in the request the callback never runs for the instance that
+         * is actually used -- and the first symptom is
+         * "Unsupported mail transport [kbb-server]" at the moment somebody
+         * presses Send test message. That is what the owner hit on the live
+         * server while every test here passed, because the ordering that
+         * breaks it does not occur in the test bootstrap.
+         *
+         * Doing it at the point of use removes the ordering question entirely:
+         * anything that sends mail through this application calls apply()
+         * first, and extend() is a single array write, so calling it again is
+         * free and idempotent.
+         *
+         * Deliberately NOT wrapped in a silent catch. The provider's copy is,
+         * which is why the real cause was invisible: a failure there left the
+         * driver unregistered and produced an error message about the symptom
+         * rather than the cause. If registration genuinely cannot work, the
+         * send is going to fail anyway and the operator is better served by
+         * the reason.
+         */
+        self::registerTransports(app('mail.manager'));
+
         config(['mail.mailers.' . self::MAILER => $this->mailerConfig()]);
 
         /*
@@ -82,8 +109,44 @@ class MailConfigurator
      *
      * @param  \Illuminate\Mail\MailManager  $manager
      */
+    /**
+     * Manager instances this process has already registered the driver on.
+     *
+     * Keyed by object id, because the point is "ensure this manager knows the
+     * driver", not "overwrite whatever it knows".
+     *
+     * @var array<int, true>
+     */
+    private static array $registered = [];
+
+    /**
+     * Teach a mail manager about the server transport, once per instance.
+     *
+     * ENSURE, not replace. Registration is called from two places on purpose --
+     * the service provider, and apply() at the point of use -- because the
+     * provider's copy runs inside afterResolving('mail.manager'), which only
+     * fires for resolutions that happen after it registered. mail.manager is a
+     * singleton, so a request that resolved it earlier got an instance the
+     * callback never touched, and the owner's first symptom was
+     * "Unsupported mail transport [kbb-server]" from Send test message.
+     *
+     * Calling extend() unconditionally the second time would fix that and
+     * break something else: anything that deliberately swapped in its own
+     * transport -- the argument spies that assert what reaches mail(), a
+     * debugging hook -- would be silently overwritten the next time the
+     * configuration was applied. Two tests caught exactly that. So the second
+     * call is a no-op, and an override registered afterwards keeps winning.
+     */
     public static function registerTransports($manager): void
     {
+        $id = spl_object_id($manager);
+
+        if (isset(self::$registered[$id])) {
+            return;
+        }
+
+        self::$registered[$id] = true;
+
         $manager->extend(
             ServerMailTransport::NAME,
             static fn (array $config = []) => new ServerMailTransport,
