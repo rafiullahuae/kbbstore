@@ -148,9 +148,27 @@ class Seo
         $out[] = '<meta name="robots" content="' . $e($robots) . '">';
         if ($url)   $out[] = '<link rel="canonical" href="' . $e($url) . '">';
 
-        // Webmaster verification
-        if (!empty($s['google_site_verification'])) $out[] = '<meta name="google-site-verification" content="' . $e($s['google_site_verification']) . '">';
-        if (!empty($s['bing_site_verification']))   $out[] = '<meta name="msvalidate.01" content="' . $e($s['bing_site_verification']) . '">';
+        /*
+         * Webmaster verification.
+         *
+         * FOUR boxes, not two. Store -> SEO & Meta -> "Verification & tracking"
+         * collects Google, Bing, Pinterest and Baidu, and all four keys are on
+         * AdminController::SETTING_RULES, so all four have always saved. Only
+         * the first two were ever printed, which made the other two a screen
+         * writing keys nothing read: "Saved" on screen, a row in the settings
+         * table, no tag in the <head>, and a verification that fails at the
+         * other end with nothing here to explain it.
+         *
+         * The tag names are each service's own and are not interchangeable:
+         * Pinterest reads `p:domain_verify`, Baidu reads
+         * `baidu-site-verification`. tests/Feature/SeoVerificationTagsTest.php
+         * drives the list off SETTING_RULES, so a fifth engine added to that
+         * constant cannot ship without its tag.
+         */
+        if (!empty($s['google_site_verification']))    $out[] = '<meta name="google-site-verification" content="' . $e($s['google_site_verification']) . '">';
+        if (!empty($s['bing_site_verification']))      $out[] = '<meta name="msvalidate.01" content="' . $e($s['bing_site_verification']) . '">';
+        if (!empty($s['pinterest_site_verification'])) $out[] = '<meta name="p:domain_verify" content="' . $e($s['pinterest_site_verification']) . '">';
+        if (!empty($s['baidu_site_verification']))     $out[] = '<meta name="baidu-site-verification" content="' . $e($s['baidu_site_verification']) . '">';
 
         // Open Graph
         $out[] = '<meta property="og:type" content="' . ($type === 'product' ? 'product' : ($type === 'article' ? 'article' : 'website')) . '">';

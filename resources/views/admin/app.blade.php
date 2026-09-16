@@ -2325,7 +2325,19 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
       <button class="iconbtn" onclick="go('debug')" title="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
       <div class="userchip"><div class="avatar">R</div><div><b>Rafi</b><small>Owner</small></div></div>
     </div>
-    <div class="envbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h16.9a2 2 0 0 0 1.8-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg> You're viewing <b>&nbsp;Sandbox&nbsp;</b> — changes here are isolated from the live store until you deploy.</div>
+    <!-- LANE DD. This strip promised that edits made while the switch above
+         reads Sandbox were held back from the live store until a deploy. There
+         is no second store and no deploy step: the switch sets
+         document.body.dataset.env and nothing else reads it, so every save on
+         every screen goes straight to the live database either way. An owner
+         who believed the promise would try a price, a coupon or a VAT rate
+         "safely" and change the real shop.
+
+         The line now says what the switch does. Whether the console should
+         keep a switch that only labels itself is the owner's call and is
+         reported, not decided here - and the CSS it rides on is pinned by
+         AdminThemeTokensAndLabelClickTest, which belongs to another lane. -->
+    <div class="envbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h16.9a2 2 0 0 0 1.8-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg> This label reads <b>&nbsp;Sandbox&nbsp;</b>, but there is only one store. Everything you change here is saved to the live shop immediately — the switch changes nothing but this strip.</div>
 
     <div class="content" id="content"></div>
   </div>
@@ -2650,12 +2662,20 @@ function renderDash(){
         </div>
       </div>
     </div>
+    <!-- LANE DD. This card was labelled "live feed" and its three rows were
+         literals, each dated "just now" for ever: a foundation that had
+         initialised, a monitor that was watching and a sandbox that was ready.
+         hydrateDash() overwrites them with the store's real recent orders --
+         but only when there ARE recent orders, and it returns early when
+         /admin-api/stats cannot be reached at all. A quiet shop, or a broken
+         endpoint, therefore left an owner reading three invented events under
+         the word "live". The rows are the placeholder they always were now,
+         and hydrateDash() writes the honest empty line when the store has no
+         orders to show rather than leaving whatever was here. -->
     <div class="card pad" style="margin-top:16px">
-      <div class="between"><b style="font-size:14px">Recent activity</b><span class="pill grey">live feed</span></div>
+      <div class="between"><b style="font-size:14px">Recent activity</b><span class="pill grey">orders</span></div>
       <div style="margin-top:8px">
-        ${act('green','Foundation initialised','Core, Modules Manager, Theme engine created','just now')}
-        ${act('blue','Debug & Monitor enabled','Watching app, database, storefront','just now')}
-        ${act('amber','Sandbox ready','Pre-flight checks armed for first deploy','just now')}
+        <p style="font-size:12.5px;color:var(--ink-soft);padding:8px 0">Loading the latest orders…</p>
       </div>
     </div>
   </div>`;
@@ -2663,7 +2683,9 @@ function renderDash(){
 const kpi=(icon,col,bg,lbl,val,sub)=>`<div class="kpi"><div class="ic" style="background:${bg};color:${col}">${ic(icon)}</div><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="sub">${sub}</div></div>`;
 const hrow=(s,n,m)=>`<div class="hrow"><span class="hd ${s}"></span><b>${n}</b><small>${m}</small></div>`;
 const prog=(n,pct,tag)=>`<div><div class="between" style="margin-bottom:6px"><span style="font-size:12.5px;font-weight:600">${n}</span>${tag?`<span class="pill ${pct===100?'green':'grey'}">${tag}</span>`:''}</div><div style="height:7px;background:var(--surface-3);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--accent-strong));border-radius:99px;transition:.6s"></div></div></div>`;
-const act=(c,t,d,w)=>`<div class="row" style="padding:11px 0;border-bottom:1px solid var(--border-2)"><span class="hd ${c==='blue'?'green':c}" style="background:var(--${c==='blue'?'blue':c});width:8px;height:8px;border-radius:50%;flex-shrink:0"></span><div><div style="font-size:13px;font-weight:600">${t}</div><div style="font-size:11.5px;color:var(--ink-soft)">${d}</div></div><small style="margin-left:auto;font-size:11px;color:var(--ink-faint)">${w}</small></div>`;
+/* LANE DD - act() built the three invented rows the Recent activity card
+   used to carry, and had no other caller, so it went with them. See the
+   note in renderDash(). */
 
 /* ---------- Modules Manager ---------- */
 const MODULES=[
@@ -6268,48 +6290,49 @@ function reportModal(){
   </div>`);
 }
 
-/* ---------- Sandbox & Deploy ---------- */
-let deployed=false;
+/* ---------- Sandbox & Deploy ----------
+   ===== LANE DD ==============================================================
+
+   THIS SCREEN DESCRIBED A RELEASE PROCESS THIS APPLICATION DOES NOT HAVE, and
+   every number on it was typed in by hand.
+
+   It showed two environment cards ("Clone of live data: yes"), five pre-flight
+   checks all lit green with invented detail under each one ("8 tables ·
+   non-destructive", "0 critical errors"), a diff summary of +8 tables and +34
+   files, a Rollback button and a Deploy to Live button. None of it was
+   measured. The checks were five string literals; the deploy handler was a
+   1.1-second setTimeout that flipped a boolean in this file and reported
+   "Deployed to Live ✓ · backup saved"; rollback flipped it back. The banner at
+   the foot promised that every deploy takes a backup of the live database
+   first and keeps the previous version for instant rollback, and nothing in
+   this application had ever taken a database backup on that path, because
+   there is no such path.
+
+   The same restraint as Meta & Facebook further up: the one-line fix would
+   have been to wire the buttons to something, and that would have been the
+   wrong one. A shop owner reading "5 / 5 passed" before pressing a button
+   labelled Deploy to Live is being told his release was checked. Making that
+   sentence true is a release pipeline, not a screen.
+
+   AND THE REAL ONE ALREADY EXISTS, one row further down the sidebar. Core
+   Updates applies a signed package, records the release, keeps a restore point
+   per apply and lists it for one-click restore — UpdateController, the
+   `update_releases` table and the Restore list on that screen. This screen now
+   says so and takes the owner there, rather than competing with it.
+
+   deploy(), rollback(), the `deployed` flag and the chk() helper went with the
+   buttons that called them; they had no other caller. The `window.deploy` /
+   `window.rollback` exports went too, for the same reason.
+   ========================================================================= */
 function renderSandbox(){
-  $('#content').innerHTML=`<div class="wrap">
-    <div class="page-head"><h2>Sandbox & Deploy</h2><p>Nothing risky touches the live store. Changes land in Sandbox, get checked, and only deploy when everything is green — with one-click rollback.</p></div>
-    <div class="envcards">
-      <div class="envcard live"><div class="et">${ic('<circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/>')} Live</div>
-        <div class="ev">Version <b id="liveVer">${deployed?'0.1.0':'0.0.0'}</b></div>
-        <div class="ev">Last deploy: <b>${deployed?'just now':'—'}</b></div>
-        <div class="ev" style="margin-top:8px"><span class="pill green"><span class="d"></span>Stable</span></div>
-      </div>
-      <div class="envcard sand"><div class="et">${ic(I.sandbox)} Sandbox</div>
-        <div class="ev">Change set: <b>Phase 0 · Foundation</b></div>
-        <div class="ev">Clone of live data: <b>yes</b></div>
-        <div class="ev" style="margin-top:8px"><span class="pill amber"><span class="d"></span>${deployed?'Clean':'Ready to deploy'}</span></div>
-      </div>
-    </div>
-    <div class="card pad">
-      <div class="between"><b style="font-size:14px">Pre-flight checks</b><span class="pill green" id="checkSum"><span class="d"></span>5 / 5 passed</span></div>
-      <div class="checks" style="margin-top:8px">
-        ${chk('green','Syntax & JS validation','no errors')}
-        ${chk('green','Conflict scan','no table / route / style clashes')}
-        ${chk('green','Migration dry-run','8 tables · non-destructive')}
-        ${chk('green','Smoke tests','admin, dashboard, nav OK')}
-        ${chk('green','Debug scan','0 critical errors')}
-      </div>
-      <div class="diff">${ic('<path d="M6 3v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9v6a6 6 0 0 1-6 6"/>')}&nbsp;<span><b class="plus">+8</b> tables</span><span><b class="plus">+34</b> files</span><span><b>8</b> core modules</span><span><b>0</b> conflicts</span></div>
-      <div class="row" style="justify-content:flex-end;gap:10px;margin-top:4px">
-        <button class="btn ghost" onclick="toast('Showing full diff — Phase 0 build')">View full diff</button>
-        <button class="btn danger" ${deployed?'':'disabled'} onclick="rollback()">${ic('<path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/>')} Rollback</button>
-        <button class="btn" ${deployed?'disabled':''} id="deployBtn" onclick="deploy()">${ic(I.rocket||I.check)} Deploy to Live</button>
-      </div>
-    </div>
-    <div class="banner" style="margin:18px 0 0;background:var(--accent-soft);border-color:#bfe6cf;color:var(--accent-ink)">${ic('<path d="M12 2 4 5v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V5z"/><path d="M9 12l2 2 4-4"/>')}<div>Every deploy auto-backs-up the live database first and keeps the previous version for instant rollback.</div></div>
-  </div>`;
+  $('#content').innerHTML=`<div class="wrap"><div class="ph">
+    <div class="pic">${ic(I.sandbox)}</div>
+    <h3>There is no sandbox to deploy from</h3>
+    <p>This store has one database and one set of files. Nothing you change in this console is staged anywhere first — a price, a coupon or a VAT rate is live the moment you save it, and the Live / Sandbox switch in the top bar only changes its own label.</p>
+    <p>Code reaches this site as an update package, and that is where the checking, the restore point and the version history actually are: <b>Core Updates</b> verifies a package, records the release and keeps a restore point you can put back in one click.</p>
+    <button class="btn" onclick="go('updates')">Core Updates →</button>
+  </div></div>`;
 }
-const chk=(s,n,m)=>`<div class="check"><div class="ci ${s}">${ic(I.check)}</div><b>${n}</b><small>${m}</small></div>`;
-function deploy(){
-  const b=$('#deployBtn');b.disabled=true;b.innerHTML=ic('<circle cx="12" cy="12" r="9"/>')+' Deploying…';
-  setTimeout(()=>{deployed=true;toast('Deployed to Live ✓ · backup saved');renderSandbox();},1100);
-}
-function rollback(){deployed=false;toast('Rolled back to previous version');renderSandbox();}
 
 /* ---------- placeholder (future modules) ---------- */
 function renderPlaceholder(id){
@@ -9054,9 +9077,17 @@ let toastT;function toast(m){const t=$('#toast');t.innerHTML=ic(I.check)+'<span>
 $$('#envtog button').forEach(b=>b.onclick=()=>{
   $$('#envtog button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   document.body.dataset.env=b.dataset.e;
-  toast(b.dataset.e==='sandbox'?'Switched to Sandbox':'Switched to Live');
+  /* LANE DD — "Switched to Sandbox" was a report of something that did not
+     happen. The line above is the whole of what this button does: it sets an
+     attribute on <body> that only the warning strip's CSS reads. There is one
+     database and every screen writes to it whichever side is lit. */
+  toast(b.dataset.e==='sandbox'
+    ? 'Label only — you are still editing the live shop'
+    : 'Label only — you were already editing the live shop');
 });
-window.go=go;window.toast=toast;window.reportModal=reportModal;window.closeModal=closeModal;window.deploy=deploy;window.rollback=rollback;
+/* LANE DD — window.deploy and window.rollback are gone with the two buttons
+   that were their only callers. See the note above renderSandbox(). */
+window.go=go;window.toast=toast;window.reportModal=reportModal;window.closeModal=closeModal;
 
 /* ---------- console settings + theme ---------- */
 /* id, name, gradient, bg, surface, accent, line, ink, accentSoft */
@@ -10103,6 +10134,15 @@ buildNav();
 
     var cards = Array.prototype.slice.call(document.querySelectorAll('#content .card.pad'));
     var feedCard = cards.filter(function(c){ return /Recent activity/.test(c.textContent); })[0];
+    /* LANE DD — the empty case is written out, not skipped. This used to bail
+       when the store had no recent orders, and whatever renderDash() had drawn
+       stayed on the page under a "live feed" label: three invented events, each
+       dated "just now" for ever. A shop with no orders now reads that it has no
+       orders. */
+    if(feedCard && !(s.recent && s.recent.length)){
+      var empty = feedCard.querySelector('div:last-child');
+      if(empty) empty.innerHTML = '<p style="font-size:12.5px;color:var(--ink-soft);padding:8px 0">No orders yet.</p>';
+    }
     if(feedCard && s.recent && s.recent.length){
       var feed = feedCard.querySelector('div:last-child');
       if(feed) feed.innerHTML = s.recent.map(function(o){
@@ -14810,15 +14850,34 @@ buildNav();
             'Filtered and sorted shop views point their canonical back at the clean category URL, so ranking signals gather there instead of scattering across every filter combination. Page 2 onward still index normally.')+
         '</div>')+
 
+      /* ===== LANE DD · one section, two different kinds of field ==============
+         The description here used to tell the owner that pasting anything into
+         this section left the storefront unchanged. That was true of the four
+         verification tokens above and untrue of the two tracking fields below
+         them. A Google Analytics ID is not a token that proves ownership: the
+         moment one is saved, App\Support\Seo puts Google's gtag script on every
+         storefront page and starts sending Google a record of every visit. The
+         owner was being told the opposite of that while switching it on.
+
+         The Meta Pixel box is the other half of the same mix-up. It saves —
+         `meta_pixel` is on AdminController::SETTING_RULES — and no storefront
+         page fires it. The pixel that does fire is the one on Growth &
+         Marketing → Marketing Pixels, which is a different setting; see
+         App\Services\MarketingPixels. Both boxes are left where they are and
+         each now says which is which, because deciding which of the two the
+         shop should keep is the owner's call, not this lane's.
+         ===================================================================== */
       smSec('Verification & tracking',
-        'Tokens each service hands you once, to prove the shop is yours. Paste and forget — nothing here changes how the storefront behaves.',
+        'The first four are verification tokens — a service gives you one, it goes into a meta tag on every page, and nothing else about the shop changes. The two below them are not tokens: they load third-party tracking scripts for your visitors.',
         '<div class="sm-grid">'+
           smField('seo_gsv','Google Search Console','<input id="seo_gsv" value="'+sesc(S.google_site_verification)+'" placeholder="verification token">')+
           smField('seo_bing','Bing Webmaster','<input id="seo_bing" value="'+sesc(S.bing_site_verification)+'" placeholder="verification token">')+
           smField('seo_pin','Pinterest','<input id="seo_pin" value="'+sesc(S.pinterest_site_verification)+'" placeholder="verification token">')+
           smField('seo_baidu','Baidu','<input id="seo_baidu" value="'+sesc(S.baidu_site_verification)+'" placeholder="verification token">')+
-          smField('seo_ga','Google Analytics ID','<input id="seo_ga" value="'+sesc(S.ga)+'" placeholder="G-XXXXXXXXXX">')+
-          smField('seo_pixel','Meta (Facebook) Pixel','<input id="seo_pixel" value="'+sesc(S.meta_pixel)+'" placeholder="123456789012345">')+
+          smField('seo_ga','Google Analytics ID','<input id="seo_ga" value="'+sesc(S.ga)+'" placeholder="G-XXXXXXXXXX">',
+            'Saving an ID here loads Google’s tag on every storefront page. Clear the box to stop it.')+
+          smField('seo_pixel','Meta (Facebook) Pixel','<input id="seo_pixel" value="'+sesc(S.meta_pixel)+'" placeholder="123456789012345">',
+            'Stored, but no storefront page fires it. The Meta pixel that does fire is set under Growth &amp; Marketing → Marketing Pixels.')+
         '</div>')+
 
       '</div>'+
