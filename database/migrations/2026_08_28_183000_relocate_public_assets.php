@@ -43,6 +43,42 @@ return new class extends Migration
             return 0;
         }
 
+        /*
+         * NOT IN A SOURCE CHECKOUT. This is a guard, not an optimisation.
+         *
+         * base_path('public/build') is a stray copy only on the host, where the
+         * updater unpacked the package under the app root and the real web root
+         * is somewhere else entirely. In anybody's working copy it is the
+         * opposite: the tracked original, 37 files that git knows about — and
+         * the tail of this method deletes the directory it just copied.
+         *
+         * So `php artisan migrate` with KBB_PUBLIC_PATH pointing anywhere other
+         * than the repo's own public/ removed those tracked files from the
+         * working copy. Three lanes lost the directory that way. Worse, two
+         * tests do it on every run: PaymentsGatewayTabsTest and
+         * AdminMobileOverflowTest boot a preview whose app root is a symlink to
+         * base_path() and whose KBB_PUBLIC_PATH is a throwaway directory, then
+         * rm -rf that directory on the way out — so `KBB_BROWSER_TESTS=1
+         * vendor/bin/pest` deleted tracked files and the deletion left with the
+         * temp dir.
+         *
+         * The site does not deploy from git (signed zip packages, see
+         * CLAUDE.md), so .git under the app root means a checkout and never the
+         * host. Inside a git worktree .git is a FILE rather than a directory,
+         * which is why this is file_exists() and not is_dir(): the worktrees
+         * several lanes work in are exactly the case that has to be covered.
+         *
+         * Production is unaffected — there is no .git there, so the relocation
+         * this migration exists to perform still happens.
+         */
+        if (file_exists(base_path('.git'))) {
+            if (app()->runningInConsole()) {
+                echo "Skipped relocating public/build: this is a git checkout, where it is the tracked original.\n";
+            }
+
+            return 0;
+        }
+
         $moved = 0;
 
         $items = new RecursiveIteratorIterator(
