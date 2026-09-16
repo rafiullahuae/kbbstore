@@ -25,12 +25,12 @@
     "isEntry": true
   },
   "resources/css/kbb/kbb-shop.css": {
-    "file": "assets/kbb-shop-BuvInSHG.css",
+    "file": "assets/kbb-shop-Bm0N_yrD.css",
     "src": "resources/css/kbb/kbb-shop.css",
     "isEntry": true
   },
   "resources/css/kbb/kbb.css": {
-    "file": "assets/kbb-gx4xFbwa.css",
+    "file": "assets/kbb-DJdSVeqM.css",
     "src": "resources/css/kbb/kbb.css",
     "isEntry": true
   },
@@ -45,7 +45,7 @@
     "src": "resources/js/kbb/app.js",
     "isEntry": true,
     "css": [
-      "assets/kbb-gx4xFbwa.css"
+      "assets/kbb-DJdSVeqM.css"
     ]
   }
 }

@@ -2806,7 +2806,11 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
   /* Card titles: kbb-shop.css does not load on the product page, so the
      related-product cards there need the same rule from this shared sheet.
      min-height keeps the grid aligned and gives a one-line name a real target. */
-  .cname{min-height:44px;padding:5px 0}
+  /* Doubled like .gwish above: kbb-shop.css sets .cname{min-height:34px} and
+     loads after this sheet, so a single class would lose the cascade on the
+     shop and category pages while winning on the product page - two different
+     card heights for the same component. */
+  .cname.cname{min-height:44px;padding:5px 0}
 
   /* Breadcrumbs, including the product page's (that page's own sheet is owned
      by another lane, so this is set from here). */

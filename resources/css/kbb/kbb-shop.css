@@ -378,9 +378,7 @@ img{max-width:100%}
   .mobi-filter{min-height:44px}
   .sortsel select{min-height:44px}
 
-  /* The card title is a third route to the product (the image and the Add to
-     cart button are the other two), but it is still a link a thumb aims at.
-     Padding rather than min-height, so the 3-line clamp above still governs
-     how much of a long name is shown. */
-  .cname{padding:5px 0}
+  /* The card title's touch size is set once, in kbb.css, as .cname.cname -
+     doubled so it wins over the .cname{min-height:34px} above regardless of
+     sheet order. Nothing to add here. */
 }
