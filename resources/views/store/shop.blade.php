@@ -18,6 +18,12 @@
 
 @push('styles')
     @vite('resources/css/kbb/kbb-shop.css')
+    {{-- Only when there is a banner to draw. A category with no banner
+         configured — which is every category until the owner turns one on —
+         downloads nothing extra for a feature it is not using. --}}
+    @if ($banner ?? null)
+        @vite('resources/css/kbb/kbb-banner.css')
+    @endif
 @endpush
 
 @section('content')
@@ -25,12 +31,25 @@
     $ck = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>';
 @endphp
 
+{{--
+    The heading block and the banner are alternatives, not a stack.
+
+    When a banner is on it carries the page's <h1> — a second one underneath
+    it would be two competing headings on the same document, and the one a
+    crawler picked would be the one the owner did not design. The breadcrumb
+    stays above either, because it is navigation and belongs before the title
+    whichever way the title is drawn.
+--}}
 <div class="wrap">
     <div class="crumb"><b>Home</b> / {{ $crumb }}</div>
-    <div class="eyebrow">K-Beauty · Skincare</div>
-    <h1 class="ptitle">{{ $title }}</h1>
-    <p class="psub">{{ $sub }}</p>
+    @unless ($banner ?? null)
+        <div class="eyebrow">K-Beauty · Skincare</div>
+        <h1 class="ptitle">{{ $title }}</h1>
+        <p class="psub">{{ $sub }}</p>
+    @endunless
 </div>
+
+<x-kbb-banner :banner="$banner ?? null" />
 
 <div class="wrap shop">
     <aside class="filtercol" id="fcol">

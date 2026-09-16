@@ -14117,6 +14117,16 @@ buildNav();
      Categories tab is untouched and still does single-category CRUD. --}}
 @include('admin.partials.category-tree-screen')
 
+{{-- Catalog -> Brands, and the category/brand page banner editor (Lane BW).
+
+     MUST come after category-tree-screen above. It does two things: it
+     registers a Brands screen of its own, and it puts the Add / Edit / Banner
+     / Delete buttons the owner reported missing into that screen's Brands tab,
+     which renders every brand row with an empty .ct-acts and no Add button.
+     The injection is done with a MutationObserver over #content rather than by
+     editing that file, which another lane owns this cycle. --}}
+@include('admin.partials.brands-editor-screen')
+
 {{-- Catalog -> Product editor. Same arrangement and for the same reason as the
      two screens above: its own file, its own sidebar entry appended to the
      rendered nav, its own wrapper around window.go. Included last so its nav

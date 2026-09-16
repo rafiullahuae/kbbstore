@@ -13,6 +13,15 @@
 @extends('layouts.store')
 @section('title', $brand ? $brand->name : 'All brands')
 
+@push('styles')
+    {{-- Only when there is a banner to draw. A brand with none configured —
+         which is every brand until the owner turns one on — downloads nothing
+         extra for a feature it is not using. --}}
+    @if ($banner ?? null)
+        @vite('resources/css/kbb/kbb-banner.css')
+    @endif
+@endpush
+
 @section('content')
 @php use App\Support\Url; @endphp
 
@@ -24,6 +33,22 @@
             <span aria-current="page">{{ $brand->name }}</span>
         </nav>
 
+        {{--
+            The banner, when the owner has turned one on for this brand.
+
+            It goes above the hero rather than replacing it: the hero's job is
+            the logo and the link onward to the listing, and those are still
+            wanted. What it does take over is the page's <h1> and standfirst,
+            which is why the two below are conditional — a banner heading and a
+            .brw-h1 both claiming to be the page's heading is two <h1>s on one
+            document, and the one a crawler picks would be the one the owner
+            did not design.
+
+            :contained="false" because .brw already supplies the max-width and
+            the side gutter.
+        --}}
+        <x-kbb-banner :banner="$banner ?? null" :contained="false" />
+
         <div class="brw-hero">
             <span class="brw-logo brw-logo--lg">
                 @if ($brand->logo)
@@ -33,10 +58,12 @@
                 @endif
             </span>
             <div class="brw-hero-txt">
-                <h1 class="brw-h1">{{ $brand->name }}</h1>
-                @if ($brand->description)
-                    <p class="brw-sub">{{ strip_tags($brand->description) }}</p>
-                @endif
+                @unless ($banner ?? null)
+                    <h1 class="brw-h1">{{ $brand->name }}</h1>
+                    @if ($brand->description)
+                        <p class="brw-sub">{{ strip_tags($brand->description) }}</p>
+                    @endif
+                @endunless
                 {{--
                     The listing, not a second archive. Built from Brand::url()
                     so this link and the directory's tiles can never drift

@@ -106,6 +106,7 @@ class ShopController extends Controller
         [$title, $sub, $crumb] = $this->heading($category, (string) $request->query('s', ''));
 
         return view('store.shop', [
+            'banner' => $this->banner($category, $active, (string) $request->query('s', ''), $title),
             'products' => $products,
             'total' => $total,
             'page' => $page,
@@ -162,6 +163,56 @@ class ShopController extends Controller
                 ->limit(40)
                 ->get()),
         ]);
+    }
+
+    /**
+     * The banner for whatever page this request actually is, or null.
+     *
+     * WHAT COUNTS AS A BRAND PAGE, given U-05.
+     *
+     * A brand has no path of its own. Brand::url() is
+     * /shop/?filter_brands={slug} and the contract says so in as many words —
+     * "this must not be 'improved' into a pretty URL". So the brand's listing
+     * is this controller, reached through a query parameter, and the only
+     * honest definition of "the Estée Lauder page" available here is: the
+     * brand facet holds exactly one slug, and nothing else is narrowing the
+     * results.
+     *
+     * The three exclusions are all cases where the banner would be a lie
+     * rather than a decoration:
+     *
+     *   - two or more brands selected. /shop/?filter_brands=a,b is a
+     *     comparison, not a brand page; showing one of the two brands' banners
+     *     across the top of it would be picking a winner at random.
+     *   - a category also selected. The heading already says "Cleansers", and
+     *     a brand banner over a category-narrowed grid describes neither.
+     *   - a search term. The page is a result set.
+     *
+     * Deliberately NOT excluded: price, sale, in-stock and paging. Those
+     * narrow the grid without changing what the page is about, and dropping
+     * the banner on page 2 of a brand would look like a bug.
+     *
+     * One extra query, only on the single-brand path, and only to fetch the
+     * two columns this needs. The category needs none — it is already loaded.
+     */
+    private function banner(?Category $category, array $active, string $search, string $title): ?array
+    {
+        if ($category) {
+            return \App\Support\PageBanner::forModel($category, $title);
+        }
+
+        $oneBrand = count($active['brand']) === 1 && ! $active['cat'] && $search === '';
+
+        if (! $oneBrand) {
+            return null;
+        }
+
+        $brand = Brand::query()
+            ->select('id', 'name', 'banner')
+            ->where('slug', $active['brand'][0])
+            ->first();
+
+        return \App\Support\PageBanner::forModel($brand, $brand?->name ?? $title);
     }
 
     private function applyFacets($query, array $active, string $search): void
