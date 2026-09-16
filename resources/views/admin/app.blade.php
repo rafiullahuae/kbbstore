@@ -1803,7 +1803,7 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 }
 
 /* ===== LANE CD — three screens given the Coupons treatment =================
-   Analytics (.an-), Business Details (.bz-) and SEO & Meta's Settings tab
+   Analytics (.an-), Business Details (.bd-) and SEO & Meta's Settings tab
    (.sm-) are laid out the way resources/views/admin/partials/coupon-editor-
    screen.blade.php lays out coupons: titled bands, each saying in one line
    when you would touch it, and field pairs that share a row and a width.
@@ -1813,6 +1813,12 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
    three screens is one edit away from restyling the other two, and this file
    is edited by several lanes at once. Every rule here starts with the prefix
    of exactly one screen and appears nowhere else in the console.
+
+   Business Details is .bd- and not the obvious .bz- because .bz- is already
+   the Brands editor's, over in admin/partials/brands-editor-screen.blade.php,
+   and three of its names (.bz-wrap, .bz-card, .bz-note) are ones this screen
+   would have wanted too. A prefix is only a guarantee if somebody checks it is
+   free; grep the whole of resources/views before adding a fourth.
 
    THE LAYOUT RULE ALL THREE ARE BUILT ON. A grid or flex item's default
    min-width is `auto` — "at least as wide as my content". A <select> whose
@@ -1895,50 +1901,50 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 }
 
 /* ---- Business Details --------------------------------------------------- */
-.bz-wrap{display:grid;gap:16px;min-width:0}
-.bz-wrap > *{min-width:0}
-.bz-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+.bd-wrap{display:grid;gap:16px;min-width:0}
+.bd-wrap > *{min-width:0}
+.bd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
          box-shadow:var(--sh-s);padding:18px;min-width:0}
-.bz-sec{display:grid;gap:13px;min-width:0}
-.bz-sec > *{min-width:0}
+.bd-sec{display:grid;gap:13px;min-width:0}
+.bd-sec > *{min-width:0}
 /* A hairline between bands rather than a box around each one: the groups stay
    visible and the screen stays one form instead of three. */
-.bz-sec + .bz-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
-.bz-sec-h{display:grid;gap:3px;min-width:0}
-.bz-sec-t{font-size:13.5px;font-weight:650}
-.bz-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft);max-width:78ch}
+.bd-sec + .bd-sec{margin-top:22px;padding-top:20px;border-top:1px solid var(--border)}
+.bd-sec-h{display:grid;gap:3px;min-width:0}
+.bd-sec-t{font-size:13.5px;font-weight:650}
+.bd-sec-d{font-size:12px;line-height:1.5;color:var(--ink-soft);max-width:78ch}
 /* auto-fit with a min() floor rather than minmax(240px,1fr): the latter cannot
    go below 240px per track, so two fields plus the gap demand more than a
    390px phone has and the row overflows instead of stacking. */
-.bz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:14px;min-width:0}
-.bz-grid > *{min-width:0}
-.bz-field{display:grid;gap:5px;min-width:0;align-content:start}
-.bz-field > *{min-width:0}
-.bz-label{font-size:12.5px;font-weight:600}
+.bd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:14px;min-width:0}
+.bd-grid > *{min-width:0}
+.bd-field{display:grid;gap:5px;min-width:0;align-content:start}
+.bd-field > *{min-width:0}
+.bd-label{font-size:12.5px;font-weight:600}
 /* Help is secondary and stays secondary: one short line, capped at a readable
    measure so it can never spread into a paragraph the eye has to cross before
    it finds the next label. Anything longer belongs in the section description
    or in a single note at the foot of the band. */
-.bz-help{font-size:11.5px;color:var(--ink-soft);line-height:1.45;max-width:62ch}
-.bz-field input,.bz-field select,.bz-field textarea{
+.bd-help{font-size:11.5px;color:var(--ink-soft);line-height:1.45;max-width:62ch}
+.bd-field input,.bd-field select,.bd-field textarea{
   width:100%;max-width:100%;min-width:0;box-sizing:border-box;
   padding:9px 11px;font:inherit;font-size:13px;border:1px solid var(--border);
   border-radius:var(--r-xs);background:var(--surface);color:var(--ink)}
-.bz-field input:focus,.bz-field select:focus,.bz-field textarea:focus{
+.bd-field input:focus,.bd-field select:focus,.bd-field textarea:focus{
   outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 /* A select's intrinsic width is its widest OPTION, which sets a floor no media
    query can reach — this is what clipped "AED — UAE Dirham" on a phone. */
-.bz-field select{text-overflow:ellipsis}
-.bz-note{border:1px solid var(--border);border-left:3px solid var(--ink-faint);
+.bd-field select{text-overflow:ellipsis}
+.bd-note{border:1px solid var(--border);border-left:3px solid var(--ink-faint);
          border-radius:var(--r-xs);padding:11px 13px;min-width:0;
          font-size:12px;line-height:1.55;color:var(--ink-soft)}
-.bz-note b{color:var(--ink-2)}
-.bz-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;min-width:0}
-.bz-actions > *{min-width:0}
+.bd-note b{color:var(--ink-2)}
+.bd-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;min-width:0}
+.bd-actions > *{min-width:0}
 @media (max-width:640px){
-  .bz-card{padding:14px}
-  .bz-sec + .bz-sec{margin-top:18px;padding-top:16px}
-  .bz-actions .btn{width:100%;justify-content:center}
+  .bd-card{padding:14px}
+  .bd-sec + .bd-sec{margin-top:18px;padding-top:16px}
+  .bd-actions .btn{width:100%;justify-content:center}
 }
 
 /* ---- SEO & Meta · Settings tab ------------------------------------------ */
@@ -11865,20 +11871,20 @@ buildNav();
      WHAT CHANGED AND WHY. The old markup used .g2, which is
      `grid-template-columns:1fr 1fr` with no breakpoint anywhere in the console
      — so on a 390px phone this screen drew two 145px columns and the currency
-     select read "AED — UAE Dirha" with the rest clipped. .bz-grid is auto-fit
+     select read "AED — UAE Dirha" with the rest clipped. .bd-grid is auto-fit
      with a min() floor and stacks instead. The four-line note about the dirham
      glyph sat under one input of a pair, which dragged that side of the row
      four lines deeper than the other; it is now one note at the foot of its
      band, where it reads as background rather than as an instruction attached
      to a box. VAT no longer floats alone at 220px with dead space beside it —
      it takes a track in its own band's grid like everything else. */
-  function bzField(id,label,control,help){
-    return '<div class="bz-field"><label class="bz-label" for="'+id+'">'+label+'</label>'+control+
-      (help?'<div class="bz-help">'+help+'</div>':'')+'</div>';
+  function bdField(id,label,control,help){
+    return '<div class="bd-field"><label class="bd-label" for="'+id+'">'+label+'</label>'+control+
+      (help?'<div class="bd-help">'+help+'</div>':'')+'</div>';
   }
-  function bzSec(title,description,body){
-    return '<section class="bz-sec"><div class="bz-sec-h"><div class="bz-sec-t">'+title+'</div>'+
-      '<div class="bz-sec-d">'+description+'</div></div>'+body+'</section>';
+  function bdSec(title,description,body){
+    return '<section class="bd-sec"><div class="bd-sec-h"><div class="bd-sec-t">'+title+'</div>'+
+      '<div class="bd-sec-d">'+description+'</div></div>'+body+'</section>';
   }
 
   async function renderStoreSettings(){
@@ -11886,28 +11892,28 @@ buildNav();
     document.querySelector('#content').innerHTML =
       '<div class="wrap"><div class="page-head"><h2>Business Details</h2>'+
       '<p>The handful of values the whole shop is built on — what the business is called, what money it takes and what delivery costs. Everything here reaches the storefront and the checkout total the moment it is saved.</p></div>'+
-      '<div class="bz-wrap"><div class="bz-card">'+
+      '<div class="bd-wrap"><div class="bd-card">'+
 
-      bzSec('Store identity',
+      bdSec('Store identity',
         'The name and tax rate every invoice, email and checkout total is built from. Come here when the business name changes or the VAT rate moves.',
-        '<div class="bz-grid">'+
-          bzField('set_store_name','Store name',
+        '<div class="bd-grid">'+
+          bdField('set_store_name','Store name',
             '<input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'">',
             'Shown in the browser tab, in emails and on invoices.')+
-          bzField('set_currency','Currency',curSelect(),
+          bdField('set_currency','Currency',curSelect(),
             'Picking one fills in its symbol and decimals below.')+
-          bzField('set_vat','VAT rate (%)',
+          bdField('set_vat','VAT rate (%)',
             '<input id="set_vat" type="number" step="0.01" value="'+sesc(SETTINGS.vat_rate)+'">',
             'Applied to checkout totals. Leave at 0 for none.')+
         '</div>')+
 
-      bzSec('How prices are printed',
+      bdSec('How prices are printed',
         'How every price on the storefront is written — the symbol, where it sits and how many decimals. Choosing a currency above fills these in, and you can still override any of them.',
-        '<div class="bz-grid">'+
-          bzField('set_currency_symbol','Symbol',
+        '<div class="bd-grid">'+
+          bdField('set_currency_symbol','Symbol',
             '<input id="set_currency_symbol" value="'+sesc(SETTINGS.currency_symbol)+'" placeholder="'+sesc(curSymbol())+'">',
             'Leave blank to use the selected currency’s own symbol.')+
-          bzField('set_currency_symbol_render','Symbol rendering',
+          bdField('set_currency_symbol_render','Symbol rendering',
             seoSel('set_currency_symbol_render',SETTINGS.currency_symbol_render,[['unicode','Unicode character — correct, may show an empty box'],['svg','Drawn glyph (SVG) — always renders']],'unicode'),
             'See the note below before changing this.')+
         '</div>'+
@@ -11915,32 +11921,32 @@ buildNav();
            tracks plus their gaps come to 962px and this card's inner width is
            957px, which is close enough that the row is one browser's rounding
            away from becoming three-and-one. An explicit pair cannot do that. */
-        '<div class="bz-grid">'+
-          bzField('set_currency_position','Symbol position',
+        '<div class="bd-grid">'+
+          bdField('set_currency_position','Symbol position',
             seoSel('set_currency_position',SETTINGS.currency_position,[['before','Before the number — '+sesc(curSymbol())+'199'],['before_space','Before, with a space — '+sesc(curSymbol())+' 199'],['after','After the number — 199'+sesc(curSymbol())],['after_space','After, with a space — 199 '+sesc(curSymbol())]],'before'),
             'Each option shows what 199 would look like.')+
-          bzField('set_currency_decimals','Decimal places',
+          bdField('set_currency_decimals','Decimal places',
             '<input id="set_currency_decimals" type="number" min="0" max="4" step="1" value="'+sesc(SETTINGS.currency_decimals)+'" placeholder="blank — whole numbers">',
             'Also how stored amounts are read back. Blank keeps whole dirhams.')+
         '</div>'+
-        '<div class="bz-note">The dirham sign “⃣” was accepted by Unicode in July 2025 and ships in Unicode 18.0 (September 2026), so most devices have no font glyph for it yet and draw an empty box instead. <b>Unicode</b> is the default because it puts the real character in the page — right for copy-paste, screen readers and search engines. If the empty box bothers you, switch to <b>Drawn glyph</b>: the storefront then draws the symbol itself and it always renders. <b>2 decimal places</b> means hundredths, which is how every amount already in the database is stored.</div>')+
+        '<div class="bd-note">The dirham sign “⃣” was accepted by Unicode in July 2025 and ships in Unicode 18.0 (September 2026), so most devices have no font glyph for it yet and draw an empty box instead. <b>Unicode</b> is the default because it puts the real character in the page — right for copy-paste, screen readers and search engines. If the empty box bothers you, switch to <b>Drawn glyph</b>: the storefront then draws the symbol itself and it always renders. <b>2 decimal places</b> means hundredths, which is how every amount already in the database is stored.</div>')+
 
-      bzSec('Delivery and cash on delivery',
+      bdSec('Delivery and cash on delivery',
         'What the shop charges to get an order to the door, and the basket size at which it stops charging. All three amounts are in AED.',
-        '<div class="bz-grid">'+
-          bzField('set_free_ship','Free-shipping threshold',
+        '<div class="bd-grid">'+
+          bdField('set_free_ship','Free-shipping threshold',
             '<input id="set_free_ship" type="number" step="1" value="'+money2aed('free_ship')+'">',
             'Delivery is free once the cart subtotal reaches this.')+
-          bzField('set_delivery','Flat delivery fee',
+          bdField('set_delivery','Flat delivery fee',
             '<input id="set_delivery" type="number" step="1" value="'+money2aed('delivery_flat')+'">',
             'Charged on every order below the threshold.')+
-          bzField('set_cod','Cash-on-delivery fee',
+          bdField('set_cod','Cash-on-delivery fee',
             '<input id="set_cod" type="number" step="1" value="'+money2aed('cod_fee')+'">',
             'Added when the shopper chooses to pay on delivery.')+
         '</div>')+
 
       '</div>'+
-      '<div class="bz-actions"><button class="btn" id="set_save_biz">Save changes</button></div>'+
+      '<div class="bd-actions"><button class="btn" id="set_save_biz">Save changes</button></div>'+
       '</div></div>';
     /* Picking a currency fills in its symbol and decimals; both stay editable. */
     var curSel=document.getElementById('set_currency');

@@ -127,7 +127,7 @@ it('still draws every field the SEO settings save reads', function () {
 it('gives every band on all three screens a one-line description', function () {
     $src = laneCdConsole();
 
-    foreach (['anSec' => 4, 'bzSec' => 3, 'smSec' => 7] as $fn => $least) {
+    foreach (['anSec' => 4, 'bdSec' => 3, 'smSec' => 7] as $fn => $least) {
         // The helper itself has to emit the description slot.
         expect(preg_match('/function '.$fn.'\(title,description,body\)\{/', $src) === 1)
             ->toBeTrue("{$fn}() is gone or no longer takes a description — this check is blind.");
@@ -184,7 +184,7 @@ it('gives every band on all three screens a one-line description', function () {
 it('lets every field grid on the three screens give way on a phone', function () {
     $css = laneCdConsole();
 
-    foreach (['an-stats', 'bz-grid', 'sm-grid'] as $cls) {
+    foreach (['an-stats', 'bd-grid', 'sm-grid'] as $cls) {
         /*
          * preg_match into toBeTrue rather than toMatch with a message: on a
          * 900KB subject, toMatch's failure prints the whole file before the
@@ -235,7 +235,7 @@ it('keeps .g2 and fixed column counts off all three screens', function () {
 it('lets every wrapper on the three screens shrink below its content', function () {
     $css = laneCdConsole();
 
-    foreach (['an-wrap', 'an-sec', 'bz-wrap', 'bz-sec', 'bz-grid', 'bz-field', 'sm-wrap', 'sm-sec', 'sm-grid', 'sm-field'] as $cls) {
+    foreach (['an-wrap', 'an-sec', 'bd-wrap', 'bd-sec', 'bd-grid', 'bd-field', 'sm-wrap', 'sm-sec', 'sm-grid', 'sm-field'] as $cls) {
         $q = preg_quote($cls, '/');
 
         expect(preg_match('/\.'.$q.'\{[^}]*min-width:0/', $css) === 1)
@@ -255,7 +255,7 @@ it('lets every wrapper on the three screens shrink below its content', function 
 it('holds help text to a readable measure on all three screens', function () {
     $css = laneCdConsole();
 
-    foreach (['an-sec-d' => '78ch', 'bz-help' => '62ch', 'bz-sec-d' => '78ch', 'sm-help' => '62ch', 'sm-sec-d' => '78ch'] as $cls => $measure) {
+    foreach (['an-sec-d' => '78ch', 'bd-help' => '62ch', 'bd-sec-d' => '78ch', 'sm-help' => '62ch', 'sm-sec-d' => '78ch'] as $cls => $measure) {
         $ok = preg_match('/\.'.preg_quote($cls, '/').'\{[^}]*max-width:'.preg_quote($measure, '/').'/', $css) === 1;
 
         expect($ok)->toBeTrue(
