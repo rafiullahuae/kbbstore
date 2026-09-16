@@ -21,7 +21,10 @@
              appear nowhere under resources/views at the tip this lane branched
              from. Content -> HTML Blocks is the screen that makes writing one
              easy, so this is the line that has to mean something first. --}}
-        <div class="policy-body">@shortcodes($page->content)</div>
+        {{-- BodyHeadings::demoteH1 wraps the shortcode expansion rather than
+             the raw column, because a [kbb_block] can itself carry an h1. The
+             <h1> above is this page's own. See App\Support\BodyHeadings. --}}
+        <div class="policy-body">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($page->content)) !!}</div>
 
         @if ($page->updated_at)
             <p class="policy-date">Last updated {{ $page->updated_at->format('j F Y') }}</p>

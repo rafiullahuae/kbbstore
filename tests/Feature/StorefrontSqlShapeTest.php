@@ -36,6 +36,23 @@ function shapeSeed(): array
     test()->seed(\Database\Seeders\DatabaseSeeder::class);
     test()->seed(\Database\Seeders\DemoReviewsSeeder::class);
 
+    /*
+     * One product per page, so that the 'shop paged' entry in shapePages()
+     * below is a page that genuinely exists.
+     *
+     * ShopController 404s a page number past the last page rather than
+     * clamping it back onto page one — an out-of-range page used to answer 200
+     * with the page-one grid and a self-referencing canonical, which is an
+     * unbounded supply of crawlable duplicates. The seeded catalogue is
+     * smaller than the default page size, so /shop?paged=2 was out of range
+     * and this walk stopped exercising the paginated branch's SQL at the
+     * assertSuccessful() rather than at the query log. The page size is a
+     * setting, so making page two real is one row, and every other page in the
+     * walk issues the same statements with a smaller LIMIT.
+     */
+    \App\Models\Setting::updateOrCreate(['key' => 'products_per_page'], ['value' => '1']);
+    \App\Models\Setting::flushMap();
+
     Post::create([
         'slug' => 'shape-article',
         'title' => 'Shape Article',

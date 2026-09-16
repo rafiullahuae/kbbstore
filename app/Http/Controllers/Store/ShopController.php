@@ -65,6 +65,32 @@ class ShopController extends Controller
 
         $total = (clone $query)->count();
         $lastPage = max(1, (int) ceil($total / $perPage));
+
+        /*
+         * A page number past the end is not a page.
+         *
+         * forPage(min($page, $lastPage)) below clamps out-of-range requests
+         * back onto page one, so every one of /shop/?paged=2, ?paged=57 and
+         * ?paged=4000 answered 200 with the page-one grid -- and the canonical
+         * Facets::canonicalUrl() then emitted for it was that same out-of-range
+         * URL, self-referencing. That is an unbounded supply of crawlable,
+         * self-canonicalising duplicates of page one, on /shop/ and on every
+         * category archive, and Google will happily walk it: each fetch is
+         * crawl budget taken off a product page, and each is a duplicate of a
+         * page that is already indexed.
+         *
+         * 404 rather than a redirect or a canonical pointing back at page one,
+         * for the same reason CategoryArchiveController 404s an unknown
+         * category: the URL does not identify anything, and a 301 from an
+         * unbounded space onto one real page is a soft 404 wearing a 301. Only
+         * page numbers above the last one are affected -- page one, and every
+         * page that really exists, are untouched, so the self-referencing
+         * canonical on a genuine /shop/?paged=2 still stands.
+         */
+        if ($page > 1 && $page > $lastPage) {
+            abort(404);
+        }
+
         $products = $query->forPage(min($page, $lastPage), $perPage)->get();
 
         [$title, $sub, $crumb] = $this->heading($category, (string) $request->query('s', ''));
