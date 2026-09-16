@@ -1158,6 +1158,39 @@
     return (model.image_alts && model.image_alts[u]) || '';
   }
 
+  /* What the storefront ALREADY uses when a photo has no description of its
+     own — mirrored here so the operator can see it rather than face an empty
+     box and guess.
+
+     This is not a new rule and must not become one: Product::altFor() falls
+     back to ProductTitle::alt(brand, name, index, total) on every product page
+     today, so an empty box has never meant an empty alt attribute. Showing it
+     as the placeholder makes a silent, working default visible.
+
+     Kept deliberately in step with app/Support/ProductTitle.php — `full()`
+     does not repeat the brand when the name already leads with it, and
+     `alt()` only adds the view counter when there is more than one shot.
+     A test pins the two against each other. */
+  function suggestedAlt(index, total){
+    var brands = (boot && boot.brands) || [];
+    var brand = '';
+
+    for (var i = 0; i < brands.length; i++) {
+      if (brands[i].id === model.brand_id) { brand = String(brands[i].name || '').trim(); break; }
+    }
+
+    var name = String(model.name || '').trim();
+    var base;
+
+    if (!brand) base = name;
+    else if (!name) base = brand;
+    else base = name.toLowerCase().indexOf(brand.toLowerCase()) === 0 ? name : brand + ' ' + name;
+
+    if (!base) return '';
+
+    return (index <= 0 || total < 2) ? base : base + ', view ' + (index + 1) + ' of ' + total;
+  }
+
   function galleryView(){
     var tiles = model.images.map(function(u, i){
       return '<div class="peo-tile" draggable="true" data-i="' + i + '">'
@@ -1166,7 +1199,8 @@
         + '<span class="peo-body">'
         +   '<span class="peo-ord">Position ' + (i + 2) + '</span>'
         +   '<input class="peo-alt" data-alt="' + esc(u) + '" value="' + esc(altOf(u)) + '" '
-        +     'placeholder="Describe this photo, e.g. texture on the back of a hand">'
+        +     'placeholder="' + esc(suggestedAlt(i + 1, model.images.length + 1)
+                                   || 'Describe this photo, e.g. texture on the back of a hand') + '">'
         + '</span>'
         + '<span class="peo-acts">'
         +   '<button data-mv="' + i + ':-1"' + (i === 0 ? ' disabled' : '') + ' title="Move earlier">↑</button>'
@@ -1237,9 +1271,10 @@
       + (model.image
           ? '<div class="peo-fld" style="margin-top:11px"><label>Image description</label>'
             + '<input class="peo-in" data-alt="' + esc(model.image) + '" value="' + esc(altOf(model.image)) + '" '
-            +   'placeholder="e.g. Anua Heartleaf Toner bottle, front">'
+            +   'placeholder="' + esc(suggestedAlt(0, 1) || 'e.g. Anua Heartleaf Toner bottle, front') + '">'
             + '<div class="peo-note">Read by Google Images and by screen readers. '
-            +   'Left empty, the shop uses the brand and product name.</div></div>'
+            +   'Left empty, the shop uses the greyed-out text above — write your own only when '
+            +   'the photo shows something that wording does not.</div></div>'
           : '')
       + '<input type="file" id="peo-mainfile" accept="image/*" hidden>'
       + '</section>';

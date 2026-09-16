@@ -163,6 +163,10 @@
    "20260916-101…" makes the grid unusable for the one job it has. */
 .mlib-name{font-size:12px;font-weight:600;overflow-wrap:anywhere;line-height:1.35}
 .mlib-dim{font-size:11px;color:var(--ink-soft,#626c80);overflow-wrap:anywhere}
+/* The "used by" line carries more weight than the dimensions beside it — it is
+   the one an owner scans for — so it takes the body ink rather than the muted
+   grey, while keeping the same size and the same wrapping. */
+.mlib-used{color:var(--ink-2,#3c465c);font-weight:500}
 
 .mlib-empty{padding:30px 16px;text-align:center;color:var(--ink-soft,#626c80);font-size:13px;
             display:grid;gap:8px;justify-items:center;min-width:0}
@@ -488,21 +492,34 @@
       ? '<img src="' + esc(item.url) + '" alt="" loading="lazy" decoding="async">'
       : '<div class="mlib-noimg">no file</div>';
 
-    /* The operator's own name is the title; the stored name goes underneath.
-       The endpoint renames every upload to Ymd-His-<random>.ext so the browser
-       cannot choose what lands in the web root, which leaves the grid full of
-       identical-looking timestamps unless the real name is shown. Both are
-       printed because the stored name is what appears in a product's <img> and
-       is the thing to search for when chasing a URL. */
+    /* The operator's own name is the title. UNDERNEATH IT goes what the image
+       is used by — the product, brand or category — because that is what the
+       owner recognises an image by and it is exact rather than guessed.
+
+       It used to print the stored filename there: Ymd-His-<random>.ext, which
+       the upload endpoint generates so the browser cannot choose what lands in
+       the web root. Useful when chasing a URL, and useless the other 99% of
+       the time — the owner asked for it replaced, and they are right. It has
+       not been thrown away: the detail panel still shows it, which is where
+       somebody chasing a URL is looking anyway.
+
+       An image nothing uses says so, which is worth more than a filename: it
+       is the line that tells the owner this one is safe to delete. */
     var title = item.original_name || item.filename;
-    var stored = (title === item.filename) ? '' :
-      '<span class="mlib-dim">' + esc(item.filename) + '</span>';
+
+    var names = Array.isArray(item.used_names) ? item.used_names.filter(Boolean) : [];
+    var extra = (item.used_count || 0) - names.length;
+
+    var sub = names.length
+      ? '<span class="mlib-dim mlib-used">' + esc(names.join(', '))
+        + (extra > 0 ? esc(' +' + extra + ' more') : '') + '</span>'
+      : '<span class="mlib-dim">Not used yet</span>';
 
     return '<button type="button" class="mlib-tile" data-mlib-open="' + esc(String(item.id)) + '">'
       + '<span class="mlib-thumb">' + img + '<span class="mlib-badge">' + badge + '</span></span>'
       + '<span class="mlib-meta">'
       + '<span class="mlib-name">' + esc(title) + '</span>'
-      + stored
+      + sub
       + '<span class="mlib-dim">' + esc(dims(item)) + ' · ' + esc(bytes(item.size)) + '</span>'
       + '<span class="mlib-dim">' + esc(when(item.created_at)) + '</span>'
       + '</span></button>';

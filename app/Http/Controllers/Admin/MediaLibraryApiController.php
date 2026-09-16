@@ -307,6 +307,24 @@ class MediaLibraryApiController extends Controller
             // The distinct owner kinds, so a tile can be badged without the
             // screen having to walk the whole usage list.
             'used_types' => array_values(array_unique(array_map(fn ($u) => $u['type'], $usage))),
+            /*
+             * The owners' NAMES, which verify() already computed and this
+             * payload used to throw away.
+             *
+             * The tile printed the stored filename under the title — a string
+             * like 20260916-054433-97xf6xZY.jpg, which the upload endpoint
+             * generates and which tells the owner nothing they can act on.
+             * The product, brand or category using the image is the thing they
+             * actually recognise it by, and it is exact rather than guessed.
+             *
+             * Capped at three so one image used by forty products cannot turn
+             * a tile into a wall of text; the count is already carried by
+             * used_count and the full list is on the detail panel.
+             */
+            'used_names' => array_values(array_unique(array_map(
+                static fn ($u) => (string) $u['name'],
+                array_slice($usage, 0, 3),
+            ))),
         ];
     }
 
