@@ -42,6 +42,31 @@ class CheckoutController extends Controller
      */
     private const VIEWABLE_KEY = 'kbb_orders_viewable';
 
+    /**
+     * What each field is called on the page, for the sentences a shopper reads.
+     *
+     * Laravel builds a message out of the field's NAME, so an empty checkout
+     * answered "The billing email field is required." — `billing_email` is a
+     * column name, "billing email" is not what the label above the box says,
+     * and this is the first thing a person sees when an order does not go
+     * through. Every name here is the label that is actually printed beside the
+     * input in store/checkout.blade.php, so the sentence and the form agree.
+     */
+    private const FIELD_NAMES = [
+        'billing_email' => 'email address',
+        'billing_phone' => 'phone number',
+        'billing_first_name' => 'name',
+        'billing_last_name' => 'last name',
+        'billing_address_1' => 'address',
+        'billing_city' => 'city / area',
+        'billing_state' => 'emirate',
+        'billing_country' => 'country',
+        'payment_method' => 'payment method',
+        'account_password' => 'password',
+        'customer_note' => 'delivery notes',
+        'gift_note' => 'gift message',
+    ];
+
     /** Emirates, in the order the live store lists them. */
     private const EMIRATES = [
         'Abu Dhabi' => 'Abu Dhabi', 'Dubai' => 'Dubai', 'Sharjah' => 'Sharjah',
@@ -174,7 +199,7 @@ class CheckoutController extends Controller
             'shipping_method' => ['nullable', 'integer'],
             'payment_method' => ['required', 'string', 'max:40'],
             'billing_kbb_whatsapp' => ['nullable'],
-        ]);
+        ], [], self::FIELD_NAMES);
 
         $cart = $this->loadCart($request);
 

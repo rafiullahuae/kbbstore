@@ -464,16 +464,73 @@ it('applies a discount code when Enter is pressed on the cart page', function ()
         ->toBeTrue('Enter in the cart discount field does not apply the code.');
 });
 
+it('marks its required fields required, so the browser can catch them', function () {
+    /*
+     * THE CLIENT-SIDE GATE NEVER FIRED, BECAUSE THERE WAS NOTHING TO FIRE ON.
+     *
+     * checkout.js guards Place order with `if (form.reportValidity())`, and
+     * every one of the five required fields carried `aria-required="true"` and
+     * no `required` attribute. aria-required is an announcement for assistive
+     * technology; it is not constraint validation. Measured in Chromium:
+     * `form.checkValidity()` returned TRUE with the entire form empty.
+     *
+     * So the gate passed, the form posted, the server rejected it, and the
+     * shopper was returned to the top of a long page — scrollY 1868 to 0 — to
+     * read one sentence, with nothing marking which field was wrong. A round
+     * trip and a lost place in the page for something the browser catches
+     * instantly and points straight at.
+     *
+     * The red asterisks and the `required_field` label classes were already
+     * telling the shopper these fields are required. This is the page keeping
+     * its own promise.
+     */
+    $blade = (string) file_get_contents(base_path('resources/views/store/checkout.blade.php'));
+
+    foreach (['billing_email', 'billing_first_name', 'billing_address_1', 'billing_state', 'billing_city'] as $id) {
+        $field = [];
+        preg_match('/<input[^>]*id="' . $id . '"[^>]*>/', $blade, $field);
+
+        expect($field)->not->toBeEmpty("#{$id} is no longer an input on the checkout form.");
+        expect(str_contains($field[0], ' required'))
+            ->toBeTrue("#{$id} is marked aria-required but not required, so the browser never stops an empty submission.");
+    }
+});
+
+it('names the field in words a shopper recognises when the server refuses', function () {
+    /*
+     * With nothing filled in, the checkout answered "The billing email field is
+     * required." — `billing_email` is a column name, and "billing email" is not
+     * what the label above the box says. Seen on the page at 390px.
+     */
+    $cart = cfCart();
+
+    $response = cfShopper($cart)->post('/checkout/place', [
+        'billing_first_name' => 'Layla',
+        'billing_address_1' => 'Villa 12',
+        'billing_city' => 'Al Barsha',
+        'billing_state' => 'Dubai',
+        'billing_country' => 'AE',
+        'payment_method' => 'cod',
+    ]);
+
+    $errors = $response->baseResponse->getSession()->get('errors');
+    $first = $errors ? $errors->first() : '';
+
+    expect(str_contains($first, 'billing'))
+        ->toBeFalse('The checkout shows a column name to the shopper: ' . $first);
+
+    expect(str_contains(strtolower($first), 'email'))
+        ->toBeTrue('The refusal no longer says which field it means: ' . $first);
+});
+
 it('takes the shopper to the field that is stopping the order', function () {
     /*
-     * Measured in Chromium at 390x844, every field filled but the email:
-     * pressing Place order took the page from scrollY 1868 to scrollY 0, left
-     * #billing_email at 883px — below the fold of an 844px viewport — and left
-     * document.activeElement on <body>. The button appeared to do nothing.
-     *
-     * reportValidity() is supposed to handle this and does not here, because
-     * the button lives in .kbb-mobile-order, rendered after the fields, so the
-     * control needing attention is always far above the one being pressed.
+     * Once the fields are properly required, the browser stops the submission —
+     * but on this page it stops it badly. reportValidity() is supposed to
+     * scroll the first invalid control into view and focus it. It cannot do a
+     * useful job here, because Place order lives in .kbb-mobile-order, which is
+     * rendered AFTER the fields, so the control needing attention is always far
+     * above the button being pressed.
      */
     $js = (string) file_get_contents(base_path('resources/js/kbb/checkout.js'));
 
