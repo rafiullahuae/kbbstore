@@ -45,10 +45,46 @@ export function initCheckout() {
             return;
         }
 
-        // Place order — both the summary button and the sticky bar submit the
-        // one real form, so there is a single submission path.
+        /*
+         * Place order — both the summary button and the sticky bar submit the
+         * one real form, so there is a single submission path.
+         *
+         * WHY THE INVALID FIELD IS TAKEN IN HAND HERE.
+         *
+         * `reportValidity()` alone is supposed to scroll the first invalid
+         * control into view and focus it. On this page, at a phone viewport, it
+         * does neither. Measured in Chromium at 390x844 with every field filled
+         * but the email: pressing Place order took the page from scrollY 1868
+         * to scrollY 0, left #billing_email at 883px — below the fold of an
+         * 844px viewport — and left document.activeElement on <body>. So the
+         * shopper tapped the button, the page jumped somewhere else, nothing
+         * was highlighted, nothing was focused, and no order was placed. A
+         * button that appears to do nothing is the single most expensive thing
+         * a checkout can do.
+         *
+         * The cause is structural and is why this cannot be left to the
+         * browser: the button lives in .kbb-mobile-order, which is rendered
+         * AFTER the form fields in the document, so the control that needs
+         * attention is always far above the one being pressed.
+         *
+         * scrollIntoView first, then focus. focus() alone scrolls too, but it
+         * scrolls the minimum distance, which parks the field under the sticky
+         * header; 'center' puts it where a person is looking. reportValidity()
+         * is still called, and still last, so the browser's own bubble lands on
+         * a field that is by then on screen.
+         */
         if (event.target.closest('[data-place]')) {
             event.preventDefault();
+
+            const invalid = form.querySelector(':invalid');
+
+            if (invalid) {
+                invalid.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                invalid.focus({ preventScroll: true });
+                form.reportValidity();
+                return;
+            }
+
             if (form.reportValidity()) form.submit();
             return;
         }

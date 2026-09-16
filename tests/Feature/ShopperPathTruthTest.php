@@ -464,6 +464,39 @@ it('applies a discount code when Enter is pressed on the cart page', function ()
         ->toBeTrue('Enter in the cart discount field does not apply the code.');
 });
 
+it('takes the shopper to the field that is stopping the order', function () {
+    /*
+     * Measured in Chromium at 390x844, every field filled but the email:
+     * pressing Place order took the page from scrollY 1868 to scrollY 0, left
+     * #billing_email at 883px — below the fold of an 844px viewport — and left
+     * document.activeElement on <body>. The button appeared to do nothing.
+     *
+     * reportValidity() is supposed to handle this and does not here, because
+     * the button lives in .kbb-mobile-order, rendered after the fields, so the
+     * control needing attention is always far above the one being pressed.
+     */
+    $js = (string) file_get_contents(base_path('resources/js/kbb/checkout.js'));
+
+    expect(cfNear($js, "closest('[data-place]')", "querySelector(':invalid')", 400))
+        ->toBeTrue('Place order still leaves an invalid field to the browser, which does not scroll to it on a phone.');
+
+    expect(cfNear($js, "querySelector(':invalid')", 'scrollIntoView', 300))
+        ->toBeTrue('The invalid field is found but never brought on screen.');
+
+    expect(cfNear($js, "querySelector(':invalid')", '.focus(', 400))
+        ->toBeTrue('The invalid field is scrolled to but never focused, so nothing says which one it is.');
+
+    $shipped = false;
+    foreach (cfBundles() as $source) {
+        if (cfNear($source, ':invalid', 'scrollIntoView', 300)) {
+            $shipped = true;
+            break;
+        }
+    }
+
+    expect($shipped)->toBeTrue('No committed bundle scrolls to the invalid field — public/build was not rebuilt.');
+});
+
 it('answers when a sold-out option is tapped', function () {
     /*
      * pdp.js declined `.variant.oos` outright — no highlight, no price change,
