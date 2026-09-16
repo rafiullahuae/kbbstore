@@ -38,7 +38,17 @@ class ShopController extends Controller
 
     public function __construct(private SettingsService $settings) {}
 
-    public function index(Request $request, ?string $categorySlug = null): View
+    /**
+     * @param  ?Category  $category  the row, when the caller has already got it.
+     *
+     * CategoryArchiveController resolves the category to decide between 200,
+     * 301 and 404, and then handed the slug down here for a second
+     * `select * from categories where slug = ?` against the row it was holding.
+     * Every category archive on the site paid for that — 10 queries on the
+     * fixture, 9 with it passed. Still optional, and still resolved from the
+     * slug when it is not supplied, so any other caller is unaffected.
+     */
+    public function index(Request $request, ?string $categorySlug = null, ?Category $category = null): View
     {
         // Facets::active() memoises in a process-level static. Under PHP-FPM
         // that is one request and harmless; in the test suite, a queue worker
@@ -54,7 +64,7 @@ class ShopController extends Controller
             ->select(self::CARD_COLUMNS)
             ->with('brand:id,name,slug');
 
-        $category = $categorySlug ? Category::where('slug', $categorySlug)->first() : null;
+        $category ??= $categorySlug ? Category::where('slug', $categorySlug)->first() : null;
 
         if ($category) {
             $query->whereHas('categories', fn ($q) => $q->where('categories.id', $category->id));

@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Services\CartService;
+use App\Models\ShippingMethod;
+use App\Models\ShippingZone;
+use App\Models\ShippingZoneLocation;
 use App\Services\SettingsService;
+use App\Services\ShippingService;
 use App\Services\Update\BackupService;
 use App\Services\Update\UpdateRunner;
 use Illuminate\Support\Facades\URL;
@@ -56,6 +60,28 @@ class AppServiceProvider extends ServiceProvider
          * still fall behind.
          */
         \App\Support\MediaUsageWriter::listen();
+
+        /*
+         * Shipping zones, their locations and their methods are read on EVERY
+         * storefront page — the header's free-delivery bar asks for the store
+         * country's threshold — and used to cost two queries every time they
+         * were asked. ShippingService now reads the whole set once and caches
+         * it (a dozen rows; it is configuration, not data).
+         *
+         * These hooks are what make that cache safe to keep forever rather than
+         * on a TTL: every write to any of the three tables drops it, so an edit
+         * on Store → Shipping is live on the next request exactly as it was
+         * before the cache existed. Same shape, and the same reason, as the
+         * catalogue hooks further down that evict the homepage fragments.
+         *
+         * `saved` AND `deleted`: switching a method off is a save, removing a
+         * zone's last country is a delete, and both change what a shopper is
+         * quoted.
+         */
+        foreach ([ShippingZone::class, ShippingZoneLocation::class, ShippingMethod::class] as $shippingModel) {
+            $shippingModel::saved(fn () => ShippingService::flushZones());
+            $shippingModel::deleted(fn () => ShippingService::flushZones());
+        }
 
         // Redirects & 404 manager. Both checks live here, in the exception
         // handler, rather than as real middleware — see CheckRedirects'

@@ -729,7 +729,9 @@ class CheckoutController extends Controller
 
     private function loadCart(Request $request)
     {
-        return $this->carts->current($request, create: false)?->load([
+        $cart = $this->carts->current($request, create: false);
+
+        $cart?->load([
             'items' => fn ($q) => $q->orderBy('id'),
             'items.product' => fn ($q) => $q->select(self::LINE_COLUMNS),
             'items.product.brand:id,name,slug',
@@ -737,6 +739,15 @@ class CheckoutController extends Controller
             'items.variant.attributeValues:id,attribute_id,name',
             'coupon:id,code,type,amount',
         ]);
+
+        // The mini-cart panel the layout renders needs a subset of exactly
+        // this, and used to fetch its own copy — three more queries for rows
+        // already in memory. See CartService::$displayLoaded.
+        if ($cart !== null) {
+            $this->carts->markDisplayLoaded();
+        }
+
+        return $cart;
     }
 
     private function netSubtotal($cart): int

@@ -148,13 +148,38 @@ function shapePages(array $seed): array
         'collection budget'   => ['/everything-under-54-aed', null],
         'cart'                => ['/cart', null],
         'cart drawer'         => ['/api/cart/drawer', null],
-        'checkout success'    => ['/checkout/success', null],
+        /*
+         * WITH an order number, which it did not have before.
+         *
+         * Bare, this page looks up nothing: `success()` skips the Order query
+         * entirely when `?order=` is absent, so the only SQL it ever issued was
+         * the header's free-delivery threshold — two queries that ran on every
+         * page of the site because nothing cached them. Lane BQ cached the
+         * shipping zones, and this page's captured log went empty, which the
+         * "issued no SQL at all" guard below reads as a page that silently
+         * rendered nothing.
+         *
+         * The guard is right and the fixture was wrong. /checkout/success is
+         * the order-received page, its query is the eager-loaded Order with its
+         * lines, their products and those products' brands, and that query — the
+         * one whose dialect shape this file exists to check — was never being
+         * captured here at all. It is now.
+         *
+         * The number is a real one from shapeSeed(). mayView() may still decide
+         * this visitor is not entitled to see it and blank the order out, which
+         * is fine: the lookup has already happened by then, the page is still a
+         * 200, and what is being asserted is the SHAPE of the SQL, not who gets
+         * to read the result.
+         */
+        'checkout success'    => ['/checkout/success?order=' . $seed['order']->order_number, null],
         'journal'             => ['/skincare-guide', null],
         'article'             => ['/shape-article', null],
         'search suggest'      => ['/api/search?q=serum', null],
         'search suggest wild' => ['/api/search?q=' . rawurlencode('50%_off\\back'), null],
         'search starter'      => ['/api/search/starter', null],
-        'wishlist'            => ['/my-wishlist', null],
+        // With something actually saved, so the page runs its own `whereIn`
+        // rather than rendering an empty branch. See the $cookies note below.
+        'wishlist'            => ['/my-wishlist', null, ['kbb_wishlist' => (string) $seed['product']->id]],
         // Client-rendered: the wall fetches /api/reviews from the browser, so
         // the page itself issues no SQL. Listed in SHAPE_STATIC below.
         'review wall'         => ['/reviews', null],
@@ -165,7 +190,11 @@ function shapePages(array $seed): array
         'account orders'      => ['/my-account/orders', $customerId],
         'account order'       => ['/my-account/orders/' . $seed['order']->id, $customerId],
         'account addresses'   => ['/my-account/edit-address', $customerId],
-        'track order'         => ['/track-my-order', null],
+        // With both halves of the lookup, for the same reason as the wishlist
+        // above: bare, track() returns the empty form before it queries
+        // anything, so its `where order_number = ?` was never shape-checked.
+        'track order'         => ['/track-my-order?order=' . $seed['order']->order_number
+                                 . '&email=' . rawurlencode((string) $seed['order']->email), null],
         'sitemap'             => ['/sitemap.xml', null],
         'api products'        => ['/api/products', null],
         'api product'         => ['/api/products/' . $product, null],
@@ -214,9 +243,39 @@ it('issues no dialect-unsafe SQL on any storefront page', function () {
     $seed = shapeSeed();
     $failures = [];
 
-    foreach (shapePages($seed) as $label => [$path, $customerId]) {
-        $captured = SqlShape::capture(function () use ($path, $customerId) {
+    foreach (shapePages($seed) as $label => $page) {
+        [$path, $customerId] = $page;
+
+        /*
+         * An optional third element: cookies the visitor arrives with.
+         *
+         * Some storefront pages read their input from a cookie and do nothing
+         * at all without one -- the wishlist is a cookie of product ids, and
+         * with an empty cookie its controller deliberately issues no query
+         * ("Rule 27: no query at all when the cookie is empty"). Until the
+         * shipping zones were cached, every such page still showed up in this
+         * capture because the header's free-delivery bar ran two queries on
+         * every page of the site; with that gone, the page's log is empty and
+         * the guard below reads it as silently broken.
+         *
+         * The fixture is what was wrong. A wishlist page with nothing in the
+         * wishlist never exercised the `whereIn` this file exists to check the
+         * shape of -- it was passing on somebody else's SQL. Handing it the
+         * cookie makes it run its own.
+         */
+        $cookies = $page[2] ?? [];
+
+        $captured = SqlShape::capture(function () use ($path, $customerId, $cookies) {
             $test = test();
+
+            if ($cookies !== []) {
+                $test = $test->withCredentials()
+                    ->withoutMiddleware(\Illuminate\Cookie\Middleware\EncryptCookies::class);
+
+                foreach ($cookies as $name => $value) {
+                    $test = $test->withUnencryptedCookie($name, $value);
+                }
+            }
 
             if ($customerId !== null) {
                 $test = $test->withSession([

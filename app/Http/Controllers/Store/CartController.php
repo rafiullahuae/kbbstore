@@ -31,7 +31,7 @@ class CartController extends Controller
     /** Columns a cart line needs. The rest of the row is never read here. */
     private const LINE_COLUMNS = [
         'id', 'wc_id', 'slug', 'name', 'brand_id', 'price', 'sale_price',
-        'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'type',
+        'sale_starts_at', 'sale_ends_at', 'stock_status', 'image', 'sku', 'type',
     ];
 
     public function __construct(
@@ -200,13 +200,24 @@ class CartController extends Controller
     {
         $cart = $this->carts->current($request, create: $create);
 
-        return $cart?->load([
+        $cart?->load([
             'items' => fn ($q) => $q->orderBy('id'),
             'items.product' => fn ($q) => $q->select(self::LINE_COLUMNS),
             'items.product.brand:id,name,slug',
-            'items.variant:id,product_id,price,sale_price,image,stock_status',
+            // `sku` added so this set is a superset of the drawer composer's,
+            // which now stands down rather than loading its own copy.
+            'items.variant:id,product_id,sku,price,sale_price,image,stock_status',
             'coupon:id,code,type,amount',
         ]);
+
+        // Said AFTER the load, and unconditionally: this method always fetches,
+        // so whatever a mutation changed a moment ago is in hand before the
+        // drawer is told it need not look.
+        if ($cart !== null) {
+            $this->carts->markDisplayLoaded();
+        }
+
+        return $cart;
     }
 
     /**

@@ -77,6 +77,11 @@ class CategoryArchiveController extends Controller
 
         // The slug, not the path, because that is what ShopController looks up
         // — and by here it is known to be the canonical one.
-        return app(ShopController::class)->index($request, $verdict['category']->slug);
+        //
+        // The row goes with it. CategoryPath::resolve() has just fetched it to
+        // decide between 200, 301 and 404, and without it ShopController ran
+        // the identical `where slug = ?` a second time on every category
+        // archive on the site.
+        return app(ShopController::class)->index($request, $verdict['category']->slug, $verdict['category']);
     }
 }

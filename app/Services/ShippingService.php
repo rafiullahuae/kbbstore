@@ -6,6 +6,9 @@ namespace App\Services;
 
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
+use App\Models\ShippingZoneLocation;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Collection;
 
 /**
  * Zone matching and rate selection.
@@ -17,16 +20,80 @@ use App\Models\ShippingZone;
  */
 class ShippingService
 {
+    public const ZONES_KEY = 'kbb.shipping.zones';
+
+    /**
+     * Every zone, with its locations and its offerable methods, read ONCE.
+     *
+     * WHAT THIS REPLACES. Each answer about a destination cost two queries —
+     * `whereHas('locations')` for the zone, then its `methods` lazily — and
+     * nothing remembered either one. A storefront page asks between one and
+     * four times:
+     *
+     *   every page      the header's free-delivery bar (StoreComposer)
+     *   /cart           + the cart totals, + the drawer's totals
+     *   /checkout       + the delivery list, + the country selector's list
+     *
+     * so /checkout ran the pair four times over and /cart three, and EVERY
+     * page on the site paid for it at least once. Measured by
+     * StorefrontQueryBudgetTest on its own fixture: eight of the checkout's
+     * twenty-five queries and six of the cart's fifteen were the same handful
+     * of rows, fetched again and again.
+     *
+     * WHY A CACHE AND NOT A PER-REQUEST MEMO. A memo takes the repeats off
+     * /cart and /checkout and does nothing at all for the homepage, which asks
+     * exactly once and still paid two queries for the answer. This is
+     * configuration, not data — production runs two zones across six locations
+     * and four methods, a dozen small rows in total — and it changes only when
+     * the owner edits Store → Shipping.
+     *
+     * NOTHING GOES STALE. The eviction is not a TTL: the three models write
+     * through flushZones() on every save and delete (registered in
+     * AppServiceProvider, alongside the catalogue hooks that evict the homepage
+     * fragments for the same reason). An edit on the shipping screen is live on
+     * the next request, exactly as it was before this cache existed.
+     *
+     * The matching below is the same matching that used to be done in SQL,
+     * moved into PHP over a dozen rows already in memory.
+     */
+    private function zones(): Collection
+    {
+        $zones = Cache::rememberForever(
+            self::ZONES_KEY,
+            fn () => ShippingZone::with(['locations', 'methods'])->get()
+        );
+
+        // A cache entry written by an older build must never take the
+        // storefront down -- the same guard SettingsService uses.
+        if (! $zones instanceof Collection) {
+            Cache::forget(self::ZONES_KEY);
+
+            return ShippingZone::with(['locations', 'methods'])->get();
+        }
+
+        return $zones;
+    }
+
+    /** Called whenever a zone, a location or a method is written. */
+    public static function flushZones(): void
+    {
+        Cache::forget(self::ZONES_KEY);
+    }
+
     /**
      * Every country covered by a zone with at least one enabled method,
      * code => name. This is the checkout's default country list — the six
      * Gulf countries in production — before Extended adds anything to it.
+     *
+     * `methods` is already the enabled-only relation (see ShippingZone), which
+     * is why the old query asked for `enabled = ?` twice. Zone order is the
+     * unordered `get()` it always was — this list is the checkout's country
+     * dropdown, and reordering it is a visible change nobody asked for.
      */
     public function coveredCountries(): array
     {
-        return ShippingZone::whereHas('methods', fn ($q) => $q->where('enabled', true))
-            ->with('locations')
-            ->get()
+        return $this->zones()
+            ->filter(fn (ShippingZone $z) => $z->methods->isNotEmpty())
             ->flatMap(fn (ShippingZone $z) => $z->locations)
             ->pluck('code')
             ->unique()
@@ -44,23 +111,26 @@ class ShippingService
 
         $country = strtoupper($country);
 
+        // sortBy('position') where the query said orderBy('position'), and
+        // first() where it said first().
+        $byPosition = $this->zones()->sortBy('position');
+
         if ($state) {
-            $zone = ShippingZone::whereHas('locations', fn ($q) => $q
-                ->where('type', 'state')
-                ->where('code', $country . ':' . $state))
-                ->orderBy('position')
-                ->first();
+            $zone = $byPosition->first(fn (ShippingZone $z) => $this->hasLocation($z, 'state', $country . ':' . $state));
 
             if ($zone) {
                 return $zone;
             }
         }
 
-        return ShippingZone::whereHas('locations', fn ($q) => $q
-            ->where('type', 'country')
-            ->where('code', $country))
-            ->orderBy('position')
-            ->first();
+        return $byPosition->first(fn (ShippingZone $z) => $this->hasLocation($z, 'country', $country));
+    }
+
+    private function hasLocation(ShippingZone $zone, string $type, string $code): bool
+    {
+        return $zone->locations->contains(
+            fn (ShippingZoneLocation $l) => $l->type === $type && $l->code === $code
+        );
     }
 
     /**

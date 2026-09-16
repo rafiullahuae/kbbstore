@@ -21,6 +21,7 @@ class SettingsService
 {
     private const CACHE_KEY = 'kbb.settings';
     private const MODULES_KEY = 'kbb.modules';
+    private const MODULE_SETTINGS_KEY = 'kbb.module_settings';
 
     public function all(): array
     {
@@ -213,11 +214,59 @@ class SettingsService
         Cache::forget(self::MODULES_KEY);
     }
 
+    /**
+     * A module's saved option, read from ONE cached snapshot of the table.
+     *
+     * This was `ModuleSetting::where(...)->where(...)->first()` — one SELECT
+     * per call, uncached, with nothing memoising it. That is the same N+1 the
+     * settings table had (see snapshot() above), and it is worse here, because
+     * of where it is called from: ProductLabels::all() reads all FOURTEEN keys
+     * of its schema, and ProductLabels is not bound in the container, so
+     * `app(ProductLabels::class)` in components/product-card.blade.php builds a
+     * NEW instance — and therefore a cold `all()` — FOR EVERY CARD.
+     *
+     * With Catalogue → Product Labels switched on, a 24-product /shop page
+     * therefore ran 24 x 14 = 336 extra single-row SELECTs, and a 48-product
+     * page ran 672: one query per product per badge option, growing with the
+     * catalogue. Off (the default), `for()` returns before `all()` and nothing
+     * showed in any measurement — which is why the budget test never caught it.
+     * Turning the module on in the admin panel was enough to do it.
+     *
+     * `module_settings` is configuration, a few dozen small rows, so it is read
+     * whole exactly like `module_toggles` above and for the same reasons.
+     * setModuleSetting() is the only writer in the codebase and forgets it.
+     */
     public function moduleSetting(string $module, string $key, mixed $default = null): mixed
     {
-        $row = ModuleSetting::where('module', $module)->where('key', $key)->first();
+        $map = $this->moduleSettingsMap();
 
-        return $row ? $this->decode($row->value) : $default;
+        return array_key_exists($module . "\0" . $key, $map)
+            ? $this->decode($map[$module . "\0" . $key])
+            : $default;
+    }
+
+    /** @return array<string, mixed> */
+    private function moduleSettingsMap(): array
+    {
+        $map = Cache::rememberForever(self::MODULE_SETTINGS_KEY, function () {
+            $out = [];
+
+            foreach (ModuleSetting::query()->get(['module', 'key', 'value']) as $row) {
+                $out[(string) $row->module . "\0" . (string) $row->key] = $row->value;
+            }
+
+            return $out;
+        });
+
+        // Same guard as all() and moduleEnabled(): a cache entry written by an
+        // older build must never take the storefront down.
+        if (! is_array($map)) {
+            Cache::forget(self::MODULE_SETTINGS_KEY);
+
+            return [];
+        }
+
+        return $map;
     }
 
     /**
@@ -232,12 +281,15 @@ class SettingsService
             ['module' => $module, 'key' => $key],
             ['value' => is_scalar($value) || $value === null ? $value : json_encode($value)]
         );
+
+        Cache::forget(self::MODULE_SETTINGS_KEY);
     }
 
     public function flush(): void
     {
         Cache::forget(self::CACHE_KEY);
         Cache::forget(self::MODULES_KEY);
+        Cache::forget(self::MODULE_SETTINGS_KEY);
         self::forgetMemo();
     }
 
