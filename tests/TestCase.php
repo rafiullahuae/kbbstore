@@ -2,9 +2,41 @@
 
 namespace Tests;
 
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Tests\Support\CompiledCaches;
 
 abstract class TestCase extends BaseTestCase
 {
-    //
+    /**
+     * Every test's application is built here, and it is built from the
+     * environment rather than from a compiled config cache.
+     *
+     * LoadConfiguration consults Application::configurationIsCached() first and,
+     * if a compiled file is there, `require`s it and never calls env() at all.
+     * One such file is therefore a complete override of the suite's database
+     * settings — past phpunit-mysql.xml's force="true" and past
+     * tests/bootstrap.php both. With a config cache naming sqlite in place,
+     * `vendor/bin/pest -c phpunit-mysql.xml tests/Feature/OrderNumbersTest.php`
+     * fails all eleven tests with "no such column: deleted_at (Connection:
+     * sqlite)": a MySQL run reading a half-migrated SQLite file.
+     *
+     * Such a file is written by every `php artisan migrate` against this
+     * checkout, because warm_caches_2_60_4 calls config:cache and route:cache
+     * from inside the migration set and the clear_caches_* migrations only
+     * remove them again at the end. Another lane's terminal, the browser
+     * previews' `migrate --force` subprocess and an UpdateRunner apply all open
+     * that window. Discarding here is what keeps a test out of it.
+     *
+     * Tests\Support\CompiledCaches carries the reproduction, and the reason this
+     * is a delete rather than a redirection of APP_CONFIG_CACHE.
+     *
+     * Cheap: three is_file() calls and one glob per test.
+     */
+    public function createApplication(): Application
+    {
+        CompiledCaches::discard();
+
+        return parent::createApplication();
+    }
 }
