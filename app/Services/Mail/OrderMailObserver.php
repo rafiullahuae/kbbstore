@@ -82,39 +82,82 @@ class OrderMailObserver
         /*
          * Money actually returned.
          *
-         * `saved` rather than `updated`, because PaymentRefunder writes the row
-         * `pending` inside its locking transaction and settles it to `succeeded`
-         * afterwards — but a provider that settles synchronously could in
-         * principle create one already succeeded, and a refund email that depends
-         * on which of two paths the gateway took is a refund email that goes
-         * missing. The wasChanged guard keeps a later unrelated save (a provider
-         * reference arriving, say) from sending a second one.
+         * TWO EVENTS, NOT `saved`, AND THE DIFFERENCE IS A DUPLICATE EMAIL.
+         *
+         * What stood here was one `Refund::saved` listener guarded by
+         *
+         *     if (! $refund->wasRecentlyCreated && ! $refund->wasChanged('status'))
+         *
+         * whose stated purpose was to stop "a later unrelated save (a provider
+         * reference arriving, say) from sending a second one". It could not do
+         * that, because `wasRecentlyCreated` is not scoped to the save that
+         * created the row — Eloquent sets it true on insert and NEVER clears it
+         * for the life of that instance. So on a refund created and then saved
+         * again in the same request, which is every refund PaymentRefunder
+         * handles, the first half of the guard stayed true forever and the
+         * `wasChanged` half was never reached. Any subsequent save of a
+         * succeeded refund — writing the provider reference, a retry stamping a
+         * field, anything — mailed the customer a second "we have sent your
+         * money back" for one refund. The one guard written to prevent the
+         * duplicate was the reason it happened.
+         *
+         * Splitting the listener says what was meant without needing a flag:
+         *
+         *   created — the row arrived already `succeeded`. That is the
+         *             synchronous-provider case the old comment was written for,
+         *             and it is a genuine settlement. Mail it.
+         *   updated — the row moved TO `succeeded` from something else. That is
+         *             PaymentRefunder's ordinary pending → succeeded settle.
+         *             `wasChanged('status')` is exact here: it is false for a
+         *             save that touched other columns, so the provider
+         *             reference arriving sends nothing.
+         *
+         * A failed refund mails nothing at all, from either event: telling a
+         * customer their money is on the way when the gateway refused is worse
+         * than telling them nothing.
          */
-        Refund::saved(static function (Refund $refund): void {
+        Refund::created(static function (Refund $refund): void {
             if ((string) $refund->status !== 'succeeded') {
                 return;
             }
 
-            if (! $refund->wasRecentlyCreated && ! $refund->wasChanged('status')) {
+            self::mailRefund($refund);
+        });
+
+        Refund::updated(static function (Refund $refund): void {
+            if ((string) $refund->status !== 'succeeded' || ! $refund->wasChanged('status')) {
                 return;
             }
 
-            DB::afterCommit(static function () use ($refund): void {
-                try {
-                    $order = $refund->order;
+            self::mailRefund($refund);
+        });
+    }
 
-                    if ($order === null) {
-                        return;
-                    }
+    /**
+     * One settled refund, mailed after the transaction that settled it.
+     *
+     * Shared by both listeners above so the two cannot drift. Everything
+     * DB::afterCommit() and the try/catch are here for is set out in this
+     * class's header: never hold a transaction open across SMTP, and never let
+     * a mail failure surface as a failed refund.
+     */
+    private static function mailRefund(Refund $refund): void
+    {
+        DB::afterCommit(static function () use ($refund): void {
+            try {
+                $order = $refund->order;
 
-                    app(OrderMailer::class)->refunded($order, $refund);
-                } catch (\Throwable $e) {
-                    Log::error('refund mail failed', [
-                        'refund' => $refund->getKey(),
-                        'exception' => class_basename($e),
-                    ]);
+                if ($order === null) {
+                    return;
                 }
-            });
+
+                app(OrderMailer::class)->refunded($order, $refund);
+            } catch (\Throwable $e) {
+                Log::error('refund mail failed', [
+                    'refund' => $refund->getKey(),
+                    'exception' => class_basename($e),
+                ]);
+            }
         });
     }
 }

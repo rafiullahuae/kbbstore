@@ -36,6 +36,27 @@ class CheckoutController extends Controller
             'customer.phone'   => 'nullable|string|max:40',
             'customer.emirate' => 'nullable|string|max:60',
             'customer.address' => 'nullable|string|max:500',
+            /*
+             * `country` WAS NEVER VALIDATED, AND THEREFORE NEVER ARRIVED.
+             *
+             * Request::validate() returns ONLY the keys it was given rules for.
+             * `customer` is validated as an array and each sub-key by name, so
+             * a sub-key with no rule of its own is dropped from $data before
+             * any of this method sees it.
+             *
+             * Two places below read `$data['customer']['country']` and both had
+             * been reading an absent key since the day they were written:
+             * the billing/shipping snapshot recorded every order as 'AE'
+             * whatever the caller sent, and the gateway's own
+             * availableFor($total, $country) check was handed null on every
+             * single call — so a gateway restricted by country was never
+             * actually asked about one. Neither could fail loudly, because
+             * `?? 'AE'` and `?? null` are exactly what an absent key produces.
+             *
+             * Same shape as the broken-filter lesson in CLAUDE.md: the code
+             * downstream read fine and had never once run on real input.
+             */
+            'customer.country' => 'nullable|string|size:2',
             'ship_method'      => 'nullable|string|max:60',
             'method'           => 'required|string|in:cod,stripe,tabby,tamara',
         ]);
@@ -51,9 +72,7 @@ class CheckoutController extends Controller
 
         return DB::transaction(function () use ($data, $orderNumber) {
             $settings   = Setting::map();
-            $freeShip   = (int) ($settings['free_ship'] ?? 20000);      // fils
             $codFeeCfg  = (int) ($settings['cod_fee'] ?? 0);            // fils
-            $flatDelivery = (int) ($settings['delivery_flat'] ?? 2000); // fils
 
             // recompute subtotal from the catalog — client prices are ignored
             $subtotal = 0;
@@ -95,7 +114,64 @@ class CheckoutController extends Controller
                 ];
             }
 
-            $delivery = $subtotal >= $freeShip ? 0 : $flatDelivery;
+            /*
+             * DELIVERY COMES FROM THE SHIPPING ZONES, exactly as it does in
+             * Store\CheckoutController::place().
+             *
+             * What stood here was:
+             *
+             *     $delivery = $subtotal >= $freeShip ? 0 : $flatDelivery;
+             *
+             * — two settings (`free_ship`, `delivery_flat`) that NOTHING ELSE IN
+             * THIS APPLICATION READS. The storefront prices delivery from
+             * ShippingService::ratesFor(), which is what the owner actually
+             * edits under Store → Shipping, and production runs two zones: All
+             * UAE at AED 20 free over AED 199, and Gulf Countries at AED 150
+             * free over AED 1,600.
+             *
+             * So this endpoint charged AED 20 to ship to Saudi Arabia while the
+             * storefront charged AED 150 for the identical basket — the shop
+             * quietly absorbing AED 130 of courier cost on every Gulf order
+             * placed through the API, and the two doors into the same shop
+             * disagreeing about the price of the same delivery.
+             *
+             * The flat defaults hid it: `delivery_flat` defaults to 2000 fils
+             * and `free_ship` to 20000, which is within a dirham of the UAE
+             * zone. Every UAE order looked right. Only the Gulf was wrong, and
+             * only on this path.
+             *
+             * A DESTINATION NO ZONE COVERS IS NOW REFUSED rather than shipped at
+             * a flat rate. place() answers "We do not deliver to that country
+             * yet" and stops; this took the order, charged the flat rate and
+             * left somebody to explain it afterwards. An endpoint that accepts
+             * orders the shop cannot fulfil is worse than one that says no.
+             */
+            $country = strtoupper(trim((string) ($data['customer']['country'] ?? 'AE'))) ?: 'AE';
+            $state   = $data['customer']['emirate'] ?? null;
+
+            $rates = app(\App\Services\ShippingService::class)->ratesFor(
+                $country,
+                $state,
+                $subtotal,
+                (bool) app(\App\Services\SettingsService::class)->get('hide_paid_when_free', true),
+            );
+
+            if (! $rates) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'We do not deliver to that country yet.',
+                ], 422);
+            }
+
+            // Only a rate actually offered for this destination is accepted —
+            // place()'s rule, and for the same reason: `ship_method` is whatever
+            // the caller sent. Compared loosely because rate ids are integers
+            // and this endpoint validates `ship_method` as a string.
+            $rate = collect($rates)
+                ->first(fn ($r) => (string) $r['id'] === trim((string) ($data['ship_method'] ?? '')))
+                ?? $rates[0];
+
+            $delivery = (int) $rate['cost'];
             $codFee   = $data['method'] === 'cod' ? $codFeeCfg : 0;
             $total    = $subtotal + $delivery + $codFee;
 
@@ -194,7 +270,12 @@ class CheckoutController extends Controller
                 'fee_total'        => $codFee,
                 'tax_total'        => 0,
                 'total'            => $total,
-                'shipping_method'  => $data['ship_method'] ?? 'standard',
+                // The rate's own title, as place() writes it — not the raw
+                // `ship_method` slug off the request. This column is what the
+                // order email's "Delivery method" line and the admin order
+                // screen print, and both were showing the customer the literal
+                // word "standard".
+                'shipping_method'  => $rate['title'],
                 'payment_method'   => $data['method'],
             ]);
 
