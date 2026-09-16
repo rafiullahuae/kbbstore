@@ -39,15 +39,61 @@
    grid collapses, every table sits in its own scroller, and no element carries
    a min-width larger than the narrowest content box (390 - 48px of .content
    padding = 342px).
+
+   SHAPE OF THE SCREEN, and why it is this shape.
+
+   It was two columns of roughly equal weight: Customer and Items on the left,
+   everything else on the right. Measured at 1280 that left the left column
+   485px tall beside a right column of 1190 — half the monitor empty, the other
+   half a ten-field stack with no grouping, and the total two screens away from
+   the items it totals. Someone taking an order on the phone was scrolling
+   between the number and the basket while talking.
+
+   Now the two columns carry four steps between them, read in the order the job
+   is done: who is it for (1) and what are they buying (2) on the left, where is
+   it going (3) below them, then how do they pay (4) and what does it come to on
+   the right. Measured filled at 1280 that is roughly 970px of left against
+   900px of right — neither column runs on while the other is blank.
+
+   The total is dealt with twice, because it is the number being read down the
+   phone. The items card carries a running total of its own, right under the
+   basket, so the figure needs no scroll at all; and the summary card is
+   `position:sticky` as the last child of a stretched right column, so once
+   reached it stays on screen for the rest of the page.
+
+   Below 1081px the grid collapses to one column and the summary stops sticking
+   — on a phone a pinned card is just a card that eats the viewport.
 --------------------------------------------------------------------------- */
-.mo-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+.mo-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
 .mo-col{min-width:0}
+/* Stretched, not start-aligned: a sticky child can only travel inside its
+   parent's box, and a content-height column gives it nowhere to go. */
+.mo-rail{min-width:0;align-self:stretch}
 .mo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
          box-shadow:var(--sh-s);padding:18px;margin-bottom:14px}
-.mo-card>h3{font-size:13.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px}
+.mo-card:last-child{margin-bottom:0}
+.mo-card>h3{font-size:13.5px;font-weight:700;letter-spacing:-.01em;margin-bottom:3px;
+            display:flex;align-items:center;gap:0;min-width:0}
 .mo-card>h3+p{font-size:11.5px;color:var(--ink-soft);margin-bottom:13px;line-height:1.5}
-.mo-step{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;
+.mo-step{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;flex:none;
          background:var(--accent-soft);color:var(--accent-ink);font-size:10.5px;font-weight:700;margin-right:7px}
+
+/* The summary card is a result, not a step, so it is tinted rather than
+   numbered — it should not read as "thing you fill in fifth".
+
+   Sticky, and max-height'd: a pinned card taller than the window would hold its
+   own Create button below the fold with no way to scroll to it. */
+.mo-card.mo-sum{border-color:var(--accent);position:sticky;top:0;
+                max-height:calc(100vh - 28px);overflow:hidden auto;overscroll-behavior:contain}
+.mo-card.mo-sum>h3{color:var(--accent-ink)}
+
+/* Titled sub-sections. Delivery & payment was ten fields in one undivided
+   stack; these are the three questions it was actually asking. */
+.mo-sub{margin-top:16px;padding-top:15px;border-top:1px solid var(--border-2);min-width:0}
+.mo-sub:first-of-type{margin-top:0;padding-top:0;border-top:0}
+.mo-sub>h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.055em;
+           color:var(--ink-2);margin-bottom:3px}
+.mo-sub>h4+p{font-size:11px;color:var(--ink-soft);margin-bottom:11px;line-height:1.5}
 
 /* Search box + results. The results list is capped and scrolls rather than
    pushing the totals off the bottom of a phone screen. */
@@ -104,6 +150,45 @@
 .mo-line-x:hover{background:var(--red-soft);color:var(--red)}
 .mo-empty{padding:26px 14px;text-align:center;font-size:12px;color:var(--ink-soft)}
 
+/* Empty states that do something.
+   "Nothing added yet." in a grey box told the operator what they could already
+   see. These say what to type, and what the screen will do with it. */
+.mo-blank{padding:22px 16px;text-align:center;background:var(--surface-2);
+          border:1px dashed var(--border);border-radius:10px;min-width:0}
+.mo-blank .mo-blank-i{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;
+                      background:var(--surface);border:1px solid var(--border);color:var(--ink-faint);margin-bottom:9px}
+.mo-blank b{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+.mo-blank p{font-size:11.5px;color:var(--ink-soft);line-height:1.55;margin:0 auto;max-width:300px}
+.mo-blank p+p{margin-top:6px}
+.mo-blank kbd{font-family:inherit;font-size:11px;font-weight:600;color:var(--ink-2);
+              background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:1px 5px}
+
+/* The running total under the basket, so the number being read down the phone
+   never needs a scroll to reach. */
+.mo-run{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;justify-content:space-between;
+        margin-top:11px;padding:11px 12px;border-radius:10px;background:var(--accent-soft);min-width:0}
+.mo-run:empty{display:none}
+.mo-run-l{font-size:11.5px;color:var(--accent-ink);opacity:.9;min-width:0;overflow-wrap:anywhere}
+/* The figures keep together on the right: a struck-through pre-discount price
+   floating between the label and the total read as a third number. */
+.mo-run-n{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;
+          justify-content:flex-end;min-width:0;margin-left:auto}
+.mo-run b{font-size:15px;font-weight:700;color:var(--accent-ink);
+          font-variant-numeric:tabular-nums;white-space:nowrap}
+.mo-run .mo-run-was{font-size:11.5px;color:var(--accent-ink);opacity:.6;
+                    text-decoration:line-through;font-weight:600;white-space:nowrap}
+
+/* What is still missing before a price can be worked out, instead of one grey
+   sentence listing all four. Each line ticks itself off as it is satisfied. */
+.mo-ready{display:flex;flex-direction:column;gap:7px;padding:2px 0 4px;min-width:0}
+.mo-ready-r{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ink-soft);min-width:0}
+.mo-ready-r i{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;flex:none;
+              margin-top:1px;border:1px solid var(--border);background:var(--surface-2);
+              color:var(--ink-faint);font-size:9px;font-style:normal;font-weight:800}
+.mo-ready-r span{min-width:0;overflow-wrap:anywhere}
+.mo-ready-r.on{color:var(--ink-2)}
+.mo-ready-r.on i{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent-ink)}
+
 /* Totals. */
 .mo-tot{display:flex;flex-direction:column;gap:7px;font-size:12.5px}
 .mo-tot-r{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
@@ -142,12 +227,17 @@
 
 @media (max-width:1080px){
   .mo-grid{grid-template-columns:minmax(0,1fr)}
+  /* One column: a pinned card would sit on top of the form it summarises. */
+  .mo-card.mo-sum{position:static;max-height:none;overflow:visible}
+  .mo-card:last-child{margin-bottom:14px}
 }
 @media (max-width:520px){
   .mo-two{grid-template-columns:1fr}
   .mo-card{padding:15px}
   .mo-line-tot{min-width:0;text-align:left}
   .mo-actions .btn{flex:1 1 100%}
+  .mo-blank{padding:18px 13px}
+  .mo-run{padding:10px 11px}
 }
 </style>
 
@@ -233,6 +323,26 @@
   }
 
   function say(msg){ try { window.toast(msg); } catch (e) {} }
+
+  /*
+   * The VAT figure arrives as the storefront's price markup —
+   * `<span class="woocommerce-Price-amount ...">AED 13</span>` — because it is
+   * produced by the same formatter the shop front uses. It was passed through
+   * esc(), so the summary printed the tags as visible text: two lines of raw
+   * HTML where a price should be. That was there before this screen was
+   * relaid; it only became visible when the total moved above the fold.
+   *
+   * Stripped rather than trusted. Dropping esc() would render server HTML
+   * unescaped in the admin, and a price string is not worth that; a tag strip
+   * leaves exactly the "AED 13" the operator needs and cannot inject anything.
+   */
+  function plainPrice(s){
+    return String(s == null ? '' : s)
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
   /* -------------------------------------------------------- sidebar entry */
   function addNavEntry(){
@@ -577,8 +687,13 @@
         '</div>' +
         '<div id="moBanner"></div>' +
         '<div class="mo-grid">' +
-          '<div class="mo-col">' + customerCard() + itemsCard() + '</div>' +
-          '<div class="mo-col">' + deliveryCard() + totalsCard() + '</div>' +
+          /* Who it is for, what they are buying, where it is going. */
+          '<div class="mo-col">' +
+            customerCard() + itemsCard() + deliveryCard() +
+          '</div>' +
+          /* How they pay, and what it comes to. The summary is last so that,
+             sticky, it pins for the remainder of the column. */
+          '<div class="mo-col mo-rail">' + paymentCard() + totalsCard() + '</div>' +
         '</div>' +
       '</div>';
 
@@ -645,13 +760,58 @@
 
   function itemsCard(){
     return '<div class="mo-card"><h3><i class="mo-step">2</i>Items</h3>' +
-      '<p>Search the live catalogue by name or SKU. Unit prices come from the catalogue, ' +
-      'including any sale or quantity-bundle rate.</p>' +
+      '<p>Search the live catalogue by product name, SKU or brand. Unit prices come from the ' +
+      'catalogue, including any sale or quantity-bundle rate.</p>' +
       '<div class="mo-search"><input id="moProdSearch" type="search" autocomplete="off" ' +
-      'placeholder="Search products by name or SKU"></div>' +
+      'placeholder="Search products by name, SKU or brand"></div>' +
       '<div class="mo-results" id="moProdResults"></div>' +
       (errors.items ? '<span class="mo-err" style="margin:8px 0 0">' + esc(errors.items) + '</span>' : '') +
-      '<div style="margin-top:12px">' + linesHTML() + '</div></div>';
+      '<div style="margin-top:12px">' + linesHTML() + '</div>' +
+      '<div class="mo-run" id="moRun">' + runHTML() + '</div></div>';
+  }
+
+  /*
+   * The running total, inside the Items card.
+   *
+   * Requirement in one line: this is the number being read down the phone, so
+   * it belongs beside the basket and not at the bottom of another column. It
+   * shows the catalogue subtotal until a quote lands and the priced total
+   * after, with the pre-discount figure struck through when a coupon is on —
+   * the same two numbers the summary card shows, never a third one.
+   */
+  function runHTML(){
+    if (!lines.length) return '';
+
+    var t = priced && priced.totals;
+    var count = lines.reduce(function(n, l){ return n + l.qty; }, 0);
+    var gross = lines.reduce(function(n, l, i){ return n + lineTotal(i); }, 0);
+
+    var label = count + ' item' + (count === 1 ? '' : 's') + (t ? '' : ' · before delivery');
+
+    return '<span class="mo-run-l">' + esc(label) + '</span>' +
+      '<span class="mo-run-n">' +
+      (t
+        ? (t.discount_fils ? '<span class="mo-run-was">' + aed(t.subtotal_fils) + '</span>' : '') +
+          '<b>' + aed(t.total_fils) + '</b>'
+        : '<b>' + aed(gross) + '</b>') +
+      '</span>';
+  }
+
+  /* What is still needed before the order can be priced, ticked off as it
+     arrives. Same four conditions quotable() uses, so the list cannot claim
+     the form is ready while the quote refuses to run. */
+  function readyHTML(){
+    var rows = [
+      [!!(customer || (newCustomer && form.nc_name && form.nc_email)), 'A customer'],
+      [lines.length > 0, 'At least one product'],
+      [!!(form.line1 && form.city && form.state && form.country), 'A delivery address'],
+      [!!form.payment_method, 'A payment method']
+    ];
+
+    return '<div class="mo-ready">' + rows.map(function(r){
+      return '<div class="mo-ready-r' + (r[0] ? ' on' : '') + '">' +
+        '<i>' + (r[0] ? '&#10003;' : '') + '</i><span>' + esc(r[1]) + '</span></div>';
+    }).join('') + '</div>';
   }
 
   /* The same square the suggestion rows use, so a line the operator has just
@@ -671,7 +831,19 @@
 
   function linesHTML(){
     if (!lines.length) {
-      return '<div class="mo-lines"><div class="mo-empty">Nothing added yet.</div></div>';
+      // Not "Nothing added yet." — that told the operator what they could
+      // already see. This says what to type and what will come back.
+      return '<div class="mo-lines" style="border:0">' +
+        '<div class="mo-blank">' +
+          '<span class="mo-blank-i">' +
+            icon('<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/>' +
+                 '<circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/>') +
+          '</span>' +
+          '<b>The basket is empty</b>' +
+          '<p>Type into the box above — a product name, a <kbd>SKU</kbd>, or a brand such as ' +
+          '<kbd>Anua</kbd>. Pick a suggestion and it lands here at the catalogue price.</p>' +
+          '<p>Use &minus; and + on a line to change the quantity; the total updates as you go.</p>' +
+        '</div></div>';
     }
     return '<div class="mo-lines">' + lines.map(function(l, i){
       return '<div class="mo-line">' +
@@ -708,15 +880,32 @@
     replacement.innerHTML = linesHTML();
     wrap.replaceWith(replacement.firstChild);
     wireLines();
+
+    // The running total sits beside the lines and moves with them. It carries
+    // no handlers, so replacing its contents detaches nothing.
+    var run = document.querySelector('#moRun');
+    if (run) run.innerHTML = runHTML();
   }
 
+  /*
+   * Step 3: where it is going, and what the delivery costs.
+   *
+   * This and paymentCard() below were one card of ten fields in a single
+   * undivided stack — address, city, region, country, phone, delivery charge,
+   * payment method, status, source, packer note. Nothing said where one
+   * question ended and the next began. Split into the questions actually being
+   * asked, each with one short line of its own. Every field id, bind key and
+   * validation key is unchanged; only the boxes around them are new.
+   */
   function deliveryCard(){
     var countries = V ? Object.keys(V.countries).map(function(k){ return [k, V.countries[k]]; }) : [];
     var emirates = V ? V.emirates : [];
 
-    return '<div class="mo-card"><h3><i class="mo-step">3</i>Delivery &amp; payment</h3>' +
-      '<p>The destination decides which delivery rates apply — the same zones the storefront uses.</p>' +
+    return '<div class="mo-card"><h3><i class="mo-step">3</i>Delivery</h3>' +
+      '<p>Where the parcel goes, and what the customer is charged to get it there.</p>' +
 
+      '<div class="mo-sub"><h4>The address</h4>' +
+      '<p>The destination decides which delivery rates apply — the same zones the storefront uses.</p>' +
       fld('line1', 'Address', textInput('line1', 'Flat / villa, street, area', form.line1)) +
       '<div class="mo-two">' +
         fld('city', 'City', textInput('city', 'Dubai', form.city)) +
@@ -729,13 +918,26 @@
       '<div class="mo-two">' +
         fld('country', 'Country', selectInput('country', countries, form.country)) +
         fld('phone', 'Phone', textInput('phone', '+971 50 000 0000', form.phone)) +
-      '</div>' +
+      '</div></div>' +
 
+      '<div class="mo-sub"><h4>How it ships, and what it costs</h4>' +
+      '<p>Left blank, the zone rate for that address is used and the free-delivery threshold ' +
+      'still applies.</p>' +
       fld('shipping_override', 'Delivery charge (AED)',
           textInput('shipping_override', 'Leave blank for the normal rate', form.shipping_override),
           'Overrides the zone rate for this order only — for a courier fee agreed in the chat. ' +
           'Read digit by digit, so 1.15 is exactly 115 fils.') +
+      '</div></div>';
+  }
 
+  /* Step 4: how they pay, and where the order came from. */
+  function paymentCard(){
+    return '<div class="mo-card"><h3><i class="mo-step">4</i>Payment &amp; source</h3>' +
+      '<p>How the money arrives, and what the packing team needs to know.</p>' +
+
+      '<div class="mo-sub"><h4>How they pay</h4>' +
+      '<p>A method switched off on the storefront can still be used here — staff take payments ' +
+      'the website does not offer.</p>' +
       '<div class="mo-two">' +
         fld('payment_method', 'Payment method',
             selectInput('payment_method', (V ? V.payment_methods : []).map(function(m){
@@ -743,16 +945,16 @@
             }), form.payment_method)) +
         fld('status', 'Order status',
             selectInput('status', (V ? V.statuses : []).map(function(s){ return [s, s]; }), form.status)) +
-      '</div>' +
+      '</div></div>' +
 
+      '<div class="mo-sub"><h4>Where the order came from</h4>' +
+      '<p>Kept on the order so the chat and DM orders can be counted separately later.</p>' +
       fld('channel', 'Came in via',
-          selectInput('channel', (V ? V.channels : []).map(function(c){ return [c, c]; }), form.channel),
-          'Stored on the order, so the WhatsApp and Instagram orders can be told apart later.') +
-
+          selectInput('channel', (V ? V.channels : []).map(function(c){ return [c, c]; }), form.channel)) +
       fld('customer_note', 'Note for the packer',
           '<textarea id="mo_customer_note" data-bind="customer_note" ' +
           'placeholder="Gift wrap, leave with security, ...">' + esc(form.customer_note) + '</textarea>') +
-      '</div>';
+      '</div></div>';
   }
 
   function totalsRowsHTML(){
@@ -771,10 +973,12 @@
             aed(t.fee_fils) + '</b></div>' : '') +
           '<div class="mo-tot-r grand"><span>Total</span><b>' + aed(t.total_fils) + '</b></div>' +
           (t.vat ? '<div class="mo-tot-r" style="font-size:11px"><span>' + esc(t.vat.label) +
-            '</span><span style="color:var(--ink-soft)">' + esc(t.vat.formatted) + '</span></div>' : '') +
+            '</span><span style="color:var(--ink-soft)">' + esc(plainPrice(t.vat.formatted)) +
+            '</span></div>' : '') +
         '</div>'
-      : '<div class="mo-empty" style="padding:18px 0">Add a customer, items and a delivery ' +
-        'address and the total appears here.</div>';
+      // Not one grey sentence naming all four prerequisites at once: the list
+      // itself, ticking off as each one is satisfied.
+      : readyHTML();
   }
 
   function couponRowHTML(){
@@ -794,8 +998,10 @@
     var t = priced && priced.totals;
     var emailCap = (V && V.email) || {available:false, reason:''};
 
-    return '<div class="mo-card"><h3><i class="mo-step">4</i>Total</h3>' +
-      '<p>Worked out server-side from the catalogue, the delivery zones and the coupon rules.</p>' +
+    // No step number: this is the result of the four steps, not a fifth one.
+    return '<div class="mo-card mo-sum"><h3>Order total</h3>' +
+      '<p>Worked out server-side from the catalogue, the delivery zones and the coupon rules — ' +
+      'so the customer pays what they were quoted.</p>' +
       '<div id="moCouponRow">' + couponRowHTML() + '</div>' +
       '<div id="moTotals">' + totalsRowsHTML() + '</div>' +
 
