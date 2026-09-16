@@ -97,12 +97,38 @@ a{color:inherit;text-decoration:none}
 /* rating capsule (config-driven, from admin Rating Capsule editor) */
 .cap-area{margin:2px 0 9px}
 .cap-area:empty{display:none}
-.sr-capbar{display:inline-flex;align-items:center;gap:9px;padding:8px 16px 8px 9px;border-radius:30px;text-decoration:none;background:linear-gradient(135deg,#fff,var(--pink-soft));border:1px solid var(--line);box-shadow:0 12px 26px -16px rgba(193,62,99,.4);transition:transform .2s var(--ease);line-height:1;cursor:pointer}
-.sr-capbar:hover{transform:translateY(-2px)}
-.sr-cap-heart{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,var(--blush),var(--pink));color:#fff;font-size:13px}
-.sr-cap-stars{color:var(--gold);letter-spacing:1px;font-size:13px}
-.sr-cap-avg{font-size:15px;color:var(--ink);font-weight:700}
-.sr-cap-count{font-size:12px;color:var(--ink-2);font-weight:600}
+/* The rating capsule.
+   ---------------------------------------------------------------------------
+   THESE VALUES ARE THE SAME AS .rbt-cap IN
+   resources/views/admin/partials/review-badges-screen.blade.php, and they have
+   to stay that way. That screen previews this badge and offers themes for it,
+   and the owner reasonably expects the preview to be the thing.
+
+   It was not. The preview drew a flat bordered pill at 13px; this drew a
+   gradient badge with a shadow, a 26px circled heart and a 15px score — two
+   independent implementations of one component, so choosing a theme in the
+   admin showed one badge and the shop rendered another. The admin preview is
+   the design the owner chose, so the shop moves to it rather than the other
+   way round.
+
+   Kept different on purpose, and only these: text-decoration and cursor,
+   because the shop's capsule is an anchor to the reviews section and the
+   preview is inert; and the hover lift, which a preview has no use for. The
+   RESTING appearance — border, radius, padding, gap, type size, and every
+   child — matches. ReviewBadgeParityTest pins the pair so a change to one
+   without the other fails. */
+.sr-capbar{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;
+           text-decoration:none;background:var(--card,#fff);border:1px solid var(--line);
+           font-size:13px;white-space:nowrap;line-height:1.4;cursor:pointer;
+           transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.sr-capbar:hover{transform:translateY(-1px);box-shadow:0 6px 16px -10px rgba(0,0,0,.35)}
+/* A plain glyph, not a filled circle — the circle is what made the shop's
+   badge twice the height of the one the owner picked. */
+.sr-cap-heart{color:#e8607f}
+.sr-cap-stars{letter-spacing:1px}
+.sr-cap-avg{font-weight:650;color:var(--ink)}
+.sr-cap-count{color:var(--ink-2)}
+@media (prefers-reduced-motion: reduce){.sr-capbar,.sr-capbar:hover{transition:none;transform:none}}
 .bb-rate{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);margin-bottom:14px}
 .stars{color:#e3d9c4;font-size:15px;letter-spacing:1px}.stars .f{color:var(--gold)}
 .bb-rate a{color:var(--pink-deep);text-decoration:underline}

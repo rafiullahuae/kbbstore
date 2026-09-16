@@ -14,8 +14,21 @@
     use App\Support\Url;
 
     $brand   = $product->brand?->name ?? '';
-    $rating  = (float) ($summary['average'] ?: $product->rating);
-    $rcount  = (int) ($summary['total'] ?: $product->review_count);
+    /* THE REVIEWS TABLE IS THE ANSWER, WITH NO FALLBACK.
+       These read `?: $product->rating` and `?: $product->review_count`, so a
+       product with no approved reviews fell back to the denormalised columns —
+       which DemoCatalogueSeeder had filled with mt_rand(4, 1400). The page
+       therefore advertised "4.9 · 3,204 reviews" on products nobody had ever
+       reviewed, while the admin correctly reported no approved review existed.
+
+       Those columns are not wrong in principle: ProductRating::refresh() keeps
+       them in step with approved reviews and the shop cards read them. They
+       were wrong in fact, which the accompanying migration corrects. But the
+       fallback has to go regardless — it is what let a stale or seeded column
+       speak over the live count, and "show the number even when we have none"
+       is never the behaviour anyone wanted. */
+    $rating  = (float) $summary['average'];
+    $rcount  = (int) $summary['total'];
     $onSale  = $product->isOnSale();
     $price   = $product->effectivePrice();
     $out     = $product->stock_status !== 'instock';

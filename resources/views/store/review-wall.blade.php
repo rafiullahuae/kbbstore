@@ -27,12 +27,16 @@
   .top-demo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 0 22px;border-bottom:1px solid var(--line);margin-bottom:24px}
   .td-brand{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);font-weight:700}
   .td-title{font-size:20px;font-weight:600;margin:2px 0 0}
-  .sr-capbar{display:inline-flex;align-items:center;gap:9px;padding:8px 16px 8px 9px;border-radius:30px;text-decoration:none;background:linear-gradient(135deg,#fff,var(--pink-soft));border:1px solid var(--line);box-shadow:0 12px 26px -16px rgba(193,62,99,.4);transition:transform .2s var(--ease);line-height:1;cursor:pointer}
-  .sr-capbar:hover{transform:translateY(-2px)}
-  .sr-cap-heart{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,var(--blush),var(--pink));color:#fff;font-size:14px}
-  .sr-cap-stars{color:var(--gold);letter-spacing:1px;font-size:14px}
-  .sr-cap-avg{font-size:16px;color:var(--ink);font-weight:700}
-  .sr-cap-count{font-size:12.5px;color:var(--ink-2);font-weight:600}
+  /* Third copy of the capsule. The one that renders on the product page lives
+     in resources/css/kbb/sorina-reviews.css; this page does not load that file,
+     so it carries its own. Same shape as the admin's .rbt-cap preview, and
+     ReviewBadgeParityTest holds all three copies to it. */
+  .sr-capbar{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;text-decoration:none;background:var(--card,#fff);border:1px solid var(--line);font-size:13px;white-space:nowrap;line-height:1.4;cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+  .sr-capbar:hover{transform:translateY(-1px);box-shadow:0 6px 16px -10px rgba(0,0,0,.35)}
+  .sr-cap-heart{color:#e8607f}
+  .sr-cap-stars{letter-spacing:1px}
+  .sr-cap-avg{font-weight:650;color:var(--ink)}
+  .sr-cap-count{color:var(--ink-2)}
 
   /* ===== review section (.sr) ===== */
   .sr{background:transparent}

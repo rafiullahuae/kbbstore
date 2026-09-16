@@ -48,14 +48,29 @@
 .sr-verified{font-size:10px;font-weight:700;color:#1a7f47;border:1px solid #1a7f47;border-radius:10px;padding:1px 6px;white-space:nowrap}
 .sr-cs{font-size:12px;flex:0 0 auto}
 .sr-nostars .sr-cs,.sr-nostars .sr-mstars{display:none}
-/* rating capsule (near product title) */
-.sr-capbar{display:inline-flex;align-items:center;gap:9px;margin:6px 0 14px;padding:8px 16px 8px 9px;border-radius:30px;text-decoration:none;background:linear-gradient(135deg,var(--sr-card),var(--sr-accent-soft));border:1px solid var(--sr-line);box-shadow:0 12px 26px -16px rgba(0,0,0,.34);transition:transform .2s,box-shadow .2s;line-height:1}
-.sr-capbar:hover{transform:translateY(-2px);box-shadow:0 18px 32px -16px rgba(0,0,0,.4)}
-.sr-cap-heart{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,var(--sr-accent-soft),var(--sr-accent));color:#fff;font-size:14px;flex:0 0 auto;box-shadow:0 4px 10px -4px rgba(0,0,0,.4)}
-.sr-cap-stars{color:var(--sr-gold);letter-spacing:1px;font-size:14px}
+/* rating capsule (near product title)
+
+   THIS is the copy the product page actually renders. ProductController::
+   reviewsCss() reads this file off disk and inlines it into a <style> block,
+   which lands after the built stylesheet and therefore wins the cascade. The
+   copies in kbb-product.css and review-wall.blade.php are shadowed here and
+   are kept in step only so the other pages match; editing either of those
+   alone changes nothing on the product page. That is exactly what happened
+   the first time this was "fixed".
+
+   Shape comes from .rbt-cap in admin/partials/review-badges-screen.blade.php —
+   the Badge Themes preview is what the owner picks from, so it is the design
+   and the shop follows it. ReviewBadgeParityTest pins all three copies against
+   that preview; change one without the others and the suite names the file. */
+.sr-capbar{display:inline-flex;align-items:center;gap:7px;margin:6px 0 14px;padding:5px 12px;border-radius:999px;text-decoration:none;background:var(--sr-card);border:1px solid var(--sr-line);font-size:13px;white-space:nowrap;line-height:1.4;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.sr-capbar:hover{transform:translateY(-1px);box-shadow:0 6px 16px -10px rgba(0,0,0,.35)}
+/* A plain glyph, not a filled circle. The 28px circle is what made the shop's
+   badge twice the height of the one the owner chose in the admin. */
+.sr-cap-heart{color:#e8607f;flex:0 0 auto}
+.sr-cap-stars{letter-spacing:1px}
 .sr-cap-stars .sr-e{color:var(--sr-star-empty)}
-.sr-cap-avg{font-family:Fraunces,Georgia,serif;font-size:16px;color:var(--sr-ink);font-weight:600}
-.sr-cap-count{font-size:12.5px;color:var(--sr-soft);font-weight:600}
+.sr-cap-avg{font-weight:650;color:var(--sr-ink)}
+.sr-cap-count{color:var(--sr-soft)}
 .sr-capbar-empty .sr-cap-count{color:var(--sr-soft)}
 .sr-isvf .sr-cmeta{flex-direction:column;align-items:flex-start;gap:0}
 .sr-isvf .sr-nm{line-height:1.15}

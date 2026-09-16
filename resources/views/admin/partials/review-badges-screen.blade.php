@@ -105,8 +105,12 @@
 .rbt-stage{border:1px dashed var(--border,#e6e6e6);border-radius:12px;padding:18px 16px;min-width:0;
            display:grid;gap:9px;justify-items:start;overflow-x:auto}
 .rbt-prodname{font-weight:650;font-size:16px}
+/* line-height is explicit so the preview is the shop's real height, not the
+   admin console's. Without it this box inherited `normal` and drew 3px
+   shorter than the badge the shopper actually sees — a preview that is close
+   is a preview you cannot trust. ReviewBadgeParityTest compares it. */
 .rbt-cap{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border,#e6e6e6);
-         border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap}
+         border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap;line-height:1.4}
 .rbt-heart{color:#e8607f}
 .rbt-stars{letter-spacing:1px}
 .rbt-avg{font-weight:650}

@@ -34,15 +34,28 @@ class Setting extends Model
      *   - Cached for the request. Seo::render() and PageController both call
      *     this on the same page load, and it was two full table reads. (Rule 27)
      */
+    /**
+     * The per-process half of the memo.
+     *
+     * A class property rather than a `static` inside map(), so flushMap() can
+     * actually reach it. It could not before: flushMap() forgot the cache key
+     * and the function-local static kept answering with the value from before
+     * the write, for the life of the process. Harmless under PHP-FPM, where a
+     * request is a process — but a queue worker that had read a setting once
+     * never saw another change to it, and in tests a save followed by a page
+     * render returned the pre-save value. That is how ReviewBadgeParityTest
+     * found this: it switched the badge heart off, re-rendered, and the heart
+     * was still there.
+     */
+    private static ?array $memo = null;
+
     public static function map(): array
     {
-        static $memo = null;
-
-        if ($memo !== null) {
-            return $memo;
+        if (self::$memo !== null) {
+            return self::$memo;
         }
 
-        $memo = Cache::remember('kbb.settings.map', 300, static function (): array {
+        $loaded = Cache::remember('kbb.settings.map', 300, static function (): array {
             $out = [];
 
             foreach (self::query()->get(['key', 'value']) as $row) {
@@ -52,12 +65,14 @@ class Setting extends Model
             return $out;
         });
 
-        return is_array($memo) ? $memo : ($memo = []);
+        return self::$memo = is_array($loaded) ? $loaded : [];
     }
 
     /** Call after writing a setting, or readers keep the old value for 5 minutes. */
     public static function flushMap(): void
     {
+        self::$memo = null;
+
         Cache::forget('kbb.settings.map');
     }
 }
