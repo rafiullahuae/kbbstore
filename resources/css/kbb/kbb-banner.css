@@ -1,0 +1,291 @@
+/* ===========================================================================
+   Category / brand page banner — the three styles.
+
+   Its own entry rather than lines appended to kbb-shop.css, because it is
+   loaded by two different pages that do not share a stylesheet: the archive
+   at /shop/ and /product-category/…/ pulls kbb-shop.css, while the brand
+   landing page at /korean-skincare-brands/{slug}/ has its own inline block and
+   pulls none of it. Appending to kbb-shop.css would have meant either loading
+   the whole 331-line archive stylesheet on the brand page — every filter
+   panel, every product card rule, all of it — or maintaining the banner twice.
+
+   Every selector is prefixed .kbb-banner and appears nowhere else in the app,
+   so this file cannot restyle anything it did not ship.
+
+   THE LAYOUT RULE, the one that has already cost this project a shipped bug:
+   min-width:0 on every grid and flex child. A grid item's default min-width is
+   `auto`, i.e. "at least as wide as my content", so one long unbroken word in
+   a heading refuses to shrink and pushes the whole page wider than the
+   viewport. At 360px that is a horizontal scrollbar on a category page.
+   =========================================================================== */
+
+.kbb-banner{
+  /* Overridden per banner from the style attribute the component writes. */
+  --kbb-banner-scrim:.55;
+  --kbb-banner-tint:#e0567b;
+
+  --kbb-banner-radius:20px;
+  --kbb-banner-pad:clamp(20px, 5vw, 56px);
+
+  position:relative;
+  isolation:isolate;              /* keeps the scrim's z-index local */
+  overflow:hidden;                /* an over-wide image cannot scroll the page */
+  border-radius:var(--kbb-banner-radius);
+  margin:0 auto 26px;
+  /* The archive sits in .wrap (max 1240 + 20px gutters); the brand page sits
+     in .brw. Matching .wrap here means the banner lines up with the grid
+     underneath it on both, and never exceeds the viewport on either. */
+  max-width:1200px;
+  width:calc(100% - 40px);
+  min-width:0;
+}
+
+.kbb-banner *{min-width:0}
+
+/* Dropped into a container that already has a max-width and a gutter (the
+   brand landing page's .brw). Applying a second set here would inset it twice
+   and it would not line up with the product grid below it. */
+.kbb-banner--flush{max-width:none;width:100%}
+
+/* --------------------------------------------------------------- the image */
+/* aspect-ratio here and width/height on the element are the two halves of
+   "reserve the space". Either one alone still lets the page jump. */
+.kbb-banner__media{
+  position:relative;
+  min-width:0;
+  background:#f4eef0;             /* what shows while the bytes are in flight */
+}
+
+.kbb-banner__img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  /* An <img> with width/height attributes gets an intrinsic ratio from them,
+     which object-fit would otherwise letterbox against. Explicit is safer. */
+  aspect-ratio:var(--kbb-banner-ratio, 5 / 2);
+}
+
+/* ------------------------------------------------------------- the copy box */
+.kbb-banner__inner{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:flex-end;
+  min-width:0;
+  padding:var(--kbb-banner-pad);
+}
+
+.kbb-banner__copy{
+  max-width:44ch;                 /* a measure, not a width — long lines do not read */
+  min-width:0;
+}
+
+.kbb-banner__heading{
+  font-family:var(--sans, "Poppins", system-ui, sans-serif);
+  font-size:clamp(26px, 4.6vw, 52px);
+  font-weight:700;
+  line-height:1.08;
+  letter-spacing:-.025em;
+  margin:0;
+  /* A single long brand name ("Beautyofjoseonhanbangserum") breaks rather than
+     widening the page. */
+  overflow-wrap:anywhere;
+}
+
+.kbb-banner__sub{
+  font-size:clamp(14px, 1.5vw, 17px);
+  line-height:1.55;
+  margin:12px 0 0;
+  overflow-wrap:anywhere;
+}
+
+/* --------------------------------------------------------------- 1. FULL BLEED
+   Image edge to edge; the copy sits on top of it. The scrim is what makes the
+   heading legible over a photograph nobody has vetted — a gradient from
+   transparent at the top to --kbb-banner-scrim at the bottom, so the top of
+   the image stays visible while the corner the type sits in is darkened. */
+.kbb-banner--full{display:grid}
+
+/* One grid cell, three stacked layers. No absolute positioning, so the media
+   still decides the height and the reserved box is honest. */
+.kbb-banner--full > *{grid-area:1 / 1}
+
+.kbb-banner--full .kbb-banner__media{--kbb-banner-ratio:5 / 2}
+
+.kbb-banner__scrim{
+  z-index:1;
+  background:
+    linear-gradient(to top, rgba(18,12,16,var(--kbb-banner-scrim)) 0%,
+                            rgba(18,12,16,calc(var(--kbb-banner-scrim) * .55)) 46%,
+                            rgba(18,12,16,0) 100%),
+    /* A second, sideways pass. A heading set left needs its own side darkened
+       even on an image whose bottom edge is already dark. */
+    linear-gradient(to right, rgba(18,12,16,calc(var(--kbb-banner-scrim) * .7)) 0%,
+                              rgba(18,12,16,0) 62%);
+}
+
+.kbb-banner--full .kbb-banner__heading{
+  /* Belt and braces over the scrim: a blown-out white sky behind white type is
+     the one case a gradient cannot fix on its own. */
+  text-shadow:0 1px 2px rgba(18,12,16,.34), 0 10px 32px rgba(18,12,16,.28);
+}
+
+/* The dark-type variant. For a soft, high-key photograph where white type
+   looks washed out, the scrim is inverted to a white veil instead. */
+.kbb-banner--full.kbb-banner--dark .kbb-banner__scrim{
+  background:
+    linear-gradient(to top, rgba(255,255,255,var(--kbb-banner-scrim)) 0%,
+                            rgba(255,255,255,calc(var(--kbb-banner-scrim) * .5)) 50%,
+                            rgba(255,255,255,0) 100%),
+    linear-gradient(to right, rgba(255,255,255,calc(var(--kbb-banner-scrim) * .75)) 0%,
+                              rgba(255,255,255,0) 62%);
+}
+
+.kbb-banner--full.kbb-banner--dark .kbb-banner__heading{
+  text-shadow:0 1px 2px rgba(255,255,255,.5);
+}
+
+/* ------------------------------------------------------------------- 2. SPLIT
+   Two tracks. The copy is never over the photograph, so there is no scrim and
+   contrast is decided by the panel alone. */
+.kbb-banner__split{
+  display:grid;
+  grid-template-columns:minmax(0, 1.05fr) minmax(0, 1fr);
+  min-width:0;
+}
+
+.kbb-banner__split > *{min-width:0}
+
+.kbb-banner--split .kbb-banner__media{--kbb-banner-ratio:4 / 3}
+
+/* The image stretches to whichever track is taller, so the two sides always
+   meet at the same bottom edge however long the subheading runs. */
+.kbb-banner--split .kbb-banner__media,
+.kbb-banner--split .kbb-banner__img{height:100%}
+
+.kbb-banner__panel{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  padding:var(--kbb-banner-pad);
+  /* A wash of the brand colour rather than the colour flat: at full strength
+     a saturated tint under text is harsh, and the operator picks the colour
+     for the brand, not for its legibility. */
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--kbb-banner-tint) 92%, #120c10) 0%,
+      color-mix(in srgb, var(--kbb-banner-tint) 74%, #120c10) 100%);
+}
+
+.kbb-banner--split.kbb-banner--dark .kbb-banner__panel{
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--kbb-banner-tint) 17%, #ffffff) 0%,
+      color-mix(in srgb, var(--kbb-banner-tint) 7%, #ffffff) 100%);
+}
+
+/* --------------------------------------------------------------- 3. SOFT TINT
+   No photograph. A brand-coloured wash and large type — the one that looks
+   deliberate when there is no good picture, which is most of the time, and so
+   also the one a banner with a missing image degrades into. */
+.kbb-banner--tint{display:grid}
+.kbb-banner--tint > *{grid-area:1 / 1}
+
+.kbb-banner__wash{
+  z-index:1;
+  background:
+    /* Two soft radial blooms over a flat base. Flat colour at this size reads
+       as an error state; the blooms give it somewhere to look. */
+    radial-gradient(120% 130% at 12% 8%,
+      color-mix(in srgb, var(--kbb-banner-tint) 62%, #ffffff) 0%,
+      rgba(255,255,255,0) 58%),
+    radial-gradient(90% 120% at 96% 96%,
+      color-mix(in srgb, var(--kbb-banner-tint) 46%, #120c10) 0%,
+      rgba(255,255,255,0) 62%),
+    linear-gradient(118deg,
+      color-mix(in srgb, var(--kbb-banner-tint) 88%, #120c10) 0%,
+      color-mix(in srgb, var(--kbb-banner-tint) 66%, #120c10) 100%);
+}
+
+.kbb-banner--tint .kbb-banner__inner{
+  align-items:center;
+  /* Nothing here has an intrinsic height — there is no image to reserve space
+     for — so the ratio is declared on the box itself, with a minimum so the
+     copy is never clipped at 360px. */
+  aspect-ratio:5 / 2;
+  min-height:200px;
+}
+
+.kbb-banner--tint .kbb-banner__heading{font-size:clamp(28px, 5.4vw, 60px)}
+
+.kbb-banner--tint.kbb-banner--dark .kbb-banner__wash{
+  background:
+    radial-gradient(120% 130% at 12% 8%, #ffffff 0%, rgba(255,255,255,0) 58%),
+    radial-gradient(90% 120% at 96% 96%,
+      color-mix(in srgb, var(--kbb-banner-tint) 26%, #ffffff) 0%, rgba(255,255,255,0) 62%),
+    linear-gradient(118deg,
+      color-mix(in srgb, var(--kbb-banner-tint) 20%, #ffffff) 0%,
+      color-mix(in srgb, var(--kbb-banner-tint) 9%, #ffffff) 100%);
+}
+
+/* ------------------------------------------------------------------- colour
+   Set once per tone rather than per style. `light` means light type, which is
+   what every dark treatment above wants. */
+.kbb-banner--light .kbb-banner__heading{color:#fff}
+.kbb-banner--light .kbb-banner__sub{color:rgba(255,255,255,.9)}
+
+.kbb-banner--dark .kbb-banner__heading{color:var(--ink, #2A2228)}
+.kbb-banner--dark .kbb-banner__sub{color:var(--ink-2, #5E545A)}
+
+/* A hairline on the light-tone variants, which would otherwise float on a
+   white page with no edge at all. */
+.kbb-banner--dark{box-shadow:inset 0 0 0 1px rgba(42,34,40,.08)}
+
+/* ------------------------------------------------------------------- motion */
+.kbb-banner__copy{
+  animation:kbb-banner-rise .62s cubic-bezier(.22,.61,.36,1) both;
+}
+
+@keyframes kbb-banner-rise{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:none}
+}
+
+/* Not "a shorter animation" — none. A vestibular trigger at 30% of its
+   duration is still a vestibular trigger, and the banner reads identically
+   without it. */
+@media (prefers-reduced-motion:reduce){
+  .kbb-banner__copy{animation:none}
+}
+
+/* -------------------------------------------------------------- responsive */
+@media (max-width:860px){
+  /* Split stops being a split. Side by side below this the copy track is
+     narrower than its own measure and the heading breaks every other word. */
+  .kbb-banner__split{grid-template-columns:minmax(0, 1fr)}
+  .kbb-banner--split .kbb-banner__media{--kbb-banner-ratio:16 / 9}
+  .kbb-banner--split .kbb-banner__media,
+  .kbb-banner--split .kbb-banner__img{height:auto}
+}
+
+@media (max-width:640px){
+  .kbb-banner{
+    --kbb-banner-radius:16px;
+    width:calc(100% - 32px);
+    margin-bottom:20px;
+  }
+
+  .kbb-banner--flush{width:100%}
+
+  /* A 5:2 photograph at 360px is 144px tall and the copy does not fit on it.
+     Taller crop, and the copy gets its own room. */
+  .kbb-banner--full .kbb-banner__media{--kbb-banner-ratio:4 / 3}
+  .kbb-banner--tint .kbb-banner__inner{aspect-ratio:auto;min-height:0;padding-block:34px}
+  .kbb-banner__copy{max-width:none}
+}
+
+@media (max-width:400px){
+  .kbb-banner{width:calc(100% - 24px);--kbb-banner-radius:14px}
+  .kbb-banner--flush{width:100%}
+}

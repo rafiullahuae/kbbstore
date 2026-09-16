@@ -59,6 +59,8 @@
 .cu-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
 .cu-title{font-weight:650;font-size:15px}
 .cu-sub{color:var(--ink-soft,#6b7280);font-size:12.5px}
+.cu-link{border:0;background:none;padding:0;font:inherit;color:var(--accent,#15a85a);
+         text-decoration:underline;cursor:pointer}
 
 .cu-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;min-width:0}
 .cu-stat{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
@@ -166,7 +168,21 @@
   function say(msg){ try { window.toast(msg); } catch (e) {} }
 
   /* -------------------------------------------------------- sidebar entry */
+  /*
+   * NO SIDEBAR ENTRY.
+   *
+   * This screen had one called "Coupons" and the editor added a second called
+   * "Manage Coupons" beneath it. The owner opened "Coupons", got this
+   * read-only report, and concluded the editor had never shipped. One name,
+   * one entry: the editor takes "Coupons" and links here from inside it.
+   * Kept as a function rather than deleted so the call sites below, and the
+   * reason, stay visible.
+   */
   function addNavEntry(){
+    return;
+  }
+
+  function addNavEntryDisabled(){
     if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
 
     // Anchored to the Orders entry, like the New Order screen, because the
@@ -305,7 +321,8 @@
     return head
       + '<div class="cu-card">'
       + '<div class="cu-head"><div><div class="cu-title">Coupon usage</div>'
-      + '<div class="cu-sub">How many times each code has actually been redeemed. Select one to see who used it.</div></div></div>'
+      + '<div class="cu-sub">How many times each code has actually been redeemed. Select one to see who used it. '
+        + '<button type="button" class="cu-link" id="cu-manage">Back to coupons</button>.</div></div></div>'
       + '<div class="cu-search" style="margin:12px 0">'
       + '<input id="cu-q" type="search" placeholder="Search by code" value="' + esc(query) + '" autocomplete="off">'
       + '</div>'
@@ -415,6 +432,13 @@
 
     var back = document.querySelector('#cu-back');
     if (back) back.onclick = function(){ detail = null; render(); };
+
+    /* Deliberately NOT cu-back: that id is already taken by the button that
+       clears a selected coupon's detail view, and querySelector returns the
+       first match in the document, so reusing it would have handed this
+       handler that button and broken it. */
+    var manage = document.querySelector('#cu-manage');
+    if (manage) manage.onclick = function(){ window.go('coupon-editor'); };
 
     var prev = document.querySelector('#cu-prev');
     var next = document.querySelector('#cu-next');

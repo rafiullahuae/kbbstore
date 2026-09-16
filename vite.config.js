@@ -16,6 +16,11 @@ export default defineConfig({
             input: [
                 'resources/css/kbb/kbb.css',
                 'resources/css/kbb/kbb-shop.css',
+                // The category/brand page banner. Its own entry because two
+                // pages that share no other stylesheet both draw it: the
+                // archive (kbb-shop.css) and the brand landing page (which
+                // has its own inline block and loads none of the shop's).
+                'resources/css/kbb/kbb-banner.css',
                 'resources/css/kbb/kbb-product.css',
                 'resources/css/kbb/kbb-cart.css',
                 'resources/css/kbb/kbb-checkout.css',

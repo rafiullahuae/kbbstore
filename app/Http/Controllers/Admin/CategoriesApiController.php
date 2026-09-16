@@ -72,7 +72,7 @@ class CategoriesApiController extends Controller
         $categories = Category::query()
             ->select('categories.id', 'categories.slug', 'categories.name', 'categories.parent_id',
                 'categories.description', 'categories.image', 'categories.position',
-                'categories.depth', 'categories.path', 'categories.seo')
+                'categories.depth', 'categories.path', 'categories.seo', 'categories.banner')
             // The headline count, and it has to agree with the archive page.
             //
             // It did not. This subquery filtered on `deleted_at IS NULL` alone,
@@ -636,6 +636,12 @@ class CategoriesApiController extends Controller
             'seo' => ['nullable', 'array'],
             'seo.title' => ['nullable', 'string', 'max:255'],
             'seo.description' => ['nullable', 'string', 'max:500'],
+            // The banner bag is validated as a shape only. Every field inside
+            // it is clamped by App\Support\PageBanner::sanitize(), which is
+            // also what the storefront reads it back through, so there is one
+            // definition of what a banner is rather than a validation rule
+            // here and a renderer somewhere else that disagree.
+            'banner' => ['nullable', 'array'],
         ], [
             'slug.regex' => 'The slug may contain only lower-case letters, numbers and single hyphens.',
             'slug.unique' => 'Another category already uses that slug.',
@@ -657,6 +663,7 @@ class CategoriesApiController extends Controller
         ], fn ($v) => $v !== '');
 
         $data['seo'] = $seo === [] ? null : $seo;
+        $data['banner'] = \App\Support\PageBanner::sanitize($data['banner'] ?? null);
 
         return $data;
     }

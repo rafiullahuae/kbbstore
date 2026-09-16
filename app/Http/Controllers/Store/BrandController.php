@@ -124,6 +124,10 @@ class BrandController extends Controller
             ->get();
 
         return view('store.brands', [
+            // The directory lists every brand; there is no one brand for a
+            // banner to belong to. Passed explicitly so the shared view never
+            // reads an undefined variable.
+            'banner' => null,
             'brand' => null,
             'brands' => $brands,
             'products' => collect(),
@@ -166,6 +170,10 @@ class BrandController extends Controller
             ->get();
 
         return view('store.brands', [
+            // The brand's own banner, when the owner has turned one on. Null
+            // for every brand that has not, which is the default and is
+            // decided by the column being NULL rather than by a stored flag.
+            'banner' => \App\Support\PageBanner::forModel($brand, $brand->name),
             'brand' => $brand,
             'brands' => collect(),
             'products' => $products,

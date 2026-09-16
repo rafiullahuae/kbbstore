@@ -4,6 +4,11 @@
     "src": "resources/css/kbb/kbb-account.css",
     "isEntry": true
   },
+  "resources/css/kbb/kbb-banner.css": {
+    "file": "assets/kbb-banner-_mQ3cL2y.css",
+    "src": "resources/css/kbb/kbb-banner.css",
+    "isEntry": true
+  },
   "resources/css/kbb/kbb-cart.css": {
     "file": "assets/kbb-cart-C473l-HE.css",
     "src": "resources/css/kbb/kbb-cart.css",
