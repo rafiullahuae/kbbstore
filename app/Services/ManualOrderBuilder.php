@@ -79,15 +79,25 @@ use Illuminate\Support\Str;
  * What this deliberately does NOT do
  * ---------------------------------------------------------------------------
  *
- *  - It does not decrement stock. THE WEBSITE PATH NOW DOES: Lane CM added
- *    CartService::claimStock(), which Store\CheckoutController::place() calls
- *    inside the placing transaction, so a storefront order refuses what is not
- *    there and takes what is. This path was left alone deliberately rather than
- *    by oversight — a back-office order is typed by someone holding the stock
- *    room's own facts, and the operator screen offers no way to see or override
- *    a refusal, so claiming stock here would block an order the operator knows
- *    is fillable. The order note below says so on the record. Wiring it up is
- *    its own change, and it needs the operator screen to move with it.
+ *  - It does not decrement stock. BOTH WEBSITE PATHS NOW DO: Lane CM added
+ *    CartService::claimStock() for Store\CheckoutController::place(), and Lane
+ *    CQ moved the routine itself to App\Services\StockClaim so the
+ *    unauthenticated Api\CheckoutController::session() could use the same one.
+ *    Each calls it inside its placing transaction, so a website order refuses
+ *    what is not there and takes what is. This path was left alone deliberately
+ *    rather than by oversight — a back-office order is typed by someone holding
+ *    the stock room's own facts, and the operator screen offers no way to see
+ *    or override a refusal, so claiming stock here would block an order the
+ *    operator knows is fillable. The order note below says so on the record.
+ *    Wiring it up is its own change, and it needs the operator screen to move
+ *    with it.
+ *
+ *  - It therefore does not RETURN stock either, and gets that for free rather
+ *    than by a second decision. Lane CQ's return works off `order_stock_claims`
+ *    — the record of what a claim actually took — so cancelling an order built
+ *    here credits nothing, because nothing was ever taken. That is the point:
+ *    crediting the shelf for an order the operator never debited it for would
+ *    invent inventory, and the operator is the one counting.
  *
  *  - It does not apply a manual, ad-hoc discount. CartService::totals() derives
  *    discount from the coupon and nothing else, so an arbitrary "take 15 off"

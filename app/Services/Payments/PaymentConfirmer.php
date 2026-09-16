@@ -122,6 +122,8 @@ class PaymentConfirmer
             return WebhookOutcome::ignored('order is already paid; failure notice ignored');
         }
 
+        $was = (string) $order->status;
+
         DB::transaction(function () use ($order, $provider, $providerRef, $reason, $summary) {
             Order::query()
                 ->whereKey($order->getKey())
@@ -130,6 +132,19 @@ class PaymentConfirmer
 
             $this->record($order, $provider, $providerRef, null, null, $reason, $summary);
         });
+
+        /*
+         * The units go back on the shelf.
+         *
+         * A provider saying the payment failed means this order will never
+         * ship, and it is holding stock that was claimed when it was written.
+         * Same rule, same one place, as an operator cancelling it by hand — see
+         * OrderTransitionStock. Deliberately AFTER the transaction above has
+         * committed, so the release cannot be rolled back by it and leave the
+         * ledger saying units were returned that were not.
+         */
+        app(\App\Services\Orders\OrderTransitionStock::class)
+            ->applied((int) $order->getKey(), $was, 'failed');
 
         $order->refresh();
 

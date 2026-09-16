@@ -459,7 +459,17 @@ class AdminOrderController extends Controller
                 $request->has('notify') ? $request->boolean('notify') : null,
             );
 
+            $was = (string) $order->status;
+
             $order->update(['status' => 'cancelled']);
+
+            // An order cancelled before it was dispatched gives its units back.
+            // The rule is OrderTransitionStock's, not this button's, so Cancel
+            // here and Cancel on the orders list cannot come to mean different
+            // things to the stock room.
+            app(\App\Services\Orders\OrderTransitionStock::class)
+                ->applied((int) $order->id, $was, 'cancelled');
+
             return response()->json(['ok' => true, 'status' => 'cancelled']);
         }
 
