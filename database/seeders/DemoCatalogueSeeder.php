@@ -76,8 +76,32 @@ class DemoCatalogueSeeder extends Seeder
                     'sale_price' => $onSale ? (int) round($price * 0.7) : null,
                     'stock_status' => $i % 9 === 0 ? 'outofstock' : 'instock',
                     'short_description' => 'Demo product for layout testing. Replaced by the WordPress migration.',
-                    'rating' => $i % 5 === 0 ? 0 : round(mt_rand(38, 50) / 10, 1),
-                    'review_count' => $i % 5 === 0 ? 0 : mt_rand(4, 1400),
+                    /*
+                     * ZERO, NOT AN INVENTED FIGURE — and the reason is the one
+                     * bug the owner actually reported.
+                     *
+                     * These two columns used to be seeded with
+                     * `mt_rand(38, 50) / 10` stars over `mt_rand(4, 1400)`
+                     * reviews while this seeder created NOT ONE ROW in
+                     * `reviews`. The shop card printed that pair (it is what
+                     * ShopController sorts `?sort=rating` and `?sort=popular`
+                     * by, and what the `top_rated` shortcode selects on), and
+                     * the product page printed a summary computed from the
+                     * `reviews` table — so the card said "4.9 · 3,204 reviews"
+                     * and the page under it said nothing. Neither number was
+                     * wrong about its own source; there was no shared source.
+                     *
+                     * The rows are the truth now. DemoReviewsSeeder writes real
+                     * reviews and App\Support\ProductRating computes this pair
+                     * from the APPROVED ones, which is the same question every
+                     * storefront reader asks. A product with no reviews shows
+                     * no score — honest, and the column default anyway.
+                     *
+                     * Do not reintroduce a figure here. Anything written at
+                     * this point is, by definition, not derived from a review.
+                     */
+                    'rating' => 0,
+                    'review_count' => 0,
                     'total_sales' => mt_rand(0, 900),
                     'featured' => $i % 6 === 0,
                     'position' => $i,
