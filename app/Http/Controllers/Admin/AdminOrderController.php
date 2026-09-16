@@ -459,16 +459,23 @@ class AdminOrderController extends Controller
                 $request->has('notify') ? $request->boolean('notify') : null,
             );
 
-            $was = (string) $order->status;
-
-            $order->update(['status' => 'cancelled']);
-
-            // An order cancelled before it was dispatched gives its units back.
-            // The rule is OrderTransitionStock's, not this button's, so Cancel
-            // here and Cancel on the orders list cannot come to mean different
-            // things to the stock room.
-            app(\App\Services\Orders\OrderTransitionStock::class)
-                ->applied((int) $order->id, $was, 'cancelled');
+            // Through the funnel, for the reason the dropdown goes through it:
+            // Cancel is a status change wearing a button, and a cancelled order
+            // has to give back the coupon use it is holding. See
+            // App\Services\Orders\OrderStatus. Pressing Cancel twice returns
+            // one use, not two — the second press is not a transition.
+            //
+            // The units this order was holding go back too. That call used to
+            // stand here, one of five copies; it is inside the funnel now, so
+            // Cancel here and Cancel on the orders list cannot come to mean
+            // different things to the stock room — which is what
+            // OrderTransitionStock's own header asked for.
+            app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $order,
+                'cancelled',
+                by: auth('admin')->user()?->name ?: 'Admin',
+                reason: 'Cancelled on the order screen.',
+            );
 
             return response()->json(['ok' => true, 'status' => 'cancelled']);
         }

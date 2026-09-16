@@ -2371,17 +2371,31 @@ class AdminController extends Controller
             $request->has('notify') ? $request->boolean('notify') : null,
         );
 
-        $was = (string) $o->status;
+        /*
+         * Through the funnel, which is the only thing that writes the column —
+         * see App\Services\Orders\OrderStatus. What it adds here is what this
+         * screen could never do on its own: the move is recorded in the order's
+         * history with the operator's name against it, and a code that was
+         * spent on an order this dropdown cancels is handed back.
+         *
+         * It refuses ONE thing, and silently: setting the status the order is
+         * already in. There is nothing to tell the operator, because the answer
+         * they get is the one they asked for.
+         *
+         * Nothing else is refused. An operator who has just marked the wrong
+         * order completed can put it back to pending from this dropdown, which
+         * on a host with no shell is the only way that mistake ever gets fixed.
+         */
+        app(\App\Services\Orders\OrderStatus::class)->moveTo(
+            $o,
+            $data['status'],
+            by: auth('admin')->user()?->name ?: 'Admin',
+            reason: 'Changed on the order screen.',
+        );
 
-        $o->status = $data['status'];
-        $o->updated_at = now()->toISOString();
-        $o->save();
-
-        // What this costs or credits the shelf is decided in one place for all
-        // four sites that write this column — see OrderTransitionStock. Called
-        // after the save, and it cannot throw.
-        app(\App\Services\Orders\OrderTransitionStock::class)
-            ->applied((int) $o->id, $was, (string) $o->status);
+        // The shelf is not this screen's business either: OrderTransitionStock
+        // is called by the funnel, once, for every site that moves a status —
+        // which is what that class's own header asked for.
 
         return response()->json(['ok' => true, 'id' => $o->id, 'status' => $o->status]);
     }

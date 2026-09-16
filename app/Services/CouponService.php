@@ -61,8 +61,15 @@ class CouponService
             }
 
             if ($coupon->usage_limit_per_user !== null) {
+                // Released rows do not count. A use that was handed back when
+                // the order was cancelled has to be usable again, or the
+                // release gave the shopper nothing — see releaseRedemptions().
+                // The same clause is on the locked re-check in assertRoomFor();
+                // the two must agree or the checkout page and the placement
+                // would tell the shopper different things.
                 $used = CouponRedemption::where('coupon_id', $coupon->id)
                     ->where('email', mb_strtolower($email))
+                    ->whereNull('released_at')
                     ->count();
 
                 if ($used >= $coupon->usage_limit_per_user) {
@@ -235,28 +242,77 @@ class CouponService
     }
 
     /**
-     * Hand back the uses an order consumed, and delete its redemption rows.
+     * Hand back the uses an order consumed, and mark its redemption rows
+     * released.
      *
-     * Used on one path only: a storefront placement whose payment could not be
-     * started. That failure is detected synchronously, in the same request, by
-     * the same code that recorded the redemption a moment earlier, so the undo
-     * is complete and there is no path it can miss.
+     * TWO CALLERS, ONE MEANING. A storefront placement whose payment could not
+     * be started calls this in the same request that recorded the redemption a
+     * moment earlier. App\Services\Orders\OrderStatus calls it when an order
+     * moves to a status that means the sale is off. Both are saying the same
+     * thing — this order is not going to happen, give the code back — so they
+     * say it through one method rather than two that can drift.
      *
-     * It is deliberately NOT wired to cancellation or refund — see the note on
-     * that decision in Store\CheckoutController::place().
+     * THE ROW IS KEPT, NOT DELETED, and `released_at` is set instead. The row
+     * is the only record that a code was ever accepted on this order; Store ->
+     * Coupons is drawn from those rows and CouponAdminApiController::destroy()
+     * counts them to protect a code's history. Deleting them would make a
+     * cancelled order's coupon vanish from the usage report while
+     * `orders.coupon_code` carried on printing it on the order.
      *
-     * Idempotent: calling it twice for the same order releases nothing the
-     * second time, because the rows are gone.
+     * IT IS ALSO WHAT MAKES A DOUBLE RELEASE IMPOSSIBLE, which a delete could
+     * not do. Each row is claimed by a conditional UPDATE — set released_at
+     * WHERE released_at IS NULL — and only the caller the database hands a row
+     * count of 1 decrements the counter. Two operators cancelling the same
+     * order at the same instant therefore return one use between them, not two.
+     * Reading the rows first and then deleting them, which is what this did,
+     * lets both readers see the same unreleased row and both act on it. It is
+     * the claim PaymentCapturer makes against `captured_at`, for the same
+     * reason and in the same shape.
      *
-     * @return int  how many redemptions were released
+     * NOTHING IS INVENTED. Only rows that exist are released, so an order that
+     * never went through recordRedemption() — every WooCommerce import, and any
+     * order placed before that call existed — releases nothing and leaves
+     * `usage_count` exactly where the import put it.
+     *
+     * Idempotent: a second call finds every row already stamped and claims
+     * none of them.
+     *
+     * @return int  how many redemptions this call released
      */
     public function releaseRedemptions(int $orderId): int
     {
         return DB::transaction(function () use ($orderId) {
-            $rows = CouponRedemption::where('order_id', $orderId)->get();
+            // Re-read by key here, and claim by key below, rather than trusting
+            // any model a caller might be holding — the trap lockForRedemption()
+            // sets out at length: an instance loaded with a partial column list
+            // reads null for whatever was not selected, and a released_at that
+            // reads null on an already-released row would release it twice.
+            $rows = CouponRedemption::where('order_id', $orderId)
+                ->whereNull('released_at')
+                ->get(['id', 'coupon_id']);
+
+            $released = 0;
 
             foreach ($rows as $row) {
-                $row->delete();
+                $claimed = CouponRedemption::whereKey($row->getKey())
+                    ->whereNull('released_at')
+                    ->update(['released_at' => now(), 'updated_at' => now()]);
+
+                if ($claimed !== 1) {
+                    // Somebody else claimed this row between the read above and
+                    // this statement. Theirs to give back, not ours.
+                    //
+                    // THE GUARD IS THE WHERE CLAUSE; this count only reports
+                    // what it did. Do not be tempted to drop the whereNull and
+                    // trust the number — MySQL reports rows CHANGED, not rows
+                    // matched, so two releases landing in the same second write
+                    // the same timestamp, the loser is told "0 rows" for a row
+                    // it really did overwrite, and the protection would be an
+                    // accident of the clock. Proven: with the clause removed
+                    // the two-process race still passed, and with the whole
+                    // claim removed it handed the use back twice.
+                    continue;
+                }
 
                 // Floored at zero. usage_count was migrated from WooCommerce
                 // verbatim and can legitimately be higher than the number of
@@ -267,9 +323,11 @@ class CouponService
                 Coupon::whereKey($row->coupon_id)
                     ->where('usage_count', '>', 0)
                     ->decrement('usage_count');
+
+                $released++;
             }
 
-            return $rows->count();
+            return $released;
         });
     }
 
@@ -331,8 +389,11 @@ class CouponService
         }
 
         if ($coupon->usage_limit_per_user !== null && $email !== null) {
+            // Released uses are spent no longer — the matching clause, and the
+            // reason for it, are in validate().
             $used = CouponRedemption::where('coupon_id', $coupon->getKey())
                 ->where('email', $email)
+                ->whereNull('released_at')
                 ->count();
 
             if ($used >= $coupon->usage_limit_per_user) {

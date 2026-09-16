@@ -62,22 +62,37 @@ class PaymentConfirmer
             return WebhookOutcome::refused('amount does not match the order');
         }
 
-        // The guard and the write are one statement, so two deliveries racing
-        // each other cannot both pass it. Whichever UPDATE runs second sees
-        // paid_at already set and matches no rows.
+        /*
+         * The guard and the write are still one indivisible act, and it is
+         * still true that a second delivery of the same webhook applies
+         * nothing. What changed is where the claim is taken: the status moves
+         * through App\Services\Orders\OrderStatus, which re-reads this order
+         * under SELECT ... FOR UPDATE and checks `$only` against the LOCKED
+         * row. A second delivery blocks on that lock until the first commits,
+         * then reads the `paid_at` the first wrote and is refused — which is
+         * the same outcome the conditional UPDATE gave, reached by a stronger
+         * route, because the lock also holds while the payment row and the note
+         * below are written.
+         *
+         * `paid_at`, the reference and the method ride along in the same save
+         * rather than in a second statement, so an order can never be marked
+         * paid without recording what paid it.
+         */
         $applied = DB::transaction(function () use ($order, $provider, $providerRef, $amountFils, $currency, $summary) {
-            $rows = Order::query()
-                ->whereKey($order->getKey())
-                ->whereNull('paid_at')
-                ->update([
+            $moved = app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $order,
+                'processing',
+                by: 'system',
+                reason: sprintf('Payment confirmed via %s.', $provider),
+                also: [
                     'paid_at' => now(),
-                    'status' => 'processing',
                     'transaction_id' => $providerRef,
                     'payment_method' => $provider,
-                    'updated_at' => now(),
-                ]);
+                ],
+                only: ['paid_at' => null],
+            );
 
-            if ($rows === 0) {
+            if ($moved === null) {
                 return false;
             }
 
@@ -122,29 +137,42 @@ class PaymentConfirmer
             return WebhookOutcome::ignored('order is already paid; failure notice ignored');
         }
 
-        $was = (string) $order->status;
-
         DB::transaction(function () use ($order, $provider, $providerRef, $reason, $summary) {
-            Order::query()
-                ->whereKey($order->getKey())
-                ->whereNull('paid_at')
-                ->update(['status' => 'failed', 'updated_at' => now()]);
+            /*
+             * Through the funnel, which does three things this could not.
+             *
+             * The `$only` precondition is the same "never downgrade a paid
+             * order" rule the whereNull() clause expressed, now checked against
+             * the locked row rather than as part of a blind update — so a
+             * capture that commits a microsecond before this notice arrives is
+             * still seen.
+             *
+             * And a `failed` order hands its coupon use back. That is not new
+             * policy: Store\CheckoutController has released the use since the
+             * day a gateway could refuse a payment synchronously. A decline
+             * that arrives by webhook instead of in the response means exactly
+             * the same thing to the shopper's code, and until now got a
+             * different answer purely because of which door it came through.
+             */
+            app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $order,
+                'failed',
+                by: 'system',
+                reason: sprintf('%s reported the payment as %s.', $provider, $reason),
+                only: ['paid_at' => null],
+            );
 
             $this->record($order, $provider, $providerRef, null, null, $reason, $summary);
         });
 
         /*
-         * The units go back on the shelf.
-         *
-         * A provider saying the payment failed means this order will never
-         * ship, and it is holding stock that was claimed when it was written.
-         * Same rule, same one place, as an operator cancelling it by hand — see
-         * OrderTransitionStock. Deliberately AFTER the transaction above has
-         * committed, so the release cannot be rolled back by it and leave the
-         * ledger saying units were returned that were not.
+         * The units go back on the shelf too, and the funnel above is what does
+         * it — the call that stood here has moved inside OrderStatus with the
+         * other four copies of it. It now runs in the same transaction as the
+         * status write rather than after it, which is the stronger position of
+         * the two: a release that cannot be rolled back by the write it belongs
+         * to is a release that can outlive it.
          */
-        app(\App\Services\Orders\OrderTransitionStock::class)
-            ->applied((int) $order->getKey(), $was, 'failed');
 
         $order->refresh();
 

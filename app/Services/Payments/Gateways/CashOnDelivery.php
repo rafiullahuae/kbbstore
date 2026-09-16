@@ -85,9 +85,22 @@ class CashOnDelivery implements PaymentGateway, SettlesPayments
      */
     public function start(Order $order): PaymentStart
     {
-        if ($order->status === 'pending') {
-            $order->forceFill(['status' => 'processing'])->save();
-        }
+        /*
+         * Through the funnel that owns this column — App\Services\Orders\
+         * OrderStatus. The rule this method has always had is unchanged and is
+         * now stated as a precondition instead of an `if`: only an order still
+         * waiting to be paid for is moved on, so a later call against an order
+         * somebody has since cancelled cannot quietly put it back to work. The
+         * difference is that the funnel checks it on the row re-read under a
+         * lock rather than on whatever this instance happened to be carrying.
+         */
+        app(\App\Services\Orders\OrderStatus::class)->moveTo(
+            $order,
+            'processing',
+            by: 'system',
+            reason: 'Cash on delivery: the order goes straight to the warehouse.',
+            only: ['status' => 'pending'],
+        );
 
         return PaymentStart::placed();
     }
