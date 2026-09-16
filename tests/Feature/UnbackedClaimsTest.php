@@ -131,10 +131,28 @@ it('does not promise a delivery speed or a returns window the shop has not recor
 });
 
 it('shows a delivery and returns promise the owner has actually written', function () {
-    clSet('trust_delivery_text', '1–3 day delivery in the UAE');
+    /*
+     * LANE CT MOVED THE DELIVERY HALF OF THIS, and the reason is worth keeping
+     * here beside the case it changes.
+     *
+     * `trust_delivery_text` fixed "nothing records this claim" and left "shown
+     * to the wrong country" exactly where it was: one global string with no
+     * country check, printed at every visitor on earth the moment the owner
+     * typed a UAE sentence into it. A single global string cannot be made
+     * country-aware — it can only ever be true of one country and the shop
+     * cannot know which — so the chip now reads the per-country wording through
+     * App\Support\DeliveryLine, the same one reader the home page and the
+     * checkout use, and the global setting is gone.
+     *
+     * What this case asserts is unchanged: a delivery promise the owner
+     * actually wrote reaches the page. Only the screen he writes it on moved,
+     * from Store → Ecommerce to Store → Delivery & Shipping → Delivery lines.
+     * The country-aware half is pinned in ProductPagePromisesTest.
+     */
+    clSet(\App\Support\DeliveryLine::SETTING, [['country' => 'AE', 'text' => '1–3 day delivery in the UAE']]);
     clSet('trust_returns_text', 'Easy 14-day returns');
 
-    $html = test()->get(clProduct()->url())->assertOk()->getContent();
+    $html = test()->withHeader('CF-IPCountry', 'AE')->get(clProduct()->url())->assertOk()->getContent();
 
     expect(str_contains($html, '1–3 day delivery in the UAE'))
         ->toBeTrue('The owner wrote a delivery promise and the page did not show it.');

@@ -114,8 +114,20 @@ class EcommerceApiController extends Controller
                     'delivery_line_enabled' => ['bool', 'Delivery line under Place order', true, ''],
                     'delivery_default_text' => ['text', 'Delivery line text', '1–3 days fast delivery all over UAE', ''],
                     'dispatch_cutoff'       => ['bool', 'Show dispatch countdown', true, '“Order within 4h 12m for delivery by …”'],
-                    'dispatch_cutoff_hour'  => ['int', 'Cutoff hour (24h)', 15, 'Orders before this ship the same working day.'],
-                    'dispatch_days'         => ['int', 'Delivery days after dispatch', 2, 'Friday is skipped automatically.'],
+                    'dispatch_cutoff_hour'  => ['int', 'Cutoff hour (24h)', 15, 'Orders before this ship the same working day. True wherever the shopper is, so everyone is told it.'],
+                    /*
+                     * THIS NUMBER DESCRIBES ONE COUNTRY AND THE HELP NOW SAYS SO.
+                     *
+                     * It is a single global transit time, so the arrival date it
+                     * builds can only be true of the store country — and the
+                     * product page used to print it at every visitor on earth.
+                     * Shoppers elsewhere now get the dispatch date alone. There
+                     * is deliberately no per-country version of this field: no
+                     * transit time outside the store country has been measured,
+                     * and a second per-country delivery screen beside Delivery
+                     * lines would be the duplication this pass removed.
+                     */
+                    'dispatch_days'         => ['int', 'Delivery days after dispatch', 2, 'Transit time inside your store country only — Friday is skipped automatically. Shoppers elsewhere are told the dispatch date and no arrival date, because no transit time has been measured for them.'],
                 ],
             ],
             'product' => [
@@ -140,8 +152,25 @@ class EcommerceApiController extends Controller
                      * Nothing was invented in their place. Both are now the
                      * owner's own words, BLANK BY DEFAULT, and the chip is not
                      * rendered until one is written here.
+                     *
+                     * EXCEPT THE DELIVERY ONE, WHICH IS NO LONGER WRITTEN HERE.
+                     *
+                     * `trust_delivery_text` was one global string with no
+                     * country check, shown to every visitor on earth — the very
+                     * defect Lane CO had just removed from the home page, blank
+                     * by default and so armed rather than firing. A single
+                     * global string cannot be made country-aware: it can only
+                     * ever be true of one country and the shop cannot know
+                     * which. So the chip was re-sourced rather than gated. It
+                     * reads `delivery_texts` through App\Support\DeliveryLine,
+                     * the one reader the home page and the checkout already
+                     * share, and the field is gone from this screen so that
+                     * ONE screen writes the sentence — Store → Delivery &
+                     * Shipping → Delivery lines. Two screens both claiming to
+                     * set "the delivery line" is the duplication this project
+                     * has had to merge twice already.
                      */
-                    'trust' => ['Trust row', 'The chips under Add to cart. Blank means the chip is not shown — write only what the shop actually does.', 'shield', ['trust_delivery_text', 'trust_returns_text']],
+                    'trust' => ['Trust row', 'The chips under Add to cart. The delivery chip is written per country under Store → Delivery & Shipping → Delivery lines, so every screen agrees; blank means the chip is not shown — write only what the shop actually does.', 'shield', ['trust_returns_text']],
                 ],
                 'fields' => [
                     'bundles_enabled'       => ['bool', 'Quantity bundles', true, 'Tiers are configured in Appearance → Quantity bundles.'],
@@ -155,7 +184,6 @@ class EcommerceApiController extends Controller
                     'review_badge_label'    => ['text', 'Count wording', '{n} reviews', 'Use {n} where the number should appear.'],
                     'review_badge_sold'     => ['bool', 'Show units sold', true, 'Only appears above 1,000 sales.'],
                     'review_badge_colour'   => ['colour', 'Star colour', '#E8A33D', ''],
-                    'trust_delivery_text'   => ['text', 'Delivery chip', '', 'e.g. "1–3 day delivery in the UAE". Left blank, no delivery chip is shown.'],
                     'trust_returns_text'    => ['text', 'Returns chip', '', 'e.g. "Easy 14-day returns". Left blank, no returns chip is shown — do not promise a window the shop does not keep.'],
                 ],
             ],
@@ -303,8 +331,12 @@ class EcommerceApiController extends Controller
             ],
             'cutoff' => [
                 'caption' => 'Where this appears — product page',
-                'stage' => $ring('<div style="font-size:12.5px">Order within <b>4h 12m</b> for delivery by <b>Mon, 31 Aug</b></div>'),
-                'legend' => ['Counts down to the cutoff hour, then rolls to the next working day. Friday is skipped automatically.'],
+                'stage' => $ring('<div style="font-size:12.5px">Order within <b>4h 12m</b> for delivery by <b>Mon, 31 Aug</b></div>')
+                    . '<div style="font-size:12.5px;margin-top:9px;color:#7b8697">Outside your store country, where no transit time has been measured, the same line reads <b>Order within 4h 12m to ship on Sat, 29 Aug</b> — when the parcel leaves, and no arrival date.</div>',
+                'legend' => [
+                    'Counts down to the cutoff hour, then rolls to the next working day. Friday is skipped automatically.',
+                    'The arrival date is only shown to shoppers in your store country, because “Delivery days after dispatch” is one number and only describes that one country. Everyone else is told when the parcel ships. To say something about delivery elsewhere, write it under Store → Delivery & Shipping → Delivery lines.',
+                ],
             ],
             'bundles' => [
                 'caption' => 'Where this appears — buy box',
