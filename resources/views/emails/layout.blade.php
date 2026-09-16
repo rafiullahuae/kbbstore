@@ -152,10 +152,29 @@
                                     {{-- The merchant's own alert is not a message to a customer, and
                                          telling the owner they are receiving it "because an order was
                                          placed using this email address" is nonsense addressed to the
-                                         one person who already knows why. --}}
+                                         one person who already knows why.
+
+                                         THE INVITATION TO REPLY IS GONE, because a reply reaches
+                                         nobody on an install that has not been configured.
+
+                                         Nothing in this application sets a Reply-To header — there is
+                                         no replyTo() call anywhere in app/ and config/mail.php has no
+                                         entry for one — so a reply goes to the From address, and
+                                         MailSettings::fromAddress() derives `no-reply@<domain>` from
+                                         APP_URL whenever the owner has left the From box empty. That
+                                         is the default state of this screen, deliberately: the server
+                                         transport needs nothing filled in, which is the whole reason
+                                         it is the default. So the sentence promising that a reply
+                                         "reaches us" was, on the shipped configuration, an invitation
+                                         to write to a mailbox named for not being read.
+
+                                         Nothing invented in its place. The support block above this
+                                         one already prints the channels the owner HAS configured —
+                                         WhatsApp, email, Instagram — each one omitted when it has no
+                                         value, and each one a real address rather than a guess about
+                                         where this message came from. --}}
                                     @if ($brand['customerFacing'] ?? true)
                                         You are receiving this because an order was placed with {{ $brand['storeName'] ?? '' }} using this email address.
-                                        Reply to this message if anything looks wrong — it reaches us.
                                     @else
                                         This is your store's new-order alert. It goes to the address set under Store → Mail,
                                         and you can switch it off under Store → Modules → Order emails.

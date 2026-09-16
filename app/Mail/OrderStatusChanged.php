@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Services\Mail\OrderEmailPresenter;
+use App\Services\SettingsService;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Support\Facades\Log;
 
 /**
  * "Your order is on its way", or "your order has been cancelled".
@@ -54,9 +57,87 @@ class OrderStatusChanged extends OrderMail
         'cancelled' => [
             'Your K Beauty Bliss order %s has been cancelled',
             'Your order has been cancelled',
-            'This order has been cancelled and nothing further will be sent. If you had already paid, the refund is on its way back to you by the method you paid with — you will get a separate email when it has been sent.',
+            'This order has been cancelled and nothing further will be sent.',
         ],
     ];
+
+    /**
+     * WHAT THE CANCELLATION EMAIL USED TO SAY ABOUT MONEY, AND WHY IT IS GONE.
+     *
+     * The `cancelled` body above used to carry a second sentence stating that a
+     * customer who had already paid would be getting their money back by the
+     * method they paid with, and a separate email once it had been sent. Every
+     * clause of it was written before the code that would have had to be true.
+     *
+     * Cancelling an order in this application starts no refund. `orders.status`
+     * is moved to `cancelled` by AdminOrderController::runAction, by
+     * AdminController::updateOrderStatus and by OrdersApiController::bulkStatus,
+     * and not one of them touches the `refunds` table or calls a gateway.
+     * App\Services\Payments\PaymentRefunder is a separate action an operator
+     * takes deliberately, from a different form. So the money was not on its
+     * way; nothing had been started. The promised follow-up email is
+     * OrderRefunded, which is driven by a `refunds` row settling — an event
+     * that, for an order nobody has refunded, never happens. The customer waits,
+     * and then writes to the shop.
+     *
+     * NOTHING HAS BEEN INVENTED IN ITS PLACE, and no refund policy has been
+     * guessed at. The store has never written one down and this is not the file
+     * to write one in. What is said instead is what this order's own rows
+     * record, and only that — the same restraint the Gulf delivery window got.
+     *
+     * THREE CASES, BECAUSE THE TRUTH IS DIFFERENT IN EACH. A single sentence
+     * vague enough to cover all three would be a sentence that told a cash
+     * customer nothing and a card customer less:
+     *
+     *   1. A REFUND IS ON THE BOOKS. `refunds` carries pending or succeeded rows
+     *      against this order, so a refund of that amount HAS been started, and
+     *      saying so is a fact rather than a promise. OrderRefunded is what tells
+     *      them it has settled, and it really is sent, because a settled row is
+     *      what triggers it.
+     *
+     *   2. NOTHING WAS EVER TAKEN. PaymentRefunder::capturedFils() is 0, which
+     *      means neither `captured_at`/`captured_total` nor `paid_at` is set:
+     *      no gateway captured anything and nothing was ever recorded as paid.
+     *      That covers every cash-on-delivery order — CashOnDelivery::start()
+     *      deliberately leaves `paid_at` null and the courier never goes — and
+     *      every card order abandoned before the gateway confirmed. There is
+     *      nothing to send back and the email says exactly that.
+     *
+     *   3. MONEY WAS TAKEN AND NO REFUND HAS BEEN RECORDED. The one case where
+     *      the customer is owed something and the application cannot say what
+     *      will happen about it, because nothing has happened yet. It states the
+     *      amount and the absence, both of which are facts, and then prints
+     *      whatever the owner has written in `mail_cancelled_refund_note` on
+     *      Store → Mail. That setting ships BLANK: this is a hole only the owner
+     *      can fill, and a default sentence written here would be the same
+     *      invention that was just removed.
+     *
+     * IT IS ASKED OF THE PAYMENT RECORD, NOT OF THE GATEWAY ID. `payment_method
+     * === 'cod'` would be a second copy of a fact that already has a home, and
+     * it would answer wrongly for an imported WooCommerce order (OrderImporter
+     * writes a real `paid_at` from `date_paid`) and for any provider added
+     * later. capturedFils() and refundedFils() are the same two methods
+     * PaymentRefunder itself decides a ceiling with, so this email and the
+     * refund screen can never disagree about whether an order was paid.
+     *
+     * THE MONEY IS RENDERED PLAIN, NOT AS Money::format() MARKUP. The body is a
+     * prose string printed through Blade's {{ }} in the HTML part, which is what
+     * keeps the owner's own sentence from arriving as markup. A figure carrying
+     * a <span> would have to be printed unescaped, and that would unescape the
+     * operator's note beside it. Full precision, like every other figure in an
+     * order email — see OrderEmailPresenter's header for why a receipt may not
+     * round.
+     */
+    public const CANCELLED_REFUND_NOTE = 'mail_cancelled_refund_note';
+
+    /** What is said when a refund really has been recorded against the order. */
+    private const CANCELLED_REFUNDED = 'A refund of %s has been recorded against it.';
+
+    /** And when the shop has no record of ever having been paid. */
+    private const CANCELLED_NOTHING_TAKEN = 'Our records show no payment taken on this order, so there is nothing to refund.';
+
+    /** And when there is, and nothing has been started. */
+    private const CANCELLED_UNREFUNDED = 'Our records show %s paid on this order and no refund recorded against it yet.';
 
     /**
      * The delivery estimate in WORDING['shipped'] is a UAE one, and this store
@@ -88,32 +169,109 @@ class OrderStatusChanged extends OrderMail
      * An order with no country on either address — an import, a half-filled
      * manual order — gets no estimate at all rather than a guessed one. Saying
      * nothing about timing is the only sentence that is certainly true.
+     *
+     * IT USED TO OFFER TRACKING AS WELL, and this shop has none. There is no
+     * tracking number, no carrier reference and no courier integration anywhere
+     * in this application — no column, no setting, no service. What
+     * /track-my-order/ shows is the order's own `status` pill, which changes
+     * when an operator types a new status and at no other time. So "your
+     * tracking will update as it moves" described a parcel being followed by
+     * something nobody built, and the one update it could ever produce comes
+     * from a person at a keyboard rather than from the parcel. Removed rather
+     * than reworded: a claim with nothing behind it is not softened, and the
+     * email already links to the order and says plainly what that link can and
+     * cannot do.
      */
-    private const SHIPPED_UNKNOWN = 'Your order has left us and is with the courier. Your tracking will update as it moves.';
+    private const SHIPPED_UNKNOWN = 'Your order has left us and is with the courier.';
 
     /** The store's own country: the one destination WORDING['shipped'] describes. */
     private const HOME_COUNTRY = 'AE';
 
     public string $status;
 
+    /**
+     * What this order's own rows say about money going back, or ''.
+     *
+     * Worked out in the constructor, where the Order model is still in hand,
+     * and kept as a finished string: OrderMail deliberately keeps only the
+     * presented array, and this class has no business holding a model it would
+     * then be tempted to read columns off inside a template. Empty for every
+     * status but `cancelled`.
+     */
+    public string $refundSentence = '';
+
     public function __construct(Order $order, string $status)
     {
         parent::__construct($order);
 
         $this->status = $status;
+
+        if ($status === 'cancelled') {
+            $this->refundSentence = $this->refundSentenceFor($order);
+        }
     }
 
     /**
-     * The dispatch sentence for where this parcel is actually going.
+     * The true sentence about money for THIS cancelled order. See the three
+     * cases set out above CANCELLED_REFUND_NOTE.
      *
-     * Only `shipped` has a destination-dependent body; `cancelled` says nothing
-     * about delivery and is returned untouched. The country comes from
+     * GUARDED, and for the reason OrderMail's own header gives about branding:
+     * OrderMailer's try exists so that a receipt which cannot be built costs the
+     * checkout nothing, and the same applies here. This reads the `refunds`
+     * table; if that read fails, the money sentence is dropped and the
+     * cancellation itself is still said — the half that matters most, and the
+     * half that is certainly true whatever the database is doing.
+     */
+    private function refundSentenceFor(Order $order): string
+    {
+        try {
+            $refunder = app(\App\Services\Payments\PaymentRefunder::class);
+
+            $refunded = $refunder->refundedFils($order);
+
+            if ($refunded > 0) {
+                return sprintf(self::CANCELLED_REFUNDED, OrderEmailPresenter::plain($refunded));
+            }
+
+            $captured = $refunder->capturedFils($order);
+
+            if ($captured <= 0) {
+                return self::CANCELLED_NOTHING_TAKEN;
+            }
+
+            $sentence = sprintf(self::CANCELLED_UNREFUNDED, OrderEmailPresenter::plain($captured));
+
+            $note = trim((string) app(SettingsService::class)->get(self::CANCELLED_REFUND_NOTE, ''));
+
+            return $note === '' ? $sentence : $sentence . ' ' . $note;
+        } catch (\Throwable $e) {
+            Log::warning('cancellation refund sentence unavailable', [
+                'order_id' => $order->getKey(),
+                'exception' => class_basename($e),
+                'message' => $e->getMessage(),
+            ]);
+
+            return '';
+        }
+    }
+
+    /**
+     * The sentence that follows the heading, for the event this actually is.
+     *
+     * `shipped` varies by where the parcel is going; `cancelled` varies by what
+     * this order's rows say about money. The country comes from
      * OrderEmailPresenter, which reads the shipping address and falls back to
      * the billing one — the same choice it makes for the address it prints, so
      * the estimate and the address can never describe two different places.
      */
     private function bodyFor(string $default): string
     {
+        if ($this->status === 'cancelled') {
+            return $this->refundSentence === ''
+                ? $default
+                : $default . ' ' . $this->refundSentence;
+        }
+
         if ($this->status !== 'shipped') {
             return $default;
         }

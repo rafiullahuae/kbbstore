@@ -115,8 +115,27 @@
         </p>
     @endif
 
+    {{-- "PAID BY" ONLY WHEN IT HAS BEEN PAID.
+
+         This line read "Paid by {payment method}" for every invoice, including
+         the ones it is most often sent for. An invoice is emailed by the
+         operator from the order screen at whatever moment they choose, and this
+         store's ordinary payment method is cash on delivery, where `paid_at` is
+         deliberately never set until the money is actually collected
+         (CashOnDelivery::start). So the commonest invoice this shop sends —
+         cash on delivery, not yet delivered — told the customer in writing that
+         they had already paid for it.
+
+         The printable invoice has always had this right: it prints the PAID
+         stamp behind `$doc['paid']`, the same flag used here. The two documents
+         render the same InvoiceDocument array and now agree about the one fact
+         an invoice is most often read for. --}}
     <p style="margin:20px 0 0;font-size:13.5px;color:#4b5563;">
-        Paid by {{ $doc['paymentLabel'] }} · {{ $doc['deliveryMethod'] }}
+        @if ($doc['paid'])
+            Paid by {{ $doc['paymentLabel'] }}@if ($doc['paidAt'] !== '') on {{ $doc['paidAt'] }}@endif · {{ $doc['deliveryMethod'] }}
+        @else
+            Payment method {{ $doc['paymentLabel'] }} · {{ $doc['deliveryMethod'] }}
+        @endif
     </p>
 
     @if ($doc['seller']['footer'] !== '')

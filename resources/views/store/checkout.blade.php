@@ -265,18 +265,44 @@
 .kbb-checkout .form-row label.kbb-acct-opt,
 .kbb-checkout .form-row label.kbb-gift-opt{display:flex;align-items:center;gap:9px;cursor:pointer;
   font-size:12px;font-weight:500;color:var(--ink-2);margin:0;line-height:1.45}
-/* `.kbb-checkout .sumrow{display:flex}` also outranks the browser's own
-   [hidden]{display:none}, so the Gift wrapping row stayed visible at 0 even
-   when marked hidden. */
-.kbb-checkout .sumrow[hidden]{display:none}
+/* HIDDEN MEANS HIDDEN, ON EVERY ELEMENT OF THIS PAGE.
+
+   The browser's own sheet says [hidden]{display:none}, and ANY author rule that
+   sets display beats it, whatever its specificity -- author origin outranks
+   user-agent origin before specificity is even looked at. This page is full of
+   such rules: `.kbb-checkout .sumrow{display:flex}` and
+   `.kbb-checkout .kbb-delivery-line{display:flex}` in kbb-checkout.css, and
+   `.kbb-acct-pw`/`.kbb-gift-msg` below. So `hidden` did nothing at all on any
+   element carrying one of them.
+
+   It was fixed here once, for `.sumrow` alone, after the Gift wrapping row was
+   found showing "AED 0.00" to every shopper who had not ticked "this order is a
+   gift". Then partials/checkout/delivery-line.blade.php was changed to render
+   the delivery line and hide it -- rendered and hidden precisely so the
+   country-change refresh in checkout.js can reveal it -- and it landed on the
+   same rake: a shopper in a country with no recorded delivery window got the
+   bordered row and the truck icon with no words in it. Measured in Chromium at
+   1280 and 390 before and after; see CheckoutHiddenRowsTest.
+
+   One rule instead of a list of them, because the next element rendered-and-
+   hidden under .kbb-checkout would otherwise be the third instance of one bug.
+   `!important` because this is not a style preference that a later rule may
+   reasonably overrule: the attribute states that the element is not to be
+   rendered, and no rule on this page has a legitimate reason to say otherwise.
+   (It is also not a tie this file can win on source order alone -- this block is
+   pushed into the scripts stack, and a rule of equal specificity landing after
+   it would take the element back.)
+
+   `hidden="until-found"` would need content-visibility rather than display and
+   is not used anywhere in this application; if it ever is, this rule has to
+   learn about it. */
+.kbb-checkout [hidden]{display:none!important}
 .kbb-checkout .kbb-acct-opt input[type="checkbox"],
 .kbb-checkout .kbb-gift-opt input[type="checkbox"]{width:17px;height:17px;margin-top:1px;
   accent-color:var(--pink);flex-shrink:0;margin-top:0}
 .kbb-checkout .kbb-gift-fee{margin-left:7px;font-weight:700;color:var(--pink)}
 .kbb-checkout .kbb-acct-pw,
 .kbb-checkout .kbb-gift-msg{display:block;margin-top:9px}
-.kbb-checkout .kbb-acct-pw[hidden],
-.kbb-checkout .kbb-gift-msg[hidden]{display:none}
 .kbb-checkout .kbb-acct-err{display:block;margin-top:6px;font-size:12px;color:var(--pink)}
 .kbb-checkout .kbb-note textarea,
 .kbb-checkout .kbb-gift textarea{resize:vertical;min-height:62px}
