@@ -8,8 +8,9 @@ declare(strict_types=1);
 | Assign/Duplicate — Lane BE
 |------------------------------------------------------------------------------
 |
-| NOT YET MOUNTED BY THIS LANE. CLAUDE.md forbids this lane from editing
-| routes/web.php, so the require line below is the integrator's to add. Until
+| Mounted by routes/web.php, beside the review-bulk require, inside the
+| existing admin-api group. CLAUDE.md forbade the lane that wrote this file
+| from editing routes/web.php, so the require was the integrator's to add. Until
 | they do, nothing in this file serves traffic — the same arrangement Lane AM
 | used for routes/reviews-admin.php and Lane BB for
 | routes/review-settings-admin.php.

@@ -525,6 +525,11 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // settings routes are: the PUT /reviews/{id} below is untyped and
         // unconstrained and would swallow a nested path as an id.
         require __DIR__.'/review-bulk-admin.php';
+
+        // Store → Reviews → Export/Import, Badge Themes, Rating Capsule and
+        // Assign/Duplicate. Same prefix reasoning as the two above: kept off
+        // /reviews/ so the untyped PUT /reviews/{id} cannot swallow them.
+        require __DIR__.'/reviews-screens-admin.php';
         Route::get('/customers',             [AdminController::class, 'customers']);
         Route::get('/quiz-leads',            [AdminController::class, 'quizLeads']);
         Route::get('/orders',                [AdminController::class, 'orders']);
