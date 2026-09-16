@@ -33,6 +33,7 @@ it('parses every script block in the admin console', function () {
     foreach ([
         'resources/views/admin/app.blade.php',
         'resources/views/admin/partials/media-picker.blade.php',
+        'resources/views/admin/partials/product-picker.blade.php',
         'resources/views/admin/partials/product-editor-screen.blade.php',
         'resources/views/admin/partials/media-library-screen.blade.php',
         'resources/views/admin/partials/review-settings-screen.blade.php',
