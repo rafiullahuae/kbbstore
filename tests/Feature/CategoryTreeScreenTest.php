@@ -118,13 +118,37 @@ it('escapes every operator-supplied string before it reaches innerHTML', functio
     }
 });
 
-it('uploads images through the one existing media endpoint', function () {
+it('reaches images through the shared Media Library, and uploads nowhere itself', function () {
     $js = catTreeSource();
 
-    // CLAUDE.md and both neighbouring route files: one upload path, one set of
-    // type and size rules, one place where the SVG screening lives.
-    expect($js)->toContain("endpoint('/media/upload')")
-        ->and(substr_count($js, '/media/upload'))->toBe(1);
+    /*
+     * This used to assert the dialog posted to endpoint('/media/upload') itself,
+     * behind a bare browser "Choose File". That control was the one in the
+     * owner's screenshot: a file input can only send a file from this computer,
+     * so an image ALREADY in the library had to be found and uploaded a second
+     * time. The dialog now opens window.kbbPickMedia instead, which lists what
+     * is already there and carries its own Upload new.
+     *
+     * The rule the old assertion was really protecting is unchanged and is
+     * asserted harder here: ONE upload path in this application, with one set of
+     * type and size rules and one place where the SVG screening lives. The
+     * screen now has NO upload code of its own at all — the picker owns it — so
+     * the count is zero rather than one, which is the stronger version of the
+     * same guarantee.
+     */
+    expect(str_contains($js, '/media/upload'))
+        ->toBeFalse('the category screen has grown a second upload path of its own');
+
+    expect(str_contains($js, 'window.kbbPickMedia({'))
+        ->toBeTrue('the category dialog no longer opens the shared Media Library');
+
+    // And the picker it defers to is still the one that posts to that endpoint.
+    $picker = (string) file_get_contents(
+        resource_path('views/admin/partials/media-picker.blade.php')
+    );
+
+    expect(str_contains($picker, "'/media/upload'"))
+        ->toBeTrue('the shared picker no longer uploads through the one media endpoint');
 });
 
 it('sends only a sibling group when a row is dragged', function () {
