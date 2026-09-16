@@ -22,6 +22,26 @@ return Application::configure(basePath: dirname(__DIR__))
             // A staging copy of a live store is the classic duplicate-content
             // accident; production leaves the variable unset.
             \App\Http\Middleware\NoIndexStaging::class,
+            /*
+             * Makes admin_users.role mean something. It acts only on routes
+             * that declare auth:admin and steps aside for everything else, so
+             * the storefront pays one in_array() per request for it.
+             *
+             * Registered here, in the web group, rather than on the admin route
+             * groups themselves, for two reasons. routes/web.php is owned by
+             * the integrator and no lane may edit it. And a group-level
+             * registration would only cover the groups someone remembered to
+             * add it to, which is the failure mode this layer exists to end —
+             * from here it reaches every auth:admin route in every route file,
+             * including ones written after it.
+             *
+             * Position matters: after StartSession, which the web group
+             * supplies, because the admin guard cannot resolve a user without
+             * the session. It still runs before the route's own auth:admin,
+             * which is why it passes an unauthenticated request straight
+             * through rather than answering it — see the class doc comment.
+             */
+            \App\Http\Middleware\EnforceAdminCapability::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

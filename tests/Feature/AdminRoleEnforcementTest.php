@@ -2,41 +2,42 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\EnforceAdminCapability;
 use App\Models\AdminUser;
+use App\Services\AdminPathService;
+use App\Support\AdminCapabilities;
 
 /**
- * What `admin_users.role` actually buys you today: nothing.
+ * What `admin_users.role` buys you. It used to be nothing.
  *
- * The column exists, AdminController validates it against a four-value
- * vocabulary (owner | manager | support | editor), the Users screen renders it,
- * and a last-owner guard stops the final owner being demoted or deleted. Every
- * one of those reads the column for its OWN CRUD. Nothing anywhere else in the
- * application consults it:
+ * ---------------------------------------------------------------------------
+ * THIS FILE WAS REWRITTEN, AND THAT WAS THE POINT OF IT
+ * ---------------------------------------------------------------------------
  *
- *     $ grep -rn "role" app/ --include=*.php
+ * The previous version of this file was a tripwire, not a wish. It asserted
+ * that a `support` account COULD promote itself to owner, COULD delete other
+ * admins, COULD reset an owner's password, COULD open the payment gateway
+ * credentials and COULD download the entire customer list — every one of those
+ * written with ->assertOk(), deliberately the wrong way round, documenting the
+ * behaviour rather than asking for it. Its own doc comment said so:
  *
- * returns AdminUser::$fillable, AdminController's own validators and last-owner
- * guard, and two SVG `role="img"` attributes. There is no app/Policies, no
- * Gate::define, no ->can(), no @can in the admin views and no role middleware —
- * app/Http/Middleware holds CheckRedirects, NoIndexStaging, NoStoreAdminApi and
- * SecurityHeaders, and that is the whole list.
+ *     "the day a real authorization layer lands, every one of them goes red,
+ *      and the person who built it gets a list of exactly the reaches that
+ *      used to be open"
  *
- * So `auth:admin` is the entire authorization model. Every back-office account
- * is an owner in all but the label, and the labels shown on the Users screen
- * describe an access-control system that was never built.
+ * That day is this package. Every reach the old file listed is now asserted
+ * shut, in the same order, one test per reach, so the diff of this file reads
+ * as the before-and-after of the hole. Nothing was deleted: the last test,
+ * which pinned the ABSENCE of any authorization layer, has been turned into its
+ * mirror image and now pins the presence of one.
  *
- * THESE TESTS ARE WRITTEN TO PASS, and they are deliberately written the way
- * round that documents the present behaviour rather than asserting the
- * behaviour anyone would want. They are a tripwire, not a wish: the day a real
- * authorization layer lands, every one of them goes red, and the person who
- * built it gets a list of exactly the reaches that used to be open and a
- * pointer to the design note in the lane report. Writing them as
- * assertForbidden() today would just be a red suite describing a feature that
- * does not exist.
+ * The layer itself is App\Support\AdminCapabilities (the map) and
+ * App\Http\Middleware\EnforceAdminCapability (the enforcement). The map's own
+ * shape, its ordering and its closed default are covered next door in
+ * AdminCapabilityMapTest; this file is the behaviour over HTTP.
  *
- * Ranked by what the reach costs the owner, worst first.
+ * Ranked by what the reach cost the owner, worst first — the old file's order.
  */
-
 function areUser(string $role, string $name = 'ARE'): AdminUser
 {
     return AdminUser::create([
@@ -49,21 +50,23 @@ function areUser(string $role, string $name = 'ARE'): AdminUser
 
 /* ------------------------------------------------- 1. privilege escalation */
 
-it('lets the lowest role promote itself to owner', function () {
+it('refuses to let the lowest role promote itself to owner', function () {
     $support = areUser('support');
 
     // There has to be a second owner, or the last-owner guard is what refuses
-    // and the test would pass for the wrong reason.
+    // and the test would pass for the wrong reason — it would go green even
+    // with this whole package reverted.
     areUser('owner');
 
-    test()->actingAs($support, 'admin')
-        ->put('/admin-api/users/'.$support->id, ['role' => 'owner'])
-        ->assertOk();
+    $response = test()->actingAs($support, 'admin')
+        ->put('/admin-api/users/'.$support->id, ['role' => 'owner']);
 
-    expect($support->fresh()->role)->toBe('owner');
+    $response->assertForbidden();
+
+    expect($support->fresh()->role)->toBe('support');
 })->group('role-enforcement');
 
-it('lets the lowest role delete another admin account', function () {
+it('refuses to let the lowest role delete another admin account', function () {
     $support = areUser('support');
     $victim = areUser('manager');
 
@@ -71,18 +74,23 @@ it('lets the lowest role delete another admin account', function () {
 
     test()->actingAs($support, 'admin')
         ->delete('/admin-api/users/'.$victim->id)
-        ->assertOk();
+        ->assertForbidden();
 
-    expect(AdminUser::find($victim->id))->toBeNull();
+    expect(AdminUser::find($victim->id))->not->toBeNull();
 })->group('role-enforcement');
 
-it('lets the lowest role reset another admin password and create new accounts', function () {
+it('refuses to let the lowest role reset another admin password or create accounts', function () {
     $support = areUser('support');
     $victim = areUser('owner');
+    $wasHashed = $victim->fresh()->password;
 
     test()->actingAs($support, 'admin')
         ->put('/admin-api/users/'.$victim->id, ['password' => 'a-new-password'])
-        ->assertOk();
+        ->assertForbidden();
+
+    expect($victim->fresh()->password)->toBe($wasHashed);
+
+    $before = AdminUser::count();
 
     test()->actingAs($support, 'admin')
         ->post('/admin-api/users', [
@@ -91,48 +99,133 @@ it('lets the lowest role reset another admin password and create new accounts', 
             'password' => 'secret-secret',
             'role' => 'owner',
         ])
-        ->assertSuccessful();
+        ->assertForbidden();
+
+    expect(AdminUser::count())->toBe($before);
 })->group('role-enforcement');
+
+it('refuses every non-owner role the users screen, not just support', function (string $role) {
+    $actor = areUser($role);
+    areUser('owner');
+
+    test()->actingAs($actor, 'admin')->get('/admin-api/users')->assertForbidden();
+    test()->actingAs($actor, 'admin')
+        ->put('/admin-api/users/'.$actor->id, ['role' => 'owner'])
+        ->assertForbidden();
+
+    expect($actor->fresh()->role)->toBe($role);
+})->with(['manager', 'support', 'editor'])->group('role-enforcement');
 
 /* ------------------------------------------------------- 2. money and data */
 
-it('lets the lowest role reach the payment provider settings', function () {
+it('refuses the lowest role the payment provider settings', function () {
     $support = areUser('support');
 
-    test()->actingAs($support, 'admin')
-        ->get('/admin-api/payments')
+    test()->actingAs($support, 'admin')->get('/admin-api/payments')->assertForbidden();
+    test()->actingAs($support, 'admin')->post('/admin-api/payments', [])->assertForbidden();
+})->group('role-enforcement');
+
+it('refuses even a manager the payment provider settings', function () {
+    // Gateway credentials are the owner's alone. A manager runs the shop; the
+    // encrypted Stripe/Tabby/Tamara secrets are not part of running the shop.
+    test()->actingAs(areUser('manager'), 'admin')->get('/admin-api/payments')->assertForbidden();
+})->group('role-enforcement');
+
+it('refuses the lowest role the customer export', function () {
+    $support = areUser('support');
+
+    test()->actingAs($support, 'admin')->get('/admin-api/customers/export')->assertForbidden();
+})->group('role-enforcement');
+
+it('still lets support read one customer while refusing it the whole list', function () {
+    // The split that makes customers.export a capability of its own: answering
+    // a ticket needs one record, and never needs all of them at once.
+    $support = areUser('support');
+
+    expect(test()->actingAs($support, 'admin')->get('/admin-api/customers/list')->getStatusCode())
+        ->not->toBe(403);
+
+    test()->actingAs($support, 'admin')->get('/admin-api/customers/export')->assertForbidden();
+})->group('role-enforcement');
+
+/* ------------------------------------------- 3. the owner is never shut out */
+
+it('lets the owner reach every one of the reaches the other roles lose', function () {
+    $owner = areUser('owner');
+
+    foreach ([
+        '/admin-api/users',
+        '/admin-api/payments',
+        '/admin-api/settings',
+        '/admin-api/customers/export',
+        '/admin-api/schema-inspect',
+        '/admin-api/import/status',
+        '/admin-api/updates',
+        '/admin-api/analytics',
+        '/'.AdminPathService::current(),
+    ] as $path) {
+        $status = test()->actingAs($owner, 'admin')->get($path)->getStatusCode();
+
+        expect($status !== 403)->toBeTrue("owner was refused {$path} (status {$status})");
+    }
+})->group('role-enforcement');
+
+it('lets the owner promote and demote accounts exactly as before', function () {
+    $owner = areUser('owner');
+    $victim = areUser('support');
+
+    test()->actingAs($owner, 'admin')
+        ->put('/admin-api/users/'.$victim->id, ['role' => 'manager'])
         ->assertOk();
+
+    expect($victim->fresh()->role)->toBe('manager');
 })->group('role-enforcement');
 
-it('lets the lowest role export the entire customer list', function () {
-    $support = areUser('support');
+it('leaves the admin login and logout outside the permission layer', function () {
+    // The escape hatch. Whatever the map says, no role can be sealed into a
+    // session it cannot end, and nobody can be refused the login form — both
+    // routes are registered outside the auth:admin group, so this layer never
+    // sees them.
+    $path = AdminPathService::current();
 
-    $response = test()->actingAs($support, 'admin')->get('/admin-api/customers/export');
+    test()->get('/'.$path.'/login')->assertOk();
 
-    expect($response->getStatusCode())->toBe(200);
+    test()->actingAs(areUser('support'), 'admin')
+        ->post('/'.$path.'/logout')
+        ->assertStatus(302);
 })->group('role-enforcement');
 
-/* ---------------------------------------------------- 3. the column itself */
+it('sends a signed-out visitor to the login form rather than a dead 403', function () {
+    // EnforceAdminCapability runs BEFORE auth:admin. If it answered an
+    // unauthenticated request itself, a logged-out owner would meet a 403 with
+    // no link to anywhere — on a host with no shell, that is unrecoverable.
+    test()->get('/admin-api/users')->assertStatus(302);
+    test()->get('/'.AdminPathService::current())->assertStatus(302);
+})->group('role-enforcement');
 
-it('has no authorization layer reading the role column', function () {
-    expect(is_dir(base_path('app/Policies')))->toBeFalse();
+/* ---------------------------------------------------- 4. the column itself */
 
+it('has an authorization layer reading the role column', function () {
+    // The mirror image of the old test, which asserted every one of these was
+    // absent. The middleware list is still pinned exactly, for the same reason
+    // it was before: if it changes again, whoever changed it should come and
+    // read this file.
     $middleware = collect(glob(base_path('app/Http/Middleware/*.php')) ?: [])
         ->map(fn ($p) => basename($p, '.php'))
         ->sort()
         ->values()
         ->all();
 
-    // If a role middleware is ever added, this list changes and the test asks
-    // whoever added it to revisit the cases above.
     expect($middleware)->toBe([
         'CheckRedirects',
+        'EnforceAdminCapability',
         'NoIndexStaging',
         'NoStoreAdminApi',
         'SecurityHeaders',
     ]);
 
-    // No gate or policy registration anywhere in the application.
+    // Still no Gate and no policy: four fixed roles and one map, not an RBAC
+    // system. This half of the old assertion is unchanged and stays true.
     $appSource = collect(
         iterator_to_array(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(app_path())))
     )
@@ -140,6 +233,101 @@ it('has no authorization layer reading the role column', function () {
         ->map(fn ($f) => (string) file_get_contents($f->getPathname()))
         ->implode("\n");
 
-    expect($appSource)->not->toContain('Gate::define')
-        ->and($appSource)->not->toContain('->authorize(');
+    expect(str_contains($appSource, 'Gate::define'))->toBeFalse('a Gate appeared; this file assumes the map is the whole layer')
+        ->and(str_contains($appSource, '->authorize('))->toBeFalse('a policy appeared; this file assumes the map is the whole layer');
+
+    // And the layer is actually wired, not merely present as a file.
+    expect(str_contains((string) file_get_contents(base_path('bootstrap/app.php')), EnforceAdminCapability::class))
+        ->toBeTrue('EnforceAdminCapability is not registered in bootstrap/app.php');
 })->group('role-enforcement');
+
+it('reads the role column for a role the map does not recognise, and closes', function () {
+    // The column is NOT NULL DEFAULT 'owner' and AdminController validates
+    // every write, so this takes a hand-edited row. It still must not open.
+    $odd = areUser('owner');
+    $odd->forceFill(['role' => 'wizard'])->save();
+
+    expect(AdminCapabilities::canonicalRole('wizard'))->toBeNull();
+
+    test()->actingAs($odd->fresh(), 'admin')->get('/admin-api/users')->assertForbidden();
+    test()->actingAs($odd->fresh(), 'admin')->get('/admin-api/stats')->assertForbidden();
+})->group('role-enforcement');
+
+it('treats the legacy staff spelling as support rather than locking it out', function () {
+    // 0001_01_01_000003's comment says owner|manager|staff; AdminController has
+    // always validated owner|manager|support|editor. A row reading 'staff' is
+    // possible on a long-lived install and is aliased, not denied.
+    $staff = areUser('owner');
+    $staff->forceFill(['role' => 'staff'])->save();
+
+    expect(AdminCapabilities::canonicalRole('staff'))->toBe('support');
+
+    test()->actingAs($staff->fresh(), 'admin')->get('/admin-api/users')->assertForbidden();
+    expect(test()->actingAs($staff->fresh(), 'admin')->get('/admin-api/stats')->getStatusCode())
+        ->not->toBe(403);
+})->group('role-enforcement');
+
+/* ------------------------------------------------- 5. the reach, per role */
+
+/**
+ * The matrix. One row per role, listing paths it must reach and paths it must
+ * not, chosen so that every capability group in the map is represented at least
+ * once on one side or the other.
+ *
+ * "Can reach" is asserted as "not 403" rather than "200" on purpose: 403 is the
+ * only status this layer produces, so anything else means the permission check
+ * let the request through to its handler, which is exactly and only what is
+ * being tested here. Asserting 200 would couple these rows to whatever each
+ * handler happens to do with an empty test database.
+ */
+dataset('role reach', [
+    'manager' => ['manager',
+        ['/admin-api/orders-list', '/admin-api/orders-export', '/admin-api/customers/list',
+            '/admin-api/customers/export', '/admin-api/catalog-products-list', '/admin-api/categories',
+            '/admin-api/blocks', '/admin-api/reviews/list', '/admin-api/coupons',
+            '/admin-api/newsletter', '/admin-api/shipping', '/admin-api/analytics'],
+        ['/admin-api/users', '/admin-api/payments', '/admin-api/settings', '/admin-api/ecommerce',
+            '/admin-api/mail', '/admin-api/updates', '/admin-api/schema-inspect',
+            '/admin-api/import/status', '/admin-api/demo-content'],
+    ],
+    'support' => ['support',
+        ['/admin-api/stats', '/admin-api/orders-list', '/admin-api/customers/list',
+            '/admin-api/reviews/list', '/admin-api/quiz-leads'],
+        ['/admin-api/users', '/admin-api/payments', '/admin-api/settings', '/admin-api/analytics',
+            '/admin-api/orders-export', '/admin-api/customers/export', '/admin-api/newsletter',
+            '/admin-api/coupons', '/admin-api/catalog-products-list', '/admin-api/categories',
+            '/admin-api/blocks', '/admin-api/updates', '/admin-api/schema-inspect'],
+    ],
+    'editor' => ['editor',
+        ['/admin-api/stats', '/admin-api/catalog-products-list', '/admin-api/categories',
+            '/admin-api/brands', '/admin-api/attributes', '/admin-api/blocks', '/admin-api/media',
+            '/admin-api/homepage', '/admin-api/review-settings', '/admin-api/reviews/list'],
+        ['/admin-api/users', '/admin-api/payments', '/admin-api/settings', '/admin-api/analytics',
+            '/admin-api/orders-list', '/admin-api/customers/list', '/admin-api/customers/export',
+            '/admin-api/newsletter', '/admin-api/coupons', '/admin-api/updates',
+            '/admin-api/schema-inspect', '/admin-api/reviews/export'],
+    ],
+]);
+
+it('gives each role exactly the reach the map promises', function (string $role, array $allowed, array $refused) {
+    $actor = areUser($role);
+    areUser('owner');
+
+    foreach ($allowed as $path) {
+        $status = test()->actingAs($actor, 'admin')->get($path)->getStatusCode();
+
+        expect($status !== 403)->toBeTrue("{$role} was refused {$path}, which the map grants it");
+    }
+
+    foreach ($refused as $path) {
+        $status = test()->actingAs($actor, 'admin')->get($path)->getStatusCode();
+
+        expect($status === 403)->toBeTrue("{$role} reached {$path}, which the map does not grant it (status {$status})");
+    }
+})->with('role reach')->group('role-enforcement');
+
+it('lets every role reach the console shell, or the role cannot work at all', function (string $role) {
+    $status = test()->actingAs(areUser($role), 'admin')->get('/'.AdminPathService::current())->getStatusCode();
+
+    expect($status !== 403)->toBeTrue("{$role} cannot open the admin console at all");
+})->with(['owner', 'manager', 'support', 'editor'])->group('role-enforcement');
