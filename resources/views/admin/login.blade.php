@@ -28,7 +28,7 @@
   .fld{margin-bottom:15px}
   input[type=email],input[type=password]{width:100%;padding:11px 13px;border:1px solid var(--border);
     border-radius:11px;font-size:14px;background:var(--surface-2);color:var(--ink);outline:none}
-  input:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-soft)}
+  input:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
   .row{display:flex;align-items:center;justify-content:space-between;margin:2px 0 20px;font-size:12.5px}
   .row label{display:flex;align-items:center;gap:7px;font-weight:500;color:var(--ink-soft);margin:0;cursor:pointer}
   .btn{width:100%;padding:12px;border:0;border-radius:11px;background:var(--accent);color:#fff;

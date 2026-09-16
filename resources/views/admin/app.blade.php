@@ -21,6 +21,51 @@
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --ease:cubic-bezier(.22,.61,.36,1);
 }
+/* ===== LANE CR · which colours here follow the theme, and which must not ===
+   Changing the console theme moved most of the panel and left parts of it
+   behind, because some rules name a token and some have the colour typed into
+   them. A literal cannot follow a theme, so those rules stayed light when the
+   rest went dark.
+
+   THE DISTINCTION THAT MATTERS. `var(--border, <literal>)` is the house
+   pattern and is correct -- the literal there is a fallback for where the
+   tokens are not defined, and every one of them was left alone. Only bare
+   literals were touched, and only where the literal really is the token's
+   light value AND the element is meant to follow the theme.
+
+   MOST BARE LITERALS IN THIS FILE ARE NOT FAULTS, and converting them would
+   be the regression, not the fix. Four kinds were deliberately left:
+
+     * a fixed white FOREGROUND on a coloured fill -- the badge counts, .logo,
+       .btn, .sev.crit, the tick glyph, the avatar's initials. These sit on
+       accent or red. Pointed at the surface token they would turn near-black
+       on green the moment the theme goes dark. Forty-odd of them.
+     * a control KNOB -- .tog::after and .ectog::after are the white thumb of a
+       switch, sliding over a coloured track. Same reason.
+     * a STOREFRONT PREVIEW -- .skinprev, .pvphone, .ppanel (search panel),
+       .ap* (login panel), .mgmpv*, .cpp, .shpv-r, .dvp-g. These draw a
+       miniature of the customer-facing site, which has its own design and is
+       not supposed to follow the admin's theme at all.
+     * a screen built on its OWN palette -- the menu-manager, html-blocks,
+       newsletter and order-detail screens use a separate plum/amber set whose
+       greys are not this file's greys. Converting only the whites there leaves
+       a dark panel behind light-grey borders, which is worse than leaving it
+       alone. Those are a per-screen job, not a literal-for-token swap.
+
+   What changed is the console's own furniture, where the rest of the rule was
+   already tokenised: .iconbtn, .userchip, .btn.ghost, .flag, .envtog's active
+   pill and its dot ring, .modal, the body wash, the avatar's gradient and the
+   two .paydot status dots. The midnight override that used to re-state five of
+   those by hand was deleted in the same pass -- it now says nothing the base
+   rules do not.
+
+   NOT CONVERTED, AND WORTH KNOWING WHY: .kdlg-b (the confirm dialog) and
+   .odcard (order detail) are console chrome and do look wrong in the dark
+   theme, but the text on them is typed in too -- .kdlg-b p is a near-black
+   grey one character off the ink-2 token, and .odcard carries amber chips and
+   tinted inputs. Moving the surface without moving the text makes them
+   unreadable rather than themed. They need the whole rule set, not this pass.
+--------------------------------------------------------------------------- */
 /* ===== admin console themes ===== */
 :root[data-theme="indigo"]{--accent:#4f63e0;--accent-strong:#3a4cc4;--accent-soft:#ebedfd;--accent-ink:#2c3aa0;--m1:99,128,255;--m2:120,110,240;--m3:60,150,255}
 :root[data-theme="rose"]{--accent:#e0567b;--accent-strong:#c13e63;--accent-soft:#fce6ee;--accent-ink:#a82f53;--m1:224,86,123;--m2:240,136,78;--m3:160,108,240}
@@ -37,7 +82,6 @@
 :root[data-theme="midnight"] .side{background:rgba(16,21,36,.74)}
 :root[data-theme="midnight"] .top{background:rgba(16,21,36,.6)}
 :root[data-theme="midnight"] .toast{background:#1f2740}
-:root[data-theme="midnight"] .iconbtn,:root[data-theme="midnight"] .userchip,:root[data-theme="midnight"] .btn.ghost,:root[data-theme="midnight"] .flag,:root[data-theme="midnight"] .envtog button.on{background:var(--surface)}
 :root[data-theme="midnight"] .tog{background:#3a4566}
 :root[data-theme="midnight"] .pill.amber{color:#f0b86a}
 :root[data-theme="midnight"] .pill.red{color:#f59289}
@@ -50,7 +94,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{font-family:var(--sans);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
-  background:radial-gradient(120% 80% at 50% -10%,#fff 0%,var(--bg) 55%,#eef1f9 100%);overflow:hidden}
+  background:radial-gradient(120% 80% at 50% -10%,var(--surface) 0%,var(--bg) 55%,var(--surface-3) 100%);overflow:hidden}
 .mesh{position:fixed;inset:-20%;z-index:-1;pointer-events:none;filter:blur(70px) saturate(120%);opacity:.7}
 .mesh::before,.mesh::after{content:"";position:absolute;inset:0}
 .mesh::before{background:
@@ -133,9 +177,9 @@ svg{display:block}
 .envtog{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:99px;padding:3px;gap:2px}
 .envtog button{font-size:12px;font-weight:600;color:var(--ink-soft);padding:6px 13px;border-radius:99px;display:flex;align-items:center;gap:6px;transition:.16s}
 .envtog button .d{width:7px;height:7px;border-radius:50%;background:currentColor}
-.envtog button.on[data-e="live"]{background:#fff;color:var(--accent-ink);box-shadow:var(--sh-s)}
-.envtog button.on[data-e="sandbox"]{background:#fff;color:var(--amber);box-shadow:var(--sh-s)}
-.iconbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;color:var(--ink-soft);transition:.15s;position:relative}
+.envtog button.on[data-e="live"]{background:var(--surface);color:var(--accent-ink);box-shadow:var(--sh-s)}
+.envtog button.on[data-e="sandbox"]{background:var(--surface);color:var(--amber);box-shadow:var(--sh-s)}
+.iconbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;color:var(--ink-soft);transition:.15s;position:relative}
 .iconbtn:hover{color:var(--ink);border-color:#d6dbe7}
 .iconbtn svg{width:18px;height:18px}
 .dciconbox svg{width:20px;height:20px}
@@ -149,9 +193,9 @@ svg{display:block}
 .dcgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 @media(max-width:1000px){.dcgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.dcgrid{grid-template-columns:minmax(0,1fr)}}
-.iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid #fff}
-.userchip{display:flex;align-items:center;gap:9px;padding:5px 7px 5px 5px;border:1px solid var(--border);border-radius:99px;background:#fff}
-.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7b6cf0,#3f6fe0);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
+.iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid var(--surface)}
+.userchip{display:flex;align-items:center;gap:9px;padding:5px 7px 5px 5px;border:1px solid var(--border);border-radius:99px;background:var(--surface)}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
 .userchip b{font-size:12.5px;font-weight:600}
 .userchip small{font-size:10.5px;color:var(--ink-soft);display:block;line-height:1}
 
@@ -189,7 +233,7 @@ body[data-env="sandbox"] .envbar{display:flex}
 .btn:hover{transform:translateY(-1px);box-shadow:0 12px 22px -8px rgba(21,168,90,.55)}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;filter:grayscale(.3)}
 .btn svg{width:16px;height:16px}
-.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--border);box-shadow:none}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--border);box-shadow:none}
 .btn.ghost:hover{border-color:#d2d8e6;background:var(--surface-2)}
 .btn.sm{padding:7px 12px;font-size:12px;border-radius:9px}
 .btn.danger{background:linear-gradient(120deg,#ef5a50,var(--red));box-shadow:0 6px 14px -6px rgba(227,73,63,.5)}
@@ -309,7 +353,7 @@ tr:last-child td{border-bottom:0}
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(16,23,41,.5);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-bg.on{display:flex;animation:fade .2s}
-.modal{background:#fff;border-radius:var(--r);box-shadow:var(--sh-l);max-width:560px;width:100%;max-height:88vh;overflow:auto;animation:pop .25s var(--ease)}
+.modal{background:var(--surface);border-radius:var(--r);box-shadow:var(--sh-l);max-width:560px;width:100%;max-height:88vh;overflow:auto;animation:pop .25s var(--ease)}
 @keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
 .modal-h{display:flex;align-items:center;gap:11px;padding:18px 20px;border-bottom:1px solid var(--border)}
 .modal-h b{font-size:15px;font-weight:700}
@@ -323,7 +367,7 @@ tr:last-child td{border-bottom:0}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast svg{width:16px;height:16px;color:#5fe39b}
 
-.flag{position:fixed;top:12px;right:14px;z-index:90;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--accent-ink);background:#fff;border:1px solid var(--accent-soft);padding:4px 11px;border-radius:99px;box-shadow:var(--sh-s)}
+.flag{position:fixed;top:12px;right:14px;z-index:90;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--accent-ink);background:var(--surface);border:1px solid var(--accent-soft);padding:4px 11px;border-radius:99px;box-shadow:var(--sh-s)}
 .themewrap{position:relative}
 .pop{position:absolute;top:46px;right:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--sh-l);padding:8px;width:212px;z-index:70;display:none;animation:fade .15s var(--ease)}
 .pop.open{display:block}
@@ -1830,15 +1874,15 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
    whose state you cannot see. Colours match payStatus(): the card and the tab
    read from the same function and cannot disagree. */
 .paydot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;background:#c8cfda}
-.paydot.green{background:#15a85a}
-.paydot.amber{background:#e0922f}
+.paydot.green{background:var(--green)}
+.paydot.amber{background:var(--amber)}
 .paydot.grey{background:#c8cfda}
 /* Live vs sandbox is the one piece of state on this screen that moves real
    money, so it is spelled out rather than left to a dot. */
 .paylive{font-size:9.5px;font-weight:800;letter-spacing:.05em;color:#b4123c;
          background:#ffe7ee;border-radius:99px;padding:1px 6px;flex:0 0 auto}
 .paytab.on .paylive{background:#ffd9e4}
-.paydirty{color:#e0922f;font-size:16px;line-height:0;flex:0 0 auto}
+.paydirty{color:var(--amber);font-size:16px;line-height:0;flex:0 0 auto}
 .paydirty[hidden]{display:none}
 .paytab-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){
@@ -2147,7 +2191,11 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 /* A switch and its explanation as one quiet row, rather than a bold <label>
    with a paragraph under it that reads like a warning between two fields. */
 .sm-opt{display:flex;gap:10px;align-items:flex-start;min-width:0;padding:11px 13px;
-        border:1px solid var(--border);border-radius:var(--r-sm);background:rgba(127,127,127,.03)}
+        border:1px solid var(--border);border-radius:var(--r-sm);background:rgba(127,127,127,.03);
+        /* The whole row works the box (LANE CR, down in the script). Every other
+           host of a tick box -- .pdchk, .catopt, .so-col -- already said pointer
+           while doing nothing; this one now says it and means it. */
+        cursor:pointer}
 .sm-opt > *{min-width:0}
 .sm-opt .cbx{margin-top:1px}
 .sm-opt-t{display:block;font-size:12.5px;font-weight:600;cursor:pointer}
@@ -9425,6 +9473,93 @@ buildNav();
   }
 })();
 /* ===== LANE CJ · Admin · keyboard-operable tick boxes — END ================ */
+
+/* ===== LANE CR · Admin · the words beside a tick box work it — BEGIN ========
+   The other half of the block above. LANE CJ gave every <span class="cbx"> a
+   focus stop, a role, Space and Enter. It left one thing open, and said so in
+   its own SCOPE NOTE: clicking the WORDS next to a box still does nothing.
+
+   WHY NOTHING HAPPENS. A <label> forwards a click to the form control it
+   labels. These boxes are not form controls -- they are spans -- so the label
+   has nothing to forward to and the click dies on the text. Only the 18px box
+   itself responds. Every other tick box anyone has ever used works the other
+   way round, so this reads as the setting being broken rather than as a small
+   target, and the settings behind these are real: the SEO switches, the column
+   pickers, the bulk-select rows, the product-editor panes.
+
+   WHY NOT A REAL <input>. Same answer as the block above, and it is worth
+   repeating because it is the tempting fix. Every reader of these controls
+   asks classList.contains('on') and every writer calls classList.toggle('on'),
+   including the save handlers that build the SEO settings body and the
+   column-visibility maps. Swapping the element means rewriting those call
+   sites in the most contended file in the repo, and a dropped field there does
+   not throw -- it silently blanks a stored setting on the next save. The
+   markup, the ids, the data attributes and every save handler stay untouched;
+   the missing behaviour is added once, here, for all of them.
+
+   BOTH SHAPES, NOT ONE. There are two, and a fix that knows only one leaves
+   half the console still broken while looking finished:
+     * the older screens WRAP the box and its words in a single <label>
+       (.pdchk, .catopt, .so-col, and the bare `class="row"` labels)
+     * smOpt() puts them in SIBLINGS -- <div class="sm-opt"><span class="cbx">
+       </span><div><span class="sm-opt-t">...</span></div></div> -- with no
+       <label> anywhere in it
+   HOST below names both. A third shape must be added to it; nothing here
+   guesses by climbing the tree, because a container picked by guesswork makes
+   a stray click somewhere in a card toggle a setting the user never aimed at.
+
+   THE DOUBLE-FIRE TRAP. A global handler that calls .click() on a control that
+   also has its own handler fires twice: the state flips and flips straight
+   back, and the control goes dead. The .ectog scar a few thousand lines up is
+   exactly that, which is why that one is narrowed to .ectog[data-ec]. Here the
+   click that must NOT be answered is the one that already landed on the box --
+   or on a link, or a button, or a field inside the same row. SKIP names those,
+   and the box itself is in that list. The synthetic click we dispatch re-enters
+   this same listener with the box as its target, matches SKIP, and stops: one
+   click on the words is one transition, never two.
+
+   A LABEL THAT ALREADY WORKS IS LEFT ALONE. If the host <label> has a real
+   control (a `for=`, or a wrapped <input>), the browser is already forwarding
+   to it -- host.control is how the DOM says so. Answering as well would be the
+   double fire again, in its native form.
+--------------------------------------------------------------------------- */
+(function(){
+  var BOX = '.cbx';
+
+  /* The containers that count as "this box and its words". Deliberately an
+     explicit list -- see BOTH SHAPES above. */
+  var HOST = 'label, .sm-opt';
+
+  /* Clicks that already mean something else. The box is in here too: it has
+     its own handler and has just run it. */
+  var SKIP = 'a[href], button, input, select, textarea, summary,' +
+             '[role="button"], [role="switch"], [role="link"], [role="tab"], .cbx';
+
+  document.addEventListener('click', function(e){
+    if (e.defaultPrevented) return;
+
+    var t = e.target;
+    if (!t || !t.closest) return;
+
+    var host = t.closest(HOST);
+    if (!host) return;
+
+    // Already a working label: the browser forwards it. Do not answer twice.
+    if (host.tagName === 'LABEL' && host.control) return;
+
+    /* Exactly one box, or we cannot know which one the words belong to. A row
+       carrying two is a list, and a list has no single setting to flip. */
+    var boxes = host.querySelectorAll(BOX);
+    if (boxes.length !== 1) return;
+
+    // The click landed on something that acts for itself -- the box included.
+    var own = t.closest(SKIP);
+    if (own && host.contains(own)) return;
+
+    boxes[0].click();
+  });
+})();
+/* ===== LANE CR · Admin · the words beside a tick box work it — END ========== */
 </script>
 <script>
 /* ============================================================================

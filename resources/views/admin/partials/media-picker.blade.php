@@ -103,8 +103,8 @@
 .mp-up-track{height:6px;border-radius:999px;background:var(--surface-2,#f2f4fb);overflow:hidden}
 .mp-up-track > i{display:block;height:100%;width:0;border-radius:999px;
                  background:var(--accent,#15a85a);transition:width .18s linear}
-.mp-up.is-bad .mp-up-track > i{background:#e3493f}
-.mp-up.is-bad .mp-up-pct{color:#e3493f}
+.mp-up.is-bad .mp-up-track > i{background:var(--red,#e3493f)}
+.mp-up.is-bad .mp-up-pct{color:var(--red,#e3493f)}
 @media (prefers-reduced-motion: reduce){.mp-up-track > i{transition:none}}
 @media (max-width:560px){
   .mp-back{padding:0}
