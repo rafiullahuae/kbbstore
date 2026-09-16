@@ -4,99 +4,62 @@ declare(strict_types=1);
 
 /*
 |------------------------------------------------------------------------------
-| Catalog → Products → Add product, and the product image  (Lane AK)
+| RETIRED — Catalog → Products → Add product, and the product image  (was Lane AK)
 |------------------------------------------------------------------------------
 |
-| NOT WIRED YET. CLAUDE.md forbids this lane from editing routes/web.php, so the
-| file ships unmounted and the integrator adds ONE line, inside the EXISTING
-| admin-api group in routes/web.php — the group that already carries
-| `auth:admin` and NoStoreAdminApi — immediately after the catalog-products
-| require, so the two halves of the same screen stay together:
+| THIS FILE REGISTERS NOTHING, ON PURPOSE. It is a tombstone, not a route file.
 |
-|     Route::prefix('admin-api')->middleware(\App\Http\Middleware\NoStoreAdminApi::class)->group(function () {
-|         ...
-|         require __DIR__.'/catalog-products-admin.php';
-|         // Add product, and the product image — the two holes 2.60.131 left in
-|         // the Products screen. Same group, for the same reason.
-|         require __DIR__.'/catalog-product-create-admin.php';
-|     });
+| Lane AT retired the duplicate product screens. The admin had grown three ways
+| to write a product — Lane AF's inline detail panel, Lane AK's create form, and
+| Lane AO's full editor — and the Edit button pointed at the oldest of them, so
+| the newest screen looked as though it had never shipped. The full editor
+| (routes/product-editor-admin.php) is the one that survives: it is the only one
+| that can set a gallery, several categories, sanitised rich copy, SEO and a
+| launch date, and its create and edit paths are the same form and the same
+| validation, so they cannot drift.
 |
-| THAT GROUP, AND NOTHING ELSE. Every route below WRITES the catalogue.
-| /catalog-product-create adds a row to `products` and can put it on the
-| storefront in the same request; /catalog-product-image/{id} changes the
-| picture on a product the shop is already selling. /api/* in this app is
-| unauthenticated BY DESIGN (CLAUDE.md), so mounting any of this there would be
-| an anonymous write primitive over the shop's own catalogue — anyone who asked
-| could add a product to the store, or replace a bestseller's photograph.
-| AdminCatalogProductCreateTest asserts the refusal on every route below,
-| mounted exactly as this header describes, for an anonymous caller, a
-| signed-in storefront customer and a plain `web` user — and reads the
-| middleware back off the REGISTERED routes rather than trusting the harness,
-| because RouteRegistrar::middleware() REPLACES rather than appends and a
-| harness that chains it twice guards nothing while reading as though it did.
+| The three routes that used to live here are GONE:
 |
-| A `clear_caches_*` migration ships with this package
-| (2026_09_24_000000_clear_caches_product_create.php). Routes, Blade and PHP all
-| change here. Without it the compiled route cache on the live host knows none
-| of these paths and the failure is the quiet kind: the Add product form renders
-| perfectly, the operator fills it in, and Save 404s.
+|     POST /admin-api/catalog-product-slug      -> use /admin-api/product-editor-slug
+|     POST /admin-api/catalog-product-create    -> use /admin-api/product-editor-create
+|     POST /admin-api/catalog-product-image/{id}-> the editor's own image + gallery
+|                                                  fields, saved through
+|                                                  /admin-api/product-editor-save/{id}
 |
-| Routes added:
+| App\Http\Controllers\Admin\CatalogProductCreateApiController is deleted, so
+| this file cannot be restored by un-commenting anything: the class it named no
+| longer exists. That is deliberate. Two of those routes were WRITE endpoints
+| over the shop's own catalogue — one added a row to `products` and could put it
+| on the storefront in the same request, the other replaced the photograph on a
+| product the shop was already selling — and an endpoint nobody calls is still
+| an endpoint somebody can call.
 |
-|     POST /admin-api/catalog-product-slug          slug preview + availability
-|     POST /admin-api/catalog-product-create        create one product
-|     POST /admin-api/catalog-product-image/{id}    set / replace / remove the image
+| ---------------------------------------------------------------------------
+| INTEGRATOR: DELETE THIS FILE, AND THE REQUIRE LINE THAT NAMES IT.
+| ---------------------------------------------------------------------------
 |
-| WHY THE PATHS ARE FLAT, AND SINGULAR.
+| routes/web.php line 386 (inside the admin-api group) reads:
 |
-| routes/web.php already registers `GET /admin-api/products/{id}` with NO
-| constraint on {id}, and `GET /admin-api/catalog/products`. Laravel matches the
-| first route registered, so a path an existing wildcard already covers is
-| decided by where in a 500-line file somebody pasted a require line, and
-| nothing about the resulting symptom points at the cause — the Orders lane lost
-| a release to exactly that (`/orders/list` matched `/orders/{id}` and reached a
-| controller whose signature is `int $id`). A flat prefix of its own cannot
-| collide whatever order the requires end up in.
+|     require __DIR__.'/catalog-product-create-admin.php';
 |
-| The prefix here is `catalog-product-` (SINGULAR), one character different from
-| Lane AF's `catalog-products-` (plural), and that is deliberate rather than
-| careless: the two are distinct literal path segments that cannot shadow each
-| other, while a reader sorting routes/ alphabetically sees the two halves of
-| the Products screen adjacent. Tests\Support\CatalogProductCreateRoutes filters
-| on the prefix AND the controller, so neither lane's route sweeps up the
-| other's and reports it as its own work.
+| Remove that line and delete this file. Both, in the same change.
 |
-| {id} is constrained to digits, so a stray path segment 404s rather than
-| reaching a controller with a TypeError.
+| The file is a tombstone rather than simply deleted because CLAUDE.md forbids
+| this lane from editing routes/web.php, and a `require` of a path that no longer
+| exists is a fatal error, not a missing feature: it would take down the whole
+| application — the storefront included — the moment the tree was deployed or a
+| test booted it. An empty file that registers nothing is inert and leaves the
+| removal itself a one-line change for whoever owns routes/web.php.
 |
-| WHY THERE IS NO UPLOAD ROUTE HERE. There is exactly one file-upload endpoint
-| in this application — POST /admin-api/media/upload
-| (Admin\MediaUploadController), already registered in routes/web.php — and the
-| Add product form and the edit panel's image box both post to it, the same way
-| the brand logo, the category image and the SEO share image do. A second upload
-| path is the thing routes/brands-admin.php and routes/catalog-admin.php each
-| went out of their way to avoid: two of them drift, and the one that drifts is
-| the one with the content-type, size and SVG rules in it. What crosses the
-| routes below is the URL that endpoint returned, never a file.
+| tests/Feature/ProductEditorRetirementTest.php asserts, against the REGISTERED
+| routes rather than against this file's text, that all three paths above now
+| 404 and that the surviving editor's routes are still mounted behind
+| `auth:admin`.
 |
-| WHY THERE IS NO SLUG ROUTE ON THE UPDATE SIDE. A product's slug is a live URL
-| contract (U-01: /product/{slug}/) — a link Google holds and a line in
-| customers' order histories. It is generated, shown and editable at CREATE
-| time, on /catalog-product-create, and after that it is not a field. Lane AF's
-| /catalog-products-save/{id} does not accept one either, and nothing here adds
-| one.
-|
-| WHAT IS DELIBERATELY ABSENT. No delete route, single or bulk.
-| order_items.product_id points at these rows. Out of scope, on purpose, and not
-| an omission to be quietly filled in.
+| A clear_caches migration ships with this package
+| (2026_10_06_000000_clear_caches_retire_duplicate_editors.php). Removing routes
+| needs the compiled route cache cleared exactly as adding them does: without it
+| the live host goes on serving the retired paths from its cached route table,
+| which is the whole point of removing them.
 |
 */
-
-use App\Http\Controllers\Admin\CatalogProductCreateApiController;
-use Illuminate\Support\Facades\Route;
-
-Route::post('/catalog-product-slug', [CatalogProductCreateApiController::class, 'slug']);
-Route::post('/catalog-product-create', [CatalogProductCreateApiController::class, 'store']);
-
-Route::post('/catalog-product-image/{id}', [CatalogProductCreateApiController::class, 'image'])
-    ->whereNumber('id');

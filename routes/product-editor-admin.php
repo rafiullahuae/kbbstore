@@ -76,26 +76,26 @@ declare(strict_types=1);
 | reaching a controller with a TypeError.
 |
 | ---------------------------------------------------------------------------
-| OVERLAP WITH LANE AK, WHICH THE INTEGRATOR SHOULD DECIDE RATHER THAN DISCOVER
+| THE OVERLAP WITH LANE AK IS RESOLVED: THIS FILE WON
 | ---------------------------------------------------------------------------
 |
-| routes/catalog-product-create-admin.php (Lane AK, also unmounted) already
-| offers /catalog-product-slug and /catalog-product-create. This file offers its
-| own slug and create endpoints, and that is a genuine duplication rather than
-| an oversight — stated here so it is a choice and not a surprise.
+| This header used to record a live duplication — routes/catalog-product-create-
+| admin.php also offered /catalog-product-slug and /catalog-product-create — and
+| recommended retiring that one once this screen had been used in anger. Lane AT
+| has done it. Those endpoints are gone, their controller is deleted, and that
+| file is now a tombstone that registers nothing.
 |
-| The reason is that the owner asked for ONE screen that does the whole job
-| ("check if we are missing on the add product page"), and a create form that
-| cannot set a gallery, multiple categories, sanitised rich copy, SEO or a
-| launch date would have to hand the operator straight to a second screen to
-| finish the product. Create and edit here are the same form and the same
-| validation path, which is also why they cannot drift.
+| The reason this one survived: the owner asked for ONE screen that does the
+| whole job, and a create form that cannot set a gallery, multiple categories,
+| sanitised rich copy, SEO or a launch date would have to hand the operator
+| straight to a second screen to finish the product. Create and edit here are
+| the same form and the same validation path, which is also why they cannot
+| drift.
 |
-| Both files are safe to mount together: the prefixes differ, so nothing
-| collides, and Lane AK's endpoints keep working for anything already pointed at
-| them. The recommendation is to mount both now and retire Lane AK's create once
-| this screen has been used in anger — but either way the two must not be
-| described as the same route, because they are not.
+| So the endpoints below are now the ONLY way to create or edit a product,
+| except for the inline price/stock/status cells on the products list
+| (CatalogProductsApiController::update), which are a workflow rather than a
+| second editor and stay.
 |
 | WHY THERE IS NO UPLOAD ROUTE HERE. There is exactly one file-upload endpoint
 | in this application — POST /admin-api/media/upload

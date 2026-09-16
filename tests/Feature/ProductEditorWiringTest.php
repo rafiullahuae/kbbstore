@@ -13,6 +13,12 @@ declare(strict_types=1);
  *
  * That is not a failure a test of either screen could catch, because both
  * screens worked. It lives in the wiring between them, so it is asserted here.
+ *
+ * Lane AT then retired the older screens outright — cpOpenDetail, cpOpenCreate
+ * and the /admin-api/catalog-product-* endpoints — so the assertions below that
+ * required them as fallbacks now require their ABSENCE. What has not changed is
+ * the rule this file exists for: the editor must be reachable, and reachable
+ * first. See tests/Feature/ProductEditorRetirementTest.php for the removals.
  */
 function adminConsole(): string
 {
@@ -38,13 +44,22 @@ it('sends the products list Edit button to the product editor', function () {
     $handler = $m[1] ?? '';
 
     expect($handler)->not->toBe('', 'the Edit button handler could not be found at all')
-        ->and($handler)->toContain('window.peoEdit')
-        // And the old panel stays reachable as the fallback, so a partial that
-        // fails to load leaves editing possible rather than a dead button.
-        ->and($handler)->toContain('cpOpenDetail');
+        ->and($handler)->toContain('window.peoEdit');
+
+    /*
+     * There is no fallback panel any more, and that is the point.
+     *
+     * This assertion used to require cpOpenDetail here, so that a partial which
+     * failed to load left editing possible rather than a dead button. Lane AT
+     * retired cpOpenDetail: keeping a second editor alive as a safety net is
+     * how the console came to have three of them, and how this button ended up
+     * pointing at the oldest one. A fallback that is itself a whole second
+     * editor is not a fallback, it is the duplication.
+     */
+    expect($handler)->not->toContain('cpOpenDetail(');
 });
 
-it('sends the Add product button to the editor before the older form', function () {
+it('sends the Add product button to the one create path that remains', function () {
     $src = adminConsole();
 
     preg_match('/addBtn\.onclick=\(\)=>\{(.{0,600}?)\};/s', $src, $m);
@@ -54,20 +69,17 @@ it('sends the Add product button to the editor before the older form', function 
         ->and($handler)->toContain('window.peoNew');
 
     /*
-     * Order matters: peoNew must be tried BEFORE cpOpenCreate, or the richer
-     * screen never opens.
+     * This used to assert that peoNew was tried BEFORE cpOpenCreate, because
+     * whichever came first was the screen the owner got. Lane AT removed
+     * cpOpenCreate and the three /admin-api/catalog-product-* endpoints behind
+     * it, so there is no ordering left to get wrong — there is one create path.
      *
-     * Compared on the CALLS, not on the raw text — my first version of this
-     * compared the first occurrence of each name and failed, because the
-     * comment above the code mentions cpOpenCreate first. It was measuring
-     * prose, not behaviour.
+     * Asserted on the CALL rather than on the raw text: an earlier version of
+     * this test compared the first occurrence of each NAME and failed on the
+     * comment above the code, measuring prose instead of behaviour.
      */
-    $callsNew = strpos($handler, 'window.peoNew(');
-    $callsOld = strpos($handler, 'window.cpOpenCreate(');
-
-    expect($callsNew)->not->toBeFalse('peoNew is never called')
-        ->and($callsOld)->not->toBeFalse('the cpOpenCreate fallback was dropped')
-        ->and($callsNew)->toBeLessThan($callsOld);
+    expect(strpos($handler, 'window.peoNew('))->not->toBeFalse('peoNew is never called')
+        ->and($handler)->not->toContain('cpOpenCreate');
 });
 
 it('exposes both entry points from the editor partial', function () {
