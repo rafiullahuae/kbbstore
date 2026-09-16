@@ -35,6 +35,7 @@ it('parses every script block in the admin console', function () {
         'resources/views/admin/partials/product-editor-screen.blade.php',
         'resources/views/admin/partials/media-library-screen.blade.php',
         'resources/views/admin/partials/review-settings-screen.blade.php',
+        'resources/views/admin/partials/review-bulk-screens.blade.php',
         'resources/views/admin/partials/html-blocks-screen.blade.php',
         'resources/views/admin/partials/manual-order-screen.blade.php',
         'resources/views/admin/partials/category-tree-screen.blade.php',
