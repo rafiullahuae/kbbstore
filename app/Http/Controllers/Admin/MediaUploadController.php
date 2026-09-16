@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Support\ImageVariants;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -158,6 +159,24 @@ class MediaUploadController extends Controller
             // Whether the file also became a row in the library. Reported
             // rather than assumed — see record().
             'recorded' => $this->record($path, $filename, $detected, $destination, $file->getClientOriginalName()),
+            /*
+             * How many phone-sized copies this upload now has.
+             *
+             * THIS IS THE ONLY MOMENT A COPY CAN CHEAPLY BE MADE. The host has
+             * no queue worker and no shell, so there is no later. Measured
+             * here, a 1000x1000 JPEG costs about 137ms for both widths and a
+             * 4000x4000 one — the largest this endpoint accepts, at the 5MB cap
+             * — about 544ms. That is inside one upload request on a host whose
+             * workers are counted in single figures; a resize on the way *out*,
+             * per tile, per cold page, would not be.
+             *
+             * Best-effort, for the same reason the library row is: the file is
+             * already written and already being served. A tile with no copy
+             * emits no srcset and loads the original, which is what every tile
+             * did before this existed — so a failure here costs bytes, not a
+             * photograph, and the Media Library's batch will pick it up.
+             */
+            'sized' => $this->sizeCopies($path),
         ]);
     }
 
@@ -224,6 +243,29 @@ class MediaUploadController extends Controller
             report($e);
 
             return false;
+        }
+    }
+
+    /**
+     * Make this upload's phone-sized copies, and say how many were made.
+     *
+     * The stored path is web-root-relative without a leading slash, which is
+     * how the `media` row and Media::urlFor() want it. ImageVariants reads a
+     * rendered `src` — the thing that ends up in the HTML — and refuses a bare
+     * relative reference on purpose, because one means a different file on
+     * every page it appears on. The slash is added here rather than loosened
+     * there.
+     *
+     * Never fails the upload. See the note on the response key.
+     */
+    private function sizeCopies(string $path): int
+    {
+        try {
+            return ImageVariants::generate('/'.ltrim($path, '/'))['made'];
+        } catch (\Throwable $e) {
+            report($e);
+
+            return 0;
         }
     }
 

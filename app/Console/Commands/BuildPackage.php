@@ -47,6 +47,13 @@ class BuildPackage extends Command
         // no extension -- and the server does not read it anyway: the installed
         // version is the newest applied row in update_releases.
         'VERSION',
+        // Generated, never source: the phone-sized copies App\Support\
+        // ImageVariants writes into the web root. They are gitignored, so
+        // --since can never select one; this is the second lock, for --file.
+        // A package that carried them would be a package that could DELETE
+        // them on the next install, and deleting files the product pages
+        // depend on is what 2.60.102-.106 did to this shop.
+        'public/img-cache/',
         // UpdateGuard forbids bootstrap/ outright, and rightly: a bad
         // bootstrap/app.php stops the application booting at all, which would
         // leave the updater unable to roll itself back. Changes there reach the

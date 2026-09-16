@@ -40,6 +40,7 @@ that wants to read it mechanically.
 | `storage/framework/`, `storage/logs/` | Runtime state and logs |
 | `*.backup-*`, `*.before-patch-*` | Editor and patch leftovers. Two `UpdateController.php.backup-*` files are committed from before this rule and should be removed |
 | `app/*.zip` | `KBB-REPAIR-UPDATER-APP-FOLDER.zip` and similar |
+| `public/img-cache/` | Phone-sized copies of the shop's photographs, written into the web root by the upload endpoint and by the Media Library's batch. Generated, so always remakeable from the originals; large; and on `BuildPackage::NEVER_SHIP` as well, because a package that carried them could delete them on the next install. Deleting it costs nothing but the CPU to make them again — the tiles fall straight back to the full-size originals in the meantime |
 
 ---
 
