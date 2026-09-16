@@ -180,9 +180,15 @@ function shapePages(array $seed): array
         // With something actually saved, so the page runs its own `whereIn`
         // rather than rendering an empty branch. See the $cookies note below.
         'wishlist'            => ['/my-wishlist', null, ['kbb_wishlist' => (string) $seed['product']->id]],
-        // Client-rendered: the wall fetches /api/reviews from the browser, so
-        // the page itself issues no SQL. Listed in SHAPE_STATIC below.
+        // Server-rendered from `reviews` since Lane DM. The comment here used
+        // to say the wall "fetches /api/reviews from the browser, so the page
+        // itself issues no SQL" -- it fetched nothing: the page was twelve
+        // invented customers in a JavaScript array. Now it reads real rows and
+        // its SQL is shape-checked like every other page, so it is no longer in
+        // SHAPE_STATIC. Driven with a filter, because that is the branch with a
+        // WHERE the two engines could disagree about.
         'review wall'         => ['/reviews', null],
+        'review wall filter'  => ['/reviews?rfilter=photos', null],
         'skin quiz'           => ['/skin-quiz', null],
         'app prototype'       => ['/app', null],
         'content page'        => ['/about', null],
@@ -208,12 +214,18 @@ function shapePages(array $seed): array
  * Pages that legitimately touch no database at all, so the "issued no SQL"
  * guard below does not read them as having silently rendered nothing.
  *
- * Each one is server-rendered chrome around a client-side page: the review wall
- * fetches /api/reviews from the browser, the quiz is entirely in JavaScript, and
- * /app is a self-contained prototype with its catalogue baked into the page. A
- * page appearing here that does have data to load is a bug, not an exemption.
+ * Each one is server-rendered chrome around a client-side page: the quiz is
+ * entirely in JavaScript, and /app is a self-contained prototype with its
+ * catalogue baked into the page. A page appearing here that does have data to
+ * load is a bug, not an exemption.
+ *
+ * THE REVIEW WALL WAS HERE AND SHOULD NOT HAVE BEEN (Lane DM). The exemption
+ * read "the review wall fetches /api/reviews from the browser", and it did not:
+ * it fetched nothing at all and rendered twelve invented customers out of a
+ * JavaScript array, which is exactly the "page that does have data to load"
+ * this list is not for. It reads `reviews` now and is shape-checked.
  */
-const SHAPE_STATIC = ['review wall', 'skin quiz', 'app prototype'];
+const SHAPE_STATIC = ['skin quiz', 'app prototype'];
 
 /**
  * Drop the framework's own schema introspection from a captured log.

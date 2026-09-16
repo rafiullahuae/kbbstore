@@ -69,7 +69,40 @@ class SeoFilesController extends Controller
         // Google to fetch a URL that then points somewhere else. Every other
         // entry in this file already used the slashed form.
         $add($base . '/shop/', null, '0.9', 'daily');
-        $add($base . '/reviews/', null, '0.5', 'weekly');
+        /*
+         * /reviews/ ONLY WHEN THERE IS A REVIEW ON IT.
+         *
+         * This entry was unconditional, and for the whole life of the repo the
+         * page it advertised was twelve invented customers in a JavaScript
+         * array (see store/review-wall.blade.php and Support\ReviewWall). The
+         * page is now built from `reviews` and says "No reviews yet" when there
+         * are none — which is honest, and is not a page to ask Google to index.
+         * A sitemap is a recommendation, and recommending a page whose entire
+         * content is a statement that it has no content is what Search Console
+         * calls thin content.
+         *
+         * NOT a 404 and NOT a noindex, which are the two heavier tools and both
+         * wrong here. The page is reachable from the home page's review wall and
+         * may be linked or bookmarked, so 404 would break real links; noindex
+         * would keep it out of the index even after the shop earns reviews,
+         * since nothing would prompt a re-crawl. Absent from the sitemap is the
+         * lightest of the three: the page stays a 200, stays crawlable, and
+         * simply is not advertised until it has something to say.
+         *
+         * One query, guarded like every other table in this file so a
+         * half-migrated database serves a short sitemap instead of a 500.
+         */
+        if (Schema::hasTable('reviews')) {
+            $hasReviews = DB::table('reviews')
+                ->where('status', 'approved')
+                ->whereNotNull('content')
+                ->where('content', '<>', '')
+                ->exists();
+
+            if ($hasReviews) {
+                $add($base . '/reviews/', null, '0.5', 'weekly');
+            }
+        }
         $add($base . '/skin-quiz/', null, '0.5', 'monthly');
         // /brands/ 301s to /korean-skincare-brands/ (BrandController::legacyIndex,
         // and the owner confirmed the long address is the live one). Submitting

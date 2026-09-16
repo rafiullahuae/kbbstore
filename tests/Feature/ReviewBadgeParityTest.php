@@ -65,7 +65,7 @@ function cssRule(string $file, string $selector): array
 const ADMIN_CSS = 'resources/views/admin/partials/review-badges-screen.blade.php';
 
 /**
- * Every file that defines .sr-capbar, and there are three.
+ * Every file that defines .sr-capbar, and there are two.
  *
  * This list is the point of the test. The first attempt at this fix changed
  * only kbb-product.css and nothing moved on the shop, because
@@ -73,20 +73,28 @@ const ADMIN_CSS = 'resources/views/admin/partials/review-badges-screen.blade.php
  * it into a <style> block that lands after the built stylesheet and wins the
  * cascade. A screenshot caught it; nothing in the suite would have.
  *
- * sorina-reviews.css is the copy that renders on the product page. The other
- * two are loaded by other pages. If a fourth copy ever appears, add it here —
- * the shape check below is only worth what this list covers.
+ * sorina-reviews.css is the copy that renders on the product page;
+ * kbb-product.css is the built stylesheet under it. If a third copy ever
+ * appears, add it here — the shape check below is only worth what this list
+ * covers.
+ *
+ * THERE WERE THREE (Lane DM). store/review-wall.blade.php carried its own copy,
+ * and the capsule it styled was a hard-coded "4.9 · 128 reviews" sitting over
+ * the name of one product that page never looked up, above twelve invented
+ * customers in a JavaScript array. The page is now built from the reviews
+ * table, the capsule went with the figure it existed to print, and the rule
+ * went with the capsule. The two copies left are the two that render over real
+ * per-product figures, and their parity with the admin preview is unchanged.
  */
 function capsuleSources(): array
 {
     return [
         'resources/css/kbb/sorina-reviews.css',
         'resources/css/kbb/kbb-product.css',
-        'resources/views/store/review-wall.blade.php',
     ];
 }
 
-it('defines the capsule in exactly the three files this test knows about', function () {
+it('defines the capsule in exactly the files this test knows about', function () {
     /*
      * Guards the list itself. A new copy somewhere else is a new way for the
      * shop to disagree with the admin, and the parity checks below cannot see

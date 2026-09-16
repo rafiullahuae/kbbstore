@@ -70,11 +70,24 @@ class ProductController extends Controller
         // products with a 20KB description each: 6MB through memory to emit
         // 54KB of JSON, on shared hosting, for free, to anybody.
         //
-        // The row COUNT is still unbounded, deliberately and not fixed here:
-        // resources/views/store/category.blade.php fetches this endpoint and
-        // filters the whole catalogue client-side, so a cap would silently drop
-        // products off a real page and a throttle would 429 real visitors.
-        // Paginating it means changing that consumer in the same package.
+        // THE ROW COUNT IS STILL UNBOUNDED, AND THE REASON GIVEN FOR IT WAS
+        // NOT TRUE (Lane DM). This comment said a cap "would silently drop
+        // products off a real page", because resources/views/store/category
+        // .blade.php fetches this endpoint and filters the whole catalogue
+        // client-side. That view is rendered by NO controller and reachable at
+        // no URL: it is a design mock whose own 60-brand menu links to
+        // /category?cat=…, a route this application does not register. It is
+        // the only consumer of /api/products anywhere in the repository, so
+        // there is no real page to drop a product off.
+        //
+        // The cost above is therefore paid for nobody: "6MB through memory to
+        // emit 54KB of JSON, on shared hosting, for free, to anybody", measured
+        // in this same comment. What it should be replaced with — a cap, a
+        // cursor, a throttle, or the endpoint's removal — is a decision for
+        // whoever owns this endpoint, and Lane DM's recommendation is in its
+        // report rather than applied here: changing what a public endpoint
+        // returns is not a change to make as a side effect of fixing a
+        // different page. Only the false justification is removed.
         $rows = Product::visible()
             ->select(self::INDEX_COLUMNS)
             ->orderBy('position')

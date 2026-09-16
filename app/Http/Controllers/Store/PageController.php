@@ -10,9 +10,11 @@ use App\Models\Post;
 use App\Models\Setting;
 use App\Services\AdminPathService;
 use App\Services\SettingsService;
+use App\Support\ReviewWall;
 use App\Support\Seo;
 use App\Support\Url;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 /**
  * Editable content pages: privacy policy, terms, delivery and so on.
@@ -143,16 +145,45 @@ class PageController extends Controller
 
     /**
      * The review wall. Same missing-method 500 as skinQuiz() above.
+     *
+     * AND, UNTIL NOW, TWELVE INVENTED CUSTOMERS. This method passed the view no
+     * review data whatsoever, and store/review-wall.blade.php answered with
+     * `var REVIEWS=[…]`: twelve fabricated people with names, star ratings,
+     * relative dates, review bodies and "helpful" counts, a computeStats() that
+     * derived "4.9" and "Based on 128 reviews" from them, and a header capsule
+     * hard-coded to "4.9 · 128 reviews" over a product the page never looked
+     * up. A real approved review could not reach this page, and the twelve
+     * could not be taken off it by anything the owner could do. The SEO block
+     * below submitted the URL to search engines the whole time.
+     *
+     * Everything the page prints now comes from App\Support\ReviewWall, which
+     * reads `reviews` and shows nothing it cannot find there.
+     *
+     * THE DESCRIPTION IS NOW TWO DESCRIPTIONS, because the old one —
+     * "What customers say about the K-beauty products they bought from us" —
+     * is a description of the fabricated page. On a shop with no approved
+     * reviews it describes content that is not there, which is the same claim
+     * the page itself stopped making. SeoFilesController keeps /reviews/ out of
+     * the sitemap in that state for the same reason; the page stays a 200 and
+     * stays indexable either way.
      */
-    public function reviewWall()
+    public function reviewWall(Request $request)
     {
         $base = self::siteBase();
+
+        $filter = ReviewWall::filter($request->query('rfilter'));
+        $show = ReviewWall::show($request->query('rshow'));
+
+        $summary = ReviewWall::summary();
+        $cards = ReviewWall::cards($filter, $show);
 
         return view('store.review-wall', [
             'seo' => Seo::render([
                 'type' => 'website',
                 'title' => 'Customer Reviews',
-                'description' => 'What customers say about the K-beauty products they bought from us.',
+                'description' => $summary['total'] > 0
+                    ? 'Reviews left by customers of this shop, shown as they were approved.'
+                    : 'This shop has not been reviewed yet. Reviews appear here once customers leave them.',
                 'url' => $base . '/reviews/',
                 'breadcrumb' => [
                     ['name' => 'Home', 'url' => $base . '/'],
@@ -160,6 +191,11 @@ class PageController extends Controller
                 ],
             ]),
             'settings' => $this->settings,
+            'summary' => $summary,
+            'reviews' => $cards['items'],
+            'hasMore' => $cards['more'],
+            'shown' => $show,
+            'filter' => $filter,
         ]);
     }
 

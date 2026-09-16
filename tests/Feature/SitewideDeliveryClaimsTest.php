@@ -235,7 +235,9 @@ function czAboutStats(string $html): array
 
 /*
 |------------------------------------------------------------------------------
-| 1. The announcement bar — every page, every visitor
+| 1. The announcement bar — no page today, every page the day it is included
+|    (see this file's header: partials/announcement.blade.php is included by
+|    nothing, and these cases render the partial directly for that reason)
 |------------------------------------------------------------------------------
 */
 
