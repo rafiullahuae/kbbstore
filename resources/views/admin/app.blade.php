@@ -10514,8 +10514,23 @@ buildNav();
         var payload={};
         var rte=document.querySelector('#content .rte'); if(rte && rte._sync) rte._sync();   // flush Visual → textarea
         var t=document.querySelector('#content .pe-title'); if(t) payload.name=t.value.trim();
-        var rp=fldByLabel('regular price'); if(rp && rp.value!=='') payload.price_aed=parseInt(rp.value,10)||0;
-        var sp=fldByLabel('sale price');    if(sp) payload.sale_aed = (sp.value==='') ? null : (parseInt(sp.value,10)||0);
+        /* Money goes over as the DECIMAL STRING the operator typed.
+           This was parseInt(rp.value, 10), which reads "99.5" as 99: the editor
+           loads the price from /admin-api/products, where price_aed is exact
+           major units (Money::toMajor(9950) is 99.5), so opening a product at
+           AED 99.50 and pressing Update saved it as AED 99 and took 50 fils off
+           the price. Silent, and it compounded every time somebody opened the
+           row. The read side of this same round trip was fixed once already --
+           AdminController::products() says so in as many words -- and this was
+           the other half of it, still truncating.
+           Not parseFloat either: money is integer fils in this schema and a
+           float is how 1.15 becomes 114. The server takes a decimal string,
+           validates it with AdminController::MONEY_RULE and converts it by
+           integer arithmetic in filsFromMajor(), so the exact digits are what
+           it needs. trim() only, no reformatting: anything else is this file
+           inventing a number the operator did not type. */
+        var rp=fldByLabel('regular price'); if(rp && rp.value.trim()!=='') payload.price_aed=rp.value.trim();
+        var sp=fldByLabel('sale price');    if(sp) payload.sale_aed = (sp.value.trim()==='') ? null : sp.value.trim();
         var skuI=fldByLabel('sku');         if(skuI) payload.sku=skuI.value.trim();          // only if the Inventory tab was opened
         var brandSel=boxSelect('brands');   if(brandSel) payload.brand=brandSel.value;
         var cat=selectedCategory();         if(cat) payload.category=cat;

@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Product;
 use App\Services\CartService;
+use App\Services\Orders\OrderNumbers;
 use App\Services\SettingsService;
 use App\Services\ShippingService;
 use App\Support\Url;
@@ -53,6 +54,7 @@ class CheckoutController extends Controller
         private ShippingService $shipping,
         private SettingsService $settings,
         private \App\Services\CouponService $coupons,
+        private OrderNumbers $orderNumbers,
     ) {}
 
     public function page(Request $request): View|RedirectResponse
@@ -266,8 +268,23 @@ class CheckoutController extends Controller
         // ErrorException. That is thrown from inside DB::transaction, so the
         // order rolled back: the storefront checkout could not place an order
         // at all. Found by the first test to POST to this endpoint.
+        /*
+         * BEFORE the transaction, deliberately, and this is load-bearing.
+         *
+         * The number used to be minted inside the closure below, from a MAX()
+         * read that MySQL served out of the transaction's own snapshot. Two
+         * shoppers placing an order at the same moment therefore computed the
+         * same number, and the loser's order died on the unique index at the
+         * last step of their checkout — the retry could not help, because
+         * every retry re-read the same frozen maximum. Allocating out here
+         * gives each statement its own transaction and its own view of what
+         * has been committed, which is the whole of the fix; the reasoning in
+         * full, including why this takes no lock, is in OrderNumbers.
+         */
+        $orderNumber = $this->nextOrderNumber();
+
         try {
-            $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle) {
+            $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle, $orderNumber) {
                 $customer = $request->user('customer') ?? Customer::firstOrCreate(
                     ['email' => mb_strtolower($data['billing_email'])],
                     ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
@@ -301,7 +318,7 @@ class CheckoutController extends Controller
                 ];
 
                 $order = Order::create([
-                    'order_number' => $this->nextOrderNumber(),
+                    'order_number' => $orderNumber,
                     'customer_id' => $customer->id,
                     'email' => mb_strtolower($data['billing_email']),
                     'phone' => $data['billing_phone'] ?? null,
@@ -1233,46 +1250,43 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Sequential, prefixed, and continuing from whatever is already there —
-     * imported WooCommerce orders keep their numbers, so new ones must not
-     * collide with them.
-     */
-    /**
      * The next free order number.
      *
-     * This was `10000 + max(id) + 1`, which assumes order numbers march in step
-     * with primary keys. They do not: any order whose number was not minted by
-     * this formula -- an import, a demo row, a renumbering -- breaks the
-     * assumption, and the result is a number that already exists. order_number
-     * is NOT NULL UNIQUE, so the insert raised SQLSTATE[23000] inside the
-     * checkout transaction and the shopper got a 500 with no order.
+     * Kept as a one-line delegation rather than deleted, because it is the
+     * name the rest of this file and two comments elsewhere in the application
+     * refer to, and because what it used to contain is worth being able to
+     * find from here.
      *
-     * Now it takes the highest of the two candidates and then walks forward
-     * until it finds a number nothing holds, so an out-of-step table costs a
-     * few cheap lookups rather than every order failing. Deliberately portable:
-     * no REGEXP, no CAST, because the tests run on SQLite and the site on
-     * MySQL, and this is precisely the kind of difference that let the bug
-     * reach production in the first place.
+     * WHAT IT USED TO BE, and why none of it survived:
+     *
+     *   $candidate = max(10000 + (int) Order::max('id'),
+     *                    (int) Order::max('order_number'));
+     *   for ($i = 0; $i < 1000; $i++) { ...first number nothing holds... }
+     *
+     * Three defects, each of which reached customers:
+     *
+     *   1. IT RAN INSIDE THE PLACING TRANSACTION. Under REPEATABLE READ the
+     *      MAX() came from the transaction's own snapshot, so two simultaneous
+     *      checkouts computed the same number and the loser's order died on
+     *      the unique index. The thousand-iteration loop could not help: every
+     *      iteration re-read the same frozen maximum.
+     *
+     *   2. IT WAS BLIND TO SOFT-DELETED ORDERS. Both queries went through the
+     *      default scope, while the unique index does not. One trashed order
+     *      at the top of the range made every checkout in the shop fail on the
+     *      same number, with no concurrency needed at all.
+     *
+     *   3. `(int) Order::max('order_number')` IS A LEXICAL MAXIMUM. The column
+     *      is a VARCHAR, so with '9999' and '50002' both present it answers
+     *      '9999' and the cast makes that 9999.
+     *
+     * All three are fixed in App\Services\Orders\OrderNumbers, which allocates
+     * from a sequence row by compare-and-swap. The call has moved to before
+     * the transaction opens — see place() — which is the part that actually
+     * matters, so this method must not be called from inside one.
      */
     private function nextOrderNumber(): string
     {
-        $candidate = max(
-            10000 + (int) Order::max('id'),
-            (int) Order::max('order_number'),
-        );
-
-        // Bounded so a pathological table cannot spin forever; a thousand
-        // consecutive taken numbers means something is wrong that a retry loop
-        // should not paper over.
-        for ($i = 0; $i < 1000; $i++) {
-            $number = (string) (++$candidate);
-
-            if (! Order::where('order_number', $number)->exists()) {
-                return $number;
-            }
-        }
-
-        // Last resort: unique by construction rather than by search.
-        return (string) $candidate . random_int(100, 999);
+        return $this->orderNumbers->allocate();
     }
 }
