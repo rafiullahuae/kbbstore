@@ -1000,6 +1000,20 @@
 
   // Exposed for the layout test, which drives the screen in a real browser
   // without an admin session to log into.
+  /*
+   * Lets the Brands editor reload this screen after it renames or deletes a
+   * brand from a button it injected into these rows. Without it the row sits
+   * stale behind a dialog that has already saved — the owner renames a brand,
+   * the dialog closes, and the old name is still on screen.
+   *
+   * One line rather than moving those buttons into brandsView(): that is the
+   * better end state and it is written down in the Brands editor's own
+   * comments, but it means rebuilding rows this screen's drag-to-reorder
+   * wiring is bound to, and that is worth doing with a browser open rather
+   * than in passing.
+   */
+  window.__ctReload = load;
+
   window.__ctRenderForTest = function(fixtureCats, fixtureBrands, fixtureRedirects){
     cats = fixtureCats || [];
     brands = fixtureBrands || [];
