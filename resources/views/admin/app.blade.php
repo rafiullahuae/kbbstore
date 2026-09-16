@@ -140,8 +140,15 @@ svg{display:block}
 .iconbtn svg{width:18px;height:18px}
 .dciconbox svg{width:20px;height:20px}
 .dcokicon svg{width:13px;height:13px}
-.dcgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:1000px){.dcgrid{grid-template-columns:1fr 1fr}}
+/* The responsive ladder stopped at 1000px, so a phone still got TWO columns.
+   A `1fr` track is `minmax(auto,1fr)` and that auto floor is the card's own
+   min-content, which is 230px and will not shrink — two of them plus the gap
+   demand 476px inside a 362px column, and #content was measured at 490 on a
+   390px screen. The missing rung is the fix; minmax(0,1fr) is kept alongside
+   it so a long word in a card can never widen a track again either. */
+.dcgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media(max-width:1000px){.dcgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.dcgrid{grid-template-columns:minmax(0,1fr)}}
 .iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid #fff}
 .userchip{display:flex;align-items:center;gap:9px;padding:5px 7px 5px 5px;border:1px solid var(--border);border-radius:99px;background:#fff}
 .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7b6cf0,#3f6fe0);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
@@ -572,6 +579,21 @@ input.inp[type=file]{padding:6px 9px}
 .sfprev .fg{padding:11px 0;border-bottom:1px solid var(--border-2)}
 .sfprev .fg:last-child{border-bottom:0}
 .sfprev .fgt{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#A82F53;margin-bottom:8px}
+/* Was written as an inline style attribute on the element, which is why this
+   screen had no phone rung and could not be given one: a media query cannot
+   override an inline declaration without !important. Declared here so it can
+   be. Two tracks stayed side by side at 390 (318px + 132px + an 18px gap =
+   469 inside a 362px column) and #content measured 483. */
+.grid2-sf{display:grid;grid-template-columns:1.4fr minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:640px){.grid2-sf{grid-template-columns:minmax(0,1fr)}}
+/* Quantity bundles: the tier table carries two fixed-width number inputs, two
+   text inputs and a Remove button, so its min-content is 396px and it simply
+   does not fit a 360px card — nothing here is a grid, and no min-width:auto is
+   involved. Same treatment as .odlscroll and .cplscroll further down: the
+   table scrolls inside the card and contributes nothing to the page width. No
+   min-width on the table, so its own intrinsic minimum stays the floor and
+   there is no magic number to go stale when a column is added. */
+.bscroll{max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 /* screen options + bulk inventory */
 .so-cols{display:flex;flex-wrap:wrap;gap:10px 18px}
 .so-col{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);cursor:pointer}
@@ -807,6 +829,23 @@ tr.invdirty{background:var(--accent-soft)}
 .mmlbl b{display:block;font-size:13px;font-weight:500}
 .mmlbl span{display:block;font-size:11.5px;color:#7b8697;margin-top:1px}
 .mmrow input[type=text],.mmrow select{border:1px solid #dfe5ec;border-radius:8px;padding:7px 10px;font:400 13px inherit;min-width:150px}
+/* A <select> is sized by its WIDEST OPTION, not by that min-width. On Section
+   dividers the longest option is "Drifting petals · …", which gives the
+   control a 291px min-content — so the row needs 368px, .mmbody's padding
+   makes that 400 and the card 402, and the grid track grows to hold it.
+   #content measured 416 at 390.
+   This is worth being precise about: putting min-width:0 on .mmcols, the
+   element that measures widest, fixes NOTHING — the track shrinks to 362 and
+   the same 291px select then overflows the card instead. The floor is the
+   control, so the control is what has to be allowed to give way. Below the
+   phone rung it takes a line of its own and may shrink; the browser then
+   ellipsises the option text, which is legible, whereas a row scrolled
+   half-off-screen is not. Toggle rows are untouched: .ectog is flex:0 0 auto
+   and stays on the label's line. */
+@media(max-width:640px){
+  .mmrow{flex-wrap:wrap}
+  .mmrow input[type=text],.mmrow select{min-width:0;width:100%;flex:1 1 100%}
+}
 .mmrange{display:flex;align-items:center;gap:9px}
 
 /* ===== Mega Menu — brand-matched to the storefront's own rose palette,
@@ -2284,10 +2323,12 @@ async function renderBundles(){
       <label class="row" style="gap:8px;font-size:13.5px;cursor:pointer;margin-bottom:14px">
         <input type="checkbox" id="bEnabled" ${d.enabled?'checked':''}> Show bundle options on product pages
       </label>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr>${['Quantity','Discount','Label','Tag',''].map(h=>`<th style="text-align:left;padding:8px 10px;background:#f8fafc;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b">${h}</th>`).join('')}</tr></thead>
-        <tbody id="bRows">${d.tiers.map(row).join('')}</tbody>
-      </table>
+      <div class="bscroll">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr>${['Quantity','Discount','Label','Tag',''].map(h=>`<th style="text-align:left;padding:8px 10px;background:#f8fafc;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b">${h}</th>`).join('')}</tr></thead>
+          <tbody id="bRows">${d.tiers.map(row).join('')}</tbody>
+        </table>
+      </div>
       <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
         <button class="btn" id="bAdd">${ic('<path d="M12 5v14M5 12h14"/>')} Add tier</button>
         <button class="btn primary" id="bSave">Save</button>
@@ -2483,7 +2524,33 @@ let ECHOVER;
 document.addEventListener('click', e=>{
   const tb=e.target.closest('[data-ectab]');
   if(tb){ ETAB=+tb.dataset.ectab; paintEcom(); return; }
-  const tg=e.target.closest('.ectog');
+  /* [data-ec], not a bare .ectog. The switch is a SHARED class: about fifteen
+     screens render one, each with its own data-* key, and this document-level
+     listener matched every one of them — so clicking a toggle anywhere in the
+     admin ran this handler as well as the owning screen's.
+
+     That was reported as harmless because the class still ends up right. It is
+     not. Two defects were measured in Chromium at the tip, both caused by this
+     listener running first on somebody else's control:
+
+       1. #demotog on the Homepage screen decides its direction by reading its
+          OWN class — `turningOn = !tog.classList.contains('on')`. This handler
+          has already flipped it by then, so with demo content OFF, clicking to
+          turn it on offered "Hide demo content?" and POSTed {enabled:false}.
+          The toggle could not be switched on at all.
+       2. Keyboard activation on Homepage and Product page was dead. The
+          keydown handler below matched a bare .ectog too and called .click(),
+          and each of those screens has its own keydown doing the same — so
+          Space dispatched TWO clicks, the state flipped twice and nothing
+          changed.
+
+     Screens whose own handler re-renders or assigns the class from their own
+     state object were genuinely unaffected, which is why this looked clean.
+     Narrowing to the key this screen actually owns (ecSaveNow() reads
+     [data-ec], and only the Ecommerce field renderer emits it) fixes both and
+     leaves nothing else relying on the overlap — verified by clicking all 124
+     toggles on every screen before and after. */
+  const tg=e.target.closest('.ectog[data-ec]');
   if(tg){ tg.classList.toggle('on'); tg.setAttribute('aria-checked', tg.classList.contains('on')); ecMarkDirty(); return; }
   const ey=e.target.closest('.eceye');
   if(ey){ ecTogglePreview(ey); return; }
@@ -2491,7 +2558,12 @@ document.addEventListener('click', e=>{
   if(e.target.id==='ecDiscard'){ renderEcommerce(); return; }
 });
 document.addEventListener('keydown', e=>{
-  if(e.target.classList && e.target.classList.contains('ectog') && (e.key===' '||e.key==='Enter')){
+  // Scoped to this screen's own toggles for the same reason as the click
+  // handler above: Homepage and Product page each run their own keydown that
+  // also calls .click(), so a bare .ectog here made Space fire twice and
+  // cancel itself out. Every other screen that renders an .ectog either has
+  // its own keydown or is mouse-only exactly as it was before.
+  if(e.target.matches && e.target.matches('.ectog[data-ec]') && (e.key===' '||e.key==='Enter')){
     e.preventDefault(); e.target.click();
   }
 });
@@ -7647,7 +7719,7 @@ let SFCFG={order:['category','brand','price','concern','offers'],on:{category:tr
 function renderShopFilters(){
   $('#content').innerHTML=`<div class="wrap">
     <div class="page-head"><h2>Shop Filters</h2><p>Control exactly what appears in the storefront filter panel — turn groups on or off, reorder them, and hand-pick which categories, brands and concerns show.</p></div>
-    <div class="grid2-sf" style="display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start">
+    <div class="grid2-sf">
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="card pad"><div class="pe-h" style="margin-bottom:6px">Filter groups</div><div id="sfGroups"></div></div>
         <div class="card pad"><div class="pe-h" style="margin-bottom:12px">Panel display</div>
@@ -7792,7 +7864,13 @@ async function renderDemoContent(){
             <p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:520px">Every demo record is tracked, so removing it never touches your real orders, customers, or products. Safe to import and remove as many times as you like.</p>
           </div>
         </div>
-        <div class="row" style="gap:10px;flex-shrink:0">
+        <!-- flex-shrink:0 plus the default min-width:auto meant this pair of
+             buttons held a hard 437px, which the wrapping .between above could
+             not help with: .between wraps its CHILDREN, and this row is one
+             child. Its own min-content is 222px — the wider button alone — so
+             letting it wrap and shrink is all that is needed, and the two
+             buttons stack on a phone instead of running off the card. -->
+        <div class="row" style="gap:10px;flex-wrap:wrap;justify-content:flex-end">
           <button class="btn ghost" id="dcRemoveAll" style="border-color:#c0392b;color:#c0392b;gap:7px">${ic('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>')} Remove All Demo Content</button>
           <button class="btn" id="dcImportAll" style="gap:7px">${ic('<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/>')} Import All Demo Content</button>
         </div>
