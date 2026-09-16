@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
+use App\Support\PageBanner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,13 +44,15 @@ class BrandsApiController extends Controller
     public function index(): JsonResponse
     {
         $brands = Brand::query()
-            ->select('brands.id', 'brands.slug', 'brands.name', 'brands.logo', 'brands.description', 'brands.position')
+            ->select('brands.id', 'brands.slug', 'brands.name', 'brands.logo', 'brands.description',
+                'brands.position', 'brands.seo', 'brands.banner')
             ->selectRaw('COUNT(products.id) as products_count')
             ->leftJoin('products', function ($join) {
                 $join->on('products.brand_id', '=', 'brands.id')
                     ->whereNull('products.deleted_at');
             })
-            ->groupBy('brands.id', 'brands.slug', 'brands.name', 'brands.logo', 'brands.description', 'brands.position')
+            ->groupBy('brands.id', 'brands.slug', 'brands.name', 'brands.logo', 'brands.description',
+                'brands.position', 'brands.seo', 'brands.banner')
             ->orderBy('brands.position')
             ->orderBy('brands.name')
             ->get();
@@ -140,6 +143,19 @@ class BrandsApiController extends Controller
             'logo' => ['nullable', 'string', 'max:2048'],
             'description' => ['nullable', 'string', 'max:5000'],
             'position' => ['nullable', 'integer', 'min:0', 'max:65535'],
+            // Bounded deliberately, and to the same lengths the category
+            // screen uses. These land in a <title> and a
+            // <meta name="description">, where anything past roughly 60 and
+            // 160 characters is truncated by the search engine anyway.
+            'seo' => ['nullable', 'array'],
+            'seo.title' => ['nullable', 'string', 'max:255'],
+            'seo.description' => ['nullable', 'string', 'max:500'],
+            // The banner bag is validated as a shape only. Every field inside
+            // it is clamped by App\Support\PageBanner::sanitize(), which is
+            // also what the storefront reads it back through, so there is one
+            // definition of what a banner is rather than a validation rule
+            // here and a renderer somewhere else that disagree.
+            'banner' => ['nullable', 'array'],
         ], [
             'slug.regex' => 'The slug may contain only lower-case letters, numbers and single hyphens.',
             'slug.unique' => 'Another brand already uses that slug.',
@@ -148,6 +164,18 @@ class BrandsApiController extends Controller
 
         $data['logo'] = $this->safeLogoUrl($data['logo'] ?? null);
         $data['position'] = (int) ($data['position'] ?? $brand?->position ?? 0);
+
+        // Only the two keys the screen edits are kept, and empties are dropped
+        // rather than stored as "". A stored empty title is not the same as no
+        // title: the page would render an empty <title> instead of falling
+        // back to the brand name.
+        $seo = array_filter([
+            'title' => trim((string) ($data['seo']['title'] ?? '')),
+            'description' => trim((string) ($data['seo']['description'] ?? '')),
+        ], fn ($v) => $v !== '');
+
+        $data['seo'] = $seo === [] ? null : $seo;
+        $data['banner'] = PageBanner::sanitize($data['banner'] ?? null);
 
         return $data;
     }
