@@ -341,6 +341,28 @@ class ModuleRegistry
          * strip, so switching it off leaves nothing of brands on the storefront.
          */
         'brands' => ['catalogue', 'Brands', 'The brand directory, each brand’s own page with its logo and description, and the brand strip on the home page. Turn it off and those pages 404 rather than sitting there empty.', true, 'Catalog → Brands', 'catalog:brands', 'grid', 'all', 'Brand pages, logos and the brand directory.', 'live'],
+        /*
+         * Phase 10 — Build my routine (Lane FM).
+         *
+         * `live`, and the reader is App\Services\BuildMyRoutine::enabled(),
+         * which Store\RoutineController gates BOTH pages on. Off means off in
+         * the strongest sense this console offers: /routines and
+         * /routines/{concern} 404, and nothing else on the storefront changes
+         * at all — no nav entry, no card, no strip. There is nothing to see
+         * with it off, which is why it can ship off.
+         *
+         * OFF BY DEFAULT because it is not ready to be seen until the owner has
+         * tagged products. Every row in this catalogue starts with
+         * `routine_role` NULL, so on the day this applies the pages would list
+         * nothing; the screen's whole top half exists to make that number
+         * visible and shrink it.
+         *
+         * NO LINK TO IT FROM THE STOREFRONT, deliberately and as a gap rather
+         * than a decision to be proud of — the header, the mega menu and the
+         * footer are `menu_items` rows the owner edits, not templates this lane
+         * may touch. docs/FM-ADMIN-APP-BLOCKS.md says where the menu item goes.
+         */
+        'build_my_routine' => ['catalogue', 'Build my routine', 'Step-by-step routines by skin concern at /routines, each step filled from a product you have tagged for it, with a swap control so the shopper can change any step. Off by default — turn it on after you have tagged some products on Catalog → Build my routine.', false, 'Its own screen', 'routines', 'site', 'all', 'Two pages of their own at /routines. Nothing else on the shop changes.', 'live'],
         'wishlist' => ['catalogue', 'Wishlist', 'Lets shoppers save products (works for guests too, via cookie). Heart button on cards/product pages plus a [kbb_wishlist] page. Off by default.', false, 'Its own screen', '', 'grid', 'card', 'The heart on every product card, and the wishlist page.', 'live'],
         'recently_viewed' => ['catalogue', 'Recently Viewed', 'Shows each shopper the products they just looked at (cookie-based, guests included). Auto-placed on product/cart pages plus a [kbb_recently_viewed] shortcode. Off by default.', false, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'mid', 'The Browsed tab in the cart panel, and a rail on the product page.', 'elsewhere'],
         /*

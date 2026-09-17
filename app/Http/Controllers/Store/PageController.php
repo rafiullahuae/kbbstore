@@ -58,7 +58,14 @@ class PageController extends Controller
         // Account and lists
         'my-account', 'track-my-order', 'my-wishlist', 'wishlist',
         // Standalone storefront pages
-        'app', 'skin-quiz', 'reviews', 'subscribe',
+        // 'routines' is Phase 10's pair of pages (Lane FM). Reserved even
+        // though the module ships OFF and both addresses 404 until it is turned
+        // on: the reservation is about the EDITOR, not the router. A post
+        // published at the slug "routines" today would be reachable, and would
+        // then silently stop being reachable on the day the owner switched the
+        // module on — a page disappearing because of a setting on another
+        // screen is the hardest kind of report to act on.
+        'app', 'skin-quiz', 'reviews', 'subscribe', 'routines',
         // Newsletter confirm/unsubscribe, opened from a shopper's inbox. Without
         // this the root catch-all below swallows them and every confirmation
         // link in every mail this shop sends resolves to a post lookup.
