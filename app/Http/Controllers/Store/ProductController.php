@@ -182,8 +182,14 @@ class ProductController extends Controller
                         'price' => \App\Support\Money::decimalString($product->effectivePrice()),
                         'price_minor' => $product->effectivePrice(),
                         'currency' => \App\Support\Money::currency(),
-                        // The real column, so 'onbackorder' can say BackOrder
-                        // rather than being flattened into OutOfStock.
+                        // The real column, not a synthesised in-stock flag,
+                        // because the flag cannot tell 'outofstock' and
+                        // 'onbackorder' apart and Seo::availability() needs to
+                        // see which it is. It publishes both as OutOfStock by
+                        // the owner's decision — the long note on that method
+                        // explains why, and why the shop is not free to answer
+                        // BackOrder while every other part of the page refuses
+                        // to sell the thing.
                         'stock_status' => $product->stock_status,
                         // Only while a sale is actually running. Outside that
                         // window the advertised price is the ordinary one and

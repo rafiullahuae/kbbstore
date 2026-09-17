@@ -73,6 +73,29 @@ $kbbSeoCtx = array_merge([
     'url' => $kbbCanonical,
     'noindex' => \App\Support\Indexability::isPrivate($kbbPath),
 ], $seoCtx ?? []);
+
+/*
+ * WHICH KIND OF noindex THIS PAGE'S noindex IS, and it is the whole care in
+ * this line.
+ *
+ * App\Support\Seo retracts the hreflang cluster on a page a CONTROLLER marked
+ * noindex — `brands.seo` and `categories.seo` carry an editorial "do not index
+ * this document" the owner sets per brand and per category, and a document
+ * saying "noindex, nofollow" while advertising three alternates of itself is
+ * saying two opposite things in one <head>. Google resolves that by dropping
+ * the cluster, which costs the OTHER language its alternate too.
+ *
+ * The merged context above ALSO carries Indexability::isPrivate() — the cart,
+ * the checkout, the account area, the wishlist and order tracking. Those are
+ * per-visitor pages excluded for a reason that has nothing to do with what
+ * document they are, and their alternates are emitted deliberately, so an
+ * Arabic shopper's wishlist links to the English one. Only the editorial kind
+ * retracts.
+ *
+ * $seoCtx and NOT $kbbSeoCtx, which is the distinction: the raw context is what
+ * the controller asked for, the merged one is that plus the prefix list.
+ */
+$kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
 @endphp
 @php
     /*
@@ -85,25 +108,25 @@ $kbbSeoCtx = array_merge([
      * owner asked to be able to reach rather than an accident.
      *
      * With Arabic off — which is how this ships — $kbbLocale is 'en', $kbbDir
-     * is 'ltr' and $kbbAlternates is empty, so this page is byte-for-byte the
-     * page it was before.
+     * is 'ltr' and no hreflang is emitted at all. Diffed against the tip on
+     * nine fetched pages, the whole of what changes for an English shopper is
+     * ONE BLANK LINE inside <head>, left where the hreflang block used
+     * to stand. Nothing else on any page moves by a byte.
      */
     $kbbLocale = \App\Support\Locale::current();
     $kbbDir = \App\Support\Locale::direction();
 
     /*
-     * The alternates carry the SAME trailing slash the canonical does.
+     * hreflang IS NO LONGER BUILT HERE. It moved into App\Support\Seo, which
+     * builds it from the canonical that class has just computed rather than
+     * from the request path — see Seo::alternateLinks() for the three cases
+     * where those two differ, and for the four storefront pages that do not use
+     * this layout at all and so were emitting no hreflang whatsoever.
      *
-     * Not cosmetic. Google requires an hreflang URL to be the canonical form of
-     * the page it names — a hreflang pointing at /ar/my-wishlist while that page
-     * canonicalises to /ar/my-wishlist/ is an hreflang pointing at a redirect,
-     * and the cluster is dropped rather than half-honoured. The canonical a few
-     * lines above puts the slash back whether or not the REQUEST carried one,
-     * for the reasons in that comment; these have to agree with it exactly.
+     * $kbbLocale and $kbbDir stay: <html lang> and <html dir> are this
+     * document's own attributes and belong to the document, not to the <head>
+     * block a helper renders into it.
      */
-    $kbbAlternates = collect(\App\Support\Locale::alternatePaths($kbbPath))
-        ->map(fn (string $p): string => $p === '/' || str_ends_with($p, '/') ? $p : $p.'/')
-        ->all();
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $kbbLocale }}" dir="{{ $kbbDir }}">
@@ -111,54 +134,6 @@ $kbbSeoCtx = array_merge([
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 {!! \App\Support\Seo::render($kbbSeoCtx) !!}
-{{--
-    hreflang, emitted only once there is a second language to point at.
-
-    BOTH DIRECTIONS, ALWAYS — including this page's own address. A page that
-    lists its alternates without listing itself is a page Google treats as
-    unrelated to them, and the pair reads as duplicate content rather than as
-    two languages of one document. x-default points at the English, which is
-    where a reader with no matching language preference should be sent.
-
-    Absolute URLs, via Url::absolute() and NOT Url::redirect(): redirect() goes
-    through Url::to(), which RE-LOCALISES a path to the current page's language
-    — so every alternate on an English page came back pointing at the English
-    page, and the tag said "the Arabic version of this page is this page".
-    absolute() takes the path exactly as built. Absolute because a crawler reads
-    these off the raw HTML.
-
-    AND NOT AT ALL ON A PAGE A CONTROLLER HAS MARKED noindex. An hreflang set is
-    a claim that these URLs are alternates of one another and should each be
-    indexed for their own audience; a document whose robots tag says "noindex,
-    nofollow" is saying the opposite about itself in the same <head>. Google
-    resolves that pair by dropping the cluster rather than honouring half of it,
-    so leaving the tags on costs the OTHER language its alternate too.
-
-    Not hypothetical: `brands.seo` and `categories.seo` carry a noindex the
-    owner sets per brand and per category, and with Arabic enabled a brand
-    marked noindex published three alternates advertising itself. Reproduced
-    against a running preview before this guard.
-
-    $seoCtx AND NOT $kbbSeoCtx, WHICH IS THE WHOLE CARE IN THIS LINE. The merged
-    context also carries Indexability::isPrivate() — the cart, the checkout, the
-    account area, the wishlist and order tracking. Those are per-visitor pages
-    that robots.txt has always excluded, they are noindex for a reason that has
-    nothing to do with what document they are, and the bilingual lane
-    deliberately emits their alternates so an Arabic shopper's wishlist links to
-    the English one. Only a noindex a CONTROLLER set — an editorial "do not
-    index this document" — retracts the cluster.
-
-    With Arabic off, which is how this ships, $kbbAlternates is already empty
-    and this changes nothing at all.
---}}
-@if (empty(($seoCtx ?? [])['noindex']))
-@foreach ($kbbAlternates as $kbbAltLocale => $kbbAltPath)
-<link rel="alternate" hreflang="{{ $kbbAltLocale }}" href="{{ \App\Support\Url::absolute($kbbAltPath) }}">
-@endforeach
-@if ($kbbAlternates !== [])
-<link rel="alternate" hreflang="x-default" href="{{ \App\Support\Url::absolute($kbbAlternates[\App\Support\Locale::DEFAULT] ?? '/') }}">
-@endif
-@endif
 @stack('head')
 
 {{-- Poppins 400-800, matching the theme exactly (T-BOOT-10). --}}

@@ -65,9 +65,30 @@ final class Indexability
      * segment boundary: '/cart' must not deindex a product whose slug happens
      * to start with the same letters. /cartridge-cleanser/ is a legitimate
      * article URL under the root-level post route.
+     *
+     * ── A LOCALE SEGMENT IS STRIPPED FIRST ─────────────────────────────────
+     *
+     * Today's one caller — layouts/store.blade.php — passes
+     * request()->getPathInfo(), which SetLocaleFromPath has already rewritten,
+     * so it hands in '/checkout' on /ar/checkout and this list matched it
+     * without knowing a second language existed. That is luck, not design: the
+     * correctness of every noindex on the Arabic storefront rested on a caller
+     * happening to read the path AFTER one particular middleware, and the next
+     * caller — a route-list audit, a crawl-surface test, a controller reading
+     * getRequestUri(), anything running before the router — would have asked
+     * about '/ar/checkout' and been told, with a straight face, that the
+     * checkout is a public page. A path that is private at /checkout and public
+     * at /ar/checkout is the exact leak CLAUDE.md records this project having
+     * shipped before.
+     *
+     * Locale::splitPath() only removes a segment that names a LIVE locale, so
+     * with Arabic off this is a no-op on every input, and a product or article
+     * slug is never mistaken for a language.
      */
     public static function isPrivate(string $path): bool
     {
+        [, $path] = Locale::splitPath($path);
+
         $path = '/' . trim($path, '/');
 
         foreach (self::PRIVATE_PREFIXES as $prefix) {

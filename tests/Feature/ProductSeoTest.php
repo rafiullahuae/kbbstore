@@ -576,16 +576,53 @@ it('validates the whole merchant graph against the spec', function () {
 
 /* ──────────────────────────────── stock ─────────────────────────────────── */
 
-it('distinguishes backorder from out of stock', function () {
+/*
+ * REVERSED BY THE OWNER, and the old assertion is quoted here rather than
+ * deleted, because it was correct about something.
+ *
+ * This test used to require BackOrder / "available for order" for
+ * 'onbackorder', on the argument that telling a shopper in a search result that
+ * something they can order today cannot be bought loses a sale. That argument
+ * stands on its own; what it did not survive was the rest of the page.
+ *
+ * Measured on one back-ordered product, in one document: the head said
+ * BackOrder and "available for order", while the gallery carried a grey
+ * "Sold out" badge, the stock line read "Sold out — check back soon", the buy
+ * button was disabled, the card offered "View product" instead of Add to cart,
+ * and POST /api/cart/add answered 422 "That product is sold out."
+ *
+ * So the invitation was to a purchase the whole application refuses — and the
+ * cost is not a missed sale but a PAID one, since a Merchant Center or Meta
+ * feed reading BackOrder runs ads and lands the click on a dead button. Google
+ * suspends items for that exact mismatch.
+ *
+ * Shown the two coherent ways out — build a real pre-order flow, or say sold
+ * out and mean it — the owner chose the second. The consequence he accepted:
+ * 'onbackorder' now means the same thing to a shopper as 'outofstock', and
+ * only the admin label and the back-in-stock form still tell them apart.
+ *
+ * The test is REPLACED rather than relaxed. It still pins both machine-facing
+ * claims for both statuses; it pins them to the other answer.
+ */
+it('tells a machine a back-ordered product is sold out, as the page does', function () {
     $back = pseoFetch(pseoProduct(['stock_status' => 'onbackorder']));
+
     expect(pseoNode($back, 'Product')['offers']['availability'])
-        ->toBe('https://schema.org/BackOrder');
-    expect(pseoMeta($back, 'product:availability'))->toBe('available for order');
+        ->toBe('https://schema.org/OutOfStock', 'the head invites a purchase the buy button refuses');
+    expect(pseoMeta($back, 'product:availability'))
+        ->toBe('out of stock', 'a product feed would run ads onto a disabled Add to cart');
 
     $out = pseoFetch(pseoProduct(['stock_status' => 'outofstock']));
     expect(pseoNode($out, 'Product')['offers']['availability'])
         ->toBe('https://schema.org/OutOfStock');
     expect(pseoMeta($out, 'product:availability'))->toBe('out of stock');
+
+    // The third value still has to reach the other branch — a match() arm that
+    // swallowed everything would pass both assertions above and be wrong.
+    $in = pseoFetch(pseoProduct(['stock_status' => 'instock']));
+    expect(pseoNode($in, 'Product')['offers']['availability'])
+        ->toBe('https://schema.org/InStock');
+    expect(pseoMeta($in, 'product:availability'))->toBe('in stock');
 });
 
 /* ────────────────────────────── ratings ─────────────────────────────────── */
