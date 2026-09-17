@@ -1,8 +1,19 @@
 <?php
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
+use App\Mail\QuizPlanEmail;
 use App\Models\QuizSubmission;
+use App\Rules\StorefrontEmail;
+use App\Services\Mail\MailConfigurator;
+use App\Services\Mail\MailLog;
+use App\Support\Locale;
+use App\Support\QuizRoutineLink;
+use App\Support\Url;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+
+use function Illuminate\Support\defer;
 class QuizController extends Controller
 {
     /**
@@ -91,6 +102,12 @@ class QuizController extends Controller
             'source_url'    => $request->headers->get('referer'),
         ]);
 
+        // The email the contact step promises, sent after the response has
+        // gone. See dispatchPlan(): until this lane the shop asked for an
+        // address under "We'll save your results & email your plan" and sent
+        // nothing at all.
+        $this->dispatchPlan($sub, $request);
+
         // A signed handle, not the bare row id. The storefront reads this as
         // `id` and puts it straight back in the expert-request URL, so the
         // shape of the flow is unchanged -- what changed is that the value is
@@ -161,7 +178,23 @@ class QuizController extends Controller
             'budget'        => 'nullable|string|max:40',
             'name'          => 'nullable|string|max:120',
             'phone'         => 'nullable|string|max:40',
-            'email'         => 'nullable|email|max:160',
+            /*
+             * StorefrontEmail, not `email`, AND IT IS THIS LANE THAT OWES IT.
+             *
+             * CLAUDE.md records CRLF injection in the framework's own email
+             * rule as one of three open advisories on this install, unfixable
+             * short of a 12.x upgrade. Rules\StorefrontEmail's header names the
+             * condition that makes it reachable: "an unauthenticated stranger
+             * hands us an address and we put an address into a message". Until
+             * this lane the second half was not true here — the quiz stored the
+             * address and nothing ever mailed it — and dispatchPlan() below is
+             * what makes it true. The rule moves in the same commit as the
+             * send, not after it.
+             *
+             * `max:160` stays: the rule's own ceiling is RFC 5321's 254 and
+             * this column is a string(160).
+             */
+            'email'         => ['nullable', 'string', 'max:160', new StorefrontEmail],
             'consent'       => 'nullable|boolean',
             'recommended_routines'           => 'nullable|array|max:6',
             'recommended_routines.*.name'    => 'nullable|string|max:120',
@@ -203,6 +236,185 @@ class QuizController extends Controller
         }
 
         return $routines === [] ? null : $routines;
+    }
+
+    /**
+     * Send the shopper the plan the contact step promised them — Lane FT.
+     *
+     * ── THE PROMISE THIS KEEPS ─────────────────────────────────────────────
+     *
+     * "We'll save your results & email your plan. No spam, ever." is printed
+     * directly under the box this endpoint's `email` comes from, and the
+     * results screen repeats it ("emailed to :email"). Nothing in app/Mail or
+     * app/Services/Mail referenced the quiz, so the shop saved the results and
+     * emailed nobody. Established by running rather than by reading: an
+     * unmodified POST /api/quiz passes Mail::assertNothingOutgoing().
+     *
+     * IT COULD BE BUILT, and the reason the risk register gave for thinking it
+     * could not is out of date. Sending here does not wait on SMTP credentials
+     * the owner has never supplied: MailSettings' default transport is
+     * TRANSPORT_SERVER — the host's own mail — MailConfigurator stopped falling
+     * back to the `log` transport for an unconfigured shop, and this shop
+     * already sends order confirmations, password resets and newsletter
+     * confirmations through exactly this mailer. Measured on a clean database:
+     * transport() is 'server' with nothing filled in.
+     *
+     * ── DEFERRED, FOR THE TWO REASONS SubscribeController GIVES ────────────
+     *
+     * The first is the shopper: an SMTP handshake takes far longer than the
+     * rest of this request and varies wildly, and nobody may sit watching a
+     * spinner at the end of a quiz while this shop negotiates TLS. The row is
+     * written before this is scheduled — the email is a consequence of the
+     * capture, never a precondition for it, and a dead mail server must not
+     * turn a captured lead into a 500.
+     *
+     * The second is that this endpoint is public and its answer must not vary:
+     * an inline send would make "this address got a plan" and "it did not"
+     * distinguishable with a stopwatch. `defer()` and not
+     * `app()->terminating()`, and NAMED — terminating callbacks are never
+     * cleared from the Application, which is harmless under PHP-FPM and a
+     * duplicate send under anything serving two requests in one process.
+     *
+     * ── THE LANGUAGE IS CAPTURED HERE AND APPLIED THERE ────────────────────
+     *
+     * `quiz_submissions` has no `locale` column, so unlike an order this row
+     * cannot say later which language it was filled in. It does not have to:
+     * this send happens in the request that captured it, so the language is
+     * simply the one this request is in. It is read now and pinned onto the
+     * Mailable with ->locale() rather than left to the ambient locale, which is
+     * the framework's own version of what OrderLocale::render() does for
+     * everything sent afterwards — and it keeps the trap that helper's header
+     * warns about out of reach, because nothing here renders a View back
+     * through a controller once the language has been put back.
+     *
+     * ── WHAT IS NOT SENT ───────────────────────────────────────────────────
+     *
+     * Nothing, if there is no address, if the address is not one this shop is
+     * willing to put in a header (see the rule on `email` above), or if the
+     * page worked out no routine at all. An email whose entire body is a
+     * greeting is not the plan that was promised, and sending it would make
+     * the delivery log say a plan went out.
+     */
+    /**
+     * The language the quiz was filled in, as far as this request can tell.
+     *
+     * THE POST CARRIES NO LANGUAGE, and that is not an oversight in the page —
+     * it is what the page does. The quiz's script posts to a literal
+     * '/api/quiz' with `const API=''`, so an Arabic shopper reading
+     * /ar/skin-quiz still submits to the UNPREFIXED endpoint, the locale
+     * middleware sees no /ar/ segment, and app()->getLocale() is English for a
+     * shopper who has been reading Arabic for a minute and a half. Sending them
+     * an English plan is precisely the defect OrderLocale exists to stop for
+     * orders, arriving by a different route.
+     *
+     * The Referer is what does know, and this row already trusts it: the
+     * `source_url` column is written from the same header. It is a hint and is
+     * treated as one — an absent, foreign or forged Referer falls back to the
+     * request's own locale, and the worst a forged one can do is choose the
+     * language of the email going to the address in the same forged request.
+     * Locale::fromSegment() refuses a language this shop has not switched on,
+     * so nothing here can select a locale the shop does not serve.
+     *
+     * WHAT THIS IS NOT. It is not a `locale` column on `quiz_submissions`, and
+     * a later lane that wants to re-send a plan will need one — this answer is
+     * only available in the request that captured the row. It is not read from
+     * the BODY either: a public endpoint should not take instructions from an
+     * anonymous caller that it cannot check, and the Referer at least describes
+     * the page the browser says it was on.
+     */
+    private function localeFromReferer(Request $request): string
+    {
+        $path = (string) (parse_url((string) $request->headers->get('referer'), PHP_URL_PATH) ?: '');
+
+        // The deployment prefix is outermost — /kbb-upgrade/ar/skin-quiz/ — so
+        // it comes off before Locale is asked, which is the order
+        // Locale::splitPath()'s own header sets out.
+        $base = rtrim(Url::base(), '/');
+
+        if ($base !== '' && str_starts_with($path, $base)) {
+            $path = substr($path, strlen($base));
+        }
+
+        [$locale] = Locale::splitPath($path);
+
+        return $locale !== null && Locale::isSupported($locale) ? $locale : Locale::current();
+    }
+
+    private function dispatchPlan(QuizSubmission $sub, Request $request): void
+    {
+        $email = trim((string) $sub->email);
+
+        /*
+         * Checked again, against the STORED value, and not because validation
+         * is doubted. It is the second of the two layers Rules\StorefrontEmail's
+         * header describes: what reaches the mail header is read back off the
+         * row, so even a row written by an import or by a future caller that
+         * skipped the rule cannot put a carriage return into an envelope.
+         */
+        if ($email === '' || ! StorefrontEmail::passes($email)) {
+            return;
+        }
+
+        $routines = $sub->recommended_routines;
+
+        if (! is_array($routines) || $routines === []) {
+            return;
+        }
+
+        $id = (int) $sub->id;
+        $locale = $this->localeFromReferer($request);
+        $name = (string) ($sub->name ?? '');
+        $skinType = (string) ($sub->skin_type ?? '');
+
+        $concerns = array_values(array_filter(
+            array_map('trim', explode(',', (string) ($sub->concerns ?? ''))),
+            static fn (string $c): bool => $c !== ''
+        ));
+
+        $shopUrl = Url::to('/shop/');
+
+        defer(function () use ($id, $email, $locale, $name, $skinType, $concerns, $routines, $shopUrl): void {
+            try {
+                /*
+                 * The routine link is resolved HERE rather than above, so the
+                 * queries behind it (Build my routine reads `products`) land
+                 * after the response has gone, and so that a shop with the
+                 * module off pays nothing for it at all. Null when the module
+                 * is off, when the routes are not in the compiled table, or
+                 * when this shop stocks nothing for that concern — in which
+                 * case the message links to the shop, which always exists.
+                 */
+                $routineUrl = QuizRoutineLink::forConcerns($concerns);
+
+                app(MailLog::class)->labelNext('quiz.plan');
+
+                Mail::mailer(MailConfigurator::MAILER)
+                    ->to($email)
+                    ->send(
+                        (new QuizPlanEmail($name, $skinType, $concerns, $routines, $shopUrl, $routineUrl))
+                            ->locale($locale)
+                    );
+            } catch (\Throwable $e) {
+                /*
+                 * Swallowed, and recorded twice: once in the delivery log the
+                 * owner can actually read on Store → Sent mail, and once in the
+                 * application log. The lead id and the exception CLASS only —
+                 * never the message, which a mail transport fills with the
+                 * recipient and sometimes the body. SubscribeController and
+                 * OutboundSender both make exactly this rule.
+                 */
+                try {
+                    app(MailLog::class)->recordFailure($e);
+                } catch (\Throwable) {
+                    // A recorder that cannot record must not become the failure.
+                }
+
+                Log::warning('A skin-quiz plan could not be emailed.', [
+                    'lead_id' => $id,
+                    'exception' => $e::class,
+                ]);
+            }
+        }, 'kbb-quiz-plan-' . $id);
     }
 
     /**

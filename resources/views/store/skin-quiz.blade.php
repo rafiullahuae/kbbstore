@@ -164,6 +164,13 @@ input,textarea{font-family:inherit}
 .routine-f{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:13px 16px}
 .routine-f .rsum{font-size:12.5px}
 
+/* The hand-off to Build my routine — Lane FT. Drawn only when the module is on,
+   so on the shipped shop these three rules style nothing. Deliberately quieter
+   than .expert below it, which is this page's one promise of contact. */
+.rtnlink{margin-top:16px;border:1px solid var(--line);border-radius:17px;padding:15px 16px;background:linear-gradient(120deg,var(--cream),var(--pink-soft));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rtnlink .rl{font-size:12px;color:var(--ink-2);line-height:1.45;max-width:420px}
+.rtnlink .btn{flex-shrink:0}
+
 .expert{margin-top:16px;border:1.5px solid #E7D6FB;border-radius:17px;padding:18px;background:linear-gradient(135deg,#fff,#F3ECFD)}
 .expert h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
 .expert h3 .eic{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--lav),var(--pink));color:#fff;display:grid;place-items:center}
@@ -225,10 +232,25 @@ input,textarea{font-family:inherit}
     // the quiz does not share the store.js.* one. Empty on an English page, so
     // no <script> is emitted and the page is byte-for-byte what it was.
     $kbbQuizStrings = \App\Services\Translation\FrontEndStrings::forPrefix('quiz.js_', app()->getLocale());
+
+    // The hand-off to Build my routine, or null. NULL IS THE SHIPPED ANSWER —
+    // the module is off by default, /routines 404s in that state, and a quiz
+    // that offers a dead link is worse than one that offers none. See
+    // App\Support\QuizRoutineLink: null emits no script, no element and not one
+    // byte of difference from the page that is live today.
+    $kbbQuizRoutines = \App\Support\QuizRoutineLink::map();
 @endphp
 <script>const SHOP_URL = @json(\App\Support\Url::to('/shop/'));</script>
 @if ($kbbQuizStrings !== [])
 <script>window.KBB_T = @json($kbbQuizStrings);</script>
+@endif
+@if ($kbbQuizRoutines !== null)
+{{-- Emitted exactly the way window.KBB_T is, and absent for a related reason: a
+     table the script reads if it is there and does without if it is not. Keyed
+     by the quiz's own English concern, so looking one up is a property access
+     rather than a mapping table — which is what App\Support\RoutineConcerns was
+     built to make possible. --}}
+<script>window.KBB_ROUTINES = @json($kbbQuizRoutines);</script>
 @endif
 @verbatim
 
@@ -561,6 +583,37 @@ function routinePanel(r,idx){
 }
 function selRoutine(){}
 
+/* THE WAY OUT OF THE QUIZ AND INTO A ROUTINE — Lane FT.
+ *
+ * The panels above are the SHAPE of a routine; Lane FM's routine pages
+ * fill those steps with products this shop has. The join is a LOOKUP because
+ * App\Support\RoutineConcerns holds the quiz's eight concern strings verbatim.
+ *
+ * window.KBB_ROUTINES IS ABSENT ON THE SHIPPED SHOP — the module is off,
+ * /routines 404s, QuizRoutineLink returns null and this returns ''. The whole
+ * off-switch is that absence. Looked up in the shopper's OWN order, with no
+ * fallback: "Sun protection" must not be handed an acne routine.
+ */
+function routinePick(){
+  const table=(typeof window!=='undefined' && window.KBB_ROUTINES)||null;
+  if(!table) return null;
+  for(let i=0;i<state.concerns.length;i++){
+    const c=state.concerns[i];
+    if(typeof table[c]==='string' && table[c]) return {url:table[c],concern:c};
+  }
+  return null;
+}
+function routineLinkHTML(){
+  const pick=routinePick();
+  if(!pick) return '';
+  /* English, exactly as the chips above are: the concerns are VALUES, not
+     labels. The routine page prints the translated name at the far end. */
+  return `<div class="rtnlink">
+    <div class="rl">${t('store.quiz.js_routine_link_lead','A :concern routine, step by step, from what this shop stocks. Steps it stocks nothing for are shown empty rather than filled with a guess.',{concern:pick.concern})}</div>
+    <a class="btn sm" href="${pick.url}">${t('store.quiz.js_routine_link_cta','Build my :concern routine →',{concern:pick.concern})}</a>
+  </div>`;
+}
+
 function renderResults(){
   const routines=recommend();
   const chips=[state.skin,...state.concerns].map((c,i)=>{const col=PAL[i%PAL.length];return `<span class="res-chip" style="background:${col[0]};color:${col[1]}">${c}</span>`;}).join('');
@@ -572,6 +625,7 @@ function renderResults(){
     <div class="res-chips">${chips}</div>
     ${avoidLine}
     ${routines.map((r,i)=>routinePanel(r,i)).join('')}
+    ${routineLinkHTML()}
     <div class="expert" id="expert">
       <div class="ex-form">
         <h3><span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 21c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></span> ${t('store.quiz.js_expert_heading','Want a human to check it?')}</h3>

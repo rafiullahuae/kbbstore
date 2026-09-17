@@ -379,6 +379,26 @@ final class InterfaceStrings
             'quiz.js_routine_glass_desc' => 'The full layering routine, in order.',
             'quiz.js_routine_glass_tag' => 'Best results',
             'quiz.js_routine_glass_title' => 'Glass-Skin Ritual',
+            /*
+             * The hand-off to Build my routine — Lane FT. Rendered only when
+             * that module is on; the quiz emits no table and no element when it
+             * is off, so these two are inert on the shipped shop.
+             *
+             * :concern IS NOT TRANSLATED and must not be. It is the shopper's
+             * own answer — a VALUE, compared in recommend() and stored as the
+             * lead's concern — which is why the note above this block keeps the
+             * whole CONCERNS array in English. The routine page prints the
+             * translated name of the same concern at the far end, through
+             * RoutineConcerns::labelKey().
+             *
+             * THE LEAD STATES THE GAP RATHER THAN HIDING IT. Lane FM's page
+             * shows a step it stocks nothing for as empty; saying so here is
+             * the difference between a link and a promise, and this page has
+             * already made its one promise — the expert box, two elements
+             * below, says a human will make contact.
+             */
+            'quiz.js_routine_link_cta' => 'Build my :concern routine →',
+            'quiz.js_routine_link_lead' => 'A :concern routine, step by step, from what this shop stocks. Steps it stocks nothing for are shown empty rather than filled with a guess.',
             'quiz.js_see_routine' => 'See my routine →',
             'quiz.js_shop_steps' => 'Shop these steps',
             'quiz.js_start_cta' => 'Start the quiz →',
@@ -1575,6 +1595,46 @@ final class InterfaceStrings
             'cart_recovery.why' => 'You asked us to remind you about this basket when you left your email address with us. If you have since placed your order, thank you — please ignore this.',
             'cart_recovery.unsubscribe_prompt' => 'Don\'t want these reminders?',
             'cart_recovery.unsubscribe_tail' => 'and we will stop, for good.',
+
+            /*
+             * THE SKIN QUIZ'S PLAN EMAIL — Lane FT.
+             *
+             * The quiz's contact step has always said "We'll save your results &
+             * email your plan. No spam, ever." and the shop sent nothing. These
+             * are the words that make the sentence true, and they are keyed
+             * rather than written into App\Mail\QuizPlanEmail for the reason the
+             * whole quiz is keyed: an Arabic shopper who answered an Arabic
+             * quiz must not be sent an English plan.
+             *
+             * NOT ONE OF THEM STATES A PRODUCT, A PRICE OR A SAVING. The page
+             * this email describes shows the SHAPE of a routine — Lane FB
+             * deleted seventeen invented products, their prices and a 15%
+             * bundle discount from it — and an email is the last place to put
+             * any of that back, because it is kept, forwarded and quoted at the
+             * shop later.
+             *
+             * `steps_note` is the load-bearing one: an ordered list in an inbox
+             * reads like a basket somebody picked out, and this says plainly
+             * that it is not one.
+             *
+             * `why` carries the "no spam, ever" promise in writing. It says one
+             * message and no list, which is exactly what this flow does — see
+             * QuizPlanEmail's header on why there is no unsubscribe link to go
+             * with it.
+             */
+            'quiz_plan.subject' => 'Your :store skin quiz plan',
+            'quiz_plan.greeting' => 'Here is your plan ✨',
+            'quiz_plan.greeting_named' => 'Here is your plan, :name ✨',
+            'quiz_plan.lead' => 'You filled in our skin quiz and asked us to email your routine. Here it is — the steps, in the order they go on.',
+            'quiz_plan.skin_type' => 'Skin type',
+            'quiz_plan.concerns' => 'Working on',
+            'quiz_plan.steps_note' => 'These are steps, not products. Nothing has been chosen, reserved or charged — pick what suits you in the shop, where the prices are.',
+            'quiz_plan.steps_note_text' => 'These are steps, not products. Nothing has been chosen, reserved or charged - pick what suits you in the shop, where the prices are.',
+            'quiz_plan.shop_button' => 'Browse the shop',
+            'quiz_plan.routine_button' => 'Build my routine',
+            'quiz_plan.why' => 'You are getting this because this address was typed into the skin quiz on our website, and the form said we would email the plan. This is that one message — the address has not been added to any list.',
+            'quiz_plan.why_text' => 'You are getting this because this address was typed into the skin quiz on our website, and the form said we would email the plan. This is that one message - the address has not been added to any list.',
+
             'newsletter.our' => 'our',
             'newsletter.somebody_asked' => 'Somebody — we hope it was you — asked for :store emails to be sent to this address.',
             'newsletter.not_yet' => ':emphasis Press the button below and you will be.',
