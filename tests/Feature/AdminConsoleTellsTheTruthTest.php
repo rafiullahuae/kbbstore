@@ -447,8 +447,24 @@ it('tells a refused role it is refused, rather than showing it an empty shop', f
  * decides the filter panel. Each was opened and driven in a browser before it
  * was linked here.
  *
- * Typography, Colours and Performance have nothing behind them anywhere, and
- * say so.
+ * Typography and Performance have nothing behind them anywhere, and say so.
+ *
+ * COLOURS WAS THE THIRD OF THOSE, AND IT WAS WRONG (Lane DN). This test used
+ * to require the sentence "There is no colour editor behind this console" to
+ * be on the screen. That is the one kind of assertion this file must never
+ * make lightly: it pinned a claim of present fact, and the fact was false.
+ * `brand_accent` has been read by App\View\Composers\StoreComposer since the
+ * baseline and is what every page's --pink is built from; what was missing was
+ * a writer, not a reader, and the console denying that one could exist is
+ * precisely how a missing writer survives being noticed for months.
+ *
+ * The writer now exists — Business Details → Your brand colour, with its rule
+ * in AdminController::SETTING_RULES and its own end-to-end test in
+ * OrphanStoreSettingsTest — so the requirement is inverted rather than
+ * dropped. The screen must now SAY the accent colour is editable and point at
+ * the screen that edits it, and must not carry the old denial. Five of the
+ * seven swatches really are fixed in the stylesheet and the card still says
+ * so; this checks the sentence that was untrue, not the ones that were not.
  */
 it('opens a real screen from every Theme card it still shows', function () use ($lddSource) {
     $code = $lddSource();
@@ -472,11 +488,19 @@ it('opens a real screen from every Theme card it still shows', function () use (
             ->toBeTrue('the Theme index no longer routes to '.$id);
     }
 
-    // The three with nothing behind them say so.
+    // The two with nothing behind them say so.
     expect(str_contains($screen, 'There is no font setting anywhere in this application.'))
         ->toBeTrue('Typography has to say it is not built');
-    expect(str_contains($screen, 'There is no colour editor behind this console'))
-        ->toBeTrue('Colours has to say it is not built');
     expect(str_contains($screen, 'there was simply never anything behind this card'))
         ->toBeTrue('Performance has to say it is not built');
+
+    // And the one that DOES have something behind it says where, instead of
+    // denying that it exists. Assembled here rather than written out, so that
+    // this file's own source cannot satisfy a search of the console for the
+    // sentence it is banning.
+    expect(str_contains($screen, 'There is no colour editor' . ' behind this console'))
+        ->toBeFalse('the Theme screen denies a colour editor that Business Details now provides');
+
+    expect(str_contains($screen, 'Business Details &rarr; Your brand colour'))
+        ->toBeTrue('the Theme index no longer says where the accent colour is set');
 });

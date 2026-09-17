@@ -158,6 +158,138 @@ final class ImageVariants
     }
 
     /**
+     * The srcset for a photograph shown BIG — the product page's main frame —
+     * or '' when there is nothing safe to offer.
+     *
+     * WHY THIS IS NOT srcsetFor(). That method is right for a tile and would be
+     * a downgrade here, for a reason stated in its own comment: it deliberately
+     * does not name the original, because "the widest frame on the site is 399
+     * CSS pixels, so even at device-pixel-ratio 3 the 800w copy is the largest
+     * anything can ask for". That sentence is about tiles. The product page's
+     * main frame is ~562 CSS pixels on a 1180px layout, and at ratio 2 a
+     * browser wants 1124 of them. Offered only 400w and 800w with no third
+     * candidate, it would take the 800 — and the shopper would get a SOFTER
+     * hero photograph than the one this page serves today. A srcset that makes
+     * the largest image on the page worse is not an optimisation.
+     *
+     * So the original is a candidate here, and to name it honestly its real
+     * width has to be stated. The only source for that is the file's own
+     * header, and reading it is precisely the cost srcsetFor() refuses to pay:
+     * one getimagesize() per photograph. The trade is different at this size.
+     * A grid pays it fifty times to save fifty small downloads; a product page
+     * pays it once for the main shot and once per thumbnail — a handful of
+     * header reads against the largest single asset on the page.
+     *
+     * AND IT IS ONLY PAID WHEN IT CAN BUY SOMETHING. The variants are looked
+     * for first, and a photograph with no copies on disk returns '' before any
+     * file is opened. A catalogue that has never been through the batch
+     * therefore costs nothing at all and renders exactly the markup it renders
+     * today.
+     *
+     * '' RATHER THAN A PARTIAL ANSWER when the original's header cannot be
+     * read. Emitting the copies alone would silently swap the hero for a
+     * smaller file on every high-density screen. With `w` descriptors the
+     * browser never looks at `src` once it has chosen, so there is no falling
+     * back from that — the same reason srcsetFor() would rather say nothing.
+     */
+    public static function detailSrcsetFor(string $image): string
+    {
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return '';
+        }
+
+        [$prefix, $rel, $fsRel] = $parts;
+
+        // A srcset is a COMMA-separated list, so a comma anywhere in a URL
+        // splits one candidate into two malformed ones and the browser is
+        // entitled to discard the lot. Rare, but `src` alone is always correct
+        // and this is the page's largest image.
+        if (str_contains($rel, ',')) {
+            return '';
+        }
+
+        $candidates = [];
+        $widest = 0;
+
+        foreach (self::WIDTHS as $width) {
+            if (is_file(public_path(self::DIR.'/'.$width.'/'.$fsRel))) {
+                $candidates[] = $prefix.'/'.self::DIR.'/'.$width.'/'.$rel.' '.$width.'w';
+                $widest = $width;
+            }
+        }
+
+        if ($candidates === []) {
+            return '';
+        }
+
+        $source = self::insidePublicRoot($fsRel);
+
+        if ($source === null) {
+            return '';
+        }
+
+        $info = @getimagesize($source);
+
+        if (! is_array($info) || (int) $info[0] < 1) {
+            return '';
+        }
+
+        $originalWidth = (int) $info[0];
+
+        // A candidate no wider than one already listed is a bigger file
+        // promising the same detail, and a browser choosing by width has no way
+        // to prefer the smaller one. generate() never upscales, so this is the
+        // ordinary case for an original that is exactly 800 wide.
+        if ($originalWidth <= $widest) {
+            return implode(', ', $candidates);
+        }
+
+        $candidates[] = $prefix.'/'.$rel.' '.$originalWidth.'w';
+
+        return implode(', ', $candidates);
+    }
+
+    /**
+     * What the product page's MAIN frame tells the browser about how wide the
+     * photograph will be drawn.
+     *
+     * Measured off the stylesheet rather than guessed, the same way
+     * sizesAttribute() is. `.wrap` is max-width:1180px with 20px of padding a
+     * side, and `.pdp` is `grid-template-columns:1.05fr 1fr` with a 42px gap
+     * until it collapses to one column at 880px (kbb-product.css:55-56).
+     *
+     *   >= 1180   (1180 - 40 - 42) x 1.05/2.05  =  562px
+     *   881-1179  (100vw - 40 - 42) x 1.05/2.05 =  51.2vw - 42px
+     *   <= 880    one column                    =  100vw - 40px
+     *
+     * The middle band is declared as a flat 52vw and the top as 563px, both a
+     * shade ABOVE the measurement. That direction is deliberate and it is not
+     * symmetric: overstating costs a slightly larger candidate, understating
+     * makes the browser choose a file too small for the frame and the hero
+     * photograph is visibly soft. At 1180 the declaration says 613px where the
+     * box is 562, and at 881 it says 458 where the box is 409.
+     */
+    public static function detailSizesAttribute(): string
+    {
+        return '(max-width: 880px) calc(100vw - 40px), (max-width: 1180px) 52vw, 563px';
+    }
+
+    /**
+     * And what a gallery THUMBNAIL will be drawn at: `.gthumb` is a fixed 66px
+     * square at every viewport (kbb-product.css:82), so there is no viewport
+     * term to write. 400w covers it to device-pixel-ratio 6.
+     *
+     * Thumbnails use srcsetFor(), not detailSrcsetFor(): a 66px box has no use
+     * for a 1000px original, so there is nothing to read a header for.
+     */
+    public static function thumbSizesAttribute(): string
+    {
+        return '66px';
+    }
+
+    /**
      * Make the missing copies of one photograph.
      *
      * Idempotent: a variant that is already there is left alone, so a batch

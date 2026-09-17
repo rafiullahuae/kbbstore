@@ -1758,6 +1758,35 @@ class AdminController extends Controller
         'support_email' => ['email', 'Support email address'],
         'support_phone' => ['text', 'Phone number shown on the site'],
         'brand_whatsapp' => ['text', 'WhatsApp number'],
+
+        /*
+         * THE ACCENT COLOUR, WHICH HAD A READER AND NO WRITER (Lane DN).
+         *
+         * App\View\Composers\StoreComposer has read `brand_accent` since the
+         * baseline and SettingsSeeder has seeded it with '#E0567B'; nothing in
+         * this console has ever written it. Every page on the storefront takes
+         * its --pink and --pink-deep from the answer
+         * (layouts/store.blade.php), so this was the shop's whole accent
+         * colour, decided by a seeder and unreachable by its owner.
+         *
+         * WORSE THAN AN INERT KEY, because the console told the owner it was
+         * unreachable AND told him why, in two places on the Theme screen:
+         * "they are part of the theme's stylesheet rather than a setting" and
+         * "there is no colour editor behind this console and nothing here
+         * writes a palette". Both sentences were true of the console and false
+         * of the application, and both are corrected in the same commit as
+         * this line — a control that saves nothing and a note that says one
+         * cannot exist are the same bug told from two ends.
+         *
+         * `hex`, not `text`: the reader validates and falls back, so free text
+         * would save, report "Saved", and change nothing. See checkSetting().
+         *
+         * Only ONE colour is editable, and that is deliberate. --pink-deep is
+         * DERIVED by Color::darken() rather than configured, so the two shades
+         * cannot drift apart; the rest of the palette really is fixed in the
+         * stylesheet, and the Theme screen still says so about those.
+         */
+        'brand_accent' => ['hex', 'Brand colour'],
     ];
 
     /** PUT /admin-api/settings — upsert a whitelisted set of store settings. */
@@ -1886,6 +1915,42 @@ class AdminController extends Controller
                 return in_array($value, (array) $extra, true)
                     ? $ok($value)
                     : $no("“{$label}” must be one of: " . implode(', ', (array) $extra) . '.');
+
+            case 'hex':
+                /*
+                 * A CSS colour, checked with the reader's own test.
+                 *
+                 * NOT `text`, and the reason is the standing failure mode of
+                 * this screen rather than tidiness. App\View\Composers\Store-
+                 * Composer guards the value with Color::isValidHex() and falls
+                 * back to the design default when it fails — correctly, because
+                 * the value is interpolated into a <style> block. So a
+                 * mistyped colour saved as free text would be accepted, stored,
+                 * reported as "Saved", and then silently ignored by every page
+                 * on the storefront. The owner would be looking at the old
+                 * colour with the new one in the box. Refusing it says so.
+                 *
+                 * BLANK IS ALLOWED AND MEANS "the theme's own colour". It has
+                 * to be: the reader treats anything it cannot parse as absent,
+                 * so clearing the field is the only way back to the default,
+                 * and SettingsService::get() returns its default only when the
+                 * ROW is absent — a cleared box stores '', never nothing.
+                 * Refusing '' would make the default unreachable once a colour
+                 * had been set.
+                 *
+                 * NORMALISED to a leading # in lower case, so that the reader's
+                 * own `strtolower($accent) !== '#e0567b'` comparison — which is
+                 * what decides whether an override is emitted at all — cannot
+                 * be defeated by typing the default back in a different case or
+                 * without its hash.
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                return \App\Support\Color::isValidHex($value)
+                    ? $ok('#' . strtolower(ltrim($value, '#')))
+                    : $no("“{$label}” must be a colour like #E0567B.");
 
             case 'tz':
                 /*

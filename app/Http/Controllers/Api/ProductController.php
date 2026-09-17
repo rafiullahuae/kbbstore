@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class ProductController extends Controller
 {
-    /** GET /api/products */
     /**
      * The columns toApi() actually publishes, and nothing else.
      *
@@ -50,8 +49,19 @@ class ProductController extends Controller
         'sale_starts_at', 'sale_ends_at',
     ];
 
+    /**
+     * The most rows one request may have, however it asks.
+     *
+     * 100 is not a taste: it is what every sibling on this surface already
+     * enforces — Api\PostController::index limits 100, Api\ReviewController
+     * ::index clamps its `limit` to 100, and this class's own reviews() limits
+     * 100. The index was the one endpoint on /api/* with no bound at all, and
+     * it reads the widest rows in the schema.
+     */
+    private const INDEX_MAX = 100;
+
     /** GET /api/products */
-    public function index()
+    public function index(Request $request)
     {
         // 'active' matched nothing -- products use 'publish'. The bug was
         // quietly containing the next one: with the filter broken this
@@ -70,27 +80,50 @@ class ProductController extends Controller
         // products with a 20KB description each: 6MB through memory to emit
         // 54KB of JSON, on shared hosting, for free, to anybody.
         //
-        // THE ROW COUNT IS STILL UNBOUNDED, AND THE REASON GIVEN FOR IT WAS
-        // NOT TRUE (Lane DM). This comment said a cap "would silently drop
-        // products off a real page", because resources/views/store/category
-        // .blade.php fetches this endpoint and filters the whole catalogue
-        // client-side. That view is rendered by NO controller and reachable at
-        // no URL: it is a design mock whose own 60-brand menu links to
-        // /category?cat=…, a route this application does not register. It is
-        // the only consumer of /api/products anywhere in the repository, so
-        // there is no real page to drop a product off.
+        // THE ROW COUNT IS NOW BOUNDED, which is the half the column list did
+        // not fix. Narrow columns made each row cheap; nothing made the number
+        // of rows finite, so the cost of one request still grew with the
+        // catalogue, on an endpoint anyone may call as often as they like.
         //
-        // The cost above is therefore paid for nobody: "6MB through memory to
-        // emit 54KB of JSON, on shared hosting, for free, to anybody", measured
-        // in this same comment. What it should be replaced with — a cap, a
-        // cursor, a throttle, or the endpoint's removal — is a decision for
-        // whoever owns this endpoint, and Lane DM's recommendation is in its
-        // report rather than applied here: changing what a public endpoint
-        // returns is not a change to make as a side effect of fixing a
-        // different page. Only the false justification is removed.
+        // Lane DM had already removed the false reason for leaving it open —
+        // that a cap "would silently drop products off a real page", which was
+        // untrue because the only consumer in the repository,
+        // resources/views/store/category.blade.php, is rendered by no
+        // controller and reachable at no URL — and left the decision to
+        // whoever owns the endpoint. This is that decision: a cap, because a
+        // cap is the smallest change that bounds the cost, and because every
+        // other endpoint on this surface already has one.
+        //
+        // THE CAP IS SERVER-SIDE AND THE QUERY STRING CANNOT RAISE IT. `limit`
+        // may only ask for FEWER rows: it is clamped into 1..INDEX_MAX, so a
+        // garbage value, a negative, a float or ?limit=100000 all land inside
+        // the bound rather than being passed to the database. A caller that
+        // says nothing gets INDEX_MAX, so a shop with fewer than a hundred
+        // visible products sees no change at all in what this returns.
+        //
+        // AND THE REST OF THE CATALOGUE IS STILL REACHABLE. A cap on its own
+        // makes every product past the hundredth invisible through this door
+        // for ever, which is a different bug from the one being fixed. `page`
+        // is 1-based and pages through the same ordering.
+        //
+        // ORDERED BY id AS WELL AS position, BECAUSE PAGING NEEDS A TOTAL
+        // ORDER. `position` defaults to 0 and is 0 for most of this catalogue,
+        // so ordering by it alone leaves ties the database may break
+        // differently between two queries — which, once there is an OFFSET, is
+        // how a product appears on page 1 and page 2 while another appears on
+        // neither. It changes nothing for a single unpaged request.
+        //
+        // NOTHING NEW IS PUBLISHED. The rows are still INDEX_COLUMNS through
+        // Product::toApi(); this bounds how many of them one request may have,
+        // not what is in one. ApiSecurityTest pins the allowlist.
+        $limit = min(max((int) $request->query('limit', self::INDEX_MAX), 1), self::INDEX_MAX);
+        $page = max((int) $request->query('page', 1), 1);
+
         $rows = Product::visible()
             ->select(self::INDEX_COLUMNS)
             ->orderBy('position')
+            ->orderBy('id')
+            ->forPage($page, $limit)
             ->get()
             ->map(fn (Product $p) => $p->toApi());
 

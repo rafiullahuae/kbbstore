@@ -20,12 +20,35 @@
 --}}
 @php
     use App\Support\Gradient;
+    use App\Support\ImageVariants;
     use App\Support\ProductTitle;
 
     $brandName = $product->brand?->name;
     $shotCount = count($gallery);
     $mainShot = $gallery[0] ?? ['image' => null, 'label' => 'Front', 'video' => false];
     $mainImage = $mainShot['image'] ?? null;
+
+    /* THE MAIN SHOT IS THE LARGEST ASSET ON THIS PAGE, and until now every
+       phone downloaded all of it. The frame it is painted into is ~350 CSS
+       pixels wide on a 390px handset; the file behind it is the catalogue's
+       full-size photograph.
+
+       What is offered instead is whatever phone-sized copy of it is on disk
+       right now — App\Support\ImageVariants explains why the copies are made
+       when an image is uploaded rather than when a page asks for one, and why
+       the answer is read off the filesystem rather than out of a column.
+
+       detailSrcsetFor() and not srcsetFor(): the tile method deliberately
+       leaves the original out of the list, which is right for a 399px tile and
+       wrong for this frame — see its comment. It returns '' when there is
+       nothing safe to offer, and '' is the important case: most of this
+       catalogue predates the copies and some of it will never have any. With
+       `w` descriptors a browser picks a candidate and never looks at `src`, so
+       one missing file is a blank hero with nothing to fall back to. The
+       attributes are therefore emitted only when a real file backs every
+       candidate, and a product with nothing to offer renders exactly the
+       markup it rendered before. */
+    $mainSrcset = $mainImage ? ImageVariants::detailSrcsetFor($mainImage) : '';
 @endphp
 
 <div class="gallery">
@@ -41,6 +64,10 @@
                       so reordering the gallery cannot slide one photograph's
                       description onto another. --}}
                  alt="{{ $product->altFor($mainImage, 0, $shotCount) }}"
+                 @if ($mainSrcset !== '')
+                 srcset="{{ $mainSrcset }}"
+                 sizes="{{ ImageVariants::detailSizesAttribute() }}"
+                 @endif
                  width="1000" height="1000"
                  loading="eager" decoding="async" fetchpriority="high">
         @endif
@@ -72,16 +99,43 @@
                 @php
                     $shotImage = $shot['image'] ?? null;
                     $shotAlt = $product->altFor($shotImage, $i, $shotCount);
+
+                    // What the 66px square itself needs: srcsetFor(), because a
+                    // thumbnail has no more use for a 1000px original than a
+                    // shop tile does, and so no header to read.
+                    $thumbSrcset = $shotImage ? ImageVariants::srcsetFor($shotImage) : '';
+
+                    /* AND WHAT THE MAIN FRAME WILL NEED WHEN THIS THUMBNAIL IS
+                       TAPPED, which is a different list for a different box.
+
+                       pdp.js swaps the main shot by assigning to the <img>'s
+                       `src`. That was complete while the <img> had no srcset;
+                       it is not any more. `srcset` OUTRANKS `src` in every
+                       browser that supports it, so an <img> whose src is
+                       changed and whose srcset is left alone goes on showing
+                       the PREVIOUS photograph — the gallery would look broken
+                       in exactly the way that is hardest to notice from the
+                       server. The swap therefore has to carry the new srcset
+                       with it, and this is where the server-rendered answer
+                       for each shot is put so that the script does not have to
+                       work one out. initGallery() reads both. */
+                    $shotMainSrcset = $shotImage ? ImageVariants::detailSrcsetFor($shotImage) : '';
                 @endphp
                 <div class="gthumb{{ 0 === $i ? ' on' : '' }}{{ ! empty($shot['video']) ? ' vid' : '' }}"
                      data-i="{{ $i }}"
                      data-image="{{ $shotImage ?? '' }}"
+                     data-srcset="{{ $shotMainSrcset }}"
+                     data-sizes="{{ $shotMainSrcset === '' ? '' : ImageVariants::detailSizesAttribute() }}"
                      data-label="{{ $shot['label'] ?? '' }}"
                      data-alt="{{ $shotAlt }}"
                      style="background:{{ $shotImage ? '#fff' : Gradient::for($product->name . $i) }}">
                     @if ($shotImage)
                         {{-- Below the fold on a phone and never the LCP: lazy. --}}
                         <img class="gthumb-img" src="{{ $shotImage }}" alt="{{ $shotAlt }}"
+                             @if ($thumbSrcset !== '')
+                             srcset="{{ $thumbSrcset }}"
+                             sizes="{{ ImageVariants::thumbSizesAttribute() }}"
+                             @endif
                              width="66" height="66" loading="lazy" decoding="async">
                     @else
                         {{ $shot['label'] ?? '' }}
