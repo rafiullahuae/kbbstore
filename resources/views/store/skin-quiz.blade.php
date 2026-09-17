@@ -499,10 +499,19 @@ function buildPayload(){
     contact:{name:state.name,phone:state.phone,email:state.email},
     /* The routine's NAME and its STEPS. A product list and a bundle total used
        to ride along here — products the shop does not sell and a total nobody
-       set. They were never stored: store() writes a fixed column list and
-       `recommended_routines` is not in it, so the key was dropped on arrival.
-       Dropping it at the source changes no row and needs no migration, and the
-       admin leads screen reads only $r['name'] from a routine in any case. */
+       set. Those were never stored, because store() did not write this column
+       at all; it does now (Lane FJ), which is what makes the admin leads
+       screen's `recommended` cell say anything. Api\QuizController keeps the
+       name and the step names and discards the rest of each object, so this
+       key cannot carry a product or a total again whatever is posted here.
+
+       WHAT THIS PAYLOAD SENDS AND THE SHOP DOES NOT KEEP: answers.allergies
+       and answers.allergyNote. recommend() reads them here, in the browser,
+       and they stop at the endpoint — the allergy step offers to steer clear
+       of ingredients while the quiz is on screen, it does not say the answer
+       is kept on file, and the box beside it is where somebody types
+       "pregnant". `status` and `expertRequest` are sent and ignored too: this
+       endpoint is public, so neither may be honoured from the body. */
     recommendedRoutines:recommend().map(r=>({name:r.t,steps:r.items.map(s=>s.n)})),
     expertRequest:state.expertSent?{requested:true,message:state.expertMsg}:{requested:false},status:'new'};
 }

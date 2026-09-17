@@ -131,21 +131,114 @@
   <div>{{ __('store.journal.footer_line') }}</div>
   <div><a href="/shop">{{ __('store.journal.nav_shop') }}</a> · <a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a> · <a href="/">{{ __('store.breadcrumb.home') }}</a></div>
 </div></footer>
+<script>
+  /* The "All" chip's LABEL, rendered here in the shopper's language.
+     This page is a standalone document — it does not extend layouts/store and
+     carries no window.KBB_T — so the one string its script needs arrives as a
+     JSON literal rather than through partials/js-strings.blade.php. It is still
+     keyed `store.js.blog_tag_all`, so the Translation console reaches it the
+     same way it reaches every other front-end string. */
+  window.KBB_BLOG_ALL_LABEL = @json(__('store.js.blog_tag_all'));
+</script>
 @verbatim
 <script>
-  // Tag filter — client-side show/hide over the server-rendered cards
-  // above, not a re-fetch against an API. The cards and their content are
-  // real now; this only toggles which of them are visible.
+  /* Tag filter — client-side show/hide over the server-rendered cards above,
+     not a re-fetch against an API. The cards and their content are real; this
+     only toggles which of them are visible.
+
+     ── WHAT THIS USED TO DO, AND WHY IT COULD NOT SURVIVE A TRANSLATION ─────
+
+     The active chip was found by comparing its RENDERED TEXT against the tag
+     value:
+
+         c.classList.toggle('on', c.textContent.trim() === t)
+
+     A chip's text is what the shopper reads and a tag is what the post is
+     filed under, and those are the same string only for as long as nothing is
+     translated. The first Arabic label breaks the comparison for EVERY chip,
+     not only the one that was translated, because the chip the shopper clicked
+     no longer matches the value that was passed — so the highlight dies on the
+     whole row while the filtering below it still works. A filter that filters
+     without saying what it filtered by is worse than one that does nothing.
+
+     'All' was the second half of the same mistake: a WORD used as a sentinel,
+     in three places — the list of chips, the chip that starts active, and the
+     "show everything" branch. Translating the label would have silently turned
+     the All chip into a filter for posts tagged "الكل", of which there are
+     none, and the page would have gone blank.
+
+     So the value and the label are now two different things. The value lives in
+     `data-tag`, exactly the attribute the cards are already keyed by, and the
+     sentinel is `null` — the ABSENCE of a tag, which is not a string in any
+     language and cannot collide with a tag an admin types. The label is only
+     ever drawn.
+
+     ── AND THE ESCAPING HOLE THE SAME LINE CARRIED ─────────────────────────
+
+     The chips were built by concatenating the tag into an HTML string, twice:
+
+         `<button class="chip" onclick="setTag('${t.replace(/'/g,"\\'")}')">${t}</button>`
+
+     Only the apostrophe was escaped, and only for the JavaScript string. A tag
+     of `x" onmouseover="alert(1)` closes the attribute; a tag of `<img src=x
+     onerror=alert(1)>` never needed an attribute at all, because `${t}` is
+     interpolated as markup. Tags come from the posts table, which the admin
+     writes — so this is not anonymous input, but it is the shape of hole that
+     turns one compromised admin session into a persistent one, and the page has
+     no reason to accept markup from a tag in the first place.
+
+     Nothing is escaped now because nothing is parsed: the chip is built with
+     createElement, the label is assigned through textContent, the value through
+     dataset, and the handler is a real listener over a closed-over value rather
+     than a string of code in an attribute. There is no context to break out of. */
+
+  /* The absence of a tag. Deliberately not a word. */
+  const ALL_TAGS = null;
+
   function setTag(t){
-    document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.textContent.trim()===t));
-    document.querySelectorAll('#grid .post').forEach(a=>{
-      a.style.display = (t==='All' || a.dataset.tag===t) ? '' : 'none';
+    document.querySelectorAll('#chips .chip').forEach(function(c){
+      /* A dataset entry that was never set reads undefined, which is not the
+         sentinel, so it is normalised rather than compared loosely — `==` here
+         would also equate the All chip with a tag of the empty string. */
+      var value = ('tag' in c.dataset) ? c.dataset.tag : ALL_TAGS;
+      c.classList.toggle('on', value === t);
+    });
+    document.querySelectorAll('#grid .post').forEach(function(a){
+      a.style.display = (t === ALL_TAGS || a.dataset.tag === t) ? '' : 'none';
     });
   }
   window.setTag = setTag;
+
   (function(){
-    const tags = ['All', ...new Set([...document.querySelectorAll('#grid .post')].map(a=>a.dataset.tag).filter(Boolean))];
-    document.getElementById('chips').innerHTML = tags.map(t=>`<button class="chip${t==='All'?' on':''}" onclick="setTag('${t.replace(/'/g,"\\'")}')">${t}</button>`).join('');
+    var chips = document.getElementById('chips');
+    var posts = [].slice.call(document.querySelectorAll('#grid .post'));
+    var tags = [];
+
+    posts.forEach(function(a){
+      var tag = a.dataset.tag;
+      if (tag && tags.indexOf(tag) === -1) tags.push(tag);
+    });
+
+    function chip(label, value){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = label;
+      if (value !== ALL_TAGS) b.dataset.tag = value;
+      b.addEventListener('click', function(){ setTag(value); });
+      return b;
+    }
+
+    chips.textContent = '';
+
+    /* The label is the translated word; the value it filters by is the
+       sentinel. The fallback keeps the page working if the <script> above it
+       did not run — it is the English this line has always said. */
+    var allChip = chip(window.KBB_BLOG_ALL_LABEL || 'All', ALL_TAGS);
+    allChip.classList.add('on');
+    chips.appendChild(allChip);
+
+    tags.forEach(function(t){ chips.appendChild(chip(t, t)); });
   })();
 </script>
 </body>

@@ -415,11 +415,56 @@ class OrderStatusChanged extends OrderMail
 
     public function envelope(): Envelope
     {
+        return new Envelope(subject: $this->subjectLine());
+    }
+
+    /**
+     * The line the customer sees in their inbox, in their own language — Lane FJ.
+     *
+     * The headings and bodies were keyed and this was not, so an order placed
+     * in Arabic produced an Arabic email under an English subject. That is not
+     * a cosmetic half-job: the subject is the part of the message that shows
+     * before anything is opened, and for a dispatch notice it is often the only
+     * part that gets read.
+     *
+     * WHY THE CONSTANT STAYS AND THIS IS LOOKED UP BY KEY. Exactly the argument
+     * displayWording() makes below: WORDING is what handles() asks which
+     * statuses are worth an email at all, and three test files read it by name.
+     * A const cannot call __(), so the English lives there and the DISPLAY copy
+     * comes from the strings table, with OrderPaperworkLabelsAreKeyedTest
+     * holding the two Englishes to each other.
+     *
+     * THE PLACEHOLDERS CHANGE SHAPE AND MUST NOT CHANGE MEANING. The constant
+     * carries sprintf's `%1$s` (the store) and `%2$s` (the order number); the
+     * key carries `:store` and `:number`. Named is the point rather than a
+     * convention: a translator who needs the order number first writes :number
+     * first, where getting a positional pair the wrong way round yields "Your
+     * KBB-10427 order Aisha Beauty Co is on its way" — grammatical, plausible
+     * and wrong, which is precisely what SettingsBlankAndSupportIdentityTest
+     * was written to catch and still catches.
+     *
+     * $status is matched against the closed list rather than interpolated into
+     * a key, for the reason displayWording() gives: a status that somehow
+     * reached here cannot compose a key that does not exist and render its own
+     * name at a customer. The default arm is the constant, rendered exactly as
+     * it was before this change.
+     *
+     * NAMED subjectLine() AND NOT subject(). Illuminate\Mail\Mailable already
+     * declares a PUBLIC subject(), so a private subject() here is a fatal
+     * "access level must be public" the moment the class is loaded — a 500 on
+     * every dispatch email, from a method name.
+     */
+    private function subjectLine(): string
+    {
         [$subject] = self::WORDING[$this->status];
 
-        return new Envelope(
-            subject: sprintf($subject, $this->brandName(), $this->orderNumber()),
-        );
+        $replace = ['store' => $this->brandName(), 'number' => $this->orderNumber()];
+
+        return match ($this->status) {
+            'shipped' => __('email.order_status.shipped_subject', $replace),
+            'cancelled' => __('email.order_status.cancelled_subject', $replace),
+            default => sprintf($subject, $this->brandName(), $this->orderNumber()),
+        };
     }
 
     /**
