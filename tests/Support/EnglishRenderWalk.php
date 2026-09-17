@@ -91,7 +91,7 @@ final class EnglishRenderWalk
      * history. From here the guard answers the next question — has anything
      * SINCE changed the English?
      */
-    public const BASE_COMMIT = '52ef58a0ed7049226eca675aa97b5fd22e6310e7';
+    public const BASE_COMMIT = '8a2c45cf8de01d0d06b6267b3a98725f764e8fdc';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
@@ -359,30 +359,25 @@ final class EnglishRenderWalk
 
             // --- standalone pages --------------------------------------------
             /*
-             * NOT BYTE-COMPARED, AND THIS IS A LOSS OF COVERAGE — Lane FB.
+             * COMPARED AGAIN, because BASE_COMMIT has moved past Lane FB's
+             * quiz change.
              *
-             * Every other entry here is compared against the PRE-CONVERSION
-             * template checked out of BASE_COMMIT, which proves the interface
-             * -string lane changed no English. That comparison is meaningless
-             * for this page now: Lane FB deliberately changed its English,
-             * deleting the seventeen invented products, their prices and the
-             * bundle saving that the results panel printed. The base template
-             * renders a page that is SUPPOSED to differ, so the only two
-             * outcomes available were a permanent failure or this line.
+             * An earlier pass turned this page off, on the reasoning that Lane
+             * FB deliberately changed its English — the seventeen invented
+             * products, their prices and the bundle saving are gone — so the
+             * pre-conversion template renders a page that is SUPPOSED to
+             * differ, and the only outcomes were a permanent failure or an
+             * exclusion.
              *
-             * It is turned off rather than papered over with an approvedReflows
-             * pattern because the change is a <style> block and most of a
-             * <script>, not a sentence inside an element — a pattern wide
-             * enough to cover it would stop the guard seeing this page at all
-             * while still claiming to check it.
-             *
-             * TO RESTORE IT: re-baseline BASE_COMMIT to a commit that contains
-             * Lane FB's quiz change and set this back to true. Until then the
-             * page's own guard is QuizRecommendsNoInventedProductTest, which
-             * pins the properties that actually matter — no price, no inline
-             * catalogue, no unauthorised discount.
+             * That was the wrong of the two available answers. The docblock on
+             * StorefrontEnglishUnchangedTest sets out what to do when a later
+             * lane changes copy on purpose, and it is not to stop looking: read
+             * the diff, approve it, and move BASE_COMMIT forward to the commit
+             * that carries the change. Turning the page off instead costs the
+             * guard for every FUTURE lane that touches /skin-quiz, which is the
+             * expensive half and the half nobody would notice had gone.
              */
-            'skin-quiz' => ['render' => false],
+            'skin-quiz' => ['render' => true],
             'reviews' => ['render' => true],
 
             // --- cart and checkout -------------------------------------------
