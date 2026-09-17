@@ -928,8 +928,10 @@ still serving an invented catalogue at invented prices.
 
 - [x] Privacy, terms, New In, Best Sellers, Super Sale, Under 54 AED, Wishlist
 - [x] `/subscribe` — *2.38.0*
-- [ ] ▲ `/brands/` — **URL conflict**: the homepage uses `/brands/`, `MenuDemo` uses
-      `/korean-skincare-brands/`. Which is the live address?
+- [x] ▲ `/brands/` — **URL conflict, closed.** The owner confirmed
+      `/korean-skincare-brands/` is the live address in 2.60.109; `/brands/` now
+      answers 301 to it, and only the canonical address is in the sitemap.
+      Verified against a running server, not read off the router — *2.60.109*
 - [ ] ▲ `/skincare-guide/` — a permalink structure, not one page: the homepage builds
       `/skincare-guide/{slug}/`, the router serves `/blog` and `/post/{slug}`
 - [x] **Blog — was a complete, silent outage.** Checked directly rather than assuming
