@@ -629,7 +629,16 @@ it('leaks no gateway secret through any public api endpoint, whatever the list o
         $raw = test()->get($uri)->getContent();
 
         foreach (GATEWAY_CANARIES as $canary) {
-            expect($raw)->not->toContain($canary, $uri);
+            /*
+             * ONE NEEDLE PER CALL. toContain() is variadic, so `$uri` here was
+             * a second NEEDLE rather than a failure message, and Pest's `not`
+             * passes the moment the positive expectation fails for any reason
+             * — including "the body does not contain the path". Both gateway
+             * sweeps were measured passing over a response with the canary in
+             * it. Found by Lane FJ while writing the quiz-lead sweep below the
+             * same way.
+             */
+            expect(str_contains($raw, $canary))->toBeFalse("{$uri} returned {$canary}");
         }
     }
 });
@@ -817,7 +826,16 @@ it('leaks nothing from an automatically connected Stripe through any public api 
         $raw = test()->get($uri)->getContent();
 
         foreach (CONNECTED_CANARIES as $canary) {
-            expect($raw)->not->toContain($canary, $uri);
+            /*
+             * ONE NEEDLE PER CALL. toContain() is variadic, so `$uri` here was
+             * a second NEEDLE rather than a failure message, and Pest's `not`
+             * passes the moment the positive expectation fails for any reason
+             * — including "the body does not contain the path". Both gateway
+             * sweeps were measured passing over a response with the canary in
+             * it. Found by Lane FJ while writing the quiz-lead sweep below the
+             * same way.
+             */
+            expect(str_contains($raw, $canary))->toBeFalse("{$uri} returned {$canary}");
         }
     }
 });
@@ -846,4 +864,289 @@ it('writes nothing the connect flow stores into the settings table', function ()
     foreach (CONNECTED_CANARIES as $canary) {
         expect($all)->not->toContain($canary);
     }
+});
+
+/*
+|------------------------------------------------------------------------------
+| THE SKIN QUIZ'S LEADS ARE NOW A CONTACT LIST (Lane FJ)
+|------------------------------------------------------------------------------
+|
+| Until this lane, POST /api/quiz validated flat snake_case while
+| resources/views/store/skin-quiz.blade.php posted camelCase under nested
+| objects, so `name`, `phone` and `email` were written NULL on every single
+| lead. That was a bug about thrown-away leads; closing it is a change to this
+| file's subject matter, because `quiz_submissions` starts holding a shopper's
+| full name, WhatsApp number and email address in a table reachable from two
+| endpoints with no authentication in front of either.
+|
+| CLAUDE.md names `reviews.author_email` and `reviews.ip` as having leaked in
+| production. This is the same shape of column arriving in a different table,
+| so the same rule is pinned for it here: nothing on the public surface may
+| hand a lead's contact back, including the endpoints that write it.
+|
+| Every case below fails against the controller as it stood before this lane —
+| the capture cases because the columns were NULL, the echo cases because there
+| was nothing to echo.
+*/
+
+/** One lead, captured exactly the way the storefront captures one. */
+function quizLeadMarkers(): array
+{
+    return [
+        'name' => 'Noura Al Marker',
+        'phone' => '+971 50 909 0909',
+        'email' => 'noura.marker@example.test',
+    ];
+}
+
+function captureQuizLead(\Tests\TestCase $test): string
+{
+    // Field for field what buildPayload() + ensureLead() post. If this drifts
+    // from the page the rest of this section stops testing the real thing.
+    $markers = quizLeadMarkers();
+
+    return $test->postJson('/api/quiz', [
+        'submittedAt' => '2026-09-17T10:00:00.000Z',
+        'skinType' => 'Oily',
+        'concerns' => ['Acne & breakouts', 'Dark spots'],
+        'answers' => [
+            'age' => '25-34',
+            'routineDepth' => 'Balanced (4-5 steps)',
+            'budget' => 'AED 200-400',
+            'allergies' => ['Fragrance'],
+            'allergyNote' => 'pregnant',
+        ],
+        'contact' => $markers,
+        'recommendedRoutines' => [['name' => 'Balanced glow', 'steps' => ['Cleanse', 'Tone']]],
+        'expertRequest' => ['requested' => false],
+        'status' => 'new',
+        'consent' => true,
+        'source_url' => '/skin-quiz',
+    ])->assertCreated()->json('id');
+}
+
+it('keeps the contact the quiz page actually posts', function () {
+    captureQuizLead($this);
+
+    $row = App\Models\QuizSubmission::latest('id')->first();
+
+    expect([
+        'skin_type' => $row->skin_type,
+        'age' => $row->age,
+        'routine_depth' => $row->routine_depth,
+        'budget' => $row->budget,
+        'name' => $row->name,
+        'phone' => $row->phone,
+        'email' => $row->email,
+    ])->toBe([
+        'skin_type' => 'Oily',
+        'age' => '25-34',
+        'routine_depth' => 'Balanced (4-5 steps)',
+        'budget' => 'AED 200-400',
+        'name' => 'Noura Al Marker',
+        'phone' => '+971 50 909 0909',
+        'email' => 'noura.marker@example.test',
+    ]);
+
+    expect($row->concerns)->toBe('Acne & breakouts,Dark spots')
+        ->and((int) $row->consent)->toBe(1)
+        ->and($row->consent_at)->not->toBeNull();
+});
+
+it('still accepts the flat spelling the endpoint has always answered to', function () {
+    // The nested shape is canonical because the page is the published
+    // contract, but the flat one has been accepted for the endpoint's whole
+    // life and nothing may be broken by choosing between them.
+    $this->postJson('/api/quiz', [
+        'skin_type' => 'Dry',
+        'concerns' => ['Hydration'],
+        'age' => '35-44',
+        'routine_depth' => 'Minimal',
+        'budget' => 'AED 100-200',
+        'name' => 'Flat Caller',
+        'phone' => '+971500000001',
+        'email' => 'flat@example.test',
+        'consent' => true,
+    ])->assertCreated();
+
+    $row = App\Models\QuizSubmission::latest('id')->first();
+
+    expect($row->name)->toBe('Flat Caller')
+        ->and($row->phone)->toBe('+971500000001')
+        ->and($row->email)->toBe('flat@example.test')
+        ->and($row->skin_type)->toBe('Dry')
+        ->and($row->age)->toBe('35-44')
+        ->and($row->routine_depth)->toBe('Minimal')
+        ->and($row->budget)->toBe('AED 100-200');
+});
+
+it('stores nothing the contact form did not ask permission to keep', function () {
+    /*
+     * THE LINE THIS LANE STOPPED AT, pinned so a later one has to argue with
+     * it rather than drift past it.
+     *
+     * The allergy step says "So we steer clear of ingredients that don't agree
+     * with you" — a purpose served while the quiz is on screen — over a free
+     * text box whose own placeholder invites "allergies, pregnancy, current
+     * products". That is health data, the form does not say it is kept, and
+     * there is no column for it. recommend() reads it in the browser and it
+     * goes no further.
+     *
+     * `status` and `expertRequest` are the other half: both are in the posted
+     * body and neither may be honoured from it, because this endpoint is
+     * public. A caller must not be able to file a lead pre-marked 'converted',
+     * nor set expert_requested without the signed handle that
+     * /api/quiz/{token}/expert-request demands.
+     */
+    $this->postJson('/api/quiz', [
+        'contact' => ['name' => 'Boundary', 'email' => 'boundary@example.test'],
+        'answers' => ['allergies' => ['Fragrance'], 'allergyNote' => 'pregnant, on tretinoin'],
+        'status' => 'converted',
+        'expertRequest' => ['requested' => true, 'message' => 'granted myself a callback'],
+        'consent' => true,
+    ])->assertCreated();
+
+    $row = App\Models\QuizSubmission::latest('id')->first();
+    $stored = implode(' ', array_map('strval', $row->getAttributes()));
+
+    expect($stored)->not->toContain('pregnant')
+        ->not->toContain('tretinoin')
+        ->not->toContain('Fragrance');
+
+    expect($row->status)->toBe('new')
+        ->and((bool) $row->expert_requested)->toBeFalse()
+        ->and($row->expert_message)->toBeNull();
+});
+
+it('lets a routine name through and leaves an invented product behind', function () {
+    /*
+     * `recommended_routines` is written now, so what may go in it is decided
+     * rather than inherited from the body. A routine contributes a name and a
+     * list of step names; everything else on the object is dropped. The page
+     * once posted seventeen products the shop does not sell and a bundle total
+     * nobody set, and the column must not be able to carry one again.
+     */
+    $this->postJson('/api/quiz', [
+        'contact' => ['email' => 'routines@example.test'],
+        'recommendedRoutines' => [[
+            'name' => 'Balanced glow',
+            'steps' => ['Cleanse', 'Tone'],
+            'products' => [['name' => 'Invented Serum', 'brand' => 'Numbuzin']],
+            'bundle_aed' => 411,
+            'price' => 129,
+        ]],
+        'products' => [['name' => 'Invented Serum']],
+        'bundle_aed' => 411,
+    ])->assertCreated();
+
+    $row = App\Models\QuizSubmission::latest('id')->first();
+
+    expect($row->recommended_routines)
+        ->toBe([['name' => 'Balanced glow', 'steps' => ['Cleanse', 'Tone']]]);
+
+    expect(implode(' ', array_map('strval', $row->getAttributes())))
+        ->not->toContain('Invented Serum')
+        ->not->toContain('Numbuzin')
+        ->not->toContain('411')
+        ->not->toContain('129');
+});
+
+it('never echoes the lead it just captured back to the caller', function () {
+    $body = $this->postJson('/api/quiz', [
+        'contact' => quizLeadMarkers(),
+        'consent' => true,
+    ])->assertCreated()->getContent();
+
+    foreach (quizLeadMarkers() as $marker) {
+        expect($body)->not->toContain($marker);
+    }
+
+    // And neither does the endpoint that writes to the same row afterwards.
+    $token = captureQuizLead($this);
+    $reply = $this->postJson("/api/quiz/{$token}/expert-request", ['message' => 'please call'])
+        ->assertOk()->getContent();
+
+    foreach (quizLeadMarkers() as $marker) {
+        expect($reply)->not->toContain($marker);
+    }
+});
+
+it('does not name the lead in a validation failure either', function () {
+    // A 422 is the other way a write endpoint talks back. Laravel echoes the
+    // FIELD in its message; it must not echo the value, or a rejected body is
+    // a mirror for anything posted through it.
+    $body = $this->postJson('/api/quiz', [
+        'contact' => ['name' => 'Noura Al Marker', 'phone' => '+971 50 909 0909', 'email' => 'not-an-email'],
+    ])->assertStatus(422)->getContent();
+
+    expect($body)->not->toContain('Noura Al Marker')
+        ->not->toContain('+971 50 909 0909');
+});
+
+it('hands no quiz lead back from anything on the public api', function () {
+    /*
+     * The sweep, rather than a list of paths somebody remembered to write
+     * down: every GET registered under /api is requested with a lead in the
+     * table, and none of the bodies may carry it. A new public endpoint that
+     * joins its way to `quiz_submissions` fails here on the day it is added.
+     */
+    captureQuizLead($this);
+
+    $gets = collect(\Illuminate\Support\Facades\Route::getRoutes()->getRoutes())
+        ->filter(fn ($r) => str_starts_with($r->uri(), 'api/') && in_array('GET', $r->methods(), true))
+        ->reject(fn ($r) => str_contains($r->uri(), '{'))
+        ->map(fn ($r) => '/' . $r->uri())
+        ->unique()
+        ->values();
+
+    expect($gets)->not->toBeEmpty('the /api GET surface could not be enumerated');
+
+    $paths = $gets
+        // And the obvious guesses at a collection endpoint for the table,
+        // which the enumeration cannot cover because they are not registered.
+        ->merge(['/api/quiz', '/api/quiz-leads', '/api/leads', '/api/submissions']);
+
+    foreach ($paths as $uri) {
+        $raw = $this->getJson($uri)->getContent();
+
+        foreach (quizLeadMarkers() as $field => $marker) {
+            /*
+             * ONE NEEDLE PER CALL, and not a style preference.
+             *
+             * expect($raw)->not->toContain($marker, $uri) reads like a needle
+             * and a failure message and is neither: toContain() is variadic,
+             * so the second argument is a SECOND NEEDLE, and Pest's `not`
+             * passes as soon as the positive expectation fails for any reason
+             * — including "the body does not contain the path I passed as a
+             * message". Written that way this whole sweep passes over a
+             * response with the lead's name in it, measured. The message goes
+             * in expect()'s own $message argument instead.
+             */
+            expect($raw)->not->toContain($marker);
+            expect(str_contains($raw, $marker))->toBeFalse("{$uri} returned the lead's {$field}");
+        }
+    }
+});
+
+it('will not let a handle issued for one lead act on another', function () {
+    /*
+     * The other half of the handle, and the half the existing cases do not
+     * reach: they prove a FORGED signature fails and that failing looks like
+     * "no such lead". This proves a GENUINE signature is bound to the id it
+     * was issued for, which is what stops a shopper who filed their own quiz
+     * from walking the table with a valid-looking token.
+     */
+    $mine = App\Models\QuizSubmission::create(['status' => 'new', 'name' => 'Mine']);
+    $theirs = App\Models\QuizSubmission::create(['status' => 'new', 'name' => 'Theirs']);
+
+    [, $mySignature] = explode('-', $mine->publicToken(), 2);
+
+    $swapped = $this->postJson("/api/quiz/{$theirs->id}-{$mySignature}/expert-request", ['message' => 'x']);
+    $absent = $this->postJson('/api/quiz/987654/expert-request', ['message' => 'x']);
+
+    expect($swapped->status())->toBe($absent->status())
+        ->and($swapped->getContent())->toBe($absent->getContent());
+
+    expect((bool) $theirs->fresh()->expert_requested)->toBeFalse()
+        ->and((bool) $mine->fresh()->expert_requested)->toBeFalse();
 });
