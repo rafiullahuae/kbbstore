@@ -109,7 +109,11 @@ class GatewayRegistry
                     'id' => $g->id(),
                     'title' => $this->titleFor($g),
                     'description' => $g->description($totalFils),
-                    'fee_html' => $fee > 0 ? '+' . \App\Support\Money::format($fee) : null,
+                    // LTR-isolated on an Arabic page: PLUS SIGN is a weak bidi class
+                    // and a leading one is moved to the trailing side of a right-to-left
+                    // run, so "+AED 10.00" reads "AED 10.00+". Measured -- App\Support\Bidi.
+                    // No-op in English.
+                    'fee_html' => $fee > 0 ? \App\Support\Bidi::number('+' . \App\Support\Money::format($fee)) : null,
                     'fee_fils' => $fee,
                 ];
             })

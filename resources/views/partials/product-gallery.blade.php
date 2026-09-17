@@ -82,7 +82,7 @@
         @elseif (! $modules->hidden('badge') && ! app(\App\Services\SettingsService::class)->moduleEnabled('product_labels', false) && $product->badge_text)
             <span class="{{ $modules->classFor('badge') }} lbl" style="top:14px;left:14px;background:{{ $product->badge_colour ?: '#1b9e77' }}">{{ $product->badge_text }}</span>
         @elseif (! $modules->hidden('badge') && ! app(\App\Services\SettingsService::class)->moduleEnabled('product_labels', false) && $onSale && $off)
-            <span class="{{ $modules->classFor('badge') }} lbl" style="top:14px;left:14px">-{{ $off }}%</span>
+            <span class="{{ $modules->classFor('badge') }} lbl" style="top:14px;left:14px">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>
         @endif
 
         @unless ($modules->hidden('wishlist'))

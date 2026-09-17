@@ -23,7 +23,7 @@
                 @endif
                 @if (($rank ?? false))<span class="kbb-badge kbb-badge-new">#{{ $i + 1 }}</span>
                 @elseif (! $p->review_count)<span class="kbb-badge kbb-badge-new">{{ __('store.product_card.badge_new') }}</span>@endif
-                @if ($off)<span class="kbb-badge kbb-badge-sale">-{{ $off }}%</span>@endif
+                @if ($off)<span class="kbb-badge kbb-badge-sale">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
             </div>
             <div class="cb">
                 @if (! empty($catLabel))<div class="kbb-card-cat">{{ $catLabel }}</div>@endif

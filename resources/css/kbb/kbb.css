@@ -1824,6 +1824,20 @@ header{border-bottom:1px solid var(--line-2)}
   width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
   background:var(--pink-soft);border-radius:50%;flex:none}
 .mm-car svg{width:18px;height:18px}
+/* THE SVG INSIDE IT IS NOT A CHARACTER, SO NOTHING MIRRORS IT. docs/rtl-audit.md
+   §9.2 left the directional glyphs open and said the mobile-nav `›` needs
+   nothing. That is true and was re-verified rather than inherited: rendered
+   centred in a fixed box in both directions and compared PIXEL FOR PIXEL, so
+   only shape can differ, U+203A and U+2039 come back as each other's mirror, as
+   do U+00BB and U+003E. U+2192, U+2190, U+25B6, U+2794 and U+21A9 come back
+   IDENTICAL -- they are not in the Unicode bidi mirroring set -- and neither an
+   <svg> path nor a background image is a character at all.
+   This chevron is a path (`M9 6l6 6-6 6`), so in Arabic it pointed into the row
+   instead of away from it.
+   The OPEN state is deliberately untouched: `.mm-node.on > .mm-par .mm-car` is
+   (0,4,0) against (0,2,0) here, so it still wins and the chevron still turns to
+   point down, which reads the same in both directions. */
+[dir="rtl"] .mm-car{transform:scaleX(-1)}
 .mm-node.on > .mm-par .mm-car{transform:rotate(90deg)}
 .mm-node .mm-kid{display:none}
 .mm-node.on > .mm-kid{display:block}

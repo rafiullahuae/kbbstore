@@ -127,6 +127,21 @@ apparatus on five more documents is T6's work with T6's instruments, and adding
 a webfont by eye to the shop's heaviest pages without it is how a page-weight
 regression gets in.
 
+> **DONE — Lane FS.** The apparatus was repeated rather than skipped. All five
+> documents now link and NAME Cairo, through one partial
+> (`resources/views/partials/arabic-face.blade.php`) so that the gate and the
+> append rule exist once rather than five times. Measured the way §11.8
+> measured: before, each of the five matched neither its own stack nor Cairo
+> — `/ar/reviews/` returned the *same* width at 400, 700 and 800, the signature
+> of a fallback face with no weight axis; after, all five match Cairo to the
+> hundredth of a pixel at all three weights, and every text-bearing element on
+> every one of them is on a Cairo-capable stack (0/24 → 24/24, 0/25 → 25/25,
+> 0/11 → 11/11, 0/366 → 366/366, 0/12 → 12/12). English is byte-identical on all
+> seven pages. Tables, method and the one correction to the method — the test
+> string must contain no spaces, because U+0020 is outside Google's `arabic`
+> unicode-range — are in `docs/FS-ARABIC-TYPOGRAPHY.md`, and the contract is
+> pinned by `tests/Feature/StandaloneDocumentsArabicFaceTest.php`.
+
 ### 3. `[dir="rtl"]` rules: none, anywhere
 
 None of the five inline stylesheets carries a single `[dir="rtl"]` selector, and

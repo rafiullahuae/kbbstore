@@ -150,7 +150,25 @@
                 {{-- Next actions, above the summary on purpose: this is what the
                      shopper came here to do, and the summary can be long. --}}
                 <div class="sec">
-                    <h2><span class="n">→</span> {{ __('store.order_received.next_heading') }}</h2>
+                    {{-- U+2192 IS NOT A MIRRORED CHARACTER. Measured in Chromium, each
+                         glyph centred in a fixed box in both directions so that only its
+                         shape can differ: U+203A, U+2039, U+00BB and U+003E are painted as
+                         their own mirror in a right-to-left run; U+2192, U+2190, U+25B6,
+                         U+2794 and U+21A9 are painted identically and merely move. This
+                         one points forward into the next step, and forward is the other
+                         way round in Arabic, so the document's own direction picks it.
+
+                         Locale::isRtl() and NOT the language, which is the opposite gate
+                         from the Arabic typeface a few files away, and right for the
+                         opposite reason: a FACE belongs to the script, so Arabic needs it
+                         even while the mirrored layout is off; an ARROW belongs to the
+                         layout, and while the layout still reads left to right, forward is
+                         still to the right.
+
+                         Done on the glyph and not with a CSS mirror on `.n`, because the
+                         same circle carries the step NUMBERS 1, 2 and 3 elsewhere on this
+                         page and scaleX(-1) would have written those backwards. --}}
+                    <h2><span class="n">{{ \App\Support\Locale::isRtl() ? '←' : '→' }}</span> {{ __('store.order_received.next_heading') }}</h2>
                     <div class="co-acts">
                         @php
                             /* Sign in is offered only when signing in is possible.

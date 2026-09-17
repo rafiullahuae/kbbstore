@@ -15,6 +15,19 @@ const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
 
+/*
+ * U+2192 IS NOT A MIRRORED CHARACTER, so the bidi algorithm will not turn this
+ * one round the way it turns the `‹` above it. Measured in Chromium, each
+ * glyph centred in a fixed box and rendered in both directions so that only its
+ * shape can differ: U+203A, U+2039, U+00BB and U+003E come back as their own
+ * mirror in a right-to-left run; U+2192, U+2190, U+25B6, U+2794 and U+21A9 come
+ * back identical. Read from the document rather than from a setting because
+ * this file is served to both languages from one bundle, and it is the DIRECTION
+ * that decides which way "onward" points, not the language: with the mirrored
+ * layout switched off the page still reads left to right.
+ */
+const onward = () => (document.documentElement.getAttribute('dir') === 'rtl' ? '←' : '→');
+
 const link = (url) => {
     const base = window.KBB?.base || '';
     const path = String(url ?? '/');
@@ -38,7 +51,7 @@ const renderSub = (item) => {
             <button class="msub-back" type="button" data-kbb-msub-back>‹</button>
             <b>${escape(item.label)}</b>
         </div>
-        <a class="msub-all" href="${escape(link(item.url))}">Shop all ${escape(item.label)} →</a>
+        <a class="msub-all" href="${escape(link(item.url))}">Shop all ${escape(item.label)} ${onward()}</a>
         <div class="msub-body">${groups}</div>
     `;
 };

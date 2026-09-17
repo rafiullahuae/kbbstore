@@ -64,7 +64,11 @@
     @if ($cfg['show_support'])
         {{-- The mobile menu prints the dialled number itself, so it asks for
              whatsapp() rather than phone() — see App\Support\SupportContact. --}}
-        @php $phone = \App\Support\SupportContact::whatsapp(); @endphp
+        {{-- ISOLATED HERE AND NOT IN whatsapp(), which is the DIALLED form: a
+             leading '+' is a weak bidi class and paints at the far end of a
+             right-to-left run, so `+971585052611` reads `971585052611+` in
+             Arabic. The wa.me href takes whatsappDigits() and is untouched. --}}
+        @php $phone = \App\Support\Bidi::number(\App\Support\SupportContact::whatsapp()); @endphp
         <div class="mm-foot">
             <a class="mm-wa" href="https://wa.me/{{ \App\Support\SupportContact::whatsappDigits() }}">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-2.8.7.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.1.1-.3 0-.4l-.7-1.7c-.2-.4-.4-.4-.5-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3 1 2.6 1.1 2.8.1.2 1.9 3 4.7 4.1 1.7.6 2.3.7 3.1.6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1 0-.1-.2-.2-.4-.3Z"/></svg>

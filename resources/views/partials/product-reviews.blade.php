@@ -44,7 +44,7 @@
             <div class="rcard" data-r="{{ $i }}">
                 <div class="rh"><span class="av">{{ Gradient::initials($r->author_name ?: '?') }}</span><div><div class="nm">{{ $r->author_name }}</div>@if ($r->verified)<div class="vf">{{ __('store.reviews.verified_badge') }}</div>@endif</div><span class="rstars stars">@for ($s = 1; $s <= 5; $s++){!! $s <= (int) $r->rating ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span></div>
                 @if ($photos)
-                    <div class="rphotos">@foreach (array_slice($photos, 0, 4) as $j => $u)<div class="rp" style="background:#fff url('{{ $u }}') center/cover">@if (3 === $j && count($photos) > 4)<div class="more">+{{ count($photos) - 3 }}</div>@endif</div>@endforeach</div>
+                    <div class="rphotos">@foreach (array_slice($photos, 0, 4) as $j => $u)<div class="rp" style="background:#fff url('{{ $u }}') center/cover">@if (3 === $j && count($photos) > 4)<div class="more">{{ \App\Support\Bidi::number('+' . (count($photos) - 3)) }}</div>@endif</div>@endforeach</div>
                 @endif
                 <div class="rtext">{{ strip_tags($r->content) }}</div>
                 <div class="rf"><span>{{ __('store.reviews.time_ago', ['time' => $r->created_at?->diffForHumans(null, true)]) }}</span><span class="cnt">👍 {{ (int) $r->helpful }}</span></div>

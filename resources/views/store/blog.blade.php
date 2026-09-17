@@ -31,7 +31,45 @@
 {!! $seo ?? '' !!}
 {!! app(\App\Services\Analytics::class)->headTags() !!}
 @verbatim
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">@endverbatim{{--
+    AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
+
+    The webfont link above carries no Arabic glyph. Before this, /ar/skincare-guide/
+    served real Arabic text in a document that linked Poppins only and named an
+    Arabic-capable family ZERO times, so every Arabic word rendered in whatever
+    face the device happened to have. Measured at 40px against Cairo and matching
+    neither -- docs/rtl-standalone-documents.md §2 found it, and
+    docs/FS-ARABIC-TYPOGRAPHY.md has this lane's before-and-after numbers.
+
+    THE WHITESPACE HERE IS LOAD-BEARING, and it is why this include is glued to
+    the end of the link above rather than given a line of its own. Blade compiles
+    the include to a PHP tag, and PHP SWALLOWS ONE NEWLINE immediately after `?>`.
+    Every arrangement that leaves a single newline next to it therefore takes a
+    newline OUT of the ENGLISH document, which is a change to output that is
+    supposed to be unchanged. The line that follows puts the newline back.
+    Checked by fetching all seven English pages before and after: byte-identical.
+
+    (The two verbatim markers are never spelled out with their @ in a comment in
+    these files. A verbatim block is extracted from the RAW source before
+    comments are removed, so the word in a comment opens a block of its own.)
+--}}@include('partials.arabic-face', [
+    'weights' => '400;500;600;700',
+    'stacks' => [
+        ':root' => ['--sans' => "'Poppins',system-ui,sans-serif"],
+        // AND `button`, which this document never gives a font to at all. A
+        // <button> does not inherit font-family from its parent -- the UA
+        // stylesheet sets it -- and unlike the other four documents this one
+        // carries no `button{font-family:inherit}`. So .chip (the tag filter,
+        // whose labels ARE translated) and .mnav-x rendered in the UA's Arial
+        // while every other element on the page moved to Cairo: 22 of 24
+        // text-bearing elements, measured. Scoped to html[lang="ar"] like the
+        // rest, so the English page keeps exactly the Arial it has today -- that
+        // half is a real defect of these two documents and belongs to whoever
+        // owns their typography, not to a lane that may not move English bytes.
+        'button' => ['font-family' => "'Poppins',system-ui,sans-serif"],
+    ],
+])
+@verbatim
 <style>
   :root{--bg:#fff;--cream:#FFF8F5;--pink-soft:#FFF0F4;--blush:#FCE0E8;--pink:#E0567B;--pink-deep:#C13E63;
     --ink:#2A2228;--ink-2:#5E545A;--muted:#8C828A;--line:rgba(42,34,40,.10);--line-2:rgba(42,34,40,.06);

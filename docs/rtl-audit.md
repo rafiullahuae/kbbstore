@@ -820,3 +820,79 @@ between two captures of the *same* tree, exactly as §8 found) and
   are `<img>`/`background-image` and are never transformed, and the only
   `scaleX(-1)` this lane introduces is on a decorative corner gradient and on a
   progress track that contains no text or photography.
+
+---
+
+## 12. Lane FS — the three things §9.2, §11.8 and §11.10 left, and three corrections
+
+Full record, with every table and every method, in `docs/FS-ARABIC-TYPOGRAPHY.md`.
+This section is the part that corrects what is written above it, because a wrong
+sentence in this document is worth more to fix than a right one is to add.
+
+### 12.1 §11.10 is wrong about U+2212 MINUS SIGN
+
+§11.10 says the `-30%` ribbon can be fixed by wrapping the number in an LTR
+isolate "or use U+2212 MINUS SIGN". **U+2212 does not fix it.** It carries bidi
+class ES exactly as HYPHEN-MINUS does, so it is resolved from the surrounding run
+in exactly the same way. Rendered in Chromium and read back character by
+character, logical `-30%` in an RTL run:
+
+| | alone | inside Arabic text |
+|---|---|---|
+| HYPHEN-MINUS | `30%-` | `%30-` |
+| **U+2212 MINUS SIGN** | `30%−` | `%30−` |
+| U+2066 … U+2069 | `-30%` | `-30%` |
+| `<bdi>` | `-30%` | `-30%` |
+
+Only the shape differs. The isolate is the fix, and it is the one that shipped.
+
+### 12.2 The bidi defect is not confined to the mirrored layout
+
+In an `<html dir="ltr">` document — Arabic with the mirrored layout switched off,
+which this shop supports — `-30%` sitting inside Arabic text **still** paints
+`%30-`, because an Arabic word opens a right-to-left run wherever it stands. So
+the isolate is gated on the LANGUAGE, not on `Locale::isRtl()`. The arrowheads in
+12.4 are gated the other way round, and deliberately: a face belongs to the
+script, an arrow belongs to the layout.
+
+### 12.3 §9.2's `.sarrow` row is stale, and its `›` claim is confirmed
+
+`.sarrow.prev` / `.sarrow.next` are listed as open directional glyphs. **Nothing
+renders them** — the class survives only in `kbb.css`, and no view, partial,
+component or script emits it. The home slider's arrows are `.sarr`, and they are
+the characters `‹` and `›`.
+
+§9.2's good news is confirmed rather than inherited. Each glyph was rendered
+centred in a fixed box in both directions — so position cannot differ and only
+shape can — and the two screenshots compared byte for byte:
+
+| flips itself | does not |
+|---|---|
+| U+203A `›`, U+2039 `‹`, U+00BB `»`, U+003E `>` | U+2192 `→`, U+2190 `←`, U+25B6 `▶`, U+2794 `➔`, U+21A9 `↩` |
+
+So the mobile-nav `›` and the mega-menu caret need nothing, exactly as §9.2 says.
+An arrow needs everything, and so does any `<svg>` path.
+
+### 12.4 What was done
+
+- **§11.8's hand-off, finished.** The five standalone documents link and NAME
+  Cairo. Measured the way §11.8 measured: all five went from matching neither the
+  page stack nor Cairo to matching Cairo to the hundredth of a pixel at 400, 700
+  and 800, and from 0 to 100% of their text-bearing elements on a Cairo-capable
+  stack. English is byte-identical on all seven pages.
+- **§11.10's ribbon, and the sweep it asked for.** `App\Support\Bidi::number()`,
+  a no-op in English. The sweep found something bigger than the ribbon: the
+  shop's phone number, `+971 58 505 2611`, paints **backwards** on every Arabic
+  page — `2611 505 58 971+` — because each space-separated group becomes its own
+  number run.
+- **§9.2's arrowheads.** Three `<svg>` chevrons mirrored under `[dir="rtl"]`, two
+  JavaScript arrows and one Blade arrow chosen by the direction.
+
+### 12.5 Two of those ship inert until the bundle is rebuilt
+
+`kbb.css`, `kbb-checkout.css`, `mobile-nav.js` and `search.js` are BUILT assets
+and this lane did not run `npx vite build`. Verified rather than assumed: the new
+`[dir="rtl"] .mm-car` rule is in the source once and in
+`public/build/assets/kbb-*.css` zero times. The mobile-menu chevron, the
+back-to-cart chevron and the two arrows need the rebuild that `cb3c745` did for
+the manual half; everything else in Lane FS ships with the views.

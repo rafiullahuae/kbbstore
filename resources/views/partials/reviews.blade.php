@@ -97,7 +97,7 @@
                     <div class="sr-reply"><b>{{ __('store.reviews.reply_from') }}</b> {{ $r->reply }}</div>
                 @endif
                 @if ($nph)
-                    <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; @endphp<span class="sr-ph"@if ($more) data-more="+{{ $more }}"@endif><img src="{{ $u }}" alt="" loading="lazy"></span>@endforeach</div>
+                    <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; @endphp<span class="sr-ph"@if ($more) data-more="{{ \App\Support\Bidi::number('+' . $more) }}"@endif><img src="{{ $u }}" alt="" loading="lazy"></span>@endforeach</div>
                 @endif
                 <div class="sr-cf"><span class="sr-dt">{{ $date }}</span>@if ($r->demo ?? false)<span class="sr-help sr-help-demo">👍 <span>{{ (int) $r->helpful }}</span></span>@else<button class="sr-help" data-id="{{ $r->id }}" type="button">👍 <span>{{ (int) $r->helpful }}</span></button>@endif</div>
 

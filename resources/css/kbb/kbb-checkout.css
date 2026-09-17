@@ -64,6 +64,11 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-titlebar-main .co-lead{margin-bottom:16px}
 .kbb-checkout .co-tocart{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;margin-top:6px;font-size:13px;font-weight:600;white-space:nowrap;text-decoration:none;transition:.15s;color:var(--ink-2)}
 .kbb-checkout .co-tocart svg{width:15px;height:15px;flex-shrink:0}
+/* "Back to cart" points back, and back is the other way in Arabic. The glyph is
+   an <svg> path (`M15 18l-6-6 6-6`), not a character, so the bidi algorithm
+   never reaches it -- §9.2's open item. The link itself already moves with its
+   logical properties; only the arrowhead was left facing out of the page. */
+[dir="rtl"] .kbb-checkout .co-tocart svg{transform:scaleX(-1)}
 /* text / text_chevron */
 .kbb-checkout .co-tocart--text:hover,.kbb-checkout .co-tocart--text_chevron:hover{color:var(--pink-deep)}
 /* ghost pill */
