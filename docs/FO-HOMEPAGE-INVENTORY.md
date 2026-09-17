@@ -215,3 +215,36 @@ which is a different lane's surface from the one this lane was given.
   reasoning written beside it. It is the same root cause as the Store →
   Ecommerce 422 another lane is repairing at source; when that lands this
   becomes a no-op rather than a conflict.
+
+---
+
+## 5. Out of lane, and why it was taken anyway
+
+- **`AdminConsoleScriptParsesTest` was a hand-kept list of seventeen paths and
+  the console has twenty-one.** `admin/partials/translation-screens.blade.php`
+  (four screens, 1,200 lines, the screen the owner turns Arabic on from),
+  `arabic-boxes.blade.php` and `review-queue-badge.blade.php` had never been
+  parsed. Found because this lane's new partial would have joined them.
+  Widened to walk the directory — the same argument
+  `StorefrontStringsAreKeyedTest` already makes in its own header — and proved
+  to bite by breaking `translation-screens` and watching it fail there. All 21
+  files parse.
+- **`EnglishRenderWalk::BASE_COMMIT` moved forward.** It compares the storefront
+  against itself at a pinned SHA with `resources/views` rolled back and the PHP
+  left in the working tree, so for this lane its "before" was the OLD hero
+  template echoing the NEW default raw — a page that has never existed. Not a
+  byte of shopper-visible copy moved; the compensating pin is in
+  `HomepageContentEditorTest`, which asserts the hero's exact rendered bytes.
+  The constant's own header now also says what to CHECK — that the value is a
+  commit `git archive` can resolve from the branch it is read on — because this
+  lane rebased after pinning it and had to repin.
+
+## 6. Still open
+
+- **Section order** (§3), the largest one.
+- **`site_title`** — read by the homepage and the review wall, written by
+  nothing. Site-wide rather than homepage content, so it belongs with the
+  general settings rather than on an Appearance screen.
+- **`moduleEnabled('banners')`** — a switch nothing reads.
+- **The hero's shipped claims** — "93 brands", the free-delivery figure and the
+  Super Sale. Removable now; still the default until somebody decides.
