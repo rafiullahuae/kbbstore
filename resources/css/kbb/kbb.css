@@ -3057,3 +3057,26 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
   .seg{min-height:44px;display:flex;align-items:center;justify-content:center}
   .auth .row a{min-height:44px;display:inline-flex;align-items:center}
 }
+
+
+/* ==========================================================================
+   A DESKTOP WINDOW NARROWER THAN 900px IS NOT A PHONE.
+
+   The tap-target block above starts at `max-width: 900px`, which is a LAYOUT
+   breakpoint being used as an INPUT-DEVICE one. A laptop with the browser at
+   half screen width — 845px, which is what the owner reported this from —
+   matched it and got 44px finger-sized steppers driven by a mouse. His words:
+   "coming too giant and style is also coming different".
+
+   `pointer: fine` is the question that was actually meant: is this a mouse or
+   a stylus, as against a finger. A phone at 390px is `coarse` and keeps every
+   44px target; a desktop window at 845px is `fine` and gets the control back.
+
+   Written as a counter-query AFTER the block rather than by narrowing it,
+   because the rest of that block is real layout work — wrapping, spacing,
+   the remove control — which a narrow desktop window genuinely wants. Only
+   the finger-sized hit areas are given back.
+   ========================================================================== */
+@media (max-width: 900px) and (pointer: fine) {
+  .kc-qty button{width:var(--cp-step,22px);height:var(--cp-step,22px)}
+}

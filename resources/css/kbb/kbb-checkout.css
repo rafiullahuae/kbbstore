@@ -751,3 +751,34 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .stab{min-height:44px}
   .kbb-checkout .viewfull{min-height:44px}
 }
+
+
+/* ==========================================================================
+   A DESKTOP WINDOW NARROWER THAN 900px IS NOT A PHONE.
+
+   The tap-target block above starts at `max-width: 900px`, which is a LAYOUT
+   breakpoint being used as an INPUT-DEVICE one. A laptop with the browser at
+   half screen width — 845px, which is what the owner reported this from —
+   matched it and got 44px finger-sized steppers driven by a mouse. His words:
+   "coming too giant and style is also coming different".
+
+   `pointer: fine` is the question that was actually meant: is this a mouse or
+   a stylus, as against a finger. A phone at 390px is `coarse` and keeps every
+   44px target; a desktop window at 845px is `fine` and gets the control back.
+
+   Written as a counter-query AFTER the block rather than by narrowing it,
+   because the rest of that block is real layout work — wrapping, spacing,
+   the remove control — which a narrow desktop window genuinely wants. Only
+   the finger-sized hit areas are given back.
+   ========================================================================== */
+@media (max-width: 900px) and (pointer: fine) {
+  /* Back to the pill: the mobile block gives .co-q a border and a 10px radius,
+     which is the "style is different" half of the report. */
+  .kbb-checkout .qty .co-q{
+    width:23px;height:23px;min-width:0;
+    font-size:13px;border:0;border-radius:0;background:transparent;
+  }
+  .kbb-checkout .qty{gap:0}
+  .kbb-checkout .qty span{min-width:22px;font-size:12px}
+  .kbb-checkout .co-rm{width:auto;height:auto}
+}

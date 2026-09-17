@@ -247,7 +247,19 @@ final class EnglishRenderWalk
      * own tip at the time of writing rather than a commit on the base: a walk
      * that compared against the base would report the additions for ever.
      */
-    public const BASE_COMMIT = '895ff93098e4408b15b90b16283581c9bcdaea6b';
+    /*
+     * MOVED FORWARD FOR LANE FS's SALE BADGE, and the whole diff is two tags.
+     *
+     *     -<span class="lbl" ...>-30% OFF</span>
+     *     +<span class="lbl" ...><bdi>-30% OFF</bdi></span>
+     *
+     * on /shop, a category and a product page. Nothing removed, nothing
+     * reworded, no whitespace moved. <bdi> renders nothing of its own and the
+     * badge was measured painting identically in English with and without it;
+     * what it buys is the Arabic page, where -30% otherwise paints 30%- and
+     * inside Arabic text %30-.
+     */
+    public const BASE_COMMIT = '244c264769dcb8fb5f6803990fca1b58f9253911';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

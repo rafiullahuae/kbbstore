@@ -139,9 +139,23 @@ it('isolates every signed number the rendered Arabic storefront prints, not only
      * listed one stops appearing, which is how this list gets deleted rather
      * than outliving the defect.
      */
+    /*
+     * INTEGRATOR: `-30%` IS GONE FROM THIS LIST BECAUSE IT WAS FIXED, and the
+     * staleness check above is what told me to delete it rather than leave it
+     * covering something else. Lane FS's two blocks for the .off and .qv-off
+     * ribbons are applied; both now print an isolated number and the sweep
+     * sees them as clean.
+     *
+     * `-30% OFF` STAYS, and not because it is unfixed. The card's whole label
+     * is one translatable string, so it is wrapped in <bdi> rather than given
+     * an isolate — and <bdi> is MARKUP, which puts nothing into the text node
+     * this sweep reads. So the text still leads with a sign and this sweep will
+     * still see it. The entry records that, so the next person does not "fix"
+     * a badge that is already right and end up with an isolate forcing an
+     * Arabic label left-to-right.
+     */
     $handedOff = [
-        '-30% OFF' => 'components/product-card.blade.php (Lane FP) — the store.product_card.label_off string',
-        '-30%' => 'store/product.blade.php and partials/quick-view.blade.php (Lane FP) — the .off / .qv-off ribbons',
+        '-30% OFF' => 'components/product-card.blade.php — handled by <bdi>, which this text-node sweep cannot see',
     ];
 
     $offenders = [];
