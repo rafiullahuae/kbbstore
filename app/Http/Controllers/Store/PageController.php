@@ -59,6 +59,10 @@ class PageController extends Controller
         'my-account', 'track-my-order', 'my-wishlist', 'wishlist',
         // Standalone storefront pages
         'app', 'skin-quiz', 'reviews', 'subscribe',
+        // Newsletter confirm/unsubscribe, opened from a shopper's inbox. Without
+        // this the root catch-all below swallows them and every confirmation
+        // link in every mail this shop sends resolves to a post lookup.
+        'newsletter',
         'about', 'delivery', 'faqs', 'contact-us',
         'privacy-policy', 'terms-and-conditions',
         // Served off disk by the web server, never by PHP

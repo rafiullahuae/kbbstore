@@ -742,6 +742,19 @@ require __DIR__.'/order-received.php';
 require __DIR__.'/auth-customer.php';
 
 /*
+ * Newsletter confirmation and unsubscribe. Same group and the same reasoning as
+ * the file above -- a shopper opens these from their own inbox, so the admin
+ * guard would 302 every one of them, and the two POSTs are the acting half of a
+ * GET-then-POST pair that needs the web group's session and CSRF. Before the
+ * Phase 9 file, which ends in a catch-all root-segment route.
+ *
+ * Not in routes/api.php: everything there is unauthenticated by design and is
+ * the group CLAUDE.md records as having leaked three times. These must be
+ * reachable without a login AND carry CSRF, which only this group gives.
+ */
+require __DIR__.'/newsletter-public.php';
+
+/*
  * Adding a browsed product from the checkout page. Web group: it is posted by a
  * shopper and needs the session and CSRF. Before the Phase 9 file, which ends in
  * a catch-all root-segment route.

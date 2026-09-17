@@ -9847,6 +9847,7 @@ function mailLastTest(){
     <b>${t.ok?'Last test succeeded':'Last test failed'}</b>
     <div class="mlf-result-when">${escHtml(when)} → ${escHtml(String(t.to||''))}</div>
     <div class="mlf-result-msg">${escHtml(String(t.message||''))}</div>
+    ${t.message_id ? `<div class="mlf-result-when">Message ID: ${escHtml(String(t.message_id))}</div>` : ''}
   </div>`;
 }
 
@@ -9887,9 +9888,80 @@ function paintMail(){
       <div style="margin-top:12px"><button class="btn primary" id="mlTest">Send test message</button></div>
       <div id="mlResult" style="margin-top:14px">${mailLastTest()}</div>
     </div>
+
+    <div class="sec-title">Sent mail</div>
+    <div class="card mlf-card">
+      <div class="mlf-sec-h" style="margin-bottom:10px">
+        <div class="mlf-sec-d">Every message this store has tried to send, and what the mail server said back. When a customer says an email never arrived, this is where the answer is. Bodies are never stored — a reset or confirmation message carries a live link.</div>
+      </div>
+      <div class="mlf-grid" style="margin-bottom:10px">
+        <div class="mlf-field">
+          <label class="mlf-label" for="mlLogFilter">Show</label>
+          <select class="mlf-input" id="mlLogFilter">
+            <option value="failed">Only the ones that failed</option>
+            <option value="all">Everything</option>
+            <option value="sent">Only the ones that were accepted</option>
+          </select>
+        </div>
+      </div>
+      <div id="mlLog"><p class="mlf-muted">Loading…</p></div>
+    </div>
   </div>`;
   bindMail();
   loadStatusEmails();
+  loadMailLog();
+  /* The filter has to do something. A select that changes nothing is the
+     control-with-no-writer this console has shipped before; bound here rather
+     than inline so the handler cannot outlive the element it reads. */
+  var mlLogSel=$('#mlLogFilter');
+  if(mlLogSel) mlLogSel.addEventListener('change', loadMailLog);
+}
+
+/* ---------------------------------------------------------------------------
+   The delivery record.
+
+   FETCHED SEPARATELY, for the same reason the status list above is: a store
+   whose SMTP is half-configured is exactly the store whose owner needs to read
+   this, so it must not be blacked out by a failure in the settings half.
+
+   DEFAULTS TO "failed". This screen exists for one question -- "the customer
+   says it never arrived" -- and a list that opens on two hundred successes
+   makes the owner hunt for the one row he came for.
+--------------------------------------------------------------------------- */
+async function loadMailLog(){
+  const host=$('#mlLog');
+  if(!host) return;
+  const sel=$('#mlLogFilter');
+  const status=(sel && sel.value) ? sel.value : 'failed';
+  try{
+    const r=await fetch(mailBase()+'/log?status='+encodeURIComponent(status)+'&limit=50',
+      {credentials:'same-origin',headers:{Accept:'application/json'}});
+    if(!r.ok){ host.innerHTML=`<p class="mlf-muted">The delivery record could not be loaded (${escHtml(String(r.status))}).</p>`; return; }
+    const d=await r.json();
+    const rows=(d && d.entries) || [];
+    const c=(d && d.counts) || {};
+    const head=`<div class="mlf-help" style="margin-bottom:8px"><b>${escHtml(String(c.sent||0))}</b> accepted by the mail server, <b>${escHtml(String(c.failed||0))}</b> refused, out of <b>${escHtml(String(c.total||0))}</b> recorded.</div>`;
+    if(!rows.length){
+      host.innerHTML=head+`<p class="mlf-muted">${status==='failed'?'Nothing has failed. That is the answer you want here.':'Nothing recorded yet.'}</p>`;
+      return;
+    }
+    host.innerHTML=head+`<div class="an-scroll"><table class="an-table"><thead><tr>
+        <th>When</th><th>Kind</th><th>To</th><th>Subject</th><th>Result</th></tr></thead><tbody>`+
+      rows.map(function(e){
+        var when=(function(){ try{ return new Date(e.at).toLocaleString(); }catch(err){ return e.at; } })();
+        var ok=(e.status==='sent');
+        var detail = ok
+          ? (e.message_id ? '<div class="mlf-help">'+escHtml(String(e.message_id))+'</div>' : '')
+          : '<div class="mlf-help">'+escHtml(String(e.error||'No reason was recorded.'))+'</div>';
+        return '<tr><td>'+escHtml(String(when))+'</td>'+
+          '<td>'+escHtml(String(e.kind||''))+'</td>'+
+          '<td>'+escHtml(String(e.recipient||''))+'</td>'+
+          '<td>'+escHtml(String(e.subject||''))+'</td>'+
+          '<td><b style="color:var(--'+(ok?'ok':'sale')+',currentColor)">'+(ok?'Accepted':'Refused')+'</b>'+detail+'</td></tr>';
+      }).join('')+`</tbody></table></div>`;
+  }catch(e){
+    host.innerHTML=`<p class="mlf-muted">The delivery record could not be loaded.</p>`;
+  }
 }
 
 /* ---------------------------------------------------------------------------

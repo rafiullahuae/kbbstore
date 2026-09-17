@@ -284,8 +284,12 @@ something half-right.
 
 - [x] Sign in, register, dashboard, orders, addresses, forgot, track order
 - [x] Field component, password strength, autofill, sum guard, account panel
-- [ ] ▲ **Password reset actually sends an email.** No outbound mail has been
-      demonstrated. Blocks email verification and newsletter double opt-in
+- [x] ▲ **Password reset actually sends an email — and the plan was contradicting
+      itself about it.** This blocker sat here while the very next section ticked
+      "Password reset and email verification — 2.60.116" off. Both halves had
+      worked since then. What had genuinely never existed was *evidence*: no
+      Message-ID, no record the owner could read, and — the real gap — **no
+      unsubscribe path anywhere in the codebase at all**. Closed at 2.60.199
 - [x] Address book: add, edit, delete, default — the `addresses` table, the model and `Customer::addresses()` already existed; the page was a 12-line stub that printed "No addresses saved yet" without ever querying. One default per type, enforced in two statements; deleting a default hands it on — *2.60.72, module switch 2.60.73*
 - [x] **Order detail page with line items and status history — plus a much bigger find
   along the way.** Checking this surfaced that the entire `/my-account/*` route group
@@ -1335,7 +1339,9 @@ a fake success toast and saves nothing).
 ## Phase 16 — Growth & Marketing
 
 - [x] Newsletter screen, `subscribers` table, CSV export — *2.39.0 → 2.41.1*
-- [ ] Newsletter double opt-in — waits on outbound mail
+- [x] **Newsletter double opt-in, and an unsubscribe that needs no login.** Signup
+      wrote `subscribed` the instant a stranger typed an address into the public
+      box, so anyone could put anyone on this shop's marketing list — *2.60.199*
 - [ ] Product Labels · Meta & Facebook — existing screens, not yet checked for parity
 
 ## Phase 17 — Dead interface  *(new — found by `hooks_bound`)*

@@ -7,12 +7,10 @@ declare(strict_types=1);
 | Newsletter double opt-in — public (Lane EE)
 |------------------------------------------------------------------------------
 |
-| NOT LOADED UNTIL THE INTEGRATOR WIRES IT UP. CLAUDE.md forbids this lane from
-| editing routes/web.php. One line, at the TOP LEVEL of routes/web.php, inside
-| the ordinary web group — beside the password-reset and verification routes it
-| is a sibling of, which sit around routes/web.php:737:
-|
-|     require __DIR__.'/newsletter-public.php';
+| MOUNTED. routes/web.php requires this file at the top level of the ordinary
+| web group, beside auth-customer.php, which these routes are a sibling of. The
+| notes below are why it belongs there and nowhere else — they are the reasoning
+| behind the mount, not a request for one.
 |
 | WHERE IT MUST NOT GO, and this matters more than it looks:
 |

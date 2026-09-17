@@ -266,6 +266,24 @@ function walkExpectations(array $seed): array
         'my-account/edit-address'        => ['status' => 302, 'auth' => 200],
         'my-account/edit-address/{id}'   => ['params' => ['id' => fn () => (string) $address->id], 'status' => 302, 'auth' => 200],
         'my-account/verify'              => ['status' => 302],
+        /*
+         * Newsletter confirm and unsubscribe, opened from a shopper's inbox.
+         * 200 for a bad id on purpose, and it is the same reasoning as the
+         * reset form below: these pages render for ANY well-formed link and
+         * judge the signature on submit, because answering 404 for an id that
+         * was never issued would make the page a membership oracle -- "is this
+         * address on the list?" answered to anyone who can guess a small
+         * integer. App\Support\CustomerLinkSigner's decoy row is what keeps the
+         * work, and therefore the timing, identical on both paths.
+         */
+        'newsletter/confirm/{id}'        => [
+            'params' => ['id' => '999999'],
+            'status' => 200,
+        ],
+        'newsletter/unsubscribe/{id}'    => [
+            'params' => ['id' => '999999'],
+            'status' => 200,
+        ],
         // An unsigned link with a wrong hash is refused, signed in or not.
         'my-account/verify/{id}/{hash}'  => [
             'params' => ['id' => (string) $customer->id, 'hash' => 'not-the-hash'],
