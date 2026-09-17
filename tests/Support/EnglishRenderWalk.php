@@ -203,41 +203,51 @@ final class EnglishRenderWalk
      * this walk exists to put in front of someone.
      *
      * The commit named below is the one that made both moves.
+     *
+     * ── MOVED AGAIN FOR LANE FT (the quiz's follow-through) ─────────────────
+     *
+     * ONE PAGE, THIRTY-NINE ADDED LINES, NOTHING REMOVED AND NOTHING CHANGED.
+     * The diff was read line by line before it was approved and it is entirely
+     * INERT ON THE SHIPPED SHOP. `/skin-quiz` grew, in three places and nowhere
+     * else:
+     *
+     *   1. a `.rtnlink` rule in the inline <style> block — three declarations
+     *      that style an element the shipped page never draws;
+     *   2. `routinePick()` and `routineLinkHTML()` in the inline <script>;
+     *   3. one `${routineLinkHTML()}` in the results template.
+     *
+     * `routineLinkHTML()` returns the EMPTY STRING unless `window.KBB_ROUTINES`
+     * is on the page, and that table is emitted only when Store → Modules →
+     * Build my routine is on, which is not how it ships — the module is off by
+     * default and /routines answers 404 in that state. So on the live shop the
+     * third item renders nothing, the second is two functions nobody calls into
+     * and the first styles nothing that exists.
+     *
+     * NOT ONE BYTE OF SHOPPER-VISIBLE COPY MOVED. The `diff` has no removed and
+     * no changed lines at all, only additions: nothing on the page shifted,
+     * reflowed or was reworded. The two new English sentences in the file are
+     * `t()` fallbacks inside `routineLinkHTML()`, which the page cannot reach
+     * with the module off; they are pinned as copy by
+     * QuizScriptStringsAreKeyedTest's drift guard, which compares every quiz
+     * call site against InterfaceStrings, and as behaviour by
+     * tests/Feature/QuizFollowThroughTest.php, which fetches the page in BOTH
+     * switch states and fails if the link appears in the wrong one. Those two
+     * are the assertions this constant cannot make for its own move.
+     *
+     * WHAT THIS WALK COULD NOT HAVE SEEN, said plainly: it renders with the
+     * module off, because that is the shipped state, so the ON state is not
+     * covered by this file at all. QuizFollowThroughTest covers it.
+     *
+     * The quiz's plan email, which is the other half of that lane, does not
+     * appear here in any form — an email is not a storefront page, and
+     * `/skin-quiz` renders identically whether or not one is ever sent.
+     *
+     * MOVED BY MERGE, NOT BY REBASE — see the paragraph above. The commit named
+     * below is the one that made the three additions, and it is this branch's
+     * own tip at the time of writing rather than a commit on the base: a walk
+     * that compared against the base would report the additions for ever.
      */
-    /*
-     * INTEGRATOR, resolving Lane FK and Lane FQ, which repinned this constant
-     * independently after doing the SAME work: both gave the five standalone
-     * documents a real <html lang> and dir. FK's landed first and shipped in
-     * 2.60.209, so its version of those five files is the one on this branch
-     * and its SHA is the one kept here. FQ's is not discarded for being wrong.
-     *
-     * FQ's note is kept below, because one paragraph of it is about this
-     * guard rather than about either lane, and it is the more useful half.
-     *
-     * What the diff said when it last moved: four pages changed by exactly one
-     * attribute and nothing else --
-     *
-     *     -<html lang="en">
-     *     +<html lang="en" dir="ltr">
-     *
-     * on /skincare-guide/, an article, /skin-quiz and /reviews. Those four
-     * carry their own <html> element instead of extending the shared layout,
-     * and the shared layout has emitted dir on every page it renders since the
-     * bilingual work landed -- so this is those four catching up with the rest
-     * of the storefront, not a copy change. With Arabic off, which is how this
-     * ships, htmlLang() is 'en' and direction() is 'ltr', so the English page
-     * is otherwise byte-for-byte what it was.
-     *
-     * ▲ WHAT THIS WALK CANNOT SEE, recorded because the silence is misleading.
-     * Lane FQ added a CollectionPage/ItemList block to the <head> of every
-     * listing page in the same cycle -- a large change to rendered bytes that
-     * does not appear in this guard's diff at all. Both of its passes render
-     * with the WORKING TREE's PHP and differ only in resources/views, so an
-     * app-code change is invisible here BY CONSTRUCTION. This guard covers
-     * Blade, and only Blade. A lane whose change is in PHP gets no assurance
-     * from it being green and must pin its own output.
-     */
-    public const BASE_COMMIT = '44d4f12edc970b459a06f2e08c8e0b2c5d4940e7';
+    public const BASE_COMMIT = '895ff93098e4408b15b90b16283581c9bcdaea6b';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
