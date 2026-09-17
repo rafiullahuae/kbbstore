@@ -424,6 +424,47 @@ final class InterfaceStrings
             'collection.all_products' => 'All products',
             'collection.empty' => 'Nothing here just yet. :link.',
             'collection.empty_link' => 'Browse the full range',
+
+            /*
+             * THE FOUR CURATED LISTINGS — Store\CollectionController::COLLECTIONS.
+             *
+             * /new-in/, /best-sellers/, /super-sale/ and /under-54/ are the
+             * header links, and every one of them drew an Arabic page under an
+             * English heading and an English sentence beneath it.
+             *
+             * THE CONSTANT STAYS AS IT IS, for the reason Facets::SORTS does: a
+             * const cannot call __(), and COLLECTIONS carries the SELECTION MODE
+             * ('newest', 'popular', 'on_sale', 'budget') in the same row as the
+             * wording. The mode is what show() switches on; the title and intro
+             * are never compared against anything. The key here is built from
+             * the collection's own URL key, so the two cannot be paired up by
+             * eye and got wrong, and CollectionPhpLabelsAreKeyedTest fails if an
+             * English source here ever stops matching the constant.
+             *
+             * THE FIGURE IN 'title_under_54' IS LEFT EXACTLY AS THE CONSTANT
+             * WRITES IT. It is not a price this shop quotes, it is the name of
+             * the listing, and the band it names is the 5400 fils ceiling in
+             * show()'s 'budget' arm. The two are coupled and neither is this
+             * lane's to move — money display is being changed under this lane by
+             * another.
+             */
+            'collection.title_new_in' => 'New In',
+            'collection.intro_new_in' => 'The latest Korean skincare to land, newest first.',
+            'collection.title_best_sellers' => 'Best Sellers',
+            'collection.title_super_sale' => 'Super Sale',
+            'collection.intro_super_sale' => 'Every product currently reduced.',
+            'collection.title_under_54' => 'Everything under AED 54',
+            'collection.intro_under_54' => 'Small joys, gently priced.',
+
+            /*
+             * /best-sellers/ HAS NO INTRO IN THE CONSTANT: it is the one page
+             * whose sentence is a MEASUREMENT, chosen by App\Support\RepeatPurchase
+             * from the order history — "customers keep coming back" only if some
+             * of them did. Both wordings are keyed, and intro() picks between
+             * the keys exactly as it picked between the constants.
+             */
+            'collection.intro_best_sellers_measured' => 'The products our customers keep coming back for.',
+            'collection.intro_best_sellers_by_units' => 'Our best sellers, by the number of units sold.',
             'product_card.badge_new' => 'New',
             // The discount badge. ':percent% OFF', not '-' . $off . '% OFF' — the
             // sign, the number and the word were three pieces of PHP string
@@ -1274,6 +1315,99 @@ final class InterfaceStrings
             'items.col_total' => 'Total',
             'items.sku' => 'SKU :sku',
             'items.each' => 'each',
+
+            /*
+             * THE MONEY BREAKDOWN'S ROW LABELS — Lane FB.
+             *
+             * ONE KEY SET, TWO CALLERS, AND THAT IS THE POINT. These labels are
+             * built in Services\Mail\OrderEmailPresenter::totals() for the four
+             * emails, and AGAIN, row for row, in Services\Invoices\InvoiceDocument::totals()
+             * for the emailed invoice and the printed one. The two are separate
+             * copies of the same decision — the customer has the receipt in
+             * their inbox and the invoice beside it, and the two may not
+             * disagree about what a line is called. So both call the SAME keys
+             * rather than each getting its own: a translator who renames
+             * "Delivery" renames it on both documents or on neither.
+             * OrderPaperworkLabelsAreKeyedTest holds the two callers to this set.
+             *
+             * THE `email` GROUP RATHER THAN `invoice`, although an invoice uses
+             * them, because the receipt is where they are decided and a key that
+             * lives in two groups is two rows to translate.
+             *
+             * THE COUPON CODE, THE PAYMENT METHOD AND THE VAT RATE ARE
+             * PLACEHOLDERS, never concatenation. A code is an identifier and is
+             * never translated; a rate is a figure. Arabic puts a qualifier on
+             * the other side of its noun, and ':method fee' can express that
+             * where $method . ' fee' cannot.
+             *
+             * NO FIGURE'S WIDTH IS DECIDED HERE. Every amount beside these
+             * labels is still rendered by the presenter at the receipt's own
+             * precision — see OrderEmailPresenter::ledgerWidth().
+             */
+            'totals.subtotal' => 'Subtotal',
+            'totals.discount' => 'Discount',
+            'totals.discount_coupon' => 'Discount (:code)',
+            'totals.delivery' => 'Delivery',
+            'totals.gift_wrapping' => 'Gift wrapping',
+            'totals.payment_fee' => ':method fee',
+            'totals.vat' => 'VAT',
+            'totals.vat_at_rate' => 'VAT at :rate%',
+            'totals.total' => 'Total',
+
+            /*
+             * THE DISPATCH AND CANCELLATION EMAILS' HEADING AND BODY — the
+             * wording in Mail\OrderStatusChanged::WORDING.
+             *
+             * THE CONSTANT STAYS, and it stays as the English source: handles()
+             * asks it which statuses are worth an email at all, three test files
+             * assert against it by name, and bodyFor() hands WORDING['shipped'][2]
+             * back UNTOUCHED while the owner's timing box is blank — a property
+             * DispatchEmailTimingTest pins by identity. content() looks the
+             * display wording up by key instead, and
+             * OrderPaperworkLabelsAreKeyedTest fails the day the English here and
+             * the English there stop being the same sentence.
+             *
+             * THE SUBJECT IS NOT HERE. WORDING[0] carries numbered sprintf
+             * placeholders that SettingsBlankAndSupportIdentityTest pins, and a
+             * subject line is a separate decision from the body — it is named in
+             * the report rather than swept in beside these.
+             */
+            'order_status.shipped_heading' => 'Your order is on its way',
+            'order_status.shipped_body' => 'Your order has left us and is with the courier. Delivery in the UAE normally takes one to three working days from dispatch.',
+            'order_status.cancelled_heading' => 'Your order has been cancelled',
+            'order_status.cancelled_body' => 'This order has been cancelled and nothing further will be sent.',
+
+            /*
+             * THE REST OF THE DISPATCH BODY. bodyFor() picks one of three by
+             * where the parcel is going, and keying only the default would have
+             * sent a Gulf customer an Arabic heading over an English paragraph —
+             * worse than the English email they get today, not better.
+             *
+             * 'shipped_dispatched' is the half true of every destination and is
+             * also what an order with no country recorded gets on its own.
+             */
+            'order_status.shipped_dispatched' => 'Your order has left us and is with the courier.',
+            'order_status.shipped_abroad' => 'Your order has left us and is with the courier. Deliveries outside the UAE take longer than local ones and also wait on customs clearance in your country, so please allow a few extra days.',
+
+            /*
+             * AND THE CANCELLATION'S MONEY SENTENCE — the three cases set out
+             * above OrderStatusChanged::CANCELLED_REFUND_NOTE.
+             *
+             * :amount is a placeholder rather than sprintf's %s so that the
+             * figure can sit where Arabic puts it. The AMOUNT ITSELF IS NOT
+             * TOUCHED: it arrives already rendered by OrderEmailPresenter::plain()
+             * at the receipt's own precision, and this only decides the sentence
+             * around it.
+             *
+             * `mail_cancelled_refund_note` is NOT keyed and must not be. It is
+             * the owner's own typed sentence from Store → Mail, it ships blank,
+             * and a second English source for a settings row is one place to
+             * correct it and one place silently wrong — the exclusion
+             * InterfaceStrings' header describes.
+             */
+            'order_status.cancelled_refunded' => 'A refund of :amount has been recorded against it.',
+            'order_status.cancelled_nothing_taken' => 'Our records show no payment taken on this order, so there is nothing to refund.',
+            'order_status.cancelled_unrefunded' => 'Our records show :amount paid on this order and no refund recorded against it yet.',
             'delivery.address_heading' => 'Delivery address',
             'delivery.method_heading' => 'Delivery method',
             'delivery.payment_heading' => 'Payment method',

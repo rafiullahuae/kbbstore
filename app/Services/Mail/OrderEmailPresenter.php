@@ -167,28 +167,35 @@ class OrderEmailPresenter
         $giftFee = (int) $order->gift_fee;
         $otherFees = max(0, (int) $order->fee_total - $giftFee);
 
-        $rows = [['Subtotal', (int) $order->subtotal, false]];
+        $rows = [[__('email.totals.subtotal'), (int) $order->subtotal, false]];
 
         if ((int) $order->discount_total !== 0) {
             // Rendered negative, because it came off the bill. The column stores
             // it positive, which is right for the column and wrong for a receipt.
             $rows[] = [
                 trim((string) $order->coupon_code) !== ''
-                    ? 'Discount (' . trim((string) $order->coupon_code) . ')'
-                    : 'Discount',
+                    // The CODE is an identifier and is never translated; only
+                    // the word around it is. A placeholder rather than
+                    // concatenation, so Arabic can put the bracket where Arabic
+                    // puts it.
+                    ? __('email.totals.discount_coupon', ['code' => trim((string) $order->coupon_code)])
+                    : __('email.totals.discount'),
                 -abs((int) $order->discount_total),
                 false,
             ];
         }
 
-        $rows[] = ['Delivery', (int) $order->shipping_total, false];
+        $rows[] = [__('email.totals.delivery'), (int) $order->shipping_total, false];
 
         if ($giftFee > 0) {
-            $rows[] = ['Gift wrapping', $giftFee, false];
+            $rows[] = [__('email.totals.gift_wrapping'), $giftFee, false];
         }
 
         if ($otherFees > 0) {
-            $rows[] = [$order->paymentLabel() . ' fee', $otherFees, false];
+            // paymentLabel() is the gateway's own name — "Cash on delivery",
+            // "Card" — and is the owner's wording, not this file's. Only the
+            // word "fee" beside it is translated.
+            $rows[] = [__('email.totals.payment_fee', ['method' => $order->paymentLabel()]), $otherFees, false];
         }
 
         /*
@@ -203,13 +210,21 @@ class OrderEmailPresenter
 
         if ($taxRecord === null) {
             if ((int) $order->tax_total !== 0) {
-                $rows[] = ['VAT', (int) $order->tax_total, false];
+                $rows[] = [__('email.totals.vat'), (int) $order->tax_total, false];
             }
         } elseif ($taxRecord['added'] && $taxRecord['fils'] !== 0) {
-            $rows[] = ['VAT at ' . (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate() . '%', $taxRecord['fils'], false];
+            // The RATE is the order's own snapshot and is a figure, so it goes
+            // in as a placeholder and its rendering is untouched.
+            $rows[] = [
+                __('email.totals.vat_at_rate', [
+                    'rate' => (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate(),
+                ]),
+                $taxRecord['fils'],
+                false,
+            ];
         }
 
-        $rows[] = ['Total', (int) $order->total, true];
+        $rows[] = [__('email.totals.total'), (int) $order->total, true];
 
         return array_map(static fn (array $row) => [
             'label' => $row[0],

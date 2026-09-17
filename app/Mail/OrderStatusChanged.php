@@ -148,6 +148,23 @@ class OrderStatusChanged extends OrderMail
      */
     public const CANCELLED_REFUND_NOTE = 'mail_cancelled_refund_note';
 
+    /*
+     * ── THE SIX CONSTANTS BELOW ARE NOW THE ENGLISH SOURCE, NOT THE OUTPUT ──
+     *
+     * Lane FB moved the wording of the dispatch and cancellation emails into
+     * App\Services\Translation\InterfaceStrings, under `email.order_status.*`,
+     * so that a customer who checked out in Arabic is written to in Arabic.
+     * What is rendered is now the KEY; these keep the English and, far more
+     * usefully, the argument for why each sentence says what it says — which is
+     * the half a key cannot carry and the half that took the longest to get
+     * right.
+     *
+     * They are not dead: OrderPaperworkLabelsAreKeyedTest reads every one of them
+     * and fails if the English here and the English in InterfaceStrings ever
+     * stop being the same sentence. That is the only failure mode a second
+     * English source has, and it is silent without the test.
+     */
+
     /** What is said when a refund really has been recorded against the order. */
     private const CANCELLED_REFUNDED = 'A refund of %s has been recorded against it.';
 
@@ -299,16 +316,20 @@ class OrderStatusChanged extends OrderMail
             $refunded = $refunder->refundedFils($order);
 
             if ($refunded > 0) {
-                return sprintf(self::CANCELLED_REFUNDED, OrderEmailPresenter::plain($refunded, \App\Support\Money::receiptDecimals($refunded)));
+                return __('email.order_status.cancelled_refunded', [
+                    'amount' => OrderEmailPresenter::plain($refunded, \App\Support\Money::receiptDecimals($refunded)),
+                ]);
             }
 
             $captured = $refunder->capturedFils($order);
 
             if ($captured <= 0) {
-                return self::CANCELLED_NOTHING_TAKEN;
+                return __('email.order_status.cancelled_nothing_taken');
             }
 
-            $sentence = sprintf(self::CANCELLED_UNREFUNDED, OrderEmailPresenter::plain($captured, \App\Support\Money::receiptDecimals($captured)));
+            $sentence = __('email.order_status.cancelled_unrefunded', [
+                'amount' => OrderEmailPresenter::plain($captured, \App\Support\Money::receiptDecimals($captured)),
+            ]);
 
             $note = trim((string) app(SettingsService::class)->get(self::CANCELLED_REFUND_NOTE, ''));
 
@@ -349,8 +370,8 @@ class OrderStatusChanged extends OrderMail
 
         return match (true) {
             $country === self::HOME_COUNTRY => $this->homeShippedBody($default),
-            $country === '' => self::SHIPPED_UNKNOWN,
-            default => self::SHIPPED_ABROAD,
+            $country === '' => __('email.order_status.shipped_dispatched'),
+            default => __('email.order_status.shipped_abroad'),
         };
     }
 
@@ -380,7 +401,10 @@ class OrderStatusChanged extends OrderMail
             return $default;
         }
 
-        return $note === '' ? $default : self::SHIPPED_DISPATCHED . ' ' . $note;
+        // The NOTE is the owner's own sentence from Store → Mail and is not
+        // translated — see the exclusion in InterfaceStrings' header. Only the
+        // half this file says is.
+        return $note === '' ? $default : __('email.order_status.shipped_dispatched') . ' ' . $note;
     }
 
     /** Is this a status a customer gets told about at all? */
@@ -398,9 +422,41 @@ class OrderStatusChanged extends OrderMail
         );
     }
 
-    public function content(): Content
+    /**
+     * The display wording, looked up by key — Lane FB.
+     *
+     * WHY THE CONSTANT IS STILL THE SOURCE AND THIS IS STILL BY KEY. WORDING
+     * has three jobs and only one of them is wording: handles() asks it which
+     * statuses are worth an email at all, DispatchEmailTimingTest asserts that
+     * bodyFor() hands WORDING['shipped'][2] back BY IDENTITY while the owner's
+     * timing box is blank, and CancellationEmailTruthTest reads it to prove what
+     * the cancellation email does not promise. A const cannot call __(), so the
+     * English stays there and the DISPLAY copy is looked up here.
+     *
+     * The two Englishes are held to each other by OrderPaperworkLabelsAreKeyedTest
+     * rather than by anybody remembering — the failure mode of a second English
+     * source is that one of them is silently stale.
+     *
+     * $status is not interpolated into the key: it is matched against the closed
+     * list so a status that somehow reached here cannot compose a key that does
+     * not exist and render its own name at a customer.
+     *
+     * @return array{0:string,1:string}  [heading, body default]
+     */
+    private function displayWording(): array
     {
         [, $heading, $body] = self::WORDING[$this->status];
+
+        return match ($this->status) {
+            'shipped' => [__('email.order_status.shipped_heading'), __('email.order_status.shipped_body')],
+            'cancelled' => [__('email.order_status.cancelled_heading'), __('email.order_status.cancelled_body')],
+            default => [$heading, $body],
+        };
+    }
+
+    public function content(): Content
+    {
+        [$heading, $body] = $this->displayWording();
 
         return new Content(
             view: 'emails.order-status',

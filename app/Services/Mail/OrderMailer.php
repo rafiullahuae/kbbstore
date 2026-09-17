@@ -156,7 +156,16 @@ class OrderMailer
         }
 
         if ($this->merchantAlertEnabled()) {
-            $this->send(static fn () => new NewOrderAlert($order), $this->merchantAddress(), $order, 'merchant_alert');
+            /*
+             * THE ONE EMAIL THAT IS NOT SENT IN THE ORDER'S LANGUAGE, and the
+             * reason the flag exists at all. This goes to the SHOP, not to the
+             * shopper. An Arabic order would otherwise put the owner's own "new
+             * order" alert into Arabic — a language he may not read — because of
+             * a choice his customer made. It renders in the process's locale,
+             * which is what it did before this lane and what NewOrderAlert's
+             * CUSTOMER_FACING = false already says about it.
+             */
+            $this->send(static fn () => new NewOrderAlert($order), $this->merchantAddress(), $order, 'merchant_alert', false);
         }
     }
 
@@ -196,9 +205,15 @@ class OrderMailer
         try {
             $order->loadMissing('items');
 
-            Mail::mailer(MailConfigurator::MAILER)
-                ->to($to)
-                ->send(new OrderConfirmation($order));
+            // In the ORDER's language, not the admin's. A resend is the case
+            // inLocale() exists for: the operator pressing this button is
+            // looking at an English back office, and the customer it goes to is
+            // not necessarily reading one.
+            \App\Support\OrderLocale::render($order, static function () use ($to, $order): void {
+                Mail::mailer(MailConfigurator::MAILER)
+                    ->to($to)
+                    ->send(new OrderConfirmation($order));
+            });
 
             return ['ok' => true, 'message' => 'Confirmation re-sent to ' . $to . '.'];
         } catch (\Throwable $e) {
@@ -282,9 +297,13 @@ class OrderMailer
             $order->refresh();
             $order->loadMissing('items');
 
-            Mail::mailer(MailConfigurator::MAILER)
-                ->to($to)
-                ->send(new \App\Mail\OrderInvoice($order));
+            // Same again, and the invoice is the document most likely to be
+            // regenerated long after the order — see inLocale().
+            \App\Support\OrderLocale::render($order, static function () use ($to, $order): void {
+                Mail::mailer(MailConfigurator::MAILER)
+                    ->to($to)
+                    ->send(new \App\Mail\OrderInvoice($order));
+            });
 
             return [
                 'ok' => true,
@@ -423,7 +442,47 @@ class OrderMailer
      * Only the transport's message is recorded, with the configured password
      * stripped out of it the same way.
      */
-    private function send(callable $build, string $to, Order $order, string $kind): void
+    /**
+     * Run one send in the language the order was placed in — Lane FB.
+     *
+     * ── WHY THIS WRAPS THE BUILD AND NOT JUST THE RENDER ────────────────────
+     *
+     * Laravel offers $mailable->locale(), and it is not enough here. OrderMail's
+     * CONSTRUCTOR runs App\Services\Mail\OrderEmailPresenter over the order and
+     * keeps the finished strings — every totals row label, and in
+     * OrderStatusChanged the whole cancellation money sentence. Those are
+     * decided before a Mailable has a locale to set, so $mailable->locale()
+     * would translate the view and leave the presented array in whatever
+     * language the PROCESS happened to be in. The factory is therefore called
+     * inside the wrapper, which is also why send() takes a factory rather than a
+     * Mailable.
+     *
+     * ── WHY THIS MATTERS MORE THAN IT LOOKS ─────────────────────────────────
+     *
+     * The confirmation is sent in the request that placed the order, so it was
+     * in the right language by accident. NOTHING AFTERWARDS IS: the dispatch
+     * email, the cancellation, the refund notice and the invoice are sent from
+     * an admin click or a queue worker weeks later, in a process whose locale is
+     * whatever it was last set to. Before this, an Arabic shopper got an Arabic
+     * checkout and English paperwork forever — App\Support\OrderLocale was
+     * written for exactly this and had no caller outside its own tests.
+     *
+     * OrderLocale::render() puts the previous locale back in a `finally`, so one
+     * Arabic order cannot leave a queue worker set to Arabic for every job
+     * behind it.
+     */
+    private function inLocale(Order $order, bool $enabled, \Closure $run): void
+    {
+        if (! $enabled) {
+            $run();
+
+            return;
+        }
+
+        \App\Support\OrderLocale::render($order, $run);
+    }
+
+    private function send(callable $build, string $to, Order $order, string $kind, bool $inOrderLocale = true): void
     {
         $to = trim($to);
 
@@ -437,19 +496,21 @@ class OrderMailer
         }
 
         try {
-            $mailable = $build();
+            $this->inLocale($order, $inOrderLocale, function () use ($build, $to, $kind): void {
+                $mailable = $build();
 
-            /*
-             * Name the message before it goes, so the delivery record says
-             * "order.confirmation" rather than "unknown". The mail events
-             * MailLog listens on cannot work this out for themselves: by the
-             * time Symfony has a Message the only thing left that identifies
-             * the feature is the subject line, and subject lines here are
-             * owner-editable wording.
-             */
-            $this->log()?->labelNext('order.' . $kind);
+                /*
+                 * Name the message before it goes, so the delivery record says
+                 * "order.confirmation" rather than "unknown". The mail events
+                 * MailLog listens on cannot work this out for themselves: by the
+                 * time Symfony has a Message the only thing left that identifies
+                 * the feature is the subject line, and subject lines here are
+                 * owner-editable wording.
+                 */
+                $this->log()?->labelNext('order.' . $kind);
 
-            Mail::mailer(MailConfigurator::MAILER)->to($to)->send($mailable);
+                Mail::mailer(MailConfigurator::MAILER)->to($to)->send($mailable);
+            });
         } catch (\Throwable $e) {
             /*
              * Recorded where the owner can see it, as well as in the log he
