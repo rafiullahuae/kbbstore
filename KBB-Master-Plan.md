@@ -862,6 +862,68 @@ country-aware.**
       constant. The brand index spent four of its six queries asking the database to
       describe itself — *2.60.183*
 
+## Phase 8d — What the shop publishes  *(2.60.186 → .192)*
+
+Phase 8c was about screens that described machinery they did not have. This
+run moved outward to the pages **a customer and a search engine actually
+see**, and to the shop's own identity on the documents it sends out.
+
+### The shop's own details, on the shop's own documents
+
+- [x] **The owner can put his own business on his own invoices.** Name, phone,
+      email, address and registration number were literals in the invoice and
+      order-email templates; they are settings now, and the templates read them
+      — *2.60.186*
+- [x] **A blank box no longer refuses the whole Save.** Clearing a field wrote
+      `''` and tripped a validation rule written for a missing row, so one empty
+      input rejected every other change on the screen with it — *2.60.187*
+
+### Screens that answer for themselves
+
+- [x] **A health panel that checks**, rather than three screens reporting a
+      status nothing measured — *2.60.187*
+- [x] **A link to a screen opens that screen**, not the dashboard — the
+      deep-link fix from 8c, finished for the screens it had missed — *2.60.188*
+- [x] **Users & Roles shows the real staff**, and no longer claims a second
+      factor this install does not have. The fake list was dead code; the live
+      defect was that a non-owner was told "No users" — *2.60.189*
+
+### Claims the shop cannot back
+
+- [x] **The front page stops advertising a discount code the shop has not
+      got.** The hero offered a coupon; no such coupon existed — *2.60.190*
+- [x] **A phone downloads a phone-sized photograph.** GD-only responsive
+      variants, cached under `public/img-cache/` (gitignored, never shipped),
+      with an admin screen for the sizes — *2.60.191*
+- [x] ▲ **`/reviews` published twelve invented customers, and the sitemap
+      submitted the page to Google.** The route was live, the twelve names were
+      a literal `var REVIEWS=[…]` in the template, the controller passed no
+      data, and `SeoFilesController` added the URL to the sitemap
+      unconditionally. Rebuilt on real approved rows. Flagged to the owner as a
+      likely legal exposure rather than a bug — *2.60.192*
+
+### The clock, the tax and the delivery promise  *(landed across .183–.185, completed here)*
+
+- [x] **Dubai time.** `App\Support\StoreTime` is the display-layer clock;
+      storage stays UTC and conversion happens with `setTimezone()`, never
+      `shiftTimezone()`. The zone is a setting, defaulting to `Asia/Dubai`
+- [x] **Tax that is charged: a rate and a basis per country**, inclusive,
+      exclusive or printed-only, on its own Tax tab, off until the owner says
+      otherwise
+- [x] **A delivery promise the shop can back for this visitor**, detected by
+      geography and re-resolved when the shopper changes country, with
+      one-click Gulf presets whose sentence follows the country name
+- [x] **Demo rows stop moving the figures.** `App\Support\DemoSeed` settles the
+      rule: **figures exclude demo content; lists show it and mark it**
+
+### In flight after this phase
+
+Five lanes, dispatched together: responsive gallery images and two settings the
+shop reads that nothing can write; Demo Content's invented review totals;
+three independent Google Analytics loaders in one tree; the tax engine traced
+end to end from country detection to printed invoice; and `/app`, a public URL
+still serving an invented catalogue at invented prices.
+
 ## Phase 9 — Content pages
 
 - [x] Privacy, terms, New In, Best Sellers, Super Sale, Under 54 AED, Wishlist
@@ -1304,6 +1366,8 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
 | ▲31 | **A regex guard reads comments and quoted strings as code.** Six separate lanes wrote a guard that then failed on its own explanatory prose — the file describes the bug it fixed, and the guard finds the description. Strip `T_COMMENT`/`T_DOC_COMMENT` with `token_get_all()`, or assert on rendered output where a comment cannot reach. Related: **a class-name search of rendered admin HTML also matches the page's inlined CSS**, so assert on elements with `preg_match_all`, never on a bare class name |
 | ▲32 | **Verify a lane's headline claim independently before merging it.** Counts and diagnoses arrive confidently and are sometimes wrong in ways that change the remedy: "sixteen screens cannot be deep-linked" was seven; "149 hand-typed colours need fixing" was thirteen, and most of the rest were *correct* colours whose conversion would have made text unreadable; "two screens hold duplicate delivery wording" was two tabs of one screen holding two different kinds of value, where no country could have used one field for both. Each of those was caught by the next lane checking rather than inheriting. A confident report is a hypothesis |
 | ▲33 | **A preview that serves stale bytes will send you chasing a defect that does not exist.** Several hours went into an admin screen that "had not changed", which was a dev server started before the merge, on a port a kill had not actually freed. Before trusting any preview: confirm the listening PID is the process you started (`ss -ltnp`, then `/proc/<pid>/cwd`), clear compiled views, and check one string you know changed. Never `pkill` broadly — one lane killed another lane's server that way |
+| ▒34 | **Invented content is a publishing decision, not a rendering detail, and `noindex` is not the remedy.** `/reviews` shipped twelve fabricated customers with a sitemap entry; `/app` still answers a public URL with a hard-coded catalogue at prices that are not real; Demo Content's `reviewSummary()` returns 12,481 reviews at 4.8 stars, and its seeded samples are written `'verified' => true`. Each was reachable by a customer. A crawler directive keeps a page out of a result list and does nothing about a bookmark, a shared link, or a screenshot. The test to write is not "is it labelled" but **"can a logged-out visitor see a figure that is not in the database"** — and it should be asserted on rendered output, per ▒31 |
+| ▒35 | **The container restarts, and everything not committed is gone.** A restart mid-session took two lanes' unfinished work with it; nothing in the repository was lost because every merged lane had already been committed and pushed. The discipline that saved it: merge and push each lane as it lands rather than batching several, and keep the integrator branch's working tree clean between merges, so the worst case is re-dispatching a brief rather than reconstructing a diff |
 
 ## Questions still unanswered
 
