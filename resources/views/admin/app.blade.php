@@ -360,6 +360,12 @@ tr:last-child td{border-bottom:0}
 .modal-h .x{margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ink-soft)}
 .modal-h .x:hover{background:var(--surface-2)}
 .modal-b{padding:20px}
+/* The saved-field tick and the flash beside the Connect application buttons.
+   Both are small on purpose: a tick that shouts is a tick nobody reads twice. */
+.paytick{display:inline-grid;place-items:center;width:17px;height:17px;margin-left:7px;
+  border-radius:50%;background:#E4F6EC;color:#1F7D52;vertical-align:-3px;flex:0 0 auto}
+.payflash{opacity:0;transition:opacity .18s}
+.payflash.on{opacity:1;color:#1F7D52;font-weight:700}
 .report{background:#0f1729;color:#cdd6e8;border-radius:var(--r-sm);padding:15px;font-family:var(--mono);font-size:11.5px;line-height:1.7;white-space:pre-wrap;max-height:340px;overflow:auto}
 .report .k{color:#7fd1a0}.report .v{color:#e8c98c}.report .c{color:#6b7794}
 
@@ -18448,9 +18454,34 @@ buildNav();
     payRefreshTabs();
   }
 
+  /* A GREEN TICK ON A FIELD THAT IS FILLED IN, reported by the owner:
+     "each keys fields etc should have green tick icon when key submitted and
+     accepted. for now there's nothing and very confusing."
+
+     He is right about the confusion. A secret field carried a `stored` pill and
+     a plain field carried nothing at all, so a screen of boxes gave no answer
+     to the only question being asked while filling it in — which of these have
+     I done. The tick answers it at a glance, per field, and the pill stays for
+     the state the tick cannot express ("not set").
+
+     "Accepted" is the honest word and the tick means exactly it: the server
+     took the value and stored it. It is not a claim that Stripe likes the key —
+     that is what Connected, and the account name beside it, report. */
+  function payTick(){
+    return '<span class="paytick" title="Saved" aria-label="Saved">'+
+      '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" '+
+      'stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'+
+      '</span>';
+  }
+
   function payField(gid,f){
     var id='pay_'+gid+'_'+f.key;
+    /* A secret is `has_value` because the server never sends one back; a plain
+       field is judged on the value it was given. Same question, two sources. */
+    var filled = f.type==='secret' ? !!f.has_value : String(f.value||'').trim()!=='';
+
     var head='<div class="ecl"><label for="'+sesc(id)+'">'+sesc(f.label)+'</label>'+
+      (filled ? payTick() : '')+
       (f.type==='secret'
         ? (f.has_value?'<span class="pill green">stored</span>':'<span class="pill amber">not set</span>')
         : '')+'</div>'+
@@ -18957,6 +18988,15 @@ buildNav();
      endpoint returns the account report and has_value-style flags only. */
   var STRIPE_CONN=null;
 
+  /* THE MESSAGE HAS TO OUTLIVE THE REPAINT THAT ERASES IT.
+     "the save connection button also not showing any successful message upon
+     press" — it set the message span to '' on success and then called
+     payStripeStatus(), which replaces the pane's innerHTML and destroys the
+     span outright. Even a message written first would have been wiped a
+     moment later, which is why this is a flash carried across the repaint and
+     printed by the renderer rather than a textContent assignment. */
+  var PAY_APP_FLASH='';
+
   /* FG: `painted` is the whole of the loop fix; see block 6.
      payStripeStatus() repaints the pane and then calls bindPayments(), and
      bindPayments() called payStripeStatus() back — an unconditional cycle that
@@ -18978,7 +19018,31 @@ buildNav();
     if(!host) return;
     try{ STRIPE_CONN=await api('/admin-api/payments/stripe/connect/status'); }
     catch(e){ host.innerHTML='<div class="ecom"><div class="echelp">Could not read the Stripe connection.</div></div>'; return; }
+    /* HALF-TYPED CLIENT IDS SURVIVE THE REPAINT. Re-check re-reads the server
+       and redraws this pane, which threw away whatever was in the two client-id
+       boxes — a smaller version of the same complaint that got Re-check fixed.
+       The two SECRET boxes are deliberately not carried: a password field
+       repopulated from the DOM is a secret key sitting in the DOM, which is the
+       rule the save path already follows by clearing them on every outcome.
+       A client id is not a secret — it travels in the popup's address bar. */
+    var keepIds={};
+    ['pay_capp_id_test','pay_capp_id_live'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el && el.value) keepIds[id]=el.value;
+    });
+
     host.innerHTML=payStripePanel(STRIPE_CONN);
+
+    Object.keys(keepIds).forEach(function(id){
+      var el=document.getElementById(id);
+      /* Only where the server had nothing to say: a value it just stored wins
+         over one the owner was mid-way through typing over it. */
+      if(el && !el.value) el.value=keepIds[id];
+    });
+
+    /* Spent by being shown. A flash that outlived its repaint would report
+       "Saved." over the next thing the owner did. */
+    PAY_APP_FLASH='';
     host.dataset.painted='1';
     bindPayments();
   }
@@ -19093,20 +19157,22 @@ buildNav();
       '<div class="ecctl" style="display:block;width:100%">'+
 
       '<div class="row" style="gap:10px;align-items:flex-start;flex-wrap:wrap">'+
-      '<div style="flex:1 1 240px"><div class="echelp" style="margin:0 0 4px">Test client id</div>'+
+      '<div style="flex:1 1 240px"><div class="echelp" style="margin:0 0 4px">Test client id'+
+      (idTest?payTick():'')+'</div>'+
       '<input type="text" class="inp" id="pay_capp_id_test" spellcheck="false" placeholder="ca_…" '+
       'style="max-width:none" value="'+sesc(idTest)+'"></div>'+
-      '<div style="flex:1 1 240px"><div class="echelp" style="margin:0 0 4px">Live client id</div>'+
+      '<div style="flex:1 1 240px"><div class="echelp" style="margin:0 0 4px">Live client id'+
+      (idLive?payTick():'')+'</div>'+
       '<input type="text" class="inp" id="pay_capp_id_live" spellcheck="false" placeholder="ca_…" '+
       'style="max-width:none" value="'+sesc(idLive)+'"></div></div>'+
 
       '<div class="row" style="gap:10px;align-items:flex-start;flex-wrap:wrap;margin-top:8px">'+
       '<div style="flex:1 1 240px"><div class="echelp" style="margin:0 0 4px">Test platform secret key'+
-      (hasTest?' — <b>stored</b>':'')+'</div>'+
+      (hasTest?payTick()+' <b>stored</b>':'')+'</div>'+
       '<input type="password" class="inp" id="pay_capp_sec_test" autocomplete="new-password" spellcheck="false" '+
       'placeholder="'+(hasTest?'••• leave blank to keep':'sk_test_…')+'" style="max-width:none"></div>'+
       '<div style="flex:1 1 240px"><div class="echelp" style="margin:0 0 4px">Live platform secret key'+
-      (hasLive?' — <b>stored</b>':'')+'</div>'+
+      (hasLive?payTick()+' <b>stored</b>':'')+'</div>'+
       '<input type="password" class="inp" id="pay_capp_sec_live" autocomplete="new-password" spellcheck="false" '+
       'placeholder="'+(hasLive?'••• leave blank to keep':'sk_live_…')+'" style="max-width:none"></div></div>'+
 
@@ -19128,7 +19194,8 @@ buildNav();
       '<button type="button" class="btn" data-payappsave="1">Save Connect application</button>'+
       ((hasTest||hasLive)?'<button type="button" class="btn ghost" data-payappclear="1">Forget stored keys</button>':'')+
       '<button type="button" class="btn ghost" data-payrecheck="1">Re-check connection</button>'+
-      '<span class="echelp" id="pay_capp_msg" style="margin:0"></span></div>'+
+      '<span class="echelp payflash'+(PAY_APP_FLASH?' on':'')+'" id="pay_capp_msg" style="margin:0">'+
+      sesc(PAY_APP_FLASH)+'</span></div>'+
 
       '<div id="pay_capp_guide" style="margin-top:10px"></div>'+
       '</div></div>';
@@ -19186,7 +19253,7 @@ buildNav();
          key sitting in a form field is a secret key sitting in the DOM. */
       if(secT) secT.value=''; if(secL) secL.value='';
       if(!d.ok){ if(msg) msg.textContent=d.error||'That could not be saved.'; return; }
-      if(msg) msg.textContent='';
+      PAY_APP_FLASH = clear ? 'Stored keys forgotten.' : 'Saved.';
       await payStripeStatus();
     }catch(e){ if(msg) msg.textContent='Could not reach this site to save.'; }
   }
@@ -19698,7 +19765,19 @@ buildNav();
        happened is the one where the browser refused to open the window that
        would have. Asking the server is always available and never wrong. */
     document.querySelectorAll('[data-payrecheck]').forEach(function(b){
-      b.onclick=function(){ renderPayments(); };
+      /* RE-CHECK CHECKS. It called renderPayments(), which rebuilds the WHOLE
+         Payments screen from the server: every tab back to its default, every
+         unsaved box on every gateway thrown away, the gateway tab reset. The
+         owner's words were "just resetting everything instead of checking",
+         and that is exactly what it did.
+         payStripeStatus() re-reads /connect/status and repaints the connection
+         pane alone, which is the thing the button names. */
+      b.onclick=function(){
+        var msg=document.getElementById('pay_capp_msg');
+        if(msg) msg.textContent='Checking…';
+        PAY_APP_FLASH='Checked just now.';
+        payStripeStatus();
+      };
     });
     document.querySelectorAll('[data-payappcopy]').forEach(function(b){
       b.onclick=async function(){
