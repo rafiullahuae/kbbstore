@@ -120,7 +120,32 @@ final class EnglishRenderWalk
      * it fails with "no such commit" rather than with a diff. The commit named
      * below is reachable from this branch's history and stays reachable.
      */
-    public const BASE_COMMIT = '937aeb72382385963bbf26a8fb6fe0915f83dcd5';
+    /*
+     * MOVED FORWARD BY LANE FQ, and this is what the diff said before it moved.
+     *
+     * Four pages changed by exactly one attribute and nothing else:
+     *
+     *     -<html lang="en">
+     *     +<html lang="en" dir="ltr">
+     *
+     * on /skincare-guide/, an article, /skin-quiz and /reviews. Those four
+     * carry their own <html> element instead of extending the shared layout,
+     * and the shared layout has emitted dir on every page it renders since the
+     * bilingual work landed -- so this is those four documents catching up with
+     * the rest of the storefront, not a copy change. With Arabic off, which is
+     * how this ships, Locale::htmlLang() is 'en' and Locale::direction() is
+     * 'ltr', so the English page is otherwise byte-for-byte what it was. The
+     * Arabic half of the same change is what the fix was for and is pinned in
+     * tests/Feature/StandaloneDocumentLocaleTest.php.
+     *
+     * WHAT THIS WALK DID NOT SEE, recorded because the silence is misleading:
+     * the same lane added a CollectionPage/ItemList block to the <head> of
+     * every listing page, which is a large change to the rendered bytes. It
+     * does not appear above because both passes render with the WORKING TREE's
+     * PHP and differ only in resources/views -- so an app-code change is
+     * invisible here by construction. This guard covers Blade, and only Blade.
+     */
+    public const BASE_COMMIT = 'b36ca4274f8c01870e267462f170d5f3f046a0db';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
