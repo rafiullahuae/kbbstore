@@ -695,6 +695,13 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // exactly the shape that has produced a dialect failure twice.
         'admin-api/orders/{id}/invoice' => '/admin-api/orders/' . $order->id . '/invoice',
         'admin-api/orders/{id}/packing-slip' => '/admin-api/orders/' . $order->id . '/packing-slip',
+        // Driven for the same reason, and NOT excused as "same controller as
+        // the two above": they take different branches through
+        // InvoiceDocument and the label reads the order's payment columns to
+        // decide whether anything is collected at the door. A route excused
+        // because a sibling is covered is a route nobody drives.
+        'admin-api/orders/{id}/delivery-note' => '/admin-api/orders/' . $order->id . '/delivery-note',
+        'admin-api/orders/{id}/shipping-label' => '/admin-api/orders/' . $order->id . '/shipping-label',
         // Groups redemptions per coupon and counts them beside the row, which
         // is the aggregate-plus-row shape MySQL's ONLY_FULL_GROUP_BY rejects.
         'admin-api/coupons/{coupon}' => '/admin-api/coupons/' . $coupon->id,

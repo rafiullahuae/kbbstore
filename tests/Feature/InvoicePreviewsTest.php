@@ -12,8 +12,9 @@ declare(strict_types=1);
  * silently. Running the suite regenerates all four files from the same routes
  * and the same Mailable the store actually uses.
  *
- * Written to docs/invoice-previews/. Open either .html in a browser and press
- * print: what the dialog shows is what the owner gets.
+ * Written to docs/invoice-previews/. Open any .html in a browser and press
+ * print: what the dialog shows is what the owner gets. The dispatch label opens
+ * as an A6 sheet rather than an A4 one, which is the thing to check on it.
  *
  * The order behind them is deliberately awkward rather than tidy — two lines, a
  * variant, a coupon discount, gift wrapping, a cash-on-delivery surcharge, a
@@ -211,6 +212,108 @@ it('renders the invoice, the packing slip and the emailed invoice, and saves the
 
     $written[] = invoicePreviewWrite('packing-slip.html', $slip);
 
+    /* ---- the delivery note: the handover sheet, no prices, signed for ---- */
+
+    $note = test()->actingAs($admin, 'admin')
+        ->get('/admin-api/orders/' . $order->id . '/delivery-note')
+        ->assertOk()
+        ->getContent();
+
+    expect($note)->toContain('Delivery Note')
+        ->and($note)->toContain('KBB-10427')
+        ->and($note)->toContain('Noura')
+        ->and($note)->toContain('Received by')
+        // No money, and none of the warehouse's or the sender's private matter.
+        ->and($note)->not->toContain('AED')
+        ->and($note)->not->toContain('473.50')
+        ->and($note)->not->toContain('HH-RT-150')
+        ->and($note)->not->toContain('Happy birthday, Mama.');
+
+    $written[] = invoicePreviewWrite('delivery-note.html', $note);
+
+    /* ---- the dispatch label, on the PAID order: no figure anywhere ---- */
+
+    $label = test()->actingAs($admin, 'admin')
+        ->get('/admin-api/orders/' . $order->id . '/shipping-label')
+        ->assertOk()
+        ->getContent();
+
+    expect($label)->toContain('Deliver to')
+        ->and($label)->toContain('KBB-10427')
+        ->and($label)->toContain('Al Barsha South 2')
+        ->and($label)->toContain('size: 105mm 148mm')
+        // Nothing about what is in the box, on the outside of the box.
+        ->and($label)->not->toContain('Rice Daily Moisturizing Toner')
+        ->and($label)->not->toContain('HH-RT-150')
+        ->and($label)->not->toContain('aisha.khan@example.com')
+        // Settled at 09:44 on the day, so there is nothing to collect.
+        ->and($label)->not->toContain('collect')
+        ->and($label)->not->toContain('473.50');
+
+    $written[] = invoicePreviewWrite('dispatch-label.html', $label);
+
+    /*
+     * ---- and the label the owner most needs to look at: an UNPAID COD one ----
+     *
+     * A second order, because the case cannot be shown on the first: order
+     * 10427 is settled, and the whole rule is that a settled order sends nobody
+     * to the door to collect. This is the one document in the set that prints a
+     * figure outside the invoice, so it is the one whose preview is worth
+     * having — a picture of the rule working, next to a picture of it not
+     * firing.
+     */
+    $cod = Order::create([
+        'id' => 10428,
+        'order_number' => 'KBB-10428',
+        'email' => 'aisha.khan@example.com',
+        'phone' => '+971 50 123 4567',
+        'status' => 'processing',
+        'currency' => 'AED',
+        'billing_address' => [
+            'first_name' => 'Aisha', 'last_name' => 'Khan',
+            'line1' => 'Apartment 1204, Marina Heights', 'city' => 'Dubai',
+            'state' => 'Dubai', 'country' => 'AE', 'phone' => '+971 50 123 4567',
+        ],
+        'shipping_address' => [
+            'first_name' => 'Aisha', 'last_name' => 'Khan',
+            'line1' => 'Apartment 1204, Marina Heights', 'city' => 'Dubai',
+            'state' => 'Dubai', 'country' => 'AE', 'phone' => '+971 50 123 4567',
+        ],
+        'subtotal' => 21550,
+        'shipping_total' => 0,
+        'total' => 21550,
+        'shipping_method' => 'Standard delivery (1–3 working days)',
+        'payment_method' => 'cod',
+        'payment_method_title' => 'Cash on delivery',
+        'paid_at' => null,
+        'created_at' => '2026-09-15 08:02:00',
+    ]);
+
+    $cod->items()->create([
+        'name' => 'Centella Ampoule',
+        'brand' => 'SKIN1004', 'sku' => 'SK-CA-030',
+        'quantity' => 1, 'unit_price' => 21550, 'subtotal' => 21550, 'total' => 21550,
+    ]);
+
+    $codLabel = test()->actingAs($admin, 'admin')
+        ->get('/admin-api/orders/' . $cod->id . '/shipping-label')
+        ->assertOk()
+        ->getContent();
+
+    /*
+     * 21550 fils is AED 215.50, and Money::displayDecimals() is 0 on this
+     * store, so the storefront renders that figure as AED 216. A driver who
+     * collects 216 against a receipt for 215.50 has taken 50 fils nobody
+     * agreed to, so the label prints at the currency's real precision like
+     * every other document here.
+     */
+    expect($codLabel)->toContain('Cash on delivery')
+        ->and($codLabel)->toContain('215.50')
+        ->and($codLabel)->not->toContain('>216<')
+        ->and(\App\Support\Money::format(21550))->toContain('216');
+
+    $written[] = invoicePreviewWrite('dispatch-label-cod.html', $codLabel);
+
     /* ---- the emailed invoice, both parts ---- */
 
     $order = $order->fresh('items');
@@ -235,7 +338,7 @@ it('renders the invoice, the packing slip and the emailed invoice, and saves the
 
     $written[] = invoicePreviewWrite('invoice-email.txt', $emailText);
 
-    expect($written)->toHaveCount(4);
+    expect($written)->toHaveCount(7);
 
     foreach ($written as $path) {
         expect(is_file($path))->toBeTrue()

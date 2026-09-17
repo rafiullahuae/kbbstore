@@ -226,6 +226,8 @@ class AdminOrderController extends Controller
             // never had one issued.
             'invoice_url' => \App\Http\Controllers\Admin\InvoiceController::invoiceUrl($order->id),
             'packing_slip_url' => \App\Http\Controllers\Admin\InvoiceController::packingSlipUrl($order->id),
+            'delivery_note_url' => \App\Http\Controllers\Admin\InvoiceController::deliveryNoteUrl($order->id),
+            'shipping_label_url' => \App\Http\Controllers\Admin\InvoiceController::shippingLabelUrl($order->id),
 
             'refunds' => $order->refunds()->latest()->get()->map(fn (Refund $r) => [
                 'id' => $r->id,

@@ -6,21 +6,33 @@
     went.
 
     On the invoice, where the two are identical the second column says so
-    rather than printing the same six lines twice. The packing slip passes
-    $collapseSame = false: the person holding it is looking for the delivery
-    address, and "as above" is a worse thing to read at a packing bench than
-    the address written out.
+    rather than printing the same six lines twice. The packing slip and the
+    delivery note pass $collapseSame = false: the person holding one of those is
+    looking for the delivery address, and "as above" is a worse thing to read at
+    a packing bench or a door than the address written out.
+
+    $showEmail defaults to true, which is what the invoice and the packing slip
+    have always done. The delivery note passes false — it is handed to whoever
+    opens the parcel, who on a gift order is not the person whose email address
+    that is.
+
+    EVERY CUSTOMER-TYPED LINE CARRIES dir="auto". An address written in Arabic
+    is laid out by the page's LTR paragraph direction unless the element says
+    otherwise, which puts a trailing house or street number at the wrong end of
+    the line. dir="auto" resolves the direction from the line's own first strong
+    character and makes it a bidi isolate besides, so an Arabic line cannot
+    reorder the English one beside it. See the ARABIC note in document.blade.php.
 --}}
 <div class="parties">
     <div class="party">
         <div class="label">{{ $billLabel ?? 'Bill to' }}</div>
         @forelse ($doc['billTo'] as $i => $line)
-            <div @class(['name' => $i === 0])>{{ $line }}</div>
+            <div dir="auto" @class(['name' => $i === 0])>{{ $line }}</div>
         @empty
             <div>&mdash;</div>
         @endforelse
-        @if ($doc['email'] !== '')
-            <div>{{ $doc['email'] }}</div>
+        @if (($showEmail ?? true) && $doc['email'] !== '')
+            <div dir="auto">{{ $doc['email'] }}</div>
         @endif
     </div>
 
@@ -30,7 +42,7 @@
             <div>Same as the billing address</div>
         @else
             @forelse ($doc['shipTo'] as $i => $line)
-                <div @class(['name' => $i === 0])>{{ $line }}</div>
+                <div dir="auto" @class(['name' => $i === 0])>{{ $line }}</div>
             @empty
                 <div>&mdash;</div>
             @endforelse

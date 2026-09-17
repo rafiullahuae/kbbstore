@@ -1,74 +1,15 @@
-{{--
-    The shell every printable document renders inside.
-
-    PRINT-READY HTML, NOT A PDF, AND DELIBERATELY SO. The host is shared
-    Hostinger with no shell access, and vendor/ cannot travel through the
-    updater at all — it is in BuildPackage::NEVER_SHIP and in
-    UpdateGuard::FORBIDDEN_PREFIXES — so a composer PDF library could never
-    reach the server through a package. Every browser prints to PDF; the owner
-    presses ⌘P / Ctrl+P and gets a file with selectable text, correct fonts and
-    no new dependency on the critical path. @page below sets A4 and the margins,
-    so what comes out of the dialog is the document and not a screenshot of a
-    web page.
-
-    NO EXTERNAL ASSETS. No Vite tag, no webfont, no image from public/build.
-    CLAUDE.md: the web root is a different directory from the application root
-    on this host, so compiled assets under public/build/ are not where this view
-    thinks they are — and a print stylesheet that 404s prints a wall of unstyled
-    text. Everything is inline, in one <style>, using system fonts.
-
-    NOTHING IS UNESCAPED HERE OR IN ANY DOCUMENT EXCEPT MONEY. Names,
-    addresses, gift messages and order notes are typed by whoever placed the
-    order and arrive raw by design (see InvoiceDocument). Every one of them goes
-    through {{ }}. The money strings come from Money::format(), which escapes
-    the operator-supplied currency symbol itself, and only those use {!! !!}.
-
-    ARABIC. This shop trades in the UAE and a customer may well write their name
-    or their address in Arabic. Two things have to be true for that to print,
-    and both are set here rather than left to luck:
-
-      A FONT THAT HAS THE GLYPHS. No webfont can be used — CLAUDE.md is explicit
-      that the web root is a different directory from the application root on
-      this host, so anything under public/build/ is not where a view thinks it
-      is, and a @font-face that 404s prints tofu on the live site only. The
-      stack below therefore names the Arabic system faces that ship with the
-      operating systems anybody here prints from: Segoe UI on Windows, Geeza
-      Pro on macOS and iOS, Noto Sans Arabic on Android and Linux. This is the
-      print path's advantage over a generated PDF stated concretely — the
-      machine doing the rendering already owns a shaping engine and a font, so
-      Arabic arrives joined and correct, where a hand-built PDF would be stuck
-      with the WinAnsi core fonts and could not draw an Arabic letter at all.
-
-      A DIRECTION THE MARKUP ACTUALLY STATES. The <html> element stays dir=ltr
-      because the furniture — the labels, the headings, the totals table — is
-      English and must not flip. Every element that prints CUSTOMER text carries
-      dir="auto" instead, which resolves from that value's own first strong
-      character. Without it an address line like "شارع 21، فيلا 7" is laid out
-      by the paragraph's LTR direction and the trailing number is placed at the
-      wrong end of the line — a silently mangled address on a parcel, which is
-      worse than a plain one. dir="auto" also makes each such element a bidi
-      isolate, so one Arabic line cannot reorder the English line beside it.
-      This is the identical argument Money::format() already makes for the
-      currency symbol, applied to the rest of the document.
---}}<!doctype html>
+<!doctype html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{-- A print document is never a page a search engine should hold. --}}
+    
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>@yield('title') — {{ $doc['orderNumber'] }}</title>
+    <title>Delivery note — KBB-10427</title>
     <style>
-        {{-- A4 unless a document says otherwise. The dispatch label is A6 and
-             says so in its own `page` section; yielding here rather than
-             hard-coding the rule means one place decides the sheet and the
-             label cannot end up printed in the middle of an A4 page. --}}
-        @hasSection('page')
-            @yield('page')
-        @else
-            @page { size: A4; margin: 14mm 14mm 16mm; }
-        @endif
-
+        
+                    @page { size: A4; margin: 14mm 14mm 16mm; }
+        
         :root {
             --ink: #16161a;
             --ink-2: #4a4f58;
@@ -257,8 +198,7 @@
         }
         .sign .cap { margin-top: 5px; font-size: 10.5px; color: var(--ink-soft); }
 
-        @yield('style')
-
+        
         /* ---- what printing changes ---- */
         @media print {
             html, body { background: #fff; }
@@ -286,30 +226,129 @@
 </head>
 <body>
     <div class="toolbar no-print">
-        <h1>@yield('title') · {{ $doc['orderNumber'] }}</h1>
+        <h1>Delivery note · KBB-10427</h1>
         <span class="spacer"></span>
         <span class="hint">Print, or choose “Save as PDF” in the print dialog.</span>
-        @yield('toolbar')
-        <button type="button" onclick="window.print()">Print</button>
+                    <a class="btn ghost" href="/admin-api/orders/10427/packing-slip">Packing slip</a>
+                <a class="btn ghost" href="/admin-api/orders/10427/shipping-label">Dispatch label</a>
+            <button type="button" onclick="window.print()">Print</button>
     </div>
 
-    {{-- THE WHOLE CLASS ATTRIBUTE IS YIELDED, WITH "sheet" AS THE DEFAULT, and
-         it is written this way because the two shorter ways both fail silently.
+    
+    <div class="sheet">
+            <div class="head">
+        <div class="who">
+            <div class="biz" dir="auto">K Beauty Bliss Trading LLC</div>
+<div class="biz-lines">
+            <div dir="auto">Office 1902, Burlington Tower</div>
+            <div dir="auto">Business Bay, Dubai</div>
+            <div dir="auto">United Arab Emirates</div>
+                <div dir="auto">+971 58 505 2611</div>
+                <div dir="auto">info@kbeautybliss.com</div>
+                <div dir="auto">kbeautybliss.com</div>
+                
+        <div dir="auto">TRN 100123456700003</div>
+    </div>
+        </div>
 
-         Blade does not match a directive whose @ is preceded by a word
-         character. So `class="sheet@yield('sheet-class')"` does not compile at
-         all: it renders the literal text @yield('sheet-class') into the class
-         attribute, the label never receives its `lbl` class, and the A6 sheet
-         prints at A4 — a bug with no error anywhere, caught here only because
-         a preview file is checked in and was read. The `@hasSection` form fails
-         worse: the @hasSection is left as text while its @endif compiles, which
-         is a PHP parse error in a file that looks correct.
+        <div class="what">
+            <div class="doctype">Delivery Note</div>
+            <div class="docmeta">
+                <div class="row">Order <b>KBB-10427</b></div>
+                                    <div class="row">Invoice <b>01000</b></div>
+                                                    <div class="row">Ordered 14 September 2026</div>
+                            </div>
+                            <div class="stamp">Gift</div>
+                    </div>
+    </div>
 
-         Here the directive opens the attribute value, so it compiles, and
-         @yield's second argument is what every document that defines no
-         `sheet-class` section gets. The dispatch label defines "sheet lbl". --}}
-    <div class="@yield('sheet-class', 'sheet')">
-        @yield('sheet')
+    <hr class="rule">
+
+    
+    <div class="parties">
+    <div class="party">
+        <div class="label">Ordered by</div>
+                    <div dir="auto" class="name">Aisha Khan</div>
+                    <div dir="auto" class="">Apartment 1204, Marina Heights</div>
+                    <div dir="auto" class="">Dubai</div>
+                    <div dir="auto" class="">United Arab Emirates</div>
+                    <div dir="auto" class="">+971 50 123 4567</div>
+                    </div>
+
+    <div class="party">
+        <div class="label">Delivered to</div>
+                                    <div dir="auto" class="name">Noura Al Mansoori</div>
+                            <div dir="auto" class="">Villa 7, Street 21</div>
+                            <div dir="auto" class="">Al Barsha South 2</div>
+                            <div dir="auto" class="">Dubai</div>
+                            <div dir="auto" class="">United Arab Emirates</div>
+                            <div dir="auto" class="">+971 55 987 6543</div>
+                        </div>
+</div>
+
+    <div class="facts">
+        <div class="fact">
+            <div class="label">Delivery</div>
+            <div class="v">Standard delivery (1–3 working days)</div>
+        </div>
+                    <div class="fact">
+                <div class="label">Phone</div>
+                <div class="v" dir="auto">+971 50 123 4567</div>
+            </div>
+                <div class="fact">
+            <div class="label">Items</div>
+            <div class="v">3</div>
+        </div>
+        <div class="fact">
+            <div class="label">Status</div>
+            <div class="v">processing</div>
+        </div>
+    </div>
+
+    <table class="lines">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th class="num" style="width:24mm">Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+                            <tr>
+                    <td>
+                        <div class="it-name" dir="auto">Rice Daily Moisturizing Toner 150ml</div>
+                                                                            <div class="it-sub" dir="auto">Haruharu Wonder</div>
+                                            </td>
+                    <td class="num"><strong>2</strong></td>
+                </tr>
+                            <tr>
+                    <td>
+                        <div class="it-name" dir="auto">Centella Ampoule</div>
+                                                                            <div class="it-sub" dir="auto">SKIN1004 · 30ml</div>
+                                            </td>
+                    <td class="num"><strong>1</strong></td>
+                </tr>
+                    </tbody>
+    </table>
+
+    <div class="sign">
+        <div>
+            <div class="label">Received by</div>
+            <div class="line"></div>
+            <div class="cap">Print name</div>
+        </div>
+        <div>
+            <div class="label">Signature</div>
+            <div class="line"></div>
+            <div class="cap">On delivery</div>
+        </div>
+        <div>
+            <div class="label">Date</div>
+            <div class="line"></div>
+            <div class="cap">Day / month / year</div>
+        </div>
+    </div>
+
+    <div class="foot">This is a delivery note and not a receipt: no prices are shown on it, and no payment is requested by it. The invoice for this order is issued separately.</div>
     </div>
 </body>
 </html>

@@ -48,8 +48,26 @@
      satisfy the check whatever this line did. --}}
 @section('title', $doc['docType'])
 
+{{-- EVERY CROSS-LINK IS GUARDED, and that is not defensive habit.
+
+     These four views are rendered by InvoiceController, which passes the whole
+     set, AND directly by tests and previews that pass only the one or two they
+     care about. A bare {{ $deliveryNoteUrl }} turns such a caller into an
+     "Undefined variable" ViewException — a 500 on a document, caused by a link
+     in a toolbar that does not print and that the caller never asked for. The
+     toolbar is navigation between documents, not part of any document: it is
+     inside .no-print and is gone the moment anything is printed. So a missing
+     link drops the button and renders the sheet. --}}
 @section('toolbar')
-    <a class="btn ghost" href="{{ $packingSlipUrl }}">Packing slip</a>
+    @isset($packingSlipUrl)
+        <a class="btn ghost" href="{{ $packingSlipUrl }}">Packing slip</a>
+    @endisset
+    @isset($deliveryNoteUrl)
+        <a class="btn ghost" href="{{ $deliveryNoteUrl }}">Delivery note</a>
+    @endisset
+    @isset($labelUrl)
+        <a class="btn ghost" href="{{ $labelUrl }}">Dispatch label</a>
+    @endisset
 @endsection
 
 @section('sheet')
@@ -101,7 +119,7 @@
         @if ($doc['phone'] !== '')
             <div class="fact">
                 <div class="label">Phone</div>
-                <div class="v">{{ $doc['phone'] }}</div>
+                <div class="v" dir="auto">{{ $doc['phone'] }}</div>
             </div>
         @endif
         <div class="fact">
@@ -123,7 +141,7 @@
             @foreach ($doc['items'] as $item)
                 <tr>
                     <td>
-                        <div class="it-name">{{ $item['name'] }}</div>
+                        <div class="it-name" dir="auto">{{ $item['name'] }}</div>
                         @php
                             $sub = array_values(array_filter([
                                 $item['brand'],
@@ -132,7 +150,7 @@
                             ], fn ($v) => $v !== ''));
                         @endphp
                         @if ($sub !== [])
-                            <div class="it-sub">{{ implode(' · ', $sub) }}</div>
+                            <div class="it-sub" dir="auto">{{ implode(' · ', $sub) }}</div>
                         @endif
                     </td>
                     <td class="num">{{ $item['quantity'] }}</td>
@@ -173,19 +191,19 @@
             @if ($doc['customerNote'] !== '')
                 <div class="note">
                     <div class="label">Order note</div>
-                    <div class="body">{{ $doc['customerNote'] }}</div>
+                    <div class="body" dir="auto">{{ $doc['customerNote'] }}</div>
                 </div>
             @endif
             @if ($doc['giftNote'] !== '')
                 <div class="note">
                     <div class="label">Gift message</div>
-                    <div class="body">{{ $doc['giftNote'] }}</div>
+                    <div class="body" dir="auto">{{ $doc['giftNote'] }}</div>
                 </div>
             @endif
         </div>
     @endif
 
     @if ($doc['seller']['footer'] !== '')
-        <div class="foot">{{ $doc['seller']['footer'] }}</div>
+        <div class="foot" dir="auto">{{ $doc['seller']['footer'] }}</div>
     @endif
 @endsection

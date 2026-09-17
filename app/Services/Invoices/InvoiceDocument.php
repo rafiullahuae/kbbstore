@@ -10,13 +10,14 @@ use App\Support\Money;
 use App\Support\StoreTime;
 
 /**
- * One order, turned into the exact strings an invoice and a packing slip print.
+ * One order, turned into the exact strings its four printable documents print.
  *
- * The same argument OrderEmailPresenter makes, for the same reason: two
- * documents — the invoice and the packing slip — have to agree about what the
- * order contained, and a figure worked out twice is a figure that can disagree
- * with itself. Everything is decided once, here, and both templates render this
- * array.
+ * The same argument OrderEmailPresenter makes, for the same reason: the invoice,
+ * the packing slip, the delivery note and the dispatch label have to agree about
+ * what the order contained and where it is going, and a figure worked out twice
+ * is a figure that can disagree with itself. Everything is decided once, here,
+ * and every template renders this array. The label naming a different door from
+ * the delivery note is not a possible bug, because there is one `shipTo`.
  *
  * ── THE LINES ARE THE SNAPSHOT, NEVER THE LIVE PRODUCT ──────────────────────
  *
@@ -107,6 +108,25 @@ class InvoiceDocument
             'seller' => $this->seller(),
             'billTo' => $this->address($order->billing_address),
             'shipTo' => $this->address($order->shipping_address ?: $order->billing_address),
+            /*
+             * The same address with its phone line left off, and the number on
+             * its own beside it.
+             *
+             * For the dispatch label, where the phone is not one more line of
+             * an address but the single field a driver acts on. address() puts
+             * it last, in the same size as the street, which is right on an
+             * invoice and wrong on a label — and printing the block as-is AND a
+             * prominent Tel line puts the number on the parcel twice, which
+             * reads as two different numbers to anybody in a hurry.
+             *
+             * The number prefers the DELIVERY address's own phone and falls
+             * back to the order's. Those differ exactly when somebody sends a
+             * gift: the order carries the buyer's number and the shipping
+             * address carries the recipient's, and it is the recipient who is
+             * standing behind the door.
+             */
+            'shipToPostal' => $this->address($order->shipping_address ?: $order->billing_address, false),
+            'shipPhone' => $this->shipPhone($order),
             'sameAddress' => $this->address($order->billing_address) === $this->address($order->shipping_address ?: $order->billing_address),
 
             'email' => trim((string) $order->email),
@@ -126,6 +146,7 @@ class InvoiceDocument
 
             'paymentLabel' => $order->paymentLabel(),
             'paid' => $order->paid_at !== null,
+            'codToCollect' => $this->codToCollect($order),
             'deliveryMethod' => trim((string) $order->shipping_method) ?: 'Standard delivery',
             'couponCode' => trim((string) $order->coupon_code),
             'isGift' => (bool) $order->is_gift,
@@ -469,12 +490,61 @@ class InvoiceDocument
     }
 
     /**
+     * The amount a cash-on-delivery driver has to come back with, or null.
+     *
+     * ── THE ONE FIGURE THAT IS ALLOWED ONTO A DISPATCH LABEL ────────────────
+     *
+     * The label goes on the outside of the parcel and the delivery note goes
+     * inside it, and neither carries a price — that is the whole of what makes
+     * them safe to send with a gift. This is the single exception, and it is
+     * not a loosening of the rule so much as the reason the rule has an edge:
+     * on a COD order the driver is collecting money at the door, and a driver
+     * who does not know the amount either asks the customer what they owe or
+     * brings back the wrong sum. Withholding it does not protect anybody; it
+     * just moves the mistake to the doorstep.
+     *
+     * So it is printed when BOTH halves hold, and never otherwise:
+     *
+     *   the order is cash on delivery — `payment_method` is exactly `cod`,
+     *       which is this app's gateway id (GatewayRegistry) and also the id
+     *       WooCommerce used, so imported orders answer correctly too. A
+     *       card-paid or Tabby order is not COD however its title reads;
+     *
+     *   nothing has been collected yet — `paid_at` is null. A COD order that
+     *       has already been settled (paid in the shop, or a reattempted
+     *       delivery) must not send a driver out to collect a second time.
+     *
+     * Anything else returns null and the documents print no money at all. A
+     * gift bought on a card therefore still arrives with no figure anywhere on
+     * it, which is the case the packing slip was built for in the first place.
+     *
+     * The figure is `total` — what was charged — at invoice precision, for the
+     * same reason every other figure on these documents is: a driver holding a
+     * label that says AED 474 and a customer holding an emailed receipt that
+     * says AED 473.50 have a disagreement at the door over 50 fils.
+     *
+     * @return array{fils:int,html:string,plain:string}|null
+     */
+    private function codToCollect(Order $order): ?array
+    {
+        if (trim((string) $order->payment_method) !== 'cod' || $order->paid_at !== null) {
+            return null;
+        }
+
+        return [
+            'fils' => (int) $order->total,
+            'html' => self::money((int) $order->total),
+            'plain' => self::moneyPlain((int) $order->total),
+        ];
+    }
+
+    /**
      * A postal address as lines, empty parts dropped.
      *
      * @param  mixed  $address
      * @return list<string>
      */
-    private function address($address): array
+    private function address($address, bool $withPhone = true): array
     {
         if (! is_array($address)) {
             return [];
@@ -496,10 +566,25 @@ class InvoiceDocument
                 : $city,
             (string) ($address['postcode'] ?? ''),
             $this->countryName((string) ($address['country'] ?? '')),
-            (string) ($address['phone'] ?? ''),
+            $withPhone ? (string) ($address['phone'] ?? '') : '',
         ];
 
         return array_values(array_filter(array_map('trim', $lines), static fn (string $l) => $l !== ''));
+    }
+
+    /**
+     * The number to ring about this delivery.
+     *
+     * The delivery address's own phone first, the order's second. See the
+     * shipToPostal note in present() for why the distinction matters on a gift.
+     */
+    private function shipPhone(Order $order): string
+    {
+        $address = $order->shipping_address ?: $order->billing_address;
+
+        $onAddress = is_array($address) ? trim((string) ($address['phone'] ?? '')) : '';
+
+        return $onAddress !== '' ? $onAddress : trim((string) $order->phone);
     }
 
     /**

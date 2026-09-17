@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 /*
 |------------------------------------------------------------------------------
-| Order invoices and packing slips  (Lane AE)
+| Order invoices, packing slips, delivery notes and dispatch labels
+|   (Lane AE; the delivery note and the label added by Lane EK)
 |------------------------------------------------------------------------------
 |
 | WIRED. This file is required from routes/web.php (or routes/api.php) and
@@ -37,8 +38,18 @@ declare(strict_types=1);
 |
 | Routes added:
 |
-|     GET /admin-api/orders/{id}/invoice        the printable tax invoice
-|     GET /admin-api/orders/{id}/packing-slip   the same order, no prices
+|     GET /admin-api/orders/{id}/invoice         the printable tax invoice
+|     GET /admin-api/orders/{id}/packing-slip    the picking sheet, no prices
+|     GET /admin-api/orders/{id}/delivery-note   the handover sheet, no prices
+|     GET /admin-api/orders/{id}/shipping-label  an A6 address label
+|
+| THE SECOND clear_caches_* MIGRATION IS NOT OPTIONAL AND IS NOT A DUPLICATE.
+| The first one shipped with the invoice and the packing slip. The compiled
+| route cache on the live host is a file of the routes that existed when it was
+| written, so it knows nothing of the two paths added here until it is rebuilt;
+| 2026_11_10_000000_clear_caches_dispatch_documents.php is what rebuilds it. The
+| failure without it is the quiet kind CLAUDE.md warns about — the buttons appear
+| on the order screen and open a 404.
 |
 | WHY THEY NEST UNDER /orders/{id} WHEN routes/orders-admin.php DELIBERATELY
 | DOES NOT.
@@ -46,7 +57,7 @@ declare(strict_types=1);
 | That file's header explains the trap: routes/web.php registers
 | `GET /orders/{id}` with no constraint on {id}, so a sibling named
 | `/orders/list` is swallowed by it and which one answers depends on the order
-| the require lines happen to sit in. The two paths here are THREE segments —
+| the require lines happen to sit in. All four paths here are THREE segments —
 | /orders/{id}/invoice — and `/orders/{id}` matches two. They cannot be
 | swallowed by it whatever order the requires end up in, exactly as
 | /orders/{id}/detail, /orders/{id}/refund and /orders/{id}/restore already
@@ -59,6 +70,8 @@ declare(strict_types=1);
 | living in a browser history and a referrer header, and the admin session is
 | already the one answer to who may read an order.
 |
+| ALL FOUR ARE GET AND ALL FOUR ONLY READ, with one exception.
+|
 | These are GET routes that RENDER, but the invoice one also ALLOCATES this
 | order's invoice number on first view (InvoiceNumbers::allocate, idempotent and
 | race-safe). That is a write on a GET, which is worth saying out loud: it is
@@ -66,6 +79,11 @@ declare(strict_types=1);
 | abandoned order would burn one out of a sequence an accountant has to
 | reconcile — and it is safe to repeat, so a browser prefetch, a reload or two
 | admins opening the same order at once still produce exactly one number.
+|
+| The other three allocate nothing and write nothing at all. Printing a picking
+| sheet, a delivery note or an address label is not issuing a financial
+| document, and an order that is picked and then cancelled must not leave a gap
+| in the invoice sequence behind it.
 |
 */
 
@@ -76,4 +94,10 @@ Route::get('/orders/{id}/invoice', [InvoiceController::class, 'invoice'])
     ->whereNumber('id');
 
 Route::get('/orders/{id}/packing-slip', [InvoiceController::class, 'packingSlip'])
+    ->whereNumber('id');
+
+Route::get('/orders/{id}/delivery-note', [InvoiceController::class, 'deliveryNote'])
+    ->whereNumber('id');
+
+Route::get('/orders/{id}/shipping-label', [InvoiceController::class, 'shippingLabel'])
     ->whereNumber('id');
