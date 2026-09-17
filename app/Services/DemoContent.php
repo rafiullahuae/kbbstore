@@ -97,7 +97,50 @@ class DemoContent
                 [$this->name, $brand, $this->price, $this->sale_price] =
                     [$r[0], $r[1], $r[2], $r[3]];
                 $this->slug = \Illuminate\Support\Str::slug($r[0]);
-                $this->brand = (object) ['name' => $brand, 'slug' => \Illuminate\Support\Str::slug($brand)];
+
+                /*
+                 * The brand is read as `$p->brand?->t('name')` by every card on
+                 * the storefront now, so a bare stdClass here is a fatal on the
+                 * home page with demo content on. Same fixture, same two
+                 * properties, plus the one method the templates call.
+                 */
+                $this->brand = new class($brand) {
+                    public string $name, $slug;
+
+                    public function __construct(string $name)
+                    {
+                        $this->name = $name;
+                        $this->slug = \Illuminate\Support\Str::slug($name);
+                    }
+
+                    public function t(string $field, ?string $locale = null): mixed
+                    {
+                        return property_exists($this, $field) ? $this->{$field} : null;
+                    }
+                };
+            }
+
+            /*
+             * t(), FOR THE SAME REASON THE PROPERTY NAMES ARE THE REAL COLUMN
+             * NAMES — see the note in posts() below.
+             *
+             * fill() concatenates these fixtures onto a collection of real
+             * models and one expression in the template has to serve both. The
+             * storefront reads catalogue text through HasTranslations::t() now,
+             * so a stand-in that answers only `->name` is a fatal
+             * "Call to undefined method" on the home page the moment demo
+             * content is switched on — exactly the failure the `cover`/`body`
+             * note records, one method along.
+             *
+             * It answers the fixture's own English and nothing else, which is
+             * the truthful answer: a fixture is not a row, it has no id, and
+             * there is nothing in `translations` that could ever be about it.
+             * property_exists() rather than ?? because a plain object has no
+             * null for a property it does not declare.
+             */
+            public function t(string $field, ?string $locale = null): mixed
+            {
+                return property_exists($this, $field) ? $this->{$field} : null;
             }
 
             public function effectivePrice(): int { return $this->sale_price ?: $this->price; }
@@ -145,6 +188,12 @@ class DemoContent
             public bool $demo = true;
             public function __construct(string $name) { $this->name = $name; }
             public function url(): string { return \App\Support\Url::to('/shop/'); }
+
+            /** See product() above: the templates read catalogue text with t(). */
+            public function t(string $field, ?string $locale = null): mixed
+            {
+                return property_exists($this, $field) ? $this->{$field} : null;
+            }
         });
     }
 
@@ -160,6 +209,12 @@ class DemoContent
             public bool $demo = true;
             public function __construct(string $name) { $this->name = $name; }
             public function url(): string { return \App\Support\Url::to('/shop/'); }
+
+            /** See product() above: the templates read catalogue text with t(). */
+            public function t(string $field, ?string $locale = null): mixed
+            {
+                return property_exists($this, $field) ? $this->{$field} : null;
+            }
         });
     }
 
@@ -202,6 +257,12 @@ class DemoContent
             public function readMinutes(): int
             {
                 return $this->minutes;
+            }
+
+            /** See product() above: the templates read catalogue text with t(). */
+            public function t(string $field, ?string $locale = null): mixed
+            {
+                return property_exists($this, $field) ? $this->{$field} : null;
             }
         });
     }

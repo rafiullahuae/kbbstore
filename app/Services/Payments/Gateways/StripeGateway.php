@@ -87,7 +87,26 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     public function description(int $totalFils): ?string
     {
-        return 'Pay securely by card. Your card details never reach this site.';
+        /*
+         * IT SAYS WHERE THE CARD IS TYPED, because the old sentence did not and
+         * the owner's own report is the evidence: he configured Stripe, opened
+         * the checkout, chose Credit / Debit Card and asked why the card fields
+         * were not showing.
+         *
+         * They are not showing because there are none, and that is the design
+         * this gateway's header argues for at length: Stripe CHECKOUT, a hosted
+         * page, so a card number never touches this server and the shop's PCI
+         * obligation stays SAQ-A on shared hosting. The flow is correct. What
+         * was missing was a sentence telling the shopper — and the owner
+         * reading his own checkout — that the card is entered on Stripe's page
+         * after Place order rather than on this one.
+         *
+         * A shopper who expects a card field and sees none assumes the shop is
+         * broken and leaves. That is the same defect as a missing field, and it
+         * costs the same order.
+         */
+        return 'Pay securely by card. You will enter your card details on Stripe\'s own '
+            .'secure page after you press Place order, so they never reach this site.';
     }
 
     public function configSchema(): array

@@ -168,13 +168,37 @@ it('carries the shopper\'s language into the breadcrumb schema as well as the pa
      */
     preg_match_all('/<script type="application\/ld\+json">(.*?)<\/script>/s', $html, $m);
 
+    /*
+     * THE BREADCRUMB NODE, not every node on the page.
+     *
+     * This read the concatenation of all of them and asserted that "Shop"
+     * appeared nowhere in it, which worked only while the page's whole JSON-LD
+     * was Organization + WebSite + BreadcrumbList. A listing now also publishes
+     * a CollectionPage carrying its own heading (App\Support\Seo, and
+     * tests/Feature/CollectionSchemaTest.php), and this fixture translates the
+     * two breadcrumb strings and not the heading — so the heading is legitimately
+     * still "Shop all" here, exactly as it is on the visible page, and the
+     * unscoped assertion started reporting the fixture rather than the defect.
+     *
+     * Narrowing it to the trail is what the comment above already said this
+     * assertion was for, and it keeps the case it was written to catch: a
+     * BreadcrumbList that is still English on an Arabic page.
+     */
+    $trail = '';
+
+    foreach ($m[1] as $block) {
+        if (str_contains($block, 'BreadcrumbList')) {
+            $trail = $block;
+        }
+    }
+
     $jsonLd = implode(' ', $m[1]);
 
     expect($jsonLd)->toContain('BreadcrumbList')
-        ->and($jsonLd)->toContain('الرئيسية')
-        ->and($jsonLd)->toContain('المتجر')
-        ->and($jsonLd)->not->toContain('Home')
-        ->and($jsonLd)->not->toContain('Shop');
+        ->and($trail)->toContain('الرئيسية')
+        ->and($trail)->toContain('المتجر')
+        ->and($trail)->not->toContain('Home')
+        ->and($trail)->not->toContain('Shop');
 });
 
 it('keeps an English source in the strings table for every label the constants carry', function () {

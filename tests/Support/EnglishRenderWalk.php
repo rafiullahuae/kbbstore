@@ -204,6 +204,39 @@ final class EnglishRenderWalk
      *
      * The commit named below is the one that made both moves.
      */
+    /*
+     * INTEGRATOR, resolving Lane FK and Lane FQ, which repinned this constant
+     * independently after doing the SAME work: both gave the five standalone
+     * documents a real <html lang> and dir. FK's landed first and shipped in
+     * 2.60.209, so its version of those five files is the one on this branch
+     * and its SHA is the one kept here. FQ's is not discarded for being wrong.
+     *
+     * FQ's note is kept below, because one paragraph of it is about this
+     * guard rather than about either lane, and it is the more useful half.
+     *
+     * What the diff said when it last moved: four pages changed by exactly one
+     * attribute and nothing else --
+     *
+     *     -<html lang="en">
+     *     +<html lang="en" dir="ltr">
+     *
+     * on /skincare-guide/, an article, /skin-quiz and /reviews. Those four
+     * carry their own <html> element instead of extending the shared layout,
+     * and the shared layout has emitted dir on every page it renders since the
+     * bilingual work landed -- so this is those four catching up with the rest
+     * of the storefront, not a copy change. With Arabic off, which is how this
+     * ships, htmlLang() is 'en' and direction() is 'ltr', so the English page
+     * is otherwise byte-for-byte what it was.
+     *
+     * ▲ WHAT THIS WALK CANNOT SEE, recorded because the silence is misleading.
+     * Lane FQ added a CollectionPage/ItemList block to the <head> of every
+     * listing page in the same cycle -- a large change to rendered bytes that
+     * does not appear in this guard's diff at all. Both of its passes render
+     * with the WORKING TREE's PHP and differ only in resources/views, so an
+     * app-code change is invisible here BY CONSTRUCTION. This guard covers
+     * Blade, and only Blade. A lane whose change is in PHP gets no assurance
+     * from it being green and must pin its own output.
+     */
     public const BASE_COMMIT = '44d4f12edc970b459a06f2e08c8e0b2c5d4940e7';
 
     /** resources/views as of $commit, materialised under a temp directory. */

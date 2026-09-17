@@ -1,0 +1,39 @@
+# ---------------------------------------------------------------------------
+# K-Beauty Bliss — far-future caching for content-addressed files
+#
+# THIS FILE IS NOT SHIPPED BY A PACKAGE AND IS NOT APPLIED AUTOMATICALLY.
+# docs/ is on BuildPackage::NEVER_SHIP, so nothing here can reach the server by
+# accident. Read docs/IMAGE-PIPELINE-AND-CACHE.md §9 before installing it by
+# hand; it says where it goes, how to check the web root first, and what to do
+# if the assets stop loading afterwards.
+#
+# It contains NO RewriteRule, NO Options and nothing outside an <IfModule>
+# guard. That is deliberate: this file must not be able to change how a single
+# URL is routed. On a server with mod_headers it sets the policy below; on one
+# without, every directive inside the guard is skipped and the file does
+# nothing at all.
+#
+# WHY A YEAR IS SAFE HERE AND NOWHERE ELSE ON THIS SITE
+#
+#   /build/     Vite writes content-hashed names — kbb-NawQuIF5.css — and a
+#               rebuild produces a new name. A URL under here cannot ever
+#               answer with different bytes.
+#   /img-cache/ the generated phone-sized copies. Their names mirror originals
+#               named Ymd-His-<random>.ext, and MediaUploadController cannot
+#               overwrite an original, so a variant URL is as fixed as the
+#               photograph it was made from.
+#
+# Neither property is assumed: tests/Feature/CacheHeaderPolicyTest.php asserts
+# both, and holds the max-age below to App\Http\Middleware\CacheHeaders::IMMUTABLE
+# so this file and the application cannot state different numbers.
+#
+# HTML IS NOT CACHED HERE. It is the application's to decide and it decides it
+# in that middleware: a storefront page carries a cart badge and a CSRF token
+# and must never be held by a shared cache.
+# ---------------------------------------------------------------------------
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|mjs|map|jpe?g|png|webp|gif|svg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

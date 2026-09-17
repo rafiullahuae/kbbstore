@@ -1074,6 +1074,137 @@ class Seo
             ]);
         }
 
+
+        /*
+         * CollectionPage + ItemList — category archives, brand landing pages
+         * and the four curated listings.
+         *
+         * These pages published `@type` nothing at all: the sitewide
+         * Organization and WebSite nodes, a BreadcrumbList, and that was the
+         * whole document. A listing that says nothing about itself is read as
+         * an ordinary web page, so the highest-intent surface on the shop --
+         * the one "korean sunscreen uae" lands on -- had no machine-readable
+         * statement that it is a list of products, and no statement of WHICH
+         * products.
+         *
+         * ── WHY THE LIST IS THIS PAGE'S ROWS AND NOT THE CATEGORY'S ─────────
+         *
+         * `position` is the item's place in the WHOLE listing, not its place on
+         * this page: page two of Serums carries positions 25..48. Restarting at
+         * 1 on every page would state that page two is the same list as page
+         * one, which is the thing the self-referencing canonical on a paginated
+         * archive exists to deny -- and denying it in the <head> while
+         * asserting it in the JSON-LD is worse than doing neither. The caller
+         * passes `offset`, which is the count of rows before the first one on
+         * this page; ShopController and CollectionController both already know
+         * it because both already compute the page window.
+         *
+         * `numberOfItems` is the number of entries in THIS list, which is what
+         * schema.org's definition says it is -- the count of itemListElement --
+         * and not the category's total. The total is what `url` plus the
+         * breadcrumb already carry.
+         *
+         * ── WHY THE CALLER DECIDES WHETHER THERE IS A LIST AT ALL ──────────
+         *
+         * A filtered or sorted view of an archive canonicalises to the CLEAN
+         * archive URL (Facets::canonicalUrl), which is a different document
+         * from the one being rendered. Attaching this page's twenty-four rows
+         * to that canonical would describe the wrong document -- the same class
+         * of defect as a canonical naming the wrong address, which is the one
+         * this project has already paid for twice. So `collection.items` is
+         * passed only when the canonical is self-referencing; when it is not,
+         * the CollectionPage node still stands (the canonical IS a collection
+         * page) and carries no list.
+         *
+         * ── PRICES ──────────────────────────────────────────────────────────
+         *
+         * Through priceString(), which is the same integer-fils path the
+         * Product node above uses. Nothing here touches a raw column: a 126 AED
+         * serum whose `price` column holds 12600 publishes "126.00", and
+         * CollectionSchemaTest mutates the builder to hand over the raw minor
+         * units and watches this go red.
+         */
+        if (($ctx['type'] ?? '') === 'collection') {
+            $c = is_array($ctx['collection'] ?? null) ? $ctx['collection'] : [];
+
+            /*
+             * `name` is the LISTING's name -- "Serums", "Best Sellers", the
+             * brand -- and falls back to the page title. The two differ by the
+             * site name, which seo_title_template appends to every <title> on
+             * the site: a CollectionPage called "Serums · K-Beauty Bliss" names
+             * the shop twice in one node, once here and once in the
+             * Organization beside it. Article resolves the same fork the same
+             * way ($a['title'] ?? $title).
+             */
+            $name = isset($c['name']) && trim((string) $c['name']) !== ''
+                ? trim((string) $c['name'])
+                : $title;
+
+            $node = array_filter([
+                '@context' => 'https://schema.org',
+                '@type' => 'CollectionPage',
+                'name' => $name,
+                'description' => $desc ?: null,
+                'url' => $url,
+            ], static fn ($v) => $v !== null);
+
+            $rows = is_array($c['items'] ?? null) ? array_values($c['items']) : [];
+
+            if ($rows !== []) {
+                $offset = max(0, (int) ($c['offset'] ?? 0));
+                $elements = [];
+
+                foreach ($rows as $i => $row) {
+                    if (! is_array($row)) {
+                        continue;
+                    }
+
+                    $itemUrl = self::canonical($row['url'] ?? null, $base);
+
+                    $item = array_filter([
+                        '@type' => 'Product',
+                        'name' => isset($row['name']) ? (string) $row['name'] : null,
+                        'url' => $itemUrl,
+                        'image' => self::absolute($row['image'] ?? null, $base),
+                        'sku' => isset($row['sku']) && (string) $row['sku'] !== '' ? (string) $row['sku'] : null,
+                    ], static fn ($v) => $v !== null && $v !== '');
+
+                    if (! empty($row['brand'])) {
+                        $item['brand'] = ['@type' => 'Brand', 'name' => (string) $row['brand']];
+                    }
+
+                    $price = self::priceString($row);
+
+                    if ($price !== null) {
+                        $item['offers'] = array_filter([
+                            '@type' => 'Offer',
+                            'price' => $price,
+                            'priceCurrency' => SeoSettings::firstFilled($row['currency'] ?? null, 'AED'),
+                            'availability' => self::availability($row),
+                            'url' => $itemUrl,
+                        ], static fn ($v) => $v !== null);
+                    }
+
+                    $elements[] = [
+                        '@type' => 'ListItem',
+                        'position' => $offset + $i + 1,
+                        'item' => $item,
+                    ];
+                }
+
+                if ($elements !== []) {
+                    $node['mainEntity'] = [
+                        '@type' => 'ItemList',
+                        'itemListOrder' => 'https://schema.org/ItemListOrderAscending',
+                        'numberOfItems' => count($elements),
+                        'itemListElement' => $elements,
+                    ];
+                }
+            }
+
+            $nodes[] = $node;
+        }
+
         // Breadcrumbs
         //
         // `item` is absolutised here rather than trusted from the caller. Every

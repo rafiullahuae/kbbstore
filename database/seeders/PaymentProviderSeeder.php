@@ -16,10 +16,13 @@ class PaymentProviderSeeder extends Seeder
     public function run(): void
     {
         $providers = [
-            ['id' => 'cod', 'title' => 'Cash on delivery', 'position' => 0],
+            // The owner's order, asked for by name: card first, cash last.
+            // 2026_11_19_000002 moves an EXISTING shop to the same order, and
+            // only while these four are still where this seeder put them.
+            ['id' => 'stripe', 'title' => 'Credit / Debit Card', 'position' => 0],
             ['id' => 'tabby', 'title' => 'Tabby: Pay in 4 Installments', 'position' => 1],
             ['id' => 'tamara', 'title' => 'Pay Later with Tamara', 'position' => 2],
-            ['id' => 'stripe', 'title' => 'Credit / Debit Card', 'position' => 3],
+            ['id' => 'cod', 'title' => 'Cash on delivery', 'position' => 3],
         ];
 
         foreach ($providers as $provider) {

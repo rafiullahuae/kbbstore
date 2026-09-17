@@ -10438,7 +10438,21 @@ buildNav();
 (function(){
   const q = new URLSearchParams(window.location.search).get('go');
   const h = (window.location.hash || '').replace('#', '');
-  const asked = q || h;
+  /* THE FIRST SEGMENT IS THE SCREEN, and reading the whole thing was a live
+     bug. Payments writes `#payments/<gateway>` from its own tab bar, so that
+     is the address in the owner's bar after he touches a gateway — and
+     TITLES['payments/stripe'] is undefined, so `asked` named no screen and the
+     replay fell through to the DASHBOARD. Bookmarking or reloading the screen
+     you were on took you somewhere else, silently.
+
+     Splitting here fixes it without teaching this boot anything about
+     gateways: `payments` routes, and the screen reads the rest of the hash
+     itself (payHashTab), which is the one channel the nine window.go wrappers
+     leave alone. Catalog takes its tab the same way, through go()'s own
+     `sub`, which it already validates against CAT_TABS. */
+  const askedPath = String(q || h);
+  const asked = askedPath.split('/')[0];
+  const askedSub = askedPath.split('/')[1] || '';
   /* TITLES is the console's own list of addressable screens; PLACEHOLDERS is
      the five `p-` ids, which are a real destination with a real card and were
      reachable by clicking inside the console but not by link. Anything else
@@ -10446,7 +10460,7 @@ buildNav();
      names no screen. */
   const target = asked && (TITLES[asked] || PLACEHOLDERS[asked]) ? asked : 'dash';
 
-  go(target);
+  go(target, askedSub);
 
   /* LIVE_RENDERED: the ids mountFrame() answers with frameStartupHTML.
      LATE_RENDERED: the ids go() answers with the DASHBOARD, because its
@@ -10467,7 +10481,7 @@ buildNav();
     if(done) return;
     done=true;
     if(!document.querySelector('#content [data-kbb-deeplink]')) return;   // drawn already
-    try{ if(typeof window.go==='function') window.go(target); }catch(e){}
+    try{ if(typeof window.go==='function') window.go(target, askedSub); }catch(e){}
   }
 
   /* setTimeout from inside the listener, not the listener itself. This block
@@ -20092,6 +20106,90 @@ buildNav();
 @include('admin.partials.routines-screen')
 
 @verbatim
+<script>
+/* ---------------------------------------------------------------------------
+   THE ADDRESS BAR FOLLOWS THE SCREEN
+
+   Reported by the owner with a screenshot: he was on Store -> Ecommerce and the
+   bar read `...#payments/stripe`. It did, and it had since the last time he
+   touched a gateway tab.
+
+   WHY. go(id,sub) paints the screen, sets the breadcrumb and the sidebar, and
+   has never written the URL. Exactly one place in this console writes it —
+   payRememberTab(), for the gateway tab — so the fragment was whatever the
+   Payments screen last left there, for the rest of the session. The address bar
+   named a screen the owner was not on, which makes a bookmark, a copied link
+   and a refresh all land somewhere else.
+
+   WHY THIS WRAPPER AND NOT AN EDIT INSIDE go(). Nine partials wrap window.go,
+   and a wrapper that handles its own screen RETURNS WITHOUT CALLING THE ONE IT
+   REPLACED — that is how Categories, the product editor, the coupon editor, the
+   brands editor, the review screens, the four Translation screens, Homepage
+   content and Build my routine are all routed. Writing the address inside the
+   base go() would therefore have updated it for some screens and not others,
+   which is worse than never updating it: a bar that is right four times out of
+   five is one nobody can trust.
+
+   So this is installed LAST, after every include above, and wraps whatever the
+   final window.go turns out to be. Every navigation goes through it, whoever
+   handles it.
+
+   replaceState, NOT location.hash and NOT pushState:
+     - assigning location.hash pushes a history entry per click AND fires
+       hashchange, which this console listens for and re-routes on;
+     - pushState would make Back walk backwards through screens instead of
+       leaving the console, which is a different feature and not the one asked
+       for. payRememberTab() chose replaceState for the same reason and this
+       matches it.
+
+   A SCREEN THAT OWNS A DEEPER ADDRESS KEEPS IT. `#payments/stripe` is the
+   Payments screen plus a gateway, so go('payments') must not flatten it back to
+   `#payments` underneath the tab bar that had just written it.
+
+   AND THE STALE QUERY GOES. `?go=<id>` is the console's other address form and
+   the boot reads it BEFORE the fragment. Leaving `?go=payments` in place while
+   the fragment says `#ecommerce` would mean a refresh opens Payments from the
+   URL of the Ecommerce screen — the same class of bug this block exists to fix,
+   one layer down.
+--------------------------------------------------------------------------- */
+(function(){
+  if (typeof window.go !== 'function') return;
+
+  var previousGo = window.go;
+
+  /* Ids are drawn from TITLES and from data-go attributes, never from user
+     input, but this is what goes into the address bar so it is bounded here
+     rather than trusted from there. */
+  var SAFE = /^[A-Za-z0-9_.-]{1,60}$/;
+
+  window.go = function(id, sub){
+    var result = previousGo.apply(this, arguments);
+
+    try {
+      var want = String(id == null ? '' : id);
+      if (!SAFE.test(want)) return result;
+
+      if (sub != null && SAFE.test(String(sub))) want += '/' + String(sub);
+
+      var here = String(window.location.hash || '').replace(/^#/, '');
+      if (here === want || here.indexOf(want + '/') === 0) return result;
+
+      var query = new URLSearchParams(window.location.search);
+      query.delete('go');
+      query.delete('tab');
+      var search = query.toString();
+
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + (search ? '?' + search : '') + '#' + want
+      );
+    } catch (e) { /* an address bar is never worth a broken screen */ }
+
+    return result;
+  };
+})();
+</script>
 </body>
 </html>
 

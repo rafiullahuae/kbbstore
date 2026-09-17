@@ -319,7 +319,14 @@ class PageController extends Controller
         $posts = Post::query()
             ->where('status', 'published')
             ->latest('published_at')
-            ->get(['slug', 'title', 'excerpt', 'tag', 'cover', 'published_at']);
+            /*
+             * `id`, for the same reason as post() below: a translation is
+             * looked up by (group, item_id, field), so a row loaded without its
+             * key cannot find its own Arabic and would print the English on a
+             * page that is translated everywhere else. One more column on a
+             * query that is already fetching the rows.
+             */
+            ->get(['id', 'slug', 'title', 'excerpt', 'tag', 'cover', 'published_at']);
 
         $base = self::siteBase();
         $seo = Seo::render([
@@ -369,7 +376,15 @@ class PageController extends Controller
             ->latest('published_at')
             ->orderByDesc('id')
             ->limit(3)
-            ->get(['slug', 'title', 'tag', 'cover']);
+            /*
+             * `id` IS PART OF THE SELECT AND IS NOT DECORATION. A translation
+             * is looked up by (group, item_id, field), so a model loaded
+             * without its key has no id to look itself up by — t() would
+             * silently answer the English for ever, on a page that looks
+             * translated everywhere else. Costs nothing: the same query, one
+             * more column, and the rows are already being fetched.
+             */
+            ->get(['id', 'slug', 'title', 'tag', 'cover']);
 
         $base = self::siteBase();
         $seoOverride = is_array($post->seo) ? $post->seo : [];
@@ -377,9 +392,12 @@ class PageController extends Controller
 
         $seo = Seo::render([
             'type' => 'article',
-            'title' => $seoOverride['title'] ?? $post->title,
+            // t() throughout: an Arabic article whose <title> and
+            // <meta description> are English advertises itself as untranslated
+            // in the one place a shopper decides whether to click.
+            'title' => $seoOverride['title'] ?? $post->t('title'),
             'title_is_final' => !empty($seoOverride['title']),
-            'description' => $seoOverride['desc'] ?? $post->excerpt ?? '',
+            'description' => $seoOverride['desc'] ?? $post->t('excerpt') ?? '',
             /*
              * The cover only counts as an image when it IS one. `posts.cover`
              * is a CSS background value and most rows hold a gradient, which
@@ -396,13 +414,16 @@ class PageController extends Controller
             'url' => !empty($seoOverride['canonical']) ? $seoOverride['canonical'] : $canonical,
             'noindex' => !empty($seoOverride['noindex']),
             'article' => [
-                'title' => $post->title,
+                'title' => $post->t('title'),
                 'published_at' => optional($post->published_at)->toAtomString(),
             ],
+            // 'Home' and 'Journal' are the English defaults of these two keys,
+            // which is what these literals were. The visible crumb on this page
+            // already prints the same two.
             'breadcrumb' => [
-                ['name' => 'Home', 'url' => $base . '/'],
-                ['name' => 'Journal', 'url' => $base . '/skincare-guide/'],
-                ['name' => $post->title, 'url' => $canonical],
+                ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
+                ['name' => __('store.journal.nav_journal'), 'url' => $base . '/skincare-guide/'],
+                ['name' => $post->t('title'), 'url' => $canonical],
             ],
         ]);
 

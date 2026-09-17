@@ -197,11 +197,15 @@ class BrandController extends Controller
         // The brand's own banner, when the owner has turned one on. Null for
         // every brand that has not, which is the default and is decided by the
         // column being NULL rather than by a stored flag.
-        $banner = \App\Support\PageBanner::forModel($brand, $brand->name);
+        // The FALLBACK heading is the brand's own name and is therefore
+        // catalogue: t(). The banner's own `heading` is a JSON sub-key of
+        // `banner` and is not translatable yet — see the note in
+        // docs/fn-translation-at-scale.md, which is a decision for the SEO lane.
+        $banner = \App\Support\PageBanner::forModel($brand, $brand->t('name'));
 
         return view('store.brands', [
             'banner' => $banner,
-            'seoCtx' => $this->seoCtx($brand, $banner),
+            'seoCtx' => $this->seoCtx($brand, $banner, $products),
             'brand' => $brand,
             'brands' => collect(),
             'products' => $products,
@@ -269,7 +273,7 @@ class BrandController extends Controller
      * @param  array<string, mixed>|null  $banner
      * @return array<string, mixed>
      */
-    private function seoCtx(Brand $brand, ?array $banner): array
+    private function seoCtx(Brand $brand, ?array $banner, \Illuminate\Support\Collection $products): array
     {
         $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
         $url = $base . Url::to('/korean-skincare-brands/' . $brand->slug . '/');
@@ -304,7 +308,10 @@ class BrandController extends Controller
          */
         $override = \App\Support\ProductSeo::normalise($brand->seo) ?? [];
 
-        $description = trim((string) ($override['desc'] ?? $brand->description));
+        // t(), so an Arabic brand page publishes an Arabic <meta description>.
+        // `description` is one of TranslationStore::LONG_FIELDS — one brand,
+        // one row, one query on the page that prints it.
+        $description = trim((string) ($override['desc'] ?? $brand->t('description')));
 
         /*
          * THE SHARE IMAGE IS STILL THE PAGE'S OWN HERO unless the owner has
@@ -365,15 +372,50 @@ class BrandController extends Controller
          */
         $noindex = ! empty($override['noindex']);
 
+        /*
+         * WHAT THIS PAGE IS, AND WHICH PRODUCTS ARE ON IT.
+         *
+         * A brand landing page is a list of that brand's products and published
+         * no type saying so. `collection` is the statement -- App\Support\Seo's
+         * CollectionPage branch carries the shape, App\Support\CollectionSchema
+         * carries why the price in it is a decimal string and not the fils
+         * column.
+         *
+         * OFFSET ZERO, and that is not an assumption: show() draws ONE window
+         * of at most PREVIEW_LIMIT products and this page has no pagination at
+         * all. If it ever grows some, the offset has to grow with it, which is
+         * why it is passed explicitly rather than defaulted.
+         *
+         * NOT WHEN THE OWNER HAS TYPED A CANONICAL. $canonical above replaces
+         * the computed URL with a document this method did not render; these
+         * rows are this page's and naming them as that page's contents would be
+         * a claim about somebody else's page. Same rule, same reason, as
+         * ShopController's.
+         *
+         * The list is the products this page DRAWS, capped at PREVIEW_LIMIT --
+         * not the brand's whole catalogue. A list naming products the page does
+         * not show is the listing-page equivalent of the invented reviews in
+         * plan item 34: reachable, machine-readable, and not what the visitor
+         * can see.
+         */
+        $collection = $canonical === ''
+            ? \App\Support\CollectionSchema::from($products, $base, 0) + ['name' => $brand->name]
+            : null;
+
         $ctx = array_filter([
+            'type' => 'collection',
+            'collection' => $collection,
             'description' => $description !== '' ? $description : null,
             'image' => $image !== '' ? $image : null,
             'url' => $url,
             'noindex' => $noindex ?: null,
+            // The same keys the visible crumb uses, so the trail Google prints
+            // and the trail a shopper reads say the same words. Their English
+            // defaults are 'Home' and 'Brands', which is what these literals were.
             'breadcrumb' => [
-                ['name' => 'Home', 'url' => $base . Url::to('/')],
-                ['name' => 'Brands', 'url' => $base . Url::to('/korean-skincare-brands/')],
-                ['name' => $brand->name, 'url' => $url],
+                ['name' => __('store.breadcrumb.home'), 'url' => $base . Url::to('/')],
+                ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to('/korean-skincare-brands/')],
+                ['name' => $brand->t('name'), 'url' => $url],
             ],
         ], static fn ($v) => $v !== null);
 

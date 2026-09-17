@@ -736,6 +736,17 @@ final class InterfaceStrings
             'product.details_eyebrow' => 'The details',
             'product.details_heading' => 'Product details',
             'product.read_more' => 'Read more ↓',
+            /*
+             * THE THREE TAB HEADINGS, which were English literals inside
+             * Store\ProductController::tabs() and so were missed by the
+             * conversion — a heading is an interface string wherever it is
+             * built. The BODIES under them are catalogue content and are read
+             * with t() against the product's own row; these three words are the
+             * same on every product page and are keyed.
+             */
+            'product.tab_description' => 'Description',
+            'product.tab_ingredients' => 'Ingredients',
+            'product.tab_how_to_use' => 'How to use',
             'product.related_eyebrow' => 'Complete your routine',
             'product.related_heading' => 'You may also like',
             'product.save_to_wishlist' => 'Save to wishlist',

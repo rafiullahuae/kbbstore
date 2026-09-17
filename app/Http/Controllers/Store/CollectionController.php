@@ -177,7 +177,7 @@ class CollectionController extends Controller
             'intro' => $intro,
             'products' => $products,
             'settings' => $this->settings,
-            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page),
+            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products),
         ]);
     }
 
@@ -229,8 +229,14 @@ class CollectionController extends Controller
      * campaign tag, a stray ?ref=) is not a different document and must not
      * become a different canonical.
      */
-    private function seoCtx(Request $request, string $title, string $intro, int $total, int $page): array
-    {
+    private function seoCtx(
+        Request $request,
+        string $title,
+        string $intro,
+        int $total,
+        int $page,
+        \Illuminate\Contracts\Pagination\LengthAwarePaginator $products
+    ): array {
         /*
          * NO DELIVERY PROMISE IN A META DESCRIPTION — the same removal, and the
          * same reasoning, as ShopController::seoDescription(), whose docblock
@@ -254,6 +260,36 @@ class CollectionController extends Controller
 
         return [
             'description' => $description,
+            /*
+             * WHAT THESE FOUR PAGES ARE, AND WHAT IS ON THEM.
+             *
+             * All four are lists of products and none of them said so: the
+             * document carried the sitewide Organization and WebSite nodes, a
+             * BreadcrumbList, and no statement of type at all. `collection`
+             * makes both halves machine-readable -- see App\Support\Seo's
+             * CollectionPage branch for the shape, and
+             * App\Support\CollectionSchema for why the price in it is a
+             * decimal string built from integer fils and never the column.
+             *
+             * UNCONDITIONAL HERE, unlike the shop's. These listings have no
+             * facets and no sort -- the docblock above says so, and says why
+             * only ?page is carried into the canonical -- so the canonical is
+             * always this page and the rows are always its own. There is no
+             * filtered view whose contents could be attached to somebody
+             * else's URL.
+             *
+             * firstItem() is the 1-based index of this page's first row within
+             * the whole listing, so firstItem() - 1 is the count of rows before
+             * it and positions on page two run 25..48. It is null on an empty
+             * listing, which ?? 1 turns back into an offset of zero -- and an
+             * empty listing has no rows to number anyway.
+             */
+            'type' => 'collection',
+            'collection' => \App\Support\CollectionSchema::from(
+                $products,
+                $base,
+                ($products->firstItem() ?? 1) - 1
+            ) + ['name' => $title],
             // Page one canonicalises to the clean URL — ?page=1 and the bare
             // path are the same document, and only one of them should be it.
             'url' => $page > 1 ? $base . $path . '?page=' . $page : $base . $path,

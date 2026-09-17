@@ -1,15 +1,15 @@
 @extends('layouts.store')
-@php use App\Support\Url; @endphp
+@php use App\Support\Url; $pageTitle = strip_tags($page->t('title')); @endphp
 
-@section('title', __('store.page.page_title', ['title' => strip_tags($page->title)]))
+@section('title', __('store.page.page_title', ['title' => $pageTitle]))
 
 @section('content')
 <div class="kbb-home">
 <section class="sec"><div class="wrap">
-    <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{!! $page->title !!}</span></nav>
+    <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{!! $page->t('title') !!}</span></nav>
 
     <article class="policy">
-        <h1>{!! $page->title !!}</h1>
+        <h1>{!! $page->t('title') !!}</h1>
         {{-- Content is authored in the admin, so it is trusted HTML.
 
              @shortcodes, not {!! !!}. AppServiceProvider has registered this
@@ -23,8 +23,12 @@
              easy, so this is the line that has to mean something first. --}}
         {{-- BodyHeadings::demoteH1 wraps the shortcode expansion rather than
              the raw column, because a [kbb_block] can itself carry an h1. The
-             <h1> above is this page's own. See App\Support\BodyHeadings. --}}
-        <div class="policy-body">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($page->content)) !!}</div>
+             <h1> above is this page's own. See App\Support\BodyHeadings.
+
+             t(), not the column. `content` is one of
+             TranslationStore::LONG_FIELDS — deliberately not in the map every
+             Arabic page loads, and read by the one page that prints it. --}}
+        <div class="policy-body">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($page->t('content'))) !!}</div>
 
         @if ($page->updated_at)
             <p class="policy-date">{{ __('store.page.last_updated', ['date' => $page->updated_at->format('j F Y')]) }}</p>

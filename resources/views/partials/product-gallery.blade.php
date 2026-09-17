@@ -23,7 +23,10 @@
     use App\Support\ImageVariants;
     use App\Support\ProductTitle;
 
-    $brandName = $product->brand?->name;
+    // Printed in the caption below, so it is the translation. The two
+    // Gradient::for() seeds further down stay on the English column so a
+    // product keeps one colour in both languages — see product-card.
+    $brandName = $product->brand?->t('name');
     $shotCount = count($gallery);
     $mainShot = $gallery[0] ?? ['image' => null, 'label' => __('store.product.gallery_front'), 'video' => false];
     $mainImage = $mainShot['image'] ?? null;

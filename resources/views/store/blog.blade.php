@@ -184,7 +184,7 @@
       @if($coverSrc)
         {{-- The first card is the one most likely to be the largest element in
              view on arrival, so it loads eagerly; the rest are below it. --}}
-        <img src="{{ $coverSrc }}" alt="{{ $p->title }}" width="800" height="500"
+        <img src="{{ $coverSrc }}" alt="{{ $p->t('title') }}" width="800" height="500"
              loading="{{ $loop->first ? 'eager' : 'lazy' }}">
       @else
         {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$p->tag] ?? '✨' }}
@@ -193,8 +193,8 @@
     </div>
     <div class="pbody">
       <div class="pdate">{{ optional($p->published_at)->format('j F Y') }}</div>
-      <div class="ptitle">{{ $p->title }}</div>
-      <div class="pex">{{ $p->excerpt }}</div>
+      <div class="ptitle">{{ $p->t('title') }}</div>
+      <div class="pex">{{ $p->t('excerpt') }}</div>
       <div class="pmore">{{ __('store.journal.read_more') }}</div>
     </div>
   </a>

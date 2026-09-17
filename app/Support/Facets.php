@@ -321,6 +321,51 @@ final class Facets
      * not discovering products that only appear on later pages, which is
      * a worse outcome than the crawl-budget cost of indexing them.
      */
+    /**
+     * Is a filter or a sort applied to this listing?
+     *
+     * Extracted out of canonicalUrl() below, which is its only caller inside
+     * this class, so that a SECOND reader of the same question cannot end up
+     * with its own copy of the rules. ShopController asks it to decide whether
+     * to publish this page's rows as an ItemList, and the only safe answer to
+     * that is the one canonicalUrl() is about to act on: a narrowed view
+     * canonicalises to the clean listing URL, and attaching the narrowed rows
+     * to that URL would describe a document nobody rendered.
+     *
+     * URL equality is NOT a substitute for this, and that is the trap worth
+     * recording: on page one a filtered view's canonical and the clean listing
+     * URL are the same string, so comparing them reports "self-canonical" for
+     * exactly the case this exists to exclude.
+     */
+    public static function hasFacets(): bool
+    {
+        $active = self::active();
+
+        return ! empty($active['cat'])
+            || ! empty($active['brand'])
+            || $active['price'] !== null
+            || $active['sale'] !== null
+            || $active['instock'] !== null
+            || self::sort() !== 'featured';
+    }
+
+    /**
+     * hasFacets(), plus a search.
+     *
+     * A search is deliberately not part of hasFacets(): `s` is not in
+     * currentParams()' facet set and canonicalUrl() does not test it, because
+     * on page one it does not need to -- a search returns the clean listing URL
+     * by falling through the page test, which is the collapse that is wanted.
+     *
+     * A list of search RESULTS is still not the listing's own list, so anything
+     * publishing the rows it drew has to ask this question rather than the
+     * narrower one.
+     */
+    public static function narrowed(): bool
+    {
+        return self::hasFacets() || trim((string) Request::query('s', '')) !== '';
+    }
+
     public static function canonicalUrl(string $cleanBaseUrl): string
     {
         if ((\App\Models\Setting::map()['crawl_clean'] ?? '1') !== '1') {
@@ -335,12 +380,7 @@ final class Facets
             return $base . Request::getRequestUri();
         }
 
-        $active = self::active();
-        $hasFilter = !empty($active['cat']) || !empty($active['brand'])
-            || $active['price'] !== null || $active['sale'] !== null || $active['instock'] !== null;
-        $hasSort = self::sort() !== 'featured';
-
-        if ($hasFilter || $hasSort) {
+        if (self::hasFacets()) {
             return $cleanBaseUrl;
         }
 

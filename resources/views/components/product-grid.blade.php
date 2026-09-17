@@ -43,8 +43,13 @@
      style="--kbb-cols:{{ $cols }};--kbb-cols-m:{{ $colsMobile }}">
     @foreach ($products as $p)
         @php
-            $brand = $p->brand?->name ?? '';
-            $cat = $p->categories->first()?->name;
+            // See product-card.blade.php: t() is the column on English and the
+            // owner's Arabic on /ar, and $seed stays English so a product keeps
+            // one colour in both languages.
+            $brand = $p->brand?->t('name') ?? '';
+            $cat = $p->categories->first()?->t('name');
+            $name = $p->t('name');
+            $seed = ($p->brand?->name ?? '') . $p->name;
             $onSale = $p->isOnSale();
             $off = $onSale ? $p->discountPercent() : 0;
             // See Money::decimalsToDistinguish(): 0 for every markdown the
@@ -58,24 +63,24 @@
             <div class="kbb-card-thumb">
                 @if ($p->image)
                     @php $pgSrcset = \App\Support\ImageVariants::srcsetFor($p->image); @endphp
-                    <img src="{{ $p->image }}" alt="{{ $p->name }}" loading="lazy" width="400" height="500"
+                    <img src="{{ $p->image }}" alt="{{ $name }}" loading="lazy" width="400" height="500"
                          @if ($pgSrcset !== '') srcset="{{ $pgSrcset }}" sizes="{{ \App\Support\ImageVariants::skinGridSizesAttribute() }}" @endif>
                 @else
                     {{-- Same gradient fallback the rest of the site uses, so a
                          product without a photo still fills the frame. --}}
-                    <span class="kbb-card-ph" style="background:{{ \App\Support\Gradient::for($brand . $p->name) }}">{{ \App\Support\Gradient::initials($brand ?: $p->name) }}</span>
+                    <span class="kbb-card-ph" style="background:{{ \App\Support\Gradient::for($seed) }}">{{ \App\Support\Gradient::initials($brand ?: $name) }}</span>
                 @endif
                 @if ($isNew)<span class="kbb-badge kbb-badge-new">{{ __('store.product_card.badge_new') }}</span>@endif
                 @if ($off)<span class="kbb-badge kbb-badge-sale">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
             </div>
             <div class="cb">
                 @if ($cat)<div class="kbb-card-cat">{{ $cat }}</div>@endif
-                <div class="cn">@if ($brand)<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span> @endif{{ $p->name }}</div>
+                <div class="cn">@if ($brand)<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span> @endif{{ $name }}</div>
                 @if ($p->review_count)
                     <div class="kbb-card-rate"><span class="kbb-crate">@for ($i = 1; $i <= 5; $i++)<span class="kbb-cstar{{ $i <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $p->review_count }})</span></div>
                 @endif
                 <div class="cp">@if ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price, $kbbDp) !!}</span> @endif<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span></div>
-                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">{{ __('store.product_card.add_to_cart') }}</span>
+                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}">{{ __('store.product_card.add_to_cart') }}</span>
             </div>
         </a>
     @endforeach

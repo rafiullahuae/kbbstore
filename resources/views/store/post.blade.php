@@ -167,7 +167,7 @@
   
   <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ \App\Support\Url::to('/skincare-guide/') }}">{{ __('store.journal.nav_journal') }}</a></div>
   @if($post->tag)<span class="atag">{{ $post->tag }}</span>@endif
-  <h1>{{ $post->title }}</h1>
+  <h1>{{ $post->t('title') }}</h1>
   <div class="ameta"><span>{{ $post->author ?: 'K-Beauty Bliss' }}</span> · <span>{{ optional($post->published_at)->format('j F Y') }}</span></div>
   {{-- The hero photograph is a real <img>, not a CSS background.
        PageController::post() hands this same column to Seo::render as the
@@ -182,7 +182,7 @@
   @endphp
   <div class="cover" style="background:{{ \App\Support\CoverImage::background($post->cover) }}">
     @if($coverSrc)
-      <img src="{{ $coverSrc }}" alt="{{ $post->title }}" width="1200" height="600" fetchpriority="high">
+      <img src="{{ $coverSrc }}" alt="{{ $post->t('title') }}" width="1200" height="600" fetchpriority="high">
     @else
       {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$post->tag] ?? '✨' }}
     @endif
@@ -195,8 +195,12 @@
   {{-- BodyHeadings::demoteH1 wraps the shortcode expansion rather than the raw
        column: a [kbb_block] can itself carry an h1, so the demotion has to see
        the expanded HTML. The <h1> above is this page's own — an h1 in an
-       article body made two of them. See App\Support\BodyHeadings. --}}
-  <div class="abody">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($post->body ?: '<p>' . e($post->excerpt) . '</p>')) !!}</div>
+       article body made two of them. See App\Support\BodyHeadings.
+
+       t(), not the column. `body` is one of TranslationStore::LONG_FIELDS:
+       not in the map that every Arabic page loads, fetched by the one page
+       that prints it. One article, one row, one query. --}}
+  <div class="abody">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($post->t('body') ?: '<p>' . e($post->t('excerpt')) . '</p>')) !!}</div>
   @verbatim
 </article>
 @endverbatim
@@ -220,12 +224,12 @@
       @endphp
       <div class="mcover" style="background:{{ \App\Support\CoverImage::background($r->cover) }}">
         @if($relSrc)
-          <img src="{{ $relSrc }}" alt="{{ $r->title }}" width="400" height="250" loading="lazy">
+          <img src="{{ $relSrc }}" alt="{{ $r->t('title') }}" width="400" height="250" loading="lazy">
         @else
           {{ ['Routine' => '✍️', 'Ingredients' => '🌿', 'SPF' => '☀️', 'News' => '📰'][$r->tag] ?? '✨' }}
         @endif
       </div>
-      <div class="mc"><div class="mtag">{{ $r->tag }}</div><div class="mt">{{ $r->title }}</div></div>
+      <div class="mc"><div class="mtag">{{ $r->tag }}</div><div class="mt">{{ $r->t('title') }}</div></div>
     </a>
   @endforeach
   @verbatim

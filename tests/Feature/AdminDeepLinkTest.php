@@ -135,7 +135,21 @@ it('still navigates the moment it reads the address, so a click and the first pa
          */
         ->and(str_contains($code, '(TITLES[asked] || PLACEHOLDERS[asked]) ? asked :'))
         ->toBeTrue('the boot no longer rejects an id the console does not know, so a typo would route somewhere')
-        ->and(preg_match('/\n\s*go\(target\);/', $code))
+        /*
+         * WIDENED, NOT WEAKENED. This matched `go(target);` character for
+         * character, so passing the sub-address alongside it turned the guard
+         * red over a change that does exactly what the guard asks for. The
+         * boot now routes on the first segment of `#<id>/<sub>` and hands the
+         * rest on, because `#payments/stripe` — an address this console writes
+         * itself, from the gateway tab — was not a key in TITLES and reloaded
+         * to the DASHBOARD.
+         *
+         * What is asserted is unchanged and still the only thing that matters:
+         * the call is there, it is at statement level, and it is not wrapped
+         * in a timeout or a handler. Optional arguments are allowed; a
+         * deferral is not.
+         */
+        ->and(preg_match('/\n\s*go\(target(?:\s*,[^;)]*)?\);/', $code))
         ->toBe(1, 'the immediate navigation is gone or has been deferred — the ten screens that boot off the state it leaves would fire against a console that never navigated');
 });
 
@@ -147,7 +161,10 @@ it('queues one more navigation for after the document is parsed, which is the fi
      * whole defect is that the local one is the incomplete chain. By the time
      * this runs, window.go is every wrapper the document installs.
      */
-    expect(str_contains($code, "typeof window.go==='function'") && str_contains($code, 'window.go(target)'))
+    // `window.go(target)` or `window.go(target, askedSub)` — see the note on the
+    // widened match above. The replay has to go through window.go; what it
+    // passes it is not this guard's business.
+    expect(str_contains($code, "typeof window.go==='function'") && preg_match('/window\.go\(target(?:\s*,[^;)]*)?\)/', $code) === 1)
         ->toBeTrue('nothing replays the navigation through the completed window.go, so the sixteen screens are unreachable by link again');
 
     /*

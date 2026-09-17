@@ -133,7 +133,22 @@ function pdtCard(Product $product): string
 {
     $html = test()->get('/shop')->assertOk()->getContent();
 
-    foreach (explode('<div class="pc">', $html) as $card) {
+    /*
+     * THE FIRST CHUNK IS NOT A CARD, and skipping it is not tidiness.
+     *
+     * explode() on the card's opening tag puts everything BEFORE the first card
+     * -- the whole <head> included -- in element 0. A listing now publishes a
+     * CollectionPage/ItemList naming every product on the page
+     * (tests/Feature/CollectionSchemaTest.php), so every slug on the shop
+     * appears up there, chunk 0 matched every product, and this helper returned
+     * the document head as "the card". The prices asserted against it then came
+     * back empty rather than wrong, which is the failure that reads as a price
+     * bug and is not one.
+     *
+     * array_slice, rather than a tighter needle, because the defect is the
+     * chunk and not the needle: chunk 0 is never a card whatever is in it.
+     */
+    foreach (array_slice(explode('<div class="pc">', $html), 1) as $card) {
         if (str_contains($card, $product->slug)) {
             return $card;
         }

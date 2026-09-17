@@ -40,7 +40,9 @@ class QuickViewController extends Controller
 
         return response()->json([
             'ok' => true,
-            'title' => $product->name,
+            // The modal's heading, which a shopper reads. t() is the English
+            // column on an English page and the owner's Arabic on /ar.
+            'title' => $product->t('name'),
             'html' => view('partials.quick-view', ['product' => $product])->render(),
         ]);
     }

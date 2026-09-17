@@ -244,12 +244,16 @@ class SearchController extends Controller
                     'key' => 'products',
                     'label' => 'Products',
                     'items' => $products->map(fn ($p) => [
-                        'label' => $p->name,
-                        'meta' => $p->brand?->name,
+                        // t(), not the column: the suggest dropdown is read by
+                        // a shopper. The `colour` seed below stays on the
+                        // English so a product's swatch is the same in both
+                        // languages — see components/product-card.blade.php.
+                        'label' => $p->t('name'),
+                        'meta' => $p->brand?->t('name'),
                         'price' => Money::plain($p->effectivePrice()),
                         'image' => $p->image,
                         'colour' => \App\Support\Gradient::for(($p->brand?->name ?? '') . $p->name),
-                        'initials' => \App\Support\Gradient::initials($p->brand?->name ?: $p->name),
+                        'initials' => \App\Support\Gradient::initials($p->brand?->t('name') ?: $p->t('name')),
                         'url' => $p->url(),
                     ])->all(),
                 ];
@@ -274,10 +278,10 @@ class SearchController extends Controller
                     'key' => 'categories',
                     'label' => 'Categories',
                     'items' => $cats->map(fn ($c) => [
-                        'label' => $c->name,
+                        'label' => $c->t('name'),
                         'meta' => $c->products_count . ' products',
                         'colour' => \App\Support\Gradient::for($c->name),
-                        'initials' => \App\Support\Gradient::initials($c->name),
+                        'initials' => \App\Support\Gradient::initials($c->t('name')),
                         'url' => $c->url(),
                     ])->all(),
                 ];
@@ -407,14 +411,18 @@ class SearchController extends Controller
                     'key' => 'products',
                     'label' => 'Products',
                     'items' => $products->map(fn ($p) => [
-                        'label' => $p->name,
-                        'meta' => $p->brand?->name,
+                        // t(), not the column: the suggest dropdown is read by
+                        // a shopper. The `colour` seed below stays on the
+                        // English so a product's swatch is the same in both
+                        // languages — see components/product-card.blade.php.
+                        'label' => $p->t('name'),
+                        'meta' => $p->brand?->t('name'),
                         'price' => Money::plain($p->effectivePrice()),
                         'image' => $p->image,
                         // The theme's .si swatch falls back to a gradient with
                         // initials when a product has no photo.
                         'colour' => \App\Support\Gradient::for(($p->brand?->name ?? '') . $p->name),
-                        'initials' => \App\Support\Gradient::initials($p->brand?->name ?: $p->name),
+                        'initials' => \App\Support\Gradient::initials($p->brand?->t('name') ?: $p->t('name')),
                         'url' => $p->url(),
                     ])->all(),
                 ];
@@ -438,10 +446,10 @@ class SearchController extends Controller
                     'key' => 'categories',
                     'label' => 'Categories',
                     'items' => $cats->map(fn ($c) => [
-                        'label' => $c->name,
+                        'label' => $c->t('name'),
                         'meta' => $c->products_count . ' products',
                         'colour' => \App\Support\Gradient::for($c->name),
-                        'initials' => \App\Support\Gradient::initials($c->name),
+                        'initials' => \App\Support\Gradient::initials($c->t('name')),
                         'url' => $c->url(),
                     ])->all(),
                 ];
@@ -465,10 +473,10 @@ class SearchController extends Controller
                     'key' => 'brands',
                     'label' => 'Brands',
                     'items' => $brands->map(fn ($b) => [
-                        'label' => $b->name,
+                        'label' => $b->t('name'),
                         'meta' => $b->products_count . ' products',
                         'colour' => \App\Support\Gradient::for($b->name),
-                        'initials' => \App\Support\Gradient::initials($b->name),
+                        'initials' => \App\Support\Gradient::initials($b->t('name')),
                         'url' => $b->url(),
                     ])->all(),
                 ];
@@ -508,8 +516,8 @@ class SearchController extends Controller
                 ->limit((int) $header->get('search_results_max'))
                 ->get()
                 ->map(fn ($p) => [
-                    'name' => $p->name,
-                    'brand' => $p->brand?->name,
+                    'name' => $p->t('name'),
+                    'brand' => $p->brand?->t('name'),
                     'url' => Url::to('/product/' . $p->slug . '/'),
                     'image' => $p->image,
                     'price' => Money::format($p->effectivePrice()),
