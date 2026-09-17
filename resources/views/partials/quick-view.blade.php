@@ -34,11 +34,23 @@
       </div>
     @endif
 
+    {{-- The modal quotes the same pair the card does, at the same width, for
+         the same reason: at whole dirhams a markdown of AED 100.00 to AED 99.80
+         printed the struck price and the live price as the identical string.
+         And the -0% that guard rules out on the card was live HERE — this
+         printed discountPercent() unguarded, so the modal for that product
+         carried "-0%" beside two equal numbers. --}}
     <div class="qv-price">
       @if ($product->isOnSale())
-        <del>{!! \App\Support\Money::format((int) $product->price) !!}</del>
-        <ins>{!! \App\Support\Money::format($product->effectivePrice()) !!}</ins>
-        <span class="qv-off">-{{ $product->discountPercent() }}%</span>
+        @php
+          $kbbQvWas = (int) $product->price;
+          $kbbQvNow = $product->effectivePrice();
+          $kbbQvDp = \App\Support\Money::decimalsToDistinguish($kbbQvWas, $kbbQvNow);
+          $kbbQvOff = $product->discountPercent();
+        @endphp
+        <del>{!! \App\Support\Money::format($kbbQvWas, $kbbQvDp) !!}</del>
+        <ins>{!! \App\Support\Money::format($kbbQvNow, $kbbQvDp) !!}</ins>
+        @if ($kbbQvOff >= 1)<span class="qv-off">-{{ $kbbQvOff }}%</span>@endif
       @else
         {!! \App\Support\Money::format($product->effectivePrice()) !!}
       @endif

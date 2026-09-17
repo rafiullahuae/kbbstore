@@ -32,7 +32,14 @@ class SeoFilesController extends Controller
     }
 
     /**
-     * Does this products.seo value ask for noindex?
+     * Does this `seo` value ask for noindex?
+     *
+     * Three tables now, not one: `products.seo`, `brands.seo` and
+     * `categories.seo` all carry the same shape — the migration that added the
+     * latter two says so in as many words — and a page that sets noindex must
+     * drop out of this file whichever table it lives in. Google reports the
+     * pair "page says noindex, sitemap says crawl me" as an error against the
+     * property rather than quietly honouring the page.
      *
      * The value arrives as a raw json string from the query builder (the
      * Eloquent cast is not in play here), and the flag itself has been written
@@ -240,16 +247,32 @@ class SeoFilesController extends Controller
         // builds it from the full nested path, not the bare slug. Every
         // category URL in the sitemap was a 404.
         if (Schema::hasTable('categories')) {
-            $cols = DB::table('categories')->select('slug', 'updated_at');
-
-            if (Schema::hasColumn('categories', 'path')) {
-                $cols->addSelect('path');
-            }
-
-            foreach ($cols->get() as $c) {
+            /*
+             * EVERY COLUMN, AND ONE FEWER QUERY THAN THE NAMED LIST COST.
+             *
+             * This read two optional columns — `path`, added after the table,
+             * and now `seo` — and the only way to name an optional column in a
+             * SELECT without a 500 on an un-migrated install is to ask the
+             * schema first. On SQLite a Schema::hasColumn() is a PRAGMA that
+             * DB::listen sees, and this file is on a query budget whose own
+             * comment records that twelve of its eighteen queries were schema
+             * introspection. Two probes to read two columns is the wrong trade
+             * for a table of tens of rows: `select *` needs none, and it is one
+             * fewer query than the version before this change.
+             *
+             * `products` below deliberately keeps its probes. That table is the
+             * catalogue — six hundred rows on this store — and selecting every
+             * column of it to avoid two PRAGMAs is not the same bargain.
+             */
+            foreach (DB::table('categories')->get() as $c) {
                 $path = trim((string) ($c->path ?? ''), '/') ?: $c->slug;
 
                 if (empty($path)) continue;
+
+                // A category whose SEO overrides ask for noindex is not a URL
+                // to submit. ShopController puts "noindex, nofollow" on the
+                // archive itself; this is the other half of the same decision.
+                if (self::isNoindex($c->seo ?? null)) continue;
 
                 $add($base . '/product-category/' . $path . '/', $c->updated_at ?? null, '0.6', 'weekly');
             }
@@ -277,13 +300,26 @@ class SeoFilesController extends Controller
         // makes "has a live product" true by construction rather than by a
         // second predicate that could drift from the first.
         if ($liveBrandIds !== [] && Schema::hasTable('brands')) {
+            // `select *` for the reason the category block above carries: it
+            // reads `brands.seo`, which is optional, and asking the schema
+            // whether it is there costs a query on a file that counts them.
+            // Only brands with a live product are fetched, so this is a handful
+            // of narrow rows either way.
             $brands = DB::table('brands')
-                ->select('slug', 'updated_at')
                 ->whereIn('id', array_keys($liveBrandIds))
                 ->get();
 
             foreach ($brands as $b) {
                 if (empty($b->slug)) {
+                    continue;
+                }
+
+                // Same test the product loop above applies, for the same
+                // reason. BrandController::seoCtx() publishes "noindex,
+                // nofollow" on the landing page from this flag; listing the
+                // URL here anyway is what Search Console reports as "Submitted
+                // URL marked noindex".
+                if (self::isNoindex($b->seo ?? null)) {
                     continue;
                 }
 

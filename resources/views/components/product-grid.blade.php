@@ -47,6 +47,10 @@
             $cat = $p->categories->first()?->name;
             $onSale = $p->isOnSale();
             $off = $onSale ? $p->discountPercent() : 0;
+            // See Money::decimalsToDistinguish(): 0 for every markdown the
+            // rounded display can already tell apart, the currency's precision
+            // for the pair that would otherwise print the same string twice.
+            $kbbDp = $onSale ? \App\Support\Money::decimalsToDistinguish((int) $p->price, $p->effectivePrice()) : null;
             $isNew = $p->created_at && $p->created_at->gt(now()->subDays(30));
             $rating = (int) round((float) $p->rating);
         @endphp
@@ -68,7 +72,7 @@
                 @if ($p->review_count)
                     <div class="kbb-card-rate"><span class="kbb-crate">@for ($i = 1; $i <= 5; $i++)<span class="kbb-cstar{{ $i <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $p->review_count }})</span></div>
                 @endif
-                <div class="cp">@if ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price) !!}</span> @endif<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice()) !!}</span></div>
+                <div class="cp">@if ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price, $kbbDp) !!}</span> @endif<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span></div>
                 <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">Add to cart</span>
             </div>
         </a>

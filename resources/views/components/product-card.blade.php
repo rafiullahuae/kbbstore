@@ -37,9 +37,19 @@
         // The theme's own, unchanged, for as long as the module is off.
         $label = '';
 
-        if ($product->isOnSale()) {
-            $off = $product->discountPercent();
-            $label = $off ? '<span class="lbl" style="background:#E23A4E">-' . $off . '% OFF</span>' : '';
+        // `$off >= 1` rather than `isOnSale()` then a guard INSIDE the branch,
+        // which is what this said. The two are not the same thing: a markdown
+        // that rounds to nothing took the sale branch, emitted the empty string
+        // and then stopped, so a featured product marked down from AED 100.00
+        // to AED 99.80 lost its Bestseller badge to a sale badge that was never
+        // drawn. ProductLabels::for() falls THROUGH to the next rule in exactly
+        // this case and says so in its own comment; the theme's copy now does
+        // the same, so turning the module on and off cannot change which badge
+        // a card carries.
+        $off = $product->isOnSale() ? $product->discountPercent() : 0;
+
+        if ($off >= 1) {
+            $label = '<span class="lbl" style="background:#E23A4E">-' . $off . '% OFF</span>';
         } elseif ($product->featured) {
             $label = '<span class="lbl" style="background:#1b9e77">Bestseller</span>';
         }
@@ -134,9 +144,20 @@
         @else
             <div class="crate" style="visibility:hidden">·</div>
         @endif
+        {{-- BOTH FIGURES AT ONE PRECISION, AND A PRECISION THAT SEPARATES THEM.
+             Money::format() rounds to whole dirhams here, so a markdown from
+             AED 100.00 to AED 99.80 printed `<del>AED 100</del> <ins>AED 100</ins>`
+             — a struck-through price identical to the one beside it, which
+             reads as a sale that took nothing off. Money::decimalsToDistinguish()
+             returns the store's usual 0 whenever the rounded figures already
+             differ (so every honest sale renders byte-for-byte as before) and
+             the currency's own precision only for the pair that would collide.
+             Both calls take the SAME width, or the two numbers would be quoted
+             on different scales, which is the same lie in a new shape. --}}
         <div class="cprice">
             @if ($product->isOnSale())
-                <del>{!! \App\Support\Money::format((int) $product->price) !!}</del> <ins>{!! \App\Support\Money::format($product->effectivePrice()) !!}</ins>
+                @php $kbbSaleDp = \App\Support\Money::decimalsToDistinguish((int) $product->price, $product->effectivePrice()); @endphp
+                <del>{!! \App\Support\Money::format((int) $product->price, $kbbSaleDp) !!}</del> <ins>{!! \App\Support\Money::format($product->effectivePrice(), $kbbSaleDp) !!}</ins>
             @else
                 {!! \App\Support\Money::format($product->effectivePrice()) !!}
             @endif

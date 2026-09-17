@@ -126,12 +126,38 @@ $kbbSeoCtx = array_merge([
     page, and the tag said "the Arabic version of this page is this page".
     absolute() takes the path exactly as built. Absolute because a crawler reads
     these off the raw HTML.
+
+    AND NOT AT ALL ON A PAGE A CONTROLLER HAS MARKED noindex. An hreflang set is
+    a claim that these URLs are alternates of one another and should each be
+    indexed for their own audience; a document whose robots tag says "noindex,
+    nofollow" is saying the opposite about itself in the same <head>. Google
+    resolves that pair by dropping the cluster rather than honouring half of it,
+    so leaving the tags on costs the OTHER language its alternate too.
+
+    Not hypothetical: `brands.seo` and `categories.seo` carry a noindex the
+    owner sets per brand and per category, and with Arabic enabled a brand
+    marked noindex published three alternates advertising itself. Reproduced
+    against a running preview before this guard.
+
+    $seoCtx AND NOT $kbbSeoCtx, WHICH IS THE WHOLE CARE IN THIS LINE. The merged
+    context also carries Indexability::isPrivate() — the cart, the checkout, the
+    account area, the wishlist and order tracking. Those are per-visitor pages
+    that robots.txt has always excluded, they are noindex for a reason that has
+    nothing to do with what document they are, and the bilingual lane
+    deliberately emits their alternates so an Arabic shopper's wishlist links to
+    the English one. Only a noindex a CONTROLLER set — an editorial "do not
+    index this document" — retracts the cluster.
+
+    With Arabic off, which is how this ships, $kbbAlternates is already empty
+    and this changes nothing at all.
 --}}
+@if (empty(($seoCtx ?? [])['noindex']))
 @foreach ($kbbAlternates as $kbbAltLocale => $kbbAltPath)
 <link rel="alternate" hreflang="{{ $kbbAltLocale }}" href="{{ \App\Support\Url::absolute($kbbAltPath) }}">
 @endforeach
 @if ($kbbAlternates !== [])
 <link rel="alternate" hreflang="x-default" href="{{ \App\Support\Url::absolute($kbbAlternates[\App\Support\Locale::DEFAULT] ?? '/') }}">
+@endif
 @endif
 @stack('head')
 

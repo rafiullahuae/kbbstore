@@ -268,6 +268,51 @@ final class Money
         return $sign . $whole . '.' . $fraction;
     }
 
+    /**
+     * How many decimals it takes to print these two amounts as two numbers.
+     *
+     * THE PROBLEM THIS EXISTS FOR. displayDecimals() is 0 on this store, so
+     * format() rounds to whole dirhams. That is a presentation choice and a
+     * fine one for a single price. It stops being fine the moment a page
+     * prints TWO figures derived from the same fils and invites the reader to
+     * compare them: a product marked down from AED 100.00 to AED 99.80 renders
+     * its strike-through and its live price as `AED 100` and `AED 100`, and
+     * the shopper is shown a sale in which nothing was taken off. Measured on
+     * /shop and on /product/{slug}/ before this existed; the same collision
+     * hides a REAL half-price markdown on a cheap line, where AED 1.00 down to
+     * AED 0.50 also prints `AED 1` twice, under a red "-50% OFF" badge.
+     *
+     * So: keep the store's rounded display wherever it can tell the truth, and
+     * widen to the currency's own precision only on the pair that would
+     * otherwise collide. Nothing else on the page moves.
+     *
+     * This is the rule OrderEmailPresenter already applies to a whole receipt
+     * ("a receipt may not round" — see its header). The storefront cannot take
+     * that wholesale, because repricing every tile to AED 100.00 is a change to
+     * how the shop looks rather than a correction; this narrows it to the one
+     * place where the rounded form states something untrue.
+     *
+     * Equal amounts get the display width: they are not a comparison, and a
+     * caller that hands the same figure twice should not trigger a widening.
+     *
+     * Never narrower than displayDecimals() and never wider than
+     * minorExponent(), which is the finest distinction the stored integers can
+     * make — two different integers ALWAYS print differently there, so the
+     * widened form is guaranteed to separate them.
+     */
+    public static function decimalsToDistinguish(int $a, int $b): int
+    {
+        $display = self::displayDecimals();
+
+        if ($a === $b) {
+            return $display;
+        }
+
+        return self::amount($a, $display) === self::amount($b, $display)
+            ? max($display, self::minorExponent())
+            : $display;
+    }
+
     // -----------------------------------------------------------------
     // Rendering
     // -----------------------------------------------------------------

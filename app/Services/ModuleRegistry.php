@@ -192,7 +192,7 @@ class ModuleRegistry
          */
         'mega_menu' => ['store', 'Mega Menu', 'Drives the header mega panels from the admin using the theme\'s own design — category columns, brands and editor\'s picks — plus the expandable sections in the phone menu. On by default: the panels have always rendered, so turning this off is what changes the storefront.', true, 'Store → Mega Menu', 'megamenu', 'header', 'nav', 'The panels that drop from the category bar, and the expandable sections in the phone menu.', 'live'],
         'notification_bar' => ['store', 'Notification Bar', 'A dismissible announcement bar at the top of every page. Replaces the Cosmetics plugin. Off by default — turn on and set your message.', false, 'Its own screen', '', 'header', 'top', 'A dismissible strip above the header on every page.', 'live'],
-        'product_labels' => ['store', 'Product Labels', 'Configurable Sale / New / Sold-out / Bestseller badges on product cards. Off by default — the theme’s built-in badges show until you turn it on.', false, 'Catalogue → Product Labels', 'labels', 'grid', 'card', 'Sale, New, Sold-out and Bestseller badges on product cards.', 'live'],
+        'product_labels' => ['store', 'Product Labels', 'Configurable Sale / New / Sold-out / Bestseller badges on product cards. Off by default — the theme’s built-in badges show until you turn it on.', false, 'Growth & Marketing → Product Labels', 'labels', 'grid', 'card', 'Sale, New, Sold-out and Bestseller badges on product cards.', 'live'],
         /*
          * The Media Library, in 'Store & content' because that is what it is:
          * it is not a catalogue feature, it holds the images for products,
@@ -278,7 +278,7 @@ class ModuleRegistry
         // time. This row said 'Its own screen' with no console route, which the
         // admin renders as "Its own screen — screen not built yet": the one
         // module whose settings the owner was told did not exist while they did.
-        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Store → Catalog → Reorder', 'catalog:reorder', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'live'],
+        'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Catalog → Reorder', 'catalog:reorder', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'live'],
         /*
          * SAID `todo` ABOUT A FEATURE THAT HAS BEEN LIVE SINCE 2.60.109 — Lane EH.
          *
