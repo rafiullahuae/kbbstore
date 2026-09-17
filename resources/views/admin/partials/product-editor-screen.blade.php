@@ -725,6 +725,13 @@
       manage_stock: false, stock: null, stock_status: 'instock',
       short_description: '', description: '', ingredients: '', how_to_use: '',
       image: null, images: [], image_alts: {}, seo: null,
+      /* A product being created has no page yet, so there is nothing truthful
+         to preview and these stay empty rather than guessing. They arrive real
+         from the endpoint on the first save, and on every load of an existing
+         product. Declared here so the snippet reads '' rather than 'undefined'
+         on a blank form. */
+      seo_fallback_title: '', seo_fallback_description: '',
+      seo_title: '', seo_description: '',
       readonly: {total_sales:0, rating:0, review_count:0, url:''}
     };
   }
@@ -2311,20 +2318,56 @@
     var u = document.querySelector('#content #peo-snip-u');
     if (!t || !d || !u) return;
 
-    var seoT = (document.querySelector('#content #peo-seo-t') || {}).value || '';
-    var seoD = (document.querySelector('#content #peo-seo-d') || {}).value || '';
-    var name = (document.querySelector('#content #peo-name') || {}).value || model.name || 'Product';
+    var emitted = emittedTags();
 
-    t.textContent = clip(seoT || name, 60);
-    d.textContent = clip(seoD || stripTags(model.short_description) || 'Add a description so Google shows the right words here.', 155);
+    t.textContent = clip(emitted.title, 60);
+    d.textContent = clip(emitted.description, 155);
     u.textContent = (model.readonly && model.readonly.url) || ('/product/' + (model.slug || 'new-product') + '/');
 
     counts();
   }
 
+  /* WHAT THE STOREFRONT WILL PUT IN THIS PRODUCT'S HEAD — not what the boxes
+     hold, which is not the same string and was what this panel used to draw.
+
+     Both fallbacks come from the product endpoint as `seo_fallback_title` and
+     `seo_fallback_description`, built by App\Support\ProductSeo out of
+     Seo::titleFor() and Seo::describe() — the same two methods the page itself
+     renders with. So an empty box shows the real tag, including the case where
+     the real tag is EMPTY: a product whose short description was cleared
+     publishes no <meta name="description"> at all, and an empty line here is
+     what Google would show. The invented sentence that used to sit in that slot
+     described a page this shop has never served.
+
+     A FILLED TITLE BOX IS THE WHOLE TITLE. Store\ProductController::show() sets
+     `title_is_final` for a per-product SEO title, so the template is not
+     applied and the site name is NOT appended — the typed string is the tag,
+     which is why it is used here verbatim. The one thing this cannot resolve
+     client-side is a %%token%% chip inside a typed title; those are substituted
+     server-side, and the panel repaints from the endpoint after every save. */
+  function emittedTags(){
+    var seoT = (document.querySelector('#content #peo-seo-t') || {}).value || '';
+    var seoD = (document.querySelector('#content #peo-seo-d') || {}).value || '';
+
+    return {
+      title: seoT.trim() || model.seo_fallback_title || model.name || 'Product',
+      description: seoD.trim() || model.seo_fallback_description || ''
+    };
+  }
+
+  /* The counters measure the EMITTED tag, not the box.
+
+     With the title box empty the tag is brand + name run through
+     `seo_title_template`, which on this store appends " | K-Beauty Bliss" — so
+     counting the box told the operator "0 / 60" under a title Google receives
+     at 40-odd characters, and counting a 58-character typed-then-cleared title
+     told them "58 / 60, good" under a 75-character tag. Same reasoning as the
+     snippet above: measure the thing that ships. */
   function counts(){
-    count('seo-title', (document.querySelector('#content #peo-seo-t') || {}).value || '', 50, 60);
-    count('seo-desc', (document.querySelector('#content #peo-seo-d') || {}).value || '', 120, 155);
+    var emitted = emittedTags();
+
+    count('seo-title', emitted.title, 50, 60);
+    count('seo-desc', emitted.description, 120, 155);
   }
 
   function count(key, value, good, max){
@@ -2339,12 +2382,6 @@
   function clip(s, n){
     s = String(s || '');
     return s.length > n ? s.slice(0, n - 1) + '…' : s;
-  }
-
-  function stripTags(html){
-    var d = document.createElement('div');
-    d.innerHTML = String(html || '');
-    return (d.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
   /* ---- slug suggestion, create only ---- */

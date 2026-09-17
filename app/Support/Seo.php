@@ -88,42 +88,13 @@ class Seo
         $base     = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
 
         $type = $ctx['type'] ?? 'website';
-        $isHome = $type === 'home';
 
         // Title. Home has its own field; everything else goes through the
         // configured template. A page that has already produced its final
         // title (a per-product SEO title, a blog post override) passes
         // title_is_final and is only cleaned of placeholders, not re-templated.
-        $rawTitle = trim((string) ($ctx['title'] ?? ''));
         $tokens = self::tokens($ctx, $sep, $siteName);
-
-        if ($isHome) {
-            $homeTitle = SeoSettings::from($s, 'seo_home_title', '');
-            $title = TitleTemplate::render(
-                $homeTitle !== '' ? $homeTitle : ($rawTitle !== '' ? $rawTitle : $siteName),
-                $tokens,
-                $sep
-            );
-        } elseif (!empty($ctx['title_is_final']) && $rawTitle !== '') {
-            $title = TitleTemplate::render($rawTitle, ['sep' => $sep, 'sitename' => $siteName, 'page' => ''], $sep);
-        } else {
-            $tpl = SeoSettings::from($s, 'seo_title_template');
-
-            // The "already carries the brand" rule that used to live here is
-            // now in self::tokens(), because it reaches the DESCRIPTION too:
-            // $tokens is the same array both are rendered with, so blanking
-            // {sitename} for the title silently blanked it for the description
-            // as well. That coupling is preserved exactly -- it is what the
-            // pages emit today -- but it is now written down in one place
-            // where an outside caller can reproduce it. See describe().
-            $title = TitleTemplate::render($tpl, $tokens, $sep);
-        }
-
-        // A blank <title> is never acceptable: it is what an untouched
-        // template field or an empty site name used to produce.
-        if ($title === '') {
-            $title = $siteName !== '' ? $siteName : 'K-Beauty Bliss';
-        }
+        $title = self::titleOf($ctx, $s, $siteName, $sep, $tokens);
 
         $desc = self::describe($ctx, $tokens, $sep);
 
@@ -308,6 +279,88 @@ class Seo
         }
 
         return $tokens;
+    }
+
+    /**
+     * The `<title>` this page will emit, resolved through the configured
+     * template — the title half of what describe() answers for the description.
+     *
+     * ── WHY THIS EXISTS, AND WHY IT IS AN EXTRACTION RATHER THAN A SECOND COPY
+     *
+     * describe() was pulled out of render() because the admin's snippet preview
+     * had no way to ask what description a page publishes, and so invented one.
+     * The title had exactly the same shape of bug and it was still live: the
+     * product editor's preview drew the operator's raw "Page title" box, or the
+     * bare product name when that box was empty. Neither is what the page
+     * emits. A page's title goes through `seo_title_template` — "{title} {sep}
+     * {sitename}" on this store — so an operator typing a 58-character title
+     * was shown "58 / 60, good" under a `<title>` that Google actually receives
+     * at 58 + " | K-Beauty Bliss" = 75 characters and truncates.
+     *
+     * Three rules live in here and none of them is reconstructible from
+     * outside: home pages use their own field, a title the page has already
+     * finalised (a per-product SEO title, a post override) is only cleaned of
+     * placeholders and never re-templated, and a raw title that ALREADY carries
+     * the site name blanks {sitename} so the brand is not printed twice — that
+     * last one via self::tokens(), which is shared with the description.
+     *
+     * render() calls this to build the tag. App\Support\ProductSeo::metaTitle()
+     * calls it so the editor can be handed the same bytes.
+     *
+     * @param  array<string, mixed>  $ctx  the same context render() is given
+     */
+    public static function titleFor(array $ctx): string
+    {
+        $s = SeoSettings::map();
+        $siteName = SeoSettings::firstFilled(
+            $s['seo_site_name'] ?? null,
+            $s['store_name'] ?? null,
+            (string) config('app.name'),
+            'K-Beauty Bliss'
+        );
+        $sep = SeoSettings::from($s, 'seo_separator');
+
+        return self::titleOf($ctx, $s, $siteName, $sep, self::tokens($ctx, $sep, $siteName));
+    }
+
+    /**
+     * The shared body, given the settings render() has already read.
+     *
+     * @param  array<string, mixed>  $ctx
+     * @param  array<string, mixed>  $s
+     * @param  array<string, string>  $tokens
+     */
+    private static function titleOf(array $ctx, array $s, string $siteName, string $sep, array $tokens): string
+    {
+        $rawTitle = trim((string) ($ctx['title'] ?? ''));
+
+        if (($ctx['type'] ?? 'website') === 'home') {
+            $homeTitle = SeoSettings::from($s, 'seo_home_title', '');
+            $title = TitleTemplate::render(
+                $homeTitle !== '' ? $homeTitle : ($rawTitle !== '' ? $rawTitle : $siteName),
+                $tokens,
+                $sep
+            );
+        } elseif (!empty($ctx['title_is_final']) && $rawTitle !== '') {
+            $title = TitleTemplate::render($rawTitle, ['sep' => $sep, 'sitename' => $siteName, 'page' => ''], $sep);
+        } else {
+            // The "already carries the brand" rule that used to live here is
+            // now in self::tokens(), because it reaches the DESCRIPTION too:
+            // $tokens is the same array both are rendered with, so blanking
+            // {sitename} for the title silently blanked it for the description
+            // as well. That coupling is preserved exactly -- it is what the
+            // pages emit today -- but it is now written down in one place
+            // where an outside caller can reproduce it. See describe().
+            $title = TitleTemplate::render(SeoSettings::from($s, 'seo_title_template'), $tokens, $sep);
+        }
+
+        // A blank <title> is never acceptable: it is what an untouched
+        // template field or an empty site name used to produce.
+        if ($title === '') {
+            $title = $siteName !== '' ? $siteName : 'K-Beauty Bliss';
+        }
+
+        return $title;
     }
 
     /**

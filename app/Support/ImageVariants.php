@@ -63,6 +63,67 @@ namespace App\Support;
  * file which happens to be named `photo-400w.jpg` can never be mistaken for a
  * variant of `photo.jpg`, and so the whole cache is one directory the owner
  * can delete without touching a single original.
+ *
+ * ── THE CACHE POLICY, IN FULL ───────────────────────────────────────────────
+ *
+ * Written down because a host with no shell and no queue worker cannot be
+ * given a policy that says "a background job tidies up".
+ *
+ * WHAT IS GENERATED. Two widths, 400 and 800, and never a width wider than the
+ * original — a 300px logo is COMPLETE with neither, and isComplete() says so
+ * rather than leaving it in a backlog forever. Only jpg/jpeg/png/webp; SVG has
+ * no pixels and GIF is usually an animation. Same format in as out, so a
+ * cut-out PNG keeps its transparency.
+ *
+ * WHEN. Exactly twice, both of them synchronous and both of them started by a
+ * person:
+ *   1. on upload — MediaUploadController::sizeCopies(), inside the upload
+ *      request, which is the one moment the cost is already being paid;
+ *   2. from Media Library → Image Sizes, a batch the owner clicks, which walks
+ *      the catalogue a slice at a time (ImageSizesApiController).
+ * NEVER on page view. A variant exists because something made it, and a page
+ * that finds none emits no srcset and loads the original exactly as before.
+ *
+ * WHAT IT COSTS, MEASURED ON REAL FILES rather than estimated (PHP 8.4, GD
+ * 2.3.3, synthetic photographic sources — noisy, so a worst case for JPEG;
+ * real product shots on white backgrounds compress better):
+ *
+ *     source                    original   400w     800w     variants  vs src
+ *     1000x1000 JPEG q85        250.1KB    20.5KB   100.6KB  121.1KB    48%
+ *     1200x1200 JPEG q85        358.8KB    20.7KB    94.7KB  115.4KB    32%
+ *       800x800  JPEG q85       159.8KB    23.0KB   (none)    23.0KB    14%
+ *     1000x1000 PNG            2129.4KB   307.7KB  1362.9KB 1670.7KB    78%
+ *
+ *     generate(), cold: 59ms for the 1000x1000 JPEG, 363ms for the PNG.
+ *     generate(), warm: 0.02-0.09ms — two is_file() calls and a return.
+ *
+ * SO, FOR THIS CATALOGUE. 671 products at one photograph each is about 79MB of
+ * variants; at four photographs each, about 317MB. Those are JPEG numbers. A
+ * PNG-heavy catalogue costs roughly fourteen times as much per image, and that
+ * — not the count of products — is the number to watch on a shared plan.
+ *
+ * HOW IT IS INVALIDATED. By forget(), called when an original is deleted
+ * (Admin\MediaLibraryApiController::destroy). There is no time-based expiry and
+ * there should not be: the cache is a pure function of the original's bytes, so
+ * an entry is stale only when those bytes change or go away. Uploads cannot
+ * overwrite — MediaUploadController names every file `Ymd-His-<random>.ext` —
+ * so replacement-in-place can only arrive by FTP or a restored backup, and the
+ * answer to that is the same forget(), or deleting public/img-cache entirely
+ * and re-running the batch. The whole directory is safe to delete at any time:
+ * nothing reads it that does not check is_file() first.
+ *
+ * HOW IT DEGRADES, all three ways, none of which breaks a page:
+ *   - NO GD. available() is false, generate() returns `reason: 'no image
+ *     library'`, the batch screen says so instead of reporting a backlog, and
+ *     srcsetFor() finds nothing on disk so pages emit no srcset at all.
+ *   - CACHE DIRECTORY UNWRITABLE. write() returns false — mkdir failed, or the
+ *     encode failed, or the rename failed — `made` stays 0 and the batch
+ *     reports progress it did not make rather than throwing. Pages are
+ *     unaffected for the same reason: the srcset is built from what is on disk.
+ *   - HALF-WRITTEN FILES ARE IMPOSSIBLE. Each variant is encoded to a
+ *     `.<random>.part` file beside its destination and rename()d into place,
+ *     which is atomic within one filesystem. A reader sees the complete file or
+ *     no file.
  */
 final class ImageVariants
 {
@@ -375,6 +436,84 @@ final class ImageVariants
         }
 
         return ['made' => $made, 'skipped' => $skipped, 'reason' => null];
+    }
+
+    /**
+     * Throw away every cached copy of one photograph, and say how many went.
+     *
+     * ── WHY THIS EXISTS: THE CACHE HAD NO INVALIDATION AT ALL ───────────────
+     *
+     * generate() skips a width that is already on disk — which is what makes an
+     * interrupted batch safe to re-run, and is right. The consequence is that
+     * NOTHING in this application could ever remove a variant. The originals
+     * have two ways out, and the copies had none:
+     *
+     *   DELETE. Admin\MediaLibraryApiController::destroy() unlinks the original
+     *   under public/uploads/ and forgets the row. Both copies stayed, in a
+     *   directory this host has no shell to reach and no screen that lists it.
+     *   On the measured numbers — 121KB of variants per 1000x1000 JPEG — a
+     *   catalogue's worth of deleted photographs is tens of megabytes of files
+     *   nobody can see, name or remove.
+     *
+     *   REPLACE. Less likely but worse. MediaUploadController names every
+     *   upload `Ymd-His-<random>.ext`, so a re-upload gets a NEW path and
+     *   cannot collide; but anything that does put different bytes at an
+     *   existing path — FTP, a restored backup, a future editor that overwrites
+     *   in place — leaves the old copies in the srcset. The result is the kind
+     *   of bug that takes a day to believe: the product page shows the new
+     *   photograph on a desktop and the old one on a phone, because `src` is
+     *   the new file and every srcset candidate is stale.
+     *
+     * So: one method, called when an original goes away or is replaced, and
+     * pinned by a test that asserts the disk is actually clean afterwards.
+     *
+     * IT PRUNES ITS OWN EMPTY DIRECTORIES, up to but never including
+     * `img-cache/<width>/`. The cache mirrors the original's path, so deleting
+     * a catalogue leaves the whole `uploads/products/` tree behind as empty
+     * directories — invisible, but real inodes on a shared host with a file
+     * quota. @rmdir only succeeds on an empty directory, so a sibling variant
+     * still in use always stops the walk; there is no case where this can
+     * remove a directory that still holds a file.
+     *
+     * NEVER THROWS, and never touches anything outside `img-cache/`. The
+     * callers are a delete endpoint and an upload endpoint, and neither should
+     * fail because a cached copy could not be unlinked — the worst outcome of a
+     * failure here is a stale file, which is exactly what the situation was
+     * before this existed.
+     */
+    public static function forget(string $image): int
+    {
+        $parts = self::split($image);
+
+        if ($parts === null) {
+            return 0;
+        }
+
+        [, , $fsRel] = $parts;
+        $removed = 0;
+
+        foreach (self::WIDTHS as $width) {
+            $root = public_path(self::DIR.'/'.$width);
+            $file = $root.'/'.$fsRel;
+
+            if (is_file($file) && @unlink($file)) {
+                $removed++;
+            }
+
+            // Walk back up the mirrored path, stopping at the width directory
+            // itself so the cache root survives an empty catalogue.
+            $directory = \dirname($file);
+
+            while (
+                $directory !== $root
+                && str_starts_with($directory, $root.'/')
+                && @rmdir($directory)
+            ) {
+                $directory = \dirname($directory);
+            }
+        }
+
+        return $removed;
     }
 
     /**

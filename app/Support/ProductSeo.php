@@ -118,6 +118,46 @@ final class ProductSeo
     }
 
     /**
+     * The `<title>` this product's page will actually publish.
+     *
+     * The title's counterpart to metaDescription(), and it exists for the same
+     * reason: the editor's preview was drawing the operator's own box rather
+     * than the tag, and the two are not the same string. Resolved through
+     * App\Support\Seo::titleFor(), which is the method render() itself uses,
+     * so it cannot drift from the page.
+     *
+     * WHAT THE OPERATOR'S BOX ACTUALLY DOES. Filled, it becomes the WHOLE title
+     * verbatim — Store\ProductController::show() sets `title_is_final`, so the
+     * site name is NOT appended and only `%%`-tokens are resolved. Empty, the
+     * head falls to ProductTitle::head() (brand + name) and THAT goes through
+     * `seo_title_template`, which on this store appends " | K-Beauty Bliss".
+     *
+     * So the two cases produce visibly different lengths from the same typing,
+     * which is exactly why a preview that shows the box cannot be trusted and a
+     * character counter run against the box is wrong in the empty case by the
+     * whole length of the site name.
+     *
+     * @param  bool  $ignoreOverride  answer as though the per-product SEO title
+     *   box were empty — what the preview needs to show the operator what
+     *   happens if they clear it.
+     */
+    public static function metaTitle(\App\Models\Product $product, bool $ignoreOverride = false): string
+    {
+        $override = is_array($product->seo) ? $product->seo : [];
+        $custom = $ignoreOverride ? '' : trim((string) ($override['title'] ?? ''));
+
+        return \App\Support\Seo::titleFor([
+            'type' => 'product',
+            'title' => $custom !== ''
+                ? $custom
+                : ProductTitle::head($product->brand?->name, $product->name),
+            // Set only when there IS a custom title, exactly as
+            // Store\ProductController::show() sets it.
+            'title_is_final' => $custom !== '',
+        ]);
+    }
+
+    /**
      * A payload from any of the editors into the stored shape.
      *
      * Returns null rather than an empty array when nothing survives, so that
