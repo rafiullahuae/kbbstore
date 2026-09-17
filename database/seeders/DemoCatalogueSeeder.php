@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\WholeDirhams;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -73,7 +74,17 @@ class DemoCatalogueSeeder extends Seeder
                     'status' => 'publish',
                     'is_visible' => true,
                     'price' => $price,
-                    'sale_price' => $onSale ? (int) round($price * 0.7) : null,
+                    /*
+                     * WHOLE DIRHAMS, because the rule that says so lives in a
+                     * controller and no seeder goes through one. 70% of a whole
+                     * dirham is not a whole dirham: five of the 24 products this
+                     * seeds ship with a sale price carrying fils, on every
+                     * install including production, and the shop then prints a
+                     * price it does not charge. WholeDirhams::toward() rounds
+                     * down, which is the direction a discount off a shelf price
+                     * should go — see the class header.
+                     */
+                    'sale_price' => $onSale ? WholeDirhams::toward((int) round($price * 0.7)) : null,
                     'stock_status' => $i % 9 === 0 ? 'outofstock' : 'instock',
                     'short_description' => 'Demo product for layout testing. Replaced by the WordPress migration.',
                     /*

@@ -78,6 +78,33 @@ final class ImportReport
         return array_sum(array_map(static fn (EntityReport $e): int => $e->discardedCount(), $this->entities));
     }
 
+    /**
+     * Rows read and then neither imported nor refused, across every bucket.
+     *
+     * Zero on every run this importer has ever made, and the number worth
+     * printing anyway: it is the only one that can go wrong without any other
+     * number in the report changing.
+     */
+    public function totalUnaccounted(): int
+    {
+        return array_sum(array_map(
+            static fn (EntityReport $e): int => $e->unaccountedCount(),
+            $this->entities,
+        ));
+    }
+
+    /** Did any bucket fail its own count check? */
+    public function hasDiscrepancy(): bool
+    {
+        foreach ($this->entities as $entity) {
+            if ($entity->verification()['verdict'] === 'discrepancy') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function totalWritten(): int
     {
         return array_sum(array_map(

@@ -252,6 +252,12 @@ final class CouponImporter extends EntityImporter
         return 'coupons.csv';
     }
 
+    /** Coupons the export supplied. `wc_id` is what a re-run matches on, so a coupon without one did not come from here. */
+    public function countImported(): ?int
+    {
+        return Coupon::query()->whereNotNull('wc_id')->count();
+    }
+
     /**
      * Adjustments and discards for the row being imported, held until the row
      * is known to survive.

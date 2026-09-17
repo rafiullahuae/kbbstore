@@ -68,6 +68,12 @@ final class CustomerImporter extends EntityImporter
         return 'customers.csv';
     }
 
+    /** Customers the export supplied. Guests synthesised from order rows carry a NULL `wp_user_id` on purpose and are NOT counted here — they are not rows of customers.csv and counting them would make this number agree with the file for the wrong reason. */
+    public function countImported(): ?int
+    {
+        return Customer::query()->withTrashed()->whereNotNull('wp_user_id')->count();
+    }
+
     public function import(Row $row, ImportContext $context): void
     {
         $wpUserId = $row->requireId('user_id', 'user_id', 'id', 'wp_user_id', 'customer_id');

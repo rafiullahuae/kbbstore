@@ -283,6 +283,21 @@ final class ImportRunner
             $report->note(
                 'resumed: '.$alreadyDone.' rows were already committed by an earlier run and were not re-read'
             );
+
+            /*
+             * A RESUMED ROW IS STILL A ROW OF THIS FILE, and the verification
+             * below is about the file and not about this invocation. Counting
+             * only what this process re-read would make every resumed import
+             * report a shortfall the size of the work the last one did -- which
+             * on shared hosting, where every import is resumed, would be every
+             * import. They are counted as read and as accounted for, because
+             * the batch that committed them advanced the checkpoint in the same
+             * transaction: their outcome is recorded in `import_checkpoints`
+             * even though this process never saw it.
+             */
+            $report->read($alreadyDone);
+            $report->accounted($alreadyDone);
+            $report->resumedRows += $alreadyDone;
         }
 
         try {
@@ -298,6 +313,7 @@ final class ImportRunner
                     continue;
                 }
 
+                $report->read();
                 $batch[] = new Row($line, $cells);
 
                 if (count($batch) >= $options->batchSize) {
@@ -345,6 +361,40 @@ final class ImportRunner
         if (! $context->dryRun() && $exhausted) {
             $checkpoint->finish();
         }
+
+        $this->verify($importer, $report, $exhausted);
+    }
+
+    /**
+     * Count-based verification for one bucket — Phase 13's own line, and the
+     * only check in this report that does not take the importer's word for it.
+     *
+     * RUN EVEN WHEN THE BUCKET IS PART-WAY THROUGH, and marked as a slice when
+     * it is. The admin screen imports one entity per HTTP request in slices of
+     * a few hundred rows, so a verification that only ran on the final slice
+     * would be a verification the owner never saw until the end -- and the
+     * whole reason the screen exists is that the end may be an hour and forty
+     * browser steps away.
+     *
+     * THE COUNT IS ONE AGGREGATE AND IT IS TAKEN AFTER finalise(), so the
+     * category tree fix-up and the review aggregates have already run and the
+     * number is the settled one.
+     */
+    private function verify(EntityImporter $importer, EntityReport $report, bool $exhausted): void
+    {
+        $report->verificationComplete = $exhausted;
+        $report->inDatabase = $importer->countImported();
+
+        $verification = $report->verification();
+
+        /*
+         * Put in the notes as well as in the structured fields, because the
+         * notes are the one channel BOTH front ends already print: the console
+         * table and the admin screen's per-entity panel. A verification that
+         * only the console showed would be absent from the one screen the owner
+         * actually runs this from.
+         */
+        $report->note(EntityReport::VERIFICATION_NOTE_PREFIX.$verification['sentence']);
     }
 
     /**
@@ -382,10 +432,29 @@ final class ImportRunner
                     }
                 }
 
+                /*
+                 * WHAT THIS ROW DID TO ITS OWN ENTITY'S TALLY, measured either
+                 * side of the call rather than asked of the importer.
+                 *
+                 * An order row legitimately moves several tallies -- its own,
+                 * `customers` when it synthesises a guest, `addresses` twice --
+                 * so the question is deliberately narrow: did the ORDERS tally
+                 * move? A row that moves nothing and throws nothing is a row
+                 * that was read and then vanished, and it is the one outcome
+                 * every other column in this report is blind to.
+                 */
+                $tallyBefore = $report->touched();
+
                 try {
                     // A SAVEPOINT, so one bad row cannot leave half of itself
                     // behind in a batch that then commits.
                     DB::transaction(fn () => $importer->import($row, $context));
+
+                    if ($report->touched() > $tallyBefore) {
+                        $report->accounted();
+                    } else {
+                        $report->unaccountedFor($row->line, $importer->identify($row));
+                    }
                 } catch (RowRejected $e) {
                     $report->reject($row->line, $importer->identify($row), $e->getMessage());
                 } catch (\Illuminate\Database\QueryException $e) {

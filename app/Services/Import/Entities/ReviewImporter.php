@@ -229,6 +229,12 @@ final class ReviewImporter extends EntityImporter
         return 'reviews.csv';
     }
 
+    /** Reviews this import wrote. Keyed on `source` rather than on a nullable id column, because Store -> Reviews -> Import writes the same rows through the same key and the two doors must count the same thing. */
+    public function countImported(): ?int
+    {
+        return Review::query()->where('source', self::SOURCE)->count();
+    }
+
     public function import(Row $row, ImportContext $context): void
     {
         $this->pending = [];

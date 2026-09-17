@@ -53,6 +53,12 @@ final class CategoryImporter extends EntityImporter
         return 'categories.csv';
     }
 
+    /** Categories the export supplied, demo-catalogue placeholders excluded by the same rule as brands. */
+    public function countImported(): ?int
+    {
+        return Category::query()->whereNotNull('source_term_id')->count();
+    }
+
     public function import(Row $row, ImportContext $context): void
     {
         $termId = $row->requireId('term_id', 'term_id', 'id', 'category_id');

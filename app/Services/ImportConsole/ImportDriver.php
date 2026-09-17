@@ -156,6 +156,15 @@ final class ImportDriver
     /** Refusals kept inline in the status payload; the CSV always has all of them. */
     private const INLINE_REJECTIONS = 200;
 
+    /**
+     * How the runner's count-based verification note begins.
+     *
+     * Matched rather than re-derived so that the screen and the console are
+     * reading the same string; see mergeNotes() for why this one note is
+     * treated differently from every other.
+     */
+    public const VERIFICATION_PREFIX = EntityReport::VERIFICATION_NOTE_PREFIX;
+
     public function __construct(private readonly ImportWorkspace $workspace = new ImportWorkspace) {}
 
     /* ------------------------------------------------------------ the run */
@@ -714,6 +723,29 @@ final class ImportDriver
     {
         foreach ($entity->notes() as $note => $count) {
             if (str_starts_with($note, 'resumed: ')) {
+                continue;
+            }
+
+            /*
+             * THE VERIFICATION LINE REPLACES ITSELF, it does not accumulate.
+             *
+             * Every other note is a fact about rows -- "11 orders had no email"
+             * -- and adding this step's eleven to the last step's is the right
+             * answer. The count check is a fact about the WHOLE BUCKET, restated
+             * with larger numbers on every slice, so accumulating it would leave
+             * the screen showing forty verification sentences of which
+             * thirty-nine are out of date and one is true, with nothing marking
+             * which. The last one is the only one that means anything.
+             */
+            if (str_starts_with($note, self::VERIFICATION_PREFIX)) {
+                foreach (array_keys($existing) as $seen) {
+                    if (str_starts_with((string) $seen, self::VERIFICATION_PREFIX)) {
+                        unset($existing[$seen]);
+                    }
+                }
+
+                $existing[$note] = 1;
+
                 continue;
             }
 

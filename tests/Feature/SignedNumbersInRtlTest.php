@@ -154,8 +154,24 @@ it('isolates every signed number the rendered Arabic storefront prints, not only
      * a badge that is already right and end up with an isolate forcing an
      * Arabic label left-to-right.
      */
+    /*
+     * KEYED ON THE SHAPE, NOT ON THE NUMBER, and that correction was forced
+     * rather than chosen. This entry read `-30% OFF` — a literal that held only
+     * while a seeded demo product happened to be discounted by exactly thirty
+     * per cent. Lane FV's fix to DemoCatalogueSeeder (rounding a demo sale
+     * price down to a whole dirham, because 70% of a whole dirham is not one)
+     * moved that product to 31% off, the literal stopped matching, and this
+     * sweep reported the product card as a NEW offender on a change that had
+     * nothing to do with bidi.
+     *
+     * The percentage is fixture data. What identifies this site is the badge's
+     * shape — a sign, a number, a per-cent sign and the word OFF — so that is
+     * what the key is now, as a pattern. It stays exactly as narrow: it still
+     * names one badge in one view, and a second unisolated node anywhere on
+     * these three pages still fails, which is the property this list exists for.
+     */
     $handedOff = [
-        '-30% OFF' => 'components/product-card.blade.php — handled by <bdi>, which this text-node sweep cannot see',
+        '/^-\d+% OFF$/' => 'components/product-card.blade.php — handled by <bdi>, which this text-node sweep cannot see',
     ];
 
     $offenders = [];
@@ -197,7 +213,7 @@ it('isolates every signed number the rendered Arabic storefront prints, not only
             }
 
             foreach ($handedOff as $known => $owner) {
-                if (str_contains($node, $known)) {
+                if (preg_match($known, $node) === 1) {
                     $seenHandedOff[$known] = true;
 
                     continue 2;

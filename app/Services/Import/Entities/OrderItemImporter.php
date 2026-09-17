@@ -49,6 +49,12 @@ final class OrderItemImporter extends EntityImporter
         return 'order_items.csv';
     }
 
+    /** Line items the export supplied, matched on the WooCommerce order_item_id. */
+    public function countImported(): ?int
+    {
+        return OrderItem::query()->whereNotNull('wc_item_id')->count();
+    }
+
     public function import(Row $row, ImportContext $context): void
     {
         $itemId = $row->requireId('item_id', 'item_id', 'order_item_id', 'id');
