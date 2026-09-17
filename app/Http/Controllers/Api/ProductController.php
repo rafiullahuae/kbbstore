@@ -87,9 +87,10 @@ class ProductController extends Controller
         //
         // Lane DM had already removed the false reason for leaving it open —
         // that a cap "would silently drop products off a real page", which was
-        // untrue because the only consumer in the repository,
-        // resources/views/store/category.blade.php, is rendered by no
-        // controller and reachable at no URL — and left the decision to
+        // untrue because the only consumer in the repository was a design mock
+        // under store/ that no controller rendered and no URL reached (Lane DZ
+        // has since deleted it; see DeadCategoryViewTest) — and left the
+        // decision to
         // whoever owns the endpoint. This is that decision: a cap, because a
         // cap is the smallest change that bounds the cost, and because every
         // other endpoint on this surface already has one.

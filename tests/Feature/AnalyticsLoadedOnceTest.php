@@ -10,7 +10,7 @@ declare(strict_types=1);
  *
  *   app/Support/Seo.php                        gtag from settings.ga
  *   app/Services/MarketingPixels.php           gtag from marketing_pixels.ga4_id
- *   resources/views/store/category.blade.php   gtag from an /api/settings payload
+ *   a design mock under store/, since deleted   gtag from an /api/settings payload
  *
  * The first two both land in the <head> of every page that extends
  * layouts/store.blade.php — Seo::render() on line 82, baseTags() on line 140.

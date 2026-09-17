@@ -60,6 +60,64 @@ final class ProductSeo
     public const PUBLISHED_KEYS = ['title', 'desc', 'og_image', 'canonical', 'noindex'];
 
     /**
+     * The description the storefront will FEED to the SEO engine for this
+     * product, before the engine's own fallbacks — or null when it has none.
+     *
+     * This is the chain Store\ProductController::show() has always used, moved
+     * here so that exactly one place knows it. It used to be an inline
+     * expression in that controller and nowhere else, which is why the admin's
+     * snippet preview could not consult it and invented a sentence instead.
+     *
+     * AN EMPTY `short_description` IS NOT NULL, AND THE DIFFERENCE IS VISIBLE.
+     * `??` falls through on null only, so a product whose short description is
+     * the empty string — which is exactly what the product editor writes when
+     * the operator clears that box — feeds '' to the engine, and App\Support\Seo
+     * emits NO description tag at all rather than falling back to
+     * `seo_default_description`. That is today's behaviour, preserved here
+     * verbatim rather than quietly corrected: it is a real defect, it belongs
+     * to the editor's write path as much as to this read path, and a lane that
+     * changed it in passing would move every such product's search snippet
+     * without anybody deciding to. It is reported, not patched.
+     *
+     * @param  bool  $ignoreOverride  answer as though the per-product SEO
+     *   description box were empty — what the admin's snippet preview needs in
+     *   order to show the operator what happens if they clear it.
+     */
+    public static function rawDescription(\App\Models\Product $product, bool $ignoreOverride = false): ?string
+    {
+        $override = is_array($product->seo) ? $product->seo : [];
+
+        if (! $ignoreOverride && isset($override['desc'])) {
+            return $override['desc'];
+        }
+
+        return $product->short_description ?? null;
+    }
+
+    /**
+     * The `<meta name="description">` this product's page will actually publish.
+     *
+     * Resolved through App\Support\Seo::describe(), which is the same method
+     * the page itself uses — so this cannot drift from the page by
+     * construction. '' means the page publishes no description tag.
+     *
+     * The title is passed because it is a TOKEN: a description containing
+     * `{title}` must resolve to the same words in the preview as in the page.
+     */
+    public static function metaDescription(\App\Models\Product $product, bool $ignoreOverride = false): string
+    {
+        $override = is_array($product->seo) ? $product->seo : [];
+
+        return \App\Support\Seo::describe([
+            'type' => 'product',
+            'title' => empty($override['title'])
+                ? ProductTitle::head($product->brand?->name, $product->name)
+                : (string) $override['title'],
+            'description' => self::rawDescription($product, $ignoreOverride),
+        ]);
+    }
+
+    /**
      * A payload from any of the editors into the stored shape.
      *
      * Returns null rather than an empty array when nothing survives, so that

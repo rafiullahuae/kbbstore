@@ -95,7 +95,7 @@ class Seo
         // title (a per-product SEO title, a blog post override) passes
         // title_is_final and is only cleaned of placeholders, not re-templated.
         $rawTitle = trim((string) ($ctx['title'] ?? ''));
-        $tokens = ['title' => $rawTitle, 'sep' => $sep, 'sitename' => $siteName, 'page' => ''];
+        $tokens = self::tokens($ctx, $sep, $siteName);
 
         if ($isHome) {
             $homeTitle = SeoSettings::from($s, 'seo_home_title', '');
@@ -109,13 +109,13 @@ class Seo
         } else {
             $tpl = SeoSettings::from($s, 'seo_title_template');
 
-            // A page title that already carries the brand ("Cart · K-Beauty
-            // Bliss") must not get it a second time. Dropping the token rather
-            // than the template keeps the separator cleanup in one place.
-            if ($rawTitle !== '' && $siteName !== '' && mb_stripos($rawTitle, $siteName) !== false) {
-                $tokens['sitename'] = '';
-            }
-
+            // The "already carries the brand" rule that used to live here is
+            // now in self::tokens(), because it reaches the DESCRIPTION too:
+            // $tokens is the same array both are rendered with, so blanking
+            // {sitename} for the title silently blanked it for the description
+            // as well. That coupling is preserved exactly -- it is what the
+            // pages emit today -- but it is now written down in one place
+            // where an outside caller can reproduce it. See describe().
             $title = TitleTemplate::render($tpl, $tokens, $sep);
         }
 
@@ -125,15 +125,7 @@ class Seo
             $title = $siteName !== '' ? $siteName : 'K-Beauty Bliss';
         }
 
-        $desc = $ctx['description']
-            ?? ($isHome ? ($s['seo_home_description'] ?? null) : null)
-            ?? ($s['seo_default_description'] ?? null)
-            ?? '';
-        $desc = trim(preg_replace('/\s+/', ' ', strip_tags((string) $desc)));
-        // Placeholders reach the description too — the same fields accept them
-        // and a literal {sitename} in a search result is as wrong as in a tab.
-        $desc = TitleTemplate::render($desc, $tokens, $sep);
-        if (mb_strlen($desc) > 300) $desc = mb_substr($desc, 0, 297) . '…';
+        $desc = self::describe($ctx, $tokens, $sep);
 
         $url    = self::canonical($ctx['url'] ?? null, $base);
         $image  = self::absolute($ctx['image'] ?? ($s['og_default_image'] ?? null), $base);
@@ -276,6 +268,105 @@ class Seo
      * is not added twice if site_url already carries it (the production host
      * serves the app from /kbb-upgrade, and APP_URL includes it).
      */
+    /**
+     * The placeholder values a page's title AND its description are rendered
+     * with — one array, which is the whole reason this is a method.
+     *
+     * `{sitename}` IS DROPPED WHEN THE PAGE TITLE ALREADY CARRIES THE SITE
+     * NAME. That rule was written for the title ("Cart · K-Beauty Bliss" must
+     * not become "Cart · K-Beauty Bliss | K-Beauty Bliss") and it was applied
+     * by mutating the shared $tokens array in the middle of render(), so it
+     * reached the description too: a `seo_default_description` containing
+     * {sitename} resolves it on the home page and blanks it on a product page,
+     * because a product page's title ends in the site name and the home page's
+     * template supplies it separately.
+     *
+     * That is what the pages emit today and it is NOT changed here. It is moved
+     * somewhere a second caller can reproduce it, which is the point: the
+     * admin's snippet preview has to predict the same string, and it could not
+     * predict a rule that existed only as a mid-method assignment.
+     *
+     * Home pages and pages that carry a final title of their own keep the token,
+     * because neither goes through the title template that would double it.
+     *
+     * @param  array<string, mixed>  $ctx
+     * @return array<string, string>
+     */
+    private static function tokens(array $ctx, string $sep, string $siteName): array
+    {
+        $rawTitle = trim((string) ($ctx['title'] ?? ''));
+
+        $tokens = ['title' => $rawTitle, 'sep' => $sep, 'sitename' => $siteName, 'page' => ''];
+
+        if (($ctx['type'] ?? null) !== 'home'
+            && empty($ctx['title_is_final'])
+            && $rawTitle !== ''
+            && $siteName !== ''
+            && mb_stripos($rawTitle, $siteName) !== false
+        ) {
+            $tokens['sitename'] = '';
+        }
+
+        return $tokens;
+    }
+
+    /**
+     * The description this page will emit, resolved and cleaned — or '' when
+     * the page emits no `<meta name="description">` at all.
+     *
+     * ── WHY THIS IS A METHOD AND NOT FOUR LINES INSIDE render() ─────────────
+     *
+     * It was four lines inside render(), and that made "what description does
+     * this page actually publish?" a question only a full page render could
+     * answer. The admin's per-product snippet preview needed exactly that
+     * answer and, having no way to ask, INVENTED ONE: it fell back to
+     * "Shop {name} by {brand} at {site} — authentic Korean skincare, fast UAE
+     * delivery." — a sentence this storefront has never emitted, promising a
+     * delivery speed for one country on behalf of a shop that serves the whole
+     * Gulf on different terms per country (App\Support\DeliveryLine). The owner
+     * was being shown a preview of a page that does not exist.
+     *
+     * So there is one implementation and both sides call it. render() calls it
+     * to build the tag; App\Support\ProductSeo::metaDescription() calls it so
+     * Admin\AdminController::getProduct() can hand the editor the real thing.
+     *
+     * '' IS A REAL ANSWER, NOT A MISSING ONE. render() emits no description tag
+     * for an empty string, so an empty return here means the page publishes no
+     * description — which a snippet preview should show as an empty description
+     * rather than paper over with a sentence of its own.
+     *
+     * @param  array<string, mixed>  $ctx  the same context render() is given
+     * @param  array<string, string>|null  $tokens  placeholder values; derived
+     *   from $ctx when omitted, which is how an outside caller uses this
+     */
+    public static function describe(array $ctx, ?array $tokens = null, ?string $sep = null): string
+    {
+        $s = SeoSettings::map();
+        $sep ??= SeoSettings::from($s, 'seo_separator');
+
+        $tokens ??= self::tokens($ctx, $sep, SeoSettings::firstFilled(
+            $s['seo_site_name'] ?? null,
+            $s['store_name'] ?? null,
+            (string) config('app.name'),
+            'K-Beauty Bliss'
+        ));
+
+        $desc = $ctx['description']
+            ?? ((($ctx['type'] ?? null) === 'home') ? ($s['seo_home_description'] ?? null) : null)
+            ?? ($s['seo_default_description'] ?? null)
+            ?? '';
+        $desc = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $desc)));
+        // Placeholders reach the description too — the same fields accept them
+        // and a literal {sitename} in a search result is as wrong as in a tab.
+        $desc = TitleTemplate::render($desc, $tokens, $sep);
+
+        if (mb_strlen($desc) > 300) {
+            $desc = mb_substr($desc, 0, 297) . '…';
+        }
+
+        return $desc;
+    }
+
     private static function canonical(?string $url, string $base): ?string
     {
         $url = trim((string) $url);

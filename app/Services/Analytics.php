@@ -21,9 +21,11 @@ use Illuminate\Http\Request;
  *     the module setting marketing_pixels.ga4_id, and the Meta loader from
  *     marketing_pixels.meta_id. layouts/store.blade.php calls it, in the same
  *     <head>, fifty lines below the Seo call.
- *   - resources/views/store/category.blade.php carried a third, client-side
- *     loader reading `ga4_id` and `meta_pixel` off an /api/settings payload.
- *     That view is rendered by no controller and reachable at no URL.
+ *   - a third, client-side loader reading `ga4_id` and `meta_pixel` off an
+ *     /api/settings payload, in a design mock under store/ that was rendered by
+ *     no controller and reachable at no URL. The loader went in 2.60.193 and
+ *     the mock itself was deleted by Lane DZ; DeadCategoryViewTest establishes
+ *     that nothing named it and guards the name against coming back.
  *
  * So any shop that had filled in BOTH Google boxes — and there are two boxes
  * for one ID, which is exactly how that happens — loaded Google's tag twice

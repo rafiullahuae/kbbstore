@@ -84,7 +84,7 @@
      Prepending only when the name does not already lead with the brand is the
      whole fix; ProductTitle explains why that test compares words rather than
      characters, and why stripping a leading brand instead would be wrong. --}}
-@section('title', ProductTitle::full($brand, $product->name) . ' · K-Beauty Bliss')
+@section('title', ProductTitle::head($brand, $product->name))
 
 @push('head')
     {{--

@@ -487,6 +487,34 @@ class AdminController extends Controller
              * them to the column that publishes it.
              */
             'seo'               => is_array($p->seo) ? $p->seo : null,
+
+            /*
+             * WHAT THE STOREFRONT WILL PRINT IF THE META DESCRIPTION BOX IS
+             * LEFT EMPTY — the string, not a guess at it.
+             *
+             * The per-product snippet preview in the admin shell had no way to
+             * ask, so it made one up: "Shop {name} by {brand} at {site} —
+             * authentic Korean skincare, fast UAE delivery." That sentence has
+             * never been emitted by this storefront. The real chain is the
+             * product's `short_description`, then the sitewide
+             * `seo_default_description`, then nothing at all — and the invented
+             * one also promised a delivery speed for ONE country on behalf of a
+             * shop that serves the Gulf on different terms per country, which
+             * is the promise App\Support\DeliveryLine exists to stop being made
+             * in one voice.
+             *
+             * Computed through App\Support\Seo::describe(), the same method
+             * that builds the tag on the page, so the preview and the page
+             * cannot drift. `ignoreOverride: true` because this is the FALLBACK:
+             * it answers "what shows if you clear that box", which is the only
+             * question the preview's `||` needs answered.
+             *
+             * An EMPTY STRING is a real answer and means the page publishes no
+             * description tag. The preview should show that rather than hide it
+             * — see ProductSeo::rawDescription() for how a product ends up
+             * there.
+             */
+            'seo_fallback_description' => \App\Support\ProductSeo::metaDescription($p, true),
         ]);
     }
 
