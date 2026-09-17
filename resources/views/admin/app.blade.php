@@ -2136,6 +2136,16 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 /* A select's intrinsic width is its widest OPTION, which sets a floor no media
    query can reach — this is what clipped "AED — UAE Dirham" on a phone. */
 .bd-field select{text-overflow:ellipsis}
+/* The accent-colour field: a swatch and the hex beside it, on one row.
+   `min-width:0` on the row and `flex:1 1 0` on the box rather than a width,
+   because .bd-grid tracks go down to 230px and an input's intrinsic width does
+   not — the same floor that clipped the currency select on a phone.
+   The swatch keeps its own fixed size: a colour well that stretches reads as a
+   button, and the browser draws its preview to the element's box. */
+.bd-colour{display:flex;gap:8px;align-items:center;min-width:0}
+.bd-colour > input[type="color"]{
+  flex:0 0 auto;width:42px;height:36px;padding:3px;cursor:pointer}
+.bd-colour > input:not([type="color"]){flex:1 1 0;width:auto;font-variant-ligatures:none}
 .bd-note{border:1px solid var(--border);border-left:3px solid var(--ink-faint);
          border-radius:var(--r-xs);padding:11px 13px;min-width:0;
          font-size:12px;line-height:1.55;color:var(--ink-soft)}
@@ -6259,16 +6269,33 @@ document.addEventListener('click', async e=>{
    here - those seven values are hard-coded in resources/css/kbb/*.css, which
    is precisely why there is no Colours screen to send anyone to. It is shown
    because it is true and useful to see, and it is labelled as fixed.
+
+   ONE OF THOSE THREE WAS WRONG (Lane DN), AND WRONG IN THE EXPENSIVE
+   DIRECTION. The Colours card denied that any colour editor existed behind
+   this console, and the swatch band said all seven values belonged to the
+   stylesheet and not to any setting. That is still true of six of the seven
+   swatches. It was never true of the first one:
+
+   `brand_accent` has been read by App\View\Composers\StoreComposer since
+   the baseline and is emitted as --pink and --pink-deep over the whole
+   storefront by layouts/store.blade.php, and #E0567B is only its DEFAULT.
+
+   What was actually missing was the writer - no screen in this console posted
+   the key - and a console that says a thing cannot be done is how a missing
+   writer survives being noticed. Both halves moved together: the field is on
+   Business Details, the rule is in AdminController::SETTING_RULES, and these
+   two notes now say which one colour is editable and which six are not,
+   rather than lumping all seven under "fixed".
    ========================================================================= */
 function renderTheme(){
   $('#content').innerHTML=`<div class="wrap">
     <div class="page-head"><h2>K-Beauty Bliss Theme</h2><p>This is not a screen of its own. Your storefront&rsquo;s design is set on the screens that own each part of it, and this page is the index of where each part lives.</p></div>
     <div class="card pad" style="margin-bottom:18px">
-      <div class="between"><b style="font-size:14px">Brand tokens</b><span class="pill grey">fixed in the theme</span></div>
+      <div class="between"><b style="font-size:14px">Brand tokens</b><span class="pill grey">one is yours to set</span></div>
       <div class="swatches" style="margin-top:14px">
         ${['#E0567B|Rose','#C13E63|Deep','#A82F53|Ink rose','#FFF0F4|Soft','#FCE0E8|Blush','#BE8E2E|Gold','#2A2228|Ink'].map(s=>{const[c,n]=s.split('|');return `<div class="sw" style="background:${c}"><span>${n}</span></div>`}).join('')}
       </div>
-      <p style="font-size:12px;color:var(--ink-soft);margin-top:12px;line-height:1.55">These are the colours your storefront actually uses. They are part of the theme&rsquo;s stylesheet rather than a setting, so they are shown here to be read, not changed &mdash; altering them is a code change.</p>
+      <p style="font-size:12px;color:var(--ink-soft);margin-top:12px;line-height:1.55">These are the colours your storefront actually uses. <b>Rose</b> is your accent colour and you can change it &mdash; it is the pink on buttons, prices, links and sale badges, and <b>Deep</b> is worked out from it, which is why the two are never set separately. Set it under <a href="#store-settings" onclick="go('store-settings');return false;">Business Details &rarr; Your brand colour</a>; the swatch above shows the colour this theme ships with. The other five are part of the theme&rsquo;s stylesheet rather than a setting, so they are shown here to be read, not changed &mdash; altering those is a code change.</p>
     </div>
     <div class="sec-title">Where your design is set</div>
     <div class="tcards">
@@ -6285,7 +6312,7 @@ function renderTheme(){
     <div class="card pad">
       <div style="display:flex;flex-direction:column;gap:14px">
         <div><b style="font-size:13px">Typography</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">There is no font setting anywhere in this application. The storefront&rsquo;s typefaces, sizes and weights are part of its stylesheet, so changing them is a code change rather than something this console can offer.</p></div>
-        <div><b style="font-size:13px">Colours</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">The palette above is the real one, and it is fixed in the theme&rsquo;s stylesheet. There is no colour editor behind this console and nothing here writes a palette, so there is no screen to send you to.</p></div>
+        <div><b style="font-size:13px">A full colour editor</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">Your accent colour <i>is</i> editable &mdash; it is under <a href="#store-settings" onclick="go('store-settings');return false;">Business Details &rarr; Your brand colour</a>, and the palette above marks it. What does not exist is an editor for the rest of the palette: the soft pinks behind sections, the gold and the ink are fixed in the theme&rsquo;s stylesheet, so changing those is a code change.</p></div>
         <div><b style="font-size:13px">Performance</b><p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.55">Nothing in this application lets you switch parts of the storefront on or off to make it lighter. Your shop is no slower than it was &mdash; there was simply never anything behind this card.</p></div>
       </div>
     </div>
@@ -14517,6 +14544,28 @@ buildNav();
       '<div class="bd-sec-d">'+description+'</div></div>'+body+'</section>';
   }
 
+  /* The accent colour as the owner typed it, which is what the text box shows
+     and what the Save button posts. Blank stays blank: it is how the storefront
+     is told to use the theme's own pink, and turning it into '#E0567B' here
+     would write that value into the database the next time anything is saved on
+     this screen -- pinning the colour to today's default instead of following
+     it. */
+  function bdAccentValue(){ var v=SETTINGS.brand_accent; return (v==null)?'':String(v).trim(); }
+
+  /* And the same colour as <input type="color"> needs it, which is not the same
+     thing. That control accepts EXACTLY '#rrggbb': handed '' it shows black,
+     and handed the three-digit form the storefront accepts ('#e57') it also
+     shows black. Either would mean the swatch beside the box silently
+     disagreed with the box -- and the first click on it would then save black.
+     So it is expanded here, and a value it cannot represent falls back to the
+     shop's own pink, which is the colour the storefront is actually painting
+     while the field is blank. */
+  function bdAccentSwatch(){
+    var v=bdAccentValue().replace(/^#/,'');
+    if(/^[0-9a-f]{3}$/i.test(v)) v=v[0]+v[0]+v[1]+v[1]+v[2]+v[2];
+    return /^[0-9a-f]{6}$/i.test(v) ? '#'+v.toLowerCase() : '#e0567b';
+  }
+
   /* ---------- Tax by country (Lane CP, extended by Lane CU) ----------------
      The owner asked for both halves of one idea, twice over. First:
 
@@ -14982,6 +15031,49 @@ buildNav();
             'Printed on invoices when the Invoice tab has no address of its own.')+
         '</div>')+
 
+      /* YOUR BRAND COLOUR (Lane DN).
+
+         `brand_accent` had a reader and no writer. App\View\Composers\Store-
+         Composer has read it since the baseline and SettingsSeeder seeds it
+         with #E0567B, and nothing in this console has ever written it — so the
+         one colour every page on the storefront is built from was decided by a
+         seeder and could not be reached by its owner.
+
+         THE CONTROL AND ITS WRITE PATH LAND TOGETHER, which on this screen
+         means three things and not one: the field below, the line in
+         AdminController::SETTING_RULES, and set_brand_accent in the payload
+         the Save button posts. A field without the rule saves nothing while
+         the endpoint answers ok — the standing warning at the top of that
+         list. A field without the payload line is not sent at all. An earlier
+         lane on this screen shipped a control that saved nothing, which is why
+         AdminScreenSectionsTest checks that every id the handler posts is
+         drawn; the reverse — an id drawn and never posted — is checked by this
+         lane's own test.
+
+         TWO CONTROLS FOR ONE VALUE, on purpose, because a colour is the one
+         setting an owner wants to SEE. The swatch is the real editor and the
+         text box beside it is what makes the value copy-and-pasteable and
+         typeable; each writes the other, and only the text box carries the id
+         the payload reads, so there is still exactly one field being saved.
+         The endpoint normalises what it stores, so the two cannot disagree
+         about case or a missing #.
+
+         ON THE BUSINESS TAB, beside the shop's name, its contact details and
+         its currency, because it is the same kind of fact: something about
+         this shop rather than something about a screen. The Theme screen is an
+         index of where design is set and now points here. */
+      bdSec('Your brand colour',
+        'The accent colour of your storefront — buttons, prices, links, the sale badges and the highlight on anything selected. One colour: the darker shade used beside it is worked out from this one, so the two can never drift apart.',
+        '<div class="bd-grid">'+
+          bdField('set_brand_accent','Accent colour',
+            '<div class="bd-colour">'+
+              '<input id="set_brand_accent_pick" type="color" aria-label="Pick the accent colour" value="'+sesc(bdAccentSwatch())+'">'+
+              '<input id="set_brand_accent" value="'+sesc(bdAccentValue())+'" placeholder="#E0567B" spellcheck="false">'+
+            '</div>',
+            'Leave it blank to go back to the shop’s original pink. Written as a hex colour, like #E0567B.')+
+        '</div>'+
+        '<div class="bd-note">Changing this repaints the storefront, not this console — the admin’s own colours are a console preference under <b>Console</b>. Every other colour in the theme (the soft pinks behind sections, the gold, the ink) is part of the stylesheet and is not a setting.</div>')+
+
       bdSec('How prices are printed',
         'How every price on the storefront is written — the symbol, where it sits and how many decimals. Choosing a currency above fills these in, and you can still override any of them.',
         '<div class="bd-grid">'+
@@ -15208,6 +15300,26 @@ buildNav();
       if(tbl) tbl.innerHTML = vatRatesTable();
     };
 
+    /* The swatch and the box are one field shown two ways, so each writes the
+       other. Only the BOX carries the id the payload reads, which is what keeps
+       "one control, one setting" true however many ways it can be edited.
+
+       The swatch is not allowed to clear the box. <input type="color"> has no
+       empty state -- it always reports a colour -- so a picker that wrote on
+       every event would turn "blank, use the theme's pink" into an explicit
+       #e0567b the first time anything on this tab was touched, and the owner
+       would lose the ability to go back to the default without knowing he had.
+       It writes only when the owner actually opens it and chooses. */
+    var accentBox=document.getElementById('set_brand_accent');
+    var accentPick=document.getElementById('set_brand_accent_pick');
+    if(accentBox&&accentPick){
+      accentPick.oninput=function(){ accentBox.value=accentPick.value; };
+      accentBox.oninput=function(){
+        SETTINGS.brand_accent=accentBox.value;
+        accentPick.value=bdAccentSwatch();
+      };
+    }
+
     document.getElementById('set_save_biz').onclick=async function(){
       var payload={
         store_name: sval('set_store_name'), currency: sval('set_currency'), vat_rate: sval('set_vat'),
@@ -15255,7 +15367,14 @@ buildNav();
            what the shop shipped with. */
         support_phone: sval('set_support_phone'),
         brand_whatsapp: sval('set_brand_whatsapp'),
-        support_email: sval('set_support_email')
+        support_email: sval('set_support_email'),
+        /* Your brand colour (Lane DN). The reader — StoreComposer, through
+           layouts/store.blade.php — has existed since the baseline; this line
+           and the `brand_accent` rule in AdminController::SETTING_RULES are the
+           writer, and neither half does anything without the other. Sent every
+           time, blank included, because blank is the instruction to go back to
+           the theme's own pink rather than an absent field. */
+        brand_accent: sval('set_brand_accent')
 
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('Business details saved'); }

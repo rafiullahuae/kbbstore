@@ -206,6 +206,24 @@ export function initGallery() {
                 main.prepend(img);
             }
 
+            /* SRCSET FIRST, AND IT IS SET EVEN WHEN IT IS EMPTY.
+
+               `srcset` outranks `src`: a browser that has both picks from the
+               list and never reads src again. So assigning src alone -- which
+               is all this did while the main <img> carried no srcset -- would
+               now leave the PREVIOUS photograph on screen, or, for a shot with
+               no copies following one that has them, leave the old shot's
+               candidates describing the new shot's file.
+
+               Hence the `|| ''`: clearing is as necessary as setting. An empty
+               string removes the list and hands the decision back to src,
+               which is exactly what a photograph with no copies on disk wants.
+               The server put one answer per shot on the thumbnail
+               (partials/product-gallery.blade.php) rather than leaving this to
+               guess at a URL, because whether a copy exists is a question only
+               the filesystem can answer. */
+            img.srcset = thumb.dataset.srcset || '';
+            img.sizes = thumb.dataset.sizes || '';
             img.src = image;
             img.alt = thumb.dataset.alt || '';
             img.hidden = false;

@@ -25,7 +25,24 @@ class PayShipRules
     public const SCHEMA = [
         'cod_min'        => ['money', 'Hide Cash on delivery below', 0, 'Zero means no lower limit.'],
         'cod_max'        => ['money', 'Hide Cash on delivery above', 0, 'Zero means no upper limit.'],
-        'hide_paid_free' => ['bool',  'Only offer free delivery when it is available', true, 'The same setting as Store → Ecommerce → Delivery. Changing it here changes it there.'],
+        /*
+         * THE HELP TEXT NAMED A SCREEN THAT DOES NOT EXIST (Lane DN).
+         *
+         * It read "The same setting as Store → Ecommerce → Delivery. Changing
+         * it here changes it there." The first half describes the intent of
+         * this class correctly — `hide_paid_when_free` is edited here and
+         * nowhere else, deliberately, so that one value never grows two
+         * controls. The second half sent the owner looking for a second
+         * control to cross-check against, and there is none: Store → Ecommerce
+         * has no Delivery tab carrying this key, and nothing in
+         * resources/views/admin/app.blade.php writes it but this screen.
+         *
+         * So the note now says what the switch DOES, in the words a shopper
+         * would see it in, which is what an owner deciding whether to turn it
+         * on actually needs. Where it is edited is answered by the fact that
+         * he is looking at it.
+         */
+        'hide_paid_free' => ['bool',  'Only offer free delivery when it is available', true, 'When an order already qualifies for free delivery, hide the paid delivery options instead of listing them beside it.'],
     ];
 
     public const TABS = [

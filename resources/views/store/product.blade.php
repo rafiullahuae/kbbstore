@@ -104,9 +104,42 @@
         It is left in place only because two tests in ProductSeoTest.php assert
         it, and that file belongs to another lane. Removing the link and those
         two assertions together is a one-line follow-up for whoever owns it.
+
+        AND IT STOPPED BUYING NOTHING THE MOMENT THE <img> GAINED A srcset.
+
+        "Resolves to the same URL" was true only while the <img> had exactly
+        one candidate. Now that the gallery offers phone-sized copies, the
+        browser may well choose the 400w or 800w one -- while this hint names
+        the full-size original unconditionally. A preload the page then does
+        not use is not a wasted hint, it is a whole EXTRA download of the
+        largest file on the page, on every product view, which is the precise
+        cost the copies exist to remove. The hint would have paid for the
+        optimisation and then some.
+
+        imagesrcset/imagesizes are how a preload is told to make the same
+        choice as the <img>: given identical lists, the browser resolves both
+        to one candidate and fetches it once. They are emitted only when the
+        gallery is really emitting a srcset, so the plain single-URL form is
+        still exactly what a product with no copies on disk gets -- which is
+        the form ProductSeoTest asserts, byte for byte, and why that file did
+        not have to be touched.
     --}}
+    @php
+        /* The same question the gallery partial asks, asked again rather than
+           passed along: this is a @push into <head> and the partial is
+           @included much further down the template, so there is no variable
+           either could hand the other. Two is_file() calls and one image
+           header, against a duplicated download of the page's biggest asset. */
+        $preloadSrcset = empty($gallery[0]['image'])
+            ? ''
+            : \App\Support\ImageVariants::detailSrcsetFor($gallery[0]['image']);
+    @endphp
     @if (! empty($gallery[0]['image']))
-        <link rel="preload" as="image" href="{{ $gallery[0]['image'] }}" fetchpriority="high">
+        @if ($preloadSrcset === '')
+            <link rel="preload" as="image" href="{{ $gallery[0]['image'] }}" fetchpriority="high">
+        @else
+            <link rel="preload" as="image" href="{{ $gallery[0]['image'] }}" fetchpriority="high" imagesrcset="{{ $preloadSrcset }}" imagesizes="{{ \App\Support\ImageVariants::detailSizesAttribute() }}">
+        @endif
     @endif
 @endpush
 
