@@ -401,3 +401,186 @@ it('dates the Customers screen on the shop clock', function () {
         ->and(preg_match('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}$/', $joined))
         ->toBe(1, "the wire shape changed: {$joined}");
 });
+
+/*
+|==============================================================================
+| THE DISCLOSURE MENTIONS REVIEWS — Lane DT
+|==============================================================================
+|
+| Lane DO closed demo reviews off from the storefront and flagged what it could
+| not finish: DemoSeed::counts() covered orders, customers and products and said
+| nothing about reviews. So the admin line that tells the owner which figures
+| leave demo rows out was silent about the largest fabrication in the shop —
+| the seeded wall is 12,481 reviews averaging 4.8 stars.
+|
+| It is additive, but it widens a shape four endpoints emit, which is why DO
+| left it alone. What is pinned here:
+|
+|   - every one of the four endpoints carries the new key;
+|   - the count is RIGHT, across BOTH of the mechanisms that write demo
+|     reviews — `source = 'demo'` from the seeder, and a demo_seed_log row from
+|     the admin panel — because a count that knew only one of them would be a
+|     new understatement in place of the old silence;
+|   - `excluded` DID NOT CHANGE MEANING. This is the trap. It used to be
+|     `array_sum(counts) > 0`, so folding reviews into the sum was the one-line
+|     version — and it would have made the dashboard banner announce "0 demo
+|     orders are excluded from these figures" on a shop that has demo reviews
+|     and no demo orders, which is the shipped state of a fresh install.
+*/
+
+/** A review the seeder wrote: stamped `source`, never logged. */
+function demoSeededReview(Product $product): \App\Models\Review
+{
+    return \App\Models\Review::create([
+        'product_id' => $product->id,
+        'author_name' => 'Invented Person ' . uniqid(),
+        'rating' => 5,
+        'content' => 'Written by a seeder, not by a customer.',
+        'status' => \App\Support\ReviewStatus::APPROVED,
+        'source' => \Database\Seeders\DemoReviewsSeeder::SOURCE,
+    ]);
+}
+
+/** A review the ADMIN PANEL seeded: logged, and (on older rows) unstamped. */
+function demoLoggedReview(Product $product): \App\Models\Review
+{
+    $review = \App\Models\Review::create([
+        'product_id' => $product->id,
+        'author_name' => 'Logged Only Person ' . uniqid(),
+        'rating' => 5,
+        'content' => 'Seeded from the admin panel before it stamped a source.',
+        'status' => \App\Support\ReviewStatus::APPROVED,
+    ]);
+
+    markDemo('reviews', \App\Models\Review::class, $review->id);
+
+    return $review;
+}
+
+/** A review an actual shopper left. */
+function demoRealReview(Product $product): \App\Models\Review
+{
+    return \App\Models\Review::create([
+        'product_id' => $product->id,
+        'author_name' => 'Real Shopper ' . uniqid(),
+        'rating' => 4,
+        'content' => 'A genuine review left by a genuine customer of this shop.',
+        'status' => \App\Support\ReviewStatus::APPROVED,
+    ]);
+}
+
+it('counts demo reviews from BOTH mechanisms, and counts a real one as neither', function () {
+    $product = demoProduct('Reviewed Serum', 5000);
+
+    $before = DemoSeed::counts()['reviews'];
+
+    demoSeededReview($product);
+    demoLoggedReview($product);
+    demoRealReview($product);
+
+    // Two invented, one real. A count built on `source` alone would say one;
+    // a count built on the log alone would also say one.
+    expect(DemoSeed::counts()['reviews'])->toBe(
+        $before + 2,
+        'the review count does not cover both of the two ways a demo review is written',
+    );
+});
+
+it('carries the review count on every endpoint that carries the disclosure', function () {
+    $admin = demoAdmin();
+    $product = demoProduct('Reviewed Serum', 5000);
+
+    demoSeededReview($product);
+    demoLoggedReview($product);
+
+    $expected = DemoSeed::counts()['reviews'];
+
+    expect($expected)->toBeGreaterThan(0, 'the fixture seeded no demo reviews, so this proves nothing');
+
+    /*
+     * All four, by name. The shape is additive, so a screen that names the old
+     * keys still finds them — but a screen the integrator forgot would be the
+     * silence this change exists to end, on that screen only.
+     */
+    foreach ([
+        '/admin-api/stats',
+        '/admin-api/orders',
+        '/admin-api/analytics',
+        '/admin-api/customers',
+    ] as $endpoint) {
+        $demo = $this->actingAs($admin, 'admin')->getJson($endpoint)->assertOk()->json('demo');
+
+        expect($demo)->toBeArray("{$endpoint} stopped carrying a demo disclosure block");
+
+        /*
+         * array_key_exists, NOT ->toHaveKey($key, $message). Pest reads that
+         * second argument as the EXPECTED VALUE, so a "message" there asserts
+         * the key holds that sentence and fails on every healthy response.
+         */
+        foreach (['excluded', 'orders', 'customers', 'products'] as $old) {
+            expect(array_key_exists($old, $demo))
+                ->toBeTrue("{$endpoint} dropped the '{$old}' key some screen already reads");
+        }
+
+        expect(array_key_exists('reviews', $demo))
+            ->toBeTrue("{$endpoint} does not disclose demo reviews");
+
+        expect($demo['reviews'])->toBe($expected, "{$endpoint} reports a different number of demo reviews");
+    }
+});
+
+it('does not flip "excluded" on for demo reviews alone', function () {
+    $admin = demoAdmin();
+    $product = demoProduct('Reviewed Serum', 5000);
+
+    // Demo REVIEWS and no demo orders, customers or products — a fresh install.
+    demoSeededReview($product);
+    demoLoggedReview($product);
+
+    $demo = $this->actingAs($admin, 'admin')->getJson('/admin-api/stats')->assertOk()->json('demo');
+
+    expect($demo['reviews'])->toBeGreaterThan(0);
+
+    /*
+     * THE WHOLE POINT OF THIS TEST. The dashboard banner reads
+     *
+     *   (s.demo && s.demo.excluded) ? s.demo.orders + ' demo orders are
+     *   excluded from these figures.' : ''
+     *
+     * so `excluded` being true here would print "0 demo orders are excluded
+     * from these figures" — a disclosure stating a figure that is not true,
+     * which is worse than the silence it replaced.
+     */
+    expect($demo['excluded'])->toBeFalse(
+        'demo reviews flipped the sales-figure disclosure on; the dashboard would now announce "0 demo orders are excluded"',
+    );
+
+    expect($demo['orders'])->toBe(0);
+});
+
+it('still flips "excluded" on for a demo order, reviews or no reviews', function () {
+    $admin = demoAdmin();
+    $product = demoProduct('Reviewed Serum', 5000);
+
+    demoSeededReview($product);
+
+    $fake = demoCustomer('Fake');
+    markDemo('customers', Customer::class, $fake->id);
+
+    $demo = $this->actingAs($admin, 'admin')->getJson('/admin-api/stats')->assertOk()->json('demo');
+
+    expect($demo['excluded'])->toBeTrue('a logged demo customer no longer flips the disclosure on')
+        ->and($demo['customers'])->toBe(1)
+        ->and($demo['reviews'])->toBeGreaterThan(0);
+});
+
+it('answers zero reviews on a shop that has seeded none', function () {
+    $admin = demoAdmin();
+
+    demoRealReview(demoProduct('Reviewed Serum', 5000));
+
+    $demo = $this->actingAs($admin, 'admin')->getJson('/admin-api/stats')->assertOk()->json('demo');
+
+    expect($demo['reviews'])->toBe(0, 'a real review was counted as invented')
+        ->and($demo['excluded'])->toBeFalse();
+});

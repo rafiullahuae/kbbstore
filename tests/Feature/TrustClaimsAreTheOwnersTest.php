@@ -354,3 +354,137 @@ it('keeps the home page counts out of the settings boxes', function () {
         'The home page stat is no longer counted from the catalogue.',
     );
 });
+
+/*
+|------------------------------------------------------------------------------
+| 6. The product page's chip, the last literal — Lane DT
+|------------------------------------------------------------------------------
+|
+| store/product.blade.php printed "100% authentic" as a literal inside
+| <div class="ti">, on every product in the shop. Lane DR could not reach it:
+| another lane held the file that round, so the page a shopper spends the most
+| time on stayed the one place whose claim only a signed package could withdraw.
+|
+| It has its OWN key, `product_authentic_text`, and does not share the
+| checkout's despite the identical shipped wording. TrustClaims::CLAIMS carries
+| the reasoning; the consequence is pinned below as "clearing one leaves the
+| other alone", because that is the part a reader would otherwise have to take
+| on trust.
+*/
+
+/** A visible product, and the page a shopper sees for it. */
+function tcProductHtml(): string
+{
+    $product = Product::create([
+        'slug' => 'tc-prod-' . Str::random(8),
+        'name' => 'Ginseng Essence',
+        'status' => 'publish',
+        'is_visible' => true,
+        'price' => 15000,
+        'stock_status' => 'instock',
+    ]);
+
+    return test()->get('/product/' . $product->slug . '/')->assertOk()->getContent();
+}
+
+/**
+ * The trust chips, as ELEMENTS.
+ *
+ * Not a word search: the storefront inlines its stylesheets, so "trust" and
+ * "ti" both appear in the document as CSS whatever the page is rendering, and
+ * "100% authentic" is a substring of "100% authentic K-beauty" elsewhere in the
+ * shop. The chips are counted and read out of the row itself.
+ *
+ * @return list<string>
+ */
+function tcProductChips(string $html): array
+{
+    if (! preg_match('#<div class="[^"]*trust">(.*?)</div>\s*<div class="[^"]*paychips#s', $html, $row)) {
+        return [];
+    }
+
+    preg_match_all('#<div class="ti">(.*?)</div>#s', $row[1], $chips);
+
+    return array_map(
+        static fn (string $c) => trim((string) preg_replace('/\s+/', ' ', strip_tags($c))),
+        $chips[1],
+    );
+}
+
+it('still prints the shipped product-page chip when no setting has been written', function () {
+    $chips = tcProductChips(tcProductHtml());
+
+    expect($chips)->not->toBeEmpty('The product page trust row was not found at all.');
+
+    expect(in_array(TrustClaims::CLAIMS['product_authentic_text'], $chips, true))
+        ->toBeTrue('The product page lost its shipped authenticity chip on a shop with no settings.');
+});
+
+it('prints the owner wording on the product page instead of the shipped default', function () {
+    tcSet('product_authentic_text', 'Bought from the brand, not a reseller');
+
+    $chips = tcProductChips(tcProductHtml());
+
+    expect(in_array('Bought from the brand, not a reseller', $chips, true))
+        ->toBeTrue('The owner wording did not reach the product page.');
+
+    expect(in_array(TrustClaims::CLAIMS['product_authentic_text'], $chips, true))
+        ->toBeFalse('The shipped claim is still on the page alongside the owner one.');
+});
+
+it('removes the whole product chip, icon included, when the owner clears the box', function () {
+    $before = tcProductChips(tcProductHtml());
+
+    expect(in_array(TrustClaims::CLAIMS['product_authentic_text'], $before, true))->toBeTrue();
+
+    tcSet('product_authentic_text', '');
+
+    $after = tcProductChips(tcProductHtml());
+
+    // The chip is GONE, not emptied.
+    expect(in_array(TrustClaims::CLAIMS['product_authentic_text'], $after, true))
+        ->toBeFalse('A cleared box still prints the shipped claim.');
+
+    expect($after)->toHaveCount(
+        count($before) - 1,
+        'Clearing the claim must remove one chip exactly — not leave an empty one behind, and not take a neighbour with it.',
+    );
+
+    // AND SO IS ITS ICON. An empty <div class="ti"> holding a lone shield is
+    // precisely the "leaves a gap" outcome this whole feature exists to avoid,
+    // so the emptiness is asserted rather than assumed.
+    foreach ($after as $chip) {
+        expect($chip)->not->toBe('', 'A chip was left behind with its icon and no words.');
+    }
+
+    // The row itself survives: the payment chip beside it is a fact about what
+    // the shop accepts, not a claim about the shop, and is not routed here.
+    expect($after)->not->toBeEmpty('Clearing one claim emptied the entire trust row.');
+});
+
+it('leaves the checkout chip alone when the product-page one is cleared', function () {
+    // THE REASON THE TWO KEYS ARE SEPARATE, stated as a test rather than only
+    // as a comment. Their shipped wording is byte-identical, so a shared box
+    // would pass every assertion above and still silently strip the last line a
+    // shopper reads before paying.
+    tcSet('product_authentic_text', '');
+
+    /*
+     * THE CHECKOUT IS FETCHED FIRST, and that ordering is load-bearing rather
+     * than stylistic. tcCheckoutHtml() drives the page with an unencrypted cart
+     * cookie and `withoutMiddleware(EncryptCookies)`; a storefront request made
+     * before it in the same test leaves cookie and session state behind that
+     * sends the checkout straight to a 302 instead of rendering. Both pages are
+     * read here either way — only the order changes.
+     */
+    $checkout = tcCheckoutHtml();
+
+    expect(tcProductChips(tcProductHtml()))
+        ->not->toContain(TrustClaims::CLAIMS['product_authentic_text']);
+
+    expect((bool) preg_match('#<div class="trust">(.*?)</div>#s', $checkout, $row))
+        ->toBeTrue('The checkout trust row was not found.');
+
+    expect(str_contains(strip_tags($row[1]), TrustClaims::CLAIMS['checkout_authentic_text']))
+        ->toBeTrue('Clearing the product page claim also removed the checkout chip — the two keys are not independent.');
+});
