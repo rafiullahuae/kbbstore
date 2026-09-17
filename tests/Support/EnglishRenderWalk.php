@@ -55,7 +55,26 @@ final class EnglishRenderWalk
      * Every page then differs by nothing at all, which is the claim this test
      * exists to make.
      */
-    public const BASE_COMMIT = '77149bd16243b30065627beb66026354b964f510';
+    /*
+     * MOVED AGAIN, and this time for a REVIEWED COPY CHANGE rather than a
+     * neighbouring lane's whitespace — which is the one reason this docblock
+     * permits.
+     *
+     * The owner settled the rounding question: whole dirhams, and if a price
+     * would carry fils, adjust the price. The four receipt surfaces had just
+     * been widened to full precision to stop them disagreeing with the emailed
+     * copy, so under his answer they printed AED 220.00 where he asked for
+     * AED 220. They now ask Money::receiptDecimals(), which prints whole
+     * dirhams whenever every figure on that receipt truthfully is one, and
+     * widens only when one is not.
+     *
+     * That changes the bytes of the account pages ON PURPOSE, so the contract
+     * moves with it. What the previous base guaranteed is not lost: the text
+     * conversion was proved byte-identical against 77149bd at the moment it
+     * merged, and that proof is recorded in its merge commit. From here the
+     * guard answers the next question — has anything since changed the English?
+     */
+    public const BASE_COMMIT = '0a0f77f6d9ba081f56832ccde7d3379628853de5';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
