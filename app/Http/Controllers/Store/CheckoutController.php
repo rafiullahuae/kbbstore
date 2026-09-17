@@ -954,7 +954,9 @@ class CheckoutController extends Controller
             ? [[
                 'id' => 'cod', 'title' => 'Cash on delivery',
                 'description' => $cod > 0 ? 'Pay in cash to the courier. A small ' . \App\Support\Money::format($cod) . ' handling fee applies.' : null,
-                'fee_html' => $cod > 0 ? '+' . \App\Support\Money::format($cod) : null,
+                // LTR-isolated on an Arabic page, as every other fee_html is -- a
+                // leading '+' otherwise reorders to the trailing side. See App\Support\Bidi.
+                'fee_html' => $cod > 0 ? \App\Support\Bidi::number('+' . \App\Support\Money::format($cod)) : null,
                 'fee_fils' => $cod,
             ]]
             : [];

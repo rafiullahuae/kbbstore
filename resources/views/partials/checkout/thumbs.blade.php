@@ -35,7 +35,7 @@
         @php $more = $items->count() - min(4, $items->count()); @endphp
         <div class="kthumb-lbl">{!! \App\Support\Phrase::inline(__('store.checkout.thumbs_youre_ordering')) !!} <span class="n">&middot; {{ $countLbl }}</span></div><div class="kthumb-row">
         @foreach ($items->take(4) as $it){!! $circle($it) !!}@endforeach
-        @if ($more > 0)<span class="kthumb kthumb-more" aria-hidden="true">+{{ $more }}</span>@endif
+        @if ($more > 0)<span class="kthumb kthumb-more" aria-hidden="true">{{ \App\Support\Bidi::number('+' . $more) }}</span>@endif
         </div>
     @else
         @php $lbl = ['badges' => __('store.checkout.thumbs_your_bag'), 'scroll' => __('store.checkout.thumbs_your_order'), 'rings' => __('store.checkout.thumbs_youre_ordering')][$style] ?? __('store.checkout.thumbs_your_bag'); @endphp

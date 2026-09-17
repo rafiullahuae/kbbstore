@@ -71,7 +71,7 @@
                     <span class="kbb-card-ph" style="background:{{ \App\Support\Gradient::for($seed) }}">{{ \App\Support\Gradient::initials($brand ?: $name) }}</span>
                 @endif
                 @if ($isNew)<span class="kbb-badge kbb-badge-new">{{ __('store.product_card.badge_new') }}</span>@endif
-                @if ($off)<span class="kbb-badge kbb-badge-sale">-{{ $off }}%</span>@endif
+                @if ($off)<span class="kbb-badge kbb-badge-sale">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
             </div>
             <div class="cb">
                 @if ($cat)<div class="kbb-card-cat">{{ $cat }}</div>@endif

@@ -33,7 +33,35 @@
 @verbatim
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">@endverbatim{{--
+    AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
+
+    The webfont link above carries no Arabic glyph. Before this, /ar/app/
+    served real Arabic text in a document that linked Fraunces and Hanken Grotesk and named an
+    Arabic-capable family ZERO times, so every Arabic word rendered in whatever
+    face the device happened to have. Measured at 40px against Cairo and matching
+    neither -- docs/rtl-standalone-documents.md §2 found it, and
+    docs/FS-ARABIC-TYPOGRAPHY.md has this lane's before-and-after numbers.
+
+    THE WHITESPACE HERE IS LOAD-BEARING, and it is why this include is glued to
+    the end of the link above rather than given a line of its own. Blade compiles
+    the include to a PHP tag, and PHP SWALLOWS ONE NEWLINE immediately after `?>`.
+    Every arrangement that leaves a single newline next to it therefore takes a
+    newline OUT of the ENGLISH document, which is a change to output that is
+    supposed to be unchanged. The line that follows puts the newline back.
+    Checked by fetching all seven English pages before and after: byte-identical.
+
+    (The two verbatim markers are never spelled out with their @ in a comment in
+    these files. A verbatim block is extracted from the RAW source before
+    comments are removed, so the word in a comment opens a block of its own.)
+--}}@include('partials.arabic-face', [
+    'weights' => '400;500;600;700',
+    'stacks' => [':root' => [
+        '--sans' => '"Hanken Grotesk", system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+        '--serif' => '"Fraunces", Georgia, "Times New Roman", serif',
+    ]],
+])
+@verbatim
 <style>
 /* ============ TOKENS ============ */
 :root{
@@ -188,6 +216,15 @@ header.app{position:sticky;top:0;z-index:60;background:rgba(251,246,240,.82);
 .car-btn:hover{background:var(--ink);color:#fff}
 .car-btn.l{inset-inline-start:-14px}.car-btn.r{inset-inline-end:-14px}
 .car-btn svg{width:20px;height:20px}
+/* The two buttons are named for a physical side and move with logical insets, so
+   in Arabic .l sits on the right and .r on the left -- correct. The chevrons
+   inside them are <svg> paths, which no bidi rule reaches, so both arrowheads
+   went on pointing the way they point in English: §9.2's open item.
+   KNOWN AND NOT FIXED HERE: the onclick handlers still scrollBy({left:-460}) and
+   {left:460} whatever the direction, so on this preview the buttons scroll the
+   wrong way round in Arabic. That is JavaScript on an admin-only preview page,
+   and it is written up rather than changed under a typography lane. */
+[dir="rtl"] .car-btn svg{transform:scaleX(-1)}
 
 /* ============ PRODUCT CARD ============ */
 .pcard{width:210px;background:var(--card);border-radius:var(--r-m);overflow:hidden;

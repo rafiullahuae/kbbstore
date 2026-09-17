@@ -84,7 +84,38 @@
 {!! app(\App\Services\Analytics::class)->headTags() !!}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">{{--
+    AND THE ARABIC FACE, WHICH THIS DOCUMENT ALSO HAS TO ASK FOR ITSELF.
+
+    The webfont link above carries no Arabic glyph. Before this, /ar/reviews/
+    served real Arabic text in a document that linked Poppins only and named an
+    Arabic-capable family ZERO times, so every Arabic word rendered in whatever
+    face the device happened to have. Measured at 40px against Cairo and matching
+    neither -- docs/rtl-standalone-documents.md §2 found it, and
+    docs/FS-ARABIC-TYPOGRAPHY.md has this lane's before-and-after numbers.
+
+    THE WHITESPACE HERE IS LOAD-BEARING, and it is why this include is glued to
+    the end of the link above rather than given a line of its own. Blade compiles
+    the include to a PHP tag, and PHP SWALLOWS ONE NEWLINE immediately after `?>`.
+    Every arrangement that leaves a single newline next to it therefore takes a
+    newline OUT of the ENGLISH document, which is a change to output that is
+    supposed to be unchanged. The line that follows puts the newline back.
+    Checked by fetching all seven English pages before and after: byte-identical.
+
+    body, NOT :root: this is the one of the five that does not put its font in
+    a custom property. It hard-codes "Poppins",sans-serif on `body`, so
+    html[lang="ar"] body (0,1,2) is what has to win over body (0,0,1). And this
+    document's link is already outside the verbatim block, so nothing is closed
+    here.
+
+    (The two verbatim markers are never spelled out with their @ in a comment in
+    these files. A verbatim block is extracted from the RAW source before
+    comments are removed, so the word in a comment opens a block of its own.)
+--}}@include('partials.arabic-face', [
+    'weights' => '400;500;600;700;800',
+    'stacks' => ['body' => ['font-family' => '"Poppins",sans-serif']],
+])
+
 @verbatim
 <style>
   :root{

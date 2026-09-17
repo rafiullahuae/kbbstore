@@ -6,8 +6,19 @@
  * that a newer keystroke has already superseded.
  */
 
-
 import { t, esc } from './i18n.js';
+
+/*
+ * U+2192 IS NOT A MIRRORED CHARACTER. Measured in Chromium, each glyph centred
+ * in a fixed box and rendered in both directions so only its shape can differ:
+ * U+203A, U+2039, U+00BB and U+003E come back as their own mirror in a
+ * right-to-left run; U+2192, U+2190, U+25B6, U+2794 and U+21A9 come back
+ * identical. One bundle is served to both languages, so the glyph is read off
+ * the document -- and off its DIRECTION rather than its language, because with
+ * the mirrored layout switched off the page still reads left to right and
+ * "onward" is still to the right.
+ */
+const onward = () => (document.documentElement.getAttribute('dir') === 'rtl' ? '←' : '→');
 
 /* One shell for the whole panel: a close button and two columns. Both the
    starter and the results write into it rather than replacing it, so the
@@ -133,7 +144,7 @@ export function initSearch() {
                 + `</span>`
                 + (it.price ? `<span class="sp">${escapeHtml(it.price)}</span>` : '')
                 + `</a>`).join('')).join('')
-            + `<a class="viewall" data-sg-row href="${data.all_url}">View all results <b>(${data.total} found)</b> <i>→</i></a>`);
+            + `<a class="viewall" data-sg-row href="${data.all_url}">View all results <b>(${data.total} found)</b> <i>${onward()}</i></a>`);
 
         panel.classList.add('on');
         index = -1;

@@ -64,10 +64,31 @@ final class SupportContact
      */
     public const SHIPPED_WHATSAPP = '+971585052611';
 
-    /** What the chrome prints beside the phone glyph. */
+    /**
+     * What the chrome prints beside the phone glyph.
+     *
+     * LTR-ISOLATED ON AN ARABIC PAGE, and this accessor is the right place for
+     * it precisely because of the split this class already draws: phone() is
+     * defined as what a surface PRINTS, while whatsappDigits() is what a link
+     * DIALS. A dialling string must never carry a formatting character; a
+     * printed one must, because `+971 58 505 2611` paints as
+     * `971 58 505 2611+` in a right-to-left run — the leading PLUS SIGN is a
+     * weak bidi class and is resolved from the run around it, exactly as the
+     * sale ribbon's HYPHEN-MINUS is. Found by rendering the Arabic storefront
+     * and reading the text nodes back, not by looking for it.
+     *
+     * Doing it here rather than at the four printing sites also reaches the one
+     * of them this lane may not edit: store/home.blade.php passes this value
+     * into a translated sentence as `:phone`.
+     *
+     * whatsapp() is deliberately left alone. Its docblock calls it the DIALLED
+     * form, and the mobile menu isolates it at the point where it prints it.
+     *
+     * No-op in English — see App\Support\Bidi for the measurement.
+     */
     public static function phone(): string
     {
-        return self::firstFilled(['support_phone', 'whatsapp']) ?: self::SHIPPED_PHONE;
+        return Bidi::number(self::firstFilled(['support_phone', 'whatsapp']) ?: self::SHIPPED_PHONE);
     }
 
     /** What a wa.me link dials, and what the mobile menu prints. */

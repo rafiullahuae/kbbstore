@@ -128,7 +128,7 @@
             @if ($totals['discount'])
                 <div class="srow disc">
                     <span>{{ $totals['coupon_code'] }}</span>
-                    <span>– {!! \App\Support\Money::format($totals['discount'], $kbbCartDp) !!}</span>
+                    <span>{!! \App\Support\Bidi::number('– ' . \App\Support\Money::format($totals['discount'], $kbbCartDp)) !!}</span>
                 </div>
                 <div class="appliedcoupon"><span>✓ {{ strtoupper($totals['coupon_code']) }}</span><a data-kcpremovecoupon="{{ $totals['coupon_code'] }}">{{ __('store.cart.remove_coupon') }}</a></div>
             @endif
