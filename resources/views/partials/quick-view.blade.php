@@ -56,7 +56,7 @@
         @endphp
         <del>{!! \App\Support\Money::format($kbbQvWas, $kbbQvDp) !!}</del>
         <ins>{!! \App\Support\Money::format($kbbQvNow, $kbbQvDp) !!}</ins>
-        @if ($kbbQvOff >= 1)<span class="qv-off">-{{ $kbbQvOff }}%</span>@endif
+        @if ($kbbQvOff >= 1)<span class="qv-off">{{ \App\Support\Bidi::number('-' . $kbbQvOff . '%') }}</span>@endif
       @else
         {!! \App\Support\Money::format($product->effectivePrice()) !!}
       @endif

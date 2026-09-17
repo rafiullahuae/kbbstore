@@ -63,7 +63,7 @@
 
         if ($off >= 1) {
             $label = '<span class="lbl" style="background:#E23A4E">'
-                   . e(__('store.product_card.label_off', ['percent' => $off]))
+                   . '<bdi>' . e(__('store.product_card.label_off', ['percent' => $off])) . '</bdi>'
                    . '</span>';
         } elseif ($product->featured) {
             $label = '<span class="lbl" style="background:#1b9e77">' . e(__('store.product_card.label_bestseller')) . '</span>';

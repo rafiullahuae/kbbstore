@@ -208,7 +208,7 @@
         <span class="now">{!! Money::format($price, $kbbSaleDp) !!}</span>
         @if ($onSale)
             <s>{!! Money::format((int) $product->price, $kbbSaleDp) !!}</s>
-            @if ($off)<span class="off">-{{ $off }}%</span>@endif
+            @if ($off)<span class="off">{{ \App\Support\Bidi::number('-' . $off . '%') }}</span>@endif
         @endif
       </div>
       @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif

@@ -193,6 +193,21 @@ it('leaves no directional glyph on the storefront that the bidi algorithm will n
         'store.quiz.js_see_routine' => 'a translatable default, so the Arabic string carries its own arrow',
         'store.quiz.js_start_sub' => 'a translatable default; the arrow means "leads to" inside a sentence',
         'store.quiz.js_start_cta' => 'a translatable default, so the Arabic string carries its own arrow',
+        /*
+         * ARRIVED AFTER THIS SWEEP WAS WRITTEN, from Lane FT's quiz -> routine
+         * hand-off, and it is the same shape as the three above rather than a
+         * new case: a translatable default whose arrow is part of the sentence
+         * it ends. An Arabic translation of "Build my :concern routine →"
+         * carries whatever arrow that sentence wants, in whatever position it
+         * wants it; what is left here is the ENGLISH fallback an untranslated
+         * Arabic page shows, which is the same thing the other three leave.
+         *
+         * Worth saying why it is an exception and not a fix: the alternative is
+         * to strip the arrow out of the key and append a direction-chosen one,
+         * which takes a punctuation decision away from the translator for the
+         * sake of a fallback that is English anyway.
+         */
+        'store.quiz.js_routine_link_cta' => 'a translatable default, so the Arabic string carries its own arrow',
     ];
 
     $seenHandedOff = [];
