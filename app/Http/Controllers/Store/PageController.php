@@ -65,6 +65,21 @@ class PageController extends Controller
         'newsletter',
         'about', 'delivery', 'faqs', 'contact-us',
         'privacy-policy', 'terms-and-conditions',
+        /*
+         * Language prefixes (Lane EP).
+         *
+         * NOT needed for routing: App\Http\Middleware\SetLocaleFromPath strips
+         * /ar before the router runs, so the router never sees it and this
+         * catch-all is never offered it. They are here because of the OTHER
+         * direction — an article or page whose slug was literally "ar" would be
+         * published at an address the middleware eats, and it would simply
+         * never be reachable, with nothing anywhere saying why. Reserving both
+         * makes the editor refuse the slug instead.
+         *
+         * 'en' as well as 'ar': /en/ is a 301 to the unprefixed form once
+         * Arabic is on, so a post called "en" has the same problem.
+         */
+        'ar', 'en',
         // Served off disk by the web server, never by PHP
         'storage', 'build', 'uploads', 'assets', 'images', 'fonts',
         // WordPress leftovers the old site still gets crawled for

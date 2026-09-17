@@ -59,5 +59,34 @@ pest()->extend(Tests\TestCase::class)
          * clear a cache entry as well, through a facade.
          */
         StaticMemos::forgetAll();
+
+        /*
+         * And the third thing that outlives a test: PHP's own execution clock.
+         *
+         * App\Http\Controllers\Admin\ImportApiController::step() calls
+         * @set_time_limit(110). That is right for the endpoint — a slice of an
+         * import must not be the thing that hangs a shared host's worker — and
+         * it is PROCESS-WIDE. PHPUnit runs the whole suite in one process, so
+         * from the moment any test drives that endpoint, EVERY REMAINING TEST
+         * IN THE RUN shares a single 110-second budget, and the run dies with
+         * "Maximum execution time of 110 seconds exceeded" at whatever
+         * unrelated line it happened to reach when the budget ran out.
+         *
+         * That is why the failure looked like a defect in
+         * Illuminate\Collections\Arr one run and in OrderEmailPresenter the
+         * next: the location is wherever the clock stopped, not where the cost
+         * is. It is a slow fuse — the suite creeps towards the ceiling as tests
+         * are added, and the lane that happens to cross it gets a fatal in
+         * somebody else's file.
+         *
+         * 0 is the CLI default and what every test outside that window already
+         * runs under, so this restores the intended behaviour rather than
+         * relaxing anything. Nothing here is a timeout defence: `timeout` in CI
+         * and in the commands in CLAUDE.md is.
+         *
+         * Found on the MySQL run, where the suite is slower and crossed first.
+         * (Lane EP)
+         */
+        @set_time_limit(0);
     })
     ->in('Feature');

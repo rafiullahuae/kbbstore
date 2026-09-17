@@ -12,6 +12,37 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        /*
+         * THE ONE LINE THAT MAKES /ar EXIST, AND THE ONE CHANGE IN THIS WHOLE
+         * FEATURE THAT HAS TO BE APPLIED TO THE SERVER BY HAND.
+         *
+         * bootstrap/ is on BuildPackage::NEVER_SHIP and UpdateGuard forbids it
+         * outright — rightly, since a bad bootstrap/app.php stops the
+         * application booting at all and leaves the updater unable to roll
+         * itself back. So this line reaches the server the way the
+         * usePublicPath() line below did: edited in place, once.
+         *
+         * PREPENDED TO THE GLOBAL STACK, and it has to be. Middleware in the
+         * `web` group runs AFTER the router has matched a route, which is too
+         * late to change which route matches. Only the global pipeline runs
+         * before the router, and stripping /ar there is what lets every
+         * existing route, RESERVED_SLUGS, the redirect map and the sitemap stay
+         * exactly as they are.
+         *
+         * FORGETTING IT IS SAFE. With the line absent, /ar/... finds no route
+         * and 404s and the shop is English-only — which is what the shop is
+         * today. Nothing else in this feature depends on it: the admin screens,
+         * the translations table and __() all work without it. That is
+         * deliberate, because the failure mode of a hand-applied edit has to be
+         * "the new thing is not live yet", never "the shop is down".
+         *
+         * AND IT IS INERT UNTIL SWITCHED ON. The middleware reads
+         * App\Support\Locale::enabled(), which is false until the owner turns
+         * Arabic on in Translation → Settings. Applying this changes nothing a
+         * shopper can see.
+         */
+        $middleware->prepend(\App\Http\Middleware\SetLocaleFromPath::class);
+
         // Unauthenticated back-office requests go to the admin login, not /login.
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
 

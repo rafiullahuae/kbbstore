@@ -1,5 +1,22 @@
 @extends('emails.layout')
 
+{{--
+    TWO STRINGS CONVERTED, DELIBERATELY (Lane EP).
+
+    An email is where the order's language has to be honoured, because this
+    message is sent LATER — from a queue, or from an admin pressing a status
+    button weeks after checkout — in a process that has no memory of the
+    request. Whatever locale that process happens to be in is English, so
+    without the order's own locale an Arabic customer gets an Arabic checkout
+    and English paperwork forever.
+
+    The language is restored from orders.locale, either with
+    App\Support\OrderLocale::render($order, fn () => ...) or with Laravel's own
+    $mailable->locale($order->locale). Wiring that into the five mailables is
+    Phase 6 and belongs to the lane that owns them; the column, the helper and
+    these two strings are the foundation it needs.
+--}}
+
 @section('body')
     @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
 
@@ -12,7 +29,7 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};border-radius:9px;">
         <tr>
             <td style="padding:13px 15px;font-size:14px;color:{{ $c['ink'] }};">
-                <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">Order</span>
+                <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">{{ __('email.order_status.order_label') }}</span>
                 <span style="font-weight:700;margin-left:7px;font-size:16px;color:{{ $c['pinkDeep'] }};">{{ $order['number'] }}</span>
             </td>
         </tr>
@@ -28,7 +45,7 @@
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:26px 0 10px;">
         <tr>
             <td bgcolor="{{ $c['pinkDeep'] }}" style="background:{{ $c['pinkDeep'] }};border-radius:7px;">
-                <a href="{{ $order['trackUrl'] }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">View your order</a>
+                <a href="{{ $order['trackUrl'] }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">{{ __('email.order_status.view_order') }}</a>
             </td>
         </tr>
     </table>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\HasTranslations;
 use App\Support\Url;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,9 +12,33 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Product extends Model
 {
 
+    use HasTranslations;
     use SoftDeletes;
 
     protected $guarded = [];
+
+    /**
+     * The columns that may carry an Arabic version, and NOTHING ELSE.
+     *
+     * An allowlist rather than a denylist, because the interesting question is
+     * what a translation must never touch and the answer has to be the default:
+     *
+     *   sku            an identifier the supplier and the warehouse share. A
+     *                  translated SKU is a SKU nobody can look up.
+     *   slug           one slug per product, in both languages, with the
+     *                  language carried by the /ar prefix. See
+     *                  App\Support\HasTranslations for the argument.
+     *   price, stock   numbers. AED 199 stays AED 199 on an Arabic page.
+     *   wc_id, total_sales, seo, images — machine fields.
+     *
+     * `description` is on the list and is deliberately NOT sent to a machine:
+     * it carries HTML, and every machine-translation format option mangles
+     * either the markup or the words. See
+     * MachineTranslationRunner::isMachineSafe().
+     *
+     * @var list<string>
+     */
+    protected array $translatable = ['name', 'short_description', 'description'];
 
     protected function casts(): array
     {

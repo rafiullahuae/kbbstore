@@ -10,6 +10,7 @@ use App\Services\Mail\MailConfigurator;
 use App\Services\Mail\ServerMailTransport;
 use App\Services\Seo\IndexNow;
 use App\Services\SettingsService;
+use App\Services\Translation\TranslationStore;
 use App\Services\Update\InstalledVersion;
 use App\Support\Facets;
 use App\Support\Money;
@@ -68,6 +69,17 @@ final class StaticMemos
             Facets::class => static fn () => Facets::reset(),
             Money::class => static fn () => Money::forgetConfig(),
             Url::class => static fn () => Url::forgetBase(),
+            /*
+             * The translations map, both layers (Lane EP).
+             *
+             * Same shape and the same reason as Setting::map() above it: a
+             * per-process memo over a cache entry. Without this reset, the
+             * first test to render a translated page would fix the answer for
+             * every test after it in the process — a test that seeds Arabic and
+             * a test that asserts the English fallback would each pass alone
+             * and one of them would fail in a full run, depending on order.
+             */
+            TranslationStore::class => static fn () => TranslationStore::flush(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

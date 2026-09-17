@@ -46,6 +46,45 @@ class AppServiceProvider extends ServiceProvider
          */
         $this->app->scoped(CartService::class);
         $this->app->scoped(SettingsService::class);
+
+        /*
+         * Bilingual foundation (Lane EP). Two bindings and nothing else.
+         *
+         * 1. __() READS THE DATABASE. Laravel's own translator is kept; only
+         *    its loader is decorated, so validation messages and pagination
+         *    wording still come from the framework's files and every Blade
+         *    conversion the later lanes do is ordinary __() that any Laravel
+         *    developer already knows.
+         *
+         *    This has to be an override rather than a new helper because the
+         *    server has no shell and lang/ is not on UpdateGuard's allowed
+         *    prefixes — a translation the owner types can only live in the
+         *    database, and the framework has to be told to look there. See
+         *    App\Services\Translation\DatabaseTranslationLoader.
+         *
+         *    extend(), not a fresh singleton: the FileLoader underneath is
+         *    whatever the framework configured, including any path a package
+         *    has added, and rebuilding it here would silently drop those.
+         *
+         * 2. THE MACHINE-TRANSLATION PROVIDER, which is NullProvider unless the
+         *    owner has saved his own API key. That default is what makes the
+         *    manual path — the one that must be free to operate — work with
+         *    nothing configured, and what keeps the test suite off the network.
+         *
+         *    `scoped` rather than `singleton`, so a queue worker that runs one
+         *    job before the key is saved and another after does not keep
+         *    answering "no provider" for the life of the process. Same trap as
+         *    Setting::map(), one layer up.
+         */
+        $this->app->extend('translation.loader', static fn ($loader) => new \App\Services\Translation\DatabaseTranslationLoader($loader));
+
+        $this->app->scoped(\App\Services\Translation\TranslationProvider::class, static function () {
+            $key = \App\Services\Translation\TranslationCredentials::apiKey();
+
+            return $key === null
+                ? new \App\Services\Translation\NullProvider
+                : new \App\Services\Translation\GoogleProvider($key);
+        });
     }
 
     public function boot(): void
@@ -60,6 +99,22 @@ class AppServiceProvider extends ServiceProvider
          * still fall behind.
          */
         \App\Support\MediaUsageWriter::listen();
+
+        /*
+         * `orders.locale` — the language the customer was shopping in.
+         *
+         * One call, registering an Order::creating hook, for the same reason
+         * MediaUsageWriter is one call: this file is shared by every lane and
+         * another closure in it is how it stops being readable.
+         *
+         * A model hook rather than a line in CheckoutController, and that is
+         * deliberate rather than convenient. Orders are created in FIVE places
+         * — Store\CheckoutController, Api\CheckoutController,
+         * ManualOrderBuilder, DemoContentController and GatewayPreflight — and
+         * a rule written at four of them is a rule. See
+         * App\Support\OrderLocale for what it does when there is no request.
+         */
+        \App\Support\OrderLocale::listen();
 
         /*
          * Shipping zones, their locations and their methods are read on EVERY
