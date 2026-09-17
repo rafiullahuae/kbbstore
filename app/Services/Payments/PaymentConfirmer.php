@@ -233,6 +233,46 @@ class PaymentConfirmer
             return WebhookOutcome::ignored('order is already paid; failure notice ignored');
         }
 
+        /*
+         * THE OTHER HALF OF HOLDS_PLACE, WHICH ONLY confirm() HAD.
+         *
+         * `paid_at` was the only guard here, and a dispatched order with no
+         * `paid_at` is not a strange one — it is the ordinary case. Cash on
+         * delivery never sets `paid_at` at all (CashOnDelivery's own class
+         * comment says why), and a shopper who opened Stripe Checkout,
+         * abandoned it and paid another way leaves an order with
+         * `payment_method = stripe`, no `paid_at`, and a Checkout session that
+         * expires about a day later. The order can easily have shipped by
+         * then.
+         *
+         * When that notice landed, this method moved a SHIPPED order to
+         * `failed`. Nothing about the sale had changed: the goods were with
+         * the courier and, for COD, the cash was collected. What changed was
+         * that the order left Order::REAL_STATUSES — so it stopped counting as
+         * revenue on the dashboard, in the customer's history and in the
+         * exports — and OrderStatus::RELEASES_COUPON handed its coupon use
+         * back, so a one-use code became usable again after the goods had
+         * gone. (The stock was not returned, because OrderTransitionStock
+         * already knows `shipped` is past the point of putting units back —
+         * which is the same judgement, applied in one place and not the
+         * other.)
+         *
+         * confirm() has refused to move these two statuses since the day
+         * HOLDS_PLACE was written, for the mirror-image reason: an order out
+         * with the courier must not revert because a late callback said so.
+         * A late notice cannot move a dispatched order in EITHER direction.
+         *
+         * It is still recorded, and loudly, because the one case where this
+         * matters is real: goods shipped against a payment the provider now
+         * says never happened. That is for a human to act on, not for a
+         * webhook to decide by rewriting the order's status.
+         */
+        if (in_array((string) $order->status, self::HOLDS_PLACE, true)) {
+            $this->recordLateFailure($order, $provider, $providerRef, $reason, $summary);
+
+            return WebhookOutcome::refused('order has already been dispatched');
+        }
+
         DB::transaction(function () use ($order, $provider, $providerRef, $reason, $summary) {
             /*
              * Through the funnel, which does three things this could not.
@@ -273,6 +313,52 @@ class PaymentConfirmer
         $order->refresh();
 
         return WebhookOutcome::applied('failure recorded');
+    }
+
+    /**
+     * A failure notice for an order that has already been dispatched.
+     *
+     * recordLate()'s counterpart, and deliberately the same shape: the payment
+     * row so the reference is findable, and ONE note however many times the
+     * provider retries — the dedupe is a read of the row this call is about to
+     * write, so a retry that lands after the first one finds it and stays
+     * quiet.
+     *
+     * @param  array<string, mixed>  $summary
+     */
+    private function recordLateFailure(
+        Order $order,
+        string $provider,
+        string $providerRef,
+        string $reason,
+        array $summary,
+    ): void {
+        $seen = Payment::query()
+            ->where('provider', $provider)
+            ->where('provider_ref', $providerRef)
+            ->where('status', 'late_failure')
+            ->exists();
+
+        $this->record($order, $provider, $providerRef, null, null, 'late_failure', $summary);
+
+        if ($seen) {
+            return;
+        }
+
+        $order->notes()->create([
+            'author' => 'system',
+            'is_customer_note' => false,
+            'content' => sprintf(
+                'ACTION NEEDED — %s reported the payment as %s (reference %s), and this order is already %s. '
+                . 'The order has NOT been changed: its status, its revenue and its coupon are left exactly as they were, '
+                . 'because a dispatched order is past the point where a callback may decide anything. '
+                . 'Check whether this order was paid by another method before treating it as unpaid.',
+                $provider,
+                $reason,
+                $providerRef,
+                (string) $order->status,
+            ),
+        ]);
     }
 
     /**

@@ -668,8 +668,34 @@ class AdminOrderController extends Controller
         $recorded = OrderTax::recorded($order);
 
         if ($recorded === null) {
-            $order->total = $subtotal + $order->shipping_total + $order->fee_total
-                + $order->tax_total - $order->discount_total;
+            /*
+             * THE SAME CLAMP THE TAXED BRANCH BELOW GETS FOR FREE.
+             *
+             * This was `$subtotal + shipping + fee + tax_total - discount`,
+             * with nothing stopping the subtraction. `discount_total` is
+             * whatever the coupon was worth against the basket AS PLACED and
+             * no edit here re-evaluates it, so an operator who removes the
+             * discounted line — or prices it down to zero — leaves a discount
+             * larger than the order it is taken off, and the total went
+             * NEGATIVE: a 150.00 order with a 100.00 coupon, minus its 100.00
+             * line, wrote total = -50.00.
+             *
+             * A negative `orders.total` is not a display glitch. It is summed
+             * as revenue on the dashboard and in customerHistory(), printed on
+             * the invoice as the amount due, and read as the refund ceiling by
+             * PaymentRefunder::capturedFils() for an order with no payment row
+             * — where <= 0 means "nothing captured" and refunds are refused
+             * outright.
+             *
+             * The taxed branch below never had this: it builds its base
+             * through OrderTax::base(), which is `max(0, subtotal - discount)
+             * + shipping`. Two branches of one method disagreeing about what
+             * an over-large discount means is the defect; this uses the same
+             * expression so they cannot disagree again. `tax_total` is still
+             * added verbatim, exactly as before, because with no recorded rule
+             * there is nothing to recompute it from.
+             */
+            $order->total = OrderTax::base($order) + (int) $order->fee_total + (int) $order->tax_total;
             $order->save();
 
             return;

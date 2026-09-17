@@ -242,6 +242,8 @@ final class Reconciler
         $existing = DB::table(self::RUNS)->where('run_key', $key)->first();
 
         if ($existing !== null && ! $restart) {
+            $this->rearmUnavailable((int) $existing->id);
+
             return (int) $existing->id;
         }
 
@@ -285,6 +287,110 @@ final class Reconciler
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    /**
+     * Give a provider that was unreachable last time another chance.
+     *
+     * WHY PRESSING RUN AGAIN USED TO DO NOTHING
+     *
+     * A run is keyed on the window and the providers, so pressing Run over the
+     * same dates CONTINUES the run rather than starting a second one. That is
+     * the resumability this screen is built on, and it is right.
+     *
+     * But a remote phase that could not read the provider's list is closed by
+     * advance(..., finished: true) — "finished" meaning "will not be retried
+     * inside this run", not "succeeded" — and the local phases that depend on
+     * it are then closed too, skipped on purpose, because a conclusion drawn
+     * from a list nobody could read is the false alarm this class exists to
+     * avoid. Every phase being finished is also exactly what nextPhase() reads
+     * as "there is nothing left to do".
+     *
+     * So the window a provider was down for became PERMANENTLY unanswerable:
+     * the owner fixes the key, presses Run over the same dates, not one HTTP
+     * request is made, and he is shown the same two "could not be read"
+     * notices as before. Nothing says the second press did nothing. The check
+     * he is missing is the one this whole class is for — money the provider
+     * holds that this database does not, or the reverse — and it sits in a
+     * window he believes he has reconciled. `restart` would have done it, but
+     * a correctness property that depends on the owner guessing which button
+     * means "actually look this time" is not a property.
+     *
+     * So: opening a run that carries a source-unavailable finding re-arms
+     * exactly the phases that outage skipped, and nothing else. The phases
+     * that DID complete keep their cursors and their findings.
+     *
+     * Re-walking is safe by construction, which is why this is cheap: findings
+     * are fingerprinted and inserted with insertOrIgnore, so a page seen twice
+     * writes nothing twice. The sightings for the re-armed half ARE dropped
+     * first, though — a sighting left over from a partial page the retry no
+     * longer sees would answer wasSeen() "yes" for a transaction nobody saw
+     * this time, which is the same silence-for-agreement mistake one layer
+     * down.
+     */
+    private function rearmUnavailable(int $runId): void
+    {
+        $halves = [
+            self::PAYMENTS_SOURCE_UNAVAILABLE => [
+                'phases' => [self::PHASE_REMOTE_PAYMENTS, self::PHASE_LOCAL_PAYMENTS],
+                'sighting_kind' => RemoteTxn::PAYMENT,
+            ],
+            self::REFUNDS_SOURCE_UNAVAILABLE => [
+                'phases' => [self::PHASE_REMOTE_REFUNDS, self::PHASE_LOCAL_REFUNDS],
+                'sighting_kind' => RemoteTxn::REFUND,
+            ],
+        ];
+
+        DB::transaction(function () use ($halves, $runId) {
+            $rearmed = false;
+
+            foreach ($halves as $kind => $half) {
+                $providers = DB::table(self::FINDINGS)
+                    ->where('run_id', $runId)
+                    ->where('kind', $kind)
+                    ->distinct()
+                    ->pluck('provider')
+                    ->all();
+
+                foreach ($providers as $provider) {
+                    $provider = (string) $provider;
+
+                    DB::table(self::FINDINGS)
+                        ->where('run_id', $runId)
+                        ->where('kind', $kind)
+                        ->where('provider', $provider)
+                        ->delete();
+
+                    DB::table(self::SIGHTINGS)
+                        ->where('run_id', $runId)
+                        ->where('provider', $provider)
+                        ->where('kind', $half['sighting_kind'])
+                        ->delete();
+
+                    DB::table(self::CHECKPOINTS)
+                        ->where('run_id', $runId)
+                        ->where('provider', $provider)
+                        ->whereIn('phase', $half['phases'])
+                        ->update(['cursor' => null, 'finished_at' => null, 'updated_at' => now()]);
+
+                    $rearmed = true;
+                }
+            }
+
+            if (! $rearmed) {
+                return;
+            }
+
+            // The run is open again, and its headline count is recomputed from
+            // the rows rather than decremented — the notices just deleted were
+            // counted into it when they were written.
+            DB::table(self::RUNS)->where('id', $runId)->update([
+                'status' => 'running',
+                'finished_at' => null,
+                'findings_count' => DB::table(self::FINDINGS)->where('run_id', $runId)->count(),
+                'updated_at' => now(),
+            ]);
+        });
     }
 
     /**
