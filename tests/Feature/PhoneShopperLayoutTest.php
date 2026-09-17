@@ -368,7 +368,24 @@ it('stops the page scrolling away underneath an open drawer', function () {
 
 it('keeps a side gutter under the product grid on a phone', function () {
     foreach (phoneBothHalves('resources/css/kbb/kbb-shop.css') as $where => $flat) {
-        expect(phoneHas($flat, '.wrap.shop{padding-left:16px;padding-right:16px}'))->toBeTrue(
+        /*
+         * Either spelling of the same rule.
+         *
+         * T6 rewrote the storefront's physical direction properties as logical
+         * ones — `padding-inline-start`/`-end` here — which resolve to exactly
+         * these values in a left-to-right document. The committed bundle under
+         * public/build still carries the physical spelling, because asset
+         * builds in this project are manual and public/build is the record of
+         * what the server currently has.
+         *
+         * So the two halves this loop compares now spell the property
+         * differently while meaning the same thing. What must not differ, and
+         * what this still pins, is that BOTH halves carry the override at all.
+         */
+        expect(
+            phoneHas($flat, '.wrap.shop{padding-left:16px;padding-right:16px}')
+            || phoneHas($flat, '.wrap.shop{padding-inline-start:16px;padding-inline-end:16px}')
+        )->toBeTrue(
             "The {$where} no longer restores the shop grid's side gutter on phones.");
     }
 

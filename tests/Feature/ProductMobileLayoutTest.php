@@ -121,7 +121,19 @@ it('draws the accordion icon from bars instead of rotating the glyph', function 
 
 it('lets Customer Reviews sit on the page gutter instead of a second one', function () {
     foreach (pdpMobileBothHalves() as $where => $flat) {
-        expect(str_contains($flat, '.wrap>.sr{padding-left:0;padding-right:0}'))->toBeTrue(
+        /*
+         * Either spelling of the same rule. T6 rewrote the storefront's
+         * physical direction properties as logical ones, and
+         * `padding-inline-start`/`-end` resolve to exactly these values in a
+         * left-to-right document. The committed bundle still carries the
+         * physical spelling because asset builds here are manual, so the two
+         * halves differ in the property name and in nothing else. That BOTH
+         * halves carry the override is what this pins, and it still does.
+         */
+        expect(
+            str_contains($flat, '.wrap>.sr{padding-left:0;padding-right:0}')
+            || str_contains($flat, '.wrap>.sr{padding-inline-start:0;padding-inline-end:0}')
+        )->toBeTrue(
             "The {$where} does not drop .sr's own horizontal padding, so the reviews block ".
             'keeps sitting one gutter further in than the rest of the page.'
         );
