@@ -342,12 +342,30 @@
            AN EMPTY ANSWER IS A REAL ANSWER and means show no chip. Nothing is
            invented to fill the gap: no delivery window outside the shop's own
            country has been measured, and the owner types one when it has. --}}
+      {{-- "100% authentic" WAS A LITERAL HERE — Lane DT.
+
+           2.60.193 made the shop's other six claims the owner's own words
+           (App\Support\TrustClaims). This one was left behind because another
+           lane held this file, which left the product page as the last place in
+           the storefront making an unverified claim that only a signed package
+           could retract — on shared hosting with no shell, that is a claim the
+           owner cannot withdraw at all.
+
+           IT HAS ITS OWN KEY rather than sharing the checkout's, whose default
+           is the same string. See TrustClaims::CLAIMS: a shared box would make
+           clearing this chip silently remove the one beside Place order too.
+
+           EMPTY REMOVES THE WHOLE CHIP, icon included. `.trust` is a two-column
+           grid, so the remaining chips simply reflow — the same thing the
+           delivery and returns chips beside it have always done, and the reason
+           they are written as conditionals rather than as empty strings. --}}
       @php
+          $trustAuthentic = \App\Support\TrustClaims::text($settings, 'product_authentic_text');
           $trustDelivery = \App\Support\DeliveryLine::here();
           $trustReturns  = trim((string) $settings->get('trust_returns_text', ''));
       @endphp
       <div class="{{ $modules->classFor('trust') }} trust">
-        <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg> 100% authentic</div>
+        @if ($trustAuthentic !== null)<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg> {{ $trustAuthentic }}</div>@endif
         @if ($trustDelivery !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13v10H3z"/><path d="M16 10h4l1 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg> {{ $trustDelivery }}</div>@endif
         @if ($trustReturns !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 5v4h4"/></svg> {{ $trustReturns }}</div>@endif
         <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg> Tabby &amp; Tamara</div>

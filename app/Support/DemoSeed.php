@@ -167,20 +167,42 @@ final class DemoSeed
     }
 
     /**
-     * How many rows of each model the demo seeder created, in ONE statement.
+     * How many rows of each kind the demo content created.
      *
      * This is the disclosure half. A screen that shows real figures and says
      * nothing about the invented rows it left out is only half-honest: an owner
      * who just clicked "Import demo orders" and saw the dashboard not move
      * would reasonably conclude the import failed. The keys are the short names
-     * a screen would print — `orders`, `customers`, `products` — not class
-     * names.
+     * a screen would print — `orders`, `customers`, `products`, `reviews` — not
+     * class names.
      *
-     * @return array<string, int>
+     * ── WHY `reviews` DOES NOT COME OUT OF THE GROUPED STATEMENT ────────────
+     *
+     * The other three are answered by one GROUP BY over `demo_seed_log`,
+     * because the log is the whole truth about them. It is NOT the whole truth
+     * about reviews: they arrive by two unrelated routes — DemoReviewsSeeder
+     * stamps `source = 'demo'` and writes no log row, while the admin panel's
+     * own seeder writes log rows. App\Support\DemoReviews is the single place
+     * that knows both, and every storefront figure already excludes reviews
+     * through it, so this asks IT rather than inventing a third answer here.
+     * One extra count, on the screen that is already doing several.
+     *
+     * Reviews were the conspicuous omission: the seeded wall is 12,481 reviews
+     * averaging 4.8 stars — by a wide margin the largest fabrication in the
+     * shop — and it was the one thing the owner's "demo rows excluded"
+     * disclosure did not mention.
+     *
+     * @return array{orders: int, customers: int, products: int, reviews: int}
      */
     public static function counts(): array
     {
-        $out = ['orders' => 0, 'customers' => 0, 'products' => 0];
+        /*
+         * Asked FIRST and unconditionally, because it does not depend on
+         * `demo_seed_log` existing. A build whose migration step was skipped
+         * still has the seeder's `source = 'demo'` rows, and answering 0 for
+         * them would be the silent subtraction this class exists to refuse.
+         */
+        $out = ['orders' => 0, 'customers' => 0, 'products' => 0, 'reviews' => DemoReviews::count()];
 
         if (! self::tableExists()) {
             return $out;
@@ -218,20 +240,49 @@ final class DemoSeed
     /**
      * The disclosure block a reporting endpoint hands its screen.
      *
-     * `excluded` is true whenever anything was left out, so a screen's
-     * condition is one field rather than a sum of three.
+     * `excluded` is true whenever anything was left out of THE FIGURES ON THESE
+     * SCREENS, so a screen's condition is one field rather than a sum of three.
      *
-     * @return array{excluded: bool, orders: int, customers: int, products: int}
+     * ── WHY `reviews` IS CARRIED BUT IS NOT PART OF `excluded` ──────────────
+     *
+     * `excluded` was `array_sum($counts) > 0` while counts() held nothing but
+     * sales rows, and summing the new key in would have been the one-line
+     * change. It would also have made the dashboard lie. That banner reads
+     *
+     *     (s.demo && s.demo.excluded) ? s.demo.orders + ' demo orders are
+     *     excluded from these figures.' : ''
+     *
+     * so on a shop with demo REVIEWS and no demo orders — which is the shipped
+     * state, since DemoReviewsSeeder runs on a fresh install and the orders
+     * seeder does not — the flag would have flipped true and the owner would
+     * have been told "0 demo orders are excluded from these figures." A
+     * disclosure that states a false figure is worse than the silence it
+     * replaced.
+     *
+     * So `excluded` keeps meaning exactly what its four existing readers
+     * already assume: demo rows were left out of the money and the lists on
+     * this screen. The review count rides alongside as its own field, and a
+     * screen that wants to say something about it tests `demo.reviews > 0` —
+     * one field, the same ergonomics, and no second boolean that could ever
+     * disagree with the number beside it.
+     *
+     * DEMO REVIEWS ARE EXCLUDED SOMEWHERE ELSE, WHICH IS THE POINT. None of
+     * these four endpoints reports a review figure at all; the reviews are kept
+     * off the STOREFRONT by App\Support\DemoReviews. This field is how the
+     * admin finally says so out loud.
+     *
+     * @return array{excluded: bool, orders: int, customers: int, products: int, reviews: int}
      */
     public static function disclosure(): array
     {
         $counts = self::counts();
 
         return [
-            'excluded' => array_sum($counts) > 0,
+            'excluded' => $counts['orders'] + $counts['customers'] + $counts['products'] > 0,
             'orders' => $counts['orders'],
             'customers' => $counts['customers'],
             'products' => $counts['products'],
+            'reviews' => $counts['reviews'],
         ];
     }
 }

@@ -20,6 +20,11 @@ use App\Services\SettingsService;
  *                                           "24/7 support"
  *   partials/checkout/order-block.blade.php "100% authentic", printed beside
  *                                           the Place order button
+ *   store/product.blade.php                 "100% authentic", the first chip in
+ *                                           the trust row under the buy box —
+ *                                           left behind by Lane DR because
+ *                                           another lane held the file, and
+ *                                           brought in by Lane DT
  *   partials/announcement.blade.php         "100% authentic K-beauty"
  *   store/home.blade.php                    "Korean brands, all sourced direct."
  *
@@ -97,6 +102,43 @@ final class TrustClaims
         // Checkout, beside the Place order button
         // (partials/checkout/order-block.blade.php).
         'checkout_authentic_text' => '100% authentic',
+
+        /*
+         * Product page, first chip in the trust row (store/product.blade.php).
+         *
+         * ── WHY THIS IS ITS OWN KEY AND NOT `checkout_authentic_text` ───────
+         *
+         * The two defaults are the same string, and that is exactly the case
+         * where sharing one box looks like the tidy answer. It is not, for one
+         * reason that outranks the tidiness: A SHARED BOX MAKES REMOVAL
+         * CONTAGIOUS. Clearing a claim is the half of this feature the owner
+         * actually needs, and on a shared key "take that off the product page"
+         * would also silently strip the chip beside Place order — a second
+         * decision he never made, on the page where being wrong costs money.
+         * One box must not be able to change two pages the owner is not
+         * looking at.
+         *
+         * IT IS ALSO THE SHAPE THIS CLASS ALREADY HAS. `reassure_auth_text` and
+         * `anno_authentic_text` carry byte-identical defaults in two keys
+         * already, and the admin tab is organised by PLACE — "On the home
+         * page", "At the checkout", "On the announcement strip". One key per
+         * placement is the established convention here; reusing one would be
+         * the anomaly, not the saving.
+         *
+         * AND THE MOMENTS ARE GENUINELY DIFFERENT. This chip is read while
+         * browsing, beside delivery and returns; the checkout one is the last
+         * sentence before payment. An owner may well want to word, keep or drop
+         * them separately, and a shared key forbids that outright.
+         *
+         * THE OBJECTION, ANSWERED. Two boxes for one sentence can drift apart.
+         * They cannot drift UNSEEN: the Claims tab prints every claim on one
+         * screen with its placement named, which is what that tab is for. This
+         * is copy, not an identifier — the "one ID, two places" defect the
+         * analytics lane untangled was a single ID that had to be unique, and
+         * duplicating it broke reporting. Duplicating a sentence breaks nothing
+         * and keeps two pages independently retractable.
+         */
+        'product_authentic_text' => '100% authentic',
 
         // Checkout, reassurance block (partials/checkout/reassurance.blade.php).
         // Pre-existing key; the only thing that changes is that the owner can

@@ -24,6 +24,61 @@ use App\Support\TrustClaims;
  * assertions count elements rather than searching for a class name, which the
  * page's own inlined CSS would also match (▲31 again).
  */
+/**
+ * Claims whose STOREFRONT half has landed and whose admin box has not.
+ *
+ * ── WHY THIS LIST IS ALLOWED TO EXIST ───────────────────────────────────────
+ *
+ * The same split this file's header describes, one round later. Lane DR made
+ * seven claims editable and could not build their boxes because another lane
+ * held resources/views/admin/app.blade.php; Lane DT added the eighth —
+ * `product_authentic_text`, the product page's "100% authentic" chip, the last
+ * literal claim in the storefront — and that file was held again.
+ *
+ * ── WHAT IS AND IS NOT EXCUSED ──────────────────────────────────────────────
+ *
+ * ONLY the two shell lines. A key in here is still required to be writable at
+ * the endpoint, to read back as removed when cleared, and to open showing what
+ * the page prints — every other test in this file loops over the whole of
+ * TrustClaims::CLAIMS with no exemption at all, so the half that can silently
+ * destroy an owner's claims is pinned for this key exactly as for the rest.
+ * What is missing is only the owner's ability to REACH it, and the guard below
+ * still reports it rather than passing in silence.
+ *
+ * ── THE INTEGRATOR'S TWO LINES, VERBATIM ────────────────────────────────────
+ *
+ * In the Claims panel, immediately after the "At the checkout" bdSec block and
+ * before "On the announcement strip" (~line 15325):
+ *
+ *   bdSec('On the product page',
+ *     'The reassurance chips under the Add to basket button, on every product
+ *      in the shop. Delivery and returns beside this one are set elsewhere.',
+ *     '<div class="bd-grid">'+
+ *       bdField('set_product_authentic_text','Beside delivery and returns',
+ *         '<input id="set_product_authentic_text"
+ *          value="'+sesc(bdClaim('product_authentic_text'))+'"
+ *          placeholder="empty — the chip is removed">',
+ *         'Currently reads “100% authentic”. Empty removes the chip and its
+ *          shield icon, and the other chips close up around it. This is a
+ *          separate box from the checkout one above on purpose: clearing one
+ *          must not silently clear the other.')+
+ *     '</div>')+
+ *
+ * and in the Business Details save payload, after the
+ * `checkout_authentic_text` line (~line 15471):
+ *
+ *   product_authentic_text: sval('set_product_authentic_text'),
+ *
+ * THEN DELETE THIS LIST'S ENTRY. The guard turns itself back on the moment the
+ * box exists, and a stale entry here is a hole, not a note.
+ *
+ * @return list<string>
+ */
+function ctPendingShellControl(): array
+{
+    return ['product_authentic_text'];
+}
+
 function ctAdmin(): AdminUser
 {
     return AdminUser::create([
@@ -39,12 +94,57 @@ it('draws a box for every claim, and sends every one of them on save', function 
 
     expect($shell)->not->toBeFalse();
 
+    $pending = ctPendingShellControl();
+
     foreach (array_keys(TrustClaims::CLAIMS) as $key) {
-        expect(str_contains($shell, "id=\"set_" . $key . "\""))
+        $drawn = str_contains($shell, "id=\"set_" . $key . "\"");
+        $saved = str_contains($shell, $key . ": sval('set_" . $key . "')");
+
+        if (in_array($key, $pending, true)) {
+            /*
+             * Awaiting the integrator — see ctPendingShellControl() for the two
+             * lines and where they go. A half-wired claim is worse than an
+             * unwired one (a box that saves nothing, or a payload key with no
+             * box), so the two lines have to arrive together or not at all.
+             */
+            expect($drawn)->toBe(
+                $saved,
+                "{$key} is half-wired into the admin shell: a box with no payload line saves nothing, and a payload line with no box posts a blank that would DELETE the claim. Add both, then drop {$key} from ctPendingShellControl().",
+            );
+
+            continue;
+        }
+
+        expect($drawn)
             ->toBeTrue("The Claims tab has to draw a box for {$key}.");
 
-        expect(str_contains($shell, $key . ": sval('set_" . $key . "')"))
+        expect($saved)
             ->toBeTrue("The save payload has to carry {$key}, or its box saves nothing.");
+    }
+});
+
+it('leaves no claim pending a box that the admin shell already draws', function () {
+    // The exemption above is a note about work in flight, and a note that has
+    // stopped being true is a hole. This closes it the moment the box lands.
+    $shell = file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    foreach (ctPendingShellControl() as $key) {
+        expect(str_contains($shell, "id=\"set_" . $key . "\""))
+            ->toBeFalse("The Claims tab now draws a box for {$key}, so it must be removed from ctPendingShellControl() and guarded like every other claim.");
+    }
+});
+
+it('makes a claim awaiting its box reachable at the endpoint all the same', function () {
+    // The storefront half has shipped for these, so the ONLY thing missing is
+    // the control. If the endpoint rule were missing too, the integrator would
+    // paste the box in and it would silently save nothing — which is the exact
+    // defect `reassure_auth_text` shipped with and this file exists to catch.
+    foreach (ctPendingShellControl() as $key) {
+        expect(\App\Http\Controllers\Admin\AdminController::SETTING_RULES)
+            ->toHaveKey($key);
+
+        expect(\App\Http\Controllers\Admin\AdminController::SETTING_RULES[$key][0])
+            ->toBe('text', "{$key} must accept a blank value, because blank is how the claim is withdrawn.");
     }
 });
 

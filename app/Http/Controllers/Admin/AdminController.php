@@ -1869,6 +1869,20 @@ class AdminController extends Controller
         'checkout_authentic_text' => ['text', 'Checkout: authenticity chip'],
         'reassure_auth_text' => ['text', 'Checkout: reassurance line'],
         'anno_authentic_text' => ['text', 'Announcement bar: authenticity claim'],
+
+        /*
+         * The seventh claim, added by Lane DT — the product page's "100%
+         * authentic" chip, which Lane DR could not reach because another lane
+         * held store/product.blade.php.
+         *
+         * `text` and blank-accepted for exactly the reason above it: clearing
+         * the box is how the claim is withdrawn. Its own key rather than a
+         * second use of `checkout_authentic_text`, whose default is the same
+         * string — TrustClaims::CLAIMS carries the full reasoning, but the
+         * short of it is that a shared box would make clearing the product
+         * page's chip also strip the one beside Place order.
+         */
+        'product_authentic_text' => ['text', 'Product page: authenticity chip'],
     ];
 
     /** PUT /admin-api/settings — upsert a whitelisted set of store settings. */

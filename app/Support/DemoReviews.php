@@ -162,10 +162,33 @@ final class DemoReviews
         return $ids;
     }
 
-    /** How many invented review rows are sitting in the table. */
+    /**
+     * How many invented review rows are sitting in the table.
+     *
+     * COUNTED IN THE DATABASE, AND AS THE COMPLEMENT OF exclude().
+     *
+     * This used to be `count(self::ids())`, which plucked every demo id into
+     * PHP to measure the array's length. Harmless at a handful of rows and not
+     * harmless here: the seeded wall is 12,481 reviews, and DemoSeed::counts()
+     * now asks this question on the dashboard, the orders screen, the analytics
+     * screen and the customers screen — four of the admin's most-loaded
+     * endpoints, each of which would have dragged twelve thousand integers
+     * across the wire to learn one number.
+     *
+     * Subtracting the real rows from all rows rather than writing an
+     * is-demo predicate is deliberate. The negation of exclude() is exactly the
+     * kind of second definition this class exists to prevent: it would have to
+     * restate the NULL-source rule and the log lookup, and the day one of them
+     * changed, the figure the owner is shown would stop describing the rows
+     * actually being hidden. Built this way it cannot disagree with exclude(),
+     * because it IS exclude().
+     */
     public static function count(): int
     {
-        return count(self::ids());
+        $all = Review::query()->count();
+        $real = self::exclude(Review::query())->count();
+
+        return max(0, $all - $real);
     }
 
     /**
