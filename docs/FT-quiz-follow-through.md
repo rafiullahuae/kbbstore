@@ -147,7 +147,7 @@ that was never sent.
   response has gone; tightens `email` to `Rules\StorefrontEmail`.
 - `app/Mail/QuizPlanEmail.php`, `resources/views/emails/quiz-plan*.blade.php` —
   new. The stored routine names and step names, and nothing else.
-- `app/Services/Translation/InterfaceStrings.php` — two quiz keys, eleven email
+- `app/Services/Translation/InterfaceStrings.php` — two quiz keys, twelve email
   keys.
 - `tests/Feature/QuizFollowThroughTest.php` — new.
 - `tests/Support/EnglishRenderWalk.php` — `BASE_COMMIT` moved forward; the note

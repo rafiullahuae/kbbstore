@@ -21,8 +21,8 @@
 @endif
 @foreach ($routines as $routine)
 
-{{ $routine['name'] }}
-@foreach ($routine['steps'] as $i => $step)
+{{ $routine['name'] ?? '' }}
+@foreach ($routine['steps'] ?? [] as $i => $step)
 {{ $i + 1 }}. {{ $step }}
 @endforeach
 @endforeach

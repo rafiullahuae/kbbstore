@@ -39,11 +39,16 @@
         </p>
     @endif
 
+    {{-- ?? on both keys. Api\QuizController::routinesFrom() guarantees the
+         shape of every row it writes, and this is the one place that shape is
+         read back out in a process that must not throw — a mailable that dies
+         on a legacy or hand-edited row would take the whole deferred send with
+         it and record nothing. --}}
     @foreach ($routines as $routine)
         <div style="border:1px solid #eee;border-radius:10px;padding:14px 16px;margin:18px 0;">
-            <p style="font-weight:600;margin:0 0 8px;">{{ $routine['name'] }}</p>
+            <p style="font-weight:600;margin:0 0 8px;">{{ $routine['name'] ?? '' }}</p>
             <ol style="margin:0;padding-inline-start:20px;">
-                @foreach ($routine['steps'] as $step)
+                @foreach ($routine['steps'] ?? [] as $step)
                     <li style="margin:2px 0;">{{ $step }}</li>
                 @endforeach
             </ol>
