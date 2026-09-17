@@ -64,14 +64,80 @@
      endif" three hundred lines below the actual mistake. --}}
 @php
   $heroCarriesH1 = ! $sections->hidden('hero') && count($banners) > 0;
+
+  // THE SLIDER CARRIES THE HERO'S OWN Desktop/Mobile, AND THE BAND NO LONGER
+  // DOES — Lane FW. See the note over the <section> below. Composed here and
+  // not in the attribute because the class is EMPTY for a shop that has not
+  // used those switches, and interpolating an empty class into the attribute
+  // would leave a trailing space there on every page on earth —
+  // StorefrontEnglishUnchangedTest compares these bytes and cannot tell a
+  // space that appeared from a word that changed.
+  $heroOwnVis = $sections->deviceClassFor('hero');
+  $heroSliderClass = $heroOwnVis === '' ? 'slider' : 'slider ' . $heroOwnVis;
 @endphp
-@unless ($heroCarriesH1)
-  <h1 class="kbb-h1-quiet">{{ $settings->get('site_title', 'K-Beauty Bliss — authentic Korean skincare in the UAE') }}</h1>
+{{-- `?:` AND NOT get()'s SECOND ARGUMENT — Lane FW.
+
+     `site_title` has a box now (Store → Business Details → Store identity;
+     AdminController::SETTING_RULES carries the reasoning). A cleared box
+     stores '' rather than deleting the row, and SettingsService::get() answers
+     its default only when the ROW IS ABSENT — so the form this line used to
+     take printed an EMPTY <h1> on the shop's own front page the first time
+     anybody cleared the field, which is the one thing this element must never
+     be. `?:` covers '' and null alike.
+
+     Byte-neutral: with no row at all get() answers null either way and the
+     literal is the same literal.
+
+     THE DIRECTIVE SHARES THIS COMMENT'S LAST LINE, as three other blocks in
+     this file do and for the same measured reason: a Blade comment compiles to
+     nothing and leaves the newline after it, so a comment on its own lines adds
+     a blank line to every rendered page. Caught here by diffing two fetches —
+     89,288 bytes against 89,289, one `>` at line 322. --}}@unless ($heroCarriesH1)
+  <h1 class="kbb-h1-quiet">{{ $settings->get('site_title') ?: 'K-Beauty Bliss — authentic Korean skincare in the UAE' }}</h1>
 @endunless
 
-{{-- HERO --}}
-@unless ($sections->hidden('hero'))
-<section class="sec {{ $sections->classFor('hero') }}" style="padding-top:14px"><div class="wrap">
+{{-- HERO.
+
+     THE BAND IS THREE SECTIONS, AND ITS VISIBILITY IS NOW THEIR UNION — Lane FW.
+
+     This `<section>` is the hero, the delivery strip AND the promo ticker: the
+     latter two are `<div>`s below, inside this element's `.wrap`, because the
+     band is one visual unit. It used to carry `$sections->classFor('hero')`,
+     which is the HERO's own d-off/m-off — and `.d-off{display:none !important}`
+     takes the whole subtree with it. So switching the hero off for desktop
+     switched the delivery strip and the ticker off for desktop too, with their
+     own Desktop switches still on and nothing said; and hiding the hero on both
+     devices dropped the `@unless` and took two switched-ON sections off the
+     page. Measured at 1280px before the repair: the band computed `display:none`
+     while `.delivery` inside it computed `flex`.
+
+     A nested section's own `d-off` can only ever SUBTRACT from what its host
+     shows, never add, so the wrapper has to be visible on a device when ANY of
+     the three is on for it — bandClassFor() — and the hero's own switch then
+     has to land on the hero's own content, which is the slider below. Neither
+     half works without the other: the union alone would make the hero
+     unhideable, the slider class alone would not bring the other two back.
+
+     @unless follows the same rule: the band renders unless all three are off on
+     both devices, which is what bandHidden() answers.
+
+     BYTE-NEUTRAL for every shop with the three rows on — bandClassFor() returns
+     exactly what classFor() returned, deviceClassFor() returns '', and the
+     directives emit nothing. Proved by fetching and diffing, not by reasoning.
+
+     $heroCarriesH1 is NOT changed, and the slider's condition is now that flag
+     rather than a second copy of it: the flag decides whether the quiet <h1>
+     above renders, so writing `count($banners) > 0` here again would let the
+     two drift and give the page two <h1>s or none.
+
+     AND THIS COMMENT OPENS WITH THE `HERO` MARKER RATHER THAN STANDING UNDER
+     IT, which looks like a typo and is not. A Blade comment compiles to
+     nothing and leaves the newline that followed it, so a SECOND comment block
+     here adds a blank line to the rendered page of every shop on earth — one
+     byte, no words, exactly the diff this file's other notes warn about.
+     Measured: 89,288 bytes before, 89,289 after, one `>` at line 322. --}}
+@unless ($sections->bandHidden('hero'))
+<section class="sec {{ $sections->bandClassFor('hero') }}" style="padding-top:14px"><div class="wrap">
 {{-- NO SLIDES, NO SLIDER — Lane FO.
 
      The band is still rendered when the list is empty, because the delivery
@@ -94,7 +160,7 @@
      test cannot tell from a copy change and which would cost the next reader
      the time it takes to prove it is nothing. Written this way the rendered
      bytes are identical while there are slides, which is every shop that has
-     not touched the new screen. --}}@if (count($banners) > 0)  <div class="slider" id="slider">
+     not touched the new screen. --}}@if ($heroCarriesH1)  <div class="{{ $heroSliderClass }}" id="slider">
     <div class="slides" id="slides">
       @foreach ($banners as $b)
         <a class="sl" href="{{ Url::to($b['url']) }}" style="background:{{ $b['gradient'] }}">

@@ -3561,15 +3561,28 @@ function hpWire(L){
 }
 
 function paintHomepage(base){
+  // A section the storefront draws INSIDE another one travels with its host:
+  // the delivery strip and the promo ticker live in the hero's own <section>,
+  // where CSS `order` is inert. The rows are grouped into blocks so an arrow
+  // moves the hero band whole and can never land a row inside it — the server
+  // settles such an order away on save, and a screen that showed it would be
+  // reporting a position the shop does not have. `movable` and `note` are
+  // derived by App\Services\HomepageSections from its NESTED constant, so this
+  // cannot come to say something the template does not do.
+  const HPB = [];
+  HP.sections.forEach(s => { if (s.movable === false && HPB.length) HPB[HPB.length-1].push(s); else HPB.push([s]); });
+  const hpBlock = s => HPB.findIndex(b => b.indexOf(s) > -1);
+
   const rows = HP.sections.map((s,i)=>`
     <div class="hprow${(!s.desktop&&!s.mobile)?' alloff':''}" data-i="${i}">
-      <div class="hpmove">
-        <button class="hpb" data-mv="-1" ${i===0?'disabled':''} aria-label="Move up">↑</button>
-        <button class="hpb" data-mv="1" ${i===HP.sections.length-1?'disabled':''} aria-label="Move down">↓</button>
+      <div class="hpmove">${s.movable === false ? '' : `
+        <button class="hpb" data-mv="-1" ${hpBlock(s)===0?'disabled':''} aria-label="Move up">↑</button>
+        <button class="hpb" data-mv="1" ${hpBlock(s)===HPB.length-1?'disabled':''} aria-label="Move down">↓</button>`}
       </div>
       <div class="hpmain">
         <b>${escHtml(s.label)}</b>
         <span>${escHtml(s.description)}</span>
+        ${s.note ? `<span>${escHtml(s.note)}</span>` : ''}
         ${s.has_grid?`<div class="hpskin"><label>Grid style</label>
           <span class="skinpick">
             <button class="skinpick-b" type="button" data-open="${i}">${escHtml((HP.skins.find(k=>k.key===s.skin)||{}).label||s.skin)}<i>&#9662;</i></button>
@@ -3655,9 +3668,18 @@ document.addEventListener('click', e=>{
   }
   const mv=e.target.closest('[data-mv]');
   if(mv){
-    const i=+mv.closest('.hprow').dataset.i, j=i+ +mv.dataset.mv;
-    if(j<0||j>=HP.sections.length) return;
-    [HP.sections[i],HP.sections[j]]=[HP.sections[j],HP.sections[i]];
+    // Moves a BLOCK. A host and the sections drawn inside it are one unit —
+    // see the note in paintHomepage() above — so the hero band swaps with its
+    // neighbour whole. Swapping bare rows put a section between a host and its
+    // nested rows, which HomepageSections::all() settles away: the screen said
+    // one order and the shop rendered another.
+    const row=HP.sections[+mv.closest('.hprow').dataset.i];
+    if(!row || row.movable===false) return;
+    const B=[]; HP.sections.forEach(s=>{ if(s.movable===false && B.length) B[B.length-1].push(s); else B.push([s]); });
+    const bi=B.findIndex(b=>b[0]===row), bj=bi+ +mv.dataset.mv;
+    if(bi<0||bj<0||bj>=B.length) return;
+    [B[bi],B[bj]]=[B[bj],B[bi]];
+    HP.sections=[].concat.apply([],B);
     paintHomepage(base); hpDirty(); return;
   }
   const lay=e.target.closest('.hpl-b');
@@ -15522,6 +15544,23 @@ buildNav();
           bdField('set_store_name','Store name',
             '<input id="set_store_name" value="'+sesc(SETTINGS.store_name)+'">',
             'Shown in the browser tab, in emails and on invoices.')+
+          /* WHAT THE SITE CALLS ITSELF, as opposed to what the business is
+             called. Read by store/home.blade.php — it is the page's <h1>
+             whenever the hero slider is off or has no slides — and by the
+             wordmark on the shareable review wall at /reviews. Until
+             AdminController::SETTING_RULES gained the key, NOTHING in the
+             application wrote it: both readers fell back to a literal, so the
+             line looked configurable and was not.
+
+             Its own box and not a second use of Store name: that one signs the
+             emails, heads the invoices and carries the footer copyright, and
+             the two ship as different strings on purpose. The placeholder is
+             the shipped line, because clearing the box puts it back — the
+             storefront reads with `?:`, so an empty value means "the line we
+             ship" and never an empty heading. */
+          bdField('set_site_title','Site title',
+            '<input id="set_site_title" value="'+sesc(SETTINGS.site_title)+'" placeholder="K-Beauty Bliss \u2014 authentic Korean skincare in the UAE">',
+            'The heading the homepage shows when the hero slider is switched off, and the name at the top of the review wall. Leave it empty for the shipped line.')+
           bdField('set_currency','Currency',curSelect(),
             'Picking one fills in its symbol and decimals below.')+
           /* WHERE THE VAT RATE WENT. It was a field right here, and the owner
@@ -15950,6 +15989,10 @@ buildNav();
     document.getElementById('set_save_biz').onclick=async function(){
       var payload={
         store_name: sval('set_store_name'), currency: sval('set_currency'), vat_rate: sval('set_vat'),
+        // Needs its line in AdminController::SETTING_RULES, which it has — the
+        // standing warning at the top of that list is that a key without one
+        // is dropped while the endpoint still answers ok.
+        site_title: sval('set_site_title'),
         store_timezone: sval('set_store_timezone'),
         // The Tax tab. Every one of these needs a line in
         // AdminController::SETTING_RULES or the endpoint answers ok and writes

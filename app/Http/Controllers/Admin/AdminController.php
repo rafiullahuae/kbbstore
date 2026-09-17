@@ -1696,6 +1696,40 @@ class AdminController extends Controller
         'store_name' => ['text', 'Store name'],
 
         /*
+         * What the SITE calls itself, as opposed to what the BUSINESS is
+         * called — Lane FW, from docs/FO-HOMEPAGE-INVENTORY.md §2.
+         *
+         * READ BY TWO STOREFRONT SURFACES AND WRITTEN BY NOTHING until this
+         * line. store/home.blade.php prints it as the page's <h1> whenever the
+         * hero slider is switched off or has no slides, and
+         * store/review-wall.blade.php prints it as the wordmark at the top of
+         * the shareable review page. Both had a literal fallback, so the key
+         * looked configurable and was not: it was in no SETTING_RULES entry, no
+         * module endpoint, no seeder, and nothing in the tree called ->set() on
+         * it.
+         *
+         * NOT A SECOND `store_name`, and it is worth saying why rather than
+         * leaving the next reader to wonder. `store_name` is the business: it
+         * signs the emails, heads the invoices, carries the footer copyright
+         * and is what the SEO layer falls back to. This is the line the shop
+         * puts at the top of its own page, and the shipped defaults are
+         * different strings for that reason — "K-Beauty Bliss" against
+         * "K-Beauty Bliss — authentic Korean skincare in the UAE". Collapsing
+         * them would put the tagline on every invoice or strip it off the
+         * homepage, and neither is a decision a lane gets to make.
+         *
+         * BLANK IS ALLOWED AND MEANS "the shipped line". It has to be: a
+         * cleared box stores '' rather than removing the row, and
+         * SettingsService::get() answers its default only when the ROW is
+         * absent — so a reader written as get('site_title', 'K-Beauty Bliss …')
+         * would print an EMPTY <h1> the moment the owner cleared the field.
+         * Both readers therefore use `?: ` against their own literal, and
+         * tests/Feature/SiteTitleSettingTest.php posts a blank and an explicit
+         * null through this endpoint and reads the storefront back.
+         */
+        'site_title' => ['text', 'Site title'],
+
+        /*
          * The shop's own wall clock, read by App\Support\StoreTime.
          *
          * A SETTING and not a constant, and deliberately NOT `APP_TIMEZONE`.

@@ -74,23 +74,26 @@ class HomepageSections
     /**
      * Said on the row, in the owner's words, instead of an arrow that lies.
      *
-     * THE THIRD CLAUSE IS ABOUT THE SWITCHES, NOT THE ARROWS, and it describes
-     * behaviour that predates this lane rather than behaviour it introduced.
-     * The band is one `<section>` and it carries the HERO's visibility classes,
-     * so `d-off` on the hero sets `display:none` on the element these two are
-     * drawn inside: switching the hero off for desktop hides the delivery strip
-     * and the promo ticker on desktop too, with their own Desktop switches
-     * still on. Measured in Chromium at 1280px — the band computes to
-     * `display:none` while `.delivery` computes to `flex` inside it.
+     * THE THIRD CLAUSE USED TO BE ABOUT THE SWITCHES, AND IS NOT ANY MORE —
+     * Lane FW. It read "and is hidden on any device the hero itself is
+     * switched off for", which was true when Lane FR wrote it and is the
+     * defect that lane measured and costed rather than fixed: the band is one
+     * `<section>` carrying the HERO's visibility classes, so `d-off` on the
+     * hero set `display:none` on the element these two are drawn inside and
+     * their own Desktop/Mobile switches were overridden with nothing said.
      *
-     * Repairing that means the band taking the UNION of the three rows'
-     * visibility and the slider taking the hero's own, which is a change to the
-     * hero block of store/home.blade.php and a separate piece of work; it is
-     * written up in docs/FR-HOMEPAGE-ORDER.md. Until it lands, the screen says
-     * so rather than offering a switch that is quietly overridden — which is
-     * the same standard this constant exists to hold the arrows to.
+     * The band now takes bandClassFor(), the UNION of the three rows, and the
+     * slider takes the hero's own — so these two rows' switches decide these
+     * two rows, which is what the screen has always implied they do. What
+     * remains true of them, and is all this sentence now claims, is that they
+     * travel with the hero's POSITION: they are drawn inside its markup, so
+     * CSS `order` cannot move them away from it.
+     *
+     * The clause is not replaced by a reassurance. A row that behaves the way
+     * the screen's own controls say it does needs no sentence about it, and one
+     * would only go stale in the other direction.
      */
-    public const NESTED_NOTE = 'Drawn inside the hero band, so it moves with the hero, cannot be placed elsewhere on the page, and is hidden on any device the hero itself is switched off for.';
+    public const NESTED_NOTE = 'Drawn inside the hero band, so it moves with the hero and cannot be placed elsewhere on the page. Its own Desktop and Mobile switches still decide whether it shows.';
 
     public function __construct(private SettingsService $settings) {}
 
@@ -169,37 +172,64 @@ class HomepageSections
      */
     private static function settle(array $rows): array
     {
-        $registry = array_keys(self::REGISTRY);
-
-        // Hosts in their saved order; nested keys dropped out of the sequence.
-        $hosts = array_values(array_filter(array_keys($rows), fn ($k) => ! isset(self::NESTED[$k])));
-
         $out = [];
 
-        foreach ($hosts as $host) {
-            $out[$host] = $rows[$host];
-
-            foreach ($registry as $key) {
-                if ((self::NESTED[$key] ?? null) === $host && isset($rows[$key])) {
-                    $out[$key] = $rows[$key];
-                }
-            }
-        }
-
-        // A nested section whose host is not in the registry at all would
-        // otherwise be dropped from the page's own inventory. Nothing writes
-        // that today; the fallback keeps a hand-edited settings row visible
-        // rather than silently short.
-        foreach ($rows as $key => $row) {
-            if (! isset($out[$key])) {
-                $out[$key] = $row;
-            }
+        foreach (self::settleKeys(array_keys($rows)) as $key) {
+            $out[$key] = $rows[$key];
         }
 
         $i = 0;
 
         foreach ($out as $key => $row) {
             $out[$key]['order'] = $i++;
+        }
+
+        return $out;
+    }
+
+    /**
+     * The sequence a saved key order REALLY produces on the page.
+     *
+     * Split out of settle() so that a caller holding a bare list of keys can
+     * ask the same question without inventing rows to ask it with — which is
+     * what HomepageLayouts::summaries() was doing wrong. Its wire-frame preview
+     * drew each preset's STORED sequence, and two of the four presets store a
+     * sequence this method rewrites: Conversion puts the ticker before the
+     * delivery strip and Boutique puts the delivery strip tenth. Applying
+     * either produced a different page from the one the preview drew, which is
+     * the same "the screen said one order and the shop rendered another" fault
+     * settle() exists to end, one screen along.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public static function settleKeys(array $keys): array
+    {
+        $registry = array_keys(self::REGISTRY);
+
+        // Hosts in their saved order; nested keys dropped out of the sequence.
+        $hosts = array_values(array_filter($keys, fn ($k) => ! isset(self::NESTED[$k])));
+
+        $out = [];
+
+        foreach ($hosts as $host) {
+            $out[] = $host;
+
+            foreach ($registry as $key) {
+                if ((self::NESTED[$key] ?? null) === $host && in_array($key, $keys, true)) {
+                    $out[] = $key;
+                }
+            }
+        }
+
+        // A nested section whose host is not in the list at all would otherwise
+        // be dropped from the page's own inventory. Nothing writes that today;
+        // the fallback keeps a hand-edited settings row visible rather than
+        // silently short.
+        foreach ($keys as $key) {
+            if (! in_array($key, $out, true)) {
+                $out[] = $key;
+            }
         }
 
         return $out;
@@ -286,6 +316,66 @@ class HomepageSections
     }
 
     /**
+     * True when the WRAPPER a section is drawn in need not render at all.
+     *
+     * For fifteen of the seventeen this is hidden() itself. For a HOST it is
+     * not: the hero's `<section>` is also the element the delivery strip and
+     * the promo ticker are drawn inside, so it has to survive the hero being
+     * switched off on both devices whenever either of those two is still on.
+     * Dropping it would take two sections the owner has switched ON off the
+     * page with it — which is what this file did until Lane FW.
+     */
+    public function bandHidden(string $key): bool
+    {
+        [$desktop, $mobile] = $this->bandVisibility($key);
+
+        return ! $desktop && ! $mobile;
+    }
+
+    /**
+     * The visibility of a host's wrapper: the UNION of its own and every
+     * section drawn inside it.
+     *
+     * ── WHY A UNION AND NOT THE HOST'S OWN ──────────────────────────────────
+     *
+     * `.d-off{display:none !important}` is applied to the wrapper, and
+     * `display:none` takes the subtree with it. A nested section's own `d-off`
+     * can therefore only ever SUBTRACT from what its host shows; it can never
+     * add. So the wrapper has to be visible on a device if ANY of the sections
+     * it carries is on for that device, and each of them then subtracts its own
+     * switch from that inside. Any other rule makes the nested rows' switches
+     * decorative, which is what they were.
+     *
+     * A section with nothing nested in it returns its own two flags unchanged,
+     * so this is the general case and classFor() is not a special one.
+     *
+     * @return array{0: bool, 1: bool}
+     */
+    private function bandVisibility(string $key): array
+    {
+        $all = $this->all();
+        $s = $all[$key] ?? null;
+
+        if ($s === null) {
+            return [false, false];
+        }
+
+        $desktop = (bool) $s['desktop'];
+        $mobile = (bool) $s['mobile'];
+
+        foreach (self::NESTED as $child => $host) {
+            if ($host !== $key || ! isset($all[$child])) {
+                continue;
+            }
+
+            $desktop = $desktop || (bool) $all[$child]['desktop'];
+            $mobile = $mobile || (bool) $all[$child]['mobile'];
+        }
+
+        return [$desktop, $mobile];
+    }
+
+    /**
      * The visibility class for a section wrapper.
      * d-off hides it above the mobile breakpoint, m-off at or below it.
      */
@@ -297,6 +387,60 @@ class HomepageSections
         if ($s === null) {
             return '';
         }
+
+        return $this->frameClass($key, $all, (bool) $s['desktop'], (bool) $s['mobile']);
+    }
+
+    /**
+     * The class for a HOST's wrapper — the hero's `<section>`.
+     *
+     * Same order class and same divider mark as classFor(), and the union
+     * visibility instead of the host's own. For a shop with the three rows on
+     * it returns exactly what classFor() returns, byte for byte, which is every
+     * shop that has not used those switches.
+     */
+    public function bandClassFor(string $key): string
+    {
+        $all = $this->all();
+
+        if (! isset($all[$key])) {
+            return '';
+        }
+
+        [$desktop, $mobile] = $this->bandVisibility($key);
+
+        return $this->frameClass($key, $all, $desktop, $mobile);
+    }
+
+    /**
+     * A section's OWN d-off/m-off, with no order class and no divider mark.
+     *
+     * For the element that carries a host's own content — the hero's slider —
+     * which sits inside a wrapper that is now showing on a device for somebody
+     * else's sake. Without this the hero would be dragged back on by its own
+     * lodgers, which is the same defect in the other direction.
+     *
+     * No order class: the slider is not a child of `.kbb-home`. No divider
+     * mark: the mark belongs above the wrapper, and a second one inside it
+     * would draw the separator twice.
+     */
+    public function deviceClassFor(string $key): string
+    {
+        $s = $this->all()[$key] ?? null;
+
+        if ($s === null) {
+            return '';
+        }
+
+        return trim(($s['desktop'] ? '' : 'd-off ') . ($s['mobile'] ? '' : 'm-off '));
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $all
+     */
+    private function frameClass(string $key, array $all, bool $desktop, bool $mobile): string
+    {
+        $s = $all[$key];
 
         // The divider class is added here rather than in the template: all
         // seventeen sections already call this, so none can be missed and none
@@ -322,7 +466,7 @@ class HomepageSections
             ? 'kbb-ord-' . $s['order'] . ' '
             : '';
 
-        return trim($ord . ($s['desktop'] ? '' : 'd-off ') . ($s['mobile'] ? '' : 'm-off ') . $mark);
+        return trim($ord . ($desktop ? '' : 'd-off ') . ($mobile ? '' : 'm-off ') . $mark);
     }
 
     public function skinFor(string $key): ?string
