@@ -1046,12 +1046,68 @@ tests to **2,936**, every file byte-compared against the repo before it shipped.
       a tie-prone sort with no tie-breaker, so the same product can appear in
       both or vanish from both
 
-### In flight after this phase
+### Five more lanes  *(2.60.195 – .197)*
 
-Five more lanes: unstable orderings across the catalogue; four latent
-contradictions that only become visible when the owner uses a feature; the
-storefront as a shopper on a phone actually sees it; whether two test suites
-can safely share one checkout; and the menu's brand addresses.
+- [x] ▲ **Nine brands in the menu told shoppers the shop stocks nothing by
+      them.** The menu built each brand's filter value by squashing its label
+      instead of looking the brand up, so `dralthea` asked for a brand recorded
+      as `dr-althea`. The page then loads perfectly and says "No products match
+      those filters" — an empty shelf rather than an error, which reads worse
+      and is harder to notice. Measured: 24 products on the bare shop, 3 for a
+      brand the shop carries, **0** for one of the nine. `MenuDemo` now reads
+      the brands table and omits what it cannot reach; the tree is rebuilt per
+      request, so an imported brand reappears on its own
+- [x] ▲ **The product page's tax sentence was a literal.** `"Inclusive of
+      {rate}% VAT"` never consulted `vat_basis`, and the rate was the global
+      default rather than the country's. Setting Saudi Arabia to 15% exclusive
+      — the feature the owner asked for by name — would have told a Riyadh
+      shopper the tax was already in the price, at the wrong rate, and then
+      charged 15% on top at checkout. Nothing would have errored. The same line
+      carried "Authentic, sourced direct" welded into the code, so clearing the
+      product page's authenticity box removed the chip and left the claim
+      printing under the price: a claim withdrawn and unremovable
+- [x] **A list that is sliced is ordered all the way down.** Thirty-odd query
+      sites now end their ORDER BY on `id`. The correction worth recording: the
+      home page's `best2` rail is **built and never rendered**, so the duplicate
+      was never shopper-visible there — the real instances were `/best-sellers`'
+      pagination and the shop's `?orderby=` modes, which nobody had flagged. The
+      worst was CatalogReorder's `autoSort`, which wrote `position` from an
+      arbitrary read order and turned a tie into the shop's persisted curated
+      order
+- [x] **Best Sellers measures what it claims.** The page said "The products our
+      customers keep coming back for" while ranking by units sold, which cannot
+      tell three hundred buyers of one jar from one buyer of three hundred.
+      `App\Support\RepeatPurchase` counts distinct orders per (product, buyer),
+      and the loyalty sentence is printed only when the history supports it
+- [x] ▲ **The shop on a phone, walked for the first time.** Every text field
+      except the header search was under iOS's 16px threshold, so tapping any of
+      them — the whole checkout, every field — zoomed the page and did not zoom
+      back. The cart drawer's scroll lock had **never worked**: `overlay.js` adds
+      and removes `body.kbb-locked` and no stylesheet in the repo ever defined
+      it. Four `font: <weight> <size> inherit` shorthands were invalid CSS and
+      dropped whole, so the sign-in page rendered in Arial at the browser
+      default. The shop and category grids had no side gutter, their cards on
+      pixel 0. All repairs scoped to phone widths; no desktop rule moved
+
+### Two suites, one checkout  *(2.60.197)*
+
+- [x] ▲ **`config:cache` writes `bootstrap/cache/config.php` with
+      `file_put_contents` — no lock, no rename**, so the file is truncated and
+      refilled in place. A suite booting inside that window gets a `ParseError`
+      rather than a test failure. Measured on this checkout: the window is the
+      whole ~27µs of the write, and **22% of boots that found a file while a
+      writer ran** died on it. Compiled-cache paths are per-process now, preview
+      children get their own, and `discard()` cleans both locations because the
+      237 `clear_caches_*` migrations only know the shared one. The blanket
+      guarantee in `tests/bootstrap.php` was false on two counts and was rewritten
+      to the narrower true one rather than left standing
+- [x] **A guard that could not see the query it was about.** `StableOrderingTest`
+      matched `"id"` in SQLite's double quotes; MySQL — what the shop runs —
+      returns backticks, so on that engine the pattern matched nothing: every
+      correctly ordered query was reported as unsettled, the home-rail counter
+      stayed at zero, and the offset sweep was blind. Both engines are now green
+      (SQLite 3063, MySQL 3068). **A test that is engine-specific and silent
+      about it is reported as coverage, which is worse than no test**
 
 ## Phase 9 — Content pages
 
@@ -1499,6 +1555,8 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
 | ▲33 | **A preview that serves stale bytes will send you chasing a defect that does not exist.** Several hours went into an admin screen that "had not changed", which was a dev server started before the merge, on a port a kill had not actually freed. Before trusting any preview: confirm the listening PID is the process you started (`ss -ltnp`, then `/proc/<pid>/cwd`), clear compiled views, and check one string you know changed. Never `pkill` broadly — one lane killed another lane's server that way |
 | ▒34 | **Invented content is a publishing decision, not a rendering detail, and `noindex` is not the remedy.** `/reviews` shipped twelve fabricated customers with a sitemap entry; `/app` still answers a public URL with a hard-coded catalogue at prices that are not real; Demo Content's `reviewSummary()` returns 12,481 reviews at 4.8 stars, and its seeded samples are written `'verified' => true`. Each was reachable by a customer. A crawler directive keeps a page out of a result list and does nothing about a bookmark, a shared link, or a screenshot. The test to write is not "is it labelled" but **"can a logged-out visitor see a figure that is not in the database"** — and it should be asserted on rendered output, per ▒31 |
 | ▒35 | **The container restarts, and everything not committed is gone.** A restart mid-session took two lanes' unfinished work with it; nothing in the repository was lost because every merged lane had already been committed and pushed. The discipline that saved it: merge and push each lane as it lands rather than batching several, and keep the integrator branch's working tree clean between merges, so the worst case is re-dispatching a brief rather than reconstructing a diff |
+| ▒36 | **A guard is only as wide as the thing it can see, and silence is its failure mode.** Four separate instruments in this suite were found checking nothing while being counted as coverage: a mobile-drawer walker whose selector named an element that does not exist (36 links unchecked); a tab-bar selector looking for a class `tb` on an element classed `tabbar`, which had never matched on any run; an admin-nav walk whose empty dispatch map excused every screen; and an ordering guard written in SQLite's quoting that reported nothing on MySQL. The shape is always the same — a parse or a match whose failure returns **nothing** rather than failing. Every extractor must assert it found something before asserting anything about what it found, every floor must be per-region so one section cannot mask another, and any test that reads compiled SQL must accept both engines' quoting |
+| ▒37 | **The exclusive-VAT feature would have shipped a contradiction the day it was switched on, and no test would have failed.** The product page printed "Inclusive of {rate}% VAT" as a literal at the global rate; the checkout charged the country's rate on the country's basis. Both were correct in isolation and disagreed only in a configuration nobody had yet selected. The lesson generalises past tax: **a feature that adds a new configuration adds a new set of screens that must be re-read in that configuration**, and "it is latent today" is a statement about the current settings, not about the code |
 
 ## Questions still unanswered
 
