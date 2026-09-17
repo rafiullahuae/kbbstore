@@ -5,6 +5,7 @@ namespace Tests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Tests\Support\CompiledCaches;
+use Tests\Support\DeterministicRandom;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -36,6 +37,24 @@ abstract class TestCase extends BaseTestCase
     public function createApplication(): Application
     {
         CompiledCaches::discard();
+
+        /*
+         * The Mersenne Twister, returned to the run's seed before every
+         * application is built.
+         *
+         * Here rather than in tests/Pest.php's beforeEach because of WHEN the
+         * demo catalogue is drawn. It is seeded by a migration
+         * (2026_08_27_100000_seed_demo_catalogue), so RefreshDatabase draws it
+         * inside the FIRST test of the process -- from setUpTraits(), which
+         * Laravel runs after createApplication() and before any beforeEach. A
+         * reseed in beforeEach is therefore a reseed after the fixture already
+         * exists, and was measured to leave the catalogue as random as it was.
+         *
+         * Tests\Support\DeterministicRandom carries what that cost: a
+         * storefront fixture that differed on every run, and an assertion count
+         * that differed with it.
+         */
+        DeterministicRandom::reseed();
 
         return parent::createApplication();
     }
