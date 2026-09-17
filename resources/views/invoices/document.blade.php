@@ -39,19 +39,44 @@
       Arabic arrives joined and correct, where a hand-built PDF would be stuck
       with the WinAnsi core fonts and could not draw an Arabic letter at all.
 
-      A DIRECTION THE MARKUP ACTUALLY STATES. The <html> element stays dir=ltr
-      because the furniture — the labels, the headings, the totals table — is
-      English and must not flip. Every element that prints CUSTOMER text carries
-      dir="auto" instead, which resolves from that value's own first strong
-      character. Without it an address line like "شارع 21، فيلا 7" is laid out
-      by the paragraph's LTR direction and the trailing number is placed at the
-      wrong end of the line — a silently mangled address on a parcel, which is
-      worse than a plain one. dir="auto" also makes each such element a bidi
-      isolate, so one Arabic line cannot reorder the English line beside it.
-      This is the identical argument Money::format() already makes for the
-      currency symbol, applied to the rest of the document.
+      A DIRECTION THE MARKUP ACTUALLY STATES. This element used to be a fixed
+      lang=en dir=ltr, on the stated grounds that "the furniture — the labels,
+      the headings, the totals table — is English and must not flip". That
+      premise no longer holds for one of the four documents: Admin\InvoiceController
+      renders the INVOICE inside OrderLocale::render(), so an order placed in
+      Arabic prints an invoice whose furniture is Arabic, to match the one
+      already in the customer's inbox. A sheet of Arabic labels inside
+      lang="en" dir="ltr" is a lie to every screen reader and hyphenator that
+      reads it.
+
+      So both attributes follow the locale this document is actually being
+      rendered in. `dir` comes from Locale::direction(), never from the language
+      alone, because this shop has two switches and not one: Arabic can be on
+      while the mirrored layout is still being built, and direction() is the
+      single place that answers which state the shop is in. The other three
+      documents are not wrapped, so they render in the operator's language and
+      this resolves to exactly what it was hard-coded to.
+
+      WHAT IS STILL PHYSICAL. The sheet's own stylesheet below uses physical
+      sides (text-align:right on the money columns, margins that assume a
+      left-hand masthead). Turning the mirrored layout on gives this document
+      the right TEXT direction and not yet a mirrored layout; converting these
+      rules to logical properties is lane/rtl-logical-properties' work on the
+      storefront stylesheet and belongs with it, not bolted on here.
+
+      Every element that prints CUSTOMER text carries dir="auto" regardless,
+      which resolves from that value's own first strong character. Without it an
+      address line like "شارع 21، فيلا 7" is laid out by the paragraph's
+      direction and the trailing number is placed at the wrong end of the line —
+      a silently mangled address on a parcel, which is worse than a plain one.
+      dir="auto" also makes each such element a bidi isolate, so one Arabic line
+      cannot reorder the English line beside it. This is the identical argument
+      Money::format() already makes for the currency symbol, applied to the rest
+      of the document. It is not replaced by the two attributes above: those say
+      what the DOCUMENT is, dir="auto" says what one customer-supplied VALUE is,
+      and an Arabic customer can have an English street address.
 --}}<!doctype html>
-<html lang="en" dir="ltr">
+<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -288,9 +313,24 @@
     <div class="toolbar no-print">
         <h1>@yield('title') · {{ $doc['orderNumber'] }}</h1>
         <span class="spacer"></span>
-        <span class="hint">{{ __('invoice.document.print_hint') }}</span>
+        {{-- THE TOOLBAR IS THE OPERATOR'S, EVEN WHEN THE SHEET IS NOT.
+
+             It is inside .no-print and is gone the moment anything is printed:
+             it is navigation for the person standing at the screen, and that
+             person is the operator whichever language the document below is in.
+             So Admin\InvoiceController resolves these two before it enters the
+             order's locale and passes them in. Every other caller — the three
+             other documents, the previews, the tests — passes neither and gets
+             the ordinary lookup, unchanged.
+
+             THE COMMENT CLOSES ONTO THE TAG, with no newline between them. A
+             Blade comment is removed and the whitespace around it is not, so a
+             comment on its own lines adds a blank line to every one of the five
+             tracked previews under docs/invoice-previews/ — a diff that says
+             nothing and that a green test run writes under you.
+        --}}<span class="hint">{{ $toolbarHint ?? __('invoice.document.print_hint') }}</span>
         @yield('toolbar')
-        <button type="button" onclick="window.print()">{{ __('invoice.document.print_button') }}</button>
+        <button type="button" onclick="window.print()">{{ $toolbarButton ?? __('invoice.document.print_button') }}</button>
     </div>
 
     {{-- THE WHOLE CLASS ATTRIBUTE IS YIELDED, WITH "sheet" AS THE DEFAULT, and

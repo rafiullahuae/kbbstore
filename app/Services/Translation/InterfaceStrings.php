@@ -1256,6 +1256,10 @@ final class InterfaceStrings
     private static function storeJs(): array
     {
         return [
+            // store/blog's tag filter. The chip a shopper reads; the value it
+            // filters by is `data-tag` and is never this string — see that
+            // page's script for what happened when the two were the same thing.
+            'js.blog_tag_all' => 'All',
             'js.generic_error' => 'Something went wrong — please try again.',
             'js.no_connection' => 'No connection — please try again.',
             'js.session_expired' => 'Your session expired — please reload the page.',
@@ -1372,6 +1376,35 @@ final class InterfaceStrings
              * subject line is a separate decision from the body — it is named in
              * the report rather than swept in beside these.
              */
+            /*
+             * THE SUBJECT LINES — Lane FJ.
+             *
+             * The headings and bodies below were keyed and the subjects were
+             * not, so an Arabic customer got an Arabic email under an English
+             * subject line: the half of the message that shows in the inbox,
+             * and the only half some of them read.
+             *
+             * TWO NAMED PLACEHOLDERS, NOT sprintf's NUMBERED ONES. The constant
+             * in OrderStatusChanged::WORDING keeps `%1$s` / `%2$s` because it
+             * is a PHP constant and cannot call __(); here they are `:store`
+             * and `:number`, which is what every other string in this file uses
+             * and what the Translation console shows the owner. Named is also
+             * the property that matters most for a subject — a translator who
+             * puts the order number first writes :number first and the sentence
+             * is still correct, where a positional %s in the wrong slot
+             * produces "Your KBB-10427 order Aisha Beauty Co is on its way":
+             * grammatical, plausible, and wrong.
+             *
+             * A SUBJECT IS NOT A BODY. Both are short on purpose — an inbox
+             * shows roughly the first sixty characters and the store's own name
+             * is inside that budget — and both must keep both placeholders. A
+             * subject that lost :number is a dispatch notice that does not say
+             * which order, which is the whole content of the line.
+             * OrderPaperworkLabelsAreKeyedTest pins the length and both
+             * placeholders for every locale that has one published.
+             */
+            'order_status.shipped_subject' => 'Your :store order :number is on its way',
+            'order_status.cancelled_subject' => 'Your :store order :number has been cancelled',
             'order_status.shipped_heading' => 'Your order is on its way',
             'order_status.shipped_body' => 'Your order has left us and is with the courier. Delivery in the UAE normally takes one to three working days from dispatch.',
             'order_status.cancelled_heading' => 'Your order has been cancelled',

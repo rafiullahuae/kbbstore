@@ -90,8 +90,37 @@ final class EnglishRenderWalk
      * proof is in its merge commit; 0a0f77f's receipt change is in this one's
      * history. From here the guard answers the next question — has anything
      * SINCE changed the English?
+     *
+     * ── MOVED AGAIN — LANE FJ ───────────────────────────────────────────────
+     *
+     * TWO PAGES, AND THE DIFF WAS READ BEFORE IT WAS APPROVED. Both changes are
+     * inside @verbatim, which is why they show up here at all — a Blade comment
+     * is stripped and a JavaScript comment is shipped to the browser:
+     *
+     *   skincare-guide  the Journal's tag filter was rewritten. setTag() matched
+     *                   the active chip on its RENDERED TEXT, so the first
+     *                   translated label would have killed the highlight for
+     *                   every chip, and 'All' was a word used as a sentinel in
+     *                   three places. The page also gained one line above the
+     *                   filter carrying the translated "All" label.
+     *
+     *   skin-quiz       buildPayload()'s comment said `recommended_routines` is
+     *                   never stored. Api\QuizController writes it now, so the
+     *                   comment said something untrue about the code beside it.
+     *
+     * Not a byte of shopper-visible COPY moved on either page: the one English
+     * row this lane did change on purpose is on the order-received summary,
+     * which this walk cannot see — it renders /checkout/success with no order in
+     * the session, so the summary partial is never included. That row is pinned
+     * in OrderPaperworkLabelsAreKeyedTest instead, by the case named for it.
+     *
+     * MOVED BY MERGE, NOT BY REBASE. This constant is a SHA, and a rebase
+     * rewrites every SHA behind it — repinning to a commit and then rebasing
+     * leaves the guard pointing at an object that is not in the branch, where
+     * it fails with "no such commit" rather than with a diff. The commit named
+     * below is reachable from this branch's history and stays reachable.
      */
-    public const BASE_COMMIT = '8a2c45cf8de01d0d06b6267b3a98725f764e8fdc';
+    public const BASE_COMMIT = '937aeb72382385963bbf26a8fb6fe0915f83dcd5';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

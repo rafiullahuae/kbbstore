@@ -11,6 +11,33 @@
     Money is integer fils throughout. Money::format() is the only thing that
     turns it into a price; there is no division anywhere in this file.
 
+    THE ROW LABELS ARE `email.totals.*`, WHICH IS NOT THIS FILE'S OWN KEY SET
+    AND IS THE POINT. Subtotal, Discount, Delivery, Gift wrapping, the payment
+    fee, VAT and Total were three separate lists: OrderEmailPresenter::totals()
+    for the four order emails, InvoiceDocument::totals() for the invoice, and
+    this file, keyed to `store.checkout.*`. The first two were merged onto one
+    key set; this was the third copy. A customer holds all three documents for
+    one order — the screen they paid on, the receipt in their inbox, the invoice
+    beside it — so a translator who renames "Delivery" has to rename it on all
+    three or on none, and three key sets meant two chances to disagree in a
+    language nobody here reads. OrderPaperworkLabelsAreKeyedTest asserts the
+    three label sets are the same strings.
+
+    ONE ENGLISH ROW CHANGED when they were joined, and deliberately: the
+    discount row printed the bare coupon code ("GLOW10") where both documents
+    print "Discount (GLOW10)". The code alone is not a label — it says nothing
+    about what the row is — and unifying on the receipt's wording is what makes
+    the three comparable at all. The code is still an identifier and still goes
+    in as a placeholder, never concatenated.
+
+    TWO DIFFERENCES ARE KEPT, both of them the screen saying MORE rather than
+    saying it differently. The delivery row appends the chosen method after a
+    middot; that is the method's own name, not a label. And the "of which" VAT
+    note under the Total uses the owner's `vat_label` setting — the shopper's
+    second-person sentence from the checkout page — where the invoice says
+    "Includes VAT at 5%" for an accountant. That split is argued below and is
+    older than this change.
+
     THE SHOW/HIDE IS <details>, not script. This page is reached once, straight
     off a payment, and a toggle that depends on JavaScript having loaded is a
     toggle that can strand the shopper with their own order hidden. The first
@@ -86,7 +113,7 @@
 
         if ($taxRecord['added']) {
             if ($taxRecord['fils'] !== 0) {
-                $vatRow = ['label' => 'VAT at ' . $vatRate . '%', 'fils' => $taxRecord['fils']];
+                $vatRow = ['label' => __('email.totals.vat_at_rate', ['rate' => $vatRate]), 'fils' => $taxRecord['fils']];
             }
         } elseif ($taxRecord['fils'] > 0) {
             $vatNote = [
@@ -99,7 +126,7 @@
             ];
         }
     } elseif ((int) $order->tax_total !== 0) {
-        $vatRow = ['label' => 'VAT', 'fils' => (int) $order->tax_total];
+        $vatRow = ['label' => __('email.totals.vat'), 'fils' => (int) $order->tax_total];
     } else {
         $vatLine = app(\App\Support\VatDisplay::class)->line((int) $order->total);
 
@@ -133,29 +160,31 @@
 
     @if ((int) $order->discount_total > 0)
         <div class="sumrow disc">
-            <span>{{ $order->coupon_code ?: __('store.checkout.discount') }}</span>
+            <span>{{ trim((string) $order->coupon_code) !== ''
+                ? __('email.totals.discount_coupon', ['code' => trim((string) $order->coupon_code)])
+                : __('email.totals.discount') }}</span>
             <span>&ndash; {!! Money::format((int) $order->discount_total) !!}</span>
         </div>
     @endif
 
     <div class="sumrow">
-        <span>{{ __('store.checkout.delivery') }}{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
+        <span>{{ __('email.totals.delivery') }}{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
         <span>@if ((int) $order->shipping_total > 0){!! Money::format((int) $order->shipping_total) !!}@else<span style="color:var(--green);font-weight:700">{{ __('store.checkout.free') }}</span>@endif</span>
     </div>
 
     @if ((int) $order->gift_fee > 0)
-        <div class="sumrow"><span>{{ __('store.checkout.gift_wrapping') }}</span><span>{!! Money::format((int) $order->gift_fee) !!}</span></div>
+        <div class="sumrow"><span>{{ __('email.totals.gift_wrapping') }}</span><span>{!! Money::format((int) $order->gift_fee) !!}</span></div>
     @endif
 
     @if ($paymentFee > 0)
-        <div class="sumrow"><span>{{ __('store.checkout.payment_fee', ['method' => $order->paymentLabel()]) }}</span><span>{!! Money::format($paymentFee) !!}</span></div>
+        <div class="sumrow"><span>{{ __('email.totals.payment_fee', ['method' => $order->paymentLabel()]) }}</span><span>{!! Money::format($paymentFee) !!}</span></div>
     @endif
 
     @if ($vatRow !== null)
         <div class="sumrow vat"><span>{{ $vatRow['label'] }}</span><span>{!! Money::format($vatRow['fils']) !!}</span></div>
     @endif
 
-    <div class="sumrow tot"><span>{{ __('store.checkout.total') }}</span><span>{!! Money::format((int) $order->total) !!}</span></div>
+    <div class="sumrow tot"><span>{{ __('email.totals.total') }}</span><span>{!! Money::format((int) $order->total) !!}</span></div>
 
     @if ($vatNote !== null)
         <div class="sumrow vat"><span>{{ $vatNote['label'] }}</span><span>{!! Money::format($vatNote['fils']) !!}</span></div>

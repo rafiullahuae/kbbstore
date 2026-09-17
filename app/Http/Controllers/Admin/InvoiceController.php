@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Invoices\InvoiceDocument;
 use App\Services\Invoices\InvoiceNumbers;
+use App\Support\OrderLocale;
 use App\Support\Url;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Response;
@@ -86,7 +87,46 @@ class InvoiceController extends Controller
         private InvoiceNumbers $numbers,
     ) {}
 
-    /** The printable invoice. Allocates this order's invoice number if it has none. */
+    /**
+     * The printable invoice. Allocates this order's invoice number if it has none.
+     *
+     * ── IT PRINTS IN THE CUSTOMER'S LANGUAGE, NOT THE OPERATOR'S ────────────
+     *
+     * This was the one document of the four that rendered in whatever language
+     * the browser that pressed the button happened to be in, which is the
+     * operator's, and the previous lane left the choice open on the grounds
+     * that an operator is the one looking at the screen.
+     *
+     * What settles it is that the customer already has this document. The
+     * emailed invoice goes out through OrderMailer, which wraps its build in
+     * OrderLocale::render() — so an Arabic order's invoice arrived in Arabic,
+     * and an operator reprinting the same invoice from this screen would hand
+     * over, or re-send, a second sheet that reads differently from the one in
+     * the customer's inbox. Both carry the same invoice number. Two documents
+     * with one number on them is the failure, and it is a worse one on an
+     * invoice than anywhere else in the shop, because an invoice is the sheet
+     * a customer files and may have to produce.
+     *
+     * So it follows the order, exactly as every other thing addressed to the
+     * customer now does, and for the same reason: the person who reads it is
+     * the customer.
+     *
+     * AND ONLY THIS ONE OF THE FOUR. A packing slip is a picking list, a
+     * delivery note is a handover record and a dispatch label is an address on
+     * a box — all three are read inside the building or by a courier, by people
+     * who did not place the order. They stay in the operator's language, which
+     * is what they were already in.
+     *
+     * RENDERED HERE, NOT RETURNED AS A VIEW. A View returned from a controller
+     * is rendered during response preparation, long after render()'s `finally`
+     * has put the previous locale back — so wrapping the call to view() and
+     * returning its result would compile the template in English and look like
+     * it had worked. The string is produced inside the closure.
+     *
+     * The toolbar is the exception inside the exception: it is `.no-print`
+     * navigation for the operator standing at the screen, so its two strings
+     * are resolved out here, before the locale changes, and passed in.
+     */
     public function invoice(int $id): View|Response
     {
         $order = $this->find($id);
@@ -102,12 +142,22 @@ class InvoiceController extends Controller
         // contention those are not always the same thing.
         $order->refresh();
 
-        return view('invoices.invoice', [
+        // Resolved OUT HERE, before the locale moves. Inside the closure the
+        // array literal is built in the order's language along with everything
+        // else, which is right for the sheet and wrong for the buttons.
+        $toolbar = [
+            'toolbarHint' => __('invoice.document.print_hint'),
+            'toolbarButton' => __('invoice.document.print_button'),
+        ];
+
+        $html = OrderLocale::render($order, fn (): string => view('invoices.invoice', array_merge([
             'doc' => $this->documents->present($order),
             'packingSlipUrl' => self::packingSlipUrl($order->id),
             'deliveryNoteUrl' => self::deliveryNoteUrl($order->id),
             'labelUrl' => self::shippingLabelUrl($order->id),
-        ]);
+        ], $toolbar))->render());
+
+        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     /**
