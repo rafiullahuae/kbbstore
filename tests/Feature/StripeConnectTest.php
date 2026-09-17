@@ -881,7 +881,14 @@ describe('Connect OAuth', function () {
     });
 
     it('builds an authorize URL with an unguessable single-use state', function () {
-        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1']);
+        // LANE FG changed the precondition, and deliberately: a client id on
+        // its own no longer opens the popup, because the token exchange that
+        // finishes the flow cannot be authenticated without a platform secret
+        // and failing there costs the owner a grant he then has to revoke. The
+        // stored merchant key is one of the three things that can serve as that
+        // secret (StripeConnect::platformSecret()), so adding it here restores
+        // the precondition this test was always about without weakening it.
+        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1', 'secret_key' => CONNECT_TEST_KEY]);
 
         $a = connectService()->authorizeUrl('test');
         $b = connectService()->authorizeUrl('test');
@@ -1125,7 +1132,10 @@ describe('the endpoints', function () {
     });
 
     it('sends the owner to Stripe and remembers the state in his session', function () {
-        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1']);
+        // See the note on 'builds an authorize URL ...': a platform secret is
+        // now required before the popup opens, and the stored merchant key
+        // serves as one.
+        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1', 'secret_key' => CONNECT_TEST_KEY]);
 
         $response = $this->actingAs(connectAdmin(), 'admin')
             ->get('/admin-api/payments/stripe/connect/start?mode=test')
@@ -1138,7 +1148,16 @@ describe('the endpoints', function () {
         parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
 
         $this->assertNotEmpty($query['state']);
-        expect(session(StripeConnect::STATE_SESSION_KEY))->toBe($query['state']);
+
+        // LANE FG: the session now holds the state together with the two facts
+        // the callback has to check it against — when it was minted, and which
+        // mode the popup was opened in. One key and one array, because two keys
+        // are two things that can fall out of step.
+        $stored = session(StripeConnect::STATE_SESSION_KEY);
+
+        expect($stored['value'])->toBe($query['state'])
+            ->and($stored['mode'])->toBe('test')
+            ->and($stored['issued_at'])->toBeGreaterThan(0);
     });
 
     it('changes nothing on a callback whose state does not match', function () {
@@ -1267,7 +1286,14 @@ describe('the guard', function () {
         // freshly-loaded copy would double-register, so read what is there.
         $mine = $before->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/payments/stripe/'))->values();
 
-        expect($mine)->toHaveCount(6);
+        /*
+         * SEVEN since the one-click lane, not six: /connect/platform joined
+         * them. The count is updated rather than dropped — the number is what
+         * makes a route added without a capability rule fail here rather than
+         * inherit the owner-only fallback and be discovered by a manager who
+         * cannot press a button.
+         */
+        expect($mine)->toHaveCount(7);
 
         foreach ($mine as $route) {
             expect(App\Support\AdminCapabilities::for($route))->toBe('payments.manage');
@@ -1315,7 +1341,7 @@ describe('the guard', function () {
         expect(connectStoredConfig())->not->toHaveKey('secret_key');
     });
 
-    it('defines exactly the six routes the header describes, and chains no middleware', function () {
+    it('defines exactly the seven routes the header describes, and chains no middleware', function () {
         $mine = collect(Route::getRoutes()->getRoutes())
             ->filter(fn ($r) => str_starts_with($r->uri(), 'admin-api/payments/stripe/'))
             ->values();
@@ -1329,6 +1355,11 @@ describe('the guard', function () {
             'POST admin-api/payments/stripe/connect/application',
             'POST admin-api/payments/stripe/connect',
             'POST admin-api/payments/stripe/disconnect',
+            // The platform application's own read, added by the one-click lane:
+            // what this shop has stored for a Connect registration, and the
+            // guide for making one. Named here rather than counted, so a route
+            // appearing without anybody deciding it should fails this list.
+            'GET admin-api/payments/stripe/connect/platform',
         ]);
 
         // RouteRegistrar::middleware() REPLACES rather than appends. A chained

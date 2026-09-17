@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\Payments\GatewayCredentials;
 use App\Services\Payments\StripeConnect;
+use App\Support\StripeConnectConsole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -98,32 +99,160 @@ class StripeConnectController extends Controller
     {
         $data = $request->validate([
             'client_id' => ['nullable', 'string', 'max:120'],
+            'client_id_test' => ['nullable', 'string', 'max:120'],
+            // No `max` and no regex on the two secrets, for the same reason the
+            // pasted key has none: a validator that rejects them renders its
+            // own message, and a message about the value of a secret key is a
+            // message that has seen one. Their shape is checked below, by code
+            // that never quotes the input.
+            'client_secret' => ['nullable', 'string'],
+            'client_secret_test' => ['nullable', 'string'],
+            // Sent by the "Clear" control. Without it there is no way to
+            // remove a secret through this endpoint at all: an empty string
+            // means "leave the stored one alone", which is what lets the screen
+            // render secrets as blank boxes.
+            'clear_client_secret' => ['nullable', 'boolean'],
+            'clear_client_secret_test' => ['nullable', 'boolean'],
         ]);
 
-        $clientId = trim((string) ($data['client_id'] ?? ''));
+        $ids = [
+            'live' => trim((string) ($data['client_id'] ?? '')),
+            'test' => trim((string) ($data['client_id_test'] ?? '')),
+        ];
 
-        if ($clientId !== '' && ! preg_match('/^ca_[A-Za-z0-9]+$/', $clientId)) {
-            return response()->json([
-                'ok' => false,
-                'step' => 'client_id',
-                'error' => 'A Stripe Connect application id starts with ca_ and has no spaces. '
-                    . 'You will find it at Stripe Dashboard -> Settings -> Connect -> Platform settings.',
-            ], 422);
+        foreach ($ids as $mode => $clientId) {
+            if ($clientId !== '' && ! preg_match('/^ca_[A-Za-z0-9]+$/', $clientId)) {
+                return response()->json([
+                    'ok' => false,
+                    'step' => $mode === 'live' ? 'client_id' : 'client_id_test',
+                    'error' => 'A Stripe Connect application id starts with ca_ and has no spaces. '
+                        . 'In the Stripe Dashboard it is on the Connect settings page, under the onboarding '
+                        . 'options — there is one for test mode and a different one for live.',
+                ], 422);
+            }
         }
 
-        // null clears it; GatewayCredentials treats '' as "leave alone" only
-        // for declared secret keys, and this is not one, so be explicit.
-        $this->credentials->save(StripeConnect::GATEWAY, [
-            'connect_client_id' => $clientId === '' ? null : $clientId,
+        $secrets = [
+            'live' => trim((string) ($data['client_secret'] ?? '')),
+            'test' => trim((string) ($data['client_secret_test'] ?? '')),
+        ];
+
+        foreach ($secrets as $mode => $secret) {
+            if ($secret === '') {
+                continue;
+            }
+
+            $step = $mode === 'live' ? 'client_secret' : 'client_secret_test';
+
+            if (str_starts_with($secret, 'pk_') || str_starts_with($secret, 'ca_')) {
+                return response()->json([
+                    'ok' => false,
+                    'step' => $step,
+                    'error' => 'That is not a secret key. The platform secret key is the one on the same Stripe '
+                        . 'page that starts sk_ — the publishable key and the application id will not authenticate '
+                        . 'the connection.',
+                ], 422);
+            }
+
+            if (! preg_match('/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/', $secret)) {
+                return response()->json([
+                    'ok' => false,
+                    'step' => $step,
+                    'error' => 'That does not look like a Stripe secret key. It should start sk_test_, sk_live_, '
+                        . 'rk_test_ or rk_live_ and have no spaces.',
+                ], 422);
+            }
+
+            /*
+             * The mode of the key must match the box it went in, and this is
+             * the refusal that matters most on this panel.
+             *
+             * Stripe will not redeem a code issued by the development client id
+             * with a live key. If the live secret were accepted into the test
+             * box the button would open the sandbox screen, the owner would
+             * grant access, and the exchange would fail afterwards with an
+             * error about the code rather than about the key — sending him to
+             * look in entirely the wrong place.
+             */
+            if (str_contains($secret, '_live_') !== ($mode === 'live')) {
+                return response()->json([
+                    'ok' => false,
+                    'step' => $step,
+                    'error' => $mode === 'live'
+                        ? 'That is a TEST secret key and this is the Live box. Stripe will not complete a live '
+                            . 'connection with a test key. Paste the sk_live_ key of the same account, or put this '
+                            . 'one in the Test box.'
+                        : 'That is a LIVE secret key and this is the Test box. Stripe will not complete a test '
+                            . 'connection with a live key. Paste the sk_test_ key of the same account, or put this '
+                            . 'one in the Live box.',
+                ], 422);
+            }
+        }
+
+        /*
+         * null clears; '' is "leave alone" only for the keys named as secrets
+         * in the third argument, so the two ids say null explicitly and the two
+         * secrets rely on that argument. Clearing a secret is therefore an
+         * explicit act with a flag of its own rather than a side effect of
+         * saving the panel with an empty box.
+         */
+        $values = [
+            'connect_client_id' => $ids['live'] === '' ? null : $ids['live'],
+            'connect_client_id_test' => $ids['test'] === '' ? null : $ids['test'],
+            StripeConnect::PLATFORM_KEYS['live']['secret'] => $secrets['live'],
+            StripeConnect::PLATFORM_KEYS['test']['secret'] => $secrets['test'],
+        ];
+
+        if ($request->boolean('clear_client_secret')) {
+            $values[StripeConnect::PLATFORM_KEYS['live']['secret']] = null;
+        }
+
+        if ($request->boolean('clear_client_secret_test')) {
+            $values[StripeConnect::PLATFORM_KEYS['test']['secret']] = null;
+        }
+
+        $this->credentials->save(StripeConnect::GATEWAY, $values, [
+            StripeConnect::PLATFORM_KEYS['live']['secret'],
+            StripeConnect::PLATFORM_KEYS['test']['secret'],
         ]);
 
         $this->credentials->forget(StripeConnect::GATEWAY);
 
+        // The status payload and nothing else, so the screen repaints from one
+        // shape whichever endpoint it just called. It carries has_* booleans
+        // for the secrets and never a value; see StripeConnect::status().
+        $status = $this->connect->status();
+
         return response()->json([
             'ok' => true,
-            'connect_client_id' => $clientId,
-            'oauth_available' => $clientId !== '',
-            'redirect_uri' => $this->connect->redirectUri(),
+            'connect_client_id' => $status['connect_client_id'],
+            'oauth_available' => $status['oauth_available'],
+            'oauth_ready' => $status['oauth_ready'],
+            'platform' => $status['platform'],
+            'redirect_uri' => $status['redirect_uri'],
+        ]);
+    }
+
+    /**
+     * The setup guide for the platform application, and what is stored now.
+     *
+     * A read, on its own route, rather than a fifth key on status(): status()
+     * is polled on every repaint of the payments screen and this is two
+     * kilobytes of unchanging prose. It carries no credential — the guide is
+     * static text and the platform block is the same has_* booleans status()
+     * returns.
+     */
+    public function platform(): JsonResponse
+    {
+        $status = $this->connect->status();
+
+        return response()->json([
+            'ok' => true,
+            'guide' => StripeConnectConsole::setupGuide(),
+            'redirect_uri' => $status['redirect_uri'],
+            'platform' => $status['platform'],
+            'oauth_available' => $status['oauth_available'],
+            'oauth_ready' => $status['oauth_ready'],
         ]);
     }
 
@@ -147,7 +276,25 @@ class StripeConnectController extends Controller
             return $this->closingPage(false, (string) ($authorize['error'] ?? 'Stripe could not be opened.'));
         }
 
-        $request->session()->put(StripeConnect::STATE_SESSION_KEY, $authorize['state']);
+        /*
+         * The state, plus the two things that have to be true of it later.
+         *
+         *   value      40 unguessable characters, compared with hash_equals.
+         *   issued_at  so a state abandoned in a session cannot be paired with
+         *              a code days afterwards; see STATE_TTL_SECONDS.
+         *   mode       so a code obtained under the sandbox application cannot
+         *              be redeemed as though the tab had said Live. Without it
+         *              the mode is inferred from the key that comes back, which
+         *              means the check can only ever agree with itself.
+         *
+         * One key, one array. Two session keys would be two things that can
+         * fall out of step, and the one that mattered would be the one missing.
+         */
+        $request->session()->put(StripeConnect::STATE_SESSION_KEY, [
+            'value' => $authorize['state'],
+            'mode' => $authorize['mode'],
+            'issued_at' => time(),
+        ]);
 
         return redirect()->away($authorize['url']);
     }
@@ -161,14 +308,43 @@ class StripeConnectController extends Controller
      */
     public function callback(Request $request): Response
     {
-        $expected = (string) $request->session()->pull(StripeConnect::STATE_SESSION_KEY, '');
+        /*
+         * PULLED FIRST, before anything else is read, so a state is spent by
+         * being looked at. Every early return below has already consumed it.
+         */
+        $stored = $request->session()->pull(StripeConnect::STATE_SESSION_KEY);
+
+        // A bare string is the shape this key held before the package that
+        // added the timestamp. A session cookie outlives a deployment, so an
+        // owner mid-flow when the package applied still completes rather than
+        // being told to start again — with no TTL and no mode to check, which
+        // is exactly what that older start() gave him.
+        $expected = is_array($stored) ? (string) ($stored['value'] ?? '') : (string) ($stored ?? '');
+        $issuedAt = is_array($stored) ? (int) ($stored['issued_at'] ?? 0) : 0;
+        $stateMode = is_array($stored) && isset($stored['mode']) ? (string) $stored['mode'] : null;
+
         $given = (string) $request->query('state', '');
 
+        /*
+         * hash_equals on two non-empty strings, and the emptiness is checked
+         * separately because hash_equals('', '') is TRUE — a callback carrying
+         * no state at all, arriving in a session that has none, would otherwise
+         * pass this line. That is the whole attack: an unauthorised callback
+         * has no state to send, and a session it did not start has none stored.
+         */
         if ($expected === '' || $given === '' || ! hash_equals($expected, $given)) {
             return $this->closingPage(
                 false,
                 'This Stripe window could not be matched to the request that opened it, so nothing was changed. '
                     . 'Close it and press Connect again.',
+            );
+        }
+
+        if ($issuedAt > 0 && (time() - $issuedAt) > StripeConnect::STATE_TTL_SECONDS) {
+            return $this->closingPage(
+                false,
+                'This Stripe window was open too long and the connection request has expired, so nothing was '
+                    . 'changed. Close it and press Connect again — it takes a few seconds the second time.',
             );
         }
 
@@ -187,7 +363,11 @@ class StripeConnectController extends Controller
             return $this->closingPage(false, 'Stripe returned no authorisation code, so nothing was changed.');
         }
 
-        $result = $this->connect->exchangeCode($code);
+        // The mode the popup was OPENED in, not one taken from the callback's
+        // own query string. Everything in that query string came back through
+        // the owner's browser and is only as trustworthy as the state that
+        // arrived with it; the mode is something this server already knew.
+        $result = $this->connect->exchangeCode($code, $stateMode);
 
         return $this->closingPage(
             (bool) ($result['ok'] ?? false),

@@ -32,14 +32,40 @@ use Illuminate\Support\Str;
  *      This is genuinely "click, popup, done" — but only AFTER he has
  *      registered a platform application, accepted Stripe's platform terms and
  *      whitelisted our redirect URL. WooCommerce hides that step because
- *      Automattic runs the platform application on every Woo shop's behalf.
- *      Nobody runs one on this shop's behalf, and standing one up turns a
- *      single-merchant storefront into its own payments platform for no gain.
+ *      Automattic runs the platform application on every Woo shop's behalf
+ *      (the WooCommerce Connect Server stands in the middle of the flow).
+ *      Nobody runs one on this shop's behalf.
  *
  *      It also does not finish the job. An OAuth grant carries no webhook
  *      signing secret, so even under Connect the endpoint still has to be
  *      created through the API — every line of ensureWebhookEndpoint() below is
  *      needed either way.
+ *
+ *      LANE FG, and this paragraph replaces a judgement rather than a fact.
+ *      Path A was written and then held back on the grounds that standing up a
+ *      platform application was "for no gain". The owner has since asked twice,
+ *      in his own words, for exactly the behaviour it gives, which settles the
+ *      question of whether there is a gain: there is, and it is his to judge.
+ *      So A is no longer dormant. What was actually missing was smaller than
+ *      the paragraph above implied and is listed here because each piece was a
+ *      way for the button to fail in front of him:
+ *
+ *        - nothing in the console could SAVE a client id, so `oauth_available`
+ *          was false on every install and the button never rendered at all;
+ *        - exchangeCode() authenticated the token exchange with the merchant
+ *          key this shop had already stored — which does not exist until
+ *          something has connected, so the flow could never run the first time,
+ *          which is the only time it is wanted;
+ *        - Stripe issues a platform TWO client ids, development and
+ *          production, and the key redeeming a code must match the mode of the
+ *          id that issued it. One stored value was a live-day failure waiting;
+ *        - the state had no expiry and carried no mode.
+ *
+ *      What is STILL true, and is the honest answer to "why does this need
+ *      anything from me at all": a `ca_...` client id and a platform secret key
+ *      can only come out of the owner's own Stripe Dashboard. No code here can
+ *      produce them. App\Support\StripeConnectConsole::setupGuide() is that
+ *      part of the job written down.
  *
  *   B. ONE-PASTE AUTO-CONFIGURATION. The owner pastes his secret key once. We
  *      authenticate it against Stripe, read the account behind it, create the
@@ -49,11 +75,25 @@ use Illuminate\Support\Str;
  *      Prerequisite: an ordinary Stripe account, which he already has. Four
  *      pastes and a dashboard visit become one paste.
  *
- * B is therefore the default and the path that works today. A is built and
- * kept, dormant, behind `connect_client_id`: the moment a platform application
- * exists the OAuth button lights up, and because both paths end in the same
- * store() call and the same disconnect(), there is one storage shape and one
- * reset — not two half-features that disagree.
+ * B remains the default and the path that needs nothing registered. A lights
+ * up the moment a client id AND a platform secret key are saved for the current
+ * mode — see oauthReady(), and note that the id alone is deliberately NOT
+ * enough, because a button that opens Stripe and fails after the grant is worse
+ * than one that is not there. Both paths end in the same store() call and the
+ * same disconnect(), so there is one storage shape and one reset, not two
+ * half-features that disagree.
+ *
+ * ON WHETHER STANDARD CONNECT OAUTH IS STILL THE RIGHT MECHANISM. Stripe's own
+ * documentation now says OAuth is not recommended for NEW Connect platforms and
+ * points them at Connect Onboarding / Account Links instead — that is the path
+ * for a platform creating and onboarding accounts it will pay out to. It is not
+ * this. Account Links onboard somebody ELSE's new account into your platform;
+ * this shop is connecting the owner's OWN existing account to his own till, and
+ * there is nothing to onboard. Stripe's documentation also still states that
+ * extensions building on Connect must use OAuth to connect to Standard
+ * accounts, and a storefront plugin is exactly an extension — which is why
+ * WooCommerce's does the same thing. So OAuth it is, and Account Links would be
+ * the wrong tool rather than the newer one.
  *
  * =============================================================================
  * WHAT IS STORED
@@ -68,7 +108,15 @@ use Illuminate\Support\Str;
  *   webhook_secret            the unguessable tail of OUR webhook URL
  *   connect_account_id        acct_... — who we are connected to
  *   connect_link              'key' (path B) or 'oauth' (path A)
- *   connect_client_id         ca_... — the platform app, if one is registered
+ *   connect_client_id         ca_... — the platform app for LIVE mode, and the
+ *                             fallback for either; not a secret, it travels in
+ *                             the authorize URL
+ *   connect_client_id_test    ca_... — the development application, when the
+ *                             owner registered a separate one
+ *   connect_client_secret         the platform account's LIVE secret key, which
+ *   connect_client_secret_test    and its TEST one. SECRETS. They authenticate
+ *                             the code exchange and never leave this class;
+ *                             status() returns has_* booleans for them
  *   connected_at              ISO 8601
  *   account_name, account_country, account_currency, charges_enabled, livemode
  *                             the report card, so the screen can say WHAT it
@@ -116,6 +164,52 @@ final class StripeConnect
     public const STATE_SESSION_KEY = 'kbb.stripe.connect.state';
 
     /**
+     * How long a minted state stays usable, in seconds.
+     *
+     * Ten minutes is long enough for the slowest honest run of this flow — the
+     * owner signs in to Stripe in the popup, works through two-factor, reads
+     * the permission screen and presses Connect — and short enough that a state
+     * left behind by an abandoned popup is not still sitting in the session
+     * days later waiting to be paired with something.
+     *
+     * It is NOT the primary defence; hash_equals against 40 unguessable
+     * characters is. It is the part that limits how long a single mistake stays
+     * live, which is the half an attacker would otherwise have unlimited time
+     * to work against.
+     */
+    public const STATE_TTL_SECONDS = 600;
+
+    /**
+     * The platform application's credentials, per mode.
+     *
+     * ── WHY PER MODE, AND NOT ONE PAIR ─────────────────────────────────────
+     *
+     * Stripe issues a platform TWO client ids: a development one for test mode
+     * and a production one for live. They are different values, they are
+     * registered on different pages of the same settings screen, and the API
+     * key used to exchange the authorisation code MUST match the mode of the
+     * client id that issued it — a test code cannot be redeemed with a live key
+     * and the reverse fails the same way.
+     *
+     * Storing one pair would work right up to the day the owner switches the
+     * gateway to Live, at which point the button would keep opening Stripe's
+     * test screen and connect him to a sandbox account while the tab said Live.
+     * That is precisely the failure connectWithKey() already refuses on the
+     * pasted path, and it would have been reintroduced by the storage shape.
+     *
+     * `connect_client_id` keeps its original name and meaning — the client id
+     * for this platform — and is the FALLBACK for either mode, so a shop that
+     * registered only one application (a shop that only ever runs live, which
+     * is most of them) still works with one value filled in.
+     *
+     * @var array<string, array{client_id: string, secret: string}>
+     */
+    public const PLATFORM_KEYS = [
+        'test' => ['client_id' => 'connect_client_id_test', 'secret' => 'connect_client_secret_test'],
+        'live' => ['client_id' => 'connect_client_id', 'secret' => 'connect_client_secret'],
+    ];
+
+    /**
      * The events this shop acts on.
      *
      * Read off StripeGateway::handleWebhook() rather than copied from a
@@ -142,6 +236,104 @@ final class StripeConnect
     public function __construct(private GatewayCredentials $credentials) {}
 
     /* ====================================================================== */
+    /* The platform application                                               */
+    /* ====================================================================== */
+
+    /**
+     * Normalise anything that arrives claiming to be a mode.
+     *
+     * One place, because "test unless the word is exactly live" is a decision
+     * that used to be made inline in four methods and only has to be got wrong
+     * once to charge a real card.
+     */
+    public static function normaliseMode(?string $mode): string
+    {
+        return $mode === 'live' ? 'live' : 'test';
+    }
+
+    /** The mode this gateway's row is labelled with. */
+    public function currentMode(): string
+    {
+        return self::normaliseMode(PaymentProvider::find(self::GATEWAY)?->mode);
+    }
+
+    /**
+     * The client id (ca_...) to send to Stripe for this mode.
+     *
+     * Mode-specific first, then the shared `connect_client_id`. An owner who
+     * registered one application fills one box; an owner who registered both
+     * fills two and each mode uses its own.
+     *
+     * NOT A SECRET. It travels in the authorize URL in the address bar of the
+     * popup, so it is returned to the screen and printed in the setup guide.
+     */
+    public function platformClientId(?string $mode = null): string
+    {
+        $mode = self::normaliseMode($mode ?? $this->currentMode());
+
+        $specific = $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS[$mode]['client_id']);
+
+        return $specific !== ''
+            ? $specific
+            : $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS['live']['client_id']);
+    }
+
+    /**
+     * The secret that authenticates the authorisation-code exchange.
+     *
+     * THIS IS A SECRET AND IS NEVER RETURNED ANYWHERE. Only has_* booleans
+     * leave this class; see status().
+     *
+     * Three sources, in order, and the order is the whole point:
+     *
+     *   1. the platform secret registered for THIS mode. The correct answer,
+     *      and the only one that works before this shop has ever connected.
+     *   2. the shared `connect_client_secret`, for the one-application shop.
+     *   3. the merchant secret key already stored.
+     *
+     * (3) is what the original dormant implementation used on its own, and on
+     * a single-merchant install it is genuinely the same Stripe account, so it
+     * genuinely works. It is last rather than only because it cannot work the
+     * FIRST time: there is no stored key until something has connected, which
+     * is the exact moment the one-click button is being pressed. A flow whose
+     * only credential is one that connecting would have produced is a flow
+     * that can never run, and that is why the button was dead.
+     */
+    public function platformSecret(?string $mode = null): string
+    {
+        $mode = self::normaliseMode($mode ?? $this->currentMode());
+
+        foreach ([
+            self::PLATFORM_KEYS[$mode]['secret'],
+            self::PLATFORM_KEYS['live']['secret'],
+            'secret_key',
+        ] as $key) {
+            $value = $this->credentials->get(self::GATEWAY, $key);
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Is the one-click flow actually runnable in this mode?
+     *
+     * A client id ALONE is not enough and saying it is was the defect. The
+     * button would open, Stripe would accept the authorisation, and the flow
+     * would then die at the token exchange with nothing connected — after the
+     * owner had already granted access. `oauth_available` keeps its original
+     * meaning (an application is registered) so the screen can tell him which
+     * half is missing; this is the one the button is gated on.
+     */
+    public function oauthReady(?string $mode = null): bool
+    {
+        return $this->platformClientId($mode) !== '' && $this->platformSecret($mode) !== '';
+    }
+
+    /* ====================================================================== */
     /* Reading the current state                                              */
     /* ====================================================================== */
 
@@ -159,7 +351,8 @@ final class StripeConnect
 
         $row = PaymentProvider::find(self::GATEWAY);
         $connected = $this->credentials->get(self::GATEWAY, 'secret_key') !== '';
-        $clientId = $this->credentials->get(self::GATEWAY, 'connect_client_id');
+        $mode = self::normaliseMode($row?->mode);
+        $clientId = $this->platformClientId($mode);
 
         return [
             'connected' => $connected,
@@ -175,6 +368,33 @@ final class StripeConnect
             // at all. Not a secret: it travels in the authorize URL.
             'connect_client_id' => $clientId,
             'oauth_available' => $clientId !== '',
+            /*
+             * The gate the one-click button is drawn behind. See oauthReady():
+             * a registered application with no platform secret produces a
+             * button that dies AFTER the owner has granted access, which is the
+             * worst moment for it to fail.
+             */
+            'oauth_ready' => $this->oauthReady($mode),
+            /*
+             * What the platform panel paints, and every secret in it is a
+             * boolean. `has_*` and never a value, not even a masked one — a
+             * mask still discloses the length, and this endpoint is polled by
+             * a screen that repaints on every save.
+             */
+            'platform' => [
+                'mode' => $mode,
+                'client_id_test' => $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS['test']['client_id']),
+                'client_id_live' => $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS['live']['client_id']),
+                'has_client_secret_test' => $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS['test']['secret']) !== '',
+                'has_client_secret_live' => $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS['live']['secret']) !== '',
+                // True when the only credential the exchange could use is the
+                // merchant key a previous connection left behind. It works, and
+                // it is worth saying so plainly, because it is also the reason
+                // the flow cannot run on a shop that has never connected.
+                'falls_back_to_merchant_key' => $this->platformSecret($mode) !== ''
+                    && $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS[$mode]['secret']) === ''
+                    && $this->credentials->get(self::GATEWAY, self::PLATFORM_KEYS['live']['secret']) === '',
+            ],
             'redirect_uri' => $this->redirectUri(),
             'in_flight' => $this->inFlight(),
             'refundable' => $this->refundable(),
@@ -447,14 +667,35 @@ final class StripeConnect
      */
     public function authorizeUrl(string $tabMode = 'test'): array
     {
-        $clientId = $this->credentials->get(self::GATEWAY, 'connect_client_id');
+        $mode = self::normaliseMode($tabMode);
+        $clientId = $this->platformClientId($mode);
 
         if ($clientId === '') {
             return $this->fail(
                 'client_id',
                 'No Stripe Connect application is registered for this shop, so the one-click flow is not available. '
-                    . 'Paste your secret key instead, or register a Connect application at '
-                    . 'Stripe Dashboard -> Settings -> Connect and put its client id (ca_...) in the Connect application id box.',
+                    . 'Paste your secret key instead, or register a Connect application in the Stripe Dashboard under '
+                    . 'Settings -> Connect and put its client id (ca_...) in the Connect application box.',
+            );
+        }
+
+        /*
+         * Refused BEFORE the popup opens, not after Stripe has sent him back.
+         *
+         * Without the platform secret the exchange cannot be authenticated, so
+         * the only thing further down this road is a failure — but a failure
+         * reached AFTER he has signed in to Stripe and granted this shop access
+         * to his account. The grant would be real and the shop would have
+         * nothing to show for it. Stopping here costs him a sentence; stopping
+         * there costs him an authorisation he then has to go and revoke.
+         */
+        if ($this->platformSecret($mode) === '') {
+            return $this->fail(
+                'client_secret',
+                'The Connect application id is saved, but the platform secret key that completes the connection is not. '
+                    . 'Stripe authenticates the final step with it, so without it the window would open, you would grant '
+                    . 'access, and nothing would be saved. Add the ' . strtoupper($mode) . ' secret key of the Stripe account '
+                    . 'the Connect application belongs to, or paste your secret key below instead.',
             );
         }
 
@@ -475,7 +716,8 @@ final class StripeConnect
                 'stripe_landing' => 'login',
             ]),
             'redirect_uri' => $this->redirectUri(),
-            'mode' => $tabMode === 'live' ? 'live' : 'test',
+            'mode' => $mode,
+            'expires_in' => self::STATE_TTL_SECONDS,
         ];
     }
 
@@ -500,25 +742,29 @@ final class StripeConnect
      */
     public function exchangeCode(string $code, ?string $tabMode = null): array
     {
-        $clientId = $this->credentials->get(self::GATEWAY, 'connect_client_id');
+        // The mode is settled FIRST, because it chooses which platform
+        // application's credentials redeem the code. Stripe will not let a code
+        // issued by the development client id be redeemed with a live key, or
+        // the reverse, and the refusal it returns for that does not say so.
+        $mode = self::normaliseMode($tabMode ?? $this->currentMode());
+
+        $clientId = $this->platformClientId($mode);
 
         if ($clientId === '') {
             return $this->fail('client_id', 'No Stripe Connect application is registered for this shop.');
         }
 
-        // The platform's own secret key authenticates the token exchange. On a
-        // single-merchant install the platform and the merchant are the same
-        // Stripe account, so this is the key already stored — and when there is
-        // none stored yet there is nothing to authenticate with. Say so rather
-        // than sending an unauthenticated request and relaying Stripe's less
-        // specific refusal.
-        $platformKey = $this->credentials->get(self::GATEWAY, 'secret_key');
+        // The platform's own secret key authenticates the token exchange. See
+        // platformSecret() for the three places it can come from and why the
+        // merchant key is the last of them rather than the only one.
+        $platformKey = $this->platformSecret($mode);
 
         if ($platformKey === '') {
             return $this->fail(
                 'platform_key',
-                'The one-click flow needs this shop\'s own Stripe secret key stored first, because Stripe authenticates '
-                    . 'the final step with it. Connect once by pasting the key, and the one-click flow works from then on.',
+                'The one-click flow needs the platform secret key of the Stripe account that owns the Connect '
+                    . 'application, because Stripe authenticates the final step with it. Add it on the Connect '
+                    . 'application panel, or connect by pasting your secret key instead.',
             );
         }
 
@@ -540,9 +786,7 @@ final class StripeConnect
         }
 
         $keyLive = str_contains($key, '_live_');
-        $tabMode = $tabMode === 'live' || $tabMode === 'test'
-            ? $tabMode
-            : ($keyLive ? 'live' : 'test');
+        $tabMode = $mode;
 
         // The same disagreement path B refuses, refused here too: an owner who
         // authorised his live account while the tab says Sandbox has made the
@@ -916,7 +1160,10 @@ final class StripeConnect
         $managed = $this->credentials->get(self::GATEWAY, 'webhook_endpoint_managed') === '1';
         $link = $this->credentials->get(self::GATEWAY, 'connect_link');
         $accountId = $this->credentials->get(self::GATEWAY, 'connect_account_id');
-        $clientId = $this->credentials->get(self::GATEWAY, 'connect_client_id');
+        // Mode-resolved, like the authorize and the exchange: deauthorising
+        // against the wrong application's client id is refused by Stripe, and
+        // the connection it was meant to revoke would quietly stay live.
+        $clientId = $this->platformClientId();
         $webhookUrl = $this->webhookUrl();
 
         $steps = [];
@@ -998,10 +1245,13 @@ final class StripeConnect
             'account_currency' => null,
             'charges_enabled' => null,
             'livemode' => null,
-            // connect_client_id is NOT cleared. It identifies the platform
-            // application this install owns, not the connection that was just
-            // ended, and making him find it again after every reset would be a
-            // small cruelty.
+            // connect_client_id is NOT cleared, and neither are the three
+            // platform values beside it (connect_client_id_test,
+            // connect_client_secret, connect_client_secret_test). They identify
+            // the platform APPLICATION this install owns, not the connection
+            // that was just ended, and making him find them again after every
+            // reset would be a small cruelty — and, worse, would leave the
+            // one-click button unable to run the very next press.
         ]);
 
         // A gateway with no credentials must not sit on the checkout page

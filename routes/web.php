@@ -344,6 +344,14 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
     require __DIR__.'/payments-connect.php';
 
     /*
+     * The Connect PLATFORM application — what the one-click button needs before
+     * it can exist. Same group: it returns what this shop has stored for a
+     * platform registration, and a read that describes a shop's payment
+     * configuration is not a read to serve to the internet.
+     */
+    require __DIR__.'/payments-connect-platform.php';
+
+    /*
      * The admin side of the back-in-stock and basket-reminder features: who is
      * waiting for what, the demand report, and the send. Inside this group
      * because the demand list is every address that has asked this shop for a
