@@ -1147,6 +1147,7 @@ class Seo
                 'description' => $desc ?: null,
                 'url' => $url,
             ], static fn ($v) => $v !== null);
+
             $rows = is_array($c['items'] ?? null) ? array_values($c['items']) : [];
 
             if ($rows !== []) {
