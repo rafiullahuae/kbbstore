@@ -306,7 +306,7 @@ character: `-30% OFF` → `O` → left-to-right → paints `-30% OFF`; an Arabic
 translation → Arabic → right-to-left → paints as Arabic should; a label with no
 strong character at all → left-to-right, per the HTML `dir=auto` rule.
 
-**Anchor** (line ~52–54):
+**Anchor** (line ~66 after the merge; the text is what matters, not the number):
 
 ```blade
                    . e(__('store.product_card.label_off', ['percent' => $off]))
@@ -324,7 +324,7 @@ English document with and without the `<bdi>`, so nothing a shopper sees moves.
 
 ### Lane FP — `resources/views/store/product.blade.php`
 
-**Anchor** (line ~197):
+**Anchor** (line ~211 after the merge; the text is what matters, not the number):
 
 ```blade
             @if ($off)<span class="off">-{{ $off }}%</span>@endif
@@ -341,7 +341,7 @@ byte and nothing has to be repinned.
 
 ### Lane FP — `resources/views/partials/quick-view.blade.php`
 
-**Anchor** (line ~55):
+**Anchor** (line ~59 after the merge; the text is what matters, not the number):
 
 ```blade
         @if ($kbbQvOff >= 1)<span class="qv-off">-{{ $kbbQvOff }}%</span>@endif
