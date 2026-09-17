@@ -15717,13 +15717,13 @@ buildNav();
          storefront page and starts sending Google a record of every visit. The
          owner was being told the opposite of that while switching it on.
 
-         The Meta Pixel box is the other half of the same mix-up. It saves —
-         `meta_pixel` is on AdminController::SETTING_RULES — and no storefront
-         page fires it. The pixel that does fire is the one on Growth &
-         Marketing → Marketing Pixels, which is a different setting; see
-         App\Services\MarketingPixels. Both boxes are left where they are and
-         each now says which is which, because deciding which of the two the
-         shop should keep is the owner's call, not this lane's.
+         LANE DP: the two boxes are now ONE VALUE. `ga` and `meta_pixel` are
+         aliases — AdminController::settings() reads them back through
+         App\Services\Analytics and updateSettings() writes them through it,
+         into the Marketing Pixels module's own keys. Whichever box the owner
+         types in, the other shows the same thing, and the storefront loads
+         one loader per network per page (App\Services\Analytics::headTags(),
+         once per request). There is no longer a dead box to warn about.
          ===================================================================== */
       smSec('Verification & tracking',
         'The first four are verification tokens — a service gives you one, it goes into a meta tag on every page, and nothing else about the shop changes. The two below them are not tokens: they load third-party tracking scripts for your visitors.',
@@ -15735,7 +15735,7 @@ buildNav();
           smField('seo_ga','Google Analytics ID','<input id="seo_ga" value="'+sesc(S.ga)+'" placeholder="G-XXXXXXXXXX">',
             'Saving an ID here loads Google’s tag on every storefront page. Clear the box to stop it.')+
           smField('seo_pixel','Meta (Facebook) Pixel','<input id="seo_pixel" value="'+sesc(S.meta_pixel)+'" placeholder="123456789012345">',
-            'Stored, but no storefront page fires it. The Meta pixel that does fire is set under Growth &amp; Marketing → Marketing Pixels.')+
+            'The same pixel as Growth &amp; Marketing → Marketing Pixels — one ID, two places to type it. Saving here loads Meta’s pixel on every storefront page. Clear the box to stop it.')+
         '</div>')+
 
       '</div>'+

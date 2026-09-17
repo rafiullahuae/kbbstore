@@ -129,16 +129,25 @@ it('does not claim the SEO tracking fields leave the storefront alone', function
 });
 
 /**
- * The Meta Pixel box on SEO & Meta writes `meta_pixel`; App\Services\
- * MarketingPixels writes `meta_id` and is the one the storefront fires. Both
- * boxes exist, so the dead one has to say which it is until the owner decides
- * which to keep.
+ * Superseded by Lane DP, and inverted rather than deleted, because the reason
+ * it existed still holds: the screen must not describe a box wrongly.
+ *
+ * It used to require the sentence "Stored, but no storefront page fires it.",
+ * which was true when `meta_pixel` had no storefront reader. App\Services\
+ * Analytics made the two boxes one value — the SEO screen's box now writes the
+ * Marketing Pixels key and the storefront fires it (pinned end to end by
+ * AnalyticsSettingMergeTest, 'fires the pixel an owner saved in the SEO
+ * screen's Meta box'). So the old sentence became the lie, and an assertion
+ * demanding it became an assertion demanding the console lie.
  */
-it('says which of the two Meta Pixel boxes is the one that fires', function () use ($lddSource) {
+it('says the two Meta Pixel boxes are one pixel, not one dead and one live', function () use ($lddSource) {
     $code = $lddSource();
 
     expect(str_contains($code, 'Stored, but no storefront page fires it.'))
-        ->toBeTrue('The SEO screen must not present a dead pixel box as a working one.');
+        ->toBeFalse('both Meta boxes are one value now; the screen must not still call this one dead.');
+
+    expect(str_contains($code, 'one ID, two places to type it'))
+        ->toBeTrue('the screen has to say that the two boxes are the same pixel.');
 });
 
 
