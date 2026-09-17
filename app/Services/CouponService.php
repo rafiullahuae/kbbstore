@@ -332,6 +332,165 @@ class CouponService
     }
 
     /**
+     * Take back the uses a release handed out, for an order that has come
+     * alive again.
+     *
+     * ---------------------------------------------------------------------
+     * The bug this closes
+     * ---------------------------------------------------------------------
+     *
+     * releaseRedemptions() was one-way. An order cancelled with a one-use code
+     * on it gave the use back — correctly — and an operator who then set the
+     * status to `processing` on the order screen had a LIVE order carrying that
+     * discount while `coupons.usage_count` read 0 and the code was on offer to
+     * the next shopper. The shop honours the discount twice and the second one
+     * is free. Nothing on the screen said anything had happened.
+     *
+     * ---------------------------------------------------------------------
+     * The rows decide, the same way they do on the way out
+     * ---------------------------------------------------------------------
+     *
+     * Only rows this order actually had released — `released_at IS NOT NULL` —
+     * are taken back. Two properties follow without a list to keep in step:
+     *
+     *   AN ORDER THAT NEVER RELEASED TAKES NOTHING. Every WooCommerce import,
+     *   and any order that never went through recordRedemption(), has no rows
+     *   here at all. Nothing is invented — which is exactly the promise
+     *   releaseRedemptions() makes in the other direction.
+     *
+     *   A SECOND REVIVE TAKES NOTHING. The first clears `released_at`; the
+     *   second matches no rows. Cancel, revive, cancel, revive leaves
+     *   `usage_count` where it started.
+     *
+     * ---------------------------------------------------------------------
+     * WHEN IT REFUSES, AND WHEN IT DELIBERATELY DOES NOT
+     * ---------------------------------------------------------------------
+     *
+     * REFUSED: the code has been fully redeemed since, either site-wide
+     * (`usage_limit`) or by this customer (`usage_limit_per_user`). Somebody
+     * else is holding the use this order wants back. Taking it anyway would
+     * drive `usage_count` past the limit the owner set, which is the
+     * double-spend this method exists to stop, arrived at from the other side.
+     * So the whole transition is refused and the caller is told which code and
+     * why, in the wording validate() uses for the same situation.
+     *
+     * NOT REFUSED: the code has EXPIRED, or has not started yet. That is
+     * deliberate and it is the judgement worth writing down. An expiry date
+     * governs who may APPLY a code; it is not a scarce resource. Nobody else
+     * can spend an expired code, so taking its use back costs the shop
+     * nothing, and the row going back to counting is what keeps Store ->
+     * Coupons agreeing with the order that is printing the discount. Refusing
+     * there would mean an owner who mis-cancelled an order last month cannot
+     * put it right, on a host with no shell and no other way in — a refusal
+     * that fires when it should not is its own kind of expensive.
+     *
+     * THE COUPON ROW IS LOCKED for the same reason recordRedemption() locks it:
+     * the counter it is checked against must not move between the check and the
+     * increment. A coupon that carries no limit at all skips the lock, because
+     * there is nothing to serialise.
+     *
+     * @return int  how many redemptions this call took back
+     *
+     * @throws CouponExhausted  naming the code; nothing is left applied
+     */
+    public function reclaimRedemptions(int $orderId): int
+    {
+        return DB::transaction(function () use ($orderId) {
+            // Re-read by key, and claim by key, for the reason
+            // lockForRedemption() sets out: a partial instance reads null for
+            // whatever was not selected, and a released_at that reads null on
+            // a live row would take a use this order is already holding.
+            $rows = CouponRedemption::where('order_id', $orderId)
+                ->whereNotNull('released_at')
+                ->orderBy('id')
+                ->get(['id', 'coupon_id', 'email']);
+
+            $taken = 0;
+
+            foreach ($rows as $row) {
+                $coupon = Coupon::whereKey($row->coupon_id)->first();
+
+                if ($coupon === null) {
+                    /*
+                     * The code itself has been deleted since. There is no
+                     * counter to take a use from and nothing anybody could
+                     * spend twice, so this is not a refusal — but the row is
+                     * still stamped released against a live order, which is
+                     * untrue. Un-stamp it and move on, exactly as the release
+                     * side leaves `usage_count` alone for a row it cannot
+                     * decrement.
+                     */
+                    CouponRedemption::whereKey($row->getKey())
+                        ->whereNotNull('released_at')
+                        ->update(['released_at' => null, 'updated_at' => now()]);
+
+                    continue;
+                }
+
+                $locked = $this->lockForRedemption($coupon);
+
+                $this->assertRoomToReclaim($locked, $row);
+
+                $claimed = CouponRedemption::whereKey($row->getKey())
+                    ->whereNotNull('released_at')
+                    ->update(['released_at' => null, 'updated_at' => now()]);
+
+                if ($claimed !== 1) {
+                    // Somebody else took this one back between the read and
+                    // here. Theirs to count, not ours — the same stand-down
+                    // releaseRedemptions() does, and the guard is the WHERE
+                    // clause rather than this number.
+                    continue;
+                }
+
+                Coupon::whereKey($locked->getKey())->increment('usage_count');
+
+                $taken++;
+            }
+
+            return $taken;
+        });
+    }
+
+    /**
+     * Is there still room for a use this order gave back?
+     *
+     * Same two limits as assertRoomFor(), same wording, prefixed with the code
+     * so an operator looking at a refused revive knows which one to go and
+     * look at. Expiry is NOT among them — see reclaimRedemptions().
+     *
+     * @throws CouponExhausted
+     */
+    private function assertRoomToReclaim(Coupon $coupon, CouponRedemption $row): void
+    {
+        $code = trim((string) $coupon->code);
+        $named = $code !== '' ? 'Coupon ' . $code . ': ' : '';
+
+        if ($coupon->usage_limit !== null && (int) $coupon->usage_count >= (int) $coupon->usage_limit) {
+            throw new CouponExhausted($named . 'that code has been fully redeemed since this order was cancelled.');
+        }
+
+        $email = $row->email !== null ? mb_strtolower((string) $row->email) : null;
+
+        if ($coupon->usage_limit_per_user !== null && $email !== null) {
+            /*
+             * This row is released, so it is not in the count — which is what
+             * makes the comparison the right one: it asks whether there is room
+             * for one MORE unreleased use by this customer, which is exactly
+             * what taking this row back would create.
+             */
+            $used = CouponRedemption::where('coupon_id', $coupon->getKey())
+                ->where('email', $email)
+                ->whereNull('released_at')
+                ->count();
+
+            if ($used >= (int) $coupon->usage_limit_per_user) {
+                throw new CouponExhausted($named . 'that customer has used that code on another order since this one was cancelled.');
+            }
+        }
+    }
+
+    /**
      * The coupon row to check and spend against: locked when it carries a
      * limit, the caller's own instance when it does not.
      */

@@ -149,6 +149,64 @@ final class OrderTransitionStock
         }
     }
 
+
+    /**
+     * The other direction: take back the units this order's release gave up.
+     *
+     * ---------------------------------------------------------------------
+     * Why the rule is not a second list
+     * ---------------------------------------------------------------------
+     *
+     * The obvious shape is `returns()` read backwards — a move out of
+     * RETURNS_STOCK into something else. It is very nearly right and it is
+     * wrong in a way that costs a unit.
+     *
+     * An order cancelled (units back), then refunded, then set to `processing`
+     * by an operator arrives here with `$from = 'refunded'`. `refunded` is not
+     * in RETURNS_STOCK — deliberately, and this class's header says why — so
+     * read backwards the lists answer "this order gave nothing back" about an
+     * order whose units are sitting on the shelf. The oversell survives, and it
+     * survives on the path an operator is most likely to take.
+     *
+     * So the lists decide nothing here. StockClaim::reclaim() takes back
+     * exactly the ledger rows a release stamped, whenever that release
+     * happened and whatever the order has been through since. That is not a
+     * different rule from this class's: those rows are stamped BECAUSE
+     * returns() said so, so asking the ledger is asking this class's own rule
+     * as it was actually applied, at the moment it was applied, rather than
+     * re-deriving it from a status that has moved on twice.
+     *
+     * Two properties fall out, both required of this and both otherwise
+     * needing their own guard:
+     *
+     *   - an order cancelled from `shipped` released nothing (returns() said
+     *     so), so there are no stamped rows and this takes nothing. Re-taking
+     *     stock that was never returned is the same bug in the other
+     *     direction, and it cannot happen here.
+     *   - reviving twice takes nothing the second time, because the first
+     *     revive un-stamped the rows.
+     *
+     * ---------------------------------------------------------------------
+     * IT CAN THROW. applied() cannot, and the difference is the whole point
+     * ---------------------------------------------------------------------
+     *
+     * applied() swallows, because the status has already moved and a failure
+     * to credit the shelf must not turn Cancel into a 500. Here nothing has
+     * been committed yet and there is no honest way to carry on: if the unit
+     * has been sold since, finishing the revive means a live order for stock
+     * the shop does not have. The exception is what refuses the whole
+     * transition and rolls it back, and OrderStatus::moveTo() — the only
+     * caller — turns it into a sentence naming the product.
+     *
+     * @return int  units taken back; 0 when this order released nothing.
+     *
+     * @throws \App\Services\StockUnavailable  naming the shelf that is short
+     */
+    public function reclaimed(int $orderId, string $from, string $to): int
+    {
+        return $this->stock->reclaim($orderId);
+    }
+
     /**
      * The same rule across a batch, one order at a time.
      *

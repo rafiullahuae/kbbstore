@@ -6,7 +6,9 @@ namespace App\Services\Orders;
 
 use App\Models\Order;
 use App\Models\OrderNote;
+use App\Services\CouponExhausted;
 use App\Services\CouponService;
+use App\Services\StockUnavailable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -87,13 +89,29 @@ use Illuminate\Support\Facades\DB;
  * What is refused
  * ---------------------------------------------------------------------------
  *
- * Exactly one thing: a move to the status the order already has, when there is
+ * TWO things, and the second one arrived long after the first.
+ *
+ * ONE: a move to the status the order already has, when there is
  * nothing else to write. Not out of tidiness — it is half of the double-release
  * guard. Cancelling an order twice must not hand back two uses of a code, and
  * the cheapest way to be sure is that the second cancellation is not a
  * transition at all. (The other half is that a release is CLAIMED: see
  * CouponService::releaseRedemptions(). Both are needed, because cancelling and
  * then refunding IS two real transitions.)
+ *
+ * TWO: a revive that cannot pay for itself. An order leaving `cancelled`,
+ * `failed` or `refunded` for a status that is none of those has to take back
+ * the units and the coupon use its ending handed out, and when the units have
+ * been sold to somebody else since, or the code has been redeemed to its limit
+ * since, there is no honest way to finish. It throws OrderReviveRefused naming
+ * what stopped it and the order is left untouched. See reclaimOrRefuse().
+ *
+ * That second one is a real edge rule and it is worth being plain about why it
+ * does not contradict the paragraph below. It is not a judgement about which
+ * moves an operator may make: it is the arithmetic of a move he has already
+ * asked for not adding up. The answer is a sentence naming the product that is
+ * short, which is something he can act on — restock it, or leave the order
+ * cancelled — rather than a dropdown that says no.
  *
  * NOTHING ELSE IS REFUSED, including `completed` back to `pending`. The status
  * is typed by a human on the order screen, and a human who has just marked the
@@ -211,6 +229,14 @@ class OrderStatus
      *                      compares the return with $to; a caller that only
      *                      needs to know whether its write landed (a webhook
      *                      applying at most once) tests it against null.
+     *
+     * @throws OrderReviveRefused  when $to brings an order back out of
+     *                      `cancelled`, `failed` or `refunded` and what that
+     *                      ending gave back cannot be taken again. NOTHING is
+     *                      written — the transaction rolls the status save
+     *                      back with it — so a caller that means to report the
+     *                      refusal can, and a caller that does not turns a
+     *                      silent oversell into a visible error instead.
      */
     public function moveTo(
         Order|int $order,
@@ -261,6 +287,26 @@ class OrderStatus
                 return $from;
             }
 
+            /*
+             * THE WAY BACK, BEFORE ANYTHING ELSE IS DECIDED.
+             *
+             * An order leaving one of RELEASES_COUPON for a status that is not
+             * one of them is a REVIVE: it was over, and an operator has just
+             * said it is not. Everything the ending handed back has to be
+             * taken again here, or the order comes alive holding nothing —
+             * which is what it did until this block existed. See
+             * reclaimOrRefuse().
+             *
+             * FIRST, so that a refusal costs nothing. It throws, and throwing
+             * before the note and the mail decision means there is no note
+             * describing a transition that did not happen and no half-applied
+             * anything to find later. The transaction rolls the status save
+             * above back with it.
+             */
+            $retaken = $this->isRevival($from, $to)
+                ? $this->reclaimOrRefuse($id, $from, $to)
+                : ['units' => 0, 'uses' => 0];
+
             // Consequences, in the order the note wants to report them.
             $released = in_array($to, self::RELEASES_COUPON, true)
                 ? $this->coupons->releaseRedemptions($id)
@@ -288,7 +334,7 @@ class OrderStatus
              */
             app(OrderTransitionStock::class)->applied($id, $from, $to);
 
-            $this->record($locked, $from, $to, $author, $reason, $released);
+            $this->record($locked, $from, $to, $author, $reason, $released, $retaken);
 
             return $from;
         });
@@ -300,6 +346,128 @@ class OrderStatus
         }
 
         return $from;
+    }
+
+    /**
+     * Is this transition an order coming back from the dead?
+     *
+     * RELEASES_COUPON is not borrowed here for convenience — it is the exact
+     * set of destinations that mean "the sale is off", and it is therefore the
+     * exact set an order can be revived OUT of. Leaving one of them for
+     * something that is not one of them is the operator saying the sale is on
+     * after all.
+     *
+     * `cancelled` -> `failed` is deliberately NOT a revive. Both are in the
+     * set, nothing was handed back on that edge, and nothing is taken on it.
+     * The same goes for `failed` -> `refunded`: the sale is still off and the
+     * order is still holding nothing.
+     *
+     * The destination is not checked against a list of "live" statuses, and a
+     * second such list is exactly what this avoids. `draft` is a revive too:
+     * an order put back to draft is one an operator intends to do something
+     * with, it can be moved to `processing` from there without passing through
+     * here again, and a draft that is cancelled afterwards releases everything
+     * again through returns() — so the round trip balances either way.
+     */
+    private function isRevival(string $from, string $to): bool
+    {
+        return in_array($from, self::RELEASES_COUPON, true)
+            && ! in_array($to, self::RELEASES_COUPON, true);
+    }
+
+    /**
+     * Take back both halves of what the ending gave away, or refuse the move.
+     *
+     * ---------------------------------------------------------------------
+     * What was wrong
+     * ---------------------------------------------------------------------
+     *
+     * Release was one-way by construction. OrderTransitionStock::applied()
+     * only returned units; CouponService::releaseRedemptions() only released
+     * uses; nothing anywhere re-took either. And the two revive paths were
+     * wide open: AdminController::updateOrderStatus validated `status` against
+     * the whole nine-value vocabulary with no from->to rules at all, and
+     * OrdersApiController::BULK_SETTABLE carries `pending`, `processing` and
+     * `onhold`, so forty orders could be revived in one press.
+     *
+     * The order for the last jar in the shop, cancelled and then set back to
+     * `processing`, ended with `stock = 1` and a live order that still had to
+     * ship that jar — it was on the shelf and sellable to the next shopper —
+     * and with `usage_count = 0` on a one-use code that a live order was using.
+     * An oversell and a double-spend, both created by a dropdown, neither
+     * visible anywhere on the screen.
+     *
+     * ---------------------------------------------------------------------
+     * ALL OF IT, OR NONE OF IT
+     * ---------------------------------------------------------------------
+     *
+     * Both halves run here, inside the transaction that is writing the status,
+     * and either one refusing takes the whole thing down with it. A revive
+     * that took the stock but not the coupon, or moved the status and took
+     * neither, is a worse state than the bug: the order looks repaired and the
+     * books do not agree. There is no partial success available.
+     *
+     * STOCK FIRST, then the coupon, and the order does not matter to
+     * correctness — the transaction makes both all-or-nothing. It matters to
+     * the sentence the owner reads: a shortage of goods is the thing he can do
+     * something about and it is what he is told about first.
+     *
+     * ---------------------------------------------------------------------
+     * WHAT THIS MAKES TRUE ABOUT A LATE PAYMENT
+     * ---------------------------------------------------------------------
+     *
+     * PaymentConfirmer refuses a confirmation on `cancelled`, `refunded` or
+     * `failed` with "order is no longer live", because those orders have given
+     * back what they were holding. An operator moving the status out of those
+     * used to walk straight around that guard: the order was live again, the
+     * next webhook delivery was accepted, and nothing had re-taken a thing.
+     *
+     * It is not a bypass any more, and the honest statement is that reviving
+     * DOES re-arm that path — on purpose. A revive that gets through here has
+     * re-taken the units and the use, so the order genuinely is live and a
+     * payment for it genuinely should be recorded; refusing it would leave the
+     * shop holding money for an order it is shipping. A revive that cannot
+     * re-take them is refused, the order stays cancelled, and PaymentConfirmer
+     * goes on refusing exactly as it did. The guard is no longer reachable
+     * around — the only way past it is a revive that has paid for itself.
+     *
+     * @return array{units: int, uses: int}  what was taken back, for the note.
+     *
+     * @throws OrderReviveRefused  naming what stopped it; nothing is applied.
+     */
+    private function reclaimOrRefuse(int $id, string $from, string $to): array
+    {
+        try {
+            $units = app(OrderTransitionStock::class)->reclaimed($id, $from, $to);
+        } catch (StockUnavailable $e) {
+            throw new OrderReviveRefused(
+                sprintf(
+                    'This order cannot go back to %s: %s Cancelling it put those units back on the shelf and they are not all there any more.',
+                    $to,
+                    $e->getMessage(),
+                ),
+                OrderReviveRefused::STOCK,
+                $id,
+                $e,
+            );
+        }
+
+        try {
+            $uses = $this->coupons->reclaimRedemptions($id);
+        } catch (CouponExhausted $e) {
+            throw new OrderReviveRefused(
+                sprintf(
+                    'This order cannot go back to %s: %s',
+                    $to,
+                    $e->getMessage(),
+                ),
+                OrderReviveRefused::COUPON,
+                $id,
+                $e,
+            );
+        }
+
+        return ['units' => $units, 'uses' => $uses];
     }
 
     /**
@@ -321,11 +489,39 @@ class OrderStatus
         string $author,
         ?string $reason,
         int $released,
+        array $retaken = ['units' => 0, 'uses' => 0],
     ): void {
         $content = sprintf('Status changed from %s to %s.', $from, $to);
 
         if ($reason !== null && trim($reason) !== '') {
             $content .= ' ' . trim($reason);
+        }
+
+        /*
+         * WHAT A REVIVE COST, in the same sentence as the transition that
+         * caused it. An operator bringing a cancelled order back takes units
+         * off the shelf and spends a coupon use again — the exact two things
+         * the cancellation note told them it had handed back — and the pair of
+         * notes read together is the whole story of the order. Saying nothing
+         * here is what made the original bug invisible.
+         */
+        if (($retaken['units'] ?? 0) > 0) {
+            $content .= sprintf(
+                ' %d unit%s taken back off the shelf for it.',
+                (int) $retaken['units'],
+                (int) $retaken['units'] === 1 ? '' : 's',
+            );
+        }
+
+        if (($retaken['uses'] ?? 0) > 0) {
+            $code = trim((string) $order->coupon_code);
+
+            $content .= sprintf(
+                ' Coupon %s re-applied — %d use%s taken back.',
+                $code !== '' ? $code : 'discount',
+                (int) $retaken['uses'],
+                (int) $retaken['uses'] === 1 ? '' : 's',
+            );
         }
 
         if ($released > 0) {
