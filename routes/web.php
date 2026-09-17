@@ -352,6 +352,17 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
      */
     require __DIR__.'/outbound-admin.php';
 
+    /*
+     * The Translation console's API. Same group, and two of these earn it on
+     * their own: /translations/machine/run spends the owner's money against his
+     * own Google Cloud account, billed per character, and
+     * /translations/settings writes the key it spends it with. The third reason
+     * is quieter and worse — POST /translations writes text the storefront
+     * renders to every shopper, so unauthenticated it is a way to put arbitrary
+     * words on this shop's product pages.
+     */
+    require __DIR__.'/translations-admin.php';
+
         // The storefront health check behind Dashboard → Check now and Safety →
         // Debug & Monitor. Inside this group and nowhere else: when a page is
         // broken it answers with the exception message and the application file

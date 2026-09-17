@@ -457,6 +457,58 @@ final class AdminCapabilities
         ['GET', 'admin-api/reviews/list', 'reviews.view'],
         ['GET', 'admin-api/reviews/*', 'reviews.view'],
 
+        // ------------------------------------------------------------ translation
+        /*
+         * The Translation console. Split across two capabilities on purpose,
+         * and the split is about money and about what a switch publishes — not
+         * about who is trusted to type Arabic.
+         *
+         * OWNER ONLY (store.settings), because these two are levers rather than
+         * content:
+         *
+         *   POST /translations/settings    writes the Google API key, and the
+         *                                  master switch that makes /ar exist
+         *                                  for every shopper at once. Same
+         *                                  class as the mail credentials
+         *                                  mapped below.
+         *   POST /translations/machine/run a batch run billed per character to
+         *                                  the owner's own Google Cloud
+         *                                  account. Whoever can press it can
+         *                                  spend his money.
+         *
+         * EDITOR AND UP (content.manage) for the rest, because translating a
+         * product is an editor's job and a console they cannot use is a console
+         * the owner ends up doing alone:
+         *
+         *   POST /translations             writes the text itself
+         *   POST /translations/publish     the same text, made visible
+         *   POST /translations/machine/field
+         *                                  one field at a time, beside the box
+         *                                  someone is typing in. It does spend
+         *                                  money, which is why it is not simply
+         *                                  lumped in with the reads — but it is
+         *                                  one field, it stores nothing, and it
+         *                                  is throttled at the route. An editor
+         *                                  who cannot press it cannot use the
+         *                                  Arabic boxes at all, which is the
+         *                                  whole feature.
+         *   GET  /translations/settings    safe for an editor to read: it
+         *                                  answers `has_api_key` as a boolean
+         *                                  and never returns the key.
+         *
+         * WRITES ARE LISTED FIRST, as this map requires. A single
+         * `['*', 'admin-api/translations/**', 'content.manage']` placed above
+         * these would match POST /translations/machine/run and hand an editor
+         * the owner's Google bill.
+         */
+        ['POST', 'admin-api/translations/settings', 'store.settings'],
+        ['POST', 'admin-api/translations/machine/run', 'store.settings'],
+        ['POST', 'admin-api/translations/machine/field', 'content.manage'],
+        ['POST', 'admin-api/translations/publish', 'content.manage'],
+        ['POST', 'admin-api/translations', 'content.manage'],
+        ['GET', 'admin-api/translations/**', 'content.manage'],
+        ['GET', 'admin-api/translations', 'content.manage'],
+
         // --------------------------------------------------------------- marketing
         /*
          * Back-in-stock alerts and basket reminders.

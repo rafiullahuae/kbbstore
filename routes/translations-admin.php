@@ -7,14 +7,12 @@ declare(strict_types=1);
 | Translation admin API — the Translation parent menu (Lane EP)
 |------------------------------------------------------------------------------
 |
-| NOT YET MOUNTED. CLAUDE.md forbids this lane from editing routes/web.php, so
-| the integrator wires it up. One line, INSIDE the existing admin-api group in
-| routes/web.php — the one already carrying `auth:admin` and NoStoreAdminApi —
-| beside the other admin requires:
+| MOUNTED. routes/web.php requires this file INSIDE the existing admin-api
+| group — the one already carrying `auth:admin` and NoStoreAdminApi — beside
+| the other admin requires. What follows is the reasoning behind that mount,
+| not a request for one.
 |
-|     require __DIR__.'/translations-admin.php';
-|
-| IT MUST GO INSIDE THAT GROUP, and this is not a style preference:
+| IT MUST STAY INSIDE THAT GROUP, and this is not a style preference:
 |
 |   POST /admin-api/translations/machine/run    SPENDS THE OWNER'S MONEY on a
 |                                               third-party API, billed per
