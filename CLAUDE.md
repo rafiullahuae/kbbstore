@@ -39,6 +39,13 @@ production uses MySQL regardless.
 
 ## Rules for parallel work
 
+**Three lanes at a time, and batch the releases.** The owner set this cadence
+deliberately after a stretch at five: five parallel lanes is the single largest
+cost in this project, the integrator is the merge bottleneck anyway, and ten
+packages in a day is a lot of applying for someone with no shell. Three lanes
+and two or three packages per round is roughly 40% cheaper and barely slower.
+Ship a package when a round of merges is done, not when each report lands.
+
 Several agents work this repo at once. Conflicts are avoided by ownership, not
 by luck:
 

@@ -1365,6 +1365,39 @@ pin that looks applied and is not is worse than none.**
 ## Phase 11 — Payments
 
 - [ ] COD → Tabby → Tamara → Stripe (order per D-39)
+- [x] ▲ **CARD FIELDS ON THE SHOP'S OWN CHECKOUT, no redirect — *2.60.215*.** The
+  owner asked twice and was explicit the second time. `start()` opens a
+  **PaymentIntent** and returns a client secret instead of a hosted URL; the
+  shopper types the card on `/checkout/` and the browser never navigates to a
+  Stripe address. Built with **Elements**, so the card number lives in Stripe's
+  own iframe and never enters this app's DOM or reaches this server — no raw
+  card input exists anywhere in the tree. The one consequence, stated once: the
+  integration moves from SAQ-A to **SAQ-A-EP**.
+- [x] ▲ **AND THE WEBHOOK WAS THE PART THAT COULD HAVE COST REAL MONEY.** An
+  already-connected shop subscribes only to the hosted flow's
+  `checkout.session.*` events. A card taken on the new checkout produces **no
+  session**, so without `payment_intent.succeeded` and `payment_intent.canceled`
+  the shop takes the money and never hears about it. Both are added and
+  `StripeConnect::EVENTS` subscribes to them — **which means every existing shop
+  must reconnect once** for its endpoint to be resubscribed. All three
+  `checkout.session` arms are kept, because orders placed the old way have
+  deliveries in flight when this lands — *2.60.215*
+- [x] ▲ **A decline no longer fails the order**, and this is the subtlest of the
+  three. Stripe leaves the intent `requires_payment_method` and the shopper is
+  still in front of the form; failing the order released the stock and the
+  coupon, so the shopper's second card would then succeed against an order the
+  confirmer treats as void — **money taken, nothing sold**. Only a cancelled
+  intent or an expired session is terminal now. And a **corrected address after
+  a decline used to be silently discarded**, shipping to the old one; any change
+  to a checkout field now releases the order and the next press places a fresh
+  one — *2.60.215*
+- [ ] **One real test-mode payment, by the owner.** Nothing in this build has
+  spoken to Stripe: every Stripe host is blocked from the build environment, so
+  35 Pest tests run against a faked client and seven Chromium scenarios against
+  a stubbed `js.stripe.com`. What that cannot prove is that Stripe accepts the
+  payload, that the real widget renders well in the box, **that a genuine 3-D
+  Secure challenge is a modal**, that the webhook arrives, and that a real
+  decline reads well.
 - [x] ▲ **AND IT WAS UNREACHABLE UNTIL 2.60.206. Every write on the Stripe panel took a
   419.** Rafi sent a screenshot saying the one-click button was not there. It was not, and
   the button was never the problem: `Connect Stripe`, `Save Connect application` and
@@ -1610,6 +1643,33 @@ a fake success toast and saves nothing).
 - [ ] **A licence must never take a shop offline**
 
 ## Phase 15 — Page builder
+
+- [x] **Appearance → Homepage content — *2.60.208*.** The words on the homepage,
+  as against which sections appear. Three settings the storefront read that
+  **nothing in the tree ever wrote** now have an owner: `home_banners` (the hero
+  slider, carrying the page's only `<h1>`, printed **unescaped**), `about_text`
+  and `home_ticker`. Three injection sinks closed on the way, because a literal
+  in a controller and a box an owner types into are not the same thing.
+- [x] ▲ **The section-order arrows had never moved anything — fixed *2.60.212*.**
+  `save()` wrote `order`, `all()` sorted by it, all five presets set it, and
+  `home.blade.php` rendered in template order and read it nowhere. Now a flex
+  column with `order:N`, emitted inline by PHP so there is nothing to rebuild,
+  and gated so a shop that has never reordered emits no style element at all.
+  The two rows CSS cannot move — `delivery` and `ticker`, nested inside the hero
+  — are marked unmovable on the screen **and settled back behind their host on
+  read**, so the order the owner is shown is the order the shopper gets.
+- [x] **The hero's figures are counted, not claimed — *2.60.212*.** "93 brands"
+  reads the same cache key the strip below it counts from; the free-delivery
+  figure comes from the shipping reader. An unresolvable token drops its line
+  rather than printing a nought.
+- [ ] ▲ **Hero visibility overrides two sections silently.** Switching the hero
+  off for a device sets `display:none` on the band the delivery strip and ticker
+  are drawn inside, so their own switches are overridden without saying so.
+  Measured; the screen states it; the repair is written up and not applied.
+- [ ] **`site_title`** — read by the storefront, written by nothing. Site-wide,
+  so it belongs with general settings rather than an Appearance screen.
+
+### Original scope
 
 - [ ] Live editing of homepage sections, reusing the settings schemas
 
@@ -2120,6 +2180,9 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
 | ▒40 | **A settings screen that cannot be saved at all, on a fresh store, because an empty box is not an empty string.** Laravel's `ConvertEmptyStringsToNull` turns an empty text box into `null`, `cast()`'s default arm answers `null`, and `save()` reports that as invalid — so Store → Ecommerce's Cart and Checkout tabs refuse every save while any of their nine normally-empty boxes is empty, which on a fresh store is all of them. Reproduced against the real endpoint as a real owner. `ReviewSettingsApiController` documents this exact trap in its own header and works around it; this controller never got the same treatment. **Any controller taking a whole tab in one post is exposed to it, and the symptom is a 422 the owner reads as "the shop rejected my settings"** |
 | ▒41 | **Two doors into one table, and only one of them is guarded.** The admin controller refuses a fixed-amount coupon that is not a whole dirham; `CouponImporter` writes to `coupons` without passing through it, and an imported fils amount is rounded **up** at the till — the shop gives away more than the screen shows. The same shape destroyed data on the taxonomy SEO screens: three readers acted on five keys while both editors rebuilt the column from two, so saving one field wiped three the owner never touched. **When a rule lives in a controller, list every writer of that table before calling the rule enforced** |
 | ▒42 | **A write that is rejected before it leaves the browser fails exactly like a write that was rejected by the far end.** Six admin writes shipped without a CSRF token Laravel accepts; all six took a 419; every caller turned "not ok" into its own generic sentence, and the owner read *"Stripe refused the connection"* over a request Stripe never saw. Nothing crashed, nothing logged, and the feature furthest downstream — the one-click Connect button — simply never appeared, because the switch that would have enabled it was one of the writes. **A screen that reports the same sentence for a transport failure and a business refusal cannot be debugged by the person looking at it.** Two shapes to check for: a request that omits the token entirely, and one that sends `(document.querySelector('meta[name=...]')||{}).content||''` against a tag the document does not render — the second is worse because it degrades to a well-formed empty header instead of throwing. `AdminConsoleWriteTokenTest` now sweeps every `fetch` in the console; it strips comments with a string-aware scanner first, because a regex over that file reads its own prose as code (▒31), and the scanner is pinned by a case of its own (▒36) |
+| ▒43 | **A shop that changes how it takes money must re-subscribe to hear about it.** Moving Stripe from the hosted page to on-site card fields changed which webhook events the payment produces — `payment_intent.*` instead of `checkout.session.*` — and an already-connected shop's endpoint subscribes only to the old set. The code was complete and correct and the shop would still have taken card payments it was never told about, leaving orders unpaid beside money sitting in Stripe. Nothing in the application can notice this: the endpoint exists, the signature verifies, the deliveries simply never arrive. **Whenever a gateway's flow changes shape, the subscription is part of the change**, and an owner instruction to re-run the connect step belongs in the release note rather than in a commit message. |
+| ▒44 | **A failed payment is not a failed order, and treating it as one loses the sale twice.** A declined card leaves Stripe's intent `requires_payment_method` with the shopper still in front of the form. Failing the order there released the stock and returned the coupon — so the second card, which usually works, then succeeded against an order the confirmer already treats as void: money taken, nothing sold, and no screen showing either. Only an explicitly cancelled intent or an expired session is terminal. The same shape bit the corrected address: reusing the order after a decline silently discarded any field the shopper fixed, and shipped to the old one. |
+| ▒45 | **A layout breakpoint is not an input device, and using one as the other reaches the wrong people.** Three quantity steppers were enlarged to 44px finger targets under `@media (max-width: 900px)`, so a laptop with the browser at half screen width got phone chrome driven by a mouse — which is how the owner found it. `pointer: fine` is the question that was meant. The sequel is worth recording too: the owner then asked for the compact control on phones as well, to fit more of a thirteen-line basket on screen, **overriding the 44px accessibility convention deliberately**. That is his call to make, it is written into the test that pins it, and the next person should not restore the tap targets as a bug fix. |
 
 ## Questions still unanswered
 
