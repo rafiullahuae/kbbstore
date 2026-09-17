@@ -7,10 +7,15 @@ namespace App\Services\Payments\Gateways;
 use App\Models\Order;
 use App\Services\Payments\HandlesWebhooks;
 use App\Services\Payments\PaymentStart;
+use App\Services\Payments\Reconciliation\ListsTransactions;
+use App\Services\Payments\Reconciliation\ReconcileWindow;
+use App\Services\Payments\Reconciliation\RemotePage;
+use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\WebhookOutcome;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -49,7 +54,7 @@ use Illuminate\Support\Facades\Http;
  * is still compared against the order's own total by PaymentConfirmer, which
  * is what actually protects us.
  */
-class StripeGateway extends RemoteGateway implements HandlesWebhooks, SettlesPayments
+class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments
 {
     private const API = 'https://api.stripe.com';
 
@@ -136,6 +141,27 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, SettlesPay
                 ],
             ]],
             'metadata' => ['order_number' => $this->reference($order)],
+            /*
+             * THE SAME REFERENCE, STAMPED ON THE PAYMENTINTENT AS WELL.
+             *
+             * Session metadata does not propagate: a Checkout session's
+             * `metadata` and `client_reference_id` stay on the session, and the
+             * charge that comes out of it carries neither. That is invisible on
+             * the webhook path, which reads the session, and it is exactly what
+             * breaks reconciliation — GET /v1/charges lists money with no way
+             * to say which order it belongs to, so a payment whose webhook
+             * never arrived can be reported as "Stripe has taken money we have
+             * no record of" without being able to name the order.
+             *
+             * `payment_intent_data.metadata` is copied onto the PaymentIntent
+             * and from there onto its charge, which is what lets the
+             * reconciliation say "order KBB-1042" instead of "some charge".
+             * Two identical stamps, and the redundancy is the point: neither
+             * path depends on the other's object.
+             */
+            'payment_intent_data' => [
+                'metadata' => ['order_number' => $this->reference($order)],
+            ],
         ];
 
         $result = $this->form('/v1/checkout/sessions', $payload);
@@ -514,6 +540,187 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, SettlesPay
         $intent = $session['body']['payment_intent'] ?? null;
 
         return is_string($intent) && $intent !== '' ? $intent : null;
+    }
+
+    /* -------------------------------------------------------- reconciliation */
+
+    /**
+     * Stripe's books, a page at a time.
+     *
+     *   GET /v1/charges?created[gte]=&created[lte]=&limit=&starting_after=
+     *   GET /v1/refunds?created[gte]=&created[lte]=&limit=&starting_after=
+     *
+     * CHARGES, NOT CHECKOUT SESSIONS, and not PaymentIntents either. A session
+     * is an intention — it exists whether or not anybody paid, and the list is
+     * mostly abandoned baskets. A charge is money. That is the question this
+     * report asks, so that is the object it reads.
+     *
+     * Stripe pages with `starting_after`, which is the id of the last object
+     * you were given, plus a `has_more` flag. The cursor this returns is
+     * therefore an object id and nothing else, which is also what makes it safe
+     * to checkpoint: it describes a position in Stripe's own ordering rather
+     * than a count of rows we think we have seen.
+     *
+     * `created` is a UNIX INTEGER on this API, both in the filter and in the
+     * response. Not a string, not RFC3339. Sending a date string here does not
+     * error — Stripe coerces it to 0 — and the request then quietly asks for
+     * everything since 1970, which pages until the rate limit rather than
+     * failing in a way anyone would notice.
+     */
+    public function listRemotePayments(ReconcileWindow $window, ?string $cursor, int $limit): RemotePage
+    {
+        return $this->listStripe('/v1/charges', $window, $cursor, $limit, RemoteTxn::PAYMENT);
+    }
+
+    public function listRemoteRefunds(ReconcileWindow $window, ?string $cursor, int $limit): RemotePage
+    {
+        return $this->listStripe('/v1/refunds', $window, $cursor, $limit, RemoteTxn::REFUND);
+    }
+
+    public function remoteSourceLabel(): string
+    {
+        return 'api.stripe.com /v1/charges and /v1/refunds';
+    }
+
+    private function listStripe(string $path, ReconcileWindow $window, ?string $cursor, int $limit, string $kind): RemotePage
+    {
+        if (! $this->configured()) {
+            return RemotePage::unsupported('Stripe has no secret key stored, so its books cannot be read.');
+        }
+
+        $query = [
+            'created' => [
+                'gte' => $window->from->getTimestamp(),
+                'lte' => $window->to->getTimestamp(),
+            ],
+            // Stripe's own ceiling. Asking for more is a 400, not a clamp.
+            'limit' => max(1, min($limit, 100)),
+        ];
+
+        if ($cursor !== null && trim($cursor) !== '') {
+            $query['starting_after'] = trim($cursor);
+        }
+
+        $attempt = $this->stripeAttempt('GET', $path . '?' . http_build_query($query));
+
+        if (! $attempt['ok'] || ! is_array($attempt['body'] ?? null)) {
+            return RemotePage::failed($attempt['error'] ?? 'unreachable', $attempt['status']);
+        }
+
+        $data = $attempt['body']['data'] ?? [];
+        $data = is_array($data) ? $data : [];
+
+        $items = [];
+        $lastId = null;
+
+        foreach ($data as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $id = (string) ($row['id'] ?? '');
+
+            if ($id === '') {
+                continue;
+            }
+
+            $lastId = $id;
+            $items[] = $kind === RemoteTxn::PAYMENT ? $this->chargeToTxn($row, $id) : $this->refundToTxn($row, $id);
+        }
+
+        $hasMore = ($attempt['body']['has_more'] ?? false) === true;
+
+        return RemotePage::of($items, $hasMore ? $lastId : null);
+    }
+
+    private function chargeToTxn(array $charge, string $id): RemoteTxn
+    {
+        $status = (string) ($charge['status'] ?? '');
+        $captured = ($charge['captured'] ?? true) === true;
+
+        /*
+         * `succeeded` is not the same as "captured". A PaymentIntent created
+         * with manual capture produces a charge that is succeeded and NOT
+         * captured, which is an authorisation Stripe will release in about a
+         * week. Calling that settled money would put it in the same list as
+         * money actually taken, and the owner would go looking for funds that
+         * are not there.
+         */
+        $state = match (true) {
+            $status === 'succeeded' && $captured => RemoteTxn::SETTLED,
+            $status === 'succeeded' => RemoteTxn::AUTHORISED,
+            $status === 'pending' => RemoteTxn::AUTHORISED,
+            default => RemoteTxn::DEAD,
+        };
+
+        /*
+         * The PaymentIntent is what `payments.provider_ref` holds — the webhook
+         * writes `$object['payment_intent']` — so it is the key that matches,
+         * and the charge id is what a human pastes into Stripe's own search.
+         * Both are carried; matching on one of them alone is how a
+         * reconciliation invents a crisis.
+         */
+        $intent = $charge['payment_intent'] ?? null;
+        $reference = $charge['metadata']['order_number'] ?? null;
+
+        return new RemoteTxn(
+            provider: $this->id(),
+            kind: RemoteTxn::PAYMENT,
+            remoteId: $id,
+            matchKeys: is_string($intent) && $intent !== '' ? [$intent] : [],
+            reference: is_string($reference) && $reference !== '' ? $reference : null,
+            // Stripe amounts are already integer MINOR units, which is how this
+            // schema stores money. No conversion here, so none to get wrong.
+            amountFils: (int) ($charge['amount'] ?? 0),
+            currency: strtoupper((string) ($charge['currency'] ?? '')),
+            state: $state,
+            rawState: $status . ($captured ? '' : ' (uncaptured)'),
+            createdAt: $this->stripeMoment($charge['created'] ?? null),
+        );
+    }
+
+    private function refundToTxn(array $refund, string $id): RemoteTxn
+    {
+        $status = (string) ($refund['status'] ?? '');
+
+        // `pending` counts, and matches PaymentRefunder::COUNTED on our side: a
+        // refund Stripe has accepted is money the merchant no longer has, even
+        // before the card network finishes with it.
+        $state = in_array($status, ['succeeded', 'pending'], true) ? RemoteTxn::SETTLED : RemoteTxn::DEAD;
+
+        /*
+         * A Stripe refund carries no order reference of any kind — not
+         * `client_reference_id`, not our metadata. What it does carry is the
+         * PaymentIntent and the charge it reverses, and `payments.provider_ref`
+         * holds that intent. Passed as PARENT keys rather than match keys: they
+         * identify the payment, not the refund, and letting them match a refund
+         * would make a refund the provider never made look confirmed. See
+         * RemoteTxn::parents().
+         */
+        $parents = array_values(array_filter([
+            $refund['payment_intent'] ?? null,
+            $refund['charge'] ?? null,
+        ], fn ($v) => is_string($v) && $v !== ''));
+
+        return new RemoteTxn(
+            provider: $this->id(),
+            kind: RemoteTxn::REFUND,
+            remoteId: $id,
+            matchKeys: [],
+            reference: null,
+            amountFils: (int) ($refund['amount'] ?? 0),
+            currency: strtoupper((string) ($refund['currency'] ?? '')),
+            state: $state,
+            rawState: $status,
+            createdAt: $this->stripeMoment($refund['created'] ?? null),
+            parentKeys: $parents,
+        );
+    }
+
+    /** A Stripe `created` is a unix integer, and occasionally a numeric string. */
+    private function stripeMoment(mixed $created): ?CarbonImmutable
+    {
+        return is_numeric($created) ? CarbonImmutable::createFromTimestampUTC((int) $created) : null;
     }
 
     /**
