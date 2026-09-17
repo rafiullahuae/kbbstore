@@ -989,12 +989,69 @@ tests to **2,936**, every file byte-compared against the repo before it shipped.
       had read since the baseline with nothing anywhere able to write it, while
       two admin screens told the owner no colour could be changed
 
+### Four more lanes  *(2.60.194)*
+
+- [x] ▲ **Fourteen links in the main menu went to a page that does not exist.**
+      Toners, Sunscreens, Moisturizers, Lip Care, Hair Care, Skincare Sets,
+      Beauty Devices and seven more still carried the WooCommerce-era flat
+      addresses, and this application serves categories at
+      `/product-category/{path}/` — so the root catch-all took them and looked
+      each one up as a **blog post**. Three of the six Build-your-routine steps
+      on the front page were dead too, for a second reason hiding behind the
+      first: one wrong slug drove both the link and the product pick, so the
+      step rendered as an empty card that read as an empty catalogue. Slugs are
+      preserved rather than remapped — resolving at apply time would bake a
+      placeholder category in for ever on a server whose import has not run,
+      while an honest 404 self-heals the moment the real category lands
+- [x] ▲ **The shop promised a search engine what it does not do.** The sitewide
+      meta description — read on the home page, every content page, every brand
+      page, in every shared-link preview, and as the `Product` description of
+      anything without a short description — said **"next-day delivery"** while
+      the shop tells every customer 1–3 days in the UAE and 3–5 across the
+      Gulf, **"glowing skin guaranteed"** (a regulated claim in the UAE, the EU
+      and the UK), and **"100% genuine"**, a fifth spelling of a claim that now
+      has one box. Also fixed: the sitelinks searchbox advertised an address
+      that threw the shopper's query away, and the `Offer` published a bare
+      shelf price with no statement of whether VAT was in it
+- [x] ▲ **A filed document could reprint itself at today's rate.** An order with
+      no tax snapshot — every order this shop has placed, the engine being off
+      — had its VAT note computed fresh on each render. And the fallback was
+      **not the tax engine's arithmetic**: it taxed the whole order total, gift
+      wrapping and COD surcharge included, which the rules deliberately exclude
+      — about **7% too high** on any order carrying a fee, with no settings
+      change involved at all. Silence where there is no record; nothing is
+      invented, because nothing ever stored what the rate was on a past day
+- [x] **The order-received page states the tax** the email and invoice already
+      stated, in the shopper's wording rather than the accountant's; the product
+      page's authenticity chip joined the Claims tab with its **own** key, so
+      clearing it cannot silently strip the chip beside Place order; and the
+      admin's revenue figures now say whether they include VAT rather than
+      leaving it to be discovered the day the tax engine is switched on
+
+### The suite stopped disagreeing with itself  *(2.60.194)*
+
+- [x] ▲ **A test suite that gave a different answer each run, finally named.**
+      Assertion counts had drifted between identical runs for the whole
+      project's life and roughly one run in four failed somewhere. The demo
+      catalogue is seeded by a **migration**, so under `RefreshDatabase` it is
+      drawn once per process inside the first test — from an **unseeded
+      `mt_rand()`**. Every run therefore rendered a different 24 products, and
+      one test asserts once per rendered image on a page whose contents depend
+      on the prices drawn. The seam matters and is worth recording: Pest's
+      `beforeEach` runs *after* `setUpTraits()` has already migrated, so
+      reseeding there changes nothing; `createApplication()` is early enough.
+      Five consecutive runs on each engine now give an identical count, and
+      the drift is zero per-testcase. Two latent product defects surfaced on
+      the way — the home page's two best-seller rails are separate queries on
+      a tie-prone sort with no tie-breaker, so the same product can appear in
+      both or vanish from both
+
 ### In flight after this phase
 
-Five more lanes: the navigation's WooCommerce-era category URLs; three items
-handed over precisely between lanes; whether a filed document can change after
-the fact; what this shop tells Google and a shared link; and the suite's own
-determinism.
+Five more lanes: unstable orderings across the catalogue; four latent
+contradictions that only become visible when the owner uses a feature; the
+storefront as a shopper on a phone actually sees it; whether two test suites
+can safely share one checkout; and the menu's brand addresses.
 
 ## Phase 9 — Content pages
 
