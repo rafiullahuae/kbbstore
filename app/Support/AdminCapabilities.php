@@ -232,6 +232,15 @@ final class AdminCapabilities
 
         // ------------------------------------------------------ gateways & money
         ['*', 'admin-api/payments', 'payments.manage'],
+        /*
+         * The preflight check reads gateway configuration and echoes the exact
+         * request start() would send. The credentials are redacted, but which
+         * boxes are filled, which host the mode resolves to and the shape of
+         * the outgoing call are still the payment setup -- so it sits under the
+         * same capability as the screen that edits it, not under a looser one.
+         */
+        ['GET', 'admin-api/payments/preflight', 'payments.manage'],
+        ['GET', 'admin-api/payments/preflight/*', 'payments.manage'],
         ['GET', 'admin-api/orders/*/settlement', 'orders.money'],
         ['POST', 'admin-api/orders/*/capture', 'orders.money'],
         ['POST', 'admin-api/orders/*/refund', 'orders.money'],

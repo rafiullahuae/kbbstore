@@ -10,6 +10,7 @@ use App\Services\Import\Entities\CustomerImporter;
 use App\Services\Import\Entities\EntityImporter;
 use App\Services\Import\Entities\OrderImporter;
 use App\Services\Import\Entities\OrderItemImporter;
+use App\Services\Import\Entities\SeoImporter;
 use App\Services\Import\Entities\ProductImporter;
 use App\Services\Import\Sources\CsvRowSource;
 use App\Services\Import\Sources\RowSource;
@@ -66,6 +67,13 @@ final class ImportRunner
             new CustomerImporter,
             new OrderImporter,
             new OrderItemImporter,
+            /*
+             * LAST, and that is a dependency, not a preference. Every Yoast row
+             * is matched on `wc_id`, which ProductImporter writes; registered
+             * before it, this entity rejects the whole file on a fresh shop.
+             * The order of this array is the order the runner walks it.
+             */
+            new SeoImporter,
         ];
     }
 

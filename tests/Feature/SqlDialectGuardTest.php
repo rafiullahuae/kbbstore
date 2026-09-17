@@ -681,6 +681,9 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
 
     /** Route URI => the concrete path to drive it with. */
     $driven = [
+        // Driven rather than excused: it reads payment_providers, so it does
+        // issue SQL, and a gateway key is a fixed string that needs no fixture.
+        'admin-api/payments/preflight/{gateway}' => '/admin-api/payments/preflight/cod',
         'admin-api/products/{id}' => '/admin-api/products/' . $product->id,
         'admin-api/orders/{id}' => '/admin-api/orders/' . $order->id,
         'admin-api/orders/{id}/detail' => '/admin-api/orders/' . $order->id . '/detail',

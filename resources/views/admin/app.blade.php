@@ -18134,8 +18134,49 @@ buildNav();
 
       '<div class="row" style="justify-content:flex-end;gap:10px;padding:12px 0 4px">'+
       '<span class="echelp" id="pay_msg_'+sesc(g.id)+'" style="margin:0;margin-right:auto"></span>'+
+      '<button type="button" class="btn ghost" data-paycheck="'+sesc(g.id)+'">Check this setup</button>'+
       '<button type="button" class="btn" data-paysave="'+sesc(g.id)+'">Save '+sesc(g.title)+'</button></div>'+
+      '<div id="pay_pre_'+sesc(g.id)+'"></div>'+
       '</div></div>';
+  }
+
+  /* ---------------------------------------------------------------------------
+     "Check this setup" — read-only, reaches no provider, writes nothing.
+
+     It answers the question an owner actually has while pasting keys: is this
+     going to work, and if not, which box have I not filled in. The endpoint
+     redacts every credential BY VALUE wherever it appears, including inside an
+     Authorization header, and it redacts VISIBLY ("«secret_key as stored»")
+     rather than dropping the header — a header that vanished would read as
+     "this gateway sends no credentials", which is the wrong lesson.
+  --------------------------------------------------------------------------- */
+  async function payPreflight(id){
+    var host=document.querySelector('#pay_pre_'+id);
+    if(!host) return;
+    host.innerHTML='<div class="echelp" style="margin-top:10px">Checking…</div>';
+    try{
+      var r=await api('/admin-api/payments/preflight/'+encodeURIComponent(id));
+      var miss=(r.missing_fields||[]).map(function(f){ return sesc(f.label||f.key); });
+      var blocked=(r.blocked_by||[]).map(function(b){ return sesc(b); });
+      var out='<div class="ecnote" style="margin-top:12px">';
+      out+= blocked.length
+        ? '<b>Not offered at checkout yet.</b><ul style="margin:6px 0 0 18px">'+blocked.map(function(b){ return '<li>'+b+'</li>'; }).join('')+'</ul>'
+        : '<b>Ready — this method is being offered at checkout right now.</b>';
+      if(miss.length) out+='<div style="margin-top:8px">Still to paste in: <b>'+miss.join('</b>, <b>')+'</b>.</div>';
+      out+='<div style="margin-top:8px">Mode: <b>'+sesc(String(r.mode||'—'))+'</b>.</div>';
+      out+= r.webhook_url
+        ? '<div style="margin-top:8px">Paste this address into the provider\'s dashboard:<br><code style="word-break:break-all">'+sesc(String(r.webhook_url))+'</code></div>'
+        : '<div style="margin-top:8px" class="echelp">The webhook address is generated when this tab is first saved.</div>';
+      var dr=r.dry_run||{};
+      out+= dr.ran
+        ? '<div style="margin-top:10px">It would send <b>'+sesc(String(dr.method||''))+'</b> to<br><code style="word-break:break-all">'+sesc(String(dr.url||''))+'</code><div class="echelp" style="margin-top:4px">Nothing was actually sent, and no order, payment or event was created.</div></div>'
+        : '<div style="margin-top:10px" class="echelp">'+sesc(String(dr.why||'Nothing to send yet.'))+'</div>';
+      out+='</div>';
+      host.innerHTML=out;
+    }catch(e){
+      host.innerHTML='<div class="echelp" style="margin-top:10px">The check could not be run'+
+        ((e && e.body && e.body.message) ? ' — '+sesc(String(e.body.message)) : '')+'.</div>';
+    }
   }
 
   function paintPayments(){
@@ -18348,6 +18389,9 @@ buildNav();
       el.onkeydown=function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); } };
     });
 
+    document.querySelectorAll('[data-paycheck]').forEach(function(b){
+      b.addEventListener('click', function(){ payPreflight(b.getAttribute('data-paycheck')); });
+    });
     document.querySelectorAll('[data-paysave]').forEach(function(b){
       b.onclick=function(){ paySave(b.dataset.paysave,null,null); };
     });

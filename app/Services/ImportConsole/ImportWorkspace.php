@@ -123,6 +123,22 @@ final class ImportWorkspace
             'unique' => true,
             'help' => 'The individual lines inside each order. They come last because they point at both orders and products.',
         ],
+        /*
+         * MUST MIRROR ImportRunner::entities(). This list and that one are two
+         * hand-maintained lists that have to agree, and they did not: the SEO
+         * entity was registered on the runner while this screen knew nothing
+         * about it, and every upload 500'd on an undefined key rather than
+         * answering the 422 it had been answering. There is now a test pinning
+         * the two lists against each other, because the next entity will be
+         * added by somebody who has not read this comment.
+         */
+        'seo' => [
+            'file' => 'seo.csv',
+            'label' => 'SEO (Yoast)',
+            'id' => ['id', 'wc_id', 'product_id', 'post_id'],
+            'unique' => false,
+            'help' => 'Your Yoast post-meta, matched to products by their WooCommerce id. Run it after products, and it never overwrites a title or description you have typed here.',
+        ],
     ];
 
     /** @return list<string> */

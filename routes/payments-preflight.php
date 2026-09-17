@@ -7,7 +7,7 @@ declare(strict_types=1);
 | Payment preflight — "have I set this gateway up correctly?" (Lane EF)
 |------------------------------------------------------------------------------
 |
-| NOT YET WIRED. The integrator adds ONE line to routes/web.php, inside the
+| MOUNTED. routes/web.php requires this file inside the
 | EXISTING `admin-api` group — the one that already carries `auth:admin` and
 | NoStoreAdminApi, beside the other payments requires:
 |

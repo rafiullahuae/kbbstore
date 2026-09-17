@@ -318,6 +318,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // the settlement read exposes what an authorisation is still worth.
         require __DIR__.'/payments-settlement.php';
 
+        /*
+         * The payments preflight check. Same group as the two files above, and that
+         * placement is the whole point: it reports which credential fields are still
+         * empty and echoes the exact request a gateway would send, redacted. Outside
+         * auth:admin that is a map of this shop's payment configuration handed to
+         * anybody who asks.
+         */
+        require __DIR__.'/payments-preflight.php';
+
         // The storefront health check behind Dashboard → Check now and Safety →
         // Debug & Monitor. Inside this group and nowhere else: when a page is
         // broken it answers with the exception message and the application file

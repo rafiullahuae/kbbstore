@@ -649,9 +649,26 @@ it('walks the entities in the importer\'s own dependency order, never its own co
     // The runbook's one genuinely dangerous sequence is orders before the
     // customers they name. This screen cannot produce it, because it reads the
     // order off ImportRunner rather than holding a list that could drift.
+    // `seo` is last, and that is a dependency rather than a preference: every
+    // Yoast row is matched on `wc_id`, which ProductImporter writes, so an
+    // entity ordered before it rejects the whole file on a fresh shop.
     expect(ImportWorkspace::runnerOrder())
-        ->toBe(['categories', 'brands', 'products', 'customers', 'orders', 'order-items'])
+        ->toBe(['categories', 'brands', 'products', 'customers', 'orders', 'order-items', 'seo'])
         ->and(ImportWorkspace::entities())->toBe(ImportWorkspace::runnerOrder());
+
+    /*
+     * AND THE TWO LISTS MUST AGREE, which is the failure this assertion did not
+     * have and which cost a package: ImportWorkspace::ENTITIES is hand-written
+     * and keyed by entity name, ImportRunner::entities() is a separate
+     * hand-written list, and registering `seo` on the runner alone made every
+     * upload on this screen 500 on an undefined key instead of answering the
+     * 422 it had been answering. `runnerOrder()` reads the runner, so a key
+     * missing from ENTITIES fails here rather than in production.
+     */
+    foreach (ImportWorkspace::runnerOrder() as $entity) {
+        expect(fn () => ImportWorkspace::meta($entity))
+            ->not->toThrow(\Throwable::class, '', "the import screen knows nothing about the '{$entity}' entity the runner walks");
+    }
 });
 
 it('issues no SQLite-only SQL from the screen\'s own reads', function () {
