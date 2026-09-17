@@ -472,6 +472,37 @@ require_once __DIR__.'/../vendor/autoload.php';
     $put('LARAVEL_STORAGE_PATH', $root.'/storage');
     $put('KBB_PUBLIC_PATH', $root.'/public');
 
+    /*
+     * APP_URL, PINNED HERE AND NOT IN phpunit.xml, AND THE DIFFERENCE MATTERS.
+     *
+     * Several tests WRITE TRACKED FILES from rendered output --
+     * docs/email-previews/ and docs/invoice-previews/, the checked-in record of
+     * what this shop's mail and printed documents look like -- and every link
+     * inside them is built from APP_URL.
+     *
+     * Unpinned, the suite renders them against whatever APP_URL the developer's
+     * shell or .env happens to carry. Run the suite with APP_URL pointed at a
+     * staging host and six tracked files quietly change underneath you, with a
+     * GREEN RUN, because those tests assert the content and not the host. The
+     * next `git add -A` then commits a set of previews full of somebody's
+     * staging URLs. This is the same family as the public/build landmine
+     * CLAUDE.md records, and it was found by a lane that hit it and reverted it
+     * by hand.
+     *
+     * WHY NOT phpunit.xml. An <env> entry there, even with force="true", writes
+     * putenv() and $_ENV but leaves an EXPORTED APP_URL sitting in $_SERVER --
+     * and Env::getRepository() stacks $_SERVER first. Measured: with
+     * APP_URL=https://staging.example.test exported and the entry forced in
+     * phpunit.xml, getenv() correctly read http://localhost while
+     * config('app.url') still read the staging host, and the previews still
+     * rewrote. The $put() helper above writes all three, which is exactly why
+     * this file exists rather than the XML.
+     *
+     * Pinning it makes the committed previews a function of the code alone,
+     * which is the only thing that makes them worth committing.
+     */
+    $put('APP_URL', 'http://localhost');
+
     register_shutdown_function(static function () use ($root, $sweepTree): void {
         $sweepTree($root);
     });

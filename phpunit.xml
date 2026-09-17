@@ -13,6 +13,15 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!--
+            APP_URL is NOT pinned here on purpose. An <env> entry in this file,
+            even forced, writes putenv() and $_ENV but leaves an EXPORTED
+            APP_URL sitting in $_SERVER, which Env::getRepository() stacks
+            first — so it looks pinned and is not. It is pinned in
+            tests/bootstrap.php instead, which writes all three; the long note
+            there explains what goes wrong when it is not (six tracked preview
+            files rewritten under you by a green run).
+        -->
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <!--
