@@ -126,7 +126,24 @@ class QuizController extends Controller
             }
         }
 
-        $flat['concerns'] = $body['concerns'] ?? null;
+        /*
+         * A STRING OF CONCERNS IS STILL A LIST OF CONCERNS.
+         *
+         * The page posts an array and always has, but this endpoint accepted
+         * `concerns` as a bare 'nullable' for its whole life, so a caller
+         * posting "Hydration,Acne" got a 201 and a row. Tightening the rule to
+         * `array` without this would turn that caller into a 422 — a contract
+         * narrowed on a public endpoint to no benefit, since the column is a
+         * comma-joined string either way. Split here, so one rule set governs
+         * both spellings of this field as well.
+         */
+        $concerns = $body['concerns'] ?? null;
+
+        if (is_string($concerns)) {
+            $concerns = array_values(array_filter(array_map('trim', explode(',', $concerns)), fn ($c) => $c !== ''));
+        }
+
+        $flat['concerns'] = $concerns;
         $flat['consent']  = $body['consent'] ?? null;
         $flat['recommended_routines'] = data_get($body, 'recommendedRoutines')
             ?? data_get($body, 'recommended_routines');

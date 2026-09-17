@@ -1008,6 +1008,40 @@ it('still accepts the flat spelling the endpoint has always answered to', functi
         ->and($row->budget)->toBe('AED 100-200');
 });
 
+it('keeps taking a concern list as a plain comma-separated string', function () {
+    /*
+     * `concerns` was validated as a bare 'nullable' — no type, no length, no
+     * content rule — on a public endpoint, into a column the owner's leads
+     * screen renders. It is `array|max:20` with each entry `string|max:80` now,
+     * and this is the caller that rule must not break: the endpoint answered
+     * 201 to a comma-separated string for its whole life, and the column is a
+     * comma-joined string either way, so narrowing it to arrays would refuse a
+     * caller for nothing.
+     */
+    $this->postJson('/api/quiz', [
+        'contact' => ['email' => 'string-concerns@example.test'],
+        'concerns' => 'Hydration, Pores & texture',
+    ])->assertCreated();
+
+    expect(App\Models\QuizSubmission::latest('id')->first()->concerns)
+        ->toBe('Hydration,Pores & texture');
+});
+
+it('refuses a concern list used as free storage', function () {
+    // The other side of the same rule: 20 entries of 80 characters, and no more.
+    $this->postJson('/api/quiz', [
+        'contact' => ['email' => 'bulk@example.test'],
+        'concerns' => array_fill(0, 40, 'x'),
+    ])->assertStatus(422);
+
+    $this->postJson('/api/quiz', [
+        'contact' => ['email' => 'long@example.test'],
+        'concerns' => [str_repeat('x', 500)],
+    ])->assertStatus(422);
+
+    expect(App\Models\QuizSubmission::count())->toBe(0);
+});
+
 it('stores nothing the contact form did not ask permission to keep', function () {
     /*
      * THE LINE THIS LANE STOPPED AT, pinned so a later one has to argue with

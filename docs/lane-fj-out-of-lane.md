@@ -65,3 +65,68 @@ through routes that already exist.
 
 No new admin path. `PUT /admin-api/quiz-leads/*` and `GET
 /admin-api/quiz-leads` are already listed, writes before reads.
+
+---
+
+## 4. Findings outside this lane, reported not fixed
+
+### 4a. `expect(...)->not->toContain($needle, $message)` asserts nothing
+
+`Expectation::toContain()` is VARIADIC, so what reads as a failure message is a
+second NEEDLE, and Pest's `not` passes as soon as the positive expectation fails
+for any reason — including "the body does not contain the string I passed as a
+message". Measured directly:
+
+```php
+$raw = '{"a":1,"probe":"sk_live_CANARY_stripe_secret_key_value"}';
+expect($raw)->not->toContain('sk_live_CANARY_stripe_secret_key_value', '/api/settings'); // PASSES
+```
+
+Lane FJ repaired the two occurrences inside its own file
+(`tests/Feature/ApiSecurityTest.php`, both gateway-secret sweeps, which were
+passing over a response carrying the canary) and wrote its own quiz-lead sweep
+the safe way. `tests/Feature/StorefrontImagesAndHeadingsTest.php` around line
+199 already carries a note about the same trap, found independently.
+
+These are in other lanes' files and are left for their owners. Each is a guard
+that currently asserts nothing:
+
+| File | What it believes it is guarding |
+|---|---|
+| `tests/Feature/MailDeliveryLogTest.php` | that no column of the delivery log carried a live token |
+| `tests/Feature/SocialMetaListingPagesTest.php` | that no secret leaked into a page's `<head>` |
+| `tests/Feature/CheckoutHiddenRowsTest.php` (line ~496) | that two Totals are not on screen at once |
+| `tests/Feature/PriceDisplayTruthTest.php` (line ~406) | that a whole-dirham product grew no decimals |
+| `tests/Feature/BilingualFoundationTest.php` (line ~1055) | that a forbidden column is not translated |
+| `tests/Feature/AdminImportScreenTest.php` (line ~233) | that a route takes no parameter |
+
+The repair is mechanical: `expect(str_contains($haystack, $needle))->toBeFalse($message)`.
+
+### 4b. The Journal renders `<html lang="en">` on its Arabic URL
+
+`resources/views/store/blog.blade.php` opens with a hard-coded
+`<html lang="en">` inside `@verbatim`. Fetched: `/ar/skincare-guide/` serves
+Arabic chrome under `lang="en"` and no `dir`. It is a standalone document that
+does not extend `layouts/store.blade.php`, so it never picked up
+`Locale::htmlLang()` / `Locale::direction()` the way every other page did.
+
+Not fixed here: this lane's brief covers the tag filter on that page, and the
+page's language attributes belong with whoever owns the bilingual foundation
+work. The invoice layout got exactly this treatment in Part 3 and
+`resources/views/invoices/document.blade.php` is the worked example.
+
+### 4c. The quiz's consent record is asserted by the client
+
+`skin-quiz.blade.php` sets `payload.consent = true` unconditionally in
+`ensureLead()`. There is no consent checkbox anywhere on the form, so
+`quiz_submissions.consent` and `consent_at` record an assertion made by the
+page, not an affirmative act by the shopper. Lane FJ did not add a checkbox:
+that changes the funnel and the copy and is the owner's decision. See the
+report for what the form's wording does and does not cover.
+
+### 4d. The contact step promises an email the shop does not send
+
+"We'll save your results & email your plan." Nothing in `app/Mail` or
+`app/Services/Mail` references `QuizSubmission` or the quiz at all, so no plan
+is emailed. Reported, not fixed — writing that mailer is a feature, not a
+correction.
