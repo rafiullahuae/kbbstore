@@ -312,15 +312,27 @@ it('marks the delivery strip and the ticker as not movable, and says why', funct
     expect(HomepageSections::NESTED_NOTE)->toContain('hero band');
     expect(HomepageSections::NESTED_NOTE)->toContain('cannot be placed elsewhere');
 
-    // And the switches, which is the OTHER control on these two rows that does
-    // not do what it says. The band is one <section> carrying the hero's own
-    // visibility classes, so turning the hero off for a device hides these two
-    // on that device with their own switches still on. Measured, not inferred:
-    // at 1280px the band computes to display:none while .delivery inside it
-    // computes to flex. Until the band takes the union of the three rows'
-    // visibility the screen has to say so, or it is offering a switch it
-    // silently overrides.
-    expect(HomepageSections::NESTED_NOTE)->toContain('switched off for');
+    // AND THE CLAUSE ABOUT THE SWITCHES IS GONE, WHICH IS A PASS AND NOT A
+    // REGRESSION — Lane FW.
+    //
+    // This assertion used to read `toContain('switched off for')`. The note
+    // ended "and is hidden on any device the hero itself is switched off for",
+    // because the band was one <section> carrying the hero's own visibility
+    // classes and turning the hero off for a device hid these two on that
+    // device with their own switches still on. That was measured here at
+    // 1280px — the band computed display:none while .delivery inside it
+    // computed flex — and this lane required the screen to say so rather than
+    // offer a switch it silently overrode.
+    //
+    // The band now takes bandClassFor(), the union of the three rows, and the
+    // slider takes the hero's own; the switches decide their own rows.
+    // tests/Feature/HomepageHeroBandVisibilityTest.php holds that whole story.
+    // A note that still described the override would be the same defect this
+    // constant exists to prevent, pointing the other way, so the sentence is
+    // asserted ABSENT rather than simply no longer asserted present.
+    expect(str_contains(HomepageSections::NESTED_NOTE, 'switched off for'))->toBeFalse(
+        'The note still describes an override the hero band no longer applies.'
+    );
 });
 
 it('never emits an ordering class or rule for a section CSS order cannot move', function () {

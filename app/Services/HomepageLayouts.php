@@ -128,15 +128,38 @@ class HomepageLayouts
         $this->settings->set('homepage_layout', $key);
     }
 
-    /** A compact description for the admin, including a section preview list. */
+    /**
+     * A compact description for the admin, including a section preview list.
+     *
+     * ── THE PREVIEW DRAWS WHAT APPLYING THE PRESET PRODUCES — Lane FW ────────
+     *
+     * `order` feeds the wire-frame the Layouts cards show, and it used to be
+     * read straight off `$layout['sections']`. That list is what the preset
+     * ASKS for, and two of the four ask for something the hero's markup cannot
+     * do: Conversion orders `hero, ticker, delivery` and Boutique puts the
+     * delivery strip tenth, while both of those rows are drawn inside the
+     * hero's own `<section>` and render wherever it renders.
+     * HomepageSections::all() settles them back behind their host on every
+     * read, so the preset applied fine and the wire-frame beside it was drawing
+     * a page that never existed — named, and left, in
+     * docs/FR-HOMEPAGE-ORDER.md.
+     *
+     * So the sequence is now taken through payloadFor() and settleKeys(): the
+     * same two functions that decide what applying the preset actually does.
+     * The preview cannot disagree with the result any more, because it is
+     * computed from it. The SET of visible sections is unchanged — `off` still
+     * decides that — so `count` and `off` answer exactly what they did.
+     */
     public function summaries(): array
     {
         $out = [];
 
         foreach (self::LAYOUTS as $key => $layout) {
+            $payload = $this->payloadFor($key);
+
             $visible = array_values(array_filter(
-                $layout['sections'],
-                fn ($s) => ! in_array($s, $layout['off'], true) && isset(HomepageSections::REGISTRY[$s])
+                HomepageSections::settleKeys(array_keys($payload)),
+                fn ($s) => $payload[$s]['desktop'] || $payload[$s]['mobile']
             ));
 
             $out[] = [
