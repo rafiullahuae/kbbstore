@@ -483,14 +483,34 @@ it('marks its required fields required, so the browser can catch them', function
      * The red asterisks and the `required_field` label classes were already
      * telling the shopper these fields are required. This is the page keeping
      * its own promise.
+     *
+     * READ OFF THE RENDERED PAGE, NOT OUT OF THE TEMPLATE. This used to regex
+     * the `<input>` tags out of store/checkout.blade.php as a string, which
+     * worked only for as long as every field was written inline in that one
+     * file. The fields are one x-checkout.field component now, so the template
+     * no longer contains an `<input>` at all and the old search would have
+     * matched nothing and passed nothing — a green test asserting the empty
+     * set. Requesting the page is also the stronger check: it is the markup a
+     * shopper's browser is handed, so a component that stopped emitting
+     * `required` fails here rather than shipping.
      */
-    $blade = (string) file_get_contents(base_path('resources/views/store/checkout.blade.php'));
+    $html = (string) preg_replace(
+        ['#<style\b[^>]*>.*?</style>#is', '#<script\b[^>]*>.*?</script>#is'],
+        '',
+        (string) cfShopper(cfCart())->get('/checkout')->getContent()
+    );
 
     foreach (['billing_email', 'billing_first_name', 'billing_address_1', 'billing_state', 'billing_city'] as $id) {
         $field = [];
-        preg_match('/<input[^>]*id="' . $id . '"[^>]*>/', $blade, $field);
+        preg_match('/<input\b[^>]*\bid="' . $id . '"[^>]*>/', $html, $field);
 
         expect($field)->not->toBeEmpty("#{$id} is no longer an input on the checkout form.");
+
+        /*
+         * ` required` with the leading space on purpose: `aria-required` ends
+         * in the same nine letters, and a pattern that cannot tell the two
+         * apart would pass on exactly the markup this test was written about.
+         */
         expect(str_contains($field[0], ' required'))
             ->toBeTrue("#{$id} is marked aria-required but not required, so the browser never stops an empty submission.");
     }
