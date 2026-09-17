@@ -140,10 +140,18 @@ class HomepageApiController extends Controller
         Shortcodes::flush();
         ShopController::flushSidebarCache();
 
+        $payload = $this->content->payload();
+
+        /*
+         * `saved` counts what is STORED, read back off the payload, not what
+         * was posted. A row that was not an array at all is skipped rather than
+         * saved, and reporting the submitted count would tell the caller a
+         * number the shop does not hold.
+         */
         return response()->json([
             'ok' => true,
             'rejected' => $rejected,
-            'saved' => count($data['slides']),
-        ] + $this->content->payload());
+            'saved' => count($payload['slides']),
+        ] + $payload);
     }
 }

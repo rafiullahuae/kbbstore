@@ -239,17 +239,18 @@ final class HomepageContent
      */
     public function slides(): array
     {
-        $saved = $this->settings->get('home_banners', null);
-
-        $rows = is_array($saved) ? $saved : self::DEFAULT_SLIDES;
-
-        return array_values(array_map(
-            fn (array $row) => $this->render($this->coerce($row)),
-            array_slice(array_filter($rows, 'is_array'), 0, self::MAX_SLIDES)
-        ));
+        return array_map(fn (array $s) => $this->render($s), $this->editable());
     }
 
-    /** The slides as stored, without the derived CSS — what the editor edits. */
+    /**
+     * The slides as stored, widened and typed, without the derived CSS — what
+     * the editor edits, and what slides() adds the two gradients to.
+     *
+     * One reader for both, so the screen cannot show a slide the page would
+     * render differently.
+     *
+     * @return list<array<string, string>>
+     */
     public function editable(): array
     {
         $saved = $this->settings->get('home_banners', null);
@@ -270,12 +271,6 @@ final class HomepageContent
         return $saved === null
             ? (string) __('store.home.about_body')
             : trim((string) $saved);
-    }
-
-    /** The default shown in the editor's box, so an untouched shop sees its own words. */
-    public function aboutDefault(): string
-    {
-        return (string) __('store.home.about_body');
     }
 
     /**
@@ -301,7 +296,6 @@ final class HomepageContent
             ),
             'defaults' => array_map(fn (array $s) => $this->coerce($s), self::DEFAULT_SLIDES),
             'tabs' => $tabs,
-            'about_default' => $this->aboutDefault(),
             // So the screen can say, in the owner's words, what the brands note
             // and trust claims on the same page currently say — those already
             // have a home and this screen must not grow a second box for them.

@@ -388,10 +388,11 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
         + t.fields.map(function(f){ return field(f, copy[f.key], 'copy.' + f.key, false); }).join('')
         + '</div>';
     }).join('')
-    + '<div class="hpc-note"><b>Elsewhere</b>'
+    + '<div class="hpc-note"><b>Elsewhere on this page</b>'
     + 'The brands strip&rsquo;s note (&ldquo;' + esc(data.claims_elsewhere) + '&rdquo;) and the three trust-row claims are edited on '
-    + 'Store &rarr; Settings, where every claim about the business already lives. They are not repeated here: one sentence with two boxes '
-    + 'is a sentence that changes depending on which box you touched last.</div>';
+    + '<b>Store &rarr; Business Details &rarr; Claims</b>, where every statement this shop makes about itself already lives — the same boxes '
+    + 'the checkout and the product page read. They are not repeated here: one sentence with two boxes is a sentence that changes '
+    + 'depending on which box you touched last.</div>';
   }
 
   function render(){
@@ -441,14 +442,14 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
   }
 
   /* ------------------------------------------------------------------- bind */
-  /* The one word that has to change when a box does, without redrawing the
-     box. render() sets it too, for everything that does go through a repaint. */
-  function markDirty(){
-    dirty = true;
-    var el = document.querySelector('.hpc-dirty');
-    if (el) el.textContent = 'Unsaved changes';
-  }
-
+  /*
+   * Store a value and say so, WITHOUT redrawing the box it came from.
+   *
+   * The dirty word is patched in place rather than repainted for the reason
+   * given above previewBody(): replacing #content under a focused input throws
+   * and loses the caret. render() sets the same word for everything that does
+   * go through a repaint.
+   */
   function setValue(name, value){
     if (name.indexOf('copy.') === 0) {
       copy[name.slice(5)] = value;
@@ -456,7 +457,11 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
       var parts = name.split('.');
       slides[+parts[0]][parts[1]] = value;
     }
+
     dirty = true;
+
+    var el = document.querySelector('.hpc-dirty');
+    if (el) el.textContent = 'Unsaved changes';
   }
 
   function bind(){
@@ -473,7 +478,6 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
 
       input.oninput = function(){
         setValue(name, input.value);
-        markDirty();
 
         /* A colour input shows its value beside it, and that label is the only
            part of the row that can go stale. */
@@ -495,7 +499,6 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
         b.classList.toggle('is-primary', !now);
         b.setAttribute('aria-checked', now ? 'false' : 'true');
         b.textContent = now ? 'Off' : 'On';
-        markDirty();
         if (slide !== null) refreshPreview(slide);
       };
     });
