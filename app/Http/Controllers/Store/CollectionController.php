@@ -28,7 +28,23 @@ class CollectionController extends Controller
         'rating', 'review_count', 'featured', 'position', 'type', 'total_sales',
     ];
 
-    /** key => [title, intro, how to select] */
+    /**
+     * key => [title, intro, how to select]
+     *
+     * ── THE WORDING HERE IS THE ENGLISH SOURCE, NOT THE OUTPUT — Lane FB ────
+     *
+     * A const cannot call __(), and this row carries the SELECTION MODE beside
+     * the wording — 'newest', 'popular', 'on_sale', 'budget' — which is what
+     * show() switches on. So the constant stays exactly as it is and the
+     * DISPLAY copy is looked up by key in wordingFor() below, under
+     * `store.collection.*`. Nothing compares the title or the intro against
+     * anything; the URL key and the mode are what the code reads, and both are
+     * untouched.
+     *
+     * CollectionPhpLabelsAreKeyedTest holds the English here and the English in
+     * InterfaceStrings to each other, because a second English source fails
+     * silently and in only one direction.
+     */
     private const COLLECTIONS = [
         'new-in' => [
             'New In',
@@ -63,7 +79,9 @@ class CollectionController extends Controller
     {
         abort_unless(isset(self::COLLECTIONS[$key]), 404);
 
-        [$title, $intro, $mode] = self::COLLECTIONS[$key];
+        [, , $mode] = self::COLLECTIONS[$key];
+
+        [$title, $intro] = $this->wordingFor($key);
 
         if ($mode === 'popular') {
             $intro = \App\Support\RepeatPurchase::intro();
@@ -161,6 +179,32 @@ class CollectionController extends Controller
             'settings' => $this->settings,
             'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page),
         ]);
+    }
+
+    /**
+     * This listing's heading and the sentence under it, in the shopper's
+     * language.
+     *
+     * KEYED BY THE URL KEY, with the dash that cannot appear in a translation
+     * key replaced by an underscore, so the constant's row and the key are
+     * paired by the same string rather than by eye. The match is a CLOSED LIST
+     * rather than an interpolation: show() has already 404'd anything not in
+     * COLLECTIONS, and a key composed from a URL segment is how a listing ends
+     * up rendering its own slug at a shopper.
+     *
+     * /best-sellers/ returns '' for the intro exactly as the constant does —
+     * its sentence is a measurement and show() asks RepeatPurchase for it.
+     *
+     * @return array{0:string,1:string}  [title, intro]
+     */
+    private function wordingFor(string $key): array
+    {
+        return match ($key) {
+            'new-in' => [__('store.collection.title_new_in'), __('store.collection.intro_new_in')],
+            'best-sellers' => [__('store.collection.title_best_sellers'), ''],
+            'super-sale' => [__('store.collection.title_super_sale'), __('store.collection.intro_super_sale')],
+            'under-54' => [__('store.collection.title_under_54'), __('store.collection.intro_under_54')],
+        };
     }
 
     /**

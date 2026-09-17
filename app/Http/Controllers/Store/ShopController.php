@@ -174,9 +174,9 @@ class ShopController extends Controller
             'page' => $page,
             'lastPage' => $lastPage,
             'cols' => Facets::columns(),
-            'sorts' => Facets::SORTS,
+            'sorts' => Facets::sortLabels(),
             'curorder' => Facets::sort(),
-            'buckets' => Facets::BUCKETS,
+            'buckets' => Facets::buckets(),
             'title' => $title,
             'seoCtx' => array_filter([
                 /*
@@ -544,9 +544,17 @@ class ShopController extends Controller
     private function breadcrumbTrail(?Category $category): array
     {
         $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+        /*
+         * TRANSLATED, THOUGH NOTHING ON THE PAGE SHOWS IT — Lane FB.
+         *
+         * This is BreadcrumbList JSON-LD, which is the trail Google prints
+         * beneath the result. On an Arabic page an English trail is the same
+         * defect as an English heading, minus the part where anybody would
+         * notice. The two keys are the ones the visible crumb already uses.
+         */
         $trail = [
-            ['name' => 'Home', 'url' => $base . '/'],
-            ['name' => 'Shop', 'url' => $base . '/shop/'],
+            ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
+            ['name' => __('store.breadcrumb.shop'), 'url' => $base . '/shop/'],
         ];
 
         if ($category) {
@@ -619,18 +627,35 @@ class ShopController extends Controller
 
     private function heading(?Category $category, string $search): array
     {        if ($category) {
+            /*
+             * The category's own name and description are CATALOGUE rows, not
+             * interface strings — they reach Arabic through the translations
+             * table against their own id (App\Support\HasTranslations), which
+             * is why they are not keyed here. Only the fallback, used when the
+             * category has no description, is this file's to say.
+             */
             return [
                 $category->name,
-                $category->description ?: 'Authentic Korean skincare, curated for the UAE.',
-                'Category',
+                $category->description ?: __('store.shop.sub_default'),
+                __('store.shop.crumb_category'),
             ];
         }
 
         if ($search !== '') {
-            return ["Search: {$search}", 'Results across products and brands.', 'Search'];
+            // The term is the shopper's own words and is passed through, never
+            // translated.
+            return [
+                __('store.shop.title_search', ['term' => $search]),
+                __('store.shop.sub_search'),
+                __('store.shop.crumb_search'),
+            ];
         }
 
-        return ['Shop all', 'Authentic Korean skincare, curated for the UAE.', 'Shop'];
+        return [
+            __('store.shop.title_all'),
+            __('store.shop.sub_default'),
+            __('store.breadcrumb.shop'),
+        ];
     }
 
     /**
@@ -663,11 +688,11 @@ class ShopController extends Controller
         }
 
         if ($active['price'] && isset(Facets::BUCKETS[$active['price']])) {
-            $chips[] = ['key' => 'price', 'value' => $active['price'], 'label' => Facets::BUCKETS[$active['price']][0]];
+            $chips[] = ['key' => 'price', 'value' => $active['price'], 'label' => Facets::bucketLabel($active['price'])];
         }
 
-        if ($active['sale'] === '1') { $chips[] = ['key' => 'sale', 'value' => '1', 'label' => 'On sale']; }
-        if ($active['instock'] === '1') { $chips[] = ['key' => 'instock', 'value' => '1', 'label' => 'In stock']; }
+        if ($active['sale'] === '1') { $chips[] = ['key' => 'sale', 'value' => '1', 'label' => __('store.shop.chip_on_sale')]; }
+        if ($active['instock'] === '1') { $chips[] = ['key' => 'instock', 'value' => '1', 'label' => __('store.shop.chip_in_stock')]; }
 
         return $chips;
     }

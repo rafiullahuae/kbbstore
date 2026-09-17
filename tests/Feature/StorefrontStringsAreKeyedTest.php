@@ -49,7 +49,7 @@ function keyedExcludedFiles(): array
         'store/app.blade.php'
             => '/app, served to an authenticated admin and 404 to everybody else (PublicPagesQuoteRealPricesTest pins both halves). It is a second, invented storefront with invented prices; translating it would be translating a fixture.',
         'store/skin-quiz.blade.php'
-            => 'The quiz builds its whole interface in one inline <script> — ~110 strings, an invented catalogue and its own PREVIEW banner. The two strings the SERVER renders are converted; the script is reported as outstanding rather than half-done.',
+            => "The script is converted now (Lane FB): ~90 keys under store.quiz.js_*, its own window.KBB_T, and the invented catalogue deleted. Still excluded for what REMAINS English on purpose — the skin types, concerns, ages, depths, budgets and allergens the shopper picks, which are compared by recommend() and POSTed to /api/quiz as the lead's answers. QuizScriptStringsAreKeyedTest pins both halves: the converted chrome, and those values staying English.",
     ];
 }
 

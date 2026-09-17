@@ -120,13 +120,15 @@ input,textarea{font-family:inherit}
 #rpanel .routine{margin-top:12px;animation:rise .3s var(--ease)}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
 @media(max-width:360px){.rgrid{grid-template-columns:1fr}}
-.rcell{display:flex;align-items:center;gap:10px;border:1px solid var(--line-2);border-radius:12px;padding:8px 9px;background:#fff}
+.rcell{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line-2);border-radius:12px;padding:8px 9px;background:#fff;min-width:0}
 .rcw{min-width:0;flex:1}
 .rcell .rthumb{width:36px;height:36px;border-radius:9px;font-size:11px}
 .rcell .rpname{font-size:12px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rpb{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
-.rcell .rpbrand{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rcell .rpprice{font-size:11.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
+/* The step's one-line explanation. Its own class because .rpname is
+   white-space:nowrap — correct for the product name it used to hold, and
+   the reason a sentence in that slot pushed the grid track wider than the
+   card it sits in. */
+.rcell .rpdesc{font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ink-2);overflow-wrap:anywhere}
 .routine-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;background:linear-gradient(120deg,var(--cream),var(--pink-soft));border-bottom:1px solid var(--line)}
 .routine-h .rt{font-size:15px;font-weight:700;letter-spacing:-.01em}
 .routine-h .rd{font-size:11.5px;color:var(--ink-2);margin-top:2px;max-width:360px;line-height:1.4}
@@ -135,13 +137,8 @@ input,textarea{font-family:inherit}
 .rthumb{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:12px;flex-shrink:0}
 .rstep{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--pink-deep)}
 .rpname{font-size:12.5px;font-weight:600;line-height:1.25}
-.rpbrand{font-size:10.5px;color:var(--muted)}
-.rpprice{margin-inline-start:auto;font-size:12.5px;font-weight:700;white-space:nowrap}
 .routine-f{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:13px 16px}
 .routine-f .rsum{font-size:12.5px}
-.routine-f .rsum b{font-size:17px}
-.routine-f .rsum s{color:var(--muted);font-weight:400;margin-inline-start:5px;font-size:11px}
-.save-pill{background:var(--green);color:#fff;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px;margin-inline-start:6px}
 
 .expert{margin-top:16px;border:1.5px solid #E7D6FB;border-radius:17px;padding:18px;background:linear-gradient(135deg,#fff,#F3ECFD)}
 .expert h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
@@ -196,9 +193,50 @@ input,textarea{font-family:inherit}
   <div class="pips" id="pips"></div>
   <div id="stage"></div>
 </div>
-<div class="toast" id="toast"></div>@verbatim
+<div class="toast" id="toast"></div>
+{{-- The one real link the results panel has. Url::to() carries the deployment's
+     base path (KBB_BASE_PATH on staging), so this cannot be a literal '/shop/'. --}}
+@php
+    // This page's own string table — see FrontEndStrings::forPrefix() for why
+    // the quiz does not share the store.js.* one. Empty on an English page, so
+    // no <script> is emitted and the page is byte-for-byte what it was.
+    $kbbQuizStrings = \App\Services\Translation\FrontEndStrings::forPrefix('quiz.js_', app()->getLocale());
+@endphp
+<script>const SHOP_URL = @json(\App\Support\Url::to('/shop/'));</script>
+@if ($kbbQuizStrings !== [])
+<script>window.KBB_T = @json($kbbQuizStrings);</script>
+@endif
+@verbatim
 
 <script>
+/* The shopper's wording for a key, or the English written beside it.
+ *
+ * A COPY OF resources/js/kbb/i18n.js's t(), AND IT HAS TO BE. That module is
+ * an ES module compiled by Vite into the bundle; this is an inline <script> in
+ * a standalone document, so it cannot import it. The contract is the one that
+ * matters and it is identical: the English is passed at every call site and is
+ * what renders when the table is absent, which on this host is the normal
+ * state of affairs rather than an accident — assets are built off-server and
+ * the shipped bundle is routinely older than this repository.
+ *
+ * WHAT IS NOT PASSED THROUGH HERE: every value a shopper PICKS. The skin
+ * types, concerns, ages, routine depths, budgets and allergens are compared
+ * (`state.concerns.includes('Hydration')`, `/Oily|Combination/.test(...)`) and
+ * are POSTed to /api/quiz, where they are kept as the lead's answers.
+ * Translating them would break recommend() outright and would write Arabic
+ * answers into a table the owner reads in English. Separating those labels
+ * from their values is a real change with a persistence contract attached and
+ * is written up rather than done here. */
+function t(key, english, replace){
+  const table = (typeof window !== 'undefined' && window.KBB_T) || null;
+  let out = (table && typeof table[key] === 'string' && table[key]) || english;
+  if (replace) {
+    Object.keys(replace).sort((a,b)=>b.length-a.length).forEach(function(name){
+      out = out.split(':' + name).join(String(replace[name]));
+    });
+  }
+  return out;
+}
 const $=(s,r=document)=>r.querySelector(s);
 const stage=$('#stage');
 let stepIndex=0;
@@ -235,59 +273,91 @@ const ALLERGENS=[
   {v:'Nut oils'},{v:'Lanolin'},{v:'None / not sure'}
 ];
 
-const POOL={
-  cleanseOil:{b:'Anua',n:'Heartleaf Cleansing Oil',p:79},
-  cleanseGel:{b:'COSRX',n:'Low pH Gel Cleanser',p:49},
-  tonerSoothe:{b:'Anua',n:'Heartleaf 77 Toner',p:89},
-  tonerHydra:{b:'Isntree',n:'Hyaluronic Acid Toner',p:79},
-  serumHydra:{b:'Torriden',n:'Dive-In HA Serum',p:69},
-  serumGlow:{b:'Beauty of Joseon',n:'Glow Serum',p:75},
-  serumVitC:{b:'Numbuzin',n:'No.5 Vitamin C Serum',p:99},
-  serumAcne:{b:'Some By Mi',n:'AHA-BHA-PHA Serum',p:89},
-  serumBarrier:{b:'COSRX',n:'Snail 96 Mucin Essence',p:79},
-  serumPDRN:{b:'Medicube',n:'PDRN Pink Collagen Serum',p:149},
-  serumCica:{b:'SKIN1004',n:'Centella Ampoule',p:79},
-  creamRich:{b:'Torriden',n:'Dive-In Cream',p:75},
-  creamGel:{b:'COSRX',n:'Oil-Free Moisturizer',p:69},
-  creamPDRN:{b:'Medicube',n:'PDRN Capsule Cream',p:129},
-  spf:{b:'Beauty of Joseon',n:'Relief Sun SPF50+',p:65},
-  mask:{b:'MEDIHEAL',n:'Glow Mask · 5 pack',p:55},
-  eye:{b:'Medicube',n:'Age-R Eye Cream',p:99}
+/* ── THE ROUTINE IS STEPS, NOT PRODUCTS — Lane FB ────────────────────────────
+ *
+ * This block used to be `const POOL`: seventeen products with brands and
+ * prices, none of which this shop sells. Thirteen of the names existed nowhere
+ * else in the repository and two of the brands did not exist at all, so the
+ * quiz recommended a basket that could not be bought, quoted a total nobody had
+ * set, and printed a 15% bundle saving that no discount rule in this shop has
+ * ever offered.
+ *
+ * WHERE THE INVENTED NAMES ACTUALLY WENT, MEASURED RATHER THAN ASSUMED. An
+ * earlier pass at this lane recorded that buildPayload() posted them to
+ * /api/quiz and that they were kept in quiz_submissions.recommended_routines.
+ * That is NOT what happens, and the correction matters because it changes what
+ * anybody has to clean up: nothing.
+ *
+ * Api\QuizController::store() validates a fixed list of keys and passes only
+ * those to create(); `recommended_routines` is not among the columns it writes,
+ * and nothing else in the application writes it either. Posting a product list
+ * and a bundle total to that endpoint and then reading the row back leaves
+ * `recommended_routines` NULL. So the fiction reached the wire and stopped
+ * there — it was never persisted, no stored lead carries an invented product
+ * name, and no migration or data repair is owed.
+ *
+ * What the banner genuinely failed to contain was the PAGE: a shopper read
+ * seventeen products, their prices and a 15% saving on a public URL, and the
+ * word PREVIEW above them does not make a price true.
+ *
+ * WHAT REPLACES IT, AND WHAT DOES NOT. The quiz can say truthfully which STEPS
+ * a skin type and a set of concerns call for, and in what order — that is
+ * skincare, not catalogue. It cannot say which product to buy, because nothing
+ * on this page reads `products` and no column records which routine step a
+ * product belongs to. So it recommends the shape of a routine and sends the
+ * shopper to the real shop to fill it.
+ *
+ * DRIVING IT FROM THE CATALOGUE IS THE NEXT STEP AND NEEDS A SCHEMA CHANGE: a
+ * `routine_role` on products (cleanser / toner / treatment / moisturiser / spf),
+ * an admin field to set it, and an endpoint to read the visible, in-stock row
+ * per role within the shopper's budget. That is a lane of its own and is
+ * written up in this lane's report. Nothing here invents a stand-in for it.
+ */
+/* `n` is the step's ENGLISH name and stays English: buildPayload() sends it to
+   /api/quiz as the routine's steps, and a lead whose steps arrive in the
+   shopper's language is a lead the owner cannot read beside the others. `k` is
+   what the display looks the wording up by. */
+const STEPS={
+  cleanse:{nk:'store.quiz.js_step_cleanse_name',dk:'store.quiz.js_step_cleanse_desc',n:'Cleanse',d:'Lift off sunscreen, sweat and the day.'},
+  cleanseOil:{nk:'store.quiz.js_step_cleanse_oil_name',dk:'store.quiz.js_step_cleanse_oil_desc',n:'Cleanse (oil first)',d:'An oil or balm to break down SPF, then a gentle wash.'},
+  tone:{nk:'store.quiz.js_step_tone_name',dk:'store.quiz.js_step_tone_desc',n:'Tone',d:'Rebalance and soften before anything active.'},
+  treat:{nk:'store.quiz.js_step_treat_name',dk:'store.quiz.js_step_treat_desc',n:'Treat',d:'The active step for your main concern.'},
+  boost:{nk:'store.quiz.js_step_boost_name',dk:'store.quiz.js_step_boost_desc',n:'Boost',d:'A second active for your next concern.'},
+  barrier:{nk:'store.quiz.js_step_barrier_name',dk:'store.quiz.js_step_barrier_desc',n:'Barrier',d:'A calming, repairing layer when skin feels reactive.'},
+  moisturise:{nk:'store.quiz.js_step_moisturise_name',dk:'store.quiz.js_step_moisturise_desc',n:'Moisturise',d:'Seal the water in so the actives are tolerated.'},
+  rich:{nk:'store.quiz.js_step_rich_name',dk:'store.quiz.js_step_rich_desc',n:'Moisturise (richer)',d:'A heavier cream for dry or mature skin.'},
+  protect:{nk:'store.quiz.js_step_protect_name',dk:'store.quiz.js_step_protect_desc',n:'Protect',d:'Sunscreen every morning — the UAE sun is the whole game.'},
+  mask:{nk:'store.quiz.js_step_mask_name',dk:'store.quiz.js_step_mask_desc',n:'Weekly',d:'A mask once or twice a week, not daily.'},
+  eye:{nk:'store.quiz.js_step_eye_name',dk:'store.quiz.js_step_eye_desc',n:'Eye',d:'A lighter formula for the thinner skin around the eye.'}
 };
-function thumb(b){return b.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
 
-function concernSerum(c){
-  if(/Acne/.test(c))return POOL.serumAcne;
-  if(/Dark spots/.test(c))return POOL.serumVitC;
-  if(/aging/.test(c))return POOL.serumPDRN;
-  if(/Redness/.test(c))return POOL.serumCica;
-  if(/Pores/.test(c))return POOL.serumAcne;
-  if(/Dullness/.test(c))return POOL.serumGlow;
-  if(/Hydration/.test(c))return POOL.serumHydra;
-  return POOL.serumGlow;
-}
+/* Which STEPS this shopper's answers call for. The branches are the same skin
+ * logic the old version used to pick products; only what they select changed. */
 function recommend(){
   const oily=/Oily|Combination/.test(state.skin)||state.concerns.some(c=>/Pores|Acne/.test(c));
   const dry=/Dry|Sensitive/.test(state.skin)||state.concerns.includes('Hydration');
-  const cleanse=oily?POOL.cleanseGel:POOL.cleanseOil;
-  const toner=(/Sensitive|Redness/.test(state.skin)||state.concerns.includes('Redness & sensitivity'))?POOL.tonerSoothe:(dry?POOL.tonerHydra:POOL.tonerSoothe);
-  const c1=state.concerns[0], c2=state.concerns[1];
-  const treat1=c1?concernSerum(c1):POOL.serumGlow;
-  let treat2=c2?concernSerum(c2):null; if(treat2&&treat2.n===treat1.n)treat2=null;
-  const cream=dry?(state.concerns.includes('Fine lines & aging')?POOL.creamPDRN:POOL.creamRich):POOL.creamGel;
-  const spf=POOL.spf;
-  const essentials=[['Cleanse',cleanse],['Treat',treat1],['Moisturise',cream],['Protect',spf]];
-  const glass=[['Cleanse',cleanse],['Tone',toner],['Treat',treat1]];
-  if(treat2)glass.push(['Boost',treat2]);
-  glass.push(['Moisturise',cream],['Protect',spf]);
-  const targeted=[['Weekly',POOL.mask]];
-  if(state.concerns.includes('Fine lines & aging'))targeted.push(['Eye',POOL.eye]);
-  else if(treat2)targeted.push(['Target',treat2]);
-  else targeted.push(['Barrier',POOL.serumBarrier]);
+  const sensitive=/Sensitive|Redness/.test(state.skin)||state.concerns.includes('Redness & sensitivity');
+  const aging=state.concerns.includes('Fine lines & aging');
+  const cleanse=oily?STEPS.cleanse:STEPS.cleanseOil;
+  const cream=dry?(aging?STEPS.rich:STEPS.rich):STEPS.moisturise;
+  const second=state.concerns.length>1;
+
+  const essentials=[cleanse,STEPS.treat,cream,STEPS.protect];
+  const glass=[cleanse,STEPS.tone,STEPS.treat];
+  if(second)glass.push(STEPS.boost);
+  glass.push(cream,STEPS.protect);
+  const targeted=[STEPS.mask];
+  if(aging)targeted.push(STEPS.eye);
+  else if(sensitive)targeted.push(STEPS.barrier);
+  else if(second)targeted.push(STEPS.boost);
+  else targeted.push(STEPS.barrier);
+
+  /* `t` is the routine's ENGLISH name and stays English — buildPayload() sends
+     it as the lead's recommended routine and the admin leads screen lists it. */
   return [
-    {t:'Everyday Essentials',short:'Essentials',tag:'Start here',d:'The core 4 steps for 90% of your goals.',items:essentials},
-    {t:'Glass-Skin Ritual',short:'Glass-Skin',tag:'Best results',d:'The full layering routine for that dewy glow.',items:glass},
-    {t:'Targeted Boosters',short:'Boosters',tag:'Add-ons',d:'Extra treatments for your top concerns.',items:targeted}
+    {tk:'store.quiz.js_routine_essentials_title',dk:'store.quiz.js_routine_essentials_desc',gk:'store.quiz.js_routine_essentials_tag',t:'Everyday Essentials',short:'Essentials',tag:'Start here',d:'The core steps for 90% of your goals.',items:essentials},
+    {tk:'store.quiz.js_routine_glass_title',dk:'store.quiz.js_routine_glass_desc',gk:'store.quiz.js_routine_glass_tag',t:'Glass-Skin Ritual',short:'Glass-Skin',tag:'Best results',d:'The full layering routine, in order.',items:glass},
+    {tk:'store.quiz.js_routine_boosters_title',dk:'store.quiz.js_routine_boosters_desc',gk:'store.quiz.js_routine_boosters_tag',t:'Targeted Boosters',short:'Boosters',tag:'Add-ons',d:'Extra steps for your top concerns.',items:targeted}
   ];
 }
 
@@ -298,10 +368,10 @@ function setProgress(){
   for(let p=1;p<=7;p++){const cls=stepIndex>p?'done':(stepIndex===p?'cur':'');html+=`<div class="pip ${cls}"></div>`;}
   $('#pips').innerHTML=html;
   const s=FLOW[stepIndex];let label='';
-  if(s==='start')label='~1 min';
-  else if(s==='results')label='Your plan ✨';
-  else if(s==='contact')label='Last step';
-  else label='Step '+stepIndex+' / '+QSTEPS;
+  if(s==='start')label=t('store.quiz.js_about_a_minute','~1 min');
+  else if(s==='results')label=t('store.quiz.js_your_plan','Your plan ✨');
+  else if(s==='contact')label=t('store.quiz.js_last_step','Last step');
+  else label=t('store.quiz.js_step_of','Step :n / :total',{n:stepIndex,total:QSTEPS});
   $('#qcount').textContent=label;
 }
 function go(i){stepIndex=i;render();}
@@ -312,11 +382,11 @@ function render(){
   setProgress();
   const s=FLOW[stepIndex];
   if(s==='start')return renderStart();
-  if(s==='skin')return renderSingle({key:'skin',eye:'Your skin',q:'What\'s your skin type?',sub:'Pick what sounds most like you.',opts:SKINS,cols:'cols3'});
+  if(s==='skin')return renderSingle({key:'skin',eye:t('store.quiz.js_eye_skin','Your skin'),q:t('store.quiz.js_q_skin',"What's your skin type?"),sub:t('store.quiz.js_sub_skin','Pick what sounds most like you.'),opts:SKINS,cols:'cols3'});
   if(s==='concerns')return renderMulti();
-  if(s==='age')return renderSingle({key:'age',eye:'About you',q:'Your age range?',sub:'Helps us pick the right actives.',opts:AGES.map(a=>({v:a})),cols:'pills'});
-  if(s==='depth')return renderSingle({key:'depth',eye:'Your routine',q:'How many steps feel right?',sub:'We\'ll size it to your life.',opts:DEPTHS,cols:'cols3'});
-  if(s==='budget')return renderSingle({key:'budget',eye:'Your routine',q:'Your budget vibe?',sub:'So picks feel right for you.',opts:BUDGETS,cols:'cols2'});
+  if(s==='age')return renderSingle({key:'age',eye:t('store.quiz.js_eye_about','About you'),q:t('store.quiz.js_q_age','Your age range?'),sub:t('store.quiz.js_sub_age','Helps us pick the right actives.'),opts:AGES.map(a=>({v:a})),cols:'pills'});
+  if(s==='depth')return renderSingle({key:'depth',eye:t('store.quiz.js_eye_routine','Your routine'),q:t('store.quiz.js_q_depth','How many steps feel right?'),sub:t('store.quiz.js_sub_depth',"We'll size it to your life."),opts:DEPTHS,cols:'cols3'});
+  if(s==='budget')return renderSingle({key:'budget',eye:t('store.quiz.js_eye_routine','Your routine'),q:t('store.quiz.js_q_budget','Your budget vibe?'),sub:t('store.quiz.js_sub_budget','So picks feel right for you.'),opts:BUDGETS,cols:'cols2'});
   if(s==='allergy')return renderAllergy();
   if(s==='contact')return renderContact();
   if(s==='results')return renderResults();
@@ -335,7 +405,7 @@ function renderSingle({key,eye,q,sub,opts,cols}){
     <span class="qeye"><span class="dot"></span>${eye}</span>
     <h2 class="qttl">${q}<small>${sub}</small></h2>
     <div class="opts ${cols}">${opts.map((o,i)=>optHTML(o,state[key]===o.v,i)).join('')}</div>
-    <div class="nav"><button class="back" onclick="prev()">‹ Back</button><div class="spacer"></div><span class="hint">Tap to continue</span></div>
+    <div class="nav"><button class="back" onclick="prev()">${t('store.quiz.js_back','‹ Back')}</button><div class="spacer"></div><span class="hint">${t('store.quiz.js_tap_continue','Tap to continue')}</span></div>
   </div>`;
   applyStagger();
   stage.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
@@ -347,29 +417,29 @@ function renderSingle({key,eye,q,sub,opts,cols}){
 }
 function renderMulti(){
   stage.innerHTML=`<div class="card">
-    <span class="qeye"><span class="dot"></span>Your goals</span>
-    <h2 class="qttl">What do you want to work on?<small>Choose up to 3.</small></h2>
+    <span class="qeye"><span class="dot"></span>${t('store.quiz.js_eye_goals','Your goals')}</span>
+    <h2 class="qttl">${t('store.quiz.js_q_goals','What do you want to work on?')}<small>${t('store.quiz.js_sub_goals','Choose up to 3.')}</small></h2>
     <div class="opts cols2">${CONCERNS.map((o,i)=>optHTML(o,state.concerns.includes(o.v),i)).join('')}</div>
-    <div class="nav"><button class="back" onclick="prev()">‹ Back</button><div class="spacer"></div>
-      <button class="btn" id="mNext" ${state.concerns.length?'':'disabled'} onclick="next()">Continue</button></div>
+    <div class="nav"><button class="back" onclick="prev()">${t('store.quiz.js_back','‹ Back')}</button><div class="spacer"></div>
+      <button class="btn" id="mNext" ${state.concerns.length?'':'disabled'} onclick="next()">${t('store.quiz.js_continue','Continue')}</button></div>
   </div>`;
   applyStagger();
   stage.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
     const v=b.dataset.v, i=state.concerns.indexOf(v);
     if(i>-1)state.concerns.splice(i,1);
-    else{if(state.concerns.length>=3){toast('Pick up to 3 concerns');return;}state.concerns.push(v);}
+    else{if(state.concerns.length>=3){toast(t('store.quiz.js_toast_max_three','Pick up to 3 concerns'));return;}state.concerns.push(v);}
     b.classList.toggle('sel');
     $('#mNext').disabled=!state.concerns.length;
   });
 }
 function renderAllergy(){
   stage.innerHTML=`<div class="card">
-    <span class="qeye"><span class="dot"></span>Safety check</span>
-    <h2 class="qttl">Any allergies or sensitivities?<small>So we steer clear of ingredients that don't agree with you. Optional — pick any that apply.</small></h2>
+    <span class="qeye"><span class="dot"></span>${t('store.quiz.js_eye_safety','Safety check')}</span>
+    <h2 class="qttl">${t('store.quiz.js_q_allergy','Any allergies or sensitivities?')}<small>${t('store.quiz.js_sub_allergy',"So we steer clear of ingredients that don't agree with you. Optional — pick any that apply.")}</small></h2>
     <div class="opts cols2">${ALLERGENS.map((o,i)=>optHTML({v:o.v,ic:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h16.9a2 2 0 0 0 1.8-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'},state.allergies.includes(o.v),i)).join('')}</div>
-    <div class="field" style="margin-top:13px"><textarea id="iAllergyNote" rows="2" placeholder="Anything else we should avoid? (optional)">${state.allergyNote}</textarea></div>
-    <div class="nav"><button class="back" onclick="prev()">‹ Back</button><div class="spacer"></div>
-      <button class="btn" onclick="allergyNext()">Continue</button></div>
+    <div class="field" style="margin-top:13px"><textarea id="iAllergyNote" rows="2" placeholder="${t('store.quiz.js_allergy_placeholder','Anything else we should avoid? (optional)')}">${state.allergyNote}</textarea></div>
+    <div class="nav"><button class="back" onclick="prev()">${t('store.quiz.js_back','‹ Back')}</button><div class="spacer"></div>
+      <button class="btn" onclick="allergyNext()">${t('store.quiz.js_continue','Continue')}</button></div>
   </div>`;
   applyStagger();
   stage.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
@@ -388,19 +458,19 @@ function allergyNext(){state.allergyNote=$('#iAllergyNote').value.trim();next();
 function renderContact(){
   stage.innerHTML=`<div class="card">
     <span class="gate-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M22 6 12 13 2 6"/></svg></span>
-    <span class="qeye"><span class="dot"></span>Almost there</span>
-    <h2 class="qttl">Where do we send your routine?<small>We'll save your results &amp; email your plan. No spam, ever.</small></h2>
-    <div class="field" id="fName"><label>Name</label><input id="iName" placeholder="e.g. Fatima" value="${state.name}"><div class="msg">Please enter your name</div></div>
+    <span class="qeye"><span class="dot"></span>${t('store.quiz.js_eye_almost','Almost there')}</span>
+    <h2 class="qttl">${t('store.quiz.js_q_contact','Where do we send your routine?')}<small>${t('store.quiz.js_sub_contact',"We'll save your results & email your plan. No spam, ever.")}</small></h2>
+    <div class="field" id="fName"><label>${t('store.quiz.js_label_name','Name')}</label><input id="iName" placeholder="${t('store.quiz.js_ph_name','e.g. Fatima')}" value="${state.name}"><div class="msg">${t('store.quiz.js_err_name','Please enter your name')}</div></div>
     <div class="two">
-      <div class="field" id="fPhone"><label>Phone (WhatsApp)</label><input id="iPhone" inputmode="tel" placeholder="+971 5X XXX XXXX" value="${state.phone}"><div class="msg">Enter a valid phone</div></div>
-      <div class="field" id="fEmail"><label>Email</label><input id="iEmail" inputmode="email" placeholder="you@email.com" value="${state.email}"><div class="msg">Enter a valid email</div></div>
+      <div class="field" id="fPhone"><label>${t('store.quiz.js_label_phone','Phone (WhatsApp)')}</label><input id="iPhone" inputmode="tel" placeholder="+971 5X XXX XXXX" value="${state.phone}"><div class="msg">${t('store.quiz.js_err_phone','Enter a valid phone')}</div></div>
+      <div class="field" id="fEmail"><label>${t('store.quiz.js_label_email','Email')}</label><input id="iEmail" inputmode="email" placeholder="you@email.com" value="${state.email}"><div class="msg">${t('store.quiz.js_err_email','Enter a valid email')}</div></div>
     </div>
     <div class="trust-row">
       <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> 10% off your first order</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Free expert help</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> ${t('store.quiz.js_perk_expert','Free expert help')}</span>
     </div>
-    <div class="nav"><button class="back" onclick="prev()">‹ Back</button><div class="spacer"></div>
-      <button class="btn" onclick="submitContact()">See my routine →</button></div>
+    <div class="nav"><button class="back" onclick="prev()">${t('store.quiz.js_back','‹ Back')}</button><div class="spacer"></div>
+      <button class="btn" onclick="submitContact()">${t('store.quiz.js_see_routine','See my routine →')}</button></div>
   </div>`;
 }
 async function submitContact(){
@@ -427,22 +497,34 @@ function buildPayload(){
   return {submittedAt:new Date().toISOString(),skinType:state.skin,concerns:state.concerns.slice(),
     answers:{age:state.age,routineDepth:state.depth,budget:state.budget,allergies:state.allergies.slice(),allergyNote:state.allergyNote},
     contact:{name:state.name,phone:state.phone,email:state.email},
-    recommendedRoutines:recommend().map(r=>{const total=r.items.reduce((s,it)=>s+it[1].p,0);const bundle=Math.round(total*0.85/5)*5;return {name:r.t,products:r.items.map(it=>it[1].b+' '+it[1].n),bundle_aed:bundle};}),
+    /* The routine's NAME and its STEPS. A product list and a bundle total used
+       to ride along here — products the shop does not sell and a total nobody
+       set. They were never stored: store() writes a fixed column list and
+       `recommended_routines` is not in it, so the key was dropped on arrival.
+       Dropping it at the source changes no row and needs no migration, and the
+       admin leads screen reads only $r['name'] from a routine in any case. */
+    recommendedRoutines:recommend().map(r=>({name:r.t,steps:r.items.map(s=>s.n)})),
     expertRequest:state.expertSent?{requested:true,message:state.expertMsg}:{requested:false},status:'new'};
 }
 const TAGCOL=['#E0567B','#BE8E2E','#8B5CF6'];
+/* One routine, as an ordered list of steps.
+ *
+ * No price, no bundle, no saving pill. The footer used to quote a bundle total,
+ * a struck-through original and a percentage saved, over a button whose only
+ * action was a toast saying the products had been added to the bag — nothing
+ * was added, no such products existed, and the percentage was arithmetic on
+ * figures that were invented in the first place.
+ * What replaces it is the one true thing the page can offer: a way into the
+ * shop, where the prices are the shop's own.
+ */
 function routinePanel(r,idx){
-  const total=r.items.reduce((s,it)=>s+it[1].p,0);
-  const bundle=Math.round(total*0.85/5)*5;
-  const save=Math.round((1-bundle/total)*100);
-  const cells=r.items.map(([step,p],j)=>{const col=PAL[(idx*2+j)%PAL.length];
-    return `<div class="rcell"><span class="rthumb" style="background:${col[0]};color:${col[1]}">${thumb(p.b)}</span>
-      <div class="rcw"><div class="rstep">${step}</div><div class="rpname">${p.n}</div>
-        <div class="rpb"><span class="rpbrand">${p.b}</span><span class="rpprice">AED ${p.p}</span></div></div></div>`;}).join('');
-  return `<div class="routine"><div class="routine-h"><div><div class="rt">${r.t}</div><div class="rd">${r.d}</div></div><span class="rtag" style="background:${TAGCOL[idx%3]}">${r.tag}</span></div>
+  const cells=r.items.map((step,j)=>{const col=PAL[(idx*2+j)%PAL.length];
+    return `<div class="rcell"><span class="rthumb" style="background:${col[0]};color:${col[1]}">${j+1}</span>
+      <div class="rcw"><div class="rstep">${t(step.nk,step.n)}</div><div class="rpdesc">${t(step.dk,step.d)}</div></div></div>`;}).join('');
+  return `<div class="routine"><div class="routine-h"><div><div class="rt">${t(r.tk,r.t)}</div><div class="rd">${t(r.dk,r.d)}</div></div><span class="rtag" style="background:${TAGCOL[idx%3]}">${t(r.gk,r.tag)}</span></div>
     <div class="rgrid">${cells}</div>
-    <div class="routine-f"><div class="rsum">Buy all ${r.items.length} · <b>AED ${bundle}</b><s>AED ${total}</s><span class="save-pill">SAVE ${save}%</span></div>
-      <button class="btn sm" onclick="toast('Added ${r.items.length} products to bag')">Buy all</button></div></div>`;
+    <div class="routine-f"><div class="rsum">${t('store.quiz.js_step_count',':count steps',{count:r.items.length})}</div>
+      <a class="btn sm" href="${SHOP_URL}">${t('store.quiz.js_shop_steps','Shop these steps')}</a></div></div>`;
 }
 function selRoutine(){}
 
@@ -450,26 +532,26 @@ function renderResults(){
   const routines=recommend();
   const chips=[state.skin,...state.concerns].map((c,i)=>{const col=PAL[i%PAL.length];return `<span class="res-chip" style="background:${col[0]};color:${col[1]}">${c}</span>`;}).join('');
   const avoid=state.allergies.filter(a=>!/None/.test(a));
-  const avoidLine=(avoid.length||state.allergyNote)?`<div class="avoid-note"><b>Avoiding for you:</b> ${avoid.join(', ')}${avoid.length&&state.allergyNote?' · ':''}${state.allergyNote||''}</div>`:'';
+  const avoidLine=(avoid.length||state.allergyNote)?`<div class="avoid-note"><b>${t('store.quiz.js_avoiding','Avoiding for you:')}</b> ${avoid.join(', ')}${avoid.length&&state.allergyNote?' · ':''}${state.allergyNote||''}</div>`:'';
   stage.innerHTML=`<div class="card">
-    <span class="qeye"><span class="dot"></span>Your results</span>
-    <h2 class="qttl"><span class="grad">${state.name}, here's your glow plan</span><small>Built for your skin &amp; the UAE climate · emailed to ${state.email}</small></h2>
+    <span class="qeye"><span class="dot"></span>${t('store.quiz.js_eye_results','Your results')}</span>
+    <h2 class="qttl"><span class="grad">${t('store.quiz.js_results_title',":name, here's your glow plan",{name:state.name})}</span><small>${t('store.quiz.js_results_sub','Built for your skin & the UAE climate · emailed to :email',{email:state.email})}</small></h2>
     <div class="res-chips">${chips}</div>
     ${avoidLine}
     ${routines.map((r,i)=>routinePanel(r,i)).join('')}
     <div class="expert" id="expert">
       <div class="ex-form">
-        <h3><span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 21c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></span> Want a human to check it?</h3>
-        <p>Send your quiz to a K-Beauty Bliss skin expert — we'll review your routine and message you on WhatsApp.</p>
-        <div class="field"><textarea id="iMsg" rows="2" placeholder="Optional note (allergies, pregnancy, current products…)"></textarea></div>
-        <div style="margin-top:12px"><button class="btn sm" onclick="sendExpert()">Send request to skin expert</button></div>
+        <h3><span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M5 21c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></span> ${t('store.quiz.js_expert_heading','Want a human to check it?')}</h3>
+        <p>${t('store.quiz.js_expert_body',"Send your quiz to a K-Beauty Bliss skin expert — we'll review your routine and message you on WhatsApp.")}</p>
+        <div class="field"><textarea id="iMsg" rows="2" placeholder="${t('store.quiz.js_expert_placeholder','Optional note (allergies, pregnancy, current products…)')}"></textarea></div>
+        <div style="margin-top:12px"><button class="btn sm" onclick="sendExpert()">${t('store.quiz.js_expert_send','Send request to skin expert')}</button></div>
       </div>
       <div class="ex-sent"><span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <div><div style="font-weight:700;font-size:13.5px">Request sent — talk soon!</div><div style="font-size:11.5px;color:var(--ink-2)">An expert will reach out on ${state.phone}.</div></div>
+        <div><div style="font-weight:700;font-size:13.5px">${t('store.quiz.js_expert_sent','Request sent — talk soon!')}</div><div style="font-size:11.5px;color:var(--ink-2)">${t('store.quiz.js_expert_reach','An expert will reach out on :phone.',{phone:state.phone})}</div></div>
       </div>
     </div>
-    <details class="beview"><summary><svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> What your store saves (backend preview)</summary><pre id="bePre"></pre></details>
-    <div class="nav" style="justify-content:center"><button class="back" onclick="restart()">↺ Retake the quiz</button></div>
+    <details class="beview"><summary><svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ${t('store.quiz.js_backend_preview','What your store saves (backend preview)')}</summary><pre id="bePre"></pre></details>
+    <div class="nav" style="justify-content:center"><button class="back" onclick="restart()">${t('store.quiz.js_retake','↺ Retake the quiz')}</button></div>
   </div>`;
   $('#bePre').innerHTML=prettyPayload(buildPayload());
 }
@@ -479,24 +561,25 @@ async function sendExpert(){
   $('#bePre').innerHTML=prettyPayload(buildPayload());
   const id=await ensureLead();
   if(id){ try{ await fetch(API+'/api/quiz/'+id+'/expert-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:state.expertMsg})}); }catch(e){} }
-  toast('Sent to a skin expert ✓');
+  toast(t('store.quiz.js_toast_expert_sent','Sent to a skin expert ✓'));
 }
 function prettyPayload(o){return JSON.stringify(o,null,2).replace(/"([^"]+)":/g,'<span class="bk">"$1"</span>:');}
 function renderStart(){
   stage.innerHTML=`<div class="card">
-    <span class="qeye"><span class="dot"></span>1-minute skin quiz</span>
-    <h2 class="qttl"><span class="grad">Find your glow.</span><small>A few quick questions → a personalised Korean routine, matched to your concerns and the UAE climate.</small></h2>
+    <span class="qeye"><span class="dot"></span>${t('store.quiz.js_start_eye','1-minute skin quiz')}</span>
+    <h2 class="qttl"><span class="grad">${t('store.quiz.js_start_title','Find your glow.')}</span><small>${t('store.quiz.js_start_sub','A few quick questions → a personalised Korean routine, matched to your concerns and the UAE climate.')}</small></h2>
     <div class="start-perks">
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ~1 minute</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg> Personalised routines</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 21c0-3.5 3-6 7-6s7 2.5 7 6"/></svg> Free expert help</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${t('store.quiz.js_perk_minute','~1 minute')}</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg> ${t('store.quiz.js_perk_routines','Personalised routines')}</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5 21c0-3.5 3-6 7-6s7 2.5 7 6"/></svg> ${t('store.quiz.js_perk_expert','Free expert help')}</span>
     </div>
-    <div style="margin-top:20px"><button class="btn block" onclick="next()">Start the quiz →</button></div>
+    <div style="margin-top:20px"><button class="btn block" onclick="next()">${t('store.quiz.js_start_cta','Start the quiz →')}</button></div>
   </div>`;
 }
 function restart(){Object.assign(state,{skin:null,concerns:[],age:null,depth:null,budget:null,allergies:[],allergyNote:'',name:'',phone:'',email:'',expertMsg:'',expertSent:false});go(0);}
 let toastT;
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+/* `el`, not `t` — a local named t would shadow the translation helper. */
+function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2200);}
 window.prev=prev;window.next=next;window.submitContact=submitContact;window.sendExpert=sendExpert;window.restart=restart;window.toast=toast;window.allergyNext=allergyNext;
 render();
 </script>

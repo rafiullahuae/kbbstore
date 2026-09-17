@@ -141,7 +141,24 @@ final class RepeatPurchase
      */
     public static function intro(): string
     {
-        return self::any() ? self::INTRO_MEASURED : self::INTRO_BY_UNITS;
+        /*
+         * TRANSLATED, AND THE CHOICE IS STILL THE MEASUREMENT'S — Lane FB.
+         *
+         * The two constants stay as the English source and as the place the
+         * argument for each sentence is written down; what /best-sellers/
+         * RENDERS is the key, so a shopper who is reading an Arabic shop is not
+         * handed one English paragraph under an Arabic heading.
+         *
+         * any() decides which of the two, exactly as before. Nothing about the
+         * condition moved: this file still may not say customers keep coming
+         * back unless the order history says some of them did.
+         *
+         * CollectionPhpLabelsAreKeyedTest pins the English here against the
+         * English in InterfaceStrings.
+         */
+        return self::any()
+            ? __('store.collection.intro_best_sellers_measured')
+            : __('store.collection.intro_best_sellers_by_units');
     }
 
     /**

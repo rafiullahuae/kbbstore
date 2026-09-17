@@ -58,7 +58,7 @@ mode that makes a guard worthless.
 | `resources/css/kbb/sorina-reviews.css` | 11 | 595 |
 | `resources/views/layouts/store.blade.php` | 3 | 104 |
 | `resources/views/store/app.blade.php` | 22 | 1400 |
-| `resources/views/store/skin-quiz.blade.php` | 12 | 571 |
+| `resources/views/store/skin-quiz.blade.php` | 9 | 571 |
 | `resources/views/store/blog.blade.php` | 3 | 224 |
 | `resources/views/store/post.blade.php` | 2 | 223 |
 | `resources/views/store/review-wall.blade.php` | 4 | 302 |
