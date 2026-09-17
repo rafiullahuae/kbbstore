@@ -36,9 +36,22 @@ class Product extends Model
      * either the markup or the words. See
      * MachineTranslationRunner::isMachineSafe().
      *
+     * `ingredients` and `how_to_use` are on it for the same reason `description`
+     * is, and were missing for one round. They are prose, they are each their
+     * own TAB on the product page — Store\ProductController::tabs() builds
+     * Description, Ingredients and How to use from these three columns — and an
+     * Arabic shopper with them off the list reads two of the three tabs in
+     * English permanently, with nothing on the progress screen saying so,
+     * because a field that is not translatable is not counted as work.
+     *
+     * They carry HTML like `description` does, so isMachineSafe() declines
+     * them and they are typed rather than machine-translated. That is the
+     * honest state, not a gap: an INCI list run through a translation engine is
+     * a safety claim in a language nobody at the shop reads.
+     *
      * @var list<string>
      */
-    protected array $translatable = ['name', 'short_description', 'description'];
+    protected array $translatable = ['name', 'short_description', 'description', 'ingredients', 'how_to_use'];
 
     protected function casts(): array
     {

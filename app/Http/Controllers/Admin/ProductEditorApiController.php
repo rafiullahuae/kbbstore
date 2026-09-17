@@ -83,6 +83,18 @@ use Illuminate\Validation\Rule;
  */
 class ProductEditorApiController extends Controller
 {
+    /**
+     * The product columns the storefront prints with {!! !!}.
+     *
+     * One list, read by the English sanitiser loop and by the Arabic one, so a
+     * field cannot be sanitised in one language and not the other. See
+     * partials/product-tabs.blade.php, which prints Description, Ingredients
+     * and How to use through {!! !!} without knowing which language it holds.
+     *
+     * @var list<string>
+     */
+    private const RICH_FIELDS = ['short_description', 'description', 'ingredients', 'how_to_use'];
+
     /** The four words the editor's status control speaks. */
     private const EDITOR_STATUSES = ['publish', 'draft', 'private', 'scheduled'];
 
@@ -711,7 +723,7 @@ class ProductEditorApiController extends Controller
         /* ------------------------------------------------- written content */
         // Sanitised without exception. The storefront prints all four of these
         // with {!! !!}; see App\Support\RichText.
-        foreach (['short_description', 'description', 'ingredients', 'how_to_use'] as $field) {
+        foreach (self::RICH_FIELDS as $field) {
             if (array_key_exists($field, $data)) {
                 $clean = RichText::clean($data[$field]);
 
@@ -826,14 +838,22 @@ class ProductEditorApiController extends Controller
          * save() because a new product has no id until then, so create and
          * update take the same path and there is no second one to get wrong.
          *
-         * The four rich fields are named so the Arabic goes through the very
-         * same RichText::clean() the English went through twenty lines above.
+         * The rich fields are named so the Arabic goes through the very same
+         * RichText::clean() the English went through twenty lines above.
          * product-tabs prints both with {!! !!}; a sanitiser applied to one
          * language only is a stored-XSS hole opened by adding the second.
+         *
+         * THE LIST IS DERIVED, NOT TYPED. It used to be a literal pair while
+         * the comment above it said "the four rich fields", and the day
+         * ingredients and how_to_use joined Product::$translatable the Arabic
+         * halves of two {!! !!} tabs would have gone to the database
+         * unsanitised — a stored-XSS hole opened by adding a column name to a
+         * list somewhere else. Reading it from the same constant the English
+         * sanitiser loop reads means the two cannot drift apart again.
          */
         $product->saveTranslations(TranslationInput::clean(
             $data['translations'] ?? [],
-            ['short_description', 'description'],
+            self::RICH_FIELDS,
         ));
 
         /* -------------------------------------------------- categories */

@@ -57,6 +57,9 @@ class PageCost extends Command
         {--products=3000 : products to seed}
         {--orders=6000 : orders to seed}
         {--reviews=6000 : reviews to seed, on top of the hero product\'s own}
+        {--translate= : after seeding, translate the whole shop into this locale and switch it on}
+        {--drafts=0 : with --translate, make every Nth row a machine DRAFT instead of published}
+        {--deep-page=100 : the page number the "deep OFFSET" scenarios ask for}
         {--runs=5 : repetitions per page; the median is reported}
         {--label=before : the column this run fills in docs/page-cost.md}
         {--only= : comma-separated substrings; measure only matching pages}
@@ -121,6 +124,20 @@ class PageCost extends Command
         ];
     }
 
+    /**
+     * The page number the deep-OFFSET scenarios ask for.
+     *
+     * 100 by default, which is what docs/page-cost.md's table was taken at and
+     * what a 3,025-product seed has. A smaller catalogue does not have a page
+     * 100, and a 404 measured as a page is a very fast page — so the number is
+     * an option rather than a literal, and a run at a different volume says
+     * which one it used.
+     */
+    private function deepPage(): int
+    {
+        return max(1, (int) $this->option('deep-page'));
+    }
+
     /** Pages measured, in the order docs/page-cost.md lists them. */
     private function scenarios(): array
     {
@@ -129,7 +146,7 @@ class PageCost extends Command
         return [
             'home' => ['GET', '/', 'none'],
             'shop-p1' => ['GET', '/shop', 'none'],
-            'shop-deep' => ['GET', '/shop?paged=100', 'none'],
+            'shop-deep' => ['GET', '/shop?paged='.$this->deepPage(), 'none'],
             'category-filtered' => ['GET', '/product-category/'.$s['category'].'?brand='.$s['brand'].'&price=54-150&instock=1&orderby=plow', 'none'],
             'brand-page' => ['GET', '/korean-skincare-brands/'.$s['brand'], 'none'],
             'brand-facet' => ['GET', '/shop?filter_brands='.$s['brand'], 'none'],
@@ -142,6 +159,34 @@ class PageCost extends Command
             'admin-dashboard' => ['GET', '/admin-api/stats', 'admin'],
             'admin-orders' => ['GET', '/admin-api/orders-list?per_page=25', 'admin'],
             'admin-products' => ['GET', '/admin-api/catalog-products-list?per_page=25', 'admin'],
+        ] + $this->arabicScenarios($s);
+    }
+
+    /**
+     * The same pages again, in Arabic, when Arabic is switched on.
+     *
+     * Named with an `ar-` prefix so `--only=ar-` measures the second language
+     * and `--only=shop` measures both shops, which is the comparison this is
+     * for: the English row and the Arabic row of the same page, taken the same
+     * way, in the same process shape, minutes apart.
+     *
+     * Absent entirely when the switch is off, rather than present and 404ing.
+     * A 404 measured as a page is a very fast page, and a table with a fast
+     * row in it is worse than a table with no row.
+     */
+    private function arabicScenarios(array $s): array
+    {
+        if (! \App\Support\Locale::enabled('ar')) {
+            return [];
+        }
+
+        return [
+            'ar-home' => ['GET', '/ar/', 'none'],
+            'ar-shop-p1' => ['GET', '/ar/shop', 'none'],
+            'ar-shop-deep' => ['GET', '/ar/shop?paged='.$this->deepPage(), 'none'],
+            'ar-category' => ['GET', '/ar/product-category/'.$s['category'], 'none'],
+            'ar-product' => ['GET', '/ar/product/'.$s['product'], 'none'],
+            'ar-cart' => ['GET', '/ar/cart', 'cart'],
         ];
     }
 
@@ -181,6 +226,14 @@ class PageCost extends Command
                 (int) $this->option('products'),
                 (int) $this->option('orders'),
                 (int) $this->option('reviews'),
+            );
+        }
+
+        if ($this->option('translate')) {
+            $this->callSilent('cache:clear');
+            (new PageCostDataset($this))->translations(
+                (string) $this->option('translate'),
+                (int) $this->option('drafts'),
             );
         }
 
@@ -296,6 +349,15 @@ class PageCost extends Command
     private function child(array $options): ?array
     {
         $args = [PHP_BINARY, base_path('artisan'), 'kbb:page-cost'];
+
+        /*
+         * Options that decide WHICH page a scenario is have to reach the child,
+         * or the parent measures one URL and the child measures another. It
+         * cost this lane a table of 404s reported as a very fast page before it
+         * was noticed, which is the failure the class header warns about from
+         * the other direction.
+         */
+        $options['--deep-page'] = $this->deepPage();
 
         foreach ($options as $key => $value) {
             $args[] = $value === true ? $key : $key.'='.$value;
@@ -554,7 +616,7 @@ class PageCost extends Command
     {
         $counts = [];
 
-        foreach (['products', 'categories', 'brands', 'orders', 'order_items', 'reviews', 'customers'] as $table) {
+        foreach (['products', 'categories', 'brands', 'orders', 'order_items', 'reviews', 'customers', 'translations'] as $table) {
             $counts[$table] = \Illuminate\Support\Facades\Schema::hasTable($table) ? DB::table($table)->count() : 0;
         }
 

@@ -63,7 +63,9 @@ final class TranslationEstimate
      * @var array<class-string, list<string>>
      */
     public const CONTENT = [
-        \App\Models\Product::class => ['name', 'short_description', 'description'],
+        // ingredients and how_to_use are prose and are each their own tab on
+        // the product page. See Product::$translatable.
+        \App\Models\Product::class => ['name', 'short_description', 'description', 'ingredients', 'how_to_use'],
         \App\Models\Category::class => ['name', 'description'],
         \App\Models\Brand::class => ['name', 'description'],
         \App\Models\Page::class => ['title', 'content'],
