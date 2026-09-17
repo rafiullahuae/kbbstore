@@ -397,9 +397,29 @@ class Seo
             $nodes[] = [
                 '@context' => 'https://schema.org', '@type' => 'WebSite',
                 'name' => $siteName, 'url' => $base,
+                /*
+                 * THE SITELINKS SEARCHBOX HAS TO SEARCH THIS SHOP.
+                 *
+                 * This advertised `/shop?q={search_term_string}`, and nothing
+                 * in this application has ever read `q`. The storefront's own
+                 * search box is `<form method="get" action="/shop/">` with
+                 * `<input name="s">` (partials/header.blade.php) and
+                 * ShopController reads `$request->query('s')` in all four
+                 * places it asks. So a visitor who typed into the search box
+                 * Google renders under the shop's own result was sent to a URL
+                 * that ignores what they typed and serves the entire catalogue
+                 * — the search term silently dropped between Google and the
+                 * shelf.
+                 *
+                 * The page wins: the parameter here is the one the page
+                 * actually filters on, and the path is the slashed form /shop/
+                 * canonicalises to, for the same reason the sitemap's entry
+                 * carries the slash — advertising a URL the site then
+                 * redirects is the defect, not a tidy-up.
+                 */
                 'potentialAction' => [
                     '@type' => 'SearchAction',
-                    'target' => ['@type' => 'EntryPoint', 'urlTemplate' => $base . '/shop?q={search_term_string}'],
+                    'target' => ['@type' => 'EntryPoint', 'urlTemplate' => $base . '/shop/?s={search_term_string}'],
                     'query-input' => 'required name=search_term_string',
                 ],
             ];
@@ -461,6 +481,42 @@ class Seo
                 // gate: the store sells new retail stock and the setting says
                 // so, defaulting to NewCondition.
                 $offer['itemCondition'] = 'https://schema.org/' . SeoSettings::from($s, 'merchant_condition');
+
+                /*
+                 * IS THE PUBLISHED PRICE THE PRICE THE BUYER PAYS?
+                 *
+                 * `price` above is the bare shelf price — the same figure the
+                 * product page prints, which is why it was right to publish it
+                 * and why it stays. What was missing is the one thing that
+                 * makes the figure mean something: whether tax is already
+                 * inside it. Under an EXCLUSIVE rule it is not. The shopper
+                 * chooses this shop out of a result showing AED 100, reaches
+                 * the checkout and is charged AED 105, and neither the result
+                 * nor the markup said so anywhere.
+                 *
+                 * `valueAddedTaxIncluded` on a UnitPriceSpecification is the
+                 * field schema.org and Google provide for exactly this, so no
+                 * new number has to be invented and, deliberately, none is:
+                 * the price and currency here are the SAME two values the
+                 * Offer already carries, so the two cannot disagree — the
+                 * og:product block above is built on the same rule.
+                 *
+                 * NO TAX ARITHMETIC HAPPENS HERE. App\Support\TaxRule is the
+                 * single authority on what a rate does and this only asks it
+                 * the one question it already answers for every money path,
+                 * addsToTotal(). See vatIncludedSitewide() for why the answer
+                 * can be absent.
+                 */
+                $vatIncluded = self::vatIncludedSitewide();
+
+                if ($vatIncluded !== null) {
+                    $offer['priceSpecification'] = [
+                        '@type' => 'UnitPriceSpecification',
+                        'price' => $priceString,
+                        'priceCurrency' => $currency,
+                        'valueAddedTaxIncluded' => $vatIncluded,
+                    ];
+                }
 
                 // priceValidUntil is emitted ONLY when a real sale window says
                 // when this price stops applying, and only while that date is
@@ -671,6 +727,64 @@ class Seo
             'onbackorder' => 'https://schema.org/BackOrder',
             default => 'https://schema.org/InStock',
         };
+    }
+
+    /**
+     * Does the published price already contain every tax the buyer will pay,
+     * for EVERY destination this shop serves — or is there no single answer?
+     *
+     * A STRUCTURED-DATA OFFER IS ONE DOCUMENT PER URL, exactly as a meta
+     * description is, and the same rule follows from it: a claim that is true
+     * of one country and false of another cannot be published sitewide. That
+     * rule is why Store\ShopController::seoDescription() carries no delivery
+     * window and why the description this lane rewrote carries none either.
+     * Tax is the same shape of question — App\Support\VatDisplay resolves a
+     * rule PER COUNTRY, and the price beside it is one number.
+     *
+     * So this answers with a boolean only when the answer is the same
+     * everywhere, and with null — the field is then not emitted at all — when
+     * the shop's own configuration gives two answers. Absent is a missing
+     * recommended field; a wrong one is a price in a search result that the
+     * checkout then exceeds, which is the failure Google penalises and the
+     * shopper actually feels.
+     *
+     *   VAT switched off      null. There is no tax to be inside or outside
+     *                         the price, and saying "tax is included" about a
+     *                         tax that does not exist is not an improvement.
+     *   tax_mode = display    true, the shipped default. Nothing is added to
+     *                         any total in this mode — the line is printed and
+     *                         charged to nobody — so the shelf price IS the
+     *                         price paid, wherever the shopper is.
+     *   tax_mode = live       the destinations are asked. Every rule that does
+     *                         not add to the total (inclusive, flat) says the
+     *                         price is final; `exclusive` says it is not. One
+     *                         answer shared by the default rule and every
+     *                         per-country rule is published; a disagreement is
+     *                         null.
+     *
+     * Read-only throughout: no rate is computed and no basis is chosen here.
+     */
+    private static function vatIncludedSitewide(): ?bool
+    {
+        $vat = app(\App\Support\VatDisplay::class);
+
+        if (! $vat->enabled()) {
+            return null;
+        }
+
+        if (! $vat->live()) {
+            return true;
+        }
+
+        $answers = [! $vat->defaultRule()->addsToTotal()];
+
+        foreach (array_keys($vat->countryRates()) as $country) {
+            $answers[] = ! $vat->ruleFor($country)->addsToTotal();
+        }
+
+        $answers = array_unique($answers, SORT_REGULAR);
+
+        return count($answers) === 1 ? (bool) reset($answers) : null;
     }
 
     /**

@@ -340,7 +340,28 @@ class SeoFilesController extends Controller
         return response($key, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 
-    /** GET /llms.txt — a plain-text summary for AI crawlers/agents, not a sitemap replacement. */
+    /**
+     * GET /llms.txt — a plain-text summary for AI crawlers/agents, not a
+     * sitemap replacement.
+     *
+     * TWO OF THE THREE LINES IN THIS FILE WERE WRONG, and this is the one
+     * crawl surface nobody looks at.
+     *
+     * The description is `seo_default_description`, which until the migration
+     * 2026_11_07_000000_honest_default_meta_description rewrote it ended
+     * "100% genuine, next-day delivery, glowing skin guaranteed" — a delivery
+     * window the shop's own DeliveryLine contradicts and a guarantee about a
+     * cosmetic outcome. It is quoted here verbatim to anything that reads this
+     * file, which is the audience least able to check it against the shop.
+     *
+     * Both "key pages" named a URL the site does not serve at that address.
+     * `/blog` is a 301 to /skincare-guide/ (routes/web.php), and `/shop` is
+     * the unslashed form the shop canonicalises away from — so the two links
+     * this file offers were a redirect and a redirect. That is the same defect
+     * sitemap() above was corrected for twice, in a file that shares its
+     * helper and sits forty lines away. tests/Feature/MachineFacingClaimsTest
+     * now walks these links the way SeoCrawlSurfaceTest walks the sitemap's.
+     */
     public function llms()
     {
         $s = SeoSettings::map();
@@ -364,8 +385,11 @@ class SeoFilesController extends Controller
             $desc !== '' ? $desc : 'Online store.',
             '',
             '## Key pages',
-            "- [Shop]({$base}/shop)",
-            "- [Blog]({$base}/blog)",
+            // The address each page actually answers on, trailing slash and
+            // all — the same form the sitemap submits and the canonical
+            // declares, never the one the site redirects from.
+            "- [Shop]({$base}/shop/)",
+            "- [Journal]({$base}/skincare-guide/)",
         ];
 
         return response(implode("\n", $lines) . "\n", 200)
