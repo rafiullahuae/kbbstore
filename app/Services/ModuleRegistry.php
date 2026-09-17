@@ -144,13 +144,13 @@ class ModuleRegistry
         'address_autocomplete' => ['checkout', 'Address autocomplete', 'Google Places suggestions on the address field (needs a key).', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'mid', 'Suggestions as the shopper types the address field.', 'todo'],
         /*
          * PORTED IN LANE FI, and previously `todo` with no settings screen at
-         * all â the row the console renders as "Not ported yet".
+         * all — the row the console renders as "Not ported yet".
          *
-         * Â§2 of the master plan files this under "blocked on a missing source",
+         * §2 of the master plan files this under "blocked on a missing source",
          * and that half is still true: the plugin's own entry is a settings LINK
          * pointing at kbb-theme, which was never supplied, so there is nothing
-         * to copy. This is `legal_notice`'s shape â the module's description
-         * built against what this app already has â and what it already has is
+         * to copy. This is `legal_notice`'s shape — the module's description
+         * built against what this app already has — and what it already has is
          * the CONTRACT: components/checkout/field.blade.php writes WooCommerce's
          * validate-required / validate-email / validate-state / validate-phone
          * classes onto every checkout row, and its own header records that
@@ -162,7 +162,7 @@ class ModuleRegistry
          * reasoning is the same rule `seo_engine`, `brands` and the order emails
          * each use pointed the other way: the default is measured against what
          * this store does WITHOUT the switch. Without it this checkout shows no
-         * marks whatsoever â only the browser's own bubble on Place order â so
+         * marks whatsoever — only the browser's own bubble on Place order — so
          * shipping ON would start colouring in the one form the shop is paid
          * through, on apply, without anybody asking. OFF, and applying this
          * package changes the checkout by nothing.

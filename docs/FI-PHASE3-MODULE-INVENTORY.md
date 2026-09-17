@@ -71,6 +71,7 @@ and `woocommerce-validated`, not a second vocabulary for the same idea.
 | `database/migrations/2026_11_14_000000_clear_caches_inline_validation.php` | the compiled checkout must go, or the switch saves and does nothing |
 | `database/migrations/2026_11_14_000001_align_inline_validation_module_toggle.php` | turns off the row the seeder wrote `true` while nothing read it |
 | `tests/Feature/ModuleInlineValidationTest.php` | 15 tests, each proven to fail without its change |
+| `tests/browser/checkout-inline-validation.mjs` | the half that begins at the first keystroke — see §5a |
 
 ### Off means off, measured in bytes
 
