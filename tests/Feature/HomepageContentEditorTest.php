@@ -339,6 +339,41 @@ it('gives the About paragraph and the promo chip an owner, and drops them when c
     expect($html)->not->toContain('<p></p>');
 });
 
+it('lets a slide field be cleared, which is what "empty hides it" promises', function () {
+    asHomepageAdmin();
+
+    /*
+     * The SLIDE half of the cleared-box problem, which the copy tab's test
+     * above covers for the other half. Both go through the same middleware —
+     * ConvertEmptyStringsToNull turns every one of these into null before the
+     * controller sees it — and both would report "refused" without
+     * HomepageContent::emptyIsEmpty(). This one has a visible consequence the
+     * screen states in as many words under the field: "Empty hides the button."
+     */
+    $response = $this->postJson('/admin-api/homepage/content', [
+        'slides' => [foSlide(['kicker' => '', 'text' => '', 'button' => ''])],
+        'copy' => [],
+    ]);
+
+    $response->assertOk();
+    expect($response->json('rejected'))->toBe([]);
+
+    $hero = foHero();
+
+    // The button's pill is a white box with padding, so an empty one is a blank
+    // lozenge on the banner rather than nothing. It is not rendered.
+    expect($hero)->not->toContain('class="b"');
+
+    // The headline is still there, so the slide has not been emptied by
+    // accident, and the page still has exactly one <h1>.
+    expect($hero)->toContain('Our own headline');
+    expect(substr_count(foHome(), '<h1'))->toBe(1);
+
+    // And a cleared field stays cleared across a reload rather than falling
+    // back to the shipped wording.
+    expect(foHero())->not->toContain('Medicube');
+});
+
 /* ─────────────────────────────────────────────────── §6 who may call it at all */
 
 it('is refused to anyone who is not signed in, and is content.manage on the map', function () {
