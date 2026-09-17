@@ -10,6 +10,9 @@ use App\Services\Mail\MailSettings;
 use App\Services\Mail\MailTester;
 use App\Services\Mail\OrderMailObserver;
 use App\Services\Mail\OrderMailer;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -45,6 +48,22 @@ class MailServiceProvider extends ServiceProvider
         $this->app->scoped(MailConfigurator::class);
         $this->app->scoped(MailTester::class);
         $this->app->scoped(OrderMailer::class);
+
+        /*
+         * SCOPED IS LOAD-BEARING HERE TOO, for the same shape of reason as
+         * OrderStatusMailPolicy below.
+         *
+         * MailLog holds the id of the row it opened for the message currently
+         * in flight, and the label the next message should carry. Bound
+         * transient, the listener that opens the row and the listener that
+         * closes it would be handed two different instances, every send would
+         * be left recorded as 'sending', and the screen would report every
+         * email the shop has ever sent as a failure.
+         *
+         * A singleton would be worse in the other direction: one open row
+         * carried between requests under anything long-lived.
+         */
+        $this->app->scoped(\App\Services\Mail\MailLog::class);
 
         /*
          * SCOPED IS LOAD-BEARING HERE, not a performance choice like the rest.
@@ -117,5 +136,28 @@ class MailServiceProvider extends ServiceProvider
     public function boot(): void
     {
         OrderMailObserver::register();
+
+        /*
+         * The delivery record.
+         *
+         * Hooked to the framework's own mail events rather than to the senders,
+         * for the reason MailLog's header sets out: mail leaves this
+         * application from six places and several of them build their own
+         * notification and reach for the default mailer without consulting
+         * anything in app/Services/Mail. These two events are the only point
+         * all of them pass through.
+         *
+         * Resolved out of the container inside the closure, not injected, so
+         * registering the listener costs nothing on a storefront page that
+         * sends no mail -- the same property the afterResolving hook above is
+         * written to keep.
+         */
+        Event::listen(MessageSending::class, function (MessageSending $event): void {
+            $this->app->make(\App\Services\Mail\MailLog::class)->recordSending($event);
+        });
+
+        Event::listen(MessageSent::class, function (MessageSent $event): void {
+            $this->app->make(\App\Services\Mail\MailLog::class)->recordSent($event);
+        });
     }
 }

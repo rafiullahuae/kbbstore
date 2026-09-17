@@ -80,6 +80,27 @@ class NewsletterApiController extends Controller
      *
      * The sibling exports (OrdersApiController and CustomersApiController) have
      * guarded their cells since they were written; this one was the odd one out.
+     *
+     * ---------------------------------------------------------------------
+     * CONFIRMED ADDRESSES ONLY (Lane EE)
+     * ---------------------------------------------------------------------
+     * This used to export the whole table. That was correct when every row in
+     * it was `subscribed`, and became a leak the moment double opt-in started
+     * writing `pending` rows: this file is downloaded in order to be pasted
+     * into a mail-merge or an email platform, so an unconfirmed address in it
+     * is an unconfirmed address that gets marketed to — through a route that
+     * never touches any of the guards in NewsletterList.
+     *
+     * The filter is NewsletterList::marketable(), the same builder the
+     * application's own sending path uses, and NOT a second copy of its
+     * conditions. Two places that decide who may be mailed is how they come to
+     * disagree, and the disagreement would show up as "the CSV has people the
+     * shop would not email", which nobody would notice until a complaint.
+     *
+     * `confirmed_at` is now a column in the file. Without it the owner cannot
+     * tell, from the export alone, that anything was withheld — and silently
+     * handing back fewer rows than the screen's total says is its own kind of
+     * lie. The stats block below reports both numbers for the same reason.
      */
     public function export(): StreamedResponse
     {
@@ -89,18 +110,21 @@ class NewsletterApiController extends Controller
 
         $callback = static function () use ($cell): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['email', 'source', 'status', 'signed_up']);
+            fputcsv($out, ['email', 'source', 'status', 'signed_up', 'confirmed_at']);
 
-            DB::table('subscribers')->orderBy('id')->chunk(500, static function ($rows) use ($out, $cell) {
-                foreach ($rows as $row) {
-                    fputcsv($out, [
-                        $cell($row->email),
-                        $cell($row->source),
-                        $cell($row->status),
-                        $cell($row->created_at),
-                    ]);
-                }
-            });
+            \App\Services\NewsletterList::marketable()
+                ->orderBy('id')
+                ->chunk(500, static function ($rows) use ($out, $cell) {
+                    foreach ($rows as $row) {
+                        fputcsv($out, [
+                            $cell($row->email),
+                            $cell($row->source),
+                            $cell($row->status),
+                            $cell($row->created_at),
+                            $cell($row->confirmed_at),
+                        ]);
+                    }
+                });
 
             fclose($out);
         };
@@ -144,11 +168,20 @@ class NewsletterApiController extends Controller
      * decorative counter failed. The settings are the screen; the counts are
      * trim, and they degrade to zero and say so.
      *
-     * @return array{total: int, week: int, latest: ?string, ready: bool}
+     * `confirmed` and `pending` are reported separately from `total` (Lane EE),
+     * and the separation is the point rather than extra detail. With double
+     * opt-in a signup no longer means a subscriber, so a single headline number
+     * would tell the owner he has a list of 400 when 90 of them never clicked
+     * anything and will never receive a campaign. `confirmed` is counted
+     * through NewsletterList::marketable() — the one builder that decides who
+     * may be mailed — so the figure on the screen and the rows in the export
+     * cannot drift apart.
+     *
+     * @return array{total: int, confirmed: int, pending: int, week: int, latest: ?string, ready: bool}
      */
     private function stats(): array
     {
-        $empty = ['total' => 0, 'week' => 0, 'latest' => null, 'ready' => false];
+        $empty = ['total' => 0, 'confirmed' => 0, 'pending' => 0, 'week' => 0, 'latest' => null, 'ready' => false];
 
         try {
             if (! Schema::hasTable('subscribers')) {
@@ -157,6 +190,10 @@ class NewsletterApiController extends Controller
 
             return [
                 'total' => (int) DB::table('subscribers')->count(),
+                'confirmed' => (int) \App\Services\NewsletterList::marketable()->count(),
+                'pending' => (int) DB::table('subscribers')
+                    ->where('status', \App\Services\NewsletterList::PENDING)
+                    ->count(),
                 'week' => (int) DB::table('subscribers')->where('created_at', '>=', now()->subDays(7))->count(),
                 'latest' => DB::table('subscribers')->orderByDesc('id')->value('email'),
                 'ready' => true,

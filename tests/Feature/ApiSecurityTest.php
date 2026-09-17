@@ -396,3 +396,118 @@ it('reads the per-IP review cap from the setting on the api door too', function 
     $post()->assertCreated();
     $post()->assertStatus(429);
 });
+
+/*
+|------------------------------------------------------------------------------
+| Outbound mail: nothing it added is reachable without a session (Lane EE)
+|------------------------------------------------------------------------------
+|
+| Extended here rather than pinned in a file of its own, exactly as CLAUDE.md
+| asks: this file is where the allowlists are pinned and where each case that
+| leaked in production is recorded. Three new stores of personal data arrived
+| with the outbound-mail package and each is a leak of a different shape:
+|
+|   mail_deliveries   every address this shop has ever sent to — a better
+|                     customer list than `customers`, because it includes people
+|                     who only ever asked for a password reset
+|   subscribers       every address that has ever signed up, confirmed or not
+|   the links         a confirmation or unsubscribe token is a bearer credential
+|
+| None of them may be reachable from /api/*, and none of them may be echoed back
+| by the endpoints that DO live there.
+*/
+
+it('does not serve the mail delivery log to the public', function () {
+    \Illuminate\Support\Facades\DB::table('mail_deliveries')->insert([
+        'kind' => 'password.reset',
+        'recipient' => 'victim@example.com',
+        'subject' => 'Reset your password',
+        'transport' => 'smtp',
+        'status' => 'sent',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    foreach (['/api/mail/log', '/api/mail', '/api/mail-log', '/api/deliveries'] as $path) {
+        $response = $this->getJson($path);
+
+        // 404 or a redirect to a login are both fine. 200 with a body carrying
+        // the address is the failure, and the assertion is on the CONTENT
+        // rather than only the status, because a route that answered 200 with
+        // an empty array today could grow a payload tomorrow.
+        expect($response->getContent())->not->toContain('victim@example.com');
+        expect($response->status())->not->toBe(200);
+    }
+});
+
+it('keeps the mail delivery log behind the admin guard', function () {
+    /*
+     * The route file ships unmounted (CLAUDE.md forbids this lane editing
+     * routes/web.php), so this loads it into the real router the way
+     * MailRoutesTest does and asserts the middleware it will carry. Asserting
+     * "it 404s today" would pass for the wrong reason and go on passing after
+     * the integrator mounted it in the wrong group.
+     */
+    app(\Illuminate\Contracts\Http\Kernel::class);
+
+    $before = \Illuminate\Support\Facades\Route::getRoutes()->getRoutes();
+
+    \Illuminate\Support\Facades\Route::middleware(['auth:admin'])
+        ->prefix('admin-api')
+        ->group(base_path('routes/mail-admin.php'));
+
+    $added = collect(\Illuminate\Support\Facades\Route::getRoutes()->getRoutes())
+        ->reject(fn ($r) => in_array($r, $before, true));
+
+    $log = $added->first(fn ($r) => $r->uri() === 'admin-api/mail/log');
+
+    expect($log)->not->toBeNull('routes/mail-admin.php no longer registers the log endpoint');
+    expect($log->gatherMiddleware())->toContain('auth:admin');
+});
+
+it('never returns a subscriber address through the public subscribe endpoint', function () {
+    // The endpoint that takes an address must not confirm one back. Its reply
+    // is the same sentence for a new address, a pending one and a confirmed
+    // one — see Store\SubscribeController::CONFIRM_MESSAGE — and echoing the
+    // address would make that sameness pointless.
+    \Illuminate\Support\Facades\Mail::fake();
+
+    $response = $this->postJson('/api/subscribe', ['email' => 'private@example.com']);
+
+    expect($response->getContent())->not->toContain('private@example.com');
+});
+
+it('never puts a live newsletter token into a public response', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+
+    $response = $this->postJson('/api/subscribe', ['email' => 'private@example.com']);
+
+    // The signature is a 64-character hex HMAC. It belongs in the inbox and
+    // nowhere else: a response carrying it would let anyone who can POST this
+    // endpoint confirm an address they do not control.
+    expect($response->getContent())->not->toMatch('#[0-9a-f]{64}#');
+    expect($response->getContent())->not->toContain('signature=');
+});
+
+it('keeps the mail settings out of the public settings allowlist', function () {
+    /*
+     * `GET /api/settings` serves Setting::map() through
+     * SettingController::PUBLIC_KEYS. The mail package writes several rows into
+     * that same table — the SMTP host and username, and `mail_last_test`, which
+     * records the address the owner last sent a test to. None is a password
+     * (that lives in the encrypted mail_credentials row), and none may be
+     * public either.
+     */
+    $settings = app(\App\Services\SettingsService::class);
+
+    $settings->set('mail_host', 'smtp.hostinger.com');
+    $settings->set('mail_username', 'owner@kbeautybliss.com');
+    $settings->set('mail_last_test', ['to' => 'owner@kbeautybliss.com', 'ok' => true], false);
+    Setting::flushMap();
+
+    $body = $this->getJson('/api/settings')->assertOk()->getContent();
+
+    expect($body)->not->toContain('smtp.hostinger.com');
+    expect($body)->not->toContain('owner@kbeautybliss.com');
+    expect($body)->not->toContain('mail_last_test');
+});

@@ -392,3 +392,109 @@ it('names the fields still missing so the screen can say what to fill in', funct
         ->and($body['missing'])->toContain('From address')
         ->and($body['missing'])->not->toContain('SMTP host');
 });
+
+/*
+|------------------------------------------------------------------------------
+| The test-send reports what the transport actually said (Lane EE)
+|------------------------------------------------------------------------------
+|
+| WHAT THIS SCREEN DID BEFORE. MailTester already refused to dress a `log`
+| mailer up as a send, already returned the transport's own error string on a
+| failure, and already named which transport ran. What it could not do was offer
+| any evidence that a message had been ACCEPTED BY SOMETHING. `ok` meant
+| "Mail::raw() did not throw", and a null mailer, a message swallowed by a
+| misconfigured MTA and a real delivery are indistinguishable from there — which
+| is the defect this whole subject is about.
+|
+| A Message-ID is the first thing in the flow that comes back FROM the
+| transport. It is also the string the owner quotes to a host's support desk,
+| who cannot trace a message without one.
+*/
+
+it('reports the message id the transport gave the message', function () {
+    /*
+     * The `array` mailer, which is a real Symfony transport: it runs the send
+     * and fires the real MessageSending/MessageSent events while delivering
+     * into memory. Mail::fake() would replace the Mailer itself and fire
+     * neither, so a test built on it would be asserting that the fake works.
+     */
+    config()->set('mail.default', 'array');
+    config()->set('mail.mailers.' . App\Services\Mail\MailConfigurator::MAILER, ['transport' => 'array']);
+
+    $result = app(App\Services\Mail\MailTester::class)->send('owner@example.com');
+
+    expect($result['ok'])->toBeTrue();
+    expect($result)->toHaveKey('message_id');
+    expect($result['message_id'])->not->toBeNull();
+    expect($result['message_id'])->toContain('@');
+});
+
+it('carries a message_id key in every branch, even the ones that send nothing', function () {
+    /*
+     * One shape, five branches. Left absent on the two early returns, a screen
+     * reading `result.message_id` would show `undefined` on exactly the paths
+     * the owner hits first — an SMTP server not filled in, and a host with
+     * mail() switched off. Null means "there is no id", which is the truth.
+     */
+    $settings = app(App\Services\SettingsService::class);
+    $settings->set('mail_transport', App\Services\Mail\MailSettings::TRANSPORT_SMTP);
+    $settings->set('mail_host', '');
+    App\Models\Setting::flushMap();
+
+    $result = app(App\Services\Mail\MailTester::class)->send('owner@example.com');
+
+    expect($result['status'])->toBe('unconfigured');
+    expect($result)->toHaveKey('message_id');
+    expect($result['message_id'])->toBeNull();
+});
+
+it('reports no message id when the send failed', function () {
+    // The same two helpers the rest of this file uses: a filled-in form and a
+    // transport that throws the string a real SMTP server would.
+    configureSmtp();
+    failingTransport('Connection could not be established with host "smtp.example.com:465"');
+
+    $result = app(App\Services\Mail\MailTester::class)->send('owner@example.com');
+
+    expect($result['ok'])->toBeFalse();
+    expect($result['message_id'])->toBeNull();
+});
+
+it('does not report the previous message id on a send that then fails', function () {
+    /*
+     * The trap this pins. MailLog remembers the last confirmed Message-ID so
+     * MailTester can report it without attaching a listener of its own. If that
+     * memory were cleared on SUCCESS rather than when a new message is OPENED,
+     * a failed send straight after a successful one would report the successful
+     * one's id — and the owner would be handed a real, traceable id for a
+     * message that was never sent. That is a worse lie than reporting nothing.
+     */
+    configureSmtp();
+    acceptingTransport();
+
+    $first = app(App\Services\Mail\MailTester::class)->send('owner@example.com');
+    expect($first['message_id'])->not->toBeNull();
+
+    failingTransport('535 Incorrect authentication data');
+
+    $second = app(App\Services\Mail\MailTester::class)->send('owner@example.com');
+
+    expect($second['ok'])->toBeFalse();
+    expect($second['message_id'])->toBeNull();
+});
+
+it('writes the test-send into the delivery record the owner can read', function () {
+    config()->set('mail.default', 'array');
+    config()->set('mail.mailers.' . App\Services\Mail\MailConfigurator::MAILER, ['transport' => 'array']);
+
+    app(App\Services\Mail\MailTester::class)->send('owner@example.com');
+
+    $row = Illuminate\Support\Facades\DB::table('mail_deliveries')->orderByDesc('id')->first();
+
+    expect($row)->not->toBeNull();
+    // Labelled, so the record distinguishes the owner pressing a button from a
+    // customer's order confirmation.
+    expect($row->kind)->toBe('test');
+    expect($row->recipient)->toBe('owner@example.com');
+    expect($row->status)->toBe('sent');
+});
