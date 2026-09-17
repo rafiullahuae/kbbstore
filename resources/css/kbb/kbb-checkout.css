@@ -318,7 +318,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .cinfo{flex:1;min-width:0}
 .kbb-checkout .cinfo .b{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
 .kbb-checkout .cinfo .n{font-size:12px;font-weight:600;line-height:1.3;margin:1px 0 4px}
-.kbb-checkout .qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.kbb-checkout .qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .kbb-checkout .qty button{width:23px;height:23px;font-size:13px;line-height:1;color:var(--ink-2);font-family:inherit}
 .kbb-checkout .qty button:hover{color:var(--pink-deep)}
 .kbb-checkout .qty span{min-width:22px;text-align:center;font-size:12px;font-weight:600}
@@ -688,15 +688,18 @@ body.woocommerce-checkout main#content>p:empty{display:none}
      The desktop `.co-q` a few hundred lines up has no border and no background;
      it is a glyph inside the pill. That is the design, and the phone should be
      the same control with a bigger target rather than a different control. */
+  /* .co-q had no CSS anywhere, so it rendered as a bare UA button. It is
+     styled to match the cart's stepper — and at the SAME size as the desktop
+     one, per the note at the foot of this file. */
   .kbb-checkout .qty .co-q{
-    width:44px;height:44px;min-width:44px;
+    width:23px;height:23px;min-width:23px;
     display:inline-flex;align-items:center;justify-content:center;
-    font-size:18px;line-height:1;
+    font-size:13px;line-height:1;
     border:0;border-radius:0;background:transparent;
     color:var(--ink-2,#5E545A);cursor:pointer;
   }
   .kbb-checkout .qty{display:inline-flex;align-items:center;gap:0}
-  .kbb-checkout .qty span{min-width:30px;text-align:center}
+  .kbb-checkout .qty span{min-width:22px;text-align:center}
 
   /* The remove control was a bare 22px glyph button. */
   .kbb-checkout .co-rm{
@@ -762,32 +765,26 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 }
 
 
+
 /* ==========================================================================
-   A DESKTOP WINDOW NARROWER THAN 900px IS NOT A PHONE.
+   ONE STEPPER, ONE RADIUS, AT EVERY SIZE — the owner's own instruction.
 
-   The tap-target block above starts at `max-width: 900px`, which is a LAYOUT
-   breakpoint being used as an INPUT-DEVICE one. A laptop with the browser at
-   half screen width — 845px, which is what the owner reported this from —
-   matched it and got 44px finger-sized steppers driven by a mouse. His words:
-   "coming too giant and style is also coming different".
+   "i had before less heighted quantity buttons, almost half less height than
+   yours ... to get the maximum number of products in the space. and keep the
+   buttons radius same everywhere, slight rectangle round is fine. not full
+   circled one."
 
-   `pointer: fine` is the question that was actually meant: is this a mouse or
-   a stylus, as against a finger. A phone at 390px is `coarse` and keeps every
-   44px target; a desktop window at 845px is `fine` and gets the control back.
+   So the mobile blocks no longer enlarge these three steppers to 44px finger
+   targets, and the `pointer: fine` counter-queries that existed only to undo
+   that enlargement are gone with them. One compact control, phone and desktop.
 
-   Written as a counter-query AFTER the block rather than by narrowing it,
-   because the rest of that block is real layout work — wrapping, spacing,
-   the remove control — which a narrow desktop window genuinely wants. Only
-   the finger-sized hit areas are given back.
+   THIS IS A DELIBERATE TRADE AND IT IS HIS TO MAKE: a 44px target is the usual
+   accessibility guidance, and a cart with thirteen lines in it is unusable if
+   every row is 46px taller than it needs to be. Density won. Recorded here so
+   the next person does not "restore" the tap targets as a bug fix.
+
+   The other 44px targets in those blocks — the drawer and menu close buttons,
+   the remove control, the tab strip — are untouched. They are not what he
+   asked about and they are not repeated thirteen times down a list.
    ========================================================================== */
-@media (max-width: 900px) and (pointer: fine) {
-  /* Back to the pill: the mobile block gives .co-q a border and a 10px radius,
-     which is the "style is different" half of the report. */
-  .kbb-checkout .qty .co-q{
-    width:23px;height:23px;min-width:0;
-    font-size:13px;border:0;border-radius:0;background:transparent;
-  }
-  .kbb-checkout .qty{gap:0}
-  .kbb-checkout .qty span{min-width:22px;font-size:12px}
-  .kbb-checkout .co-rm{width:auto;height:auto}
-}
+

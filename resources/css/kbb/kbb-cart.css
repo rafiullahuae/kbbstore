@@ -38,7 +38,7 @@
 .kbb-cartpage .cn a{color:inherit}
 .kbb-cartpage .cn a:hover{color:var(--pink-deep)}
 .kbb-cartpage .cvar{font-size:11.5px;color:var(--muted);margin:-4px 0 8px}
-.kbb-cartpage .qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin:0}
+.kbb-cartpage .qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:0}
 .kbb-cartpage .qty button{width:28px;height:28px;font-size:15px;color:var(--ink-2)}
 .kbb-cartpage .qty button:hover{background:var(--pink-soft);color:var(--pink-deep)}
 .kbb-cartpage .qty span{min-width:28px;text-align:center;font-size:13px;font-weight:700}
@@ -109,8 +109,6 @@
 
   /* The quantity stepper was 28x28 per button. Changing how many of something
      you are buying is the single most-used control on this page. */
-  .kbb-cartpage .qty button{width:44px;height:44px;font-size:18px}
-  .kbb-cartpage .qty span{min-width:40px;font-size:14px}
 
   /* "Remove" was 11px type with no padding, sitting 7.3px from the stepper. */
   .kbb-cartpage .crm{display:inline-flex;align-items:center;min-height:44px;padding:0 6px;font-size:12px}
@@ -131,25 +129,26 @@
 }
 
 
+
 /* ==========================================================================
-   A DESKTOP WINDOW NARROWER THAN 900px IS NOT A PHONE.
+   ONE STEPPER, ONE RADIUS, AT EVERY SIZE — the owner's own instruction.
 
-   The tap-target block above starts at `max-width: 900px`, which is a LAYOUT
-   breakpoint being used as an INPUT-DEVICE one. A laptop with the browser at
-   half screen width — 845px, which is what the owner reported this from —
-   matched it and got 44px finger-sized steppers driven by a mouse. His words:
-   "coming too giant and style is also coming different".
+   "i had before less heighted quantity buttons, almost half less height than
+   yours ... to get the maximum number of products in the space. and keep the
+   buttons radius same everywhere, slight rectangle round is fine. not full
+   circled one."
 
-   `pointer: fine` is the question that was actually meant: is this a mouse or
-   a stylus, as against a finger. A phone at 390px is `coarse` and keeps every
-   44px target; a desktop window at 845px is `fine` and gets the control back.
+   So the mobile blocks no longer enlarge these three steppers to 44px finger
+   targets, and the `pointer: fine` counter-queries that existed only to undo
+   that enlargement are gone with them. One compact control, phone and desktop.
 
-   Written as a counter-query AFTER the block rather than by narrowing it,
-   because the rest of that block is real layout work — wrapping, spacing,
-   the remove control — which a narrow desktop window genuinely wants. Only
-   the finger-sized hit areas are given back.
+   THIS IS A DELIBERATE TRADE AND IT IS HIS TO MAKE: a 44px target is the usual
+   accessibility guidance, and a cart with thirteen lines in it is unusable if
+   every row is 46px taller than it needs to be. Density won. Recorded here so
+   the next person does not "restore" the tap targets as a bug fix.
+
+   The other 44px targets in those blocks — the drawer and menu close buttons,
+   the remove control, the tab strip — are untouched. They are not what he
+   asked about and they are not repeated thirteen times down a list.
    ========================================================================== */
-@media (max-width: 900px) and (pointer: fine) {
-  .kbb-cartpage .qty button{width:28px;height:28px;font-size:15px}
-  .kbb-cartpage .qty span{min-width:28px;font-size:13px}
-}
+
