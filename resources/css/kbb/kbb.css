@@ -117,6 +117,15 @@
      stay on the same physical property. Left alone deliberately. */
   .mega .mcol a::before, .mega .mcol-link::before{content:'';position:absolute;inset:0 100% 0 0;background:var(--pink-soft);border-radius:6px;z-index:-1;transition:right .18s ease}
   .mega .mcol a:hover::before, .mega .mcol-link:hover::before{right:0}
+  /* RTL-PHYSICAL: the same wipe, mirrored, and physical for the same reason the
+     rule above is. `inset:0 0 0 100%` parks the panel against the inline start
+     of a right-to-left row and `transition:left` animates the property that
+     actually moves. A logical spelling in either half would name a property the
+     transition is not declared against, and that fails silently: the panel
+     appears in one frame with no wipe at all. Measured mid-flight in the
+     capture browser — both directions are at half width at half the duration. */
+  [dir="rtl"] .mega .mcol a::before, [dir="rtl"] .mega .mcol-link::before{inset:0 0 0 100%;transition:left .18s ease}
+  [dir="rtl"] .mega .mcol a:hover::before, [dir="rtl"] .mega .mcol-link:hover::before{left:0}
   .mega .mcol a:hover, .mega .mcol-link:hover{color:var(--pink-deep)}
   .feat{background:linear-gradient(135deg,#fff4f8,#ffe6ef);border-radius:14px;padding:14px}
   .feat .fh{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--pink-deep);margin-bottom:10px}
@@ -364,10 +373,17 @@
      which is why that one always behaved. overflow on <body> is what the
      viewport uses while <html> is `visible`, so this is the same mechanism. */
   body.kbb-locked{overflow:hidden}
-  /* RTL-PHYSICAL: off-canvas panel. The closed position is translateX(100%),
-     which has no logical form; converting the inset alone would put the panel
-     on screen when closed. The whole pair flips together at RTL switch-on. */
-  .drawer{position:fixed;top:0;right:0;height:100%;width:var(--cp-w,380px);max-width:90vw;background:#fff;z-index:95;transform:translateX(100%);transition:.32s var(--ease);display:flex;flex-direction:column}
+  /* Off-canvas panel. The inset is logical, so the panel anchors to the
+     inline-end edge in both directions; the closed position is a translateX,
+     which has no logical form, so its sign is flipped under [dir="rtl"]. Both
+     halves move together — converting the inset alone would leave the panel
+     sitting on screen in its closed state.
+
+     The override goes BEFORE .drawer.on deliberately. `[dir="rtl"] .drawer` and
+     `.drawer.on` have the same specificity, so whichever comes last wins; put
+     the other way round it would hold the drawer shut when it is open. */
+  .drawer{position:fixed;top:0;inset-inline-end:0;height:100%;width:var(--cp-w,380px);max-width:90vw;background:#fff;z-index:95;transform:translateX(100%);transition:.32s var(--ease);display:flex;flex-direction:column}
+  [dir="rtl"] .drawer{transform:translateX(-100%)}
   .drawer.on{transform:translateX(0)}
   .dwh{display:flex;align-items:center;gap:8px;padding:18px 20px;border-bottom:1px solid var(--line-2);font-size:15px}
   .dwh .x{margin-inline-start:auto;width:34px;height:34px;border-radius:50%;background:var(--cream);display:grid;place-items:center}
@@ -388,9 +404,12 @@
   .freebar{font-size:11.5px;color:var(--ink-2);margin-bottom:6px}.freetrack{height:6px;border-radius:99px;background:var(--pink-soft);overflow:hidden;margin-bottom:14px}.freefill{height:100%;background:linear-gradient(90deg,var(--blush),var(--pink))}
 
   /* mobile nav — sub-popup overlay (matches Nav Menu design) */
-  /* RTL-PHYSICAL: off-canvas panel — see .drawer. The box-shadow offset
-     (14px 0) is physical too and has no logical equivalent. */
-  .mnav{position:fixed;top:0;bottom:0;left:0;width:var(--mw);background:#fff;z-index:95;transform:translateX(-105%);transition:transform .3s var(--ease);overflow:hidden;display:flex;flex-direction:column;box-shadow:14px 0 40px rgba(60,20,40,.18)}
+  /* Off-canvas panel — see .drawer, including why the override sits above the
+     .on rule. The box-shadow x-offset has no logical form either, and it is this
+     panel's own edge shadow falling across the page, so it flips with the
+     transform instead of being left pointing back under the panel. */
+  .mnav{position:fixed;top:0;bottom:0;inset-inline-start:0;width:var(--mw);background:#fff;z-index:95;transform:translateX(-105%);transition:transform .3s var(--ease);overflow:hidden;display:flex;flex-direction:column;box-shadow:14px 0 40px rgba(60,20,40,.18)}
+  [dir="rtl"] .mnav{transform:translateX(105%);box-shadow:-14px 0 40px rgba(60,20,40,.18)}
   .mnav.on{transform:translateX(0)}
   .mnav-h{display:flex;align-items:center;gap:10px;padding:15px 16px;border-bottom:1px solid var(--line-2);flex:none}
   .mnav-h .logo{font-size:18px}
@@ -403,9 +422,12 @@
   .mrow2 .npill{font-size:8.5px;font-weight:800;color:#fff;border-radius:5px;padding:1px 5px;letter-spacing:.03em}
   .mrow2 .go{margin-inline-start:auto;color:#d58aa4;font-size:18px;line-height:1}
   .mrow2.act{background:var(--pink-soft);color:var(--pink-deep)}
-  /* RTL-PHYSICAL: sub-panel of .mnav; its inset, its border-left edge and its
-     translateX(-14px) reveal are one coordinated physical system. */
-  .msub{position:fixed;top:0;bottom:0;left:calc(var(--mw) - var(--sw)/2);width:var(--sw);background:#fff;z-index:96;box-shadow:0 12px 46px rgba(60,20,40,.26);border-left:1px solid var(--line-2);transform:translateX(-14px);opacity:0;visibility:hidden;transition:.24s var(--ease);overflow-y:auto}
+  /* Sub-panel of .mnav. Its inset and its visible edge are both logical, so it
+     hangs off whichever edge .mnav is on; only the translateX(-14px) reveal has
+     no logical form, and it is flipped below the base rule for the same cascade
+     reason as .drawer. */
+  .msub{position:fixed;top:0;bottom:0;inset-inline-start:calc(var(--mw) - var(--sw)/2);width:var(--sw);background:#fff;z-index:96;box-shadow:0 12px 46px rgba(60,20,40,.26);border-inline-start:1px solid var(--line-2);transform:translateX(-14px);opacity:0;visibility:hidden;transition:.24s var(--ease);overflow-y:auto}
+  [dir="rtl"] .msub{transform:translateX(14px)}
   .msub.on{transform:translateX(0);opacity:1;visibility:visible}
   .msub-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line-2);font-weight:700;color:var(--pink-deep);font-size:13px;position:sticky;top:0;background:#fff}
   .msub-h .x{margin-inline-start:auto;color:#bcb0b6;cursor:pointer;font-size:15px;background:none;border:0;font-family:inherit}
@@ -1180,10 +1202,13 @@ body{padding-bottom:46px}
 .kbb-pgrid[data-skin="actions"] .kbb-card-cart{position:absolute;inset-inline-start:0;inset-inline-end:0;bottom:0;margin:0;border-radius:0;transform:translateY(100%);transition:transform .28s ease}
 .kbb-pgrid[data-skin="actions"] .kbb-card:hover .kbb-card-cart{transform:none}
 .kbb-pgrid[data-skin="ribbon"] .kbb-card{border:1px solid rgba(42,34,40,.1);border-radius:12px;overflow:hidden;background:#fff}
-/* RTL-PHYSICAL: the corner ribbon's offset is tied to rotate(45deg). Flipping
-   the inset without flipping the rotation would put the ribbon across the
-   wrong corner, pointing the wrong way. */
-.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale{top:16px;right:-36px;left:auto;transform:rotate(45deg);width:140px;text-align:center;border-radius:0;padding:5px 0;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+/* The corner ribbon's offset is logical, so it crosses the inline-end corner in
+   both directions; the rotate(45deg) that lays it across that corner has no
+   logical form, so its sign flips below. Flipping one without the other puts the
+   ribbon across the wrong corner still pointing the old way. scaleX(-1) is not
+   an option here the way it is for the corner artwork: this one carries text. */
+.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale{top:16px;inset-inline-end:-36px;inset-inline-start:auto;transform:rotate(45deg);width:140px;text-align:center;border-radius:0;padding:5px 0;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+[dir="rtl"] .kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale{transform:rotate(-45deg)}
 .kbb-pgrid[data-skin="frame"] .kbb-card{border:0;background:#fff;padding:14px;position:relative}
 .kbb-pgrid[data-skin="frame"] .kbb-card:before{content:'';position:absolute;inset:8px;border:1px solid #E7D9DE;pointer-events:none;z-index:2}
 .kbb-pgrid[data-skin="frame"] .cb{text-align:center;padding:14px 6px 4px}
@@ -1263,16 +1288,19 @@ body{
 .kbb-home .sec{padding:clamp(9px,1.1vw,14px) 0}
 .kbb-home .sec > .wrap{padding-inline-start:clamp(18px,2vw,28px);padding-inline-end:clamp(18px,2vw,28px);
   max-width:1352px;width:calc(100% - 24px)}
-/* RTL-PHYSICAL: the corner artwork is pinned by a physical border-radius
-   shorthand and clipped by a directional mask gradient (230deg); neither has a
-   logical form, so the inset stays with them. */
+/* The inset is logical, so the artwork hugs the inline-end corner either way.
+   The border-radius shorthand and the 230deg mask gradient that shape it have no
+   logical form, so rather than respelling three direction-carrying values and
+   keeping them in step by hand, the rendered corner is mirrored whole under
+   [dir="rtl"] below. Nothing inside it is text. */
 .kbb-home .sec:nth-of-type(odd) > .wrap::before{
-  content:'';position:absolute;top:0;right:0;width:220px;height:200px;
+  content:'';position:absolute;top:0;inset-inline-end:0;width:220px;height:200px;
   background-image:var(--bg-corner);background-size:cover;background-repeat:no-repeat;
   opacity:.5;pointer-events:none;border-radius:0 22px 0 0;
   -webkit-mask-image:linear-gradient(230deg,#000 20%,transparent 72%);
           mask-image:linear-gradient(230deg,#000 20%,transparent 72%);
 }
+[dir="rtl"] .kbb-home .sec:nth-of-type(odd) > .wrap::before{transform:scaleX(-1)}
 .kbb-home .sec > .wrap{overflow:hidden}
 .kbb-home .sh :is(h1,h2)::before{content:'';display:inline-block;width:18px;height:18px;margin-inline-end:2px;
   background-image:var(--bg-corner);background-size:190px;background-position:-92px -66px;
