@@ -614,6 +614,18 @@ class ReviewsApiController extends Controller
             'helpful' => (int) $r->helpful,
             'reply' => $r->reply,
             'status' => ReviewStatus::normalise((string) $r->status),
+            /*
+             * SHOWN HERE, AND MARKED. The storefront excludes demo reviews
+             * outright (App\Support\DemoReviews says why); the admin is the one
+             * place they must stay visible, because the owner cannot delete
+             * what the panel hides from them. This flag is what lets the list
+             * badge them, the same way the Orders and Customers screens already
+             * badge their demo rows from DemoSeed.
+             */
+            'is_demo' => \App\Support\DemoReviews::isDemo(
+                $r->source === null ? null : (string) $r->source,
+                (int) $r->id,
+            ),
             'created_at' => optional($r->created_at)->toIso8601String(),
         ];
     }

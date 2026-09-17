@@ -75,12 +75,38 @@ final class ProductRating
          * column beside them is legal under ONLY_FULL_GROUP_BY, which is the
          * mode this MySQL runs in.
          */
-        $rows = DB::table('reviews')
+        $query = DB::table('reviews')
             ->select('product_id')
             ->selectRaw('COUNT(*) as c')
             ->selectRaw('AVG(rating) as a')
             ->whereIn('product_id', $ids)
-            ->where('status', ReviewStatus::APPROVED)
+            ->where('status', ReviewStatus::APPROVED);
+
+        /*
+         * DEMO-SEEDED ROWS ARE NOT PART OF THE SCORE.
+         *
+         * These two columns are the widest-reaching figures on the storefront:
+         * every shop, category, brand, wishlist and related-product card
+         * prints them, `?sort=rating` and `?sort=popular` order by them, the
+         * `top_rated` shortcode selects on them, and App\Support\Seo turns the
+         * pair into the schema.org aggregateRating it publishes to Google.
+         *
+         * Nothing in the application had ever asked whether the rows behind
+         * them were real. DemoReviewsSeeder writes a dozen products' worth of
+         * invented reviews and then calls this method to cache them into the
+         * pair, so a store that had demo content switched on when an update
+         * landed has been printing star ratings — and submitting them as
+         * structured data — for reviews written by a seeder. Excluding them
+         * here closes every one of those readers at once, because all of them
+         * read the columns this method writes.
+         *
+         * A product whose only reviews were demo ones therefore scores 0/0,
+         * which the card renders as its "New" badge rather than as an empty
+         * star row. That is the honest empty state: no reviews, so no score.
+         */
+        DemoReviews::excludeQuery($query);
+
+        $rows = $query
             ->groupBy('product_id')
             ->get()
             ->keyBy('product_id');

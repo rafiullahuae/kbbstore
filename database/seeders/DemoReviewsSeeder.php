@@ -171,7 +171,16 @@ class DemoReviewsSeeder extends Seeder
                     'status' => $seq % self::PENDING_EVERY === 0
                         ? ReviewStatus::PENDING
                         : ReviewStatus::APPROVED,
-                    'verified' => $seq % 3 !== 2,
+                    /*
+                     * NEVER `verified`. Two thirds of these rows used to be
+                     * written with it set. `verified` means this named person
+                     * bought this product from this shop — it is the claim the
+                     * "✓ Verified" tick on the product page makes. These
+                     * authors are invented and emailFor() gives them
+                     * @example.com addresses. A seeder cannot verify a
+                     * purchase that did not happen.
+                     */
+                    'verified' => false,
                     'helpful' => $row['helpful'],
                     'images' => [],
                     'source' => self::SOURCE,

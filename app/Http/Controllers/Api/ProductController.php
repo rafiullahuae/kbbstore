@@ -128,6 +128,9 @@ class ProductController extends Controller
             ->select(['id', 'product_id', 'author_name', 'rating', 'title', 'content', 'verified', 'reply', 'created_at'])
             ->where('product_id', $product->id)
             ->where('status', 'approved')
+            // Same reason as Api\ReviewController::index(): this endpoint is
+            // public and must not publish what the product page withholds.
+            ->real()
             ->orderByDesc('id')
             ->limit(100)
             ->get();

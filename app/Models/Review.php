@@ -43,4 +43,24 @@ class Review extends Model
         return $query->whereNull('product_id');
     }
 
+    /**
+     * Rows a real person really wrote — demo-seeded ones excluded.
+     *
+     * Every storefront and crawler-facing reader of this table applies this
+     * beside ->approved(). The two questions are deliberately separate scopes
+     * rather than one: `approved` is a moderation state the owner controls and
+     * `real` is a question about provenance, and the admin needs to filter on
+     * the first while still showing rows that fail the second.
+     *
+     * The predicate itself lives in App\Support\DemoReviews, because answering
+     * it takes both `reviews.source` and the `demo_seed_log` table and neither
+     * half alone is complete. See that class.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<self>  $query
+     */
+    public function scopeReal($query, ?string $table = null)
+    {
+        return \App\Support\DemoReviews::exclude($query, $table);
+    }
+
 }

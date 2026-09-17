@@ -128,7 +128,7 @@ final class ReviewWall
      */
     public static function summary(): array
     {
-        $rows = Review::query()->approved()
+        $rows = Review::query()->approved()->real()
             ->selectRaw('rating, COUNT(*) as n')
             ->groupBy('rating')
             ->pluck('n', 'rating');
@@ -169,7 +169,7 @@ final class ReviewWall
      */
     public static function cards(string $filter, int $show): array
     {
-        $query = Review::query()->approved()
+        $query = Review::query()->approved()->real()
             ->select(self::CARD_COLUMNS)
             ->whereNotNull('content')
             ->where('content', '<>', '')
