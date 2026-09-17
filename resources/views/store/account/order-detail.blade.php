@@ -24,6 +24,72 @@
 --}}
 @extends('layouts.store')
 @php use App\Support\Countries; use App\Support\Gradient; use App\Support\Money; use App\Support\Url; @endphp
+
+{{--
+    RECEIPT PRECISION, NOT THE STOREFRONT'S ROUNDED DISPLAY.
+
+    Money::displayDecimals() is 0 on this store, so a bare Money::format()
+    ROUNDS to whole dirhams. On a shop tile that is a presentation choice. On
+    this page it is a misstatement of three separate kinds at once, all of them
+    measured on one real order (subtotal 9040, discount 60, total 8980):
+
+        Subtotal   AED 90       the figure is 40 fils short of what was charged
+        TINY     - AED 1        90 - 1 = 90, so the column does not add up
+        Total      AED 90       20 fils MORE than the emailed receipt states
+
+    The last one is the one that matters: the customer holds two copies of the
+    same receipt and they disagree about the total. This project already
+    settled which copy is right — App\Services\Mail\OrderEmailPresenter's
+    header says it in its own words, "on a receipt it is a misstatement... a
+    receipt may not round", and renders every emailed figure at
+    Money::minorExponent(). This page is the customer's own copy of that same
+    receipt, so it follows the same rule rather than a different one.
+
+    DELIBERATELY NOT WIDENED HERE: the cart and the checkout ledger
+    (partials/checkout/order-block, store/checkout, store/cart-inner). They
+    carry the same defect, but a live basket is not a receipt for an order
+    already placed, and repainting them changes how every shopping page in the
+    store looks. That is a question for the owner, asked separately.
+
+    "Free" for a zero delivery line stays "Free": zero IS what was charged, so
+    the word states the truth the figure would. ReceiptFiguresAgreeTest reads
+    it as 0 fils and holds it to the emailed AED 0.00.
+--}}
+@php $receiptMoney = static fn (int $fils): string => Money::format($fils, Money::minorExponent()); @endphp
+@php
+    /*
+     * The order's own tax record, split the way a receipt reads it: a ROW when
+     * the tax was added on top of the figures above it, a NOTE under the total
+     * when it is a portion of them. Identical decision to
+     * App\Services\Mail\OrderEmailPresenter::totals()/vatNote(), and it reads
+     * the same App\Support\OrderTax::recorded() snapshot, so the two copies of
+     * one receipt cannot disagree about whether tax was charged or at what rate.
+     *
+     * The RATE is the order's; only the sentence around the note is the shop's
+     * (`vat_label` is wording the owner may reword), which is why {rate} is
+     * filled from the snapshot and never from today's settings.
+     */
+    $taxRecorded = \App\Support\OrderTax::recorded($order);
+    $vatRow = null;
+    $vatNote = null;
+
+    if ($taxRecorded !== null && $taxRecorded['fils'] !== 0) {
+        $rate = (new \App\Support\TaxRule($taxRecorded['rate'], $taxRecorded['basis']))->printableRate();
+
+        if ($taxRecorded['added']) {
+            $vatRow = ['label' => 'VAT at ' . $rate . '%', 'fils' => $taxRecorded['fils']];
+        } elseif ($taxRecorded['fils'] > 0) {
+            $vatNote = [
+                'label' => str_replace(
+                    '{rate}',
+                    $rate,
+                    (string) app(\App\Services\SettingsService::class)->get('vat_label', "You're paying VAT ({rate}%)")
+                ),
+                'fils' => $taxRecorded['fils'],
+            ];
+        }
+    }
+@endphp
 @section('title', 'Order #' . $order->order_number . ' · K-Beauty Bliss')
 
 @push('styles')
@@ -60,6 +126,7 @@
 .kbbod-row{display:flex;justify-content:space-between;gap:16px;padding:7px 0;font-size:13px;color:var(--ink-2)}
 .kbbod-row.is-total{border-top:1px solid var(--line-2);margin-top:5px;padding-top:11px;font-size:15px;font-weight:800;color:var(--ink)}
 .kbbod-free{color:#1F7D52;font-weight:700}
+.kbbod-vatnote{margin-inline-start:auto;max-width:340px;text-align:end;font-size:12.5px;color:var(--muted);padding-top:7px}
 
 .kbbod-facts{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .kbbod-fact dt{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
@@ -146,9 +213,9 @@
             <div class="kbbod-name">
               @if ($item->brand)<div class="kbbod-brand">{{ $item->brand }}</div>@endif
               <b>{{ $item->name }}</b>
-              <span class="kbbod-meta">{{ (int) $item->quantity }} × {!! Money::format((int) $item->unit_price) !!}@if ($variant !== '') · {{ $variant }}@endif</span>
+              <span class="kbbod-meta">{{ (int) $item->quantity }} × {!! $receiptMoney((int) $item->unit_price) !!}@if ($variant !== '') · {{ $variant }}@endif</span>
             </div>
-            <div class="kbbod-linetotal">{!! Money::format((int) $item->total) !!}</div>
+            <div class="kbbod-linetotal">{!! $receiptMoney((int) $item->total) !!}</div>
           </div>
         @endforeach
       </div>
@@ -156,22 +223,47 @@
 
     <div class="kbbod-sec">
       <div class="kbbod-totals">
-        <div class="kbbod-row"><span>Subtotal</span><span>{!! Money::format((int) $order->subtotal) !!}</span></div>
+        <div class="kbbod-row"><span>Subtotal</span><span>{!! $receiptMoney((int) $order->subtotal) !!}</span></div>
         @if ((int) $order->discount_total > 0)
-          <div class="kbbod-row"><span>{{ $order->coupon_code ?: 'Discount' }}</span><span>&ndash; {!! Money::format((int) $order->discount_total) !!}</span></div>
+          <div class="kbbod-row"><span>{{ $order->coupon_code ?: 'Discount' }}</span><span>&ndash; {!! $receiptMoney((int) $order->discount_total) !!}</span></div>
         @endif
         <div class="kbbod-row">
           <span>Delivery{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
-          <span>@if ((int) $order->shipping_total > 0){!! Money::format((int) $order->shipping_total) !!}@else<span class="kbbod-free">Free</span>@endif</span>
+          <span>@if ((int) $order->shipping_total > 0){!! $receiptMoney((int) $order->shipping_total) !!}@else<span class="kbbod-free">Free</span>@endif</span>
         </div>
         @if ((int) $order->gift_fee > 0)
-          <div class="kbbod-row"><span>Gift wrapping</span><span>{!! Money::format((int) $order->gift_fee) !!}</span></div>
+          <div class="kbbod-row"><span>Gift wrapping</span><span>{!! $receiptMoney((int) $order->gift_fee) !!}</span></div>
         @endif
         @if ($paymentFee > 0)
-          <div class="kbbod-row"><span>{{ $order->paymentLabel() }} fee</span><span>{!! Money::format($paymentFee) !!}</span></div>
+          <div class="kbbod-row"><span>{{ $order->paymentLabel() }} fee</span><span>{!! $receiptMoney($paymentFee) !!}</span></div>
         @endif
-        <div class="kbbod-row is-total"><span>Total</span><span>{!! Money::format((int) $order->total) !!}</span></div>
+        {{--
+            VAT, ONLY WHERE IT WAS ADDED TO THE FIGURES ABOVE IT.
+
+            Same rule, same source of truth and same labels as
+            emails/partials/totals.blade.php, because this is the same receipt.
+            App\Support\OrderTax::recorded() reads the rate and basis the ORDER
+            snapshotted on the day, never today's settings — an order reprinted
+            next year must not restate a tax nobody was charged.
+
+            Measured before this existed: an `exclusive` order of subtotal 9040
+            and tax 452 printed Subtotal AED 90.40, Delivery Free, Total
+            AED 94.92 — a column with a AED 4.52 hole in it, on the customer's
+            own copy of a receipt. The emailed copy printed the row.
+
+            `added` false (inclusive, and the shipped `display` default) keeps
+            its figure OUT of the column and under the rule as a note, because
+            it is a portion OF the total rather than an addition to it. Putting
+            it in the rows is what would stop them summing.
+        --}}
+        @if ($vatRow !== null)
+          <div class="kbbod-row"><span>{{ $vatRow['label'] }}</span><span>{!! $receiptMoney($vatRow['fils']) !!}</span></div>
+        @endif
+        <div class="kbbod-row is-total"><span>Total</span><span>{!! $receiptMoney((int) $order->total) !!}</span></div>
       </div>
+      @if ($vatNote !== null)
+        <p class="kbbod-vatnote">{{ $vatNote['label'] }}: {!! $receiptMoney($vatNote['fils']) !!}</p>
+      @endif
     </div>
 
     <div class="kbbod-sec">

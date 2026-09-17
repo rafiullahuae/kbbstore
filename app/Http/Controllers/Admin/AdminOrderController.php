@@ -732,6 +732,25 @@ class AdminOrderController extends Controller
      * not something an operator can check; "recalculated at 15% exclusive, the
      * rate recorded on this order" is, and it is the sentence that makes it
      * obvious if the figure ever does come from somewhere else.
+     *
+     * THE TWO FIGURES ARE RENDERED AT Money::minorExponent(), NOT AT THE
+     * STOREFRONT'S DISPLAY WIDTH. Money::plain() with no width follows
+     * Money::displayDecimals(), which is 0 on this store, so every movement
+     * smaller than half a dirham wrote itself down as
+     *
+     *     Tax recalculated after the items changed: AED 4 → AED 4 at 2% …
+     *
+     * an audit entry stating that a figure changed to the value it already
+     * had. This note is only written BECAUSE the figure moved — the caller
+     * checks `!==` first — so the rounded form contradicts the reason the row
+     * exists. And `order_notes` has no edit path: there is no screen, no
+     * endpoint and no command that can correct one, so a note that records
+     * nothing records nothing permanently.
+     *
+     * Same rule, same reason as a receipt, and the argument is written out in
+     * App\Services\Mail\OrderEmailPresenter's header: a document somebody
+     * will act on may not round the figure it is about. The rate and the basis
+     * were always exact; only the two amounts the sentence is ABOUT were not.
      */
     private function noteTaxRecalculated(Order $order, int $was, int $now, TaxRule $rule): void
     {
@@ -741,8 +760,8 @@ class AdminOrderController extends Controller
             'is_customer_note' => false,
             'content' => sprintf(
                 'Tax recalculated after the items changed: %s → %s at %s%% %s, the rate recorded on this order when it was placed.',
-                Money::plain($was),
-                Money::plain($now),
+                Money::plain($was, Money::minorExponent()),
+                Money::plain($now, Money::minorExponent()),
                 $rule->printableRate(),
                 $rule->basis,
             ),
