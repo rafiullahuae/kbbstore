@@ -206,8 +206,11 @@ to lose.
 
 ## A shop that has not touched the screen
 
-Fetched, not reasoned about. Two renders of `/` differ only in the CSRF token,
-so that is masked; then the three changed files were stashed, the compiled views
+Fetched, not reasoned about, and **measured on the ordering change alone** —
+taken before the hero's figures were touched, because that second piece changes
+the hero's words on purpose and would mask what this is proving. Two renders of
+`/` differ only in the CSRF token, so that is masked; then everything this lane
+had changed under `app/` and `resources/` was stashed, the compiled views
 cleared, and `/` fetched again from the tree as it stood:
 
 ```
@@ -216,8 +219,12 @@ diff before.html after.html   →  no output
 ```
 
 `StorefrontEnglishUnchangedTest` re-proves the same thing from the other
-direction and stays green, so **`EnglishRenderWalk::BASE_COMMIT` is NOT moved by
-the ordering half of this lane.**
+direction, on every storefront page rather than one, and stays green — so
+**`EnglishRenderWalk::BASE_COMMIT` is not moved by this lane at all**, by either
+half. The hero's copy change is invisible to that walk by construction (it rolls
+`resources/views` back and leaves the PHP in place, and the change is in the
+PHP), which is why the compensating pin is `HomepageContentEditorTest`'s §7 and
+why that file's §7 was updated rather than the walk's constant.
 
 ## The one thing route 2 costs that FO's costing did not name
 
