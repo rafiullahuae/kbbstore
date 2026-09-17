@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\CompiledCaches;
 
 /**
  * The product picker, driven the way the owner drives it.
@@ -128,6 +129,17 @@ function bootPickerPreview(): array
         'APP_KEY' => (string) config('app.key'),
         'PHP_CLI_SERVER_WORKERS' => '4',
     ];
+
+    /*
+     * A compiled-cache directory of this preview's own. A shell env prefix ADDS
+     * to the inherited environment, so without this the `migrate --force` below
+     * follows the suite's APP_CONFIG_CACHE: it boots from the suite's compiled
+     * config -- the wrong database -- and its own warm_caches_2_60_4 then
+     * overwrites that file with this preview's settings, which the suite reads
+     * at its next boot. Tests\Support\CompiledCaches::environmentFor() carries
+     * the reasoning and the measurement.
+     */
+    $env += CompiledCaches::environmentFor($dir.'/compiled');
 
     $envPrefix = '';
 
