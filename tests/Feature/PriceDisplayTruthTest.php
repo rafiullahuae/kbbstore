@@ -350,3 +350,59 @@ it('fills the cart panel bar from the same number the cart page uses', function 
     expect($page[1] ?? null)->not->toBeNull();
     expect($panel[1])->toBe($page[1]);
 });
+
+/*
+|------------------------------------------------------------------------------
+| THE ROW THAT HAS NO PAIR OF ITS OWN — found by the integrator, at merge
+|------------------------------------------------------------------------------
+|
+| decimalsToDistinguish() answers a question about TWO figures: quote this pair
+| wide enough that they are different numbers. Every surface above hands it a
+| pair, so every surface above is covered.
+|
+| The product page's bundle rows are the exception, and it took a screenshot to
+| see it. The "1 unit" row carries ONE figure, because a single unit has no
+| bundle saving, so there is no pair and the row stayed at the store's
+| whole-dirham display. That row IS the headline price. On a product marked down
+| from AED 100.00 to AED 99.80 the block at the top of the page correctly read
+| AED 99.80 while the row directly beneath it read AED 100 — for the same unit,
+| in the same eyeful, one of them wrong.
+|
+| The rule the template now follows is the one the sticky bar below it already
+| followed, applied upward: two renderings of one number on one document must
+| not be quoted at two widths. The row takes the wider of its own requirement
+| and the price block's, so a bundle whose own pair needs more precision than
+| the headline still gets it.
+*/
+
+it('quotes the single-unit row at the same width as the price block above it', function () {
+    $product = pdtProduct(['price' => 10000, 'sale_price' => 9980]);
+
+    $html = test()->get('/product/' . $product->slug)->assertOk()->getContent();
+
+    $headline = pdtAmountsIn($html, 'id="bbPrice"', 400);
+    $rows = pdtAmountsIn($html, 'id="variants"', 1600);
+
+    expect($headline[0])->toBe('AED 99.80');
+
+    // The first figure in the first row is the single unit, and it is the same
+    // money as the headline. Before this, it read "AED 100".
+    expect($rows[0] ?? null)
+        ->toBe('AED 99.80', 'the 1-unit row disagrees with the price block directly above it');
+});
+
+it('leaves every bundle row on a whole-dirham product exactly as it was', function () {
+    /*
+     * The regression guard, and it passes on BOTH sides of the change — which
+     * is the point of it. Widening is supposed to be reserved for the pair that
+     * would otherwise misprint; an ordinary product priced in whole dirhams must
+     * not acquire ".00" on any row.
+     */
+    $product = pdtProduct(['price' => 5900, 'sale_price' => null]);
+
+    $html = test()->get('/product/' . $product->slug)->assertOk()->getContent();
+
+    foreach (pdtAmountsIn($html, 'id="variants"', 1600) as $figure) {
+        expect($figure)->not->toContain('.', "a whole-dirham product grew decimals: {$figure}");
+    }
+});

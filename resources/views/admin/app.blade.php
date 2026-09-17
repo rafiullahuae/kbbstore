@@ -9091,7 +9091,13 @@ function psrField(f){
    something to work out from two numbers. */
 function psrPreview(){
   const min=Number(psrGet('cod_min')), max=Number(psrGet('cod_max'));
-  const money=(f)=>`${PSR.currency} ${Math.round(f/100)}`;
+  /* TWO DECIMALS, AND NOT FOR TIDINESS. This rounded to whole dirhams, so a
+     rule whose floor is 9950 fils previewed as "AED 100 — Cash on delivery
+     hidden" and actually fires at AED 99.50. The preview disagreed with the
+     rule it exists to preview, which is the one thing it may never do: an
+     operator reads this row to decide whether the window he has typed is the
+     window he meant. Number()||0 because psrGet can hand back an empty box. */
+  const money=(f)=>`${PSR.currency} ${(Math.round(Number(f)||0)/100).toFixed(2)}`;
   const row=(fils)=>{
     const blocked=(min>0&&fils<min)||(max>0&&fils>max);
     return `<div class="psrow${blocked?' no':' yes'}">

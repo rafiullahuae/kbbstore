@@ -238,7 +238,32 @@
         <div class="opt-label">Choose your option <span id="optNote">Save more with bundles</span></div>
         <div class="variants" id="variants">
           @foreach ($bundles as $n => $b)
-            @php $bdp = $b['saved'] > 0 ? Money::decimalsToDistinguish((int) $b['was'], (int) $b['total']) : null; @endphp
+            {{-- TWO REASONS THIS ROW MAY HAVE TO WIDEN, and the second was
+                 missed on the first pass because it is not about this row at
+                 all.
+
+                 1. The row's own pair. A bundle whose `was` and `total` round
+                    to the same string states a saving it does not show.
+
+                 2. THE PRICE BLOCK ABOVE IT. A single-figure row has no pair to
+                    collide with, so rule 1 leaves it at the store's whole-dirham
+                    display — and the 1-unit row IS the headline price. On a
+                    product marked down from AED 100.00 to AED 99.80 the block at
+                    the top of the page correctly read `AED 99.80` while the
+                    row directly beneath it read `AED 100`, for the same unit, in
+                    the same eyeful. Two renderings of one number on one document
+                    must not be quoted at two widths — the same argument the
+                    sticky bar below already makes, applied upward.
+
+                 So the row takes the WIDER of its own requirement and the price
+                 block's. max() and not a replacement, because a bundle whose own
+                 pair needs more precision than the headline still needs it. --}}
+            @php
+                $bdp = $b['saved'] > 0
+                    ? Money::decimalsToDistinguish((int) $b['was'], (int) $b['total'])
+                    : null;
+                $bdp = max($bdp ?? Money::displayDecimals(), $kbbSaleDp ?? Money::displayDecimals());
+            @endphp
             <div class="variant{{ 0 === $n ? ' on' : '' }}" data-i="{{ $n }}" data-qty="{{ $b['qty'] }}" data-price="{{ Money::plain($b['total'], $bdp) }}">
               <span class="vr"></span><span class="vn">{{ $b['label'] }}</span><span class="vp">@if ($b['saved'] > 0)<s>{!! Money::format($b['was'], $bdp) !!}</s>@endif{!! Money::format($b['total'], $bdp) !!}</span>@if ($b['tag'])<span class="vtag">{{ $b['tag'] }}</span>@endif
             </div>
