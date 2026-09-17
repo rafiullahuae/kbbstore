@@ -1600,20 +1600,52 @@ descriptions, validation messages).
         estimated cost, and the batch run. Absent key must leave every manual
         path working
 
-- [ ] **T2 · Interface strings** — the 95 Blade files. The bulk of the work and
-      almost entirely mechanical once T1 lands. An Arabic page silently half in
-      English is a designed-for outcome, not an accident: the fallback has to be
-      honest about what is untranslated
-- [ ] ▲ **T3 · The order records the shopper's language** — without it an Arabic
-      customer gets an English invoice, and an English "your order has shipped"
-      email three weeks later. A column and a decision about what the admin sees.
-      Small, and painful to retrofit, so it goes early
+- [x] **T2 · Interface strings — landed *2.60.202*.** 752 keys, 953 call sites in
+      Blade, 45 in JavaScript, 94 Blade files, 11 JS modules. **The English
+      output is byte-identical**, proved against a git-archived copy of the old
+      tree rendered in the same process, with a control pass proving the small
+      mask is not so broad it would swallow a word — 34 storefront pages, 22
+      emails in BOTH their HTML and plain-text parts, and the four printed
+      documents. Six exceptions, all whitespace reflows of sentences that had
+      been written across several template lines with a link in the middle, each
+      encoded as a named counted rule so it cannot rot into a no-op.
+
+      Two things worth keeping: **28 keys carry plural forms**, because Arabic
+      has six to English's two and the templates were full of
+      `$n . ($n === 1 ? 'item' : 'items')`; and **every settings-backed string is
+      deliberately excluded**, because a second English source for a value the
+      owner types would be one of the two silently wrong.
+
+      Still open, named rather than half-done: the skin-quiz script's ~110
+      strings, and ~40 shopper-facing labels that live in PHP rather than Blade
+- [x] ▲ **T3 · The order records the shopper's language — landed with T1,
+      *2.60.200*.** `orders.locale`, written by an `Order::creating` hook rather
+      than a line in the checkout, because orders are created in five places and
+      a rule applied in four is not a rule. An explicitly set locale is never
+      overwritten, so a phone order taken in Arabic keeps it. The half that
+      matters is `OrderLocale::render()`, which restores the language for one
+      closure and puts the previous one back in a `finally` — without that, one
+      failed email leaves a worker set to Arabic for every job after it
 - [ ] **T4 · Content translations** — a polymorphic table over `name_ar` columns,
       so "what is still untranslated" is one query and a new field needs no
       schema change. Must not become an N+1 on a product grid; measure it
-- [ ] ▲ **T4b · An Arabic box beside every field, in every editor** — owner's
-      requirement, and it decides where translation actually happens. Adding a
-      product, a post, a category, a brand or a page must offer the Arabic
+- [x] ▲ **T4b · An Arabic box beside every field — landed *2.60.202*.** Every
+      translatable field on every model's allowlist, in the same form, saved by
+      the same button, on the **Add** form as well as the edit form. The screens
+      never list translatable fields — they ask the server — so adding a column
+      to a model's `$translatable` grows a box in every editor with no Blade
+      change. The rich-text Arabic is the *same control* as the English, not a
+      plain textarea, or the Arabic page could not carry the headings the
+      English one does. Sanitised through the same `RichText::clean()`, because
+      a sanitiser applied to one language only would be a stored-XSS hole opened
+      by the act of adding the second language.
+
+      Two known gaps, both upstream: `Product::ingredients` and
+      `Product::how_to_use` are prose and are not on the allowlist, so an Arabic
+      shopper reads them in English — a two-line fix worth doing **before** the
+      owner starts typing, not after. Original requirement, still the point:
+      adding a product, a post, a category, a brand or a page must offer the
+      Arabic
       alongside the English **at the moment of creation**, not on a separate
       screen visited afterwards. Every translatable field in every admin editor
       gains its Arabic counterpart, carried in the same save, validated by the
@@ -1656,8 +1688,26 @@ descriptions, validation messages).
       `text-align:left`; CSS logical properties let one sheet serve both
       directions. Plus an Arabic face (Cairo or Tajawal alongside Poppins).
       **Audit first, rewrite second**; the storefront CSS is contended
-- [ ] **T7 · SEO** — `hreflang` both ways, per-language canonical, per-language
-      sitemap. Builds on the `Seo` class rather than beside it
+- [x] **T7 · SEO — landed *2.60.202*.** hreflang moved out of the layout into
+      `App\Support\Seo`, built from the canonical that class has just computed
+      rather than from the request path — which is what reached the four pages
+      carrying their own document, and what makes paginated lists, `seo.canonical`
+      overrides and the trailing-slash case right by construction.
+
+      ▲ It was worse than "not built". **Five Arabic page types canonicalised to
+      the English address**, three of them emitting no hreflang at all, because
+      seven of the nine places that build an SEO url built it by string
+      concatenation that `Url::to()` never sees. A canonical naming another
+      language is an instruction that the page is a duplicate, so the whole
+      Arabic storefront would have stayed out of the index while every hreflang
+      advertised it. A crawl of the baseline sitemap: 54 entries, 52 failures.
+
+      **One sitemap, not an index**, and the argument is the switch: Arabic is a
+      per-request setting so it can be flipped without a release, and under an
+      index flipping it changes which *files exist*. With Arabic off,
+      `sitemap.xml`, `robots.txt` and `llms.txt` are byte-identical to before.
+      Verified by crawling: 108 entries, 324 page fetches, zero failures, on the
+      default path and again under `/kbb-upgrade`
 - [ ] **T8 · Admin console in Arabic** — **deferred by the owner.** Its own phase,
       after the storefront is live and earning. Listed so it is a decision on
       record rather than an omission
