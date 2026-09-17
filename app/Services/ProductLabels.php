@@ -93,7 +93,15 @@ class ProductLabels
         return match ($def[0]) {
             'bool' => (bool) $value,
             'range' => max((int) $def[4]['min'], min((int) $def[4]['max'], (int) $value)),
-            'colour' => \App\Support\Color::isValidHex((string) $value) ? strtoupper((string) $value) : $def[2],
+            // isValidHex() accepts a hex with OR without the leading '#', so a
+            // stored "e23a4e" came back out as "E23A4E" and went into
+            // style="background:E23A4E" — not a colour, so the badge drew with
+            // no background and its white text vanished. The '#' is put back on
+            // rather than trusting every caller to have sent one; the colour
+            // picker on the screen always does, a POST to the endpoint need not.
+            'colour' => \App\Support\Color::isValidHex((string) $value)
+                ? '#' . strtoupper(ltrim((string) $value, '#'))
+                : $def[2],
             default => mb_substr(trim((string) $value), 0, 40),
         };
     }
@@ -120,13 +128,34 @@ class ProductLabels
             return ['text' => $c['oos_text'], 'colour' => $c['oos_color']];
         }
 
-        if ($c['sale_on']) {
-            $regular = (float) $product->price;
-            $sale = (float) $product->effectivePrice();
+        /*
+         * ONE SOURCE OF TRUTH FOR "IS THIS ON SALE, AND BY HOW MUCH".
+         *
+         * This branch used to do its own arithmetic — `(float) $product->price`
+         * against `effectivePrice()`, guarded by `$sale > 0` — beside
+         * Product::isOnSale()/discountPercent(), which the price block on the
+         * very same card already uses. Two copies of one rule, and they did not
+         * agree:
+         *
+         *  - A MARKDOWN THAT ROUNDS TO NOTHING PRINTED "-0% OFF". AED 100.00
+         *    down to AED 99.80 is a real sale by both tests, but the badge
+         *    states the discount, and the discount it stated was zero. The
+         *    theme's own badge has always guarded this (`$off ? … : ''` in
+         *    components/product-card.blade.php) and the module did not, so
+         *    turning the module ON introduced a badge advertising a saving of
+         *    nothing, in the sale colour, on a card whose price block correctly
+         *    showed no saving at all. Reproduced on /shop before the fix.
+         *  - `$sale > 0` SKIPPED A PRODUCT MARKED DOWN TO FREE. The price block
+         *    called that a sale; the badge did not.
+         *
+         * Below 1% the badge cannot state a true number, so the rule falls
+         * through to the next one (new, then bestseller) rather than lying. The
+         * plugin's `{off}` substitution is unchanged.
+         */
+        if ($c['sale_on'] && $product->isOnSale()) {
+            $off = $product->discountPercent();
 
-            if ($regular > 0 && $sale > 0 && $sale < $regular) {
-                $off = (int) round((1 - $sale / $regular) * 100);
-
+            if ($off >= 1) {
                 return [
                     'text' => str_replace('{off}', (string) $off, (string) $c['sale_text']),
                     'colour' => $c['sale_color'],

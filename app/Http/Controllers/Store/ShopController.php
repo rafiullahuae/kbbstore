@@ -105,8 +105,10 @@ class ShopController extends Controller
 
         [$title, $sub, $crumb] = $this->heading($category, (string) $request->query('s', ''));
 
+        $banner = $this->banner($category, $active, (string) $request->query('s', ''), $title);
+
         return view('store.shop', [
-            'banner' => $this->banner($category, $active, (string) $request->query('s', ''), $title),
+            'banner' => $banner,
             'products' => $products,
             'total' => $total,
             'page' => $page,
@@ -116,11 +118,31 @@ class ShopController extends Controller
             'curorder' => Facets::sort(),
             'buckets' => Facets::BUCKETS,
             'title' => $title,
-            'seoCtx' => [
+            'seoCtx' => array_filter([
                 'description' => $this->seoDescription($category, (string) $request->query('s', ''), $total),
+                /*
+                 * The share image is the hero this page actually draws.
+                 *
+                 * Every category archive published the store-wide default share
+                 * image, so a category with its own banner photograph shared as
+                 * the generic shop card. $banner is already resolved above for
+                 * the view — this reads the same value rather than deciding a
+                 * second time, so the picture in the share card and the picture
+                 * at the top of the page cannot disagree.
+                 *
+                 * PageBanner::resolve() has already dropped the image for the
+                 * styles that never draw one (tint, no-image), which is why
+                 * this is the right key to read and `categories.banner` is not:
+                 * a banner switched off still has a URL in the column, and
+                 * publishing it would share a photograph the page does not show.
+                 *
+                 * Null — no banner, or a search/filter page that has none —
+                 * falls through to og_default_image, unchanged.
+                 */
+                'image' => is_string($banner['image'] ?? null) && $banner['image'] !== '' ? $banner['image'] : null,
                 'url' => Facets::canonicalUrl($this->absoluteListingUrl($category)),
                 'breadcrumb' => $this->breadcrumbTrail($category),
-            ],
+            ], static fn ($v) => $v !== null),
             'sub' => $sub,
             'crumb' => $crumb,
             'clearUrl' => $category ? $category->url() : Facets::clearUrl(),

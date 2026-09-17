@@ -194,11 +194,14 @@ class BrandController extends Controller
             ->limit(self::PREVIEW_LIMIT)
             ->get();
 
+        // The brand's own banner, when the owner has turned one on. Null for
+        // every brand that has not, which is the default and is decided by the
+        // column being NULL rather than by a stored flag.
+        $banner = \App\Support\PageBanner::forModel($brand, $brand->name);
+
         return view('store.brands', [
-            // The brand's own banner, when the owner has turned one on. Null
-            // for every brand that has not, which is the default and is
-            // decided by the column being NULL rather than by a stored flag.
-            'banner' => \App\Support\PageBanner::forModel($brand, $brand->name),
+            'banner' => $banner,
+            'seoCtx' => $this->seoCtx($brand, $banner),
             'brand' => $brand,
             'brands' => collect(),
             'products' => $products,
@@ -210,6 +213,84 @@ class BrandController extends Controller
             'display' => self::DISPLAY_DEFAULT,
             'gridMin' => self::gridMinimum(0),
         ]);
+    }
+
+    /**
+     * What a brand page tells a share scraper about itself.
+     *
+     * IT SAID NOTHING, AND SO EVERY BRAND PAGE SAID THE SAME THING. show()
+     * passed no $seoCtx at all, so layouts/store.blade.php applied its
+     * defaults and all ninety-odd brand landing pages published one identical
+     * Open Graph card: the store-wide default description ("Shop Korean
+     * skincare in the UAE — serums, creams, moisturisers…", the same sentence
+     * the homepage and the cart publish), the store-wide default share image,
+     * and no breadcrumb. Pasting a brand page into WhatsApp produced a card
+     * that did not name the brand anywhere except in the title. Verified by
+     * fetching /korean-skincare-brands/round-lab/ against a running preview
+     * before the change.
+     *
+     * Three things go in, and each is a value this page already has:
+     *
+     *  - THE DESCRIPTION is the brand's own `description` column when the
+     *    owner has written one. There is no invented fallback sentence: a
+     *    brand with an empty description keeps the store-wide default, which
+     *    is true of it, rather than getting a generated claim about a
+     *    catalogue this method has not counted. (It must not count one —
+     *    show() fetches a capped preview, and the brand page is on
+     *    StorefrontQueryBudgetTest's budget at 9 queries. This adds none.)
+     *
+     *  - THE IMAGE is the page's own hero: the banner photograph when the
+     *    owner has turned a banner on, the brand logo otherwise. Both are
+     *    stored the way `products.image` is — a URL or a root-relative path,
+     *    rendered raw into <img src> by store/brands.blade.php — so both go
+     *    through Seo::absolute() exactly as a product's image does. Null when
+     *    the brand has neither, which correctly falls through to the store's
+     *    default share image rather than publishing a broken og:image.
+     *
+     *  - THE CANONICAL is built from site_url + Url::to(...), the same shape
+     *    ProductController uses with $product->url(). Url::to() is what honours
+     *    KBB_BASE_PATH, and Seo::canonical() is what reconciles the two ends:
+     *    Url::to() adds the /kbb-upgrade prefix and site_url already carries
+     *    it, and canonical() collapses the one duplicate. Writing the path as a
+     *    bare '/korean-skincare-brands/…' literal instead would publish a
+     *    canonical that 404s on the live host — which is exactly the class of
+     *    bug a test on the default base path cannot see.
+     *
+     *    Brand::url() is deliberately NOT used: U-05 keeps it pointing at the
+     *    filterable shop listing (/shop/?filter_brands={slug}), and this page
+     *    is the landing page, not that listing. Canonicalising one to the other
+     *    would tell Google this page does not exist.
+     *
+     * SeoSettings::get() rather than Setting::map(), for the reason
+     * CollectionController::seoCtx() carries in full: the latter memoises in a
+     * process-level static and a page rendered before that map was first
+     * filled produced a root-relative trail inside an absolute document.
+     *
+     * @param  array<string, mixed>|null  $banner
+     * @return array<string, mixed>
+     */
+    private function seoCtx(Brand $brand, ?array $banner): array
+    {
+        $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
+        $url = $base . Url::to('/korean-skincare-brands/' . $brand->slug . '/');
+
+        $description = trim((string) $brand->description);
+        $image = $banner['image'] ?? null;
+
+        if (! is_string($image) || trim($image) === '') {
+            $image = trim((string) $brand->logo);
+        }
+
+        return array_filter([
+            'description' => $description !== '' ? $description : null,
+            'image' => $image !== '' ? $image : null,
+            'url' => $url,
+            'breadcrumb' => [
+                ['name' => 'Home', 'url' => $base . Url::to('/')],
+                ['name' => 'Brands', 'url' => $base . Url::to('/korean-skincare-brands/')],
+                ['name' => $brand->name, 'url' => $url],
+            ],
+        ], static fn ($v) => $v !== null);
     }
 
     /**
