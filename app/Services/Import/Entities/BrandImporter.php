@@ -35,6 +35,12 @@ final class BrandImporter extends EntityImporter
         return 'brands.csv';
     }
 
+    /** Brands the export supplied. A brand with no `source_term_id` is a demo-catalogue placeholder this import did not claim. */
+    public function countImported(): ?int
+    {
+        return Brand::query()->whereNotNull('source_term_id')->count();
+    }
+
     public function import(Row $row, ImportContext $context): void
     {
         $termId = $row->requireId('term_id', 'term_id', 'id', 'brand_id');

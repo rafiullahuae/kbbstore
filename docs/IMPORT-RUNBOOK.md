@@ -242,6 +242,39 @@ php artisan kbb:import --dir=storage/app/woo --batch=200   # smaller batches, mo
 php artisan kbb:import --dir=storage/app/woo --limit=5000  # do 5,000 rows per entity and stop
 ```
 
+### ▲ `--limit` on a whole export imports orders before their customers
+
+**Do not use `--limit` across more than one entity on a live run.** It is a
+budget PER ENTITY, so one invocation does 5,000 customers and then 5,000 orders
+— and every order in that slice whose customer is further down `customers.csv`
+does exactly what §2 warns about under "running orders first": it cannot find
+its customer, links by billing email, synthesises a guest row with a NULL
+`wp_user_id`, and the genuine WordPress user is then **refused as an email
+collision** when they arrive.
+
+Measured, not feared: a 140-order export run in slices of 23 refused **14 of its
+80 customers** this way. Nothing is corrupted and every refusal is named, but
+fourteen people are missing from the shop and the reason printed beside them
+points at decision D2, which is a different problem.
+
+The command warns when you do it. Use one of these instead:
+
+- **Store → Import**, which steps ONE entity per request in the runner's own
+  order and never starts the next until the current one is finished. It cannot
+  produce this.
+- `--only=customers` until it finishes, then `--only=orders`, and so on down
+  `ImportRunner::entityNames()`.
+- No `--limit` at all, against a restored copy where there is no timeout.
+
+There is also no termination signal for a loop of limited runs. A finished
+entity restarts from row one (rule 2 below) and, if `--limit` cuts that
+re-presentation short, is left unfinished again — so "every checkpoint is
+finished" is a state such a loop never reliably reaches. Nothing is lost by the
+extra passes; there is simply nothing a script can wait for. The screen keeps
+its own `done_entities` list and does reach `complete`.
+
+Both of these are measured in `docs/FV-IMPORT-AT-VOLUME.md` §6.
+
 `--limit` is a resume point, not a truncation: the entity is left unfinished, so
 the next run carries on from where it stopped. That is how a very large import
 gets done inside a shared host's `max_execution_time` — run it repeatedly until
@@ -264,6 +297,58 @@ Three rules govern what happens next time:
 the real one.
 
 ---
+
+## 4a. Count-based verification, after every bucket
+
+Every other number in the report is the importer describing its own work:
+`created` is incremented by the code that created the row, `rejected` by the code
+that refused it. A row read from the file and then neither written nor refused
+increments nothing — and is invisible in a report whose every column is
+self-reported, while the totals still look plausible.
+
+So two checks run after each bucket, and neither asks the importer how it thinks
+it did:
+
+```
+Count-based verification — rows in against rows out, per bucket:
++-------------+-----------+-----------+---------+-------------+----------+
+| bucket      | rows read | accounted | refused | in database | verdict  |
++-------------+-----------+-----------+---------+-------------+----------+
+| products    | 671       | 669       | 2       | 669         | VERIFIED |
+| customers   | 3,713     | 3,712     | 1       | 3,712       | VERIFIED |
+| orders      | 4,159     | 4,159     | 0       | 4,159       | VERIFIED |
+| order-items | 10,571    | 10,571    | 0       | 10,571      | VERIFIED |
+| seo         | 671       | 669       | 2       | —           | no table |
++-------------+-----------+-----------+---------+-------------+----------+
+```
+
+- **rows read against rows accounted for.** Each row is watched for whether it
+  moved its own entity's tally. One that moves nothing and throws nothing is
+  printed with its line number and its id. That is the named discrepancy — a
+  row, not a total that is one short — and it **fails the command** even when
+  nothing was refused.
+- **rows in the database.** One COUNT per bucket, restricted to rows carrying an
+  external id, so the demo catalogue's 24 id-less products do not read as a
+  surplus. Fewer rows than the file supplied is a DISCREPANCY. More is a note:
+  a delta import runs against a table that already holds last week's rows.
+
+Four things it deliberately will not claim:
+
+- `seo` writes onto rows `products` owns, so it has no table of its own and says
+  so rather than leaving the line out — a verification that is silently absent
+  reads exactly like one that passed.
+- A bucket that is part-way through is marked as a slice, which is every step of
+  the admin screen.
+- A **resumed** run reports the count without a verdict: it cannot know how many
+  of the rows it did not re-read were refusals, so `read − refused` is not the
+  number the table should hold.
+- The customers tally includes guests synthesised by the ORDERS bucket — 4,411
+  created for a 3,713-row file on the full-volume run — so it can never answer
+  "customers in = customers out". The COUNT can, because it asks about
+  `wp_user_id`.
+
+The same line goes into the entity's notes, so it appears on Store → Import as
+well as in the console.
 
 ## 5. Dry run
 
@@ -357,6 +442,20 @@ is silent.** That is a run whose timezone is unverified, not a run whose
 timezone is confirmed. Re-export with the GMT column if you want the check.
 
 ---
+
+## 7a. It has been run at the real volume
+
+671 products, 4,159 orders, 3,712 customers, on MySQL, twice over and killed in
+the middle. 49 seconds, 34 MB peak, 107,258 queries; the second pass reported
+`created 0, updated 0` and a byte-identical database; the killed-and-resumed
+database matched the uninterrupted one row for row. From Store → Import it is
+**62 browser steps, the slowest 2.2 seconds** — or 229 steps at 0.67 seconds
+each with a smaller slice.
+
+The numbers, the method, the discard list at that volume, and what a real export
+still carries that nothing here reads are in `docs/FV-IMPORT-AT-VOLUME.md`. The
+export that produced them is `tools/woo-volume-fixture/generate.php`, which is
+deterministic and takes the three numbers as flags.
 
 ## 8. Run it against MySQL, not SQLite
 

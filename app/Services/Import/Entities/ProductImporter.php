@@ -120,6 +120,12 @@ final class ProductImporter extends EntityImporter
         return 'products.csv';
     }
 
+    /** Products the export supplied. withTrashed(), deliberately: a soft-deleted product is still a row this import wrote, and counting it as missing would send the owner looking for an import failure that is a deletion. */
+    public function countImported(): ?int
+    {
+        return Product::query()->withTrashed()->whereNotNull('wc_id')->count();
+    }
+
     public function import(Row $row, ImportContext $context): void
     {
         $wcId = $row->requireId('id', 'id', 'wc_id', 'product_id', 'post_id');

@@ -73,6 +73,34 @@ abstract class EntityImporter
     public function finalise(ImportContext $context): void {}
 
     /**
+     * How many rows this entity's table holds that came from a WooCommerce
+     * export — the one number in the report that is asked of the database
+     * rather than of the importer.
+     *
+     * Phase 13's line is "count-based verification after each bucket", and the
+     * verification it means is the one nobody can talk themselves out of:
+     * products in, products out. Every other figure in the report is the
+     * importer's own account of its own work, which is exactly the account you
+     * cannot use to find a row the importer never noticed it lost.
+     *
+     * COUNTED ON THE EXTERNAL ID, not on the whole table, because the whole
+     * table is the wrong question on this shop: 2026_08_27_100000_seed_demo_-
+     * catalogue puts 24 products, 8 brands and 6 categories on EVERY install
+     * with no external id at all, so `SELECT COUNT(*) FROM products` is 703 for
+     * 679 imported and the difference looks like a bug in the import instead of
+     * a demo catalogue nobody deleted.
+     *
+     * NULL means this entity has no table of its own to count — `seo` writes a
+     * column onto rows `products` owns. The report says so in words rather than
+     * quietly leaving the line out, because a verification that is silently
+     * absent reads exactly like a verification that passed.
+     */
+    public function countImported(): ?int
+    {
+        return null;
+    }
+
+    /**
      * A short identifier for this row, for the rejection report.
      *
      * Best effort by definition — the row may be rejected precisely because its

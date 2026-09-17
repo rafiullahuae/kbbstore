@@ -76,6 +76,12 @@ final class OrderImporter extends EntityImporter
         return 'orders.csv';
     }
 
+    /** Orders the export supplied. */
+    public function countImported(): ?int
+    {
+        return Order::query()->withTrashed()->whereNotNull('wc_order_id')->count();
+    }
+
     /**
      * NO CUSTOMER IS EMAILED ABOUT AN ORDER FROM 2023 BECAUSE THIS RAN.
      *

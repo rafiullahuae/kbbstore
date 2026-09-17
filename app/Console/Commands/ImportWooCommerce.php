@@ -119,6 +119,8 @@ class ImportWooCommerce extends Command
             $this->newLine();
         }
 
+        $this->warnAboutInterleaving($options);
+
         try {
             $report = (new ImportRunner)->run($options, function (string $entity, int $done): void {
                 $this->line('  '.$entity.': '.number_format($done).' rows');
@@ -137,7 +139,59 @@ class ImportWooCommerce extends Command
         $this->writeRejectsCsv($report);
         $this->writeChangesCsv($report);
 
-        return $report->totalRejected() === 0 ? self::SUCCESS : self::FAILURE;
+        /*
+         * A DISCREPANCY FAILS THE COMMAND EVEN WITH NOTHING REFUSED, which is
+         * the whole point of it: a refused row is one the importer knows it
+         * does not have, and an unaccounted row is one it does not know it does
+         * not have. The second is the worse of the two and it used to exit 0.
+         */
+        return $report->totalRejected() === 0 && ! $report->hasDiscrepancy()
+            ? self::SUCCESS
+            : self::FAILURE;
+    }
+
+    /**
+     * --limit ACROSS A WHOLE EXPORT IMPORTS ORDERS BEFORE THEIR CUSTOMERS, and
+     * that is the one sequence docs/IMPORT-RUNBOOK.md §2 says leaves a mess.
+     *
+     * WHAT HAPPENS, MEASURED RATHER THAN FEARED. --limit is a budget PER
+     * ENTITY, so one invocation does N customers and then N orders and then N
+     * line items. The orders in that slice name customers whose rows are still
+     * further down customers.csv. Each one falls back to linking by billing
+     * email and, under the default --guests=synthesise, creates a customer row
+     * for that address with wp_user_id NULL. When the genuine user arrives on a
+     * later pass carrying the same email, it finds the address already held by
+     * a row with no WordPress id and is REFUSED as a collision.
+     *
+     * Running a 45-product/140-order/80-customer export in slices of 23 refused
+     * 14 of the 80 customers this way. Nothing is corrupted and every refusal is
+     * named — the count verification above shows the shortfall — but 14 people
+     * are missing from the shop and the reason printed beside them points at
+     * decision D2, which is a different problem entirely.
+     *
+     * WHY THIS IS A WARNING AND NOT A REFUSAL. --limit across every entity is
+     * the shape the runbook documents and two other suites already exercise, and
+     * turning it into an error from this lane would break work that is not
+     * wrong, only unsafe in one combination. The admin screen does not have the
+     * problem at all: it runs ONE entity per request and never starts the next
+     * until the previous one is finished, which is the property this warning
+     * tells the operator to go and get.
+     */
+    private function warnAboutInterleaving(ImportOptions $options): void
+    {
+        if ($options->limit === 0 || $options->dryRun || count($options->only) === 1) {
+            return;
+        }
+
+        $this->newLine();
+        $this->warn(
+            '--limit is a budget PER ENTITY, so this run will import some orders before customers.csv has '
+            .'been read to the end. Every order whose customer is further down that file will synthesise a '
+            .'guest row for their email, and the genuine customer will then be REFUSED as a collision when '
+            .'they arrive. Run one entity at a time instead — --only=customers until it finishes, then '
+            .'--only=orders — or use Store -> Import, which does exactly that and cannot get the order wrong.'
+        );
+        $this->newLine();
     }
 
     /**
@@ -198,6 +252,7 @@ class ImportWooCommerce extends Command
             $rows,
         );
 
+        $this->printVerification($report);
         $this->printNotes($report);
         $this->printChanges($report);
         $this->printRejections($report);
@@ -225,6 +280,68 @@ class ImportWooCommerce extends Command
             $report->totalRejected().' rows were refused and are NOT in the database. '
             .'Each one is listed above with the reason.'
         );
+    }
+
+    /**
+     * Count-based verification, per bucket — the thing Phase 13 asks for by
+     * name and the only block in this report that is not the importer marking
+     * its own homework.
+     *
+     * PRINTED FIRST, above the notes and the refusals, because it is the one
+     * answer that decides whether the rest of the report is worth reading. A
+     * bucket that cannot account for every row it read is not an import with a
+     * few problems in it; it is an import whose totals mean nothing.
+     */
+    private function printVerification(ImportReport $report): void
+    {
+        $this->newLine();
+        $this->line('<comment>Count-based verification — rows in against rows out, per bucket:</comment>');
+
+        $rows = [];
+
+        foreach ($report->entities() as $entity) {
+            if ($entity->rowsRead === 0 && $entity->inDatabase === null) {
+                continue;
+            }
+
+            $v = $entity->verification();
+
+            $rows[] = [
+                $entity->name,
+                number_format($v['read']),
+                number_format($v['accounted']),
+                number_format($v['rejected']),
+                $v['in_database'] === null ? '—' : number_format($v['in_database']),
+                match ($v['verdict']) {
+                    'verified' => '<info>VERIFIED</info>',
+                    'discrepancy' => '<fg=red>DISCREPANCY</>',
+                    'partial' => 'part-way',
+                    'counted' => 'resumed — counted, not compared',
+                    default => 'no table',
+                },
+            ];
+        }
+
+        if ($rows === []) {
+            return;
+        }
+
+        $this->table(['bucket', 'rows read', 'accounted', 'refused', 'in database', 'verdict'], $rows);
+
+        foreach ($report->entities() as $entity) {
+            $v = $entity->verification();
+
+            if ($v['verdict'] !== 'discrepancy') {
+                continue;
+            }
+
+            $this->newLine();
+            $this->error($entity->name.' — '.$v['sentence']);
+
+            foreach ($entity->unaccountedRows() as $row) {
+                $this->line('    line '.$row['line'].'  ['.$row['id'].']  read, and then neither imported nor refused');
+            }
+        }
     }
 
     private function printNotes(ImportReport $report): void
