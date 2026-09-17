@@ -149,7 +149,7 @@ saying the routes are unmounted — `RouteFileHeadersTest` fails any route file
 that `web.php` requires while the file still describes itself that way. Rewrite
 the sentence rather than quoting the old one; the guard reads the whole file.
 
-`database/migrations/2026_11_18_000000_clear_caches_homepage_content.php` clears
+`database/migrations/2026_11_18_000003_clear_caches_homepage_content.php` clears
 the compiled route table and the compiled views, and must be in the same
 package: without it the routes 404 and the old compiled `home.blade.php` keeps
 printing the hero headline unescaped while the new console invites the owner to

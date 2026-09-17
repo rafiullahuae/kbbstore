@@ -162,7 +162,7 @@ final class EnglishRenderWalk
      * conditional without moving a single space. See the comments in
      * store/home.blade.php, which say so at each of the three places.
      */
-    public const BASE_COMMIT = '3fd50009afae9b82e37c64ecae0dffb1b806a0e3';
+    public const BASE_COMMIT = '08d6b82f2e161a602a93b88cf8976806412b4748';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

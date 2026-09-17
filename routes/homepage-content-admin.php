@@ -37,7 +37,7 @@ declare(strict_types=1);
 |
 | AND THE ROUTE CACHE. The host runs a compiled route table and has no shell, so
 | a route added is inert until the cache is cleared:
-| database/migrations/2026_11_15_000000_clear_caches_homepage_content.php is the
+| database/migrations/2026_11_18_000003_clear_caches_homepage_content.php is the
 | migration that does it, and it ships in the same package as this file.
 */
 
