@@ -18,12 +18,31 @@ All three were applied to a working copy, the console was driven in a browser,
 and the screenshots in `docs/fo-homepage-shots/` were taken through them. They
 applied with no adjustment.
 
+**Blocks 1 and 2 must land together.** `AdminNavAndIdsTest` derives the
+`LATE_RENDERED` set from the file — every `TITLES` id that misses `go()`'s
+dispatch object, the frame maps and the `p-` branch — and fails if the literal
+has drifted from it in either direction. Applying block 1 alone was tried, and
+it fails with the sentence that names the consequence:
+
+```
+hpcontent  is in TITLES as "Appearance · Homepage content" but has no entry in
+           go()'s dispatch object, no frame and no boot of its own, so
+           ?go=hpcontent draws renderDash() under that heading and says nothing.
+           Add it to LATE_RENDERED, or give go() a renderer for it.
+```
+
+With both applied, that file is 36 passed.
+
 ---
 
 ## Block 1 — `const TITLES` gains one entry
 
-The breadcrumb and page heading. Without it the crumb reads `Platform` and the
-heading reads `hpcontent`.
+**The deep link, not the breadcrumb.** The screen sets its own crumb and title
+when `window.go` reaches it, so those are already right. What `TITLES` decides
+is whether `?go=hpcontent` is a routable id at all: the replay reads
+`TITLES[asked] || PLACEHOLDERS[asked]` and falls back to `dash` otherwise, so
+without this entry the Modules screen's Open button for `banners` — which now
+points here — lands the owner on the dashboard.
 
 **Anchor** (in the single-line `const TITLES={…}` literal, line ≈2638):
 
