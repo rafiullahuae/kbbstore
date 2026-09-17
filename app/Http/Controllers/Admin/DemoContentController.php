@@ -13,6 +13,7 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\Review;
+use Database\Seeders\DemoReviewsSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -452,9 +453,28 @@ class DemoContentController extends Controller
         $count = 0;
 
         foreach ($samples as [$rating, $name, $title, $content, $status]) {
+            /*
+             * `verified` IS FALSE, AND `source` SAYS WHERE THE ROW CAME FROM.
+             *
+             * These rows were written with 'verified' => true. That flag is
+             * what puts a "✓ Verified" tick beside a reviewer's name on the
+             * product page — it is a statement that this named person bought
+             * this product from this shop. The names are invented and the
+             * addresses are @example.kbb. Nobody verified anything, so the
+             * column says so.
+             *
+             * `source` is stamped to match DemoReviewsSeeder. Until now these
+             * rows were recorded ONLY in `demo_seed_log`, while the seeder's
+             * rows were marked ONLY by `source` — two provenance schemes, each
+             * blind to the other's rows. App\Support\DemoReviews has to ask
+             * both questions because rows already on the server predate this;
+             * stamping it here means anything seeded from now on is knowable
+             * from the `reviews` table alone.
+             */
             $r = Review::create([
                 'product_id' => $product->id, 'author_name' => $name, 'author_email' => Str::slug($name) . '@example.kbb',
-                'rating' => $rating, 'title' => $title, 'content' => $content, 'status' => $status, 'verified' => true,
+                'rating' => $rating, 'title' => $title, 'content' => $content, 'status' => $status,
+                'verified' => false, 'source' => DemoReviewsSeeder::SOURCE,
             ]);
             $this->log('reviews', Review::class, $r->id);
             $count++;

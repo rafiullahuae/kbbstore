@@ -211,7 +211,10 @@
     @foreach ($categories as $c)
       <a class="ct" href="{{ $c->url() }}">
         <div class="im" style="background:{{ Gradient::for($c->name) }}"></div>
-        <b>{{ $c->name }}</b><span class="n">{{ $c->products_count }} products</span>
+        {{-- The tally only when there is one. A demo stand-in tile counts no
+             real category and so carries 0; printing "0 products" under a tile
+             that links to a full shop would be its own small untruth. --}}
+        <b>{{ $c->name }}</b>@if ((int) $c->products_count > 0)<span class="n">{{ $c->products_count }} products</span>@endif
       </a>
     @endforeach
   </div>
@@ -313,7 +316,8 @@
     <a class="lnk" href="{{ Url::to('/brands/') }}">All brands</a></div>
   <div class="brands">
     @foreach ($brands as $b)
-      <a class="bd" href="{{ $b->url() }}"><div class="bname"><span class="bn">{{ $b->name }}</span><span class="bc">{{ $b->products_count }}</span></div></a>
+      {{-- As with the category tiles above: no tally for a stand-in brand. --}}
+      <a class="bd" href="{{ $b->url() }}"><div class="bname"><span class="bn">{{ $b->name }}</span>@if ((int) $b->products_count > 0)<span class="bc">{{ $b->products_count }}</span>@endif</div></a>
     @endforeach
   </div>
 </div></section>

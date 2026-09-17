@@ -93,13 +93,24 @@ class SeoFilesController extends Controller
          * half-migrated database serves a short sitemap instead of a 500.
          */
         if (Schema::hasTable('reviews')) {
-            $hasReviews = DB::table('reviews')
+            $query = DB::table('reviews')
                 ->where('status', 'approved')
                 ->whereNotNull('content')
-                ->where('content', '<>', '')
-                ->exists();
+                ->where('content', '<>', '');
 
-            if ($hasReviews) {
+            /*
+             * The same definition of "has a review" that the page itself uses.
+             *
+             * Support\ReviewWall now excludes demo-seeded rows, so a shop whose
+             * only reviews were seeded renders "No reviews yet" on /reviews. A
+             * sitemap built from the unfiltered table would go on submitting
+             * that page to Google — spending crawl budget to advertise an empty
+             * state, and reproducing in miniature the defect 2.60.192 fixed,
+             * where the sitemap promoted a page of invented customers.
+             */
+            \App\Support\DemoReviews::excludeQuery($query);
+
+            if ($query->exists()) {
                 $add($base . '/reviews/', null, '0.5', 'weekly');
             }
         }

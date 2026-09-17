@@ -65,7 +65,11 @@ class ProductController extends Controller
              */
             ->select('id', 'author_name', 'rating', 'title', 'content', 'verified', 'created_at', 'images', 'helpful', 'reply')
             ->where('product_id', $product->id)
-            ->approved();
+            ->approved()
+            // Demo-seeded rows are invented people with invented testimony and
+            // a "Verified" tick. They stay in the table so the admin can find
+            // and remove them; they do not appear on a public product page.
+            ->real();
 
         // Applied through the shared helper so the admin screen's option list
         // and the page's ORDER BY can never drift apart.
@@ -88,25 +92,34 @@ class ProductController extends Controller
             ->limit($reviewLimit)
             ->get();
 
-        // Demo reviews only when the product genuinely has none. A product with
-        // real reviews is never padded — that would misrepresent it.
-        //
-        // $realSummary is kept separately and is the ONLY thing the structured
-        // data is allowed to see. Demo content is a dressing for an empty page
-        // while the catalogue is being filled; publishing an aggregateRating
-        // derived from it would tell Google this product has reviews and a star
-        // average that no visitor can find anywhere on the page, which is the
-        // textbook trigger for a structured-data manual action. The seoCtx
-        // closure below used to capture $summary after this block had already
-        // replaced it.
+        /*
+         * NO DEMO REVIEWS ON A PRODUCT PAGE, in either half of it.
+         *
+         * WHAT USED TO HAPPEN. When the product had no reviews of its own and
+         * the Demo Content switch was on, this substituted
+         * DemoContent::productReviews(): six invented customers, five of them
+         * flagged `verified`, under a summary reading "4.9" and "3,204
+         * reviews". The structured data was already protected from it —
+         * $realSummary was kept back for exactly that reason, and the comment
+         * here explained that publishing such an aggregateRating is the
+         * textbook trigger for a structured-data manual action.
+         *
+         * WHY THAT WAS NOT ENOUGH. The reasoning stopped one step short. The
+         * argument against telling Google about 3,204 reviews that do not
+         * exist is not that Google is a special audience; it is that the
+         * number is false. A shopper reading "4.9 · 3,204 reviews" above six
+         * named people who never bought anything is the person the claim
+         * actually misleads, and inventing customer reviews is unlawful in the
+         * UAE, the EU and the UK whether or not a crawler sees them. Marking
+         * them would not help: a shopper who has to be told which of the
+         * reviews on the page are real has been shown fabricated ones.
+         *
+         * So the page now shows the product's real reviews or an honest empty
+         * state. $summary is the real summary, full stop; $realSummary remains
+         * as the name seoCtx below already closes over, and the two are now
+         * the same thing by construction rather than by care.
+         */
         $realSummary = $summary;
-        $demo = app(DemoContent::class);
-
-        if ($demo->enabled() && $reviews->isEmpty()) {
-            $fixture = $demo->productReviews();
-            $reviews = $fixture['items'];
-            $summary = $fixture['summary'];
-        }
 
         return view('store.product', [
             'product' => $product,
@@ -320,6 +333,12 @@ class ProductController extends Controller
             ->selectRaw('rating, COUNT(*) as n')
             ->where('product_id', $productId)
             ->approved()
+            // The same restriction the review list above applies, for the same
+            // reason and in the same place: this average and total are printed
+            // on the page AND handed to Seo as the schema.org aggregateRating.
+            // A summary computed over rows the list does not show would put a
+            // star rating in Google's results that no visitor can find.
+            ->real()
             ->groupBy('rating')
             ->pluck('n', 'rating');
 

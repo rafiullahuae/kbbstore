@@ -52,7 +52,11 @@ final class StoreRating
     public static function summary(): ?array
     {
         $row = Cache::remember(self::CACHE_KEY, 900, function () {
-            $aggregate = Review::query()->approved()
+            // ->real() as well as ->approved(): this figure is printed beside
+            // the pay button, and a trust line assembled out of demo-seeded
+            // rows is the single worst place on the site to state a number
+            // nobody earned.
+            $aggregate = Review::query()->approved()->real()
                 ->selectRaw('COUNT(*) c, AVG(rating) a')
                 ->first();
 

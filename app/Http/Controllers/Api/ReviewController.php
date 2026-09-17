@@ -30,9 +30,14 @@ class ReviewController extends Controller
     {
         $limit = min(max((int) $request->query('limit', 50), 1), 100);
 
+        // /api/* is unauthenticated: everything this returns is public, and
+        // that includes a demo row's invented author and `verified` flag. The
+        // storefront's own pages exclude them, so this must too, or the same
+        // fabrications simply leave by a different door.
         $rows = Review::query()
             ->select(self::PUBLIC_COLUMNS)
             ->where('status', 'approved')
+            ->real()
             ->orderByDesc('id')
             ->limit($limit)
             ->get();

@@ -615,18 +615,41 @@ it('ignores a pending review, which no visitor can see', function () {
 });
 
 it('never derives a star rating from demo content', function () {
-    // Demo content dresses an empty page while the catalogue is being filled.
-    // It must never reach the structured data: a star average Google can show
-    // against a page displaying no such reviews is a manual-action trigger.
+    /*
+     * This used to assert something weaker, and its own guard is what makes
+     * the change visible: it proved demo content was on by checking the page
+     * PRINTED a fabricated reviewer ("Aisha M."), then checked that the
+     * structured data had no aggregateRating. In other words the fabricated
+     * reviews were expected on the page and merely withheld from Google.
+     *
+     * They are now withheld from both. The shopper reading "4.9 · 3,204
+     * reviews" over six invented people is the person the claim misleads;
+     * keeping it out of the JSON-LD only hid it from the crawler.
+     */
     pseoSettings(['demo_content' => '1']);
 
     $product = pseoProduct();
     $html = pseoFetch($product);
 
-    // First prove demo content really is switched on for this render —
-    // otherwise the assertion below passes for the wrong reason and would go on
-    // passing after the guard was removed.
-    expect($html)->toContain('Aisha M.');
+    // Demo content really is on for this render, proved by something that is
+    // still supposed to be there — otherwise every assertion below passes for
+    // the wrong reason. The demo detail tabs are copy, not a claim about
+    // anyone's purchase, and DemoContent::tabs() still supplies them.
+    expect(str_contains($html, 'How to use'))->toBeTrue(
+        'Demo content must be switched on for this test to mean anything.'
+    );
+
+    // Not one of the six invented reviewers reaches the page.
+    foreach (['Aisha M.', 'Fatima K.', 'Noor S.', 'Layla H.', 'Mariam A.', 'Dana Q.'] as $invented) {
+        expect(str_contains($html, $invented))->toBeFalse(
+            "The product page must not print the demo reviewer {$invented}."
+        );
+    }
+
+    // Nor the summary that was printed above them.
+    expect(str_contains($html, '3,204'))->toBeFalse(
+        'The product page must not print the demo review total.'
+    );
 
     expect(pseoNode($html, 'Product'))->not->toHaveKey('aggregateRating');
 });

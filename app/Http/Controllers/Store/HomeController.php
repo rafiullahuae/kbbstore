@@ -96,11 +96,11 @@ class HomeController extends Controller
 
         // Review wall: a summary, the star distribution and a few reviews.
         $reviews = Cache::remember('kbb.home.reviews', 900, function () {
-            $agg = Review::query()->approved()->selectRaw('COUNT(*) c, AVG(rating) a')->first();
+            $agg = Review::query()->approved()->real()->selectRaw('COUNT(*) c, AVG(rating) a')->first();
             $total = (int) ($agg->c ?? 0);
 
             // One grouped query for the bars rather than five counts. (Rule 27)
-            $byStar = Review::query()->approved()
+            $byStar = Review::query()->approved()->real()
                 ->selectRaw('rating, COUNT(*) c')
                 ->groupBy('rating')
                 ->pluck('c', 'rating');
@@ -133,7 +133,7 @@ class HomeController extends Controller
                  * this way since it was written. This is the same list, minus
                  * the three the home card has no markup for.
                  */
-                'items' => Review::query()->approved()
+                'items' => Review::query()->approved()->real()
                     ->select(['id', 'product_id', 'author_name', 'rating', 'content',
                         'verified', 'helpful', 'created_at'])
                     ->whereNotNull('content')
@@ -195,9 +195,35 @@ class HomeController extends Controller
         $catalogueCount = Cache::remember('kbb.home.count', 900, fn () => Product::query()->visible()->count());
         $brandTotal = Cache::remember('kbb.home.brandcount', 900, fn () => Brand::query()->count());
 
-        // Demo content fills empty sections only. Real rows always win, and
-        // nothing here is written to the database — switching it off simply
-        // stops substituting.
+        /*
+         * Demo content fills empty SECTIONS so the layout can be seen before
+         * the catalogue is written. It does not supply a single FIGURE.
+         *
+         * WHAT WAS HERE, AND WHY IT IS GONE. Three of the statements in this
+         * block invented numbers and printed them to shoppers and to crawlers:
+         *
+         *   - `$demo->reviewSummary()` returned 12,481 reviews at 4.8 stars.
+         *     home.blade.php prints that as "12.5k+ verified reviews" in the
+         *     trust strip and as a full star-distribution wall headed "12,481
+         *     verified reviews from real orders." Not one of them existed.
+         *     Alongside it `$demo->reviews()` supplied four invented customers,
+         *     each carrying `verified = true` — the same defect, and the same
+         *     four people, that 2.60.192 has just finished removing from
+         *     /reviews.
+         *   - `max($catalogueCount, 671)` and `max($brandTotal, 93)` overstated
+         *     the size of the shop itself, in the "products stocked" and
+         *     "Korean brands" counters and in the shop-filter summary.
+         *
+         * The review wall now simply shows what the `reviews` table holds. Its
+         * section is already wrapped in `@if ($reviews['total'] > 0)`, so a
+         * shop with no reviews renders no wall at all rather than a zeroed one
+         * — an honest empty state, not a broken layout. The counters print the
+         * real COUNT(*) they were always computed from.
+         *
+         * The remaining substitutions are stand-in CARDS, not claims: they
+         * carry no rating, no review count and no product tally (see
+         * DemoContent), and every one of them links to /shop/.
+         */
         $demo = app(DemoContent::class);
 
         if ($demo->enabled()) {
@@ -208,13 +234,6 @@ class HomeController extends Controller
             $categories = $demo->fill($categories, 'categories', 8);
             $brands = $demo->fill($brands, 'brands', 12);
             $posts = $demo->fill($posts, 'posts', 3);
-
-            if ($reviews['total'] === 0) {
-                $reviews = $demo->reviewSummary() + ['items' => $demo->reviews()];
-            }
-
-            $catalogueCount = max($catalogueCount, 671);
-            $brandTotal = max($brandTotal, 93);
         }
 
         return view('store.home', [

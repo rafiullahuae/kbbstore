@@ -23,12 +23,30 @@ use Illuminate\Support\Facades\DB;
  *   - real rows exist, against real product ids, moderatable like any other;
  *   - the four reviews the homepage had been faking out of
  *     App\Services\DemoContent are among them;
- *   - the cached pair on `products` EQUALS the aggregate of the APPROVED rows,
- *     product by product, computed here from the table rather than taken from
- *     the code under test;
- *   - a pending review is counted by neither;
+ *   - the cached pair on `products` EQUALS the aggregate of the APPROVED,
+ *     NON-DEMO rows, product by product, computed here from the table rather
+ *     than taken from the code under test;
  *   - a second run adds nothing;
  *   - and DemoCatalogueSeeder can no longer invent a figure on its own.
+ *
+ * WHAT CHANGED, AND WHY THE ARITHMETIC ABOVE GAINED A CLAUSE.
+ *
+ * This file used to say the pair equalled the aggregate of the approved rows,
+ * full stop — and since the seeder's rows were the only rows, that is what put
+ * a star rating on the demo catalogue's cards and, through App\Support\Seo, a
+ * schema.org aggregateRating in front of Google. It was the same defect one
+ * layer down: the cards no longer disagreed with the product page, but both of
+ * them now agreed about customers who do not exist.
+ *
+ * `products.rating` and `products.review_count` are the widest-reaching figures
+ * on the storefront — every shop, category, brand and related card prints them,
+ * `?sort=rating` and `?sort=popular` order by them, `top_rated` selects on them
+ * — so App\Support\ProductRating now computes them from real rows only. A
+ * product whose only reviews were seeded therefore scores 0/0 and its card
+ * shows the "New" badge, which is the truth about it.
+ *
+ * The demo rows themselves are untouched and still in the table: the admin
+ * needs to see them to remove them. They simply do not count.
  *
  * WHY EACH TEST CLEARS FIRST. database/migrations/2026_10_11_000002_seed_demo_
  * reviews.php runs during the suite's migration pass, so every test starts with
@@ -46,11 +64,18 @@ function dsClearDemoReviews(): void
 }
 
 /**
- * The approved aggregate for one product, read straight from `reviews`.
+ * The aggregate the cached pair on `products` is supposed to equal: rows that
+ * are APPROVED **and** were written by a real person.
  *
- * Deliberately NOT App\Support\ProductRating — that is the code under test, and
- * a test that checks a value against the function that produced it checks
- * nothing.
+ * Deliberately NOT App\Support\ProductRating and NOT App\Support\DemoReviews —
+ * both are the code under test, and a test that checks a value against the
+ * function that produced it checks nothing. The two conditions are spelled out
+ * here in full so this stays an independent second opinion.
+ *
+ * The demo test is written as "source IS NULL OR source <> 'demo'" rather than
+ * "source <> 'demo'" for the reason the production predicate gives: on both
+ * engines `NULL <> 'demo'` is NULL, not true, so the shorter form silently
+ * drops every real review that carries no source at all.
  *
  * @return array{count: int, average: float}
  */
@@ -59,6 +84,13 @@ function dsApprovedAggregate(int $productId): array
     $rows = Review::query()
         ->where('product_id', $productId)
         ->where('status', ReviewStatus::APPROVED)
+        ->where(function ($q) {
+            $q->whereNull('source')->orWhere('source', '<>', DemoReviewsSeeder::SOURCE);
+        })
+        ->whereNotIn('id', DB::table('demo_seed_log')
+            ->where('model', Review::class)
+            ->pluck('record_id')
+            ->all())
         ->pluck('rating')
         ->all();
 
@@ -188,32 +220,62 @@ it('makes every product rating column agree with its approved reviews', function
     }
 });
 
-it('counts a pending review in neither the rating nor the count', function () {
+it('counts a demo review in neither the rating nor the count, approved or not', function () {
+    /*
+     * This test used to be about PENDING rows — it asserted that the cached
+     * pair excluded a demo review that was awaiting moderation, which meant it
+     * also asserted that an APPROVED demo review was included. That inclusion
+     * is the defect. Approved-versus-pending maths is pinned on real rows in
+     * RatingsTellTheTruthTest ('counts only approved reviews, not pending or
+     * spam'), so nothing is lost by making this one about provenance instead.
+     */
     dsClearDemoReviews();
     test()->seed(DemoReviewsSeeder::class);
 
-    // A product that actually has one, so this is not a vacuous pass.
+    // A product the seeder gave APPROVED reviews to — the case that used to
+    // produce a public star rating.
     $productId = (int) Review::query()
         ->where('source', DemoReviewsSeeder::SOURCE)
-        ->where('status', ReviewStatus::PENDING)
+        ->where('status', ReviewStatus::APPROVED)
         ->value('product_id');
 
     expect($productId)->toBeGreaterThan(0);
 
-    $total = Review::query()->where('product_id', $productId)->count();
-    $expected = dsApprovedAggregate($productId);
+    $demoApproved = Review::query()
+        ->where('product_id', $productId)
+        ->where('source', DemoReviewsSeeder::SOURCE)
+        ->where('status', ReviewStatus::APPROVED)
+        ->count();
 
-    expect($expected['count'])->toBeLessThan(
-        $total,
-        'This product must hold at least one unapproved review for the test to mean anything.'
+    expect($demoApproved)->toBeGreaterThan(
+        0,
+        'This product must hold at least one approved demo review for the test to mean anything.'
     );
 
     $product = Product::query()->whereKey($productId)->first(['rating', 'review_count']);
 
-    expect((int) $product->review_count)->toBe(
-        $expected['count'],
-        'The cached count must exclude the pending review.'
-    );
+    expect((int) $product->review_count)->toBe(0, 'Demo reviews must not be counted.');
+    expect(round((float) $product->rating, 2))->toBe(0.0, 'Demo reviews must not produce a score.');
+
+    /*
+     * And the columns are not simply stuck at zero: one REAL review on the same
+     * product moves both. Without this half the test would pass just as well
+     * against a ProductRating that had been broken outright.
+     */
+    Review::create([
+        'product_id' => $productId,
+        'author_name' => 'A Real Shopper',
+        'rating' => 4,
+        'content' => 'Genuinely bought this.',
+        'status' => ReviewStatus::APPROVED,
+    ]);
+
+    \App\Support\ProductRating::refresh([$productId]);
+
+    $product = Product::query()->whereKey($productId)->first(['rating', 'review_count']);
+
+    expect((int) $product->review_count)->toBe(1, 'A real review must still count.');
+    expect(round((float) $product->rating, 2))->toBe(4.0);
 });
 
 /* ------------------------------------------------------------ idempotence */
