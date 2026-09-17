@@ -10,7 +10,43 @@
     // as a plain link. Without this, a menu row that somehow references its own
     // parent would recurse until the request dies.
     $children = $depth >= 2 ? [] : ($item['children'] ?? []);
-    $hasKids = ! empty($children);
+
+    /*
+     * Store & content -> "Mega Menu" (module key mega_menu), the phone half of
+     * the gate in partials/nav-bar.blade.php.
+     *
+     * ── WHY THIS GATES THE SUB-PANELS AND NOT THE SHEET ────────────────────
+     *
+     * The registry's hover card says the switch takes "the panels that drop
+     * from the category bar, and the phone overlay", and the overlay reading
+     * was checked against the markup before it was built. It does not hold:
+     * `.mbar` is `display:none` under 1000px (resources/css/kbb/kbb.css), so
+     * on a phone the #mmenu sheet this partial fills is not the mega menu's
+     * overlay — it is the ONLY navigation the page has, and it also carries
+     * the menu search, the account links and the support footer, all of which
+     * are configured on a different screen (Appearance -> Mobile menu).
+     *
+     * Hiding the whole sheet would therefore leave a phone with no navigation
+     * at all and a #burger button that opens an empty panel — an orphaned
+     * control, which is the exact fault the desktop half of this gate exists
+     * to avoid ("one alone leaves a caret pointing at nothing"). It would also
+     * not be the same switch on the two surfaces: desktop keeps its top-level
+     * links when the module is off.
+     *
+     * So the phone equivalent of "the panels go" is "the expandable sections
+     * go": a parent renders as a plain link to its own URL, exactly as the
+     * desktop bar already links every parent whether or not it has children.
+     * Top-level rows, search, account and support all survive.
+     *
+     * THE OTHER READING IS ONE LINE. To make "off" remove the sheet entirely
+     * instead, wrap the <nav class="mmenu"> element in
+     * partials/mobile-chrome.blade.php in the same @if and leave this alone —
+     * but the #burger in partials/menu-icon.blade.php has to go with it, or
+     * the phone keeps a button that opens nothing.
+     */
+    $kbbMega = app(\App\Services\SettingsService::class)->moduleEnabled('mega_menu', true);
+
+    $hasKids = $kbbMega && ! empty($children);
     $label = $item['label'] ?? '';
     $url = \App\Support\Url::to($item['url'] ?? '/');
     $hot = ! empty($item['badge']) || str_contains(mb_strtolower($label), 'sale');

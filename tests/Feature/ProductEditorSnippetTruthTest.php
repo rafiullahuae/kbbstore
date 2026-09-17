@@ -50,11 +50,26 @@ declare(strict_types=1);
  * tag. Both counters now measure the tag.
  *
  * A SECOND FINDING CAME OUT OF WRITING THIS, and is pinned below rather than
- * fixed: `seo_title_template` cannot change a product title at all, because
- * ProductTitle::head() has already produced the final string and Seo::tokens()
- * then blanks {sitename}. That is a sitewide control with no reader on the
- * page type that matters most. Changing it would move every product's tab and
- * search result, so it is reported to the owner, not quietly altered.
+ * fixed: that `seo_title_template` cannot change a product title at all.
+ *
+ * MEASURED IN 2.60.199 (Lane EM), THAT WORDING IS TOO STRONG and the correction
+ * matters, because it points at a different fix. The template DOES reach product
+ * pages — "Buy {title} today" really does produce "Buy Anua Heartleaf
+ * Quercetinol Toner · K-Beauty Bliss today". What it cannot do THERE is move the
+ * site name: ProductTitle::head() has already put the suffix on, Seo::tokens()
+ * blanks {sitename} so the brand is not printed twice, and tidy() drops the
+ * separator it was attached to. The same is true of shop, collection, cart,
+ * checkout, wishlist, orders and CMS pages, and NOT true of the brand directory,
+ * the account pages or the newsletter pages, where both tokens work normally.
+ * The home page ignores the template outright.
+ *
+ * So it is not a control with no reader; it is a control that behaves
+ * differently on different pages with nothing saying which. The behaviour is
+ * still not altered here — doing so means taking the suffix out of
+ * ProductTitle::head(), which moves every product's tab and search result at
+ * once — but the screen now states it, via
+ * AdminController::titleTemplateBasis(), and the full map is pinned in
+ * tests/Feature/TitleTemplateReachTest.php.
  *
  * ── WHAT IS PINNED ─────────────────────────────────────────────────────────
  *
@@ -244,18 +259,22 @@ it('agrees with the page even when the sitewide title template is changed', func
     /*
      * A FINDING, PINNED AS IT STANDS RATHER THAN CHANGED.
      *
-     * `seo_title_template` on the SEO & Meta screen cannot alter a PRODUCT
-     * title on this store, and nothing says so. ProductTitle::head() hands the
-     * engine a raw title that already ends in the site name; Seo::tokens()
-     * therefore blanks {sitename}; TitleTemplate::tidy() then drops the
-     * separator that token was attached to. Whatever the operator arranges
-     * around {title}, what survives is {title} -- which already is the whole
-     * thing.
+     * `seo_title_template` cannot REORDER a product title on this store, and
+     * nothing on the screen said so. ProductTitle::head() hands the engine a
+     * raw title that already ends in the site name; Seo::tokens() therefore
+     * blanks {sitename}; TitleTemplate::tidy() then drops the separator that
+     * token was attached to. Rearranging {title}, {sep} and {sitename} around
+     * each other changes nothing here.
+     *
+     * (It is NOT true that the template has no effect at all — literal text in
+     * it does reach a product title. See this file's header and
+     * tests/Feature/TitleTemplateReachTest.php, which maps every page type.)
      *
      * Changing that would move every product page's tab and every product's
      * search result on a shop that has not asked for it, and ProductTitle::head
      * says in as many words that it moved the string without changing what any
-     * page prints. So this lane reports it and pins the behaviour instead.
+     * page prints. So the behaviour is pinned and the screen is made to state
+     * it, via AdminController::titleTemplateBasis().
      *
      * What matters for the preview either way is the invariant below: whatever
      * the template does or does not do, the editor is handed the page's bytes.
@@ -286,14 +305,41 @@ it('hands this editor the same description bytes the page publishes', function (
     expect(peiEditorPayload($product)['seo_description'])->toBe($published);
 });
 
-it('admits this page publishes no description where it publishes none', function () {
+it('shows the sitewide description once the short-description box is cleared', function () {
     /*
-     * The reported-not-patched defect: the editor writes '' when the operator
-     * clears the short-description box, `??` falls through on null only, so the
-     * sitewide default is never reached and NO description tag is emitted. The
-     * preview's job is to stop hiding that, which is what the invented sentence
-     * did.
+     * WAS THE REPORTED-NOT-PATCHED DEFECT, FIXED IN 2.60.199 (Lane EM).
+     *
+     * The editor writes '' when the operator clears the short-description box;
+     * `??` falls through on null only, so the sitewide default was never
+     * reached and the page emitted NO description tag — the product lost its
+     * Google snippet with no warning anywhere. ProductSeo::rawDescription() now
+     * answers null for a short description with no words in it, so the engine
+     * reaches `seo_default_description` exactly as it does for a product that
+     * never had one.
+     *
+     * This file's own subject is unchanged and is the assertion that matters:
+     * whatever the chain produces, THIS EDITOR IS HANDED THE PAGE'S BYTES.
      */
+    $product = peiProduct(['short_description' => '']);
+
+    $published = peiStorefrontDescription($product);
+
+    expect($published)->toBe('Korean skincare and K-beauty, shipped across the Gulf.');
+
+    $payload = peiEditorPayload($product);
+
+    expect($payload['seo_description'])->toBe($published)
+        ->and($payload['seo_fallback_description'])->toBe($published);
+});
+
+it('still admits this page publishes no description where it publishes none', function () {
+    /*
+     * '' REMAINS A REAL ANSWER. The fix routes an empty short description to
+     * the sitewide default; it does not invent a sentence when that is empty
+     * too — which is the fault this whole file was written against.
+     */
+    peiSettings(['seo_default_description' => '']);
+
     $product = peiProduct(['short_description' => '']);
 
     expect(peiStorefrontDescription($product))->toBeNull();

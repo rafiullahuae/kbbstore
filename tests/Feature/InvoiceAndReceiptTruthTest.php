@@ -181,6 +181,84 @@ it('agrees with the printable invoice about whether it was paid', function () {
         ->and($paid['paid'])->toBeTrue('a paid order reports itself unpaid');
 });
 
+/* --------------------------- 1b. a COD order whose cash was collected --------- */
+
+/*
+ * THE INVOICE ASKS "WAS THIS ORDER'S MONEY COLLECTED", NOT "DID A PROVIDER
+ * CONFIRM IT" — Lane EM, 2.60.199.
+ *
+ * `$doc['paid']` read `paid_at !== null`. PaymentCapturer settles a cash-on-
+ * delivery order by writing `captured_at` and `captured_total` and deliberately
+ * NOT `paid_at`, because on COD there is no provider and nothing was ever
+ * authorised — CashOnDelivery's class note says exactly that, and five other
+ * things read `paid_at` as the provider claim it is (PaymentConfirmer's replay
+ * guard, PaymentCapturer's not-authorised check, PaymentRefunder's refundable
+ * ceiling, the emailed "Paid ... on <date>" line and the order screen's payment
+ * note).
+ *
+ * So a COD order whose cash the courier had handed over, which the operator had
+ * captured, and which the refund engine would let you refund in full, printed an
+ * invoice with no PAID stamp on it. The shop handed the customer a document
+ * saying it had not been paid, after being paid.
+ *
+ * Fixed in InvoiceDocument alone. `paid_at` is untouched, so nothing else moves.
+ */
+
+it('stamps a cash-on-delivery order paid once its cash has been captured', function () {
+    $collected = app(InvoiceDocument::class)->present(invoiceOrder([
+        'captured_at' => now(),
+        'captured_total' => 22500,
+    ]));
+
+    expect($collected['paid'])->toBeTrue('a COD order whose cash was collected still prints unpaid');
+});
+
+it('still reports a cash-on-delivery order unpaid before anyone captures it', function () {
+    // The other side of the same switch: COD is the ordinary method here, and
+    // an invoice emailed the moment the order is placed must not claim the cash
+    // has been taken. This is the case Lane CX's assertions above cover, and it
+    // has to keep answering the same way.
+    $placed = invoiceOrder();
+
+    expect($placed->paid_at)->toBeNull();
+    expect($placed->captured_at)->toBeNull();
+    expect(app(InvoiceDocument::class)->present($placed)['paid'])->toBeFalse();
+});
+
+it('leaves a confirmed-but-uncaptured card order stamped exactly as it was', function () {
+    /*
+     * NOTHING THAT USED TO STAMP PAID STOPS DOING SO. A card order that a
+     * provider has authorised carries `paid_at` and no `captured_at`; its
+     * invoice said Paid before this change and still does. The two columns are
+     * not redundant, which is why the test is an OR rather than a replacement.
+     */
+    $authorised = app(InvoiceDocument::class)->present(invoiceOrder([
+        'payment_method' => 'tabby',
+        'payment_method_title' => 'Tabby',
+        'paid_at' => now(),
+    ]));
+
+    expect($authorised['paid'])->toBeTrue();
+});
+
+it('does not borrow the capture date for the "Paid on" line', function () {
+    /*
+     * `paidAt` is deliberately NOT widened alongside `paid`. It is printed as
+     * "Paid by <method> on <date>" in the invoice email, and the date a COD
+     * order was captured is the date the shop marked the cash received, which
+     * is not always the day the courier took it. An empty date is less wrong
+     * than a confident wrong one; printing the collection date is an owner's
+     * call, not this method's.
+     */
+    $doc = app(InvoiceDocument::class)->present(invoiceOrder([
+        'captured_at' => now(),
+        'captured_total' => 22500,
+    ]));
+
+    expect($doc['paid'])->toBeTrue();
+    expect($doc['paidAt'])->toBe('');
+});
+
 /* ----------------------------------------------- 2. the column reaches the total */
 
 it('prints a column of figures that adds up to the total charged', function () {

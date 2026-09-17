@@ -125,7 +125,58 @@ class InvoiceDocument
             'vatNote' => $this->vatNote($order),
 
             'paymentLabel' => $order->paymentLabel(),
-            'paid' => $order->paid_at !== null,
+
+            /*
+             * WAS THIS ORDER'S MONEY COLLECTED? — not "did a provider confirm
+             * it", which is the different question `paid_at` answers.
+             *
+             * THE BUG. This read `$order->paid_at !== null`. PaymentCapturer
+             * settles a cash-on-delivery order by writing `captured_at` and
+             * `captured_total` and deliberately NOT `paid_at`, because on COD
+             * there is no provider and nothing was ever authorised — the note
+             * on App\Services\Payments\Gateways\CashOnDelivery says so in as
+             * many words. So a COD order whose cash the courier had handed
+             * over, which the operator had captured, and which the refund
+             * engine would let you refund in full, printed an invoice with no
+             * Paid stamp on it. The customer was handed a document saying the
+             * shop had not been paid, by the shop, after paying.
+             *
+             * WHY THIS IS NOT FIXED BY SETTING `paid_at` ON COD CAPTURE. That
+             * column is a claim about a provider and five other things read it
+             * as one: PaymentConfirmer's idempotency guard (a non-null
+             * `paid_at` is how a replayed webhook is recognised and refused),
+             * PaymentCapturer's own not-authorised check, PaymentRefunder's
+             * refundable ceiling, the order-invoice email's "Paid ... on
+             * <date>" line, and the order detail screen's payment note.
+             * Writing it on COD would make a replayed webhook look handled and
+             * would have every one of those read "a provider confirmed this"
+             * about an order no provider ever saw. The invoice's question is
+             * narrower and is answerable from columns that already mean
+             * exactly it.
+             *
+             * `captured_at` IS THE RIGHT COLUMN AND MEANS THE FULL AMOUNT.
+             * PaymentCapturer captures `(int) $order->total` and nothing else
+             * — there is no partial capture in this application — and it
+             * releases `captured_at` back to null when the provider call
+             * fails, precisely so that a non-null value is never a lie. So
+             * `captured_at !== null` is "the whole of this order's money was
+             * collected", which is what a Paid stamp asserts.
+             *
+             * `paid_at` stays in the test because the two are not redundant:
+             * a card order authorised and confirmed but not yet captured has
+             * `paid_at` and no `captured_at`, and its invoice said Paid before
+             * this change and still does. Nothing that used to stamp Paid
+             * stops doing so; COD starts.
+             *
+             * `paidAt` above is deliberately NOT widened to match. It is a
+             * date labelled "Paid ... on" in the invoice email, and the date a
+             * COD order was captured is the date the shop marked the cash
+             * received, which is not always the day the courier took it. An
+             * empty date is less wrong than a confident wrong one, and
+             * printing the collection date is an owner's call, not this
+             * method's.
+             */
+            'paid' => $order->paid_at !== null || $order->captured_at !== null,
             'deliveryMethod' => trim((string) $order->shipping_method) ?: 'Standard delivery',
             'couponCode' => trim((string) $order->coupon_code),
             'isGift' => (bool) $order->is_gift,

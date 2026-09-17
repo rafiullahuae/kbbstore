@@ -244,23 +244,63 @@ it('clamps a long description exactly where the page clamps it', function () {
     expect(sdpEditorPayload($product)['seo_fallback_description'])->toBe($published);
 });
 
-it('admits the page publishes no description at all where it publishes none', function () {
+it('falls back to the sitewide description when the short-description box is cleared', function () {
     /*
-     * A REPORTED DEFECT, PINNED RATHER THAN PATCHED.
+     * THE DEFECT THIS FILE USED TO PIN, NOW FIXED (Lane EM, 2.60.199).
      *
-     * `??` falls through on null only. The product editor writes the EMPTY
-     * STRING when the operator clears the short-description box
-     * (AdminController::updateProduct assigns whatever arrives), and an empty
-     * string is a value — so the sitewide default is never reached and
-     * App\Support\Seo emits no description tag whatsoever. The product silently
-     * loses its search snippet, and nothing anywhere says so.
+     * It read: clearing the short-description box wrote '', `??` falls through
+     * on null only, so the sitewide default was never reached and
+     * App\Support\Seo emitted NO description tag whatsoever. The product
+     * silently lost its Google snippet and nothing on any screen said so.
      *
-     * Changing that is a decision about what every such product's search result
-     * says, and it belongs with the editor's write path rather than in a lane
-     * passing through the read path. What this lane can do is make sure the
-     * preview STOPS HIDING IT: the endpoint answers '' and the snippet shows an
-     * empty description, which is precisely what Google would show.
+     * ProductSeo::rawDescription() now answers null for a short description
+     * with no words in it, so the engine reaches `seo_default_description`
+     * exactly as it does for a product that never had one. Fixed on the READ
+     * path deliberately: normalising on write would have left every product
+     * already carrying '' broken until somebody re-saved it. See the note on
+     * that method.
+     *
+     * THE PREVIEW STILL TELLS THE TRUTH, which is this file's actual subject:
+     * the endpoint and the page are asserted to agree, whatever the answer is.
      */
+    $product = sdpProduct(['short_description' => '']);
+
+    $published = sdpStorefrontDescription($product);
+
+    expect($published)->toBe('Korean skincare and K-beauty, shipped across the Gulf.');
+    expect(sdpEditorPayload($product)['seo_fallback_description'])->toBe($published);
+});
+
+it('treats a short description with no words in it as no description', function () {
+    /*
+     * The case a `trim($value) !== ''` test would have missed and a WooCommerce
+     * import supplies by the thousand. Seo::describe() strips tags before it
+     * decides whether to print anything, so '<p></p>' and '&nbsp;' are strings
+     * it would reduce to '' and publish as no tag at all. rawDescription()
+     * measures emptiness the same way, so the two agree by construction rather
+     * than by luck.
+     */
+    foreach (['<p></p>', '   ', "<p>\n  <br>\n</p>"] as $blank) {
+        $product = sdpProduct(['short_description' => $blank]);
+
+        $published = sdpStorefrontDescription($product);
+
+        expect($published)->toBe('Korean skincare and K-beauty, shipped across the Gulf.');
+        expect(sdpEditorPayload($product)['seo_fallback_description'])->toBe($published);
+    }
+});
+
+it('still publishes no description when there is no sitewide default either', function () {
+    /*
+     * '' IS STILL A REAL ANSWER. The fix routes an empty short description to
+     * the sitewide default; it does not invent a sentence when that is empty
+     * too. A shop that has cleared `seo_default_description` publishes no
+     * description tag, and the preview shows an empty description rather than
+     * papering over it — which is the behaviour this whole file exists to
+     * defend.
+     */
+    sdpSettings(['seo_default_description' => '']);
+
     $product = sdpProduct(['short_description' => '']);
 
     expect(sdpStorefrontDescription($product))->toBeNull();

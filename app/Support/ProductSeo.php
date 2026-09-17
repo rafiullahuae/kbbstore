@@ -68,16 +68,43 @@ final class ProductSeo
      * expression in that controller and nowhere else, which is why the admin's
      * snippet preview could not consult it and invented a sentence instead.
      *
-     * AN EMPTY `short_description` IS NOT NULL, AND THE DIFFERENCE IS VISIBLE.
-     * `??` falls through on null only, so a product whose short description is
-     * the empty string — which is exactly what the product editor writes when
-     * the operator clears that box — feeds '' to the engine, and App\Support\Seo
-     * emits NO description tag at all rather than falling back to
-     * `seo_default_description`. That is today's behaviour, preserved here
-     * verbatim rather than quietly corrected: it is a real defect, it belongs
-     * to the editor's write path as much as to this read path, and a lane that
-     * changed it in passing would move every such product's search snippet
-     * without anybody deciding to. It is reported, not patched.
+     * AN EMPTY `short_description` IS ABSENT, NOT PRESENT-AND-BLANK — FIXED
+     * HERE (Lane EM, 2.60.199), on the read path rather than the write path.
+     *
+     * It used to be preserved verbatim and reported: `??` falls through on null
+     * only, so a product whose short description was the empty string — exactly
+     * what the product editor writes when the operator clears that box — fed ''
+     * to the engine, and App\Support\Seo::describe()'s `?? ... ?? ''` chain
+     * stopped dead on it. The page emitted NO `<meta name="description">` at
+     * all instead of falling back to `seo_default_description`, so clearing a
+     * box in the admin silently deleted that product's Google snippet with
+     * nothing on any screen saying so.
+     *
+     * WHY THE READ PATH AND NOT THE EDITOR'S WRITE PATH. Normalising '' to null
+     * on write fixes the next save and leaves every product already carrying ''
+     * broken until somebody re-saves it, so it would need a data migration over
+     * `products` to finish the job — and it would still leave this method
+     * answering "yes, there is a description, it is empty" to anything that
+     * asked. The question this method exists to answer is "does this product
+     * supply a description?", and '' is not a description. Fixing it here fixes
+     * every affected product on the next request, needs no migration, and
+     * cannot drift from the page, because the page and the admin's snippet
+     * preview both reach the engine through this one method.
+     *
+     * EMPTINESS IS MEASURED THE WAY describe() MEASURES IT — strip_tags, then
+     * collapse whitespace, then trim. A WooCommerce import's `<p></p>` or a
+     * lone `&nbsp;` is a non-empty string that describe() reduces to '' anyway,
+     * so testing the raw string would have fixed the cleared box and left the
+     * imported empty paragraph still deleting snippets. The two now agree by
+     * construction: if there is nothing the engine could print, this says so.
+     *
+     * NOTHING SUPPRESSES A DESCRIPTION DELIBERATELY TODAY, which is why this is
+     * safe to read as an accident rather than an intention. normalise() filters
+     * '' out of the stored `seo` array, so a cleared per-product SEO
+     * description box is never persisted as '' in the first place, and there is
+     * no control anywhere that means "publish no description for this product".
+     * If one is ever wanted it needs its own explicit flag, not an empty string
+     * that four other things read as a typo.
      *
      * @param  bool  $ignoreOverride  answer as though the per-product SEO
      *   description box were empty — what the admin's snippet preview needs in
@@ -87,11 +114,28 @@ final class ProductSeo
     {
         $override = is_array($product->seo) ? $product->seo : [];
 
-        if (! $ignoreOverride && isset($override['desc'])) {
+        if (! $ignoreOverride && self::hasText($override['desc'] ?? null)) {
             return $override['desc'];
         }
 
-        return $product->short_description ?? null;
+        return self::hasText($product->short_description) ? $product->short_description : null;
+    }
+
+    /**
+     * Would the SEO engine get any words out of this?
+     *
+     * The same reduction App\Support\Seo::describe() applies before it decides
+     * whether to emit a tag, asked as a question. Kept beside rawDescription()
+     * because the two have to agree: anything this calls empty is something
+     * describe() would have rendered as '' and published as no tag at all.
+     */
+    private static function hasText(mixed $value): bool
+    {
+        if (! is_string($value)) {
+            return false;
+        }
+
+        return trim((string) preg_replace('/\s+/', ' ', strip_tags($value))) !== '';
     }
 
     /**
