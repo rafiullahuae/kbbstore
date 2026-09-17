@@ -557,6 +557,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         Route::post('/homepage', [\App\Http\Controllers\Admin\HomepageApiController::class, 'save']);
         Route::post('/homepage/layout', [\App\Http\Controllers\Admin\HomepageApiController::class, 'applyLayout']);
 
+        // Appearance → Homepage content (Phase 15). The WORDS on the homepage,
+        // as opposed to which of its sections appear, which the three routes
+        // above already own. Same guarded group: it writes the settings the
+        // storefront reads for the hero, the About paragraph and the ticker.
+        require __DIR__.'/homepage-content-admin.php';
+
         // Storefront settings, grouped into tabs.
         Route::get('/ecommerce',  [\App\Http\Controllers\Admin\EcommerceApiController::class, 'show']);
         Route::post('/ecommerce', [\App\Http\Controllers\Admin\EcommerceApiController::class, 'save']);

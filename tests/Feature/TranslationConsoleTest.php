@@ -575,7 +575,28 @@ it('keeps the handover document and the applied console in step', function () {
         expect(str_contains($app, "'".$id."'"))->toBeTrue($id.' is not in the applied file');
     }
 
-    expect($app)->toContain("const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine']);");
+    /*
+     * THE FOUR IDS ARE ARMED — asserted about the four, not about the whole set.
+     *
+     * This line used to pin the set literal character for character, which made
+     * it a lock on every OTHER screen in the console: Lane FO's Appearance →
+     * Homepage content joined LATE_RENDERED for exactly the same reason and by
+     * exactly the same rule, and this assertion went red over a change that has
+     * nothing to do with translation. A guard that fails when somebody else does
+     * the right thing teaches people to edit the guard, which is how a guard
+     * stops guarding.
+     *
+     * It is not weaker. The set is located first and the match is asserted, so
+     * the check cannot pass by finding nothing (risk ▒36), and each of the four
+     * ids is then required inside it — remove any one and this still goes red.
+     */
+    expect(preg_match('/const LATE_RENDERED\s*=\s*new Set\(\[([^\]]*)\]\);/', $app, $m))
+        ->toBe(1, 'LATE_RENDERED could not be found in the applied console at all');
+
+    foreach (['tr-settings', 'tr-progress', 'tr-strings', 'tr-machine'] as $id) {
+        expect(str_contains($m[1], "'".$id."'"))
+            ->toBeTrue($id.' is not armed in LATE_RENDERED, so a deep link to it opens the dashboard');
+    }
 });
 
 /*
