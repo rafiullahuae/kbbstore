@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Payments;
 
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Refund;
 use App\Support\Money;
 use Illuminate\Database\QueryException;
@@ -208,8 +209,39 @@ class PaymentRefunder
     /**
      * The most that could ever be refunded on this order, in fils.
      *
-     * Not a float anywhere on this path: `captured_total` and `total` are both
-     * integer columns and neither is divided before it is compared.
+     * Not a float anywhere on this path: `captured_total`, `payments.amount`
+     * and `total` are all integer columns and none is divided before it is
+     * compared.
+     *
+     * WHY THIS DOES NOT READ `orders.total` FIRST
+     *
+     * It used to, whenever the order was confirmed but not captured through
+     * this lane — which is every Stripe, Tabby and Tamara order between the
+     * callback landing and somebody pressing Capture, and every Stripe order
+     * that was captured at Stripe and so never needs the button at all.
+     *
+     * `orders.total` is not evidence of anything. It is a mutable column, and
+     * `processing` is in AdminOrderController::EDITABLE_STATUSES, so the
+     * admin can add and remove lines on a paid order and the ceiling moved
+     * with them in BOTH directions:
+     *
+     *   - edit UP, and a refund larger than the payment is accepted. An order
+     *     paid 200.00 with a 100.00 line added refunded 300.00 and was marked
+     *     `refunded`. 100.00 the shop never took went back to the customer.
+     *   - edit DOWN, and the customer cannot be given back what they paid. The
+     *     same order edited to 100.00 refunded 100.00, reported nothing
+     *     further refundable, and moved to `refunded` — a full-refund claim
+     *     while the shop still held 100.00 of the buyer's money.
+     *
+     * So the ceiling is the amount the PROVIDER confirmed, on the `payments`
+     * rows PaymentConfirmer writes inside the same transaction that sets
+     * `paid_at`. Those rows are never rewritten by an order edit.
+     *
+     * `orders.total` survives only as the fallback for a paid order carrying
+     * no payment row at all — a WooCommerce order brought in by
+     * Import\Entities\OrderImporter, which sets `paid_at` from `date_paid`
+     * and has no provider record to offer. There is no better evidence for
+     * those, and refusing to refund them would be worse than a soft ceiling.
      */
     public function capturedFils(Order $order): int
     {
@@ -219,9 +251,20 @@ class PaymentRefunder
             return $captured;
         }
 
-        // Confirmed but not captured through this lane. The order total is the
-        // ceiling, because it is the most the provider was ever asked for.
-        return $order->paid_at !== null ? (int) $order->total : 0;
+        if ($order->paid_at === null) {
+            return 0;
+        }
+
+        // Only `paid` rows. A row whose status is `amount_mismatch`,
+        // `currency_mismatch` or a provider failure reason records a payment
+        // that was REFUSED, and summing it would build the ceiling out of
+        // money that never arrived.
+        $confirmed = (int) Payment::query()
+            ->where('order_id', $order->getKey())
+            ->where('status', 'paid')
+            ->sum('amount');
+
+        return $confirmed > 0 ? $confirmed : (int) $order->total;
     }
 
     /** Fils already refunded or reserved against this order. */
