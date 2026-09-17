@@ -60,7 +60,28 @@
                     <div class="sec">
                         <h2><span class="n">1</span> Contact</h2>
                         <div class="row2">
-                            <p class="form-row form-row-wide validate-required validate-email" id="billing_email_field" data-priority="1"><label for="billing_email" class="required_field">Email address&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="email" class="input-text " name="billing_email" id="billing_email" placeholder="you@email.com"  value="{{ old('billing_email', $prefill['email'] ?? '') }}" required aria-required="true" autocomplete="section-billing billing email" /></span></p>                            <p class="form-row form-row-wide validate-phone" id="billing_phone_field" data-priority="100"><label for="billing_phone" class="">Phone&nbsp;<span class="optional">(optional)</span></label><span class="woocommerce-input-wrapper"><input type="tel" class="input-text " name="billing_phone" id="billing_phone" placeholder="+971 5x xxx xxxx"  value="{{ old('billing_phone', $prefill['phone'] ?? '') }}" autocomplete="section-billing billing tel" /></span></p>                        </div>
+                            <x-checkout.field name="billing_email" label="Email address" type="email" required
+                                validate="validate-required validate-email" priority="1"
+                                placeholder="you@email.com" inputmode="email"
+                                autocomplete="section-billing billing email"
+                                :value="old('billing_email', $prefill['email'] ?? '')" />
+
+                            <x-checkout.field name="billing_phone" label="Phone" type="tel" optional
+                                validate="validate-phone" priority="100"
+                                placeholder="+971 5x xxx xxxx" inputmode="tel"
+                                autocomplete="section-billing billing tel"
+                                :value="old('billing_phone', $prefill['phone'] ?? '')" />
+                        </div>
+{{-- THE THREE COMPOUND ROWS ON THIS PAGE STAY HAND-WRITTEN, deliberately.
+
+     This one, the gift row below and the WhatsApp opt-in are not fields with a
+     label above them: each is a tick that reveals or prices a second control,
+     with its own wrapper classes, its own hidden state and -- here -- the only
+     per-field error message on the checkout. Pushing them through
+     x-checkout.field would mean teaching that component three shapes it has one
+     caller each for, which is how a shared component becomes harder to read
+     than the nine copies it replaced. The nine plain rows are the ones that
+     were drifting, and they are the ones it renders. --}}
 @guest('customer')
                             <p class="form-row form-row-wide kbb-acct" id="create_account_field">
                                 <label for="create_account" class="kbb-acct-opt">
@@ -85,26 +106,65 @@
                     <div class="sec">
                         <h2><span class="n">2</span> Shipping address</h2>
 @if ($singleName ?? true)
-                            <p class="form-row form-row-wide validate-required" id="billing_first_name_field" data-priority="10"><label for="billing_first_name" class="required_field">Full name&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="billing_first_name" id="billing_first_name" placeholder="First and last name"  value="{{ old('billing_first_name', $prefill['name'] ?? '') }}" required aria-required="true" autocomplete="section-billing billing given-name" /></span></p>
+                            {{-- autocomplete="name", not "given-name". This one box holds the
+                                 whole name -- splitName() in the controller cuts it up -- and a
+                                 browser told "given-name" fills it with the first name alone,
+                                 leaving the surname to be typed by hand on a phone. --}}
+                            <x-checkout.field name="billing_first_name" label="Full name" required
+                                validate="validate-required" priority="10"
+                                placeholder="First and last name"
+                                autocomplete="section-billing billing name"
+                                :value="old('billing_first_name', $prefill['name'] ?? '')" />
 @else
                             {{-- Store → Ecommerce → Checkout → Form fields, off. The single field
                                  above is still what the backend sees when this is on — splitName()
                                  in the controller has accepted this shape all along; only the form
                                  itself never offered it. --}}
                             <div class="row2">
-                                <p class="form-row form-row-first validate-required" id="billing_first_name_field" data-priority="10"><label for="billing_first_name" class="required_field">First name&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="billing_first_name" id="billing_first_name" placeholder=""  value="{{ old('billing_first_name', $prefill['first_name'] ?? '') }}" required aria-required="true" autocomplete="section-billing billing given-name" /></span></p>
-                                <p class="form-row form-row-last validate-required" id="billing_last_name_field" data-priority="20"><label for="billing_last_name" class="required_field">Last name&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="billing_last_name" id="billing_last_name" placeholder=""  value="{{ old('billing_last_name', $prefill['last_name'] ?? '') }}" required aria-required="true" autocomplete="section-billing billing family-name" /></span></p>
+                                <x-checkout.field name="billing_first_name" label="First name" required
+                                    rowClass="form-row-first" validate="validate-required" priority="10"
+                                    autocomplete="section-billing billing given-name"
+                                    :value="old('billing_first_name', $prefill['first_name'] ?? '')" />
+
+                                <x-checkout.field name="billing_last_name" label="Last name" required
+                                    rowClass="form-row-last" validate="validate-required" priority="20"
+                                    autocomplete="section-billing billing family-name"
+                                    :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
                             </div>
-@endif                        <p class="form-row form-row-wide validate-required" id="billing_address_1_field" data-priority="50"><label for="billing_address_1" class="required_field">Address&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="billing_address_1" id="billing_address_1" placeholder="Street, building / villa no."  value="{{ old('billing_address_1', $prefill['line1'] ?? '') }}" required aria-required="true" autocomplete="section-billing billing address-line1" /></span></p>                        <div class="row2">
+@endif
+                        <x-checkout.field name="billing_address_1" label="Address" required
+                            validate="validate-required" priority="50"
+                            placeholder="Street, building / villa no."
+                            autocomplete="section-billing billing address-line1"
+                            :value="old('billing_address_1', $prefill['line1'] ?? '')" />
+
+                        <div class="row2">
                             {{-- A text input, exactly as the live site. It was a select whose
                                  change handler reloaded the page, which made the field unusable. --}}
-                            <p class="form-row form-row-wide validate-required validate-state" id="billing_state_field" data-priority="80"><label for="billing_state" class="required_field">Emirate&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " value="{{ old('billing_state', $prefill['state'] ?? '') }}"  placeholder="" name="billing_state" id="billing_state" required aria-required="true" autocomplete="section-billing billing address-level1" data-input-classes=""/></span></p>                            <p class="form-row form-row-wide validate-required" id="billing_city_field" data-priority="70"><label for="billing_city" class="required_field">City / area&nbsp;<span class="required" aria-hidden="true">*</span></label><span class="woocommerce-input-wrapper"><input type="text" class="input-text " name="billing_city" id="billing_city" placeholder="e.g. Al Reem Island"  value="{{ old('billing_city', $prefill['city'] ?? '') }}" required aria-required="true" autocomplete="section-billing billing address-level2" /></span></p>                        </div>
+                            <x-checkout.field name="billing_state" label="Emirate" required
+                                validate="validate-required validate-state" priority="80"
+                                autocomplete="section-billing billing address-level1"
+                                :value="old('billing_state', $prefill['state'] ?? '')" />
+
+                            <x-checkout.field name="billing_city" label="City / area" required
+                                validate="validate-required" priority="70"
+                                placeholder="e.g. Al Reem Island"
+                                autocomplete="section-billing billing address-level2"
+                                :value="old('billing_city', $prefill['city'] ?? '')" />
+                        </div>
 {{-- The country selector is always shown now: delivery always covers at
                              least the zone countries (the Gulf set, in production), and the
                              charge always depends on which one is picked. It carries the
                              checkout's own .input-text class, the same wrapper as Emirate and
                              City, so it matches rather than being a new look bolted in. --}}
-                        <p class="form-row form-row-wide validate-required" id="billing_country_field" data-priority="40"><label for="billing_country" class="required_field">Country&nbsp;<span class="required" aria-hidden="true">*</span>@if ($countryDetected ?? false)<span class="xd-detected">Detected</span>@endif</label><span class="woocommerce-input-wrapper"><select name="billing_country" id="billing_country" class="input-text " aria-required="true" autocomplete="section-billing billing country">@foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $name }}</option>@endforeach</select></span></p>
+                        <x-checkout.field name="billing_country" label="Country" type="select" required
+                            validate="validate-required" priority="40"
+                            autocomplete="section-billing billing country">
+                            @if ($countryDetected ?? false)
+                                <x-slot:badge><span class="xd-detected">Detected</span></x-slot:badge>
+                            @endif
+                            @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $name }}</option>@endforeach
+                        </x-checkout.field>
                     </div>
 
                     <!-- 3 · Delivery -->
@@ -118,13 +178,10 @@
                         <div id="kbbDeliverySlot" class="kbb-delivery">
                             @include('partials.checkout.delivery-options')
                         </div>
-                            <p class="form-row form-row-wide kbb-note" id="customer_note_field">
-                                <label for="customer_note">Delivery notes <span class="optional">(optional)</span></label>
-                                <span class="woocommerce-input-wrapper">
-                                    <textarea name="customer_note" id="customer_note" class="input-text" rows="2" maxlength="600"
-                                              placeholder="Delivery instructions, a landmark, a preferred time">{{ old('customer_note') }}</textarea>
-                                </span>
-                            </p>
+                            <x-checkout.field name="customer_note" label="Delivery notes" type="textarea" optional
+                                rowClass="form-row-wide kbb-note" rows="2" maxlength="600"
+                                placeholder="Delivery instructions, a landmark, a preferred time"
+                                :value="old('customer_note')" />
                             @if (app(\App\Services\SettingsService::class)->get('gift_enabled', '1'))
                             <p class="form-row form-row-wide kbb-gift" id="gift_field">
                                 @php
