@@ -19300,7 +19300,7 @@ buildNav();
            'It goes straight to the server, is stored encrypted, and is never sent back to this screen.')+
         '</ol>'+
         '<input type="password" class="inp" id="wiz_key" autocomplete="new-password" spellcheck="false" '+
-        'placeholder="'+(live?'sk_live_…':'sk_test_…')+'" style="max-width:none;margin-top:4px">'+
+        'placeholder="'+(live?'sk_live_…':'sk_test_…')+'" style="max-width:none;width:100%;margin-top:4px">'+
         '<div class="echelp" id="wiz_msg" style="margin:8px 0 0;min-height:16px"></div>'+
         '<div class="row" style="gap:8px;justify-content:flex-end;margin-top:8px">'+back+
         '<button type="button" class="btn" data-wizfinish="1">Finish setup</button></div></div>';
