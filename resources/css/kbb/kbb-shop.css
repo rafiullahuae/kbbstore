@@ -382,3 +382,23 @@ img{max-width:100%}
      doubled so it wins over the .cname{min-height:34px} above regardless of
      sheet order. Nothing to add here. */
 }
+
+/* Phone shopper pass - Lane EA. <=820px only.
+
+   1. THE SIDE GUTTER. `.shop` is declared above as
+      `padding:22px 0 60px`, and the markup is `<div class="wrap shop">`. Both
+      selectors are one class, `.shop` is written later, so its shorthand `0`
+      overwrites `.wrap{padding:0 20px}` and the shop, category and search
+      grids lost their side gutter at every viewport under the 1240px
+      max-width. On a phone that put the product cards' borders on the first
+      and last pixel of the screen and clipped the rounded left corner of the
+      "Filters" pill, while the heading and breadcrumb directly above them -
+      which sit in a different .wrap - stayed inset. Restoring the gutter on
+      phones only leaves the desktop grid exactly as it is.
+
+   2. The sort dropdown is 13px, so choosing "Price, low to high" on an iPhone
+      zoomed the page. See the note in kbb.css; this sheet loads after it. */
+@media (max-width: 820px) {
+  .wrap.shop{padding-left:16px;padding-right:16px}
+  .sortsel select{font-size:16px}
+}
