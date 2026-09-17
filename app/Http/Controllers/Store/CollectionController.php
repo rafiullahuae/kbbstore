@@ -65,19 +65,50 @@ class CollectionController extends Controller
             ->visible()
             ->with('brand:id,name,slug');
 
+        /*
+         * EVERY ONE OF THESE ENDS IN `id`, BECAUSE ALL FOUR ARE PAGINATED.
+         *
+         * `paginate()` below is LIMIT/OFFSET over whatever order this match
+         * arm left behind, and LIMIT/OFFSET is only a partition of the list
+         * when the order is TOTAL. Where the sort key ties, the database is
+         * free to break the tie differently between the request that built
+         * page 1 and the request that built page 2 -- they are two separate
+         * queries, minutes apart, and nothing carries the first one's tie
+         * decision into the second. A product then appears on both pages, or
+         * on neither.
+         *
+         * That is not theoretical here. `products_total_sales_index` (added by
+         * 2026_10_11_000000_clear_caches_storefront_speed) means the planner
+         * has two ways to answer `ORDER BY total_sales DESC`: walk the index
+         * backwards, or sort. Both are correct, and over a tied group they
+         * return the tied rows in OPPOSITE orders -- measured, not assumed.
+         * Which one it picks is a costing decision that depends on the row
+         * estimate, and the estimate is not the same for `LIMIT 24` as it is
+         * for `LIMIT 24 OFFSET 24`.
+         *
+         * `review_count` was the tie-break on 'popular' and is not one: it is
+         * 0 for most of this catalogue, so on the rows that actually tie on
+         * total_sales it ties too. It is kept because where it does differ it
+         * is the better signal; `id` goes after it as the key that cannot tie.
+         *
+         * THIS DOES NOT REORDER ANYTHING THAT WAS ALREADY ORDERED. A final key
+         * only ever decides between rows the preceding keys called equal.
+         */
         match ($mode) {
             // Newest by publication where it exists, falling back to id so a
             // catalogue imported without dates still orders sensibly.
             'newest' => $query->orderByDesc('created_at')->orderByDesc('id'),
-            'popular' => $query->orderByDesc('total_sales')->orderByDesc('review_count'),
+            'popular' => $query->orderByDesc('total_sales')->orderByDesc('review_count')->orderByDesc('id'),
             'on_sale' => $query
                 ->whereNotNull('sale_price')
                 ->where('sale_price', '>', 0)
                 ->whereColumn('sale_price', '<', 'price')
-                ->orderByRaw('(price - sale_price) / price DESC'),
+                ->orderByRaw('(price - sale_price) / price DESC')
+                ->orderByDesc('id'),
             'budget' => $query
                 ->whereRaw('COALESCE(NULLIF(sale_price, 0), price) <= ?', [5400])
-                ->orderByRaw('COALESCE(NULLIF(sale_price, 0), price) ASC'),
+                ->orderByRaw('COALESCE(NULLIF(sale_price, 0), price) ASC')
+                ->orderBy('id'),
         };
 
         /*

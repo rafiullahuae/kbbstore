@@ -168,10 +168,14 @@ class ReviewAssignApiController extends Controller
 
         $search = trim((string) ($data['q'] ?? ''));
 
+        // `review_count` is 0 for most of this catalogue and product names are
+        // not unique, so without `id` this LIMIT truncates a tied block the
+        // database gets to order.
         $query = DB::table('products')
             ->select(['id', 'name', 'sku', 'rating', 'review_count'])
             ->orderByDesc('review_count')
             ->orderBy('name')
+            ->orderBy('id')
             ->limit(self::PRODUCT_LIMIT);
 
         if ($search !== '') {

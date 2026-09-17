@@ -195,7 +195,7 @@ class SearchController extends Controller
                 });
             }
 
-            $own = $ownQuery->orderByDesc('total_sales')->limit($n)->get();
+            $own = $ownQuery->orderByDesc('total_sales')->orderByDesc('id')->limit($n)->get();
 
             $products = $own;
 
@@ -211,6 +211,7 @@ class SearchController extends Controller
                     ->where('brand_id', $brand->id)
                     ->whereNotIn('id', $own->pluck('id')->all() ?: [0])
                     ->orderByDesc('total_sales')
+                    ->orderByDesc('id')
                     ->limit($n - $own->count())
                     ->get();
 
@@ -231,6 +232,7 @@ class SearchController extends Controller
                     })
                     ->whereNotIn('id', $products->pluck('id')->all() ?: [0])
                     ->orderByDesc('total_sales')
+                    ->orderByDesc('id')
                     ->limit($n - $products->count())
                     ->get();
 
@@ -263,6 +265,7 @@ class SearchController extends Controller
                 ->groupBy('categories.id', 'categories.name', 'categories.slug')
                 ->having('products_count', '>', 0)
                 ->orderByDesc('products_count')
+                ->orderByDesc('categories.id')
                 ->limit($n)
                 ->get();
 
@@ -365,6 +368,7 @@ class SearchController extends Controller
                     [self::likePrefix($q)]
                 )
                 ->orderByDesc('total_sales')
+                ->orderByDesc('id')
                 ->limit($n)
                 ->get();
 
@@ -391,6 +395,7 @@ class SearchController extends Controller
                         $brandIds
                     ))
                     ->orderByDesc('total_sales')
+                    ->orderByDesc('id')
                     ->limit($n - $products->count())
                     ->get();
 
@@ -424,6 +429,7 @@ class SearchController extends Controller
                 ->groupBy('categories.id', 'categories.name', 'categories.slug')
                 ->having('products_count', '>', 0)
                 ->orderByDesc('products_count')
+                ->orderByDesc('categories.id')
                 ->limit($n)
                 ->get();
 
@@ -450,6 +456,7 @@ class SearchController extends Controller
                 ->groupBy('brands.id', 'brands.name', 'brands.slug')
                 ->having('products_count', '>', 0)
                 ->orderByDesc('products_count')
+                ->orderByDesc('brands.id')
                 ->limit($n)
                 ->get();
 
@@ -497,6 +504,7 @@ class SearchController extends Controller
                 ->visible()
                 ->with('brand:id,name')
                 ->orderByDesc('total_sales')
+                ->orderByDesc('id')
                 ->limit((int) $header->get('search_results_max'))
                 ->get()
                 ->map(fn ($p) => [

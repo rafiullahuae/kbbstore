@@ -330,7 +330,11 @@ class PageController extends Controller
         $related = Post::query()
             ->where('status', 'published')
             ->where('id', '!=', $post->id)
+            // Three out of everything published, and `published_at` is the
+            // same value for every article an import wrote: without `id` the
+            // three are picked out of a tie by the database.
             ->latest('published_at')
+            ->orderByDesc('id')
             ->limit(3)
             ->get(['slug', 'title', 'tag', 'cover']);
 

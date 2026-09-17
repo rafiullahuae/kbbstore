@@ -1066,7 +1066,12 @@ class AdminOrderController extends Controller
                 'stock', 'stock_status',
             ])
             ->with(['brand:id,name', 'variants'])
+            // `id` after `name`, because forPage() below is LIMIT/OFFSET and
+            // product names are not unique: two products sharing a name at a
+            // page boundary can otherwise land on both pages of the picker,
+            // or on neither.
             ->orderBy('name')
+            ->orderBy('id')
             ->forPage($page, self::PAGE)
             ->get();
 

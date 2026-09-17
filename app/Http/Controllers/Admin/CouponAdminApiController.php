@@ -270,7 +270,10 @@ class CouponAdminApiController extends Controller
                     'LOWER(name) LIKE ?',
                     ['%' . str_replace(['%', '_'], ['\%', '\_'], mb_strtolower($search)) . '%']
                 ))
+                // `id` after `name`: this LIMIT truncates a lookup list and
+                // names are not unique.
                 ->orderBy('name')
+                ->orderBy('id')
                 ->limit(self::LOOKUP_LIMIT)
                 ->get(['id', 'name', 'path']);
 
@@ -292,7 +295,10 @@ class CouponAdminApiController extends Controller
                     'LOWER(name) LIKE ?',
                     ['%' . str_replace(['%', '_'], ['\%', '\_'], mb_strtolower($search)) . '%']
                 ))
+                // `id` after `name`: this LIMIT truncates a lookup list and
+                // names are not unique.
                 ->orderBy('name')
+                ->orderBy('id')
                 ->limit(self::LOOKUP_LIMIT)
                 ->get(['id', 'name', 'slug']);
 
@@ -328,7 +334,9 @@ class CouponAdminApiController extends Controller
                     ->orWhereHas('brand', fn ($b) => $b->whereRaw('LOWER(name) LIKE ?', [$term])));
             })
             ->with('brand:id,name')
+            // Same as the category and brand lookups above.
             ->orderBy('name')
+            ->orderBy('id')
             ->limit(self::LOOKUP_LIMIT)
             ->get(['id', 'name', 'sku', 'brand_id']);
 

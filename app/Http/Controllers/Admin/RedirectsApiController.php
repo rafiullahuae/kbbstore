@@ -16,10 +16,15 @@ class RedirectsApiController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
-            'redirects' => Redirect::query()->orderByDesc('created_at')->get([
+            // Both end in `id`. The redirect list is not truncated, so there
+            // its only job is that the screen stops reshuffling rows that tie
+            // on created_at; the 404 log is cut at 100 and there it decides
+            // which of a tied block the owner is shown at all — `hits` is 1
+            // for most of that table.
+            'redirects' => Redirect::query()->orderByDesc('created_at')->orderByDesc('id')->get([
                 'id', 'source', 'target', 'code', 'enabled', 'hits', 'auto_created', 'last_hit_at', 'created_at',
             ]),
-            'not_found' => NotFoundLog::query()->orderByDesc('hits')->limit(100)->get([
+            'not_found' => NotFoundLog::query()->orderByDesc('hits')->orderByDesc('id')->limit(100)->get([
                 'id', 'path', 'hits', 'referer', 'first_seen_at', 'last_seen_at',
             ]),
         ]);

@@ -147,6 +147,10 @@ class ShopController extends Controller
                 ->having('products_count', '>', 0)
                 ->orderBy('categories.position')
                 ->orderByDesc('products_count')
+                // And `categories.id`, because this is a LIMIT: a tie on the
+                // count at the thirtieth place decides which category the
+                // filter rail offers at all.
+                ->orderBy('categories.id')
                 ->limit(30)
                 ->get()),
             // Same reasoning as the categories above: `brands.position` has
@@ -160,6 +164,8 @@ class ShopController extends Controller
                 ->having('products_count', '>', 0)
                 ->orderBy('brands.position')
                 ->orderBy('name')
+                // Same as the categories above; brand names are not unique.
+                ->orderBy('brands.id')
                 ->limit(40)
                 ->get()),
         ]);
@@ -301,6 +307,34 @@ class ShopController extends Controller
             // "Featured" is the curated order the Sorting module maintains.
             default => $this->applyDefaultSort($query),
         };
+
+        /*
+         * AND THEN `id`, WHATEVER THE SHOPPER PICKED.
+         *
+         * Every arm above leaves ties, and several leave nothing but ties.
+         * `rating` and `review_count` are 0 for most of this catalogue, so
+         * "Sort by: average rating" is one enormous tied block; `total_sales`
+         * ties across the whole tail; `created_at` ties for every product the
+         * importer wrote in the same second, which is all of them.
+         *
+         * This method's caller pages the result with forPage(), and LIMIT /
+         * OFFSET only partitions a list when the order is total. Page 1 and
+         * page 2 are two separate requests running two separate queries, and
+         * where the order does not decide between two rows, nothing obliges
+         * the second query to break the tie the way the first one did. The
+         * shopper sees the same product on both pages and never sees the one
+         * it displaced.
+         *
+         * The tie-break runs in the same direction as the sort it follows, so
+         * "most popular" and "cheapest" both keep reading the way they look.
+         * It CANNOT reorder a list that was already ordered -- a final key
+         * only ever decides between rows every earlier key called equal.
+         */
+        if (in_array($orderby, ['popularity', 'rating', 'date'], true)) {
+            $query->orderByDesc('id');
+        } else {
+            $query->orderBy('id');
+        }
     }
 
     /**

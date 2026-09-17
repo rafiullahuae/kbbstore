@@ -128,6 +128,10 @@ class CatalogReorderApiController extends Controller
                 ->whereHas('order', fn ($o) => $o->whereIn('status', \App\Models\Order::REAL_STATUSES))])
             ->orderBy('products.position')
             ->orderBy('products.name')
+            // `position` is 0 across an un-reordered catalogue and names are
+            // not unique, so this paged screen needs `id` to be a partition
+            // of the list rather than a sample of it.
+            ->orderBy('products.id')
             ->forPage($page, $perPage)
             ->get()
             ->map(fn ($p, $i) => [
@@ -265,11 +269,25 @@ class CatalogReorderApiController extends Controller
 
         $query = $this->scopeQuery($type, $id);
 
+        /*
+         * `products.id` last on every arm, because this WRITES the order it
+         * reads. The ids below are enumerated straight into `position`, so a
+         * tie the database broke arbitrarily is not a momentary display
+         * accident here — it is persisted as the shop's curated order and
+         * then read back by ShopController's default sort. Two owners
+         * pressing the same button on the same catalogue got different
+         * answers, and neither could tell why.
+         *
+         * `created_at` ties for the whole imported catalogue, `total_sales`
+         * across its tail and the coalesced price wherever two products cost
+         * the same, so this is the common case rather than the edge.
+         */
         match ($data['by']) {
-            'name' => $query->orderBy('products.name'),
-            'price' => $query->orderByRaw('COALESCE(products.sale_price, products.price) asc'),
-            'newest' => $query->orderByDesc('products.created_at'),
-            'bestselling' => $query->orderByDesc('products.total_sales'),
+            'name' => $query->orderBy('products.name')->orderBy('products.id'),
+            'price' => $query->orderByRaw('COALESCE(products.sale_price, products.price) asc')
+                ->orderBy('products.id'),
+            'newest' => $query->orderByDesc('products.created_at')->orderByDesc('products.id'),
+            'bestselling' => $query->orderByDesc('products.total_sales')->orderByDesc('products.id'),
         };
 
         $ids = $query->pluck('products.id')->values()->all();

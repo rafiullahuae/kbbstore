@@ -64,7 +64,11 @@ class SearchInsights
                     ->select('term', DB::raw('SUM(hits) as total'))
                     ->where('day', '>=', now()->subDays(self::WINDOW_DAYS)->toDateString())
                     ->groupBy('term')
+                    // Most searched terms in the window have been searched
+                    // once, so this LIMIT is taken over one large tie; `term`
+                    // is the group key and cannot tie.
                     ->orderByDesc('total')
+                    ->orderBy('term')
                     ->limit($limit)
                     ->pluck('term')
                     ->all();

@@ -164,8 +164,12 @@ class BrandController extends Controller
              */
             ->with(['brand:id,name,slug', 'categories:id,name'])
             ->where('brand_id', $brand->id)
+            // `position` is 0 until the owner reorders anything and product
+            // names are not unique, so `id` finishes an order this LIMIT
+            // otherwise takes over a tie.
             ->orderBy('position')
             ->orderBy('name')
+            ->orderBy('id')
             ->limit(self::PREVIEW_LIMIT)
             ->get();
 

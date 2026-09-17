@@ -48,13 +48,56 @@ class HomeController extends Controller
                 ->whereNotNull('sale_price')
                 ->whereColumn('sale_price', '<', 'price')
                 ->orderByDesc('total_sales')
+                ->orderByDesc('id')
                 ->limit(4)
                 ->get();
 
+            /*
+             * THE BEST-SELLER RAILS ARE ONE QUERY AND ONE SPLIT, NOT TWO
+             * QUERIES AND AN OFFSET.
+             *
+             * This was:
+             *
+             *     'best1' => ...orderByDesc('total_sales')->limit(4)
+             *     'best2' => ...orderByDesc('total_sales')->offset(4)->limit(4)
+             *
+             * -- two separate queries meant to partition one list, over a sort
+             * key that ties constantly. `total_sales` is a counter and most of
+             * this catalogue shares a handful of values; `review_count`, the
+             * other candidate, is 0 nearly everywhere. Where rank 4 and rank 5
+             * tie, LIMIT 4 and LIMIT 4 OFFSET 4 are each free to pick either
+             * row, and nothing carries the first query's choice into the
+             * second. The same product lands in both rails, and the one it
+             * displaced lands in neither.
+             *
+             * That is not a theoretical freedom. `products_total_sales_index`
+             * (2026_10_11_000000_clear_caches_storefront_speed) gives the
+             * planner a choice between walking that index backwards and
+             * sorting, and over a tied group those two return the tied rows in
+             * OPPOSITE orders -- measured on this project's own SQLite, and
+             * the same choice exists on MySQL between an index scan and a
+             * filesort. Which one it picks is a costing decision, and the cost
+             * of `LIMIT 4` is not the cost of `LIMIT 4 OFFSET 4`.
+             *
+             * Fetching eight once and slicing in PHP makes the duplicate
+             * STRUCTURALLY IMPOSSIBLE rather than merely unlikely: one query
+             * returns one list, and two halves of one list cannot overlap
+             * however the database broke the ties inside it. It is also one
+             * query instead of two on the most-hit URL on the site.
+             *
+             * `orderByDesc('id')` is still appended, because the split is not
+             * the only thing that wants a stable answer: this block is cached
+             * for ten minutes and re-run on every eviction, and a rail whose
+             * membership changes on each rebuild with no data behind the
+             * change is the same defect one layer up.
+             */
+            $best = $base()->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
+
             return [
-                'recommended' => $base()->where('featured', true)->orderByDesc('total_sales')->limit(5)->get(),
-                'best1' => $base()->orderByDesc('total_sales')->limit(4)->get(),
-                'best2' => $base()->orderByDesc('total_sales')->offset(4)->limit(4)->get(),
+                'recommended' => $base()->where('featured', true)
+                    ->orderByDesc('total_sales')->orderByDesc('id')->limit(5)->get(),
+                'best1' => $best->take(4)->values(),
+                'best2' => $best->slice(4)->values(),
                 // Falls back to newest when nothing is discounted, so the row is
                 // never an empty gap.
                 'flash' => $onSale->isNotEmpty() ? $onSale : $base()->latest('id')->limit(4)->get(),
@@ -63,9 +106,11 @@ class HomeController extends Controller
                 // nothing is categorised as a set, so the row is never empty.
                 'bundles' => (function () use ($base) {
                     $sets = $base()->whereHas('categories', fn ($c) => $c->where('slug', 'like', '%set%'))
-                        ->orderByDesc('total_sales')->limit(8)->get();
+                        ->orderByDesc('total_sales')->orderByDesc('id')->limit(8)->get();
 
-                    return $sets->isNotEmpty() ? $sets : $base()->orderByDesc('price')->limit(8)->get();
+                    return $sets->isNotEmpty()
+                        ? $sets
+                        : $base()->orderByDesc('price')->orderByDesc('id')->limit(8)->get();
                 })(),
             ];
         });
@@ -73,7 +118,12 @@ class HomeController extends Controller
         $brands = Cache::remember('kbb.home.brands', 900, fn () => Brand::query()
             ->select('id', 'name', 'slug')
             ->withCount(['products' => fn ($q) => $q->visible()])
+            // Then by name: `products_count` ties across the long tail of
+            // brands carrying one or two products, and this is a LIMIT, so a
+            // tie at the twelfth place decides who is on the homepage at all.
             ->orderByDesc('products_count')
+            ->orderBy('name')
+            ->orderBy('id')
             ->limit(12)
             ->get());
 
@@ -83,14 +133,21 @@ class HomeController extends Controller
             ->withCount(['products' => fn ($q) => $q->visible()])
             ->groupBy('categories.id', 'categories.name', 'categories.slug')
             ->having('products_count', '>', 0)
+            // Same as the brand strip: a tie on the count at the tenth place
+            // decides which tile the homepage shows.
             ->orderByDesc('products_count')
+            ->orderBy('name')
+            ->orderBy('categories.id')
             ->limit(10)
             ->get());
 
         // Journal posts, if the blog has any.
         $posts = Cache::remember('kbb.home.posts', 900, fn () => Post::query()
             ->where('status', 'published')
+            // Posts imported together share a `published_at` to the second, so
+            // this is a LIMIT over a tie unless `id` finishes the order.
             ->latest('published_at')
+            ->orderByDesc('id')
             ->limit(3)
             ->get());
 
@@ -138,7 +195,10 @@ class HomeController extends Controller
                         'verified', 'helpful', 'created_at'])
                     ->whereNotNull('content')
                     ->with('product:id,name,slug')
+                    // ReviewWall does the same, for the same reason: without
+                    // `id` this LIMIT is taken over a tie on created_at.
                     ->latest('created_at')
+                    ->orderByDesc('id')
                     ->limit(4)
                     ->get(),
                 'total' => $total,
@@ -228,7 +288,10 @@ class HomeController extends Controller
                 $steps[$i]['pick'] = $slug === null ? null : Product::query()->select(self::CARD_COLUMNS)->visible()
                     ->with('brand:id,name,slug')
                     ->whereHas('categories', fn ($c) => $c->where('slug', $slug))
+                    // first() is LIMIT 1, so the whole step is decided by how
+                    // a tie on total_sales happens to break.
                     ->orderByDesc('total_sales')
+                    ->orderByDesc('id')
                     ->first();
             }
 

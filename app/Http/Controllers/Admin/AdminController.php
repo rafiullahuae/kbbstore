@@ -1347,7 +1347,16 @@ class AdminController extends Controller
             ->selectRaw('order_items.name as name, order_items.brand as brand,'
                 . ' COALESCE(SUM(order_items.quantity), 0) as units,'
                 . ' COALESCE(SUM(order_items.total), 0) as revenue')
+            // Then by the group key, so the "Top products" table is a stable
+            // eight. Two products that sold one unit at the same price tie on
+            // revenue exactly, and this is a LIMIT.
+            // Then by the group key, so the "Top products" table is a stable
+            // eight. Two products that sold one unit at the same price tie on
+            // revenue exactly, and this is a LIMIT. `name` and `brand` are the
+            // whole GROUP BY, so together they cannot tie.
             ->orderByDesc('revenue')
+            ->orderBy('order_items.name')
+            ->orderBy('order_items.brand')
             ->limit(8)
             ->get()
             ->map(fn ($r) => [
