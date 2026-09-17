@@ -277,8 +277,12 @@
 
 .kbb-pgrid[data-skin="ribbon"] .kbb-card{border:1px solid rgba(42,34,40,.1);border-radius:12px;overflow:hidden;background:#fff}
 
-/* RTL-PHYSICAL: corner ribbon offset tied to rotate(45deg). */
-.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale{top:16px;right:-36px;left:auto;transform:rotate(45deg);width:140px;text-align:center;border-radius:0;padding:5px 0;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+/* Corner ribbon: logical offset so it crosses the inline-end corner either way,
+   with the rotate — which has no logical form — flipped below. Kept identical to
+   the copy in kbb.css; the two files style the same badge for two different
+   entry points and have to agree. */
+.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale{top:16px;inset-inline-end:-36px;inset-inline-start:auto;transform:rotate(45deg);width:140px;text-align:center;border-radius:0;padding:5px 0;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+[dir="rtl"] .kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale{transform:rotate(-45deg)}
 
 .kbb-pgrid[data-skin="frame"] .kbb-card{border:0;background:#fff;padding:14px;position:relative}
 

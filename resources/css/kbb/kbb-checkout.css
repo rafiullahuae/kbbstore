@@ -245,9 +245,11 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* real WooCommerce place-order + terms live in #payment; hide the native button,
    we drive it from the summary/paybar proxy */
 .kbb-checkout #payment .place-order{padding:0!important;margin:0!important;background:transparent!important;border:0!important}
-/* RTL-PHYSICAL: off-screen parking, not a reading direction — see .hp in
-   kbb-product.css. */
+/* RTL-PHYSICAL (left:-9999px): off-screen parking, not a reading direction —
+   see .hp in kbb-product.css, including the measurement showing which edge is
+   the safe one in each direction. */
 .kbb-checkout #payment #place_order{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
+[dir="rtl"] .kbb-checkout #payment #place_order{inset-inline-start:-9999px;inset-inline-end:auto}
 .kbb-checkout #payment .woocommerce-terms-and-conditions-wrapper,
 .kbb-checkout #payment .woocommerce-privacy-policy-text{background:transparent!important;border:0!important;padding:12px 2px 0!important;margin:0!important;font-size:12px;color:var(--muted)}
 .kbb-checkout #payment .woocommerce-privacy-policy-text p{margin:0}
@@ -320,6 +322,19 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    fill still grows in green through it; once unlocked the track switches to
    the same soft green the fill uses, since there is nothing left "missing". */
 .kbb-checkout .ftrack{position:relative;height:8px;border-radius:99px;background:#FBE1E6;overflow:visible}
+/* The mirror. `direction:ltr` puts the track back into the coordinate system
+   every rule in this block was written for — fill grows from the left, sprites
+   pinned physically to the right end — and scaleX(-1) then flips the finished
+   picture. One declaration pair in place of respelling a gradient angle, two
+   translate signs, a keyframe, eight --tx offsets and nine insets, each of which
+   would then have to be kept in step with the others by hand.
+   It is safe here for one specific reason: .ftrack contains no text. Its only
+   children are .ffill and the .fs-cheer particles, which are stars, sparkles and
+   coloured rectangles. The "AED 40 to go" label is in .freebar, a SIBLING, and
+   is not touched. Do not extend this rule upward to .freebar.
+   overflow-x:clip stays on .freebar, the parent, so the mobile horizontal-scroll
+   fix documented above still applies to the mirrored burst. */
+[dir="rtl"] .kbb-checkout .ftrack{direction:ltr;transform:scaleX(-1)}
 .kbb-checkout .is-unlocked .ftrack{background:#E4F7EC}
 .kbb-checkout .ffill{position:relative;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#3DD68C,#1FA968);transition:width .65s cubic-bezier(.22,.61,.36,1)}
 .kbb-checkout .fs-rider{display:none}
@@ -336,7 +351,19 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    the bar fills with a 90deg gradient and a width transition, the shine and the
    rider ride on translateX, the particles fly along --tx offsets, and the track
    is trimmed with overflow-x:clip. None of those has a logical form. Converting
-   only the insets would desynchronise the sprites from the fill they sit on. */
+   only the insets would desynchronise the sprites from the fill they sit on.
+
+   SO IT IS MIRRORED WHOLE INSTEAD, by the one rule under .ftrack below, and
+   every declaration from here to the end of the burst block stays exactly as it
+   is. The reason mirroring is not optional: .ffill is an ordinary in-flow block,
+   so the moment <html dir> is rtl it starts at the track's right edge and grows
+   LEFTWARD on its own, with no CSS change at all. Measured — a 45% fill sits at
+   [732,876] of a track at [556,876]. The fill mirrors whether anyone decides it
+   should or not; what was left desynchronised was everything pinned to it. The
+   jade pulse dot and the comet rider both sat at the far right, i.e. at the
+   ANCHORED end of a bar now growing away from them — a comet flying backwards.
+   Measured before the fix: rider at [866.8,883] with the fill's leading edge at
+   732. After: [725,741.2], centred on the leading edge, as in LTR. */
 .kbb-checkout .fs-jade .ffill::after{content:"";position:absolute;right:0;top:50%;width:11px;height:11px;transform:translate(50%,-50%);border-radius:50%;background:#fff;box-shadow:0 0 9px 2px rgba(31,169,104,.9);animation:kbbPulse 1.3s ease-in-out infinite}
 .kbb-checkout .is-unlocked.fs-jade .ffill::after{display:none}
 @keyframes kbbPulse{0%,100%{opacity:.65;transform:translate(50%,-50%) scale(.8)}50%{opacity:1;transform:translate(50%,-50%) scale(1.2)}}
@@ -594,15 +621,18 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    carries .input-text, the checkout's existing field class, so it matches the
    Emirate and City fields exactly rather than being a new look bolted in. Only
    the select arrow needs stating, because a <select> does not inherit one. */
-/* RTL-PHYSICAL (padding-right): it reserves room for the chevron, and the
-   chevron is placed by background-position, which has no logical form. The
-   padding has to stay on whichever side the image is on. */
+/* The padding that reserves room for the chevron is logical, so it lands on the
+   inline-end side in both directions; background-position has no logical keyword
+   at all, so the image itself is moved to match under [dir="rtl"] below. The two
+   must name the same side — padding on one side and the chevron on the other
+   gives a chevron sitting on top of the country name. */
 #billing_country_field select.input-text{
   appearance:none;-webkit-appearance:none;
   background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A7F86' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 12px center;background-size:15px;
-  padding-right:36px;
+  padding-inline-end:36px;
 }
+[dir="rtl"] #billing_country_field select.input-text{background-position:left 12px center}
 .xd-detected{background:#EAF7EF;color:#2F7D51;border:1px solid #CFE7DA;border-radius:99px;
              padding:1px 8px;font-size:9.5px;font-weight:800;letter-spacing:.06em;
              text-transform:uppercase;margin-inline-start:8px;vertical-align:middle}
