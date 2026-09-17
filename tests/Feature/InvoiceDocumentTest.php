@@ -376,13 +376,27 @@ it('renders money exactly as the emailed receipt does', function () {
 it('shows VAT as a portion of the total and never as an addition to it', function () {
     InvoiceAdminRoutes::wire(app());
 
-    $order = invDocOrder();
+    /*
+     * ── THE FIGURE MOVED, AND THAT IS THE POINT — LANE DU ──────────────────
+     *
+     * This asserted 2255 fils, which is 5% inclusive of 47350 — the ORDER
+     * TOTAL, fees and all. That was VatDisplay's live display line, asked for
+     * at print time, and Lane DU removed it because it reprinted at whatever
+     * rate the settings held on the day somebody opened the document.
+     *
+     * The order now carries its own record, so the note is the recorded figure:
+     * 5% inclusive of the TAXABLE BASE, 46300 - 4000 + 2000 = 44300, which is
+     * 2110. The gap between 2255 and 2110 is the AED 30.50 of gift wrapping and
+     * cash-on-delivery surcharge that the tax engine has never treated as a
+     * taxable supply (see VatDisplay's header) but that the old display line
+     * silently taxed anyway. Two arithmetics on one shop, and only one of them
+     * was the engine's.
+     */
+    $order = invDocOrder(['tax_rate' => 5, 'tax_basis' => \App\Support\TaxRule::INCLUSIVE, 'tax_total' => 2110]);
     $doc = app(InvoiceDocument::class)->present($order);
 
-    // Decision D-64: display only. 47350 x 5 / 105, rounded, out of the same
-    // VatDisplay service the checkout page itself uses.
     expect($doc['vatNote'])->not->toBeNull()
-        ->and($doc['vatNote']['fils'])->toBe(2255)
+        ->and($doc['vatNote']['fils'])->toBe(2110)
         ->and($doc['vatNote']['label'])->toBe('Includes VAT at 5%');
 
     // It is not a totals row, so it cannot be added in by anything that walks
@@ -395,8 +409,31 @@ it('shows VAT as a portion of the total and never as an addition to it', functio
     $html = test()->actingAs(invAdmin(), 'admin')->get(invUrl($order))->getContent();
 
     expect($html)->toContain('Includes VAT at 5%')
-        ->and($html)->toContain(invMoney(2255))
-        ->and($html)->toContain('22.55');
+        ->and($html)->toContain(invMoney(2110))
+        ->and($html)->toContain('21.10');
+});
+
+it('says nothing about VAT on an invoice for an order that recorded none', function () {
+    InvoiceAdminRoutes::wire(app());
+
+    /*
+     * The order the shipped `display` mode produces: tax_total 0, no rate, no
+     * basis. It used to get VatDisplay's live line printed under its Total; it
+     * now gets nothing, because nothing about its tax is recoverable and a
+     * document that states no tax is not wrong where one that states the wrong
+     * tax is. See InvoiceDocument::vatNote().
+     */
+    $order = invDocOrder();
+
+    expect(\App\Support\OrderTax::recorded($order))->toBeNull()
+        ->and(app(InvoiceDocument::class)->present($order)['vatNote'])->toBeNull();
+
+    $html = test()->actingAs(invAdmin(), 'admin')->get(invUrl($order))->getContent();
+
+    // 'Includes VAT', the words the note prints — not the class name, which a
+    // search of rendered HTML would also find in the inlined stylesheet.
+    expect(str_contains($html, 'Includes VAT'))
+        ->toBeFalse('an order with no tax record still has a VAT figure printed under its Total');
 });
 
 it('prints an imported order s own stored tax instead of a second computed one', function () {
@@ -655,7 +692,11 @@ it('prints the business details the owner has entered', function () {
 
 it('prints no tax registration number when none has been entered', function () {
     // An invoice showing an invented TRN is worse than one showing none.
-    $doc = app(InvoiceDocument::class)->present(invDocOrder());
+    // The order needs a tax record, or there is no VAT note to carry a TRN at
+    // all — which is its own test above, not this one.
+    $doc = app(InvoiceDocument::class)->present(
+        invDocOrder(['tax_rate' => 5, 'tax_basis' => \App\Support\TaxRule::INCLUSIVE, 'tax_total' => 2110])
+    );
 
     expect($doc['seller']['trn'])->toBe('')
         ->and($doc['vatNote']['trn'])->toBe('');

@@ -399,3 +399,130 @@ it('does not hand a date window a value MySQL has to coerce', function () {
         }
     }
 });
+
+/* ------------------------------------------- what "revenue" means — Lane DU */
+
+/*
+ * A REVENUE NUMBER THAT IS SILENTLY EITHER NET OR GROSS IS THE DEFECT.
+ *
+ * Every figure on these two screens is SUM(orders.total) with refunds taken
+ * off. `orders.total` is what the customer was BILLED, so on an exclusive-tax
+ * order it carries VAT the shop collects for the tax authority and remits.
+ * Under the word "Revenue", that counts money that is not the owner's.
+ *
+ * It is not netted out, because it cannot be netted out exactly: the screen
+ * prints Net + Refunded = Gross, `refunds.amount` is the money handed back with
+ * its VAT inside it, and nothing records the tax share of a refund. So the
+ * figure keeps its meaning and is made to SAY it, with the component published
+ * beside it. See AdminController::revenueBasis().
+ *
+ * These tests fail if either half goes missing — the disclosure, or the tax
+ * figure that makes it usable.
+ */
+
+/** An order billed at `total` with `tax` of that being VAT. */
+function aTaxedOrder(int $totalFils, int $taxFils, string $basis = 'exclusive'): Order
+{
+    static $n = 0;
+    $n++;
+
+    return Order::create([
+        'order_number' => 'A-TAX-' . $n . '-' . uniqid(),
+        'email' => 'a-tax-' . $n . '@example.test',
+        'status' => 'completed',
+        'subtotal' => $totalFils - ($basis === 'exclusive' ? $taxFils : 0),
+        'tax_total' => $taxFils,
+        'tax_rate' => 5,
+        'tax_basis' => $basis,
+        'total' => $totalFils,
+        'paid_at' => now(),
+    ]);
+}
+
+it('publishes the VAT inside its revenue figure, and says the figure carries it', function () {
+    asAnalyticsAdmin();
+
+    // AED 100 of goods with AED 5 of exclusive VAT charged on top: the customer
+    // was billed 105, the shop keeps 100 and owes the authority 5.
+    aTaxedOrder(10500, 500);
+
+    foreach ([
+        ['/admin-api/stats', 'revenue_30d_aed', 'tax_collected_30d_aed'],
+        ['/admin-api/analytics?period=all', 'revenue_total_aed', 'tax_collected_aed'],
+    ] as [$uri, $revenueKey, $taxKey]) {
+        $json = test()->getJson($uri)->assertOk()->json();
+
+        // The figure the owner reads is the BILLED one, VAT and all...
+        expect($json[$revenueKey])->toBe(105, $uri . ' does not report what was billed');
+
+        // ...the VAT inside it is published, so 100 is recoverable...
+        expect($json[$taxKey])->toBe(5, $uri . ' does not publish the VAT inside its revenue figure');
+
+        // ...and the screen is told, in words, which of the two it is showing.
+        expect($json['revenue_basis']['includes_tax'])
+            ->toBeTrue($uri . ' no longer declares that its revenue figure carries VAT');
+
+        expect(str_contains(strtolower((string) $json['revenue_basis']['label']), 'vat'))
+            ->toBeTrue($uri . ' offers a revenue label that does not mention VAT');
+
+        expect(trim((string) $json['revenue_basis']['note']))
+            ->not->toBe('', $uri . ' offers no explanation of what its revenue figure is');
+    }
+});
+
+it('reads zero tax while the shop is in display mode, so the disclosure costs nothing today', function () {
+    asAnalyticsAdmin();
+
+    /*
+     * The shipped default writes `tax_total` 0 on every order this application
+     * places, so today the billed figure and the ex-VAT figure are the same
+     * number. That is exactly why the disclosure was added now rather than
+     * after the owner turns `tax_mode` to `live` — the moment it starts
+     * mattering is the moment it would otherwise move a tile with no
+     * explanation.
+     */
+    anOrder(20000, 'completed');
+
+    $stats = test()->getJson('/admin-api/stats')->assertOk()->json();
+
+    expect($stats['revenue_30d_aed'])->toBe(200)
+        ->and($stats['tax_collected_30d_aed'])->toBe(0)
+        ->and($stats['today']['tax_collected_aed'])->toBe(0);
+});
+
+it('does not call a product line total the same thing as the revenue tile', function () {
+    asAnalyticsAdmin();
+
+    /*
+     * Per-product revenue is SUM(order_items.total): the lines only, with no
+     * delivery, no fees and no order-level VAT. The dashboard tile sums
+     * `orders.total`, which has all three. Two figures called "revenue" on one
+     * console that sum different columns is the thing this pins: they must
+     * carry different, explicit bases.
+     */
+    $order = aTaxedOrder(10500, 500);
+    anItem($order, 'Rice Toner', 1, 10000);
+
+    $analytics = test()->getJson('/admin-api/analytics?period=all')->assertOk()->json();
+
+    expect($analytics['top_products'][0]['revenue_aed'])->toBe(100, 'the product figure picked up order-level VAT')
+        ->and($analytics['revenue_total_aed'])->toBe(105);
+
+    // Two bases, and they do not say the same thing.
+    expect($analytics['top_products_basis']['label'])
+        ->not->toBe($analytics['revenue_basis']['label'], 'the two revenue figures are labelled identically');
+
+    expect(trim((string) $analytics['top_products_basis']['note']))->not->toBe('');
+});
+
+it('says what a customer-history revenue figure carries, on the order screen', function () {
+    asAnalyticsAdmin();
+
+    $order = aTaxedOrder(10500, 500);
+
+    $json = test()->getJson('/admin-api/orders/' . $order->id . '/detail')->assertOk()->json();
+
+    expect($json['customer_history']['total_revenue_aed'])->toBe(105)
+        ->and($json['customer_history']['tax_collected_aed'])->toBe(5)
+        ->and($json['customer_history']['revenue_basis']['includes_tax'])->toBeTrue();
+});

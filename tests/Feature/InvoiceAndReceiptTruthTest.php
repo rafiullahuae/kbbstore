@@ -240,7 +240,18 @@ it('keeps VAT a portion of the total and never an addition to it', function () {
     // D-64, and the property that has to survive whatever tax engine replaces
     // VatDisplay: the figures that add up are the figures that were charged, and
     // the VAT line sits underneath them saying how much of that was tax.
-    $doc = app(InvoiceDocument::class)->present(invoiceOrder());
+    /*
+     * The order needs a tax record of its own, or there is no note here to
+     * check at all — Lane DU removed the live recomputation that used to give
+     * one to every order, so the skip below became unconditional and this test
+     * stopped asserting anything. 5% inclusive of the taxable base
+     * 20000 - 2000 + 2000 = 20000 is 952.
+     */
+    $doc = app(InvoiceDocument::class)->present(invoiceOrder([
+        'tax_rate' => 5,
+        'tax_basis' => \App\Support\TaxRule::INCLUSIVE,
+        'tax_total' => 952,
+    ]));
 
     if ($doc['vatNote'] === null) {
         test()->markTestSkipped('VAT display is off in this configuration, so there is no note to check.');

@@ -8,7 +8,6 @@ use App\Models\Order;
 use App\Services\SettingsService;
 use App\Support\Money;
 use App\Support\StoreTime;
-use App\Support\VatDisplay;
 
 /**
  * One order, turned into the exact strings an invoice and a packing slip print.
@@ -40,20 +39,23 @@ use App\Support\VatDisplay;
  * rendering of it. This is the identical rule OrderEmailPresenter applies, and
  * InvoiceMoneyTest asserts the two produce byte-identical strings.
  *
- * ── VAT IS A DISPLAY LINE, AND THE INVOICE SAYS SO ──────────────────────────
+ * ── EVERY TAX FIGURE ON THIS DOCUMENT COMES OFF THE ORDER ───────────────────
  *
- * Decision D-64: VAT is never charged, never added to a total and never stored
- * against an order placed by this app — `tax_total` is written as 0 by
- * CheckoutController. App\Support\VatDisplay computes the portion of a total
- * that VAT represents, and that is all this invoice claims: an "of which"
- * line under the total, never an addition to it. No tax engine is invented
- * here and none should grow here.
+ * Nothing in this class asks the settings table what the tax rate is. D-64 —
+ * "VAT is a display line, never charged, never stored" — was overturned by the
+ * owner on 2026-09-16 and App\Support\VatDisplay's header records that in his
+ * own words. What replaced it is a rate, a basis and an amount SNAPSHOTTED
+ * onto the order when it is placed, read back by App\Support\OrderTax, and
+ * read back by nothing else.
  *
- * The one case that is not display-only is an IMPORTED order. WooCommerce
- * orders carry a real `tax_total`, already inside `total`. Where that column
- * is non-zero it is the order's own record of its tax and it is printed as the
- * authoritative figure; VatDisplay's computed line is then suppressed, because
- * two different VAT numbers on one invoice is worse than none.
+ * That is the whole design and it has one consequence worth stating: an order
+ * that recorded no tax gets no tax figure printed. Not a computed one, not a
+ * remembered one, not a backfilled one. See vatNote() for why each of those
+ * three was rejected. The three orders in that position are the pre-engine
+ * ones, the ones placed while the shop sits in the shipped `display` mode, and
+ * imported WooCommerce orders — and the last of those is the one exception
+ * that proves the rule, because it carries a real `tax_total` already inside
+ * `total`, which totals() prints as its own authoritative row.
  *
  * ── NOTHING IS ESCAPED HERE ─────────────────────────────────────────────────
  *
@@ -69,7 +71,6 @@ class InvoiceDocument
 {
     public function __construct(
         private SettingsService $settings,
-        private VatDisplay $vat,
     ) {}
 
     /**
@@ -380,78 +381,91 @@ class InvoiceDocument
     /**
      * The "of which VAT" line printed under the total, or null.
      *
-     * Null in three cases, each of which is a reason to say nothing rather than
-     * to say something untrue:
+     * ── IT IS THE ORDER'S OWN RECORD OR IT IS NOTHING — LANE DU ─────────────
      *
-     *   - VAT display is switched off in settings;
-     *   - the computed portion rounds to zero;
-     *   - the order carries its own `tax_total`, which has already been printed
-     *     as a real row above and must not be restated as a different number.
+     * This method had two halves. The first read the order's snapshot. The
+     * second, reached by every order that has no snapshot, asked VatDisplay
+     * LIVE:
+     *
+     *     $line = $this->vat->line((int) $order->total);
+     *
+     * That second half is gone. The argument for removing it rather than
+     * leaving it, freezing it later, or backfilling a rate for the orders that
+     * took it:
+     *
+     *   1. IT MADE A FILED DOCUMENT CHANGE ITS OWN TAX FIGURE. Every order
+     *      placed before the tax engine, and every order placed while the shop
+     *      sits in the shipped `display` mode, reached it. Raise the global
+     *      `vat_rate` from 5 to 20 and the note on last year's invoice reprints
+     *      as "Includes VAT at 20% — AED 20.00" where it had read "Includes VAT
+     *      at 5% — AED 5.71". No money moves; `total` is a column and stays
+     *      what was charged. A number on a document somebody filed moves,
+     *      silently, and that is the whole of the harm.
+     *
+     *   2. BACKFILLING IS NOT AVAILABLE, BECAUSE THE RATE IS NOT RECOVERABLE.
+     *      `settings` is `key, value, autoload, timestamps` — one row per key,
+     *      overwritten in place, with no history table anywhere in the schema.
+     *      Nothing records what `vat_rate` held on the day any past order was
+     *      placed. Writing today's rate onto yesterday's order would not be a
+     *      backfill, it would be a fabrication carrying a migration's
+     *      authority, and TaxEngineTest already pins that we do not do it.
+     *
+     *   3. FREEZING AT FIRST RENDER BUYS A WEAKER GUARANTEE THAT LOOKS LIKE A
+     *      STRONGER ONE. An order placed in January, a rate edited in February
+     *      and an invoice first opened in March would freeze MARCH'S rate for
+     *      good: permanently wrong, now permanently unfixable, and wearing
+     *      every appearance of being authoritative. It also means a GET that
+     *      renders a document writes to the orders table, and a preview would
+     *      spend the one freeze the order gets.
+     *
+     *   4. THE NOTE WAS ALREADY CONTRADICTING THE DOCUMENT AROUND IT. For an
+     *      order with no record, statesChargedTax() is false, so docType() is
+     *      "Invoice" and not "Tax Invoice" — the document declines, in its own
+     *      heading, to be a tax document. Printing a VAT rate and a VAT amount
+     *      underneath that heading states a tax on a paper that says it is not
+     *      stating one. Saying nothing is the coherent answer.
+     *
+     *   5. THE OWNER HAS A SUPPORTED WAY TO GET THE NOTE BACK, AND IT IS BETTER
+     *      THAN THE FALLBACK WAS. Store -> Ecommerce -> Tax: set `tax_mode` to
+     *      `live` with an `inclusive` basis. An inclusive rule adds nothing —
+     *      VatDisplay::quote() returns `added` false and `total` equal to the
+     *      base — so not one order total changes by a fil, and from that moment
+     *      every order records its own rate, basis and amount, this note prints
+     *      from that snapshot, and the invoice earns the "Tax Invoice" heading
+     *      it was previously only half claiming. A truthful permanent note is
+     *      one switch away; an untruthful one is not worth keeping meanwhile.
+     *
+     * So: null whenever the order has no tax record of its own, and otherwise
+     * null in the cases that were always null —
+     *
+     *   exclusive — already printed as a row above; a second figure under the
+     *               total would be the same tax stated twice;
+     *   a recorded figure that rounds to zero.
+     *
+     * An imported WooCommerce order's own `tax_total` is untouched by all of
+     * this: it has no rate beside it, so it has no record, totals() prints it
+     * as a real row above the Total exactly as before, and this method — which
+     * must not restate it as a second, different number — returns null.
      *
      * @return array{label:string,fils:int,html:string,plain:string,trn:string}|null
      */
     private function vatNote(Order $order): ?array
     {
-        /*
-         * THE ORDER'S OWN RECORD FIRST, AND NOTHING LIVE BESIDE IT.
-         *
-         * This method used to ask VatDisplay at print time, which meant the
-         * rate on the document was whatever the settings said TODAY. With one
-         * global display rate that was invisible; with per-country rates the
-         * owner is free to change, it silently reprints a filed document at a
-         * rate that was never charged. App\Support\OrderTax reads what the
-         * order recorded on the day.
-         *
-         *   exclusive — already printed as a row above; a second figure under
-         *               the total would be the same tax stated twice.
-         *   inclusive — the portion of the total that is tax: this note.
-         *   flat      — printed and never charged, which is what a note is.
-         */
         $taxRecord = \App\Support\OrderTax::recorded($order);
 
-        if ($taxRecord !== null) {
-            if ($taxRecord['added'] || $taxRecord['fils'] <= 0) {
-                return null;
-            }
-
-            $rate = (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate();
-
-            return [
-                'label' => 'Includes VAT at ' . $rate . '%',
-                'fils' => $taxRecord['fils'],
-                'html' => self::money($taxRecord['fils']),
-                'plain' => self::moneyPlain($taxRecord['fils']),
-                'trn' => $this->setting('invoice_trn'),
-            ];
-        }
-
-        if ((int) $order->tax_total !== 0) {
+        if ($taxRecord === null || $taxRecord['added'] || $taxRecord['fils'] <= 0) {
             return null;
         }
 
-        $line = $this->vat->line((int) $order->total);
-
-        if ($line === null) {
-            return null;
-        }
+        $rate = (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate();
 
         return [
-            // VatDisplay::label() is the checkout's own second-person wording
-            // ("You're paying VAT (5%)"). An invoice is read by an accountant
-            // as often as by the buyer, so the rate is restated in a form that
-            // suits a document while the figure stays the checkout's.
-            'label' => 'Includes VAT at ' . $this->rateText() . '%',
-            'fils' => (int) $line['amount'],
-            'html' => self::money((int) $line['amount']),
-            'plain' => self::moneyPlain((int) $line['amount']),
+            'label' => 'Includes VAT at ' . $rate . '%',
+            'fils' => $taxRecord['fils'],
+            'html' => self::money($taxRecord['fils']),
+            'plain' => self::moneyPlain($taxRecord['fils']),
             'trn' => $this->setting('invoice_trn'),
         ];
-    }
-
-    /** "5", "7.5" — the configured rate with trailing zeros trimmed. */
-    private function rateText(): string
-    {
-        return rtrim(rtrim(number_format($this->vat->rate(), 2, '.', ''), '0'), '.');
     }
 
     /**

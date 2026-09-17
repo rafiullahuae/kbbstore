@@ -599,52 +599,197 @@ it('does not invent a tax record for an order placed before the engine was switc
         ->and(e2eBreakdown(app(InvoiceDocument::class)->present($reread)))->toBe($before);
 });
 
-it('still recomputes the VAT NOTE live on an order that recorded no tax — the one place history is not frozen', function () {
+/*
+|------------------------------------------------------------------------------
+| 4b. THE RESIDUAL LANE DQ PINNED, CLOSED — LANE DU
+|------------------------------------------------------------------------------
+|
+| Section 4 above proves that everything an order RECORDED is frozen. The hole
+| in that guarantee was the order that recorded NOTHING: placed before the tax
+| engine, or placed while the shop sits in the shipped `display` mode. Those had
+| nothing to read back, so both presenters fell through to asking VatDisplay
+| live —
+|
+|     $line = $this->vat->line((int) $order->total);
+|
+| — and raising the global `vat_rate` from 5 to 20 reprinted a filed invoice's
+| "of which VAT" note from 571 fils to 2000. No money moved; a document changed
+| its own tax figure.
+|
+| That fallback is gone rather than frozen or backfilled. The argument is
+| written out in InvoiceDocument::vatNote(); in one line, the rate on the day is
+| not recoverable — `settings` holds one row per key with no history — so there
+| is nothing honest to print, and a document that states no tax is not wrong
+| where one that states the wrong tax is.
+|
+| What follows is the invariant that replaces the pin, asserted over all three
+| readers of an order at once and over all three kinds of order.
+*/
+
+/**
+ * Everything the three readers print for one order, as one comparable value.
+ *
+ * The invoice, the emailed receipt and the admin order screen are three
+ * separate code paths over one record, and the failure this file exists to
+ * catch is two of them agreeing while the third drifts. Comparing the whole of
+ * each — not a chosen field — is what makes a new live lookup anywhere inside
+ * them a failure here.
+ */
+function e2eThreeReaders(int $orderId): array
+{
+    $order = Order::find($orderId)->fresh('items');
+
+    e2eAdmin();
+
+    return [
+        'invoice' => app(InvoiceDocument::class)->present($order),
+        'email' => app(OrderEmailPresenter::class)->present($order),
+        'admin' => test()->getJson('/admin-api/orders/' . $orderId . '/detail')->assertOk()->json(),
+    ];
+}
+
+/**
+ * The owner comes back a year later and changes every tax setting he has.
+ *
+ * Deliberately a storm rather than one key: a reader that froze the global rate
+ * but still consulted the country map, or that froze the rate but not the
+ * basis, would pass a single-key test and fail a customer.
+ *
+ * `vat_label` is NOT in here, and that is on purpose — it is wording rather
+ * than a figure, it stays live by design, and it has its own test below.
+ */
+function e2eRateStorm(): void
+{
+    e2eSet('vat_rate', 20);
+    e2eSet('vat_basis', TaxRule::EXCLUSIVE);
+    e2eSet(VatDisplay::COUNTRY_RATES_KEY, json_encode(['AE' => '17.5', 'SA' => '15']));
+    e2eSet(VatDisplay::COUNTRY_BASES_KEY, json_encode(['AE' => TaxRule::EXCLUSIVE, 'SA' => TaxRule::EXCLUSIVE]));
+    e2eSet('tax_mode', VatDisplay::MODE_LIVE);
+    e2eSet('vat_enabled', true);
+}
+
+it('prints the same invoice, the same receipt and the same admin screen after every tax setting has changed', function () {
     /*
-     * ── A RESIDUAL, PINNED HERE SO IT IS A DECISION RATHER THAN A SURPRISE ──
+     * THE INVARIANT, over the three kinds of order that exist:
      *
-     * Everything an order RECORDED is frozen: the test above proves a rate
-     * change cannot move the rows, the total or the printed rate. But an order
-     * with NO record — everything placed before the engine, and everything
-     * placed while the shop is in the shipped `display` mode — has nothing to
-     * read back, so InvoiceDocument::vatNote() and OrderEmailPresenter::vatNote()
-     * fall through to asking VatDisplay LIVE:
+     *   A  recorded — placed while the engine was live, carries rate and basis;
+     *   B  historical — a row from before the engine existed, no record at all;
+     *   C  display mode — placed through the real checkout while the shop sits
+     *      in the shipped default, which writes tax_total 0 and leaves the two
+     *      columns NULL.
      *
-     *     $line = $this->vat->line((int) $order->total);
-     *
-     * That is deliberate — it is precisely the pre-lane behaviour those two
-     * methods are documented as preserving, and D-64's display line had no
-     * per-order rate to freeze. The consequence is worth stating plainly all
-     * the same: change the GLOBAL `vat_rate` and every display-mode invoice's
-     * "of which VAT" note reprints at the new rate, because that note was never
-     * a record of anything that was charged.
-     *
-     * Nothing here says that is right or wrong. It says it is TRUE, so that if
-     * the owner decides an old receipt must not move, the change is a visible
-     * failure in this test rather than a silent discovery on a filed document.
-     * Note the total itself does NOT move: no money is restated, only the note.
+     * B and C are the two that used to move. They are kept apart rather than
+     * treated as one case because they REACH the same state by different
+     * routes, and a fix that only covered the row the migration left behind
+     * would pass with C still drifting.
+     */
+    e2eLive(['AE' => '5'], ['AE' => TaxRule::INCLUSIVE]);
+    $recorded = e2ePlace(e2eCart(10000));
+
+    e2eSet('tax_mode', VatDisplay::MODE_DISPLAY);
+    $displayMode = e2ePlace(e2eCart(10000));
+
+    $historical = Order::create([
+        'order_number' => 'KBB-E2E-OLD-' . uniqid(),
+        'email' => 'old@example.com',
+        'status' => 'completed',
+        'currency' => 'AED',
+        'billing_address' => ['first_name' => 'Aisha', 'last_name' => 'Khan', 'city' => 'Dubai', 'country' => 'AE'],
+        'subtotal' => 20000, 'discount_total' => 0, 'shipping_total' => 2000,
+        'fee_total' => 0, 'tax_total' => 0, 'total' => 22000,
+    ]);
+    $historical->items()->create([
+        'name' => 'Rice Toner', 'sku' => 'HH-RT-150',
+        'quantity' => 1, 'unit_price' => 20000, 'subtotal' => 20000, 'total' => 20000,
+    ]);
+
+    expect(OrderTax::recorded($recorded))->not->toBeNull()
+        ->and(OrderTax::recorded($historical))->toBeNull()
+        ->and(OrderTax::recorded($displayMode))->toBeNull();
+
+    $before = [
+        'recorded' => e2eThreeReaders($recorded->id),
+        'historical' => e2eThreeReaders($historical->id),
+        'displayMode' => e2eThreeReaders($displayMode->id),
+    ];
+
+    e2eRateStorm();
+
+    foreach ($before as $which => $documents) {
+        $id = ['recorded' => $recorded->id, 'historical' => $historical->id, 'displayMode' => $displayMode->id][$which];
+
+        expect(e2eThreeReaders($id))->toBe(
+            $documents,
+            "the {$which} order's documents changed when the shop's tax settings did"
+        );
+    }
+});
+
+it('states no tax at all on a document for an order that recorded none', function () {
+    /*
+     * The invariant above would also be satisfied by a figure that is wrong and
+     * STAYS wrong, so this says what the three readers actually print: nothing.
+     * 571 fils was the figure the removed fallback produced for exactly this
+     * order, out of the shop's default 5% inclusive rule and a 12000 total.
      */
     $order = e2ePlace(e2eCart(10000));
 
-    expect(OrderTax::recorded($order))->toBeNull('this order deliberately has no tax record');
+    expect(OrderTax::recorded($order))->toBeNull();
 
-    $before = app(InvoiceDocument::class)->present($order)['vatNote'];
+    $readers = e2eThreeReaders($order->id);
 
-    // 5% inclusive is the shipped default rule, extracted from a 12000 total.
-    expect($before['fils'])->toBe(571)
-        ->and($before['label'])->toBe('Includes VAT at 5%');
+    expect($readers['invoice']['vatNote'])->toBeNull()
+        ->and($readers['email']['vatNote'])->toBeNull()
+        ->and($readers['admin']['vat'])->toBeNull();
 
-    // The owner raises the global rate, years later.
+    // No VAT row either — silence means silence, not a figure moved elsewhere.
+    expect(array_keys(e2eBreakdown($readers['invoice'])['rows']))->not->toContain('VAT')
+        ->and($readers['invoice']['docType'])->toBe('Invoice');
+
+    // And the money is exactly what it was: this closed a documentation defect,
+    // not a money one, and it must not have become a money one.
+    expect((int) Order::find($order->id)->total)->toBe(12000)
+        ->and($readers['invoice']['totalFils'])->toBe(12000);
+});
+
+it('rewords a receipt when the owner rewords vat_label, without restating the rate or the amount', function () {
+    /*
+     * THE ONE THING THAT IS STILL LIVE, AND WHY IT IS ALLOWED TO BE.
+     *
+     * `vat_label` is a sentence the owner writes — "You're paying VAT ({rate}%)"
+     * by default — and it is read at render time so that rewording it reaches
+     * the receipts he sends from then on. The {rate} inside it is filled from
+     * the ORDER'S snapshot, never from VatDisplay::label(), so rewording moves
+     * the words around an unchanged rate and an unchanged figure. A reworded
+     * sentence stating the right tax is not a restatement; that is the line.
+     *
+     * Freezing the wording too would need a column holding a copy of the
+     * sentence on every order, and for the orders that predate it there would
+     * be no sentence to copy — the same unrecoverable-history problem that
+     * decided the rate, with far less at stake.
+     */
+    e2eLive(['AE' => '5'], ['AE' => TaxRule::INCLUSIVE]);
+
+    $order = e2ePlace(e2eCart(10000));
+    $before = app(OrderEmailPresenter::class)->present($order)['vatNote'];
+
+    expect($before['label'])->toBe("You're paying VAT (5%)");
+
+    e2eSet('vat_label', 'Tax included ({rate}%)');
     e2eSet('vat_rate', 20);
+    e2eSet(VatDisplay::COUNTRY_RATES_KEY, json_encode(['AE' => '20']));
 
-    $after = app(InvoiceDocument::class)->present(Order::find($order->id))['vatNote'];
+    $after = app(OrderEmailPresenter::class)->present(Order::find($order->id)->fresh('items'))['vatNote'];
 
-    // The NOTE moves...
-    expect($after['fils'])->toBe(2000)
-        ->and($after['label'])->toBe('Includes VAT at 20%');
+    // New words. The SAME rate inside them, and the same figure beside them.
+    expect($after['label'])->toBe('Tax included (5%)')
+        ->and($after['fils'])->toBe($before['fils'])
+        ->and($after['html'])->toBe($before['html'])
+        ->and($after['plain'])->toBe($before['plain']);
 
-    // ...and the money does not. The total is the figure that was charged.
-    expect((int) Order::find($order->id)->total)->toBe(12000);
+    // The invoice's own wording carries no setting at all, so it is untouched.
+    expect(app(InvoiceDocument::class)->present(Order::find($order->id)->fresh('items'))['vatNote']['label'])
+        ->toBe('Includes VAT at 5%');
 });
 
 /*
