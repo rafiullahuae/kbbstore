@@ -1,9 +1,17 @@
 # T6 · RTL — audit and logical-property rewrite
 
-**Status: the mechanical half is done. RTL is not switched on and this change
-does not switch it on.** Every conversion here is a no-op in a left-to-right
-document, which is what makes it safe to land while the locale switch (Lane EP)
-does not exist yet.
+**Status: both halves are done.** The mechanical half — 368 physical direction
+declarations rewritten as logical ones — landed first and is described below.
+The manual half, §11 onward, is the part that decides whether the Arabic shop can
+be shown to a customer: it turns RTL on, looks at every surface in a browser, and
+fixes the things a property rename cannot reach. 21 of the 57 declarations this
+document recorded as deliberately physical turned out to be convertible once
+their `transform` was flipped alongside them, one row was added, and two are
+deliberately deferred (§11.1), so the kept-physical list is now **37** and the
+tables below are the current ones.
+
+**RTL is still shipped OFF.** `language_ar_enabled` and `language_rtl_enabled`
+are both absent by default and nothing here seeds them.
 
 CSS logical properties resolve to their physical equivalents in
 `writing-mode: horizontal-tb; direction: ltr`. `margin-inline-start` *is*
@@ -26,9 +34,15 @@ Scope of the audit: every stylesheet under `resources/css/`, plus every
 |---|---|
 | Physical direction declarations found, whole repo | **678** |
 | — in the storefront files this lane owns | **425** |
-| — converted to logical | **368** |
-| — left physical on purpose | **57** |
+| — converted to logical, mechanical half | **368** |
+| — converted to logical, manual half (§11) | **21** |
+| — left physical on purpose, after both halves | **37** |
+| — added on purpose: one `[dir="rtl"]` twin of a physical rule (§11.6) | **1** |
 | — out of this lane's scope (admin, invoice, dead Laravel welcome page) | **253** |
+
+368 + 21 + 37 = 426, one more than 425, because of the added twin. The floors
+table above and the kept-physical table below are regenerated from the
+stylesheets, so those are the numbers to trust if this paragraph ever drifts.
 
 "Physical direction declaration" means: `margin-left/right`,
 `padding-left/right`, `border-left/right(-color/-width/-style)`, the four
@@ -47,24 +61,24 @@ mode that makes a guard worthless.
 <!-- rtl-audit:floors:begin -->
 | file | logical direction declarations (floor) | total declarations parsed |
 |---|---|---|
-| `resources/css/kbb/kbb.css` | 183 | 5756 |
-| `resources/css/kbb/kbb-shop.css` | 34 | 1243 |
-| `resources/css/kbb/kbb-product.css` | 32 | 1337 |
+| `resources/css/kbb/kbb.css` | 190 | 5765 |
+| `resources/css/kbb/kbb-shop.css` | 40 | 1248 |
+| `resources/css/kbb/kbb-product.css` | 36 | 1341 |
 | `resources/css/kbb/kbb-cart.css` | 5 | 300 |
-| `resources/css/kbb/kbb-checkout.css` | 35 | 1334 |
+| `resources/css/kbb/kbb-checkout.css` | 38 | 1339 |
 | `resources/css/kbb/kbb-account.css` | 2 | 170 |
 | `resources/css/kbb/kbb-banner.css` | 0 | 100 |
-| `resources/css/kbb/kbb-grid-skins.css` | 13 | 569 |
-| `resources/css/kbb/sorina-reviews.css` | 11 | 595 |
-| `resources/views/layouts/store.blade.php` | 3 | 104 |
-| `resources/views/store/app.blade.php` | 22 | 1400 |
-| `resources/views/store/skin-quiz.blade.php` | 9 | 571 |
+| `resources/css/kbb/kbb-grid-skins.css` | 15 | 570 |
+| `resources/css/kbb/sorina-reviews.css` | 13 | 597 |
+| `resources/views/layouts/store.blade.php` | 3 | 110 |
+| `resources/views/store/app.blade.php` | 25 | 1402 |
+| `resources/views/store/skin-quiz.blade.php` | 9 | 545 |
 | `resources/views/store/blog.blade.php` | 3 | 224 |
 | `resources/views/store/post.blade.php` | 2 | 223 |
 | `resources/views/store/review-wall.blade.php` | 4 | 302 |
 | `resources/views/store/checkout.blade.php` | 2 | 33 |
 | `resources/views/store/checkout-success.blade.php` | 1 | 154 |
-| `resources/views/store/account/order-detail.blade.php` | 3 | 148 |
+| `resources/views/store/account/order-detail.blade.php` | 5 | 154 |
 | `resources/views/store/account/track.blade.php` | 1 | 63 |
 <!-- rtl-audit:floors:end -->
 
@@ -75,8 +89,9 @@ declaration added to it later fails the guard.
 
 ## 2. What stays physical, and why
 
-These 57 declarations are inside the converted files and are **deliberately not
-converted**. Each one is either an idiom that is not about reading direction, or
+These 37 declarations are inside the converted files and are **deliberately not
+converted**. (It was 57; §11 explains which 21 moved and why, which one was
+added, and which two are deferred rather than kept.) Each one is either an idiom that is not about reading direction, or
 one half of a pair whose other half has no logical form — and converting half of
 a coordinated pair is worse than converting neither, because it breaks the layout
 in RTL in a way nobody sees until RTL is switched on.
@@ -89,28 +104,14 @@ exactly, in both directions, so the document cannot drift from the code.
 | file | selector | declaration | why |
 |---|---|---|---|
 | `resources/css/kbb/kbb.css` | `.mega .mcol a:hover::before, .mega .mcol-link:hover::before` | `right: 0` | transition |
+| `resources/css/kbb/kbb.css` | `[dir="rtl"] .mega .mcol a:hover::before, [dir="rtl"] .mega .mcol-link:hover::before` | `left: 0` | transition |
 | `resources/css/kbb/kbb.css` | `.sdots` | `left: 50%` | centre |
-| `resources/css/kbb/kbb.css` | `.drawer` | `right: 0` | off-canvas |
-| `resources/css/kbb/kbb.css` | `.mnav` | `left: 0` | off-canvas |
-| `resources/css/kbb/kbb.css` | `.msub` | `left: calc(var(--mw) - var(--sw)/2)` | off-canvas |
-| `resources/css/kbb/kbb.css` | `.msub` | `border-left: 1px solid var(--line-2)` | off-canvas |
 | `resources/css/kbb/kbb.css` | `.toast` | `left: 50%` | centre |
 | `resources/css/kbb/kbb.css` | `.kbb-pgrid[data-skin="editorial"] .cn:after` | `left: 50%` | centre |
-| `resources/css/kbb/kbb.css` | `.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale` | `right: -36px` | rotated |
-| `resources/css/kbb/kbb.css` | `.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale` | `left: auto` | rotated |
-| `resources/css/kbb/kbb.css` | `.kbb-home .sec:nth-of-type(odd) > .wrap::before` | `right: 0` | masked |
 | `resources/css/kbb/kbb.css` | `.acct::before` | `border-left: 1px solid var(--line-2)` | rotated |
-| `resources/css/kbb/kbb-shop.css` | `.mnav` | `left: 0` | off-canvas |
-| `resources/css/kbb/kbb-shop.css` | `.tog::after` | `left: 2.5px` | toggle |
 | `resources/css/kbb/kbb-shop.css` | `.qv` | `left: 50%` | centre |
-| `resources/css/kbb/kbb-shop.css` | `.dw` | `right: 0` | off-canvas |
-| `resources/css/kbb/kbb-shop.css` | `.dw.left` | `left: 0` | off-canvas |
-| `resources/css/kbb/kbb-shop.css` | `.dw.left` | `right: auto` | off-canvas |
 | `resources/css/kbb/kbb-shop.css` | `.toast` | `left: 50%` | centre |
-| `resources/css/kbb/kbb-shop.css` | `@media(max-width:900px) .filtercol` | `left: 0` | off-canvas |
-| `resources/css/kbb/kbb-product.css` | `.mnav` | `left: 0` | off-canvas |
 | `resources/css/kbb/kbb-product.css` | `.hp` | `left: -9999px` | off-screen |
-| `resources/css/kbb/kbb-product.css` | `.dw` | `right: 0` | off-canvas |
 | `resources/css/kbb/kbb-product.css` | `.toast` | `left: 50%` | centre |
 | `resources/css/kbb/kbb-checkout.css` | `.kbb-checkout #payment #place_order` | `left: -9999px` | off-screen |
 | `resources/css/kbb/kbb-checkout.css` | `.kbb-checkout .fs-jade .ffill::after` | `right: 0` | fill-bar |
@@ -129,18 +130,12 @@ exactly, in both directions, so the document cannot drift from the code.
 | `resources/css/kbb/kbb-checkout.css` | `.kbb-checkout .fs-jade .fs-cheer i:nth-child(6)` | `left: 70%` | fill-bar |
 | `resources/css/kbb/kbb-checkout.css` | `.kbb-checkout .fs-jade .fs-cheer i:nth-child(7)` | `left: 82%` | fill-bar |
 | `resources/css/kbb/kbb-checkout.css` | `.kbb-checkout .fs-jade .fs-cheer i:nth-child(8)` | `left: 93%` | fill-bar |
-| `resources/css/kbb/kbb-checkout.css` | `#billing_country_field select.input-text` | `padding-right: 36px` | background-position |
 | `resources/css/kbb/kbb-grid-skins.css` | `.kbb-pgrid[data-skin="editorial"] .cn:after` | `left: 50%` | centre |
-| `resources/css/kbb/kbb-grid-skins.css` | `.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale` | `right: -36px` | rotated |
-| `resources/css/kbb/kbb-grid-skins.css` | `.kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale` | `left: auto` | rotated |
 | `resources/css/kbb/sorina-reviews.css` | `.sr-mcard` | `left: 50%` | centre |
 | `resources/css/kbb/sorina-reviews.css` | `@media(min-width:760px) .sr-scard` | `left: 50%` | centre |
 | `resources/css/kbb/sorina-reviews.css` | `@media(min-width:760px) .sr-scard` | `right: auto` | centre |
 | `resources/css/kbb/sorina-reviews.css` | `.sr-hp` | `left: -9999px` | off-screen |
 | `resources/views/layouts/store.blade.php` | `.qv-btn` | `left: 50%` | centre |
-| `resources/views/store/app.blade.php` | `.drawer` | `right: 0` | off-canvas |
-| `resources/views/store/app.blade.php` | `.drawer.left` | `right: auto` | off-canvas |
-| `resources/views/store/app.blade.php` | `.drawer.left` | `left: 0` | off-canvas |
 | `resources/views/store/app.blade.php` | `.toast` | `left: 50%` | centre |
 | `resources/views/store/skin-quiz.blade.php` | `.toast` | `left: 50%` | centre |
 | `resources/views/store/blog.blade.php` | `.mnav` | `left: 0` | off-canvas |
@@ -149,62 +144,61 @@ exactly, in both directions, so the document cannot drift from the code.
 
 ### The reasons in full
 
+Counts are the current ones. Where a group shrank, the row that replaced it is in
+§11.
+
 **`centre` (13)** — `left: 50%` paired with `transform: translateX(-50%)`.
 This is the centring idiom, not a statement about direction. `translateX` has no
 logical equivalent, so converting the inset alone would resolve to `right: 50%`
 in RTL while the transform still pulled the element left — moving it off centre
 by its own width. Toasts, carousel dot rails, the quick-view button, the review
-modal and the editorial card underline are all this.
-
-**`off-canvas` (16)** — a panel parked off-screen by `transform: translateX(±100%)`
-and anchored by a physical inset. `.drawer`, `.mnav`, `.msub`, `.dw`, `.dw.left`
-and `.filtercol`. Converting the inset flips which edge the panel is anchored to
-without flipping the direction it slides from, so in RTL the panel would sit
-*on* screen in its closed state. `.msub`'s `border-left` is the same panel's
-visible edge and belongs with it. These are the rules that need a `[dir="rtl"]`
-block overriding the transform when RTL is switched on — that is switch work, not
-rewrite work.
+modal and the editorial card underline are all this. **Verified rather than
+assumed** (§11.3): in a `dir="rtl"` document at 900px the toast spans
+397.5..502.5, centre 450.0. All 13 stay exactly as they are, and
+`RtlMirrorTest` now fails if a `[dir="rtl"]` rule is ever added to one of them.
 
 **`fill-bar` (16)** — the checkout's free-shipping progress bar and its
 celebration sprites. The fill is `linear-gradient(90deg, …)` with a width
-transition; the shine and the comet rider ride on `translateX`; the burst
-particles fly along `--tx` custom properties; the track is trimmed with
+transition, the shine and the comet rider ride on `translateX`, the burst
+particles fly along `--tx` custom properties, and the track is trimmed with
 `overflow-x: clip`. None of those has a logical form, and the sprite positions
-are measured against the fill they sit on. The whole block stays physical as one
-unit, which is a cleaner boundary than converting the insets and leaving the
-sprites behind.
+are measured against the fill they sit on. All 16 stay physical — and §11.2
+explains why the bar is nevertheless mirrored, by one rule on the track rather
+than by converting any of them.
 
 **`off-screen` (3)** — `left: -9999px` on the two spam honeypots and on
 WooCommerce's real `#place_order` button. "Off the left edge" is a physical
 trick for hiding something from sight while leaving it in the accessibility
-tree; it is not a reading direction. `inset-inline-start: -9999px` would park it
-off the *right* edge in RTL, where it can extend the scrollable area.
+tree; it is not a reading direction, so all three stay. **But which edge is safe
+is not the same in both directions, and the note that used to be here had it
+backwards** — see §11.4, which is a bug this lane found by measuring.
 
-**`rotated` (5)** — geometry fixed by a `rotate()`. The corner sale ribbon is
-`right: -36px` + `rotate(45deg)`; flipping the inset without flipping the
-rotation puts the ribbon across the wrong corner still pointing the old way. The
-account-menu caret is two adjacent borders on a square rotated 45°, and *which*
-two borders is what makes the tip point up.
+**`rotated` (1)** — the account-menu caret, `.acct::before`: two adjacent
+borders on a square rotated 45°, and *which* two borders is what makes the tip
+point up. Photographed in RTL (§11.5): the tip still points up, because the pair
+is symmetric about the vertical axis. It must not flip. The corner sale ribbon
+used to be in this group and is not any more — §11.5.
 
-**`toggle` (1)** — the filter switch knob rests at `left: 2.5px` and moves with
-`.tog.on::after { transform: translateX(17px) }`. Both halves move together or
-neither does.
-
-**`transition` (1)** — `.mega .mcol a::before` sets `inset: 0 100% 0 0` (a
+**`transition` (2)** — `.mega .mcol a::before` sets `inset: 0 100% 0 0` (a
 physical shorthand) and animates it with `transition: right .18s ease`, which
 names the physical property. The hover state's `right: 0` has to stay on the
-property the transition is declared against.
+property the transition is declared against — and so does its RTL twin, which is
+the second row in this group. §11.6.
 
-**`masked` (1)** — the alternating section corner artwork is pinned by a
-physical `border-radius` shorthand and clipped by `mask-image:
-linear-gradient(230deg, …)`. Neither has a logical form.
+**`background-position` (0)** — the country `<select>` still draws its chevron
+with `background-position`, which has no logical keyword, but the padding that
+reserves room for it is now logical and the image moves to match. §11.7.
 
-**`background-position` (1)** — the country `<select>` draws its chevron with
-`background-position: right 12px center` and reserves room for it with
-`padding-right: 36px`. `background-position` has no logical keyword, so the
-padding must stay on whichever side the image is on.
+**`toggle` (0)**, **`masked` (0)** — both converted. §11.5.
 
----
+**`off-canvas` (2)** — 14 of the 16 converted (§11.1). The two that remain are
+`.mnav` in `store/blog.blade.php` and `store/post.blade.php`, and they are
+**deferred, not kept**: those views hard-code `<html lang="en">` with no `dir`,
+so a `[dir="rtl"]` rule could never match in them, while converting them does
+change the English bytes of a shipped page and trips
+`StorefrontEnglishUnchangedTest` — whose `BASE_COMMIT` repin a rebase then
+invalidates. §11.1 and §9.5. They belong with whoever gives those views a real
+`<html lang>`/`<html dir>`, in one change that repins that guard once.
 
 ## 3. Properties with no logical equivalent at all
 
@@ -406,29 +400,39 @@ was left alone.
 
 ## 9. What RTL still needs after this
 
-This change does not make the site work in RTL. It removes the mechanical part.
-What is left is genuinely directional and belongs with the switch:
+*Written before the manual half. Kept, with each item's current state marked,
+because the list is still the map — §11 is what happened to items 1 and 4.*
 
-1. **A `[dir="rtl"]` override block for the 77 `translateX` transforms** — the
-   off-canvas panels above all. Each needs its sign flipped.
-2. **Directional glyphs.** `.sarrow.prev` / `.sarrow.next`, `.car-btn.l` /
-   `.car-btn.r`, the mega-menu carets and the breadcrumb `›`. Their *positions*
-   now flip correctly; the SVG inside them does not, so a chevron would point the
-   wrong way. A `[dir="rtl"] .sarrow svg { transform: scaleX(-1) }` handles the
-   ones that mean "previous/next"; anything that means "back" should not flip.
+1. ~~**A `[dir="rtl"]` override block for the 77 `translateX` transforms** — the
+   off-canvas panels above all. Each needs its sign flipped.~~ **DONE for every
+   transform that carries a direction** — §11.1, §11.2, §11.5. Not every one of
+   the 77 needed flipping: most are `translateY`, a `translate(-50%,…)` centring
+   pair, or a keyframe that reads the same either way.
+2. **Directional glyphs — STILL OPEN, and out of this lane.** `.sarrow.prev` /
+   `.sarrow.next`, `.car-btn.l` / `.car-btn.r` and the hero carousel arrows.
+   Their *positions* flip correctly; the SVG inside them does not. The
+   mega-menu caret and the mobile-nav `›` turned out **not** to need anything:
+   `›` (U+203A) is in the Unicode bidi mirroring set and renders as `‹` in an
+   RTL run on its own, photographed in `docs/rtl-shots/manual/`.
 3. **Class names that name a side** — `.dw.left`, `.drawer.left`, `.car-btn.l`,
-   `.car-btn.r`, `.kc-right`, `.cright`, `.gright`. Harmless, but they will read
-   as lies in RTL. Renaming them is a separate, noisier diff and was deliberately
-   not mixed into this one.
-4. **Horizontal `linear-gradient` angles** (92 of them) where the gradient
-   carries meaning rather than decoration — the free-shipping fill in particular.
-5. **`<html dir>` and `lang`** — Lane EP's, and **already landed**: the
-   bilingual foundation on the base branch sets `dir="{{ $kbbDir }}"` from
-   `App\Support\Locale::direction()`, gated on the `language_rtl_enabled`
-   setting. The switch this rewrite was waiting for now exists; what is
-   missing is items 1–4 above, which is the right-to-left stylesheet itself.
-
----
+   `.car-btn.r`, `.kc-right`, `.cright`, `.gright`. Still open, still
+   deliberately not mixed in. They now mirror correctly in spite of their names;
+   renaming them is a separate, noisier diff.
+4. ~~**Horizontal `linear-gradient` angles** (92 of them) where the gradient
+   carries meaning rather than decoration — the free-shipping fill in
+   particular.~~ **The free-shipping fill is DONE** (§11.2), by mirroring its
+   track rather than by respelling the angle. The other 91 are decorative
+   backgrounds and panel washes and were left alone on purpose: a decorative
+   gradient that mirrors is not more correct, it is just a different picture.
+5. **`<html dir>` and `lang`** — Lane EP's, and **already landed** on the
+   storefront layout. **But not everywhere**, and this is a finding of the
+   manual half: `store/blog.blade.php`, `store/post.blade.php` and
+   `store/app.blade.php` are standalone layouts that hard-code
+   `<html lang="en">` with no `dir`. `/ar/skincare-guide/` serves an
+   English-tagged, left-to-right page with no Arabic face. Their `.mnav` rules
+   were converted anyway so the copies do not diverge, but nothing in §11
+   reaches those pages until they get a real `<html lang>`/`<html dir>`. Out of
+   this lane; it belongs to whoever owns those views.
 
 ## 10. The Arabic face: what shipped, and two measured notes on it
 
@@ -442,6 +446,13 @@ Arabic glyphs in that state too.
 
 So this section is no longer a recommendation. It is the measurement this lane
 did anyway, and two things in it are worth acting on.
+
+> **Correction from the manual half (§11.8).** "Shipped it well" was about the
+> `<link>`, and the `<link>` is right. But no font stack in the storefront ever
+> named Cairo, so the face was downloaded by nothing and every Arabic word still
+> rendered in the device fallback — the exact defect the link was added to fix.
+> Note 1 below has also been actioned: `;800` is in the request. Read §11.8 for
+> what the measurement looks like now.
 
 ### What the pages pay, measured
 
@@ -529,3 +540,279 @@ them:
   sans-serif`. Poppins has no Arabic glyphs and Cairo's Latin is not the brand
   face, so per-codepoint selection is exactly what is wanted — and it is what
   keeps the English page rendering from Poppins with Cairo never requested.
+
+---
+
+## 11. The manual half — what a browser showed, and what was changed
+
+Everything above this line was provably inert in LTR by construction. This
+section is not: it is the part that needed RTL switched on and every affected
+surface looked at, at 1440×1000 and 390×844, in three states — English, Arabic
+with RTL off, Arabic with RTL on. Shots in `docs/rtl-shots/manual/`.
+
+**The method.** `php -S` against a seeded SQLite database with a Vite manifest
+pointing at the *source* stylesheets (the committed hashes under `public/build`
+predate this change and would have made every comparison vacuous). Chromium
+1194, `browser.newContext({viewport})`, `deviceScaleFactor: 1`,
+`reducedMotion: 'reduce'`, animations and transitions frozen by an injected
+stylesheet. Panels are opened by adding the class the site's own JS adds, so a
+closed drawer and an open one are both photographable.
+
+**The mechanism, throughout: `[dir="rtl"]` overrides and logical properties,
+never a change to the default.** Proof in §11.9.
+
+### 11.1 off-canvas (16) — the group that decides whether the shop is usable
+
+Photographed first, because "would be visibly wrong" deserved a picture rather
+than a prediction. With RTL on and nothing else changed:
+
+| surface | what it did |
+|---|---|
+| cart drawer (`.drawer`) | slid in from the **right** while the cart icon sat at the top **left** |
+| mobile nav (`.mnav`) | slid in from the **left** while the burger sat at the top **right** |
+| sub-menu (`.msub`) | hung off the mobile nav's outer edge, half off screen |
+| filter column (`.filtercol`) | opened from the **left**, trigger on the right |
+| shop/product drawers (`.dw`, `.dw.left`) | both on the wrong side |
+
+Two of the 16 are not fixed here. `.mnav` in `store/blog.blade.php` and
+`store/post.blade.php` is the same panel in two standalone layouts that
+hard-code `<html lang="en">` with no `dir` attribute — `/ar/skincare-guide/`
+serves an English-tagged, left-to-right page (§9.5). `[dir="rtl"]` cannot match
+there, so the conversion buys nothing today, while it does change the rendered
+English bytes of a live page and turns `StorefrontEnglishUnchangedTest` red.
+That guard is repinned by moving a `BASE_COMMIT` SHA forward, and its own
+docblock warns the SHA must survive a rebase — so repinning it to a lane commit
+that is about to be rebased is exactly the failure it describes. The right time
+to convert these two is when someone gives those views a real `<html dir>`, in
+one change that repins the guard once. The rows stay in the table above with the
+reason `off-canvas`, so nothing is silently forgotten.
+
+Not "on screen when closed" — the audit's prediction was for converting the
+inset *alone*, which is exactly why the previous lane did not. Left untouched
+they were consistently, visibly mirrored the wrong way.
+
+**What was done.** The inset was converted to `inset-inline-*` **and** the
+closed-state `translateX` given a `[dir="rtl"]` twin with the opposite sign.
+Both halves, together, which is the thing the audit said had to happen. So all
+16 move out of the kept-physical table; `.msub`'s `border-left` becomes
+`border-inline-start` with them, and `.mnav`'s `box-shadow: 14px 0 40px` — which
+has no logical form and is the panel's own edge shadow falling across the page —
+is negated in the same override.
+
+**The cascade trap, which this lane fell into first.** `[dir="rtl"] .drawer` and
+`.drawer.on` both score (0,2,0). Source order decides. Written below the `.on`
+rule, the override re-applies the closed transform to an *open* drawer and the
+panel never appears in Arabic — while every declaration-level test passes. Every
+override is therefore placed directly under the rule it mirrors and **above** the
+`.on` rule, and `RtlMirrorTest` fails if one ever moves below it.
+
+### 11.2 fill-bar (16) — it mirrors, and that was not a choice
+
+The brief asked whether the free-delivery bar should mirror. Measurement answers
+it: **`.ffill` is an ordinary in-flow block**, so the moment `<html dir>` is
+`rtl` it starts at the track's right edge and grows leftward with no CSS change
+at all. A 45% fill in a track at `[556, 876]` sits at `[732, 876]`.
+
+So the fill mirrors whether anyone decides it should or not, and what was left
+behind was everything pinned to it. The jade pulse dot and the comet rider are
+positioned against the fill's *leading* edge; both sat at the far right, i.e. at
+the anchored end of a bar now growing away from them. **The comet was flying
+backwards** — measured at `[866.8, 883]` with the leading edge at 732.
+
+**What was done — one rule, not sixteen.**
+
+```css
+[dir="rtl"] .kbb-checkout .ftrack{direction:ltr;transform:scaleX(-1)}
+```
+
+`direction: ltr` puts the track back into the coordinate system its 16
+declarations were written for; `scaleX(-1)` mirrors the finished picture. After:
+rider at `[725, 741.2]`, centred on the leading edge, as in LTR. The gradient,
+the shine, the stripes and the burst all mirror with it.
+
+All 16 declarations stay physical and stay in the table. This is the cleaner
+boundary the audit already argued for, taken one step further: the unit that
+mirrors is the track.
+
+It is safe **only because `.ftrack` contains no text** — its children are
+`.ffill` and the `.fs-cheer` particles, which are stars, sparkles and coloured
+rectangles. The "AED 40 to go" label is in `.freebar`, a sibling. Do not extend
+this rule upward. `overflow-x: clip` stays on `.freebar`, so the mobile
+horizontal-scroll fix documented in that file still covers the mirrored burst.
+
+### 11.3 centre (13) — verified, and deliberately untouched
+
+`left: 50%` + `translateX(-50%)` was checked rather than assumed, because the
+brief asked for that specifically. In a `dir="rtl"` document at 900px wide the
+toast spans `397.5..502.5`; centre 450.0, which is exactly half of 900.
+
+Correct in both directions, because `left: 50%` is unambiguous and `translateX`
+is physical in both. **All 13 unchanged**, and `RtlMirrorTest` now fails if a
+`[dir="rtl"]` rule is ever added to any selector this document records as
+`centre`.
+
+### 11.4 off-screen (3) — the note in this document was backwards
+
+The old text said `inset-inline-start: -9999px` "would park it off the right edge
+in RTL, where it can extend the scrollable area". Measured, it is the other way
+round. In a right-to-left document the scrollable overflow region extends to the
+**left**:
+
+| | `left:-9999px` | `[dir="rtl"]` fixed |
+|---|---|---|
+| `documentElement.scrollWidth` | 10899 | 900 |
+| `clientWidth` | 900 | 900 |
+| `scrollLeft` range | −9999 … 0 | 0 … 0 |
+
+So with RTL on, the two honeypots and WooCommerce's hidden `#place_order` gave
+an Arabic shopper ten thousand pixels of blank page to scroll into — the same
+class of defect as the burst particles the checkout already had a comment about.
+
+`left: -9999px` stays as the LTR default (it is correct there, and it is the
+idiom). Each gains:
+
+```css
+[dir="rtl"] .hp{inset-inline-start:-9999px;inset-inline-end:auto}
+```
+
+which in RTL resolves to `right: -9999px; left: auto` — the side that is
+discarded. Logical spelling, so no new physical declaration and no new table row.
+
+### 11.5 rotated (5) — one flips, one must not, and a picture of each
+
+**The corner sale ribbon (4 declarations, two files).** In RTL it stayed across
+the top-**right** corner of a card grid that had mirrored around it. Converted:
+`inset-inline-end: -36px; inset-inline-start: auto` plus
+`[dir="rtl"] … {transform: rotate(-45deg)}`. It now crosses the top-left corner
+with the text still running readably. `scaleX(-1)` was rejected here — unlike the
+corner artwork, this element carries text. Moves out of the table.
+
+**The account-menu caret, `.acct::before` (1 declaration).** `border-left` +
+`border-top` on a square rotated 45°. Photographed with the panel forced open in
+RTL: the panel moves to the other side with its logical inset and **the tip still
+points up**, because the two borders are symmetric about the vertical axis.
+Flipping either one would point it sideways. **Unchanged**, and it is the only
+row left in the `rotated` group.
+
+**`masked` (1), the alternating section corner artwork.** `right: 0` plus a
+physical `border-radius` shorthand plus a `linear-gradient(230deg)` mask — three
+direction-carrying values that would have to be kept in step by hand. Converted
+the inset and mirrored the rendered result instead:
+`[dir="rtl"] … {transform: scaleX(-1)}`. One declaration, and it cannot drift.
+Safe because it is artwork with no text in it. Moves out of the table.
+
+**`toggle` (1), the filter switch.** In RTL the knob rested at the left and moved
+right — the LTR behaviour, unmirrored. Now `inset-inline-start: 2.5px` with
+`[dir="rtl"] .tog.on::after{transform:translateX(-17px)}`: rest at the inline
+start, travel to the inline end, in both directions. Moves out of the table.
+
+### 11.6 transition (1 → 2) — the one row this lane added
+
+`.mega .mcol a::before` sets `inset: 0 100% 0 0` and animates it with
+`transition: right .18s ease`. In RTL that still pins the wipe to the physical
+left and sweeps it rightward — backwards for a row of right-to-left text, and it
+does animate, so nothing looks broken; it just runs the wrong way.
+
+Two spellings were tried and both animate correctly in Chromium (measured
+mid-flight: half width at half the duration). The logical one —
+`transition: inset-inline-end` — works, and was **rejected**: it only reads
+correctly if you also notice that the base rule's `:hover{right:0}` happens to be
+a no-op in RTL. The physical twin says what it does:
+
+```css
+[dir="rtl"] .mega .mcol a::before{inset:0 0 0 100%;transition:left .18s ease}
+[dir="rtl"] .mega .mcol a:hover::before{left:0}
+```
+
+That `left: 0` is a physical direction declaration, so it is **added to the
+kept-physical table** with the reason `transition`. It is the only row this lane
+added, and the guard pins it exactly as it pins the other 34.
+
+### 11.7 background-position (1) — the padding moves, the image follows
+
+`background-position: right 12px center` with `padding-right: 36px`. In RTL the
+select right-aligns its text and the chevron stayed on the right with no room
+reserved for it. `padding-right` becomes `padding-inline-end` (moves out of the
+table) and the image is moved to match:
+
+```css
+[dir="rtl"] #billing_country_field select.input-text{background-position:left 12px center}
+```
+
+`background-position` is not a property the reader tracks, so this adds no row.
+The pair has to name the same side or the chevron sits on the country name.
+
+### 11.8 The Arabic face: linked, and never used
+
+§10 recorded that Lane EP shipped the Cairo `<link>` "and shipped it well",
+including weight 800. The link is right and the gating is right. **The face was
+never rendering**, because nothing named it: `--sans` is
+`"Poppins",system-ui,…` in all four stylesheets that define it, `kbb.css` sets
+`body{font:400 14px/1.6 Poppins,system-ui,sans-serif}` with the shorthand, and
+the product card name, the badges and the add-to-cart button hard-code
+`'Poppins',sans-serif`. A browser fetches a face when something uses it.
+
+Measured with Cairo served from Google's own bytes (the capture browser cannot
+reach `fonts.gstatic.com` through this sandbox's proxy), the same Arabic string
+at 40px, page stack versus Cairo:
+
+| | page stack | Cairo | |
+|---|---|---|---|
+| weight 400 | 496.53 | 479.05 | before — matches neither: system fallback |
+| weight 800 | 595.63 | 537.88 | before |
+| weight 400 | **479.05** | 479.05 | after |
+| weight 800 | **537.88** | 537.88 | after |
+
+Fixed by appending — never substituting — Cairo after the Latin face, in one
+`<style>` block emitted inside the existing `@if ($kbbLocale !== DEFAULT)`, so an
+English page is unchanged byte for byte and per-codepoint selection still gives
+Latin to Poppins. A sweep of every text-bearing element across the Arabic home,
+shop, product, cart and checkout pages went from **960 to 1800** on a
+Cairo-capable stack; what is left is `<title>`/`<script>`/`<style>`, which render
+nothing, and the blog views from §9.5, which are not bilingual at all.
+
+Independently confirmed while doing it: `Cairo:wght@400;600;700;800` returns
+6,952 B of CSS and **one** 30,896-byte variable WOFF2 shared by all four weights
+— so §10's "weight 800 costs nothing" is right, and the two weights do render
+differently (479.05 vs 537.88), so it is buying something.
+
+### 11.9 Proof that English did not move
+
+Two independent proofs, because screenshots on this box flake.
+
+**Computed geometry, which cannot flake.** Every element and every
+`::before`/`::after` on 9 pages × 2 viewports, with every off-canvas panel
+force-opened so the changed rules are exercised: position and size to three
+decimals, all four margins, paddings, border widths, colours and styles, both
+insets, `text-align`, `float`, all four corner radii, **`transform`**,
+**`background-position`** and `direction`. **9,200 nodes, 0 differences.** The
+last three properties are the ones this lane actually changes, and the earlier
+render check in §8 did not capture them.
+
+**Structural, which cannot flake either.** Two mechanical checks over the diff:
+
+1. every rule selector this lane added is scoped to `[dir="rtl"]` — **0
+   exceptions**, so none of them can match in a left-to-right document;
+2. with those rules and all CSS comments removed and the logical property names
+   renamed back, **all 9 changed files come back byte-identical** to the branch
+   point.
+
+**Screenshots, for corroboration.** 25 surfaces × before/after in English: 22
+byte-identical. The three that differed were `desktop-product` (max channel delta
+221 — the live "order within 6h 10m" countdown, which differs by the same amount
+between two captures of the *same* tree, exactly as §8 found) and
+`mobile-checkout` and `mobile-shop`, at **3 and 4 pixels, max delta 2 of 255**.
+
+### 11.10 What still needs the owner, or another lane
+
+- **`-30%` reads as `30%-` on the sale ribbon in Arabic.** Not CSS: the Unicode
+  bidi algorithm reorders a leading hyphen-minus to the trailing side of an RTL
+  run. The fix belongs to whoever formats that label — wrap the number in an LTR
+  isolate. Photographed.
+- **The blog, article and `/app` views are not bilingual** — §9.5.
+- **Directional glyphs in the carousel and slider arrows** — §9.2.
+- **No mirrored logo or photograph was found** that would need an owner's
+  decision. The wordmark is text (`K-Beauty` + `Bliss`), the hero and card images
+  are `<img>`/`background-image` and are never transformed, and the only
+  `scaleX(-1)` this lane introduces is on a decorative corner gradient and on a
+  progress track that contains no text or photography.

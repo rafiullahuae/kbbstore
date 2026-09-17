@@ -157,8 +157,10 @@
 .sr-pv .i img{width:100%;height:100%;object-fit:cover}
 .sr-pv .i button{position:absolute;top:2px;inset-inline-end:2px;width:19px;height:19px;border:none;background:rgba(0,0,0,.7);color:#fff;border-radius:50%;font-size:12px;line-height:1;cursor:pointer}
 .sr-cap label span{color:var(--sr-accent)}
-/* RTL-PHYSICAL: off-screen parking for the honeypot, not a reading direction. */
+/* RTL-PHYSICAL (left:-9999px): off-screen parking for the honeypot — see .hp in
+   kbb-product.css for why the RTL override parks it off the opposite edge. */
 .sr-hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+[dir="rtl"] .sr-hp{inset-inline-start:-9999px;inset-inline-end:auto}
 .sr-submit{width:100%;background:var(--ink);color:var(--c);border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;margin-top:2px}
 .sr-submit:disabled{opacity:.6}
 .sr-msg{margin-top:11px;font-size:13.5px;text-align:center}

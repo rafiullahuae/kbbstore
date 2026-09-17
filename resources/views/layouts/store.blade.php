@@ -170,9 +170,76 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
     download: Cairo:wght@400;600;700 and the same list with 800 return THE SAME
     variable WOFF2 — same URL, same SHA-256, 30,896 bytes either way. Only the
     CSS grows, 5,214 to 6,952 uncompressed bytes, and only on Arabic pages.
+
+    AND THE FACE HAS TO BE NAMED SOMEWHERE, WHICH IT WAS NOT.
+
+    The <link> above is correct and correctly gated, and on its own it did
+    nothing at all: no font stack in this storefront mentions Cairo. `--sans` is
+    "Poppins",system-ui,… in all four stylesheets that define it, and the product
+    card name, the badges and the add-to-cart button hard-code 'Poppins',
+    sans-serif of their own. A browser downloads a face when something uses it,
+    so Cairo was fetched by nothing and every Arabic word still fell through
+    Poppins — which has no Arabic glyphs — to the system fallback. That is
+    exactly the defect the note above describes, with a 30 KB stylesheet request
+    added on top of it.
+
+    MEASURED, with Cairo served from the same bytes Google serves so the capture
+    browser could actually load it. The same Arabic string at 40px, set in the
+    page's own inherited stack versus set in Cairo explicitly:
+
+                     stack      Cairo
+        weight 400   496.53     479.05      before
+        weight 800   595.63     537.88      before
+        weight 400   479.05     479.05      after
+        weight 800   537.88     537.88      after
+
+    Before, the stack was `Poppins, system-ui, sans-serif` and matched neither —
+    it was rendering in the system fallback. After, it matches Cairo exactly at
+    both weights, and the two weights differ from each other, so the `;800` in
+    the request above is doing real work rather than being rounded to 700.
+
+    A sweep of every text-bearing element on the Arabic storefront (home, shop,
+    product, cart, checkout) moved from 960 elements on a Cairo-capable stack to
+    1800. What is left is <title>/<script>/<style>, which render nothing, and
+    the blog and article views — see the note below.
+
+    APPENDED, NEVER SUBSTITUTED. Poppins stays first so Latin — the brand name,
+    prices, SKUs, every English word on a mixed page — still renders in the
+    brand face; per-codepoint font selection then reaches Cairo only for the
+    codepoints Poppins has no glyph for. The English page is unchanged byte for
+    byte: nothing here is emitted for it, and the rules are scoped to
+    html[lang="ar"] besides.
+
+    Gated on the LANGUAGE and not on Locale::isRtl(), same as the link, and for
+    the same reason: direction() returns ltr for Arabic while
+    language_rtl_enabled is off, and Arabic words need Arabic glyphs in that
+    state too.
+
+    NOT FIXED HERE, and out of this lane: store/blog.blade.php and
+    store/post.blade.php are standalone layouts that hard-code <html lang="en">
+    with no dir attribute, so /ar/skincare-guide/ serves an English-tagged,
+    left-to-right page with no Cairo link at all. Nothing in this block reaches
+    them. store/app.blade.php (the admin-only /app preview) is the same.
+    Whoever owns those views has to give them <html lang>/<html dir> before any
+    of this applies there.
+
+    The three hard-coded stacks are restated rather than tokenised. Editing
+    them in place would put Cairo in the English stylesheets as well, which is a
+    change to the default and is what this lane is not allowed to make.
+    Specificity carries these over the page stylesheets whatever order they load
+    in: html[lang="ar"] (0,1,1) beats :root (0,1,0), and
+    html[lang="ar"] .kbb-checkout (0,2,1) beats .kbb-checkout (0,1,0).
 --}}
 @if ($kbbLocale !== \App\Support\Locale::DEFAULT)
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style id="kbb-arabic-face">
+html[lang="ar"],html[lang="ar"] .kbb-checkout{--sans:"Poppins","Cairo",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+html[lang="ar"] body{font-family:"Poppins","Cairo",system-ui,sans-serif}
+html[lang="ar"] .kbb-card .cn,html[lang="ar"] .kbb-badge,html[lang="ar"] .kbb-card-cart{font-family:'Poppins','Cairo',sans-serif}
+html[lang="ar"] .sr{font-family:"Hanken Grotesk","Cairo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+html[lang="ar"] .sr-title,html[lang="ar"] .sr-avg,html[lang="ar"] .sr-stitle{font-family:Fraunces,"Cairo",Georgia,serif}
+html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-family:"Poppins","Cairo",sans-serif}
+</style>
 @endif
 
 @vite(['resources/css/kbb/kbb.css', 'resources/js/kbb/app.js'])

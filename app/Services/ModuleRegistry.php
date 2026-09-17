@@ -201,7 +201,36 @@ class ModuleRegistry
         'mobile_tabbar' => ['store', 'Floating bottom menu (mobile)', 'The floating bar pinned to the bottom of the screen on phones — Home, Shop, Quiz, Saved and Bag. Off by default; the header, its cart icon and the mobile menu all keep working without it.', false, 'No settings screen', '', 'mobile', 'mid', 'The floating Home / Shop / Quiz / Saved / Bag bar at the bottom of every page on a phone.', 'live'],
         'cart_coupon_field' => ['cart', 'Cart-page discount code box', 'The “Discount code” input and Apply button in the cart page order summary. Off by default; the checkout page has its own box and is not affected.', false, 'No settings screen', '', 'cartpage', 'mid', 'The discount code box in the order summary on the cart page.', 'live'],
         // ── Store & content ──
-        'banners' => ['store', 'Banners', 'Drives the homepage hero slider — headline, eyebrow, buttons, floating product pods and the offer badge — using the theme’s own .heroslider markup. Supports scheduling. Off by default.', false, 'Appearance → Homepage', '', 'home', 'top', 'The homepage hero slider — headline, buttons and product pods.', 'elsewhere'],
+        /*
+         * SETTINGS PATH AND ROUTE KEY CORRECTED — Lane FO, Phase 15.
+         *
+         * This row said its settings were on 'Appearance → Homepage', and that
+         * screen has never carried a banner control of any kind: it owns which
+         * sections render, per device, and their grid skins. The hero's words
+         * lived in `home_banners`, a setting HomeController READ and nothing in
+         * the tree WROTE, so the Open button sent the owner to a screen that
+         * could not change the thing the row describes. Both fields now name
+         * Appearance → Homepage content, which is where the slides actually
+         * are; ModuleRegistrySettingsPathTest resolves the path through this
+         * lane's kbbAddNavEntry() call, so the claim is checked rather than
+         * asserted.
+         *
+         * THE DESCRIPTION IS TRIMMED TO WHAT THE SCREEN DOES. "Floating product
+         * pods", "the offer badge" and "supports scheduling" came across from
+         * the KBB Modules plugin verbatim and describe none of this app: the
+         * slide has an eyebrow, a headline, a supporting line, a button and two
+         * gradients, and there is no schedule anywhere. A row promising three
+         * features the screen behind it does not have is the same defect as a
+         * path naming a screen that does not exist.
+         *
+         * The DEFAULT is untouched and still off, and nothing on the storefront
+         * reads this toggle — see docs/FO-HOMEPAGE-INVENTORY.md, which reports
+         * that as an open gap rather than quietly wiring it up: switching a
+         * module off must remove it from the storefront, and making that true
+         * for `banners` is a decision about whether a shop with the module off
+         * has a hero at all.
+         */
+        'banners' => ['store', 'Banners', 'The homepage hero slider — the eyebrow, headline, supporting line, button and colours of each slide, and the order they rotate in. The first slide’s headline is the page’s h1.', false, 'Appearance → Homepage content', 'hpcontent', 'home', 'top', 'The homepage hero slider — headline, buttons and colours.', 'elsewhere'],
         /*
          * ON by default, and the reasoning is `brands`' and `seo_engine`'s
          * rather than this registry's usual "a fresh install shows nothing the

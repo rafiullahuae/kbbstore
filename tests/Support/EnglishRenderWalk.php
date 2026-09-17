@@ -114,39 +114,55 @@ final class EnglishRenderWalk
      * the session, so the summary partial is never included. That row is pinned
      * in OrderPaperworkLabelsAreKeyedTest instead, by the case named for it.
      *
-     * ── MOVED AGAIN — LANE FK ─────────────────────────────────────
-     *
-     * FOUR PAGES, ONE ATTRIBUTE, AND THE DIFF WAS READ BEFORE IT WAS APPROVED.
-     * The whole of what changed on skincare-guide, a post page, skin-quiz and
-     * reviews is this, at byte 16 of each document and nowhere else:
-     *
-     *     before   <html lang="en">
-     *     after    <html lang="en" dir="ltr">
-     *
-     * Not one other byte moved on any of the four — no whitespace, no reflow,
-     * no copy. The five pages that carry their own <html> (store/app is the
-     * fifth and is admin-only, so this walk does not reach it) never picked up
-     * the lang and dir that layouts/store.blade.php has emitted since the
-     * bilingual foundation landed, so /ar/skincare-guide/ served Arabic chrome
-     * under lang="en" and stated no direction at all. Both attributes come from
-     * Locale now, which on an English page resolves to exactly what the first
-     * of them was hard-coded to and makes the second one explicit.
-     *
-     * `dir="ltr"` IS AN ADDITION TO THE ENGLISH PAGE and that is the point: a
-     * document that states its direction is a document a mirrored stylesheet
-     * can be switched on under. It is what the shared layout already prints on
-     * every other page of the shop, so the four are now consistent with it
-     * rather than exceptions to it. See docs/rtl-standalone-documents.md.
-     *
      * MOVED BY MERGE, NOT BY REBASE. This constant is a SHA, and a rebase
      * rewrites every SHA behind it — repinning to a commit and then rebasing
      * leaves the guard pointing at an object that is not in the branch, where
      * it fails with "no such commit" rather than with a diff. The commit named
-     * below is the merge that brought this branch up to date with
-     * claude/kind-mayer-rpqesv, it carries Lane FK's five documents, and it is
-     * reachable from this branch's history and stays reachable.
+     * below is reachable from this branch's history and stays reachable.
+     *
+     * Lane FO repinned, rebased when the base branch moved under it, and then
+     * REPINNED AGAIN to the rewritten SHA — which is the note above working as
+     * intended rather than around it. The value here must always be a commit
+     * `git archive` can resolve from the branch it is read on; anything else
+     * fails with "no such commit" instead of with a diff, and a guard that
+     * cannot run is indistinguishable from one that passes.
+     *
+     * ── MOVED AGAIN FOR LANE FO (Phase 15, the homepage hero) ───────────────
+     *
+     * NOT ONE BYTE OF SHOPPER-VISIBLE COPY MOVED, and the diff this reported
+     * was an artefact of how the comparison is built rather than a change to
+     * the page. Worth setting out, because the same shape will recur.
+     *
+     * The hero's three slides used to be a literal array in HomeController,
+     * with a `<br>` inside each headline, echoed through {!! !!}. They are
+     * HomepageContent::DEFAULT_SLIDES now — the same words, with the `<br>`
+     * stored as a NEWLINE so that store/home.blade.php can escape what an owner
+     * types into the new Appearance → Homepage content screen and convert the
+     * newline itself. Rendered, it is the same bytes: str_replace over e()'s
+     * result puts back exactly `<br>`, which is why it is not nl2br(), whose
+     * output keeps the newline as well and defaults to the XHTML form.
+     *
+     * THIS WALK CANNOT SEE THAT, by construction. It rolls resources/views back
+     * to BASE_COMMIT and leaves the PHP in the working tree, so its "before" is
+     * the OLD template echoing the NEW default raw — a page that has never
+     * existed and never will. It reported `Age-R Booster Pro⏎with a free gift
+     * set` against `Age-R Booster Pro<br>with a free gift set`, where the page
+     * the server is serving today is the second of those.
+     *
+     * The compensating pin is in tests/Feature/HomepageContentEditorTest.php,
+     * which asserts those exact bytes off the rendered hero — including the
+     * three gradients, the three buttons and that the first slide carries the
+     * page's only <h1>. That assertion does the work this constant cannot do
+     * for its own move, which is the honest cost of moving it and the reason it
+     * is named here rather than left to be inferred.
+     *
+     * Everything else on every page is byte-identical, which is what let the
+     * hero's wrapper be written the way it is: the new @if shares a line with
+     * the div and the comments above it close on the markup, so the slider is
+     * conditional without moving a single space. See the comments in
+     * store/home.blade.php, which say so at each of the three places.
      */
-    public const BASE_COMMIT = '4e5fd2413eadb78c4f061ba0d48c25d68f3e4eba';
+    public const BASE_COMMIT = '08d6b82f2e161a602a93b88cf8976806412b4748';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

@@ -30,25 +30,42 @@ it('parses every script block in the admin console', function () {
         test()->markTestSkipped('node is not available to parse the script with');
     }
 
-    foreach ([
-        'resources/views/admin/app.blade.php',
-        'resources/views/admin/partials/media-picker.blade.php',
-        'resources/views/admin/partials/product-picker.blade.php',
-        'resources/views/admin/partials/product-editor-screen.blade.php',
-        'resources/views/admin/partials/media-library-screen.blade.php',
-        'resources/views/admin/partials/review-settings-screen.blade.php',
-        'resources/views/admin/partials/review-bulk-screens.blade.php',
-        'resources/views/admin/partials/html-blocks-screen.blade.php',
-        'resources/views/admin/partials/manual-order-screen.blade.php',
-        'resources/views/admin/partials/category-tree-screen.blade.php',
-        'resources/views/admin/partials/brands-editor-screen.blade.php',
-        'resources/views/admin/partials/coupon-usage-screen.blade.php',
-        'resources/views/admin/partials/coupon-editor-screen.blade.php',
-        'resources/views/admin/partials/reviews-io-screen.blade.php',
-        'resources/views/admin/partials/review-badges-screen.blade.php',
-        'resources/views/admin/partials/review-capsule-screen.blade.php',
-        'resources/views/admin/partials/review-assign-screen.blade.php',
-    ] as $view) {
+    /*
+     * THE DIRECTORY, NOT A LIST — Lane FO.
+     *
+     * This was seventeen paths written out by hand, and the list had already
+     * drifted: admin/partials/translation-screens.blade.php (four screens,
+     * 1,200 lines), admin/partials/arabic-boxes.blade.php and
+     * admin/partials/review-queue-badge.blade.php were never added to it and
+     * were therefore never parsed. Nothing said so, because a hand-kept list
+     * passes exactly as loudly when it is short.
+     *
+     * That is the same argument StorefrontStringsAreKeyedTest makes in its own
+     * header — "the conversion is finished the day it is done and unfinished
+     * the day after, because the next lane writes a new page" — and it applies
+     * here for the same reason: every screen that ships as its own partial is
+     * a lane avoiding the 19,000-line file, so new partials are the normal
+     * case rather than the exception.
+     *
+     * All 21 files under the directory parse today, checked before this was
+     * changed, so the walk is not being introduced with a failure inside it.
+     */
+    $views = array_merge(
+        ['resources/views/admin/app.blade.php'],
+        array_map(
+            fn ($path) => 'resources/views/admin/partials/' . basename($path),
+            glob(base_path('resources/views/admin/partials/*.blade.php')) ?: []
+        )
+    );
+
+    sort($views);
+
+    // Measured rather than assumed: a glob that silently matched nothing would
+    // turn this whole guard into a no-op, which is the failure mode a list at
+    // least could not have.
+    expect(count($views))->toBeGreaterThan(15);
+
+    foreach ($views as $view) {
         $path = base_path($view);
 
         if (! is_file($path)) {
@@ -79,7 +96,16 @@ it('parses every script block in the admin console', function () {
 
         preg_match_all('/<script>(.*?)<\/script>/s', $source, $blocks);
 
-        expect($blocks[1])->not->toBeEmpty("no script block found in {$view}");
+        /*
+         * A partial may legitimately be markup only — that is what the walk
+         * above has to allow for, where the list did not. But a file that
+         * CONTAINS the opening tag and yields no block means the stripping
+         * above has gone wrong, and that must still fail: it is the one way
+         * this guard could quietly stop reading a file it is looking at.
+         */
+        if (str_contains($source, '<script')) {
+            expect($blocks[1])->not->toBeEmpty("no script block found in {$view}");
+        }
 
         foreach ($blocks[1] as $i => $script) {
             /*

@@ -354,12 +354,19 @@ header.app{position:sticky;top:0;z-index:60;background:rgba(251,246,240,.82);
 .scrim{position:fixed;inset:0;background:rgba(36,30,28,.42);backdrop-filter:blur(2px);z-index:90;
   opacity:0;pointer-events:none;transition:.3s var(--ease)}
 .scrim.on{opacity:1;pointer-events:auto}
-/* RTL-PHYSICAL: off-canvas drawer — insets paired with translateX(+/-100%),
-   including the .drawer.left variant. */
-.drawer{position:fixed;top:0;right:0;height:100dvh;width:min(420px,100vw);background:var(--cream);z-index:100;
+/* Off-canvas drawers: logical insets, transforms flipped under [dir="rtl"], each
+   override directly under the rule it mirrors and above the matching .on rule
+   (equal specificity, so source order decides).
+   NOTE: this view hard-codes <html lang="en"> with no dir attribute and is the
+   admin-only /app developer preview, so [dir="rtl"] can never match here today.
+   It is written anyway so the two copies of this drawer do not diverge — and so
+   that whoever gives this page a real <html dir> does not inherit a bug. */
+.drawer{position:fixed;top:0;inset-inline-end:0;height:100dvh;width:min(420px,100vw);background:var(--cream);z-index:100;
   display:flex;flex-direction:column;transform:translateX(100%);transition:transform .38s var(--ease);box-shadow:var(--sh-l)}
+[dir="rtl"] .drawer{transform:translateX(-100%)}
 .drawer.on{transform:none}
-.drawer.left{right:auto;left:0;transform:translateX(-100%)}
+.drawer.left{inset-inline-end:auto;inset-inline-start:0;transform:translateX(-100%)}
+[dir="rtl"] .drawer.left{transform:translateX(100%)}
 .drawer.left.on{transform:none}
 .dr-hd{display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid var(--line)}
 .dr-hd h3{font-family:var(--serif);font-weight:600;font-size:20px}

@@ -31,7 +31,7 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |
-| Modules with a working switch | **23 live**, **6 answered by an existing screen**, **2 still to port** — *re-verified module by module at 2.60.205 by flipping each switch and fetching the page, not by reading a registry row. Seven of the old "ten still to port" were already built; `inline_validation` was ported in 2.60.205. See the corrected inventory below.* |
+| Modules with a working switch | **24 live**, **6 answered by an existing screen**, **2 still to port** — *`build_my_routine` joined the live set at 2.60.207, off by default. Re-verified module by module at 2.60.205 by flipping each switch and fetching the page, not by reading a registry row. Seven of the old "ten still to port" were already built; `inline_validation` was ported in 2.60.205. See the corrected inventory below.* |
 | Build gates | **6 run on every package** (`js_check`, `blade_lint`, `closure_check`, `state_check`, `markup_check`, `shipped_check`) + 2 situational (`hooks_bound`, `settings_wired`). `kbb-doctor.php`, standalone at the public web root, is the first thing to check for any live-site bug report — reads the real error log directly, works even if Laravel itself won't boot |
 | Dead hooks outstanding | **2**, re-run fresh at 2.60.0 — down from 23 at the start of Phase 17. Both remaining are false positives (checked directly, not assumed): inert markup and a CSS-only attribute the tool can't see. Phase 17 is functionally complete |
 
@@ -1317,14 +1317,83 @@ pin that looks applied and is not is worse than none.**
   with a real request and `kbb.base_path` configured — every generated link correctly
   carries the prefix. Stale note, not a live bug
 
-## Phase 10 — Build my routine  *(designed, not built)*
+## Phase 10 — Build my routine  *(built — 2.60.207, ships switched OFF)*
 
-- [ ] Routines by concern · manual selection · front-end list · offer strip
-- [ ] **Open:** fixed steps or a free list? One offer strip or one per routine?
+- [x] **Routines by concern, driven by the catalogue rather than by fiction** — *2.60.207*.
+  Two columns, and the second one is the whole argument: `products.routine_role` says
+  which of five steps a product fills, `products.routine_concerns` says which concerns
+  it is *for*, empty meaning "suits any". With only the first, every concern gets the
+  same treatment serum — which puts a product under the heading "for your acne" on a
+  claim **nobody in this shop ever made**. That is the invented-catalogue sin in a
+  quieter voice, and this project has already deleted it twice.
+- [x] **The routines are not stored.** They are `RoutineConcerns × RoutineRoles` and work
+  on a shop that has never opened the screen; the `routines` table holds **overrides
+  only**, every column nullable. A shop that renamed one routine has one row — *2.60.207*
+- [x] **Manual selection** — `?<role>=<product-slug>`, server-rendered, no JavaScript and
+  no session, so a built routine has a URL that can be shared, bookmarked, crawled and
+  fetched in a test. An unknown or sold-out slug falls back silently rather than 404ing a
+  five-step page over one step — *2.60.207*
+- [x] **A step nothing fills prints "Not stocked yet" and is never dropped**, because four
+  steps drawn as four steps look exactly like a four-step routine. The total is arithmetic
+  over the rows actually chosen and names which steps it covers; no saving is claimed — *2.60.207*
+- [x] **The offer strip names a real row in `coupons`** and prints that row's own terms.
+  It has no amount of its own, because a saving this shop has not created is exactly the
+  invented "15% bundle saving" an earlier lane deleted — *2.60.207*
+- [x] **Untagged is the headline, not a footnote.** Three tiles with the untagged figure in
+  red, a per-role row marking any empty role, a one-click `role=none` filter, and each
+  routine panel naming the steps it cannot fill. Counted over rows a shopper could
+  actually be shown, so a draft with no role is not a permanently alarming number the
+  owner learns to ignore — *2.60.207*
+- [x] **Both open questions answered as settings, with the cost of changing either
+  measured.** `steps_mode` defaults to **fixed**, because on the day this applies no
+  product carries a role and the owner's first job is tagging, not authoring. `offer_scope`
+  defaults to **site**, because a shop runs one promotion at a time and eight per-routine
+  strips are seven things to forget to take down; a stale strip quoting a dead code is
+  worse than no strip. Either can be changed with one dropdown — the storage for the other
+  answer shipped in the same migration — *2.60.207*
+- [x] **Off means off, proved by fetching rather than by reading the gate.** `/routines`
+  and `/routines/{concern}` 404 with the module off and 200 with it on, and the home page,
+  shop, cart, quiz and brands pages are **byte-identical** in both states once the
+  per-request CSRF token is normalised. No page of the shop contains the string
+  `/routines` in either state — *2.60.207*
+- [ ] **The owner has to add the menu row himself.** This lane adds no link anywhere,
+  because the header, mega menu and footer are `menu_items` the owner edits rather than
+  templates a lane may touch. The row to add is in `docs/FM-ADMIN-APP-BLOCKS.md`
+- [ ] **The quiz → routine hand-off.** `RoutineConcerns` carries the quiz's own eight
+  concerns character for character so it is a one-line lookup; it belongs to the quiz lane
 
 ## Phase 11 — Payments
 
 - [ ] COD → Tabby → Tamara → Stripe (order per D-39)
+- [x] ▲ **AND IT WAS UNREACHABLE UNTIL 2.60.206. Every write on the Stripe panel took a
+  419.** Rafi sent a screenshot saying the one-click button was not there. It was not, and
+  the button was never the problem: `Connect Stripe`, `Save Connect application` and
+  `Disconnect Stripe` all sent `X-Requested-With` and **no CSRF token**, while every other
+  write in the console sends `X-XSRF-TOKEN`. Laravel answers a missing token with 419, and
+  the panel turns any non-ok response into one generic sentence — so *"Stripe refused the
+  connection"* was printed over a request Stripe was never sent. The chain is the whole
+  bug: the one-click button is drawn from `oauth_ready`, `oauth_ready` needs a client id
+  and a platform secret saved, and the only screen that could save them could not write.
+  **Built, shipped, tested at the controller, and unreachable from the screen in front of
+  him.** Measured in Chromium before and after: before, every attempt returned the generic
+  line; after, the server's own messages arrive and saving a Connect application makes the
+  button appear.
+- [x] ▲ **Two more writes were broken the same way, found by sweeping every `fetch` in the
+  console rather than stopping at the three reported.** Store → Outbound's *send now* and
+  the order status-email save both read `meta[name=csrf-token]`, **and this document has no
+  such tag** — `(document.querySelector(...)||{}).content||''` degrades to an empty header
+  instead of throwing. Adding the tag is not the fix either, and that was measured too:
+  `app.blade.php` opens with `@verbatim`, so `{{ csrf_token() }}` in its head renders as
+  those eighteen literal characters and the request still 419s — *2.60.206*
+- [x] **A setup wizard, because the one-click button needs a Stripe Connect registration
+  and taking card payments does not.** *Set up Stripe* → choose Test or Live → a button
+  that opens the exact `dashboard.stripe.com` API-keys page for that mode → paste the key
+  → a screen naming everything the server did: account read back, publishable key fetched,
+  webhook endpoint created, signing secret captured. A modal rather than a second browser
+  window, deliberately: a window this page opens onto *itself* is the one kind a popup
+  blocker stops for no benefit, and it would leave the owner copying a key out of one
+  window into another. With a Connect application saved, its step 2 becomes the true
+  one-click button instead — *2.60.206*
 - [x] **Stripe one-click Connect** — the Configure button Rafi asked for twice. Press it,
   Stripe opens in a popup, the owner approves, and the till is wired without a secret key
   ever being pasted — *2.60.205*. Four things had kept it dead; three were code and are
@@ -1749,9 +1818,51 @@ descriptions, validation messages).
       matters is `OrderLocale::render()`, which restores the language for one
       closure and puts the previous one back in a `finally` — without that, one
       failed email leaves a worker set to Arabic for every job after it
-- [ ] **T4 · Content translations** — a polymorphic table over `name_ar` columns,
-      so "what is still untranslated" is one query and a new field needs no
-      schema change. Must not become an N+1 on a product grid; measure it
+- [~] **T4 · Content translations — measured at volume this cycle; the render
+      is what is left.** The table, the cached map, the editor boxes and the
+      progress figures all work at 696 products with the whole catalogue
+      translated. **The N+1 does not happen**: /ar/shop runs the same seven
+      statements as /shop and /ar/cart the same eight as /cart, pinned at 400
+      rows as well as at 24. What Arabic costs is **+6 MB of peak memory and
+      +11–43 ms of wall clock on every Arabic page, none of it SQL** — 97% of
+      the cached map is product long-prose that is read on one page at a time.
+      Verdict, with the counterfactual measured: keep the map for short text
+      (0.17 MB, 2,446 entries) and take `description`, `ingredients`,
+      `how_to_use`, `pages.content` and `posts.body` out of it — a 19×, one
+      file, and NOT urgent, for the reason below. See
+      docs/fn-translation-at-scale.md.
+
+      **The reason it is not urgent, and the reason T4 is not close to done:
+      nothing on the storefront reads a content translation.** `t()` is called
+      by no Blade file, no view composer and no storefront controller —
+      measured with a sentinel, not grepped: with the shop fully translated and
+      Arabic on, /ar/shop renders "Hydrating Serum No. 360" and zero
+      occurrences of that product's Arabic name. Every Arabic word on an Arabic
+      page today is an interface string. So the owner's ~55 hours of catalogue
+      typing would currently land in a table no page reads, and the map split
+      should ship in the same cycle as the render rather than before it.
+      product-card.blade.php, store/product.blade.php, quick-view,
+      product-tabs and Store\ProductController::tabs() are the call sites, and
+      they belong to the storefront and RTL lanes.
+
+      **Product::ingredients and Product::how_to_use are now on the allowlist**
+      (the T4b gap). It was not a two-line fix: the third line was a stored-XSS
+      hole. ProductEditorApiController sanitised the English of all four rich
+      columns and handed the Arabic side a literal pair under a comment reading
+      "the four rich fields are named" — so the moment those two joined the
+      allowlist, the Arabic halves of two {!! !!} tabs went to the database
+      unsanitised. Both loops now read one RICH_FIELDS constant, and the case
+      is pinned.
+
+      **seo.title / seo.desc and banner.heading / subheading / image_alt:
+      argued, not done.** They belong translated — they are what an Arabic
+      shopper reads in an Arabic search result — but they are JSON sub-keys,
+      not columns, and `$translatable` names columns. The store already
+      tolerates a dotted field; the part that does not is
+      TranslationEstimate::fieldsWithText(), whose dialect-neutral SQL
+      denominator drops any name that is not a bare identifier and would count
+      them silently as zero work. A decision for the SEO lane, not a line in a
+      diff.
 - [x] ▲ **T4b · An Arabic box beside every field — landed *2.60.202*.** Every
       translatable field on every model's allowlist, in the same form, saved by
       the same button, on the **Add** form as well as the edit form. The screens
@@ -1781,9 +1892,39 @@ descriptions, validation messages).
       keeps speaking English — the owner needs those to enter anything at all,
       so it is required work, not the deferred kind. The per-field Translate
       button from T5 sits beside each box
-- [ ] **T5 · The translate-from-Google accelerator** — pluggable provider, his
-      own key, batched, cost shown before it runs, output as a draft. The manual
-      path must keep working with no key at all
+- [~] **T5 · The translate-from-Google accelerator — driven at volume this
+      cycle; two defects found and fixed.** 240 outstanding fields go out
+      as [100, 100, 40], every row a draft, `TranslationStore::map()` empty, the
+      progress screen reading `drafts: 240, translated: 0, percent: 0`. A run
+      that loses its second batch keeps the first, and the resume re-sends
+      exactly the hundred that were lost and not one field it had already
+      bought. No test touches the network: the provider is a recording fake, or
+      the real GoogleProvider through Http::fake().
+
+      **Fixed 1 — the shifted batch the foundation warned about was real.** The
+      runner paired answers to requests by index and trusted the count.
+      GoogleProvider pads a gap with null in place; nothing enforced that on the
+      runner's side, so a provider returning a COMPACTED array wrote each
+      product's Arabic copy onto the next product's row — 99 drafts, no errors,
+      the money spent, one Approve from publishing somebody else's name on a
+      skincare catalogue. A batch whose answer count does not match is now
+      dropped whole and reported.
+
+      **Fixed 2 — the receipt was not the bill.** `characters` was accumulated
+      inside the write loop, so a batch the provider refused after reading the
+      request left its characters out of the figure, and Google bills for text
+      it was SENT. `run()` now returns `characters_sent` as well, counted before
+      the call. The quote and the request already agreed to the character.
+
+      **Found, not fixed, and it needs a decision:** a machine draft can be
+      longer than the editor will let the owner SAVE. products.name is
+      varchar(200), so TranslationInput mirrors max:200 onto the Arabic box,
+      but the Arabic lives in translations.value, a mediumtext, and Arabic runs
+      longer than English for the same meaning. Reproduced: a 264-character
+      Arabic draft of a 192-character English name stores fine, appears in the
+      box, and makes the ordinary Save 422 on a value the owner never typed.
+      app/Support/TranslationInput.php is Lane EX's. See
+      docs/fn-translation-at-scale.md.
 - [~] ▲ **T6 · RTL — audit and mechanical half landed *2.60.201*; the manual
       half remains.** 678 physical direction declarations counted with a real
       CSS declaration reader rather than grep (because `margin-left` occurs both
@@ -1978,6 +2119,7 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
 | ▒39 | **Eight guards on this project have now been caught asserting nothing, and one mechanism accounts for most of them.** `expect($raw)->not->toContain($needle, $message)` reads like a needle and a message and is neither — Pest's `toContain()` is **variadic**, so the message becomes a second needle, and `not` passes the moment the positive expectation fails *for any reason*, including "the body does not contain the path". Two live gateway-secret sweeps in `ApiSecurityTest` were written that way; six more are listed for their owners. The repair is mechanical: `expect(str_contains($raw, $needle))->toBeFalse($message)`. The discipline behind it: **every new guard must be run against the unfixed code and seen to go red**, and a guard that cannot be made to fail is not coverage |
 | ▒40 | **A settings screen that cannot be saved at all, on a fresh store, because an empty box is not an empty string.** Laravel's `ConvertEmptyStringsToNull` turns an empty text box into `null`, `cast()`'s default arm answers `null`, and `save()` reports that as invalid — so Store → Ecommerce's Cart and Checkout tabs refuse every save while any of their nine normally-empty boxes is empty, which on a fresh store is all of them. Reproduced against the real endpoint as a real owner. `ReviewSettingsApiController` documents this exact trap in its own header and works around it; this controller never got the same treatment. **Any controller taking a whole tab in one post is exposed to it, and the symptom is a 422 the owner reads as "the shop rejected my settings"** |
 | ▒41 | **Two doors into one table, and only one of them is guarded.** The admin controller refuses a fixed-amount coupon that is not a whole dirham; `CouponImporter` writes to `coupons` without passing through it, and an imported fils amount is rounded **up** at the till — the shop gives away more than the screen shows. The same shape destroyed data on the taxonomy SEO screens: three readers acted on five keys while both editors rebuilt the column from two, so saving one field wiped three the owner never touched. **When a rule lives in a controller, list every writer of that table before calling the rule enforced** |
+| ▒42 | **A write that is rejected before it leaves the browser fails exactly like a write that was rejected by the far end.** Six admin writes shipped without a CSRF token Laravel accepts; all six took a 419; every caller turned "not ok" into its own generic sentence, and the owner read *"Stripe refused the connection"* over a request Stripe never saw. Nothing crashed, nothing logged, and the feature furthest downstream — the one-click Connect button — simply never appeared, because the switch that would have enabled it was one of the writes. **A screen that reports the same sentence for a transport failure and a business refusal cannot be debugged by the person looking at it.** Two shapes to check for: a request that omits the token entirely, and one that sends `(document.querySelector('meta[name=...]')||{}).content||''` against a tag the document does not render — the second is worse because it degrades to a well-formed empty header instead of throwing. `AdminConsoleWriteTokenTest` now sweeps every `fetch` in the console; it strips comments with a string-aware scanner first, because a regex over that file reads its own prose as code (▒31), and the scanner is pinned by a case of its own (▒36) |
 
 ## Questions still unanswered
 

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Store\ShopController;
+use App\Services\HomepageContent;
 use App\Services\HomepageLayouts;
 use App\Services\HomepageSections;
 use App\Support\GridSkins;
@@ -20,6 +21,7 @@ class HomepageApiController extends Controller
     public function __construct(
         private HomepageSections $sections,
         private HomepageLayouts $layouts,
+        private HomepageContent $content,
     ) {}
 
     public function show(): JsonResponse
@@ -95,5 +97,61 @@ class HomepageApiController extends Controller
             'layout' => $this->layouts->current(),
             'sections' => array_values($this->sections->all()),
         ]);
+    }
+
+    /**
+     * Appearance → Homepage content: the words, as opposed to the switches.
+     *
+     * A sibling endpoint under the SAME prefix rather than a new top-level one,
+     * so `['*', 'admin-api/homepage/**', 'content.manage']` — already in
+     * AdminCapabilities::RULES — governs it. A new prefix would need a new rule
+     * and that map fails closed, which is a screen that 403s on a host with no
+     * shell to fix it from.
+     */
+    public function content(): JsonResponse
+    {
+        return response()->json($this->content->payload());
+    }
+
+    public function saveContent(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'slides' => ['present', 'array', 'max:' . HomepageContent::MAX_SLIDES],
+            'slides.*' => ['array'],
+            'copy' => ['sometimes', 'array'],
+        ]);
+
+        $rejected = $this->content->saveSlides($data['slides']);
+
+        $copy = $this->content->saveCopy($data['copy'] ?? []);
+
+        foreach ($copy['rejected'] as $label) {
+            $rejected[$label] = 'not a valid value';
+        }
+
+        /*
+         * The homepage is cached, and so are its rails. Without this the owner
+         * saves, reloads the shop, sees the old hero and concludes the screen
+         * does not work — which is what the section endpoint above already
+         * learned, in the comment beside its own forget() calls.
+         */
+        Cache::forget('kbb.home.rails');
+        Cache::forget('kbb.home.brands');
+        Shortcodes::flush();
+        ShopController::flushSidebarCache();
+
+        $payload = $this->content->payload();
+
+        /*
+         * `saved` counts what is STORED, read back off the payload, not what
+         * was posted. A row that was not an array at all is skipped rather than
+         * saved, and reporting the submitted count would tell the caller a
+         * number the shop does not hold.
+         */
+        return response()->json([
+            'ok' => true,
+            'rejected' => $rejected,
+            'saved' => count($payload['slides']),
+        ] + $payload);
     }
 }
