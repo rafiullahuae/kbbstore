@@ -11667,23 +11667,52 @@ buildNav();
   function olConfirmSkipped(out, status, kind){
     var done = kind === 'delete' ? out.deleted : out.changed;
 
-    openModal('<div class="modal-h"><b>Some of these count as revenue</b><button class="x" onclick="closeModal()">✕</button></div>' +
+    /* TWO KINDS OF SKIP NOW, AND THEY MUST NOT BE RUN TOGETHER.
+       A revenue skip is a question only the owner can settle, and `force` is his
+       answer to it. A revive refusal is the shop saying the arithmetic does not
+       work — the jar has been sold, the code is spent — and `force` is not an
+       answer to that: the server refuses it either way, so offering the button
+       would be offering one whose only possible outcome is a second refusal.
+       An entry written before `forceable` existed carries no flag, and a missing
+       flag keeps the old meaning: forceable. */
+    var forceable = out.skipped.filter(function(s){ return s.forceable !== false; });
+    var refused   = out.skipped.filter(function(s){ return s.forceable === false; });
+
+    function olSkipLine(s){
+      return '<li>' + sesc(s.label) + ' — ' +
+        (s.reason ? sesc(s.reason) : sesc(s.status) + ', ' + sesc(s.total_display)) + '</li>';
+    }
+
+    openModal('<div class="modal-h"><b>' + (refused.length ? 'Some of these could not be changed' : 'Some of these count as revenue') + '</b><button class="x" onclick="closeModal()">✕</button></div>' +
       '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)"><b>' + done + '</b> ' +
-      (kind === 'delete' ? 'moved to trash' : 'updated') + '. <b>' + out.skipped.length +
-      '</b> left alone because ' + (out.skipped.length === 1 ? 'it counts' : 'they count') + ' as revenue:</p>' +
-      '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
-      out.skipped.slice(0, 12).map(function(s){
-        return '<li>' + sesc(s.label) + ' — ' + sesc(s.status) + ', ' + sesc(s.total_display) + '</li>';
-      }).join('') +
-      (out.skipped.length > 12 ? '<li>and ' + (out.skipped.length - 12) + ' more</li>' : '') + '</ul>' +
-      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">Going ahead takes their value out of the store’s revenue figures. Refunds are not affected either way — money only moves from the order screen.</p>' +
+      (kind === 'delete' ? 'moved to trash' : 'updated') + '. <b>' + out.skipped.length + '</b> left alone.</p>' +
+      (refused.length
+        ? '<p style="font-size:12.5px;color:var(--ink-2);margin-top:10px"><b>' + refused.length + '</b> ' +
+          (refused.length === 1 ? 'was' : 'were') + ' refused — bringing ' + (refused.length === 1 ? 'it' : 'them') +
+          ' back would need stock or a coupon use the shop no longer has:</p>' +
+          '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+          refused.slice(0, 12).map(olSkipLine).join('') +
+          (refused.length > 12 ? '<li>and ' + (refused.length - 12) + ' more</li>' : '') + '</ul>'
+        : '') +
+      (forceable.length
+        ? '<p style="font-size:12.5px;color:var(--ink-2);margin-top:10px"><b>' + forceable.length + '</b> left alone because ' +
+          (forceable.length === 1 ? 'it counts' : 'they count') + ' as revenue:</p>' +
+          '<ul style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0 18px">' +
+          forceable.slice(0, 12).map(olSkipLine).join('') +
+          (forceable.length > 12 ? '<li>and ' + (forceable.length - 12) + ' more</li>' : '') + '</ul>' +
+          '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px">Going ahead takes their value out of the store’s revenue figures. Refunds are not affected either way — money only moves from the order screen.</p>'
+        : '') +
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
-      '<button class="btn ghost" onclick="closeModal()">Leave them</button>' +
-      '<button class="btn" style="background:var(--red)" id="olForce">' + (kind === 'delete' ? 'Trash those too' : 'Change those too') + '</button></div></div>');
+      '<button class="btn ghost" onclick="closeModal()">' + (forceable.length ? 'Leave them' : 'Close') + '</button>' +
+      (forceable.length
+        ? '<button class="btn" style="background:var(--red)" id="olForce">' + (kind === 'delete' ? 'Trash those too' : 'Change those too') + '</button>'
+        : '') + '</div></div>');
 
     var force = document.getElementById('olForce');
     if(force) force.onclick = function(){
-      var ids = out.skipped.map(function(s){ return s.id; });
+      /* The forceable ones only. Sending the refused ids back would ask the
+         server to refuse them a second time. */
+      var ids = forceable.map(function(s){ return s.id; });
       if(kind === 'delete') olRunDelete(ids, true); else olRunStatus(ids, status, true);
     };
   }
@@ -12165,7 +12194,22 @@ buildNav();
       try{ await api('/admin-api/orders/'+id+'/status',{method:'PUT',body:JSON.stringify(body)});
         toast(body.notify === false ? 'Order updated · no email sent' : 'Order updated');
         renderOrderDetail(id);
-      }catch(e){ toast('Update failed'); }
+      }catch(e){
+        /* A REVIVE THE SHOP CANNOT PAY FOR IS REFUSED, AND THE REFUSAL NAMES
+           WHAT IS SHORT. Bringing a cancelled order back to life has to re-take
+           the units it put back on the shelf and the coupon use it handed back;
+           where it cannot, the server says which product is short and by how
+           many, or which coupon is spent. That sentence IS the feature —
+           'Update failed' throws it away and sends the owner to look at his
+           wifi. api() attaches the status and the parsed body for exactly this.
+           The screen is redrawn either way, because the order did not move. */
+        if(e && e.status === 422 && e.body && e.body.error === 'revive_refused'){
+          alert(e.body.message);
+          renderOrderDetail(id);
+          return;
+        }
+        toast('Update failed');
+      }
     };
 
     document.getElementById('odTrash').onclick = async function(){
@@ -12389,7 +12433,18 @@ buildNav();
     document.getElementById('ordStatusSave').onclick=async function(){
       try{ await api('/admin-api/orders/'+id+'/status',{method:'PUT',body:JSON.stringify({status:sel.value})});
         toast('Order status updated'); closeModal(); renderOrders(); if(cur==='dash') hydrateDash();
-      }catch(e){ toast('Update failed'); }
+      }catch(e){
+        /* The same refusal from the same endpoint — see the order detail
+           screen for why the sentence has to survive. The modal is left OPEN
+           here, unlike the detail screen: the operator is standing in front of
+           a status dropdown and the refusal tells him which other status he
+           could pick instead. */
+        if(e && e.status === 422 && e.body && e.body.error === 'revive_refused'){
+          alert(e.body.message);
+          return;
+        }
+        toast('Update failed');
+      }
     };
   }
 
@@ -18546,7 +18601,20 @@ buildNav();
             {method:'POST',body:JSON.stringify({})});
           toast('Marked as dealt with');
           reconReport();
-        }catch(e){ toast('Could not record that'); }
+        }catch(e){
+          /* The server refuses the ack on the two "could not be read" notices
+             and says why. Acknowledging a discrepancy means "I looked, it is
+             fine"; acknowledging "I could not look" does not make the looking
+             happen, and it used to empty the outstanding count on a run that
+             compared nothing with anything. The sentence names the way out —
+             press Run over these dates again — so it must be shown rather than
+             replaced with "Could not record that". */
+          if(e && e.status === 422 && e.body && e.body.error === 'cannot_acknowledge'){
+            alert(e.body.message);
+            return;
+          }
+          toast('Could not record that');
+        }
       };
     });
 
@@ -18571,9 +18639,19 @@ buildNav();
         (f.remote_ref ? 'Their reference <code>'+sesc(f.remote_ref)+'</code>. ' : '')+
         (f.local_ref ? 'Ours <code>'+sesc(f.local_ref)+'</code>.' : '')+
       '</div>'+
-      '<div class="row" style="justify-content:flex-end;margin-top:6px">'+
-        '<button type="button" class="btn ghost" data-reconack="'+f.id+'">I have dealt with this</button>'+
-      '</div></div>';
+      /* NO "I have dealt with this" ON A NOTICE THAT SAYS THE PROVIDER COULD
+         NOT BE READ. There is nothing to have dealt with, because the run did
+         not look. The server refuses the ack either way; not drawing the button
+         is what stops the owner being offered a control whose only possible
+         outcome is a refusal. In its place, the route that actually answers the
+         window. */
+      (f.kind === 'payments_source_unavailable' || f.kind === 'refunds_source_unavailable'
+        ? '<div class="echelp" style="margin-top:6px">Press <b>Check the books</b> over these dates again once '+
+          sesc(f.provider)+' is reachable — the checks this outage skipped are re-run for real and this '+
+          'notice clears itself.</div>'
+        : '<div class="row" style="justify-content:flex-end;margin-top:6px">'+
+          '<button type="button" class="btn ghost" data-reconack="'+f.id+'">I have dealt with this</button>'+
+          '</div>')+'</div>';
   }
 
   /* Its own block, under its own heading, and never merged into the list above.
@@ -18776,11 +18854,23 @@ buildNav();
   async function payStripeDisconnect(){
     var s=STRIPE_CONN||{};
     var n=(s.in_flight||{}).count||0;
+    /* TWO DIFFERENT RISKS, and this dialog could only see one of them.
+       in_flight counts orders with NO paid_at — a shopper who may be on
+       Stripe's payment page right now. A FULLY CAPTURED order has paid_at set,
+       so it was never counted here at all, and the refund on it comes back
+       not_configured once the keys are gone: that money cannot be returned
+       through this panel by any route. The owner was being told "nothing is in
+       flight" over a quarter of a million fils he was about to strand. */
+    var rf=s.refundable||{count:0};
     var warn='Disconnect this shop from Stripe?\n\n'+
       'Card payments stop being offered and the stored keys are erased.\n';
     if(n) warn+='\n'+n+' payment'+(n===1?' is':'s are')+' still in progress. Anyone already on '+
       'Stripe\'s payment page can still pay, and that money will reach your Stripe account — but this '+
       'shop will not hear about it, so the order stays unpaid here until you mark it paid or reconnect.\n';
+    if(rf.count) warn+='\n'+rf.amount_display+' is still refundable on '+rf.count+' order'+
+      (rf.count===1?'':'s')+'. With the keys cleared this shop cannot send a refund to Stripe at all, so '+
+      'that money can only go back from the Stripe dashboard by hand until you reconnect — and a refund '+
+      'made there will not be recorded against the order here.\n';
     warn+='\nYou can connect again at any time.';
     if(!confirm(warn)) return;
     try{
