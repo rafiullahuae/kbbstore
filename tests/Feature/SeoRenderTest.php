@@ -253,23 +253,34 @@ it('escapes a script payload arriving as a page title', function () {
 
 /* ---------------------------------------------------------------- analytics */
 
-it('emits gtag only for a well-formed measurement id', function () {
+/**
+ * THIS CLASS NO LONGER EMITS ANALYTICS, and the two tests that used to live
+ * here pinned the emitter rather than the shape check, so they moved with it.
+ *
+ * Seo::render() used to write a gtag loader and a gtag('config', …) from the
+ * SEO setting `ga`, into the same <head> where layouts/store.blade.php then
+ * called MarketingPixels::baseTags() and wrote the same two tags from
+ * marketing_pixels.ga4_id. Two boxes for one measurement id, two loaders, two
+ * config calls — two page_view hits for every page view on any shop that had
+ * filled both in.
+ *
+ * App\Services\Analytics resolves one id per network and emits once per
+ * request, and tests/Feature/AnalyticsLoadedOnceTest.php counts the tags on
+ * real pages with preg_match_all. The shape check that refused a malformed id
+ * moved there too, and is pinned there.
+ *
+ * What is asserted here is the half that belongs to this class: it puts no
+ * analytics on a page at all, however the setting is filled in.
+ */
+it('puts no analytics tag in the SEO block', function () {
     seoSettings(['ga' => 'G-AB12CD34EF']);
 
-    expect(Seo::render([]))->toContain("gtag('config','G-AB12CD34EF')");
-});
+    $html = Seo::render([]);
 
-it('refuses an analytics id that is not one', function () {
-    // htmlspecialchars() is no defence inside a <script> body: the browser
-    // HTML-decodes the element's contents before the JS parser sees them.
-    foreach (["G-OK'));alert(1);//", '<script>alert(1)</script>', 'G-OK" onload="x'] as $bad) {
-        seoSettings(['ga' => $bad]);
-
-        $html = Seo::render([]);
-
-        expect($html)->not->toContain('googletagmanager.com')
-            ->and($html)->not->toContain('alert(1)');
-    }
+    expect(str_contains($html, 'googletagmanager.com'))
+        ->toBeFalse('the SEO block is not an analytics emitter; App\Services\Analytics is');
+    expect(str_contains($html, 'gtag('))
+        ->toBeFalse('the SEO block is not an analytics emitter; App\Services\Analytics is');
 });
 
 /* ------------------------------------------------- fresh writes are visible */

@@ -220,14 +220,28 @@ class Seo
             }
         }
 
-        // Optional analytics (only if configured, and only if it is actually
-        // a measurement ID).
-        $ga = self::measurementId($s['ga'] ?? null);
-        if ($ga !== null) {
-            $out[] = '<script async src="https://www.googletagmanager.com/gtag/js?id=' . $ga . '"></script>';
-            $out[] = "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','" . $ga . "');</script>";
-        }
-
+        /*
+         * ANALYTICS USED TO BE EMITTED HERE, and that is why the storefront
+         * loaded Google's tag twice.
+         *
+         * This block read the SEO setting `ga`. Fifty lines further down the
+         * same <head>, layouts/store.blade.php called MarketingPixels::
+         * baseTags(), which emitted the same two tags from a DIFFERENT setting
+         * (marketing_pixels.ga4_id). Two admin boxes for one measurement ID,
+         * two loaders, and two gtag('config', …) calls — so two page_view hits
+         * per page view on any shop that had filled in both.
+         *
+         * It also meant that switching the SEO Engine module off switched
+         * analytics off with it, on the pages whose only loader was this one,
+         * which is not what either switch says it does.
+         *
+         * App\Services\Analytics is now the only thing that emits an analytics
+         * tag anywhere in this application, it resolves ONE id per network,
+         * and it emits once per request whoever asks. This class is back to
+         * describing the page to a search engine, which is all it claims to
+         * do. The shape check this file used to apply to the ID lives on as
+         * Analytics::validId(), which is the only caller that needs it.
+         */
         return "\n" . implode("\n", $out) . "\n";
     }
 
@@ -251,29 +265,6 @@ class Seo
         );
 
         return $json === false ? null : $json;
-    }
-
-    /**
-     * An analytics measurement ID, or null.
-     *
-     * This value is interpolated into a script body, where it sits inside a
-     * JavaScript string literal rather than in markup -- htmlspecialchars()
-     * does nothing about a quote-and-semicolon there, because the browser
-     * HTML-decodes the script's contents before the JS parser ever sees them.
-     * The defence has to be the value's own shape, so anything that is not a
-     * Google measurement/property ID is simply not emitted.
-     */
-    private static function measurementId(?string $value): ?string
-    {
-        $value = strtoupper(trim((string) $value));
-
-        if ($value === '') {
-            return null;
-        }
-
-        $ok = preg_match('/^(?:G-[A-Z0-9]{4,24}|GT-[A-Z0-9]{4,24}|AW-[0-9]{6,20}|UA-[0-9]{4,12}-[0-9]{1,4})$/', $value) === 1;
-
-        return $ok ? $value : null;
     }
 
     /**

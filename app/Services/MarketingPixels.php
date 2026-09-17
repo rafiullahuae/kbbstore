@@ -17,6 +17,13 @@ use App\Models\Product;
  * the module on is not itself an event source, only a gate in front of
  * whichever IDs are actually filled in.
  *
+ * WHERE THE IDS NOW LIVE. This class no longer reads module_settings for an
+ * ID and no longer builds a loader tag. Both are App\Services\Analytics' job:
+ * it is the single decider of which ID is live for each network (the SEO
+ * screen's `ga` and `meta_pixel` boxes are aliases of the same two values, not
+ * rival ones) and the single emitter of the loader markup, once per request.
+ * What is left here is the EVENTS, which is what this class was always for.
+ *
  * Four render points, matching the plugin's four hook sites:
  *   - baseTags()      — every page, in <head>. PageView / page_view / page+load.
  *   - viewContent()    — a product page. ViewContent / view_item.
@@ -35,29 +42,26 @@ class MarketingPixels
         'pixels' => ['Pixels', 'Add an ID to activate that pixel. Leave any of them blank to skip it.', ['meta_id', 'ga4_id', 'tiktok_id']],
     ];
 
-    private ?array $cache = null;
+    /** SCHEMA key => the network Analytics knows it by. */
+    private const NETWORK = ['meta_id' => 'meta', 'ga4_id' => 'ga4', 'tiktok_id' => 'tiktok'];
 
-    public function __construct(private SettingsService $settings) {}
+    public function __construct(private Analytics $analytics) {}
 
     public function enabled(): bool
     {
-        return $this->settings->moduleEnabled('marketing_pixels', false);
+        return $this->analytics->enabled();
     }
 
     /** @return array<string, string> */
     public function all(): array
     {
-        if ($this->cache !== null) {
-            return $this->cache;
-        }
-
         $out = [];
 
         foreach (self::SCHEMA as $key => $def) {
-            $out[$key] = trim((string) $this->settings->moduleSetting('marketing_pixels', $key, $def[2]));
+            $out[$key] = $this->analytics->id(self::NETWORK[$key]);
         }
 
-        return $this->cache = $out;
+        return $out;
     }
 
     /** @param array<string, mixed> $values */
@@ -65,74 +69,53 @@ class MarketingPixels
     {
         foreach (self::SCHEMA as $key => $def) {
             if (array_key_exists($key, $values)) {
-                $this->settings->setModuleSetting('marketing_pixels', $key, mb_substr(trim((string) $values[$key]), 0, 60));
+                $this->analytics->setId(self::NETWORK[$key], (string) $values[$key]);
             }
         }
-
-        $this->cache = null;
     }
 
     private function active(): bool
     {
-        if (! $this->enabled()) {
-            return false;
-        }
-
-        $c = $this->all();
-
-        return $c['meta_id'] !== '' || $c['ga4_id'] !== '' || $c['tiktok_id'] !== '';
+        return $this->analytics->anyActive();
     }
 
-    /** Base loader tags plus the page-view event for each configured pixel. */
+    /**
+     * The loader tags. Delegated in full: Analytics emits them once per
+     * request, so this staying as a call site costs nothing and a page that
+     * reaches the loader only through this method keeps working.
+     */
     public function baseTags(): string
     {
-        if (! $this->active()) {
-            return '';
-        }
-
-        $c = $this->all();
-        $out = '';
-
-        if ($c['meta_id'] !== '') {
-            $id = json_encode($c['meta_id']);
-            $out .= "<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',{$id});fbq('track','PageView');</script>\n";
-        }
-
-        if ($c['ga4_id'] !== '') {
-            $id = json_encode($c['ga4_id']);
-            $src = rawurlencode($c['ga4_id']);
-            $out .= "<script async src=\"https://www.googletagmanager.com/gtag/js?id={$src}\"></script>\n";
-            $out .= "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',{$id});</script>\n";
-        }
-
-        if ($c['tiktok_id'] !== '') {
-            $id = json_encode($c['tiktok_id']);
-            $out .= "<script>!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=['page','track','identify','instances','debug','on','off','once','ready','alias','group','enableCookie','disableCookie'];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var i='https://analytics.tiktok.com/i18n/pixel/events.js';ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=d.createElement('script');o.type='text/javascript';o.async=!0;o.src=i+'?sdkid='+e+'&lib='+t;var a=d.getElementsByTagName('script')[0];a.parentNode.insertBefore(o,a)};ttq.load({$id});ttq.page();}(window,document,'ttq');</script>\n";
-        }
-
-        return $out;
+        return $this->analytics->headTags();
     }
 
-    /** Product-page view event. */
+    /**
+     * Product-page view event.
+     *
+     * EVERY interpolated value is json_encode()d, numbers included. A bare
+     * `{$price}` is a PHP float rendered by string conversion, and that is not
+     * always JavaScript: a large or tiny value prints as `1.0E+25`, which is a
+     * syntax error inside an object literal and takes the whole tag down with
+     * it, and a float that happens to be integral prints without its decimals.
+     * json_encode() is the only conversion in this file that is guaranteed to
+     * produce a JavaScript literal for whatever it is handed.
+     *
+     * Nothing here is customer data. A product id, a product name and a price
+     * are on the page the shopper is already looking at.
+     */
     public function viewContent(Product $product): string
     {
-        if (! $this->active()) {
-            return '';
-        }
-
-        $c = $this->all();
-        $price = (float) $product->effectivePrice() / 100;
-        $currency = json_encode($this->currency());
         $out = '';
+        $price = json_encode((float) $product->effectivePrice() / 100);
+        $currency = json_encode($this->currency());
+        $pid = json_encode((string) $product->id);
 
-        if ($c['meta_id'] !== '') {
-            $pid = json_encode((string) $product->id);
+        if ($this->analytics->active('meta')) {
             $out .= "<script>fbq('track','ViewContent',{content_ids:[{$pid}],content_type:'product',value:{$price},currency:{$currency}});</script>\n";
         }
 
-        if ($c['ga4_id'] !== '') {
-            $pid = json_encode((string) $product->id);
-            $name = json_encode($product->name);
+        if ($this->analytics->active('ga4')) {
+            $name = json_encode((string) $product->name);
             $out .= "<script>gtag('event','view_item',{currency:{$currency},value:{$price},items:[{item_id:{$pid},item_name:{$name},price:{$price}}]});</script>\n";
         }
 
@@ -167,20 +150,29 @@ class MarketingPixels
             return '';
         }
 
-        $c = $this->all();
         $currency = json_encode($this->currency());
 
         $calls = [];
 
-        if (! empty($c['meta_id'])) {
+        if ($this->analytics->active('meta')) {
             $calls[] = "if(window.fbq)fbq('track','AddToCart',{content_ids:[id],content_type:'product',value:v,currency:{$currency}});";
         }
 
-        if (! empty($c['ga_id'])) {
+        /*
+         * This read `ga_id` -- a key that is not in SCHEMA, was never written
+         * by any screen and could therefore never be non-empty. GA4 has
+         * recorded no add_to_cart from this shop since the method was written,
+         * even with a GA4 ID filled in and the module on: the funnel simply had
+         * a hole in it between view_item and begin_checkout, and because the
+         * other two calls were built correctly nothing looked broken. The
+         * network name is now the one Analytics knows, so there is no second
+         * spelling of it left to get wrong.
+         */
+        if ($this->analytics->active('ga4')) {
             $calls[] = "if(window.gtag)gtag('event','add_to_cart',{currency:{$currency},value:v,items:[{item_id:id,item_name:n,price:v,quantity:q}]});";
         }
 
-        if (! empty($c['tiktok_id'])) {
+        if ($this->analytics->active('tiktok')) {
             $calls[] = "if(window.ttq)ttq.track('AddToCart',{content_id:String(id),content_type:'product',value:v,currency:{$currency}});";
         }
 
@@ -209,23 +201,26 @@ document.addEventListener('click', function (e) {
 HTML;
     }
 
-    /** Checkout-page event. The caller is responsible for never calling this on the success page. */
+    /**
+     * Checkout-page event. The caller is responsible for never calling this on
+     * the success page.
+     *
+     * A basket total and a currency, and nothing else — no email, no address,
+     * no customer id. The basket's line items are deliberately not sent: what
+     * a shop needs from begin_checkout is the value, and the items would add
+     * nothing the purchase event does not already carry.
+     */
     public function beginCheckout(int $totalFils): string
     {
-        if (! $this->active()) {
-            return '';
-        }
-
-        $c = $this->all();
-        $value = $totalFils / 100;
+        $value = json_encode($totalFils / 100);
         $currency = json_encode($this->currency());
         $out = '';
 
-        if ($c['meta_id'] !== '') {
+        if ($this->analytics->active('meta')) {
             $out .= "<script>fbq('track','InitiateCheckout',{value:{$value},currency:{$currency}});</script>\n";
         }
 
-        if ($c['ga4_id'] !== '') {
+        if ($this->analytics->active('ga4')) {
             $out .= "<script>gtag('event','begin_checkout',{currency:{$currency},value:{$value}});</script>\n";
         }
 
@@ -258,9 +253,32 @@ HTML;
             return '';
         }
 
-        $c = $this->all();
-        $total = (float) $order->total / 100;
-        $currency = json_encode($order->currency ?: $this->currency());
+        /*
+         * WHAT LEAVES THE SHOP HERE, checked field by field, because this is
+         * the one tag that sees an order.
+         *
+         *   transaction_id  the ORDER NUMBER, not the row id. The number is
+         *                   printed on the page the customer is looking at and
+         *                   on their receipt; the row id is an internal
+         *                   sequence and is not sent.
+         *   value, currency the order total. Already on the page.
+         *   items           product id, product name, quantity, unit price —
+         *                   the catalogue, which is public.
+         *
+         * NOT SENT, and there is no version of this tag that should send them:
+         * the customer's email, name, phone, billing or delivery address, the
+         * customer id, the order id, the coupon code, or anything from the
+         * payment. Meta in particular will happily accept hashed personal data
+         * in an `em`/`ph` parameter; nothing here builds one.
+         *
+         * Every interpolated value is json_encode()d, the numbers included. A
+         * bare `. $total .` is a PHP float rendered by string conversion, and
+         * that is not always JavaScript — a large or small enough total prints
+         * as `1.0E+25`, which is a syntax error inside an object literal and
+         * takes the whole tag, and therefore the sale, down with it.
+         */
+        $total = json_encode((float) $order->total / 100);
+        $currency = json_encode((string) ($order->currency ?: $this->currency()));
         $ids = [];
         $items = [];
 
@@ -268,26 +286,26 @@ HTML;
             $ids[] = (string) $item->product_id;
             $items[] = [
                 'item_id' => (string) $item->product_id,
-                'item_name' => $item->name,
-                'quantity' => $item->quantity,
+                'item_name' => (string) $item->name,
+                'quantity' => (int) $item->quantity,
                 'price' => (float) $item->unit_price / 100,
             ];
         }
 
         $out = '';
 
-        if ($c['meta_id'] !== '') {
+        if ($this->analytics->active('meta')) {
             $out .= '<script>fbq(\'track\',\'Purchase\',{value:' . $total . ',currency:' . $currency
                 . ',content_type:\'product\',content_ids:' . json_encode($ids) . '});</script>' . "\n";
         }
 
-        if ($c['ga4_id'] !== '') {
-            $orderNumber = json_encode($order->order_number);
+        if ($this->analytics->active('ga4')) {
+            $orderNumber = json_encode((string) $order->order_number);
             $out .= '<script>gtag(\'event\',\'purchase\',{transaction_id:' . $orderNumber . ',value:' . $total
                 . ',currency:' . $currency . ',items:' . json_encode($items) . '});</script>' . "\n";
         }
 
-        if ($c['tiktok_id'] !== '') {
+        if ($this->analytics->active('tiktok')) {
             $out .= '<script>ttq.track(\'CompletePayment\',{value:' . $total . ',currency:' . $currency . '});</script>' . "\n";
         }
 

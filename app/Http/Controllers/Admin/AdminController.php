@@ -1373,10 +1373,34 @@ class AdminController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    /** GET /admin-api/settings — flat { key: value } from store_settings. */
+    /**
+     * GET /admin-api/settings — flat { key: value } from store_settings.
+     *
+     * `ga` and `meta_pixel` are ALIASES, not rows.
+     *
+     * Store → SEO & Meta has a Google Analytics box and a Meta Pixel box.
+     * Growth & Marketing → Marketing Pixels has a Google (GA4) box and a Meta
+     * Pixel box. Those were four independent values for two IDs, saved in two
+     * different tables, with nothing on either screen showing what the other
+     * held — which is exactly how a shop ends up with both Google boxes filled
+     * in, Google's tag loaded twice and every session counted twice.
+     *
+     * There is now ONE value per network, in the Marketing Pixels module's own
+     * keys, and both screens are windows onto it: read back here, written
+     * through in updateSettings(). Whichever box the owner types in, the other
+     * shows the same thing, and there is no state in which two different IDs
+     * exist for one network.
+     */
     public function settings()
     {
-        return response()->json(['settings' => \App\Models\Setting::map()]);
+        $map = \App\Models\Setting::map();
+        $analytics = app(\App\Services\Analytics::class);
+
+        foreach (\App\Services\Analytics::LEGACY_KEYS as $legacyKey => $network) {
+            $map[$legacyKey] = $analytics->id($network);
+        }
+
+        return response()->json(['settings' => $map]);
     }
 
     /**
@@ -1818,8 +1842,26 @@ class AdminController extends Controller
         // storefront until something else happened to flush them. set() clears
         // both caches.
         $settings = app(\App\Services\SettingsService::class);
+        $analytics = app(\App\Services\Analytics::class);
 
         foreach ($clean as $key => $value) {
+            /*
+             * The two alias keys are WRITTEN THROUGH to the one canonical ID
+             * rather than stored here — see settings() above for why there is
+             * only one. Analytics::setId() also drops the superseded
+             * `settings` row, so a save from this screen cannot resurrect the
+             * second copy, and switches the Marketing Pixels module on if a
+             * non-blank ID arrives while it is off. That last part is what
+             * keeps this screen's own promise ("saving an ID here loads
+             * Google's tag on every storefront page") true now that the tag it
+             * loads is the module's.
+             */
+            if (isset(\App\Services\Analytics::LEGACY_KEYS[$key])) {
+                $analytics->setId(\App\Services\Analytics::LEGACY_KEYS[$key], (string) $value);
+                $saved++;
+                continue;
+            }
+
             $settings->set($key, $value);
             $saved++;
         }
