@@ -63,6 +63,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * (customers) are LEFT JOINed onto `orders`, so unit counts, refunded totals and
  * the buyer's name all arrive with the page of rows.
  *
+ * AND ONLY ONTO THE STATEMENTS THAT READ THEM. A fixed statement count says
+ * nothing about what each statement costs, and for a long time all four this
+ * endpoint issues carried both derived tables — including the pagination COUNT
+ * and the chip counts, which name no column of either. See rowQuery() and
+ * withLineAndRefundTotals(): 131.1 ms of SQL to 76.1 ms at 6,000 orders and
+ * 27,000 order lines, with the response byte-for-byte identical.
+ * docs/page-cost.md.
+ *
  * GUEST AND IMPORTED ORDERS. customer_id is nullable and on an import of Woo
  * guest orders it is null for a large share of the table. Such an order still
  * has to show a name, so the name falls back to billing_address, which is JSON
@@ -161,7 +169,10 @@ class OrdersApiController extends Controller
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = min($page, $lastPage);
 
-        $rows = $this->applySort($query, $sort)
+        // The aggregates are added HERE, to the clone that fetches rows, and
+        // not to $query — which is still needed, unaggregated, by summaryFor()
+        // below. applySort() and forPage() mutate what they are given.
+        $rows = $this->applySort($this->withLineAndRefundTotals(clone $query), $sort)
             ->forPage($page, $perPage)
             ->get()
             ->map(fn ($o) => $this->rowToApi($o))
@@ -216,7 +227,9 @@ class OrdersApiController extends Controller
          * chunk callback is how chunk() is told to stop.
          */
         $query = $this->applySort(
-            $this->applyFilter($this->baseQuery($request), $filter),
+            $this->withLineAndRefundTotals(
+                $this->applyFilter($this->baseQuery($request), $filter)
+            ),
             $sort
         );
 
@@ -470,37 +483,61 @@ class OrdersApiController extends Controller
     /* --------------------------------------------------------------- queries */
 
     /**
-     * `orders` with every aggregate this screen needs already joined on.
+     * `orders` with the joins EVERY statement on this screen needs, and only
+     * those.
      *
-     * Two grouped derived tables and one plain join, evaluated once for the
-     * whole page rather than once per row:
-     *
-     *   ia  order_items, for units and line count.
-     *   ra  refunds, for the refunded total. Restricted to the same statuses
-     *       PaymentRefunder::COUNTED sums, so this screen and the refund
-     *       ceiling on the detail page can never disagree about how much of an
-     *       order has been sent back.
      *   c   customers, for the account holder's name. A guest order joins to
-     *       nothing here and falls back to billing_address in PHP.
+     *       nothing here and falls back to billing_address in PHP. It stays
+     *       here rather than moving to withLineAndRefundTotals() because the
+     *       search box matches c.name and the `customer` sort orders by it, so
+     *       the FILTERED set is defined in terms of it. It is an eq_ref join on
+     *       a primary key and costs a lookup per row returned.
      *
-     * No select bindings are added. The revenue rule is applied in PHP from the
-     * status string rather than as a CASE in the select list, which keeps the
-     * binding slot empty and the aggregate() helper below simple.
+     * WHAT MOVED OUT, AND WHY IT HAD TO.
+     *
+     * The two grouped derived tables — order_items for units, refunds for the
+     * refunded total — used to be joined here, which meant EVERY statement the
+     * list issues carried them: the page of 50 rows, the pagination COUNT, the
+     * per-status chip counts and the summary strip. A derived table is
+     * materialised in full before it can be joined, so each of those four
+     * statements aggregated the WHOLE of `order_items` to answer a question
+     * about at most fifty orders.
+     *
+     * Measured on MySQL 8.0 against 6,000 orders and 27,000 order lines
+     * (docs/page-cost.md, and `artisan kbb:page-cost` reproduces it):
+     *
+     *     GET /admin-api/orders-list    10 statements, 131.1 ms of SQL
+     *
+     * and the split, in one such request:
+     *
+     *          the page of rows          52.6 ms   needs ia and ra
+     *          the summary strip         46.2 ms   names ra; never names ia
+     *          the per-status chips      42.5 ms   names neither
+     *          the pagination COUNT      41.4 ms   names neither
+     *
+     * Three of those four do not name a single column of either derived table.
+     * `aggregateQuery()` discards the select list precisely so that an
+     * aggregate is legal, so `ia` and `ra` were joined, materialised, and then
+     * referenced by nothing at all.
+     *
+     * REMOVING THEM CANNOT CHANGE A COUNT, and that is a property rather than a
+     * hope: both subqueries GROUP BY order_id, so each produces at most one row
+     * per order, and a LEFT JOIN onto at most one row neither multiplies rows
+     * nor drops them. The count over `orders` is therefore identical with the
+     * joins and without. Asserted from the other end in
+     * tests/Feature/PageCostBudgetTest.php, which compares every figure this
+     * endpoint returns against the same figures computed the slow way.
+     *
+     * After: 10 statements, 76.1 ms. The row page still pays for `ia` because
+     * it genuinely prints units and lines; nothing else does.
+     *
+     * No select bindings are added here. The revenue rule is applied in PHP
+     * from the status string rather than as a CASE in the select list, which
+     * keeps the binding slot empty and the aggregate() helper simple.
      */
     private function rowQuery(?Builder $from = null): Builder
     {
-        $items = DB::table('order_items')
-            ->groupBy('order_id')
-            ->selectRaw('order_id, COALESCE(SUM(quantity), 0) as units, COUNT(*) as lines_count');
-
-        $refunds = DB::table('refunds')
-            ->whereIn('status', PaymentRefunder::COUNTED)
-            ->groupBy('order_id')
-            ->selectRaw('order_id, COALESCE(SUM(amount), 0) as refunded_fils');
-
         return ($from ?? Order::query())
-            ->leftJoinSub($items, 'ia', 'ia.order_id', '=', 'orders.id')
-            ->leftJoinSub($refunds, 'ra', 'ra.order_id', '=', 'orders.id')
             ->leftJoin('customers as c', 'c.id', '=', 'orders.customer_id')
             ->select([
                 // An explicit allowlist. `orders` also carries ip_address and
@@ -530,13 +567,58 @@ class OrdersApiController extends Controller
                 'orders.completed_at',
                 'orders.created_at',
                 'orders.deleted_at',
-                DB::raw('COALESCE(ia.units, 0) as units'),
-                DB::raw('COALESCE(ia.lines_count, 0) as lines_count'),
-                DB::raw('COALESCE(ra.refunded_fils, 0) as refunded_fils'),
                 DB::raw('c.name as account_name'),
                 DB::raw('c.first_name as account_first_name'),
                 DB::raw('c.last_name as account_last_name'),
             ]);
+    }
+
+    /**
+     * The two grouped derived tables, added to a query that is about to FETCH
+     * ROWS — the page of the list, or the export.
+     *
+     *   ia  order_items, for units and line count.
+     *   ra  refunds, for the refunded total. Restricted to the same statuses
+     *       PaymentRefunder::COUNTED sums, so this screen and the refund
+     *       ceiling on the detail page can never disagree about how much of an
+     *       order has been sent back.
+     *
+     * addSelect(), not select(): the allowlist rowQuery() built is the point of
+     * that method and must survive. Replacing it here would quietly put
+     * `orders.*` — ip_address and both address blobs — back on the wire.
+     */
+    private function withLineAndRefundTotals(Builder $query): Builder
+    {
+        $items = DB::table('order_items')
+            ->groupBy('order_id')
+            ->selectRaw('order_id, COALESCE(SUM(quantity), 0) as units, COUNT(*) as lines_count');
+
+        return $this->withRefundTotals($query)
+            ->leftJoinSub($items, 'ia', 'ia.order_id', '=', 'orders.id')
+            ->addSelect([
+                DB::raw('COALESCE(ia.units, 0) as units'),
+                DB::raw('COALESCE(ia.lines_count, 0) as lines_count'),
+            ]);
+    }
+
+    /**
+     * Refunds alone.
+     *
+     * The summary strip sums `ra.refunded_fils` and needs nothing from
+     * `order_items`, so it takes this and not the pair above. `refunds` is a
+     * small table filtered by an indexed status; the cost this saves is the
+     * 27,000-row aggregation next door, not this one.
+     */
+    private function withRefundTotals(Builder $query): Builder
+    {
+        $refunds = DB::table('refunds')
+            ->whereIn('status', PaymentRefunder::COUNTED)
+            ->groupBy('order_id')
+            ->selectRaw('order_id, COALESCE(SUM(amount), 0) as refunded_fils');
+
+        return $query
+            ->leftJoinSub($refunds, 'ra', 'ra.order_id', '=', 'orders.id')
+            ->addSelect([DB::raw('COALESCE(ra.refunded_fils, 0) as refunded_fils')]);
     }
 
     /** Everything the operator typed, except the chip. */
@@ -753,7 +835,9 @@ class OrdersApiController extends Controller
         $marks = implode(',', array_fill(0, count(Order::REAL_STATUSES), '?'));
 
         $row = $this->aggregate(
-            $query,
+            // `ra` and nothing else: this reads refunded_fils and no column of
+            // the order_items aggregate.
+            $this->withRefundTotals(clone $query),
             "COUNT(*) as orders,
              COALESCE(SUM(orders.total), 0) as gross,
              COALESCE(SUM(COALESCE(ra.refunded_fils, 0)), 0) as refunded,
