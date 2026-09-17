@@ -17,6 +17,22 @@ use App\Services\Seo\TitleTemplate;
 class Seo
 {
     /**
+     * The @type a row in a CollectionPage's ItemList is allowed to name.
+     *
+     * An allowlist and not a passthrough. The value is written straight into a
+     * JSON-LD document that search engines read as this shop's own claim about
+     * itself, and this repository's standing rule for anything reaching a
+     * public document is a named list rather than a filter -- Product::toApi()
+     * and SettingController::PUBLIC_KEYS are the same decision on the API side.
+     *
+     * `Product` is every product listing on the shop. `Brand` is the A-Z
+     * directory at /korean-skincare-brands/, which lists brands.
+     *
+     * @var list<string>
+     */
+    public const COLLECTION_ITEM_TYPES = ['Product', 'Brand'];
+
+    /**
      * Is the SEO Engine module switched on?
      *
      * Store → Modules → SEO → SEO Engine. Until this check existed the whole
@@ -895,6 +911,41 @@ class Seo
             }
 
             if (!empty($p['sku']))         $node['sku'] = $p['sku'];
+
+            /*
+             * GTIN -- THE IDENTIFIER THE PLAN RECORDED AS BLOCKED.
+             *
+             * Phase 12 closed the structured-data item with "Still open: GTIN
+             * and variant-level offers -- genuinely blocked, no GTIN/barcode
+             * column exists anywhere in the schema". That was true when it was
+             * written and is not true now: `products.gtin` was added by
+             * 2026_10_05_000000_add_product_editor_columns, the product editor
+             * collects it, and ProductEditorApiController refuses a value
+             * App\Support\Gtin::isValid() rejects.
+             *
+             * VALIDATED AGAIN HERE, which is not the same check twice over.
+             * The admin form is one of three ways a value reaches this column
+             * -- the other two are the WooCommerce import and a hand-edited
+             * row -- and neither of those passes through that controller. A
+             * GTIN is the field Google MATCHES PRODUCTS ON: a wrong one does
+             * not degrade the listing, it attaches this shop's price and stock
+             * to somebody else's product. The check digit exists precisely to
+             * catch the mistyped and transposed digits a human makes copying
+             * fourteen numbers off a box, so a value that fails it is not
+             * published at all. Absent is a missing recommended field; wrong is
+             * a misattributed product.
+             *
+             * `gtin`, not `gtin13`. Google's current guidance is the
+             * length-agnostic property, which lets one field carry an EAN-13, a
+             * UPC-A and an ITF-14 without the writer having to classify the
+             * number -- and Gtin::normalise() has already established which of
+             * the four lengths it is by accepting it at all.
+             */
+            $gtin = Gtin::normalise(is_string($p['gtin'] ?? null) ? $p['gtin'] : null);
+
+            if ($gtin !== null && Gtin::isValid($gtin)) {
+                $node['gtin'] = $gtin;
+            }
             // Recommended, and cheap: it disambiguates the product from the
             // page when the two are ever cited separately.
             if ($url)                      $node['url'] = $url;
@@ -1035,7 +1086,26 @@ class Seo
                     }
                 }
 
-                $node['offers'] = $offer;
+                /*
+                 * VARIANT-LEVEL OFFERS -- the other half of the plan's
+                 * "genuinely blocked" line, and it was never blocked at all.
+                 *
+                 * `product_variants` has carried `price`, `sale_price`,
+                 * `stock_status` and `sku` since the ORIGINAL schema migration.
+                 * The blocker recorded in Phase 12 is the GTIN one; variant
+                 * offers were listed beside it and inherited the same verdict
+                 * without the schema being checked a second time.
+                 *
+                 * What the page actually shows is the test that matters here,
+                 * and store/product.blade.php shows a price PER OPTION: every
+                 * `.variant` row prints its own `Money::format($vsale)`, struck
+                 * through against its own regular price. The single Offer this
+                 * block builds publishes the PARENT row's price, so a product
+                 * whose 30ml is 89 and whose 100ml is 210 told Google it costs
+                 * one number while showing a shopper two. A range is what the
+                 * page states, so a range is what the document should state.
+                 */
+                $node['offers'] = self::aggregateOffer($p, $offer, $currency) ?? $offer;
             }
 
             // AggregateRating only where real, approved reviews exist. Both
@@ -1161,19 +1231,60 @@ class Seo
 
                     $itemUrl = self::canonical($row['url'] ?? null, $base);
 
+                    /*
+                     * WHAT THE ROW IS. `Product` unless the caller names
+                     * something else, because every caller but one lists
+                     * products and a default of anything else would make the
+                     * common case say the wrong thing loudly.
+                     *
+                     * The one exception is the A-Z brand directory
+                     * (App\Support\BrandDirectorySchema), which lists BRANDS.
+                     * Publishing ninety-three Brand landing pages as `Product`
+                     * would put ninety-three products into Google's index that
+                     * have no price, no availability and no SKU -- a product
+                     * node missing every required field is not a weaker rich
+                     * result, it is an invalid one, and it would be invalid
+                     * ninety-three times on the shop's own brand index.
+                     *
+                     * Allowlisted rather than taken verbatim: this string is
+                     * published into a JSON-LD document, and a row that reached
+                     * here from anything less trusted than a builder in this
+                     * namespace must not be able to name an arbitrary type.
+                     */
+                    $rowType = is_string($row['schema_type'] ?? null)
+                        && in_array($row['schema_type'], self::COLLECTION_ITEM_TYPES, true)
+                            ? $row['schema_type']
+                            : 'Product';
+
                     $item = array_filter([
-                        '@type' => 'Product',
+                        '@type' => $rowType,
                         'name' => isset($row['name']) ? (string) $row['name'] : null,
                         'url' => $itemUrl,
                         'image' => self::absolute($row['image'] ?? null, $base),
                         'sku' => isset($row['sku']) && (string) $row['sku'] !== '' ? (string) $row['sku'] : null,
+                        // schema.org puts `logo` on Organization and on Brand,
+                        // and nowhere else this branch emits. A product row
+                        // never carries the key, so the guard is the key's
+                        // absence rather than a type test.
+                        'logo' => self::absolute($row['logo'] ?? null, $base),
                     ], static fn ($v) => $v !== null && $v !== '');
 
                     if (! empty($row['brand'])) {
                         $item['brand'] = ['@type' => 'Brand', 'name' => (string) $row['brand']];
                     }
 
-                    $price = self::priceString($row);
+                    /*
+                     * NO OFFER ON A ROW THAT IS NOT A PRODUCT, and this is the
+                     * half that is easy to leave out. priceString() reads
+                     * `price`/`price_minor`, a brand row carries neither, and
+                     * the result today would be null anyway -- so the guard
+                     * looks redundant and is not. `schema.org/Brand` has no
+                     * `offers` property at all, so the day any caller hands a
+                     * non-product row something price-shaped, the absence of
+                     * this test is what publishes an invalid node instead of
+                     * ignoring the field.
+                     */
+                    $price = $rowType === 'Product' ? self::priceString($row) : null;
 
                     if ($price !== null) {
                         $item['offers'] = array_filter([
@@ -1232,6 +1343,156 @@ class Seo
         }
 
         return $nodes;
+    }
+
+    /**
+     * A variable product's offers as an AggregateOffer, or null to keep the
+     * single Offer the caller already built.
+     *
+     * ── WHEN IT RETURNS null, WHICH IS MOST OF THE TIME ────────────────────
+     *
+     * Fewer than two priced variants, or every variant priced the same. Both
+     * are cases where the single Offer above is already the whole truth, and
+     * an AggregateOffer with `lowPrice` equal to `highPrice` states a range
+     * that is not one. A simple product therefore emits a document byte-
+     * identical to the one it emitted before this method existed, which is the
+     * property SeoVariantOfferTest pins first.
+     *
+     * ── THE ARITHMETIC IS DONE ON THE MINOR UNITS, AND ONLY THERE ──────────
+     *
+     * `price_minor` is the integer AED × 100; `price` is the decimal string
+     * built from it. min() and max() run on the INTEGERS and the result is
+     * formatted once by Money::decimalString().
+     *
+     * AND THE OBVIOUS REASON FOR THAT IS NOT TRUE, which is worth writing down
+     * because the first draft of this method claimed it and a mutation proved
+     * it wrong. Taking min() of the decimal STRINGS does not sort "12.00" below
+     * "9.00": PHP compares two numeric strings numerically, so min(['9.00',
+     * '12.00']) is '9.00' and the naive version is correct today. The mutation
+     * that swaps the integers for the strings stays green, and is recorded in
+     * ProductIdentifierAndVariantOfferTest as one that does not go red.
+     *
+     * The integers are still right, for a reason that survives being checked:
+     * the string version is correct only while Money::decimalString() emits a
+     * bare separator-free decimal AND PHP's numeric-string juggling holds. Give
+     * the formatter a thousands separator -- min(['1,299.00', '890.00']) is
+     * '1,299.00', because a string with a comma in it is not numeric and PHP
+     * falls back to comparing it character by character -- and a product
+     * ranging from 890 to 1,299 publishes a lowPrice ABOVE its highPrice.
+     * Google reads highPrice < lowPrice as an invalid offer and drops the price
+     * from the result entirely. Integer arithmetic depends on none of that.
+     *
+     * The mutation that IS red is formatting the range from the minor units
+     * without Money::decimalString() -- `(string) min($minors)` publishes 8900
+     * for an AED 89 option, which is the fils bug this project has already
+     * shipped once and caught in 2.60.36.
+     *
+     * A variant with no `price_minor` aborts the whole aggregate rather than
+     * being skipped: a range computed over some of the options is a range the
+     * page does not show, and the single parent Offer is a true statement
+     * where a partial range is not.
+     *
+     * ── WHERE THE MERCHANT FIELDS GO ───────────────────────────────────────
+     *
+     * The AggregateOffer keeps everything the single Offer carried EXCEPT the
+     * price pair: itemCondition, priceValidUntil, shippingDetails and
+     * hasMerchantReturnPolicy describe the shop's terms and are the same for
+     * every option, so repeating them per variant would say the same thing ten
+     * times in one document.
+     *
+     * `priceSpecification` is the exception and moves DOWN into each child
+     * offer, because it is the only one of them that names a price. Left on
+     * the aggregate it would carry the parent row's single figure beside a
+     * lowPrice and a highPrice that disagree with it -- a VAT statement about
+     * a price the document no longer claims.
+     *
+     * @param  array<string, mixed>  $p        the product context
+     * @param  array<string, mixed>  $offer    the single Offer already built
+     * @return array<string, mixed>|null
+     */
+    private static function aggregateOffer(array $p, array $offer, string $currency): ?array
+    {
+        $variants = is_array($p['variants'] ?? null) ? array_values($p['variants']) : [];
+
+        if (count($variants) < 2) {
+            return null;
+        }
+
+        $rows = [];
+
+        foreach ($variants as $variant) {
+            if (! is_array($variant)) {
+                return null;
+            }
+
+            $price = self::priceString($variant);
+            $minor = self::priceMinor($variant);
+
+            if ($price === null || $minor === null) {
+                return null;
+            }
+
+            $rows[] = ['price' => $price, 'minor' => $minor, 'variant' => $variant];
+        }
+
+        $minors = array_column($rows, 'minor');
+
+        // One price across every option is not a range. The parent Offer
+        // already publishes that number and publishes it with less ceremony.
+        if (count(array_unique($minors, SORT_NUMERIC)) < 2) {
+            return null;
+        }
+
+        $vatIncluded = self::vatIncludedSitewide();
+        $children = [];
+
+        foreach ($rows as $row) {
+            $child = array_filter([
+                '@type' => 'Offer',
+                'priceCurrency' => $currency,
+                'price' => $row['price'],
+                // The OPTION's own stock status, which is the whole reason a
+                // per-variant offer is worth publishing: the page tags a
+                // sold-out size "Sold out" and greys it, and a document that
+                // says every size is in stock contradicts what is on screen.
+                'availability' => self::availability($row['variant']),
+                'sku' => isset($row['variant']['sku']) && (string) $row['variant']['sku'] !== ''
+                    ? (string) $row['variant']['sku']
+                    : null,
+                // Every option is bought on the one product page; there is no
+                // per-variant URL on this storefront, so naming the product's
+                // is the honest answer rather than inventing a fragment.
+                'url' => $offer['url'] ?? null,
+                'itemCondition' => $offer['itemCondition'] ?? null,
+            ], static fn ($v) => $v !== null);
+
+            if ($vatIncluded !== null) {
+                $child['priceSpecification'] = [
+                    '@type' => 'UnitPriceSpecification',
+                    'price' => $row['price'],
+                    'priceCurrency' => $currency,
+                    'valueAddedTaxIncluded' => $vatIncluded,
+                ];
+            }
+
+            $children[] = $child;
+        }
+
+        $aggregate = $offer;
+
+        // The parent's single figure and its VAT statement are what the range
+        // replaces. unset() rather than rebuilding the array from scratch, so
+        // a merchant field added to $offer later is carried here without this
+        // method having to be remembered.
+        unset($aggregate['price'], $aggregate['priceSpecification']);
+
+        $aggregate['@type'] = 'AggregateOffer';
+        $aggregate['lowPrice'] = Money::decimalString(min($minors));
+        $aggregate['highPrice'] = Money::decimalString(max($minors));
+        $aggregate['offerCount'] = count($children);
+        $aggregate['offers'] = $children;
+
+        return $aggregate;
     }
 
     /**

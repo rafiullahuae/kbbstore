@@ -68,7 +68,12 @@ class SchemaInspectorApiController extends Controller
             return ['error' => 'Enter a product slug.'];
         }
 
-        $product = Product::query()->with('categories:id,name,slug,path')->where('slug', $slug)->first();
+        $product = Product::query()
+            // `variants` eager-loaded, so the inspector costs one query
+            // for the options rather than one per option.
+            ->with(['categories:id,name,slug,path', 'variants' => fn ($q) => $q->orderBy('position')])
+            ->where('slug', $slug)
+            ->first();
 
         if ($product === null) {
             return ['error' => "No product with slug \"{$slug}\"."];
@@ -102,6 +107,27 @@ class SchemaInspectorApiController extends Controller
                 'name' => $product->name,
                 'brand' => $product->brand?->name,
                 'sku' => $product->sku,
+                /*
+                 * gtin and variants, because this screen's whole promise is
+                 * that nothing shown here can drift from what ships. Both
+                 * reached the real Product node in the same release; leaving
+                 * them out of the preview would make the inspector quietly
+                 * wrong about the two newest fields on it, which is worse than
+                 * having no inspector -- an owner checks this screen instead of
+                 * viewing source precisely so they do not have to.
+                 *
+                 * App\Support\Seo re-validates the check digit, so a bad
+                 * stored GTIN shows here as absent exactly as it ships absent.
+                 */
+                'gtin' => $product->gtin,
+                'variants' => $product->variants
+                    ->map(fn ($variant) => [
+                        'price' => Money::decimalString($variant->effectivePrice()),
+                        'price_minor' => $variant->effectivePrice(),
+                        'sku' => $variant->sku,
+                        'stock_status' => $variant->stock_status,
+                    ])
+                    ->all(),
                 'price_aed' => Money::toAed($product->effectivePrice()),
                 'stock' => $product->stock_status === 'instock' ? 1 : 0,
                 'rating' => $product->rating ?: null,
@@ -169,6 +195,19 @@ class SchemaInspectorApiController extends Controller
             if (($node['@type'] ?? '') === 'Product') {
                 if (empty($node['offers'])) {
                     $warnings[] = 'Product schema has no offer — no price will show in search results.';
+                } elseif (($node['offers']['@type'] ?? '') === 'AggregateOffer') {
+                    /*
+                     * A variable product publishes a RANGE, not a price, and
+                     * the old test read `offers.price` unconditionally -- so
+                     * the moment variant offers shipped, every variable
+                     * product in this screen would have reported "Offer has no
+                     * price set" over a node that carries two. A warning that
+                     * fires on correct output is how an owner learns to ignore
+                     * the warnings.
+                     */
+                    if (empty($node['offers']['lowPrice']) || empty($node['offers']['highPrice'])) {
+                        $warnings[] = 'Offer has no price range set.';
+                    }
                 } elseif (empty($node['offers']['price'])) {
                     $warnings[] = 'Offer has no price set.';
                 }

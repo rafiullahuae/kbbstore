@@ -185,6 +185,57 @@ class ProductController extends Controller
                         'name' => $product->t('name'),
                         'brand' => $product->brand?->t('name'),
                         'sku' => $product->sku,
+                        /*
+                         * The barcode, which the plan recorded as having no
+                         * column to come from. It has one --
+                         * 2026_10_05_add_product_editor_columns added
+                         * `products.gtin` and the product editor writes it.
+                         * Passed raw; App\Support\Seo re-checks the mod-10
+                         * check digit before publishing, because this column
+                         * is also reachable by the importer and by hand and a
+                         * wrong GTIN attaches this shop's price to somebody
+                         * else's product.
+                         */
+                        'gtin' => $product->gtin,
+                        /*
+                         * EVERY OPTION'S OWN PRICE AND STOCK.
+                         *
+                         * The page prints a price on every `.variant` row and
+                         * published one number for all of them. Seo turns two
+                         * or more distinct prices into an AggregateOffer and
+                         * leaves a single-priced product exactly as it was.
+                         *
+                         * `effectivePrice()` on the VARIANT, not the product:
+                         * ProductVariant::effectivePrice() is the method that
+                         * knows a variant's sale_price only applies inside the
+                         * parent's sale window, and it is the same call the
+                         * blade template makes two lines above where it prints
+                         * the figure. The decimal string and the integer both
+                         * go over, for the reason CollectionSchema's header
+                         * gives at length: priceString() reads a STRING as
+                         * already-formatted and a NUMBER as major units, so
+                         * handing it the integer 12600 under `price` publishes
+                         * 12,600 AED.
+                         *
+                         * The relation is already eager-loaded for the options
+                         * list, so this costs no query.
+                         */
+                        'variants' => $product->variants
+                            ->map(fn ($variant) => [
+                                'price' => \App\Support\Money::decimalString($variant->effectivePrice()),
+                                'price_minor' => $variant->effectivePrice(),
+                                'sku' => $variant->sku,
+                                /*
+                                 * The real column, never inStock()'s boolean.
+                                 * Seo::availability() has to tell 'outofstock'
+                                 * and 'onbackorder' apart to publish what the
+                                 * owner decided, and a bool has already thrown
+                                 * that away -- the same note CollectionSchema
+                                 * and the product block above both carry.
+                                 */
+                                'stock_status' => $variant->stock_status,
+                            ])
+                            ->all(),
                         // The exact price as a decimal string, straight off the
                         // integer fils. Money::toAed() returns a float and the
                         // renderer then ran number_format() on it — two float

@@ -85,7 +85,7 @@
         </nav>
 
         <h1 class="brw-h1">{{ __('store.brands.all_heading') }}</h1>
-        <p class="brw-sub">{{ trans_choice('store.brands.all_subtitle', $brands->count(), ['total' => $brands->count(), 'stocked' => $stocked]) }}</p>
+        {{-- Built in BrandController::index(): published here AND as this page's <meta description>, so one call. Written on this line rather than above it because StorefrontEnglishUnchangedTest byte-pins this page and a comment on its own line leaves the newline and the indent behind. --}}<p class="brw-sub">{{ $subtitle }}</p>
 
         @if ($brands->isEmpty())
             <p class="brw-empty">{{ __('store.brands.none_yet') }}</p>
