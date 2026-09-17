@@ -76,7 +76,10 @@
               <b>Order #{{ $order->order_number }}</b>
               <span>{{ $order->created_at?->format('j M Y') ?? '' }}@if (isset($order->items_count)) · {{ $order->items_count }} {{ $order->items_count === 1 ? 'item' : 'items' }}@endif</span>
             </span>
-            <span class="kbbol-total">{!! Money::format((int) $order->total) !!}</span>
+            {{-- Receipt precision. The same order's total is printed at full precision
+                 on its detail page and in its emailed receipt; rounding it here made
+                 the list disagree with the row it links to. --}}
+            <span class="kbbol-total">{!! Money::format((int) $order->total, Money::minorExponent()) !!}</span>
             <span class="kbbol-pill {{ $statusClass }}">{{ ucfirst(str_replace('-', ' ', $status)) }}</span>
             <span class="kbbol-chev">›</span>
           </a>

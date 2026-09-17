@@ -122,7 +122,14 @@
                              CashOnDelivery deliberately leaves `paid_at` null and
                              says why — "No money has moved; the courier collects
                              it" — so `paid_at` is what decides the word here. --}}
-                        <div class="co-fact"><dt>{{ $order->paid_at ? 'Total paid' : 'Total to pay' }}</dt><dd>{!! Money::format((int) $order->total) !!}</dd></div>
+                        {{-- Receipt precision, not the storefront's rounded display. This is the
+                             first copy of the receipt the customer sees and the emailed copy
+                             follows a minute later; Money::format() with no width ROUNDS
+                             (displayDecimals() is 0 here), so a total of 8980 fils printed
+                             AED 90 on screen and AED 89.80 in the inbox — two figures for one
+                             order. OrderEmailPresenter's header settled which is right: "a
+                             receipt may not round". --}}
+                        <div class="co-fact"><dt>{{ $order->paid_at ? 'Total paid' : 'Total to pay' }}</dt><dd>{!! Money::format((int) $order->total, Money::minorExponent()) !!}</dd></div>
                         <div class="co-fact"><dt>Payment</dt><dd>{{ $order->paymentLabel() }}</dd></div>
                         {{-- The rate name answered "what did I pay for", never
                              "when does it come" — which is the question a

@@ -26,7 +26,13 @@
      * the service, filled its own to 100%. Two bars, one basket, two answers.
      * Measured on a running preview.
      */
-    $pct   = $totals['free_shipping_percent'] ?? ($free ? min(100, (int) round($sub / $free * 100)) : 100);
+    // The fallback carries the service's rule too, including its ceiling: 100
+    // is reserved for a basket that has actually reached the threshold, so a
+    // basket 30 fils short cannot round its own bar up to full. Without that,
+    // a caller that omits the key gets back the very bug the service no longer
+    // has. See CartService::totals().
+    $pct   = $totals['free_shipping_percent']
+        ?? ($free ? ($left > 0 ? min(99, (int) round($sub / $free * 100)) : 100) : 100);
 
     /*
      * "You're AED 0 away from free delivery" — printed, on a basket 30 fils

@@ -97,7 +97,10 @@
                         @if ($order->completed_at)
                             <div class="kbbtr-row"><span>Completed</span><span>{{ $order->completed_at->format('j F Y') }}</span></div>
                         @endif
-                        <div class="kbbtr-row"><span>Order total</span><span>{!! Money::format((int) $order->total) !!}</span></div>
+                        {{-- Receipt precision, as on the order-detail page and in the emailed
+                             receipt. This screen is reached by order number and email, so it is
+                             frequently the only copy a guest ever sees. --}}
+                        <div class="kbbtr-row"><span>Order total</span><span>{!! Money::format((int) $order->total, Money::minorExponent()) !!}</span></div>
                     </div>
                 </div>
                 <p class="acw-fine">Signed up with us? <a href="{{ Url::to('/my-account/orders/') }}">Your orders</a> has the full receipt.</p>

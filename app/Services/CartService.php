@@ -652,9 +652,33 @@ class CartService
             'free_shipping_threshold' => $threshold,
             'free_shipping_remaining' => $toFree,
             'free_shipping_unlocked' => $threshold !== null && $toFree === 0,
-            // Same basis as $toFree above, or the bar's fill and its caption
-            // would tell two different stories about one basket.
-            'free_shipping_percent' => $threshold ? min(100, (int) round($subtotal / $threshold * 100)) : null,
+            /*
+             * Same basis as $toFree above, or the bar's fill and its caption
+             * would tell two different stories about one basket.
+             *
+             * 100 IS RESERVED FOR ACTUALLY UNLOCKED, and it is read off
+             * $toFree — the same value `free_shipping_unlocked` is read off —
+             * rather than derived a second time from a division.
+             *
+             * `min(100, (int) round($subtotal / $threshold * 100))` gave 100 to
+             * a basket 30 fils short of a AED 199 threshold: 19870/19900 is
+             * 99.85%, which rounds up. The bar filled completely, the "is-
+             * unlocked" styling did not fire, and the caption beside it read
+             * "You're AED 0.30 away from free delivery" — a full progress bar
+             * against a milestone that had not been reached, next to the
+             * sentence saying so. A shopper reading the bar rather than the
+             * caption checks out expecting free delivery and is charged AED 20.
+             *
+             * A bar is a claim about whether something is done, and rounding
+             * one up to its milestone makes that claim untrue in exactly the
+             * range where it matters most — the last fil. So: 100 when the
+             * threshold is met, and at most 99 while any of it is still owed.
+             * round() is kept below that ceiling, so nothing else about the
+             * fill moves.
+             */
+            'free_shipping_percent' => $threshold
+                ? ($toFree === 0 ? 100 : min(99, (int) round($subtotal / $threshold * 100)))
+                : null,
             /*
              * THE PRINTED LINE, computed on the base rather than on the total.
              *
