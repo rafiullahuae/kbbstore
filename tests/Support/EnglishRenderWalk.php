@@ -118,9 +118,45 @@ final class EnglishRenderWalk
      * rewrites every SHA behind it — repinning to a commit and then rebasing
      * leaves the guard pointing at an object that is not in the branch, where
      * it fails with "no such commit" rather than with a diff. The commit named
-     * below is reachable from this branch's history and stays reachable.
+     * below is reachable from this branch's history and stays reachable. This
+     * lane rebased FIRST and repinned afterwards, for that reason.
+     *
+     * ── MOVED AGAIN FOR LANE FO (Phase 15, the homepage hero) ───────────────
+     *
+     * NOT ONE BYTE OF SHOPPER-VISIBLE COPY MOVED, and the diff this reported
+     * was an artefact of how the comparison is built rather than a change to
+     * the page. Worth setting out, because the same shape will recur.
+     *
+     * The hero's three slides used to be a literal array in HomeController,
+     * with a `<br>` inside each headline, echoed through {!! !!}. They are
+     * HomepageContent::DEFAULT_SLIDES now — the same words, with the `<br>`
+     * stored as a NEWLINE so that store/home.blade.php can escape what an owner
+     * types into the new Appearance → Homepage content screen and convert the
+     * newline itself. Rendered, it is the same bytes: str_replace over e()'s
+     * result puts back exactly `<br>`, which is why it is not nl2br(), whose
+     * output keeps the newline as well and defaults to the XHTML form.
+     *
+     * THIS WALK CANNOT SEE THAT, by construction. It rolls resources/views back
+     * to BASE_COMMIT and leaves the PHP in the working tree, so its "before" is
+     * the OLD template echoing the NEW default raw — a page that has never
+     * existed and never will. It reported `Age-R Booster Pro⏎with a free gift
+     * set` against `Age-R Booster Pro<br>with a free gift set`, where the page
+     * the server is serving today is the second of those.
+     *
+     * The compensating pin is in tests/Feature/HomepageContentEditorTest.php,
+     * which asserts those exact bytes off the rendered hero — including the
+     * three gradients, the three buttons and that the first slide carries the
+     * page's only <h1>. That assertion does the work this constant cannot do
+     * for its own move, which is the honest cost of moving it and the reason it
+     * is named here rather than left to be inferred.
+     *
+     * Everything else on every page is byte-identical, which is what let the
+     * hero's wrapper be written the way it is: the new @if shares a line with
+     * the div and the comments above it close on the markup, so the slider is
+     * conditional without moving a single space. See the comments in
+     * store/home.blade.php, which say so at each of the three places.
      */
-    public const BASE_COMMIT = '937aeb72382385963bbf26a8fb6fe0915f83dcd5';
+    public const BASE_COMMIT = '9e65b2df6bbe915eccf9cd1915e4d169470ebf65';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
