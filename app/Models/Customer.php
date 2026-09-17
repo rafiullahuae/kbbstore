@@ -76,6 +76,11 @@ class Customer extends Authenticatable
         'orders_count',
         'total_spent',
         'last_order_at',
+        // Not a secret — a `cus_...` authorises nothing on its own — but it is
+        // an internal handle on somebody's saved cards, and /api/* is
+        // unauthenticated. Nothing serialises this model there today; this is
+        // so that nothing can start to by accident.
+        'stripe_customer_ids',
     ];
 
     /**
@@ -89,6 +94,8 @@ class Customer extends Authenticatable
             'password' => 'hashed',
             'email_verified_at' => 'datetime',
             'whatsapp_optin' => 'bool',
+            // ['test' => 'cus_…', 'live' => 'cus_…']. See stripeCustomerId().
+            'stripe_customer_ids' => 'array',
         ];
     }
 
@@ -111,6 +118,44 @@ class Customer extends Authenticatable
     {
         return $this->addresses()->where('type', $type)->where('is_default', true)->first()
             ?? $this->addresses()->where('type', $type)->first();
+    }
+
+    /* ------------------------------------------------------- saved cards */
+
+    /**
+     * This customer's Stripe Customer id for one set of keys, or null.
+     *
+     * KEYED BY MODE, and that is the whole reason this is a map rather than a
+     * column holding one string. A `cus_...` created with test keys does not
+     * exist to an account using live keys: stored as a single value, the first
+     * real order placed by somebody who had also ordered while the shop was in
+     * test mode would hand Stripe a customer it has never heard of and the
+     * PaymentIntent — the payment itself — would be refused. Each half is kept
+     * and read on its own, so throwing that switch costs nothing.
+     *
+     * Anything that is not a `cus_...` reads as absent, including a value left
+     * by an older build or edited by hand.
+     */
+    public function stripeCustomerId(string $mode): ?string
+    {
+        $map = $this->stripe_customer_ids;
+        $id = is_array($map) ? ($map[$mode] ?? null) : null;
+
+        return is_string($id) && str_starts_with($id, 'cus_') ? $id : null;
+    }
+
+    /**
+     * Remember one, leaving the other mode's alone.
+     *
+     * forceFill/save rather than update(): this is written from a payment path
+     * that has no business touching any other column on the row.
+     */
+    public function rememberStripeCustomerId(string $mode, string $id): void
+    {
+        $map = is_array($this->stripe_customer_ids) ? $this->stripe_customer_ids : [];
+        $map[$mode] = $id;
+
+        $this->forceFill(['stripe_customer_ids' => $map])->save();
     }
 
     public function displayName(): string

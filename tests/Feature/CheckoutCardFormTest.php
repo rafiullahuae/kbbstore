@@ -170,8 +170,12 @@ it('renders the card fields on the checkout page itself', function () {
      * it a second needle and the assertion silently stops being the one that
      * was written — see tests/Feature/ExpectationsThatCannotFailTest.php.
      */
-    // The box Stripe.js mounts its iframe into.
-    expect($html)->toContain('id="kbb-card-element"');
+    // The three boxes Stripe.js mounts its iframes into. One element became
+    // three when the form was laid out the way the owner asked for it; the
+    // card number, the expiry and the security code each have their own now.
+    expect($html)->toContain('id="kbb-card-number"');
+    expect($html)->toContain('id="kbb-card-expiry"');
+    expect($html)->toContain('id="kbb-card-cvc"');
     // Stripe.js itself, and from Stripe's own domain — self-hosting it would
     // put the code that touches the card number inside our origin.
     expect($html)->toContain('https://js.stripe.com/v3');
@@ -193,15 +197,25 @@ it('puts the card fields inside the card option, not loose on the page', functio
      * visibility — so their position in the document is the behaviour.
      */
     $box = strpos($html, 'payment_box payment_method_stripe');
-    $mount = strpos($html, 'id="kbb-card-element"');
 
     expect($box)->not->toBeFalse();
-    expect($mount)->not->toBeFalse();
-    expect($mount)->toBeGreaterThan($box);
 
-    // And the next payment option's <li> starts after the mount, so the box
-    // was not closed before it.
-    expect(substr($html, $box, $mount - $box))->not->toContain('</ul>');
+    /*
+     * ALL THREE, not just the first. They are laid out in two rows now and it
+     * would be entirely possible to close the box between them — which would
+     * leave the card number hiding correctly with the option and the expiry and
+     * security code sitting in the open under every other payment method.
+     */
+    foreach (['kbb-card-number', 'kbb-card-expiry', 'kbb-card-cvc'] as $id) {
+        $mount = strpos($html, 'id="' . $id . '"');
+
+        expect($mount)->not->toBeFalse();
+        expect($mount)->toBeGreaterThan($box);
+
+        // And the next payment option's <li> starts after the mount, so the box
+        // was not closed before it.
+        expect(substr($html, $box, $mount - $box))->not->toContain('</ul>');
+    }
 });
 
 it('loads no Stripe script at all when no card gateway is configured', function () {
@@ -210,7 +224,7 @@ it('loads no Stripe script at all when no card gateway is configured', function 
     $html = formShopper(formCart())->get('/checkout')->assertOk()->getContent();
 
     expect($html)->not->toContain('js.stripe.com');
-    expect($html)->not->toContain('kbb-card-element');
+    expect($html)->not->toContain('kbb-card-number');
 });
 
 it('never puts the secret key on the checkout page', function () {

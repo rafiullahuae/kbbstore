@@ -141,27 +141,26 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         return $this->credentials->get($this->id(), 'publishable_key');
     }
 
+    /**
+     * NOTHING, DELIBERATELY, AND THIS IS A REMOVAL RATHER THAN AN OVERSIGHT.
+     *
+     * Three sentences used to stand here and print as a paragraph directly
+     * above the card fields. The owner asked for them to go — "make the field
+     * more nice and clear" — and for one short line with a padlock in their
+     * place. That line is `store.checkout.card_secure_line`, drawn by
+     * partials/checkout/stripe-card at the top of the fields it describes,
+     * where it is keyed for translation like the rest of the checkout. A
+     * sentence returned from here could not be: this method is read by the
+     * admin and by the API as well as by the page, and it has never gone
+     * through __().
+     *
+     * partials/checkout/payment-methods draws the .payment_box for the card
+     * gateway whether or not there is a description, precisely so that this
+     * returning null cannot take the card fields off the page with it.
+     */
     public function description(int $totalFils): ?string
     {
-        /*
-         * IT SAYS WHERE THE CARD IS TYPED, because the old sentence did not and
-         * the owner's own report is the evidence: he configured Stripe, opened
-         * the checkout, chose Credit / Debit Card and asked why the card fields
-         * were not showing.
-         *
-         * They are showing now. The sentence that stood here said they would
-         * appear on Stripe's page after Place order, which was true of the
-         * hosted flow and is the opposite of what this page does today, so
-         * leaving it would be worse than saying nothing at all.
-         *
-         * What it does NOT say is anything about a redirect, and it does not
-         * promise there will be no further step: a 3-D Secure challenge is the
-         * card issuer's, not Stripe's, it is mandatory on most UAE cards, and
-         * it opens over this page rather than navigating away from it.
-         */
-        return 'Pay securely by card. Enter your card details below — they go straight '
-            .'to our payment processor and are never stored on this site. Your bank may '
-            .'ask you to confirm the payment.';
+        return null;
     }
 
     public function configSchema(): array
@@ -171,7 +170,41 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'secret_key' => ['secret', 'Secret key', 'Starts sk_test_ or sk_live_. Never leaves the server, and is never returned by any API.'],
             'webhook_signing_secret' => ['secret', 'Webhook signing secret', 'Starts whsec_. From Stripe Dashboard -> Developers -> Webhooks, after adding the endpoint URL below. Without it no webhook can be verified.'],
             'webhook_secret' => ['secret', 'URL secret', 'Generated for you. Forms part of the webhook URL below.'],
+            /*
+             * NOT A CREDENTIAL — a switch, and the first entry in any gateway's
+             * schema that is one. Two consequences follow, and both are handled
+             * rather than assumed:
+             *
+             *   - GatewayPreflight lists an empty schema key as a field still to
+             *     be pasted in. A switch that is off is not a missing
+             *     credential, and "Still to paste in: Stripe Link" on a
+             *     correctly configured shop would be a false alarm on the one
+             *     screen that exists to remove them. It skips `bool` entries.
+             *   - The admin console draws an unknown type as a text box. The
+             *     anchor and replacement that teach it `bool` are in
+             *     docs/FY-CHECKOUT-CARD-AND-PREFILL.md; until they land the
+             *     value is still settable as '1' or empty, and the default
+             *     below is what a shop that never touches it gets.
+             *
+             * DEFAULT OFF, which is the owner's stated preference and is what an
+             * absent key already reads as — so a shop that has never seen this
+             * field has Link off from the moment the package lands, with no save
+             * required and nothing to remember.
+             */
+            'link_enabled' => ['bool', 'Stripe Link', 'Stripe’s own one-click autofill, offered inside the card number field. Off by default: it asks the shopper to save their card with Stripe rather than with this shop, and it puts a second sign-in in the middle of the checkout.'],
         ];
+    }
+
+    /**
+     * Is Stripe Link offered inside the card number field?
+     *
+     * Compared as a string rather than cast: GatewayCredentials stores whatever
+     * the admin posted, so the honest question is "did somebody switch this
+     * on", and every other value — absent, '', '0' — is off.
+     */
+    public function linkEnabled(): bool
+    {
+        return $this->credentials->get($this->id(), 'link_enabled') === '1';
     }
 
     protected function baseUrl(): string
@@ -188,11 +221,46 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
     public function start(Order $order): PaymentStart
     {
+        return $this->openIntent($order, saveCard: false);
+    }
+
+    /**
+     * The same payment, with the card kept for next time.
+     *
+     * A SEPARATE ENTRY POINT rather than a parameter on start(), because
+     * start() is PaymentGateway's and every gateway implements it: widening
+     * that signature would ask Cash on Delivery, Tabby and Tamara to carry an
+     * argument that means nothing to any of them. CheckoutController names this
+     * method only after it has satisfied itself that the shopper has an account
+     * to attach the card to — see the guard there, which is the one that
+     * matters.
+     */
+    public function startAndSaveCard(Order $order): PaymentStart
+    {
+        return $this->openIntent($order, saveCard: true);
+    }
+
+    private function openIntent(Order $order, bool $saveCard): PaymentStart
+    {
         if (! $this->configured()) {
             return PaymentStart::failed('Card payment is not available right now.');
         }
 
         $currency = strtolower((string) ($order->currency ?: 'AED'));
+
+        /*
+         * The Stripe Customer the card will hang off, made or found now.
+         *
+         * A NULL HERE DOES NOT REFUSE THE SALE. `setup_future_usage` without a
+         * customer is an error at Stripe, so if this shop cannot get one the
+         * choice is between taking the payment without saving the card and not
+         * taking the payment at all — and losing an order because a convenience
+         * failed is the worse of the two by a long way. It is logged, loudly
+         * enough to find, and the shopper is charged exactly what they agreed
+         * to. The follow-up that offers saved cards back will find nothing
+         * saved for that order, which is the truth.
+         */
+        $stripeCustomer = $saveCard ? $this->stripeCustomerFor($order) : null;
 
         /*
          * AN INTENT THIS ORDER ALREADY HAS IS REUSED, NEVER REPLACED.
@@ -217,7 +285,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
          * is Stripe's own model for a retry and the reason a decline needs no
          * new order and no new intent.
          */
-        $existing = $this->reusableIntent($order, $currency);
+        $existing = $this->reusableIntent($order, $currency, $stripeCustomer);
 
         if ($existing !== null) {
             return $existing;
@@ -266,6 +334,26 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         ];
 
         /*
+         * KEEPING THE CARD, when the shopper asked for it and only then.
+         *
+         * `on_session` rather than `off_session`, and the difference is a
+         * promise rather than a preference. It states that this card will be
+         * reused with the shopper PRESENT, at a checkout they are looking at —
+         * which is what "save this card for future purchases" offers and all
+         * this shop will ever do with it. `off_session` claims the right to
+         * charge it while they are away, asks the issuer for the stronger
+         * authentication that goes with that claim, and would be a larger
+         * promise than the tick makes.
+         *
+         * `customer` is required alongside it: a saved card has to be attached
+         * to somebody, and Stripe refuses setup_future_usage without one.
+         */
+        if ($stripeCustomer !== null) {
+            $payload['customer'] = $stripeCustomer;
+            $payload['setup_future_usage'] = 'on_session';
+        }
+
+        /*
          * Stripe's own replay guard, keyed on the order.
          *
          * The reuse check above reads `orders.transaction_id`, so it cannot
@@ -280,7 +368,16 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'POST',
             '/v1/payment_intents',
             $payload,
-            'kbb-intent-' . $this->reference($order),
+            /*
+             * THE KEY CARRIES THE SHAPE OF THE REQUEST, not just the order.
+             * Stripe refuses a second request that reuses a key with different
+             * parameters, and an order whose reusable intent was rejected above
+             * for having the wrong setup_future_usage asks for exactly that —
+             * same order, different payload. A 400 there would be a checkout
+             * that cannot take a card for a shopper who merely changed their
+             * mind about a tick.
+             */
+            'kbb-intent-' . $this->reference($order) . ($stripeCustomer === null ? '' : '-save'),
         );
 
         $result = $attempt['body'];
@@ -298,9 +395,83 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $this->log('payment intent created', '/v1/payment_intents', 200, [
             'reference' => $this->reference($order),
             'payment_intent' => $intentId,
+            'saves_card' => $stripeCustomer !== null,
         ]);
 
         return PaymentStart::confirm($secret, $intentId);
+    }
+
+    /**
+     * The Stripe Customer this order's card may be attached to, or null.
+     *
+     * ── WHY THE ID IS STORED PER MODE ──────────────────────────────────────
+     *
+     * A `cus_...` minted with test keys does not exist to an account using live
+     * keys, and vice versa. Stored as one id, the first live order placed by a
+     * customer who had ordered in test mode would send Stripe a customer it has
+     * never heard of, and the intent — the whole payment — would be refused.
+     * That is a checkout outage caused by a switch the merchant is expected to
+     * throw exactly once, so the column holds a small map keyed by mode and
+     * each half is looked up on its own.
+     *
+     * ── AND WHY A FAILURE HERE IS NOT AN ERROR ─────────────────────────────
+     *
+     * Every return of null means "no card will be saved for this order", and
+     * openIntent() goes on to take an ordinary payment. Nothing here can refuse
+     * a sale.
+     */
+    private function stripeCustomerFor(Order $order): ?string
+    {
+        $customer = $order->customer;
+
+        if (! $customer instanceof \App\Models\Customer) {
+            return null;
+        }
+
+        $mode = $this->credentials->live($this->id()) ? 'live' : 'test';
+        $stored = $customer->stripeCustomerId($mode);
+
+        if ($stored !== null) {
+            return $stored;
+        }
+
+        $attempt = $this->stripeAttempt(
+            'POST',
+            '/v1/customers',
+            array_filter([
+                'email' => (string) ($customer->email ?: $order->email),
+                'name' => trim((string) $customer->displayName()),
+                // So a person looking at the Stripe dashboard can tell which
+                // shopper this is without a second lookup. The id, not the
+                // email again — the email is already the field above it.
+                'metadata' => ['kbb_customer_id' => (string) $customer->id],
+            ], fn ($value) => $value !== '' && $value !== []),
+            // Keyed on the customer, so the retry of a request whose answer
+            // never arrived returns the customer that was made rather than
+            // making a second one. Stripe expires these after 24 hours, which
+            // is only reachable at all if the write below failed as well.
+            'kbb-customer-' . $mode . '-' . $customer->id,
+        );
+
+        $id = is_array($attempt['body']) ? ($attempt['body']['id'] ?? null) : null;
+
+        if (! is_string($id) || ! str_starts_with($id, 'cus_')) {
+            $this->log('customer not created', '/v1/customers', $attempt['status'], [
+                'reference' => $this->reference($order),
+                'error' => $attempt['error'],
+            ]);
+
+            return null;
+        }
+
+        $customer->rememberStripeCustomerId($mode, $id);
+
+        $this->log('customer created', '/v1/customers', $attempt['status'], [
+            'reference' => $this->reference($order),
+            'stripe_customer' => $id,
+        ]);
+
+        return $id;
     }
 
     /**
@@ -327,7 +498,7 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
      * without ever having been confirmed, against the alternative of a
      * checkout that cannot take a payment because Stripe was briefly slow.
      */
-    private function reusableIntent(Order $order, string $currency): ?PaymentStart
+    private function reusableIntent(Order $order, string $currency, ?string $stripeCustomer): ?PaymentStart
     {
         $ref = trim((string) $order->transaction_id);
 
@@ -352,6 +523,34 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
         if ((int) ($intent['amount'] ?? -1) !== (int) $order->total
             || strtolower((string) ($intent['currency'] ?? '')) !== $currency) {
+            return null;
+        }
+
+        /*
+         * AND IT MUST ALREADY BE THE INTENT THE SHOPPER ASKED FOR.
+         *
+         * `setup_future_usage` is fixed when the intent is created. An intent
+         * opened without it cannot save the card however it is confirmed, so
+         * reusing one for a shopper who has since ticked "save this card" would
+         * take the money, show them their tick, and save nothing — the exact
+         * shape of defect this feature was warned about. The reverse matters
+         * too: reusing a saving intent for somebody who has since un-ticked it
+         * would keep a card they asked us not to keep.
+         *
+         * Same answer as the amount test above, and the same cost: the old
+         * intent is left behind unconfirmed and expires at Stripe without ever
+         * having been a charge. In practice the checkout gets there first —
+         * either tick releases the order through the change handler in
+         * partials/checkout/stripe-elements — so this is the backstop rather
+         * than the mechanism.
+         */
+        $wanted = $stripeCustomer === null ? null : 'on_session';
+
+        if (($intent['setup_future_usage'] ?? null) !== $wanted) {
+            return null;
+        }
+
+        if ($stripeCustomer !== null && (string) ($intent['customer'] ?? '') !== $stripeCustomer) {
             return null;
         }
 

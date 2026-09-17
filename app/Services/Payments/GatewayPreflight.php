@@ -85,6 +85,21 @@ final class GatewayPreflight
         $missing = [];
 
         foreach ($schema as $key => $def) {
+            /*
+             * A SWITCH IS NEVER A MISSING CREDENTIAL.
+             *
+             * `bool` entries (Stripe Link is the first) are settings, and an
+             * empty one means "off" rather than "not filled in yet". Counting
+             * them here would print "Still to paste in: Stripe Link" on a shop
+             * that is correctly configured and deliberately has Link off —
+             * a false alarm on the one screen whose entire job is to remove
+             * them, and one the owner could only silence by switching on a
+             * thing he asked to have off.
+             */
+            if (($def[0] ?? '') === 'bool') {
+                continue;
+            }
+
             if ($this->credentials->get($gatewayId, $key) === '') {
                 // The LABEL, not the key. This is read by the person who has
                 // to go and find the value.
