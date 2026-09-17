@@ -57,6 +57,19 @@ use Illuminate\Support\Facades\DB;
  */
 final class ImportRunner
 {
+    /**
+     * Every column name the current entity's source carried, mapped to the
+     * first non-empty value seen in it, and every column anything asked for.
+     * The difference is the discard list Phase 13's third bucket is made of.
+     * Reset at the start of each entity.
+     *
+     * @var array<string, string>
+     */
+    private array $columnsSeen = [];
+
+    /** @var array<string, true> */
+    private array $columnsRead = [];
+
     /** @return list<EntityImporter> */
     public static function entities(): array
     {
@@ -117,6 +130,8 @@ final class ImportRunner
      */
     private function execute(ImportOptions $options, ImportContext $context, ?callable $progress): void
     {
+        $this->reportUnreadFiles($options, $context);
+
         foreach (self::entities() as $importer) {
             if (! $options->wants($importer->name())) {
                 continue;
@@ -205,6 +220,9 @@ final class ImportRunner
         $entity = $importer->name();
         $report = $context->report->for($entity);
 
+        $this->columnsSeen = [];
+        $this->columnsRead = [];
+
         $checkpoint = Checkpoint::open(
             $options->runKey,
             $entity,
@@ -287,6 +305,8 @@ final class ImportRunner
             }
         }
 
+        $this->reportIgnoredColumns($report, $source->describe());
+
         // The tree fix-up for categories, and nothing for anything else. Its own
         // transaction so it cannot enlarge a batch's.
         $this->inTransaction($context, fn () => $importer->finalise($context));
@@ -320,6 +340,17 @@ final class ImportRunner
 
         DB::transaction(function () use ($importer, $batch, $context, $checkpoint, $report, $before): void {
             foreach ($batch as $row) {
+                foreach ($row->all() as $column => $value) {
+                    // The first non-empty value seen for the column, which is
+                    // what turns "meta_delivery_instructions" from a name into
+                    // a decision.
+                    if (($this->columnsSeen[$column] ?? '') === '' && trim((string) $value) !== '') {
+                        $this->columnsSeen[$column] = trim((string) $value);
+                    } else {
+                        $this->columnsSeen[$column] ??= '';
+                    }
+                }
+
                 try {
                     // A SAVEPOINT, so one bad row cannot leave half of itself
                     // behind in a batch that then commits.
@@ -336,6 +367,11 @@ final class ImportRunner
                         $importer->identify($row),
                         'the database refused this row: '.$this->firstLine($e->getMessage()),
                     );
+                } finally {
+                    // Whatever the outcome. A rejected row still asked for the
+                    // fields it got as far as, and a column asked for by one
+                    // row is not an ignored column.
+                    $this->columnsRead += $row->readKeys();
                 }
             }
 
@@ -351,6 +387,150 @@ final class ImportRunner
         });
 
         return count($batch);
+    }
+
+    /**
+     * Files sitting in the export folder that no entity will ever open.
+     *
+     * THIS IS THE LARGEST DISCARD IN THE WHOLE MIGRATION AND IT WAS THE ONE
+     * NOTHING SAID. ImportRunner::entities() is seven importers and there is no
+     * eighth: this application has coupons, it has reviews, and neither has an
+     * entity here. An owner who exports their WooCommerce store the obvious way
+     * gets coupons.csv and reviews.csv along with everything else, drops the
+     * folder in, reads a report that says 4,166 orders imported, and has no
+     * reason at all to suspect that two of the files they handed over were
+     * never opened. Their coupon codes -- the ones printed on cards in outgoing
+     * parcels -- are simply not in the new shop, and they find out when a
+     * customer cannot use one.
+     *
+     * A run narrowed with --only is exempt, because there the unread files are
+     * the point: `--only=orders` is supposed to ignore products.csv, and saying
+     * so every time would train the owner to skim past the one message that
+     * matters.
+     *
+     * Named, not read. Writing a coupon importer is a different lane's job and
+     * guessing at one here would be worse than the silence.
+     */
+    private function reportUnreadFiles(ImportOptions $options, ImportContext $context): void
+    {
+        if ($options->only !== [] || $options->directory === '') {
+            return;
+        }
+
+        $directory = rtrim($options->directory, '/');
+
+        if (! is_dir($directory)) {
+            return;
+        }
+
+        /*
+         * permalinks.csv is read by `kbb:import-redirects`, which is a separate
+         * command by design -- see RedirectMap's class comment -- so it is not
+         * an unread file, it is a file read by the other half of Phase 13.
+         * Naming it here would train the owner to ignore this list.
+         */
+        $claimed = ['permalinks.csv' => true];
+
+        foreach (self::entities() as $importer) {
+            $claimed[strtolower($importer->conventionalFile())] = true;
+        }
+
+        foreach ($options->files as $path) {
+            $claimed[strtolower(basename($path))] = true;
+        }
+
+        $found = glob($directory.'/*.{csv,CSV,tsv,txt,json,xml}', GLOB_BRACE) ?: [];
+
+        sort($found);
+
+        foreach ($found as $path) {
+            $name = basename($path);
+
+            if (isset($claimed[strtolower($name)])) {
+                continue;
+            }
+
+            $lines = max(0, $this->countLines($path) - 1);
+
+            $context->report->for('export')->discarded(
+                'a file in the export folder that no importer opens -- this application has no entity for '
+                .'it, so nothing in it reaches the database and nothing else in this report mentions it',
+                $name,
+                'export',
+                $name,
+                $lines.' data '.($lines === 1 ? 'row' : 'rows').', read by nothing',
+            );
+        }
+    }
+
+    /**
+     * Line count without loading the file. A WooCommerce order export is tens
+     * of megabytes and this is only ever run to print a number.
+     */
+    private function countLines(string $path): int
+    {
+        $handle = @fopen($path, 'rb');
+
+        if ($handle === false) {
+            return 0;
+        }
+
+        $lines = 0;
+
+        while (! feof($handle)) {
+            $chunk = fread($handle, 1 << 16);
+
+            if ($chunk === false) {
+                break;
+            }
+
+            $lines += substr_count($chunk, "\n");
+        }
+
+        fclose($handle);
+
+        return $lines;
+    }
+
+    /**
+     * Name the columns of this export that no field in this importer reads.
+     *
+     * ONE ENTRY FOR THE WHOLE ENTITY AND NOT ONE PER ROW OR ONE PER COLUMN, and
+     * the shape matters more than it looks. Per row, a WooCommerce order export
+     * with nine ignored columns over 4,159 orders produces 37,431 identical
+     * observations. Per column, the report's own sample cap then hides the tail
+     * behind "and 9 more like it" -- and the tail is the part the owner needs,
+     * because every one of those nine names is a different thing they are
+     * losing and only they can say which ones matter. So: one entry, every name
+     * in it, each with the first value the file actually held for it.
+     *
+     * "meta:_delivery_instructions" means nothing on its own.
+     * "meta:_delivery_instructions = Ring the bell twice" is a decision.
+     */
+    private function reportIgnoredColumns(EntityReport $report, string $label): void
+    {
+        $ignored = array_diff_key($this->columnsSeen, $this->columnsRead);
+
+        if ($ignored === []) {
+            return;
+        }
+
+        ksort($ignored);
+
+        $named = [];
+
+        foreach ($ignored as $column => $sample) {
+            $named[] = $sample === '' ? $column.' (always empty)' : $column.' = '.$sample;
+        }
+
+        $report->discarded(
+            'columns in this export that no field of this importer reads -- they are in the file and '
+            .'they will not be in the database, and nothing else in this report mentions them',
+            basename($label),
+            $report->name,
+            count($ignored).' column'.(count($ignored) === 1 ? '' : 's'),
+            implode(' | ', $named),
+        );
     }
 
     private function inTransaction(ImportContext $context, callable $work): void

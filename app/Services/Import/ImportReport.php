@@ -68,6 +68,16 @@ final class ImportReport
         return array_sum(array_map(static fn (EntityReport $e): int => $e->rejectedCount(), $this->entities));
     }
 
+    public function totalAdjusted(): int
+    {
+        return array_sum(array_map(static fn (EntityReport $e): int => $e->adjustedCount(), $this->entities));
+    }
+
+    public function totalDiscarded(): int
+    {
+        return array_sum(array_map(static fn (EntityReport $e): int => $e->discardedCount(), $this->entities));
+    }
+
     public function totalWritten(): int
     {
         return array_sum(array_map(

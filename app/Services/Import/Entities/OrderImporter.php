@@ -7,6 +7,7 @@ namespace App\Services\Import\Entities;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Services\Import\AddressWriter;
+use App\Services\Import\DateParser;
 use App\Services\Import\Emails;
 use App\Services\Import\ImportContext;
 use App\Services\Import\Row;
@@ -115,6 +116,8 @@ final class OrderImporter extends EntityImporter
             );
         }
 
+        $this->checkDeclaredTimezone($row, $context);
+
         $orderNumber = $this->orderNumber($row, $wcOrderId, $context);
 
         $order = Order::query()->withTrashed()->where('wc_order_id', $wcOrderId)->first();
@@ -137,6 +140,9 @@ final class OrderImporter extends EntityImporter
         $customerId = $this->resolveCustomer($row, $context, $email, $synthesised, $wcOrderId, $createdAt);
 
         $status = $this->status($row, $context);
+        $currency = $this->currency($row);
+
+        $this->reportCurrency($row, $context, $currency);
 
         $attributes = [
             'wc_order_id' => $wcOrderId,
@@ -145,7 +151,7 @@ final class OrderImporter extends EntityImporter
             'email' => $email,
             'phone' => $row->text('billing_phone', 'phone'),
             'status' => $status,
-            'currency' => $this->currency($row),
+            'currency' => $currency,
             'subtotal' => $row->moneyOrZero('subtotal', 'subtotal', 'order_subtotal', 'cart_subtotal'),
             'discount_total' => $row->moneyOrZero('discount_total', 'discount_total', 'cart_discount', 'order_discount'),
             'shipping_total' => $row->moneyOrZero('shipping_total', 'shipping_total', 'order_shipping'),
@@ -179,6 +185,8 @@ final class OrderImporter extends EntityImporter
         }
 
         $order ??= new Order;
+
+        $this->reportFils($row, $context, $attributes);
 
         $outcome = $context->apply($order, $attributes);
 
@@ -365,6 +373,144 @@ final class OrderImporter extends EntityImporter
         }
 
         return $status;
+    }
+
+    /**
+     * Verify --timezone against the export's own GMT column, where it has one.
+     *
+     * See DateParser::disagreementWithGmt() for why this is the only assumption
+     * in the importer that could be checked and was not. The outcome is
+     * reported rather than fatal, for a reason worth stating: the import is
+     * still perfectly usable with a wrong timezone IF the owner knows -- they
+     * re-run with the right one and every row reports as updated, because every
+     * write is an updateOrCreate on an external id. What is not recoverable is
+     * not being told, because by then the shop is live and the four-hour shift
+     * is indistinguishable from history.
+     *
+     * COUNTED, NOT LISTED, because it is true of every row in the file or of
+     * none of them. One headline with 4,159 against it says the whole thing.
+     */
+    private function checkDeclaredTimezone(Row $row, ImportContext $context): void
+    {
+        $disagreement = DateParser::disagreementWithGmt(
+            $row->raw('date_created', 'order_date', 'post_date', 'created_at'),
+            $row->raw('date_created_gmt', 'post_date_gmt', 'order_date_gmt'),
+            'date_created',
+            $context->timezone(),
+        );
+
+        if ($disagreement === null) {
+            return;
+        }
+
+        [$declared, $gmt] = $disagreement;
+
+        $context->report->for($this->name())->adjusted(
+            'the export\'s own GMT column disagrees with --timezone='.$context->timezone().' -- every date '
+            .'in this file is being read in the wrong zone, which shifts the whole store\'s order history '
+            .'and every daily revenue figure derived from it. Re-run with the site timezone the export was '
+            .'really written in.',
+            $row->line,
+            $this->identify($row),
+            'date_created',
+            $declared->toDateTimeString().'Z (reading it as '.$context->timezone().')',
+            $gmt->toDateTimeString().'Z (what the export\'s GMT column says)',
+        );
+    }
+
+    /**
+     * AN ORDER IN A FOREIGN CURRENCY IS A NUMBER THAT LIES WHEN IT IS ADDED UP.
+     *
+     * `orders.currency` is stored and the money columns are integer minor
+     * units, and nothing downstream converts. Every revenue figure in this
+     * application -- the dashboard, the analytics buckets, Store -> Customers'
+     * lifetime value -- is a SUM(total) with no currency in the GROUP BY. A USD
+     * order for 100.00 therefore adds 10,000 to the same total as an AED order
+     * for 100.00, and the shop reports AED 200 of revenue for AED 100 and
+     * USD 100 of sales.
+     *
+     * Not a rejection: the order is real money and belongs in the history. Not
+     * a conversion either -- the importer has no rate for the day the order was
+     * placed and inventing one would be the worst of the three. Named, with a
+     * count, so the owner knows how much of their reported revenue is in a
+     * currency the report does not distinguish.
+     *
+     * The three-letter fallback in currency() is reported for the same reason:
+     * a currency cell this importer could not read becomes AED, and that is an
+     * assumption about money, made silently, on a row the owner never sees.
+     */
+    private function reportCurrency(Row $row, ImportContext $context, string $currency): void
+    {
+        $raw = $row->text('currency', 'order_currency');
+        $store = \App\Support\Money::currency();
+        $report = $context->report->for($this->name());
+
+        if ($raw !== null && mb_strtoupper($raw) !== $currency) {
+            $report->adjusted(
+                'a currency cell this importer could not read, replaced with the store currency -- '
+                .'the money columns were imported unchanged, so this order\'s totals are now labelled '
+                .'with a currency the export did not state',
+                $row->line,
+                $this->identify($row),
+                'currency',
+                $raw,
+                $currency,
+            );
+
+            return;
+        }
+
+        if ($currency !== $store) {
+            $report->adjusted(
+                'an order in a currency that is not the store currency -- every revenue figure in this '
+                .'application is a SUM over the money columns with no currency in the GROUP BY, so this '
+                .'order\'s total is added to '.$store.' revenue at face value and nothing converts it',
+                $row->line,
+                $this->identify($row),
+                'currency',
+                $currency.' '.\App\Support\Money::amount($row->moneyOrZero('total', 'total', 'order_total'), 2),
+                'counted as '.$store,
+            );
+        }
+    }
+
+    /**
+     * Order money carrying fils on a shop that prints whole dirhams.
+     *
+     * Same decision as ProductImporter::reportFils() and the same cost, one
+     * step further downstream: the figure that rounds here is the one on the
+     * order page, on the invoice and in the confirmation email. An order whose
+     * lines each round up by half a dirham prints a total that does not equal
+     * the sum of the lines printed above it -- which is the defect
+     * OrderEmailPresenter's "a receipt may not round" header already describes,
+     * arriving through the import rather than through checkout.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function reportFils(Row $row, ImportContext $context, array $attributes): void
+    {
+        if (\App\Support\Money::displayDecimals() !== 0) {
+            return;
+        }
+
+        foreach (['subtotal', 'discount_total', 'shipping_total', 'fee_total', 'tax_total', 'total'] as $field) {
+            $fils = $attributes[$field] ?? 0;
+
+            if (! is_int($fils) || $fils % 100 === 0) {
+                continue;
+            }
+
+            $context->report->for($this->name())->adjusted(
+                'an order amount carrying fils on a shop that prints whole dirhams -- it is stored '
+                .'exactly and printed rounded, so the order page and the invoice can show a total that '
+                .'does not equal the lines above it',
+                $row->line,
+                $this->identify($row),
+                $field,
+                \App\Support\Money::amount($fils, 2),
+                \App\Support\Money::amount($fils, 0).' (as printed)',
+            );
+        }
     }
 
     private function currency(Row $row): string

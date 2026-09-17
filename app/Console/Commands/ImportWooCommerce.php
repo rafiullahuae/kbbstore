@@ -57,6 +57,7 @@ class ImportWooCommerce extends Command
         {--timezone=Asia/Dubai : the WordPress site timezone the export\'s dates are written in}
         {--adopt-by-slug : claim an existing category/brand/product that has no WooCommerce id but holds the slug (the demo catalogue)}
         {--rejects= : write every refused row to this CSV}
+        {--changes= : write the adjusted values and the discards to this CSV, with the before and the after}
         {--show-rejects=25 : how many refusals to print per entity}';
 
     protected $description = 'Import a WooCommerce CSV export: categories, brands, products, customers, orders and line items';
@@ -134,6 +135,7 @@ class ImportWooCommerce extends Command
         $this->printReport($report);
 
         $this->writeRejectsCsv($report);
+        $this->writeChangesCsv($report);
 
         return $report->totalRejected() === 0 ? self::SUCCESS : self::FAILURE;
     }
@@ -179,6 +181,8 @@ class ImportWooCommerce extends Command
                 number_format($entity->updated),
                 number_format($entity->unchanged),
                 number_format($entity->skipped),
+                number_format($entity->adjustedCount()),
+                number_format($entity->discardedCount()),
                 number_format($entity->rejectedCount()),
             ];
         }
@@ -189,12 +193,27 @@ class ImportWooCommerce extends Command
             return;
         }
 
-        $this->table(['entity', 'created', 'updated', 'unchanged', 'skipped', 'REJECTED'], $rows);
+        $this->table(
+            ['entity', 'created', 'updated', 'unchanged', 'skipped', 'ADJUSTED', 'DISCARDED', 'REJECTED'],
+            $rows,
+        );
 
         $this->printNotes($report);
+        $this->printChanges($report);
         $this->printRejections($report);
 
         $this->newLine();
+
+        if ($report->totalDiscarded() > 0 || $report->totalAdjusted() > 0) {
+            $this->warn(
+                $report->totalAdjusted().' value(s) '.($report->isDryRun() ? 'would go' : 'went').' in changed and '
+                .$report->totalDiscarded().' thing(s) '.($report->isDryRun() ? 'would not go' : 'did not go')
+                .' in at all. Phase 13 says the owner approves anything discarded — that list is above. '
+                .($report->isDryRun()
+                    ? 'Read it before the real run.'
+                    : 'Re-read it: this run has already happened.')
+            );
+        }
 
         if ($report->totalRejected() === 0) {
             $this->info('No rows were refused.');
@@ -226,6 +245,54 @@ class ImportWooCommerce extends Command
         }
     }
 
+    /**
+     * What went in changed, and what did not go in at all.
+     *
+     * Grouped by kind with the count and a few worked examples, which is the
+     * shape the owner can act on: "173 unit prices were truncated, here are
+     * three of them" is a decision. One line per affected row is 173 lines of
+     * the same sentence and gets skipped, which is the same as not printing it.
+     */
+    private function printChanges(ImportReport $report): void
+    {
+        foreach ([
+            ['adjustments', 'yellow', 'would be imported CHANGED', 'is imported CHANGED'],
+            ['discards', 'red', 'would NOT be imported at all', 'is NOT imported'],
+        ] as [$kind, $colour, $dryLabel, $realLabel]) {
+            foreach ($report->entities() as $entity) {
+                $groups = $kind === 'adjustments' ? $entity->adjustments() : $entity->discards();
+
+                if ($groups === []) {
+                    continue;
+                }
+
+                $this->newLine();
+                $this->line(
+                    '<fg='.$colour.'>'.$entity->name.' — '
+                    .($report->isDryRun() ? $dryLabel : $realLabel).':</>'
+                );
+
+                foreach ($groups as $headline => $group) {
+                    $this->line('  '.number_format($group['count']).'x  '.$headline);
+
+                    foreach ($group['samples'] as $sample) {
+                        $this->line(
+                            '        '.$sample['line'].'  ['.$sample['id'].']  '.$sample['field']
+                            .': '.$sample['before'].'  ->  '.$sample['after']
+                        );
+                    }
+
+                    if ($group['count'] > count($group['samples'])) {
+                        $this->line(
+                            '        ... and '.number_format($group['count'] - count($group['samples']))
+                            .' more like it'
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     private function printRejections(ImportReport $report): void
     {
         $show = max(0, (int) $this->option('show-rejects'));
@@ -253,6 +320,74 @@ class ImportWooCommerce extends Command
                 $this->line('  line '.$rejection['line'].'  ['.$rejection['id'].']  '.$rejection['reason']);
             }
         }
+    }
+
+    /**
+     * The adjusted values and the discards, for the owner to read next to the
+     * export.
+     *
+     * WHAT THIS FILE HOLDS AND WHAT IT DOES NOT, stated plainly rather than
+     * promised and quietly not delivered. It carries every KIND with its full
+     * count, and up to EntityReport::SAMPLES_PER_KIND worked examples of each.
+     * It does NOT carry one line per affected row, and it must not: "a unit
+     * price truncated by integer division" can be true of forty thousand line
+     * items in a good import, and holding forty thousand before/after pairs in
+     * memory to write a file nobody reads to the end is a cost with no buyer.
+     *
+     * The count is the number the owner acts on; the examples are how they
+     * recognise what it is the count of. The rejections CSV is the one that is
+     * complete, because a complete rejection list is small by construction —
+     * the run is a failure if it is not.
+     */
+    private function writeChangesCsv(ImportReport $report): void
+    {
+        $path = (string) ($this->option('changes') ?? '');
+
+        if ($path === '') {
+            return;
+        }
+
+        $handle = fopen($path, 'wb');
+
+        if ($handle === false) {
+            $this->error('Could not write '.$path);
+
+            return;
+        }
+
+        fputcsv($handle, ['bucket', 'entity', 'how_many', 'what', 'line', 'id', 'field', 'before', 'after']);
+
+        $kinds = 0;
+
+        foreach ($report->entities() as $entity) {
+            foreach ([['adjust', $entity->adjustments()], ['discard', $entity->discards()]] as [$bucket, $groups]) {
+                foreach ($groups as $headline => $group) {
+                    $kinds++;
+
+                    foreach ($group['samples'] as $sample) {
+                        fputcsv($handle, [
+                            $bucket,
+                            $entity->name,
+                            $group['count'],
+                            $headline,
+                            $sample['line'],
+                            $sample['id'],
+                            $sample['field'],
+                            $sample['before'],
+                            $sample['after'],
+                        ]);
+                    }
+                }
+            }
+        }
+
+        fclose($handle);
+
+        $this->newLine();
+        $this->line(
+            $kinds.' kind(s) of change written to '.$path.' — each with its full count and up to '
+            .EntityReport::SAMPLES_PER_KIND.' worked examples.'
+        );
     }
 
     private function writeRejectsCsv(ImportReport $report): void

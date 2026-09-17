@@ -77,6 +77,39 @@ final class ProductImporter extends EntityImporter
         'backorder' => 'onbackorder',
     ];
 
+    /**
+     * SKUs this run has already placed, so a duplicate inside ONE export is
+     * caught as well as a duplicate against a row already in the database.
+     *
+     * A per-instance array and not a static: ImportRunner::entities() builds a
+     * fresh importer per run, so it cannot leak between runs, and a dry run's
+     * rollback cannot leave it holding ids that no longer exist.
+     *
+     * @var array<string, int> sku => the wc_id that placed it
+     */
+    private array $skusSeen = [];
+
+    /**
+     * SKUs already reported as shared, so the count does not depend on how
+     * much of the import had already run.
+     *
+     * WHY THIS IS NOT OPTIONAL, and it was found by the resume test rather than
+     * by reading. A collision reported PER ROW says "1" on the first pass —
+     * only the second of the pair sees the first — and "2" on every pass after
+     * that, because by then both rows are in the database and each one finds
+     * the other. A number in the discard report that changes depending on
+     * whether the run was interrupted is a number the owner cannot act on, and
+     * "unchanged on the second pass" is the only evidence this importer offers
+     * that it did the same thing twice. The report has to be idempotent for the
+     * same reason the writes do.
+     *
+     * Reported once per SKU, which is also the truthful unit: one SKU is shared
+     * by two products, and that is one problem, not two.
+     *
+     * @var array<string, true>
+     */
+    private array $skusReported = [];
+
     public function name(): string
     {
         return 'products';
@@ -92,10 +125,43 @@ final class ProductImporter extends EntityImporter
         $wcId = $row->requireId('id', 'id', 'wc_id', 'product_id', 'post_id');
         $name = $row->requireText('name', 'name', 'post_title', 'title');
 
-        $slug = $row->text('slug', 'post_name') ?? Str::slug($name);
+        $sourceSlug = $row->text('slug', 'post_name');
+        $slug = $sourceSlug ?? Str::slug($name);
 
         if ($slug === '') {
             throw RowRejected::because("name '".$name."' does not reduce to a usable slug");
+        }
+
+        /*
+         * THE SLUG IS THE ADDRESS, and this is the one place the import can
+         * silently move a page Google already has.
+         *
+         * RedirectMap's stated finding is that products do not move: Woo's
+         * default product base and this shop's U-01 are both /product/{slug}/,
+         * and SlugGuard never rewrites a slug. That is true only while the
+         * slug COMES FROM THE EXPORT. When the export carries no slug column --
+         * and several Woo exporters do not -- this line invents one with
+         * Str::slug($name), which is a transliteration, not a copy. Str::slug()
+         * turns "مرطب الوجه — Creme Hydratante 保湿" into
+         * "mrtb-alogh-creme-hydratante": the Arabic is romanised and the CJK is
+         * dropped outright. The old address and the new one are then different
+         * strings, the old one 404s, and the import report said "created".
+         *
+         * Reported as an adjustment rather than refused, because a regenerated
+         * slug is usually right and refusing 671 products over it helps nobody.
+         * What the owner needs is the list, so a redirect can be written for
+         * each one.
+         */
+        if ($sourceSlug === null) {
+            $context->report->for($this->name())->adjusted(
+                'slug invented from the product name because the export carried no slug column '
+                .'-- the old /product/<slug>/ address will 404 unless a redirect is written',
+                $row->line,
+                $this->identify($row),
+                'slug',
+                $name,
+                $slug,
+            );
         }
 
         $price = $row->money('regular_price', 'regular_price', 'price');
@@ -110,6 +176,9 @@ final class ProductImporter extends EntityImporter
 
         $status = $this->mapStatus($row);
         $stockStatus = $this->mapStockStatus($row);
+
+        $this->reportSku($row, $wcId, $name, $context);
+        $this->reportFils($row, $context, $price, $salePrice);
 
         $product = Product::query()->withTrashed()->where('wc_id', $wcId)->first();
 
@@ -187,8 +256,8 @@ final class ProductImporter extends EntityImporter
             // choose, and the result is stored XSS on every imported product
             // page. See App\Support\RichText for why the allowlist is the
             // control and the editor is only a convenience.
-            'short_description' => self::cleanHtml($row->text('short_description', 'post_excerpt')),
-            'description' => self::cleanHtml($row->text('description', 'post_content')),
+            'short_description' => $this->cleanHtmlReported($row->text('short_description', 'post_excerpt'), 'short_description', $row, $context),
+            'description' => $this->cleanHtmlReported($row->text('description', 'post_content'), 'description', $row, $context),
             'image' => $row->text('image', 'featured_image'),
             'featured' => $row->bool(false, 'featured', 'is_featured'),
             'position' => $row->int((int) ($product->position ?? 0), 'position', 'menu_order'),
@@ -358,6 +427,148 @@ final class ProductImporter extends EntityImporter
         // rather than coerced: the column is free-form and a wrong coercion
         // would make a grouped product behave as a purchasable simple one.
         return $raw === '' ? 'simple' : $raw;
+    }
+
+    /**
+     * `products.sku` carries no unique index, so neither of these stops an
+     * import -- which is exactly why neither of them was ever said out loud.
+     *
+     * A DUPLICATE SKU IS NOT A COSMETIC PROBLEM on this shop. It is the key the
+     * owner reconciles stock against, the key the Meta catalogue feed is built
+     * on, and the key an admin types into the product search. Two products
+     * holding one SKU means one of them is unreachable by the only handle the
+     * warehouse uses. Woo permits it across variants; this schema stores
+     * variants as ordinary products, so the collision arrives flattened and
+     * indistinguishable from a genuine mistake.
+     *
+     * A MISSING SKU is the same fact with the opposite shape: the product is in
+     * the shop and has no warehouse handle at all.
+     *
+     * Both are reported and both are imported. The owner decides.
+     */
+    private function reportSku(Row $row, int $wcId, string $name, ImportContext $context): void
+    {
+        $sku = $row->text('sku');
+        $report = $context->report->for($this->name());
+
+        if ($sku === null) {
+            $report->adjusted(
+                'no SKU in the export -- the product imports with an empty SKU and cannot be '
+                .'reconciled against stock or the Meta catalogue feed by one',
+                $row->line,
+                $this->identify($row),
+                'sku',
+                $name,
+                '(no SKU)',
+            );
+
+            return;
+        }
+
+        $holder = Product::query()
+            ->withTrashed()
+            ->where('sku', $sku)
+            ->where(function ($q) use ($wcId): void {
+                $q->whereNull('wc_id')->orWhere('wc_id', '!=', $wcId);
+            })
+            ->value('wc_id');
+
+        if ($holder === null && ! isset($this->skusSeen[$sku])) {
+            $this->skusSeen[$sku] = $wcId;
+
+            return;
+        }
+
+        if (isset($this->skusReported[$sku])) {
+            return;
+        }
+
+        $this->skusReported[$sku] = true;
+
+        $report->adjusted(
+            'two products share one SKU -- products.sku has no unique index so both import, but only '
+            .'one of them can be found by it afterwards',
+            $row->line,
+            $this->identify($row),
+            'sku',
+            $sku.' (also on product '.($holder ?? $this->skusSeen[$sku]).')',
+            $sku,
+        );
+    }
+
+    /**
+     * An amount the storefront cannot print.
+     *
+     * The owner has settled that this shop prices in whole dirhams, and that
+     * decision lives in App\Support\Money::displayDecimals(), which returns 0
+     * here. format() therefore ROUNDS. A product imported at AED 99.50 is
+     * charged at 9,950 fils and PRINTED as "AED 100" -- a shop that shows one
+     * price and takes another, on every tile, every product page and every
+     * receipt line that goes through format().
+     *
+     * Rounding it on the way in would be a silent edit to the owner's prices,
+     * which Money refuses to do for three decimals and should not do for two.
+     * So it is imported exactly and named, and the owner decides whether to fix
+     * the price in WooCommerce or widen the display.
+     */
+    private function reportFils(Row $row, ImportContext $context, ?int $price, ?int $salePrice): void
+    {
+        if (\App\Support\Money::displayDecimals() !== 0) {
+            return;
+        }
+
+        foreach (['price' => $price, 'sale_price' => $salePrice] as $field => $fils) {
+            if ($fils === null || $fils % 100 === 0) {
+                continue;
+            }
+
+            $context->report->for($this->name())->adjusted(
+                'a price carrying fils in a shop that prints whole dirhams -- it is stored and charged '
+                .'exactly, and printed rounded, so the shopper is shown a price the shop does not take',
+                $row->line,
+                $this->identify($row),
+                $field,
+                \App\Support\Money::amount($fils, 2),
+                \App\Support\Money::amount($fils, 0).' (as printed)',
+            );
+        }
+    }
+
+    /**
+     * RichText over an imported HTML column, and a note of what it took out.
+     *
+     * THE ALLOWLIST IS A DISCARD AND THE OWNER APPROVES DISCARDS. cleanHtml()
+     * is not a formatting pass: on a WooCommerce export written by a plugin it
+     * removes whole elements -- a script, an iframe, an embedded video, a
+     * shortcode wrapper, a styled table -- and what is left is shorter than
+     * what arrived. Removing the script is the right call and is why the method
+     * exists. Doing it without saying so is not: the owner reads "created" and
+     * has no way to learn that forty product pages lost their video.
+     *
+     * Compared by length rather than by diff, deliberately. A diff of kilobytes
+     * of HTML is not something a console report can usefully carry, and the
+     * question the owner is actually asking is "did this product lose
+     * anything, and how much".
+     */
+    private function cleanHtmlReported(?string $html, string $field, Row $row, ImportContext $context): ?string
+    {
+        $cleaned = self::cleanHtml($html);
+
+        if ($html === null || $cleaned === null || $cleaned === $html) {
+            return $cleaned;
+        }
+
+        $context->report->for($this->name())->discarded(
+            'HTML the allowlist removed -- the import strips what a browser would execute, so the '
+            .'imported description is not byte-for-byte what WooCommerce held',
+            $row->line,
+            $this->identify($row),
+            $field,
+            mb_strlen($html).' characters: '.$html,
+            mb_strlen($cleaned).' characters kept',
+        );
+
+        return $cleaned;
     }
 
     /**

@@ -368,6 +368,65 @@ final class RedirectMap
                 continue;
             }
 
+            /*
+             * TWO RULES THAT AGREE ARE NOT A CONFLICT, and this is the case
+             * that actually happens rather than the one the code was written
+             * for.
+             *
+             * Both rules here describe the SAME category from two directions.
+             * fromCategoryNesting() derives "/product-category/serums/ ->
+             * /product-category/skincare/serums/" from the tree that was just
+             * imported; fromPermalinks() reads the same move out of the old
+             * site's own permalink export. On a nested category that the
+             * permalink file also covers -- which, on a real export, is every
+             * nested category -- both fire, with byte-identical source AND
+             * byte-identical target, and the loser was demoted to ASK with the
+             * reason "another rule claims the same old address and points it
+             * somewhere else, at X" where X is the address it also points to.
+             *
+             * Measured on a 671-product, 29-category fixture: 27 of the 52
+             * non-discard rows were questions containing no disagreement. The
+             * owner has to read every one to discover that, and the ones that
+             * are real disagreements are mixed in among them. A question list
+             * that is mostly noise is a question list nobody finishes, which is
+             * the same failure as not asking.
+             *
+             * So agreement collapses: one proposal stays, the duplicates become
+             * DISCARD with the reason stated, and ASK keeps only the rows where
+             * two rules genuinely send one old address to two different places.
+             */
+            $targets = array_unique(array_map(
+                static fn (int $i): string => $proposals[$i]['target'],
+                $indexes,
+            ));
+
+            if (count($targets) === 1) {
+                $keep = $indexes[0];
+
+                foreach ($indexes as $index) {
+                    // The permalink export is the record of what was really
+                    // served, so it is the one kept where it is present.
+                    if ($proposals[$index]['rule'] === 'permalink') {
+                        $keep = $index;
+
+                        break;
+                    }
+                }
+
+                foreach ($indexes as $index) {
+                    if ($index === $keep) {
+                        continue;
+                    }
+
+                    $proposals[$index]['decision'] = self::DISCARD;
+                    $proposals[$index]['reason'] = 'a second rule proposes exactly this redirect, to exactly '
+                        .'this destination — one of them is enough, and two identical rows are not a question '
+                        .'for anybody';
+                }
+
+                continue;
+            }
+
             $winner = null;
 
             foreach ($indexes as $index) {
