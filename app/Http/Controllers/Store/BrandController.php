@@ -144,6 +144,34 @@ class BrandController extends Controller
             ->orderBy('brands.name')
             ->get();
 
+        $display = $this->displayMode();
+
+        // Empty brands are listed but muted rather than hidden: a brand
+        // with nothing in stock today is still a brand the shop carries,
+        // and silently dropping it makes the A-Z look wrong.
+        $stocked = $brands->where('products_count', '>', 0)->count();
+
+        /*
+         * THE SUBTITLE IS BUILT ONCE, HERE, because it is now published twice.
+         *
+         * It is the sentence under the <h1> and it is this page's <meta
+         * description> (see indexSeoCtx). The view used to build it inline with
+         * its own trans_choice() call; leaving that there and adding a second
+         * copy in the controller is precisely the shape of defect this
+         * repository keeps paying for -- the admin wrote `seo.description`
+         * while the storefront read `desc`, three readers acted on five keys
+         * while two writers rebuilt the column from two. One call, one string,
+         * and the tag cannot drift from the paragraph.
+         *
+         * The rendered bytes are unchanged: same key, same count, same
+         * replacements, evaluated a few microseconds earlier.
+         */
+        $subtitle = trans_choice(
+            'store.brands.all_subtitle',
+            $brands->count(),
+            ['total' => $brands->count(), 'stocked' => $stocked]
+        );
+
         return view('store.brands', [
             // The directory lists every brand; there is no one brand for a
             // banner to belong to. Passed explicitly so the shared view never
@@ -152,13 +180,140 @@ class BrandController extends Controller
             'brand' => null,
             'brands' => $brands,
             'products' => collect(),
-            'display' => $this->displayMode(),
+            'display' => $display,
             'gridMin' => self::gridMinimum($brands->count()),
-            // Empty brands are listed but muted rather than hidden: a brand
-            // with nothing in stock today is still a brand the shop carries,
-            // and silently dropping it makes the A-Z look wrong.
-            'stocked' => $brands->where('products_count', '>', 0)->count(),
+            'stocked' => $stocked,
+            'subtitle' => $subtitle,
+            'seoCtx' => $this->indexSeoCtx($brands, $display, $subtitle),
         ]);
+    }
+
+    /**
+     * What the A-Z directory tells a crawler about itself.
+     *
+     * ── WHY THIS DID NOT EXIST, AND WHY IT DOES NOW ────────────────────────
+     *
+     * Lane FQ gave CollectionPage/ItemList to the category archives, the brand
+     * LANDING pages and the four curated listings, and deliberately stopped
+     * here. The reason it gave is real and is the thing this method has to
+     * handle rather than ignore: index() passed NO $seoCtx at all, so every
+     * value in the <head> came from layouts/store.blade.php's defaults, and
+     * handing it a context changes those defaults whether or not that was the
+     * intention. Verified by fetching /korean-skincare-brands/ against a
+     * running preview before touching anything --
+     *
+     *     <title>            All brands | KBB
+     *     <meta description> Shop Korean skincare in the UAE - serums, creams,
+     *                        moisturisers and beauty devices from Korean
+     *                        beauty brands.
+     *     og:type            website
+     *     JSON-LD            Organization, WebSite. Nothing else.
+     *
+     * -- so the shop's brand index described itself with the sentence the
+     * homepage and the cart publish, and said nothing anywhere about being a
+     * list of ninety-odd brands.
+     *
+     * ── THE TITLE IS DELIBERATELY UNCHANGED ────────────────────────────────
+     *
+     * No `title` key and no `title_is_final`. The view's @section('title')
+     * yields "All brands", `seo_title_template` appends the site name, and the
+     * page keeps the exact title it has been serving. That is a decision, not
+     * an omission: the title is already the right two words, and this method
+     * exists to stop the page describing itself by accident -- replacing a
+     * correct title on the way past would be the same accident in the other
+     * direction. BrandDirectoryStructuredDataTest fetches the page and asserts
+     * the title byte-for-byte against the one recorded above.
+     *
+     * ── THE DESCRIPTION IS THE SENTENCE THE PAGE ALREADY PRINTS ────────────
+     *
+     * `$subtitle` -- ":total brands, :stocked with products in the shop right
+     * now." -- which is the paragraph under the <h1>, counted from the same
+     * query the tiles are drawn from.
+     *
+     * Three alternatives were considered and rejected:
+     *
+     *   Leave the store-wide default. It is about serums and moisturisers and
+     *   this page sells neither; it is also the identical sentence the
+     *   homepage and the cart publish, which is the duplicate-description
+     *   defect the brand LANDING pages were fixed for two releases ago.
+     *
+     *   Write a new marketing sentence. It needs a new key in
+     *   App\Services\Translation\InterfaceStrings, an Arabic translation
+     *   this lane cannot write, and it would be a claim about the page that
+     *   the page itself does not make. A meta description that says something
+     *   the visible page does not is the mismatch the whole structured-data
+     *   family of work exists to avoid.
+     *
+     *   List the brand names. Ninety-three names in a 160-character box is a
+     *   truncated list of the first six brands alphabetically, which reads as
+     *   a page about Anua.
+     *
+     * So: the page's own sentence, already true, already translated, already
+     * counted. Short, and short is not the failure mode here -- wrong is.
+     *
+     * ── THE LIST ───────────────────────────────────────────────────────────
+     *
+     * An ItemList of brand LANDING pages, built by
+     * App\Support\BrandDirectorySchema. Three things Lane FQ got right and
+     * that this must not undo:
+     *
+     *   PRICES ARE INTEGER FILS. There is no price on this page at all -- a
+     *   brand tile carries a name, a logo and a muted count -- so the builder
+     *   emits no Offer and Seo's collection branch is now explicit that a
+     *   non-Product row never gets one. Nothing here can publish 12,600 for a
+     *   126 AED serum because nothing here publishes money.
+     *
+     *   A FILTERED OR SORTED VIEW CARRIES NO LIST. This page has no facets, no
+     *   sort and no pagination: index() runs one ungrouped query over every
+     *   brand and the view draws all of them. So the canonical is always
+     *   self-referencing and the list is always this page's own rows. The
+     *   offset is 0 for the same reason, and is passed rather than assumed.
+     *
+     *   ITEM URLs GO THROUGH Seo::canonical(). They do -- Seo's collection
+     *   branch runs every row's url through it, which is what collapses the
+     *   doubled base path under KBB_BASE_PATH. The builder therefore composes
+     *   its urls exactly as show() composes its own canonical, base + Url::to(),
+     *   rather than as a bare literal that would 404 on the live host.
+     *
+     * SeoSettings::get(), not Setting::map(), for the reason seoCtx() below
+     * carries in full.
+     *
+     * @param  \Illuminate\Support\Collection<int, Brand>  $brands
+     * @return array<string, mixed>
+     */
+    private function indexSeoCtx(\Illuminate\Support\Collection $brands, string $display, string $subtitle): array
+    {
+        $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
+
+        return [
+            'type' => 'collection',
+            'description' => $subtitle,
+            'collection' => \App\Support\BrandDirectorySchema::from(
+                $brands,
+                $base,
+                // `names` mode draws no logo on any tile, so the document must
+                // publish none. The other two modes draw one per brand that
+                // has one, which the builder checks per row.
+                withLogos: $display !== self::DISPLAY_MODES[2],
+            ) + [
+                /*
+                 * The HEADING, not the page title. CollectionPage `name` falls
+                 * back to the resolved <title>, which `seo_title_template` has
+                 * already appended the site name to -- so the node would read
+                 * "All brands | KBB" and name the shop twice in one document,
+                 * once here and once in the Organization node beside it. The
+                 * brand LANDING pages resolve the same fork the same way.
+                 */
+                'name' => __('store.brands.all_heading'),
+            ],
+            // The same two crumbs the visible trail prints, so the trail Google
+            // reads and the trail a shopper reads say the same words. The
+            // second one is this page, which is why it has no third entry.
+            'breadcrumb' => [
+                ['name' => __('store.breadcrumb.home'), 'url' => $base . Url::to('/')],
+                ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to('/korean-skincare-brands/')],
+            ],
+        ];
     }
 
     /** One brand's landing page, at /korean-skincare-brands/{slug}/. */
@@ -216,6 +371,11 @@ class BrandController extends Controller
             // variable.
             'display' => self::DISPLAY_DEFAULT,
             'gridMin' => self::gridMinimum(0),
+            // The directory's subtitle, which this branch of the shared view
+            // never reaches. Passed anyway, for the same stated reason as
+            // `display` and `gridMin` directly above: this file's rule is that
+            // the shared view never reads an undefined variable.
+            'subtitle' => '',
         ]);
     }
 
