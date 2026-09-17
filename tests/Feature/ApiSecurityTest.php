@@ -749,3 +749,101 @@ it('never puts a gateway secret in anything it hands back to a caller', function
         expect($surface)->not->toContain($canary);
     }
 });
+
+/*
+|------------------------------------------------------------------------------
+| THE SAME QUESTION, ASKED OF AN AUTOMATICALLY CONNECTED SHOP
+|------------------------------------------------------------------------------
+|
+| Store -> Payments -> Stripe -> Connect (App\Services\Payments\StripeConnect)
+| writes more keys into `payment_providers.config` than the hand-filled form
+| ever did: the account id, the account's name and country, the id of the
+| webhook endpoint it created, and -- the two that matter -- a secret key and a
+| signing secret obtained from Stripe rather than from a paste box.
+|
+| The sweep above reads its canaries out of a config shaped like the OLD form,
+| so on its own it would keep passing while a connect-shaped shop leaked. This
+| asks the identical question of the new shape.
+*/
+
+/** Distinctive enough that a substring match cannot be a coincidence. */
+const CONNECTED_CANARIES = [
+    'sk_live_CANARY_autoconnected_secret',
+    'whsec_CANARY_autoconnected_signing',
+    'whsec-CANARY-autoconnect-url-00001',
+];
+
+function seedConnectedStripe(): void
+{
+    \App\Models\PaymentProvider::query()->delete();
+
+    $row = \App\Models\PaymentProvider::create([
+        'id' => 'stripe', 'enabled' => true, 'mode' => 'live', 'position' => 1,
+    ]);
+
+    // Exactly the shape StripeConnect::store() writes, new keys included.
+    $row->config = [
+        'secret_key' => CONNECTED_CANARIES[0],
+        'publishable_key' => 'pk_live_safe_to_show',
+        'webhook_signing_secret' => CONNECTED_CANARIES[1],
+        'webhook_secret' => CONNECTED_CANARIES[2],
+        'connect_account_id' => 'acct_CANARY1',
+        'connect_link' => 'key',
+        'connect_client_id' => 'ca_CANARY1',
+        'connected_at' => '2026-09-17T09:00:00+00:00',
+        'account_name' => 'K Beauty Bliss',
+        'account_country' => 'AE',
+        'account_currency' => 'AED',
+        'charges_enabled' => '1',
+        'livemode' => '1',
+        'webhook_endpoint_id' => 'we_CANARY1',
+        'webhook_endpoint_managed' => '1',
+    ];
+
+    $row->save();
+
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+}
+
+it('leaks nothing from an automatically connected Stripe through any public api endpoint', function () {
+    seedConnectedStripe();
+
+    $uris = publicGetUris();
+
+    // A sweep that swept nothing would pass silently.
+    expect($uris)->not->toBeEmpty()->and($uris)->toContain('/api/settings');
+
+    foreach ($uris as $uri) {
+        $raw = test()->get($uri)->getContent();
+
+        foreach (CONNECTED_CANARIES as $canary) {
+            expect($raw)->not->toContain($canary, $uri);
+        }
+    }
+});
+
+it('encrypts what the connect flow stores, the same as what the form stored', function () {
+    seedConnectedStripe();
+
+    // Straight at the column, past the model's cast. `config` is the only place
+    // any of this lives and it is an `encrypted:array`, so a database backup in
+    // the wrong hands carries no usable key.
+    $stored = \Illuminate\Support\Facades\DB::table('payment_providers')
+        ->where('id', 'stripe')->value('config');
+
+    expect($stored)->toBeString();
+
+    foreach (CONNECTED_CANARIES as $canary) {
+        expect($stored)->not->toContain($canary);
+    }
+});
+
+it('writes nothing the connect flow stores into the settings table', function () {
+    seedConnectedStripe();
+
+    $all = Setting::query()->pluck('value')->implode(' ');
+
+    foreach (CONNECTED_CANARIES as $canary) {
+        expect($all)->not->toContain($canary);
+    }
+});

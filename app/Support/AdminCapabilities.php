@@ -252,6 +252,30 @@ final class AdminCapabilities
          */
         ['*', 'admin-api/payments/reconcile', 'payments.manage'],
         ['*', 'admin-api/payments/reconcile/**', 'payments.manage'],
+
+        /*
+         * Stripe connect / disconnect — routes/payments-connect.php.
+         *
+         * The same capability as the screen that edits the keys by hand,
+         * because these do the same thing with fewer keystrokes: one of them
+         * takes a live secret key in a request body and another takes the shop
+         * off its card processor and deletes a webhook endpoint inside the
+         * owner's Stripe account.
+         *
+         * WRITES BEFORE READS, and specifically before the '/connect/*' read
+         * below it. 'admin-api/payments/stripe/connect' is the POST and
+         * 'admin-api/payments/stripe/connect/*' would not match it — but
+         * 'admin-api/payments/stripe/connect/application' IS a POST that the
+         * GET wildcard would match, and a wildcard read rule listed first would
+         * hand a write endpoint out on a read capability. That is the shape of
+         * the quiz-leads and coupons/manage mistakes further down this file,
+         * and it is written out rather than relied on because both of those
+         * were found by a test rather than by a reader.
+         */
+        ['POST', 'admin-api/payments/stripe/connect', 'payments.manage'],
+        ['POST', 'admin-api/payments/stripe/connect/application', 'payments.manage'],
+        ['POST', 'admin-api/payments/stripe/disconnect', 'payments.manage'],
+        ['GET', 'admin-api/payments/stripe/connect/*', 'payments.manage'],
         ['GET', 'admin-api/orders/*/settlement', 'orders.money'],
         ['POST', 'admin-api/orders/*/capture', 'orders.money'],
         ['POST', 'admin-api/orders/*/refund', 'orders.money'],

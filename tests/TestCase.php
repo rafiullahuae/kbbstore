@@ -56,6 +56,47 @@ abstract class TestCase extends BaseTestCase
          */
         DeterministicRandom::reseed();
 
+        /*
+         * The execution-time limit, put back to "no limit" before every test.
+         *
+         * Not defensive tidying — this suite dies without it, and the way it
+         * dies is the worst kind.
+         *
+         * Admin\ImportApiController::step() calls `@set_time_limit(110)`. That
+         * is right in production: the host is shared, its max_execution_time is
+         * about 30 seconds, and one import slice needs longer. It is a RAISE
+         * there.
+         *
+         * Under the CLI the default limit is 0, meaning no limit, so the same
+         * call is a LOWER: the first test that exercises the import step arms a
+         * 110-second countdown over the whole PHP process, and the suite is
+         * then killed 110 wall-clock seconds later wherever it happens to be.
+         * The crash is a bare "Maximum execution time of 110 seconds exceeded"
+         * pointing at DateFactory, or Router, or whatever innocent frame the
+         * timer expired in — never at the import test that armed it, and in a
+         * different place on every run.
+         *
+         * It was live and invisible before this line existed because the suite
+         * finished at about 152 seconds against a budget that ran out at
+         * roughly 155. Any lane adding a few seconds of tests inherited a red
+         * suite it did not break, with a stack trace pointing at somebody
+         * else's code.
+         *
+         * The real fix belongs in ImportApiController, which should only ever
+         * raise the limit:
+         *
+         *     $current = (int) ini_get('max_execution_time');
+         *     if ($current !== 0 && $current < self::STEP_SECONDS) {
+         *         @set_time_limit(self::STEP_SECONDS);
+         *     }
+         *
+         * That file is another lane's, so this is the harness protecting itself
+         * rather than a fix to the cause, and it stays useful afterwards: any
+         * future `set_time_limit` anywhere in the application is contained to
+         * the single test that provokes it.
+         */
+        @set_time_limit(0);
+
         return parent::createApplication();
     }
 }
