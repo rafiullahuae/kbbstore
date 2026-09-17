@@ -10578,10 +10578,38 @@ buildNav();
     setKpi('Orders completed', conv+'%', s.paid_orders+' of '+s.orders+' reached a real status');
 
     var banner = document.querySelector('#content .banner div');
-    /* Demo orders are excluded from every money figure on this screen, so the
-       screen has to say so — otherwise switching Demo Content on and off moves
-       the revenue and nothing explains why. */
-    if(banner) banner.innerHTML = 'Live data. <b>'+s.products+'</b> products, <b>'+s.orders+'</b> orders, <b>'+s.customers+'</b> customers. '+(s.low_stock? ('<b>'+s.low_stock+'</b> low on stock.') : 'Stock levels healthy.')+((s.demo&&s.demo.excluded)? (' <b>'+s.demo.orders+'</b> demo orders are excluded from these figures.') : '');
+    /* Demo rows are excluded from every figure on this screen, so the screen has
+       to say so — otherwise switching Demo Content on and off moves the numbers
+       and nothing explains why.
+
+       WORDED FROM THE COUNTS, NEVER FROM s.demo.excluded. `excluded` is
+       orders + customers + products > 0, and Store -> Demo Content imports one
+       type at a time, so an owner who imported demo PRODUCTS alone has
+       excluded=true with orders=0 — and this line used to print "0 demo orders
+       are excluded from these figures" at him. Measured, and pinned in
+       tests/Feature/DemoDisclosureSentenceTest.php.
+
+       Demo REVIEWS get their own sentence because they are a different claim:
+       no figure on this screen counts reviews at all. They are kept off the
+       STOREFRONT by App\Support\DemoReviews, and that is the thing the owner
+       needs told. */
+    var dm = (s.demo||{}), demoBits = [], demoTotal = 0, demoNote = '';
+    [['orders','order'],['customers','customer'],['products','product']].forEach(function(k){
+      var n = Number(dm[k[0]]||0);
+      if(!n) return;
+      demoTotal += n;
+      demoBits.push('<b>'+n.toLocaleString()+'</b> demo '+k[1]+(n===1?'':'s'));
+    });
+    if(demoBits.length){
+      var demoLast = demoBits.pop();
+      demoNote += ' '+(demoBits.length? demoBits.join(', ')+' and '+demoLast : demoLast)+
+                  (demoTotal===1? ' is' : ' are')+' excluded from these figures.';
+    }
+    if(Number(dm.reviews||0)){
+      demoNote += ' <b>'+Number(dm.reviews).toLocaleString()+'</b> demo review'+
+                  (Number(dm.reviews)===1? ' is' : 's are')+' hidden from the storefront.';
+    }
+    if(banner) banner.innerHTML = 'Live data. <b>'+s.products+'</b> products, <b>'+s.orders+'</b> orders, <b>'+s.customers+'</b> customers. '+(s.low_stock? ('<b>'+s.low_stock+'</b> low on stock.') : 'Stock levels healthy.')+demoNote;
 
     var cards = Array.prototype.slice.call(document.querySelectorAll('#content .card.pad'));
     var feedCard = cards.filter(function(c){ return /Recent activity/.test(c.textContent); })[0];
@@ -14315,6 +14343,23 @@ buildNav();
         '<b>A refund is counted in the period of the order it came off</b>, not the day the money went back — '+
         'so this reads "of what these orders brought in, this much went back", and it is the same rule the '+
         'chart and the average order value follow.</p>'+
+        /* The demo disclosure for this screen, worded from the counts and not
+           from a.demo.excluded — see the dashboard banner in renderDash() for
+           why. Only demo ORDERS move anything here: every figure and every bar
+           on this screen is built from `orders`, and DemoSeed::exclude() takes
+           the demo ones off (top_products too — it excludes by orders.id).
+           Demo customers and demo products change nothing on Analytics, so
+           naming them here would be noise. Demo reviews are in no figure on
+           this screen at all, which is exactly why they are said out loud
+           rather than left implied. */
+        (function(){
+          var dd = (a.demo||{}), n = Number(dd.orders||0), r = Number(dd.reviews||0), out = '';
+          if(n) out += '<b>'+n.toLocaleString()+'</b> demo order'+(n===1?' is':'s are')+
+                       ' excluded from every figure on this screen. ';
+          if(r) out += '<b>'+r.toLocaleString()+'</b> demo review'+(r===1?' is':'s are')+
+                       ' hidden from the storefront; no figure here counts reviews. ';
+          return out? '<p class="an-note">'+out.trim()+'</p>' : '';
+        })()+
       '</div>'+
 
       /* --- section 2: the chart --- */
@@ -14330,7 +14375,11 @@ buildNav();
         anCardHead('Revenue over time',
           sesc(a.bucket_label||'Each bar is one day')+' in '+sesc(a.timezone||'Asia/Dubai')+' time, '+
           'by the date the order was placed, net of anything refunded on it.'+
-          ((a.demo&&a.demo.excluded)? ' Demo orders are excluded.' : ''), period)+
+          /* Keyed on the ORDER count, not on `excluded`: every bar on this chart
+             is built from `orders`, so demo customers or demo products flipping
+             `excluded` true made this caption claim an exclusion that had not
+             happened to it. */
+          (Number((a.demo||{}).orders||0)? ' Demo orders are excluded.' : ''), period)+
         '<div class="an-scale"><span>Tallest bar <b>'+sesc(anMoney(peak))+'</b></span>'+
         '<span>'+sesc(period.label)+' <b>'+sesc(anMoney(periodTotal))+'</b></span></div>'+
         (series.length? '<div class="an-chart'+(dense?' is-dense':'')+'">'+bars+'</div>'+
