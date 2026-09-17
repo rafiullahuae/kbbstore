@@ -167,27 +167,90 @@ class HomeController extends Controller
              'panel' => 'linear-gradient(150deg,#FFF2D9,#EFCE8A)'],
         ]);
 
-        // Routine steps, each with a real product suggestion from its category.
+        /*
+         * Routine steps, each with a real product suggestion from its category.
+         *
+         * EACH STEP NAMES CANDIDATE SLUGS, NOT ONE SLUG, and the first that
+         * exists wins. Three of the six steps hard-coded a slug no category has
+         * ever carried — verified on a migrated database, not inferred:
+         *
+         *   step 01 / 02  'cleansing'     -> /product-category/cleansing/    404
+         *   step 05       'moisturizers'  -> /product-category/moisturizers/ 404
+         *
+         * Both halves of the step were broken by it, and the second half hid
+         * the first. The link 404'd, AND `whereHas` matched nothing, so those
+         * steps rendered with no product and no price — which looks like an
+         * empty catalogue rather than a wrong slug, so nobody went looking.
+         *
+         * A candidate list rather than a corrected single slug because this is
+         * evaluated per request, not baked in: the shop's real taxonomy arrives
+         * by WordPress import carrying the live site's slugs
+         * (`cleansing-oils`, `face-serums`, `moisturizers`), while a shop that
+         * has not imported yet has only DemoCatalogueSeeder's six placeholders
+         * (`cleansers`, `serums`, `moisturisers`). The live slug is listed
+         * first, so the import silently upgrades each step the moment it lands
+         * and nobody has to come back and change this.
+         *
+         * A step whose categories all turn out to be absent links to /shop/
+         * rather than to a category archive that 404s.
+         */
         $routine = Cache::remember('kbb.home.routine', 900, function () {
             $steps = [
-                ['n' => '01', 'title' => 'Oil cleanser',   'note' => 'Melts SPF and makeup',   'slug' => 'cleansing'],
-                ['n' => '02', 'title' => 'Water cleanser', 'note' => 'The second cleanse',     'slug' => 'cleansing'],
-                ['n' => '03', 'title' => 'Toner',          'note' => 'Hydrates and preps',     'slug' => 'toners'],
-                ['n' => '04', 'title' => 'Serum',          'note' => 'Where the actives work', 'slug' => 'serums'],
-                ['n' => '05', 'title' => 'Moisturiser',    'note' => 'Seals it all in',        'slug' => 'moisturizers'],
-                ['n' => '06', 'title' => 'Sunscreen',      'note' => 'Every single morning',   'slug' => 'sunscreens'],
+                ['n' => '01', 'title' => 'Oil cleanser',   'note' => 'Melts SPF and makeup',   'slugs' => ['cleansing-oils', 'cleansers', 'cleansing']],
+                ['n' => '02', 'title' => 'Water cleanser', 'note' => 'The second cleanse',     'slugs' => ['face-washes', 'cleansers', 'cleansing']],
+                ['n' => '03', 'title' => 'Toner',          'note' => 'Hydrates and preps',     'slugs' => ['toners']],
+                ['n' => '04', 'title' => 'Serum',          'note' => 'Where the actives work', 'slugs' => ['face-serums', 'serums']],
+                ['n' => '05', 'title' => 'Moisturiser',    'note' => 'Seals it all in',        'slugs' => ['moisturizers', 'moisturisers']],
+                ['n' => '06', 'title' => 'Sunscreen',      'note' => 'Every single morning',   'slugs' => ['sunscreens']],
             ];
 
+            // One query for every slug any step might want, rather than one per
+            // candidate: six steps with three candidates each would otherwise
+            // be up to eighteen lookups on the busiest page on the site.
+            $live = Category::query()
+                ->whereIn('slug', array_unique(array_merge(...array_column($steps, 'slugs'))))
+                ->pluck('slug')
+                ->all();
+
             foreach ($steps as $i => $step) {
-                $steps[$i]['pick'] = Product::query()->select(self::CARD_COLUMNS)->visible()
+                $slug = null;
+
+                foreach ($step['slugs'] as $candidate) {
+                    if (in_array($candidate, $live, true)) {
+                        $slug = $candidate;
+                        break;
+                    }
+                }
+
+                $steps[$i]['slug'] = $slug;
+                unset($steps[$i]['slugs']);
+
+                $steps[$i]['pick'] = $slug === null ? null : Product::query()->select(self::CARD_COLUMNS)->visible()
                     ->with('brand:id,name,slug')
-                    ->whereHas('categories', fn ($c) => $c->where('slug', $step['slug']))
+                    ->whereHas('categories', fn ($c) => $c->where('slug', $slug))
                     ->orderByDesc('total_sales')
                     ->first();
             }
 
             return $steps;
         });
+
+        /*
+         * The link is derived OUTSIDE the cache, from the slug inside it. That
+         * is what makes this change safe to deploy: an entry written by the
+         * previous version of this method holds `slug` and no `url`, and
+         * reading it here gives a working array rather than an undefined-key
+         * error on the busiest page on the site for the rest of its 15-minute
+         * life. The accompanying clear_caches migration forgets the key
+         * outright, so that window is normally zero.
+         *
+         * URL Contract U-03. A step whose category is absent points at the shop
+         * rather than at an archive that is known to 404.
+         */
+        foreach ($routine as $i => $step) {
+            $slug = $step['slug'] ?? null;
+            $routine[$i]['url'] = $slug === null ? '/shop/' : '/product-category/' . $slug . '/';
+        }
 
         $routineTotal = collect($routine)->sum(fn ($s) => $s['pick']?->effectivePrice() ?? 0);
 

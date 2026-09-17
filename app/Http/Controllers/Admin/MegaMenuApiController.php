@@ -241,14 +241,33 @@ class MegaMenuApiController extends Controller
                 $child($brands->id, $p, ['label' => $label, 'url' => '/shop/?filter_brands=' . $slug2]);
             }
 
-            $skincare = $top(['label' => 'Skincare', 'url' => '/skincare/']);
+            /*
+             * Category addresses are /product-category/{slug}/ — URL Contract
+             * U-03 — not the flat /toners/ form the live WordPress site used.
+             * Seeded flat, every one of these fell through routes/
+             * kbb-brands-blog.php's `/{slug}/` catch-all to PageController@post,
+             * which looks for a BLOG POST by that slug and 404s. Repaired on
+             * existing shops by 2026_11_07_000000_repoint_menu_category_urls;
+             * corrected here so re-seeding cannot bring it back.
+             *
+             * The slug is kept exactly as the live site spells it rather than
+             * resolved against the categories table: see App\Support\
+             * LegacyCategoryUrls for why remapping at seed time is the unsafe
+             * direction.
+             */
+            $skincare = $top(['label' => 'Skincare', 'url' => '/product-category/skincare/']);
             $p = 0;
             foreach ([
-                'Cleansing Oils' => '/cleansing-oils/', 'Face Washes' => '/face-washes/',
-                'Exfoliators' => '/exfoliators/', 'Toners' => '/toners/',
-                'Face Serums' => '/face-serums/', 'Eye Care' => '/eye-care/',
-                'Face Masks' => '/face-masks/', 'Moisturizers' => '/moisturizers/',
-                'Lip Care' => '/lip-care/', 'Sunscreens' => '/sunscreens/',
+                'Cleansing Oils' => '/product-category/cleansing-oils/',
+                'Face Washes' => '/product-category/face-washes/',
+                'Exfoliators' => '/product-category/exfoliators/',
+                'Toners' => '/product-category/toners/',
+                'Face Serums' => '/product-category/face-serums/',
+                'Eye Care' => '/product-category/eye-care/',
+                'Face Masks' => '/product-category/face-masks/',
+                'Moisturizers' => '/product-category/moisturizers/',
+                'Lip Care' => '/product-category/lip-care/',
+                'Sunscreens' => '/product-category/sunscreens/',
             ] as $label => $url) {
                 $child($skincare->id, $p, ['label' => $label, 'url' => $url]);
             }
@@ -258,14 +277,14 @@ class MegaMenuApiController extends Controller
             // shortcut in addition to their place in the Skincare dropdown,
             // not instead of it. That duplication is real and intentional
             // on kbeautybliss.com itself, not a mistake being copied here.
-            $top(['label' => 'Sunscreens', 'url' => '/sunscreens/']);
-            $top(['label' => 'Moisturizers', 'url' => '/moisturizers/']);
-            $top(['label' => 'Toners', 'url' => '/toners/']);
-            $top(['label' => 'Lip Care', 'url' => '/lip-care/']);
-            $top(['label' => 'Hair Care', 'url' => '/hair-care/']);
-            $top(['label' => 'Skincare Sets', 'url' => '/skincare-sets/']);
+            $top(['label' => 'Sunscreens', 'url' => '/product-category/sunscreens/']);
+            $top(['label' => 'Moisturizers', 'url' => '/product-category/moisturizers/']);
+            $top(['label' => 'Toners', 'url' => '/product-category/toners/']);
+            $top(['label' => 'Lip Care', 'url' => '/product-category/lip-care/']);
+            $top(['label' => 'Hair Care', 'url' => '/product-category/hair-care/']);
+            $top(['label' => 'Skincare Sets', 'url' => '/product-category/skincare-sets/']);
             $top(['label' => 'Super Sale', 'url' => '/super-sale/', 'highlight_color' => '#E23A4E']);
-            $top(['label' => 'Beauty Devices', 'url' => '/beauty-devices/']);
+            $top(['label' => 'Beauty Devices', 'url' => '/product-category/beauty-devices/']);
             $top(['label' => 'Everything Under 54 AED', 'url' => '/everything-under-54-aed/']);
             $top(['label' => 'Blog', 'url' => '/skincare-guide/']);
 

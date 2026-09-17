@@ -248,7 +248,7 @@
     <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">Routine guide</a></div>
   <div class="rsteps">
     @foreach ($routine as $step)
-      <a class="rstep" href="{{ Url::to('/product-category/' . $step['slug'] . '/') }}">
+      <a class="rstep" href="{{ Url::to($step['url']) }}">
         <span class="rn">{{ $step['n'] }}</span>
         <div class="rb"><b>{{ $step['title'] }}</b><span>{{ $step['note'] }}</span></div>
         @if ($step['pick'])
