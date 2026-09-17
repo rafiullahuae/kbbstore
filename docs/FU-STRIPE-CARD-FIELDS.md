@@ -178,10 +178,18 @@ and a six-scenario Chromium walk):
 - that the card fields render inside the card option, that Stripe.js is booted
   with the publishable key and nothing else, and that the secret key is not on
   the page;
-- in Chromium: no navigation to any Stripe host on the success path, a decline
-  showing Stripe's own sentence beside the fields with the basket untouched, a
-  delayed challenge locking Place order without leaving the page, one order from
-  three presses, and the basket restored on give-up.
+- in Chromium, seven scenarios end to end against a running app: the fields
+  mounting inside the card option and hiding again under Cash on delivery; a
+  successful payment with **no navigation to any Stripe host**; a decline
+  showing Stripe's own sentence beside the fields with the basket untouched and
+  Place order live again; a delayed challenge locking Place order without
+  leaving the page; one order from three presses; the basket restored on
+  give-up; and a corrected address after a decline releasing the first order and
+  placing a fresh one that carries the correction. The database was read
+  afterwards each time — the paid orders are `processing` with a `payments` row,
+  the declined one is `pending`, the released ones are `failed`, and the
+  corrected order carries `99 Corrected Road` while the order it replaced still
+  carries the old line.
 
 **Needs one real test-mode payment from the owner**, because a fake cannot
 answer for Stripe:
@@ -204,3 +212,26 @@ answer for Stripe:
 A redirect-based 3-D Secure challenge — a minority of issuers — returns the
 shopper to `/checkout/success?order=…` and the order is marked paid by the
 webhook rather than by the browser. That path is not exercised by the walk.
+
+---
+
+## Two behaviours worth knowing about before they surprise somebody
+
+**A declined card does not place a second order.** Stripe leaves the intent
+payable after a decline, so the next press reuses the order and the intent that
+already exist. That is Stripe's own model for a retry and it is what keeps a
+shopper from burning an order number, a stock claim and a coupon use per
+attempt.
+
+**But any change to the form after a failed attempt releases that order.** The
+order was written from the fields as they stood at the first press and nothing
+re-posts them, so a corrected address would otherwise be silently discarded and
+the goods would go to the old one — a failure that succeeds. So a `change` on
+any field of the checkout cancels the intent at Stripe, fails the order (which
+returns the stock and the coupon through `OrderStatus`), restores the basket,
+and lets the next press place a fresh order from the fields as they now read.
+Switching to another payment method does the same thing, for the other half of
+the same reason: two live orders would hold this basket's stock twice.
+
+The visible consequence is that a shopper who corrects something after a decline
+gets a new order number. That is the intended trade.

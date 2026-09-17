@@ -413,22 +413,46 @@
   }, true);
 
   /*
-   * Switching AWAY from the card after a failed attempt.
+   * ANYTHING THAT CHANGES AFTER A FAILED ATTEMPT RELEASES THE ORDER.
    *
-   * There is a real order sitting `pending` at that point with a live intent
-   * against it. Leaving it there and placing a second order by another method
-   * would hold this basket's stock twice and spend the coupon twice, and the
-   * first order's intent would still be confirmable by a stale tab. So the
-   * order is released exactly as the "return to your basket" control releases
-   * it — the difference between the two is only where the shopper ends up.
+   * After a decline there is a real order sitting `pending` with a live intent
+   * against it, and the next press reuses both rather than placing a second
+   * one. That is right for "try another card" and WRONG for everything else
+   * the shopper might do next, in two different ways:
+   *
+   *   - They correct something. The order was written from the fields as they
+   *     were at the first press, and nothing re-posts them, so a corrected
+   *     address, a fixed typo in the email or a different delivery option
+   *     would be silently discarded and the goods would go to the old one.
+   *     That is worse than a failed payment, because it succeeds.
+   *   - They switch to another payment method. Placing a second order would
+   *     hold this basket's stock twice and spend its coupon twice, and the
+   *     first order's intent would still be confirmable by a stale tab.
+   *
+   * Both have the same answer: release the order the way the "return to your
+   * basket" control releases it — cancel the intent at Stripe, put the stock
+   * and the coupon back, restore the basket — and let the next press place a
+   * fresh one from the fields as they now read. The only difference between
+   * this and pressing that control is where the shopper ends up, and here they
+   * do not move at all.
+   *
+   * `change`, not `input`: this fires when a field is left, not on every
+   * keystroke, so correcting one character does not release the order five
+   * times.
    */
   document.addEventListener('change', function (event) {
-    var radio = event.target.closest && event.target.closest('input[name="payment_method"]');
-    if (!radio || radio.value === 'stripe' || !openOrder || busy) return;
+    if (!openOrder || busy) return;
+    if (!event.target.closest) return;
+
+    // Only fields of this checkout. The card iframe is Stripe's document and
+    // raises nothing here; the quantity steppers are buttons, not inputs.
+    var field = event.target.closest('input, select, textarea');
+    if (!field || !FORM.contains(field)) return;
 
     var order = openOrder.order;
     openOrder = null;
     clearError();
+
     var b = bailButton();
     if (b) b.classList.remove('on');
 
