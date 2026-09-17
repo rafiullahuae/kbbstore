@@ -738,6 +738,19 @@ it('drives or explicitly excuses every parameterised admin-api GET route', funct
         // Serves a zip from disk. Touches no query and cannot carry a dialect
         // problem; driving it would assert against a 404 for a missing file.
         'admin-api/updates/{release}/download' => 'file download, issues no SQL',
+
+        /*
+         * Reconciliation's two read routes. Both take a RUN id, and a run only
+         * exists after a POST that reaches out to a payment provider. Driving
+         * them here would mean either faking a gateway inside a dialect guard,
+         * which is not what this file is for, or asserting against a 404, which
+         * issues no SQL and would be coverage in name only. The SQL they issue
+         * IS exercised on both engines by PaymentReconciliationTest, which
+         * builds a real run against a faked HTTP client -- so this is a
+         * statement about where the coverage lives, not an absence of it.
+         */
+        'admin-api/payments/reconcile/{run}' => 'needs a run built against a faked gateway; covered by PaymentReconciliationTest',
+        'admin-api/payments/reconcile/{run}/findings' => 'same run, same coverage',
     ];
 
     $parameterised = [];

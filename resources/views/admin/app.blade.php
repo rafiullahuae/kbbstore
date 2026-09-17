@@ -18213,6 +18213,11 @@ buildNav();
           ' aria-labelledby="pay_tab_'+sesc(g.id)+'"'+(g.id===PAYTAB?'':' hidden')+'>'+
           payCard(g)+'</div>';
       }).join('')+
+
+      /* BELOW the gateway tabs and OUTSIDE them. Reconciliation is about every
+         gateway at once, so it must not sit inside a pane that hides it
+         whenever the operator happens to be looking at a different tab. */
+      reconPanel()+
       '</div>';
 
     /* The baseline every dirty check is measured against: the values exactly as
@@ -18222,7 +18227,195 @@ buildNav();
     PAYG.forEach(function(g){ PAYBASE[g.id]=paySnapshot(g.id); });
 
     bindPayments();
+    reconBind();
     payRefreshTabs();
+  }
+
+  /* ---------------------------------------------------------------------------
+     Reconcile — the provider's books against ours.
+
+     READ ONLY, and the button says so in words. It reports; it does not repair.
+     An automatic repair that marked orders paid off a provider's list would be
+     the same shape as the defect 2.60.199 closed, only acting a page at a time
+     and off an unsigned list, against orders whose stock has gone back on the
+     shelf. What the operator gets is an order number and a reference, and the
+     capture and refund buttons that already exist on the order screen, pressed
+     one order at a time.
+
+     Many short requests, not one long one. This host kills a long request and
+     has no queue worker, so the browser drives the run exactly as Store ->
+     Import / Export already does. Each step commits its own checkpoint, so
+     closing this tab halfway loses nothing and pressing the button again
+     carries on from where it stopped.
+  --------------------------------------------------------------------------- */
+  var RECON={run:null,busy:false};
+
+  function reconMoney(fils){ return fils==null ? '' : 'AED '+(Math.round(fils)/100).toFixed(2); }
+
+  function reconDates(){
+    var iso=function(d){ return d.toISOString().slice(0,10); };
+    return [iso(new Date(Date.now()-13*86400000)), iso(new Date())];
+  }
+
+  function reconPanel(){
+    var d=reconDates();
+
+    return '<div class="ecopt wide"><div class="ecom">'+
+      '<div class="ecl"><label>Check the books</label></div>'+
+      '<div class="echelp">Compares what Stripe, Tabby and Tamara say they took against what this shop has '+
+      'recorded: money taken that never reached us, money we think we hold that they cannot confirm, amounts '+
+      'that disagree, and refunds on one side only. It only looks &mdash; nothing is marked paid, refunded or changed '+
+      'by running it, so it is safe to press on a live shop at any time. Cash on delivery is not part of it '+
+      '(there is no second set of books for cash) and its figures are shown separately underneath.</div>'+
+      '<div class="row" style="gap:10px;align-items:flex-end;margin-top:12px;flex-wrap:wrap">'+
+        '<label class="echelp" style="margin:0">From<br><input type="date" id="recon_from" value="'+d[0]+'"></label>'+
+        '<label class="echelp" style="margin:0">To<br><input type="date" id="recon_to" value="'+d[1]+'"></label>'+
+        '<button type="button" class="btn" id="recon_go">Check the books</button>'+
+        '<button type="button" class="btn ghost" id="recon_fresh">Start over</button>'+
+        '<span class="echelp" id="recon_msg" style="margin:0"></span>'+
+      '</div>'+
+      '<div id="recon_out" style="margin-top:14px"></div>'+
+      '<div id="recon_cod" style="margin-top:14px"></div>'+
+      '</div></div>';
+  }
+
+  function reconBind(){
+    var go=document.getElementById('recon_go');
+    var fresh=document.getElementById('recon_fresh');
+    if(go) go.onclick=function(){ reconRun(false); };
+    /* "Start over" throws this window's previous findings away and looks again.
+       It is what the owner wants after he has FIXED something and needs a clean
+       answer rather than yesterday's plus today's. */
+    if(fresh) fresh.onclick=function(){ reconRun(true); };
+  }
+
+  function reconMsg(t){ var e=document.getElementById('recon_msg'); if(e) e.textContent=t||''; }
+
+  async function reconRun(restart){
+    if(RECON.busy) return;
+
+    var from=(document.getElementById('recon_from')||{}).value;
+    var to=(document.getElementById('recon_to')||{}).value;
+
+    if(!from||!to){ reconMsg('Pick both dates first.'); return; }
+
+    RECON.busy=true;
+    reconMsg('Starting…');
+    document.getElementById('recon_out').innerHTML='';
+    document.getElementById('recon_cod').innerHTML='';
+
+    try{
+      var s=await api('/admin-api/payments/reconcile/start',{method:'POST',
+        body:JSON.stringify({from:from,to:to,restart:!!restart})});
+      RECON.run=s.run_id;
+    }catch(e){
+      RECON.busy=false;
+      /* The endpoint refuses an unusable window with a sentence written for the
+         owner ("that window is longer than 92 days..."). Printing it beats
+         replacing it with "could not start", which sends him to look at his
+         wifi over a date. */
+      reconMsg((e&&e.body&&e.body.error) ? e.body.error : 'That run could not be started.');
+      return;
+    }
+
+    /* The cap is a guard, not an expectation: the phases are finite and each
+       one either advances or finishes. An unbounded loop against somebody
+       else's rate-limited API is not a trade worth having either way. */
+    for(var i=0;i<400;i++){
+      var st;
+
+      try{
+        st=await api('/admin-api/payments/reconcile/step',{method:'POST',
+          body:JSON.stringify({run_id:RECON.run})});
+      }catch(e){
+        reconMsg('The check stopped part way. Press "Check the books" again and it will carry on from where it got to.');
+        break;
+      }
+
+      reconMsg('Checking… '+(st.phases_done||0)+' of '+(st.phases_total||0)+' steps done.');
+
+      if(st.done){ reconMsg(''); break; }
+    }
+
+    RECON.busy=false;
+    await reconReport();
+    await reconCod(from,to);
+  }
+
+  async function reconReport(){
+    var host=document.getElementById('recon_out');
+    if(!host||!RECON.run) return;
+
+    var r;
+    try{ r=await api('/admin-api/payments/reconcile/'+RECON.run+'/findings'); }
+    catch(e){ host.innerHTML='<div class="echelp">The report could not be loaded.</div>'; return; }
+
+    if(!r.total){
+      host.innerHTML='<div class="ecnote"><b>Both sides agree.</b> Nothing outstanding for these dates.</div>';
+      return;
+    }
+
+    host.innerHTML='<div class="nlwarn"><b>'+r.total+' thing'+(r.total===1?'':'s')+' to look at.</b> '+
+      'Nothing has been changed &mdash; each of these is for you to decide about.</div>'+
+      r.findings.map(reconRow).join('');
+
+    host.querySelectorAll('[data-reconack]').forEach(function(b){
+      b.onclick=async function(){
+        try{
+          await api('/admin-api/payments/reconcile/'+RECON.run+'/findings/'+b.dataset.reconack+'/ack',
+            {method:'POST',body:JSON.stringify({})});
+          toast('Marked as dealt with');
+          reconReport();
+        }catch(e){ toast('Could not record that'); }
+      };
+    });
+
+    host.querySelectorAll('[data-reconorder]').forEach(function(a){
+      a.onclick=function(ev){ ev.preventDefault(); renderOrderDetail(+a.dataset.reconorder); };
+    });
+  }
+
+  function reconRow(f){
+    var amounts=[];
+    if(f.amount_local!=null) amounts.push(reconMoney(f.amount_local)+' here');
+    if(f.amount_remote!=null) amounts.push(reconMoney(f.amount_remote)+' at '+sesc(f.provider));
+
+    return '<div class="ecnote" style="margin-top:8px;border-left:4px solid var('+
+      (f.severity==='alarm'?'--sale':'--ink-faint')+')">'+
+      '<div>'+sesc(f.summary)+'</div>'+
+      '<div class="echelp" style="margin-top:6px">'+
+        (f.order_number && f.order_id
+          ? 'Order <a href="#" data-reconorder="'+f.order_id+'"><b>'+sesc(f.order_number)+'</b></a>. '
+          : (f.order_number ? 'Order <b>'+sesc(f.order_number)+'</b>. ' : ''))+
+        (amounts.length ? amounts.join(' · ')+'. ' : '')+
+        (f.remote_ref ? 'Their reference <code>'+sesc(f.remote_ref)+'</code>. ' : '')+
+        (f.local_ref ? 'Ours <code>'+sesc(f.local_ref)+'</code>.' : '')+
+      '</div>'+
+      '<div class="row" style="justify-content:flex-end;margin-top:6px">'+
+        '<button type="button" class="btn ghost" data-reconack="'+f.id+'">I have dealt with this</button>'+
+      '</div></div>';
+  }
+
+  /* Its own block, under its own heading, and never merged into the list above.
+     Cash on delivery has no second set of books, so these figures are one sided
+     and the `note` says so in words the screen prints verbatim rather than
+     summarises. */
+  async function reconCod(from,to){
+    var host=document.getElementById('recon_cod');
+    if(!host) return;
+
+    var c;
+    try{
+      c=await api('/admin-api/payments/reconcile/cod?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to));
+    }catch(e){ host.innerHTML=''; return; }
+
+    host.innerHTML='<div class="ecnote"><b>Cash on delivery &mdash; a different report.</b>'+
+      '<div style="margin-top:6px">'+
+      'Marked collected: <b>'+reconMoney(c.collected.fils)+'</b> over '+c.collected.orders+' order(s).<br>'+
+      'Still owed to us: <b>'+reconMoney(c.outstanding.fils)+'</b> over '+c.outstanding.orders+' order(s).<br>'+
+      'Closed without collection: <b>'+reconMoney(c.closed_uncollected.fils)+'</b> over '+
+        c.closed_uncollected.orders+' order(s).</div>'+
+      '<div class="echelp" style="margin-top:8px">'+sesc(c.note)+'</div></div>';
   }
 
   function payMsg(id,text){

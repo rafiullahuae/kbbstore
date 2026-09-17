@@ -241,6 +241,17 @@ final class AdminCapabilities
          */
         ['GET', 'admin-api/payments/preflight', 'payments.manage'],
         ['GET', 'admin-api/payments/preflight/*', 'payments.manage'],
+        /*
+         * Reconciliation reads the gateways' books and names this shop's orders,
+         * references and amounts. Same capability as the screen it lives on.
+         * `acknowledge` is its only write and it moves no money -- it records
+         * that a human looked, which is why who and when are stored: it hides a
+         * money discrepancy from the default view, and anything that hides one
+         * has to say who hid it. Written down rather than left to fall through
+         * to the owner-only default, so the intent is on the record.
+         */
+        ['*', 'admin-api/payments/reconcile', 'payments.manage'],
+        ['*', 'admin-api/payments/reconcile/**', 'payments.manage'],
         ['GET', 'admin-api/orders/*/settlement', 'orders.money'],
         ['POST', 'admin-api/orders/*/capture', 'orders.money'],
         ['POST', 'admin-api/orders/*/refund', 'orders.money'],

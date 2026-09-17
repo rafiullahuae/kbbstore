@@ -7,12 +7,10 @@ declare(strict_types=1);
 | Payment reconciliation — the provider's books against ours (Lane EJ)
 |------------------------------------------------------------------------------
 |
-| NOT YET MOUNTED. routes/web.php is owned by the integrator, so this lane has
-| not edited it. ONE line goes inside the EXISTING `admin-api` group — the one
-| that already carries `auth:admin` and NoStoreAdminApi — beside the three
-| payments requires that are already there:
-|
-|     require __DIR__.'/payments-reconcile.php';
+| MOUNTED. routes/web.php requires this file inside the `admin-api` group, the
+| one carrying `auth:admin` and NoStoreAdminApi, beside the other payments
+| requires. The paragraph below is why it belongs in that group and nowhere
+| else — it is the reasoning behind the mount, not a request for one.
 |
 | It belongs immediately after
 |

@@ -327,6 +327,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/payments-preflight.php';
 
+    /*
+     * Reconciliation. Same group, and for a stronger reason than the file
+     * above: it moves no money, but what it RETURNS is a list of this shop's
+     * payments, order numbers, provider references and amounts, together with a
+     * precise description of where its money handling is weak. That is worse to
+     * publish than the preflight beside it.
+     */
+    require __DIR__.'/payments-reconcile.php';
+
         // The storefront health check behind Dashboard → Check now and Safety →
         // Debug & Monitor. Inside this group and nowhere else: when a page is
         // broken it answers with the exception message and the application file
