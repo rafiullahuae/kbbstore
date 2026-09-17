@@ -305,6 +305,13 @@ An unaccounted row now **fails the command** even when nothing was refused: a
 refused row is one the importer knows it does not have, and an unaccounted row is
 one it does not know it does not have.
 
+One thing the table makes visible that nothing did before: **refusing a product
+refuses things downstream of it.** The two products in the WordPress trash cost
+two `seo` rows and twelve of the eighteen refused reviews, because a review of a
+product that is not here cannot be attached to anything. Each of those is named
+individually in the rejection list, and the three buckets now line up in one
+place so the chain can be read rather than reconstructed.
+
 ---
 
 ## 8. Money — 39,156 values checked against the export, nothing wrong
@@ -357,7 +364,7 @@ change in §12.
 ## 10. The discard list — its shape, and that nothing is silent
 
 `--changes=` writes it to a CSV; the screen shows it before a row moves. At full
-volume it came to **2,292 adjusted values and 1,367 discarded things**, grouped
+volume it came to **2,297 adjusted values and 1,369 discarded things**, grouped
 by kind, each kind carrying its full count and five worked examples with the
 before and the after. Not one row per observation: 9 ignored columns over 4,159
 orders would otherwise be 37,431 identical lines, and the report's sample cap
@@ -372,7 +379,7 @@ What the run actually produced:
 |---|---:|
 | an order amount carrying fils on a shop that prints whole dirhams | 1,046 |
 | a unit price truncated by integer division | 494 |
-| `comment_approved 'trash'` imported as `spam` | 381 |
+| `comment_approved 'trash'` imported as `spam` | 378 |
 | a negative refund quantity clamped to zero while the money stayed | 152 |
 | a price carrying fils | 127 |
 | coupon code lower-cased | 40 |
@@ -382,6 +389,7 @@ What the run actually produced:
 | a fixed coupon amount carrying fils | 7 |
 | two products sharing one SKU | 2 |
 | no SKU in the export | 2 |
+| a coupon restriction naming products that are not in this shop | 1 |
 
 **DISCARDED — in the export, and never in the database**
 
@@ -392,14 +400,18 @@ What the run actually produced:
 | a coupon's `usage_limit_per_user` (8) and `used_by` (8) | 16 |
 | `<script>` removed from a product description | 7 |
 | **columns in the export that nothing reads** — one entry per entity, naming every column with the first real value found in it | 5 |
-| **files in the folder that no importer opens** — `refunds.csv` (207 rows), `order_notes.csv` (1,386), `variations.csv` (335), `tags.csv` (74) | 4 |
+| **files in the folder that no importer opens** — `refunds.csv` (207 rows), `order_notes.csv` (1,386), `variations.csv` (335), `tags.csv` (74), and `manifest.json` | 5 |
 
 The two bold rows are the channel that found `coupons.csv` and `reviews.csv` in
-the first place. They still work: all four planted files were named, each with
-its row count, and `meta:_delivery_instructions = Ring the bell twice`,
-`refund_amount` and `order_notes` were all named as columns nothing reads,
-each with a real value beside the name so the owner is approving a fact rather
-than a column heading.
+the first place. They still work — and they are not selective about it: all four
+planted files were named with their row counts, and so was the generator's own
+`manifest.json`, which is exactly the behaviour wanted. A channel that only
+names the files somebody thought of is not a channel.
+
+On the column side, `meta:_delivery_instructions = Ring the bell twice`,
+`refund_amount` and `order_notes` were all named as columns nothing reads — each
+with a real value beside the name, so the owner is approving a fact rather than a
+column heading.
 
 ---
 
