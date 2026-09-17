@@ -232,3 +232,72 @@ it('generates a webhook secret on first save so the url is never guessable', fun
     expect(strlen(app(GatewayCredentials::class)->get('stripe', 'webhook_secret')))
         ->toBeGreaterThanOrEqual(16);
 });
+
+/* ------------------------------------------- after an automatic connection -- */
+
+/*
+ * Store -> Payments -> Stripe -> Connect stores the same two Stripe secrets the
+ * form stored, plus a handful of facts about the account. Those extra keys are
+ * NOT in StripeGateway::configSchema() -- deliberately, so the preflight does
+ * not report a shop that will never register a Connect application as
+ * half-configured -- which means the loop in show() does not iterate them.
+ *
+ * That is exactly the sort of "it cannot reach them, so it is fine" argument
+ * that stops being true when somebody later makes show() dump the whole config
+ * blob for convenience. Pinned rather than reasoned about.
+ */
+
+function secretsConnectedStripe(): void
+{
+    PaymentProvider::query()->delete();
+
+    $row = PaymentProvider::create([
+        'id' => 'stripe', 'title' => 'Stripe', 'enabled' => true, 'mode' => 'live', 'position' => 1,
+    ]);
+
+    $row->config = [
+        'secret_key' => LIVE_STRIPE_SECRET,
+        'publishable_key' => 'pk_live_safe_to_show',
+        'webhook_signing_secret' => LIVE_STRIPE_WHSEC,
+        'webhook_secret' => 'whsec-url-stripe-canary-000000',
+        'connect_account_id' => 'acct_CANARY',
+        'connect_link' => 'key',
+        'connect_client_id' => 'ca_CANARY',
+        'account_name' => 'K Beauty Bliss',
+        'account_currency' => 'AED',
+        'charges_enabled' => '1',
+        'webhook_endpoint_id' => 'we_CANARY',
+        'webhook_endpoint_managed' => '1',
+    ];
+
+    $row->save();
+
+    app(GatewayCredentials::class)->forget();
+}
+
+it('returns no secret from the payments screen after an automatic connection', function () {
+    secretsConnectedStripe();
+
+    $body = app(PaymentsApiController::class)->show()->getContent();
+
+    expect($body)->not->toContain(LIVE_STRIPE_SECRET)
+        ->and($body)->not->toContain(LIVE_STRIPE_WHSEC);
+
+    // Still reports THAT they are stored, which is what the screen renders.
+    $stripe = collect(json_decode($body, true)['gateways'])->firstWhere('id', 'stripe');
+
+    $secretField = collect($stripe['fields'])->firstWhere('key', 'secret_key');
+
+    expect($secretField['value'])->toBe('')
+        ->and($secretField['has_value'])->toBeTrue();
+});
+
+it('does not put the connect bookkeeping into the settings table either', function () {
+    secretsConnectedStripe();
+
+    $values = Setting::query()->pluck('value')->implode(' ');
+
+    foreach ([LIVE_STRIPE_SECRET, LIVE_STRIPE_WHSEC, 'we_CANARY', 'acct_CANARY'] as $canary) {
+        expect($values)->not->toContain($canary);
+    }
+});
