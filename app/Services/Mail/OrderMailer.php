@@ -439,14 +439,54 @@ class OrderMailer
         try {
             $mailable = $build();
 
+            /*
+             * Name the message before it goes, so the delivery record says
+             * "order.confirmation" rather than "unknown". The mail events
+             * MailLog listens on cannot work this out for themselves: by the
+             * time Symfony has a Message the only thing left that identifies
+             * the feature is the subject line, and subject lines here are
+             * owner-editable wording.
+             */
+            $this->log()?->labelNext('order.' . $kind);
+
             Mail::mailer(MailConfigurator::MAILER)->to($to)->send($mailable);
         } catch (\Throwable $e) {
+            /*
+             * Recorded where the owner can see it, as well as in the log he
+             * cannot. This is the line that turns "the customer says they never
+             * got it" from an unanswerable question into a row with the
+             * transport's own words in it.
+             *
+             * Still swallowed. Everything this class's header says about a mail
+             * failure never becoming an order failure is unchanged: the record
+             * is a side effect of the failure, never a second thing that can
+             * fail the checkout, and MailLog's own methods cannot throw.
+             */
+            $this->log()?->recordFailure($e);
+
             Log::error('order mail failed', [
                 'order' => $order->order_number,
                 'kind' => $kind,
                 'exception' => class_basename($e),
                 'message' => $this->redact($e->getMessage()),
             ]);
+        }
+    }
+
+    /**
+     * The delivery record, or null if it cannot be built.
+     *
+     * Resolved on use rather than injected, and allowed to be absent. This
+     * class is constructed on the checkout's own request; a container binding
+     * that is missing -- an older package where this lane's provider changes
+     * did not land -- must not be the reason an order cannot be placed.
+     */
+    private function log(): ?MailLog
+    {
+        try {
+            return app(MailLog::class);
+        } catch (\Throwable) {
+            return null;
         }
     }
 

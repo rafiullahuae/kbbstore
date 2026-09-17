@@ -41,7 +41,7 @@ class MailTester
     ) {}
 
     /**
-     * @return array{ok:bool,status:string,message:string,error:?string,to:string,transport:string,at:string,duration_ms:int}
+     * @return array{ok:bool,status:string,message:string,error:?string,to:string,transport:string,message_id:?string,at:string,duration_ms:int}
      */
     public function send(string $to): array
     {
@@ -94,9 +94,15 @@ class MailTester
         $real = $this->configurator->usesRealTransport();
         $started = microtime(true);
 
+        $log = $this->log();
+
         try {
+            $log?->labelNext('test');
+
             $this->dispatch($to);
         } catch (\Throwable $e) {
+            $log?->recordFailure($e);
+
             return $this->record([
                 'ok' => false,
                 'status' => 'failed',
@@ -105,9 +111,33 @@ class MailTester
                 'error' => $this->redact($this->describe($e)),
                 'to' => $to,
                 'transport' => $active,
+                'message_id' => null,
                 'duration_ms' => (int) round((microtime(true) - $started) * 1000),
             ]);
         }
+
+        /*
+         * The Message-ID, taken from the transport itself.
+         *
+         * WHY THIS IS NOT DECORATION. Everything above this line establishes
+         * which transport was chosen and whether it threw. Neither answers the
+         * question the owner is actually asking, because a null mailer, a
+         * message swallowed by a misconfigured MTA and a real delivery all
+         * finish without throwing. A Message-ID is the first piece of evidence
+         * in this flow that comes back FROM the transport rather than from our
+         * own hopes about it: something on the other side took the message and
+         * gave it a name. It is also the string the owner quotes to the host's
+         * support desk, who cannot trace a message without one.
+         *
+         * Read from MailLog rather than by attaching a listener here. A
+         * listener would have to be removed afterwards, and the dispatcher's
+         * forget() takes an EVENT name, not a handle -- calling it would tear
+         * down MailLog's own listener for the rest of the request and stop
+         * every later email being recorded. MailLog already captures this for
+         * every message the application sends; asking it is both cheaper and
+         * the only version that cannot break something else.
+         */
+        $messageId = $log?->lastMessageId();
 
         return $this->record([
             'ok' => true,
@@ -128,8 +158,30 @@ class MailTester
             'error' => null,
             'to' => $to,
             'transport' => $active,
+            // Null where the transport reported none -- the `log` mailer, for
+            // one. Never invented, because a fabricated id is worse than an
+            // absent one: it is the field the owner would quote to a support
+            // desk that would then find no trace of it.
+            'message_id' => $messageId,
             'duration_ms' => (int) round((microtime(true) - $started) * 1000),
         ]);
+    }
+
+    /**
+     * The delivery record, or null if it cannot be built.
+     *
+     * Resolved on use and allowed to be absent, for the reason
+     * OrderMailer::log() gives: this runs on a live request and a missing
+     * binding must not be the reason the owner cannot find out whether his shop
+     * can send email.
+     */
+    private function log(): ?MailLog
+    {
+        try {
+            return app(MailLog::class);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**
@@ -195,6 +247,18 @@ class MailTester
     private function record(array $result): array
     {
         $result['at'] = now()->toIso8601String();
+
+        /*
+         * One shape, every branch.
+         *
+         * The two early returns above answer without sending anything and so
+         * have no id to report. Left absent, the key would be missing from
+         * those two responses and present in the other three, and a screen
+         * reading it would show `undefined` on exactly the paths the owner
+         * hits first. Null means "there is no id", which is the truth, and it
+         * means the same thing in all five.
+         */
+        $result['message_id'] ??= null;
 
         $this->settings->recordTest($result);
 

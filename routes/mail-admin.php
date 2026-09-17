@@ -96,3 +96,29 @@ Route::post('/mail/test', [MailApiController::class, 'test'])
 */
 Route::get('/mail/status-emails', [\App\Http\Controllers\Admin\OrderEmailPolicyController::class, 'show']);
 Route::post('/mail/status-emails', [\App\Http\Controllers\Admin\OrderEmailPolicyController::class, 'save']);
+
+/*
+|------------------------------------------------------------------------------
+| The delivery record — Store → Mail → Sent mail (Lane EE)
+|------------------------------------------------------------------------------
+|
+|     GET /admin-api/mail/log      ?status=all|sent|failed&limit=
+|
+| Added to THIS file rather than a new one for the reason the status-emails
+| block above gives: it is the same screen's data. It is the read side of
+| App\Services\Mail\MailLog, which records every message the application hands
+| to a transport.
+|
+| INSIDE THE ADMIN GROUP, and this is the same argument the header of this file
+| makes about /mail/test, pointing the other way. That one must be authenticated
+| because it SENDS; this one must be authenticated because it READS. Every row
+| carries a recipient's email address, and the table holds every address the
+| shop has ever mailed — password-reset requesters included, who may never have
+| been customers. Unauthenticated, it is a better address list than anything
+| else in this application, handed out for free.
+|
+| No throttle. It sends nothing and writes nothing; the admin guard is the
+| control that matters, and an owner refreshing a diagnostics screen while
+| chasing a missing email is exactly the person a rate limit would punish.
+*/
+Route::get('/mail/log', [\App\Http\Controllers\Admin\MailLogApiController::class, 'show']);

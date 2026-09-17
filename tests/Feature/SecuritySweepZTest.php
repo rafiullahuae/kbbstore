@@ -198,6 +198,25 @@ it('neutralises a formula an anonymous subscriber planted in the source tag', fu
     expect(DB::table('subscribers')->where('email', 'z-victim@example.test')->value('source'))
         ->toBe('=cmd|\'/c calc\'!A1');
 
+    /*
+     * Confirm the row (Lane EE).
+     *
+     * The signup form now writes `pending` and the export only carries
+     * confirmed subscribers — see NewsletterApiController::export(). Without
+     * this the row would simply be absent from the file and the injection
+     * assertions below would pass against an empty CSV, which is the "zero
+     * findings reported as a pass" shape this suite exists to avoid.
+     *
+     * Confirming it also sharpens what this test says: a formula typed by an
+     * anonymous stranger into a public form survives the whole double-opt-in
+     * round trip and reaches the owner's spreadsheet. The prefix is what stops
+     * it executing there.
+     */
+    DB::table('subscribers')->where('email', 'z-victim@example.test')->update([
+        'status' => 'subscribed',
+        'confirmed_at' => now(),
+    ]);
+
     $csv = $this->actingAs(zAdmin(), 'admin')
         ->get('/admin-api/newsletter/export')
         ->streamedContent();
@@ -216,6 +235,9 @@ it('neutralises every leading character a spreadsheet will execute', function ()
             'email' => 'z-lead-' . $i . '@example.test',
             'source' => $lead . 'HYPERLINK("http://evil.test")',
             'status' => 'subscribed',
+            // Confirmed, or the export leaves the row out entirely and every
+            // assertion below would pass against an empty file (Lane EE).
+            'confirmed_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -235,6 +257,8 @@ it('leaves an ordinary subscriber row exactly as it was', function () {
         'email' => 'z-plain@example.test',
         'source' => 'homepage',
         'status' => 'subscribed',
+        // See above: an unconfirmed row is not in the export at all (Lane EE).
+        'confirmed_at' => now(),
         'created_at' => now(),
         'updated_at' => now(),
     ]);

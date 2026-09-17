@@ -22,6 +22,7 @@
  */
 
 use App\Http\Controllers\Admin\MailApiController;
+use App\Http\Controllers\Admin\MailLogApiController;
 use App\Http\Controllers\Admin\OrderEmailPolicyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -78,9 +79,15 @@ function mountedAsDocumented(): Illuminate\Support\Collection
  * address the caller chooses, and the reason for the whole file is that such a
  * thing must never appear outside the guard.
  *
- * Lane BS added the last two: the per-status order-email switches. They belong
- * here because they are the same screen's data and the same guarded group —
- * see the header block above them in routes/mail-admin.php.
+ * Lane BS added the per-status order-email switches. They belong here because
+ * they are the same screen's data and the same guarded group — see the header
+ * block above them in routes/mail-admin.php.
+ *
+ * Lane EE added the last one: the delivery record. Same screen, same group, and
+ * it needs the guard for the mirror-image reason /mail/test does. That one must
+ * be authenticated because it SENDS; this one must be because it READS, and
+ * every row it returns carries a recipient's email address — including people
+ * who only ever asked for a password reset and were never customers.
  *
  * @var array<string, class-string>
  */
@@ -90,6 +97,7 @@ const MAIL_ROUTE_OWNERS = [
     'POST admin-api/mail/test' => MailApiController::class,
     'GET admin-api/mail/status-emails' => OrderEmailPolicyController::class,
     'POST admin-api/mail/status-emails' => OrderEmailPolicyController::class,
+    'GET admin-api/mail/log' => MailLogApiController::class,
 ];
 
 it('defines the routes the mail screen needs and no others', function () {
