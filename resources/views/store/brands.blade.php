@@ -11,7 +11,7 @@
     both modes link to it rather than reproducing it.
 --}}
 @extends('layouts.store')
-@section('title', $brand ? $brand->name : __('store.brands.all_heading'))
+@section('title', $brand ? $brand->t('name') : __('store.brands.all_heading'))
 
 @push('styles')
     {{-- Only when there is a banner to draw. A brand with none configured —
@@ -30,7 +30,7 @@
         <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">
             <a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> <span>&rsaquo;</span>
             <a href="{{ Url::to('/korean-skincare-brands/') }}">{{ __('store.breadcrumb.brands') }}</a> <span>&rsaquo;</span>
-            <span aria-current="page">{{ $brand->name }}</span>
+            <span aria-current="page">{{ $brand->t('name') }}</span>
         </nav>
 
         {{--
@@ -52,16 +52,16 @@
         <div class="brw-hero">
             <span class="brw-logo brw-logo--lg">
                 @if ($brand->logo)
-                    <img src="{{ $brand->logo }}" alt="{{ $brand->name }}" decoding="async">
+                    <img src="{{ $brand->logo }}" alt="{{ $brand->t('name') }}" decoding="async">
                 @else
-                    <span class="brw-initial">{{ mb_strtoupper(mb_substr($brand->name, 0, 1)) }}</span>
+                    <span class="brw-initial">{{ mb_strtoupper(mb_substr($brand->t('name'), 0, 1)) }}</span>
                 @endif
             </span>
             <div class="brw-hero-txt">
                 @unless ($banner ?? null)
-                    <h1 class="brw-h1">{{ $brand->name }}</h1>
+                    <h1 class="brw-h1">{{ $brand->t('name') }}</h1>
                     @if ($brand->description)
-                        <p class="brw-sub">{{ strip_tags($brand->description) }}</p>
+                        <p class="brw-sub">{{ strip_tags($brand->t('description')) }}</p>
                     @endif
                 @endunless
                 {{--
@@ -69,7 +69,7 @@
                     so this link and the directory's tiles can never drift
                     apart, and so U-05 has exactly one place to change.
                 --}}
-                <a class="brw-cta" href="{{ $brand->url() }}">{{ __('store.brands.shop_all', ['brand' => $brand->name]) }}</a>
+                <a class="brw-cta" href="{{ $brand->url() }}">{{ __('store.brands.shop_all', ['brand' => $brand->t('name')]) }}</a>
             </div>
         </div>
 
@@ -128,14 +128,14 @@
                         @if ($showLogo || $showInitial)
                             <span class="brw-logo">
                                 @if ($showLogo)
-                                    <img src="{{ $item->logo }}" alt="{{ $item->name }}" loading="lazy" decoding="async">
+                                    <img src="{{ $item->logo }}" alt="{{ $item->t('name') }}" loading="lazy" decoding="async">
                                 @else
-                                    <span class="brw-initial">{{ mb_strtoupper(mb_substr($item->name, 0, 1)) }}</span>
+                                    <span class="brw-initial">{{ mb_strtoupper(mb_substr($item->t('name'), 0, 1)) }}</span>
                                 @endif
                             </span>
                         @endif
                         @if ($showName)
-                            <span class="brw-name">{{ $item->name }}</span>
+                            <span class="brw-name">{{ $item->t('name') }}</span>
                         @endif
                         <span class="brw-count">{{ $n > 0 ? trans_choice('store.brands.card_count', $n) : __('store.brands.card_coming_soon') }}</span>
                     </a>

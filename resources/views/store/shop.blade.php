@@ -65,7 +65,7 @@
                     @foreach ($cats as $c)
                         <a class="fopt{{ Facets::isOn('cat', $c->slug) ? ' on' : '' }}" href="{{ Facets::url('cat', $c->slug) }}">
                             <span class="cb">{!! $ck !!}</span>
-                            <span class="catdot" style="background:var(--pink)"></span> {{ $c->name }}
+                            <span class="catdot" style="background:var(--pink)"></span> {{ $c->t('name') }}
                             <span class="ct">{{ $c->products_count }}</span>
                         </a>
                     @endforeach
@@ -76,7 +76,7 @@
                 <div class="fgroup"><h4>{{ __('store.shop.facet_brand') }}</h4>
                     @foreach ($brands as $b)
                         <a class="fopt{{ Facets::isOn('brand', $b->slug) ? ' on' : '' }}" href="{{ Facets::url('brand', $b->slug) }}">
-                            <span class="cb">{!! $ck !!}</span> {{ $b->name }}
+                            <span class="cb">{!! $ck !!}</span> {{ $b->t('name') }}
                             <span class="ct">{{ $b->products_count }}</span>
                         </a>
                     @endforeach

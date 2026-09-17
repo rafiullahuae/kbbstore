@@ -214,7 +214,7 @@
         {{-- The tally only when there is one. A demo stand-in tile counts no
              real category and so carries 0; printing "0 products" under a tile
              that links to a full shop would be its own small untruth. --}}
-        <b>{{ $c->name }}</b>@if ((int) $c->products_count > 0)<span class="n">{{ trans_choice('store.home.category_product_count', (int) $c->products_count) }}</span>@endif
+        <b>{{ $c->t('name') }}</b>@if ((int) $c->products_count > 0)<span class="n">{{ trans_choice('store.home.category_product_count', (int) $c->products_count) }}</span>@endif
       </a>
     @endforeach
   </div>
@@ -253,7 +253,7 @@
         <div class="rb"><b>{{ $step['title'] }}</b><span>{{ $step['note'] }}</span></div>
         @if ($step['pick'])
           <div class="rp"><i style="background:{{ Gradient::for($step['pick']->name) }}"></i>
-            <span>{{ $step['pick']->brand?->name }}<br><b>{!! Money::format($step['pick']->effectivePrice()) !!}</b></span></div>
+            <span>{{ $step['pick']->brand?->t('name') }}<br><b>{!! Money::format($step['pick']->effectivePrice()) !!}</b></span></div>
         @endif
       </a>
     @endforeach
@@ -333,7 +333,7 @@
   <div class="brands">
     @foreach ($brands as $b)
       {{-- As with the category tiles above: no tally for a stand-in brand. --}}
-      <a class="bd" href="{{ $b->url() }}"><div class="bname"><span class="bn">{{ $b->name }}</span>@if ((int) $b->products_count > 0)<span class="bc">{{ $b->products_count }}</span>@endif</div></a>
+      <a class="bd" href="{{ $b->url() }}"><div class="bname"><span class="bn">{{ $b->t('name') }}</span>@if ((int) $b->products_count > 0)<span class="bc">{{ $b->products_count }}</span>@endif</div></a>
     @endforeach
   </div>
 </div></section>
@@ -371,7 +371,7 @@
           <img src="{{ $p->image }}" alt="{{ $p->altFor($p->image) }}" width="400" height="400" loading="lazy"
                @if ($ugcSrcset !== '') srcset="{{ $ugcSrcset }}" sizes="{{ \App\Support\ImageVariants::homeTileSizesAttribute() }}" @endif>
         @endif
-        <span class="shop"><b>{{ $p->name }}</b><span>{!! Money::format($p->effectivePrice()) !!}</span></span></div></a>
+        <span class="shop"><b>{{ $p->t('name') }}</b><span>{!! Money::format($p->effectivePrice()) !!}</span></span></div></a>
     @endforeach
   </div>
 </div></section>
@@ -418,7 +418,7 @@
         @endphp
         <div class="im" style="background:{{ $postCover ? '#fff' : Gradient::for($post->title) }}">
           @if ($postCover)
-            <img src="{{ $postCover }}" alt="{{ $post->title }}" width="640" height="400" loading="lazy">
+            <img src="{{ $postCover }}" alt="{{ $post->t('title') }}" width="640" height="400" loading="lazy">
           @endif
           {{-- `tag`, `body` and readMinutes(): the same correction as `cover`
                above, for the three fields that were missed when it was made.
@@ -428,8 +428,8 @@
                fallback but the only branch -- every article on this page
                claimed five minutes whatever its length. --}}
           @if ($post->tag)<span class="chip">{{ $post->tag }}</span>@endif</div>
-        <h3>{{ $post->title }}</h3>
-        <p>{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->excerpt ?: $post->body)), 110) }}</p>
+        <h3>{{ $post->t('title') }}</h3>
+        <p>{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->t('excerpt') ?: $post->t('body'))), 110) }}</p>
         <span class="meta">{{ trans_choice('store.home.read_minutes', $post->readMinutes()) }} · {{ $post->published_at?->format('j M') }}</span>
       </a>
     @endforeach
@@ -509,7 +509,7 @@
         <div class="rh"><span class="av" style="background:{{ Gradient::for($r->author_name ?: '?') }}">{{ mb_substr($r->author_name ?: '?', 0, 1) }}</span>
           <div class="rwho"><div class="rline"><span class="nm">{{ $r->author_name }}</span>@if ($r->verified)<span class="vf">{{ __('store.reviews.verified_badge') }}</span>@endif</div>
             <span class="rstars">@for ($i = 1; $i <= 5; $i++)<span class="{{ $i <= (int) $r->rating ? 'f' : '' }}">★</span>@endfor</span></div></div>
-        @if ($r->product)<div class="rprod">{{ $r->product->name }}</div>@endif
+        @if ($r->product)<div class="rprod">{{ $r->product->t('name') }}</div>@endif
         <div class="rtext">{{ \Illuminate\Support\Str::limit(strip_tags((string) $r->content), 150) }}</div>
         <div class="rf"><span>{{ $r->created_at?->diffForHumans() }}</span>@if ($r->helpful)<span class="cnt3">👍 {{ (int) $r->helpful }}</span>@endif</div>
       </div>

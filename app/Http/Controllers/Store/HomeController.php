@@ -362,6 +362,20 @@ class HomeController extends Controller
             $posts = $demo->fill($posts, 'posts', 3);
         }
 
+        /*
+         * ONE QUERY FOR THE JOURNAL STRIP'S LONG PROSE, NOT ONE PER TILE.
+         *
+         * The tiles print t('excerpt') ?: t('body'), and `body` is one of
+         * TranslationStore::LONG_FIELDS — deliberately not carried in the map
+         * that every Arabic page loads. Without this, three articles with no
+         * excerpt would be three queries; with it they are one, and on an
+         * English page it is none at all because primeTranslations() returns
+         * immediately for the default locale.
+         *
+         * Called after the demo top-up, so the stand-in rows are covered too.
+         */
+        \App\Models\Post::primeTranslations($posts);
+
         return view('store.home', [
             // Section visibility, order and grid skins.
             'sections' => app(HomepageSections::class),

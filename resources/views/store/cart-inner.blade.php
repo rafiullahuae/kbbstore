@@ -62,9 +62,13 @@
                 @foreach ($items as $item)
                     @php
                         $p     = $item->product;
-                        $brand = $p?->brand?->name ?? '';
+                        // t(), not the column; the seed stays English so a
+                        // line keeps one colour in both languages.
+                        $brand = $p?->brand?->t('name') ?? '';
+                        $name  = $p?->t('name');
+                        $seed  = ($p?->brand?->name ?? '') . ($p?->name ?? '');
                         $img   = $item->variant?->image ?: $p?->image;
-                        $thumb = $img ? "background-image:url('" . e($img) . "')" : 'background:' . Gradient::for($brand . ($p?->name ?? ''));
+                        $thumb = $img ? "background-image:url('" . e($img) . "')" : 'background:' . Gradient::for($seed);
                         $attrs = $item->variant?->label();
                         $line  = $item->lineTotal();
                         $was   = ($p && $p->isOnSale()) ? (int) $p->price * $item->quantity : 0;
@@ -77,10 +81,10 @@
                         $wasDp = ($was > $line) ? \App\Support\Money::decimalsToDistinguish($was, $line) : null;
                     @endphp
                     <div class="ci">
-                        <div class="cth" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($p?->name ?? '?')) }}</div>
+                        <div class="cth" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
                         <div class="cmid">
                             @if ($brand)<div class="cbrand">{{ $brand }}</div>@endif
-                            <div class="cn"><a href="{{ $p?->url() ?? '#' }}">{{ $p?->name }}</a></div>
+                            <div class="cn"><a href="{{ $p?->url() ?? '#' }}">{{ $name }}</a></div>
                             @if ($attrs)<div class="cvar">{{ $attrs }}</div>@endif
                             <div class="qty">
                                 <button type="button" data-kcpq="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>

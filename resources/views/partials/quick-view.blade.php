@@ -8,17 +8,21 @@
     cannot disappear in the modal.
 --}}
 @php
-    $brand = $product->brand?->name ?? '';
+    // t(), not the column — the same read the card and the product page make.
+    // On English it IS the column; on /ar it is the Arabic, falling back per
+    // field to the English. See App\Support\HasTranslations.
+    $brand = $product->brand?->t('name') ?? '';
+    $name = $product->t('name');
     $img = $product->image;
     $inStock = ($product->stock_status ?? 'instock') !== 'outofstock';
-    $blurb = trim(strip_tags((string) ($product->short_description ?? '')));
+    $blurb = trim(strip_tags((string) ($product->t('short_description') ?? '')));
 @endphp
 
 <div class="qv-wrap">
   <div class="qv-media">
     @if ($img)
       @php $qvSrcset = \App\Support\ImageVariants::srcsetFor($img); @endphp
-      <img src="{{ $img }}" alt="{{ $product->name }}" loading="lazy"
+      <img src="{{ $img }}" alt="{{ $name }}" loading="lazy"
            @if ($qvSrcset !== '') srcset="{{ $qvSrcset }}" sizes="{{ \App\Support\ImageVariants::quickViewSizesAttribute() }}" @endif>
     @else
       <div class="qv-noimg"></div>
@@ -27,7 +31,7 @@
 
   <div class="qv-info">
     @if ($brand)<div class="qv-brand">{{ $brand }}</div>@endif
-    <h3 class="qv-name">{{ $product->name }}</h3>
+    <h3 class="qv-name">{{ $name }}</h3>
 
     @if ((int) $product->review_count > 0)
       <div class="qv-rate">
@@ -66,7 +70,7 @@
 
     <div class="qv-acts">
       @if ($inStock)
-        <button type="button" class="qv-add" data-kbb-add="{{ $product->id }}" data-quantity="1" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $product->name }}">{{ __('store.product_card.add_to_cart') }}</button>
+        <button type="button" class="qv-add" data-kbb-add="{{ $product->id }}" data-quantity="1" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}">{{ __('store.product_card.add_to_cart') }}</button>
       @endif
       <a class="qv-full" href="{{ $product->url() }}">{{ __('store.quick_view.view_full') }}</a>
     </div>

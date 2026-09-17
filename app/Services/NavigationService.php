@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Menu;
+use App\Services\Translation\TranslationStore;
 use App\Support\BrandUrls;
+use App\Support\Locale;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -133,11 +135,38 @@ class NavigationService
          */
         $hideBrands = ! $this->settings->moduleEnabled('brands', true);
 
-        return $this->filterItems($items, $loggedIn, $hideBrands);
+        /*
+         * THE LABELS ARE TRANSLATED HERE, AND HERE FOR THE SAME REASON THE
+         * VISIBILITY FILTER IS.
+         *
+         * menu() caches one tree for five minutes and shares it with every
+         * visitor. Translating inside that cached closure would bake whichever
+         * visitor's LANGUAGE triggered the cache miss into everybody else's
+         * header — an Arabic menu on the English site for five minutes, or the
+         * reverse — which is exactly the trap tree()'s own comment records
+         * about `visibility` and filterVisible()'s about the brands module.
+         *
+         * So the cached tree stays language-neutral (it carries the English
+         * label and the row's `id`) and the swap happens per request, after the
+         * cache read, in the same pass that is already walking every item.
+         */
+        $locale = Locale::current();
+
+        return $this->filterItems(
+            $items,
+            $loggedIn,
+            $hideBrands,
+            $locale === Locale::DEFAULT ? null : $locale,
+        );
     }
 
-    /** @param array<int, array<string, mixed>> $items */
-    private function filterItems(array $items, bool $loggedIn, bool $hideBrands): array
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @param  string|null  $locale  the language to translate labels into, or
+     *   null for English — which is the column, so nothing is looked up at all
+     *   and an English header is byte-identical.
+     */
+    private function filterItems(array $items, bool $loggedIn, bool $hideBrands, ?string $locale = null): array
     {
         $out = [];
 
@@ -165,7 +194,32 @@ class NavigationService
                 continue;
             }
 
-            $item['children'] = $this->filterItems($item['children'] ?? [], $loggedIn, $hideBrands);
+            /*
+             * ONE HASH LOOKUP PER ITEM AND NO QUERIES. `menu_items.label` is
+             * short text, so it is in the cached map that __() has already
+             * loaded for this request — see TranslationStore::LONG_FIELDS for
+             * what deliberately is not.
+             *
+             * get() and not a pre-built id => label array: the general form
+             * walks the whole map to answer, and a header has about twenty
+             * items against a map of a couple of thousand entries.
+             *
+             * Blank means untranslated, so an item with no Arabic label keeps
+             * its English one. A fallback item from fallback() has no `id` at
+             * all and is never matched, which is right: it is not a row and
+             * there is nothing in `translations` that could be about it.
+             */
+            $id = (int) ($item['id'] ?? 0);
+
+            if ($locale !== null && $id > 0) {
+                $label = TranslationStore::get($locale, 'menu_items', $id, 'label');
+
+                if ($label !== null && $label !== '') {
+                    $item['label'] = $label;
+                }
+            }
+
+            $item['children'] = $this->filterItems($item['children'] ?? [], $loggedIn, $hideBrands, $locale);
             $out[] = $item;
         }
 

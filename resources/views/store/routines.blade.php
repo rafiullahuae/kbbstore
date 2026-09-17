@@ -315,9 +315,9 @@
                                     <ul class="rtn-alts">
                                         @foreach ($alts as $alt)
                                             <li>
-                                                <a href="{{ $swapUrl($routine, $step['role'], $alt->slug) }}">{{ $alt->name }}</a>
+                                                <a href="{{ $swapUrl($routine, $step['role'], $alt->slug) }}">{{ $alt->t('name') }}</a>
                                                 @if ($alt->brand?->name)
-                                                    <span class="rtn-b">{{ $alt->brand->name }}</span>
+                                                    <span class="rtn-b">{{ $alt->brand->t('name') }}</span>
                                                 @endif
                                                 <span class="rtn-b">{!! Money::format($alt->effectivePrice()) !!}</span>
                                             </li>

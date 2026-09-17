@@ -257,7 +257,7 @@
                 </div>
               </div>
               @if ($review->product)
-                <div class="sr-prod">{!! __('store.review_wall.on_product', ['product' => '<a href="' . e(Url::to('/product/' . $review->product->slug . '/')) . '">' . e($review->product->name) . '</a>']) !!}</div>
+                <div class="sr-prod">{!! __('store.review_wall.on_product', ['product' => '<a href="' . e(Url::to('/product/' . $review->product->slug . '/')) . '">' . e($review->product->t('name')) . '</a>']) !!}</div>
               @endif
               @if (trim((string) $review->title) !== '')
                 <div class="sr-h">{{ $review->title }}</div>

@@ -14,8 +14,11 @@
            longer drives any cart behaviour here. --}}
 @php use App\Support\Gradient; use App\Support\Money; @endphp
 @php
+    // The seed stays English — see components/product-card.blade.php — and the
+    // name a shopper reads is t().
+    $name = $bp->t('name');
     $thumb = $bp->image
         ? "background-image:url('" . e($bp->image) . "')"
         : 'background:' . Gradient::for(($bp->brand?->name ?? '') . $bp->name);
 @endphp
-<div class="bitem"><a class="bth" href="{{ $bp->url() }}" style="{{ $thumb }}"></a><div class="binfo"><a class="bn" href="{{ $bp->url() }}">{{ $bp->name }}</a><div class="bp">@if ($bp->isOnSale())@php $kbbBDp = Money::decimalsToDistinguish((int) $bp->price, $bp->effectivePrice()); @endphp<del aria-hidden="true">{!! Money::format((int) $bp->price, $kbbBDp) !!}</del><ins aria-hidden="true">{!! Money::format($bp->effectivePrice(), $kbbBDp) !!}</ins>@else{!! Money::format($bp->effectivePrice()) !!}@endif</div></div><button type="button" class="baddbtn" data-kbb-checkout-add="{{ $bp->id }}" data-kbb-add="{{ $bp->id }}" data-price="{{ number_format($bp->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $bp->name }}" aria-label="{{ __('store.checkout.browsed_add_label', ['product' => $bp->name]) }}">{{ __('store.checkout.browsed_add') }}</button></div>
+<div class="bitem"><a class="bth" href="{{ $bp->url() }}" style="{{ $thumb }}"></a><div class="binfo"><a class="bn" href="{{ $bp->url() }}">{{ $name }}</a><div class="bp">@if ($bp->isOnSale())@php $kbbBDp = Money::decimalsToDistinguish((int) $bp->price, $bp->effectivePrice()); @endphp<del aria-hidden="true">{!! Money::format((int) $bp->price, $kbbBDp) !!}</del><ins aria-hidden="true">{!! Money::format($bp->effectivePrice(), $kbbBDp) !!}</ins>@else{!! Money::format($bp->effectivePrice()) !!}@endif</div></div><button type="button" class="baddbtn" data-kbb-checkout-add="{{ $bp->id }}" data-kbb-add="{{ $bp->id }}" data-price="{{ number_format($bp->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}" aria-label="{{ __('store.checkout.browsed_add_label', ['product' => $name]) }}">{{ __('store.checkout.browsed_add') }}</button></div>

@@ -197,7 +197,11 @@ class BrandController extends Controller
         // The brand's own banner, when the owner has turned one on. Null for
         // every brand that has not, which is the default and is decided by the
         // column being NULL rather than by a stored flag.
-        $banner = \App\Support\PageBanner::forModel($brand, $brand->name);
+        // The FALLBACK heading is the brand's own name and is therefore
+        // catalogue: t(). The banner's own `heading` is a JSON sub-key of
+        // `banner` and is not translatable yet — see the note in
+        // docs/fn-translation-at-scale.md, which is a decision for the SEO lane.
+        $banner = \App\Support\PageBanner::forModel($brand, $brand->t('name'));
 
         return view('store.brands', [
             'banner' => $banner,
@@ -304,7 +308,10 @@ class BrandController extends Controller
          */
         $override = \App\Support\ProductSeo::normalise($brand->seo) ?? [];
 
-        $description = trim((string) ($override['desc'] ?? $brand->description));
+        // t(), so an Arabic brand page publishes an Arabic <meta description>.
+        // `description` is one of TranslationStore::LONG_FIELDS — one brand,
+        // one row, one query on the page that prints it.
+        $description = trim((string) ($override['desc'] ?? $brand->t('description')));
 
         /*
          * THE SHARE IMAGE IS STILL THE PAGE'S OWN HERO unless the owner has
@@ -370,10 +377,13 @@ class BrandController extends Controller
             'image' => $image !== '' ? $image : null,
             'url' => $url,
             'noindex' => $noindex ?: null,
+            // The same keys the visible crumb uses, so the trail Google prints
+            // and the trail a shopper reads say the same words. Their English
+            // defaults are 'Home' and 'Brands', which is what these literals were.
             'breadcrumb' => [
-                ['name' => 'Home', 'url' => $base . Url::to('/')],
-                ['name' => 'Brands', 'url' => $base . Url::to('/korean-skincare-brands/')],
-                ['name' => $brand->name, 'url' => $url],
+                ['name' => __('store.breadcrumb.home'), 'url' => $base . Url::to('/')],
+                ['name' => __('store.breadcrumb.brands'), 'url' => $base . Url::to('/korean-skincare-brands/')],
+                ['name' => $brand->t('name'), 'url' => $url],
             ],
         ], static fn ($v) => $v !== null);
 

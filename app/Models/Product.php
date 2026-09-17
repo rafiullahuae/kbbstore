@@ -227,7 +227,10 @@ class Product extends Model
             return $stored;
         }
 
-        return \App\Support\ProductTitle::alt($this->brand?->name, $this->name, $index, $total);
+        // t(), not the column: alt text is read aloud to a shopper and indexed
+        // by a search engine, so it is content and not an identifier. On
+        // English t() IS the column, so nothing about the English page moves.
+        return \App\Support\ProductTitle::alt($this->brand?->t('name'), $this->t('name'), $index, $total);
     }
 
     /**
