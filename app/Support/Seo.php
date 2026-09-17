@@ -67,7 +67,24 @@ class Seo
             );
         }
 
-        return "\n" . '<title>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>' . "\n";
+        /*
+         * hreflang survives the engine switch, and that is deliberate.
+         *
+         * Store -> Modules -> SEO Engine governs what this shop CHOOSES to say
+         * about itself — the title template, the descriptions, the cards, the
+         * structured data. Which languages a document exists in is not a
+         * choice, it is a fact about the URL space, and dropping the tag would
+         * not make the Arabic pages go away: it would leave two indexable
+         * copies of every page with nothing relating them, which is the
+         * duplicate-content state hreflang exists to prevent. The layout
+         * emitted it outside the engine's gate before this moved here, so this
+         * is also the behaviour that was already shipping.
+         */
+        $base = rtrim(SeoSettings::firstFilled($s['site_url'] ?? null, (string) config('app.url')), '/');
+        $links = self::alternateLinks(self::canonical($ctx['url'] ?? null, $base), $base, $ctx);
+
+        return "\n" . '<title>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>' . "\n"
+            . ($links === [] ? '' : implode("\n", $links) . "\n");
     }
 
     /** @param array $ctx type,title,description,image,url,noindex,product,article,breadcrumb */
@@ -181,6 +198,13 @@ class Seo
             if ($json !== null) {
                 $out[] = '<script type="application/ld+json">' . $json . '</script>';
             }
+        }
+
+        // hreflang. See alternateLinks() for why it is emitted from here and
+        // not from the layout, and why it is built from $url rather than from
+        // the request path.
+        foreach (self::alternateLinks($url, $base, $ctx) as $link) {
+            $out[] = $link;
         }
 
         /*
@@ -420,7 +444,276 @@ class Seo
         return $desc;
     }
 
+    /**
+     * The canonical URL for the page being rendered, IN THE LANGUAGE IT IS
+     * BEING RENDERED IN.
+     *
+     * ── WHY THE LOCALE IS APPLIED HERE AND NOT AT THE CALL SITES ────────────
+     *
+     * Nine places build a `url` for $ctx and hand it to render(): the product
+     * page, the post page, the Journal index, /reviews, /skin-quiz, /app, the
+     * four curated collections, the brand pages and /shop. Most of them build
+     * it as `$siteBase . '/some/literal/path/'` — a string, not a link — so
+     * Url::to() never sees it and the language prefix was never added. Fetched
+     * with Arabic switched on, /ar/shop/, /ar/new-in/, /ar/skincare-guide/,
+     * /ar/reviews/ and /ar/skin-quiz/ each published
+     * `<link rel="canonical" href="https://…/shop/">` — the ENGLISH address.
+     * A canonical pointing at another language is not a weak signal, it is an
+     * instruction: it tells Google the Arabic page is a duplicate of the
+     * English one and must not be indexed, which would have left the entire
+     * Arabic storefront out of the index while every hreflang on the site
+     * advertised it.
+     *
+     * Two of those nine already did it correctly (BrandController goes through
+     * Url::to(), Product::url() does too), which is exactly the failure mode a
+     * choke point exists to stop: the rule was known, written down, and applied
+     * in two places out of nine. Fixing the seven call sites leaves the eighth
+     * — the one a later lane writes — still wrong. Fixing it here cannot be
+     * forgotten by a page that does not exist yet.
+     *
+     * ── AND IT FIXES THE `seo` JSON OVERRIDE FOR FREE ───────────────────────
+     *
+     * ProductController and PageController both honour a per-row
+     * `seo.canonical`, which an admin types once, in English, for both
+     * languages. Passed straight through, that override dragged the Arabic
+     * product page onto the English canonical no matter what the rest of this
+     * class did. It arrives here like any other URL and is localised like any
+     * other URL — so the Arabic page canonicalises to the Arabic address OF
+     * THE PAGE THE OWNER POINTED AT, which is what the override means.
+     *
+     * A canonical on ANOTHER HOST is left exactly as it is: a syndication
+     * canonical names a document this shop does not serve, and /ar/ in front of
+     * somebody else's URL is a 404.
+     */
     private static function canonical(?string $url, string $base): ?string
+    {
+        return self::localise(self::canonicalAbsolute($url, $base), $base);
+    }
+
+    /**
+     * <link rel="alternate" hreflang="…"> for every language this page exists
+     * in, plus x-default.
+     *
+     * ── WHY IT IS BUILT FROM THE CANONICAL AND NOT FROM THE REQUEST PATH ────
+     *
+     * Google's stated requirement is that an hreflang URL must be the canonical
+     * form of the page it names. Built from request()->getPathInfo(), as the
+     * layout built it, the two could differ and on three page types they did:
+     *
+     *   - /new-in/?page=2 canonicalises WITH the query (page 2 is its own
+     *     document) and the alternates were emitted without it, so the Arabic
+     *     alternate of page two was page one;
+     *   - a post carrying a `seo.canonical` override canonicalises to another
+     *     address entirely, and the alternates still named this one;
+     *   - /cart vs /cart/ — the canonical normalises the trailing slash back on
+     *     whatever the request carried, and an alternate that disagrees is an
+     *     alternate pointing at a redirect, which drops the whole cluster.
+     *
+     * Reading the canonical instead makes those three true by construction
+     * rather than by three separate corrections: whatever the page declares
+     * itself to be, its alternates are the other languages OF THAT, and the
+     * self-referencing alternate is the canonical string itself.
+     *
+     * ── WHY IT IS HERE AND NOT IN layouts/store.blade.php ──────────────────
+     *
+     * Four storefront pages do not use that layout — /skin-quiz, /skincare-guide,
+     * an article, and /app each carry their own <html> document and call
+     * render() for their <head>. Fetched with Arabic on, all four served an
+     * Arabic URL with no hreflang on it at all, so /ar/skin-quiz/ and
+     * /skin-quiz/ were two unrelated pages as far as a crawler was concerned.
+     * Every page that describes itself to a search engine comes through this
+     * method; the layout is only one of its callers.
+     *
+     * ── BOTH DIRECTIONS, ALWAYS ────────────────────────────────────────────
+     *
+     * Including this page's own address. A page that lists its alternates
+     * without listing itself is a page Google treats as unrelated to them, and
+     * the pair reads as duplicate content rather than as two languages of one
+     * document. Locale::alternatePaths() returns the whole set, this page
+     * included, and returns [] while there is only one language live — so with
+     * Arabic off nothing at all is emitted, which is what the shop does today.
+     *
+     * x-default points at the default language, which is where a reader whose
+     * browser asks for neither should land.
+     *
+     * ── AND NOT AT ALL ON A DOCUMENT THAT SAYS noindex ABOUT ITSELF ────────
+     *
+     * An hreflang set is a claim that these URLs are alternates of one another
+     * and should each be indexed for their own audience. A document whose
+     * robots tag says "noindex, nofollow" is saying the opposite about itself
+     * in the same <head>, and Google resolves the pair by dropping the cluster
+     * rather than honouring half of it — so leaving the tags on costs the OTHER
+     * language its alternate too. Not hypothetical: `brands.seo` and
+     * `categories.seo` carry a noindex the owner sets per brand and per
+     * category, and with Arabic enabled a brand marked noindex published three
+     * alternates advertising itself.
+     *
+     * `noindex_editorial`, NOT `noindex`, AND THAT IS THE WHOLE CARE HERE.
+     * layouts/store.blade.php also sets noindex from
+     * Indexability::isPrivate() — the cart, the checkout, the account area, the
+     * wishlist and order tracking. Those are per-visitor pages excluded for a
+     * reason that has nothing to do with what document they are, and the
+     * bilingual foundation emits their alternates deliberately so an Arabic
+     * shopper's wishlist links to the English one. Only an editorial "do not
+     * index this document" retracts the cluster, and the layout is what knows
+     * which kind its noindex is.
+     *
+     * A caller that renders its own <head> — /skin-quiz, the Journal, an
+     * article, /app — sets only `noindex`, and for those it is always the
+     * editorial kind, which is why that is the fallback.
+     *
+     * @param  array<string, mixed>  $ctx
+     * @return list<string>
+     */
+    private static function alternateLinks(?string $url, string $base, array $ctx = []): array
+    {
+        if (! empty($ctx['noindex_editorial'] ?? ($ctx['noindex'] ?? false))) {
+            return [];
+        }
+
+        $split = self::splitOwnUrl($url, $base);
+
+        if ($split === null) {
+            return [];
+        }
+
+        [$prefix, $path, $suffix] = $split;
+
+        $alternates = Locale::alternatePaths($path);
+
+        if ($alternates === []) {
+            return [];
+        }
+
+        $root = rtrim($base, '/');
+        $e = static fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
+
+        /*
+         * THE SAME TRAILING SLASH THE CANONICAL CARRIES.
+         *
+         * Every storefront route in this shop is declared with one and the
+         * canonical puts it back whether or not the request had it. An hreflang
+         * naming /ar/my-wishlist while that page canonicalises to
+         * /ar/my-wishlist/ is an hreflang pointing at a redirect, and the
+         * cluster is dropped rather than half-honoured.
+         */
+        $href = static function (string $localePath) use ($root, $prefix, $suffix): string {
+            if ($localePath !== '/' && ! str_ends_with($localePath, '/')) {
+                $localePath .= '/';
+            }
+
+            return $root . $prefix . $localePath . $suffix;
+        };
+
+        $out = [];
+
+        foreach ($alternates as $code => $localePath) {
+            $out[] = '<link rel="alternate" hreflang="' . $e($code) . '" href="' . $e($href($localePath)) . '">';
+        }
+
+        $default = $alternates[Locale::DEFAULT] ?? null;
+
+        if ($default !== null) {
+            $out[] = '<link rel="alternate" hreflang="x-default" href="' . $e($href($default)) . '">';
+        }
+
+        return $out;
+    }
+
+    /**
+     * Split an absolute URL of OUR OWN into [deployment prefix, path, suffix].
+     *
+     * Returns null for anything that is not under $base — another host, a
+     * protocol-relative CDN URL, a syndication canonical. Nothing in this file
+     * may put a locale segment on one of those.
+     *
+     * The deployment prefix is separated from the path because the two compose
+     * in exactly one order: KBB_BASE_PATH is where the application is MOUNTED
+     * and the locale is a fact about the PAGE, so it is /kbb-upgrade/ar/shop/
+     * and never /ar/kbb-upgrade/shop/. site_url normally already carries the
+     * base path (APP_URL does on the production host), in which case it is part
+     * of $base and $prefix comes back ''; when it does not, Url::base() finds
+     * it on the front of the path and it is held aside here. Both spellings
+     * therefore produce the same address, which is the point — the shop has
+     * shipped with site_url written both ways.
+     *
+     * The suffix is the query string and fragment, kept out of the way of the
+     * path surgery and put back untouched. /new-in/?page=2 has an Arabic twin
+     * and it is /ar/new-in/?page=2, not /ar/new-in/.
+     *
+     * @return array{0: string, 1: string, 2: string}|null
+     */
+    private static function splitOwnUrl(?string $url, string $base): ?array
+    {
+        if ($url === null || $url === '') {
+            return null;
+        }
+
+        $root = rtrim($base, '/');
+
+        if ($root === '' || ! str_starts_with($url, $root)) {
+            return null;
+        }
+
+        $rest = substr($url, strlen($root));
+
+        if ($rest === '') {
+            $rest = '/';
+        }
+
+        // https://kbeautybliss.com vs https://kbeautybliss.com.evil.test/ —
+        // str_starts_with() alone would accept the second.
+        if ($rest[0] !== '/') {
+            return null;
+        }
+
+        $cut = strcspn($rest, '?#');
+        $path = substr($rest, 0, $cut);
+        $suffix = substr($rest, $cut);
+
+        $prefix = '';
+        $basePath = Url::base();
+
+        if ($basePath !== '' && ($path === $basePath || str_starts_with($path, $basePath . '/'))) {
+            $prefix = $basePath;
+            $path = substr($path, strlen($basePath));
+            $path = $path === '' ? '/' : $path;
+        }
+
+        return [$prefix, $path, $suffix];
+    }
+
+    /**
+     * Put the current language's segment onto one of our own absolute URLs.
+     *
+     * Locale::withSegment() is idempotent and returns the path untouched for a
+     * path that may not carry a prefix at all (/wp-content/…, the admin, any
+     * segment with a dot in it), so this is safe to apply to every URL this
+     * class emits rather than to a list of the ones that need it.
+     *
+     * In English — and that is every request this shop serves until the owner
+     * turns Arabic on — Locale::segment() is '' and this returns its argument
+     * unchanged, before any path is split. The English shop is byte-for-byte
+     * the shop it is today.
+     */
+    private static function localise(?string $url, string $base): ?string
+    {
+        if ($url === null || Locale::segment() === '') {
+            return $url;
+        }
+
+        $split = self::splitOwnUrl($url, $base);
+
+        if ($split === null) {
+            return $url;
+        }
+
+        [$prefix, $path, $suffix] = $split;
+
+        return rtrim($base, '/') . $prefix . Locale::withSegment($path) . $suffix;
+    }
+
+    private static function canonicalAbsolute(?string $url, string $base): ?string
     {
         $url = trim((string) $url);
 

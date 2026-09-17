@@ -4,11 +4,27 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Services\Seo\SeoSettings;
+use App\Support\Locale;
+use App\Support\Url;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class SeoFilesController extends Controller
 {
+    /**
+     * The per-visitor paths robots.txt keeps crawlers off.
+     *
+     * The same set as App\Support\Indexability::PRIVATE_PREFIXES, in the order
+     * this file has always printed them, so the English bytes of robots.txt do
+     * not move. It is a second list rather than a use of the first ONLY because
+     * of that order, and SeoBilingualTest asserts the two sets are equal — so a
+     * private prefix added to one and not the other fails the suite instead of
+     * shipping a crawlable account page.
+     */
+    private const ROBOTS_PRIVATE = [
+        '/checkout', '/cart', '/my-account', '/my-wishlist', '/wishlist', '/track-my-order',
+    ];
+
     /**
      * The absolute base every URL in these files is built on.
      *
@@ -344,20 +360,147 @@ class SeoFilesController extends Controller
             }
         }
 
+        /*
+         * ── ONE SITEMAP CARRYING xhtml:link ALTERNATES, NOT A SITEMAP INDEX ──
+         *
+         * The two shapes Google accepts are (a) one file in which each <url>
+         * names every language of that page with <xhtml:link>, and (b) a
+         * sitemap index pointing at one file per language. This is (a), and the
+         * reasons are specific to this shop rather than general:
+         *
+         * 1. A CLUSTER HAS TO BE COMPLETE AND RECIPROCAL, and shape (a) makes
+         *    that true by construction. Every entry below is built from ONE
+         *    call to Locale::alternatePaths() — the same call layouts and
+         *    App\Support\Seo make for the <head> — so the sitemap cannot
+         *    disagree with the page about what the page's alternates are. Two
+         *    files built in two passes can drift, and a cluster that does not
+         *    reciprocate is dropped in full rather than half-honoured.
+         *
+         * 2. THE SWITCH HAS TO BE ABLE TO GO BACK OFF. Arabic is a setting
+         *    (Locale::enabled) precisely so it needs no release to flip. Under
+         *    shape (b) flipping it changes which FILES exist: /sitemap-ar.xml
+         *    appears and disappears, and Search Console keeps fetching a child
+         *    sitemap it has already seen and starts reporting 404s on it. Here
+         *    the address never changes, and with Arabic off this method emits
+         *    byte-for-byte the file it emits today — verified by diffing the
+         *    fetched /sitemap.xml against the tip's — no index wrapper, no
+         *    xmlns:xhtml, no /ar anywhere.
+         *
+         * 3. THERE IS NO SIZE ARGUMENT FOR SPLITTING. The limits are 50,000
+         *    URLs and 50MB uncompressed. This catalogue is 671 products; two
+         *    languages of the whole sitemap is about 1,400 <url> elements. An
+         *    index exists to get under a ceiling that is two orders of
+         *    magnitude away.
+         *
+         * 4. A SECOND SITEMAP ADDRESS IS A SECOND THING TO GET WRONG on a host
+         *    where a new route does not exist until a migration has cleared the
+         *    compiled route table. Locale::localisable() already refuses to put
+         *    /ar in front of anything with a dot in it, for exactly this
+         *    reason: a machine-facing document has one canonical address.
+         *
+         * The xhtml namespace is declared only when there is something to put
+         * in it, so the English-only file is unchanged down to the root element.
+         */
+        $bilingual = count(Locale::enabledCodes()) > 1;
+
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+              . ($bilingual ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : '')
+              . '>' . "\n";
+
         foreach ($urls as $u) {
-            $xml .= '  <url><loc>' . htmlspecialchars($u['loc'], ENT_XML1) . '</loc>';
-            if (!empty($u['lastmod'])) {
-                $d = @date('Y-m-d', strtotime((string) $u['lastmod']));
-                if ($d) $xml .= '<lastmod>' . $d . '</lastmod>';
+            foreach ($this->cluster((string) $u['loc'], $base) as $entry) {
+                $xml .= '  <url><loc>' . htmlspecialchars($entry['loc'], ENT_XML1) . '</loc>';
+
+                // Immediately after <loc>, which is where Google's own
+                // documented example puts them.
+                foreach ($entry['alternates'] as $hreflang => $href) {
+                    $xml .= '<xhtml:link rel="alternate" hreflang="' . htmlspecialchars((string) $hreflang, ENT_XML1)
+                          . '" href="' . htmlspecialchars($href, ENT_XML1) . '"/>';
+                }
+
+                if (!empty($u['lastmod'])) {
+                    $d = @date('Y-m-d', strtotime((string) $u['lastmod']));
+                    if ($d) $xml .= '<lastmod>' . $d . '</lastmod>';
+                }
+                $xml .= '<changefreq>' . $u['freq'] . '</changefreq>';
+                $xml .= '<priority>' . $u['priority'] . '</priority></url>' . "\n";
             }
-            $xml .= '<changefreq>' . $u['freq'] . '</changefreq>';
-            $xml .= '<priority>' . $u['priority'] . '</priority></url>' . "\n";
         }
         $xml .= '</urlset>';
 
         return response($xml, 200)->header('Content-Type', 'application/xml; charset=UTF-8');
+    }
+
+    /**
+     * One sitemap URL in, every language of it out, each carrying the whole set.
+     *
+     * With one language live this returns the entry exactly as it came in and
+     * no alternates at all — the single place the bilingual sitemap decides to
+     * be an English sitemap, and the reason nothing else in sitemap() needed to
+     * learn about a second language.
+     *
+     * The deployment prefix is held aside before the locale segment is added
+     * and put back after, because the two compose in one order only:
+     * /kbb-upgrade/ar/shop/. site_url normally already carries the base path
+     * (APP_URL does on the production host) in which case it is inside $base
+     * and $prefix is '' — this handles the other spelling too rather than
+     * assuming which one is configured, because the shop has shipped with both.
+     *
+     * A loc that is not under $base is handed straight back. Nothing builds one
+     * today, and quietly putting /ar/ in front of another host's URL is the
+     * kind of thing that should need a decision rather than happen.
+     *
+     * @return list<array{loc: string, alternates: array<string, string>}>
+     */
+    private function cluster(string $loc, string $base): array
+    {
+        $plain = [['loc' => $loc, 'alternates' => []]];
+
+        $root = rtrim($base, '/');
+
+        if ($root === '' || ! str_starts_with($loc, $root)) {
+            return $plain;
+        }
+
+        $path = substr($loc, strlen($root));
+
+        if ($path === '' || $path[0] !== '/') {
+            return $plain;
+        }
+
+        $prefix = '';
+        $basePath = Url::base();
+
+        if ($basePath !== '' && ($path === $basePath || str_starts_with($path, $basePath . '/'))) {
+            $prefix = $basePath;
+            $path = substr($path, strlen($basePath));
+            $path = $path === '' ? '/' : $path;
+        }
+
+        $alternates = Locale::alternatePaths($path);
+
+        if ($alternates === []) {
+            return $plain;
+        }
+
+        $hrefs = [];
+
+        foreach ($alternates as $code => $localePath) {
+            $hrefs[$code] = $root . $prefix . $localePath;
+        }
+
+        // x-default last, and pointing at the default language: where a reader
+        // whose browser asks for neither should land.
+        $hrefs['x-default'] = $hrefs[Locale::DEFAULT] ?? $loc;
+
+        $out = [];
+
+        foreach ($alternates as $code => $localePath) {
+            $out[] = ['loc' => $hrefs[$code], 'alternates' => $hrefs];
+        }
+
+        return $out;
     }
 
     /**
@@ -428,6 +571,44 @@ class SeoFilesController extends Controller
             "- [Journal]({$base}/skincare-guide/)",
         ];
 
+        /*
+         * ── WHICH LANGUAGES THIS SHOP IS PUBLISHED IN ────────────────────────
+         *
+         * The audience for this file is the audience least able to check it
+         * against the shop, which is the reason the comment on llms() above
+         * exists at all. An agent handed only the English addresses will report
+         * that this shop has no Arabic, while every page of it is carrying
+         * hreflang="ar" and the sitemap is naming 671 Arabic URLs.
+         *
+         * Only once there is a second language live — with Arabic off,
+         * Locale::enabledCodes() is ['en'], this block emits nothing, and the
+         * file is byte-for-byte what it is today. The addresses are built
+         * through Locale::withSegment() rather than written out, so a third
+         * language is a row in Locale::LOCALES and not an edit here.
+         */
+        $live = Locale::enabledCodes();
+
+        if (count($live) > 1) {
+            $lines[] = '';
+            $lines[] = '## Languages';
+
+            foreach ($live as $code) {
+                $meta = Locale::LOCALES[$code];
+                $label = $meta['native'] === $meta['name']
+                    ? $meta['name']
+                    : $meta['name'] . ' (' . $meta['native'] . ')';
+
+                $lines[] = "- {$label} — `{$code}`"
+                    . ($code === Locale::DEFAULT ? ', served unprefixed' : ', served under /' . $meta['segment'] . '/')
+                    // $base already carries the deployment prefix, exactly as
+                    // the Key pages block above assumes — so these are the bare
+                    // localised paths, not Url::raw(), which would print
+                    // /kbb-upgrade twice.
+                    . ': [Shop](' . $base . Locale::withSegment('/shop/', $code) . ')'
+                    . ', [Journal](' . $base . Locale::withSegment('/skincare-guide/', $code) . ')';
+            }
+        }
+
         return response(implode("\n", $lines) . "\n", 200)
             ->header('Content-Type', 'text/plain; charset=UTF-8');
     }
@@ -441,16 +622,75 @@ class SeoFilesController extends Controller
             return response($custom, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
         }
         $base = $this->base();
-        $body = "User-agent: *\nAllow: /\n"
-              . "Disallow: /admin\nDisallow: /admin-api\nDisallow: /api\nDisallow: /checkout\n"
-              // Thin or per-visitor pages: a cart, an account area and a
-              // wishlist are different for every visitor and useless in a
-              // result. Every crawl of them is budget not spent on a
-              // product. /admin stays a decoy -- the real admin path is a
-              // setting, and naming it here would publish the one thing
-              // keeping it quiet.
-              . "Disallow: /cart\nDisallow: /my-account\nDisallow: /my-wishlist\nDisallow: /wishlist\nDisallow: /track-my-order\n\n"
-              . "Sitemap: {$base}/sitemap.xml\n";
+
+        /*
+         * ── EVERY PATH THROUGH Url::raw(), AND EVERY PRIVATE ONE ONCE PER
+         *    LANGUAGE ──────────────────────────────────────────────────────
+         *
+         * A robots.txt rule is matched against the path as the crawler sees it
+         * in the address bar, which is the deployment prefix plus the locale
+         * segment plus the path. This file printed neither.
+         *
+         * The locale half is the leak. With Arabic switched on, /ar/checkout,
+         * /ar/cart, /ar/my-account and /ar/track-my-order are real, served,
+         * 200-answering addresses that this file said nothing about — so the
+         * account area was Disallowed in English and crawlable in Arabic, which
+         * is the same shape of defect CLAUDE.md records this shop shipping
+         * before and the reason Indexability exists at all. The pages
+         * themselves do emit noindex under /ar (Indexability::isPrivate now
+         * strips the locale segment before matching), but a Disallow and a
+         * noindex are not the same instruction and the two files have to agree:
+         * a URL Google may not crawl is a URL whose noindex it can never read.
+         *
+         * The base-path half is smaller and was wrong the same way. On the host
+         * that serves this app from /kbb-upgrade, "Disallow: /checkout" names a
+         * path at the DOMAIN root that this application does not serve, so the
+         * rule protected nothing. Url::raw() — raw, not to(), because each of
+         * these is written out once per language explicitly — puts the prefix
+         * on. With no base path configured it returns its argument, so the
+         * bytes on the default path do not move.
+         *
+         * /admin stays a decoy: the real admin path is a setting, and naming it
+         * here would publish the one thing keeping it quiet. It is not
+         * localised either — Locale::UNLOCALISED_ROOTS keeps the back office to
+         * one address.
+         */
+        $body = "User-agent: *\nAllow: /\n";
+
+        // The back office and the admin API have exactly one address each:
+        // Locale::UNLOCALISED_ROOTS lists 'admin-api', and the configured admin
+        // path is excluded by Locale::localisable(), so neither answers under
+        // /ar and a prefixed rule here would name nothing.
+        foreach (['/admin', '/admin-api'] as $path) {
+            $body .= 'Disallow: ' . Url::raw($path) . "\n";
+        }
+
+        /*
+         * /api IS LOCALISED AND IT SHOULD NOT BE, but that is not this file's
+         * call to make.
+         *
+         * Locale::UNLOCALISED_ROOTS lists 'admin-api' and does not list 'api',
+         * so the middleware strips the prefix off /ar/api/products and the
+         * public API answers 200 there — verified against the running app. That
+         * is a second crawlable address for every endpoint in it. Whether the
+         * router should serve it at all is a question about that constant, and
+         * the constant belongs to the bilingual foundation; what this file can
+         * do is stop asking crawlers to spend budget on the copy. Listed here
+         * rather than silently omitted, so the rule is not quietly wrong the
+         * day the constant changes either way.
+         *
+         * Then the thin or per-visitor pages: a cart, an account area and a
+         * wishlist are different for every visitor and useless in a result.
+         * Every crawl of them is budget not spent on a product.
+         */
+        foreach (array_merge(['/api'], self::ROBOTS_PRIVATE) as $path) {
+            foreach (Locale::enabledCodes() as $code) {
+                $body .= 'Disallow: ' . Url::raw(Locale::withSegment($path, $code)) . "\n";
+            }
+        }
+
+        $body .= "\nSitemap: {$base}/sitemap.xml\n";
+
         return response($body, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 }

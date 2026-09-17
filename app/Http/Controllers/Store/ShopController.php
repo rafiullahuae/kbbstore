@@ -59,9 +59,24 @@ class ShopController extends Controller
         $page = Facets::page();
         $perPage = (int) $this->settings->get('products_per_page', 24);
 
+        /*
+         * EVERY CARD COLUMN QUALIFIED WITH ITS TABLE.
+         *
+         * A search joins `brands` (applyFacets below), and `brands` carries a
+         * column called id, one called slug, one called name, one called
+         * position and one called created_at — five of the eighteen this list
+         * asks for. Unqualified, MySQL answers "Column 'id' in field list is
+         * ambiguous" and every search on the shop is a 500. SQLite is happy to
+         * guess, which is exactly the MySQL-parity gap docs/MYSQL-PARITY.md
+         * exists for, so this is qualified once here rather than discovered on
+         * the live host.
+         *
+         * `products.name` and `name` select the same column when nothing is
+         * joined, so the unsearched query is unchanged.
+         */
         $query = Product::query()
             ->visible()
-            ->select(self::CARD_COLUMNS)
+            ->select(array_map(static fn (string $c): string => 'products.' . $c, self::CARD_COLUMNS))
             ->with('brand:id,name,slug');
 
         $category ??= $categorySlug ? Category::where('slug', $categorySlug)->first() : null;
@@ -335,11 +350,42 @@ class ShopController extends Controller
             // the value is still bound, but wrong results all the same.
             $terms = \App\Support\SearchTerms::expand($search);
 
+            /*
+             * ── ONE LEFT JOIN, NOT A CORRELATED EXISTS PER TERM PER ROW ─────
+             *
+             * orWhereHas('brand', …) compiles to
+             *   exists (select * from brands
+             *           where products.brand_id = brands.id and brands.name like ?)
+             * which the planner evaluates once per candidate row, per search
+             * term. On 3,025 products that is the dominant cost of the COUNT
+             * that decides the pagination, and the COUNT runs on every search
+             * before a single card is rendered.
+             *
+             * WHY THE JOIN IS BEHAVIOUR-IDENTICAL AND NOT MERELY EQUIVALENT-
+             * LOOKING. products.brand_id is a single nullable foreign key onto
+             * the brands primary key, so the join matches AT MOST ONE row per
+             * product: it cannot multiply rows, which is the only way a join
+             * ever changes a COUNT or a result set. LEFT, not INNER, so a
+             * product with brand_id NULL — or pointing at a brand that has been
+             * deleted — stays in the result exactly as it did under EXISTS, and
+             * `brands.name like ?` is NULL for it, which is not true, which is
+             * the same answer EXISTS gave. Product::brand() is a plain
+             * belongsTo with no constraints and Brand has no soft deletes, so
+             * there is nothing in the relation for the join to leave out.
+             *
+             * Measured rather than assumed, and the numbers are in the lane
+             * report. tests/Feature/ShopSearchJoinTest.php pins the result set,
+             * the ordering and the count against the EXISTS form it replaces,
+             * on a search matching by product name only, by brand name only, by
+             * both, and by neither.
+             */
+            $query->leftJoin('brands', 'products.brand_id', '=', 'brands.id');
+
             $query->where(function ($q) use ($terms) {
                 foreach ($terms as $term) {
                     \App\Support\SearchTerms::orWhereLike($q, 'products.name', $term);
                     \App\Support\SearchTerms::orWhereLike($q, 'products.sku', $term);
-                    $q->orWhereHas('brand', fn ($b) => \App\Support\SearchTerms::whereLike($b, 'brands.name', $term));
+                    \App\Support\SearchTerms::orWhereLike($q, 'brands.name', $term);
                 }
             });
         }
@@ -393,17 +439,25 @@ class ShopController extends Controller
 
     private function applySort($query, string $orderby): void
     {
+        /*
+         * QUALIFIED, for the same reason the select list above is: a search
+         * joins `brands`, and `name`, `position`, `id` and `created_at` all
+         * exist on both tables. An unqualified ORDER BY across that join is
+         * ambiguous on MySQL and a coin toss on SQLite. Nothing is joined on an
+         * unsearched listing, where `products.name` and `name` are the same
+         * column and the plan is identical.
+         */
         match ($orderby) {
-            'popularity' => $query->orderByDesc('total_sales'),
+            'popularity' => $query->orderByDesc('products.total_sales'),
             // Same reasoning as the price bucket above: "Price: low to high"
             // has to mean the price on the card. Sorting on the `price` column
             // put an AED 50 markdown where AED 200 belongs, near the end of the
             // cheapest-first list the shopper opened to find it.
             'plow' => \App\Support\EffectivePrice::orderBy($query, 'asc'),
             'phigh' => \App\Support\EffectivePrice::orderBy($query, 'desc'),
-            'rating' => $query->orderByDesc('rating')->orderByDesc('review_count'),
-            'date' => $query->orderByDesc('created_at'),
-            'name' => $query->orderBy('name'),
+            'rating' => $query->orderByDesc('products.rating')->orderByDesc('products.review_count'),
+            'date' => $query->orderByDesc('products.created_at'),
+            'name' => $query->orderBy('products.name'),
             // "Featured" is the curated order the Sorting module maintains.
             default => $this->applyDefaultSort($query),
         };
@@ -431,9 +485,9 @@ class ShopController extends Controller
          * only ever decides between rows every earlier key called equal.
          */
         if (in_array($orderby, ['popularity', 'rating', 'date'], true)) {
-            $query->orderByDesc('id');
+            $query->orderByDesc('products.id');
         } else {
-            $query->orderBy('id');
+            $query->orderBy('products.id');
         }
     }
 
@@ -459,13 +513,13 @@ class ShopController extends Controller
      */
     private function applyDefaultSort($query)
     {
-        $query->orderByDesc('featured');
+        $query->orderByDesc('products.featured');
 
         if ($this->settings->moduleEnabled('product_sorting', false)) {
-            $query->orderBy('position');
+            $query->orderBy('products.position');
         }
 
-        return $query->orderBy('name');
+        return $query->orderBy('products.name');
     }
 
     /**
