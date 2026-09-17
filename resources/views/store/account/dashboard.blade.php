@@ -7,7 +7,7 @@
     rendered an empty strip instead.
 --}}
 @extends('layouts.store')
-@section('title', 'My account')
+@section('title', __('store.account.dashboard_title'))
 
 @section('content')
 @php use App\Support\Money; use App\Support\Url; @endphp
@@ -18,19 +18,19 @@
         <div><h1>{{ $customer->displayName() }}</h1>
             <p class="acw-sub">{{ $customer->email }}</p></div>
         <form method="post" action="{{ Url::to('/my-account/logout') }}" class="acw-outform">@csrf
-            <button class="acw-out" type="submit">Sign out</button></form>
+            <button class="acw-out" type="submit">{{ __('store.account_panel.sign_out') }}</button></form>
     </div>
 
     <div class="acw-cards">
-        <a class="acw-card" href="{{ Url::to('/my-account/orders/') }}"><b>Orders</b><span>Everything you have ordered</span></a>
-        <a class="acw-card" href="{{ Url::to('/my-wishlist/') }}"><b>Wishlist</b><span>Saved for later</span></a>
-        @if (app(\App\Services\SettingsService::class)->moduleEnabled('address_book', true))<a class="acw-card" href="{{ Url::to('/my-account/edit-address/') }}"><b>Addresses</b><span>Where we deliver</span></a>@endif
-        <a class="acw-card" href="{{ Url::to('/track-my-order/') }}"><b>Track an order</b><span>Where your parcel is</span></a>
+        <a class="acw-card" href="{{ Url::to('/my-account/orders/') }}"><b>{{ __('store.account.card_orders') }}</b><span>{{ __('store.account.card_orders_note') }}</span></a>
+        <a class="acw-card" href="{{ Url::to('/my-wishlist/') }}"><b>{{ __('store.account.card_wishlist') }}</b><span>{{ __('store.account.card_wishlist_note') }}</span></a>
+        @if (app(\App\Services\SettingsService::class)->moduleEnabled('address_book', true))<a class="acw-card" href="{{ Url::to('/my-account/edit-address/') }}"><b>{{ __('store.account.card_addresses') }}</b><span>{{ __('store.account.card_addresses_note') }}</span></a>@endif
+        <a class="acw-card" href="{{ Url::to('/track-my-order/') }}"><b>{{ __('store.account.card_track') }}</b><span>{{ __('store.account.card_track_note') }}</span></a>
     </div>
 
-    <h2 class="acw-h2">Recent orders</h2>
+    <h2 class="acw-h2">{{ __('store.account.recent_orders') }}</h2>
     @if ($orders->isEmpty())
-        <p class="acw-empty">Nothing here yet. <a href="{{ Url::to('/shop/') }}">Start shopping</a>.</p>
+        <p class="acw-empty">{!! __('store.account.orders_empty', ['link' => '<a href="' . e(Url::to('/shop/')) . '">' . e(__('store.account.orders_empty_link')) . '</a>']) !!}</p>
     @else
         <div class="acw-orders">
             @foreach ($orders as $order)
@@ -42,7 +42,7 @@
                 </a>
             @endforeach
         </div>
-        <p class="acw-empty" style="margin-top:12px"><a href="{{ Url::to('/my-account/orders/') }}">See all orders</a></p>
+        <p class="acw-empty" style="margin-top:12px"><a href="{{ Url::to('/my-account/orders/') }}">{{ __('store.account.see_all_orders') }}</a></p>
     @endif
 </div>
 @endsection

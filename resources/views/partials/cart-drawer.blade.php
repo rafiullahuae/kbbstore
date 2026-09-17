@@ -125,7 +125,9 @@
                             @php
                                 $bIn  = in_array($bp->id, $inCart ?? [], true);
                                 $bOut = $bp->stock_status !== 'instock';
-                                $bLbl = $bOut ? 'Sold out' : ($bIn ? 'In your bag — add another' : 'Add to cart');
+                                $bLbl = $bOut
+                                    ? __('store.cart_drawer.browsed_sold_out')
+                                    : ($bIn ? __('store.cart_drawer.browsed_in_bag') : __('store.cart_drawer.browsed_add'));
                             @endphp
                             {{-- A tick once it is in the bag, so the shopper can see at a glance
                                  what they have already taken. Still pressable: pressing again adds

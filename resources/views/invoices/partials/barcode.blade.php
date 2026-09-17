@@ -26,7 +26,7 @@
 
 @if ($bcWidths !== null)
     <div class="bc" @if (! empty($height)) style="height: {{ $height }}" @endif
-         role="img" aria-label="Barcode of {{ $bcValue }}">
+         role="img" aria-label="{{ __('invoice.document.barcode_label', ['value' => $bcValue]) }}">
         @foreach ($bcWidths as $bcIndex => $bcWidth)
             @php $bcMm = number_format($bcWidth * $bcModule, 3, '.', ''); @endphp
             {{-- The list alternates, starting with a bar. --}}

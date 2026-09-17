@@ -117,8 +117,8 @@
     @if ($tail->isNotEmpty())
         <details class="co-more">
             <summary>
-                <span class="lbl-shut">Show {{ $tail->count() }} more {{ $tail->count() === 1 ? 'item' : 'items' }}</span>
-                <span class="lbl-open">Show fewer items</span>
+                <span class="lbl-shut">{{ trans_choice('store.order_received.show_more', $tail->count()) }}</span>
+                <span class="lbl-open">{{ __('store.order_received.show_fewer') }}</span>
             </summary>
             @foreach ($tail as $item)
                 @include('partials.checkout.received-line', ['item' => $item])
@@ -133,29 +133,29 @@
 
     @if ((int) $order->discount_total > 0)
         <div class="sumrow disc">
-            <span>{{ $order->coupon_code ?: 'Discount' }}</span>
+            <span>{{ $order->coupon_code ?: __('store.checkout.discount') }}</span>
             <span>&ndash; {!! Money::format((int) $order->discount_total) !!}</span>
         </div>
     @endif
 
     <div class="sumrow">
-        <span>Delivery{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
-        <span>@if ((int) $order->shipping_total > 0){!! Money::format((int) $order->shipping_total) !!}@else<span style="color:var(--green);font-weight:700">Free</span>@endif</span>
+        <span>{{ __('store.checkout.delivery') }}{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
+        <span>@if ((int) $order->shipping_total > 0){!! Money::format((int) $order->shipping_total) !!}@else<span style="color:var(--green);font-weight:700">{{ __('store.checkout.free') }}</span>@endif</span>
     </div>
 
     @if ((int) $order->gift_fee > 0)
-        <div class="sumrow"><span>Gift wrapping</span><span>{!! Money::format((int) $order->gift_fee) !!}</span></div>
+        <div class="sumrow"><span>{{ __('store.checkout.gift_wrapping') }}</span><span>{!! Money::format((int) $order->gift_fee) !!}</span></div>
     @endif
 
     @if ($paymentFee > 0)
-        <div class="sumrow"><span>{{ $order->paymentLabel() }} fee</span><span>{!! Money::format($paymentFee) !!}</span></div>
+        <div class="sumrow"><span>{{ __('store.checkout.payment_fee', ['method' => $order->paymentLabel()]) }}</span><span>{!! Money::format($paymentFee) !!}</span></div>
     @endif
 
     @if ($vatRow !== null)
         <div class="sumrow vat"><span>{{ $vatRow['label'] }}</span><span>{!! Money::format($vatRow['fils']) !!}</span></div>
     @endif
 
-    <div class="sumrow tot"><span>Total</span><span>{!! Money::format((int) $order->total) !!}</span></div>
+    <div class="sumrow tot"><span>{{ __('store.checkout.total') }}</span><span>{!! Money::format((int) $order->total) !!}</span></div>
 
     @if ($vatNote !== null)
         <div class="sumrow vat"><span>{{ $vatNote['label'] }}</span><span>{!! Money::format($vatNote['fils']) !!}</span></div>

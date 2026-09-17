@@ -19,7 +19,7 @@
 --}}
 @extends('layouts.store')
 @php use App\Support\Money; use App\Support\Url; @endphp
-@section('title', 'Track my order · K-Beauty Bliss')
+@section('title', __('store.track.page_title'))
 
 @push('styles')
 <style>
@@ -49,29 +49,29 @@
 <div class="auth {{ $ap->formClass() }}" style="{{ $ap->cssVariables() }}">
     <div class="auth-grid">
         <div class="authcard">
-            <h1>Track my order</h1>
-            <p class="lede">Your order number is in your confirmation email. We ask for the email as well, so only you can see where your parcel is.</p>
+            <h1>{{ __('store.track.heading') }}</h1>
+            <p class="lede">{{ __('store.track.lead') }}</p>
 
             <form method="get" action="{{ Url::to('/track-my-order/') }}">
                 <div class="fgroup">
-                    <x-field name="order" label="Order number" :value="request('order')" />
+                    <x-field name="order" :label="__('store.order_received.fact_order_number')" :value="request('order')" />
                     {{-- Never prefilled from the query string: see the note at
                          the top of this file. --}}
-                    <x-field name="email" label="Email address" type="email" icon="mail" autocomplete="email" />
+                    <x-field name="email" :label="__('store.checkout.field_email')" type="email" icon="mail" autocomplete="email" />
                 </div>
-                <button class="go" type="submit">Find my order</button>
+                <button class="go" type="submit">{{ __('store.track.submit') }}</button>
             </form>
 
             @if ($retryAfter > 0)
                 <div class="kbbtr-msg is-slow">
-                    Too many tries. Wait {{ (int) ceil($retryAfter / 60) }} {{ (int) ceil($retryAfter / 60) === 1 ? 'minute' : 'minutes' }} and try again — or sign in to <a href="{{ Url::to('/my-account/orders/') }}">your orders</a>, where no number is needed.
+                    {!! trans_choice('store.track.too_many_tries', (int) ceil($retryAfter / 60), ['link' => '<a href="' . e(Url::to('/my-account/orders/')) . '">' . e(__('store.track.too_many_tries_link')) . '</a>']) !!}
                 </div>
             @elseif ($notFound)
                 {{-- The SAME words for "that order does not exist" and "that is
                      not the email on it". Two messages here would be an
                      enumeration oracle. --}}
                 <div class="kbbtr-msg is-miss">
-                    We couldn't find an order matching that number and email. Double-check both and try again.
+                    {{ __('store.track.not_found') }}
                 </div>
             @elseif ($order)
                 @php
@@ -86,21 +86,21 @@
                 @endphp
                 <div class="kbbtr-card">
                     <div class="kbbtr-top">
-                        <b>Order #{{ $order->order_number }}</b>
-                        <span class="kbbtr-pill {{ $statusClass }}">{{ ucfirst(str_replace('-', ' ', $status)) }}</span>
+                        <b>{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</b>
+                        <span class="kbbtr-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span>
                     </div>
                     <div class="kbbtr-rows">
-                        <div class="kbbtr-row"><span>Placed</span><span>{{ $order->created_at?->format('j F Y') ?? '—' }}</span></div>
+                        <div class="kbbtr-row"><span>{{ __('store.track.row_placed') }}</span><span>{{ $order->created_at?->format('j F Y') ?? '—' }}</span></div>
                         @if ($order->shipping_method)
-                            <div class="kbbtr-row"><span>Delivery</span><span>{{ $order->shipping_method }}</span></div>
+                            <div class="kbbtr-row"><span>{{ __('store.checkout.delivery') }}</span><span>{{ $order->shipping_method }}</span></div>
                         @endif
                         @if ($order->completed_at)
-                            <div class="kbbtr-row"><span>Completed</span><span>{{ $order->completed_at->format('j F Y') }}</span></div>
+                            <div class="kbbtr-row"><span>{{ __('store.track.row_completed') }}</span><span>{{ $order->completed_at->format('j F Y') }}</span></div>
                         @endif
-                        <div class="kbbtr-row"><span>Order total</span><span>{!! Money::format((int) $order->total) !!}</span></div>
+                        <div class="kbbtr-row"><span>{{ __('email.refunded.row_order_total') }}</span><span>{!! Money::format((int) $order->total) !!}</span></div>
                     </div>
                 </div>
-                <p class="acw-fine">Signed up with us? <a href="{{ Url::to('/my-account/orders/') }}">Your orders</a> has the full receipt.</p>
+                <p class="acw-fine">{!! __('store.track.signed_up', ['link' => '<a href="' . e(Url::to('/my-account/orders/')) . '">' . e(__('store.track.signed_up_link')) . '</a>']) !!}</p>
             @endif
         </div>
     </div>

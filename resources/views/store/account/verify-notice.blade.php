@@ -6,7 +6,7 @@
     that has sat unwritten since the baseline schema starts carrying a fact.
 --}}
 @extends('layouts.store')
-@section('title', 'Confirm your email')
+@section('title', __('store.verify.notice_title'))
 
 @section('content')
 @php use App\Support\Url; @endphp
@@ -15,24 +15,23 @@
 <div class="auth {{ $ap->formClass() }}" style="{{ $ap->cssVariables() }}">
     <div class="auth-grid">
         <div class="authcard">
-            <h1>Confirm your email</h1>
+            <h1>{{ __('store.verify.notice_title') }}</h1>
 
             @if ($errors->any())<div class="auth-err">{{ $errors->first() }}</div>@endif
             @if (session('status'))<div class="auth-ok">{{ session('status') }}</div>@endif
 
             @if ($customer && $customer->hasVerifiedEmail())
-                <p class="lede">Your address is confirmed. There is nothing to do here.</p>
+                <p class="lede">{{ __('store.verify.already_done') }}</p>
             @else
-                <p class="lede">We will send a link to
-                    <strong>{{ $customer?->email }}</strong>. Open it and the address is confirmed.</p>
+                <p class="lede">{!! __('store.verify.will_send', ['email' => '<strong>' . e($customer?->email) . '</strong>']) !!}</p>
 
                 <form method="post" action="{{ Url::to('/my-account/verify/resend') }}">
                     @csrf
-                    <button class="go" type="submit">Send the link</button>
+                    <button class="go" type="submit">{{ __('store.account.forgot_submit') }}</button>
                 </form>
             @endif
 
-            <p class="alt"><a href="{{ Url::to('/my-account/') }}">Back to your account</a></p>
+            <p class="alt"><a href="{{ Url::to('/my-account/') }}">{{ __('store.verify.back_to_account') }}</a></p>
         </div>
     </div>
 </div>

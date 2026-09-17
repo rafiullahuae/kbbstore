@@ -13,7 +13,7 @@
 @if ($settings->moduleEnabled('frequently_bought', false) && $bundle->isNotEmpty())
 
 <section class="kbb-fbt">
-    <h2 class="kbb-fbt-title">{{ $settings->get('fbt_title', 'Complete your routine') }}</h2>
+    <h2 class="kbb-fbt-title">{{ $settings->get('fbt_title', __('store.fbt.title')) }}</h2>
     <div class="kbb-fbt-items">
         @foreach ($bundle as $i => $p)
             @php
@@ -34,8 +34,8 @@
         @endforeach
     </div>
     <div class="kbb-fbt-foot">
-        <div class="kbb-fbt-total">Total: <b class="kbb-fbt-sum"></b></div>
-        <button type="button" class="button kbb-fbt-add">Add selected to cart</button>
+        <div class="kbb-fbt-total">{!! __('store.fbt.total', ['amount' => '<b class="kbb-fbt-sum"></b>']) !!}</div>
+        <button type="button" class="button kbb-fbt-add">{{ __('store.fbt.add_selected') }}</button>
     </div>
 </section>
 @endif

@@ -6,6 +6,7 @@
  */
 
 import { addToCart } from './cart.js';
+import { t } from './i18n.js';
 
 export function initFbt() {
     const block = document.querySelector('.kbb-fbt');
@@ -27,7 +28,7 @@ export function initFbt() {
         if (!event.target.closest('.kbb-fbt-add')) return;
 
         const ids = [...block.querySelectorAll('.kbb-fbt-cb:checked')].map((cb) => Number(cb.value));
-        if (!ids.length) { window.kbbToast?.('Select at least one product.'); return; }
+        if (!ids.length) { window.kbbToast?.(t('store.js.fbt_pick_one', 'Select at least one product.')); return; }
 
         const button = event.target.closest('.kbb-fbt-add');
         button.disabled = true;
@@ -41,9 +42,9 @@ export function initFbt() {
             for (const id of ids) {
                 await addToCart({ product_id: id, quantity: 1 });
             }
-            window.kbbToast?.(`${ids.length} item${ids.length === 1 ? '' : 's'} added ✓`);
+            window.kbbToast?.(t('store.js.fbt_added', ':count items added ✓', { count: ids.length }));
         } catch {
-            window.kbbToast?.('Could not add those — please try again.');
+            window.kbbToast?.(t('store.js.fbt_failed', 'Could not add those — please try again.'));
         } finally {
             button.disabled = false;
         }

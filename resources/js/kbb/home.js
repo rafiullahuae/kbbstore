@@ -4,6 +4,8 @@
  * Everything else on the page is server-rendered — the grids, the quiz form and
  * the section visibility — so this is deliberately small.
  */
+import { t } from './i18n.js';
+
 export function initHome() {
     initMobileChrome();
     initHeaderScroll();
@@ -349,7 +351,9 @@ export function initReveal() {
         const shown = 'text' === input.type;
         input.type = shown ? 'password' : 'text';
         button.classList.toggle('on', !shown);
-        button.setAttribute('aria-label', shown ? 'Show password' : 'Hide password');
+        button.setAttribute('aria-label', shown
+            ? t('store.account.show_password', 'Show password')
+            : t('store.js.hide_password', 'Hide password'));
         input.focus();
     });
 }
@@ -375,12 +379,12 @@ function passwordScore(value) {
     const lower = value.toLowerCase();
 
     // Anything on this list is weak whatever else it contains.
-    if (WEAK_WORDS.some((w) => lower.includes(w))) return { score: 1, label: 'Too common' };
+    if (WEAK_WORDS.some((w) => lower.includes(w))) return { score: 1, label: t('store.js.password_common', 'Too common') };
 
     // A single character repeated, or a straight run, is length without variety.
-    if (/^(.)\1+$/.test(value)) return { score: 1, label: 'Too simple' };
+    if (/^(.)\1+$/.test(value)) return { score: 1, label: t('store.js.password_simple', 'Too simple') };
     if (/^(?:0123|1234|2345|3456|4567|5678|6789|abcd|qwer|asdf)/i.test(value)) {
-        return { score: 1, label: 'Too simple' };
+        return { score: 1, label: t('store.js.password_simple', 'Too simple') };
     }
 
     let score = 0;
@@ -404,7 +408,16 @@ function passwordScore(value) {
 
     score = Math.max(1, Math.min(4, score));
 
-    return { score, label: ['', 'Weak', 'Fair', 'Good', 'Strong'][score] };
+    return {
+        score,
+        label: [
+            '',
+            t('store.js.password_weak', 'Weak'),
+            t('store.js.password_fair', 'Fair'),
+            t('store.js.password_good', 'Good'),
+            t('store.js.password_strong', 'Strong'),
+        ][score],
+    };
 }
 
 export function initPasswordMeter() {

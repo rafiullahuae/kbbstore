@@ -43,14 +43,14 @@
 @endphp
 
 <section class="sr{{ $showStars ? '' : ' sr-nostars' }}" id="sr" style="--sr-cols:{{ $cols }}" data-product="{{ $product->id }}">
-    <div class="sr-head"><div class="sr-eyebrow">Loved by you</div><h2 class="sr-title">Customer Reviews</h2></div>
+    <div class="sr-head"><div class="sr-eyebrow">{{ __('store.reviews.eyebrow') }}</div><h2 class="sr-title">{{ __('store.reviews.heading') }}</h2></div>
 
     <div class="sr-summary">
         @if ($showStars)
         <div class="sr-score">
             <div class="sr-avg">{{ number_format($summary['average'], 1) }}</div>
             <div class="sr-avg-stars">{!! $star((int) round($summary['average'])) !!}</div>
-            <div class="sr-count">{{ $summary['total'] }} review{{ 1 === $summary['total'] ? '' : 's' }}</div>
+            <div class="sr-count">{{ trans_choice('store.reviews.review_count', (int) $summary['total']) }}</div>
         </div>
         <div class="sr-bars">
             @foreach ($summary['bars'] as $starVal => $bar)
@@ -58,18 +58,18 @@
             @endforeach
         </div>
         @else
-        <div class="sr-score" style="flex:1"><div class="sr-count">{{ $summary['total'] }} review{{ 1 === $summary['total'] ? '' : 's' }}</div></div>
+        <div class="sr-score" style="flex:1"><div class="sr-count">{{ trans_choice('store.reviews.review_count', (int) $summary['total']) }}</div></div>
         @endif
     </div>
 
-    @if ($allowSub)<button class="sr-write" type="button" data-sr-open>✎ Write a Review</button>@endif
+    @if ($allowSub)<button class="sr-write" type="button" data-sr-open>{{ __('store.reviews.write_button') }}</button>@endif
 
     @if ($showTabs)
     <div class="sr-filters">
-        <button class="sr-chip on" data-f="all">All</button>
+        <button class="sr-chip on" data-f="all">{{ __('store.reviews.filter_all') }}</button>
         <button class="sr-chip" data-f="5">5★</button>
         <button class="sr-chip" data-f="4">4★</button>
-        <button class="sr-chip" data-f="photos">With Photos</button>
+        <button class="sr-chip" data-f="photos">{{ __('store.reviews.filter_with_photos') }}</button>
     </div>
     @endif
 
@@ -85,7 +85,7 @@
                 <div class="sr-ct">
                     <span class="sr-av">{{ $ini }}</span>
                     <div class="sr-cmeta">
-                        <span class="sr-nm">{{ $r->author_name }}@if ($r->verified) <span class="sr-verified">✓ Verified</span>@endif</span>
+                        <span class="sr-nm">{{ $r->author_name }}@if ($r->verified) <span class="sr-verified">{{ __('store.reviews.verified_badge') }}</span>@endif</span>
                         <span class="sr-cs">{!! $star((int) $r->rating) !!}</span>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                 {{-- ?? null, because the demo reviews are fixture objects with no such
                      property and a plain object throws on one it does not have. --}}
                 @if ($r->reply ?? null)
-                    <div class="sr-reply"><b>Reply from K-Beauty Bliss</b> {{ $r->reply }}</div>
+                    <div class="sr-reply"><b>{{ __('store.reviews.reply_from') }}</b> {{ $r->reply }}</div>
                 @endif
                 @if ($nph)
                     <div class="sr-pp {{ 1 === $nph ? 'one' : 'multi' }}"><span class="sr-pc">📷 {{ $nph }}</span>@foreach (array_slice($imgs, 0, 4) as $idx => $u)@php $more = ($nph > 4 && 3 === $idx) ? $nph - 4 : 0; @endphp<span class="sr-ph"@if ($more) data-more="+{{ $more }}"@endif><img src="{{ $u }}" alt="" loading="lazy"></span>@endforeach</div>
@@ -128,30 +128,30 @@
         @endforelse
     </div>
 
-    @if ($reviews->count() > 4)<button class="sr-more" data-sr-more type="button">Load more reviews</button>@endif
+    @if ($reviews->count() > 4)<button class="sr-more" data-sr-more type="button">{{ __('store.reviews.load_more') }}</button>@endif
 
     {{-- detail popup --}}
-    <div class="sr-modal" data-sr-modal hidden><div class="sr-mx-scrim" data-sr-mclose></div><div class="sr-mcard"><button class="sr-mx" type="button" data-sr-mclose aria-label="Close">&times;</button><div class="sr-mbody" data-sr-mbody></div></div></div>
+    <div class="sr-modal" data-sr-modal hidden><div class="sr-mx-scrim" data-sr-mclose></div><div class="sr-mcard"><button class="sr-mx" type="button" data-sr-mclose aria-label="{{ __('store.reviews.close_label') }}">&times;</button><div class="sr-mbody" data-sr-mbody></div></div></div>
 
     @if ($allowSub)
     <div class="sr-sheet" data-sr-sheet hidden>
         <div class="sr-sc" data-sr-close></div>
         <div class="sr-scard">
             <div class="sr-grab"></div>
-            <button class="sr-sx" type="button" data-sr-close aria-label="Close">&times;</button>
-            <h3 class="sr-stitle">Share your experience ♡</h3>
+            <button class="sr-sx" type="button" data-sr-close aria-label="{{ __('store.reviews.close_label') }}">&times;</button>
+            <h3 class="sr-stitle">{{ __('store.reviews.form_heading') }}</h3>
             <form class="sr-form" data-sr-form enctype="multipart/form-data">
                 @csrf
-                <div class="sr-fld"><label>Your rating</label><div class="sr-pick" data-sr-stars>@for ($i = 1; $i <= 5; $i++)<span data-v="{{ $i }}">★</span>@endfor</div><input type="hidden" name="rating" value="0" data-sr-rating></div>
-                <div class="sr-r2"><div class="sr-fld"><label>Name</label><input type="text" name="author_name" required maxlength="100" placeholder="First name"></div><div class="sr-fld"><label>Email <small>(not shown)</small></label><input type="email" name="author_email" required maxlength="120" placeholder="you@email.com"></div></div>
-                <div class="sr-fld"><label>Title</label><input type="text" name="title" maxlength="120" placeholder="Sum it up ✨"></div>
-                <div class="sr-fld"><label>Your review</label><textarea name="content" rows="4" required placeholder="Tell us what you loved…"></textarea></div>
+                <div class="sr-fld"><label>{{ __('store.reviews.field_rating') }}</label><div class="sr-pick" data-sr-stars>@for ($i = 1; $i <= 5; $i++)<span data-v="{{ $i }}">★</span>@endfor</div><input type="hidden" name="rating" value="0" data-sr-rating></div>
+                <div class="sr-r2"><div class="sr-fld"><label>{{ __('store.reviews.field_name') }}</label><input type="text" name="author_name" required maxlength="100" placeholder="{{ __('store.reviews.field_name_placeholder') }}"></div><div class="sr-fld"><label>{{ __('store.reviews.field_email') }} <small>{{ __('store.reviews.field_email_note') }}</small></label><input type="email" name="author_email" required maxlength="120" placeholder="{{ __('store.reviews.field_email_placeholder') }}"></div></div>
+                <div class="sr-fld"><label>{{ __('store.reviews.field_title') }}</label><input type="text" name="title" maxlength="120" placeholder="{{ __('store.reviews.field_title_placeholder') }}"></div>
+                <div class="sr-fld"><label>{{ __('store.reviews.field_review') }}</label><textarea name="content" rows="4" required placeholder="{{ __('store.reviews.field_review_placeholder') }}"></textarea></div>
                 @if ($allowPhotos)
-                <div class="sr-fld"><label>Add photos <small>(optional, up to {{ $maxPhotos }})</small></label><label class="sr-up"><input type="file" name="sr_photos[]" accept="image/png,image/jpeg,image/webp" multiple hidden data-sr-file>📷 Tap to add photos</label><div class="sr-pv" data-sr-previews></div></div>
+                <div class="sr-fld"><label>{{ __('store.reviews.field_photos') }} <small>{{ trans_choice('store.reviews.field_photos_hint', (int) $maxPhotos) }}</small></label><label class="sr-up"><input type="file" name="sr_photos[]" accept="image/png,image/jpeg,image/webp" multiple hidden data-sr-file>{{ __('store.reviews.photos_cta') }}</label><div class="sr-pv" data-sr-previews></div></div>
                 @endif
-                <div class="sr-fld sr-cap"><label>Quick check: <span data-sr-question>…</span></label><input type="text" name="captcha" inputmode="numeric" required placeholder="Answer" autocomplete="off"><input type="hidden" name="captcha_token" data-sr-token></div>
+                <div class="sr-fld sr-cap"><label>{{ __('store.reviews.field_captcha') }} <span data-sr-question>…</span></label><input type="text" name="captcha" inputmode="numeric" required placeholder="{{ __('store.reviews.field_captcha_placeholder') }}" autocomplete="off"><input type="hidden" name="captcha_token" data-sr-token></div>
                 <div class="sr-hp"><input type="text" name="sr_website" tabindex="-1" autocomplete="off"></div>
-                <button type="submit" class="sr-submit">Submit Review</button>
+                <button type="submit" class="sr-submit">{{ __('store.reviews.submit') }}</button>
                 <div class="sr-msg" data-sr-msg></div>
             </form>
         </div>

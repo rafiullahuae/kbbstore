@@ -14,7 +14,7 @@
 {{-- Deliberately not .burger: that class carries the old bar styling, and an
      element wearing both ends up with bar rules fighting tile rules. --}}
 <button class="kbbmi kbbmi-{{ $style }}" id="burger" type="button"
-        aria-label="Menu" aria-controls="mmenu" aria-expanded="false">
+        aria-label="{{ __('store.mobile_menu.open_label') }}" aria-controls="mmenu" aria-expanded="false">
     @switch ($family)
         @case ('tiles')
             <span class="s"></span><span class="s"></span><span class="s"></span><span class="s"></span>

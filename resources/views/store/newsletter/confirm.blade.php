@@ -1,5 +1,5 @@
 @extends('layouts.store')
-@section('title', 'Confirm your subscription')
+@section('title', __('store.newsletter.confirm_title'))
 
 @section('content')
 @php use App\Support\Url; @endphp
@@ -21,8 +21,8 @@
 <div class="auth">
     <div class="auth-grid">
         <div class="authcard">
-            <h1>One more press</h1>
-            <p class="lede">Confirm that you would like emails from us at this address.</p>
+            <h1>{{ __('store.newsletter.confirm_heading') }}</h1>
+            <p class="lede">{{ __('store.newsletter.confirm_lead') }}</p>
 
             <form method="post" action="{{ Url::to('/newsletter/confirm') }}" id="nl-confirm">
                 @csrf
@@ -30,11 +30,11 @@
                 <input type="hidden" name="expires" value="{{ $expires }}">
                 <input type="hidden" name="signature" value="{{ $signature }}">
 
-                <button type="submit" class="btn btn-primary">Yes, subscribe me</button>
+                <button type="submit" class="btn btn-primary">{{ __('store.newsletter.confirm_button') }}</button>
             </form>
 
             <p class="muted" style="margin-top:16px;font-size:13px;">
-                If you did not ask for this, close this page. Nothing is added unless you press the button.
+                {{ __('store.newsletter.confirm_note') }}
             </p>
         </div>
     </div>

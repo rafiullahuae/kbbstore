@@ -8,6 +8,7 @@
  */
 
 import { toast } from './toast.js';
+import { t } from './i18n.js';
 
 export function initNewsletter() {
     document.addEventListener('submit', async (event) => {
@@ -35,12 +36,12 @@ export function initNewsletter() {
             const body = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                toast(body.error || 'Could not sign you up — please try again.');
+                toast(body.error || t('store.js.subscribe_failed', 'Could not sign you up — please try again.'));
                 return;
             }
 
             form.reset();
-            toast(body.message || 'You are on the list ✓');
+            toast(body.message || t('store.js.subscribed', 'You are on the list ✓'));
         } catch {
             // The network failed rather than the server refusing. Hand it back to
             // the browser so the address is not silently dropped.

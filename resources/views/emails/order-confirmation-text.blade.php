@@ -1,16 +1,13 @@
-Thank you{!! $order['customerName'] !== '' ? ', ' . $order['customerName'] : '' !!}
+{!! $order['customerName'] !== '' ? __('email.text.thank_you_named', ['name' => $order['customerName']]) : __('email.text.thank_you') !!}
 
-Your order is in and we are packing it with care. Everything you chose is
-listed below, exactly as it was when you ordered — keep this email, it is
-your receipt.
+{!! wordwrap(__('email.confirmation.lead'), 78) !!}
 
 @include('emails.partials.body-text')
 
-TRACK YOUR ORDER
+{!! mb_strtoupper(__('email.confirmation.track_button')) !!}
 {!! $order['trackUrl'] !!}
 
-That link opens on the device you ordered from. Anywhere else, sign in to your
-account and your orders are all listed there under {!! $order['number'] !!}:
+{!! wordwrap(__('email.text.device_note_confirmation', ['number' => $order['number']]), 78) !!}
 {!! $order['accountUrl'] !!}
 
 @include('emails.partials.support-text')

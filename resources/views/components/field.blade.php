@@ -35,6 +35,6 @@
              property Firefox does not support, so it would quietly do nothing
              for some customers. --}}
         <button type="button" class="trail" data-reveal="f-{{ $name }}"
-                aria-label="Show password">@include('partials.icon-eye')</button>
+                aria-label="{{ __('store.account.show_password') }}">@include('partials.icon-eye')</button>
     @endif
 </div>

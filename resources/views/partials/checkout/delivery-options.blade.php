@@ -28,8 +28,8 @@
         </li>
     </ul>
 @empty
-    <div class="kbb-delivery-loading">Loading delivery options…</div>
+    <div class="kbb-delivery-loading">{{ __('store.checkout.delivery_loading') }}</div>
 @endforelse
 @if (!empty($deliveryEta))
-    <p class="xd-eta">Arrives in {{ $deliveryEta }}</p>
+    <p class="xd-eta">{{ __('store.checkout.arrives_in', ['eta' => $deliveryEta]) }}</p>
 @endif

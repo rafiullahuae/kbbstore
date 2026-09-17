@@ -7,12 +7,14 @@
  */
 
 
+import { t, esc } from './i18n.js';
+
 /* One shell for the whole panel: a close button and two columns. Both the
    starter and the results write into it rather than replacing it, so the
    right-hand column is never rebuilt while someone is typing. */
 function ensureShell(panel) {
     if (panel.querySelector('.colA')) return;
-    panel.innerHTML = '<button type="button" class="sgx" aria-label="Close search">'
+    panel.innerHTML = '<button type="button" class="sgx" aria-label="' + esc(t('store.js.close_search', 'Close search')) + '">'
         + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round">'
         + '<path d="M6 6l12 12M18 6L6 18"/></svg></button>'
         + '<div class="colA"></div><div class="colB"></div>';
@@ -386,7 +388,7 @@ export function initQuickView() {
     let controller = null;
     let opener = null;
 
-    const reset = () => { slot.innerHTML = '<div class="qv-load">Loading…</div>'; };
+    const reset = () => { slot.innerHTML = '<div class="qv-load">' + esc(t('store.quick_view.loading', 'Loading…')) + '</div>'; };
 
     const close = () => {
         if (back.hidden) return;

@@ -20,7 +20,7 @@
                     <span class="ph2" style="background:{{ Gradient::for($brand . $p->name) }}"></span>
                 @endif
                 @if (($rank ?? false))<span class="kbb-badge kbb-badge-new">#{{ $i + 1 }}</span>
-                @elseif (! $p->review_count)<span class="kbb-badge kbb-badge-new">New</span>@endif
+                @elseif (! $p->review_count)<span class="kbb-badge kbb-badge-new">{{ __('store.product_card.badge_new') }}</span>@endif
                 @if ($off)<span class="kbb-badge kbb-badge-sale">-{{ $off }}%</span>@endif
             </div>
             <div class="cb">
@@ -28,7 +28,7 @@
                 <div class="cn">@if ($brand)<span class="kbb-card-brand">{{ mb_strtoupper($brand) }}</span> @endif{{ $p->name }}</div>
                 <div class="kbb-card-rate"><span class="kbb-crate">@for ($s = 1; $s <= 5; $s++)<span class="kbb-cstar{{ $s <= $stars ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ (int) $p->review_count }})</span></div>
                 <div class="cp">@if ($off)<span class="kbb-card-reg">{!! Money::format($reg) !!}</span> @endif<span class="kbb-card-price">{!! Money::format($sale) !!}</span></div>
-                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">Add to cart</span>
+                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">{{ __('store.product_card.add_to_cart') }}</span>
             </div>
         </a>
     @endforeach

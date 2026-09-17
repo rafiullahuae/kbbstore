@@ -7,7 +7,7 @@
     signature" would be a customer-count oracle for anyone willing to count.
 --}}
 @extends('layouts.store')
-@section('title', $ok ? 'Email confirmed' : 'Confirmation link')
+@section('title', $ok ? __('store.verify.result_ok_title') : __('store.verify.result_bad_title'))
 
 @section('content')
 @php use App\Support\Url; @endphp
@@ -16,7 +16,7 @@
 <div class="auth {{ $ap->formClass() }}" style="{{ $ap->cssVariables() }}">
     <div class="auth-grid">
         <div class="authcard">
-            <h1>{{ $ok ? 'Email confirmed' : 'That link did not work' }}</h1>
+            <h1>{{ $ok ? __('store.verify.result_ok_title') : __('store.verify.result_bad_heading') }}</h1>
 
             @if ($ok)
                 <div class="auth-ok">{{ $message }}</div>
@@ -24,7 +24,7 @@
                 <div class="auth-err">{{ $message }}</div>
             @endif
 
-            <p class="alt"><a href="{{ Url::to('/my-account/') }}">Go to your account</a></p>
+            <p class="alt"><a href="{{ Url::to('/my-account/') }}">{{ __('store.verify.go_to_account') }}</a></p>
         </div>
     </div>
 </div>

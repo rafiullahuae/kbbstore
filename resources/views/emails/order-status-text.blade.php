@@ -1,4 +1,4 @@
-Hello{!! $order['customerName'] !== '' ? ' ' . $order['customerName'] : '' !!},
+{!! $order['customerName'] !== '' ? __('email.greeting.hello_named', ['name' => $order['customerName']]) : __('email.greeting.hello') !!}
 
 {!! strtoupper($heading) !!}
 
@@ -12,11 +12,10 @@ Hello{!! $order['customerName'] !== '' ? ' ' . $order['customerName'] : '' !!},
 
 @include('emails.partials.body-text')
 
-VIEW YOUR ORDER
+{!! mb_strtoupper(__('email.order_status.view_order')) !!}
 {!! $order['trackUrl'] !!}
 
-That link opens on the device you ordered from. Anywhere else, sign in to your
-account and look for {!! $order['number'] !!}:
+{!! wordwrap(__('email.text.device_note_status', ['number' => $order['number']]), 78) !!}
 {!! $order['accountUrl'] !!}
 
 @include('emails.partials.support-text')

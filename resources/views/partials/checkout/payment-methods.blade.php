@@ -39,7 +39,7 @@
      The wording is the one fragments() already uses when the last method is
      withdrawn by a quantity change, so the page says the same thing however
      the shopper arrives at it. --}}
-<p class="pay-note pay-empty" role="status" aria-live="polite">No payment method is available for this order total. Please contact us and we will take your order directly.</p>
+<p class="pay-note pay-empty" role="status" aria-live="polite">{{ __('store.checkout.no_payment_method') }}</p>
 @endif
             <ul class="wc_payment_methods payment_methods methods">
             @if (!empty($codHidden))<p class="pay-note">{{ $codHidden }}</p>@endif

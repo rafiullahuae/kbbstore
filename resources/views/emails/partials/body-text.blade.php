@@ -26,10 +26,10 @@
     the text part and the HTML part say the same thing in the same order, which
     is the whole reason both render the same presenter array.
 --}}
-Order {!! $order['number'] !!}@if ($order['placedAt'] !== '') — placed {!! $order['placedAt'] !!}@endif
+{!! __('email.text.order_line', ['number' => $order['number']]) !!}@if ($order['placedAt'] !== '') — {!! __('email.confirmation.placed_on', ['date' => $order['placedAt']]) !!}@endif
 
 
-{!! $itemsHeading ?? 'WHAT YOU ORDERED' !!}
+{!! $itemsHeading ?? mb_strtoupper(__('store.orders.what_you_ordered')) !!}
 @foreach ($order['items'] as $item)
 - {!! $item['name'] !!}@if ($item['brand'] !== '') ({!! $item['brand'] !!})@endif
 
@@ -37,12 +37,12 @@ Order {!! $order['number'] !!}@if ($order['placedAt'] !== '') — placed {!! $or
   {!! $item['variant'] !!}
 @endif
 @if ($item['sku'] !== '')
-  SKU {!! $item['sku'] !!}
+  {!! __('email.items.sku', ['sku' => $item['sku']]) !!}
 @endif
-  QTY {!! $item['quantity'] !!}  ·  {!! $item['unitPlain'] !!} each  ·  line total {!! $item['linePlain'] !!}
+  {!! __('email.text.item_line', ['quantity' => $item['quantity'], 'unit' => $item['unitPlain'], 'line' => $item['linePlain']]) !!}
 @endforeach
 
-TOTALS
+{!! mb_strtoupper(__('email.text.totals_heading')) !!}
 @foreach ($order['totals'] as $row)
 {!! $row['label'] !!}: {!! $row['plain'] !!}
 @endforeach
@@ -53,22 +53,22 @@ TOTALS
 {!! $order['vatNote']['label'] !!}: {!! $order['vatNote']['plain'] !!}
 @endif
 
-DELIVERY ADDRESS
+{!! mb_strtoupper(__('email.delivery.address_heading')) !!}
 @forelse ($order['address'] as $line)
 {!! $line !!}
 @empty
-Not recorded
+{!! __('email.delivery.not_recorded') !!}
 @endforelse
 
-Delivery method: {!! $order['deliveryMethod'] !!}
-Payment method: {!! $order['paymentLabel'] !!}
+{!! __('email.text.delivery_method', ['method' => $order['deliveryMethod']]) !!}
+{!! __('email.text.payment_method', ['method' => $order['paymentLabel']]) !!}
 @if ($order['giftNote'] !== '')
 
-GIFT MESSAGE
+{!! mb_strtoupper(__('email.delivery.gift_heading')) !!}
 {!! $order['giftNote'] !!}
 @endif
 @if ($order['customerNote'] !== '')
 
-ORDER NOTE
+{!! mb_strtoupper(__('email.delivery.note_heading')) !!}
 {!! $order['customerNote'] !!}
 @endif

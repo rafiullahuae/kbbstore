@@ -47,7 +47,7 @@
 
     /** A star row that states its own rating, so nothing has to read the glyphs. */
     $stars = fn (int $n) => '<span class="sr-stars" data-rating="' . $n . '" role="img" aria-label="'
-        . $n . ' out of 5 stars">'
+        . e(trans_choice('store.review_wall.stars_label', $n)) . '">'
         . str_repeat('★', $n)
         . '<span class="e">' . str_repeat('★', 5 - $n) . '</span></span>';
 @endphp
@@ -175,30 +175,26 @@
   <div class="sr-top">
     <a class="sr-logo" href="{{ $homeUrl }}">{{ $shopName }}</a>
     <nav class="sr-topnav">
-      <a href="{{ $shopUrl }}">Shop</a>
-      <a href="{{ $homeUrl }}">Home</a>
+      <a href="{{ $shopUrl }}">{{ __('store.journal.nav_shop') }}</a>
+      <a href="{{ $homeUrl }}">{{ __('store.breadcrumb.home') }}</a>
     </nav>
   </div>
 
   <section class="sr" id="sr">
     <div class="sr-head">
-      <div class="sr-eyebrow">Customer reviews</div>
-      <h1 class="sr-title">What customers have said</h1>
+      <div class="sr-eyebrow">{{ __('store.review_wall.eyebrow') }}</div>
+      <h1 class="sr-title">{{ __('store.review_wall.heading') }}</h1>
       @if ($summary['total'] > 0)
-        <p class="sr-sub">Every review below was left by a customer of this shop and published after moderation.</p>
+        <p class="sr-sub">{{ __('store.review_wall.subtitle') }}</p>
       @endif
     </div>
 
     @if ($summary['total'] === 0)
       {{-- STATE ONE: nothing to show, said plainly. --}}
       <div class="sr-empty">
-        <h2>No reviews yet</h2>
-        <p>
-          Nobody has reviewed this shop yet. When customers do, their reviews appear
-          here exactly as they were written — we do not publish reviews we did not
-          receive.
-        </p>
-        <a class="sr-cta" href="{{ $shopUrl }}">Browse the shop</a>
+        <h2>{{ __('store.review_wall.empty_heading') }}</h2>
+        <p>{{ __('store.review_wall.empty_body') }}</p>
+        <a class="sr-cta" href="{{ $shopUrl }}">{{ __('store.review_wall.empty_cta') }}</a>
       </div>
     @else
       @if ($summary['score'])
@@ -207,7 +203,7 @@
           <div class="sr-score">
             <div class="sr-avg">{{ number_format($summary['average'], 1) }}</div>
             <div class="sr-avg-stars">{!! $stars((int) max(1, min(5, round($summary['average'])))) !!}</div>
-            <div class="sr-count">Based on {{ number_format($summary['total']) }} approved {{ 1 === $summary['total'] ? 'review' : 'reviews' }}</div>
+            <div class="sr-count">{{ trans_choice('store.review_wall.based_on', (int) $summary['total'], ['formatted' => number_format($summary['total'])]) }}</div>
           </div>
           <div class="sr-bars">
             @foreach ($summary['bars'] as $star => $bar)
@@ -223,10 +219,8 @@
         {{-- STATE TWO: some real reviews, too few for a score. The rule and the
              reason are App\Support\StoreRating's, not a second one invented here. --}}
         <div class="sr-too-few">
-          <b>{{ number_format($summary['total']) }} approved {{ 1 === $summary['total'] ? 'review' : 'reviews' }} so far.</b>
-          An average is not shown until there are {{ StoreRating::MINIMUM }} — a handful of
-          reviews is not a shop-wide score, and printing one would say more than we know.
-          Each review below is shown in full.
+          <b>{{ trans_choice('store.review_wall.too_few_count', (int) $summary['total'], ['formatted' => number_format($summary['total'])]) }}</b>
+          {{ __('store.review_wall.too_few_body', ['minimum' => StoreRating::MINIMUM]) }}
         </div>
       @endif
 
@@ -241,29 +235,29 @@
           {{-- No "showing 12 of 137": the count of matching rows is a second
                query, and this page does not run one to print a number. It says
                what it is showing, and "load more" says the rest exists. --}}
-          <div class="sr-shown">Showing {{ $reviews->count() }}{{ $hasMore ? ' so far' : '' }}</div>
+          <div class="sr-shown">{{ $hasMore ? __('store.review_wall.showing_so_far', ['count' => $reviews->count()]) : __('store.review_wall.showing', ['count' => $reviews->count()]) }}</div>
         @endif
       </div>
 
       @if ($reviews->isEmpty())
-        <div class="sr-none">No reviews match this filter. <a href="{{ Url::to('/reviews/') }}">Show all reviews</a>.</div>
+        <div class="sr-none">{!! __('store.review_wall.no_match', ['link' => '<a href="' . e(Url::to('/reviews/')) . '">' . e(__('store.review_wall.no_match_link')) . '</a>']) !!}</div>
       @else
         <div class="sr-grid">
           @foreach ($reviews as $review)
             @php
-              $name = trim((string) $review->author_name) ?: 'Anonymous';
+              $name = trim((string) $review->author_name) ?: __('store.review_wall.anonymous');
               $photos = ReviewWall::photos($review);
             @endphp
             <article class="sr-card" data-review="{{ $review->id }}">
               <div class="sr-ct">
                 <span class="sr-av" style="background:{{ Gradient::for($name) }}">{{ mb_substr($name, 0, 1) }}</span>
                 <div class="sr-cmeta">
-                  <div class="sr-nm"><span class="sr-name">{{ $name }}</span>@if ($review->verified)<span class="sr-verified">✓ Verified</span>@endif</div>
+                  <div class="sr-nm"><span class="sr-name">{{ $name }}</span>@if ($review->verified)<span class="sr-verified">{{ __('store.reviews.verified_badge') }}</span>@endif</div>
                   {!! $stars((int) $review->rating) !!}
                 </div>
               </div>
               @if ($review->product)
-                <div class="sr-prod">on <a href="{{ Url::to('/product/' . $review->product->slug . '/') }}">{{ $review->product->name }}</a></div>
+                <div class="sr-prod">{!! __('store.review_wall.on_product', ['product' => '<a href="' . e(Url::to('/product/' . $review->product->slug . '/')) . '">' . e($review->product->name) . '</a>']) !!}</div>
               @endif
               @if (trim((string) $review->title) !== '')
                 <div class="sr-h">{{ $review->title }}</div>
@@ -272,14 +266,14 @@
               @if ($photos)
                 <div class="sr-pp">
                   @foreach ($photos as $photo)
-                    <img class="sr-ph" src="{{ Url::to($photo) }}" alt="Review photo" loading="lazy" width="62" height="62">
+                    <img class="sr-ph" src="{{ Url::to($photo) }}" alt="{{ __('store.review_wall.photo_alt') }}" loading="lazy" width="62" height="62">
                   @endforeach
                 </div>
               @endif
               <div class="sr-cf">
                 <span>{{ $review->created_at?->format('j M Y') }}</span>
                 @if ((int) $review->helpful > 0)
-                  <span>👍 {{ number_format((int) $review->helpful) }} found this helpful</span>
+                  <span>{{ trans_choice('store.review_wall.found_helpful', (int) $review->helpful, ['formatted' => number_format((int) $review->helpful)]) }}</span>
                 @endif
               </div>
             </article>
@@ -288,7 +282,7 @@
 
         @if ($hasMore)
           <div class="sr-more-wrap">
-            <a class="sr-more" href="{{ request()->fullUrlWithQuery(['rshow' => $shown + ReviewWall::STEP]) }}#sr">Load more reviews</a>
+            <a class="sr-more" href="{{ request()->fullUrlWithQuery(['rshow' => $shown + ReviewWall::STEP]) }}#sr">{{ __('store.reviews.load_more') }}</a>
           </div>
         @endif
       @endif
@@ -306,13 +300,11 @@
       new column, a new moderation case and a new decision for the owner — the
       page points at the one that is built and works.
     --}}
-    <p class="sr-unbuilt">
-      <b>Writing a review:</b> reviews are left on the page of the product you bought —
-      open it and use “Write a review” there. A shop-wide review form, review photos
-      browsing and helpful-voting from this page are <b>not built</b>: nothing is wrong
-      with your store and nothing is missing from it, these pieces simply do not exist
-      here yet. <a href="{{ $shopUrl }}">Find a product to review</a>.
-    </p>
+    <p class="sr-unbuilt">{!! __('store.review_wall.unbuilt_note', [
+      'lead' => '<b>' . e(__('store.review_wall.unbuilt_lead')) . '</b>',
+      'not_built' => '<b>' . e(__('store.review_wall.unbuilt_emphasis')) . '</b>',
+      'link' => '<a href="' . e($shopUrl) . '">' . e(__('store.review_wall.unbuilt_link')) . '</a>',
+    ]) !!}</p>
   </section>
 </div>
 </body>

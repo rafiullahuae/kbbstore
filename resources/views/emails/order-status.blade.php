@@ -20,7 +20,7 @@
 @section('body')
     @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
 
-    <p style="margin:0 0 14px;font-size:15px;color:{{ $c['ink2'] }};">Hello{{ $order['customerName'] !== '' ? ' ' . $order['customerName'] : '' }},</p>
+    <p style="margin:0 0 14px;font-size:15px;color:{{ $c['ink2'] }};">{{ $order['customerName'] !== '' ? __('email.greeting.hello_named', ['name' => $order['customerName']]) : __('email.greeting.hello') }}</p>
 
     <p style="margin:0 0 10px;font-size:19px;font-weight:700;line-height:1.3;color:{{ $c['ink'] }};">{{ $heading }}</p>
 
@@ -51,8 +51,9 @@
     </table>
 
     <p style="margin:0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
-        That link opens on the device you ordered from. Anywhere else,
-        <a href="{{ $order['accountUrl'] }}" style="color:{{ $c['pinkDeep'] }};font-weight:600;">sign in to your account</a>
-        and look for {{ $order['number'] }}.
+        {!! __('email.order_status.device_note', [
+            'link' => '<a href="' . e($order['accountUrl']) . '" style="color:' . e($c['pinkDeep']) . ';font-weight:600;">' . e(__('email.confirmation.sign_in_link')) . '</a>',
+            'number' => e($order['number']),
+        ]) !!}
     </p>
 @endsection

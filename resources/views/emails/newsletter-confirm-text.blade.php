@@ -6,19 +6,19 @@
     client is a consent request that cannot be answered, and the recipient's only
     remaining option is to mark it as spam.
 --}}
-Hello,
+{!! __('email.greeting.hello') !!}
 
-Somebody -- we hope it was you -- asked for {{ $brand['storeName'] ?? 'our' }} emails to be sent to this address.
+{!! __('email.newsletter.somebody_asked_text', ['store' => $brand['storeName'] ?? __('email.newsletter.our')]) !!}
 
-You are not on the list yet. Open the link below and you will be.
+{!! __('email.newsletter.not_yet_text') !!}
 
 {{ $confirmUrl }}
 
-The link works for {{ $days }} days.
+{!! trans_choice('email.newsletter.link_expiry', (int) $days) !!}
 
-If it was not you, do nothing. Without that press we will not add this address, and you will not hear from us again.
+{!! __('email.newsletter.do_nothing') !!}
 
 -- {{ $brand['storeName'] ?? 'K Beauty Bliss' }}
 
-Never want email from us at this address? Unsubscribe here:
+{!! __('email.text.unsubscribe_here_from_us') !!}
 {{ $unsubscribeUrl }}

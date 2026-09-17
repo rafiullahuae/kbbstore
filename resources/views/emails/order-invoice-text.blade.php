@@ -20,44 +20,44 @@
      all capitals. mb_ because the phrase may not be ASCII. --}}
 {!! mb_strtoupper($doc['docType']) !!}
 @if ($doc['invoiceReference'] !== '')
-Invoice {!! $doc['invoiceReference'] !!}
+{!! __('email.invoice.reference', ['reference' => $doc['invoiceReference']]) !!}
 @endif
-Order {!! $doc['orderNumber'] !!}
+{!! __('email.invoice.order', ['number' => $doc['orderNumber']]) !!}
 @if ($doc['invoicedAt'] !== '')
-Issued {!! $doc['invoicedAt'] !!}
+{!! __('email.invoice.issued', ['date' => $doc['invoicedAt']]) !!}
 @endif
 @if ($doc['placedAt'] !== '')
-Ordered {!! $doc['placedAt'] !!}
+{!! __('email.invoice.ordered', ['date' => $doc['placedAt']]) !!}
 @endif
 
-FROM
+{!! mb_strtoupper(__('email.text.from_heading')) !!}
 {!! $doc['seller']['name'] !!}
 @foreach ($doc['seller']['addressLines'] as $line)
 {!! $line !!}
 @endforeach
 @if ($doc['seller']['trn'] !== '')
-TRN {!! $doc['seller']['trn'] !!}
+{!! __('email.invoice.trn', ['trn' => $doc['seller']['trn']]) !!}
 @endif
 
-BILL TO
+{!! mb_strtoupper(__('email.invoice.bill_to')) !!}
 @forelse ($doc['billTo'] as $line)
 {!! $line !!}
 @empty
-Not recorded
+{!! __('email.delivery.not_recorded') !!}
 @endforelse
 
-DELIVER TO
+{!! mb_strtoupper(__('email.invoice.deliver_to')) !!}
 @if ($doc['sameAddress'])
-Same as the billing address
+{!! __('email.invoice.same_as_billing') !!}
 @else
 @forelse ($doc['shipTo'] as $line)
 {!! $line !!}
 @empty
-Not recorded
+{!! __('email.delivery.not_recorded') !!}
 @endforelse
 @endif
 
-ITEMS
+{!! mb_strtoupper(__('email.text.items_heading')) !!}
 @foreach ($doc['items'] as $item)
 - {!! $item['name'] !!}@if ($item['brand'] !== '') ({!! $item['brand'] !!})@endif
 
@@ -65,12 +65,12 @@ ITEMS
   {!! $item['variant'] !!}
 @endif
 @if ($item['sku'] !== '')
-  SKU {!! $item['sku'] !!}
+  {!! __('email.items.sku', ['sku' => $item['sku']]) !!}
 @endif
   {!! $item['quantity'] !!} x {!! $item['unitPlain'] !!} = {!! $item['linePlain'] !!}
 @endforeach
 
-TOTALS
+{!! mb_strtoupper(__('email.text.totals_heading')) !!}
 @foreach ($doc['totals'] as $row)
 {!! $row['label'] !!}: {!! $row['plain'] !!}
 @endforeach
@@ -78,8 +78,8 @@ TOTALS
 {!! $doc['vatNote']['label'] !!}: {!! $doc['vatNote']['plain'] !!}
 @endif
 
-Payment method: {!! $doc['paymentLabel'] !!}
-Delivery method: {!! $doc['deliveryMethod'] !!}
+{!! __('email.text.payment_method', ['method' => $doc['paymentLabel']]) !!}
+{!! __('email.text.delivery_method', ['method' => $doc['deliveryMethod']]) !!}
 @if ($doc['seller']['footer'] !== '')
 
 {!! $doc['seller']['footer'] !!}

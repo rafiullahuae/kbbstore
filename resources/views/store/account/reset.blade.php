@@ -8,7 +8,7 @@
     ids which ones are real.
 --}}
 @extends('layouts.store')
-@section('title', 'Set a new password')
+@section('title', __('store.account.reset_title'))
 
 @section('content')
 @php use App\Support\Url; @endphp
@@ -17,13 +17,13 @@
 <div class="auth {{ $ap->formClass() }}" style="{{ $ap->cssVariables() }}">
     <div class="auth-grid">
         <div class="authcard">
-            <h1>Set a new password</h1>
+            <h1>{{ __('store.account.reset_title') }}</h1>
 
             @if (! $valid)
                 <div class="auth-err">{{ $message }}</div>
-                <p class="alt"><a href="{{ Url::to('/my-account/forgot') }}">Request a new link</a></p>
+                <p class="alt"><a href="{{ Url::to('/my-account/forgot') }}">{{ __('store.account.reset_new_link') }}</a></p>
             @else
-                <p class="lede">Choose something you have not used here before. At least 8 characters.</p>
+                <p class="lede">{{ __('store.account.reset_lead') }}</p>
 
                 @if ($errors->any())<div class="auth-err">{{ $errors->first() }}</div>@endif
 
@@ -35,7 +35,7 @@
                         told would read the old password's next failure as the
                         reset not having worked.
                     --}}
-                    <div class="auth-ok">Note: your original K Beauty Bliss password will stop working once you save this.</div>
+                    <div class="auth-ok">{{ __('store.account.reset_legacy_note') }}</div>
                 @endif
 
                 <form method="post" action="{{ Url::to('/my-account/reset') }}">
@@ -44,16 +44,16 @@
                     <input type="hidden" name="token" value="{{ $token }}">
 
                     <div class="fgroup">
-                        <x-field name="password" label="New password" type="password"
+                        <x-field name="password" :label="__('store.account.reset_field_password')" type="password"
                                  icon="lock" autocomplete="new-password" minlength="8" reveal />
-                        <x-field name="password_confirmation" label="Confirm new password" type="password"
+                        <x-field name="password_confirmation" :label="__('store.account.reset_field_confirm')" type="password"
                                  icon="lock" autocomplete="new-password" minlength="8" reveal />
                     </div>
 
-                    <button class="go" type="submit">Save new password</button>
+                    <button class="go" type="submit">{{ __('store.account.reset_submit') }}</button>
                 </form>
 
-                <p class="alt">Signing in everywhere else will be ended, so you will need to sign in again on your other devices.</p>
+                <p class="alt">{{ __('store.account.reset_signed_out_note') }}</p>
             @endif
         </div>
     </div>

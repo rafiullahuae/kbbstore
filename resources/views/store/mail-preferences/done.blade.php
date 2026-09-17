@@ -1,5 +1,5 @@
 @extends('layouts.store')
-@section('title', $ok ? 'Stopped' : 'That link did not work')
+@section('title', $ok ? __('store.mail_prefs.done_title') : __('store.newsletter.bad_link_title'))
 
 @section('content')
 
@@ -21,13 +21,13 @@
     <div class="auth-grid">
         <div class="authcard">
             @if ($ok)
-                <h1>Stopped</h1>
-                <p class="lede">Done. We will not send stock alerts or basket reminders to this address again, and any that were already waiting have been cancelled.</p>
-                <p class="muted" style="font-size:13px;">Order confirmations, delivery updates and receipts are not affected — they are how you find out what is happening to something you paid for.</p>
+                <h1>{{ __('store.mail_prefs.done_title') }}</h1>
+                <p class="lede">{{ __('store.mail_prefs.done_lead') }}</p>
+                <p class="muted" style="font-size:13px;">{{ __('store.mail_prefs.done_note') }}</p>
             @else
-                <h1>That link did not work</h1>
-                <p class="lede">It may have expired, or it may have been copied incompletely — links wrap badly in some email programs.</p>
-                <p class="muted" style="font-size:13px;">Try opening it again straight from the email. If it still does not work, reply to any message from us and we will take the address off by hand.</p>
+                <h1>{{ __('store.newsletter.bad_link_title') }}</h1>
+                <p class="lede">{{ __('store.newsletter.bad_link_lead') }}</p>
+                <p class="muted" style="font-size:13px;">{{ __('store.mail_prefs.bad_link_note') }}</p>
             @endif
         </div>
     </div>

@@ -20,8 +20,8 @@
         <div class="logo">K-Beauty<span>Bliss</span></div>
         <button class="x" style="margin-left:auto;width:32px;height:32px;border-radius:50%;background:var(--cream)" type="button" data-kbb-close>✕</button>
     </div>
-    <div class="mnav-search"><input type="search" placeholder="Search skincare, brands…" data-kbb-msearch></div>
-    <div class="mnav-hint">Tap a section to open it</div>
+    <div class="mnav-search"><input type="search" placeholder="{{ __('store.mobile_menu.search_placeholder') }}" data-kbb-msearch></div>
+    <div class="mnav-hint">{{ __('store.mobile_menu.hint') }}</div>
     <div class="mnav-list" id="mlist"></div>
 </nav>
 

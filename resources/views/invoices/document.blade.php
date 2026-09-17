@@ -288,9 +288,9 @@
     <div class="toolbar no-print">
         <h1>@yield('title') · {{ $doc['orderNumber'] }}</h1>
         <span class="spacer"></span>
-        <span class="hint">Print, or choose “Save as PDF” in the print dialog.</span>
+        <span class="hint">{{ __('invoice.document.print_hint') }}</span>
         @yield('toolbar')
-        <button type="button" onclick="window.print()">Print</button>
+        <button type="button" onclick="window.print()">{{ __('invoice.document.print_button') }}</button>
     </div>
 
     {{-- THE WHOLE CLASS ATTRIBUTE IS YIELDED, WITH "sheet" AS THE DEFAULT, and

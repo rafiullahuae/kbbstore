@@ -1,7 +1,7 @@
 @extends('layouts.store')
 @php use App\Support\Url; @endphp
 
-@section('title', $title . ' · K-Beauty Bliss')
+@section('title', __('store.collection.page_title', ['title' => $title]))
 
 @push('styles')
     @vite('resources/css/kbb/kbb-grid-skins.css')
@@ -10,7 +10,7 @@
 @section('content')
 <div class="kbb-home">
 <section class="sec"><div class="wrap">
-    <nav class="crumb"><a href="{{ Url::to('/') }}">Home</a> / <span>{{ $title }}</span></nav>
+    <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{{ $title }}</span></nav>
 
     <div class="sh">
         <div>
@@ -19,14 +19,14 @@
                  rendered no <h1> at all. There is exactly one .sh block on this
                  view, so this cannot produce a second. The size is unchanged —
                  .kbb-home .sh :is(h1,h2) in kbb.css matches both tags. --}}
-            <h1>{{ $title }} <span class="cnt">{{ number_format($products->total()) }} products</span></h1>
+            <h1>{{ $title }} <span class="cnt">{{ trans_choice('store.collection.product_count', $products->total(), ['formatted' => number_format($products->total())]) }}</span></h1>
             <p>{{ $intro }}</p>
         </div>
-        <a class="lnk" href="{{ Url::to('/shop/') }}">All products</a>
+        <a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.collection.all_products') }}</a>
     </div>
 
     @if ($products->isEmpty())
-        <p class="empty">Nothing here just yet. <a href="{{ Url::to('/shop/') }}">Browse the full range</a>.</p>
+        <p class="empty">{!! __('store.collection.empty', ['link' => '<a href="' . e(Url::to('/shop/')) . '">' . e(__('store.collection.empty_link')) . '</a>']) !!}</p>
     @else
         @include('partials.home.grid', [
             'items' => $products,

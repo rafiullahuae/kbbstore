@@ -21,12 +21,11 @@
     @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
 
     <p style="margin:0 0 6px;font-size:20px;font-weight:700;color:{{ $c['ink'] }};line-height:1.3;">
-        Thank you{{ $order['customerName'] !== '' ? ', ' . $order['customerName'] : '' }} ✨
+        {{ $order['customerName'] !== '' ? __('email.confirmation.greeting_named', ['name' => $order['customerName']]) : __('email.confirmation.greeting') }}
     </p>
 
     <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:{{ $c['ink2'] }};">
-        Your order is in and we are packing it with care. Everything you chose is listed below,
-        exactly as it was when you ordered — keep this email, it is your receipt.
+        {{ __('email.confirmation.lead') }}
     </p>
 
     {{-- The order chip. Same information as before, in the brand's own tint
@@ -35,10 +34,10 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['cream'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['cream'] }};border-radius:9px;">
         <tr>
             <td style="padding:13px 15px;font-size:14px;line-height:1.5;color:{{ $c['ink'] }};">
-                <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">Order</span>
+                <span style="font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">{{ __('email.order_status.order_label') }}</span>
                 <span style="font-weight:700;margin-left:7px;font-size:16px;color:{{ $c['pinkDeep'] }};">{{ $order['number'] }}</span>
                 @if ($order['placedAt'] !== '')
-                    <span style="color:{{ $c['ink2'] }};margin-left:10px;">placed {{ $order['placedAt'] }}</span>
+                    <span style="color:{{ $c['ink2'] }};margin-left:10px;">{{ __('email.confirmation.placed_on', ['date' => $order['placedAt']]) }}</span>
                 @endif
             </td>
         </tr>
@@ -55,7 +54,7 @@
                  inline anchor and leaves a bare blue link; a cell with a bgcolor
                  attribute it does render. --}}
             <td bgcolor="{{ $c['pinkDeep'] }}" style="background:{{ $c['pinkDeep'] }};border-radius:7px;">
-                <a href="{{ $order['trackUrl'] }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">Track your order</a>
+                <a href="{{ $order['trackUrl'] }}" style="display:inline-block;padding:13px 26px;color:{{ $c['white'] }};font-size:15px;font-weight:600;text-decoration:none;">{{ __('email.confirmation.track_button') }}</a>
             </td>
         </tr>
     </table>
@@ -67,8 +66,9 @@
         Said here rather than discovered on a phone.
     --}}
     <p style="margin:0;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">
-        That link opens on the device you ordered from. Anywhere else,
-        <a href="{{ $order['accountUrl'] }}" style="color:{{ $c['pinkDeep'] }};font-weight:600;">sign in to your account</a>
-        and your orders are all listed there under {{ $order['number'] }}.
+        {!! __('email.confirmation.device_note', [
+            'link' => '<a href="' . e($order['accountUrl']) . '" style="color:' . e($c['pinkDeep']) . ';font-weight:600;">' . e(__('email.confirmation.sign_in_link')) . '</a>',
+            'number' => e($order['number']),
+        ]) !!}
     </p>
 @endsection

@@ -24,9 +24,9 @@
 @if ($items->isEmpty())
     <div class="empty">
         <div class="em">🛍️</div>
-        <b>Your bag is empty</b>
-        <p>Discover authentic K-Beauty to start your glow.</p>
-        <a class="cobtn" style="max-width:260px;margin:0 auto" href="{{ Url::to('/shop/') }}">Start shopping</a>
+        <b>{{ __('store.cart.empty_heading') }}</b>
+        <p>{{ __('store.cart.empty_body') }}</p>
+        <a class="cobtn" style="max-width:260px;margin:0 auto" href="{{ Url::to('/shop/') }}">{{ __('store.cart.empty_cta') }}</a>
     </div>
 @else
     @php
@@ -50,9 +50,9 @@
             <div class="ship">
                 <div class="t">
                     @if ($left > 0)
-                        You're <b>{!! \App\Support\Money::format($left, $leftDp) !!}</b> away from <b>free delivery</b>
+                        {!! __('store.cart.free_delivery_away', ['amount' => '<b>' . \App\Support\Money::format($left, $leftDp) . '</b>', 'free_delivery' => '<b>' . e(__('store.cart.free_delivery_phrase')) . '</b>']) !!}
                     @else
-                        🎉 <b>You've unlocked free delivery!</b>
+                        🎉 <b>{!! \App\Support\Phrase::inline(__('store.cart.free_delivery_unlocked')) !!}</b>
                     @endif
                 </div>
                 <div class="bar"><div class="fill" style="width:{{ $pct }}%"></div></div>
@@ -83,14 +83,14 @@
                             <div class="cn"><a href="{{ $p?->url() ?? '#' }}">{{ $p?->name }}</a></div>
                             @if ($attrs)<div class="cvar">{{ $attrs }}</div>@endif
                             <div class="qty">
-                                <button type="button" data-kcpq="{{ $item->id }}" data-d="-1" aria-label="Decrease quantity">−</button>
+                                <button type="button" data-kcpq="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>
                                 <span>{{ $item->quantity }}</span>
-                                <button type="button" data-kcpq="{{ $item->id }}" data-d="1" aria-label="Increase quantity">+</button>
+                                <button type="button" data-kcpq="{{ $item->id }}" data-d="1" aria-label="{{ __('store.cart.increase_quantity') }}">+</button>
                             </div>
                         </div>
                         <div class="cright">
                             <div class="cpr">{!! \App\Support\Money::format($line, $wasDp) !!}@if ($was > $line)<span class="cwas">{!! \App\Support\Money::format($was, $wasDp) !!}</span>@endif</div>
-                            <button class="crm" type="button" data-kcprm="{{ $item->id }}">Remove</button>
+                            <button class="crm" type="button" data-kcprm="{{ $item->id }}">{{ __('store.cart.remove_item') }}</button>
                         </div>
                     </div>
                 @endforeach
@@ -98,14 +98,14 @@
         </div>
 
         <aside class="sum">
-            <h2>Order Summary</h2>
-            <div class="srow"><span>Subtotal</span><span>{!! \App\Support\Money::format($totals['subtotal']) !!}</span></div>
+            <h2>{{ __('store.cart.summary_heading') }}</h2>
+            <div class="srow"><span>{{ __('store.cart.subtotal') }}</span><span>{!! \App\Support\Money::format($totals['subtotal']) !!}</span></div>
             @if ($totals['discount'])
                 <div class="srow disc">
                     <span>{{ $totals['coupon_code'] }}</span>
                     <span>– {!! \App\Support\Money::format($totals['discount']) !!}</span>
                 </div>
-                <div class="appliedcoupon"><span>✓ {{ strtoupper($totals['coupon_code']) }}</span><a data-kcpremovecoupon="{{ $totals['coupon_code'] }}">Remove</a></div>
+                <div class="appliedcoupon"><span>✓ {{ strtoupper($totals['coupon_code']) }}</span><a data-kcpremovecoupon="{{ $totals['coupon_code'] }}">{{ __('store.cart.remove_coupon') }}</a></div>
             @endif
 
             {{-- The entry UI only. The applied-coupon row above stays visible
@@ -113,25 +113,25 @@
                  discount they can see on the total and no way to take it off. --}}
             @if ($kbbCartCoupon)
                 <div class="coupon">
-                    <input type="text" id="kbbCartCoupon" placeholder="Discount code" autocomplete="off">
-                    <button type="button" data-kcpcoupon>Apply</button>
+                    <input type="text" id="kbbCartCoupon" placeholder="{{ __('store.cart.coupon_placeholder') }}" autocomplete="off">
+                    <button type="button" data-kcpcoupon>{{ __('store.cart.coupon_apply') }}</button>
                 </div>
                 @if ($couponHint)
                     <div class="cohint"><span>🎁</span><div>{!! $couponHint !!}</div></div>
                 @endif
             @endif
 
-            <div class="srow tot"><span>Total</span><span>{!! \App\Support\Money::format($totals['total']) !!}</span></div>
+            <div class="srow tot"><span>{{ __('store.cart.total') }}</span><span>{!! \App\Support\Money::format($totals['total']) !!}</span></div>
             {{-- CartController::payload() calls totals() with no shipping cost,
                  so this figure is the subtotal less any discount and nothing
                  else. A basket of AED 130 read "Total AED 130" here and became
                  AED 150 on the very next screen. The number is right; the word
                  beside it was not, and one line is cheaper than a shopper
                  discovering the difference at the payment step. --}}
-            <div class="srow note">Delivery calculated at checkout</div>
-            <a class="cobtn" href="{{ Url::to('/checkout/') }}">Proceed to checkout →</a>
-            <a class="conti" href="{{ Url::to('/shop/') }}">or continue shopping</a>
-            <div class="paylogos"><span>Visa</span><span>Mastercard</span><span>Tabby</span><span>Tamara</span><span>Apple Pay</span><span>COD</span></div>
+            <div class="srow note">{{ __('store.cart.delivery_at_checkout') }}</div>
+            <a class="cobtn" href="{{ Url::to('/checkout/') }}">{{ __('store.cart.checkout_cta') }}</a>
+            <a class="conti" href="{{ Url::to('/shop/') }}">{{ __('store.cart.continue_shopping_link') }}</a>
+            <div class="paylogos"><span>Visa</span><span>Mastercard</span><span>Tabby</span><span>Tamara</span><span>Apple Pay</span><span>{{ __('store.footer.pay_cod') }}</span></div>
         </aside>
     </div>
 @endif

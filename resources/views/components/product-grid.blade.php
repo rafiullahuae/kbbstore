@@ -18,7 +18,7 @@
     'heading' => null,
     'subheading' => null,
     'moreUrl' => null,
-    'moreLabel' => 'View all',
+    'moreLabel' => null,
 ])
 
 @php
@@ -35,7 +35,7 @@
             @if ($heading)<h2>{{ $heading }}</h2>@endif
             @if ($subheading)<p>{{ $subheading }}</p>@endif
         </div>
-        @if ($moreUrl)<a class="lnk" href="{{ \App\Support\Url::to($moreUrl) }}">{{ $moreLabel }}</a>@endif
+        @if ($moreUrl)<a class="lnk" href="{{ \App\Support\Url::to($moreUrl) }}">{{ $moreLabel ?? __('store.product_grid.view_all') }}</a>@endif
     </div>
 @endif
 
@@ -63,7 +63,7 @@
                          product without a photo still fills the frame. --}}
                     <span class="kbb-card-ph" style="background:{{ \App\Support\Gradient::for($brand . $p->name) }}">{{ \App\Support\Gradient::initials($brand ?: $p->name) }}</span>
                 @endif
-                @if ($isNew)<span class="kbb-badge kbb-badge-new">New</span>@endif
+                @if ($isNew)<span class="kbb-badge kbb-badge-new">{{ __('store.product_card.badge_new') }}</span>@endif
                 @if ($off)<span class="kbb-badge kbb-badge-sale">-{{ $off }}%</span>@endif
             </div>
             <div class="cb">
@@ -73,7 +73,7 @@
                     <div class="kbb-card-rate"><span class="kbb-crate">@for ($i = 1; $i <= 5; $i++)<span class="kbb-cstar{{ $i <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $p->review_count }})</span></div>
                 @endif
                 <div class="cp">@if ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price, $kbbDp) !!}</span> @endif<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span></div>
-                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">Add to cart</span>
+                <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $p->name }}">{{ __('store.product_card.add_to_cart') }}</span>
             </div>
         </a>
     @endforeach

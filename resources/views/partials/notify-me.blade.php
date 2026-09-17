@@ -102,12 +102,12 @@
             --}}
             <input type="hidden" name="variant_id" id="notifyVariantId" value="0">
 
-            <label for="notifyEmail" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Your email address</label>
+            <label for="notifyEmail" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">{{ __('store.notify_me.email_label') }}</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <input id="notifyEmail" type="email" name="email" required maxlength="160"
-                       autocomplete="email" placeholder="you@example.com"
+                       autocomplete="email" placeholder="{{ __('store.notify_me.email_placeholder') }}"
                        style="flex:1 1 200px;min-width:0;padding:10px 12px;border:1px solid var(--line,#e6e6e6);border-radius:8px;font-size:15px;">
-                <button type="submit" style="padding:10px 18px;border:0;border-radius:8px;background:#1d1d1f;color:#fff;font-size:15px;cursor:pointer;">Email me</button>
+                <button type="submit" style="padding:10px 18px;border:0;border-radius:8px;background:#1d1d1f;color:#fff;font-size:15px;cursor:pointer;">{{ __('store.notify_me.submit') }}</button>
             </div>
 
             {{--
@@ -122,9 +122,7 @@
                 opens, and it is the sentence that makes the consent informed.
             --}}
             <p style="margin:10px 0 0;font-size:12px;color:#666;line-height:1.5;">
-                We will email you once, when this product is back. Your address is
-                used for that and nothing else — it is not added to our mailing list,
-                and every message has an unsubscribe link.
+                {{ __('store.notify_me.privacy') }}
             </p>
         </form>
     </div>

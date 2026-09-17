@@ -18,7 +18,7 @@
     taught its customers to abandon baskets.
 --}}
 <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1d1d1f;">
-    <p>Hello,</p>
+    <p>{{ __('email.greeting.hello') }}</p>
 
     {{-- Escaped, then line breaks restored. See back-in-stock.blade.php. --}}
     <p>{!! nl2br(e($body)) !!}</p>
@@ -44,7 +44,7 @@
     @endif
 
     <p style="margin:24px 0;">
-        <a href="{{ $cartUrl }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">View your basket</a>
+        <a href="{{ $cartUrl }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">{{ __('email.cart_recovery.view_basket') }}</a>
     </p>
 
     {{--
@@ -54,12 +54,12 @@
         does not remember a week later. Saying so, and saying where the address
         came from, is what the tick box promised.
     --}}
-    <p style="font-size:13px;color:#555;">You asked us to remind you about this basket when you left your email address with us. If you have since placed your order, thank you — please ignore this.</p>
+    <p style="font-size:13px;color:#555;">{{ __('email.cart_recovery.why') }}</p>
 
     <p style="color:#555;">— {{ $brand['storeName'] ?? config('app.name') }}</p>
 
     <p style="font-size:12px;color:#888;border-top:1px solid #eee;padding-top:12px;">
-        Don't want these reminders?
-        <a href="{{ $unsubscribeUrl }}" style="color:#888;">Unsubscribe</a> and we will stop, for good.
+        {!! \App\Support\Phrase::inline(__('email.cart_recovery.unsubscribe_prompt')) !!}
+        <a href="{{ $unsubscribeUrl }}" style="color:#888;">{{ __('email.common.unsubscribe') }}</a> {{ __('email.cart_recovery.unsubscribe_tail') }}
     </p>
 </div>

@@ -14,13 +14,13 @@
             <div class="cinfo">
                 <div class="n">{{ $p?->name }}</div>
                 <div class="qty">
-                    <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="-1" aria-label="Decrease quantity">−</button>
+                    <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="-1" aria-label="{{ __('store.cart.decrease_quantity') }}">−</button>
                     <span>{{ $item->quantity }}</span>
-                    <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="1" aria-label="Increase quantity">+</button>
+                    <button type="button" class="co-q" data-key="{{ $item->id }}" data-d="1" aria-label="{{ __('store.cart.increase_quantity') }}">+</button>
                 </div>
             </div>
             <div class="cside">
-                <button type="button" class="co-rm" data-key="{{ $item->id }}" aria-label="Remove {{ $p?->name }}">✕</button>
+                <button type="button" class="co-rm" data-key="{{ $item->id }}" aria-label="{{ __('store.checkout.remove_item_label', ['product' => $p?->name]) }}">✕</button>
                 <div class="cprice">{!! Money::format($item->lineTotal()) !!}</div>
             </div>
         </div>

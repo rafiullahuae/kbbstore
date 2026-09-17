@@ -40,11 +40,11 @@
         <form class="sbox" method="get" action="{{ Url::to('/shop/') }}" role="search">
           <div class="search-in {{ 'compact' === $h['search_row_size'] ? 'rs-compact' : 'rs-regular' }}{{ $h['search_native_clear'] ? '' : ' no-native-clear' }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
-            <input type="search" name="s" autocomplete="off" aria-label="Search"
+            <input type="search" name="s" autocomplete="off" aria-label="{{ __('store.header.search_label') }}"
                    value="{{ request('s') }}"
                    placeholder="{{ str_replace('{n}', number_format($kbbProductCount ?? 0), $h['search_text']) }}">
           </div>
-          <div class="sugg" id="kbbSuggest" role="listbox" aria-label="Suggestions"
+          <div class="sugg" id="kbbSuggest" role="listbox" aria-label="{{ __('store.header.suggestions_label') }}"
                data-brands-phone="{{ $h['search_brands_phone'] ? '1' : '0' }}"
                data-max="{{ (int) $h['search_results_max'] }}"></div>
         </form>
@@ -62,7 +62,7 @@
           @endphp
           <span class="ib-acct" @if ($acctPanel) data-acct data-acct-open="{{ app(\App\Services\AccountPanel::class)->get('panel_open') }}" @endif>
             <a class="ib{{ auth()->guard()->check() && $h['account_dot'] ? ' in' : '' }}"
-               href="{{ Url::to('/my-account/') }}" aria-label="Account"
+               href="{{ Url::to('/my-account/') }}" aria-label="{{ __('store.header.account_label') }}"
                @if ($acctPanel) aria-haspopup="true" aria-expanded="false" @endif>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
             </a>
@@ -71,11 +71,11 @@
         @endif
 
         @if ($h['icon_wishlist'])
-          <a class="ib" href="{{ Url::to('/my-wishlist/') }}" aria-label="Wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg><i id="kbbWishCt" style="display:{{ ($kbbWishlistCount ?? 0) > 0 ? '' : 'none' }}">{{ $kbbWishlistCount ?? 0 }}</i></a>
+          <a class="ib" href="{{ Url::to('/my-wishlist/') }}" aria-label="{{ __('store.header.wishlist_label') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg><i id="kbbWishCt" style="display:{{ ($kbbWishlistCount ?? 0) > 0 ? '' : 'none' }}">{{ $kbbWishlistCount ?? 0 }}</i></a>
         @endif
 
         @if ($h['icon_cart'])
-          <a class="ib" href="{{ Url::to('/cart/') }}" data-kbb-open="cart" data-kbb-cart aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>@if (($kbbCartCount ?? 0) > 0)<i id="cartCt">{{ $kbbCartCount }}</i>@endif</a>
+          <a class="ib" href="{{ Url::to('/cart/') }}" data-kbb-open="cart" data-kbb-cart aria-label="{{ __('store.header.cart_label') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>@if (($kbbCartCount ?? 0) > 0)<i id="cartCt">{{ $kbbCartCount }}</i>@endif</a>
         @endif
       </div>
 
@@ -90,7 +90,7 @@
     </div>
 
     @if ($h['trending_show'] && ! empty($kbbTrending))
-      <div class="trend"><b>TRENDING</b>
+      <div class="trend"><b>{{ __('store.header.trending_heading') }}</b>
         @foreach (array_slice($kbbTrending, 0, (int) $h['trending_limit']) as $term)
           <a href="{{ Url::to('/shop/') }}?s={{ urlencode($term) }}">{{ $term }}</a>
         @endforeach

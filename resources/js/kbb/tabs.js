@@ -5,6 +5,8 @@
  * without JavaScript; this only switches which one is shown and expands the
  * clamped text. On mobile the same content is an accordion.
  */
+import { t } from './i18n.js';
+
 export function initProductTabs() {
     const root = document.getElementById('details');
     if (!root) return;
@@ -22,7 +24,7 @@ export function initProductTabs() {
             if (i !== index) {
                 p.querySelector('.dcontent')?.classList.replace('open', 'clamp');
                 const btn = p.querySelector('.readmore');
-                if (btn) btn.textContent = 'Read more ↓';
+                if (btn) btn.textContent = t('store.product.read_more', 'Read more ↓');
             }
         });
     };
@@ -36,7 +38,9 @@ export function initProductTabs() {
             const content = more.previousElementSibling;
             const open = content.classList.toggle('open');
             content.classList.toggle('clamp', !open);
-            more.textContent = open ? 'Read less ↑' : 'Read more ↓';
+            more.textContent = open
+                ? t('store.js.read_less', 'Read less ↑')
+                : t('store.product.read_more', 'Read more ↓');
             return;
         }
 

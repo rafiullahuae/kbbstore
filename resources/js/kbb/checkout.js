@@ -6,6 +6,20 @@
  */
 
 import { setCartCount } from './cart.js';
+import { t, esc } from './i18n.js';
+
+/**
+ * The placeholder that fills the delivery slot while the rates are in flight.
+ *
+ * One function rather than the same string typed twice: the two call sites were
+ * a literal each, which is how the two halves of one message end up saying
+ * different things a release apart. esc() because the wording is an owner's to
+ * correct and this builds markup out of it.
+ */
+const deliveryLoading = () =>
+    '<div class="kbb-delivery-loading">'
+    + esc(t('store.checkout.delivery_loading', 'Loading delivery options…'))
+    + '</div>';
 
 export function initCheckout() {
     const form = document.getElementById('kbbCheckoutForm');
@@ -40,7 +54,9 @@ export function initCheckout() {
         const viewToggle = event.target.closest('#kbbViewItems');
         if (viewToggle) {
             const opened = document.getElementById('kbbSummary')?.classList.toggle('open') ?? false;
-            viewToggle.textContent = opened ? 'Hide full summary ▴' : 'View full summary ▾';
+            viewToggle.textContent = opened
+                ? t('store.checkout.view_summary_close', 'Hide full summary ▴')
+                : t('store.checkout.view_summary_open', 'View full summary ▾');
             viewToggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
             return;
         }
@@ -209,7 +225,7 @@ export function initCheckout() {
         const slot = document.getElementById('kbbDeliverySlot');
         const state = document.getElementById('billing_state')?.value || '';
 
-        if (slot) slot.innerHTML = '<div class="kbb-delivery-loading">Loading delivery options…</div>';
+        if (slot) slot.innerHTML = deliveryLoading();
 
         try {
             const response = await fetch(window.KBB.routes.checkoutRates, {
@@ -224,7 +240,7 @@ export function initCheckout() {
             const data = await response.json();
 
             if (!data.ok) {
-                window.kbbToast?.(data.error || 'Could not update delivery for that country.');
+                window.kbbToast?.(data.error || t('store.js.delivery_failed', 'Could not update delivery for that country.'));
                 return;
             }
 
@@ -317,8 +333,8 @@ export function initCheckout() {
                 });
             }
         } catch {
-            window.kbbToast?.('Could not update delivery for that country — please try again.');
-            if (slot) slot.innerHTML = '<div class="kbb-delivery-loading">Loading delivery options…</div>';
+            window.kbbToast?.(t('store.js.delivery_retry', 'Could not update delivery for that country — please try again.'));
+            if (slot) slot.innerHTML = deliveryLoading();
         }
     });
 
@@ -371,7 +387,7 @@ export function initCheckout() {
         const note = document.getElementById('kbbBrowsedNote');
         if (!note) return;
 
-        note.textContent = 'Added';
+        note.textContent = t('store.js.added', 'Added');
         note.classList.add('on');
 
         clearTimeout(noteTimer);
@@ -498,7 +514,7 @@ export function initCheckout() {
             const data = await run;
 
             if (!data || data.ok !== true) {
-                window.kbbToast?.((data && data.error) || 'Could not update your bag — please try again.');
+                window.kbbToast?.((data && data.error) || t('store.js.bag_failed', 'Could not update your bag — please try again.'));
                 return;
             }
 
@@ -551,7 +567,7 @@ export function initCheckout() {
             const data = await response.json().catch(() => null);
 
             if (!data) {
-                window.kbbToast?.('Could not apply that code — please try again.');
+                window.kbbToast?.(t('store.js.coupon_failed', 'Could not apply that code — please try again.'));
                 return;
             }
 
@@ -561,7 +577,7 @@ export function initCheckout() {
             if (typeof data.orderHtml === 'string') applyFragments(data);
 
             if (data.ok !== true) {
-                window.kbbToast?.(data.error || 'That code could not be applied.');
+                window.kbbToast?.(data.error || t('store.js.coupon_rejected', 'That code could not be applied.'));
                 return;
             }
 
@@ -608,14 +624,14 @@ export function initCheckout() {
             if (!data || data.ok !== true) {
                 rowError(btn, (data && data.error)
                     || (response.status === 419
-                        ? 'Your session expired — please reload the page.'
-                        : 'Could not add that just now — please try again.'));
+                        ? t('store.js.session_expired', 'Your session expired — please reload the page.')
+                        : t('store.js.add_failed', 'Could not add that just now — please try again.')));
                 return;
             }
 
             applyBrowsedAdd(data);
         } catch {
-            rowError(btn, 'No connection — please try again.');
+            rowError(btn, t('store.js.no_connection', 'No connection — please try again.'));
         } finally {
             adding.delete(id);
             // On success this button has already been replaced with the rest of
@@ -645,7 +661,7 @@ export function initCheckout() {
                does, a reload is the honest way to keep every copy in step. */
             window.location.reload();
         } catch {
-            window.kbbToast?.('Something went wrong — please try again.');
+            window.kbbToast?.(t('store.js.generic_error', 'Something went wrong — please try again.'));
         }
     }
 }

@@ -6,6 +6,8 @@
  * helpful-vote button.
  */
 
+import { t } from './i18n.js';
+
 const INITIAL_VISIBLE = 8;
 
 function initReviewFilters(section) {
@@ -116,7 +118,7 @@ function initHelpfulVotes(section) {
             if (data.ok) {
                 const count = btn.querySelector('span');
                 if (count) count.textContent = data.helpful;
-                if (data.already) window.kbbToast?.('You already marked this helpful.');
+                if (data.already) window.kbbToast?.(t('store.js.already_helpful', 'You already marked this helpful.'));
             }
         } catch {
             // Quiet failure — a vote count is not worth interrupting the page for.
@@ -211,7 +213,7 @@ function initReviewSheet(section) {
             const data = await response.json();
 
             if (!data.ok) {
-                if (msg) msg.textContent = data.error || 'Something went wrong — please try again.';
+                if (msg) msg.textContent = data.error || t('store.js.generic_error', 'Something went wrong — please try again.');
                 loadCaptcha();
                 return;
             }
@@ -224,7 +226,7 @@ function initReviewSheet(section) {
 
             setTimeout(shut, 1800);
         } catch {
-            if (msg) msg.textContent = 'Could not submit — please check your connection and try again.';
+            if (msg) msg.textContent = t('store.js.review_failed', 'Could not submit — please check your connection and try again.');
         } finally {
             if (submitBtn) submitBtn.disabled = false;
         }

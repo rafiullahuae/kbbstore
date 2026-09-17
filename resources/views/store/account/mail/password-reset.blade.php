@@ -15,24 +15,24 @@
     something and type a password.
 --}}
 <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1d1d1f;">
-    <p>Hello{{ $name ? ' ' . $name : '' }},</p>
+    <p>{{ $name ? __('email.greeting.hello_named', ['name' => $name]) : __('email.greeting.hello') }}</p>
 
-    <p>Somebody asked to reset the password on your K Beauty Bliss account. If that was you, open the link below and choose a new one.</p>
+    <p>{{ __('email.reset.lead') }}</p>
 
     <p style="margin:24px 0;">
-        <a href="{{ $url }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">Set a new password</a>
+        <a href="{{ $url }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">{{ __('email.reset.button') }}</a>
     </p>
 
-    <p style="font-size:13px;color:#555;">Or paste this into your browser:<br>
+    <p style="font-size:13px;color:#555;">{{ __('email.common.paste_link') }}<br>
         <span style="word-break:break-all;">{{ $url }}</span></p>
 
-    <p>The link can be used once, and expires in {{ $minutes }} minutes.</p>
+    <p>{{ trans_choice('email.reset.expiry', (int) $minutes) }}</p>
 
     @if ($retiresOldPassword)
-        <p>Once you set a new password, your previous one — including the password you used on our old website — will stop working, and you will be signed out on any other device.</p>
+        <p>{{ __('email.reset.retires_old') }}</p>
     @endif
 
-    <p>If you did not ask for this, you can ignore this message. Your password has not changed and nobody has been given access to your account.</p>
+    <p>{{ __('email.reset.not_you') }}</p>
 
-    <p style="color:#555;">— K Beauty Bliss</p>
+    <p style="color:#555;">{{ __('email.common.sign_off') }}</p>
 </div>

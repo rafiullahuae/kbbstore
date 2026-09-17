@@ -84,7 +84,7 @@
                             <div style="font-size:23px;font-weight:800;letter-spacing:-.02em;color:{{ $c['ink'] }};">{{ $markInk }}<span style="color:{{ $c['pinkDeep'] }};">{{ $markAccent }}</span></div>
                         @endif
 
-                        <div style="margin-top:7px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:{{ $c['pinkDeep'] }};">Authentic K-Beauty, curated for you</div>
+                        <div style="margin-top:7px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:{{ $c['pinkDeep'] }};">{{ __('email.layout.masthead_tagline') }}</div>
                     </td>
                 </tr>
 
@@ -120,8 +120,8 @@
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{{ $c['pinkSoft'] }}" style="width:100%;border-collapse:collapse;background:{{ $c['pinkSoft'] }};border-radius:10px;">
                                 <tr>
                                     <td style="padding:16px 18px 6px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
-                                        <div style="font-size:15px;font-weight:700;color:{{ $c['ink'] }};">We are here if you need us</div>
-                                        <div style="margin-top:3px;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">A real person answers. Ask us anything — a question about your order, or about what to use it with.</div>
+                                        <div style="font-size:15px;font-weight:700;color:{{ $c['ink'] }};">{{ __('email.layout.support_heading') }}</div>
+                                        <div style="margin-top:3px;font-size:13px;line-height:1.55;color:{{ $c['ink2'] }};">{{ __('email.layout.support_body') }}</div>
                                     </td>
                                 </tr>
                                 @foreach ($brand['support'] as $channel)
@@ -200,10 +200,9 @@
                                          configured, each one a real address rather than a guess about
                                          where this message came from. --}}
                                     @if ($brand['customerFacing'] ?? true)
-                                        You are receiving this because an order was placed with {{ $brand['storeName'] ?? '' }} using this email address.{{ $replyInvitation }}
+                                        {{ __('email.layout.footer_customer', ['store' => $brand['storeName'] ?? '']) }}{{ $replyInvitation }}
                                     @else
-                                        This is your store's new-order alert. It goes to the address set under Store → Mail,
-                                        and you can switch it off under Store → Modules → Order emails.
+                                        {!! \App\Support\Phrase::inline(__('email.layout.footer_merchant')) !!}
                                     @endif
                                 </td>
                             </tr>

@@ -1,7 +1,7 @@
 @extends('layouts.store')
 @php use App\Support\Url; @endphp
 
-@section('title', 'Cart · K-Beauty Bliss')
+@section('title', __('store.cart.page_title'))
 
 @push('styles')
     @vite('resources/css/kbb/kbb-cart.css')
@@ -11,7 +11,7 @@
 {{-- Wrapper matches the theme's cart page shell (kbb-cart.css .kbb-cartpage). --}}
 <div class="kbb-cartpage" id="cartPage">
     <div class="wrap">
-        <a class="backlink" href="{{ Url::to('/shop/') }}">← Continue shopping</a>
+        <a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.cart.continue_shopping') }}</a>
         {{-- The count sits in the heading rather than on a line of its own.
 
              The class is `cart-count`, NOT `lead`. `.lead` in kbb.css is the
@@ -23,7 +23,7 @@
 
              The id stays `cartLead` so cart.js (Lane R) keeps updating the same
              element; only the class is renamed. --}}
-        <h1>Your Bag <span class="cart-count" id="cartLead">({{ $totals['item_count'] }} {{ $totals['item_count'] === 1 ? 'item' : 'items' }})</span></h1>
+        <h1>{{ __('store.cart.heading') }} <span class="cart-count" id="cartLead">({{ trans_choice('store.cart.item_count', $totals['item_count']) }})</span></h1>
         <div id="kbbCartNotices"></div>
         <div id="cartInner">
             @include('store.cart-inner')

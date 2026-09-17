@@ -26,9 +26,8 @@
     before the @include and this file starts with real content.
 --}}
 @if (! empty($brand['hasSupport']))
-WE ARE HERE IF YOU NEED US
-A real person answers. Ask us anything — a question about your order, or
-about what to use it with.
+{!! mb_strtoupper(__('email.layout.support_heading')) !!}
+{!! wordwrap(__('email.layout.support_body'), 76) !!}
 @foreach ($brand['support'] as $channel)
 {!! $channel['label'] !!}: {!! $channel['value'] !!} ({!! $channel['url'] !!})
 @endforeach

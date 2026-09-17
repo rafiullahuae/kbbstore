@@ -1,14 +1,13 @@
-Hello,
+{!! __('email.greeting.hello') !!}
 
 {{ $body }}
 
 {{ $productName }}
 {{ $productUrl }}
 
-You asked to be told when this product came back in stock. This is that one
-message - we will not email you about it again unless you ask us to.
+{!! wordwrap(__('email.back_in_stock.why_text'), 78) !!}
 
 - {{ $brand['storeName'] ?? config('app.name') }}
 
-Never want email like this? Unsubscribe here:
+{!! __('email.text.unsubscribe_here_like_this') !!}
 {{ $unsubscribeUrl }}

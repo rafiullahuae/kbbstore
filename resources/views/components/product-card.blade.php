@@ -49,9 +49,11 @@
         $off = $product->isOnSale() ? $product->discountPercent() : 0;
 
         if ($off >= 1) {
-            $label = '<span class="lbl" style="background:#E23A4E">-' . $off . '% OFF</span>';
+            $label = '<span class="lbl" style="background:#E23A4E">'
+                   . e(__('store.product_card.label_off', ['percent' => $off]))
+                   . '</span>';
         } elseif ($product->featured) {
-            $label = '<span class="lbl" style="background:#1b9e77">Bestseller</span>';
+            $label = '<span class="lbl" style="background:#1b9e77">' . e(__('store.product_card.label_bestseller')) . '</span>';
         }
     }
 
@@ -132,15 +134,15 @@
         {!! $binit !!}
         {!! $label !!}
         @if ($kbbQuickView)
-        <button class="qv-btn" type="button" aria-label="Quick view" data-kbb-qv="{{ $product->id }}" onclick="event.stopPropagation()">Quick view</button>
+        <button class="qv-btn" type="button" aria-label="{{ __('store.product_card.quick_view') }}" data-kbb-qv="{{ $product->id }}" onclick="event.stopPropagation()">{{ __('store.product_card.quick_view') }}</button>
         @endif
-        @if ($kbbWishlist)<button class="heart" type="button" aria-label="Save" data-kbb-wish="{{ $product->id }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg></button>@endif
+        @if ($kbbWishlist)<button class="heart" type="button" aria-label="{{ __('store.product_card.save_label') }}" data-kbb-wish="{{ $product->id }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg></button>@endif
     </div>
     <div class="cbody">
         @if ($brand)<div class="cbrand">{{ $brand }}</div>@endif
         <a class="cname" href="{{ $link }}">{{ $name }}</a>
         @if ($rc > 0)
-            <div class="crate"><span class="st">{{ str_repeat('★', max(1, (int) round($rating))) }}</span> {{ number_format($rating, 1) }} · {{ $rc > 999 ? round($rc / 1000, 1) . 'k' : $rc }}</div>
+            <div class="crate"><span class="st">{{ str_repeat('★', max(1, (int) round($rating))) }}</span> {{ number_format($rating, 1) }} · {{ $rc > 999 ? __('store.product_card.count_thousands', ['count' => round($rc / 1000, 1)]) : $rc }}</div>
         @else
             <div class="crate" style="visibility:hidden">·</div>
         @endif
@@ -164,10 +166,10 @@
         </div>
         @if ($canAdd)
             <a class="addbtn add_to_cart_button ajax_add_to_cart" href="?add-to-cart={{ $product->publicId() }}" data-quantity="1" data-product_id="{{ $product->id }}" data-kbb-add="{{ $product->id }}" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $product->name }}" rel="nofollow">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg> Add to cart
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg> {{ __('store.product_card.add_to_cart') }}
             </a>
         @else
-            <a class="addbtn" href="{{ $link }}">View product</a>
+            <a class="addbtn" href="{{ $link }}">{{ __('store.product_card.view_product') }}</a>
         @endif
     </div>
 </div>

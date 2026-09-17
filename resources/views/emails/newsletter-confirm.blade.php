@@ -13,20 +13,20 @@
     client will not follow a button.
 --}}
 <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1d1d1f;">
-    <p>Hello,</p>
+    <p>{{ __('email.greeting.hello') }}</p>
 
-    <p>Somebody — we hope it was you — asked for {{ $brand['storeName'] ?? 'our' }} emails to be sent to this address.</p>
+    <p>{{ __('email.newsletter.somebody_asked', ['store' => $brand['storeName'] ?? __('email.newsletter.our')]) }}</p>
 
-    <p><strong>You are not on the list yet.</strong> Press the button below and you will be.</p>
+    <p>{!! __('email.newsletter.not_yet', ['emphasis' => '<strong>' . e(__('email.newsletter.not_yet_emphasis')) . '</strong>']) !!}</p>
 
     <p style="margin:24px 0;">
-        <a href="{{ $confirmUrl }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">Yes, subscribe me</a>
+        <a href="{{ $confirmUrl }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">{{ __('store.newsletter.confirm_button') }}</a>
     </p>
 
-    <p style="font-size:13px;color:#555;">Or paste this into your browser:<br>
+    <p style="font-size:13px;color:#555;">{{ __('email.common.paste_link') }}<br>
         <span style="word-break:break-all;">{{ $confirmUrl }}</span></p>
 
-    <p>The link works for {{ $days }} days.</p>
+    <p>{{ trans_choice('email.newsletter.link_expiry', (int) $days) }}</p>
 
     {{--
         The "do nothing" sentence is the important one and it is the honest one,
@@ -35,7 +35,7 @@
         requires `subscribed` AND a confirmation date. An address that ignores
         this message receives nothing further.
     --}}
-    <p style="color:#555;">If it was not you, do nothing. Without that press we will not add this address, and you will not hear from us again.</p>
+    <p style="color:#555;">{{ __('email.newsletter.do_nothing') }}</p>
 
     <p style="color:#555;">— {{ $brand['storeName'] ?? 'K Beauty Bliss' }}</p>
 
@@ -48,7 +48,7 @@
         the mailbox again before anything reaches it.
     --}}
     <p style="font-size:12px;color:#888;border-top:1px solid #eee;padding-top:12px;">
-        Never want email from us at this address?
-        <a href="{{ $unsubscribeUrl }}" style="color:#888;">Unsubscribe</a>.
+        {{ __('email.newsletter.unsubscribe_prompt') }}
+        <a href="{{ $unsubscribeUrl }}" style="color:#888;">{{ __('email.common.unsubscribe') }}</a>.
     </p>
 </div>
