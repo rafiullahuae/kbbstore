@@ -37,19 +37,79 @@
 {{-- HERO --}}
 @unless ($sections->hidden('hero'))
 <section class="sec {{ $sections->classFor('hero') }}" style="padding-top:14px"><div class="wrap">
-  <div class="slider" id="slider">
+{{-- NO SLIDES, NO SLIDER — Lane FO.
+
+     The band is still rendered when the list is empty, because the delivery
+     strip and the promo ticker live inside it and are their own sections on
+     Appearance → Homepage. The SLIDER is not: with nothing to rotate it drew
+     an empty coloured box with a previous arrow, a next arrow and a row of
+     dots, which is furniture rather than restraint — the rule the trust row's
+     delivery card and the ticker's chips above already follow.
+
+     It could not happen before this release: `home_banners` was read and
+     written by nothing, so the list was always the three shipped slides.
+     Deleting the last slide is a thing an owner can now do, and it has to
+     leave a page rather than a frame.
+
+     THE DIRECTIVE AND THE DIV SHARE A LINE, AND THE COMMENT ENDS ON IT, which
+     is not how the rest of this file is laid out and is deliberate.
+     StorefrontEnglishUnchangedTest compares this page against the same page at
+     BASE_COMMIT byte for byte, and a wrapper written on its own lines moves the
+     markup two spaces and a newline — a diff with no words in it, which that
+     test cannot tell from a copy change and which would cost the next reader
+     the time it takes to prove it is nothing. Written this way the rendered
+     bytes are identical while there are slides, which is every shop that has
+     not touched the new screen. --}}@if (count($banners) > 0)  <div class="slider" id="slider">
     <div class="slides" id="slides">
       @foreach ($banners as $b)
         <a class="sl" href="{{ Url::to($b['url']) }}" style="background:{{ $b['gradient'] }}">
           <div class="sl-t">
             <span class="k">{{ $b['kicker'] }}</span>
             @if ($loop->first)
-              <h1>{!! $b['heading'] !!}</h1>
+{{-- ESCAPED, AND THAT IS THE CHANGE — Lane FO.
+
+     This printed the headline with {!! !!} because the three
+     shipped slides carry a <br>. That was safe for exactly as long
+     as the value was a literal in HomeController, which is how it
+     stayed for the life of this file: `home_banners` was read here
+     and written by nothing in the tree, so nobody could put
+     anything in it.
+
+     Appearance → Homepage content is now a box an owner types into,
+     which turns the same line into stored cross-site scripting on
+     the front page of the shop. So the value is plain text with
+     NEWLINES now and this escapes it and converts them.
+
+     str_replace AND NOT nl2br(), which was the first version of this
+     line. nl2br INSERTS a break and KEEPS the newline, so it renders
+     "a<br>\nb" where the shipped literal was "a<br>b"; its default
+     second argument emits the XHTML form on top of that. Neither
+     reads any differently and both are a different page,
+     byte for byte, from the one the server is serving today — which
+     is the only definition StorefrontEnglishUnchangedTest has, and
+     rightly, since it cannot tell a break that moved from a sentence
+     that changed. This renders the three shipped headings as exactly
+     the bytes they are now.
+
+     The replacement is markup by construction and the value inside it
+     has been through e(), so the {!! !!} that remains is over an
+     escaped string and not over the setting. --}}              <h1>{!! str_replace("\n", '<br>', e($b['heading'])) !!}</h1>
             @else
-              <h2>{!! $b['heading'] !!}</h2>
+              <h2>{!! str_replace("\n", '<br>', e($b['heading'])) !!}</h2>
             @endif
             <p>{{ $b['text'] }}</p>
-            <span class="b">{{ $b['button'] }}</span>
+{{-- The BUTTON is the one of the five that cannot simply be empty:
+     .sl .b is a white pill with padding, so an empty one is a blank
+     lozenge sitting on the banner rather than nothing at all. The
+     eyebrow and the supporting line have no box of their own and
+     collapse to nothing when they are empty, so they are left
+     unconditional — which also keeps this page byte-identical to
+     the one before it for every shop still on the shipped slides.
+
+     Written as one echo rather than a wrapper, for the reason given
+     at the top of this section: a directive on its own line here
+     moves the markup and StorefrontEnglishUnchangedTest reports a
+     diff with no words in it. --}}            {!! $b['button'] === '' ? '' : '<span class="b">' . e($b['button']) . '</span>' !!}
           </div>
           <div class="sl-i" style="background:{{ $b['panel'] }}"></div>
         </a>
@@ -58,7 +118,7 @@
     <button class="sarr prev" id="sprev" type="button" aria-label="{{ __('store.home.slider_previous') }}">‹</button>
     <button class="sarr next" id="snext" type="button" aria-label="{{ __('store.home.slider_next') }}">›</button>
     <div class="sdots" id="sdots"></div>
-  </div>
+  </div>@endif
 
   {{-- RESOLVED ONCE FOR THE WHOLE HERO, because the band and the ticker below
        it make the SAME TWO CLAIMS and used to make them from four different
@@ -445,7 +505,19 @@
     <div class="im"></div>
     <div>
       <h2>{{ __('store.home.about_heading') }}</h2>
-      <p>{{ $settings->get('about_text', __('store.home.about_body')) }}</p>
+      {{-- CLEARED MEANS SAY NOTHING — Lane FO, the rule TrustClaims already
+           applies three sections down. `about_text` was read here and written
+           by nothing in this application, so the shipped paragraph was the only
+           paragraph any shop could have. It has a box now (Appearance →
+           Homepage content), and a box the owner can fill is a box the owner
+           can empty: emptied, the paragraph is dropped rather than printed
+           blank, and the heading, the three counted figures and the link stay.
+           The value arrives from HomeController already resolved, so this
+           template needs no raw-PHP block of its own. That is not tidiness:
+           this file's own headers, thirty and seventy lines from the top,
+           record that Blade compiles STATEMENTS BEFORE COMMENTS, so naming a
+           directive in prose here is the same as writing one. --}}
+      @if ($aboutText !== '')<p>{{ $aboutText }}</p>@endif
       <div class="astats">
         <div><b>{{ number_format($catalogueCount) }}</b><span>{{ __('store.home.about_stat_products') }}</span></div>
         <div><b>{{ $brandTotal }}</b><span>{{ __('store.home.about_stat_brands') }}</span></div>

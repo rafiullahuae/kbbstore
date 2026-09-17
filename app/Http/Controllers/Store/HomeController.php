@@ -11,6 +11,7 @@ use App\Models\Post;
 use App\Models\Review;
 use App\Models\Product;
 use App\Services\DemoContent;
+use App\Services\HomepageContent;
 use App\Services\HomepageSections;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
@@ -207,25 +208,24 @@ class HomeController extends Controller
             ];
         });
 
-        // Hero banners. Editable later through the Banners module; these are the
-        // defaults so the slider is never empty on a fresh install.
-        $banners = (array) ($this->settings->get('home_banners') ?: [
-            ['kicker' => 'Medicube · limited-time offer', 'heading' => 'Age-R Booster Pro<br>with a free gift set',
-             'text' => 'The device everyone is asking about, bundled with the PDRN glow set.',
-             'button' => 'Shop Medicube', 'url' => '/shop/',
-             'gradient' => 'linear-gradient(118deg,#F7C6D4,#E0567B 58%,#A82F53)',
-             'panel' => 'linear-gradient(150deg,#FFE6EE,#EFA8BE)'],
-            ['kicker' => '93 brands · sourced direct', 'heading' => 'The authentic<br>K-beauty store',
-             'text' => 'Every product original, every order checked. Freebies with every parcel.',
-             'button' => 'Shop all brands', 'url' => '/brands/',
-             'gradient' => 'linear-gradient(118deg,#CDE6DA,#3E8F6E 58%,#2A6A50)',
-             'panel' => 'linear-gradient(150deg,#E4F3EC,#9FCBB6)'],
-            ['kicker' => 'Tabby · Tamara · COD', 'heading' => 'Pay later,<br>delivered in 1–3 days',
-             'text' => 'Split any order into four. Free delivery across the UAE over AED 199.',
-             'button' => 'Shop the Super Sale', 'url' => '/shop/?on_sale=1',
-             'gradient' => 'linear-gradient(118deg,#FFE1A8,#E8A33D 58%,#C07F1E)',
-             'panel' => 'linear-gradient(150deg,#FFF2D9,#EFCE8A)'],
-        ]);
+        /*
+         * Hero banners — Lane FO, Phase 15.
+         *
+         * The three defaults that used to be written out here are now
+         * HomepageContent::DEFAULT_SLIDES, carried across verbatim, and the
+         * service is what merges them with whatever the owner has saved on
+         * Appearance → Homepage content. They moved for one reason: this array
+         * was the ONLY definition of the slider's shape, `home_banners` was
+         * read here and written by nothing in the tree, and so these three
+         * slides — the largest thing on the page, carrying its only <h1> —
+         * were the shipped and only value of every install.
+         *
+         * `?:` became a null check inside the service on purpose. An owner who
+         * deletes every slide saves an EMPTY ARRAY, which `?:` reads as "not
+         * set" and replaces with the defaults — so the one edit that removes
+         * the shop's unapproved marketing copy would have silently put it back.
+         */
+        $banners = app(HomepageContent::class)->slides();
 
         /*
          * Routine steps, each with a real product suggestion from its category.
@@ -372,6 +372,9 @@ class HomeController extends Controller
             'posts' => $posts,
             'reviews' => $reviews,
             'banners' => $banners,
+            // '' when the owner has cleared it; the band drops the paragraph
+            // rather than printing an empty one. Same rule as TrustClaims.
+            'aboutText' => app(HomepageContent::class)->aboutText(),
             'routine' => $routine,
             'routineTotal' => $routineTotal,
             'catalogueCount' => $catalogueCount,
