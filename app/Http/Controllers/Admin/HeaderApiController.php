@@ -41,7 +41,9 @@ class HeaderApiController extends Controller
         // Real brands and categories, so a word can be picked rather than typed.
         $suggestions = Cache::remember('kbb.admin.trending', 600, fn () => array_values(array_unique(array_merge(
             \App\Models\Brand::query()->orderByDesc('id')->limit(30)->pluck('name')->all(),
-            \App\Models\Category::query()->orderBy('name')->limit(30)->pluck('name')->all(),
+            // `id` after `name`: this is a LIMIT, and category names are not
+            // unique across the tree.
+            \App\Models\Category::query()->orderBy('name')->orderBy('id')->limit(30)->pluck('name')->all(),
         ))));
 
         return response()->json(['tabs' => $tabs, 'suggestions' => $suggestions]);

@@ -368,7 +368,12 @@ class ProductController extends Controller
                 fn ($q) => $q->whereHas('categories', fn ($c) => $c->whereIn('categories.id', $categoryIds))
             )
             ->with('brand:id,name,slug')
+            // Four out of a category is a LIMIT over a key that ties across
+            // most of this catalogue, so without `id` the four "You may also
+            // like" cards change between two renders of the same product page
+            // with nothing behind the change.
             ->orderByDesc('total_sales')
+            ->orderByDesc('id')
             ->limit(4)
             ->get();
     }

@@ -13,7 +13,11 @@ class PostController extends Controller
             Post::query()
                 ->select(['id', 'slug', 'title', 'excerpt', 'cover', 'tag', 'author', 'published_at'])
                 ->where('status', 'published')
+                // `created_at` ties for every post an import wrote in the same
+                // second, and this truncates at 100: without `id` it is not
+                // settled which posts the hundred are.
                 ->orderByDesc('created_at')
+                ->orderByDesc('id')
                 ->limit(100)
                 ->get()
         );

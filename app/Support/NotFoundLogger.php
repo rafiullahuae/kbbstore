@@ -76,9 +76,14 @@ class NotFoundLogger
             return;
         }
 
+        // `id` last, because the rows this LIMIT does not reach are DELETED
+        // on the next line. `hits` is 1 for most of a 404 log and
+        // `last_seen_at` ties at the second, so without a total order it is
+        // the database that picks which of a tied block survives the trim.
         $idsToKeep = NotFoundLog::query()
             ->orderByDesc('hits')
             ->orderByDesc('last_seen_at')
+            ->orderByDesc('id')
             ->limit(self::MAX_ROWS)
             ->pluck('id');
 

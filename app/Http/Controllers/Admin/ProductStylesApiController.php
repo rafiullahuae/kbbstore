@@ -45,11 +45,12 @@ class ProductStylesApiController extends Controller
             'tabs' => $tabs,
             'skins' => collect(GridSkins::ALL)->map(fn ($l, $k) => ['key' => $k, 'label' => $l])->values(),
             // The builder offers real categories and brands rather than asking
-            // someone to remember a slug.
+            // someone to remember a slug. Both end on `id` because both are
+            // truncated at 200 and neither name column is unique.
             'categories' => Cache::remember('kbb.admin.cats', 600, fn () => Category::query()
-                ->select('id', 'name', 'slug')->orderBy('name')->limit(200)->get()),
+                ->select('id', 'name', 'slug')->orderBy('name')->orderBy('id')->limit(200)->get()),
             'brands' => Cache::remember('kbb.admin.brands', 600, fn () => Brand::query()
-                ->select('id', 'name', 'slug')->orderBy('name')->limit(200)->get()),
+                ->select('id', 'name', 'slug')->orderBy('name')->orderBy('id')->limit(200)->get()),
         ]);
     }
 

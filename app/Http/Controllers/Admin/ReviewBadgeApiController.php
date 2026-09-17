@@ -140,7 +140,12 @@ class ReviewBadgeApiController extends Controller
             ->selectRaw('AVG(reviews.rating) as a')
             ->where('reviews.status', '=', ReviewStatus::APPROVED)
             ->groupBy('products.id', 'products.name', 'products.total_sales')
+            // LIMIT 1 over a count that ties constantly — two products with
+            // three approved reviews each is the ordinary case on this shop,
+            // and this picks the one the badge names. `products.id` decides
+            // it rather than the planner.
             ->orderByDesc('n')
+            ->orderByDesc('products.id')
             ->limit(1)
             ->first();
 

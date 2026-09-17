@@ -93,7 +93,10 @@ class ReviewsIoApiController extends Controller
             ->select('source')
             ->selectRaw('COUNT(*) as n')
             ->groupBy('source')
+            // `source` after the count: the group key is unique per row here,
+            // so it is the key that makes this LIMIT a stable truncation.
             ->orderByDesc('n')
+            ->orderBy('source')
             ->limit(20)
             ->get()
             ->map(fn ($r) => ['source' => (string) ($r->source ?? ''), 'reviews' => (int) $r->n])

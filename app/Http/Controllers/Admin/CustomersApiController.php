@@ -944,6 +944,9 @@ class CustomersApiController extends Controller
         return DB::table('addresses')
             ->whereNotNull('country')
             ->where('country', '!=', '')
+            // `distinct()` makes `country` the unique key of this result, so
+            // the order is already total; the LIMIT is a safety bound on a
+            // column with at most a couple of hundred distinct values.
             ->distinct()
             ->orderBy('country')
             ->limit(300)

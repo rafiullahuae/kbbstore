@@ -242,8 +242,33 @@ final class Shortcodes
                     'name' => $q->orderBy('name', $dir),
                     'random' => $q->inRandomOrder(),
                     'menu_order' => $q->orderBy('position'),
-                    default => $q->orderBy('id', $dir),
+                    // 'date' and anything unrecognised: `id`, which the block
+                    // below applies to every branch anyway.
+                    default => null,
                 };
+            }
+
+            /*
+             * `id` LAST, WHATEVER THE AUTHOR ASKED FOR.
+             *
+             * Every branch above ends in a LIMIT, and every key any of them
+             * sorts on ties: `total_sales` across the tail, `rating` and
+             * `review_count` at 0 for most of this catalogue (so `top_rated`
+             * is very nearly one undifferentiated block), `position` at 0
+             * until somebody reorders something, and the effective price
+             * wherever two products cost the same. A LIMIT over a tie is a
+             * truncation the database gets to decide, so the same [kbb_products]
+             * tag renders different products into the same page with nothing
+             * behind the change -- and these are cached, so whichever answer
+             * the rebuild happened to get is then the answer for everyone.
+             *
+             * `random` is exempt: an author who asked for an arbitrary order
+             * has asked for exactly the thing a total order removes. A manual
+             * `ids` selection is restored to its written order below and is
+             * unaffected either way.
+             */
+            if (($a['orderby'] ?? null) !== 'random') {
+                $q->orderBy('id', $dir);
             }
 
             $rows = $q->limit($limit)->get();

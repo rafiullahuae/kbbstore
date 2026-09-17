@@ -561,7 +561,12 @@ class ReviewsApiController extends Controller
             ->selectRaw('COUNT(*) as n')
             ->whereNotNull('reviews.product_id')
             ->groupBy('reviews.product_id')
+            // `reviews.product_id` is the GROUP BY key, so one row per value
+            // and no two rows can tie on it: that is what makes this LIMIT a
+            // stable truncation rather than a sample of a tied block, and
+            // review counts tie constantly.
             ->orderByDesc('n')
+            ->orderByDesc('reviews.product_id')
             ->limit(200)
             ->get()
             ->map(fn ($r) => [
