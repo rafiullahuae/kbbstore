@@ -30,7 +30,16 @@ class ModuleSeeder extends Seeder
             ['module' => 'reassurance', 'enabled' => true],
             ['module' => 'checkout_thumbs', 'enabled' => true],
             ['module' => 'address_autocomplete', 'enabled' => true],
-            ['module' => 'inline_validation', 'enabled' => true],
+            // inline_validation — off, unlike the plugin, and for the mirror
+            // of the mega_menu reason below. Until Lane FI nothing read this
+            // key: the row said "Not ported yet" and the checkout marked
+            // nothing, whatever the seeder had written here. Now that the gate
+            // is real, `true` here would mean a fresh install came up with the
+            // one form the shop is paid through colouring itself in, chosen by
+            // nobody. The reasoning is recorded in full on the ModuleRegistry
+            // row, which this matches; 2026_11_14_000001 carries the same
+            // alignment for stores that already have a row.
+            ['module' => 'inline_validation', 'enabled' => false],
             ['module' => 'single_name', 'enabled' => true],
             // cart
             ['module' => 'minicart_promo', 'enabled' => true],
