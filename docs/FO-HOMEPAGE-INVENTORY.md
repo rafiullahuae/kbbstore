@@ -9,7 +9,7 @@ template. Where a defect is reported, the reproduction is written out.
 
 ---
 
-## 1. The three registers, and how many sections are in each
+## 1. Where each section's words come from
 
 There are **17 sections** in `HomepageSections::REGISTRY`. Two separate things
 are configurable about each of them, and it is worth naming them apart because
@@ -23,14 +23,17 @@ the console only owns one:
 Presence is in good shape and is not what this lane touched. Content is the
 whole finding.
 
-### Schema-driven content — 1 of 17
+### Schema-driven content — 1 of 17 before this lane, 2 after
 
 | Section | Schema | Screen |
 |---|---|---|
 | `newsletter` | `NewsletterSettings::SCHEMA` / `::TABS` — 14 fields, cast on the way in | Growth & Marketing → Newsletter, with a live preview |
 
-One section. That is the model the rest of this phase is measured against, and
-it is also the model this lane copied.
+One section, before this lane. That is the model the rest of Phase 15 is
+measured against, and it is the model this lane copied rather than improved on:
+`hero` joins it here, through `HomepageContent::SLIDE_SCHEMA`, drawn and cast by
+the same `ModuleSchema` — and so do `about_text` and `home_ticker`, as flat
+fields on the same screen. Two of seventeen, and three sentences elsewhere.
 
 ### Settings-driven but not schema-driven — 4 fields across 2 sections
 
