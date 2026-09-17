@@ -1424,6 +1424,49 @@ a fake success toast and saves nothing).
 
 ---
 
+## Phase 18 — Arabic  *(requested by the owner, 2.60.199; foundation in flight)*
+
+The whole shop in Arabic as well as English, translated by the owner rather than
+by a browser plugin, with `/ar` on the front end. **Greenfield**: there is no
+`lang/` directory, **zero** uses of `__()`, `@lang` or `trans()` anywhere in the
+tree, and `config/app.php` is stock.
+
+The surface is three different things needing three different homes:
+
+- **95 Blade files** of hardcoded English — storefront, partials, emails, invoices
+- **Database content** — `products` (671 on the live shop), `categories`, `brands`,
+  `pages`, `posts`, `menu_items`
+- **English defaults held in PHP classes** — `TrustClaims::CLAIMS`, the delivery
+  lines, `VatDisplay`'s notes, module descriptions, validation messages
+
+- [ ] **Foundation** — locale resolution, the store, the fallback chain, the admin
+      editing surface. **The store must be the database, and that is decided by
+      the host rather than by taste**: there is no shell, so a `lang/ar.json`
+      could only change by shipping a signed zip, and the owner has to be able to
+      type a correction and see it live
+- [ ] ▲ **The URL shape.** English unprefixed with Arabic at `/ar/...`, with
+      `/en/...` as a 301 alias, against prefixing both. Prefixing both moves
+      **every URL a second time** — after the WooCommerce migration already moved
+      them once — and the redirect map, the sitemap and `RESERVED_SLUGS`' root
+      catch-all all pay for it
+- [ ] **Content translations** — a polymorphic table over `name_ar` columns, so
+      "what is still untranslated" is one query and a new field needs no schema
+      change. Slugs stay single: translating them doubles the URL surface and
+      breaks the redirect map
+- [ ] ▲ **The order must record the shopper's language.** Without it an Arabic
+      customer gets an English invoice, and an English "your order has shipped"
+      email weeks later
+- [ ] ▲ **RTL is not a translation problem.** The stylesheet is full of
+      `margin-left` / `padding-right` / `text-align:left`; CSS logical properties
+      let one sheet serve both. **Poppins carries no Arabic glyphs**, so an
+      Arabic face is needed as well
+- [ ] **Machine translation as a draft, never as a publish.** A pluggable
+      provider on the owner's own API key, a character count and cost shown
+      before anything runs, and output landing as a draft he approves — which is
+      what makes "if we find anything incorrect we correct it manually" real
+- [ ] **SEO** — `hreflang` both ways, per-language canonical, per-language sitemap
+
+
 ## Approximate timeline
 
 Measured in **working sessions like the ones so far** — a session being a focused
