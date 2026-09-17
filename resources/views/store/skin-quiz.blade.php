@@ -120,13 +120,15 @@ input,textarea{font-family:inherit}
 #rpanel .routine{margin-top:12px;animation:rise .3s var(--ease)}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
 @media(max-width:360px){.rgrid{grid-template-columns:1fr}}
-.rcell{display:flex;align-items:center;gap:10px;border:1px solid var(--line-2);border-radius:12px;padding:8px 9px;background:#fff}
+.rcell{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line-2);border-radius:12px;padding:8px 9px;background:#fff;min-width:0}
 .rcw{min-width:0;flex:1}
 .rcell .rthumb{width:36px;height:36px;border-radius:9px;font-size:11px}
 .rcell .rpname{font-size:12px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rpb{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
-.rcell .rpbrand{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rcell .rpprice{font-size:11.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
+/* The step's one-line explanation. Its own class because .rpname is
+   white-space:nowrap — correct for the product name it used to hold, and
+   the reason a sentence in that slot pushed the grid track wider than the
+   card it sits in. */
+.rcell .rpdesc{font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ink-2);overflow-wrap:anywhere}
 .routine-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;background:linear-gradient(120deg,var(--cream),var(--pink-soft));border-bottom:1px solid var(--line)}
 .routine-h .rt{font-size:15px;font-weight:700;letter-spacing:-.01em}
 .routine-h .rd{font-size:11.5px;color:var(--ink-2);margin-top:2px;max-width:360px;line-height:1.4}
@@ -135,13 +137,8 @@ input,textarea{font-family:inherit}
 .rthumb{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:12px;flex-shrink:0}
 .rstep{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--pink-deep)}
 .rpname{font-size:12.5px;font-weight:600;line-height:1.25}
-.rpbrand{font-size:10.5px;color:var(--muted)}
-.rpprice{margin-inline-start:auto;font-size:12.5px;font-weight:700;white-space:nowrap}
 .routine-f{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:13px 16px}
 .routine-f .rsum{font-size:12.5px}
-.routine-f .rsum b{font-size:17px}
-.routine-f .rsum s{color:var(--muted);font-weight:400;margin-inline-start:5px;font-size:11px}
-.save-pill{background:var(--green);color:#fff;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px;margin-inline-start:6px}
 
 .expert{margin-top:16px;border:1.5px solid #E7D6FB;border-radius:17px;padding:18px;background:linear-gradient(135deg,#fff,#F3ECFD)}
 .expert h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
@@ -196,7 +193,10 @@ input,textarea{font-family:inherit}
   <div class="pips" id="pips"></div>
   <div id="stage"></div>
 </div>
-<div class="toast" id="toast"></div>@verbatim
+<div class="toast" id="toast"></div>
+{{-- The one real link the results panel has. Url::to() carries the deployment's
+     base path (KBB_BASE_PATH on staging), so this cannot be a literal '/shop/'. --}}
+<script>const SHOP_URL = @json(\App\Support\Url::to('/shop/'));</script>@verbatim
 
 <script>
 const $=(s,r=document)=>r.querySelector(s);
@@ -235,59 +235,71 @@ const ALLERGENS=[
   {v:'Nut oils'},{v:'Lanolin'},{v:'None / not sure'}
 ];
 
-const POOL={
-  cleanseOil:{b:'Anua',n:'Heartleaf Cleansing Oil',p:79},
-  cleanseGel:{b:'COSRX',n:'Low pH Gel Cleanser',p:49},
-  tonerSoothe:{b:'Anua',n:'Heartleaf 77 Toner',p:89},
-  tonerHydra:{b:'Isntree',n:'Hyaluronic Acid Toner',p:79},
-  serumHydra:{b:'Torriden',n:'Dive-In HA Serum',p:69},
-  serumGlow:{b:'Beauty of Joseon',n:'Glow Serum',p:75},
-  serumVitC:{b:'Numbuzin',n:'No.5 Vitamin C Serum',p:99},
-  serumAcne:{b:'Some By Mi',n:'AHA-BHA-PHA Serum',p:89},
-  serumBarrier:{b:'COSRX',n:'Snail 96 Mucin Essence',p:79},
-  serumPDRN:{b:'Medicube',n:'PDRN Pink Collagen Serum',p:149},
-  serumCica:{b:'SKIN1004',n:'Centella Ampoule',p:79},
-  creamRich:{b:'Torriden',n:'Dive-In Cream',p:75},
-  creamGel:{b:'COSRX',n:'Oil-Free Moisturizer',p:69},
-  creamPDRN:{b:'Medicube',n:'PDRN Capsule Cream',p:129},
-  spf:{b:'Beauty of Joseon',n:'Relief Sun SPF50+',p:65},
-  mask:{b:'MEDIHEAL',n:'Glow Mask · 5 pack',p:55},
-  eye:{b:'Medicube',n:'Age-R Eye Cream',p:99}
+/* ── THE ROUTINE IS STEPS, NOT PRODUCTS — Lane FB ────────────────────────────
+ *
+ * This block used to be `const POOL`: seventeen products with brands and
+ * prices, none of which this shop sells. Thirteen of the names existed nowhere
+ * else in the repository and two of the brands did not exist at all, so the
+ * quiz recommended a basket that could not be bought, quoted a total nobody had
+ * set, and printed a 15% bundle saving that no discount rule in this shop has
+ * ever offered.
+ *
+ * The preview banner did not contain any of it, because buildPayload() posted
+ * those names and that total to /api/quiz and they were kept in
+ * quiz_submissions.recommended_routines.
+ *
+ * WHAT REPLACES IT, AND WHAT DOES NOT. The quiz can say truthfully which STEPS
+ * a skin type and a set of concerns call for, and in what order — that is
+ * skincare, not catalogue. It cannot say which product to buy, because nothing
+ * on this page reads `products` and no column records which routine step a
+ * product belongs to. So it recommends the shape of a routine and sends the
+ * shopper to the real shop to fill it.
+ *
+ * DRIVING IT FROM THE CATALOGUE IS THE NEXT STEP AND NEEDS A SCHEMA CHANGE: a
+ * `routine_role` on products (cleanser / toner / treatment / moisturiser / spf),
+ * an admin field to set it, and an endpoint to read the visible, in-stock row
+ * per role within the shopper's budget. That is a lane of its own and is
+ * written up in this lane's report. Nothing here invents a stand-in for it.
+ */
+const STEPS={
+  cleanse:{n:'Cleanse',d:'Lift off sunscreen, sweat and the day.'},
+  cleanseOil:{n:'Cleanse (oil first)',d:'An oil or balm to break down SPF, then a gentle wash.'},
+  tone:{n:'Tone',d:'Rebalance and soften before anything active.'},
+  treat:{n:'Treat',d:'The active step for your main concern.'},
+  boost:{n:'Boost',d:'A second active for your next concern.'},
+  barrier:{n:'Barrier',d:'A calming, repairing layer when skin feels reactive.'},
+  moisturise:{n:'Moisturise',d:'Seal the water in so the actives are tolerated.'},
+  rich:{n:'Moisturise (richer)',d:'A heavier cream for dry or mature skin.'},
+  protect:{n:'Protect',d:'Sunscreen every morning — the UAE sun is the whole game.'},
+  mask:{n:'Weekly',d:'A mask once or twice a week, not daily.'},
+  eye:{n:'Eye',d:'A lighter formula for the thinner skin around the eye.'}
 };
-function thumb(b){return b.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
 
-function concernSerum(c){
-  if(/Acne/.test(c))return POOL.serumAcne;
-  if(/Dark spots/.test(c))return POOL.serumVitC;
-  if(/aging/.test(c))return POOL.serumPDRN;
-  if(/Redness/.test(c))return POOL.serumCica;
-  if(/Pores/.test(c))return POOL.serumAcne;
-  if(/Dullness/.test(c))return POOL.serumGlow;
-  if(/Hydration/.test(c))return POOL.serumHydra;
-  return POOL.serumGlow;
-}
+/* Which STEPS this shopper's answers call for. The branches are the same skin
+ * logic the old version used to pick products; only what they select changed. */
 function recommend(){
   const oily=/Oily|Combination/.test(state.skin)||state.concerns.some(c=>/Pores|Acne/.test(c));
   const dry=/Dry|Sensitive/.test(state.skin)||state.concerns.includes('Hydration');
-  const cleanse=oily?POOL.cleanseGel:POOL.cleanseOil;
-  const toner=(/Sensitive|Redness/.test(state.skin)||state.concerns.includes('Redness & sensitivity'))?POOL.tonerSoothe:(dry?POOL.tonerHydra:POOL.tonerSoothe);
-  const c1=state.concerns[0], c2=state.concerns[1];
-  const treat1=c1?concernSerum(c1):POOL.serumGlow;
-  let treat2=c2?concernSerum(c2):null; if(treat2&&treat2.n===treat1.n)treat2=null;
-  const cream=dry?(state.concerns.includes('Fine lines & aging')?POOL.creamPDRN:POOL.creamRich):POOL.creamGel;
-  const spf=POOL.spf;
-  const essentials=[['Cleanse',cleanse],['Treat',treat1],['Moisturise',cream],['Protect',spf]];
-  const glass=[['Cleanse',cleanse],['Tone',toner],['Treat',treat1]];
-  if(treat2)glass.push(['Boost',treat2]);
-  glass.push(['Moisturise',cream],['Protect',spf]);
-  const targeted=[['Weekly',POOL.mask]];
-  if(state.concerns.includes('Fine lines & aging'))targeted.push(['Eye',POOL.eye]);
-  else if(treat2)targeted.push(['Target',treat2]);
-  else targeted.push(['Barrier',POOL.serumBarrier]);
+  const sensitive=/Sensitive|Redness/.test(state.skin)||state.concerns.includes('Redness & sensitivity');
+  const aging=state.concerns.includes('Fine lines & aging');
+  const cleanse=oily?STEPS.cleanse:STEPS.cleanseOil;
+  const cream=dry?(aging?STEPS.rich:STEPS.rich):STEPS.moisturise;
+  const second=state.concerns.length>1;
+
+  const essentials=[cleanse,STEPS.treat,cream,STEPS.protect];
+  const glass=[cleanse,STEPS.tone,STEPS.treat];
+  if(second)glass.push(STEPS.boost);
+  glass.push(cream,STEPS.protect);
+  const targeted=[STEPS.mask];
+  if(aging)targeted.push(STEPS.eye);
+  else if(sensitive)targeted.push(STEPS.barrier);
+  else if(second)targeted.push(STEPS.boost);
+  else targeted.push(STEPS.barrier);
+
   return [
-    {t:'Everyday Essentials',short:'Essentials',tag:'Start here',d:'The core 4 steps for 90% of your goals.',items:essentials},
-    {t:'Glass-Skin Ritual',short:'Glass-Skin',tag:'Best results',d:'The full layering routine for that dewy glow.',items:glass},
-    {t:'Targeted Boosters',short:'Boosters',tag:'Add-ons',d:'Extra treatments for your top concerns.',items:targeted}
+    {t:'Everyday Essentials',short:'Essentials',tag:'Start here',d:'The core steps for 90% of your goals.',items:essentials},
+    {t:'Glass-Skin Ritual',short:'Glass-Skin',tag:'Best results',d:'The full layering routine, in order.',items:glass},
+    {t:'Targeted Boosters',short:'Boosters',tag:'Add-ons',d:'Extra steps for your top concerns.',items:targeted}
   ];
 }
 
@@ -427,22 +439,34 @@ function buildPayload(){
   return {submittedAt:new Date().toISOString(),skinType:state.skin,concerns:state.concerns.slice(),
     answers:{age:state.age,routineDepth:state.depth,budget:state.budget,allergies:state.allergies.slice(),allergyNote:state.allergyNote},
     contact:{name:state.name,phone:state.phone,email:state.email},
-    recommendedRoutines:recommend().map(r=>{const total=r.items.reduce((s,it)=>s+it[1].p,0);const bundle=Math.round(total*0.85/5)*5;return {name:r.t,products:r.items.map(it=>it[1].b+' '+it[1].n),bundle_aed:bundle};}),
+    /* The routine's NAME and its STEPS. A product list and a bundle total used
+       to ride along here and were kept in quiz_submissions.recommended_routines
+       — products the shop does not sell and a total nobody set, stored against
+       a real customer's phone number. The admin leads screen reads only
+       $r['name'], so dropping them renders rows already stored exactly as
+       before and needs no migration. */
+    recommendedRoutines:recommend().map(r=>({name:r.t,steps:r.items.map(s=>s.n)})),
     expertRequest:state.expertSent?{requested:true,message:state.expertMsg}:{requested:false},status:'new'};
 }
 const TAGCOL=['#E0567B','#BE8E2E','#8B5CF6'];
+/* One routine, as an ordered list of steps.
+ *
+ * No price, no bundle, no saving pill. The footer used to quote a bundle total,
+ * a struck-through original and a percentage saved, over a button whose only
+ * action was a toast saying the products had been added to the bag — nothing
+ * was added, no such products existed, and the percentage was arithmetic on
+ * figures that were invented in the first place.
+ * What replaces it is the one true thing the page can offer: a way into the
+ * shop, where the prices are the shop's own.
+ */
 function routinePanel(r,idx){
-  const total=r.items.reduce((s,it)=>s+it[1].p,0);
-  const bundle=Math.round(total*0.85/5)*5;
-  const save=Math.round((1-bundle/total)*100);
-  const cells=r.items.map(([step,p],j)=>{const col=PAL[(idx*2+j)%PAL.length];
-    return `<div class="rcell"><span class="rthumb" style="background:${col[0]};color:${col[1]}">${thumb(p.b)}</span>
-      <div class="rcw"><div class="rstep">${step}</div><div class="rpname">${p.n}</div>
-        <div class="rpb"><span class="rpbrand">${p.b}</span><span class="rpprice">AED ${p.p}</span></div></div></div>`;}).join('');
+  const cells=r.items.map((step,j)=>{const col=PAL[(idx*2+j)%PAL.length];
+    return `<div class="rcell"><span class="rthumb" style="background:${col[0]};color:${col[1]}">${j+1}</span>
+      <div class="rcw"><div class="rstep">${step.n}</div><div class="rpdesc">${step.d}</div></div></div>`;}).join('');
   return `<div class="routine"><div class="routine-h"><div><div class="rt">${r.t}</div><div class="rd">${r.d}</div></div><span class="rtag" style="background:${TAGCOL[idx%3]}">${r.tag}</span></div>
     <div class="rgrid">${cells}</div>
-    <div class="routine-f"><div class="rsum">Buy all ${r.items.length} · <b>AED ${bundle}</b><s>AED ${total}</s><span class="save-pill">SAVE ${save}%</span></div>
-      <button class="btn sm" onclick="toast('Added ${r.items.length} products to bag')">Buy all</button></div></div>`;
+    <div class="routine-f"><div class="rsum">${r.items.length} steps</div>
+      <a class="btn sm" href="${SHOP_URL}">Shop these steps</a></div></div>`;
 }
 function selRoutine(){}
 

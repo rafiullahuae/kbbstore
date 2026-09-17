@@ -260,6 +260,52 @@ final class InterfaceStrings
             'shop.clear_all' => 'Clear all',
             'shop.empty_heading' => 'No products match those filters',
             'shop.empty_body' => 'Try removing a filter or clearing all.',
+
+            /*
+             * THE SORT SELECT AND THE PRICE BANDS — Lane FB.
+             *
+             * Their English source is App\Support\Facets::SORTS and ::BUCKETS,
+             * which stay as they are: a const cannot call __(), BUCKETS carries
+             * the filter's own min/max beside each label, and both are compared
+             * BY KEY everywhere ('plow', 'u54'), never by the label — which is
+             * what makes translating the label safe at all.
+             *
+             * The key here is the constant's array key, so the two cannot be
+             * matched up by eye and get it wrong. ShopPhpLabelsAreKeyedTest
+             * fails if an English source here ever stops matching the constant.
+             *
+             * The figures in the price bands are left exactly as the constant
+             * writes them. They are the band's own definition rather than a
+             * claim that can go stale, and money DISPLAY is being changed under
+             * this lane by another — see the note in the report.
+             */
+            'shop.sort_featured' => 'Featured',
+            'shop.sort_popularity' => 'Best selling',
+            'shop.sort_plow' => 'Price: low to high',
+            'shop.sort_phigh' => 'Price: high to low',
+            'shop.sort_rating' => 'Top rated',
+            'shop.sort_date' => 'Newest',
+            'shop.sort_name' => 'Name A–Z',
+            'shop.price_u54' => 'Under AED 54',
+            'shop.price_54_150' => 'AED 54 – 150',
+            'shop.price_150_300' => 'AED 150 – 300',
+            'shop.price_300p' => 'AED 300+',
+
+            // The chips above the grid, which name the filter the shopper just
+            // applied and are the control for removing it.
+            'shop.chip_on_sale' => 'On sale',
+            'shop.chip_in_stock' => 'In stock',
+
+            // ShopController::heading() — the listing's own title, subtitle and
+            // the crumb after Home. A category supplies its own name and
+            // description from the catalogue; these are the fallbacks and the
+            // unfiltered /shop/ case.
+            'shop.title_all' => 'Shop all',
+            'shop.title_search' => 'Search: :term',
+            'shop.sub_default' => 'Authentic Korean skincare, curated for the UAE.',
+            'shop.sub_search' => 'Results across products and brands.',
+            'shop.crumb_category' => 'Category',
+            'shop.crumb_search' => 'Search',
             'collection.page_title' => ':title · K-Beauty Bliss',
             'collection.product_count' => ':formatted product|:formatted products',
             'collection.all_products' => 'All products',
@@ -837,7 +883,7 @@ final class InterfaceStrings
             // than changed here: it is a claim about shipping, not an interface
             // string, and it belongs with the other free-delivery figures that already
             // come from ShippingService.
-            'account.aside_free_delivery' => 'Free delivery on orders over د.إ150.',
+            'account.aside_free_delivery' => 'Free delivery on orders over :amount.',
             'account.forgot_title' => 'Reset password',
             'account.forgot_heading' => 'Reset your password',
             'account.forgot_lead' => 'Enter your email and we will send you a link to set a new one.',

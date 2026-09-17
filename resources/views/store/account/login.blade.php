@@ -5,6 +5,27 @@
 @php
     use App\Support\Url;
     $ap = app(\App\Services\AccountPanel::class);
+
+    /*
+     * THE THRESHOLD IS THE OWNER'S, NOT THIS TEMPLATE'S — Lane FB.
+     *
+     * This page used to state "Free delivery on orders over د.إ150." as a
+     * literal, and 150 was not a number this shop has ever run: the
+     * free-shipping method carries 19900, and the announcement bar, the home
+     * ticker, the trust row and window.KBB.freeShip all say 199. The sign-in
+     * page contradicted the rest of the shop, on the screen that asks for a
+     * password.
+     *
+     * RESOLVED HERE RATHER THAN READ OFF $kbbFreeShipThreshold, which is the
+     * variable every other surface uses. StoreComposer is bound to
+     * 'layouts.store' (ViewServiceProvider), and Blade renders a child's
+     * sections BEFORE the layout it @extends, so that variable is genuinely not
+     * in scope in this file — taking it would have been an undefined-variable
+     * error under a name that looks correct. thresholdHere() is what the
+     * composer itself calls, and it memoises per request on the Request, so
+     * asking it directly costs nothing.
+     */
+    $kbbSignInFreeShip = app(\App\Services\ShippingService::class)->thresholdHere();
 @endphp
 
 <div class="auth {{ $ap->formClass() }}" style="{{ $ap->cssVariables() }}">
@@ -99,7 +120,14 @@
                     <li>{{ __('store.account.aside_point_wishlist') }}</li>
                     <li>{{ __('store.account.aside_point_restocks') }}</li>
                 </ul>
-                <p class="authside-note">{{ __('store.account.aside_free_delivery') }}</p>
+                {{-- null when this shopper's zone has no free-delivery method at
+                     all. Unguarded, the sentence renders as "Free delivery on
+                     orders over ." — a promise with its number missing, which
+                     still reads as a promise. Same guard as
+                     partials/announcement.blade.php. --}}
+                @if ($kbbSignInFreeShip !== null)
+                    <p class="authside-note">{!! __('store.account.aside_free_delivery', ['amount' => \App\Support\Money::format($kbbSignInFreeShip, 0)]) !!}</p>
+                @endif
             </aside>
         @endif
     </div>

@@ -358,7 +358,31 @@ final class EnglishRenderWalk
             'contact-us' => ['render' => true],
 
             // --- standalone pages --------------------------------------------
-            'skin-quiz' => ['render' => true],
+            /*
+             * NOT BYTE-COMPARED, AND THIS IS A LOSS OF COVERAGE — Lane FB.
+             *
+             * Every other entry here is compared against the PRE-CONVERSION
+             * template checked out of BASE_COMMIT, which proves the interface
+             * -string lane changed no English. That comparison is meaningless
+             * for this page now: Lane FB deliberately changed its English,
+             * deleting the seventeen invented products, their prices and the
+             * bundle saving that the results panel printed. The base template
+             * renders a page that is SUPPOSED to differ, so the only two
+             * outcomes available were a permanent failure or this line.
+             *
+             * It is turned off rather than papered over with an approvedReflows
+             * pattern because the change is a <style> block and most of a
+             * <script>, not a sentence inside an element — a pattern wide
+             * enough to cover it would stop the guard seeing this page at all
+             * while still claiming to check it.
+             *
+             * TO RESTORE IT: re-baseline BASE_COMMIT to a commit that contains
+             * Lane FB's quiz change and set this back to true. Until then the
+             * page's own guard is QuizRecommendsNoInventedProductTest, which
+             * pins the properties that actually matter — no price, no inline
+             * catalogue, no unauthorised discount.
+             */
+            'skin-quiz' => ['render' => false],
             'reviews' => ['render' => true],
 
             // --- cart and checkout -------------------------------------------
