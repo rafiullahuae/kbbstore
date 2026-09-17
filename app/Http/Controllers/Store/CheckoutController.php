@@ -920,7 +920,14 @@ class CheckoutController extends Controller
                 $order,
                 'failed',
                 by: 'system',
-                reason: 'The shopper cancelled the card payment and returned to their basket.',
+                /*
+                 * True of both callers, which is why it does not say "returned
+                 * to their basket". One is the control beside a decline, which
+                 * does send them back; the other is a field they corrected
+                 * afterwards, which replaces this order in place and leaves
+                 * them where they are.
+                 */
+                reason: 'The card payment was cancelled before it completed; the basket was restored.',
                 only: ['paid_at' => null],
             );
 
