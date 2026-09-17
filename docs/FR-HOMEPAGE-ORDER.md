@@ -373,6 +373,32 @@ visibility change in the hero block of the hottest file in the repository, and
 shipping it half-proved beside a fully-proved ordering change would be the worse
 trade.
 
+## Lifting the delivery strip and the ticker out of the hero, costed
+
+`HomepageSections::NESTED` points here for this, so here it is. Making those two
+genuinely movable means giving each its own `<section class="sec">` as a sibling
+under `.kbb-home`, at which point they are flex children and `order` works on
+all seventeen.
+
+It is not free and it is not small:
+
+- **It moves rendered bytes for every shop on the shipped layout.** The two are
+  `<div>`s inside the hero's `.wrap` today; as siblings they need a `.sec` and a
+  `.wrap` of their own, which is new markup, new whitespace and — because
+  `.kbb-home .sec` carries `clamp(9px,1.1vw,14px)` of block padding and
+  `.sec > .wrap` a card frame with 22px radius, a border and a shadow — a
+  visibly different band. The hero stops being one unit and becomes three
+  stacked cards. That is a design decision, not a refactor.
+- **It changes `nth-of-type` for every section after it**, so the corner
+  ornament's alternation shifts for the whole page even on a shop that never
+  reorders anything.
+- **It interacts with the visibility defect below.** Once they are siblings,
+  their own Desktop/Mobile switches start working, which is the right outcome —
+  but it means the two changes want to land together rather than separately.
+
+Which is the same shape of answer FO reached about option 1, and the reason this
+lane shipped the CSS route with the two rows named rather than the restructure.
+
 ## Two more, smaller
 
 - **`hpWire()` previews the preset's stored sequence**, so the three presets
