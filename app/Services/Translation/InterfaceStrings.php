@@ -107,6 +107,7 @@ final class InterfaceStrings
                 self::storeAddresses(),
                 self::storeTrack(),
                 self::storeQuiz(),
+                self::storeRoutines(),
                 self::storeNewsletter(),
                 self::storeJs(),
             ),
@@ -1217,6 +1218,81 @@ final class InterfaceStrings
      *
      * @return array<string, string>
      */
+    /**
+     * Phase 10 — Build my routine (Lane FM). /routines and /routines/{concern}.
+     *
+     * TWO VOCABULARIES MEET HERE AND ONLY ONE OF THEM IS TRANSLATED.
+     *
+     * `concern_*` are the shopper-facing names of the eight concerns in
+     * App\Support\RoutineConcerns, whose English is copied character for
+     * character from the skin quiz's own CONCERNS array. The quiz's copies stay
+     * English on purpose — the note above storeJs() and
+     * StorefrontStringsAreKeyedTest's exclusion for skin-quiz.blade.php both say
+     * why: recommend() COMPARES those strings and /api/quiz stores them as the
+     * lead's answers, so an Arabic shopper must file a lead the owner can read
+     * beside the others. These are different: they are a HEADING on a page, read
+     * and never compared, and the slug is what anything machine-readable
+     * carries. Translating one and not the other is correct, and the two are
+     * pinned together by QuizAndRoutinesShareOneConcernListTest.
+     *
+     * `role_*` are the five steps. Their keys come from
+     * App\Support\RoutineRoles::ORDER, so adding a sixth role is one line
+     * there and two keys here.
+     *
+     * THE OFFER STRIP HAS NO NUMBER OF ITS OWN. Every figure in `offer_*` is a
+     * placeholder filled from a real row in `coupons`. There is no string here
+     * that states a saving, because this shop has no saving to state until
+     * somebody creates the coupon — which is the whole lesson of the "15% bundle
+     * saving" the previous lane deleted from the quiz.
+     */
+    private static function storeRoutines(): array
+    {
+        return [
+            'routines.breadcrumb' => 'Build my routine',
+            'routines.heading' => 'Build my routine',
+            'routines.lead' => 'Pick what you want to work on. Every step is something this shop has in stock, and you can swap any of them.',
+            'routines.empty_heading' => 'No routines yet',
+            'routines.empty_lead' => 'Nothing in the shop has been matched to a routine step yet. Browse the shop in the meantime — everything in it is real and in stock.',
+            'routines.browse_shop' => 'Browse the shop',
+            'routines.open' => 'See this routine',
+            'routines.back' => 'All routines',
+            'routines.steps_count' => ':count step|:count steps',
+            'routines.step_number' => 'Step :number',
+            'routines.title_for' => ':concern routine',
+            'routines.blurb_for' => 'A Korean routine for :concern, in the order it goes on.',
+            'routines.total_label' => 'Total for the :count step shown|Total for the :count steps shown',
+            'routines.total_note' => 'The prices of the products chosen above. Nothing is added or taken off.',
+            'routines.swap_open' => 'Swap this step',
+            'routines.swap_none' => 'Nothing else in stock for this step.',
+            'routines.reset' => 'Start this routine over',
+            'routines.gap_heading' => 'Not stocked yet',
+            'routines.gap_lead' => 'This shop has nothing matched to this step at the moment, so the step is shown empty rather than filled with a guess.',
+            'routines.offer_percent' => 'Use code :code for :percent% off.',
+            'routines.offer_amount' => 'Use code :code for :amount off.',
+            'routines.offer_shipping' => 'Use code :code for free delivery.',
+            'routines.offer_minimum' => 'On orders of :amount or more.',
+            'routines.offer_expires' => 'Ends :date.',
+            'routines.concern_hydration' => 'Hydration',
+            'routines.concern_dark-spots' => 'Dark spots & tone',
+            'routines.concern_acne' => 'Acne & blemishes',
+            'routines.concern_ageing' => 'Fine lines & aging',
+            'routines.concern_sensitivity' => 'Redness & sensitivity',
+            'routines.concern_pores' => 'Pores & oil',
+            'routines.concern_dullness' => 'Dullness & glow',
+            'routines.concern_sun' => 'Sun protection',
+            'routines.role_cleanse' => 'Cleanse',
+            'routines.role_cleanse_help' => 'Lift off sunscreen, sweat and the day.',
+            'routines.role_tone' => 'Tone',
+            'routines.role_tone_help' => 'Rebalance and soften before anything active.',
+            'routines.role_treat' => 'Treat',
+            'routines.role_treat_help' => 'The active step for what you came in for.',
+            'routines.role_moisturise' => 'Moisturise',
+            'routines.role_moisturise_help' => 'Seal the water in so the actives are tolerated.',
+            'routines.role_protect' => 'Protect',
+            'routines.role_protect_help' => 'Sunscreen every morning — the UAE sun is the whole game.',
+        ];
+    }
+
     private static function storeNewsletter(): array
     {
         return [

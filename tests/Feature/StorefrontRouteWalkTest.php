@@ -240,6 +240,7 @@ function walkExpectations(array $seed): array
          */
         'app'                      => ['status' => 404],
 
+
         // --- Cart and checkout ------------------------------------------
         'cart'                     => ['status' => 200],
         'api/cart/drawer'          => ['status' => 200],
@@ -339,7 +340,30 @@ function walkExpectations(array $seed): array
 
         // --- Catch-all --------------------------------------------------
         '{fallbackPlaceholder}'    => ['params' => ['fallbackPlaceholder' => 'no-such-page-at-all'], 'status' => 404],
-    ];
+    ] + (Route::has('routines.index') ? [
+        /*
+         * Phase 10 — Build my routine (Lane FM), and it is added CONDITIONALLY
+         * on purpose.
+         *
+         * Its two pages live in routes/build-my-routine.php, which routes/web.php
+         * does not require yet: CLAUDE.md forbids that lane from editing web.php,
+         * so the integrator adds one line (docs/FM-ADMIN-APP-BLOCKS.md). This
+         * file fails BOTH ways — a registered route with no entry, and an entry
+         * for a route that is not registered — so an unconditional pair would
+         * have to be added in the same commit as that line or the suite goes
+         * red, and the whole point of the walk is that adding a route cannot
+         * quietly go uncovered. Keyed off the route NAME, so the day the require
+         * lands these light up with it and nobody has to remember.
+         *
+         * 404 because the module SHIPS OFF and this walk is a shop in its
+         * default state — which is exactly what makes the entry worth having:
+         * both pages must answer a clean 404 rather than an exception or a
+         * half-rendered page. tests/Feature/BuildMyRoutineTest.php turns the
+         * module on and asserts 200 from both.
+         */
+        'routines'                 => ['status' => 404],
+        'routines/{concern}'       => ['params' => ['concern' => 'hydration'], 'status' => 404],
+    ] : []);
 }
 
 /** Every storefront GET route URI the router has registered. */

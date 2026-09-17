@@ -75,7 +75,7 @@ final class MachineTranslationRunner
      * how the shop stays inside Google's free allowance — a thing he can
      * actually do from a screen.
      *
-     * @return array{requested: int, translated: int, characters: int, skipped: int, errors: list<string>}
+     * @return array{requested: int, translated: int, characters: int, characters_sent: int, skipped: int, errors: list<string>}
      */
     public function run(string $locale, int $limit = 100, ?string $onlyGroup = null): array
     {
@@ -93,15 +93,32 @@ final class MachineTranslationRunner
         $pending = $this->pending($locale, $limit, $onlyGroup);
 
         if ($pending === []) {
-            return ['requested' => 0, 'translated' => 0, 'characters' => 0, 'skipped' => 0, 'errors' => []];
+            return [
+                'requested' => 0, 'translated' => 0, 'characters' => 0,
+                'characters_sent' => 0, 'skipped' => 0, 'errors' => [],
+            ];
         }
 
         $translated = 0;
         $characters = 0;
+        $sent = 0;
         $errors = [];
 
         foreach (array_chunk($pending, GoogleProvider::MAX_PER_REQUEST) as $batch) {
             $texts = array_column($batch, 'english');
+
+            /*
+             * Counted BEFORE the call and whatever the call answers.
+             *
+             * Google bills per character of source text it was handed. A batch
+             * that comes back short, or that fails after the request was read,
+             * is money spent — so the characters go on the receipt at the
+             * moment they leave, not at the moment a row is written. Reporting
+             * only what was stored told the owner he had used a third of what
+             * his account had actually been charged, and the next estimate he
+             * read was wrong by the difference.
+             */
+            $sent += array_sum(array_map(static fn (string $t): int => mb_strlen($t, 'UTF-8'), $texts));
 
             try {
                 $results = $this->provider->translate($texts, Locale::DEFAULT, $locale);
@@ -109,6 +126,37 @@ final class MachineTranslationRunner
                 // One failed batch must not lose the batches that succeeded —
                 // those are already written and already paid for.
                 $errors[] = $e->getMessage();
+
+                continue;
+            }
+
+            /*
+             * ORDER IS THE CONTRACT, AND THIS IS THE SIDE THAT CHECKS IT.
+             *
+             * Answers are paired to requests by index. GoogleProvider upholds
+             * that by answering an index it could not translate with null IN
+             * PLACE; its header says so in capitals. Nothing enforced it here —
+             * so a provider that returned a COMPACTED array, which is what a
+             * stray array_filter or a second implementation of this interface
+             * produces, slid every answer one place up the batch and wrote each
+             * product's Arabic copy onto the NEXT product's row.
+             *
+             * Nothing about the outcome would have looked wrong: ninety-nine
+             * drafts written, no errors, the money spent, and ninety-nine
+             * products carrying somebody else's name in Arabic — published one
+             * Approve later, on a skincare catalogue.
+             *
+             * A count that does not match is a broken contract, and a broken
+             * contract means NO row in the batch can be trusted, not merely the
+             * missing one. The whole batch is dropped and reported. The
+             * characters stay on the receipt above, because they were still
+             * sent.
+             */
+            if (count($results) !== count($batch)) {
+                $errors[] = 'The translation service answered a batch of '.count($batch)
+                    .' with '.count($results).' rows. Nothing from that batch was stored: with rows '
+                    .'missing there is no way to tell which translation belongs to which product, and '
+                    .'a batch written one row out of step gives every product the next one\'s words.';
 
                 continue;
             }
@@ -139,7 +187,11 @@ final class MachineTranslationRunner
         return [
             'requested' => count($pending),
             'translated' => $translated,
+            // What was STORED, which is what the progress screen grew by.
             'characters' => $characters,
+            // What was SENT, which is what the bill will say. The two differ
+            // by every batch that failed and every row answered with nothing.
+            'characters_sent' => $sent,
             'skipped' => count($pending) - $translated,
             'errors' => $errors,
         ];

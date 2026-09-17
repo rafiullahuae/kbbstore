@@ -54,6 +54,9 @@ final class PageCostDataset
         'Sunscreen', 'Ampoule', 'Balm',
     ];
 
+    /** Filler for --translate. See arabicOf(); this is a byte fixture, not a translation. */
+    private const ARABIC_WORDS = ['منتج', 'للبشرة', 'مرطب', 'يومي', 'لطيف', 'عناية', 'كوري', 'أصلي', 'تركيبة', 'حاجز'];
+
     private const ADJECTIVES = [
         'Hydrating', 'Brightening', 'Calming', 'Renewing', 'Barrier',
         'Glow', 'Clarifying', 'Nourishing',
@@ -160,6 +163,12 @@ final class PageCostDataset
                 // not select. A fixture of empty descriptions cannot show the
                 // cost of SELECT *.
                 'description' => str_repeat('<p>'.$adjective.' '.$noun.' — formulated for the UAE climate. </p>', 40),
+                // The other two prose tabs a product page draws, because they
+                // are on Product::$translatable and so are part of what a
+                // translated catalogue puts in the cached map.
+                'ingredients' => '<p>Water, Glycerin, Niacinamide, Butylene Glycol, Centella Asiatica Extract, '
+                    .'1,2-Hexanediol, Panthenol, Cellulose Gum, Ethylhexylglycerin, Sodium Hyaluronate.</p>',
+                'how_to_use' => str_repeat('<p>After cleansing, apply to a cotton pad and sweep over the face. </p>', 3),
                 'image' => '/wp-content/uploads/pc/'.$i.'-front.jpg',
                 'images' => json_encode([
                     '/wp-content/uploads/pc/'.$i.'-texture.jpg',
@@ -514,6 +523,180 @@ final class PageCostDataset
         }
 
         $this->insert('cart_items', $rows);
+    }
+
+    /* --------------------------------------------------- the second language */
+
+    /**
+     * Fill one locale's translations table to the brim, and switch Arabic on.
+     *
+     * WHY THIS IS SEPARATE FROM build(). The English measurement is the
+     * baseline this lane compares against, and a baseline that carried a
+     * translations table would not be a baseline. `--seed` builds the shop;
+     * `--translate` translates it. Run the second on top of the first and the
+     * only thing that moved is the second language.
+     *
+     * WHAT "FULL TRANSLATION" MEANS HERE, AND WHY IT IS THE HONEST CASE.
+     * Every translatable field of every content row, plus every interface
+     * string, PUBLISHED. That is the state the owner is working towards over
+     * his ~55 hours, so it is the state the cached map has to be affordable in.
+     * Measuring a shop with twenty-four translations measures nothing: it is
+     * the SIZE OF THE MAP that is the open question, and twenty-four rows do
+     * not have a size.
+     *
+     * ARABIC IS TWO BYTES PER LETTER in UTF-8 where English is one, and PHP
+     * measures a string in bytes. So the Arabic written here is the same
+     * CHARACTER length as the English it replaces — which is roughly what a
+     * real translation is — and therefore about twice the bytes. A fixture of
+     * ASCII placeholders would under-report the memory by half.
+     */
+    public function translations(string $locale, int $draftEvery = 0): void
+    {
+        mt_srand(20260918);
+
+        $this->out->line('Translating the shop into '.$locale.'. This takes a minute.');
+
+        $rows = [];
+        $written = 0;
+        $drafts = 0;
+        $n = 0;
+
+        $push = function (string $group, int $itemId, string $field, string $english, bool $draft)
+            use (&$rows, &$written, &$drafts, $locale): void {
+            $rows[] = [
+                'locale' => $locale,
+                'group' => $group,
+                'item_id' => $itemId,
+                'field' => strtolower($field),
+                'value' => $this->arabicOf($english),
+                'status' => $draft ? 'draft' : 'published',
+                'source' => $draft ? 'machine' : 'manual',
+                'source_hash' => sha1($english),
+                'reviewed_at' => $draft ? null : now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $written++;
+            $draft and $drafts++;
+
+            if (count($rows) >= 500) {
+                DB::table('translations')->insertOrIgnore($rows);
+                $rows = [];
+            }
+        };
+
+        foreach (\App\Services\Translation\InterfaceStrings::flat() as $key => $english) {
+            $n++;
+            $push('ui', 0, (string) $key, (string) $english, $draftEvery > 0 && $n % $draftEvery === 0);
+        }
+
+        foreach (\App\Services\Translation\TranslationEstimate::CONTENT as $class => $columns) {
+            /** @var \Illuminate\Database\Eloquent\Model $model */
+            $model = new $class;
+            $table = $model->getTable();
+
+            if (! \Illuminate\Support\Facades\Schema::hasTable($table)) {
+                continue;
+            }
+
+            $present = array_values(array_filter(
+                $columns,
+                static fn (string $c): bool => \Illuminate\Support\Facades\Schema::hasColumn($table, $c)
+            ));
+
+            if ($present === []) {
+                continue;
+            }
+
+            DB::table($table)->select(array_merge(['id'], $present))->orderBy('id')
+                ->chunk(500, function ($page) use ($present, $table, $push, &$n, $draftEvery): void {
+                    foreach ($page as $row) {
+                        foreach ($present as $column) {
+                            $english = $row->{$column} ?? null;
+
+                            if (! is_string($english) || trim($english) === '') {
+                                continue;
+                            }
+
+                            $n++;
+                            $push($table, (int) $row->id, $column, $english, $draftEvery > 0 && $n % $draftEvery === 0);
+                        }
+                    }
+                });
+        }
+
+        DB::table('translations')->insertOrIgnore($rows);
+
+        // The master switch. Without it /ar/shop is a 404 and the measurement
+        // would report a very fast page that nobody can reach.
+        foreach ([\App\Support\Locale::SETTING_ENABLED, \App\Support\Locale::SETTING_RTL] as $key) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $key],
+                ['value' => json_encode(true), 'updated_at' => now(), 'created_at' => now()],
+            );
+        }
+
+        $bytes = (int) DB::table('translations')->where('locale', $locale)
+            ->selectRaw('SUM(LENGTH(value)) as b')->value('b');
+
+        $this->out->line('  translations: '.number_format($written)
+            .' rows ('.number_format($drafts).' drafts), '
+            .number_format($bytes / 1048576, 2).' MB of value bytes on disk');
+    }
+
+    /**
+     * Arabic of the same CHARACTER length as the English handed in.
+     *
+     * Not a translation and not pretending to be one — this is a memory and a
+     * byte-count fixture. What has to be right is the length in characters
+     * (so the map is the size a translated shop's map is) and the fact that
+     * the letters are outside ASCII (so every one of them costs two bytes,
+     * which is what makes an Arabic map bigger than an English one).
+     *
+     * Markup is kept as markup: a translated description is still HTML, and a
+     * fixture that turned tags into letters would under-count the bytes.
+     */
+    private function arabicOf(string $english): string
+    {
+        // Tags are left exactly as they are and only the words between them are
+        // replaced. A real Arabic description is still HTML: the markup stays
+        // ASCII at one byte a character while the prose doubles, and a fixture
+        // that turned <p> into Arabic letters would over-state the bytes by the
+        // markup's share of the copy.
+        if (! str_contains($english, '<')) {
+            return $this->arabicWords(mb_strlen($english, 'UTF-8'));
+        }
+
+        return (string) preg_replace_callback(
+            '/>[^<]+</u',
+            fn (array $m): string => '>'.$this->arabicWords(mb_strlen(substr($m[0], 1, -1), 'UTF-8')).'<',
+            $english,
+        ) ?: $english;
+    }
+
+    /**
+     * $n Arabic characters, spaces included.
+     *
+     * A class constant rather than a function-local static variable, which is
+     * what this was first written as. StaticMemoIsolationTest counts any
+     * process-level static under app/ as state that can outlive a test, and it
+     * is right to — the rule does not get an exemption for a word list. Its
+     * detector reads the file, so the spelling it looks for is avoided in this
+     * comment too.
+     */
+    private function arabicWords(int $n): string
+    {
+        $words = self::ARABIC_WORDS;
+
+        $out = '';
+        $i = 0;
+
+        while (mb_strlen($out, 'UTF-8') < $n) {
+            $out .= ($out === '' ? '' : ' ').$words[$i++ % count($words)];
+        }
+
+        return mb_substr($out, 0, $n, 'UTF-8');
     }
 
     private function insert(string $table, array $rows): void
