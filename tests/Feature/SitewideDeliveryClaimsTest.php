@@ -648,8 +648,9 @@ function czMeta(string $html): ?string
 it('promises no delivery window in a listing page\'s meta description', function () {
     /*
      * THE HARDEST PROMISE LEFT ANYWHERE IN THIS APPLICATION, and it was not on
-     * the file this lane's brief named — resources/views/store/category
-     * .blade.php is rendered by no route at all. The live one was built in
+     * the file that lane's brief named — a design mock under store/ that was
+     * rendered by no route at all, and that Lane DZ has since deleted. The live
+     * one was built in
      * ShopController::seoDescription() and CollectionController::seoCtx(), and
      * it ended every category, search, /shop and collection description with a
      * transit time attached to one country.

@@ -85,9 +85,13 @@ use App\Services\SettingsService;
  * ── THE COUNTRY IS ALWAYS AN ARGUMENT ──────────────────────────────────────
  *
  * Nothing here resolves a visitor's country. The checkout knows the
- * destination and passes it; the product page does not and does not pretend
- * to, so it gets the default rule. The one resolver for that question lives in
- * App\Support\ShopperCountry, and two would be two answers to one question.
+ * destination and passes it; the product page asks App\Support\ShopperCountry
+ * and passes what it answers, which on a request carrying no geo signal at all
+ * is the shop's own country and therefore the default rule — the behaviour this
+ * paragraph used to describe as the product page's only option. A caller with
+ * no country at all still passes null and still gets the default. The one
+ * resolver for that question lives in ShopperCountry, and two would be two
+ * answers to one question.
  *
  * ── DEFENSIVE ON THE WAY OUT ───────────────────────────────────────────────
  *
@@ -320,6 +324,89 @@ final class VatDisplay
             'total' => $baseFils + ($added ? $printed : 0),
             'label' => $this->label($country),
         ];
+    }
+
+    /**
+     * The tax sentence for a SHELF PRICE — the line under the price on the
+     * product page — or null when there is no tax to speak of.
+     *
+     * ── WHAT WAS WRONG, AND WHY IT WAS INVISIBLE ────────────────────────────
+     *
+     * Store\ProductController::vatLine() built this sentence itself, and it
+     * built it as "Inclusive of {rate}% VAT" — the word "Inclusive" hard-coded,
+     * printed WHATEVER `vat_basis` said. It read `vat_rate` straight out of the
+     * settings table, so it also ignored `vat_country_rates` entirely and told
+     * a shopper in Riyadh the UAE's rate.
+     *
+     * Nobody noticed because the shipped basis is `inclusive` and the shipped
+     * mode is `display`, so the assertion happened to be true of the only
+     * configuration that existed. It stops being true the first time an owner
+     * uses the feature he asked for by name — "for uae the vat i can set
+     * inclusive, for Saudi i can set exclusive" — and it stops being true on
+     * EVERY product page at once, silently, with no error anywhere.
+     *
+     * The product page's own structured data already refused to make that
+     * claim: MachineFacingClaimsTest pins `valueAddedTaxIncluded` to false
+     * under an exclusive rule and omits it when countries disagree. So the
+     * machine-facing half of this page was honest about the basis while the
+     * sentence a human reads asserted the opposite. One authority, one answer.
+     *
+     * ── THE THREE SENTENCES, AND WHY THE THIRD IS NOT "INCLUSIVE" ───────────
+     *
+     *   the total goes up        "+5% VAT added at checkout"
+     *     (live mode, exclusive) The one case where the shelf price is not what
+     *                            is paid. Said before the buy button, not after
+     *                            it, which is the whole point of saying it.
+     *
+     *   inclusive                "Inclusive of 5% VAT"
+     *                            The tax is inside the price. This is the
+     *                            shipped configuration and the wording that
+     *                            shipped, so a shop that applies the package
+     *                            and changes nothing sees the same line it has
+     *                            always seen, to the character.
+     *
+     *   anything else            "5% VAT shown at checkout"
+     *     (flat, or exclusive    Nothing is added and nothing is contained: a
+     *      while the mode is     figure is printed beside a total it is not
+     *      still `display`)      part of. "Shown" is deliberately neither
+     *                            "included" nor "added", because on this branch
+     *                            the shop is making neither claim.
+     *
+     * NULL, NOT AN EMPTY STRING, when the line is switched off or the rate is
+     * zero — the same distinction TrustClaims draws, and the reason the product
+     * template's `@if ($vatLine)` renders no empty div.
+     *
+     * NOT OWNER-EDITABLE, ON PURPOSE. This is not a claim about the business;
+     * it is a description of arithmetic the owner has already configured on
+     * Store → Ecommerce → Tax, and a text box here would be a second place to
+     * say what the basis is — free to drift from the basis that is actually
+     * charged. `vat_label` remains the editable wording for the CHECKOUT line,
+     * where the figure beside it comes from the same quote.
+     */
+    public function shelfNote(?string $country = null): ?string
+    {
+        // ruleFor() already answers a zero rate when the line is switched off,
+        // so "disabled" and "0%" take the same branch rather than two.
+        $rule = $this->ruleFor($country);
+
+        if ($rule->bp <= 0) {
+            return null;
+        }
+
+        $rate = $rule->printableRate();
+
+        // live() is asked as well as addsToTotal(): in `display` mode an
+        // exclusive rule charges nobody anything, and promising a surcharge
+        // that never arrives is its own untruth.
+        if ($this->live() && $rule->addsToTotal()) {
+            return '+' . $rate . '% VAT added at checkout';
+        }
+
+        if ($rule->basis === TaxRule::INCLUSIVE) {
+            return 'Inclusive of ' . $rate . '% VAT';
+        }
+
+        return $rate . '% VAT shown at checkout';
     }
 
     /**

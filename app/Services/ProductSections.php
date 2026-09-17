@@ -19,7 +19,12 @@ class ProductSections
         'wishlist'    => ['Wishlist button', 'The heart on the gallery image.', true],
         'capsule'     => ['Rating capsule', 'The pink pill with the average score.', true],
         'rating'      => ['Inline rating line', 'Stars, score, review count and units sold.', true],
-        'vat'         => ['VAT line', 'Inclusive of 5% VAT · Authentic, sourced direct.', true],
+        // Described, not quoted. This used to read "Inclusive of 5% VAT ·
+        // Authentic, sourced direct." — a copy of the storefront sentence that
+        // asserted a basis this shop can now set per country, plus a trust claim
+        // whose one home is App\Support\TrustClaims. The sentence itself is
+        // App\Support\VatDisplay::shelfNote()'s to write.
+        'vat'         => ['VAT line', 'The tax line under the price. Its wording follows the rule set for the shopper\'s country on Store → Ecommerce → Tax.', true],
         'short'       => ['Short description', 'The summary above the options.', true],
         'options'     => ['Options / bundles', 'Variants and quantity bundles.', true],
         'stockline'   => ['Stock line', 'In stock, low stock or sold out.', true],

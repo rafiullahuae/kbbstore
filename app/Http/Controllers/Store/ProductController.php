@@ -136,7 +136,7 @@ class ProductController extends Controller
             // entry throws, and that took this page down for hours.
             'reviewsCss' => $this->reviewsCss(),
             'bundle' => $this->bundle($product),
-            'vatLine' => $this->vatLine(),
+            'vatLine' => $this->vatLine($request),
             // $summary is built at the top of this method but was never
             // imported here, so the two review lines below referenced a
             // variable that does not exist inside the closure. PHP 8 raises
@@ -162,7 +162,10 @@ class ProductController extends Controller
 
                 $ctx = [
                     'type' => 'product',
-                    'description' => $override['desc'] ?? $product->short_description ?? null,
+                    // The chain itself lives in App\Support\ProductSeo now, so the
+                    // admin's snippet preview can ask what this page will publish
+                    // instead of inventing a sentence. Same order, same result.
+                    'description' => \App\Support\ProductSeo::rawDescription($product),
                     'image' => $override['og_image'] ?? $product->image,
                     'url' => !empty($override['canonical']) ? $override['canonical'] : ($base . $product->url()),
                     'breadcrumb' => $this->breadcrumbTrail($product),
@@ -566,15 +569,56 @@ class ProductController extends Controller
         cookie()->queue('kbb_viewed', implode(',', $seen), 60 * 24 * 30);
     }
 
-    /** Display only — never added to a total (D-64). */
-    private function vatLine(): ?string
+    /**
+     * The tax sentence under the price, for THIS shopper's destination.
+     *
+     * ── TWO DEFECTS IN ONE LINE, BOTH LATENT ────────────────────────────────
+     *
+     * This method used to return, verbatim:
+     *
+     *     "Inclusive of {rate}% VAT · Authentic, sourced direct"
+     *
+     * with the rate read straight out of `vat_rate`.
+     *
+     * 1. THE BASIS WAS ASSERTED, NOT READ. "Inclusive of" was a literal. It was
+     *    printed whatever `vat_basis` said and whatever `vat_country_rates` /
+     *    `vat_country_bases` said, so the sentence was true only of the shipped
+     *    configuration. The day the owner does the thing he asked for in his own
+     *    words — "for uae the vat i can set inclusive, for Saudi i can set
+     *    exclusive" — every product page in the shop starts telling Saudi
+     *    shoppers the tax is already in a price the checkout is about to add it
+     *    to. The rate was wrong for them too: `vat_rate` is the DEFAULT rate,
+     *    not Saudi Arabia's.
+     *
+     *    App\Support\VatDisplay::shelfNote() now answers it, from the same rule
+     *    the checkout charges, for the country App\Support\ShopperCountry
+     *    resolves. The product page's structured data was already honest about
+     *    the basis (MachineFacingClaimsTest); the sentence a human reads now
+     *    agrees with it instead of contradicting it.
+     *
+     * 2. "Authentic, sourced direct" WAS A TRUST CLAIM WITH NO HOME. 2.60.193
+     *    gave every claim about this business one owner-editable box in
+     *    App\Support\TrustClaims, where an empty box removes the claim AND its
+     *    element. This was the spelling that got left out — glued to a tax line,
+     *    on the very page whose trust row already prints `product_authentic_text`
+     *    a few hundred pixels below.
+     *
+     *    So the removal half of that feature did not work here: an owner who
+     *    cleared the authenticity chip on Business Details → Claims watched the
+     *    chip disappear and the same claim go on being printed under the price,
+     *    in a string only a signed package could reach. It is gone from here.
+     *    The claim itself is NOT gone from the page — it keeps its one home in
+     *    the trust row, where it can now actually be withdrawn.
+     *
+     *    It is deliberately NOT given a seventh key of its own. A second
+     *    authenticity box on one page is a second place to say one thing, which
+     *    is the defect TrustClaims exists to end, and TrustClaims::CLAIMS argues
+     *    the case for one key per PLACEMENT — this was never a placement, it was
+     *    a duplicate.
+     */
+    private function vatLine(Request $request): ?string
     {
-        if (! $this->settings->get('vat_enabled', true)) {
-            return null;
-        }
-
-        $rate = rtrim(rtrim(number_format((float) $this->settings->get('vat_rate', 5), 2, '.', ''), '0'), '.');
-
-        return "Inclusive of {$rate}% VAT · Authentic, sourced direct";
+        return app(\App\Support\VatDisplay::class)
+            ->shelfNote(\App\Support\ShopperCountry::for($request)->code);
     }
 }

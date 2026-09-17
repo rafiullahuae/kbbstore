@@ -56,6 +56,27 @@ final class ProductTitle
         return self::leadsWithBrand($brand, $name) ? $name : $brand . ' ' . $name;
     }
 
+    /**
+     * The product page's `<title>`, before the SEO engine templates it.
+     *
+     * The suffix was a literal in store/product.blade.php. It is here because
+     * the title is also a TOKEN: App\Support\Seo substitutes `{title}` into a
+     * meta description, so anything that wants to know what description a
+     * product page will publish has to know the same title the page produces.
+     * Two copies of that string would be two answers, and the one nobody could
+     * see would be the admin's.
+     *
+     * Deliberately still a literal rather than `seo_site_name`: this method
+     * moves the string, it does not change what any page prints. The site name
+     * in the head title is the SEO engine's business through its own template,
+     * and rerouting this one through a setting would change every product
+     * page's tab on a shop that never asked for it.
+     */
+    public static function head(?string $brand, ?string $name): string
+    {
+        return self::full($brand, $name) . ' · K-Beauty Bliss';
+    }
+
     /** Whether the name's opening words already are the brand. */
     public static function leadsWithBrand(string $brand, string $name): bool
     {
