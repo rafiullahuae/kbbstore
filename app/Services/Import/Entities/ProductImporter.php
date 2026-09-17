@@ -195,11 +195,35 @@ final class ProductImporter extends EntityImporter
             'total_sales' => max(0, $row->int((int) ($product->total_sales ?? 0), 'total_sales')),
         ];
 
-        $images = $row->list('|', 'images', 'image_gallery', 'gallery');
-
-        if ($images === []) {
-            $images = $row->list(',', 'images', 'image_gallery', 'gallery');
-        }
+        /*
+         * THE GALLERY SEPARATOR IS CHOSEN BY LOOKING, not by trying one and
+         * falling back, and the difference is not stylistic.
+         *
+         * This was `list('|', …)` with a `if ($images === []) list(',', …)`
+         * fallback under it. `Row::list()` splits and then drops empty parts,
+         * so splitting "a.jpg,b.jpg" on "|" returns ONE element — the whole
+         * string — which is not `[]`, so the comma branch never ran. The only
+         * input that reached it was an empty cell, for which the comma split
+         * also returns `[]`. A fallback that can only fire when it has nothing
+         * to do is the same dead-filter shape as `Api\ProductController`'s
+         * status check, and it hid the same kind of second bug.
+         *
+         * WHAT IT COST: WooCommerce's own product CSV exporter writes the
+         * Images column COMMA-separated. So every multi-image product imported
+         * with its whole gallery as a single entry —
+         * "https://…/a.jpg,https://…/b.jpg" — one string that is not a URL. The
+         * product page then renders one broken image instead of the four that
+         * were exported, and the import report says "created" either way. Found
+         * by `kbb:import-media`, which is the entire argument for that command
+         * existing: nothing in a row-count reconciliation can see this.
+         *
+         * A pipe is the unambiguous case, so it wins where it appears; a URL
+         * cannot contain a bare "|". Otherwise the comma is what Woo wrote.
+         */
+        $raw = $row->text('images', 'image_gallery', 'gallery');
+        $images = $raw !== null && str_contains($raw, '|')
+            ? $row->list('|', 'images', 'image_gallery', 'gallery')
+            : $row->list(',', 'images', 'image_gallery', 'gallery');
 
         if ($images !== []) {
             $attributes['images'] = $images;
