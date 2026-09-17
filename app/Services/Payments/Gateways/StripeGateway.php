@@ -615,7 +615,16 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         $summary = [
             'event_id' => $event['id'] ?? null,
             'event_type' => $type,
-            'session_id' => $object['id'] ?? null,
+            /*
+             * `object_id`, not `session_id`. It was named for the only thing
+             * that used to arrive here — a Checkout session — and it now holds
+             * a PaymentIntent id on every event a card payment produces. An
+             * audit row whose key says `session_id` beside a `pi_...` is the
+             * kind of small lie that sends somebody looking in the wrong place
+             * in Stripe's dashboard at the worst possible moment. Nothing reads
+             * the old name; it was written and never consumed.
+             */
+            'object_id' => $object['id'] ?? null,
             'reference' => $reference,
         ];
 
