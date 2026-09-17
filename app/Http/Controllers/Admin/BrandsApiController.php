@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Support\PageBanner;
+use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -57,21 +58,81 @@ class BrandsApiController extends Controller
             ->orderBy('brands.name')
             ->get();
 
-        return response()->json(['ok' => true, 'brands' => $brands]);
+        /*
+         * THE ARABIC BOXES' PREFILL. (Lane EX, T4b)
+         *
+         * ONE query for all ninety-three brands. translationsForEditor() is per
+         * model and would have turned the screen this method was deliberately
+         * written as one grouped query into ninety-four of them again.
+         *
+         * Drafts included — see App\Support\TranslationInput::editorMapFor.
+         */
+        $translations = TranslationInput::editorMapFor($brands);
+
+        // Set as an attribute so it rides along in the JSON, and NOT saved back:
+        // `translations` is also the name of the trait's relation method and
+        // there is no such column, so these instances are read-only from here.
+        foreach ($brands as $brand) {
+            $brand->setAttribute('translations', $translations[(int) $brand->id] ?? null);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'brands' => $brands,
+            /*
+             * The EMPTY shape of the Arabic boxes, for the "add" form — a row
+             * being created has no translations but still has to draw a box for
+             * every translatable field. Handed down from the server so the
+             * screen never holds a second copy of Brand::$translatable.
+             */
+            'translatable' => (new Brand)->translationsForEditor(),
+        ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $this->validated($request, null);
+        $translations = $this->translationsFrom($data);
 
-        return response()->json(['ok' => true, 'brand' => Brand::query()->create($data)], 201);
+        $brand = Brand::query()->create($data);
+
+        // After create(), because the row has no id before it. One call, the
+        // same request, both paths. See App\Support\TranslationInput.
+        $brand->saveTranslations($translations);
+
+        return response()->json(['ok' => true, 'brand' => $brand], 201);
     }
 
     public function update(Request $request, Brand $brand): JsonResponse
     {
-        $brand->update($this->validated($request, $brand));
+        $data = $this->validated($request, $brand);
+        $translations = $this->translationsFrom($data);
+
+        $brand->update($data);
+        $brand->saveTranslations($translations);
 
         return response()->json(['ok' => true, 'brand' => $brand->fresh()]);
+    }
+
+    /**
+     * Lift the `translations` bag out of the validated data.
+     *
+     * It has to come OUT before the array reaches create() or update(): Brand
+     * is `$guarded = []`, so a stray `translations` key would be mass assigned
+     * as though it were a column.
+     *
+     * Nothing is named rich: the brand dialog's description is a plain
+     * textarea on both sides, so there is no {!! !!} asymmetry to close here.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, array<string, string|null>>
+     */
+    private function translationsFrom(array &$data): array
+    {
+        $bag = $data['translations'] ?? [];
+        unset($data['translations']);
+
+        return TranslationInput::clean(is_array($bag) ? $bag : []);
     }
 
     /**
@@ -129,7 +190,7 @@ class BrandsApiController extends Controller
         $slug = Str::slug((string) $request->input('slug') ?: (string) $request->input('name'));
         $request->merge(['slug' => $slug]);
 
-        $data = $request->validate([
+        $english = [
             'name' => ['required', 'string', 'max:255'],
             'slug' => [
                 'required', 'string', 'max:255',
@@ -156,7 +217,17 @@ class BrandsApiController extends Controller
             // definition of what a banner is rather than a validation rule
             // here and a renderer somewhere else that disagree.
             'banner' => ['nullable', 'array'],
-        ], [
+        ];
+
+        /*
+         * The Arabic boxes, shape-validated off the English rules above rather
+         * than restated. Required-ness does not carry: blank Arabic means "not
+         * translated yet" and deletes the row — which is exactly how a brand
+         * name like Anua, deliberately identical in both languages, stays
+         * distinguishable from one nobody has reached yet. Typing it in is what
+         * says "translated".
+         */
+        $data = $request->validate($english + TranslationInput::rules(new Brand, $english), [
             'slug.regex' => 'The slug may contain only lower-case letters, numbers and single hyphens.',
             'slug.unique' => 'Another brand already uses that slug.',
             'slug.required' => 'A brand needs a name it can make a slug from.',

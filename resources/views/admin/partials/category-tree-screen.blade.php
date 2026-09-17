@@ -289,6 +289,44 @@
     return cats.filter(function(c){ return Number(c.id) === Number(id); })[0];
   }
 
+  /* The empty shape of the Arabic boxes, for the Add-category form. A category
+     being created has no translations but still has to draw a box for every
+     translatable field. Asked of the server rather than listed here, so
+     Category::$translatable stays the one place the answer lives. */
+  var ARABIC_SHAPE = null;
+
+  /**
+   * T4b — the Arabic counterpart of one category field.
+   *
+   * The maxlength mirrors the English control's own: the Arabic box must not
+   * accept what the English box would refuse. CategoriesApiController enforces
+   * the same bound server-side, derived from that same English rule rather
+   * than restated, so the two cannot drift apart.
+   */
+  function arabicBox(cat, field, label, fromSelector, maxlength, type){
+    /* The shared helper is included by resources/views/admin/app.blade.php. A
+       build with this screen and not the helper draws no Arabic boxes rather
+       than throwing and taking the categories screen down with it. */
+    if (!window.KBBArabic) return '';
+
+    var shape = (cat && cat.translations) || ARABIC_SHAPE;
+
+    if (!shape || !shape[KBBArabic.locale]
+        || !Object.prototype.hasOwnProperty.call(shape[KBBArabic.locale], field)) {
+      return '';
+    }
+
+    return KBBArabic.box({
+      field: field,
+      label: label,
+      prefill: (cat && cat.translations) || null,
+      type: type || 'text',
+      maxlength: maxlength,
+      rows: 3,
+      from: fromSelector
+    });
+  }
+
   /* ----------------------------------------------------------------- data */
   async function load(){
     var mine = ++seq;
@@ -300,6 +338,7 @@
         var d = await api('/categories');
         if (mine !== seq) return;
         cats = (d && d.categories) || [];
+        ARABIC_SHAPE = (d && d.translatable) || ARABIC_SHAPE;
       } else if (tab === 'brands') {
         var b = await api('/brands-tree');
         if (mine !== seq) return;
@@ -646,7 +685,12 @@
       + '<button class="ct-x" data-close>✕</button></div>'
       + slugWarn
       + '<div class="ct-fld"><label for="ct-name">Name</label>'
-        + '<input id="ct-name" value="' + esc(cat.name) + '"></div>'
+        + '<input id="ct-name" value="' + esc(cat.name) + '">'
+        /* T4b — the Arabic name, in this form, saved by this form's button, on
+           the Add dialog as well as the Edit one. Blank means "not translated
+           yet" and never "same as the English". */
+        + arabicBox(cat, 'name', 'Name', '#ct-name', 255)
+        + '</div>'
       + '<div class="ct-fld"><label for="ct-slug">URL slug</label>'
         + '<input id="ct-slug" value="' + esc(cat.slug) + '" placeholder="left blank, made from the name">'
         + '<p class="ct-note">One segment of /product-category/…/. Lower case, numbers and single hyphens. '
@@ -683,7 +727,9 @@
         + 'An address from elsewhere can still be pasted in above.</p></div>'
       + '<div class="ct-fld"><label for="ct-desc">Description</label>'
         + '<textarea id="ct-desc" rows="3">' + esc(cat.description || '') + '</textarea>'
-        + '<p class="ct-note">Shown under the heading on the category page.</p></div>'
+        + '<p class="ct-note">Shown under the heading on the category page.</p>'
+        + arabicBox(cat, 'description', 'Description', '#ct-desc', 5000, 'textarea')
+        + '</div>'
       + '<div class="ct-fld"><label for="ct-seotitle">SEO title</label>'
         + '<input id="ct-seotitle" value="' + esc(seo.title || '') + '" maxlength="255" placeholder="Defaults to the category name">'
         + '</div>'
@@ -742,6 +788,11 @@
     var imgBox = document.getElementById('ct-image');
     if (imgBox) imgBox.oninput = function(){ applyImage(imgBox.value); };
 
+    /* Attaches the Translate buttons and reveals them only if an API key is
+       configured. With no key they stay hidden and every manual path here works
+       unchanged — typing Arabic needs no account and costs nothing. */
+    if (window.KBBArabic) KBBArabic.wire(modal || document);
+
     document.getElementById('ct-save').onclick = async function(){
       var parent = val('ct-parent');
       var payload = {
@@ -751,7 +802,12 @@
         description: val('ct-desc'),
         image: val('ct-image'),
         position: parseInt(val('ct-pos'), 10) || 0,
-        seo: {title: val('ct-seotitle'), description: val('ct-seodesc')}
+        seo: {title: val('ct-seotitle'), description: val('ct-seodesc')},
+        /* The Arabic goes up in the SAME request as the English. Scoped to this
+           dialog, because this screen opens several. Blank fields are sent
+           rather than omitted: blank means "not translated yet" and has to
+           reach the server to delete the row. */
+        translations: window.KBBArabic ? KBBArabic.collect(modal || document) : {}
       };
 
       if (!payload.name) { say('A category needs a name'); return; }

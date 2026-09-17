@@ -5095,6 +5095,36 @@ async function mgmPerformDrop(draggedId, target){
 
 /* ---------- Add / edit form ---------- */
 
+/* T4b — the Arabic label box for a menu item.  (Lane EX)
+
+   WHICH FIELDS GET A BOX IS THE SERVER'S ANSWER, NOT THIS SCREEN'S.
+   MenuItem::$translatable is `label` and nothing else: `url` is deliberately
+   left off it, because one menu item points at one page and the /ar prefix is
+   what makes that page Arabic — a translated URL would be a second address to
+   keep in step by hand. So this asks the payload rather than listing fields,
+   and a column added to that allowlist grows a box here with no edit.
+
+   MGM.translatable is the EMPTY shape, which is what lets the "Add item"
+   dialog draw a box for an item that does not exist yet. Without it a menu
+   could only be translated on a second visit, which is the "somewhere else,
+   afterwards" the plan rules out. */
+function mgmArabicLabel(editing){
+  if(!window.KBBArabic) return '';
+
+  const shape = (editing && editing.translations) || (typeof MGM !== 'undefined' && MGM && MGM.translatable);
+
+  if(!shape || !shape[KBBArabic.locale]
+     || !Object.prototype.hasOwnProperty.call(shape[KBBArabic.locale], 'label')) return '';
+
+  return `<div style="padding:2px 0 11px;border-bottom:1px solid #f2f5f8">${KBBArabic.box({
+    field: 'label',
+    label: 'Label',
+    prefill: (editing && editing.translations) || null,
+    maxlength: 60,
+    from: '#mgmfLabel'
+  })}</div>`;
+}
+
 function mgmOpenForm(parentId, depth, editing){
   const kind = depth === 0 ? 'top-level item' : depth === 1 ? 'column' : 'link';
   const isEdit = !!editing;
@@ -5105,6 +5135,7 @@ function mgmOpenForm(parentId, depth, editing){
     <h3>${isEdit ? 'Edit' : 'Add'} ${kind}</h3>
     <div class="mmrow"><div class="mmlbl"><b>Label</b></div>
       <input type="text" id="mgmfLabel" maxlength="60" value="${escAttr(editing?.label || '')}" placeholder="e.g. Skincare"></div>
+    ${mgmArabicLabel(editing)}
     <div class="mmrow"><div class="mmlbl"><b>Link</b><span>${depth < 2 ? 'Leave blank for a heading that only opens a panel.' : ''}</span></div>
       <input type="text" id="mgmfUrl" maxlength="255" value="${escAttr(editing?.url || '')}" placeholder="/product-category/cleansers/"></div>
     ${depth === 0 ? `<div class="mmrow"><div class="mmlbl"><b>Badge</b><span>Optional — small pill next to the label, e.g. NEW</span></div>
@@ -5137,6 +5168,12 @@ function mgmOpenForm(parentId, depth, editing){
       <button class="btn primary" id="mgmfSave">${isEdit ? 'Save' : 'Add'}</button></div>
   </div>`);
 
+  /* Attaches the Translate button and reveals it ONLY if an API key is
+     configured. With no key it is never shown, and typing the Arabic by hand
+     works with no account and no bill — which is how the menu is actually
+     going to be translated. */
+  if(window.KBBArabic) KBBArabic.wire(document);
+
   const colorInput = $('#mgmfColor');
   const colorVal = $('#mgmfColorVal');
   const colorClear = $('#mgmfColorClear');
@@ -5160,6 +5197,12 @@ function mgmOpenForm(parentId, depth, editing){
 
     const payload = {
       label,
+      /* T4b — the Arabic travels with the ordinary save, in the same request
+         as the English label and stored by the same button. A blank box is
+         SENT rather than omitted: blank means "not translated yet" and has to
+         reach the server to delete the row, which is the only reason the
+         Translation screen's progress figure can be counted. */
+      translations: window.KBBArabic ? KBBArabic.collect(document) : {},
       url: $('#mgmfUrl').value.trim() || null,
       badge: depth === 0 ? ($('#mgmfBadge').value.trim() || null) : null,
       icon: depth === 2 ? ($('#mgmfIcon').value.trim() || null) : null,
@@ -16515,6 +16558,18 @@ buildNav();
      The display-mode select at the top writes `brands_display` through
      /admin-api/settings, which is what the storefront directory reads. */
   var BRANDS=[];
+
+  /* T4b · the empty shape of the Arabic boxes, for this tab's "Add brand"
+     dialog. /admin-api/brands hands it down beside the rows, so this screen
+     never carries its own copy of Brand::$translatable.
+
+     THIS IS THE SECOND BRAND EDITOR IN THE CONSOLE. The other one is the
+     Brands screen in admin/partials/brands-editor-screen.blade.php, and it
+     already has its boxes. Both write the same endpoint, so a brand edited
+     here and a brand edited there have to offer the same fields — an Arabic
+     box present on one and absent on the other is how a translation gets
+     silently dropped by whichever screen the operator happened to open. */
+  var BRANDS_ARABIC=null;
   var BRAND_DISPLAY_OPTS=[
     ['auto','Logo when the brand has one, name otherwise (default)'],
     ['logos','Logos only'],
@@ -16549,6 +16604,7 @@ buildNav();
     body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading brands…</p>';
     try{
       var d=await brandWrite('','GET',null); BRANDS=d.brands||[];
+      BRANDS_ARABIC=d.translatable||BRANDS_ARABIC;
     }catch(e){ BRANDS=[]; }
     await loadSettings();
     brandPaint();
@@ -16601,19 +16657,36 @@ buildNav();
     var isNew=!brand; brand=brand||{name:'',slug:'',logo:'',description:'',position:0};
     openModal('<div class="modal-h"><b>'+(isNew?'Add brand':'Edit brand')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
       '<div class="modal-b">'+
-      '<div class="fld"><label>Name</label><input id="brd_name" value="'+sesc(brand.name)+'"></div>'+
+      '<div class="fld"><label>Name</label><input id="brd_name" value="'+sesc(brand.name)+'">'+
+        (window.KBBArabic ? KBBArabic.boxIf((brand&&brand.translations)||BRANDS_ARABIC, {
+          field:'name', label:'Name', prefill:(brand&&brand.translations)||null,
+          maxlength:255, from:'#brd_name'
+        }) : '')+'</div>'+
       '<div class="fld"><label>Slug</label><input id="brd_slug" value="'+sesc(brand.slug)+'" placeholder="left blank, made from the name">'+
       '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">Used in /korean-skincare-brands/{slug}/ and the shop filter. Lower case, hyphens.</p></div>'+
       imgUploadField('brd_logo', brand.logo||'', 'Logo', 'brands')+
-      '<div class="fld"><label>Description</label><textarea id="brd_desc" class="inp" rows="3">'+sesc(brand.description)+'</textarea></div>'+
+      '<div class="fld"><label>Description</label><textarea id="brd_desc" class="inp" rows="3">'+sesc(brand.description)+'</textarea>'+
+        (window.KBBArabic ? KBBArabic.boxIf((brand&&brand.translations)||BRANDS_ARABIC, {
+          field:'description', label:'Description', prefill:(brand&&brand.translations)||null,
+          type:'textarea', rows:3, maxlength:5000, from:'#brd_desc'
+        }) : '')+'</div>'+
       '<div class="fld" style="max-width:160px"><label>Position</label><input id="brd_pos" type="number" min="0" value="'+sesc(brand.position||0)+'"></div>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
       '<button class="btn" id="brd_save">'+(isNew?'Create brand':'Save brand')+'</button></div></div>');
     wireImgUpload('brd_logo','brands');
+
+    /* Attaches the Translate buttons and reveals them ONLY if an API key is
+       configured. With no key they are never shown and typing by hand works. */
+    if(window.KBBArabic) KBBArabic.wire(document);
+
     document.getElementById('brd_save').onclick=async function(){
       var payload={
         name: sval('brd_name'), slug: sval('brd_slug'), logo: sval('brd_logo'),
-        description: sval('brd_desc'), position: parseInt(sval('brd_pos'),10)||0
+        description: sval('brd_desc'), position: parseInt(sval('brd_pos'),10)||0,
+        /* The Arabic goes up in the SAME request as the English. A blank box
+           is SENT rather than omitted — blank means "not translated yet" and
+           has to reach the server to delete the row. */
+        translations: window.KBBArabic ? KBBArabic.collect(document) : {}
       };
       if(!payload.name){ toast('A brand needs a name'); return; }
       try{
@@ -16693,12 +16766,20 @@ buildNav();
   /* ---------- Catalog → Categories (real CRUD, replacing the preview table) */
   var CATEGORIES=[];
 
+  var CATEGORIES_ARABIC=null;
+
   window.catCategories = async function(){
     var body=document.getElementById('catBody');
     if(!body) return;
     body.innerHTML='<p style="padding:24px;color:var(--ink-soft)">Loading categories…</p>';
     try{
       var d=await catalogWrite('/categories','GET',null); CATEGORIES=d.categories||[];
+      /* T4b · the empty shape of the Arabic boxes, for this tab's "Add
+         category" dialog. THIS IS THE SECOND CATEGORY EDITOR in the console —
+         the other is admin/partials/category-tree-screen.blade.php, which
+         already has its boxes. Both write the same endpoint, so both have to
+         offer the same fields. */
+      CATEGORIES_ARABIC=d.translatable||CATEGORIES_ARABIC;
     }catch(e){ CATEGORIES=[]; }
     catCatPaint();
   };
@@ -16817,17 +16898,29 @@ buildNav();
 
     openModal('<div class="modal-h"><b>'+(isNew?'Add category':'Edit category')+'</b><button class="x" onclick="closeModal()">✕</button></div>'+
       '<div class="modal-b">'+
-      '<div class="fld"><label>Name</label><input id="cat_name" value="'+sesc(cat.name)+'"></div>'+
+      '<div class="fld"><label>Name</label><input id="cat_name" value="'+sesc(cat.name)+'">'+
+        (window.KBBArabic ? KBBArabic.boxIf((cat&&cat.translations)||CATEGORIES_ARABIC, {
+          field:'name', label:'Name', prefill:(cat&&cat.translations)||null,
+          maxlength:255, from:'#cat_name'
+        }) : '')+'</div>'+
       '<div class="fld"><label>Slug</label><input id="cat_slug" value="'+sesc(cat.slug)+'" placeholder="left blank, made from the name">'+
       '<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">One segment of /product-category/…/. Lower case, hyphens. The full path is built from the parents.</p></div>'+
       '<div class="fld"><label>Parent</label><select class="inp" id="cat_parent" style="width:100%">'+opts+'</select>'+
       (isNew?'':'<p class="description" style="margin:6px 0 0;font-size:11.5px;color:var(--ink-soft)">This category and anything under it are not offered — a category cannot sit inside itself.</p>')+'</div>'+
       imgUploadField('cat_image', cat.image||'', 'Image', 'categories')+
-      '<div class="fld"><label>Description</label><textarea id="cat_desc" class="inp" rows="3">'+sesc(cat.description)+'</textarea></div>'+
+      '<div class="fld"><label>Description</label><textarea id="cat_desc" class="inp" rows="3">'+sesc(cat.description)+'</textarea>'+
+        (window.KBBArabic ? KBBArabic.boxIf((cat&&cat.translations)||CATEGORIES_ARABIC, {
+          field:'description', label:'Description', prefill:(cat&&cat.translations)||null,
+          type:'textarea', rows:3, maxlength:5000, from:'#cat_desc'
+        }) : '')+'</div>'+
       '<div class="fld" style="max-width:160px"><label>Position</label><input id="cat_pos" type="number" min="0" value="'+sesc(cat.position||0)+'"></div>'+
       '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancel</button>'+
       '<button class="btn" id="cat_save">'+(isNew?'Create category':'Save category')+'</button></div></div>');
     wireImgUpload('cat_image','categories');
+
+    /* Attaches the Translate buttons and reveals them ONLY if an API key is
+       configured. With no key they are never shown and typing by hand works. */
+    if(window.KBBArabic) KBBArabic.wire(document);
 
     document.getElementById('cat_save').onclick=async function(){
       var parent=sval('cat_parent');
@@ -16835,7 +16928,9 @@ buildNav();
         name: sval('cat_name'), slug: sval('cat_slug'),
         parent_id: parent===''?null:parseInt(parent,10),
         description: sval('cat_desc'), image: sval('cat_image'),
-        position: parseInt(sval('cat_pos'),10)||0
+        position: parseInt(sval('cat_pos'),10)||0,
+        /* The Arabic goes up in the SAME request as the English. */
+        translations: window.KBBArabic ? KBBArabic.collect(document) : {}
       };
       if(!payload.name){ catToast('A category needs a name'); return; }
       try{
@@ -19141,6 +19236,15 @@ buildNav();
 {{-- The shared media picker. FIRST, because every screen partial below it
      calls window.kbbPickMedia and a partial cannot call a global that a later
      partial defines. It defines one global and touches nothing else. --}}
+{{-- T4b · the Arabic boxes (Lane EX). FIRST, for the same reason the media
+     picker below it is first: it defines exactly one global,
+     window.KBBArabic, and every screen that draws an Arabic box — the product
+     editor, the categories tree, the brands editor and the mega-menu form —
+     calls it later. Every one of those screens checks for the global before
+     using it, so a build that has them and not this include simply draws no
+     Arabic boxes rather than throwing. --}}
+@include('admin.partials.arabic-boxes')
+
 @include('admin.partials.media-picker')
 
 {{-- The shared product type-ahead, used by New Order below and by "add a
