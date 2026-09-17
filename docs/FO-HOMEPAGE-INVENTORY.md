@@ -48,11 +48,15 @@ empty box means "say nothing":
 These are correct and were left alone. They are the pattern Lane DR
 established and the one this lane followed for `about_text`.
 
-### Counted from the database — 6 sections
+### Counted from the database — 7 sections
+
+**These groups are about an ASPECT of a section, not a partition of the
+seventeen.** A rail can have its items counted and its heading hard-coded, and
+several do; each section appears under every group that is true of it.
 
 Nothing to edit and nothing that can be wrong: `categories`, `bundles`,
-`recommended`, `bestsellers`, `flash`, `blog`, plus the `reviews` wall and the
-three figures in the About band, all read off the catalogue. `delivery` and the
+`recommended`, `bestsellers`, `flash`, `blog` and `reviews` are read off the
+catalogue, as are the three figures in the About band. `delivery` and the
 free-delivery figures in `ticker` and `trust` come from Store → Delivery &
 Shipping and Store → Shipping through `DeliveryLine` and
 `ShippingService::thresholdHere()`.
@@ -60,20 +64,25 @@ Shipping and Store → Shipping through `DeliveryLine` and
 This half of the page has been repaired thoroughly by earlier lanes and the
 comments in `home.blade.php` record each repair.
 
-### Hard-coded, with no setting at all — 6 sections
+### Wording hard-coded as translation keys — 14 of the 17
 
-Their every word is a translation key in `InterfaceStrings`, which makes them
-translatable and **not** editable: an owner cannot change them, and a package is
-needed to.
+Counted off the template rather than estimated: every `store.home.*` key
+between one section marker and the next.
 
-| Section | What is fixed |
-|---|---|
-| `routine` | the heading, and the six steps themselves — built in `HomeController`, with candidate category slugs |
-| `quiz` | the kicker, heading, body, the question, its five options, the button; "5 questions" and "0 cost" are literals |
-| `spotted` | heading, badge, subtitle, link; the four tiles are the best-sellers rail |
-| `bestsellers`, `flash`, `bundles`, `recommended` | their headings, badges, subtitles and "see all" links |
-| `about` | the heading and the three stat labels (the figures are counted) |
-| `trust` | the payments card, both halves |
+| Section | `store.home.*` keys | What is fixed |
+|---|---|---|
+| `quiz` | 20 | the kicker, heading, body, the question, its five options, the button; "5 questions" and "0 cost" are literals |
+| `about` | 6 | the heading and the three stat labels — the figures are counted |
+| `bundles` `recommended` `bestsellers` `flash` `blog` `reviews` `trust` | 5 each | headings, badges, subtitles, "see all" links; for `trust`, the payments card, both halves |
+| `routine` `spotted` | 4 each | `routine` also has its six steps built in `HomeController` |
+| `brands` | 3 | the heading and the link. The NOTE under it is the owner's |
+| `hero` | 2 | the two slider arrows' labels only — everything a shopper reads is the owner's now |
+| `categories` | 1 | the "n products" tally label |
+| `delivery` `ticker` `newsletter` | 0 | entirely owner- or data-driven |
+
+Seven of these are the rails above, whose ITEMS are counted and whose HEADINGS
+are not. Keys make a sentence translatable and **not** editable: an owner cannot
+change one, and a package is needed to.
 
 Not a defect on its own — a shipped sentence with a translation key is a
 deliberate choice, and several of these were rewritten by earlier lanes
