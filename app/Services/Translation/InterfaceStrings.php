@@ -800,6 +800,30 @@ final class InterfaceStrings
             'checkout.field_notes' => 'Delivery notes',
             'checkout.field_notes_placeholder' => 'Delivery instructions, a landmark, a preferred time',
             'checkout.optional_note' => '(optional)',
+
+            /*
+             * The `inline_validation` module's wording — Lane FI.
+             *
+             * Four sentences, one per validate-* class the checkout's markup
+             * already carries, and they are HERE rather than in the partial
+             * that prints them because StorefrontStringsAreKeyedTest walks the
+             * directory: a sentence typed into a Blade file is English only,
+             * whatever the shop's language is.
+             *
+             * They are rendered by the SERVER into a JSON island and read from
+             * there by the script, not looked up through resources/js/kbb/i18n.js.
+             * That is deliberate: CLAUDE.md records that asset builds on this
+             * project are manual, so a key added here reaches the shop with the
+             * package while a key the bundle would have to know about does not.
+             *
+             * Each says what to DO, not what is wrong. "This field is required"
+             * describes the form's problem; "Please fill this in" describes the
+             * shopper's next action, and it is the shopper reading it.
+             */
+            'checkout.validate_required' => 'Please fill this in.',
+            'checkout.validate_email' => 'Please enter an email address, like you@email.com.',
+            'checkout.validate_state' => 'Please choose one from the list.',
+            'checkout.validate_phone' => 'Please enter a phone number, or leave this empty.',
             'checkout.create_account' => 'Create an account for faster checkout next time',
             'checkout.password_placeholder' => 'Choose a password (8 characters or more)',
             'checkout.whatsapp_optin' => 'Send order updates on WhatsApp — confirmation, dispatch & delivery alerts.',

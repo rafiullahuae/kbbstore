@@ -31,7 +31,7 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |
-| Modules with a working switch | **15 live**, **6 answered by an existing screen**, **10 still to port** |
+| Modules with a working switch | **23 live**, **6 answered by an existing screen**, **2 still to port** — *re-verified module by module at 2.60.205 by flipping each switch and fetching the page, not by reading a registry row. Seven of the old "ten still to port" were already built; `inline_validation` was ported in 2.60.205. See the corrected inventory below.* |
 | Build gates | **6 run on every package** (`js_check`, `blade_lint`, `closure_check`, `state_check`, `markup_check`, `shipped_check`) + 2 situational (`hooks_bound`, `settings_wired`). `kbb-doctor.php`, standalone at the public web root, is the first thing to check for any live-site bug report — reads the real error log directly, works even if Laravel itself won't boot |
 | Dead hooks outstanding | **2**, re-run fresh at 2.60.0 — down from 23 at the start of Phase 17. Both remaining are false positives (checked directly, not assumed): inert markup and a CSS-only attribute the tool can't see. Phase 17 is functionally complete |
 
@@ -122,7 +122,74 @@ Inspector and Yoast live inside the SEO Engine module.
 directly rather than as modules. Phase 3 is therefore mostly *registering and
 gating what is there*, not writing 31 features from nothing.
 
-### The 10 still to port, as at 2.56.1 — every one checked, not assumed
+### The remaining modules, re-verified at 2.60.205 — every one run, not assumed
+
+**The 2.56.1 list below is superseded.** It was written before several lanes
+shipped module work. At 2.60.205 the whole list was re-established the only way
+worth trusting: flipping the switch the owner would flip and fetching the page a
+shopper would fetch, against a seeded database at a real viewport. *"Not built"*
+meaning *"built and not wired"* is a fault this project has a whole phase for,
+so nothing here is inferred from a registry row. Full evidence in
+`docs/FI-PHASE3-MODULE-INVENTORY.md`.
+
+**Seven of the ten were already done.**
+
+| Module | 2.56.1 said | Verdict at 2.60.205 | How it was established |
+|---|---|---|---|
+| `abandoned_cart` | blocked on mail | **DONE** — live, off by default | Opt-in box on `/cart/`: present with the switch on, **0** occurrences off. `OutboundTick` sends. |
+| `back_in_stock` | blocked on mail | **DONE** — live, off by default | Notify-me form under Add to cart on a sold-out product: present on, **0** off. |
+| `legal_notice` | blocked on missing kbb-theme source | **DONE** — live, on by default | Probe text twice on `/checkout/` on, **0** off. |
+| `mega_menu` | done at 2.60.12 | **DONE, and the gate is real now** | `/` is **89,066** bytes on against **71,683** off. The plan flagged this as live while the panels rendered regardless; that was true until 2.60.199. |
+| `brands` | blocked on the `/brands/` URL decision | **DONE** — live, on by default | `/korean-skincare-brands/` returns **200** on and **404** off. |
+| `seo_engine` | "a working form writing into a void" | **DONE, and it reads its settings** | **8** og/canonical/ld+json matches on, **0** off; a probe home title appears **3 times**. |
+| `product_sorting` | "a real build, not a gate" | **DONE** — live, off by default, screen at Catalog → Reorder | `/shop/` genuinely reorders. |
+
+**`inline_validation` was ported in 2.60.205.** Not a copy — the plugin has
+nothing to copy, only a settings link to the never-supplied kbb-theme. What made
+it a *port* rather than an invention is that the contract was already in this
+repo's markup: the checkout field component writes WooCommerce's
+`validate-required` / `validate-email` / `validate-state` / `validate-phone`
+onto every row, and its own header records that nothing here has ever read them.
+This is that reader, writing back Woo's own `woocommerce-invalid` /
+`woocommerce-validated` rather than a second vocabulary for the same idea.
+Default is **blur**, not the plugin blurb's "as they type", because judging an
+email at its first letter calls it wrong; a field already judged still updates
+live as it is corrected. Off means off, measured in bytes: `/checkout/` with the
+module off is byte-identical to the page before the lane touched it.
+
+▲ **A landmine was defused, and an identical one is still armed.** `ModuleSeeder`
+has always seeded `inline_validation` **true** while nothing read the key, and
+`moduleEnabled()` returns the stored row whenever one exists. Adding the reader
+without an alignment migration would have switched live field-marking **on** for
+every install the seeder ever ran against — a shop's checkout changing
+appearance on apply, chosen by nobody. The package ships
+`2026_11_14_000001_align_inline_validation_module_toggle.php` for exactly that.
+**`address_autocomplete` is seeded `true`, defaults `true` in the registry, and
+is read by nothing.** Whoever ports it must ship the alignment migration in the
+same package or the same thing happens.
+
+**Two are genuinely still to port.**
+
+- **`address_autocomplete`** — needs an owner decision, not a developer: a Google
+  Places API key, and a judgement about sending shoppers' partial addresses to
+  Google. No `moduleEnabled('address_autocomplete')` call exists anywhere.
+- **`performance`** — and here the 2.56.1 plan is right. The plugin's version
+  throttles the WP heartbeat and dequeues WordPress asset bloat; none of that
+  exists here to strip. The work it describes is already done unconditionally —
+  3 preconnect/dns-prefetch tags in the store layout, `loading="lazy"` in 7
+  storefront templates. Porting a WordPress-shaped toggle for a problem this app
+  does not have would be inventing a module, not building one.
+
+**What the old list got backwards.** Its closing line — *"nothing here is safely
+buildable without either new information from Rafi or a properly scoped session
+of its own"* — has been overtaken in seven of ten cases. The "blocked on mail"
+and "blocked on a missing source" groups turned out to be buildable the way
+`legal_notice` was built: not by copying a plugin that has nothing to copy, but
+by implementing the module's *description* against what this app already has.
+
+<details>
+<summary>The superseded 2.56.1 assessment, kept for the record</summary>
+
 
 Checked every remaining module against the plugin source and this codebase
 before picking what to build next, rather than start on the first one on
@@ -184,6 +251,8 @@ URL, a Google Places key) or a properly scoped session of its own
 this plainly rather than picking the least-bad option and building
 something half-right.
 
+</details>
+
 ---
 
 ## Phase 1 — Foundation
@@ -236,7 +305,14 @@ something half-right.
   new `pixels_fired_at` column, matching the plugin's own meta-flag idea. Built as its own screen
   rather than folded into the existing "Meta & Facebook" screen, which is unrelated design-preview
   work for a larger Conversions-API/catalog-feed feature and was left untouched.
-- [ ] Port the remaining 10 `todo` modules — see the list in §2 below
+- [x] **inline_validation** ported — live green/red checkout validation reading the
+  `validate-*` classes the field component has always written, plus the alignment
+  migration that stops the seeder's stale `true` switching it on by itself — *2.60.205*
+- [x] **The remaining `todo` list re-verified by running it** — seven of the old ten were
+  already built and gated; see the corrected inventory above — *2.60.205*
+- [ ] Port the last 2 `todo` modules: `address_autocomplete` (needs a Google Places key
+  and an owner decision about sending partial addresses to Google) and `performance`
+  (does not port — the work it describes is already done unconditionally)
 - [ ] Per-module settings schema shared with the admin renderer, for the modules that own theirs
 
 ## Phase 4 — Search
@@ -1249,6 +1325,26 @@ pin that looks applied and is not is worse than none.**
 ## Phase 11 — Payments
 
 - [ ] COD → Tabby → Tamara → Stripe (order per D-39)
+- [x] **Stripe one-click Connect** — the Configure button Rafi asked for twice. Press it,
+  Stripe opens in a popup, the owner approves, and the till is wired without a secret key
+  ever being pasted — *2.60.205*. Four things had kept it dead; three were code and are
+  fixed. The fourth cannot be: **test and live need separate Connect registrations** and
+  two values have to come out of the owner's own Stripe Dashboard. WooCommerce's button
+  works because *Automattic is the platform* — the merchant registers nothing because
+  somebody already registered it for him. Also fixed here: the old code stored **one**
+  client id for both modes, which was a go-live failure waiting — the button would have
+  kept opening the sandbox screen after the tab was switched to Live.
+- [x] The OAuth callback's **state defence**, written down. The callback is a URL a stranger
+  can put in a link; the owner follows it signed in, his cookie rides along under
+  SameSite=Lax, and the callback redeems the *attacker's* code — attaching the attacker's
+  Stripe account to this shop, with every card payment from then on landing in it. 40
+  random characters, session-held, `hash_equals`, spent by being looked at. And the sharp
+  edge: **`hash_equals('', '') is TRUE**, so a callback carrying no state arriving in a
+  session holding none sails past a comparison that does not check emptiness first — which
+  is precisely the only request an attacker *can* make — *2.60.205*
+- [x] **An OAuth grant carries no webhook signing secret.** Stripe returns one only when an
+  endpoint is created, so both the one-click and paste-a-key paths now call the same
+  `ensureWebhookEndpoint()`. Without it the shop takes payments it never hears about — *2.60.205*
 
 ## Phase 12 — Performance and SEO
 
@@ -1346,7 +1442,13 @@ a fake success toast and saves nothing).
   succeeds — noted directly on the "Add a redirect" form rather than left as a silent
   gap. The two things that actually matter here — auto-redirect on slug change, and
   catching dead/broken URLs — both work correctly — *2.60.52*
-- [ ] **Per-product SEO editor** ▲ *blocked on the product edit page* — focus keyphrase,
+- [x] **Per-product SEO editor** — *2.60.205*. The block was lifted: the product editor is
+  real now, so this went where it always belonged rather than standing alone. ▲ **And it
+  found something worse than a missing editor: three readers were acting on five keys while
+  both taxonomy screens rebuilt the column from two** — so saving a brand or category's SEO
+  from the admin screen silently destroyed the other three keys on that row. Editing one
+  field wiped fields the owner never touched. Fixed at the writer, with the readers left
+  alone. What the editor carries: focus keyphrase,
   SEO title/description with live counts + SERP preview, live SEO + readability
   traffic-light checks, per-page OG override, canonical/noindex/nofollow/cornerstone
   flags, internal-link suggestions. This has to live inside the real product editor —
@@ -1398,16 +1500,21 @@ a fake success toast and saves nothing).
   (correctly excluded), a product with a thin 2-word description (correctly flagged),
   and a product with a genuinely long description (correctly excluded from both
   checks) — *2.60.55*
-- [ ] Yoast data importer — field-by-field mapping (`_yoast_wpseo_*` → the `seo` column
-  above, now that it is real). Storage side is done; the import itself is only worth
-  running once there's confirmation of which Yoast tier (free / Premium / +WooCommerce
-  SEO add-on) was actually in use — that decides whether there's product-schema data
-  to import at all
+- [~] Yoast data importer — **the field map is named and built** (`_yoast_wpseo_title`,
+  `_yoast_wpseo_metadesc`, `_yoast_wpseo_canonical`, `_yoast_wpseo_meta-robots-noindex`,
+  `_yoast_wpseo_focuskw` → the `seo` column), and the importer reads it — *2.60.205*.
+  Still open and still an owner question, not a developer one: **which Yoast tier was
+  actually in use** (free / Premium / +WooCommerce SEO add-on). That decides whether the
+  export carries product-schema data at all; the map handles what the free tier writes
 - [~] Structured data — sitewide, product, BreadcrumbList, and article now real (article
   landed as a side effect of the blog outage fix above — the renderer already supported
   it, it just never had real data reach it before). Category pages still use plain
   `website` type rather than a proper `CollectionPage`/`ItemList` — the one piece left
-- [ ] Image pipeline · cache strategy
+- [~] Image pipeline · cache strategy — **measured, and the homepage was the offender**:
+  it served full-size photographs into tiles a few hundred pixels wide. The grid, the
+  product cards, the quick-view and the frequently-bought-together strip now emit real
+  `srcset`/`sizes` against generated variants — *2.60.205*. Written up with the numbers in
+  `docs/IMAGE-PIPELINE-AND-CACHE.md`. The cache-header half is still open
 
 ## Phase 13 — Data migration  *(one-time, idempotent Artisan command)*
 
@@ -1415,6 +1522,18 @@ a fake success toast and saves nothing).
 - [ ] Count-based verification after each bucket
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [ ] Media and image paths · URL redirect map — **needs the two URL decisions in Phase 9**
+- [x] **Dry run** — the import can now say what it would change, what it would drop, and
+  what it never reads, before a row moves. Rafi approves the drop list from a screen
+  rather than from a promise — *2.60.203*
+- [x] **Coupons and reviews carried through** — *2.60.205*. ▲ Two files the migration had
+  never opened: a WooCommerce export contains `coupons.csv` and `reviews.csv` and this
+  importer read neither, so every discount code and every star rating the shop has earned
+  would have been left behind on the old site. Both now import.
+- [x] ▲ **A second door into `coupons` was found and closed off in the audit.** The admin
+  controller refuses a fixed-amount coupon that is not a whole dirham; `CouponImporter`
+  bypasses that controller entirely. An imported fils coupon is rounded **up** at the till,
+  so the shop gives away more than the screen shows. `kbb:whole-dirham-audit` now counts
+  and warns about coupons separately — *2.60.205*
 
 ## Phase 14 — Licensing console  *(separate application)*
 
@@ -1574,7 +1693,7 @@ descriptions, validation messages).
       hand** — that file is on `NEVER_SHIP` and `UpdateGuard` refuses it. Built
       so that forgetting it is safe: without it `/ar` simply 404s and the shop
       stays English-only, which is what the shop is today
-- [ ] ▲ **T1b · A `Translation` section in the admin, with real switches** —
+- [x] ▲ **T1b · A `Translation` section in the admin, with real switches — landed *2.60.203*, with the API-key setup guide added in *2.60.204*.** All of the below is built; the guide under the key box names the real Google Cloud screens step by step, and corrects what the earlier blurb implied: Google applies a monthly credit that covers roughly the first 500,000 characters and then **bills** — it does not stop at the free allowance, and the screen now says so before the owner pastes a key. Original requirement, for the record:
       owner's requirement: a **parent menu of its own** in the sidebar, beside
       Store and Content, rather than settings scattered across other screens.
       Everything **off by default**, so applying the package changes nothing on
@@ -1599,6 +1718,10 @@ descriptions, validation messages).
       - **Machine translation** — provider, his own key, the character count and
         estimated cost, and the batch run. Absent key must leave every manual
         path working
+
+- [x] ▲ **T3b · The paperwork a customer keeps, in the language they ordered in — landed *2.60.204* → *.205*.** The emailed invoice already rendered in the order's language; the **printed** one did not, so an operator reprinting handed over a second sheet that read differently from the one already in the customer's inbox **carrying the same invoice number**. Two documents with one number is worse on an invoice than anywhere else. Fixed for the invoice only — the packing slip, delivery note and dispatch label stay English on purpose, because a picking list in a language the picker cannot read is the worse document, and a test asserts all three did not follow. The dispatch subject lines are keyed with **named** placeholders so a translator can put the order number first.
+
+- [x] ▲ **A stored XSS on the Journal, found and closed — *2.60.205*.** The tag filter built its chips by interpolating an admin-entered tag into an `onclick` attribute. Driven in a real browser against a post tagged with an `img/onerror` payload, `alert(1)` **fired on page load**. Chips are now built with `createElement` / `textContent` / `dataset` / `addEventListener` — nothing is escaped because nothing is parsed. The same change fixed what the lane was sent for: the active chip was found by comparing its *rendered text* against the tag value, so the first translated label would have killed the highlight for every tag, and `'All'` was a linguistic string used as a sentinel in three places. The sentinel is now the **absence** of a tag, which is not a word in any language and cannot collide with one an admin types.
 
 - [x] **T2 · Interface strings — landed *2.60.202*.** 752 keys, 953 call sites in
       Blade, 45 in JavaScript, 94 Blade files, 11 JS modules. **The English
@@ -1851,6 +1974,10 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
 | ▒35 | **The container restarts, and everything not committed is gone.** A restart mid-session took two lanes' unfinished work with it; nothing in the repository was lost because every merged lane had already been committed and pushed. The discipline that saved it: merge and push each lane as it lands rather than batching several, and keep the integrator branch's working tree clean between merges, so the worst case is re-dispatching a brief rather than reconstructing a diff |
 | ▒36 | **A guard is only as wide as the thing it can see, and silence is its failure mode.** Four separate instruments in this suite were found checking nothing while being counted as coverage: a mobile-drawer walker whose selector named an element that does not exist (36 links unchecked); a tab-bar selector looking for a class `tb` on an element classed `tabbar`, which had never matched on any run; an admin-nav walk whose empty dispatch map excused every screen; and an ordering guard written in SQLite's quoting that reported nothing on MySQL. The shape is always the same — a parse or a match whose failure returns **nothing** rather than failing. Every extractor must assert it found something before asserting anything about what it found, every floor must be per-region so one section cannot mask another, and any test that reads compiled SQL must accept both engines' quoting |
 | ▒37 | **The exclusive-VAT feature would have shipped a contradiction the day it was switched on, and no test would have failed.** The product page printed "Inclusive of {rate}% VAT" as a literal at the global rate; the checkout charged the country's rate on the country's basis. Both were correct in isolation and disagreed only in a configuration nobody had yet selected. The lesson generalises past tax: **a feature that adds a new configuration adds a new set of screens that must be re-read in that configuration**, and "it is latent today" is a statement about the current settings, not about the code |
+| ▒38 | **A form collected a lead and stored a blank row, and only measuring found it.** The skin quiz posts **camelCase under nested objects**; the endpoint validated **flat snake_case**; `validate()` silently drops what it does not list. Every lead ever captured holds the concern list and a NULL name, phone and email. Nothing in this application persists a raw request body — no audit table, no middleware, no log — so **there is nothing to backfill and nothing is recoverable**. What is owed is a sentence to the owner: those blanks are this defect, not shoppers declining to fill the form in. The general shape: **a contract with two ends written by two authors agrees only if somebody posts the real body and reads the stored row** |
+| ▒39 | **Eight guards on this project have now been caught asserting nothing, and one mechanism accounts for most of them.** `expect($raw)->not->toContain($needle, $message)` reads like a needle and a message and is neither — Pest's `toContain()` is **variadic**, so the message becomes a second needle, and `not` passes the moment the positive expectation fails *for any reason*, including "the body does not contain the path". Two live gateway-secret sweeps in `ApiSecurityTest` were written that way; six more are listed for their owners. The repair is mechanical: `expect(str_contains($raw, $needle))->toBeFalse($message)`. The discipline behind it: **every new guard must be run against the unfixed code and seen to go red**, and a guard that cannot be made to fail is not coverage |
+| ▒40 | **A settings screen that cannot be saved at all, on a fresh store, because an empty box is not an empty string.** Laravel's `ConvertEmptyStringsToNull` turns an empty text box into `null`, `cast()`'s default arm answers `null`, and `save()` reports that as invalid — so Store → Ecommerce's Cart and Checkout tabs refuse every save while any of their nine normally-empty boxes is empty, which on a fresh store is all of them. Reproduced against the real endpoint as a real owner. `ReviewSettingsApiController` documents this exact trap in its own header and works around it; this controller never got the same treatment. **Any controller taking a whole tab in one post is exposed to it, and the symptom is a 422 the owner reads as "the shop rejected my settings"** |
+| ▒41 | **Two doors into one table, and only one of them is guarded.** The admin controller refuses a fixed-amount coupon that is not a whole dirham; `CouponImporter` writes to `coupons` without passing through it, and an imported fils amount is rounded **up** at the till — the shop gives away more than the screen shows. The same shape destroyed data on the taxonomy SEO screens: three readers acted on five keys while both editors rebuilt the column from two, so saving one field wiped three the owner never touched. **When a rule lives in a controller, list every writer of that table before calling the rule enforced** |
 
 ## Questions still unanswered
 
@@ -1863,12 +1990,40 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
    transactional service like Postmark/SES)? This has quietly grown from
    blocking password reset alone to blocking five separate things, two of
    them full Phase 3 modules (Abandoned Cart, Back-in-Stock).
-7. **kbb-theme source** — needed to build `legal_notice` and
-   `inline_validation` faithfully; both are currently only a settings link
-   in the plugin with no implementation to port.
+7. ~~**kbb-theme source**~~ — **no longer needed.** Both `legal_notice`
+   (2.60.109) and `inline_validation` (2.60.205) were built without it, from
+   each module's own description against what this app already has — and in
+   `inline_validation`'s case from a contract already sitting in this repo's
+   own markup. Only `address_autocomplete` still names it, and that is blocked
+   on the key below, not on the source.
 8. **Google Places API key** — needed for `address_autocomplete`, on top of
    the same kbb-theme source requirement.
-9. **Orphaned `build 5/` folder** at the public web root, alongside the real
+9. **Stripe Connect — five things only Rafi can do**, and the one-click
+   Configure button stays hidden until they are done. It is not a gap in the
+   code: WooCommerce's equivalent button works because *Automattic* is the
+   registered platform and the merchant registers nothing. Here the shop has to
+   register itself. In order: **(a)** enable Connect on his own Stripe account;
+   **(b)** complete the platform profile Stripe asks for; **(c)** copy the
+   Connect **client id** — **twice**, because test and live are different values
+   and a single stored id would keep opening the sandbox screen after the tab is
+   switched to Live; **(d)** register the redirect URI **including the
+   `/kbb-upgrade` segment**, or Stripe refuses the return; **(e)** paste each
+   mode's secret key into its own box. The honest caveat, worth repeating to
+   him: this asks a single-merchant shop to register itself as a payments
+   platform. That is friction Stripe imposes, not friction this code invented.
+10. **Which Yoast tier was in use** — free, Premium, or Premium + the
+   WooCommerce SEO add-on. The field map is built and the importer reads it;
+   the answer decides whether the export carries product-schema data to import
+   at all.
+11. **The quiz promises an email the shop does not send.** The contact step says
+   "We'll save your results & email your plan", and nothing in `app/Mail` or
+   `app/Services/Mail` references the quiz. Writing that mailer is a feature,
+   not a fix — and it is a sixth thing behind the mail-provider answer in Q6.
+12. **There is no consent checkbox on the quiz.** `consent` is set to `true` by
+   the page unconditionally, so the stored consent record is an assertion the
+   page made, not an affirmative act by the shopper. Adding a real checkbox
+   changes the funnel and the copy, so it is the owner's call, not a lane's.
+13. **Orphaned `build 5/` folder** at the public web root, alongside the real
    `build/` — nothing references it, almost certainly a leftover from a
    manual ZIP upload before the automated updater existed. Low priority,
    but flag before delete: confirm with Rafi it's safe to remove rather

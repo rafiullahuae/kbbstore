@@ -180,8 +180,13 @@ it('names a real console location in every module row that names one at all', fu
     }
 
     // Every row that claims a screen, measured rather than assumed: 43 rows in
-    // the registry, 8 of which name no screen.
-    expect($checked)->toBe(35);
+    // the registry, 7 of which name no screen.
+    //
+    // 35 until Lane FI. `inline_validation` was ported there and its row moved
+    // from '' — the value the console renders as "screen not built yet" —
+    // to 'Store → Ecommerce → Checkout', which is where its three controls
+    // really are. One more row claiming a screen, and one fewer naming none.
+    expect($checked)->toBe(36);
     expect($wrong)->toBe([]);
 });
 

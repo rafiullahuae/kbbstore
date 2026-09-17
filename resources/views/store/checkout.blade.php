@@ -293,7 +293,7 @@
     </section>
 
 @push('scripts')
-{!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
+@include('partials.checkout.inline-validation', ['validation' => \App\Support\InlineValidation::config(app(\App\Services\SettingsService::class))]){!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
 @endpush
 
 @push('scripts')

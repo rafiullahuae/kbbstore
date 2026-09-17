@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Store\ShopController;
 use App\Models\PaymentProvider;
 use App\Services\SettingsService;
+use App\Support\InlineValidation;
 use App\Support\Money;
 use App\Support\Shortcodes;
 use App\Support\WholeDirhams;
@@ -125,9 +126,45 @@ class EcommerceApiController extends Controller
                      * owns.
                      */
                     'legal' => ['Legal notice', 'The line above the Place order button. Leave it empty to show nothing.', 'card', ['checkout_legal_text']],
+                    /*
+                     * The `inline_validation` module's controls — Lane FI.
+                     *
+                     * Here rather than on a screen of its own for exactly the
+                     * reason the legal notice above is: this tab is drawn
+                     * generically from the schema below, so three fields added
+                     * to it get three real controls without touching
+                     * resources/views/admin/app.blade.php, which no single lane
+                     * owns. The module's registry row names this tab —
+                     * 'Store → Ecommerce → Checkout', route 'ecommerce:checkout'
+                     * — and ModuleRegistrySettingsPathTest checks that the
+                     * sentence and the Open button agree.
+                     *
+                     * The SWITCH is not here. It is on Store → Modules, where
+                     * every module's switch is; these three are what the marks
+                     * look like once it is on, and each of them ships a default
+                     * that matches the quietest sensible reading of the plugin's
+                     * one-line description. With the module off they are inert,
+                     * which is why the section's own description says so rather
+                     * than leaving the owner to find out.
+                     */
+                    'validation' => ['Live field validation', 'How the checkout marks a field as the shopper fills it in. Nothing appears until Live field validation is switched on under Store → Modules.', 'card', ['checkout_validate_when', 'checkout_validate_ok', 'checkout_validate_hint']],
                 ],
                 'fields' => [
                     'checkout_single_name'  => ['bool', 'Single full-name field', true, 'Off splits it into first and last name.'],
+                    /*
+                     * Read by App\Support\InlineValidation, which is read by
+                     * partials/checkout/inline-validation.blade.php. Both halves,
+                     * and ModuleFrameworkGuardTest fails if either goes missing.
+                     *
+                     * The options are InlineValidation::WHEN so the two values
+                     * the script actually compares against and the two the owner
+                     * can choose between are one list. A select whose options
+                     * were retyped here is how a screen comes to offer a value
+                     * nothing implements.
+                     */
+                    'checkout_validate_when' => ['select', 'When to mark a field', InlineValidation::DEFAULT_WHEN, 'Leaving it until they move on avoids marking a half-typed email address as wrong. Either way, a field already marked updates live as it is corrected.', InlineValidation::WHEN],
+                    'checkout_validate_ok'   => ['bool', 'Mark correct fields too', true, 'Off, only fields that need attention are marked.'],
+                    'checkout_validate_hint' => ['bool', 'Say what is wrong', true, 'A short line under a field that needs attention. Off, it is marked but not explained.'],
                     /*
                      * Read by App\Support\CheckoutLegalNotice, which is read by
                      * partials/checkout/legal-notice.blade.php. Both halves, and
