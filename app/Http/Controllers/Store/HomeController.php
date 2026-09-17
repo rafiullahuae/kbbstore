@@ -319,7 +319,13 @@ class HomeController extends Controller
 
         // Totals used in the copy, so the page never states a made-up number.
         $catalogueCount = Cache::remember('kbb.home.count', 900, fn () => Product::query()->visible()->count());
-        $brandTotal = Cache::remember('kbb.home.brandcount', 900, fn () => Brand::query()->count());
+        // ONE READER for this figure, not two. The hero's eyebrow quotes it
+        // through HomepageContent's {brands} token, and the brand strip's own
+        // tally is this variable; a second COUNT(*) here would be two answers
+        // to one question on one page, which is the fault this page has now had
+        // removed from it four times. Same cache key, same 900s, same
+        // flushCache() below.
+        $brandTotal = HomepageContent::brandTotal();
 
         /*
          * Demo content fills empty SECTIONS so the layout can be seen before

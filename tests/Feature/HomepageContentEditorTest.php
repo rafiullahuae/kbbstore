@@ -148,7 +148,7 @@ it('puts the owner’s hero on the storefront, through the admin endpoint', func
     // pushed down it.
     expect($hero)->not->toContain('Medicube · limited-time offer');
     expect($hero)->not->toContain('Shop the Super Sale');
-    expect($hero)->not->toContain('93 brands · sourced direct');
+    expect($hero)->not->toContain(' brands · sourced direct');
 });
 
 it('builds the slide’s gradients from validated colours and never from typed CSS', function () {
@@ -285,7 +285,7 @@ it('lets the owner delete every slide without the shipped copy coming back', fun
     $html = foHome();
 
     expect($html)->not->toContain('Medicube · limited-time offer');
-    expect($html)->not->toContain('93 brands · sourced direct');
+    expect($html)->not->toContain(' brands · sourced direct');
     expect($html)->not->toContain('Shop the Super Sale');
     expect($html)->not->toContain('id="slider"');
 
@@ -399,6 +399,28 @@ it('is refused to anyone who is not signed in, and is content.manage on the map'
 /* ──────────────────────────── §7 a shop that changes nothing sees no change */
 
 it('renders the three shipped slides byte for byte when nothing has been saved', function () {
+    /*
+     * ONE LINE OF THIS IS NO LONGER A LITERAL — Lane FR.
+     *
+     * The eyebrow on the second slide read "93 brands · sourced direct" and the
+     * brand strip forty lines below it counted the real number off the
+     * catalogue. Two answers to one question on one page, and the unchangeable
+     * one was the louder. HomeController's own header records the same figure
+     * being taken out of the About band and the shop filters — `max($brandTotal,
+     * 93)` — and this was the last place it survived.
+     *
+     * The default is `{brands} brands · sourced direct` now and the figure comes
+     * from the counter the strip uses, so the assertion below reads the
+     * DATABASE rather than a constant: a pin on "8 brands" would be this test
+     * agreeing with a fixture, and a pin on HomepageContent::brandTotal() would
+     * be it agreeing with itself.
+     *
+     * The free-delivery figure moved the same way and does NOT change these
+     * bytes: `{free_from}` resolves through ShippingService::thresholdHere(),
+     * which for a shop on the shipped threshold is AED 199 — the number the
+     * literal quoted. What changed is that raising it on Store → Shipping now
+     * moves the hero too, instead of leaving it advertising the old one.
+     */
     $html = foHome();
 
     $hero = foHero();
@@ -411,7 +433,15 @@ it('renders the three shipped slides byte for byte when nothing has been saved',
         'Shop Medicube',
         'Shop all brands',
         'Shop the Super Sale',
-        '93 brands · sourced direct',
+        \App\Models\Brand::query()->count() . ' brands · sourced direct',
+        // The pay-later half of the third slide's supporting line, which is
+        // true of every shop. The free-delivery half beside it is now a
+        // {free_from} token, and this fixture configures no free-shipping
+        // method at all — so the shop has no such rule, and the sentence is
+        // dropped rather than quoting a figure nobody enforces. Both branches
+        // are asserted against real shipping zones in
+        // tests/Feature/HeroClaimsAreCountedTest.php.
+        'Split any order into four.',
         'linear-gradient(118deg,#F7C6D4,#E0567B 58%,#A82F53)',
         'linear-gradient(150deg,#FFE6EE,#EFA8BE)',
         'linear-gradient(118deg,#CDE6DA,#3E8F6E 58%,#2A6A50)',

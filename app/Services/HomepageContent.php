@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Brand;
+use App\Support\Money;
 use App\Support\TrustClaims;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * What the homepage SAYS, as opposed to which of its sections appear.
@@ -99,6 +102,47 @@ final class HomepageContent
     ];
 
     /**
+     * Figures a slide may quote, which the shop MEASURES somewhere else.
+     *
+     * ── WHY A TOKEN AND NOT A NUMBER ────────────────────────────────────────
+     *
+     * Two of the three shipped slides stated things this shop counts elsewhere
+     * on the same page. "93 brands · sourced direct" sat forty lines above a
+     * strip that counts the real number off the catalogue — eight, on the
+     * preview database — and the free-delivery figure was a literal in a slide
+     * sitting directly above a band and a ticker that had both already been
+     * repaired to read Store → Shipping. One page, three answers, and the
+     * loudest one was the one nobody could edit.
+     *
+     * HomeController's own header records the same fault being removed from
+     * three other statements on this page: `max($brandTotal, 93)` and
+     * `max($catalogueCount, 671)` overstated the size of the shop in the About
+     * band and the shop filters, and the invented review summary was taken out
+     * with them. This is the last survivor of that set, and it is removed the
+     * same way — by making the sentence read the counter rather than quote it.
+     *
+     * A TOKEN RATHER THAN A HARD-WIRED SENTENCE, because the wording around the
+     * figure is the owner's and only the figure is the shop's. The eyebrow can
+     * become "{brands} Korean brands, all checked" and still be true tomorrow;
+     * deleting the token leaves a sentence with no number in it, which is also
+     * allowed. What is not available any more is typing a number of your own
+     * and having the page repeat it forever.
+     *
+     * AN UNRESOLVABLE TOKEN DROPS ITS LINE, not the whole field and not the
+     * token alone. `{free_from}` has no answer for a shopper in a country this
+     * shop has no free-shipping rule for — the delivery band and the ticker
+     * below already drop their own half in exactly that case, and this is the
+     * same decision one band up. Dropping the LINE is what lets the shipped
+     * third slide keep "Split any order into four.", which is true everywhere,
+     * while losing the sentence that is not. Nothing is invented to fill the
+     * gap and no owner copy is deleted for a shopper the figure is true for.
+     */
+    public const TOKENS = [
+        '{brands}' => 'How many brands the catalogue holds, counted — the figure the brand strip on this page prints.',
+        '{free_from}' => 'The free-delivery threshold for this visitor, from Store → Shipping. A line quoting it is dropped where the shop has no such rule.',
+    ];
+
+    /**
      * One hero slide. ModuleSchema field definitions, so the console's generic
      * renderer draws them and ModuleSchema::cast() validates them.
      */
@@ -107,7 +151,7 @@ final class HomepageContent
             'type' => 'text',
             'label' => 'Eyebrow',
             'default' => '',
-            'help' => 'The small line above the headline. Leave it empty and nothing is shown.',
+            'help' => 'The small line above the headline. Leave it empty and nothing is shown. {brands} prints how many brands the shop carries, counted.',
         ],
         'heading' => [
             'type' => 'textarea',
@@ -119,7 +163,7 @@ final class HomepageContent
             'type' => 'textarea',
             'label' => 'Supporting line',
             'default' => '',
-            'help' => '',
+            'help' => '{brands} and {free_from} print the shop’s own figures. A line quoting a figure the shop has no answer for is dropped rather than guessed at.',
         ],
         'button' => [
             'type' => 'text',
@@ -187,12 +231,21 @@ final class HomepageContent
      * headline, which becomes a newline: nl2br() over the escaped value renders
      * the identical markup, so a shop that has saved nothing sees no change.
      *
-     * THEY ARE DEFAULTS, NOT TRUTHS. Two of them state figures this shop
-     * measures elsewhere — "93 brands" is counted on the brands strip below,
-     * and the free-delivery number is owned by Store → Shipping — and a third
-     * advertises a sale. Making them editable does not make them true; it makes
-     * them removable, which they were not. docs/FO-HOMEPAGE-INVENTORY.md names
-     * all three.
+     * THEY ARE DEFAULTS, NOT TRUTHS — and two of the three claims that made
+     * that sentence necessary are now derived rather than asserted (Lane FR).
+     * "93 brands" was counted on the brands strip forty lines below and quoted
+     * here as a literal; it is `{brands}` now, and reads the same counter. The
+     * free-delivery number is owned by Store → Shipping, per zone; it is
+     * `{free_from}` now, and a line quoting it is dropped where the shop has no
+     * such rule. See TOKENS.
+     *
+     * WHAT IS STILL ONLY A DEFAULT is the third: "Shop the Super Sale" and
+     * "Medicube · limited-time offer" advertise a sale and an offer on every
+     * fresh install, and NOTHING in this application knows whether either is
+     * running. There is no counter to read, so no number is invented and the
+     * owner's copy is not deleted — it stays the editable default it became,
+     * and whether to remove it is the owner's call.
+     * docs/FO-HOMEPAGE-INVENTORY.md §2 names all three.
      */
     public const DEFAULT_SLIDES = [
         [
@@ -205,7 +258,7 @@ final class HomepageContent
             'card_from' => '#FFE6EE', 'card_to' => '#EFA8BE',
         ],
         [
-            'kicker' => '93 brands · sourced direct',
+            'kicker' => '{brands} brands · sourced direct',
             'heading' => "The authentic\nK-beauty store",
             'text' => 'Every product original, every order checked. Freebies with every parcel.',
             'button' => 'Shop all brands',
@@ -216,7 +269,7 @@ final class HomepageContent
         [
             'kicker' => 'Tabby · Tamara · COD',
             'heading' => "Pay later,\ndelivered in 1–3 days",
-            'text' => 'Split any order into four. Free delivery across the UAE over AED 199.',
+            'text' => "Split any order into four.\nFree delivery across the UAE over {free_from}.",
             'button' => 'Shop the Super Sale',
             'url' => '/shop/?on_sale=1',
             'bg_from' => '#FFE1A8', 'bg_mid' => '#E8A33D', 'bg_to' => '#C07F1E',
@@ -239,7 +292,109 @@ final class HomepageContent
      */
     public function slides(): array
     {
-        return array_map(fn (array $s) => $this->render($s), $this->editable());
+        $figures = $this->figures();
+
+        return array_map(fn (array $s) => $this->fill($this->render($s), $figures), $this->editable());
+    }
+
+    /**
+     * What each token resolves to for THIS request, or null for "no answer".
+     *
+     * Both come from the reader that already owns the figure, not from a second
+     * copy of the query or of the setting:
+     *
+     *   {brands}     the same Cache key HomeController counts the brand strip
+     *                from, so the eyebrow and the strip forty lines below it
+     *                cannot print two different numbers. Reading it here costs
+     *                the page nothing — whichever of the two runs first fills
+     *                the entry and the other reads it.
+     *   {free_from}  ShippingService::thresholdHere(), which is what the
+     *                delivery band and the promo ticker inside this same hero
+     *                were repaired to use, memoised on the Request.
+     *
+     * Money::plain() and NOT Money::format(): format() returns a <span>, and
+     * the supporting line is printed through {{ }}. The markup would appear on
+     * the banner as text.
+     *
+     * A count of zero is NO ANSWER rather than the number nought. "0 brands ·
+     * sourced direct" is arithmetically true and reads as a broken page, which
+     * is the rule the delivery band beside it already follows for an empty
+     * sentence.
+     *
+     * @return array<string, string|null>
+     */
+    public function figures(): array
+    {
+        $brands = self::brandTotal();
+        $free = app(ShippingService::class)->thresholdHere();
+
+        return [
+            '{brands}' => $brands > 0 ? (string) $brands : null,
+            '{free_from}' => $free === null ? null : Money::plain($free, 0),
+        ];
+    }
+
+    /**
+     * How many brands the catalogue holds.
+     *
+     * THE SAME CACHE KEY HomeController uses for the brand strip's own tally,
+     * deliberately: this method is now the one reader and the controller calls
+     * it, so there is no second COUNT(*) and no way for the two figures on the
+     * page to disagree. HomeController::flushCache() already forgets this key.
+     */
+    public static function brandTotal(): int
+    {
+        return (int) Cache::remember('kbb.home.brandcount', 900, fn () => Brand::query()->count());
+    }
+
+    /**
+     * Substitute the figures into the four fields a shopper reads.
+     *
+     * Line by line, so an unresolved token takes its own sentence with it and
+     * leaves the rest of the field standing. `url` and the five colours are not
+     * touched: a token in a link or a colour would be a value the validator has
+     * already refused, and substituting into either is how a text field becomes
+     * an injection sink.
+     *
+     * @param  array<string, string|null>  $figures
+     */
+    private function fill(array $slide, array $figures): array
+    {
+        foreach (['kicker', 'heading', 'text', 'button'] as $key) {
+            $value = (string) ($slide[$key] ?? '');
+
+            if (! str_contains($value, '{')) {
+                continue;
+            }
+
+            $kept = [];
+
+            foreach (explode("\n", $value) as $line) {
+                $drop = false;
+
+                foreach ($figures as $token => $resolved) {
+                    if (! str_contains($line, $token)) {
+                        continue;
+                    }
+
+                    if ($resolved === null) {
+                        $drop = true;
+
+                        break;
+                    }
+
+                    $line = str_replace($token, $resolved, $line);
+                }
+
+                if (! $drop) {
+                    $kept[] = $line;
+                }
+            }
+
+            $slide[$key] = implode("\n", $kept);
+        }
+
+        return $slide;
     }
 
     /**
@@ -295,6 +450,11 @@ final class HomepageContent
                 $this->editable()
             ),
             'defaults' => array_map(fn (array $s) => $this->coerce($s), self::DEFAULT_SLIDES),
+            // The figures a slide may quote, and what they stand at right now.
+            // The editor edits the TOKEN — that is the point of it — so the
+            // screen needs both to explain one and to preview the other.
+            'tokens' => self::TOKENS,
+            'figures' => $this->figures(),
             'tabs' => $tabs,
             // So the screen can say, in the owner's words, what the brands note
             // and trust claims on the same page currently say — those already
