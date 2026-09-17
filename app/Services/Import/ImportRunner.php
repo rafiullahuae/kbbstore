@@ -6,10 +6,12 @@ namespace App\Services\Import;
 
 use App\Services\Import\Entities\BrandImporter;
 use App\Services\Import\Entities\CategoryImporter;
+use App\Services\Import\Entities\CouponImporter;
 use App\Services\Import\Entities\CustomerImporter;
 use App\Services\Import\Entities\EntityImporter;
 use App\Services\Import\Entities\OrderImporter;
 use App\Services\Import\Entities\OrderItemImporter;
+use App\Services\Import\Entities\ReviewImporter;
 use App\Services\Import\Entities\SeoImporter;
 use App\Services\Import\Entities\ProductImporter;
 use App\Services\Import\Sources\CsvRowSource;
@@ -77,9 +79,38 @@ final class ImportRunner
             new CategoryImporter,
             new BrandImporter,
             new ProductImporter,
+            /*
+             * AFTER PRODUCTS AND CATEGORIES, BEFORE ORDERS, and both halves of
+             * that are dependencies rather than preferences.
+             *
+             * After, because `coupons.product_ids` and `coupons.category_ids`
+             * hold LOCAL primary keys -- CouponService::eligibleItems() tests
+             * them against $product->id -- while the export carries WordPress
+             * post and term ids. CouponImporter translates them through this
+             * run's id maps, and a translation that finds nothing turns a
+             * restricted coupon into one valid on the whole catalogue, which
+             * it refuses rather than does.
+             *
+             * Before, because OrderImporter writes `orders.coupon_code` as a
+             * bare string and Store -> Coupons' usage report joins the two. It
+             * is not a foreign key, so nothing breaks the other way round --
+             * but an order naming a code that is not yet a row is an order
+             * whose discount cannot be looked at.
+             */
+            new CouponImporter,
             new CustomerImporter,
             new OrderImporter,
             new OrderItemImporter,
+            /*
+             * AFTER PRODUCTS, for the same reason as SEO below -- every review
+             * names its product by the WooCommerce post id that ProductImporter
+             * writes -- and after CUSTOMERS, because a review carries the
+             * reviewer's WordPress user id and links to `customers` where this
+             * shop has them. Registered before either, it rejects every row it
+             * cannot attach, and an orphaned review is refused rather than
+             * imported as a review of the shop.
+             */
+            new ReviewImporter,
             /*
              * LAST, and that is a dependency, not a preference. Every Yoast row
              * is matched on `wc_id`, which ProductImporter writes; registered
@@ -392,24 +423,30 @@ final class ImportRunner
     /**
      * Files sitting in the export folder that no entity will ever open.
      *
-     * THIS IS THE LARGEST DISCARD IN THE WHOLE MIGRATION AND IT WAS THE ONE
-     * NOTHING SAID. ImportRunner::entities() is seven importers and there is no
-     * eighth: this application has coupons, it has reviews, and neither has an
-     * entity here. An owner who exports their WooCommerce store the obvious way
-     * gets coupons.csv and reviews.csv along with everything else, drops the
-     * folder in, reads a report that says 4,166 orders imported, and has no
-     * reason at all to suspect that two of the files they handed over were
-     * never opened. Their coupon codes -- the ones printed on cards in outgoing
-     * parcels -- are simply not in the new shop, and they find out when a
-     * customer cannot use one.
+     * THIS WAS THE LARGEST DISCARD IN THE WHOLE MIGRATION AND IT WAS THE ONE
+     * NOTHING SAID. entities() was seven importers and there was no eighth:
+     * this application has coupons and it has reviews, and neither had an entity
+     * here. An owner who exported their WooCommerce store the obvious way got
+     * coupons.csv and reviews.csv along with everything else, dropped the folder
+     * in, read a report that said 4,166 orders imported, and had no reason at
+     * all to suspect that two of the files they handed over were never opened.
+     * Their coupon codes -- the ones printed on cards in outgoing parcels --
+     * were simply not in the new shop, and they found out when a customer could
+     * not use one.
+     *
+     * BOTH OF THOSE FILES ARE NOW READ: CouponImporter and ReviewImporter are
+     * registered above. This method keeps doing its job for whatever the next
+     * export carries that nothing here opens -- refunds.csv, order_notes.csv,
+     * variations.csv, tags.csv -- because the failure was never about those two
+     * filenames. It was about a file being ignored in silence.
      *
      * A run narrowed with --only is exempt, because there the unread files are
      * the point: `--only=orders` is supposed to ignore products.csv, and saying
      * so every time would train the owner to skim past the one message that
      * matters.
      *
-     * Named, not read. Writing a coupon importer is a different lane's job and
-     * guessing at one here would be worse than the silence.
+     * Named, not read. Writing an importer for one of them is a different job,
+     * and guessing at a mapping here would be worse than the silence.
      */
     private function reportUnreadFiles(ImportOptions $options, ImportContext $context): void
     {

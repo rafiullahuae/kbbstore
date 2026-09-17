@@ -1,0 +1,12 @@
+comment_id,comment_post_id,comment_type,author,email,rating,title,content,comment_approved,comment_date,verified,user_id,ip
+8101,4021,review,Layla,buyer@example.test,5,Wonderful,Cleared my skin in a week,1,2024-03-01 10:00:00,yes,412,203.0.113.9
+8102,4021,review,,anon@example.test,4,,Good enough,1,2024-03-02 10:00:00,no,,198.51.100.4
+8103,4022,review,Mariam,mariam@example.test,3,Fine,Does what it says,0,2024-03-03 10:00:00,no,415,198.51.100.5
+8104,4022,review,Spammer,spam@example.test,5,,Buy cheap watches,spam,2024-03-04 10:00:00,no,,198.51.100.6
+8105,4022,review,Deleted,del@example.test,2,,The owner binned this one,trash,2024-03-05 10:00:00,no,,198.51.100.7
+8106,99999,review,Ghost,ghost@example.test,5,,Reviewing a product that is gone,1,2024-03-06 10:00:00,no,,198.51.100.8
+8107,4021,review,Sixer,six@example.test,6,,Six stars out of five,1,2024-03-07 10:00:00,no,,198.51.100.9
+8108,4021,review,Nostar,nostar@example.test,,,A question rather than a review,1,2024-03-08 10:00:00,no,,198.51.100.10
+8109,4021,review,Weird,weird@example.test,3,,A moderation state this shop has no word for,archived,2024-03-09 10:00:00,no,,198.51.100.11
+8110,4021,comment,Blogger,blog@example.test,,,A blog comment that is not a review,1,2024-03-10 10:00:00,no,,198.51.100.12
+,4021,review,No Comment Id,noid@example.test,4,,Cannot be matched on a re-run,1,2024-03-11 10:00:00,no,,198.51.100.13

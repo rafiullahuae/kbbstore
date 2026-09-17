@@ -113,7 +113,7 @@ function impFile(string $name, string $body, string $mime = 'text/csv'): Uploade
     return new UploadedFile($temp, $name, $mime, null, true);
 }
 
-/** Put the six fixture exports on the server, the way the screen does. */
+/** Put every fixture export on the server, the way the screen does. */
 function impUploadAll(): void
 {
     foreach (ImportWorkspace::entities() as $entity) {
@@ -653,7 +653,13 @@ it('walks the entities in the importer\'s own dependency order, never its own co
     // Yoast row is matched on `wc_id`, which ProductImporter writes, so an
     // entity ordered before it rejects the whole file on a fresh shop.
     expect(ImportWorkspace::runnerOrder())
-        ->toBe(['categories', 'brands', 'products', 'customers', 'orders', 'order-items', 'seo'])
+        ->toBe([
+            'categories', 'brands', 'products',
+            // Coupons after the products their restriction lists name and
+            // before the orders that name their code; reviews after both the
+            // products they are of and the customers who wrote them.
+            'coupons', 'customers', 'orders', 'order-items', 'reviews', 'seo',
+        ])
         ->and(ImportWorkspace::entities())->toBe(ImportWorkspace::runnerOrder());
 
     /*
