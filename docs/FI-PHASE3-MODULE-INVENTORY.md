@@ -284,6 +284,55 @@ a screen where it named none. The comment above it records why.
 
 ---
 
+## 5a · The browser report, on and off
+
+`tests/browser/checkout-inline-validation.mjs`, following the convention of
+`tests/browser/checkout-hidden-rows.mjs`: it reports, it does not judge, and
+the same script produces both tables without being edited between them. The
+Pest suite on this project has no browser in it, so this is the half that
+begins at the first keystroke.
+
+```
+KBB_IV_URL=http://127.0.0.1:8941/checkout/ KBB_IV_CART=<kbb_cart cookie> \
+KBB_IV_CHROME=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
+node tests/browser/checkout-inline-validation.mjs
+```
+
+**Module ON** (`island.on: true`):
+
+| Case | Row classes after the interaction | aria-invalid | Hint |
+| --- | --- | --- | --- |
+| empty required address, left | `validate-required woocommerce-invalid` | true | Please fill this in. |
+| optional phone, left empty | `validate-phone` | — | — |
+| optional phone, a real number | `validate-phone woocommerce-validated` | — | — |
+| optional phone, not a number | `validate-phone woocommerce-invalid` | true | Please enter a phone number, or leave this empty. |
+| delivery notes, no `validate-*` of its own | `kbb-note` | — | — |
+| email that is not an address | `validate-required validate-email woocommerce-invalid` | true | Please enter an email address, like you@email.com. |
+| the same email, corrected **without leaving it** | `validate-required validate-email woocommerce-validated` | — | — |
+
+**Module OFF** (`island.on: false`), same script, same keystrokes:
+
+| Case | Row classes after the interaction | aria-invalid | Hint |
+| --- | --- | --- | --- |
+| *every one of the seven* | the `validate-*` classes the markup has always carried, and nothing else | — | — |
+
+### Two defects this found, both of which looked right in the server output
+
+1. **A row with no `validate-*` class was judged anyway.** Three rows on this
+   checkout carry none — "Delivery notes" is one — and with no rule to break
+   they came back clean and were given a green tick for being empty.
+2. **A row whose only rule had no opinion got the same tick.** The optional
+   phone carries `validate-phone`, and `phone` answers "no opinion" about an
+   empty box; "no opinion" was being read as "approved".
+
+Both are the shop congratulating a shopper for doing nothing, and both make the
+tick beside a field they really did fill in mean less. A row is now marked good
+only when a rule actually said yes, and a row that declares no rules is not
+touched at all. Neither would have been caught by anything the server sends,
+which is why the script exists.
+
+---
+
 ## 6 · Screenshots
 
 `docs/fi-module-shots/`, all captured in real Chromium against a seeded database

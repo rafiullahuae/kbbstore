@@ -158,25 +158,59 @@
     }
   };
 
-  function control(row) {
-    return row.querySelector('input.input-text, select.input-text, textarea.input-text');
-  }
+  /*
+      The rules this row actually declares, as bare names.
 
-  /* The failing rule's name, or '' when the row is fine. The order the classes
-     appear in is the order they are tested, so "required" wins over "email" on
-     an empty required address and the shopper is told the useful thing. */
-  function fault(row, el) {
+      A row that declares NONE is not this module's business, and that
+      distinction is load-bearing rather than tidy. Three of the twelve rows on
+      this checkout carry no validate-* class at all — "Delivery notes" is one —
+      and an earlier draft judged them anyway: with nothing to fail, they came
+      back clean and were given a green tick for being empty. A tick against an
+      optional field nobody has filled in is the shop congratulating a shopper
+      on doing nothing, and it is worse than no mark, because it makes the tick
+      beside a field they DID fill in mean less.
+  */
+  function declaredRules(row) {
     var names = [];
     row.classList.forEach(function (c) {
-      if (c.indexOf('validate-') === 0) names.push(c.slice(9));
+      if (c.indexOf('validate-') === 0 && rules[c.slice(9)]) names.push(c.slice(9));
     });
+    return names;
+  }
+
+  /*
+      What this row's rules say about what is in it, as {bad, approved}.
+
+      `bad` is the FIRST failing rule's name, and first matters: the classes are
+      tested in the order the markup lists them, so "required" wins over "email"
+      on an empty required address and the shopper is told the useful thing
+      rather than that nothing is a valid address.
+
+      `approved` is whether any rule said YES, as opposed to having no opinion,
+      and it is the half that took a second pass to get right. An optional phone
+      carries `validate-phone`, and `phone` answers null for an empty box — so
+      an untouched optional phone has a rule, breaks none of it, and was being
+      given a green tick for being empty. That is the same "congratulating a
+      shopper for doing nothing" as the no-rules case above, arriving by a
+      different door, and it devalues the tick beside the fields they really did
+      fill in. A row is only marked good when something in it was actually
+      judged good.
+  */
+  function verdict(names, el) {
+    var value = el.value == null ? '' : String(el.value);
+    var out = { bad: '', approved: false };
+
     for (var i = 0; i < names.length; i++) {
-      var rule = rules[names[i]];
-      if (!rule) continue;
-      var verdict = rule(el.value == null ? '' : String(el.value));
-      if (verdict === false) return names[i];
+      var said = rules[names[i]](value);
+
+      if (said === false) {
+        if (out.bad === '') out.bad = names[i];
+      } else if (said === true) {
+        out.approved = true;
+      }
     }
-    return '';
+
+    return out;
   }
 
   function hintFor(row, el) {
@@ -205,13 +239,23 @@
   }
 
   function judge(row, el) {
-    var bad = fault(row, el);
+    var names = declaredRules(row);
+
+    // Nothing declared, nothing marked — not even a class removed, because this
+    // module never put one there.
+    if (names.length === 0) {
+      return;
+    }
+
+    var said = verdict(names, el);
+    var bad = said.bad;
 
     row.classList.toggle('woocommerce-invalid', bad !== '');
-    /* The green half only when the owner asked for it. `validated` is never
-       added otherwise, so the tick and the green border have no selector to
-       match and the quiet reading really is quiet. */
-    row.classList.toggle('woocommerce-validated', cfg.ok && bad === '');
+    /* The green half only when the owner asked for it AND something was
+       actually approved. `validated` is never added otherwise, so the tick and
+       the green border have no selector to match and the quiet reading really
+       is quiet. */
+    row.classList.toggle('woocommerce-validated', cfg.ok && bad === '' && said.approved);
 
     if (bad !== '') {
       el.setAttribute('aria-invalid', 'true');
