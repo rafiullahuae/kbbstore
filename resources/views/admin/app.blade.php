@@ -18520,8 +18520,16 @@ buildNav();
   function payField(gid,f){
     var id='pay_'+gid+'_'+f.key;
     /* A secret is `has_value` because the server never sends one back; a plain
-       field is judged on the value it was given. Same question, two sources. */
-    var filled = f.type==='secret' ? !!f.has_value : String(f.value||'').trim()!=='';
+       field is judged on the value it was given. Same question, two sources.
+
+       A `bool` gets NO TICK, and that is not an oversight. The tick means "the
+       server took this value and stored it", and a switch left Off is stored
+       exactly as surely as one turned On -- so a tick that appeared only in the
+       On position would be read as "this is on", which is the one thing the
+       select next to it already says. A tick that means two different things on
+       two field types is worse than no tick. */
+    var filled = f.type==='bool' ? false
+      : (f.type==='secret' ? !!f.has_value : String(f.value||'').trim()!=='');
 
     var head='<div class="ecl"><label for="'+sesc(id)+'">'+sesc(f.label)+'</label>'+
       (filled ? payTick() : '')+
@@ -18538,6 +18546,22 @@ buildNav();
         '<div class="ecctl"><input type="password" class="inp" id="'+sesc(id)+'" data-payg="'+sesc(gid)+'" data-payf="'+sesc(f.key)+'"'+
         ' autocomplete="new-password" spellcheck="false" value="" placeholder="'+
         (f.has_value?'••••••••  unchanged':'paste the key here')+'"></div></div>';
+    }
+
+    /* A SETTING, NOT A CREDENTIAL. `bool` fields are stored in the same config
+       blob as the keys and travel the same way, but there is nothing to paste
+       into them: the value is '1' or empty. Drawn as a select rather than a
+       checkbox deliberately -- everything on this screen is read and written
+       through el.value (paySnapshot, payRestorePending, paySave), and a
+       checkbox's .value does not change with its checked state, so a checkbox
+       would need three other functions taught about it and would save the wrong
+       thing until they were. */
+    if(f.type==='bool'){
+      return '<div class="ecopt wide"><div class="ecom">'+head+'</div>'+
+        '<div class="ecctl"><select class="inp" id="'+sesc(id)+'" data-payg="'+sesc(gid)+'" data-payf="'+sesc(f.key)+'">'+
+        '<option value=""'+(f.value==='1'?'':' selected')+'>Off</option>'+
+        '<option value="1"'+(f.value==='1'?' selected':'')+'>On</option>'+
+        '</select></div></div>';
     }
 
     return '<div class="ecopt wide"><div class="ecom">'+head+'</div>'+

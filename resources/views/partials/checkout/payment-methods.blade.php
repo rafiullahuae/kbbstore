@@ -53,13 +53,22 @@
              which is easy to miss until after it has already been chosen. --}}
         @if (!empty($g['fee_html']))<span class="codfee">{!! $g['fee_html'] !!}</span>@endif
     </label>
-            @if ($g['description'])
+            @if ($g['description'] || $g['id'] === 'stripe')
             {{-- Shown purely by :has() on .kbb-checkout below, matching how
                  the selected-option highlight on this same list already
                  works — no JS, and correct for whichever option is checked
-                 rather than only ever the first one. --}}
+                 rather than only ever the first one.
+
+                 THE CONDITION NAMES THE CARD GATEWAY, and it has to. This box
+                 is drawn for a description, and the card fields live inside it
+                 so that the same `:has(input:checked)` rule reveals them. The
+                 owner asked for the paragraph above the fields to go, so
+                 StripeGateway::description() now returns null — and a box
+                 rendered only when there is a description would have taken the
+                 card fields away with the words, which is a checkout that
+                 cannot take a card. --}}
             <div class="payment_box payment_method_{{ $g['id'] }}">
-            <p>{!! $g['description'] !!}</p>
+            @if ($g['description'])<p>{!! $g['description'] !!}</p>@endif
             {{-- The card fields, for the one gateway that has any. Inside the
                  same .payment_box as its description, so the existing
                  `:has(input:checked)` rule in kbb-checkout.css reveals them

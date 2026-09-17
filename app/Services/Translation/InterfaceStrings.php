@@ -875,7 +875,25 @@ final class InterfaceStrings
             'checkout.or_pay_with' => 'or pay with',
             'checkout.no_payment_method' => 'No payment method is available for this order total. Please contact us and we will take your order directly.',
             // The card form on this page — see partials/checkout/stripe-card.
-            'checkout.card_secure_note' => 'Your card details are entered directly into our payment processor and never reach this site.',
+            //
+            // The one line above the fields, with a padlock beside it. It
+            // replaced both a three-sentence paragraph (StripeGateway::
+            // description(), which now returns null for the same reason) and the
+            // smaller note that used to sit under the fields, at the owner's
+            // request: "make the field more nice and clear". The ampersand is
+            // his wording, and it is a literal rather than an entity because
+            // everything in this file is escaped on the way out.
+            'checkout.card_secure_line' => '100% secure & encrypted — Use any card',
+            // Above each of the three boxes. Drawn uppercase by the partial's
+            // own letter-spaced rule rather than shouted here, so each Arabic
+            // translation is an ordinary phrase.
+            'checkout.card_number_label' => 'Card number',
+            'checkout.card_expiry_label' => 'Expiration date',
+            'checkout.card_cvc_label' => 'Security code',
+            // The tick beneath the fields. Shown only to somebody who has an
+            // account or is making one in this same checkout — see the note in
+            // partials/checkout/stripe-card.
+            'checkout.card_save' => 'Save this card for future purchases.',
             'checkout.card_return_to_basket' => 'Cancel this payment and return to your basket',
             'checkout.card_not_ready' => 'The card form is still loading. Please wait a moment and try again.',
             'checkout.card_generic_error' => 'We could not take that card. Please check the details or try another card.',

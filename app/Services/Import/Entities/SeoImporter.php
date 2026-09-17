@@ -9,6 +9,7 @@ use App\Services\Import\ImportContext;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
 use App\Support\YoastSeo;
+use App\Support\YoastTiers;
 
 /**
  * Yoast's per-product SEO, out of the WordPress export and into `products.seo`.
@@ -153,6 +154,42 @@ final class SeoImporter extends EntityImporter
                 $meta,
                 $value,
             );
+        }
+
+        /*
+         * ── WHICH YOAST WAS IN USE, COUNTED RATHER THAN ASKED ──────────────
+         *
+         * One note per key this row carries. EntityReport counts notes BY THEIR
+         * TEXT, so a run comes out as a table — the key, the tier that writes
+         * it, what this application does with it, and the number of rows
+         * carrying it — with no new report channel and no run-level state:
+         *
+         *   671  _yoast_wpseo_metadesc  — Yoast SEO (free) — … — imported
+         *   183  _yoast_wpseo_focuskeywords — Yoast SEO PREMIUM — … — NOT imported
+         *   214  wpseo_global_identifier_values — Yoast WooCommerce SEO ADD-ON
+         *        — … — NOT imported, AND THERE IS SOMEWHERE FOR IT TO GO
+         *
+         * Line two settles the tier question Phase 12 could not answer. Line
+         * three is the barcodes.
+         *
+         * App\Support\YoastTiers::KEYS is deliberately WIDER than
+         * YoastSeo::MAPPED + ::UNMAPPED: it names the Premium and add-on keys
+         * that table has never had a line for, plus three free-tier scores
+         * (inclusive_language_score, seo_title_score, meta_description_score)
+         * that are today neither imported nor reported. YoastTierCensusTest
+         * fails if a key the importer acts on has no line here.
+         */
+        foreach (YoastTiers::present($cells) as $meta) {
+            $report->note(YoastTiers::line($meta));
+        }
+
+        /*
+         * And the honesty half: a wpseo-looking column nobody has documented.
+         * "We did not import it" and "we never heard of it" are the same bytes
+         * on disk afterwards, and only one of them is a decision.
+         */
+        foreach (YoastTiers::unrecognised($cells) as $column) {
+            $report->note(YoastTiers::line($column));
         }
 
         /*

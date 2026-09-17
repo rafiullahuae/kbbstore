@@ -91,7 +91,27 @@ class CheckoutController extends Controller
         }
 
         $customer = $request->user('customer');
-        $address = $customer?->defaultAddress();
+
+        /*
+         * THE ADDRESS BOOK IS ASKED FOR SHIPPING FIRST AND BILLING SECOND.
+         *
+         * It used to ask for shipping alone, which is Customer::defaultAddress()'s
+         * default — and on this shop's own data that is the wrong question to
+         * ask only once. WooCommerce has no addresses table: a customer's
+         * billing and shipping addresses are loose usermeta keys, and
+         * Import\AddressWriter skips whichever of the two the export left empty
+         * ("an address with nothing in it is not an address"). A Woo customer
+         * who only ever filled in billing — which is most of them, because a
+         * shop delivering to the billing address never asks for a second one —
+         * therefore has exactly one row, of type `billing`, and this checkout
+         * prefilled NOTHING for them. Store -> Orders has asked both questions
+         * in this order since it gained a customer picker; the storefront was
+         * the half that did not.
+         *
+         * Shipping still wins where both exist. This page's step 2 is headed
+         * "Shipping address" and that is what it is.
+         */
+        $address = $customer?->defaultAddress('shipping') ?? $customer?->defaultAddress('billing');
 
         // The country list is always live now — the zone countries (Gulf, in
         // production) plus anything Extended has added — so the selector and
@@ -173,17 +193,7 @@ class CheckoutController extends Controller
             // posted — only the form itself was never given the other shape
             // to send. The setting existed and did nothing until now.
             'singleName' => (bool) $this->settings->get('checkout_single_name', true),
-            'prefill' => [
-                'email' => $customer?->email,
-                'phone' => $customer?->phone,
-                'name' => $customer?->displayName(),
-                'first_name' => $customer?->first_name,
-                'last_name' => $customer?->last_name,
-                'line1' => $address?->line1,
-                'city' => $address?->city,
-                'state' => $address?->state,
-                'country' => $address?->country,
-            ],
+            'prefill' => $this->prefill($customer, $address),
         ]);
     }
 
@@ -215,6 +225,11 @@ class CheckoutController extends Controller
             // keeps the existing guest flow byte-for-byte unchanged.
             'create_account' => ['nullable', 'boolean'],
             'account_password' => ['nullable', 'required_if:create_account,1', 'string', 'min:8', 'max:72'],
+            // "Save this card for future purchases", from the card form. Only
+            // a request, never a permission: whether it is honoured is decided
+            // below, after it is known whether this shopper has an account for
+            // the card to belong to.
+            'save_card' => ['nullable', 'boolean'],
             // Order note and gift message. Both optional; 600 characters is
             // generous for a gift card and short enough that a paste of an
             // entire email does not end up printed on one.
@@ -395,8 +410,15 @@ class CheckoutController extends Controller
          */
         $orderNumber = $this->nextOrderNumber();
 
+        /*
+         * Set by the closure below when THIS request gave a brand-new account
+         * its password, and read afterwards by the one decision that needs it:
+         * whether a card may be saved. See the guard beneath the transaction.
+         */
+        $accountCreated = false;
+
         try {
-            $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle, $orderNumber) {
+            $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle, $orderNumber, &$accountCreated) {
                 $customer = $request->user('customer') ?? Customer::firstOrCreate(
                     ['email' => mb_strtolower($data['billing_email'])],
                     ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
@@ -420,6 +442,7 @@ class CheckoutController extends Controller
                     && self::canSetInitialPassword($customer)
                 ) {
                     $customer->forceFill(['password' => $data['account_password']])->save();
+                    $accountCreated = true;
                 }
 
                 $address = [
@@ -619,6 +642,42 @@ class CheckoutController extends Controller
         // if they revisited their own success page a moment later.
         session(['kbb_last_order' => $order->order_number]);
 
+        /*
+         * ------------------------------------------- "save this card for later"
+         *
+         * THE TICK IS A REQUEST. THIS IS THE DECISION, and it is made here
+         * rather than in the card form because the form cannot be the one that
+         * makes it: a hidden checkbox still posts, and the box arrives with
+         * whatever value a browser — or something that is not a browser — chose
+         * to send.
+         *
+         * A card may only be kept for somebody who can come back and be
+         * recognised, which means an account they can sign into. There are
+         * exactly two such people at this point in the request:
+         *
+         *   - a signed-in customer, and
+         *   - a guest who has just created an account HERE, in this request,
+         *     which is what $accountCreated records. It is set only on the
+         *     branch that actually wrote a password, which canSetInitialPassword()
+         *     refuses when one already exists.
+         *
+         * THE CASE THAT MAKES THIS A GUARD RATHER THAN A FORMALITY: the
+         * transaction above attaches an order to an EXISTING customer row
+         * whenever a guest types the email address of one — that is what
+         * firstOrCreate does, and it is right for the order history. So "this
+         * order has a customer" is not the same question as "this shopper has
+         * an account", and answering the first one would let a guest who knows
+         * somebody's email address attach a card to their account, for them to
+         * be offered at a later checkout. $accountCreated cannot be true in
+         * that case, because a customer with a password is exactly the one
+         * canSetInitialPassword() declines.
+         *
+         * Everything else about the payment is unchanged: same order, same
+         * amount, same intent, same confirmation in the browser.
+         */
+        $saveCard = $request->boolean('save_card')
+            && ($request->user('customer') !== null || $accountCreated);
+
         // Hand off to the gateway. The order row exists and is `pending`
         // before this runs, so a hosted session that is started and then
         // abandoned leaves a real order to reconcile rather than nothing at
@@ -628,7 +687,9 @@ class CheckoutController extends Controller
         // Deliberately outside the transaction above: this is a network call
         // to a third party, and holding a database transaction open across one
         // is how a slow provider becomes a locked table.
-        $start = $gateway->start($order);
+        $start = ($saveCard && $gateway instanceof \App\Services\Payments\Gateways\StripeGateway)
+            ? $gateway->startAndSaveCard($order)
+            : $gateway->start($order);
 
         if (! $start->ok()) {
             /*
@@ -1189,6 +1250,87 @@ class CheckoutController extends Controller
         $first = array_shift($parts) ?? '';
 
         return [$first, implode(' ', $parts)];
+    }
+
+    /**
+     * What the checkout puts in the boxes for a shopper who is signed in.
+     *
+     * ── THE RULE, WHICH IS ONE RULE ─────────────────────────────────────────
+     *
+     * AN EMPTY BOX BEATS A WRONG GUESS. Every value here is something the
+     * account actually holds; nothing is derived, inferred or defaulted, and a
+     * field with nothing behind it comes back null so the box renders empty and
+     * the shopper types what they were always going to type. The cost of the
+     * other choice is not a wasted keystroke — it is an order delivered to an
+     * address nobody read, because a box that is already filled in is a box
+     * that gets skipped.
+     *
+     * Two values are taken from the saved address when the account record has
+     * nothing, and only those two: the phone number and the name. Both are the
+     * shopper's OWN details either way — `addresses.phone` and
+     * `addresses.first_name` are what they typed the last time they gave this
+     * shop an address — so this is reading the same fact from the other place
+     * it is written down, not inventing one.
+     *
+     * ── WHAT IS DELIBERATELY NOT HERE ───────────────────────────────────────
+     *
+     * displayName() falls back to the EMAIL ADDRESS when a customer has no
+     * name, which is right for "who is this" on an order screen and quite wrong
+     * for a box labelled "Full name": an imported customer with no name would
+     * have found buyer@example.com sitting in it, and a shopper who did not
+     * look would have had it printed on the parcel. name() below stops at the
+     * name.
+     *
+     * Nothing is filled in for a guest. $customer is null and every value is
+     * null with it — there is nothing this shop knows about them to fill in,
+     * and the browser's own autofill is better at this than we are.
+     *
+     * NOTHING HERE OVERRIDES THE SHOPPER. Every field in the template reads
+     * old() first, so a rejected submission comes back as it was typed rather
+     * than as the account still reads. And a change made after a card is
+     * declined is not this method's business at all: that path never re-renders
+     * the page — it releases the order and places a fresh one from the fields
+     * as they now stand, which is what partials/checkout/stripe-elements is
+     * doing when it posts to /checkout/card/abandon on a `change`.
+     *
+     * @return array<string, string|null>
+     */
+    private function prefill(?Customer $customer, ?\App\Models\Address $address): array
+    {
+        if ($customer === null) {
+            return [];
+        }
+
+        $value = static function (?string ...$candidates): ?string {
+            foreach ($candidates as $candidate) {
+                $candidate = trim((string) $candidate);
+
+                if ($candidate !== '') {
+                    return $candidate;
+                }
+            }
+
+            return null;
+        };
+
+        // The account's own name, never the email standing in for one.
+        $name = $value(
+            $customer->name,
+            trim($customer->first_name . ' ' . $customer->last_name),
+            trim($address?->first_name . ' ' . $address?->last_name),
+        );
+
+        return [
+            'email' => $value($customer->email),
+            'phone' => $value($customer->phone, $address?->phone),
+            'name' => $name,
+            'first_name' => $value($customer->first_name, $address?->first_name),
+            'last_name' => $value($customer->last_name, $address?->last_name),
+            'line1' => $value($address?->line1),
+            'city' => $value($address?->city),
+            'state' => $value($address?->state),
+            'country' => $value($address?->country),
+        ];
     }
 
     /**

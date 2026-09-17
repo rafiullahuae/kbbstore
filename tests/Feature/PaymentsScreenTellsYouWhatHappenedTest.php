@@ -123,3 +123,63 @@ it('carries a typed client id across the repaint but never a secret', function (
         );
     }
 });
+
+/**
+ * A FOURTH THING THE OWNER ASKED FOR: "give facility on backend to turned off
+ * LINK on stripe fields."
+ *
+ * `link_enabled` is the first entry in any gateway's schema that is a SETTING
+ * rather than a credential, and payField() had one shape for everything: a text
+ * box. A switch you turn off by clearing a box and typing nothing into it is not
+ * a switch, and nothing on the screen would have said what to type.
+ *
+ * A SELECT AND NOT A CHECKBOX, which is the part worth pinning. Every control on
+ * this screen is read by paySnapshot(), written by payRestorePending() and
+ * collected by paySave() through `el.value` — and a checkbox's `.value` does not
+ * change with its checked state. A checkbox here would report the same string
+ * whether it was ticked or not, so the unsaved-change dot would never light and
+ * the save would post the same value both ways: a switch that looks like it
+ * works and does nothing.
+ */
+it('draws a gateway setting as a switch, and reads it the way everything else on the screen is read', function () {
+    $js = paymentsConsoleJs();
+
+    /*
+     * INSIDE payField(), and located that way rather than by searching the whole
+     * script. This console draws `bool` fields on a dozen other screens and
+     * `if(f.type==='bool')` appears fourteen times in it; a bare search would go
+     * green on any one of them and this guard would be pinning the Modules
+     * screen's toggle instead of the Payments screen's.
+     */
+    $payField = substr($js, (int) strpos($js, 'function payField(gid,f){'), 1800);
+
+    expect(str_contains($payField, "if(f.type==='bool'){"))
+        ->toBeTrue('payField no longer has a branch for a bool field, so the Link switch is a text box again');
+
+    // The half that makes it work with the rest of the screen unchanged: the
+    // select is the element carrying the two data attributes those three
+    // functions find their controls by. Located as ONE substring of the branch
+    // rather than three separate searches, so a select drawn somewhere else on
+    // this screen cannot satisfy it on the bool branch's behalf.
+    $branch = substr($payField, (int) strpos($payField, "if(f.type==='bool'){"), 600);
+
+    foreach (['<select class="inp"', 'data-payg=', 'data-payf='] as $needle) {
+        expect(str_contains($branch, $needle))->toBeTrue(
+            "the switch is not drawn as a select carrying {$needle} — paySnapshot, payRestorePending and paySave find their controls by those attributes and would not see it"
+        );
+    }
+
+    foreach (['>Off</option>', '>On</option>'] as $option) {
+        expect(str_contains($js, $option))->toBeTrue("the switch has lost its {$option} position");
+    }
+
+    /*
+     * AND NO TICK ON IT. The tick means "the server took this value and stored
+     * it". A switch left Off is stored exactly as surely as one turned On, so a
+     * tick that appeared only in the On position would be read as "this is on" —
+     * which is the one thing the select beside it already says. A tick meaning
+     * two different things on two field types is worse than no tick.
+     */
+    expect(str_contains($js, "var filled = f.type==='bool' ? false"))
+        ->toBeTrue('a bool field is being judged "filled" again, so a switch turned On wears a tick that means something else');
+});

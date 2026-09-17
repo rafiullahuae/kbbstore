@@ -77,36 +77,38 @@ it('sorts the checkout list by that column, not by anything else', function () {
     );
 });
 
-it('tells the shopper where the card details are actually typed', function () {
+it('says nothing above the card fields, and says it on purpose', function () {
     $stripe = app(GatewayRegistry::class)->find('stripe');
 
     $text = (string) $stripe?->description(50000);
 
-    expect($text)->not->toBe('');
-
     /*
-     * THE SENTENCE FOLLOWS THE FEATURE, and it has now followed it twice.
+     * THE SENTENCE FOLLOWED THE FEATURE TWICE AND HAS NOW BEEN WITHDRAWN.
      *
      * It first said "your card details never reach this site", which was true
-     * and answered a question nobody was asking. It was then rewritten to say
-     * the card is entered on Stripe's own page after Place order, which was
-     * the honest description of the hosted flow.
+     * and answered a question nobody was asking. It was rewritten to say the
+     * card is entered on Stripe's own page after Place order, which was the
+     * honest description of the hosted flow. When the fields moved onto this
+     * page it was rewritten a third time, to three sentences pointing at them.
      *
-     * The card fields are on this page now, so that second sentence would send
-     * a shopper looking for a step that does not happen — and would be read by
-     * the owner, on his own checkout, as the change not having been applied.
-     * What it has to say is that the fields are here.
+     * The owner read those three sentences on his own checkout and asked for
+     * them to go — "make the field more nice and clear" — and for one short
+     * line with a padlock in their place. That line is
+     * `store.checkout.card_secure_line`, drawn by partials/checkout/stripe-card
+     * at the top of the fields it describes, where it is keyed for translation.
+     * A sentence returned from here could not be: description() is read by the
+     * admin and the API as well as by the page, and has never gone through
+     * __().
+     *
+     * So this now asserts the ABSENCE, and it is the absence that needs
+     * pinning: the two things it protects are both silent failures. A
+     * description that comes back would print a paragraph above the fields
+     * again; and the empty one has to be survivable by the partial, which is
+     * the next test.
      */
-    expect(str_contains($text, 'below'))->toBeTrue(
-        'the card option does not point at the fields under it, so a shopper is not told where to type'
-    );
+    expect($text)->toBe('');
 
     /*
-     * And it must not promise a page that no longer exists. Asserted as an
-     * absence because the failure is silent: a description left over from the
-     * hosted flow renders perfectly and simply tells the shopper something
-     * untrue, which is the one kind of copy bug no screenshot catches.
-     *
      * Each needle is its own expect(). toContain() is VARIADIC — passing a
      * message as the second argument makes it a second needle, so the
      * assertion silently stops being the one that was written. See
@@ -114,6 +116,39 @@ it('tells the shopper where the card details are actually typed', function () {
      */
     expect($text)->not->toContain('Stripe\'s own');
     expect($text)->not->toContain('after you press Place order');
+
+    // And the one line that replaced all of it is defined and keyed.
+    expect(__('store.checkout.card_secure_line'))->toBe('100% secure & encrypted — Use any card');
+});
+
+it('still draws the card option-s box when the gateway has no description at all', function () {
+    /*
+     * THE HALF THAT WOULD BREAK THE CHECKOUT SILENTLY.
+     *
+     * .payment_box is what kbb-checkout.css reveals for the selected option,
+     * and the card fields are inside it. It used to be rendered only for a
+     * gateway with a description; with description() now returning null, a
+     * partial left as it was draws no box — and the fields go with the words.
+     * The page would look tidy and simply be unable to take a card.
+     */
+    $html = view('partials.checkout.payment-methods', [
+        'gateways' => [[
+            'id' => 'stripe',
+            'title' => 'Credit / Debit Card',
+            'description' => null,
+            'fee_html' => null,
+            'fee_fils' => 0,
+        ]],
+        'codHidden' => null,
+        'selectedMethod' => 'stripe',
+    ])->render();
+
+    expect(str_contains($html, 'payment_box payment_method_stripe'))->toBeTrue('the card option has no box, so the fields cannot be revealed');
+    expect(str_contains($html, 'data-kbb-card-el="number"'))->toBeTrue('the card number box is not inside it');
+
+    // And no empty <p> where the paragraph used to be: a description that is
+    // not there is not rendered as nothing-in-a-paragraph.
+    expect(str_contains($html, '<p></p>'))->toBeFalse();
 });
 
 it('renders that explanation into the page, under the option it belongs to', function () {

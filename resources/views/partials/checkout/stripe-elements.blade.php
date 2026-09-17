@@ -22,17 +22,42 @@
     number inside our origin, which is the whole thing Elements exists to
     avoid.
 
-    #kbb-card-element gets a cross-origin IFRAME. The card number, expiry and
-    CVC live in Stripe's document, not ours. Nothing in this file reads them,
-    nothing can, and no value from them is ever posted to this server — only
-    the client secret of one PaymentIntent goes out, and only back to Stripe.
+    EACH OF THE THREE MOUNT BOXES gets a cross-origin IFRAME. The card number,
+    the expiry and the CVC live in Stripe's document, not ours. Nothing in this
+    file reads them, nothing can, and no value from them is ever posted to this
+    server — only the client secret of one PaymentIntent goes out, and only back
+    to Stripe.
+
+    ── THREE ELEMENTS, NOT ONE ────────────────────────────────────────────────
+
+    `cardNumber`, `cardExpiry` and `cardCvc` rather than the combined `card`,
+    because the owner asked for the number on its own row with expiry and
+    security code beneath it, each labelled — and the combined element lays out
+    its own insides, so that layout is not something CSS can ask it for.
+
+    All three come from ONE elements() instance, which is what lets
+    confirmCardPayment() be handed the number element alone and find the other
+    two itself. They are not three independent forms.
 --}}
 @php
     $stripeGateway = app(\App\Services\Payments\GatewayRegistry::class)->find('stripe');
-    $stripeKey = $stripeGateway instanceof \App\Services\Payments\Gateways\StripeGateway
-        && in_array('stripe', array_column($gateways ?? [], 'id'), true)
-            ? $stripeGateway->publishableKey()
-            : '';
+    $stripeOnOffer = $stripeGateway instanceof \App\Services\Payments\Gateways\StripeGateway
+        && in_array('stripe', array_column($gateways ?? [], 'id'), true);
+    $stripeKey = $stripeOnOffer ? $stripeGateway->publishableKey() : '';
+    /*
+     * Stripe Link — the autofill prompt Stripe draws inside the card number
+     * field, offering a card saved with Stripe itself.
+     *
+     * OFF unless the merchant switches it on, which is the owner's stated
+     * preference and the reason the default lives in the gateway's own config
+     * rather than in this file: a setting hard-coded here is one he would have
+     * to ask a developer to change.
+     */
+    $stripeLink = $stripeOnOffer && $stripeGateway->linkEnabled();
+    // Whether the save-card row may be shown without anybody ticking anything
+    // else. Asked of the guard, not of the markup — see syncSave() below and
+    // the note in partials/checkout/stripe-card.
+    $cardCustomerSignedIn = auth('customer')->check();
 @endphp
 @if ($stripeKey !== '')
 <script src="https://js.stripe.com/v3"></script>
@@ -57,8 +82,20 @@
 
   var stripe = Stripe(@json($stripeKey));
   var elements = stripe.elements();
-  var card = null;
-  var mountedIn = null;
+
+  /* The three fields, each an Element and each mounted into a box this page
+     draws. `number` is the one confirmCardPayment() is handed; Stripe finds the
+     other two through the shared elements() instance above. */
+  var FIELDS = ['number', 'expiry', 'cvc'];
+  var TYPES  = { number: 'cardNumber', expiry: 'cardExpiry', cvc: 'cardCvc' };
+  var parts = { number: null, expiry: null, cvc: null };
+  var mountedIn = { number: null, expiry: null, cvc: null };
+  var ready = false;
+
+  /* Whether the shopper asked for the card to be kept, remembered here as well
+     as in the box — #payment is replaced wholesale by the fragment refresh, and
+     the box goes with it. See syncSave(). */
+  var saveCard = false;
 
   /* The order this browser has open at Stripe, once place() has created one.
      Kept so a second failure reuses it rather than placing another order, and
@@ -68,50 +105,111 @@
 
   /* ------------------------------------------------------------------ mount */
 
+  var STYLE = {
+    base: {
+      fontSize: '14px',
+      fontFamily: 'inherit',
+      color: '#1F2A24',
+      '::placeholder': { color: '#9AA8A0' }
+    },
+    invalid: { color: '#C8325C', iconColor: '#C8325C' }
+  };
+
+  /* STRIPE LINK, off unless Store -> Payments -> Stripe says otherwise.
+     The flag is only meaningful on the number element, which is where Stripe
+     draws the prompt. */
+  var LINK = @json($stripeLink);
+
+  function optionsFor(field) {
+    var options = { style: STYLE };
+
+    if (field === 'number') {
+      options.showIcon = true;
+      options.disableLink = !LINK;
+    }
+
+    return options;
+  }
+
   /*
-   * The element is created ONCE and re-mounted, never re-created.
+   * EACH ELEMENT IS CREATED ONCE AND RE-MOUNTED, NEVER RE-CREATED.
    *
    * #payment is replaced wholesale by fragments() whenever the bag or the
    * coupon changes (checkout.js: `payment.innerHTML = data.paymentHtml`), which
-   * takes the mount box and the iframe inside it with it. A fresh
-   * elements.create('card') each time would leak an Element per quantity tap
-   * and lose whatever the shopper had already typed; re-mounting the same one
-   * into the new box keeps its state, which is what Stripe's mount() is for.
+   * takes all three mount boxes and the iframes inside them with it. A fresh
+   * elements.create() each time would leak three Elements per quantity tap and
+   * lose whatever the shopper had already typed; re-mounting the same three
+   * into the new boxes keeps their state, which is what Stripe's mount() is
+   * for. The walk measures it: three create() calls in total, before and after
+   * a quantity change.
    */
   function sync() {
-    var box = document.querySelector('[data-kbb-card-el]');
+    FIELDS.forEach(function (field) {
+      var box = document.querySelector('[data-kbb-card-el="' + field + '"]');
 
-    if (!box) { mountedIn = null; return; }
-    if (box === mountedIn) return;
+      if (!box) { mountedIn[field] = null; return; }
+      if (box === mountedIn[field]) return;
 
-    if (!card) {
-      card = elements.create('card', {
-        hidePostalCode: true,
-        style: {
-          base: {
-            fontSize: '14px',
-            fontFamily: 'inherit',
-            color: '#1F2A24',
-            '::placeholder': { color: '#9AA8A0' }
-          },
-          invalid: { color: '#C8325C', iconColor: '#C8325C' }
-        }
-      });
+      if (!parts[field]) {
+        parts[field] = elements.create(TYPES[field], optionsFor(field));
 
-      /* Stripe's own validation, as the shopper types: a card number one digit
-         short says so before Place order is ever pressed. The same box is used
-         for the decline afterwards, so there is one place on this page that
-         says what is wrong with the card. */
-      card.on('change', function (event) {
-        box.classList.toggle('is-invalid', !!event.error);
-        if (event.error) { showError(event.error.message); } else { clearError(); }
-      });
-      card.on('focus', function () { box.classList.add('is-focused'); });
-      card.on('blur', function () { box.classList.remove('is-focused'); });
-    }
+        /* Stripe's own validation, as the shopper types: a card number one
+           digit short says so before Place order is ever pressed. All three
+           report into the SAME message box, so there is one place on this page
+           that says what is wrong with the card — and `field` is captured per
+           iteration, so each one paints its own border. */
+        parts[field].on('change', function (event) {
+          var current = mountedIn[field];
+          if (current) current.classList.toggle('is-invalid', !!event.error);
+          if (event.error) { showError(event.error.message); } else { clearError(); }
+        });
+        parts[field].on('focus', function () {
+          var current = mountedIn[field];
+          if (current) current.classList.add('is-focused');
+        });
+        parts[field].on('blur', function () {
+          var current = mountedIn[field];
+          if (current) current.classList.remove('is-focused');
+        });
+      }
 
-    card.mount(box);
-    mountedIn = box;
+      parts[field].mount(box);
+      mountedIn[field] = box;
+    });
+
+    ready = !!parts.number && !!mountedIn.number;
+
+    syncSave();
+  }
+
+  /*
+   * "Save this card for future purchases", and who may see it.
+   *
+   * The row is in the markup for everybody, hidden for a shopper who is not
+   * signed in, because a card saved for somebody with no account can never be
+   * offered back to them — they cannot be recognised on their next visit. The
+   * one thing that changes that mid-checkout is "create an account", two steps
+   * up this same form, so the row follows that tick.
+   *
+   * Un-ticking it CLEARS the box as well as hiding it. A hidden checkbox still
+   * posts, and a `save_card=1` from a control nobody can see is precisely the
+   * state this row exists to avoid. The server refuses it too — neither half
+   * is trusted to be the only one.
+   */
+  function syncSave() {
+    var row = document.querySelector('[data-kbb-card-save-row]');
+    var box = document.querySelector('[data-kbb-card-save]');
+
+    if (!row || !box) return;
+
+    var account = document.getElementById('create_account');
+    var allowed = @json($cardCustomerSignedIn ?? false) || (account ? account.checked : false);
+
+    row.hidden = !allowed;
+
+    if (!allowed) { saveCard = false; }
+
+    box.checked = allowed && saveCard;
   }
 
   sync();
@@ -206,7 +304,7 @@
     }
     if (!FORM.reportValidity()) return;
 
-    if (!card) { showError(TEXT.notReady); return; }
+    if (!ready) { showError(TEXT.notReady); return; }
 
     clearError();
     lock(true);
@@ -250,7 +348,7 @@
        */
       var result = await stripe.confirmCardPayment(handle.client_secret, {
         payment_method: {
-          card: card,
+          card: parts.number,
           billing_details: billingDetails()
         },
         return_url: handle.return_url
@@ -411,6 +509,27 @@
     event.stopPropagation();
     pay();
   }, true);
+
+  /*
+   * The save-card tick, and the account tick that governs whether it may be
+   * shown at all.
+   *
+   * SEPARATE FROM THE RELEASE LISTENER BELOW, and before it, because that one
+   * returns early whenever there is no open order — which is the state this
+   * page is in for the whole of a first attempt. Both run: ticking "create an
+   * account" after a decline reveals this row AND releases the order, which is
+   * right, because the order was placed for a shopper who was not making one.
+   */
+  document.addEventListener('change', function (event) {
+    if (!event.target.closest) return;
+
+    if (event.target.closest('[data-kbb-card-save]')) {
+      saveCard = !!event.target.checked;
+      return;
+    }
+
+    if (event.target.id === 'create_account') syncSave();
+  });
 
   /*
    * ANYTHING THAT CHANGES AFTER A FAILED ATTEMPT RELEASES THE ORDER.
