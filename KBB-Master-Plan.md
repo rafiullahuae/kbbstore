@@ -916,13 +916,85 @@ see**, and to the shop's own identity on the documents it sends out.
 - [x] **Demo rows stop moving the figures.** `App\Support\DemoSeed` settles the
       rule: **figures exclude demo content; lists show it and mark it**
 
+### Five lanes at once  *(2.60.193)*
+
+The largest single package of the project: five lanes merged together, 2,803
+tests to **2,936**, every file byte-compared against the repo before it shipped.
+
+- [x] ▲ **`/app` was a second storefront.** A public URL answering 200 with the
+      shop's own logo, nav and payment badges, a hard-coded catalogue of 24
+      invented products at invented prices, and **two discount codes the shop
+      has never had** — `GLOW30` and `KBB10` — offered in the hero, on the
+      product view, and in a coupon box that accepted them and showed the money
+      coming off. 2.60.190 had shipped to stop the *front page* advertising
+      `GLOW30`; nobody had checked this page. Now admin-only, gated in the
+      controller rather than the route, because the compiled route cache is not
+      cleared until a package says so and a controller check is live the moment
+      the file lands. 404 and not 403: a 403 confirms the page is there
+- [x] **Five links in the chrome went nowhere.** Four in the footer of every
+      page — Shipping & Delivery, Returns Information, FAQs, Contact us — and
+      About on the home page. One mechanism: `routes/web.php` hard-codes seven
+      content slugs at `PageController::show()`, which `firstOrFail()`s on a
+      `pages` row, and only two of the seven had ever been seeded. Now editable
+      rows with deliberately claim-free placeholder copy. A walker test follows
+      every internal href the rendered footer, header and mobile chrome emit,
+      and a second, generic form reads the router: any route with a fixed
+      `defaults('slug')` and no published row fails the first time the suite runs
+- [x] **Every trust claim became the owner's.** "100% original", "24/7 support",
+      "100% authentic", "Korean brands, all sourced direct." were literals in
+      Blade files — which, on a host with no shell, meant the owner could not
+      change or withdraw one of them without a signed package. `TrustClaims`
+      makes each a setting defaulting to the shipped wording, and a **Claims
+      tab** on Business Details edits them. An empty box removes the claim and
+      its element. Counts are deliberately excluded: a brand count an owner can
+      type is a brand count that can drift
+- [x] ▲ **The Claims tab nearly shipped the defect it was built to fix.**
+      `Setting::map()` is the settings *table*; a claim nobody has edited has no
+      row, while the storefront prints its default happily. Sent raw, the tab
+      would have opened with seven empty boxes on a shop whose pages all say
+      "100% original" — and since an empty box on that screen *means* remove the
+      claim, the owner's first Save would have stripped every claim off his own
+      site without him typing a character. Caught before shipping, closed by
+      resolving on the read side, and pinned by a test that fails if the resolve
+      is removed
+- [x] **Google was told about every visit twice.** Two boxes for one Analytics
+      ID — one on SEO & Meta, one on Marketing Pixels — and the storefront read
+      both, so a shop with both filled reported every page load as two. Traffic
+      looks twice as large; everything measured *per visit* looks half as good.
+      `App\Services\Analytics` is now the only emitter, claiming a flag on the
+      **Request's own attribute bag** — not a static, not a singleton, with no
+      reset method, so a second call in the same request is `''` by construction
+      and a new include is safe by default. Found alongside it: `add_to_cart` had
+      **never** been sent to GA4 (it tested a key no screen writes), and the blog,
+      quiz, reviews and preview pages reported to no pixel at all
+- [x] ▲ **Demo content was two fabrication mechanisms, and only one was behind
+      the switch.** The fixtures claimed **12,481 reviews at 4.8 stars** over four
+      named people who do not exist, each labelled a verified buyer, and 671
+      products and 93 brands regardless of the real figures. Separately — and
+      *whatever the switch was set to* — seeded rows in `reviews` were being
+      counted into `products.rating`, into the score beside the pay button, and
+      into the `AggregateRating` published to Google. Two provenance mechanisms,
+      each blind to the other; `DemoReviews` asks both. The migration is
+      load-bearing: `products.rating` is a **stored column**, so a shop that had
+      the switch on keeps its invented stars for ever unless they are recomputed
+- [x] **One tax answer per destination, whichever door the order came through.**
+      `customer.country` is nullable on the public `/api/checkout/session`, and
+      every other figure resolved an absent country to AE while the tax quote
+      alone got the raw `null` — which answers the *global default* rule, not
+      AE's row. Same basket, same destination: AED 231.00 through the storefront,
+      AED 220.00 through the API, on an order stamped `country: AE`. Verified by
+      reverting the fix and watching exactly one test fail
+- [x] **A phone downloads a phone-sized photograph**, and the accent colour of
+      the whole storefront became a box on Business Details — a setting the shop
+      had read since the baseline with nothing anywhere able to write it, while
+      two admin screens told the owner no colour could be changed
+
 ### In flight after this phase
 
-Five lanes, dispatched together: responsive gallery images and two settings the
-shop reads that nothing can write; Demo Content's invented review totals;
-three independent Google Analytics loaders in one tree; the tax engine traced
-end to end from country detection to printed invoice; and `/app`, a public URL
-still serving an invented catalogue at invented prices.
+Five more lanes: the navigation's WooCommerce-era category URLs; three items
+handed over precisely between lanes; whether a filed document can change after
+the fact; what this shop tells Google and a shared link; and the suite's own
+determinism.
 
 ## Phase 9 — Content pages
 
