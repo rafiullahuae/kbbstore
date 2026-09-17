@@ -282,10 +282,35 @@ class CheckoutController extends Controller
              * touches stock, the lines, or the gateway hand-off.
              */
             $taxableBase = $subtotal + $delivery;
-            $tax = app(\App\Support\VatDisplay::class)->quote(
-                $taxableBase,
-                $data['customer']['country'] ?? null,
-            );
+
+            /*
+             * $country, NOT `$data['customer']['country'] ?? null`, and this is
+             * the whole of the difference.
+             *
+             * `customer.country` is `nullable` on this endpoint, so an absent
+             * country is a reachable state on a PUBLIC, unauthenticated route
+             * rather than a theoretical one. Every other figure on this order
+             * already resolves that absence to 'AE' — $country above defaults
+             * to it, ShippingService prices the delivery against it, and the
+             * billing/shipping snapshot records it — but the tax quote was
+             * handed the raw null, and VatDisplay::ruleFor(null) answers the
+             * GLOBAL default rule rather than the rule for AE.
+             *
+             * So one order said `country: AE`, was charged AE delivery, and was
+             * taxed at whatever `vat_rate`/`vat_basis` happen to be — while the
+             * storefront checkout, for the identical destination, used AE's own
+             * row. With AE inclusive by default and AE's row set to exclusive,
+             * the same basket came to AED 220.00 through this door and AED
+             * 231.00 through the other one, and omitting a nullable field was
+             * the cheaper of the two.
+             *
+             * This is the same shape as the defect recorded thirty lines above
+             * — `?? null` reading fine and never once running on real input —
+             * one call along, and CLAUDE.md's own note about a broken filter
+             * hiding a second bug. The destination is resolved ONCE, at the top
+             * of this method, and every reader below uses that one answer.
+             */
+            $tax = app(\App\Support\VatDisplay::class)->quote($taxableBase, $country);
 
             $total = $tax['total'] + $codFee;
 
@@ -361,7 +386,14 @@ class CheckoutController extends Controller
                 'phone'   => $data['customer']['phone'] ?? null,
                 'state'   => $data['customer']['emirate'] ?? null,
                 'line1'   => $data['customer']['address'] ?? null,
-                'country' => $data['customer']['country'] ?? 'AE',
+                // The SAME resolved destination the delivery was priced against
+                // and the tax was quoted for, rather than a second reading of
+                // the raw field. Normalising only — $country is this value
+                // trimmed and upper-cased, with the identical 'AE' fallback —
+                // so the country recorded on the order can never be a different
+                // country, or a different spelling of one, from the country the
+                // order was charged for.
+                'country' => $country,
             ];
 
             $order = Order::create([
