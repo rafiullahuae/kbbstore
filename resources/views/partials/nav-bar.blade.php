@@ -20,6 +20,36 @@
     it's an expand/collapse list, not a column layout — so nothing here
     touches it.
 --}}
+@php
+    /*
+     * Store & content -> "Mega Menu" (module key mega_menu).
+     *
+     * WHAT THIS GATE HIDES, AND WHY IT IS BOTH LINES BELOW AND NOT ONE.
+     *
+     * The switch was marked `live` in ModuleRegistry while the ONLY code
+     * anywhere that read its key was MegaMenuApiController's `module_on` — a
+     * flag the admin screen prints about itself. This bar rendered its panels
+     * whatever the switch said, which is the same defect `seo_engine` and
+     * `product_sorting` both carried and both had fixed.
+     *
+     * Off hides the caret AND the panel. Hiding only the panel leaves a "▾"
+     * pointing at nothing; hiding only the caret leaves a panel that still
+     * drops on hover. The top-level links are untouched either way, so turning
+     * the module off costs a shopper the dropdowns and nothing else — the
+     * registry's own hover card ("the panels that drop from the category bar")
+     * is the description this implements.
+     *
+     * Resolved ONCE here rather than per item: this loop runs for every row in
+     * the primary menu, and moduleEnabled() is a container resolve plus a cache
+     * read each time.
+     *
+     * Default `true`, matching the registry row, and 2026_10_21_000000 aligns
+     * the stored toggle for installs seeded `false` before anything read it.
+     * Without that pair, making the gate real would strip a live store's header
+     * dropdowns the moment the package applied.
+     */
+    $kbbMega = app(\App\Services\SettingsService::class)->moduleEnabled('mega_menu', true);
+@endphp
 <div class="mbar"><div class="wrap">
     @foreach ($kbbNav as $item)
         <div class="navitem">
@@ -30,12 +60,12 @@
                 @if (! empty($item['badge']))
                     <span class="npill" style="background:#15a85a">{{ $item['badge'] }}</span>
                 @endif
-                @if (! empty($item['children']))
+                @if ($kbbMega && ! empty($item['children']))
                     <span class="ind">▾</span>
                 @endif
             </a>
 
-            @if (! empty($item['children']))
+            @if ($kbbMega && ! empty($item['children']))
                 @php
                     $childCount = count($item['children']);
                     // Manual setting wins outright; otherwise roughly 10 rows

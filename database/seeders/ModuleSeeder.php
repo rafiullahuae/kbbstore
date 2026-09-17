@@ -37,7 +37,16 @@ class ModuleSeeder extends Seeder
             ['module' => 'back_to_cart', 'enabled' => true],
             // store
             ['module' => 'banners', 'enabled' => false],
-            ['module' => 'mega_menu', 'enabled' => false],
+            // mega_menu — on, unlike the plugin, and for the same shape of
+            // reason as seo_engine below. Until 2.60.199 nothing on the
+            // storefront read this key: the header dropdowns and the phone
+            // menu's expandable sections rendered whatever the switch said.
+            // Now that the gate is real, `false` here would mean a fresh
+            // install came up with no dropdown navigation at all. The
+            // reasoning is recorded in full on the ModuleRegistry row, which
+            // this matches; 2026_11_10_000000 carries the same alignment for
+            // stores that already have a row.
+            ['module' => 'mega_menu', 'enabled' => true],
             ['module' => 'notification_bar', 'enabled' => false],
             ['module' => 'product_labels', 'enabled' => false],
             // payship

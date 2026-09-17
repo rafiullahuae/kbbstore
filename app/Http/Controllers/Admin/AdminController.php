@@ -176,6 +176,72 @@ class AdminController extends Controller
     }
 
     /**
+     * What the "Title template" box on SEO & Meta actually governs — LANE EM.
+     *
+     * Same arrangement, and the same reason, as revenueBasis() above: the
+     * screen's explanation of a control lives next to the behaviour it
+     * describes, so the two cannot drift. A note written into the admin shell
+     * would be wrong the first time either changed, and this particular control
+     * has already been reported twice as "does nothing" by people reading it
+     * literally.
+     *
+     * ── WHAT WAS MEASURED, NOT ASSUMED ──────────────────────────────────────
+     *
+     * The received report was "seo_title_template cannot change a product
+     * title". That is NOT what the code does, and the difference matters
+     * because it points at a different fix. Rendered against real pages:
+     *
+     *   TEMPLATE: "Buy {title} today"
+     *     product   -> "Buy Anua Heartleaf Quercetinol Toner · K-Beauty Bliss today"
+     *     shop      -> "Buy Shop all · K-Beauty Bliss today"
+     *     brands    -> "Buy All brands today"
+     *     home      -> unchanged
+     *
+     *   TEMPLATE: "{sitename} {sep} {title}"
+     *     product   -> "Anua Heartleaf Quercetinol Toner · K-Beauty Bliss"  (unmoved)
+     *     brands    -> "K-Beauty Bliss | All brands"                        (moved)
+     *
+     * So the template DOES drive product titles. What it cannot do on a product
+     * page is REORDER the site name, and the reason is not the template engine:
+     * store/product.blade.php ends its own title with the site name
+     * (ProductTitle::head()), as do shop, collection, cart, checkout, wishlist,
+     * orders, tracking and CMS pages. App\Support\Seo::tokens() then blanks
+     * {sitename} so the brand is not printed twice, and TitleTemplate::tidy()
+     * drops the separator that token was attached to. On the pages that do NOT
+     * bake the site name into their own title — the brand directory, the
+     * account area, the newsletter pages — both tokens work normally.
+     *
+     * The home page ignores the template outright and uses `seo_home_title`.
+     *
+     * ── WHY THIS IS A NOTE AND NOT A CODE CHANGE ────────────────────────────
+     *
+     * Making {sitename} live on product pages means taking the suffix out of
+     * ProductTitle::head(), which moves every product's browser tab and every
+     * product's Google result on a shop that has not asked for it. That is an
+     * owner's decision, not a lane's, and ProductTitle::head() says in as many
+     * words that it moved that string without changing what any page prints.
+     * So the behaviour is left exactly as it is and the screen is made to state
+     * it. tests/Feature/TitleTemplateReachTest.php pins every line of this.
+     *
+     * @return array{label:string,note:string,tokens_note:string}
+     */
+    public static function titleTemplateBasis(): array
+    {
+        return [
+            'label' => 'Title template',
+            'note' => 'Sets the browser tab and the Google result title for every page except the'
+                . ' home page, which uses the Home title box below instead. Text you add around'
+                . ' {title} appears on all of them.',
+            'tokens_note' => '{sitename} and the separator only change pages that do not already end'
+                . ' in your site name. Product, shop, category, cart, checkout, wishlist, order and'
+                . ' content pages build their own title ending in the site name, so the engine drops'
+                . ' {sitename} there rather than print your shop name twice — moving it in this box'
+                . ' will not move it on those pages. The brand directory, the account pages and the'
+                . ' newsletter pages have no such suffix, and there both tokens work as written.',
+        ];
+    }
+
+    /**
      * What a per-product revenue figure is made of — LANE DU.
      *
      * `SUM(order_items.total)` is the line value of what was sold and nothing
@@ -1568,7 +1634,20 @@ class AdminController extends Controller
             $map[$claimKey] = \App\Support\TrustClaims::get($claimKey) ?? '';
         }
 
-        return response()->json(['settings' => $map]);
+        /*
+         * Sent BESIDE `settings`, not inside it, because it is not a setting:
+         * it is the screen's own explanation of one, resolved from the code
+         * that implements it. Same shape as the `revenue_basis` the dashboard
+         * and the orders screen already take their tile captions from, and for
+         * the same reason — see titleTemplateBasis().
+         *
+         * Additive: the shell reads `d.settings` and is unaffected by a second
+         * top-level key until it chooses to render this one.
+         */
+        return response()->json([
+            'settings' => $map,
+            'title_template_basis' => self::titleTemplateBasis(),
+        ]);
     }
 
     /**

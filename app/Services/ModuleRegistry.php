@@ -172,7 +172,25 @@ class ModuleRegistry
         'cart_coupon_field' => ['cart', 'Cart-page discount code box', 'The “Discount code” input and Apply button in the cart page order summary. Off by default; the checkout page has its own box and is not affected.', false, 'No settings screen', '', 'cartpage', 'mid', 'The discount code box in the order summary on the cart page.', 'live'],
         // ── Store & content ──
         'banners' => ['store', 'Banners', 'Drives the homepage hero slider — headline, eyebrow, buttons, floating product pods and the offer badge — using the theme’s own .heroslider markup. Supports scheduling. Off by default.', false, 'Appearance → Homepage', '', 'home', 'top', 'The homepage hero slider — headline, buttons and product pods.', 'elsewhere'],
-        'mega_menu' => ['store', 'Mega Menu', 'Drives the header mega panels from the admin using the theme\'s own design — category columns, brands and editor\'s picks — plus a mobile slide-in overlay. Off by default.', false, 'Store → Mega Menu', 'megamenu', 'header', 'nav', 'The panels that drop from the category bar, and the phone overlay.', 'live'],
+        /*
+         * ON by default, and the reasoning is `brands`' and `seo_engine`'s
+         * rather than this registry's usual "a fresh install shows nothing the
+         * owner did not ask for".
+         *
+         * Until 2.60.199 nothing on the storefront read this key: the bar
+         * rendered its panels and the phone menu its expandable sections
+         * whatever the switch said, and the only reader in the codebase was
+         * the admin screen's own `module_on`. The default has to be measured
+         * against what the store DOES without the switch, not against a blank
+         * slate — and what it does is show the dropdowns. Shipping the gate
+         * with `false` would take the header dropdowns off a live store on
+         * apply, which is not a default, it is an outage.
+         *
+         * 2026_10_21_000000 aligns the stored toggle for the installs that
+         * were seeded `false` while nothing consulted it. A genuinely fresh
+         * install with no row gets this value.
+         */
+        'mega_menu' => ['store', 'Mega Menu', 'Drives the header mega panels from the admin using the theme\'s own design — category columns, brands and editor\'s picks — plus the expandable sections in the phone menu. On by default: the panels have always rendered, so turning this off is what changes the storefront.', true, 'Store → Mega Menu', 'megamenu', 'header', 'nav', 'The panels that drop from the category bar, and the expandable sections in the phone menu.', 'live'],
         'notification_bar' => ['store', 'Notification Bar', 'A dismissible announcement bar at the top of every page. Replaces the Cosmetics plugin. Off by default — turn on and set your message.', false, 'Its own screen', '', 'header', 'top', 'A dismissible strip above the header on every page.', 'live'],
         'product_labels' => ['store', 'Product Labels', 'Configurable Sale / New / Sold-out / Bestseller badges on product cards. Off by default — the theme’s built-in badges show until you turn it on.', false, 'Catalogue → Product Labels', 'labels', 'grid', 'card', 'Sale, New, Sold-out and Bestseller badges on product cards.', 'live'],
         /*

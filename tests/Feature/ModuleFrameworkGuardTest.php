@@ -189,37 +189,25 @@ it('has a real, tokenised storefront reader for every module the registry calls 
 /**
  * The `live` rows whose only reader is an admin screen's own status flag.
  *
- * FOUND BY THE TEST BELOW AND REPORTED RATHER THAN FIXED (Lane EH).
- *
- * `mega_menu` is marked `live`, and the only code anywhere that reads its key
- * is `'module_on' => ...moduleEnabled('mega_menu', false)` in
- * MegaMenuApiController — a flag the admin screen prints about itself. The
- * storefront renders the mega panels and the phone overlay unconditionally, so
- * the switch on Store → Modules does nothing to any page a shopper sees. That
- * is the same defect `seo_engine` and `product_sorting` carried.
- *
- * It is NOT fixed here because fixing it needs two decisions that are not a
- * lane's to make, both recorded in the hand-back:
- *
- *   - What "off" means. No dropdowns at all, or a fall back to simple
- *     dropdowns? The registry's hover card says the panels and the overlay go;
- *     the module's description reads as though it only drives the mega layout.
- *   - The default. It is `false` today and the panels render regardless, so
- *     making the gate real without flipping the default to true (plus an
- *     alignment migration, as `brands` and `seo_engine` both needed) would
- *     strip the header navigation of a live store on apply.
- *
- * and the files involved — partials/nav-bar.blade.php and the mobile overlay —
- * are the storefront chrome lane's, not this one's.
+ * EMPTY, AND THAT IS THE POINT. It held `mega_menu` — marked `live` while the
+ * only code anywhere that read its key was `'module_on' => ...` in
+ * MegaMenuApiController, a flag the admin screen printed about itself, with the
+ * storefront rendering the panels regardless. Lane EM fixed it in 2.60.199:
+ * partials/nav-bar.blade.php now gates both the caret and the `.drop` panel on
+ * the switch, and partials/mobile-menu-item.blade.php gates the phone menu's
+ * expandable sections, with 2026_11_10_000000 aligning the stored toggle so the
+ * newly-real gate does not strip a live store's header on apply.
  *
  * SUBSET, NOT EQUALITY: a row leaving this list is a fix and must not fail;
- * a row JOINING it is a new instance of the defect and must.
+ * a row JOINING it is a new instance of the defect and must. So this returning
+ * `[]` is not a weaker guard than it was — it is the same guard with nothing
+ * left excused.
  *
  * @return list<string>
  */
 function ehAdminOnlyReaders(): array
 {
-    return ['mega_menu'];
+    return [];
 }
 
 it('does not rest a live row on an admin screen’s own status flag', function () {
