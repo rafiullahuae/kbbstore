@@ -171,8 +171,19 @@ class ProductController extends Controller
                     'breadcrumb' => $this->breadcrumbTrail($product),
                     'noindex' => !empty($override['noindex']),
                     'product' => [
-                        'name' => $product->name,
-                        'brand' => $product->brand?->name,
+                        /*
+                         * THE STRUCTURED DATA IS TRANSLATED TOO, and this is
+                         * not cosmetic. hreflang tells Google that the Arabic
+                         * URL is a page in its own right; a rich result whose
+                         * name is in English on an Arabic page advertises the
+                         * page as untranslated in exactly the place a shopper
+                         * decides whether to click.
+                         *
+                         * `sku` is deliberately NOT translated and cannot be —
+                         * it is not on the allowlist. See HasTranslations.
+                         */
+                        'name' => $product->t('name'),
+                        'brand' => $product->brand?->t('name'),
                         'sku' => $product->sku,
                         // The exact price as a decimal string, straight off the
                         // integer fils. Money::toAed() returns a float and the
@@ -234,18 +245,22 @@ class ProductController extends Controller
     private function breadcrumbTrail(Product $product): array
     {
         $base = rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/');
+        // The same two keys the visible breadcrumb prints, so the crumb a
+        // shopper reads and the crumb Google reads say the same words in the
+        // same language. Their English defaults are 'Home' and 'Shop', which is
+        // what these literals were.
         $trail = [
-            ['name' => 'Home', 'url' => $base . '/'],
-            ['name' => 'Shop', 'url' => $base . '/shop/'],
+            ['name' => __('store.breadcrumb.home'), 'url' => $base . '/'],
+            ['name' => __('store.breadcrumb.shop'), 'url' => $base . '/shop/'],
         ];
 
         $category = $product->categories->first();
 
         if ($category) {
-            $trail[] = ['name' => $category->name, 'url' => $base . $category->url()];
+            $trail[] = ['name' => $category->t('name'), 'url' => $base . $category->url()];
         }
 
-        $trail[] = ['name' => $product->name, 'url' => $base . $product->url()];
+        $trail[] = ['name' => $product->t('name'), 'url' => $base . $product->url()];
 
         return $trail;
     }
@@ -486,10 +501,31 @@ class ProductController extends Controller
      */
     private function tabs($product): array
     {
+        /*
+         * TWO DIFFERENT KINDS OF TEXT, READ TWO DIFFERENT WAYS.
+         *
+         * The HEADINGS are interface: the same three words on every product
+         * page, so they are keys. They were English literals here, which is why
+         * the interface conversion never saw them — a heading built in a
+         * controller is still a heading.
+         *
+         * The BODIES are catalogue: this product's own prose, so they are t()
+         * against its row. description, ingredients and how_to_use are all in
+         * TranslationStore::LONG_FIELDS, so they are fetched by this page in
+         * ONE query rather than carried in the map on every page of the site.
+         * One query for all three and not three: longFor() records every id it
+         * was asked about, so the first of these three reads pays for the
+         * other two.
+         *
+         * Blank still means untranslated: t() falls back to the English column,
+         * so a product with an Arabic description and no Arabic ingredients
+         * shows both tabs with one of them in English rather than showing an
+         * empty tab or dropping it.
+         */
         $tabs = [
-            ['title' => 'Description', 'body' => (string) ($product->description ?: $product->short_description)],
-            ['title' => 'Ingredients', 'body' => (string) ($product->ingredients ?? '')],
-            ['title' => 'How to use', 'body' => (string) ($product->how_to_use ?? '')],
+            ['title' => __('store.product.tab_description'), 'body' => (string) ($product->t('description') ?: $product->t('short_description'))],
+            ['title' => __('store.product.tab_ingredients'), 'body' => (string) ($product->t('ingredients') ?? '')],
+            ['title' => __('store.product.tab_how_to_use'), 'body' => (string) ($product->t('how_to_use') ?? '')],
         ];
 
         foreach ((array) $this->settings->get('product_tabs', []) as $custom) {

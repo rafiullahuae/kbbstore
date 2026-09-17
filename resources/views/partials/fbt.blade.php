@@ -17,19 +17,21 @@
     <div class="kbb-fbt-items">
         @foreach ($bundle as $i => $p)
             @php
-                $brand = $p->brand?->name ?? '';
+                $brand = $p->brand?->t('name') ?? '';
+                $name  = $p->t('name');
+                $seed  = ($p->brand?->name ?? '') . $p->name;
                 $price = $p->effectivePrice();
             @endphp
             <label class="kbb-fbt-item{{ 0 === $i ? ' is-main' : '' }}">
                 <input type="checkbox" class="kbb-fbt-cb" value="{{ $p->id }}" data-price="{{ $price / 100 }}" checked>
                 @if ($p->image)
                     @php $fbtSrcset = \App\Support\ImageVariants::srcsetFor($p->image); @endphp
-                    <img src="{{ $p->image }}" alt="{{ $p->name }}" width="90" height="90" loading="lazy"
+                    <img src="{{ $p->image }}" alt="{{ $name }}" width="90" height="90" loading="lazy"
                          @if ($fbtSrcset !== '') srcset="{{ $fbtSrcset }}" sizes="{{ \App\Support\ImageVariants::fbtSizesAttribute() }}" @endif>
                 @else
-                    <span class="ph-fallback" style="background:{{ \App\Support\Gradient::for($brand . $p->name) }};width:90px;height:90px;display:grid;place-items:center;border-radius:10px">{{ \App\Support\Gradient::initials($brand ?: $p->name) }}</span>
+                    <span class="ph-fallback" style="background:{{ \App\Support\Gradient::for($seed) }};width:90px;height:90px;display:grid;place-items:center;border-radius:10px">{{ \App\Support\Gradient::initials($brand ?: $name) }}</span>
                 @endif
-                <span class="kbb-fbt-name">{{ $p->name }}</span>
+                <span class="kbb-fbt-name">{{ $name }}</span>
                 <span class="kbb-fbt-price">{!! \App\Support\Money::format($price) !!}</span>
             </label>
             @if ($i < $bundle->count() - 1)<span class="kbb-fbt-plus" aria-hidden="true">+</span>@endif

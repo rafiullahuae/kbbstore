@@ -118,7 +118,22 @@ final class ProductSeo
             return $override['desc'];
         }
 
-        return self::hasText($product->short_description) ? $product->short_description : null;
+        /*
+         * THE SAME BLURB THE PAGE PRINTS, IN THE SAME LANGUAGE.
+         *
+         * An Arabic search result whose <meta description> is in English is
+         * worse than no Arabic page: it advertises itself as untranslated in
+         * exactly the place a shopper decides whether to click. t() is the
+         * English column on an English page — including in the admin, which is
+         * never served under /ar — so the snippet preview is unmoved.
+         *
+         * The EMPTINESS test still asks the English column. Whether this
+         * product has a blurb at all is a fact about the product, not about the
+         * language it is being read in, and t() falls back to that same English
+         * anyway — so a product with English words and no Arabic yet publishes
+         * the English description rather than no tag.
+         */
+        return self::hasText($product->short_description) ? $product->t('short_description') : null;
     }
 
     /**
@@ -155,7 +170,7 @@ final class ProductSeo
         return \App\Support\Seo::describe([
             'type' => 'product',
             'title' => empty($override['title'])
-                ? ProductTitle::head($product->brand?->name, $product->name)
+                ? ProductTitle::head($product->brand?->t('name'), $product->t('name'))
                 : (string) $override['title'],
             'description' => self::rawDescription($product, $ignoreOverride),
         ]);
@@ -194,7 +209,7 @@ final class ProductSeo
             'type' => 'product',
             'title' => $custom !== ''
                 ? $custom
-                : ProductTitle::head($product->brand?->name, $product->name),
+                : ProductTitle::head($product->brand?->t('name'), $product->t('name')),
             // Set only when there IS a custom title, exactly as
             // Store\ProductController::show() sets it.
             'title_is_final' => $custom !== '',

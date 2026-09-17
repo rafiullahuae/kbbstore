@@ -15,8 +15,21 @@
     // Catalogue → Quick view. Registered in ModuleRegistry, default on.
     $kbbQuickView = app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', true);
 
-    $brand  = $product->brand?->name ?? '';
-    $name   = $product->name;
+    // t(), not the column. On English these two ARE the column — t() returns
+    // early for the default locale — so an English card is the same bytes it
+    // was. On /ar they are the Arabic the owner typed, and blank still means
+    // untranslated, which falls back to the English name rather than to a gap
+    // where a product name should be.
+    $brand  = $product->brand?->t('name') ?? '';
+    $name   = $product->t('name');
+
+    // THE TILE'S COLOUR IS SEEDED FROM THE ENGLISH, DELIBERATELY. Gradient::for
+    // hashes the string it is given, so seeding it with the translated name
+    // would give a product one colour on /shop and a different one on /ar/shop
+    // — the same shop repainted, for a value nobody reads. Nothing below is
+    // printed from this; the initials and the words in the placeholder come
+    // from $brand and $name above and are translated.
+    $seed   = ($product->brand?->name ?? '') . $product->name;
     $link   = $product->url();
     $rating = (float) $product->rating;
     $rc     = (int) $product->review_count;
@@ -84,7 +97,7 @@
     // so the framing is unchanged: letterboxed, never cropped.
     $phStyle = $img
         ? 'background:#fff'
-        : 'background:' . \App\Support\Gradient::for($brand . $name);
+        : 'background:' . \App\Support\Gradient::for($seed);
 
     $binit = $img
         ? ''
@@ -165,7 +178,7 @@
             @endif
         </div>
         @if ($canAdd)
-            <a class="addbtn add_to_cart_button ajax_add_to_cart" href="?add-to-cart={{ $product->publicId() }}" data-quantity="1" data-product_id="{{ $product->id }}" data-kbb-add="{{ $product->id }}" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $product->name }}" rel="nofollow">
+            <a class="addbtn add_to_cart_button ajax_add_to_cart" href="?add-to-cart={{ $product->publicId() }}" data-quantity="1" data-product_id="{{ $product->id }}" data-kbb-add="{{ $product->id }}" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}" rel="nofollow">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg> {{ __('store.product_card.add_to_cart') }}
             </a>
         @else

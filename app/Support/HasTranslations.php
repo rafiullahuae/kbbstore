@@ -6,7 +6,8 @@ namespace App\Support;
 
 use App\Models\Translation;
 use App\Services\Translation\TranslationStore;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 /**
  * Translated CONTENT — a product's name, a category's description.
@@ -22,19 +23,41 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
  * ONE cached map, so a row's translation is an array lookup and a page of
  * products costs NO QUERIES AT ALL beyond the page of products itself.
  *
- * That is affordable because of what this table actually is. The shop has 671
- * products and about eight translatable fields between the catalogue models;
- * fully translated into one language that is a few thousand short rows —
- * configuration-sized, not data-sized, and the same argument SettingsService
- * makes for reading the whole settings table in one go. It is measured rather
- * than assumed: BilingualFoundationTest drives a 24-product grid and asserts
+ * That is affordable because of what the SHORT half of this table is. The shop
+ * has 671 products and about eight translatable fields between the catalogue
+ * models; the names, labels and blurbs, fully translated into one language, are
+ * a few thousand short rows — configuration-sized, not data-sized, and the same
+ * argument SettingsService makes for reading the whole settings table in one go.
+ * It is measured rather than assumed: BilingualFoundationTest drives a
+ * 24-product grid and ContentTranslationAtScaleTest drives 400, and both assert
  * the query count does not move.
  *
- * WHEN THAT STOPS BEING TRUE — a third and fourth language, or descriptions
- * long enough that the map costs real memory — the replacement is
- * scopeWithTranslations() below, which is a real eager load and adds exactly
- * one query per page however many rows are on it. It is written, tested and
- * unused, so the swap is a one-line change rather than a redesign.
+ * ── AND THE HALF THAT IS NOT IN THE MAP ─────────────────────────────────────
+ *
+ * This header used to name "a third and fourth language" as the thing that
+ * would end the one-map design. THAT WAS WRONG, and it was wrong in a way that
+ * would have kept the real problem hidden: each locale has its own cache entry
+ * and a request loads only the locale it is being served in, so a fourth
+ * language costs a fourth cache key and NOTHING per request.
+ *
+ * The trigger was always field LENGTH, and it had been crossed long before
+ * anybody looked. Measured at 696 products with the catalogue fully translated,
+ * one process, warm file cache — docs/fp-storefront-reads-translations.md, and
+ * docs/fn-translation-at-scale.md before it:
+ *
+ *     before   4,512 entries, 3.20 MB of strings, +4.72 MB resident, 7.1-7.8 ms
+ *     after    2,491 entries, 0.18 MB of strings, +0.48 MB resident, 0.9-1.0 ms
+ *
+ * 97% of those bytes were product long prose — read on at most one page at a
+ * time, and paid for on /ar/cart, which prints none of it.
+ *
+ * So the map is split rather than replaced. TranslationStore::LONG_FIELDS —
+ * description, ingredients, how_to_use, content, body — are not in it. They are
+ * read by the page that prints them instead, through TranslationStore::longFor():
+ * one query, 73 rows and 0.11 MB for a page of 25 products. At the page that is
+ * /ar/ at 34.0 MB where it was 42.5, which is what an English / costs.
+ * scopeWithTranslations() below is the other way to the same place and is what
+ * the admin editor uses.
  *
  * ── WHAT IS NEVER TRANSLATED ────────────────────────────────────────────────
  *
@@ -107,7 +130,7 @@ trait HasTranslations
             return $value;
         }
 
-        $translated = $this->loadedTranslations($locale)[TranslationStore::normaliseKey($field)] ?? null;
+        $translated = $this->translationFor($field, $locale);
 
         return ($translated === null || $translated === '') ? $value : $translated;
     }
@@ -121,35 +144,66 @@ trait HasTranslations
             return true;
         }
 
-        $value = $this->loadedTranslations($locale)[TranslationStore::normaliseKey($field)] ?? null;
+        $value = $this->translationFor($field, $locale);
 
         return $value !== null && $value !== '';
     }
 
     /**
-     * field => value for this row in one locale.
+     * One field's stored translation for this row, or null.
      *
-     * Prefers a relation that has actually been eager-loaded, so
-     * withTranslations() genuinely avoids the map; otherwise the cached map,
-     * which costs nothing.
+     * THREE SOURCES, AND WHICH ONE IS ASKED IS DECIDED BY THE FIELD.
      *
-     * @return array<string, string>
+     *   1. An eager-loaded `translations` relation, if there is one. Then
+     *      withTranslations() genuinely avoids both of the others, which is
+     *      what the admin editor and a primed page want.
+     *   2. For a LONG_FIELDS column: TranslationStore::longFor(), one query per
+     *      page and memoised per row. These are deliberately not in the map —
+     *      see the header.
+     *   3. Otherwise the cached map, which is already in memory because __()
+     *      loaded it, and costs no query at all.
+     *
+     * Asking per FIELD rather than building the whole row's array is the point.
+     * The old shape returned every field at once, so the moment the long columns
+     * moved out of the map, printing a product's NAME on a grid of cards would
+     * have fetched its description too — a query per card, on the exact page the
+     * map exists to keep flat.
      */
-    private function loadedTranslations(string $locale): array
+    private function translationFor(string $field, string $locale): ?string
     {
-        if ($this->relationLoaded('translations')) {
-            $out = [];
+        $key = TranslationStore::normaliseKey($field);
 
+        if ($this->relationLoaded('translations')) {
             foreach ($this->getRelation('translations') as $row) {
-                if ($row->locale === $locale && $row->status === Translation::STATUS_PUBLISHED) {
-                    $out[TranslationStore::normaliseKey((string) $row->field)] = (string) $row->value;
+                if ($row->locale === $locale
+                    && $row->status === Translation::STATUS_PUBLISHED
+                    && TranslationStore::normaliseKey((string) $row->field) === $key) {
+                    return (string) $row->value;
                 }
             }
 
-            return $out;
+            return null;
         }
 
-        return TranslationStore::forGroup($locale, $this->translationGroup(), [(int) $this->getKey()])[(int) $this->getKey()] ?? [];
+        $id = (int) $this->getKey();
+
+        if (in_array($key, TranslationStore::LONG_FIELDS, true)) {
+            return TranslationStore::longFor($locale, $this->translationGroup(), [$id])[$id][$key] ?? null;
+        }
+
+        /*
+         * get(), not forGroup(), and it is not a tidy-up.
+         *
+         * forGroup() walks the WHOLE map to answer, because it is the batch
+         * form and does not know which slot it is looking for. Called from here
+         * it was doing that once per FIELD per ROW: a grid of 24 cards reading
+         * two fields each was 48 full scans of a 2,491-entry array to perform
+         * 48 lookups it already had the exact key for. get() is one hash
+         * lookup against the same map, which is what the map was built to be —
+         * and the saving grows with the catalogue, which is the wrong direction
+         * for the thing it was costing.
+         */
+        return TranslationStore::get($locale, $this->translationGroup(), $id, $key);
     }
 
     /**
@@ -379,20 +433,60 @@ trait HasTranslations
     }
 
     /**
-     * Warm the cached map for a page of rows.
+     * "I am about to read translations for these rows."
      *
-     * A no-op in the present design, kept as the single named place a caller
-     * says "I am about to read translations for these rows" — so if the read
-     * path ever changes, the call sites do not have to.
+     * It was a no-op while everything lived in one map. It is not one any more:
+     * the long columns are fetched per page now, so this is the single call that
+     * turns a page of rows into ONE query instead of one per row that prints a
+     * description. Short fields still come from the map and still cost nothing,
+     * so calling this for a grid of cards is free either way.
      *
-     * @param  EloquentCollection<int, static>  $models
+     * Safe to call on the default locale and safe to call twice — longFor()
+     * records every id it was asked about, including the ones with no rows.
+     *
+     * A PLAIN Collection, not an EloquentCollection, and the difference is a
+     * page rather than a nicety. App\Services\DemoContent::fill() concatenates
+     * anonymous fixture objects onto a collection of real models, so the thing
+     * a controller is holding when it calls this is frequently NOT all models —
+     * and a fixture has no key to prime. They are filtered out here rather than
+     * guarded against at every call site.
+     *
+     * @param  \Illuminate\Support\Collection<int, mixed>  $models
      */
-    public static function primeTranslations(EloquentCollection $models, ?string $locale = null): void
+    public static function primeTranslations(Collection $models, ?string $locale = null): void
     {
         if ($models->isEmpty()) {
             return;
         }
 
-        TranslationStore::map($locale ?? Locale::current());
+        $locale = $locale ?? Locale::current();
+
+        TranslationStore::map($locale);
+
+        if ($locale === Locale::DEFAULT) {
+            // English is the column. Nothing to fetch, and fetching it would
+            // put a query on every English page, which the budgets forbid.
+            return;
+        }
+
+        $real = $models->filter(static fn ($m): bool => $m instanceof Model && $m->getKey() !== null);
+
+        if ($real->isEmpty()) {
+            return;
+        }
+
+        $first = $real->first();
+
+        if (array_intersect($first->translatable(), TranslationStore::LONG_FIELDS) === []) {
+            // Nothing this model can hold is outside the map, so the map read
+            // above is the whole of the priming.
+            return;
+        }
+
+        TranslationStore::longFor(
+            $locale,
+            $first->translationGroup(),
+            $real->map(static fn ($m): int => (int) $m->getKey())->values()->all(),
+        );
     }
 }

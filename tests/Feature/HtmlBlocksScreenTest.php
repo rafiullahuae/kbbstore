@@ -198,14 +198,48 @@ it('had no view using the shortcode directive before this lane', function () {
     $page = file_get_contents(resource_path('views/store/page.blade.php'));
     $post = file_get_contents(resource_path('views/store/post.blade.php'));
 
-    $runsEngine = fn (string $view, string $expression): bool => str_contains($view, '@shortcodes(' . $expression)
-        || str_contains($view, 'Shortcodes::render(' . $expression);
+    /*
+     * AND EITHER READ OF THE COLUMN COUNTS — Lane FP.
+     *
+     * Both views read their column through HasTranslations::t() now, so the
+     * expression is `$page->t('content')` rather than `$page->content`. That is
+     * the same column: on English t() returns the attribute untouched, and on
+     * /ar it returns the owner's Arabic of the same field. What this test is
+     * about is whether the ENGINE is in the path, and it still is.
+     *
+     * Both spellings are listed rather than matched loosely, because
+     * `Shortcodes::render($page->` would be satisfied by any column at all —
+     * and this is a source-text check, which is only ever as good as the exact
+     * string it looks for. The claim it cannot make is made two cases below
+     * instead, against a rendered page: `it serves a placed block to a shopper
+     * inside the page HTML` requests /about and reads the expanded block out of
+     * the HTML, which is the assertion that would survive any spelling.
+     */
+    $runsEngine = function (string $view, string $model, string $column): bool {
+        foreach ([$model . '->' . $column, $model . "->t('" . $column . "')"] as $expression) {
+            if (str_contains($view, '@shortcodes(' . $expression)
+                || str_contains($view, 'Shortcodes::render(' . $expression)) {
+                return true;
+            }
+        }
 
-    expect($runsEngine($page, '$page->content'))->toBeTrue()
+        return false;
+    };
+
+    expect($runsEngine($page, '$page', 'content'))->toBeTrue()
         ->and($page)->not->toContain('{!! $page->content !!}');
 
-    expect($runsEngine($post, '$post->body'))->toBeTrue()
+    expect($runsEngine($post, '$post', 'body'))->toBeTrue()
         ->and($post)->not->toContain('{!! $post->body !!}');
+
+    // The raw column echoed with no engine in the path is the original defect,
+    // and it must stay impossible in the translated spelling too.
+    expect(str_contains($page, "{!! \$page->t('content') !!}"))->toBeFalse(
+        'store/page.blade.php echoes its content with no shortcode engine in the path.'
+    );
+    expect(str_contains($post, "{!! \$post->t('body') !!}"))->toBeFalse(
+        'store/post.blade.php echoes its body with no shortcode engine in the path.'
+    );
 });
 
 it('serves a placed block to a shopper inside the page HTML', function () {

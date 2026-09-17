@@ -76,6 +76,72 @@ final class TranslationStore
     private const CACHE_PREFIX = 'kbb.translations.';
 
     /**
+     * The fields that are NOT in the map, and the whole reason there is a
+     * split.
+     *
+     * ── WHY THESE FIVE AND NOT A LENGTH CHECK ───────────────────────────────
+     *
+     * A length check would put a row in or out of the map depending on what the
+     * owner happened to type, so the same page would cost different amounts on
+     * different days and no test could pin either number. This is a named list
+     * of COLUMNS, decided by what the column is for: five columns that hold an
+     * article — a product's description, its INCI list, its how-to-use, a
+     * policy page's body, a journal post's body.
+     *
+     * ── WHAT IT IS WORTH, MEASURED ──────────────────────────────────────────
+     *
+     * MySQL 8.0.46 at 696 products with the whole catalogue translated, one
+     * process, warm file cache — docs/fp-storefront-reads-translations.md, and
+     * Lane FN's docs/fn-translation-at-scale.md before it:
+     *
+     *     map('ar') with them:     4,512 entries, 3.20 MB of strings, +4.72 MB, 7.1-7.8 ms
+     *     map('ar') without them:  2,491 entries, 0.18 MB of strings, +0.48 MB, 0.9-1.0 ms
+     *
+     * A tenth of the resident memory, and the map is loaded on EVERY Arabic request —
+     * not because a product card wants a name but because __() asks the loader
+     * for an interface string, on /ar/cart, which prints no prose at all.
+     *
+     * The thing that makes those 3.1 MB unnecessary is not that they are large.
+     * It is WHEN they are read: a description is read on one product page at a
+     * time. So they are read that way instead — longFor() below, one query,
+     * measured at 73 rows / 3.0–3.4 ms / 0.11 MB for a page of 25 products.
+     * At the page that is /ar/ costing 34.0 MB where it cost 42.5, which is
+     * what an English / costs, with the query count unmoved.
+     *
+     * NOT `short_description` and NOT `excerpt`, deliberately, though both are
+     * prose. Both are printed on GRIDS — a blurb under a card, a teaser under a
+     * journal tile — so taking them out of the map would trade 0.02 MB for a
+     * query per card, which is the N+1 the map exists to prevent.
+     */
+    public const LONG_FIELDS = ['description', 'ingredients', 'how_to_use', 'content', 'body'];
+
+    /**
+     * locale => group => item id => [ field => value ], published long prose.
+     *
+     * Filled by longFor() and cleared by flush(), exactly like $memo. There is
+     * no CACHE entry behind this one: a second file-cache key holding the 3.2 MB
+     * this split just removed would be read back in whole by the first page that
+     * wanted one paragraph of it, which is the cost being removed. A targeted
+     * query is a few milliseconds and a tenth of a megabyte, and is the second
+     * half of what the measurement recommends.
+     *
+     * @var array<string, array<string, array<int, array<string, string>>>>
+     */
+    private static array $longMemo = [];
+
+    /**
+     * locale => the UI slice of the map, built once.
+     *
+     * uiMap() walks the whole map to answer, and the loader asks it once per
+     * translation GROUP — five or so times a request. Before the split that was
+     * five walks of 4,512 entries; it is now five walks of 2,491, and with this
+     * memo it is one.
+     *
+     * @var array<string, array<string, string>>
+     */
+    private static array $uiMemo = [];
+
+    /**
      * Clears ALL THREE layers. Called from Translation's saved/deleted hooks.
      *
      * The third is the one that was missed first time and is worth naming.
@@ -94,7 +160,7 @@ final class TranslationStore
      */
     public static function flush(): void
     {
-        self::$memo = null;
+        self::forgetMemo();
 
         foreach (Locale::codes() as $code) {
             Cache::forget(self::CACHE_PREFIX . $code);
@@ -111,6 +177,32 @@ final class TranslationStore
             // console command where the translator is not resolvable. A cache
             // that could not be evicted must never take down the write.
         }
+    }
+
+    /**
+     * The PROCESS-LEVEL layers only, leaving the cache where it is.
+     *
+     * This is what the end of a request does under PHP-FPM: the process goes
+     * and takes every static with it, while the file cache — which is shared
+     * and is the whole reason the memo is worth having — survives. flush() is
+     * the other thing entirely: a WRITE happened and the cached answer is
+     * wrong, so both layers have to go.
+     *
+     * It exists because a test process is not a request. A measurement that
+     * warms these statics and then measures again is measuring a state no
+     * visitor is ever in, and it hides exactly the defect the split introduces
+     * the possibility of: a template reading a long field per row runs a query
+     * per row on every real request and none at all on a second render inside
+     * one process. Proven while writing the guard for it — an N+1 deliberately
+     * added to the product card left the flatness test green until this was
+     * called between passes. See StorefrontQueryBudgetTest's header, which
+     * makes the same distinction about SettingsService and the cache store.
+     */
+    public static function forgetMemo(): void
+    {
+        self::$memo = null;
+        self::$longMemo = [];
+        self::$uiMemo = [];
     }
 
     /**
@@ -135,7 +227,16 @@ final class TranslationStore
     }
 
     /**
-     * Every published translation for one locale.
+     * Every published SHORT translation for one locale.
+     *
+     * Names, labels, blurbs, interface strings: the text that is read on every
+     * page, is bounded by the number of rows rather than by how much the owner
+     * typed, and is worth holding in memory so that a grid of cards costs no
+     * queries at all.
+     *
+     * NOT the five columns in LONG_FIELDS — see that constant for the
+     * measurement. A caller that wants one of those asks longFor(), which is a
+     * query for the page it is on rather than a megabyte on every page.
      *
      * @return array<string, string>
      */
@@ -175,6 +276,12 @@ final class TranslationStore
                 $rows = Translation::query()
                     ->published()
                     ->where('locale', $locale)
+                    // THE SPLIT. Filtered in SQL rather than in the loop below
+                    // so the 3.1 MB never crosses the wire, is never hydrated
+                    // into models, and is never serialised into the cache
+                    // entry. Filtering after the fetch would have saved the
+                    // resident megabytes and none of the milliseconds.
+                    ->whereNotIn('field', self::LONG_FIELDS)
                     ->get(['group', 'item_id', 'field', 'value']);
             } catch (\Throwable) {
                 return [];
@@ -265,6 +372,10 @@ final class TranslationStore
      */
     public static function uiMap(string $locale): array
     {
+        if (array_key_exists($locale, self::$uiMemo)) {
+            return self::$uiMemo[$locale];
+        }
+
         $prefix = Translation::GROUP_UI . '.0.';
         $out = [];
 
@@ -272,6 +383,85 @@ final class TranslationStore
             if (str_starts_with($slot, $prefix)) {
                 $out[substr($slot, strlen($prefix))] = $value;
             }
+        }
+
+        return self::$uiMemo[$locale] = $out;
+    }
+
+    /**
+     * The long-prose translations for one group and one page of rows, in ONE
+     * query.
+     *
+     * This is the other half of the split, and the reason the map can be a
+     * tenth of the size without anything becoming unreadable. LONG_FIELDS are
+     * not in the map, so a product's Arabic description is fetched by the page
+     * that prints it — measured at 73 rows, 3.0–3.4 ms and 0.11 MB for a page
+     * of 25 products, against the 4.72 MB the map cost on every request
+     * including ones with no prose on them at all.
+     *
+     * MEMOISED PER ROW, not per call, and that is what keeps a grid flat. A
+     * template that asks for one row's description and then another's runs one
+     * query and then none; a controller that primes the whole page runs one
+     * query for all of it. Both end up in the same array. flush() clears it, so
+     * a correction saved in this process is visible to the next read — the
+     * Setting::map() trap this class's header is written against.
+     *
+     * NOT CACHED. A second file-cache entry holding the megabytes this split
+     * just removed would be read back whole by the first page that wanted one
+     * paragraph, which is the cost being removed.
+     *
+     * @param  list<int>  $itemIds
+     * @return array<int, array<string, string>> item id => field => value
+     */
+    public static function longFor(string $locale, string $group, array $itemIds): array
+    {
+        $group = self::normaliseKey($group);
+        $ids = array_values(array_unique(array_map('intval', $itemIds)));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $known = self::$longMemo[$locale][$group] ?? [];
+        $missing = array_values(array_filter($ids, static fn (int $id): bool => ! array_key_exists($id, $known)));
+
+        if ($missing !== []) {
+            try {
+                $rows = Translation::query()
+                    ->published()
+                    ->where('locale', $locale)
+                    ->where('group', $group)
+                    ->whereIn('item_id', $missing)
+                    ->whereIn('field', self::LONG_FIELDS)
+                    ->get(['item_id', 'field', 'value']);
+            } catch (\Throwable) {
+                // Same argument as map(): this is reachable from a view while
+                // the migration that creates the table is running, and an
+                // untranslated page is survivable where a 500 is not.
+                $rows = collect();
+            }
+
+            // Every id asked for is recorded, INCLUDING the ones with no rows.
+            // Otherwise a product with no Arabic description would be re-queried
+            // every time a template mentioned it, which is the N+1 back again on
+            // exactly the rows the owner has not reached yet.
+            foreach ($missing as $id) {
+                self::$longMemo[$locale][$group][$id] = [];
+            }
+
+            foreach ($rows as $row) {
+                if ($row->value === null || $row->value === '') {
+                    continue;
+                }
+
+                self::$longMemo[$locale][$group][(int) $row->item_id][self::normaliseKey((string) $row->field)] = (string) $row->value;
+            }
+        }
+
+        $out = [];
+
+        foreach ($ids as $id) {
+            $out[$id] = self::$longMemo[$locale][$group][$id] ?? [];
         }
 
         return $out;

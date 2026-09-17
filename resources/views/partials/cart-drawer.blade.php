@@ -75,16 +75,22 @@
                 @foreach ($items as $item)
                     @php
                         $p = $item->product;
-                        $brand = $p?->brand?->name ?? '';
+                        // t(), not the column — the basket is read in the
+                        // language the shopper is shopping in. $seed stays
+                        // English so a line keeps one colour in both. See
+                        // components/product-card.blade.php.
+                        $brand = $p?->brand?->t('name') ?? '';
+                        $name = $p?->t('name');
+                        $seed = ($p?->brand?->name ?? '') . ($p?->name ?? '');
                         $img = $item->variant?->image ?: $p?->image;
                         $thumb = $img
                             ? "background:#fff url('" . e($img) . "') center/cover"
-                            : 'background:' . Gradient::for($brand . ($p?->name ?? ''));
+                            : 'background:' . Gradient::for($seed);
                     @endphp
                     <div class="kc-item">
-                        <div class="kc-th" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($p?->name ?? '?')) }}</div>
+                        <div class="kc-th" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($name ?? '?')) }}</div>
                         <div class="kc-mid">
-                            <div class="kc-nm">{{ $p?->name }}</div>
+                            <div class="kc-nm">{{ $name }}</div>
                             <div class="kc-qty">
                                 <button type="button" data-kcq="{{ $item->id }}" data-d="-1">−</button>
                                 <span>{{ $item->quantity }}</span>
@@ -115,16 +121,18 @@
             <div class="dbody">
                 @foreach ($browsed as $bp)
                     @php
-                        $bbrand = $bp->brand?->name ?? '';
+                        $bbrand = $bp->brand?->t('name') ?? '';
+                        $bname  = $bp->t('name');
+                        $bseed  = ($bp->brand?->name ?? '') . $bp->name;
                         $bimg   = $bp->image;
                         $bthumb = $bimg
                             ? "background:#fff url('" . e($bimg) . "') center/cover"
-                            : 'background:' . Gradient::for($bbrand . $bp->name);
+                            : 'background:' . Gradient::for($bseed);
                     @endphp
                     <div class="kc-item" data-brow="{{ $bp->id }}">
-                        <a class="kc-th" href="{{ $bp->url() }}" style="{{ $bthumb }}">{{ $bimg ? '' : Gradient::initials($bbrand ?: $bp->name) }}</a>
+                        <a class="kc-th" href="{{ $bp->url() }}" style="{{ $bthumb }}">{{ $bimg ? '' : Gradient::initials($bbrand ?: $bname) }}</a>
                         <div class="kc-mid">
-                            <div class="kc-nm">{{ $bp->name }}</div>
+                            <div class="kc-nm">{{ $bname }}</div>
                             <div class="kc-pr" style="font-size:12.5px">{!! \App\Support\Money::format($bp->effectivePrice()) !!}</div>
                         </div>
                         <div class="kc-right">

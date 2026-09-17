@@ -11,10 +11,13 @@
 
     $circle = function ($item, $withQty = false) {
         $p = $item->product;
-        $brand = $p?->brand?->name ?? '';
+        $brand = $p?->brand?->t('name') ?? '';
+        $name = $p?->t('name');
         $img = $item->variant?->image ?: $p?->image;
-        $st = $img ? "background-image:url('" . e($img) . "')" : 'background:' . Gradient::for($brand . ($p?->name ?? ''));
-        $init = $img ? '' : e(Gradient::initials($brand ?: ($p?->name ?? '?')));
+        // The seed is the English pair, so the circle is the same colour in
+        // both languages; the initials inside it are read and are translated.
+        $st = $img ? "background-image:url('" . e($img) . "')" : 'background:' . Gradient::for(($p?->brand?->name ?? '') . ($p?->name ?? ''));
+        $init = $img ? '' : e(Gradient::initials($brand ?: ($name ?? '?')));
         $q = $withQty ? '<span class="kthumb-q">&times;' . (int) $item->quantity . '</span>' : '';
         return '<span class="kthumb" style="' . e($st) . '" aria-hidden="true">' . $init . $q . '</span>';
     };
@@ -26,7 +29,7 @@
         <div class="kthumb-row"><span class="kstack">@foreach ($items->take(4) as $it){!! $circle($it) !!}@endforeach</span><span class="kmeta">{{ $countLbl }}<b>{!! \App\Support\Money::format($totals['total']) !!}</b></span></div>
     @elseif ($style === 'names')
         <div class="kthumb-lbl">{{ __('store.checkout.thumbs_your_order') }}</div><div class="kthumb-row">
-        @foreach ($items as $it)<span class="kthumb-it">{!! $circle($it) !!}<span class="kthumb-nm">{{ $it->product?->name }}</span></span>@endforeach
+        @foreach ($items as $it)<span class="kthumb-it">{!! $circle($it) !!}<span class="kthumb-nm">{{ $it->product?->t('name') }}</span></span>@endforeach
         </div>
     @elseif ($style === 'stack')
         @php $more = $items->count() - min(4, $items->count()); @endphp

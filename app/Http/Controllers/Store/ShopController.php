@@ -333,7 +333,8 @@ class ShopController extends Controller
             ->where('slug', $active['brand'][0])
             ->first();
 
-        return \App\Support\PageBanner::forModel($brand, $brand?->name ?? $title);
+        // The fallback heading is catalogue text — see BrandController::show().
+        return \App\Support\PageBanner::forModel($brand, $brand?->t('name') ?? $title);
     }
 
     private function applyFacets($query, array $active, string $search): void
@@ -558,7 +559,7 @@ class ShopController extends Controller
         ];
 
         if ($category) {
-            $trail[] = ['name' => $category->name, 'url' => $base . $category->url()];
+            $trail[] = ['name' => $category->t('name'), 'url' => $base . $category->url()];
         }
 
         return $trail;
@@ -633,10 +634,24 @@ class ShopController extends Controller
              * table against their own id (App\Support\HasTranslations), which
              * is why they are not keyed here. Only the fallback, used when the
              * category has no description, is this file's to say.
+             *
+             * THAT WAS THE INTENTION AND NOT THE CODE. Until this lane these
+             * read `$category->name` and `$category->description`, which is the
+             * column and therefore the English — so the comment above described
+             * a mechanism the page did not use, and an Arabic category archive
+             * carried an English <h1>. t() is that mechanism.
+             *
+             * `description` is one of TranslationStore::LONG_FIELDS, so it is
+             * fetched by this page rather than carried in the map that every
+             * Arabic request loads. One category, one row, one query — and the
+             * `?:` still asks the TRANSLATED value, so a category whose Arabic
+             * description is blank falls back to its English one and only a
+             * category with no description in either language reaches the
+             * keyed default.
              */
             return [
-                $category->name,
-                $category->description ?: __('store.shop.sub_default'),
+                $category->t('name'),
+                $category->t('description') ?: __('store.shop.sub_default'),
                 __('store.shop.crumb_category'),
             ];
         }

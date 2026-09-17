@@ -13,7 +13,21 @@
     use App\Support\ProductTitle;
     use App\Support\Url;
 
-    $brand   = $product->brand?->name ?? '';
+    /* t(), not the column — see App\Support\HasTranslations. On English these
+       ARE the column, byte for byte, because t() returns early for the default
+       locale. On /ar they are the Arabic the owner typed, per field: a product
+       with an Arabic name and no Arabic short description shows the Arabic name
+       and the English blurb, never a blank where either should be.
+
+       Where a translated field is printed under an @if, the @if keeps asking
+       the ENGLISH column and only the printed value is t(): whether this
+       product has a blurb at all is a fact about the product, not about the
+       language it is being read in. See .bb-desc below. */
+    $brand   = $product->brand?->t('name') ?? '';
+    $name    = $product->t('name');
+    /* The gradient's seed stays ENGLISH so a product is the same colour on
+       /product/... and /ar/product/..., and nothing reads it. */
+    $seed    = ($product->brand?->name ?? '') . $product->name;
     /* THE REVIEWS TABLE IS THE ANSWER, WITH NO FALLBACK.
        These read `?: $product->rating` and `?: $product->review_count`, so a
        product with no approved reviews fell back to the denormalised columns —
@@ -36,7 +50,7 @@
     // $out is finished below, once the variants are in hand: a variable product
     // whose every option is sold out is sold out, whatever the parent row says.
 
-    $grad    = Gradient::for($brand . $product->name);
+    $grad    = Gradient::for($seed);
     // Gallery entries are now labelled shots, not bare URLs; the partial
     // renders the frame, so this is only kept for anything else referencing it.
     $mainBg  = ! empty($gallery[0]['image'])
@@ -84,7 +98,7 @@
      Prepending only when the name does not already lead with the brand is the
      whole fix; ProductTitle explains why that test compares words rather than
      characters, and why stripping a leading brand instead would be wrong. --}}
-@section('title', ProductTitle::head($brand, $product->name))
+@section('title', ProductTitle::head($brand, $name))
 
 @push('head')
     {{--
@@ -150,7 +164,7 @@
 
 @section('content')
 <div class="wrap">
-  <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->name ?? __('store.breadcrumb.shop') }}</a> / {{ $product->name }}</div>
+  <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->t('name') ?? __('store.breadcrumb.shop') }}</a> / {{ $name }}</div>
   <div class="pdp">
     <!-- gallery -->
     @include('partials.product-gallery')
@@ -158,7 +172,7 @@
   <!-- buy box -->
     <div class="buybox">
       @if ($brand)<div class="bb-brand" id="bbBrand">{{ $brand }}</div>@endif
-      <h1 class="bb-title" id="bbTitle">{{ $product->name }}</h1>
+      <h1 class="bb-title" id="bbTitle">{{ $name }}</h1>
       @php
           $badgeHeart  = (bool) $settings->get('review_badge_heart', true);
           $badgeAvg    = (bool) $settings->get('review_badge_avg', true);
@@ -198,7 +212,7 @@
         @endif
       </div>
       @if ($vatLine)<div class="{{ $modules->classFor('vat') }} bb-vat">{{ $vatLine }}</div>@endif
-      @if ($product->short_description)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->short_description }}</p>@endif
+      @if ($product->short_description)<p class="{{ $modules->classFor('short') }} bb-desc">{{ $product->t('short_description') }}</p>@endif
 
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
@@ -489,7 +503,7 @@
         <div class="sth" style="background:{{ $mainBg }}">{{ $gallery ? '' : Gradient::initials($brand) }}</div>
         @endif
         @if ($settings->get('sticky_name', true))
-        <div style="min-width:0"><div class="snm">{{ $product->name }}</div></div>
+        <div style="min-width:0"><div class="snm">{{ $name }}</div></div>
         @endif
     </div>
     @endif
