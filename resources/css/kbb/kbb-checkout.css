@@ -212,7 +212,19 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    nothing ever un-hid it. Now shown for whichever option is actually
    checked, the same :has() pattern already used for the selected highlight
    on this list. */
-.kbb-checkout .wc_payment_method:has(input:checked) .payment_box{display:block}
+/* THE REVEAL HAS TO OUT-RANK THE HIDE, and it did not.
+   The hide two rules above is `.kbb-checkout #payment div.payment_box`, and
+   #payment is an ID: (0,1,2,1). This reveal was
+   `.kbb-checkout .wc_payment_method:has(input:checked) .payment_box`, which is
+   (0,0,4,1) even counting what :has() contributes. An id beats any number of
+   classes, so display:none won every time and NO payment method has ever shown
+   its description — not the card option, not Cash on delivery. The owner
+   selected Credit / Debit Card, saw nothing appear, and reasonably read that as
+   the card fields failing to load.
+   Matched id-for-id here rather than reached for !important, which would have
+   to be out-shouted by the next person instead of out-ranked. */
+.kbb-checkout .wc_payment_method:has(input:checked) .payment_box,
+.kbb-checkout #payment .wc_payment_method:has(input:checked) div.payment_box{display:block}
 .kbb-checkout .payment_box::before,
 .kbb-checkout #payment div.payment_box::before{content:none!important;display:none!important}
 .kbb-checkout .payment_box p{margin:0 0 6px}

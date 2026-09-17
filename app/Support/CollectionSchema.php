@@ -78,7 +78,23 @@ final class CollectionSchema
             $minor = $product->effectivePrice();
 
             $items[] = array_filter([
-                'name' => (string) $product->name,
+                /*
+                 * t(), NOT the column — caught by StorefrontReadsTranslationsTest
+                 * when these two lanes met. This block was written while nothing
+                 * on the storefront read a content translation, so reading the
+                 * column was correct on the day it was written and wrong the
+                 * moment the storefront started translating.
+                 *
+                 * An Arabic listing page would otherwise show Arabic names to a
+                 * shopper and publish ENGLISH ones to every search engine, in
+                 * the same document, under an Arabic canonical. Structured data
+                 * that disagrees with the visible page is the one kind Google
+                 * acts on: it is a manual-action category, not a ranking nudge.
+                 *
+                 * t() falls back to the column per field, so an untranslated
+                 * product publishes its English name exactly as before.
+                 */
+                'name' => (string) $product->t('name'),
                 'url' => $base . $product->url(),
                 /*
                  * The featured shot only, AND EXACTLY THE STRING THE TILE PUTS
@@ -106,7 +122,7 @@ final class CollectionSchema
                 // `brand` is eager-loaded by every caller. `?->` rather than a
                 // relation read, so a product with no brand row costs no query
                 // and publishes no empty Brand node.
-                'brand' => $product->relationLoaded('brand') ? ($product->brand?->name) : null,
+                'brand' => $product->relationLoaded('brand') ? ($product->brand?->t('name')) : null,
                 // Read the long note above before changing either of these.
                 'price' => Money::decimalString($minor),
                 'price_minor' => $minor,
