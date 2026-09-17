@@ -156,6 +156,16 @@
   .sr-unbuilt{margin-top:34px;border-top:1px solid var(--line);padding-top:22px;font-size:12.5px;line-height:1.65;color:var(--muted);text-align:center}
   .sr-unbuilt b{color:var(--ink-2)}
   .sr-unbuilt a{color:var(--pink-deep);font-weight:600}
+
+  /* Phone shopper pass - Lane EA. This page renders bare, so it gets none of
+     the storefront's mobile tap-target rules: at 360px its wordmark was
+     129x22, the Shop / Home links 34x15, and "Browse the shop" - the only way
+     off an empty review wall - 161x39. */
+  @media (max-width: 820px) {
+    .sr-logo{min-height:44px;display:inline-flex;align-items:center}
+    .sr-topnav a{min-height:44px;display:inline-flex;align-items:center}
+    .sr-cta{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  }
 </style>
 @endverbatim
 </head>

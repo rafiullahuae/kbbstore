@@ -348,6 +348,16 @@
   /* drawers */
   .ov{position:fixed;inset:0;background:rgba(42,34,40,.45);z-index:90;opacity:0;pointer-events:none;transition:.25s}
   .ov.on{opacity:1;pointer-events:auto}
+  /* overlay.js has put `kbb-locked` on <body> whenever a drawer opens since
+     T-CHROME-15, under the comment "Stops the page behind a drawer from
+     scrolling on touch devices" -- but NO stylesheet in the repo ever defined
+     the class, so nothing stopped it. Adding a product to the bag on a phone
+     opened the cart drawer over a page that still scrolled away underneath it
+     (measured: scrollY 837 -> 1337 on one flick with the drawer open). The
+     mobile menu does not use this class; it sets body.style.overflow itself,
+     which is why that one always behaved. overflow on <body> is what the
+     viewport uses while <html> is `visible`, so this is the same mechanism. */
+  body.kbb-locked{overflow:hidden}
   .drawer{position:fixed;top:0;right:0;height:100%;width:var(--cp-w,380px);max-width:90vw;background:#fff;z-index:95;transform:translateX(100%);transition:.32s var(--ease);display:flex;flex-direction:column}
   .drawer.on{transform:translateX(0)}
   .dwh{display:flex;align-items:center;gap:8px;padding:18px 20px;border-bottom:1px solid var(--line-2);font-size:15px}
@@ -1277,7 +1287,12 @@ body{
 .kbb-home .nl h2{font-size:clamp(22px,2.8vw,38px);font-weight:800;margin:12px 0 8px;letter-spacing:-.02em}
 .kbb-home .nl .lede{color:var(--ink-2);max-width:46ch;font-size:14px;margin:0 auto}
 .kbb-home .nl .f{display:flex;gap:10px;max-width:460px;margin:20px auto 0}
-.kbb-home .nl .f input{flex:1;border:1px solid var(--line-2);border-radius:99px;padding:14px 20px;font:400 14px inherit;background:#fff}
+/* `font:400 14px inherit` is not valid CSS -- `inherit` cannot stand in for the
+   family inside the shorthand, so the browser threw the WHOLE declaration away
+   and this field rendered in Arial at the UA default 13.33px. Longhands, which
+   say the same thing and are actually applied. Same correction below on
+   .mm-srch input, .fld input and .go. */
+.kbb-home .nl .f input{flex:1;border:1px solid var(--line-2);border-radius:99px;padding:14px 20px;font-family:inherit;font-weight:400;font-size:14px;background:#fff}
 .kbb-home .nl .f button{border:0;background:var(--nl-btn-bg,var(--ink));color:var(--nl-btn-fg,#fff);border-radius:99px;padding:14px 26px;font:700 13px inherit;cursor:pointer}
 @media(max-width:640px){.kbb-home .nl .f{flex-direction:column}.kbb-home .nl .f button{width:100%}}
 /* Signup confirmation. Scoped under .kbb-home like the rest of this block —
@@ -1665,6 +1680,20 @@ header{border-bottom:1px solid var(--line-2)}
 .kbb-home .policy{max-width:78ch;margin:0 auto;padding:8px 0 20px}
 .kbb-home .policy h1{font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-.02em;margin:0 0 22px}
 .kbb-home .policy-body{color:var(--ink-2);font-size:15px;line-height:1.75}
+/* The five policy pages print whatever the owner types in Store -> Pages, and
+   a delivery or returns page is exactly where a courier tracking URL and a
+   five-column charges table end up. Neither had anywhere to go on a phone: a
+   long unbroken string ran past the column and was clipped mid-number, and a
+   table that could not shrink any further had no scroll container of its own.
+   Both are properties of the container, so they hold for any content the owner
+   writes later without touching the template. */
+/* break-word and not `anywhere`: `anywhere` also counts the break points when
+   the browser works out a box's min-content width, which let the charges table
+   squeeze down until "Ras Al Khaimah" broke across two lines as "Khaima / h".
+   break-word breaks a word only when it would otherwise overflow, so the URL
+   wraps and the table keeps its words whole and scrolls instead. */
+.kbb-home .policy-body{overflow-wrap:break-word}
+.kbb-home .policy-body table{display:block;max-width:100%;overflow-x:auto}
 .kbb-home .policy-body h3{font-size:17px;font-weight:700;color:var(--ink);margin:28px 0 8px;letter-spacing:-.01em}
 .kbb-home .policy-body p{margin:0 0 14px}
 .kbb-home .policy-body ul,.kbb-home .policy-body ol{margin:0 0 16px;padding-left:22px}
@@ -1730,7 +1759,7 @@ header{border-bottom:1px solid var(--line-2)}
 .mm-srch{position:relative;padding:2px 12px 8px;flex:none}
 .mm-srch svg{position:absolute;left:23px;top:10px;width:15px;height:15px;color:var(--muted)}
 .mm-srch input{width:100%;border:1px solid var(--line-2);background:#F8F3F5;border-radius:10px;
-    padding:9px 11px 9px 32px;font:400 12.5px inherit;color:var(--ink)}
+    padding:9px 11px 9px 32px;font-family:inherit;font-weight:400;font-size:12.5px;color:var(--ink)}
 .mm-srch input:focus{outline:0;border-color:var(--pink);background:#fff}
 
 .mm-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding-bottom:4px}
@@ -2413,7 +2442,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 /* the field itself */
 .fld{position:relative;margin-bottom:13px}
 .fld input{width:100%;border:1.5px solid var(--line);border-radius:12px;background:#fff;
-    padding:calc(19px + var(--fld-gap,3px)) 14px 7px;font:400 14px inherit;color:var(--ink);outline:0;
+    padding:calc(19px + var(--fld-gap,3px)) 14px 7px;font-family:inherit;font-weight:400;font-size:14px;color:var(--ink);outline:0;
     transition:border-color .16s,box-shadow .16s,background .16s}
 .fld.ico input{padding-left:42px}
 .fld > label{position:absolute;left:14px;top:14px;font-size:14px;color:var(--muted);pointer-events:none;
@@ -2455,7 +2484,7 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
 .chk span{width:17px;height:17px;border-radius:6px;border:1.5px solid var(--line);display:block;transition:.15s}
 .chk input:checked + span{background:var(--pink);border-color:var(--pink);box-shadow:inset 0 0 0 3px #fff}
 .chk input:focus-visible + span{box-shadow:0 0 0 3px rgba(224,86,123,.2)}
-.go{width:100%;border:0;border-radius:12px;padding:14px;color:#fff;font:700 14px inherit;cursor:pointer;
+.go{width:100%;border:0;border-radius:12px;padding:14px;color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;
     background:linear-gradient(180deg,var(--pink),var(--pink-deep));
     box-shadow:0 1px 2px rgba(193,62,99,.3),0 10px 22px -12px rgba(193,62,99,.75);transition:.16s}
 .go:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(193,62,99,.3),0 14px 26px -12px rgba(193,62,99,.8)}
@@ -2887,4 +2916,78 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
      label is the honest target. */
   .kbb-home .q-o{min-height:44px}
   .kbb-home .q-next{min-height:44px}
+}
+
+/* ---------------------------------------------------------------------------
+   Phone shopper pass - Lane EA. Everything below is <=820px only, so no
+   desktop rule changes.
+
+   1. iOS Safari ZOOMS the whole page when a text field with a computed
+      font-size under 16px takes focus, and it does not zoom back out.
+
+      The header search already knows this: `header .sbox .search-in input`
+      is raised to 16px further up this sheet, under a comment that says
+      exactly why. What that rule never covered is EVERY OTHER FIELD ON THE
+      SITE. Measured at 360px before this block: the menu filter 13.33px, the
+      newsletter 13.33px, the sign-in, register and order-tracking fields
+      13.33px, the shop's sort dropdown 13px, the review form 14px and all
+      thirteen checkout fields 14px. A shopper in Dubai tapping "Email
+      address" got a page jammed at ~114% with the form half off-screen, on
+      every form the shop has except the one search box. This is that same
+      fix, finished. It is applied on phones only, so the desktop type scale
+      is untouched.
+
+      Checkout, shop-sort and review-form fields are set in their own sheets,
+      which load after this one; those carry the same rule locally.
+
+   2. The "Added to bag" toast is centred on the viewport with z-index 120,
+      while the cart drawer it opens alongside is 77vw wide and pinned right
+      (z-index 95). On a 360px phone the toast landed inside the drawer, on top
+      of its Subtotal and Checkout row, for the 1.7s it shows. Lift it clear
+      while a drawer is open.
+
+   3. Tap targets Lane BM's three passes did not reach.
+--------------------------------------------------------------------------- */
+@media (max-width: 820px) {
+
+  /* 1. No page zoom on focus. Checkboxes and radios are left alone: they take
+        no text, so iOS never zooms for them, and their font-size is inherited
+        by nothing. */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="url"],
+  input[type="date"],
+  input:not([type]),
+  select,
+  textarea{font-size:16px}
+
+  /* Each of these sets its size through a class selector, which beats the bare
+     element selectors above. .search-in is named for completeness -- the one
+     in the header is already covered by its own rule further up -- and
+     .mnav-search belongs to the #mnav drawer, which only /_design-check
+     opens today. */
+  .search-in input,
+  .mnav-search input,
+  .mm-srch input,
+  .kbb-home .nl .f input,
+  .fld input{font-size:16px}
+
+  /* 2. Toast clear of an open drawer. :has() is the only way to see the
+        drawer's state from the toast, which is its sibling, not its child.
+        Where :has() is unsupported the toast simply keeps today's position. */
+  body:has(.drawer.on) .toast{bottom:auto;top:14px;transform:translateX(-50%) translateY(-18px)}
+  body:has(.drawer.on) .toast.on{transform:translateX(-50%) translateY(0)}
+
+  /* 3a. The password reveal on /my-account/ was 26x26 -- the smallest control
+         on the sign-in form. It is absolutely positioned inside the field, so
+         growing it costs no layout. */
+  .fld .trail{width:44px;height:44px;display:grid;place-items:center;padding:0;right:4px}
+
+  /* 3b. Sign in / Create account tabs were 38px; "Forgot password?" was 20px. */
+  .seg{min-height:44px;display:flex;align-items:center;justify-content:center}
+  .auth .row a{min-height:44px;display:inline-flex;align-items:center}
 }

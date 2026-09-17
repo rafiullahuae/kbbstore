@@ -193,3 +193,13 @@
   .sr-chip{min-height:44px;display:inline-flex;align-items:center}
   .sr-write{min-height:44px}
 }
+
+/* Phone shopper pass - Lane EA. <=820px only.
+   The review sheet's name / email / title / body fields are 14px, so opening
+   "Write a review" on an iPhone and tapping the first field zoomed the page
+   under the sheet. Same 16px threshold as the rest of the storefront. */
+@media (max-width: 820px) {
+  .sr-fld input[type=text],
+  .sr-fld input[type=email],
+  .sr-fld textarea{font-size:16px}
+}

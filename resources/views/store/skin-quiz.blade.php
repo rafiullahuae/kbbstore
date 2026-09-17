@@ -38,6 +38,10 @@ input,textarea{font-family:inherit}
 .btn.ghost:hover{border-color:var(--pink);color:var(--pink-deep);background:#fff}
 .btn.sm{padding:9px 15px;font-size:12.5px}
 .btn.block{width:100%}
+/* Phone shopper pass - Lane EA. This page draws its own buttons, so it gets
+   none of the storefront's mobile tap-target rules: "Start the quiz" and every
+   Next/Back after it were 40px tall at 360px. */
+@media (max-width: 820px) { .btn{min-height:44px} }
 
 .shell{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:22px 18px 50px}
 .qhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}

@@ -665,3 +665,32 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .form-row label.kbb-gift-opt{min-height:44px}
   .kbb-checkout input[type=checkbox]{width:22px;height:22px}
 }
+
+/* Phone shopper pass - Lane EA. <=820px only.
+
+   Every text field on this checkout was 14px -- the bridge block near the top
+   of this sheet that maps WooCommerce .form-row onto the design's fields, plus
+   the coupon input. iOS Safari zooms the whole page whenever a field under
+   16px takes focus, and does not zoom back out: on an iPhone, tapping "Email
+   address" on the checkout of a shop whose customers are overwhelmingly on
+   phones left the form half off-screen and the shopper pinching to get back.
+   This sheet loads after kbb.css, so the rule has to be repeated here to win
+   the cascade.
+
+   The two order-summary controls at the top of the page were 35px and 37px
+   tall; Lane BM's three passes reached the opt-in labels but not these. */
+@media (max-width: 820px) {
+  .kbb-checkout .input-text,
+  .kbb-checkout .coupon input,
+  .kbb-checkout .form-row input[type="text"],
+  .kbb-checkout .form-row input[type="email"],
+  .kbb-checkout .form-row input[type="tel"],
+  .kbb-checkout .form-row input[type="password"],
+  .kbb-checkout .form-row input[type="number"],
+  .kbb-checkout .form-row input[type="search"],
+  .kbb-checkout .form-row textarea,
+  .kbb-checkout .form-row select{font-size:16px}
+
+  .kbb-checkout .stab{min-height:44px}
+  .kbb-checkout .viewfull{min-height:44px}
+}
