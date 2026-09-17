@@ -55,3 +55,9 @@ app/*.zip
 # carried them could delete them on the next install. BuildPackage::NEVER_SHIP
 # carries the same path for the same reason.
 /public/img-cache/
+
+# Integrator scratch: the local preview server launcher. Never shippable —
+# UpdateGuard rejects any path outside app/, config/, database/, resources/,
+# routes/ and public/build/, and a package carrying it is refused whole.
+_preview.sh
+_shot*.mjs
