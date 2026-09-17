@@ -2731,32 +2731,33 @@ const prog=(n,pct,tag)=>`<div><div class="between" style="margin-bottom:6px"><sp
    used to carry, and had no other caller, so it went with them. See the
    note in renderDash(). */
 
-/* ---------- Modules Manager ---------- */
-const MODULES=[
-  {g:'Core platform',locked:true,items:[
-    ['Dashboard','KPIs & overview',I.dash],['Modules Manager','Install / enable / disable modules',I.modules],
-    ['Users & Roles','Staff accounts, roles, permissions',I.users],['Settings','Global configuration',I.settings],
-    ['Media','Media library',I.content],['K-Beauty Bliss Theme','All design, layout & storefront settings',I.theme],
-    ['Debug & Monitor','Error capture, health, AI reports',I.debug],['Sandbox & Deploy','Safe staging & deploys',I.sandbox]]},
-  {g:'Catalog',built:true,items:[['Catalog','Products, categories, tags, brands, attributes',I.catalog],['Inventory','Stock & low-stock alerts',I.catalog],['Catalog Order','Reorder products in any category',I.catalog]]},
-  {g:'Growth',built:true,items:[['Product Labels','Image/text badges on thumbnails — seasonal offers, assign by product or category','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['Meta & Facebook','Pixel, Conversions API & product catalog feed','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>']]},
-  {g:'Selling',phase:'P3',items:[['Orders','Orders, statuses, refunds',I.orders],['Invoices','Invoice & packing PDFs',I.orders],['Checkout','Checkout flow & fields',I.orders],['Shipping','Per-country rates, on/off',I.orders],['Tax','VAT & tax rates',I.cash],['Payments','Stripe · Tabby · Tamara · COD',I.cash]]},
-  {g:'Customers',phase:'P3',items:[['Customers','Accounts, addresses, logins',I.cust],['Reviews','Ratings, photos, moderation',I.cust]]},
-  {g:'Growth & Experience',phase:'P2–P4',items:[
-    ['Bundles & Routine Builder','Build Your Own Routine, kits',I.mkt],['Shoppable Video / UGC','Video gallery, shop-the-look',I.mkt],
-    ['Loyalty & Rewards','Points, tiers, referrals',I.mkt],['Gift Cards & Store Credit','Digital cards + credit',I.cash],
-    ['Subscriptions','Subscribe & save',I.mkt],['Returns / RMA','Self-service returns + tracking',I.orders],
-    ['Localization & Currency','Arabic / English (RTL), AED/SAR/KWD',I.mkt],['WhatsApp Commerce','Order / cart / stock messages',I.mkt],
-    ['Coupons & Marketing','Coupons, campaigns',I.mkt],['Cart Recovery','Abandoned-cart flows',I.mkt],
-    ['SEO','Meta, schema, sitemaps, redirects',I.mkt],['Email / SMTP','Transactional + delivery log',I.mkt],
-    ['PWA','Installable app, push, offline',I.modules],['Ad & Catalog Feeds','Meta / Google / TikTok',I.mkt],
-    ['Recommendations','FBT, complete-the-routine',I.mkt],['Affiliate / Influencer','Codes & commissions',I.mkt],
-    ['Ingredient Glossary','Ingredient pages + filter',I.catalog],['Stock & Price Alerts','Back-in-stock, price-drop',I.bell],
-    ['Skin Quiz','Quiz + lead capture',I.mkt],['Advanced Search','Typo-tolerant, synonyms',I.catalog]]},
-  {g:'Content',phase:'P5',items:[['KBB Page Builder','Elementor-class builder',I.content],['HTML Blocks','Reusable blocks',I.content],['Blog','Posts & comments',I.content],['Forms','Form builder + submissions',I.content]]},
-  {g:'System',phase:'P6',items:[['Reports & Analytics','Sales & traffic',I.revenue],['Security','IP rules, login protection, 2FA',I.shield],['Import / Export','Migration engine',I.sandbox],['Custom Fields','Extra fields',I.settings],['Cosmetics','Occasion themes + bar',I.theme],['Consent & Privacy','PDPL + cookie consent',I.shield],['Accessibility','WCAG helpers',I.shield],['Bulk Catalog Editing','Large-catalog edits',I.catalog],['AI Agent','On-site assistant',I.bell]]}
-];
-let modState={};
+/* ---------- Modules Manager ----------
+
+   THE HARD-CODED MODULES ARRAY THAT USED TO SIT HERE IS GONE, along with the
+   `modState` that went with it.
+
+   Nothing read either one. The mock Modules screen they fed was deleted some
+   releases ago -- the note further down, beside renderTheme, records why it had
+   to go -- and the real screen is renderModules() above, backed by
+   ModuleRegistry and /admin-api/modules. The array survived its only reader and
+   then sat here as twenty-four lines of prose about this shop that nobody was
+   maintaining, because nobody could see it.
+
+   It is DELETED rather than corrected, and that is the point of this note. A
+   lane reviewing it this round found two of its entries false -- it filed Meta &
+   Facebook under a `built:true` group when renderMeta() says the feature is not
+   installed and ModuleRegistry has no key for it, and it described Product
+   Labels as offering per-product assignment and scheduling, which is precisely
+   the richer mock that was removed for not existing. Those two were the ones
+   somebody happened to look at. In the same array: "Invoices -- Invoice &
+   packing PDFs", when this host cannot generate a PDF at all and the documents
+   are print-ready HTML; "Debug & Monitor -- Error capture, health, AI reports",
+   and there are no AI reports.
+
+   Correcting three claims in a structure nothing renders would leave the rest
+   to rot and leave the next reader believing the array is maintained. The
+   console's real inventory of what exists is ModuleRegistry, and it is one
+   place on purpose. */
 
 /* ---------- Core Updates ----------
    Rendered inside the console like every other screen. The standalone page at
