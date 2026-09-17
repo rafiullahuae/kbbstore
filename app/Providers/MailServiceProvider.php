@@ -159,5 +159,96 @@ class MailServiceProvider extends ServiceProvider
         Event::listen(MessageSent::class, function (MessageSent $event): void {
             $this->app->make(\App\Services\Mail\MailLog::class)->recordSent($event);
         });
+
+        $this->bootOutbound();
+    }
+
+    /**
+     * The two shopper-triggered emails: back-in-stock alerts and basket
+     * reminders (Lane EN).
+     *
+     * REGISTERED HERE for the reason the paragraph above OrderMailObserver
+     * gives about the order emails: this is mail wiring, and a reader looking
+     * for "what sends mail in this app" should find all of it in one provider.
+     * It is also the only place they CAN be registered — `bootstrap/` does not
+     * ship in an update package on this host, so a new provider in
+     * bootstrap/providers.php would never be loaded on the server.
+     */
+    private function bootOutbound(): void
+    {
+        /*
+         * ── THE TRIGGER ─────────────────────────────────────────────────────
+         *
+         * There is no queue worker, no cron and no shell on this host, so a web
+         * request is the only thing that ever executes PHP here. Every request
+         * the application finishes asks whether a sweep is due.
+         * Services\OutboundTick's header sets out what that forces, what it
+         * costs, and what happens when nothing triggers for a week.
+         *
+         * RequestHandled and not a middleware: registering middleware means
+         * editing bootstrap/app.php, which cannot ship. The listener does no
+         * work itself — it hands off to `defer()`, so the sweep runs after the
+         * response has gone to the browser and no shopper waits for SMTP.
+         *
+         * Resolved out of the container INSIDE the closure, not injected, so
+         * attaching this listener costs nothing on a page that never reaches
+         * it — the same property the afterResolving hook above is written to
+         * keep. And with both modules off, which is the shipped state,
+         * onRequest() is one array lookup against a settings cache the request
+         * has already loaded.
+         *
+         * Guarded, because this is attached to the end of EVERY request in the
+         * application including the checkout's: an exception escaping here
+         * would surface as a 500 on a page that has already been rendered.
+         */
+        Event::listen(\Illuminate\Foundation\Http\Events\RequestHandled::class, function (): void {
+            try {
+                $this->app->make(\App\Services\OutboundTick::class)->onRequest();
+            } catch (\Throwable) {
+                // Deliberately silent. See OutboundTick::onRequest().
+            }
+        });
+
+        /*
+         * ── AN ORDER STOPS THE CHASE ────────────────────────────────────────
+         *
+         * A recovery email for an order already placed is worse than sending
+         * nothing, and this is the barrier that matters most against it.
+         *
+         * `created` on Order, so it fires INSIDE Store\CheckoutController's
+         * DB::transaction() — the cancellation commits with the order or rolls
+         * back with it, and there is no instant at which an order exists and a
+         * live recovery row for its address does not.
+         *
+         * An Eloquent event and not a call in the checkout for the reason
+         * OrderMailObserver's header gives about order status: orders are
+         * created from more than one place (the checkout and
+         * Services\ManualOrderBuilder), several of them in directories this
+         * lane does not own, and a hook wired into one call site stops working
+         * the day a second appears.
+         *
+         * NOT wrapped in DB::afterCommit(), and that is the one place this
+         * deliberately differs from OrderMailObserver. That class defers
+         * because it SENDS, and sending inside a transaction holds it open
+         * across an SMTP conversation. This writes one indexed UPDATE and must
+         * happen inside the transaction, because being atomic with the order is
+         * the entire point.
+         *
+         * NOTHING HERE MAY THROW: it runs inside the transaction that is
+         * writing a customer's order, and CartRecovery::cancelForEmail()
+         * swallows a missing table for exactly that reason. This catch is the
+         * belt to that braces — a failed marketing suppression must never be
+         * the thing that fails a sale.
+         */
+        \App\Models\Order::created(function (\App\Models\Order $order): void {
+            try {
+                $this->app->make(\App\Services\CartRecovery::class)
+                    ->cancelForEmail((string) $order->email, 'ordered');
+            } catch (\Throwable) {
+                // See above. A sale must not fail because a reminder could not
+                // be cancelled; the sweep's own cart-status check (barrier 4)
+                // still catches the converted cart.
+            }
+        });
     }
 }

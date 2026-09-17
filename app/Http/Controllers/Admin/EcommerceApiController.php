@@ -50,8 +50,50 @@ class EcommerceApiController extends Controller
                     'freeship' => ['Free delivery', 'The progress bar shoppers see as they approach the threshold.', 'truck', ['freeship_bar', 'freeship_bar_style']],
                     'drawer' => ['Mini-cart drawer', 'The panel that slides in when something is added.', 'bag', ['minicart_promo', 'show_browsed']],
                     'coupons' => ['Coupons', 'The hint under the coupon box on the cart page.', 'pct', ['cart_coupon_text']],
+                    /*
+                     * The `abandoned_cart` module's wording and schedule —
+                     * Lane EN. Here rather than on a bespoke screen for the
+                     * reason the back-in-stock section on the Product page tab
+                     * gives: this schema draws its own controls, and a screen
+                     * of its own would have meant editing
+                     * resources/views/admin/app.blade.php, which this lane does
+                     * not own.
+                     *
+                     * The switch is on Store → Modules. These four boxes are
+                     * the words and the timing, and every one of them ships
+                     * empty — see Services\CartRecovery's header for what each
+                     * empty box stops.
+                     */
+                    'reminders' => ['Basket reminders', 'The opt-in box on the cart page, the email it leads to, and when it is sent. Leave these empty and no box appears and nothing is sent, whatever the switch on Store → Modules says.', 'bag',
+                        ['cart_recovery_optin_label', 'cart_recovery_subject', 'cart_recovery_body', 'cart_recovery_schedule']],
                 ],
                 'fields' => [
+                    /*
+                     * FOUR BLANK BOXES, AND THEY FAIL IN DIFFERENT PLACES ON
+                     * PURPOSE.
+                     *
+                     *   optin_label  blank -> no tick box, so no address is
+                     *                ever collected.
+                     *   subject/body blank -> nothing is sent, though addresses
+                     *                already given are kept and will be used
+                     *                once the words are written. That is the
+                     *                deliberate asymmetry: consent is worth
+                     *                honouring from the moment it is given, and
+                     *                Store → Mail → Sent mail names the gap in
+                     *                words rather than letting it be silent.
+                     *   schedule     blank -> there is no time at which
+                     *                anything is due, so nothing is sent.
+                     *
+                     * The schedule is deliberately NOT given a default. How
+                     * long after, and how many messages, is the owner's
+                     * judgement about his own customers, not a number a
+                     * developer picks — and a default here would start a shop
+                     * emailing people on a timetable nobody chose.
+                     */
+                    'cart_recovery_optin_label' => ['textarea', 'Opt-in text', '', 'The line beside the tick box on the cart page, e.g. “Email me a reminder about this basket.” Empty means no box, and no addresses collected.'],
+                    'cart_recovery_subject'     => ['text', 'Reminder subject line', '', 'Used exactly as written, for every message in the sequence. Empty means nothing is ever sent.'],
+                    'cart_recovery_body'        => ['textarea', 'Reminder message', '', 'Your own words. The basket contents, a link back to it, the reason the email arrived and the unsubscribe link are added for you. Empty means nothing is ever sent.'],
+                    'cart_recovery_schedule'    => ['text', 'When to send', '', 'Hours after the shopper ticks the box, separated by commas — “4, 24” sends two reminders, one at four hours and one at twenty-four. Each is measured from the tick, not from the previous message. Empty means nothing is ever sent.'],
                     'freeship_bar'        => ['bool', 'Free-delivery progress bar', true, 'Shown in the cart, drawer and checkout.'],
                     'freeship_bar_style'  => ['select', 'Bar style', 'mint', '', ['mint' => 'Mint', 'candy' => 'Candy', 'gold' => 'Gold', 'mono' => 'Mono', 'rider' => 'Rider']],
                     'minicart_promo'      => ['textarea', 'Mini-cart promo line', '', 'Appears above the subtotal in the drawer. HTML allowed.'],
@@ -175,6 +217,29 @@ class EcommerceApiController extends Controller
                         ['review_capsule_style', 'review_badge_heart', 'review_badge_avg', 'review_badge_count',
                          'review_badge_label', 'review_badge_sold', 'review_badge_colour']],
                     'bundles' => ['Quantity bundles', 'Buy-more-save-more tiers on every product.', 'box', ['bundles_enabled']],
+                    /*
+                     * The `back_in_stock` module's wording — Lane EN.
+                     *
+                     * HERE rather than on a screen of its own, and for exactly
+                     * the reason the legal-notice section above gives: this
+                     * schema is "a deliberate step towards the Phase 3 schema
+                     * renderer", the console draws these tabs generically, and
+                     * a field added to the list below gets a real control with
+                     * NO change to resources/views/admin/app.blade.php — which
+                     * no single lane owns and which this lane is forbidden to
+                     * edit. A bespoke screen would have needed one.
+                     *
+                     * THE SWITCH IS NOT HERE. It is on Store → Modules, like
+                     * every other module's, and duplicating it would be the
+                     * "two screens editing one setting" fault this file already
+                     * records against the VAT fields. These three boxes are the
+                     * WORDS only, and all three ship empty: with the module on
+                     * and these blank, the form does not appear and nothing is
+                     * ever sent. Services\StockAlerts' header sets out why both
+                     * halves are needed and why neither has a default.
+                     */
+                    'stockalert' => ['Back-in-stock alerts', 'The notify-me form on sold-out products, and the email it leads to. Leave these empty and nothing appears and nothing is sent, whatever the switch on Store → Modules says.', 'box',
+                        ['stock_alert_form_label', 'stock_alert_subject', 'stock_alert_body']],
                     'fbt' => ['Frequently bought together', 'A companion-products block below the buy box.', 'box', ['frequently_bought', 'fbt_title', 'fbt_count']],
                     'ratings' => ['Ratings', 'How the review score is shown.', 'star', ['review_capsule_style']],
                     /*
@@ -211,6 +276,28 @@ class EcommerceApiController extends Controller
                     'trust' => ['Trust row', 'The chips under Add to cart. The delivery chip is written per country under Store → Delivery & Shipping → Delivery lines, so every screen agrees; blank means the chip is not shown — write only what the shop actually does.', 'shield', ['trust_returns_text']],
                 ],
                 'fields' => [
+                    /*
+                     * BLANK DEFAULTS, and unlike most blank defaults on this
+                     * screen these three are the feature's safety catch rather
+                     * than a nicety — Lane EN.
+                     *
+                     * Read by Services\StockAlerts, which refuses to show the
+                     * form without the first and refuses to SEND without both
+                     * the second and the third. A default sentence here would
+                     * mean a shop that switched the module on to see what it did
+                     * started emailing its customers in words nobody wrote. The
+                     * `checkout_legal_text` field above is blank for the same
+                     * reason and Support\CheckoutLegalNotice's header argues it
+                     * at length.
+                     *
+                     * SettingsService::get() returns its default only when the
+                     * row is ABSENT and an owner who clears a box stores '' —
+                     * so the default and the cleared state have to be the same
+                     * value, and they are.
+                     */
+                    'stock_alert_form_label' => ['textarea', 'Notify-me form text', '', 'The line above the form on a sold-out product, e.g. “Sold out — we will email you the moment it is back.” Empty means no form at all.'],
+                    'stock_alert_subject'    => ['text', 'Alert subject line', '', 'Used exactly as written. Do not put the product name in it — a subject shows on a locked phone screen and in every mail server’s log. Empty means nothing is ever sent.'],
+                    'stock_alert_body'       => ['textarea', 'Alert message', '', 'Your own words. The product name, a link to it, the reason the email arrived and the unsubscribe link are added for you. Empty means nothing is ever sent.'],
                     'bundles_enabled'       => ['bool', 'Quantity bundles', true, 'Tiers are configured in Appearance → Quantity bundles.'],
                     'frequently_bought'     => ['bool', 'Frequently bought together', false, ''],
                     'fbt_title'             => ['text', 'Bundle block title', 'Complete your routine', ''],

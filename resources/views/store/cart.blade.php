@@ -28,6 +28,20 @@
         <div id="cartInner">
             @include('store.cart-inner')
         </div>
+
+        {{-- "Email me a reminder about this basket" (Lane EN).
+
+             OUTSIDE #cartInner deliberately. cart.js replaces the contents of
+             that div wholesale whenever a quantity changes or a line is
+             removed, so a form living inside it would be torn out and rebuilt
+             mid-typing, losing whatever the shopper had entered. Out here it
+             survives every cart edit.
+
+             Renders nothing unless the abandoned_cart module is on AND the
+             owner has written the line beside the tick box — both ship as they
+             ship, so applying the package changes this page by exactly nothing.
+             partials/cart-reminder.blade.php carries the reasoning. --}}
+        @include('partials.cart-reminder', ['reminderLabel' => app(\App\Services\CartRecovery::class)->optInLabel()])
     </div>
 </div>
 @endsection

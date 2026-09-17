@@ -332,8 +332,43 @@ class ModuleRegistry
         'frequently_bought' => ['catalogue', 'Frequently Bought Together', 'A “Complete your routine” block on product pages — the main item plus matches (from WooCommerce cross-sells or the same category), with one-click add-all. Lifts average order value. Off by default.', false, 'Its own screen', '', 'product', 'mid', 'The Complete your routine block on the product page.', 'live'],
         // ── Marketing ──
         'marketing_pixels' => ['marketing', 'Marketing Pixels', 'Meta Pixel, Google (GA4) and TikTok tags with standard e-commerce events (view, checkout, purchase). Off by default — add your IDs to activate.', false, 'Growth & Marketing → Marketing Pixels', 'pixels', 'site', 'all', 'Meta, GA4 and TikTok tags on every page. Nothing visible.', 'live'],
-        'abandoned_cart' => ['marketing', 'Abandoned Cart Recovery', 'Captures carts and emails a one-click recovery link at your chosen intervals via your normal mailer. Off by default.', false, 'Its own screen', '', 'site', 'all', 'Captures carts and emails a recovery link. Nothing visible.', 'todo'],
-        'back_in_stock' => ['marketing', 'Back-in-Stock Alerts', 'A “notify me” form on sold-out products; emails everyone the moment it restocks. Doubles as a demand list for what to reorder. Off by default.', false, 'Its own screen', '', 'product', 'mid', 'A notify-me form in place of Add to cart when sold out.', 'todo'],
+        /*
+         * These two said "blocked on mail, which this app has never sent" and
+         * were marked `todo` on that basis. That is no longer true and has not
+         * been since 2.60.199: MailSettings::DEFAULT_TRANSPORT is the server's
+         * own mail(), five order emails are live, and every message this shop
+         * hands to a transport is recorded in `mail_deliveries` with its
+         * Message-ID and the provider's exact refusal.
+         *
+         * Both are now BUILT and both are `live` — Services\CartRecovery and
+         * Services\StockAlerts each read their key here, and the storefront
+         * renders a form from each. They remain OFF by default and, separately,
+         * carry no wording of their own, so switching one on still changes
+         * nothing a shopper sees until the owner writes the words. That is the
+         * `legal_notice` shape, deliberately.
+         *
+         * The descriptions are edited to match what was actually built rather
+         * than what the plugin's blurb promised, because a description is the
+         * only thing the owner reads before flipping a switch:
+         *
+         *   - "one-click recovery link" is gone. The reminder names the basket
+         *     and links to each item's own page; it does NOT carry a link that
+         *     restores a shopping session, because such a link is a bearer
+         *     credential for somebody's basket and checkout details.
+         *     App\Mail\CartRecoveryReminder's header argues it, and whether the
+         *     owner wants the stronger version is a hand-back question.
+         *   - "at your chosen intervals" now says the schedule starts empty,
+         *     because an empty schedule sends nothing and that is the shipped
+         *     state.
+         *   - "emails everyone the moment it restocks" becomes "when the shop
+         *     is next visited", which is the truth on a host with no scheduler.
+         *     Services\OutboundTick's header sets out why.
+         *   - "in place of Add to cart" becomes "under", which is where the form
+         *     was actually put. partials/notify-me.blade.php argues the choice
+         *     and the hand-back asks the owner to confirm it.
+         */
+        'abandoned_cart' => ['marketing', 'Abandoned Cart Recovery', 'An opt-in tick box on the cart page; emails a reminder naming the basket, on a schedule you write. Stops the moment an order is placed. Off by default, and sends nothing until you write the message and the schedule.', false, 'Store → Ecommerce → Cart', 'ecommerce', 'site', 'all', 'A tick box under the basket on the cart page.', 'live'],
+        'back_in_stock' => ['marketing', 'Back-in-Stock Alerts', 'A “notify me” form under Add to cart on sold-out products; emails everyone who asked, once each, when the shop is next visited after it restocks. Doubles as a demand list for what to reorder. Off by default, and sends nothing until you write the message.', false, 'Store → Ecommerce → Product page', 'ecommerce', 'product', 'mid', 'A notify-me form under Add to cart when sold out.', 'live'],
         'newsletter' => ['marketing', 'Email Capture', 'A signup form ([kbb_signup]) with an optional timed popup. Stores subscribers locally with one-click CSV export for any email tool. No API key. Off by default.', false, 'Appearance → Homepage', 'newsletter', 'home', 'bottom', 'The signup panel near the foot of the homepage.', 'elsewhere'],
         // ── Performance ──
         'performance' => ['performance', 'Performance & Speed', 'Core Web Vitals wins: strips WordPress bloat, lazy-loads iframes, throttles heartbeat, and adds preconnect/preload. Every tweak is individually toggleable. Off by default.', false, 'Its own screen', '', 'site', 'all', 'Lazy loading and asset trimming. Nothing visible.', 'todo'],
