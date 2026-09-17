@@ -20066,6 +20066,16 @@ buildNav();
      switches are absent-means-off and nothing here seeds a row. --}}
 @include('admin.partials.translation-screens')
 
+{{-- Catalog → Build my routine (Lane FM). The role each product plays, which
+     products are still untagged, the eight routines and the module's two
+     settings. It registers its own sidebar entry inside the Catalog group and
+     wraps window.go, exactly as the screens above do, so this include is the
+     whole of the change to this file.
+
+     It changes nothing on the live shop by being applied: the module ships off,
+     and with it off /routines is a 404 and no other page differs by a byte. --}}
+@include('admin.partials.routines-screen')
+
 @verbatim
 </body>
 </html>

@@ -182,24 +182,31 @@
     return found ? found.label : key;
   }
 
-  /* -------------------------------------------------------- sidebar entry */
+  /* -------------------------------------------------------- sidebar entry
+     INTEGRATOR: this was a hand-rolled copy and two live guards in
+     AdminNavAndIdsTest caught it the moment the partial was included — which is
+     the moment the lane's own branch could not reach, because nothing included
+     it there.
+
+     Both findings were real. `if (!anchor) return;` answers a missing anchor by
+     REMOVING THE SCREEN FROM THE SIDEBAR, silently: rename or reorder the
+     Catalog group and Build my routine stops existing for the owner while every
+     endpoint behind it keeps answering. And a hand-built <button> is a second
+     copy of the row's class name and icon markup, free to drift from the nine
+     screens beside it.
+
+     kbbAddNavEntry() is the shared version: the intended position, then the end
+     of the named group, then the sidebar itself, and a console error naming this
+     screen if it gets that far. Nothing is lost — the row lands in the same
+     place, after the product editor, inside Catalog. */
   function addNavEntry(){
-    if (document.querySelector('[data-go="' + SCREEN + '"]')) return;
-
-    // Inside the Catalog group, because tagging a product with the step it
-    // fills is catalogue work and the owner is already in that group when
-    // they are thinking about products.
-    var anchor = document.querySelector('#nav [data-go="product-editor"]')
-              || document.querySelector('#nav [data-go="catalog"]');
-    if (!anchor) return;
-
-    var b = document.createElement('button');
-    b.className = 'nav-item';
-    b.dataset.go = SCREEN;
-    b.innerHTML = icon('<path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="15" cy="18" r="2"/>')
-                + '<span>Build my routine</span>';
-    b.onclick = function(){ window.go(SCREEN); };
-    anchor.parentNode.insertBefore(b, anchor.nextSibling);
+    window.kbbAddNavEntry({
+      screen: SCREEN,
+      label:  'Build my routine',
+      icon:   '<path d="M4 6h10"/><path d="M4 12h16"/><path d="M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="15" cy="18" r="2"/>',
+      group:  'Catalog',
+      after:  ['product-editor', 'catalog']
+    });
   }
 
   /* ------------------------------------------------------------ the route */

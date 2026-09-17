@@ -156,6 +156,15 @@ Route::get('/checkout/success', [\App\Http\Controllers\Store\CheckoutController:
 Route::get('/checkout/pending', fn () => redirect(\App\Support\Url::redirect('/checkout/')))->name('checkout.pending');
 Route::get('/skin-quiz',   [PageController::class, 'skinQuiz'])->name('skin-quiz');
 Route::get('/reviews',     [PageController::class, 'reviewWall'])->name('review-wall');
+
+// Phase 10 — Build my routine. Two storefront pages, at the storefront level
+// and in no group: they publish nothing a shop page does not already publish,
+// because the cards are the shop's own component. Both 404 unless the module is
+// on, and it ships off. Mounted BEFORE the root catch-all at the end of this
+// file, and 'routines' is in Store\PageController::RESERVED_SLUGS so an editor
+// cannot publish a post at an address this route owns.
+require __DIR__.'/build-my-routine.php';
+
 // The journal. Four places publish /skincare-guide/ -- the homepage twice plus
 // every post card, MenuDemo's Blog node, MegaMenuApiController, the admin Pages
 // registry and the health check -- and nothing routed it, so all of those were
@@ -468,6 +477,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // create endpoints above, so mounting both is safe; the older create
         // path is the one to retire once this screen has been used in anger.
         require __DIR__.'/product-editor-admin.php';
+
+        // Catalog → Build my routine: role tagging, the routines and the
+        // module's settings. Same guarded group as the rest of admin-api —
+        // GET /admin-api/routine-products lists every product INCLUDING drafts
+        // and scheduled rows with their SKUs, which is an inventory of the shop
+        // and never belongs in routes/api.php.
+        require __DIR__.'/build-my-routine-admin.php';
 
         // The product editor's per-admin panel arrangement. Same guarded
         // group: it reads and writes a preference row keyed to the signed-in

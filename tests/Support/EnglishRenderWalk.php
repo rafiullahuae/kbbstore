@@ -364,6 +364,25 @@ final class EnglishRenderWalk
             'super-sale' => ['render' => true],
             'everything-under-54-aed' => ['render' => true],
 
+            // --- build my routine (Lane FM) ----------------------------------
+            /*
+             * BOTH 404 IN A SHOP'S DEFAULT STATE, and that is the point rather
+             * than a gap. The module ships OFF, this walk seeds a default shop,
+             * and with it off the controller answers 404 — so there is no
+             * English body here to pin against the base commit. The pages
+             * switched ON are covered by BuildMyRoutineTest, which also holds
+             * the byte-identical check on every other storefront page in both
+             * states. Listing them as `render => true` would pin a 404 page and
+             * then go red the day the owner switches the module on, which is
+             * the wrong way round.
+             */
+            'routines' => ['render' => false, 'why' => '404 while the Build my routine module is off, which is how it ships'],
+            'routines/{concern}' => [
+                'params' => ['concern' => 'acne'],
+                'render' => false,
+                'why' => '404 while the Build my routine module is off, which is how it ships',
+            ],
+
             // --- brands ------------------------------------------------------
             'korean-skincare-brands' => ['render' => true],
             'korean-skincare-brands/{slug}' => ['params' => ['slug' => $brandSlug], 'render' => true],
