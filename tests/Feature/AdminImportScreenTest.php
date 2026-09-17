@@ -230,7 +230,13 @@ it('never mounts an import endpoint under the unauthenticated /api prefix', func
  */
 it('takes no entity through a URL segment', function () {
     foreach (ImportAdminRoutes::registered() as $route) {
-        expect($route->uri())->not->toContain('{', $route->uri().' takes a route parameter');
+        /*
+         * str_contains() inside toBeFalse(). ->not->toContain('{', $message) is
+         * not a guard: toContain() is VARIADIC, the message is a second needle,
+         * and `not` passes because no URI contains "... takes a route
+         * parameter". Measured with '{' appended to every URI -- still green.
+         */
+        expect(str_contains($route->uri(), '{'))->toBeFalse($route->uri().' takes a route parameter');
     }
 });
 

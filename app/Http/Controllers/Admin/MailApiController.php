@@ -121,11 +121,23 @@ class MailApiController extends Controller
          * it" (or, for the password, "unchanged"). Applying `email` or
          * `integer` to a blank string would reject a perfectly ordinary save --
          * clearing the port to fall back to the default, for one.
+         *
+         * NULL IS WHAT A BLANK BOX ACTUALLY ARRIVES AS, and that is the half
+         * this skip was missing. Laravel's global ConvertEmptyStringsToNull
+         * runs before the controller, so the '' this test was written for
+         * never reaches it -- `is_string(null)` is false, the skip did not
+         * fire, and the `string` and `email` rules were applied to a null.
+         * Measured: {"settings":{"mail_host":""}} answered 422 "The
+         * settings.mail host field must be a string." Eight of this screen's
+         * fifteen boxes refused to be cleared, which on a fresh store is every
+         * box under the SMTP option. Same trap as
+         * EcommerceApiController::castText() and the `nullable` note in
+         * ReviewSettingsApiController.
          */
         $rules = [];
 
         foreach ($values as $key => $value) {
-            if (is_string($value) && trim($value) === '') {
+            if ($value === null || (is_string($value) && trim($value) === '')) {
                 continue;
             }
 

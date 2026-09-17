@@ -1,5 +1,29 @@
 @verbatim<!DOCTYPE html>
-<html lang="en">
+@endverbatim{{--
+    THE DOCUMENT SAYS WHICH LANGUAGE IT IS IN.
+
+    This page carries its own <html> and does not extend
+    layouts/store.blade.php, so it never picked up the two attributes that
+    layout has emitted since the bilingual foundation landed. /ar/ served this
+    document with a correct Arabic canonical and a correct hreflang set while
+    declaring itself English -- a lie to every screen reader, hyphenator and
+    translation tool that reads the attribute, on the pages a shopper is most
+    likely to read with one.
+
+    `dir` GOES THROUGH Locale::direction(), NEVER THROUGH THE LANGUAGE. This
+    shop has two switches and not one: Arabic can be live while the mirrored
+    layout is still being built, and direction() is the single place that
+    answers which of the two states the shop is in. That is the contract
+    resources/views/invoices/document.blade.php sets out at length and
+    layouts/store.blade.php already follows; this is the same two attributes,
+    not a second opinion on them.
+
+    WHAT IS STILL PHYSICAL. The stylesheet below is inline and this file's own.
+    Turning the mirrored layout on gives this document the right TEXT direction
+    and not yet a mirrored layout, and it does not give it an Arabic-capable
+    webfont either. Both measured, named and left for their owners in
+    docs/rtl-standalone-documents.md rather than papered over here.
+--}}<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}">@verbatim
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -57,8 +81,23 @@
   footer a{color:rgba(255,255,255,.75);text-decoration:none}footer a:hover{color:#fff}
   .navov{position:fixed;inset:0;background:rgba(42,34,40,.42);z-index:105;opacity:0;visibility:hidden;transition:.3s}
   .navov.on{opacity:1;visibility:visible}
-  /* RTL-PHYSICAL: off-canvas panel — inset paired with translateX(-100%). */
-  .mnav{position:fixed;top:0;left:0;height:100%;width:290px;max-width:85vw;background:#fff;z-index:110;transform:translateX(-100%);transition:.3s var(--ease);padding:20px;display:flex;flex-direction:column}
+  /* THE MOBILE NAV, MIRRORED (Lane FK, completing T6 §11.4's deferral).
+     The RTL lane converted every other off-canvas panel and left this one
+     physical for a stated reason: "[dir="rtl"] cannot match there", because
+     this document hard-coded <html lang="en"> with no dir at all, so the
+     conversion bought nothing while changing a live page's English bytes. It
+     asked for it to be done "when someone gives those views a real <html dir>,
+     in one change that repins the guard once". That is this change.
+
+     The inset is logical AND the transform is flipped, because translateX has
+     no logical form: inset-inline-start alone would pin the panel to the
+     reading edge under RTL while translateX(-100%) went on pushing it the other
+     way — out of the viewport in English, INTO it in Arabic. The override sits
+     before .mnav.on deliberately, so the open state still wins on equal
+     specificity. Both halves copied from kbb.css's own .mnav, which is this
+     same panel in the shared layout. */
+  .mnav{position:fixed;top:0;inset-inline-start:0;height:100%;width:290px;max-width:85vw;background:#fff;z-index:110;transform:translateX(-100%);transition:.3s var(--ease);padding:20px;display:flex;flex-direction:column}
+  [dir="rtl"] .mnav{transform:translateX(100%)}
   .mnav.on{transform:none}
   .mnav a{padding:14px 6px;text-decoration:none;font-weight:500;border-bottom:1px solid var(--line-2)}
   .mnav-x{align-self:flex-end;font-size:20px;background:none;border:none;color:var(--ink-2);cursor:pointer;margin-bottom:6px}

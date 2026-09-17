@@ -403,6 +403,12 @@ it('leaves every bundle row on a whole-dirham product exactly as it was', functi
     $html = test()->get('/product/' . $product->slug)->assertOk()->getContent();
 
     foreach (pdtAmountsIn($html, 'id="variants"', 1600) as $figure) {
-        expect($figure)->not->toContain('.', "a whole-dirham product grew decimals: {$figure}");
+        /*
+         * str_contains() inside toBeFalse(). ->not->toContain('.', $message)
+         * asserted nothing: toContain() is VARIADIC, the message was a second
+         * needle, and `not` passed because no figure contains that sentence.
+         * Measured with '.' appended to every figure -- still green.
+         */
+        expect(str_contains($figure, '.'))->toBeFalse("a whole-dirham product grew decimals: {$figure}");
     }
 });

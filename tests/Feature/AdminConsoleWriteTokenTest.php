@@ -198,7 +198,24 @@ it('reads no csrf-token meta tag unless the document actually renders one', func
         || str_contains($raw, 'meta[name="csrf-token"]');
 
     if (! $readsTag) {
-        expect(true)->toBeTrue();
+        /*
+         * NOT expect(true)->toBeTrue(), which is what stood here (Lane FK).
+         * An expectation on a constant cannot fail, and this one sat on the
+         * branch the test's own title describes -- so the case the test is
+         * NAMED for was the case it asserted nothing about, while still being
+         * counted as coverage of it.
+         *
+         * There is exactly one way this branch can be a lie, and it is asked
+         * instead: str_contains('') is false for every needle, so a console
+         * this process could not read takes this path and reports success over
+         * a file nobody opened. The console is 1.2MB; a hundred kilobytes is a
+         * floor no real version of it can fall below and no empty read can
+         * reach.
+         */
+        expect(strlen($raw))->toBeGreaterThan(
+            100000,
+            'the admin console could not be read, so "it reads no csrf-token meta tag" is a fact about an empty string'
+        );
 
         return;
     }

@@ -161,8 +161,50 @@ final class EnglishRenderWalk
      * the div and the comments above it close on the markup, so the slider is
      * conditional without moving a single space. See the comments in
      * store/home.blade.php, which say so at each of the three places.
+     *
+     * ── MOVED AGAIN — LANE FK (the five standalone documents) ──────────────
+     *
+     * FOUR PAGES, ONE ATTRIBUTE, AND THE DIFF WAS READ BEFORE IT WAS APPROVED.
+     * The whole of what changed on skincare-guide, a post page, skin-quiz and
+     * reviews is this, at byte 16 of each document and nowhere else:
+     *
+     *     before   <html lang="en">
+     *     after    <html lang="en" dir="ltr">
+     *
+     * Not one other byte moved on any of the four — no whitespace, no reflow,
+     * no copy. The five pages that carry their own <html> (store/app is the
+     * fifth and is admin-only, so this walk does not reach it) never picked up
+     * the lang and dir that layouts/store.blade.php has emitted since the
+     * bilingual foundation landed, so /ar/skincare-guide/ served Arabic chrome
+     * under lang="en" and stated no direction at all. Both attributes come from
+     * Locale now, which on an English page resolves to exactly what the first
+     * of them was hard-coded to and makes the second one explicit.
+     *
+     * `dir="ltr"` IS AN ADDITION TO THE ENGLISH PAGE and that is the point: a
+     * document that states its direction is a document the mirrored layout can
+     * be switched on under. It is what the shared layout already prints on
+     * every other page of the shop, so the four are now consistent with it
+     * rather than exceptions to it. Pinned from the other side in
+     * tests/Feature/StandaloneDocumentsDeclareTheirLanguageTest.php, which
+     * asserts the exact tag on all six documents in all three switch states —
+     * that assertion is what this constant cannot do for its own move. See
+     * docs/rtl-standalone-documents.md.
+     *
+     * It carries the RTL manual half's moves and Lane FO's hero as well as this
+     * one; all three had landed by the commit named below.
+     *
+     * AND ONE CSS DECLARATION, in the same lane and for the same reason. Giving
+     * those documents a real `dir` is what unblocked T6 §11.4's deferred
+     * `.mnav` conversion, so blog and post also moved `left: 0` to
+     * `inset-inline-start: 0` and gained one `[dir="rtl"]` rule that cannot
+     * match in an English document. In LTR `inset-inline-start` IS `left`, so
+     * the four pages render identically — what moved is the bytes of the
+     * <style> block the browser is sent, which is exactly the kind of change
+     * this walk exists to put in front of someone.
+     *
+     * The commit named below is the one that made both moves.
      */
-    public const BASE_COMMIT = '08d6b82f2e161a602a93b88cf8976806412b4748';
+    public const BASE_COMMIT = '44d4f12edc970b459a06f2e08c8e0b2c5d4940e7';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

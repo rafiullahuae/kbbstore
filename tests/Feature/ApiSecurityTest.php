@@ -685,7 +685,16 @@ it('keeps every gateway config key out of the public settings allowlist', functi
     // is present", so a gateway adding a field cannot quietly widen this.
     foreach (app(\App\Services\Payments\GatewayRegistry::class)->all() as $gateway) {
         foreach (array_keys($gateway->configSchema()) as $key) {
-            expect($served)->not->toContain($key, $gateway->id() . '.' . $key);
+            /*
+             * in_array() inside toBeFalse(). ->not->toContain($key, $label)
+             * asserted nothing -- toContain() is VARIADIC, the label was a
+             * second needle, and `not` passed because 'stripe.secret_key' is
+             * never itself a served key. Measured with each gateway key pushed
+             * onto $served: still green. Two sweeps in this file were repaired
+             * for the same reason (lines 669 and 866); this third one was
+             * missed.
+             */
+            expect(in_array($key, $served, true))->toBeFalse($gateway->id() . '.' . $key);
         }
     }
 });

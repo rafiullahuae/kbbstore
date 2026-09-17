@@ -192,7 +192,16 @@ it('never puts a SELECT alias in a WHERE clause', function () {
         $clause = substr($outer, $where);
 
         foreach ($aliases as $alias) {
-            expect($clause)->not->toContain('"' . $alias . '"',
+            /*
+             * str_contains() inside toBeFalse(), never
+             * ->not->toContain($needle, $message). toContain() is VARIADIC, so
+             * the message was a SECOND NEEDLE and `not` passed the moment the
+             * positive expectation failed for any reason -- including "this
+             * WHERE clause does not contain that whole sentence", which it
+             * never does. Measured: with '"o"' appended to $clause the old form
+             * stayed green. This form goes red.
+             */
+            expect(str_contains($clause, '"' . $alias . '"'))->toBeFalse(
                 'the alias ' . $alias . ' is used in a WHERE clause, which MySQL will not resolve:' . "\n" . $statement->sql);
         }
     }
