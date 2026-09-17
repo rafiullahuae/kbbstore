@@ -183,9 +183,17 @@
       <div class="bb-price" id="bbPrice">{{-- The current price is always inside .now, on sale or not.
         Without it an ordinary price rendered bare and then jumped in size the
         moment a bundle was selected, because the update adds the span. --}}
-        <span class="now">{!! Money::format($price) !!}</span>
+        {{-- The struck price and the live price are quoted at ONE precision,
+             chosen so the two are actually different numbers. Whole dirhams is
+             this store's display setting, and at whole dirhams a markdown from
+             AED 100.00 to AED 99.80 printed `AED 100` inside .now and `AED 100`
+             inside the <s> beside it. See Money::decimalsToDistinguish(): it
+             answers 0 — no change at all — for every markdown the rounded form
+             can already tell apart. --}}
+        @php $kbbSaleDp = $onSale ? Money::decimalsToDistinguish((int) $product->price, $price) : null; @endphp
+        <span class="now">{!! Money::format($price, $kbbSaleDp) !!}</span>
         @if ($onSale)
-            <s>{!! Money::format((int) $product->price) !!}</s>
+            <s>{!! Money::format((int) $product->price, $kbbSaleDp) !!}</s>
             @if ($off)<span class="off">-{{ $off }}%</span>@endif
         @endif
       </div>
@@ -203,13 +211,19 @@
               $vreg  = (int) ($v->price ?: $vsale);
               $oos   = ! $v->inStock();
               $voff  = ($vreg > 0 && $vsale < $vreg) ? (int) round((1 - $vsale / $vreg) * 100) : 0;
+              // Same collision as the main price block, one level down: two
+              // options priced 10000 and 9980 fils both printed "AED 100", so
+              // the row struck a price through and quoted the identical number
+              // next to it, sometimes under a "Save 0%" — no, under nothing,
+              // because $voff guards that — which left the strike unexplained.
+              $vdp   = ($vsale < $vreg) ? Money::decimalsToDistinguish($vreg, $vsale) : null;
             @endphp
             {{-- Selected by identity, not by index: the highlighted row is the
                  first one that can be bought, which is the same row the hidden
                  field below is set to. `0 === $n` selected nothing at all when
                  option 0 was sold out. --}}
-            <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale) }}">
-              @if ($v->image)<span class="vsw" style="background-image:url('{{ $v->image }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: 'Option ' . ($n + 1) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg) !!}</s>@endif{!! Money::format($vsale) !!}</span>@if ($oos)<span class="vtag sold">Sold out</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">Save {{ $voff }}%</span>@endif
+            <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale, $vdp) }}">
+              @if ($v->image)<span class="vsw" style="background-image:url('{{ $v->image }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: 'Option ' . ($n + 1) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">Sold out</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">Save {{ $voff }}%</span>@endif
             </div>
           @endforeach
         </div>
@@ -224,8 +238,9 @@
         <div class="opt-label">Choose your option <span id="optNote">Save more with bundles</span></div>
         <div class="variants" id="variants">
           @foreach ($bundles as $n => $b)
-            <div class="variant{{ 0 === $n ? ' on' : '' }}" data-i="{{ $n }}" data-qty="{{ $b['qty'] }}" data-price="{{ Money::plain($b['total']) }}">
-              <span class="vr"></span><span class="vn">{{ $b['label'] }}</span><span class="vp">@if ($b['saved'] > 0)<s>{!! Money::format($b['was']) !!}</s>@endif{!! Money::format($b['total']) !!}</span>@if ($b['tag'])<span class="vtag">{{ $b['tag'] }}</span>@endif
+            @php $bdp = $b['saved'] > 0 ? Money::decimalsToDistinguish((int) $b['was'], (int) $b['total']) : null; @endphp
+            <div class="variant{{ 0 === $n ? ' on' : '' }}" data-i="{{ $n }}" data-qty="{{ $b['qty'] }}" data-price="{{ Money::plain($b['total'], $bdp) }}">
+              <span class="vr"></span><span class="vn">{{ $b['label'] }}</span><span class="vp">@if ($b['saved'] > 0)<s>{!! Money::format($b['was'], $bdp) !!}</s>@endif{!! Money::format($b['total'], $bdp) !!}</span>@if ($b['tag'])<span class="vtag">{{ $b['tag'] }}</span>@endif
             </div>
           @endforeach
         </div>
@@ -454,7 +469,12 @@
     </div>
     @endif
     @if ($settings->get('sticky_price', true))
-    <span class="sp" id="stickyPrice"><span class="now">{!! Money::format($price) !!}</span></span>
+    {{-- $kbbSaleDp, not the default: this is the SAME fils the .now span at
+         the top of the page prints, and two renderings of one number on one
+         document must not be quoted at two widths. Without it a page whose
+         price block widened to AED 99.80 carried a sticky bar still reading
+         AED 100. --}}
+    <span class="sp" id="stickyPrice"><span class="now">{!! Money::format($price, $kbbSaleDp) !!}</span></span>
     @endif
     <button class="addcart" type="button" onclick="document.querySelector('.kbb-cart-form .addcart')?.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $settings->get('sticky_label', 'Add to cart') }}</button>
   </div>

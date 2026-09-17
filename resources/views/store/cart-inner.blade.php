@@ -33,6 +33,16 @@
         $free = $totals['free_shipping_threshold'];
         $left = $totals['free_shipping_remaining'] ?? 0;
         $pct  = $totals['free_shipping_percent'] ?? 100;
+
+        /*
+         * The same guard the cart panel carries, and for the same bytes: this
+         * page printed "You're AED 0 away from free delivery" on a basket 30
+         * fils short, above a bar the same @php block fills to 100% because the
+         * percent is rounded too. Zero is the one number this sentence cannot
+         * say while $left > 0, since zero is what "you have it" looks like —
+         * and the 🎉 branch below, which is that state, did not run.
+         */
+        $leftDp = \App\Support\Money::decimalsToDistinguish($left, 0);
     @endphp
     <div class="grid">
         <div>
@@ -40,7 +50,7 @@
             <div class="ship">
                 <div class="t">
                     @if ($left > 0)
-                        You're <b>{!! \App\Support\Money::format($left) !!}</b> away from <b>free delivery</b>
+                        You're <b>{!! \App\Support\Money::format($left, $leftDp) !!}</b> away from <b>free delivery</b>
                     @else
                         🎉 <b>You've unlocked free delivery!</b>
                     @endif
@@ -58,6 +68,13 @@
                         $attrs = $item->variant?->label();
                         $line  = $item->lineTotal();
                         $was   = ($p && $p->isOnSale()) ? (int) $p->price * $item->quantity : 0;
+                        // The struck "was" and the line total are two figures
+                        // off one basket line, so they are quoted at one width
+                        // and at a width that separates them: whole dirhams
+                        // printed both as "AED 100" for a line marked down from
+                        // 10000 to 9980 fils. Money::decimalsToDistinguish()
+                        // returns the store's usual 0 for every other line.
+                        $wasDp = ($was > $line) ? \App\Support\Money::decimalsToDistinguish($was, $line) : null;
                     @endphp
                     <div class="ci">
                         <div class="cth" style="{{ $thumb }}">{{ $img ? '' : Gradient::initials($brand ?: ($p?->name ?? '?')) }}</div>
@@ -72,7 +89,7 @@
                             </div>
                         </div>
                         <div class="cright">
-                            <div class="cpr">{!! \App\Support\Money::format($line) !!}@if ($was > $line)<span class="cwas">{!! \App\Support\Money::format($was) !!}</span>@endif</div>
+                            <div class="cpr">{!! \App\Support\Money::format($line, $wasDp) !!}@if ($was > $line)<span class="cwas">{!! \App\Support\Money::format($was, $wasDp) !!}</span>@endif</div>
                             <button class="crm" type="button" data-kcprm="{{ $item->id }}">Remove</button>
                         </div>
                     </div>

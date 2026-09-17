@@ -274,23 +274,122 @@ class BrandController extends Controller
         $base = rtrim(\App\Services\Seo\SeoSettings::get('site_url', ''), '/');
         $url = $base . Url::to('/korean-skincare-brands/' . $brand->slug . '/');
 
-        $description = trim((string) $brand->description);
-        $image = $banner['image'] ?? null;
+        /*
+         * PER-BRAND SEO OVERRIDES — `brands.seo`, which nothing read until now.
+         *
+         * The column has existed since 2026_10_05_add_category_seo_and_redirects,
+         * whose own header says it is "deliberately identical to `products.seo`
+         * so there is one shape in this app for the SEO overrides of a thing".
+         * Store\ProductController::show() has read that shape on products for
+         * months. Nothing read it here or on categories, so Catalog → Brands
+         * collected a title and a description, saved them, reported success,
+         * and published neither: an owner who filled the boxes in got the
+         * store-wide default description on every brand page, exactly as if
+         * they had left them empty. Reproduced against a running preview by
+         * saving a brand SEO title and fetching the page.
+         *
+         * ProductSeo::normalise() ON THE READ, AND IT IS NOT DECORATION. The
+         * admin screen for brands and categories writes `seo.description`,
+         * while the published vocabulary — ProductSeo::PUBLISHED_KEYS, what
+         * Store\ProductController reads — spells that key `desc`. Reading the
+         * raw array would have found no `desc` and published nothing, which is
+         * the SECOND of the two independent bugs ProductSeo's header records
+         * against products ("the admin's panel collected Yoast-shaped names and
+         * the storefront reads different ones"). ProductSeo::RENAME already
+         * maps `description` to `desc`, so running the stored bag through the
+         * product normaliser is what makes this the SAME mechanism rather than
+         * a parallel one — and it is also what turns a hand-written or
+         * imported `noindex` of "1" into a real bool, which `!empty()` below
+         * relies on.
+         */
+        $override = \App\Support\ProductSeo::normalise($brand->seo) ?? [];
 
-        if (! is_string($image) || trim($image) === '') {
+        $description = trim((string) ($override['desc'] ?? $brand->description));
+
+        /*
+         * THE SHARE IMAGE IS STILL THE PAGE'S OWN HERO unless the owner has
+         * named one. Order: the explicit og_image override, then the banner
+         * photograph this page draws, then the brand logo. Products resolve it
+         * in exactly this order (`$override['og_image'] ?? $product->image`).
+         *
+         * Nothing new is published that the page does not show. `categories.image`
+         * has no storefront consumer at all and is deliberately NOT reached for
+         * anywhere in this class or in ShopController's equivalent — an og:image
+         * for a picture that appears nowhere on the page is a share card that
+         * misrepresents the page, which is the defect this whole lane is about.
+         */
+        $image = trim((string) ($override['og_image'] ?? ''));
+
+        if ($image === '') {
+            $image = is_string($banner['image'] ?? null) ? trim((string) $banner['image']) : '';
+        }
+
+        if ($image === '') {
             $image = trim((string) $brand->logo);
         }
 
-        return array_filter([
+        /*
+         * A CANONICAL OVERRIDE REPLACES THE COMPUTED ONE, as it does on a
+         * product. Url::absolute(), never Url::to(): the override is a path the
+         * OWNER wrote, so it already carries whatever language and prefix they
+         * meant, and Url::to() would strip the locale segment off it and apply
+         * this reader's instead — the exact mistake Url::absolute()'s own
+         * docblock records against hreflang alternates. absolute() also passes
+         * a full http(s) URL through untouched, which is the form the product
+         * editor's canonical box collects.
+         */
+        $canonical = trim((string) ($override['canonical'] ?? ''));
+
+        if ($canonical !== '') {
+            $url = Url::absolute($canonical);
+        }
+
+        /*
+         * NOINDEX. Two halves, and the second is the one that is easy to miss.
+         *
+         * App\Support\Seo::render() turns this into `<meta name="robots"
+         * content="noindex, nofollow">` — that is the page saying it. The
+         * SITEMAP is a separate document that was still advertising the same
+         * URL, and Google reports that pair as "Submitted URL marked noindex"
+         * rather than quietly honouring it; Store\SeoFilesController already
+         * skips noindexed PRODUCTS for that reason and now skips brands and
+         * categories on the same test.
+         *
+         * The hreflang alternates are the third document that could contradict
+         * it. They are emitted by layouts/store.blade.php from
+         * Locale::alternatePaths(), which returns an empty array while Arabic
+         * is off — so a noindexed brand publishes no alternate today. That is a
+         * fact about the current configuration and not a guard, and it is
+         * written up in this lane's report rather than patched from here: the
+         * fix belongs in the layout, which this lane does not own.
+         */
+        $noindex = ! empty($override['noindex']);
+
+        $ctx = array_filter([
             'description' => $description !== '' ? $description : null,
             'image' => $image !== '' ? $image : null,
             'url' => $url,
+            'noindex' => $noindex ?: null,
             'breadcrumb' => [
                 ['name' => 'Home', 'url' => $base . Url::to('/')],
                 ['name' => 'Brands', 'url' => $base . Url::to('/korean-skincare-brands/')],
                 ['name' => $brand->name, 'url' => $url],
             ],
         ], static fn ($v) => $v !== null);
+
+        /*
+         * `title_is_final`, exactly as Store\ProductController::show() sets it:
+         * a title the owner typed is the WHOLE title, with the site name not
+         * appended. Set only when there is one, so an empty box still goes
+         * through `seo_title_template` and reads " | K-Beauty Bliss" as every
+         * other page does.
+         */
+        if (! empty($override['title'])) {
+            $ctx['title'] = $override['title'];
+            $ctx['title_is_final'] = true;
+        }
+
+        return $ctx;
     }
 
     /**

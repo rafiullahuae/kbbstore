@@ -15,6 +15,34 @@
     $free  = $totals['free_shipping_threshold'];
     $left  = $totals['free_shipping_remaining'] ?? 0;
 
+    /*
+     * THE BAR'S FILL COMES FROM THE SERVICE, not from a second division here.
+     *
+     * CartService::totals() computes `free_shipping_percent` and its comment
+     * says why: "Same basis as $toFree above, or the bar's fill and its caption
+     * would tell two different stories about one basket." This panel was the
+     * copy that did not use it — `$sub / $free * 100` — so one basket 30 fils
+     * short filled this bar to 99.667774086379% while the cart page, reading
+     * the service, filled its own to 100%. Two bars, one basket, two answers.
+     * Measured on a running preview.
+     */
+    $pct   = $totals['free_shipping_percent'] ?? ($free ? min(100, (int) round($sub / $free * 100)) : 100);
+
+    /*
+     * "You're AED 0 away from free delivery" — printed, on a basket 30 fils
+     * short, beside a bar that is not full and above a delivery charge that is
+     * still being made. Money::format() rounds to whole dirhams on this store,
+     * and a remainder under half a dirham rounds to the one number this
+     * sentence must never say, because zero is the value that means the shopper
+     * already has it.
+     *
+     * Money::decimalsToDistinguish($left, 0) is the same rule the sale prices
+     * use, asked against zero: the store's usual whole dirhams whenever the
+     * remainder can be stated without becoming nothing, and the currency's real
+     * precision — "AED 0.30" — only when it cannot.
+     */
+    $leftDp = \App\Support\Money::decimalsToDistinguish($left, 0);
+
     // Wording from Appearance → Cart panel, so none of the copy below is fixed.
     $cpText = app(\App\Services\CartPanel::class);
 @endphp
@@ -30,11 +58,11 @@
             @if ($free)
             <div class="kc-ship">
                 @if ($left > 0)
-                    <div class="t">{!! str_replace('{amount}', '<b>' . \App\Support\Money::format($left) . '</b>', e($cpText->get("txt_ship_away"))) !!}</div>
+                    <div class="t">{!! str_replace('{amount}', '<b>' . \App\Support\Money::format($left, $leftDp) . '</b>', e($cpText->get("txt_ship_away"))) !!}</div>
                 @else
                     <div class="t done"><b>{{ $cpText->get("txt_ship_done") }}</b></div>
                 @endif
-                <div class="kc-bar"><div class="kc-fill" style="width:{{ min(100, $free ? $sub / $free * 100 : 100) }}%"></div></div>
+                <div class="kc-bar"><div class="kc-fill" style="width:{{ $pct }}%"></div></div>
             </div>
             @endif
             <div class="dbody">

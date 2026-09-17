@@ -107,6 +107,51 @@ class ShopController extends Controller
 
         $banner = $this->banner($category, $active, (string) $request->query('s', ''), $title);
 
+        /*
+         * PER-CATEGORY SEO OVERRIDES — `categories.seo`, unread until now.
+         *
+         * The same column, the same shape and the same story as `brands.seo`;
+         * Store\BrandController::seoCtx() carries the reasoning in full and
+         * this is the other half of it. Store → Catalog → Categories has been
+         * collecting an SEO title and description, saving them into this
+         * column and publishing neither, so a category archive — the highest
+         * intent page on the site, which is what "korean sunscreen uae" lands
+         * on — took its title from the bare category name and its description
+         * from seoDescription() below whatever the owner typed.
+         *
+         * Through ProductSeo::normalise() for the reason given there: the
+         * admin writes `seo.description` and the published vocabulary spells
+         * that key `desc`, and ProductSeo::RENAME is the existing map between
+         * them. Reusing it is what makes this the product mechanism rather
+         * than a second one beside it.
+         *
+         * NULL FOR /shop/ AND FOR A SEARCH, which have no category and
+         * therefore no row to carry an override.
+         */
+        $catSeo = $category ? (\App\Support\ProductSeo::normalise($category->seo) ?? []) : [];
+
+        /*
+         * THE CANONICAL OVERRIDE REPLACES THE CLEAN BASE URL, NOT THE WHOLE
+         * CANONICAL — and that distinction is the only safe way to do it here.
+         *
+         * Facets::canonicalUrl() is what makes /shop/?paged=2 canonicalise to
+         * itself rather than to page one; its own docblock records why
+         * collapsing later pages is worse than the crawl cost of indexing
+         * them. Substituting the owner's URL for the whole canonical would
+         * reintroduce exactly that: every page of a category, and every
+         * filtered view of it, claiming to be one document. Substituting it
+         * for the base the method builds FROM keeps pagination and facet
+         * collapsing behaving as they do on every other listing.
+         *
+         * Url::absolute(), never Url::to(): the owner's path already carries
+         * whatever language it meant, and to() would strip that and apply this
+         * reader's. absolute() passes a full http(s) URL through untouched.
+         */
+        $canonicalBase = trim((string) ($catSeo['canonical'] ?? ''));
+        $listingUrl = $canonicalBase !== ''
+            ? Url::absolute($canonicalBase)
+            : $this->absoluteListingUrl($category);
+
         return view('store.shop', [
             'banner' => $banner,
             'products' => $products,
@@ -119,7 +164,20 @@ class ShopController extends Controller
             'buckets' => Facets::BUCKETS,
             'title' => $title,
             'seoCtx' => array_filter([
-                'description' => $this->seoDescription($category, (string) $request->query('s', ''), $total),
+                /*
+                 * A title the owner typed is the WHOLE title — `title_is_final`
+                 * stops Seo::render() appending the site name through
+                 * `seo_title_template`, which is exactly how
+                 * Store\ProductController::show() treats a per-product title.
+                 * Both keys are null when the box is empty and array_filter
+                 * drops them, so an un-overridden archive is byte-for-byte the
+                 * page it was.
+                 */
+                'title' => trim((string) ($catSeo['title'] ?? '')) !== '' ? $catSeo['title'] : null,
+                'title_is_final' => (trim((string) ($catSeo['title'] ?? '')) !== '') ?: null,
+                'description' => trim((string) ($catSeo['desc'] ?? '')) !== ''
+                    ? $catSeo['desc']
+                    : $this->seoDescription($category, (string) $request->query('s', ''), $total),
                 /*
                  * The share image is the hero this page actually draws.
                  *
@@ -139,8 +197,28 @@ class ShopController extends Controller
                  * Null — no banner, or a search/filter page that has none —
                  * falls through to og_default_image, unchanged.
                  */
-                'image' => is_string($banner['image'] ?? null) && $banner['image'] !== '' ? $banner['image'] : null,
-                'url' => Facets::canonicalUrl($this->absoluteListingUrl($category)),
+                /*
+                 * An explicit og_image override wins over the banner, exactly
+                 * as it does on a product (`$override['og_image'] ?? $product->image`).
+                 *
+                 * `categories.image` is STILL not read, here or anywhere: it
+                 * has no storefront consumer at all, so publishing it as an
+                 * og:image would share a picture that appears nowhere on the
+                 * page. The banner stays the fallback because the banner is
+                 * the hero this page actually draws.
+                 */
+                'image' => trim((string) ($catSeo['og_image'] ?? '')) !== ''
+                    ? $catSeo['og_image']
+                    : (is_string($banner['image'] ?? null) && $banner['image'] !== '' ? $banner['image'] : null),
+                'url' => Facets::canonicalUrl($listingUrl),
+                /*
+                 * A category the owner has marked noindex is noindexed on
+                 * EVERY view of itself — page two, a filtered view, a sort —
+                 * because this is read once for the archive and not per facet.
+                 * Store\SeoFilesController drops the same categories from the
+                 * sitemap, so the two documents cannot disagree.
+                 */
+                'noindex' => ! empty($catSeo['noindex']) ?: null,
                 'breadcrumb' => $this->breadcrumbTrail($category),
             ], static fn ($v) => $v !== null),
             'sub' => $sub,
