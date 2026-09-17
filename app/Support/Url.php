@@ -18,6 +18,9 @@ namespace App\Support;
  *
  * Trailing slashes are preserved deliberately (U-01). WordPress uses them and
  * Laravel does not, so dropping one turns an indexed URL into a redirect.
+ *
+ * Since 2.60.200 this also carries the LANGUAGE prefix — see to() below and
+ * App\Support\Locale for why that belongs here and not at 194 call sites.
  */
 final class Url
 {
@@ -89,8 +92,70 @@ final class Url
         ];
     }
 
-    /** A storefront path, prefixed for the current environment. */
+    /**
+     * A storefront path, prefixed for the current environment AND language.
+     *
+     * THE LANGUAGE PREFIX IS ADDED HERE AND NOWHERE ELSE. Every internal link
+     * in this application already comes through this method — 194 call sites,
+     * plus the self-referencing canonical in layouts/store.blade.php, which is
+     * built from the request path and handed straight back through here. So an
+     * Arabic page links to Arabic pages and canonicalises to its own Arabic
+     * address without a single one of those call sites being edited, and a link
+     * a later lane writes is bilingual the day it is written.
+     *
+     * The two prefixes compose in the only order that can be right:
+     * base first, language second — /kbb-upgrade/ar/shop/. The base path is
+     * where the application is MOUNTED (a fact about the server) and the
+     * language is a fact about the PAGE, so the deployment prefix has to be
+     * outermost or the front controller would never be reached.
+     *
+     * App\Support\Locale::localisable() is what keeps /wp-content/uploads/…
+     * and /admin-api/… out of it: those are served off disk or by the back
+     * office, and a prefixed copy of either is a 404. media() below does not
+     * come through this path at all, for the same reason twice over.
+     *
+     * In English — Locale::segment() === '' — this is byte-for-byte what it
+     * always returned, so nothing changes for the shop as it stands today.
+     */
     public static function to(string $path = '/'): string
+    {
+        $base = self::base();
+
+        if ($path === '' || $path === '/') {
+            $path = '/';
+        } elseif (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path)) {
+            // Absolute URLs and mailto/tel links pass through untouched.
+            return $path;
+        }
+
+        /*
+         * THE FAST PATH, AND IT IS NOT AN OPTIMISATION FOR ITS OWN SAKE.
+         *
+         * This method is called around two hundred times on a storefront page.
+         * Locale::withSegment() splits the path, consults
+         * AdminPathService::current() and checks a settings-backed switch — all
+         * of which is wasted work when the answer is "no prefix", which is
+         * EVERY English page, which is every page this shop serves today.
+         *
+         * Locale::segment() answers that in an array lookup: the default locale
+         * short-circuits before any setting is read. Measured as a per-test
+         * timeout in the suite when this check was not here, which is the
+         * honest reason it is.
+         */
+        if (Locale::segment() !== '') {
+            $path = Locale::withSegment($path);
+        }
+
+        return self::raw($path);
+    }
+
+    /**
+     * The same, with no language prefix.
+     *
+     * For paths the web server answers without PHP, and for anywhere that needs
+     * the one canonical address of a document rather than this reader's copy.
+     */
+    public static function raw(string $path = '/'): string
     {
         $base = self::base();
 
@@ -98,7 +163,6 @@ final class Url
             return $base === '' ? '/' : $base . '/';
         }
 
-        // Absolute URLs and mailto/tel links pass through untouched.
         if (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path)) {
             return $path;
         }
@@ -106,7 +170,13 @@ final class Url
         return $base . '/' . ltrim($path, '/');
     }
 
-    /** A media path under /wp-content/uploads. */
+    /**
+     * A media path under /wp-content/uploads.
+     *
+     * raw(), never to(): these files are served off disk by the web server and
+     * PHP never sees the request, so /ar/wp-content/uploads/foo.jpg is a 404
+     * for an image on every Arabic page. An image has no language.
+     */
     public static function media(string $path): string
     {
         if (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path)) {
@@ -118,10 +188,40 @@ final class Url
 
         // Accept paths already carrying the root, so importers can store either form.
         if (str_starts_with('/' . $path, $root)) {
-            return self::to($path);
+            return self::raw($path);
         }
 
-        return self::to(ltrim($root, '/') . '/' . $path);
+        return self::raw(ltrim($root, '/') . '/' . $path);
+    }
+
+    /**
+     * An absolute URL for a path that ALREADY carries the language it wants.
+     *
+     * WHY THIS IS NOT redirect(). redirect() goes through to(), and to()
+     * re-localises: it strips whatever locale segment the path carries and
+     * applies the CURRENT one. That is right for an ordinary internal link
+     * written as '/shop/' and wrong for a path that was deliberately built for
+     * another language — which is exactly what an hreflang alternate is. Passed
+     * through to(), every alternate on an English page came back pointing at
+     * the English page, so the tag said "the Arabic version of this page is
+     * this page".
+     *
+     * So this one uses raw(): base path, no locale, absolute.
+     */
+    public static function absolute(string $path = '/'): string
+    {
+        if (preg_match('#^([a-z][a-z0-9+.-]*:|//)#i', $path)) {
+            return $path;
+        }
+
+        $appUrl = rtrim((string) config('app.url'), '/');
+        $base = self::base();
+
+        if ($base !== '' && str_ends_with($appUrl, $base)) {
+            $appUrl = substr($appUrl, 0, -strlen($base));
+        }
+
+        return rtrim($appUrl, '/') . self::raw($path);
     }
 
     /**

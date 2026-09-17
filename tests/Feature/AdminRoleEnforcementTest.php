@@ -222,6 +222,22 @@ it('has an authorization layer reading the role column', function () {
         'NoIndexStaging',
         'NoStoreAdminApi',
         'SecurityHeaders',
+        /*
+         * Lane EP, and I have come and read this file as instructed.
+         *
+         * SetLocaleFromPath authorises nothing and reads no role. It strips a
+         * language prefix off the path before the router runs and sets
+         * App::setLocale(); it takes no decision that depends on who is asking,
+         * and App\Support\Locale::localisable() steps aside for the admin path
+         * and /admin-api entirely, so the back office never carries a language
+         * segment and this class is inert on every route this file is about.
+         *
+         * It is global rather than in a group because middleware in the `web`
+         * group runs after the router has matched, which is too late to change
+         * which route matches. See the class doc and the block in
+         * bootstrap/app.php that registers it.
+         */
+        'SetLocaleFromPath',
     ]);
 
     // Still no Gate and no policy: four fixed roles and one map, not an RBAC

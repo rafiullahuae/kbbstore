@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\HasTranslations;
 use App\Support\Url;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
+    use HasTranslations;
 
     protected $guarded = [];
+
+    /** @var list<string> Not `slug` — one slug per row. See HasTranslations. */
+    protected array $translatable = ['name', 'description'];
 
     protected function casts(): array
     {

@@ -74,12 +74,65 @@ $kbbSeoCtx = array_merge([
     'noindex' => \App\Support\Indexability::isPrivate($kbbPath),
 ], $seoCtx ?? []);
 @endphp
+@php
+    /*
+     * Bilingual foundation (Lane EP).
+     *
+     * $kbbLocale is the language this page is being served in and $kbbDir is
+     * whether the MIRRORED LAYOUT is switched on — two separate switches, on
+     * purpose. Locale::direction() returns 'ltr' for Arabic while the
+     * right-to-left stylesheet is still being built, which is a real state the
+     * owner asked to be able to reach rather than an accident.
+     *
+     * With Arabic off — which is how this ships — $kbbLocale is 'en', $kbbDir
+     * is 'ltr' and $kbbAlternates is empty, so this page is byte-for-byte the
+     * page it was before.
+     */
+    $kbbLocale = \App\Support\Locale::current();
+    $kbbDir = \App\Support\Locale::direction();
+
+    /*
+     * The alternates carry the SAME trailing slash the canonical does.
+     *
+     * Not cosmetic. Google requires an hreflang URL to be the canonical form of
+     * the page it names — a hreflang pointing at /ar/my-wishlist while that page
+     * canonicalises to /ar/my-wishlist/ is an hreflang pointing at a redirect,
+     * and the cluster is dropped rather than half-honoured. The canonical a few
+     * lines above puts the slash back whether or not the REQUEST carried one,
+     * for the reasons in that comment; these have to agree with it exactly.
+     */
+    $kbbAlternates = collect(\App\Support\Locale::alternatePaths($kbbPath))
+        ->map(fn (string $p): string => $p === '/' || str_ends_with($p, '/') ? $p : $p.'/')
+        ->all();
+@endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $kbbLocale }}" dir="{{ $kbbDir }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 {!! \App\Support\Seo::render($kbbSeoCtx) !!}
+{{--
+    hreflang, emitted only once there is a second language to point at.
+
+    BOTH DIRECTIONS, ALWAYS — including this page's own address. A page that
+    lists its alternates without listing itself is a page Google treats as
+    unrelated to them, and the pair reads as duplicate content rather than as
+    two languages of one document. x-default points at the English, which is
+    where a reader with no matching language preference should be sent.
+
+    Absolute URLs, via Url::absolute() and NOT Url::redirect(): redirect() goes
+    through Url::to(), which RE-LOCALISES a path to the current page's language
+    — so every alternate on an English page came back pointing at the English
+    page, and the tag said "the Arabic version of this page is this page".
+    absolute() takes the path exactly as built. Absolute because a crawler reads
+    these off the raw HTML.
+--}}
+@foreach ($kbbAlternates as $kbbAltLocale => $kbbAltPath)
+<link rel="alternate" hreflang="{{ $kbbAltLocale }}" href="{{ \App\Support\Url::absolute($kbbAltPath) }}">
+@endforeach
+@if ($kbbAlternates !== [])
+<link rel="alternate" hreflang="x-default" href="{{ \App\Support\Url::absolute($kbbAlternates[\App\Support\Locale::DEFAULT] ?? '/') }}">
+@endif
 @stack('head')
 
 {{-- Poppins 400-800, matching the theme exactly (T-BOOT-10). --}}
@@ -89,6 +142,26 @@ $kbbSeoCtx = array_merge([
 {{-- Only the weights the stylesheets actually use. Each extra weight is a
      separate font file on the critical path. --}}
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+{{--
+    POPPINS CARRIES NO ARABIC GLYPHS. Not "renders Arabic badly" — it has none
+    of the letters, so every Arabic word falls back to whatever the device
+    happens to have: Tahoma on Windows, and on an older Android a face with no
+    diacritic positioning at all. The result is legible and looks like a broken
+    website, which is the worst possible combination on a page asking for a card
+    number.
+
+    Cairo, because it was drawn as an Arabic face with a Latin companion rather
+    than a Latin face with Arabic bolted on, it covers the weights this theme
+    uses, and it is on Google Fonts under the SIL Open Font Licence — so nothing
+    has to be bought or self-hosted on a shared host with no shell.
+
+    ONLY ON AN ARABIC PAGE. A second render-blocking stylesheet on every English
+    page would repeat exactly the defect the account-panel font block further
+    down was written to fix. English traffic is unchanged, byte for byte.
+--}}
+@if ($kbbLocale !== \App\Support\Locale::DEFAULT)
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+@endif
 
 @vite(['resources/css/kbb/kbb.css', 'resources/js/kbb/app.js'])
 @stack('styles')

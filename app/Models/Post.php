@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
+    use HasTranslations;
 
     protected $guarded = [];
+
+    /** @var list<string> `body`, not `content` — that is what the column is called. */
+    protected array $translatable = ['title', 'excerpt', 'body'];
 
     protected function casts(): array
     {

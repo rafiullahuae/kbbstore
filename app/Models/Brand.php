@@ -4,13 +4,27 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Support\HasTranslations;
 use App\Support\Url;
 use Illuminate\Database\Eloquent\Model;
 
 class Brand extends Model
 {
+    use HasTranslations;
 
     protected $guarded = [];
+
+    /**
+     * @var list<string>
+     *
+     * `name` is on the list and that is a judgement, not an oversight. Korean
+     * brand names are often already transliterations ("Anua", "Round Lab") and
+     * an Arabic shopper may well want them left as they are — so the box exists
+     * and is left BLANK, which under this design means "not translated" and
+     * falls back to the English. Typing the same text in would mean "translated,
+     * deliberately identical". The shop can tell those two apart.
+     */
+    protected array $translatable = ['name', 'description'];
 
     /**
      * `seo` and `banner` are json columns and were being handed to the views
