@@ -55,7 +55,13 @@ function langState(bool $arabic, bool $mirrored): void
     Setting::flushMap();
 }
 
-/** The five documents, plus /shop/ as the control that uses the shared layout. */
+/**
+ * The five documents, plus /shop/ as the control that uses the shared layout.
+ *
+ * Every test below asserts inside a loop over this, and a loop that does not
+ * run asserts nothing -- so each of them counts it first. That is cheap here
+ * and it is the failure mode this lane spent its day on.
+ */
 function standaloneDocuments(): array
 {
     return [
@@ -101,6 +107,7 @@ it('serves all five documents and the control, so the sweeps below are asked of 
     langSeed();
     langState(arabic: true, mirrored: false);
 
+    expect(standaloneDocuments())->toHaveCount(6);
     foreach (standaloneDocuments() as $url => $view) {
         expect(test()->get($url)->status())->toBe(200, "{$view} did not render at {$url}");
         expect(test()->get('/ar' . $url)->status())->toBe(200, "{$view} did not render at /ar{$url}");
@@ -109,6 +116,8 @@ it('serves all five documents and the control, so the sweeps below are asked of 
 
 it('declares English on an English URL, whatever the switches say', function () {
     langSeed();
+
+    expect(standaloneDocuments())->toHaveCount(6);
 
     foreach ([[false, false], [true, false], [true, true]] as [$arabic, $mirrored]) {
         langState($arabic, $mirrored);
@@ -126,6 +135,7 @@ it('declares Arabic on an Arabic URL', function () {
     langSeed();
     langState(arabic: true, mirrored: false);
 
+    expect(standaloneDocuments())->toHaveCount(6);
     foreach (standaloneDocuments() as $url => $view) {
         expect(htmlTag('/ar' . $url))->toContain('lang="ar"');
     }
@@ -138,6 +148,7 @@ it('leaves dir alone until the mirrored layout is switched on, which is the shop
     // enabled, and the one that would be wrong if `dir` followed the language.
     langState(arabic: true, mirrored: false);
 
+    expect(standaloneDocuments())->toHaveCount(6);
     foreach (standaloneDocuments() as $url => $view) {
         expect(htmlTag('/ar' . $url))->toBe(
             '<html lang="ar" dir="ltr">',
@@ -148,6 +159,7 @@ it('leaves dir alone until the mirrored layout is switched on, which is the shop
     // Both on.
     langState(arabic: true, mirrored: true);
 
+    expect(standaloneDocuments())->toHaveCount(6);
     foreach (standaloneDocuments() as $url => $view) {
         expect(htmlTag('/ar' . $url))->toBe(
             '<html lang="ar" dir="rtl">',
