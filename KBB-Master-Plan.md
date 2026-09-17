@@ -1424,48 +1424,63 @@ a fake success toast and saves nothing).
 
 ---
 
-## Phase 18 — Arabic  *(requested by the owner, 2.60.199; foundation in flight)*
+## Translation Module — Arabic  *(owner-approved 2.60.199; foundation in flight)*
 
-The whole shop in Arabic as well as English, translated by the owner rather than
-by a browser plugin, with `/ar` on the front end. **Greenfield**: there is no
-`lang/` directory, **zero** uses of `__()`, `@lang` or `trans()` anywhere in the
-tree, and `config/app.php` is stock.
+The whole **storefront** in Arabic as well as English, translated by the owner
+rather than by a browser plugin, at `/ar`. **Greenfield**: no `lang/` directory,
+**zero** uses of `__()`, `@lang` or `trans()` anywhere in the tree, stock
+`config/app.php`.
 
-The surface is three different things needing three different homes:
+### Decisions the owner has taken
 
-- **95 Blade files** of hardcoded English — storefront, partials, emails, invoices
-- **Database content** — `products` (671 on the live shop), `categories`, `brands`,
-  `pages`, `posts`, `menu_items`
-- **English defaults held in PHP classes** — `TrustClaims::CLAIMS`, the delivery
-  lines, `VatDisplay`'s notes, module descriptions, validation messages
+| | Decision | Why it went this way |
+|---|---|---|
+| Scope | **Storefront now, admin console later, as its own phase** | The shop is what customers and Google read; the console is one 1.1 MB file read only by him and his staff, worth nothing in search. Mixing them would let the bigger, unpaid job delay the one that earns |
+| Cost | **Free to operate.** Typing translations needs no key, no account, no external call | His requirement, stated plainly |
+| URLs | **English stays unprefixed, Arabic at `/ar/…`, `/en/…` a 301 alias** | Prefixing both moves every URL a second time, after the WooCommerce migration already moved them once — taking the redirect map, the sitemap and the rankings with it |
+| Store | **Database, not `lang/*.json`** | Decided by the host, not by taste: no shell, so a file could only change by shipping a signed zip, and he must be able to fix a typo himself |
+| Machine translation | **A draft he approves, never a publish.** His own key, character count and cost shown first | Makes "if we find anything incorrect we correct it manually" true rather than discovered after customers read it. ~700k characters across the shop; Google's free monthly allowance is ~500k, so two batches across two months costs nothing |
+| RTL | **Proper** — real `dir="rtl"`, mirrored layout, an Arabic face, since Poppins carries no Arabic glyphs | A flip is a plugin's answer, not a shop's |
+| Never mirrored | **Prices stay `AED 199`, photographs keep their orientation, the logo is unchanged** | Told to the owner as part of the approval |
+| Never translated | SKUs, coupon codes, order numbers, **and slugs** | One slug per row keeps the redirect map intact and halves the URL surface |
 
-- [ ] **Foundation** — locale resolution, the store, the fallback chain, the admin
-      editing surface. **The store must be the database, and that is decided by
-      the host rather than by taste**: there is no shell, so a `lang/ar.json`
-      could only change by shipping a signed zip, and the owner has to be able to
-      type a correction and see it live
-- [ ] ▲ **The URL shape.** English unprefixed with Arabic at `/ar/...`, with
-      `/en/...` as a 301 alias, against prefixing both. Prefixing both moves
-      **every URL a second time** — after the WooCommerce migration already moved
-      them once — and the redirect map, the sitemap and `RESERVED_SLUGS`' root
-      catch-all all pay for it
-- [ ] **Content translations** — a polymorphic table over `name_ar` columns, so
-      "what is still untranslated" is one query and a new field needs no schema
-      change. Slugs stay single: translating them doubles the URL surface and
-      breaks the redirect map
-- [ ] ▲ **The order must record the shopper's language.** Without it an Arabic
+### The surface, measured
+
+Three different things needing three different homes: **95 Blade files** of
+hardcoded English (storefront, partials, emails, invoices); **database content**
+(`products` — 671 on the live shop — plus `categories`, `brands`, `pages`,
+`posts`, `menu_items`); and **English defaults held in PHP classes**
+(`TrustClaims::CLAIMS`, the delivery lines, `VatDisplay`'s notes, module
+descriptions, validation messages).
+
+### Queued, in dependency order
+
+- [ ] **T1 · Foundation** — locale resolution, the database store, the fallback
+      chain, the admin editing surface, proved end to end on a handful of real
+      strings. **In flight.** Everything below waits on the shape it settles
+- [ ] **T2 · Interface strings** — the 95 Blade files. The bulk of the work and
+      almost entirely mechanical once T1 lands. An Arabic page silently half in
+      English is a designed-for outcome, not an accident: the fallback has to be
+      honest about what is untranslated
+- [ ] ▲ **T3 · The order records the shopper's language** — without it an Arabic
       customer gets an English invoice, and an English "your order has shipped"
-      email weeks later
-- [ ] ▲ **RTL is not a translation problem.** The stylesheet is full of
-      `margin-left` / `padding-right` / `text-align:left`; CSS logical properties
-      let one sheet serve both. **Poppins carries no Arabic glyphs**, so an
-      Arabic face is needed as well
-- [ ] **Machine translation as a draft, never as a publish.** A pluggable
-      provider on the owner's own API key, a character count and cost shown
-      before anything runs, and output landing as a draft he approves — which is
-      what makes "if we find anything incorrect we correct it manually" real
-- [ ] **SEO** — `hreflang` both ways, per-language canonical, per-language sitemap
-
+      email three weeks later. A column and a decision about what the admin sees.
+      Small, and painful to retrofit, so it goes early
+- [ ] **T4 · Content translations** — a polymorphic table over `name_ar` columns,
+      so "what is still untranslated" is one query and a new field needs no
+      schema change. Must not become an N+1 on a product grid; measure it
+- [ ] **T5 · The translate-from-Google accelerator** — pluggable provider, his
+      own key, batched, cost shown before it runs, output as a draft. The manual
+      path must keep working with no key at all
+- [ ] ▲ **T6 · RTL** — the stylesheet is full of `margin-left` / `padding-right` /
+      `text-align:left`; CSS logical properties let one sheet serve both
+      directions. Plus an Arabic face (Cairo or Tajawal alongside Poppins).
+      **Audit first, rewrite second**; the storefront CSS is contended
+- [ ] **T7 · SEO** — `hreflang` both ways, per-language canonical, per-language
+      sitemap. Builds on the `Seo` class rather than beside it
+- [ ] **T8 · Admin console in Arabic** — **deferred by the owner.** Its own phase,
+      after the storefront is live and earning. Listed so it is a decision on
+      record rather than an omission
 
 ## Approximate timeline
 
