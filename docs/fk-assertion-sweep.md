@@ -12,7 +12,7 @@ the guard that ships), over every `.php` file under `tests/`:
 
 | | |
 |---|---|
-| files walked | 356 |
+| files walked | 356 (359 after the base branch moved; re-swept) |
 | `to*` matcher calls | 10,863 |
 | `assert*` calls | 2,639 |
 | `it()` / `test()` bodies | 3,789 |
@@ -59,15 +59,29 @@ cannot count arguments across a nested call, and it uses `token_get_all()`
 rather than the parser above so that an unrelated package dropping a transitive
 dependency cannot silently switch the guard off.
 
-## Shape B — a matcher on a constant. Two candidates, one real.
+## Shape B — a matcher on a constant. Three candidates, two real.
 
 - `CashOnDeliveryTest:297` — `expect(true)->toBeTrue();`. It stated its own
   conclusion. Replaced with `Http::assertNothingSent()`, which asks the
   mechanism that actually enforces the claim, so the line goes red if
   `preventStrayRequests()` is ever taken out of `beforeEach()`.
+- `AdminConsoleWriteTokenTest:201` — the same, and worse placed: it sat on the
+  branch the test's own title describes ("reads no csrf-token meta tag unless
+  the document actually renders one"), so the named case was the one asserting
+  nothing. It arrived on the base branch mid-lane and the re-sweep after the
+  merge caught it. There is exactly one way that branch can be a lie —
+  `str_contains('')` is false for every needle, so a console this process could
+  not read takes the path and reports success over a file nobody opened — and
+  that is what it asks now.
 - `YoastSeoImportTest:366` — `expect(false)->toBeTrue('the row was accepted')`
   inside a `try`, reached only when the expected exception was not thrown. That
   one CAN fail and is the idiomatic fail-if-reached. Left alone.
+
+While repairing the above: `AdminConsoleWriteTokenTest:186` calls
+`toBe([], /* a comment where the message should be */)`. Harmless — the comment
+is not an argument, so the expectation is a plain `toBe([])` with the default
+message — but the intended message is not being shown to anyone. Left for its
+owner.
 
 ## Shape C — assertions inside a loop that may not run. Reported, not repaired.
 
