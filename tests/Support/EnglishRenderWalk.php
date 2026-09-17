@@ -118,8 +118,14 @@ final class EnglishRenderWalk
      * rewrites every SHA behind it — repinning to a commit and then rebasing
      * leaves the guard pointing at an object that is not in the branch, where
      * it fails with "no such commit" rather than with a diff. The commit named
-     * below is reachable from this branch's history and stays reachable. This
-     * lane rebased FIRST and repinned afterwards, for that reason.
+     * below is reachable from this branch's history and stays reachable.
+     *
+     * Lane FO repinned, rebased when the base branch moved under it, and then
+     * REPINNED AGAIN to the rewritten SHA — which is the note above working as
+     * intended rather than around it. The value here must always be a commit
+     * `git archive` can resolve from the branch it is read on; anything else
+     * fails with "no such commit" instead of with a diff, and a guard that
+     * cannot run is indistinguishable from one that passes.
      *
      * ── MOVED AGAIN FOR LANE FO (Phase 15, the homepage hero) ───────────────
      *
@@ -156,7 +162,7 @@ final class EnglishRenderWalk
      * conditional without moving a single space. See the comments in
      * store/home.blade.php, which say so at each of the three places.
      */
-    public const BASE_COMMIT = '9e65b2df6bbe915eccf9cd1915e4d169470ebf65';
+    public const BASE_COMMIT = '3fd50009afae9b82e37c64ecae0dffb1b806a0e3';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
