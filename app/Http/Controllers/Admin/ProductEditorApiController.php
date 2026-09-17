@@ -273,6 +273,50 @@ class ProductEditorApiController extends Controller
 
             'seo' => is_array($product->seo) ? $product->seo : null,
 
+            /*
+             * WHAT THE STOREFRONT WILL ACTUALLY PUT IN THIS PRODUCT'S HEAD.
+             *
+             * The editor draws a Google-style snippet under the Search
+             * appearance panel. It used to draw it out of the operator's own two
+             * boxes, falling back to the product name and to an invented
+             * sentence — "Add a description so Google shows the right words
+             * here." — neither of which the site has ever emitted. That is the
+             * same defect SnippetPreviewTruthTest was written to kill in the
+             * OLD Yoast-shaped panel, and it was fixed there; this screen is the
+             * one the owner actually uses (Lane AT retired the other two), and
+             * it still lied.
+             *
+             * Both strings are built by the SAME methods render() uses —
+             * Seo::titleFor() and Seo::describe(), through ProductSeo — so the
+             * preview cannot drift from the page by construction.
+             *
+             * `true` means "answer as though the operator's box were empty".
+             * The preview's own logic is `typed || fallback`, so the endpoint's
+             * job is only the second operand: what appears the moment the box is
+             * cleared. Note these are NOT symmetrical, and that asymmetry is the
+             * whole reason the title is here too:
+             *
+             *   - cleared DESCRIPTION box -> the sitewide default, or nothing.
+             *   - cleared TITLE box       -> brand + name THROUGH the title
+             *     template, so " | K-Beauty Bliss" is appended. A filled title
+             *     box is `title_is_final` and gets no such suffix.
+             *
+             * So the emitted title is longer than the box in one case and equal
+             * to it in the other, which is also why the editor's character
+             * counter has to count THIS rather than the box.
+             *
+             * '' is a real answer for the description and means the page
+             * publishes no description tag at all. The preview shows that as an
+             * empty line, which is what Google would show.
+             */
+            'seo_fallback_title' => \App\Support\ProductSeo::metaTitle($product, true),
+            'seo_fallback_description' => \App\Support\ProductSeo::metaDescription($product, true),
+
+            // And what it emits RIGHT NOW, with whatever is stored. The counter
+            // measures this, so "58 / 60" refers to the tag and not to the box.
+            'seo_title' => \App\Support\ProductSeo::metaTitle($product),
+            'seo_description' => \App\Support\ProductSeo::metaDescription($product),
+
             // Read-only, and shown as such: these are computed from orders and
             // reviews and the editor has no control that writes them.
             'readonly' => [

@@ -1,0 +1,161 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Import\Entities;
+
+use App\Models\Product;
+use App\Services\Import\ImportContext;
+use App\Services\Import\Row;
+use App\Services\Import\RowRejected;
+use App\Support\YoastSeo;
+
+/**
+ * Yoast's per-product SEO, out of the WordPress export and into `products.seo`.
+ *
+ * WHY THIS IS AN ENTITY ON THE EXISTING RUNNER rather than an importer of its
+ * own. Everything this needs — batching, one transaction per batch, a
+ * checkpoint that survives a request dying on a 110-second host, a dry run, a
+ * rejects CSV, and "created / updated / unchanged" tallies that are the only
+ * honest evidence a second pass changed nothing — is already built and already
+ * tested in App\Services\Import. A second importer would be a second place for
+ * all of it to be subtly wrong, and this repository has already paid for two
+ * product editors and two title strings.
+ *
+ * IT RUNS AFTER PRODUCTS, AND THAT IS NOT A PREFERENCE. Every row here is
+ * matched on `wc_id`, which the product import is what writes. Run first, this
+ * would reject the entire file.
+ *
+ * ── THE FILE IT READS ───────────────────────────────────────────────────────
+ *
+ * `seo.csv`: one row per product, a column identifying the WooCommerce post and
+ * whatever `_yoast_wpseo_*` columns the export carried. The realistic shapes
+ * are a `wp db export` of `postmeta` pivoted to one row per post, and the CSV
+ * that WP All Export or the Yoast "export settings" flow produces; both are
+ * accepted, along with the bare `metadesc` spelling, because
+ * App\Support\YoastSeo::fragment() matches a column with or without the
+ * `_yoast_wpseo_` prefix. The full field-by-field table — what is mapped, what
+ * is deliberately not, and why — lives in that class and is not repeated here.
+ *
+ * ── WHAT IT WILL NOT DO ─────────────────────────────────────────────────────
+ *
+ * IT WILL NOT CREATE A PRODUCT. A Yoast row naming a post this catalogue does
+ * not have is a rejection with the id in it, not a new row. The `seo` column is
+ * an attribute of a product; a product conjured out of its own meta data would
+ * have no name, no price and no images, and would be visible to exactly the
+ * queries that do not filter on those.
+ *
+ * IT WILL NOT INVENT A VALUE THE SOURCE LACKS. An absent column, a blank
+ * column, and Yoast's `meta-robots-noindex: '2'` all write nothing at all —
+ * which is different from writing an empty string, and on this storefront
+ * visibly so: `Seo` emits NO description tag for an empty description rather
+ * than falling back to the sitewide default, so a blank Yoast field imported as
+ * a value would strip the search snippet off every product it touched.
+ *
+ * IT WILL NOT OVERWRITE WHAT THE OWNER HAS TYPED HERE. A key already present in
+ * `products.seo` is left exactly as it is and the Yoast value for it is
+ * dropped; only keys the column does not yet have are filled. The export is the
+ * older document by definition — it was taken before this admin existed — and
+ * an importer that can quietly undo an afternoon's work is one nobody runs
+ * twice.
+ *
+ * THE REVERSE IS BUILT AND NOT WIRED, ON PURPOSE. YoastSeo::merge() takes an
+ * $overwrite flag for the case where the export really is the newer document: a
+ * store still being edited in WordPress while this port is finished. Turning it
+ * on needs one more field on App\Services\Import\ImportOptions, which belongs
+ * to the import lane rather than this one, so it is described for the
+ * integrator instead of being reached for across a lane boundary. Until the
+ * owner asks for it, the safe direction is the only direction.
+ *
+ * ── IDEMPOTENCE ─────────────────────────────────────────────────────────────
+ *
+ * Every write goes through ImportContext::apply(), so a second pass over an
+ * unchanged export reports `unchanged` for every row — and reports it from
+ * Eloquent's own dirty check against the database, not from this class
+ * deciding it did nothing. That matters more here than for most entities:
+ * `seo` is a json column, and MySQL reorders object keys on the way in, so a
+ * naive comparison is dirty on every pass forever. apply() already handles
+ * that (withoutEquivalentJson), which is a second reason not to have written a
+ * separate importer.
+ */
+final class SeoImporter extends EntityImporter
+{
+    public function name(): string
+    {
+        return 'seo';
+    }
+
+    public function conventionalFile(): string
+    {
+        return 'seo.csv';
+    }
+
+    public function import(Row $row, ImportContext $context): void
+    {
+        $wcId = $row->requireId('id', 'id', 'wc_id', 'product_id', 'post_id');
+
+        $cells = $row->all();
+
+        /*
+         * A row with no Yoast column at all is a file problem, not a row
+         * problem — most likely the products export handed to --files=seo by
+         * mistake. Rejecting it row by row turns one wrong path into 671
+         * identical rejection lines, but that is still better than a run that
+         * reports 671 rows imported and wrote nothing, which is what a silent
+         * skip would produce.
+         */
+        if (! YoastSeo::looksLikeYoast($cells)) {
+            throw RowRejected::because(
+                'no _yoast_wpseo_* column in this row — is this file the Yoast export?'
+            );
+        }
+
+        $product = Product::query()->withTrashed()->where('wc_id', $wcId)->first();
+
+        if ($product === null) {
+            throw RowRejected::because(
+                'no product with wc_id '.$wcId.' — import products before seo, '
+                .'and check this row is not a page or a post rather than a product'
+            );
+        }
+
+        $fragment = YoastSeo::fragment($cells);
+
+        foreach (YoastSeo::skipped($cells) as $meta) {
+            /*
+             * Seen, understood, and deliberately not kept — said in the report
+             * so "the focus keyphrases did not come across" is something the
+             * owner READS rather than discovers months later.
+             *
+             * Called per row and NOT de-duplicated here, because EntityReport
+             * already keys notes by their text and counts them — its own header
+             * says these are "the cases that recur across thousands of rows"
+             * and need "to be said once with a count". So the report ends up
+             * with one line per field carrying the number of products that had
+             * one, which is the more useful answer and is not this class's to
+             * reimplement.
+             */
+            $context->report->for($this->name())->note(
+                $meta.' is in this export and has no home in this application — not imported'
+            );
+        }
+
+        if ($fragment === []) {
+            /*
+             * Every Yoast column on this row was blank — which is the COMMON
+             * case in a real export, not an error: most products in a Woo store
+             * have never had their SEO tab opened. Recorded as unchanged so the
+             * tallies are honest about how much of the file carried anything.
+             */
+            $context->record($this->name(), 'unchanged');
+
+            return;
+        }
+
+        // false: the owner's typing wins. See the header — reversing it is a
+        // one-field change on ImportOptions, which this lane does not own.
+        $merged = YoastSeo::merge($product->seo, $fragment, overwrite: false);
+
+        $context->record($this->name(), $context->apply($product, ['seo' => $merged]));
+    }
+}

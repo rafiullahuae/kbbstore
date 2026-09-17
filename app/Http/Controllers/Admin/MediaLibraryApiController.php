@@ -210,11 +210,40 @@ class MediaLibraryApiController extends Controller
             }
         }
 
+        /*
+         * And the phone-sized copies, which until now nothing ever removed.
+         *
+         * App\Support\ImageVariants writes up to two resized files per
+         * photograph under public/img-cache/<width>/<the original's path>, and
+         * generate() deliberately skips a width that already exists — so this
+         * endpoint was unlinking an original and leaving its copies behind
+         * permanently. They are gitignored and on BuildPackage::NEVER_SHIP, so
+         * no package could clear them either, and the host has no shell: the
+         * only way back was FTP. On the measured cost of a 1000x1000 JPEG,
+         * 121KB per deleted photograph accumulates with nothing to bound it.
+         *
+         * UNCONDITIONAL, unlike the unlink above. That guard exists because an
+         * imported /wp-content/ path belongs to the OLD store's directory and
+         * is not ours to delete. img-cache is entirely ours whatever the
+         * original's path was, so there is no file here this application did
+         * not write, and no reason to leave one behind.
+         *
+         * AFTER the unlink, not before: if the unlink fails the original is
+         * still being served, and it is better for its srcset candidates to be
+         * gone — the browser simply loads `src` — than for the copies to
+         * outlive an original this endpoint has already forgotten the row for.
+         *
+         * forget() never throws and returns how many files it took, which the
+         * response carries for the same reason `file_removed` is there.
+         */
+        $variantsRemoved = \App\Support\ImageVariants::forget('/'.ltrim($path, '/'));
+
         $media->delete();
 
         return response()->json([
             'ok' => true,
             'file_removed' => $removed,
+            'variants_removed' => $variantsRemoved,
             'forced' => $usage !== [],
             'usage' => $usage,
         ]);
