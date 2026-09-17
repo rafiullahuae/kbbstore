@@ -1436,6 +1436,7 @@ rather than by a browser plugin, at `/ar`. **Greenfield**: no `lang/` directory,
 | | Decision | Why it went this way |
 |---|---|---|
 | Scope | **Storefront now, admin console later, as its own phase** | The shop is what customers and Google read; the console is one 1.1 MB file read only by him and his staff, worth nothing in search. Mixing them would let the bigger, unpaid job delay the one that earns |
+| Where translation happens | **Beside the English field, in the editor, at the moment of creation** — not on a separate screen afterwards | His requirement. A separate screen means every new product ships English-only until someone remembers to go back, which is how a half-Arabic shop happens |
 | Cost | **Free to operate.** Typing translations needs no key, no account, no external call | His requirement, stated plainly |
 | URLs | **English stays unprefixed, Arabic at `/ar/…`, `/en/…` a 301 alias** | Prefixing both moves every URL a second time, after the WooCommerce migration already moved them once — taking the redirect map, the sitemap and the rankings with it |
 | Store | **Database, not `lang/*.json`** | Decided by the host, not by taste: no shell, so a file could only change by shipping a signed zip, and he must be able to fix a typo himself |
@@ -1469,6 +1470,21 @@ descriptions, validation messages).
 - [ ] **T4 · Content translations** — a polymorphic table over `name_ar` columns,
       so "what is still untranslated" is one query and a new field needs no
       schema change. Must not become an N+1 on a product grid; measure it
+- [ ] ▲ **T4b · An Arabic box beside every field, in every editor** — owner's
+      requirement, and it decides where translation actually happens. Adding a
+      product, a post, a category, a brand or a page must offer the Arabic
+      alongside the English **at the moment of creation**, not on a separate
+      screen visited afterwards. Every translatable field in every admin editor
+      gains its Arabic counterpart, carried in the same save, validated by the
+      same rules, and blank-means-untranslated rather than blank-means-English.
+      Touches `resources/views/admin/app.blade.php` and
+      `admin/partials/product-editor-screen.blade.php`.
+
+      **This is not T8.** T8 is translating the console's own labels into Arabic
+      and stays deferred. T4b is adding Arabic *input boxes* to a console that
+      keeps speaking English — the owner needs those to enter anything at all,
+      so it is required work, not the deferred kind. The per-field Translate
+      button from T5 sits beside each box
 - [ ] **T5 · The translate-from-Google accelerator** — pluggable provider, his
       own key, batched, cost shown before it runs, output as a draft. The manual
       path must keep working with no key at all
