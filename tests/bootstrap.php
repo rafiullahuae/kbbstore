@@ -31,6 +31,10 @@ declare(strict_types=1);
  * exactly as incident 1 below describes. Nothing here can prevent that; this
  * file can only give the override a name that nothing else sets by accident.
  *
+ * One shared resource is not a path and so is not settled here at all: the TCP
+ * ports the browser previews listen on. Tests\Support\PreviewPort settles those,
+ * and incident 7 below says why guessing them was not enough.
+ *
  * And what is genuinely shared stays shared: the checkout's own source, vendor/
  * and public/build are read by both runs and owned by neither, so a lane that
  * edits a file mid-run changes what the other run is testing. That is a working
@@ -101,6 +105,18 @@ declare(strict_types=1);
  *    at tests/TestCase.php:40. Deleting the file first, which is what the suite
  *    did for a long time, narrows that window and cannot close it. See the
  *    comment on APP_CONFIG_CACHE below.
+ *
+ * 7. The one shared thing that is NOT a path, and so is the one settled outside
+ *    this file: the TCP ports the browser previews' `php -S` servers listen on.
+ *    Each helper drew one at random from a band of ninety-one and used it
+ *    blind, so two lanes collided on about one boot in ninety-one -- and a
+ *    preview server that outlived a SIGKILLed run held its port against every
+ *    future run in every worktree, for as long as the machine stayed up. Five
+ *    such ports on this host belonged to four other lanes' leaked servers, and
+ *    one of them is what made AdminMobileOverflowTest fail with "preview server
+ *    never answered", which names the wrong thing entirely. Settled in
+ *    Tests\Support\PreviewPort, which asks the operating system for a port that
+ *    will bind rather than guessing one.
  *
  * Nothing here can be asserted from inside itself, so the outcome is asserted
  * from the other end instead. tests/Feature/SuiteIsolationTest.php covers 1-4

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\AdminUser;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * No admin screen may scroll sideways on a phone.
@@ -156,7 +157,7 @@ function bootOverflowPreview(): array
 
     DB::purge('lane_aw_preview');
 
-    $port = 8400 + random_int(30, 120);
+    $port = PreviewPort::claim(8430, 8520);
     $command = $envPrefix . 'php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($root) . ' ' . escapeshellarg($root . '/index.php');
 
     $process = proc_open(

@@ -91,6 +91,7 @@ use App\Models\Product;
 use App\Services\CartService;
 use App\Services\SettingsService;
 use Illuminate\Support\Str;
+use Tests\Support\PreviewPort;
 
 /** Node, playwright, Chromium and the script. */
 function hrPrereqs(): array
@@ -199,7 +200,7 @@ function hrServe(string $html): array
 
     exec('cp -r ' . escapeshellarg(base_path('public/build')) . ' ' . escapeshellarg($root . '/build'));
 
-    $port = 8600 + random_int(20, 250);
+    $port = PreviewPort::claim(8620, 8850);
 
     $process = proc_open(
         'php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($root),

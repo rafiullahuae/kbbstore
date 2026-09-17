@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\AdminUser;
 use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * Sixteen admin screens could be clicked but not linked to.
@@ -389,7 +390,7 @@ function bootDeepLinkPreview(): array
 
     \Illuminate\Support\Facades\DB::purge('lane_da_preview');
 
-    $port = 8740 + random_int(30, 120);
+    $port = PreviewPort::claim(8770, 8860);
     $command = $envPrefix.'php -S 127.0.0.1:'.$port.' -t '.escapeshellarg($root).' '.escapeshellarg($root.'/index.php');
 
     $process = proc_open(

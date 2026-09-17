@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\AdminUser;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * Two faults in the admin console, and the two guards that keep them fixed.
@@ -335,7 +336,7 @@ function bootCrPreview(): array
 
     DB::purge('lane_cr_preview');
 
-    $port = 8600 + random_int(30, 140);
+    $port = PreviewPort::claim(8630, 8740);
     $command = $envPrefix . 'php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($root) . ' ' . escapeshellarg($root . '/index.php');
 
     $process = proc_open(

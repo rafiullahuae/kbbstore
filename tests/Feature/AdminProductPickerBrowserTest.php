@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * The product picker, driven the way the owner drives it.
@@ -241,7 +242,7 @@ function bootPickerPreview(): array
 
     DB::purge('lane_bu_preview');
 
-    $port = 8760 + random_int(30, 120);
+    $port = PreviewPort::claim(8790, 8880);
     $command = $envPrefix.'php -S 127.0.0.1:'.$port.' -t '.escapeshellarg($root).' '.escapeshellarg($root.'/router.php');
 
     $process = proc_open(

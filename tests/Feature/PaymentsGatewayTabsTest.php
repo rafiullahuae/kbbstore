@@ -7,6 +7,7 @@ use App\Models\PaymentProvider;
 use App\Services\Payments\GatewayRegistry;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * Store → Payments, one tab per gateway.
@@ -387,7 +388,7 @@ function bootPaytabsPreview(): array
 
     DB::purge('lane_az_preview');
 
-    $port = 8600 + random_int(30, 120);
+    $port = PreviewPort::claim(8630, 8720);
     $command = $envPrefix . 'php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($root) . ' ' . escapeshellarg($root . '/index.php');
 
     $process = proc_open(
