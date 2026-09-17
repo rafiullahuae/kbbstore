@@ -83,7 +83,6 @@ class AdminOrderController extends Controller
 
     public function show(
         int $id,
-        \App\Support\VatDisplay $vat,
         PaymentCapturer $capturer,
         PaymentRefunder $refunder,
     ): JsonResponse
@@ -174,43 +173,45 @@ class AdminOrderController extends Controller
             'fee_total_aed' => Money::toAed($order->fee_total),
             'total_aed' => Money::toAed($order->total),
             /*
-             * THE ORDER'S OWN TAX RECORD FIRST — Lane CU.
+             * THE ORDER'S OWN TAX RECORD, AND NOTHING ELSE — Lane CU, closed
+             * by Lane DU.
              *
-             * This computed the line fresh from the live settings, which was
-             * right while VAT was a display line at one global rate (D-64).
-             * The owner overturned that on 2026-09-16 and rates now vary by
-             * country and can be edited, so a recomputation here would show
-             * staff a figure the customer was never charged. An order that has
-             * a record of its own is read from that record; one that has none
-             * — everything placed before this lane — falls back to exactly the
-             * computation that was here.
+             * Lane CU made a recorded order read from its record but left the
+             * pre-lane computation in place as a fallback for orders that have
+             * none:
              *
-             * VatDisplay's own 'formatted' field is raw HTML meant for
-             * server-rendered Blade (Money::format() wraps it in <span> tags)
-             * — wrong for this JSON response, so only the label and a
-             * converted AED amount are used.
+             *     $line = $vat->line($order->total);
+             *
+             * That fallback is gone, for the reason written out at length in
+             * InvoiceDocument::vatNote(). The short version, in the terms that
+             * matter on THIS screen: the figure it produced was a function of
+             * today's `vat_rate`, so a member of staff opening an old order the
+             * day after the owner edited the rate would be shown a tax the
+             * customer was never charged — and would read it out to that
+             * customer on the phone, or refund against it. The invoice and the
+             * receipt for the same order now say nothing about tax; an admin
+             * screen that contradicted them would be worse than one that
+             * agrees. Three readers of one record, one answer.
+             *
+             * null here means "this order has no tax record", which is the
+             * truth for every order placed before the engine and every order
+             * placed while the shop sits in `display` mode.
              */
-            'vat' => (function () use ($vat, $order) {
+            'vat' => (function () use ($order) {
                 $recorded = \App\Support\OrderTax::recorded($order);
 
-                if ($recorded !== null) {
-                    if ($recorded['fils'] <= 0) {
-                        return null;
-                    }
-
-                    $rule = new \App\Support\TaxRule($recorded['rate'], $recorded['basis']);
-
-                    return [
-                        'label' => $recorded['added']
-                            ? 'VAT at ' . $rule->printableRate() . '% (added to the total)'
-                            : 'VAT at ' . $rule->printableRate() . '% (included in the total)',
-                        'amount_aed' => Money::toAed($recorded['fils']),
-                    ];
+                if ($recorded === null || $recorded['fils'] <= 0) {
+                    return null;
                 }
 
-                $line = $vat->line($order->total);
+                $rule = new \App\Support\TaxRule($recorded['rate'], $recorded['basis']);
 
-                return $line ? ['label' => $line['label'], 'amount_aed' => Money::toAed($line['amount'])] : null;
+                return [
+                    'label' => $recorded['added']
+                        ? 'VAT at ' . $rule->printableRate() . '% (added to the total)'
+                        : 'VAT at ' . $rule->printableRate() . '% (included in the total)',
+                    'amount_aed' => Money::toAed($recorded['fils']),
+                ];
             })(),
 
             'invoice_number' => $order->invoice_number,
@@ -858,13 +859,27 @@ class AdminOrderController extends Controller
             ? Order::withTrashed()->where('customer_id', $customerId)
             : Order::withTrashed()->where('email', $email);
 
-        $orders = $query->get(['id', 'total', 'status']);
+        $orders = $query->get(['id', 'total', 'tax_total', 'status']);
         $real = $orders->whereIn('status', Order::REAL_STATUSES);
 
         return [
             'total_orders' => $orders->count(),
             'total_revenue_aed' => Money::toAed((int) $real->sum('total')),
             'average_order_value_aed' => $real->count() > 0 ? Money::toAed((int) round($real->sum('total') / $real->count())) : 0,
+            /*
+             * WHAT THIS CUSTOMER WAS BILLED, VAT INCLUDED — Lane DU.
+             *
+             * `total` is the billed figure, so on an exclusive-tax order it
+             * carries VAT the shop collects for the tax authority and does not
+             * keep. This panel sits beside the order the operator is reading
+             * and gets asked "how much has this customer spent with us" — two
+             * different questions, and it should not answer the second with the
+             * first and no note. The VAT inside the figure is published so the
+             * screen can say so; the same disclosure the dashboard carries, in
+             * AdminController::revenueBasis().
+             */
+            'tax_collected_aed' => Money::toAed((int) $real->sum('tax_total')),
+            'revenue_basis' => \App\Http\Controllers\Admin\AdminController::revenueBasis(),
         ];
     }
 

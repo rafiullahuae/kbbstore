@@ -352,6 +352,17 @@ class CatalogProductsApiController extends Controller
             'units_sold' => (int) ($stats->units_sold ?? 0),
             'revenue_fils' => (int) ($stats->revenue_fils ?? 0),
             'revenue_display' => Money::plain((int) ($stats->revenue_fils ?? 0)),
+            /*
+             * WHAT THAT FIGURE IS MADE OF — Lane DU.
+             *
+             * SUM(order_items.total): the line value of this product across
+             * paid orders. It is NOT the same quantity as the revenue tile on
+             * the dashboard, which sums `orders.total` and therefore carries
+             * delivery, fees and VAT. Two numbers called "revenue" on one
+             * console, summing different columns, is the defect this names
+             * rather than hides. See AdminController::productRevenueBasis().
+             */
+            'revenue_basis' => \App\Http\Controllers\Admin\AdminController::productRevenueBasis(),
             'trashed' => $product->trashed(),
             'created_at' => $this->iso($product->created_at),
             'updated_at' => $this->iso($product->updated_at),

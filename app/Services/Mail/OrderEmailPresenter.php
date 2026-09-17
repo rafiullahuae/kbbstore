@@ -7,7 +7,6 @@ namespace App\Services\Mail;
 use App\Models\Order;
 use App\Support\Money;
 use App\Support\Url;
-use App\Support\VatDisplay;
 
 /**
  * One order, turned into the exact strings an email prints.
@@ -214,94 +213,86 @@ class OrderEmailPresenter
     }
 
     /**
-     * "You're paying VAT (5%)" — the line the checkout page already showed,
-     * printed on the receipt as well. Or null, when there is nothing true to say.
+     * "You're paying VAT (5%)" — the tax the order RECORDED, printed under the
+     * total. Or null, when there is nothing true to say.
      *
-     * WHY THE RECEIPT WAS SILENT ABOUT TAX UNTIL NOW, AND WHY THAT WAS A BUG.
-     * The VAT row in totals() above is gated on `tax_total`, and this store
-     * always writes that column 0 — VAT is a display line, never charged, never
-     * added to a total, never stored (decision D-64, App\Support\VatDisplay).
-     * So the gate was not a condition, it was a closed door: the shopper was
-     * shown an inclusive-VAT line at checkout, the formal tax invoice carried
-     * VAT and the TRN, and the one document in between — the receipt the
-     * customer actually keeps — mentioned tax nowhere at all.
+     * THIS IS A NOTE, NOT A ROW, and the distinction survives every version of
+     * the tax decision. It is rendered under the Total rather than among the
+     * rows that add up to it, because it is a portion OF that total and adding
+     * it as a row would make the column of figures stop summing to what was
+     * charged. An `exclusive` tax is the opposite case and belongs in the rows;
+     * totals() puts it there. Nothing here writes `tax_total` or moves a total.
      *
-     * THIS IS A NOTE, NOT A ROW, and the distinction is the whole of D-64. It
-     * is rendered under the Total rather than among the rows that add up to it,
-     * because it is a portion OF that total and adding it as a row would make
-     * the column of figures stop summing to what was charged. Nothing here
-     * writes `tax_total`; the totals above are untouched.
+     * ── THE ORDER'S OWN RECORD, OR SILENCE — LANE DU ────────────────────────
      *
-     * NULL IN TWO CASES, each a reason to say nothing rather than something
-     * untrue — the same two InvoiceDocument::vatNote() answers null to:
+     * This method used to end by asking VatDisplay LIVE for any order that had
+     * no tax record of its own:
      *
-     *   - the order carries its own `tax_total`. That is an imported order with
-     *     real tax already printed as a real row, and a second computed figure
-     *     beside it would be two different tax numbers on one receipt.
-     *   - VatDisplay has nothing to return: the owner switched the line off, the
-     *     rate is zero, or the portion rounds to nothing.
+     *     $line = app(VatDisplay::class)->line((int) $order->total);
      *
-     * THE FIGURE IS VatDisplay'S AND THE WORDING IS VatDisplay'S. One source of
-     * truth with the checkout page, so the two cannot drift; the label is
-     * label(), the shopper's own second-person sentence, because this is read by
-     * the shopper. (The invoice restates the same figure as "Includes VAT at
-     * 5%", which suits a document an accountant reads — see InvoiceDocument.)
+     * A receipt is a document the customer keeps, and this store RESENDS it —
+     * the admin's "resend confirmation" action re-renders it from scratch, at
+     * today's settings. So the owner raising `vat_rate` from 5 to 20 did not
+     * merely mean a stale figure sitting in an old inbox; it meant the copy the
+     * customer asks for in a year's time states a tax they were never charged,
+     * while `total` correctly states what they paid. The two then disagree.
      *
-     * Only the RENDERING differs, and it has to: VatDisplay::line() formats at
-     * the storefront's display precision, which rounds, and a receipt may not
-     * round. The fils integer is taken and re-rendered at the currency's real
-     * precision like every other figure in this class. See the header.
+     * The full argument for deleting that fallback rather than freezing or
+     * backfilling it is written out in InvoiceDocument::vatNote(), which took
+     * the same decision for the same reason at the same time. In one line: the
+     * rate on the day is not recoverable from a settings table with no history,
+     * so there is nothing honest to print, and a document that states no tax is
+     * not wrong where one that states the wrong tax is.
+     *
+     * NULL, THEREFORE, WHENEVER:
+     *
+     *   - the order has no tax record: placed before the engine, placed while
+     *     the shop is in the shipped `display` mode, or imported from
+     *     WooCommerce (that last one carries a real `tax_total` which totals()
+     *     has already printed as a real row above — a second figure here would
+     *     be two different tax numbers on one receipt);
+     *   - the tax was `exclusive`, so it is already a row in totals() above and
+     *     only a portion OF the total belongs underneath it;
+     *   - the recorded figure is zero.
+     *
+     * THE FIGURE AND THE RATE ARE THE ORDER'S; ONLY THE SENTENCE IS THE SHOP'S.
+     * `vat_label` stays live because it is wording the owner may reword — "VAT
+     * included ({rate}%)" instead of "You're paying VAT ({rate}%)" — and a
+     * reworded sentence around an unchanged figure restates nothing. The
+     * {rate} placeholder is filled from the snapshot, never from
+     * VatDisplay::label(), whose rate is today's. (The invoice restates the
+     * same figure as "Includes VAT at 5%", which suits a document an accountant
+     * reads — see InvoiceDocument.)
+     *
+     * The fils integer is re-rendered at the currency's real precision like
+     * every other figure in this class, because a receipt may not round. See
+     * the header.
      *
      * @return array{label:string,fils:int,html:string,plain:string}|null
      */
     private function vatNote(Order $order): ?array
     {
-        /*
-         * THE ORDER'S OWN RECORD FIRST — see InvoiceDocument::vatNote() for the
-         * full reasoning. Asking VatDisplay live at send time means a resent
-         * receipt states whatever rate the settings hold today rather than the
-         * one the customer was charged, and per-country rates the owner can
-         * edit make that a real misstatement rather than a theoretical one.
-         *
-         * An `exclusive` order's tax is already a row in totals() above and is
-         * not restated here; only a portion OF the total belongs under it.
-         */
         $taxRecord = \App\Support\OrderTax::recorded($order);
 
-        if ($taxRecord !== null) {
-            if ($taxRecord['added'] || $taxRecord['fils'] <= 0) {
-                return null;
-            }
-
-            $rate = (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate();
-
-            return [
-                'label' => str_replace(
-                    '{rate}',
-                    $rate,
-                    (string) app(\App\Services\SettingsService::class)->get('vat_label', "You're paying VAT ({rate}%)")
-                ),
-                'fils' => $taxRecord['fils'],
-                'html' => self::html($taxRecord['fils']),
-                'plain' => self::plain($taxRecord['fils']),
-            ];
-        }
-
-        if ((int) $order->tax_total !== 0) {
+        if ($taxRecord === null || $taxRecord['added'] || $taxRecord['fils'] <= 0) {
             return null;
         }
 
-        $line = app(VatDisplay::class)->line((int) $order->total);
-
-        if ($line === null) {
-            return null;
-        }
+        $rate = (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate();
 
         return [
-            'label' => (string) $line['label'],
-            'fils' => (int) $line['amount'],
-            'html' => self::html((int) $line['amount']),
-            'plain' => self::plain((int) $line['amount']),
+            // The RATE is the order's. Only the WORDING around it is the
+            // owner's, and `vat_label` is a sentence he may reword at will —
+            // which is why the {rate} placeholder is filled from the snapshot
+            // and never from VatDisplay::label(), whose rate is today's.
+            'label' => str_replace(
+                '{rate}',
+                $rate,
+                (string) app(\App\Services\SettingsService::class)->get('vat_label', "You're paying VAT ({rate}%)")
+            ),
+            'fils' => $taxRecord['fils'],
+            'html' => self::html($taxRecord['fils']),
+            'plain' => self::plain($taxRecord['fils']),
         ];
     }
 

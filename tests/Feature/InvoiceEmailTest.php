@@ -193,7 +193,11 @@ it('is not gated on the automatic order-email switch', function () {
 it('renders the same figures the printable invoice does, to the fil', function () {
     Mail::fake();
 
-    $order = invMailOrder();
+    // The order carries its own tax record, because the emailed invoice only
+    // states a VAT figure for an order that has one — Lane DU removed the live
+    // recomputation that used to state one for every order. 5% inclusive of the
+    // taxable base 46300 - 4000 + 2000 = 44300 is 2110.
+    $order = invMailOrder(['tax_rate' => 5, 'tax_basis' => \App\Support\TaxRule::INCLUSIVE, 'tax_total' => 2110]);
     app(OrderMailer::class)->emailInvoice($order);
 
     $mailable = new OrderInvoice($order->fresh('items'));
@@ -205,9 +209,11 @@ it('renders the same figures the printable invoice does, to the fil', function (
 
     /*
      * "Invoice", not "Tax Invoice" — Lane DE. The heading is
-     * InvoiceDocument::docType() now, and this order carries no tax and no TRN,
-     * so the document does not claim to be a tax document. InvoiceDocTypeTest
-     * covers every state of that decision.
+     * InvoiceDocument::docType() now, and the stronger heading needs BOTH a tax
+     * that was really charged or contained AND a registration number under the
+     * seller's name. This order has the first and the shop has not entered the
+     * second, so the document does not claim to be a tax document.
+     * InvoiceDocTypeTest covers every state of that decision.
      */
     expect($html)->toContain('>Invoice</div>')
         ->and($html)->not->toContain('Tax Invoice')
@@ -221,7 +227,7 @@ it('renders the same figures the printable invoice does, to the fil', function (
         ->and($html)->toContain('Cash on delivery')
         ->and($html)->toContain('GLOW10')
         ->and($html)->toContain('Includes VAT at 5%')
-        ->and($html)->toContain(InvoiceDocument::money(2255));
+        ->and($html)->toContain(InvoiceDocument::money(2110));
 });
 
 it('puts the invoice number in the subject and no money in it', function () {

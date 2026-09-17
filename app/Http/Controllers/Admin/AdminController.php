@@ -118,6 +118,91 @@ class AdminController extends Controller
     }
 
     /**
+     * WHAT "REVENUE" MEANS ON THESE SCREENS, SHIPPED AS DATA — LANE DU.
+     *
+     * ── THE DEFECT THIS ANSWERS ────────────────────────────────────────────
+     *
+     * Every revenue figure on the dashboard and in Analytics is SUM(orders.total)
+     * with refunds taken off. `orders.total` is what the customer was billed,
+     * and on an EXCLUSIVE-tax order that includes VAT the shop charges on the
+     * state's behalf and does not keep. So the headline number counts money
+     * that is not the owner's, under a word — "Revenue" — that says it is.
+     *
+     * The number was not wrong yesterday and it is not wrong today: while the
+     * shop sits in the shipped `display` mode, `orders.tax_total` is written 0
+     * for every order this application places, so there is nothing in there to
+     * take out. It becomes wrong the moment the owner turns `tax_mode` to
+     * `live` on a country with an `exclusive` basis, at which point the tile
+     * grows by the VAT and says nothing about why. Naming the basis now, while
+     * the two readings are the same figure, is the one moment the disclosure
+     * costs nobody anything.
+     *
+     * ── WHY THE FIGURE IS NOT SIMPLY NETTED HERE ───────────────────────────
+     *
+     * Because it cannot be done exactly, and an approximation carrying the word
+     * "Revenue" is the defect again in the other direction. The screen prints
+     * Net + Refunded = Gross and that identity has to hold; `refunds.amount` is
+     * the money handed back, VAT and all, and NOTHING records the tax share of
+     * a refund. Netting the tax out of gross while subtracting refunds whole
+     * would understate the result by the VAT inside every refund, and inventing
+     * a tax share for a refund is exactly the kind of arithmetic that must not
+     * grow a second home (see App\Support\TaxRule).
+     *
+     * So the figure stays what it is, it SAYS what it is, and the component the
+     * owner needs to read it is published beside it — `tax_collected_*_aed`,
+     * SUM(orders.tax_total) over the identical rows. Where nothing in the
+     * window was refunded, revenue minus that figure is the ex-VAT reading
+     * exactly; where something was, it is the ex-VAT reading of what was
+     * billed, which is the honest thing to say about it.
+     *
+     * Published rather than written into a Blade template for the same reason
+     * `revenue_statuses` is: the screen prints the list it actually sums, and a
+     * label living in the shell would drift from the query the first time
+     * either changed.
+     *
+     * @return array{includes_tax:bool,label:string,note:string}
+     */
+    public static function revenueBasis(): array
+    {
+        return [
+            // The one machine-readable fact. The shell may branch on it; the
+            // two strings are for the owner to read.
+            'includes_tax' => true,
+            'label' => 'Revenue (incl. VAT)',
+            'note' => 'What customers were billed, less refunds. Any VAT charged on these orders is'
+                . ' inside this figure — it is collected for the tax authority and not kept. The VAT'
+                . ' inside it is shown beside it.',
+        ];
+    }
+
+    /**
+     * What a per-product revenue figure is made of — LANE DU.
+     *
+     * `SUM(order_items.total)` is the line value of what was sold and nothing
+     * else: no delivery, no gift wrapping, no cash-on-delivery surcharge, and
+     * no refunds. It is therefore NOT the same quantity as the revenue tile
+     * beside it, and two figures on one screen that are both called "revenue"
+     * while summing different columns is the thing this method exists to stop.
+     *
+     * VAT is the awkward part and it is stated rather than smoothed over: an
+     * EXCLUSIVE tax is added at order level and never reaches a line, so it is
+     * outside these figures; an INCLUSIVE tax is a portion of the prices the
+     * lines carry, so it is inside them. Splitting it per line would need a tax
+     * column on `order_items`, which this schema does not have, and
+     * apportioning one would be inventing a figure to make a label tidier.
+     *
+     * @return array{label:string,note:string}
+     */
+    public static function productRevenueBasis(): array
+    {
+        return [
+            'label' => 'Product sales',
+            'note' => 'The value of the lines sold. Delivery, fees and refunds are not in it, and'
+                . ' VAT is only in it where the price already included VAT.',
+        ];
+    }
+
+    /**
      * GET /admin-api/stats — dashboard KPIs + recent orders.
      *
      * TWO MORE THINGS WERE WRONG HERE, on top of the refund netting above.
@@ -158,6 +243,12 @@ class AdminController extends Controller
             ->where('created_at', '>=', $since)
             ->sum('total');
 
+        // The VAT inside the figure above, over the IDENTICAL rows — same
+        // statuses, same demo exclusion, same window. See revenueBasis().
+        $tax30 = (int) $paidReal()
+            ->where('created_at', '>=', $since)
+            ->sum('tax_total');
+
         // Netted against the same window, so the dashboard and Analytics cannot
         // disagree about what the store actually took. See countedRefunds().
         $refunds30 = (int) self::countedRefunds()
@@ -177,7 +268,7 @@ class AdminController extends Controller
 
         $todayRow = $this->aggregate(
             $paidReal()->where('created_at', '>=', $dayStart)->where('created_at', '<', $dayEnd),
-            'COUNT(*) as n, COALESCE(SUM(total), 0) as revenue',
+            'COUNT(*) as n, COALESCE(SUM(total), 0) as revenue, COALESCE(SUM(tax_total), 0) as tax',
         );
 
         $todayRefunds = (int) self::countedRefunds()
@@ -233,6 +324,11 @@ class AdminController extends Controller
             // would be as hard to trust as one that silently did not.
             'gross_revenue_30d_aed' => (int) round($grossRevenue30 / 100),
             'refunds_30d_aed' => (int) round($refunds30 / 100),
+            // The VAT inside the two figures above, and the words that say the
+            // figures carry it. Zero on every order this shop places while
+            // `tax_mode` is `display`. See revenueBasis().
+            'tax_collected_30d_aed' => (int) round($tax30 / 100),
+            'revenue_basis' => self::revenueBasis(),
             'orders'          => $ordersTotal,
             'customers'       => $customers,
             'products'        => $products,
@@ -245,6 +341,7 @@ class AdminController extends Controller
                 'date'        => StoreTime::today()->format('Y-m-d'),
                 'orders'      => (int) ($todayRow->n ?? 0),
                 'revenue_aed' => (int) round(max(0, ((int) ($todayRow->revenue ?? 0)) - $todayRefunds) / 100),
+                'tax_collected_aed' => (int) round(((int) ($todayRow->tax ?? 0)) / 100),
             ],
             'demo'            => DemoSeed::disclosure(),
         ]);
@@ -1050,11 +1147,15 @@ class AdminController extends Controller
         $allOrders = $range->apply(DemoSeed::exclude(Order::query(), Order::class));
 
         $totals = (clone $paidQuery)
-            ->selectRaw('COUNT(*) as n, COALESCE(SUM(total), 0) as revenue')
+            ->selectRaw('COUNT(*) as n, COALESCE(SUM(total), 0) as revenue, COALESCE(SUM(tax_total), 0) as tax')
             ->first();
 
         $grossRevenue = (int) ($totals->revenue ?? 0);       // fils
         $paidCount    = (int) ($totals->n ?? 0);
+        // The VAT inside $grossRevenue, from the same aggregate over the same
+        // rows so the two cannot be taken over different order sets. It is
+        // reported, never subtracted — see revenueBasis().
+        $taxCollected = (int) ($totals->tax ?? 0);
 
         /*
          * Revenue is NET of refunds, and the average order value is computed
@@ -1268,6 +1369,13 @@ class AdminController extends Controller
             'revenue_total_aed' => (int) round($revenueTotal / 100),
             'gross_revenue_aed' => (int) round($grossRevenue / 100),
             'refunds_total_aed' => (int) round($refundTotal / 100),
+            // What the three figures above are made of, and how much of them is
+            // tax the shop collects and does not keep. Both are published
+            // rather than written into the screen for the same reason
+            // `revenue_statuses` below is. See revenueBasis().
+            'tax_collected_aed' => (int) round($taxCollected / 100),
+            'revenue_basis'     => self::revenueBasis(),
+            'top_products_basis' => self::productRevenueBasis(),
             'orders_total'      => $ordersTotal,
             'paid_orders'       => $paidCount,
             'aov_aed'           => (int) round($aov / 100),

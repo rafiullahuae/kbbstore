@@ -47,6 +47,8 @@ use App\Models\PaymentProvider;
 use App\Models\Setting;
 use App\Services\Mail\OrderEmailPresenter;
 use App\Services\SettingsService;
+use App\Support\OrderTax;
+use App\Support\TaxRule;
 use App\Support\VatDisplay;
 use Illuminate\Support\Facades\Mail;
 
@@ -149,37 +151,88 @@ function truthText(string $class, string $view): string
 
 /* ------------------------------------------------------------------ VAT -- */
 
-it('prints on the receipt the same inclusive-VAT line the checkout printed', function () {
+it('prints on the receipt the inclusive-VAT line the order recorded', function () {
+    /*
+     * ── WHAT THIS TEST USED TO SAY, AND WHY IT CHANGED — LANE DU ───────────
+     *
+     * It used to take a fixture with NO tax record and assert that the receipt
+     * printed VatDisplay's LIVE line anyway, on the grounds that the checkout
+     * page had shown one. That is the behaviour Lane DU removed: a receipt is
+     * re-rendered every time it is resent, so a live figure on it is a figure
+     * that changes after the fact. See OrderEmailPresenter::vatNote().
+     *
+     * The property worth keeping is the one underneath it — the receipt does
+     * not go silent about a tax the customer was charged — so the fixture now
+     * carries the record that entitles it to print one. The silence case has
+     * its own test below.
+     */
     Mail::fake();
 
-    $order = truthOrder();
+    // 20000 - 0 + 2000 = 22000 taxable base; 5% inclusive of that is 1048.
+    $order = truthOrder(['tax_rate' => 5, 'tax_basis' => TaxRule::INCLUSIVE, 'tax_total' => 1048]);
 
     Mail::to((string) $order->email)->send(new OrderConfirmation($order));
 
-    $vat = app(VatDisplay::class);
-    $amount = $vat->amount((int) $order->total);
+    $recorded = OrderTax::recorded($order);
 
     // The fixture has to be one where VAT is actually visible, or this test
     // would pass by saying nothing.
-    expect($amount)->toBeGreaterThan(0);
+    expect($recorded)->not->toBeNull()
+        ->and($recorded['fils'])->toBe(1048)
+        ->and($recorded['added'])->toBeFalse();
 
     $html = truthHtml(OrderConfirmation::class);
     $text = truthText(OrderConfirmation::class, 'emails.order-confirmation-text');
 
-    // e(), because the default label is "You're paying VAT (5%)" and Blade's
-    // {{ }} escapes the apostrophe — which is exactly what an HTML body should
-    // do to it. The text part below wants the unescaped original.
-    expect(str_contains($html, e($vat->label())))
-        ->toBeTrue('the confirmation email prints no VAT line, though the checkout page showed one');
+    // The WORDING is still the shop's `vat_label`; only the {rate} inside it
+    // comes off the order. With the shop at its default 5% the two agree, so
+    // this string is also a check that the snapshot rate is what was
+    // substituted. e(), because Blade's {{ }} escapes the apostrophe in
+    // "You're" — which is exactly what an HTML body should do to it. The text
+    // part below wants the unescaped original.
+    $label = app(VatDisplay::class)->label();
 
-    expect(str_contains($html, OrderEmailPresenter::html($amount)))
-        ->toBeTrue('the confirmation email does not print the VAT figure the checkout computed');
+    expect(str_contains($html, e($label)))
+        ->toBeTrue('the confirmation email prints no VAT line for an order that recorded tax');
 
-    expect(str_contains($text, $vat->label()))
+    expect(str_contains($html, OrderEmailPresenter::html(1048)))
+        ->toBeTrue('the confirmation email does not print the VAT figure the order recorded');
+
+    expect(str_contains($text, $label))
         ->toBeTrue('the plain-text receipt prints no VAT line');
 
-    expect(str_contains($text, OrderEmailPresenter::plain($amount)))
+    expect(str_contains($text, OrderEmailPresenter::plain(1048)))
         ->toBeTrue('the plain-text receipt does not print the VAT figure');
+});
+
+it('says nothing about VAT on a receipt for an order that recorded none', function () {
+    /*
+     * The other half of the decision above, and the one a reader will want to
+     * find: an order with no tax record — placed before the engine, or placed
+     * while the shop sits in the shipped `display` mode — gets no VAT figure on
+     * its receipt at all, rather than one recomputed from today's settings.
+     *
+     * Stated as a consequence the owner should know about: while the shop is in
+     * `display` mode the CHECKOUT PAGE still shows a VAT line, because that is
+     * a live quote about a cart and is allowed to be, and the receipt that
+     * follows it now says nothing. Setting tax_mode to `live` with an
+     * `inclusive` basis makes all three documents agree again and moves no
+     * totals — see App\Support\VatDisplay::quote().
+     */
+    Mail::fake();
+
+    $order = truthOrder();
+
+    expect(OrderTax::recorded($order))->toBeNull();
+
+    Mail::to((string) $order->email)->send(new OrderConfirmation($order));
+
+    // 'VAT' as a word, not as a class name: a rendered email inlines its own
+    // CSS and a class-name search would match that too.
+    expect(str_contains(truthHtml(OrderConfirmation::class), 'VAT'))
+        ->toBeFalse('a receipt for an order with no tax record still states a VAT figure');
+
+    expect((new OrderEmailPresenter)->present($order)['vatNote'])->toBeNull();
 });
 
 it('leaves tax_total at zero and the total unchanged when it prints VAT', function () {
@@ -213,7 +266,7 @@ it('leaves tax_total at zero and the total unchanged when it prints VAT', functi
 it('prints the VAT figure the emailed invoice prints, to the fil', function () {
     Mail::fake();
 
-    $order = truthOrder();
+    $order = truthOrder(['tax_rate' => 5, 'tax_basis' => TaxRule::INCLUSIVE, 'tax_total' => 1048]);
 
     // The invoice is the formal tax document and it already carried VAT. If the
     // receipt in the customer's inbox and the invoice they can ask for disagree
@@ -225,6 +278,15 @@ it('prints the VAT figure the emailed invoice prints, to the fil', function () {
     expect($doc['vatNote'])->not->toBeNull()
         ->and($presented['vatNote'])->not->toBeNull()
         ->and((int) $presented['vatNote']['fils'])->toBe((int) $doc['vatNote']['fils']);
+
+    // And they agree about SILENCE too, which is the case Lane DU created and
+    // the one where two readers of the same record could most easily drift:
+    // one of them keeping a live fallback the other dropped would put a VAT
+    // figure on the invoice and none on the receipt for the same order.
+    $bare = truthOrder();
+
+    expect(app(\App\Services\Invoices\InvoiceDocument::class)->present($bare)['vatNote'])->toBeNull()
+        ->and((new OrderEmailPresenter)->present($bare)['vatNote'])->toBeNull();
 });
 
 it('says nothing about VAT when the owner has switched the line off', function () {

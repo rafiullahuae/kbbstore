@@ -562,12 +562,31 @@ it('leaves a historical order reading zero, and does not invent a rate for it', 
         ->and($order->tax_total)->toBe(0)
         ->and(\App\Support\OrderTax::recorded($order))->toBeNull();
 
-    // And it still prints the display-only note the shop was showing then.
+    /*
+     * ── AND IT PRINTS NO TAX FIGURE AT ALL — LANE DU ───────────────────────
+     *
+     * This used to assert the opposite: that the old order "still prints the
+     * display-only note the shop was showing then". It did not print the note
+     * the shop was showing THEN — it printed the note the shop is showing NOW,
+     * recomputed at print time from today's `vat_rate`. Raise the rate and this
+     * order's invoice restated its own tax figure, years after it was filed.
+     *
+     * The figure on that note was never recoverable: `settings` keeps one row
+     * per key with no history, so nothing anywhere records what the rate was on
+     * the day. Lane DU therefore removed the recomputation rather than freezing
+     * or backfilling it — an order with no tax record gets no tax figure. The
+     * reasoning is in InvoiceDocument::vatNote().
+     *
+     * Note what has NOT changed, which is the more important half: no rate is
+     * invented on the order, no VAT row appears among the figures that sum to
+     * the Total, and the Total is untouched.
+     */
     $document = app(\App\Services\Invoices\InvoiceDocument::class)->present($order);
 
-    expect($document['vatNote'])->not->toBeNull('an old order stopped printing its inclusive-VAT note');
+    expect($document['vatNote'])->toBeNull('an old order states a VAT figure recomputed from today\'s settings');
     expect(collect($document['totals'])->contains(fn ($r) => str_contains((string) $r['label'], 'VAT')))
         ->toBeFalse('an old order started printing VAT as a row that adds to its total');
+    expect($document['totalFils'])->toBe(22000);
 });
 
 it('keeps an inclusive order tax out of the rows that sum to the total', function () {
