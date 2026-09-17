@@ -1447,6 +1447,33 @@ pin that looks applied and is not is worse than none.**
 - [x] **An OAuth grant carries no webhook signing secret.** Stripe returns one only when an
   endpoint is created, so both the one-click and paste-a-key paths now call the same
   `ensureWebhookEndpoint()`. Without it the shop takes payments it never hears about — *2.60.205*
+- [x] **The card is typed on our own checkout.** Moved off Stripe's hosted Checkout
+  Session onto PaymentIntents + Elements: no redirect, in the success case or any
+  other. The fields are cross-origin iframes served by `js.stripe.com`, so the card
+  number lives in Stripe's document and never enters this application's DOM. ▲ This
+  moves the integration from SAQ-A to SAQ-A-EP — an obligation, not a preference —
+  and it is the arrangement WooCommerce's own Stripe plugin uses for inline mode.
+  ▲ **Every shop already connected must reconnect**, or the webhook is subscribed to
+  `checkout.session.*` events a card payment no longer produces: the shop takes the
+  money and never hears about it
+- [x] **The form the owner asked for, after he placed a real order through it.** The
+  three-sentence paragraph replaced by one padlock line; two rows (card number, then
+  expiry beside security code), measured in Chromium at 1280 and 390 rather than
+  eyeballed; a small "save this card" tick; Link off unless switched on, with a real
+  Off/On switch on the Payments screen rather than a box you type `1` into; and a
+  green tick on every credential the server has accepted. Still exactly **one
+  `<input>` in the card form** and it is the tick — counted by a test, because the
+  entire reason this is Elements is that no field of ours ever holds a card number
+- [x] **The checkout fills itself in for a signed-in shopper**, from the address book,
+  shipping first then billing, and never over anything already typed
+- [~] **Saving a card: the save half only.** The card is genuinely kept at Stripe
+  (`setup_future_usage=on_session` against a Stripe Customer, stored **per mode** —
+  one id for both would make a shopper's first live order fail the whole
+  PaymentIntent, not merely the saving). Offering it BACK at the next checkout is a
+  lane of its own and is not built. The tick is hidden from anybody it cannot serve,
+  and the server decides independently of it: `place()` attaches an order to an
+  existing customer row whenever a guest types the email address of one, so "this
+  order has a customer" is not "this shopper has an account"
 
 ## Phase 12 — Performance and SEO
 
@@ -1465,7 +1492,11 @@ pin that looks applied and is not is worse than none.**
 
 **Full feature audit done 2026-09-10** — read the WordPress plugin's actual `seo_engine`
 module source directly (not secondhand) plus dedicated research on Yoast itself, since
-Rafi confirmed Yoast is the real plugin in use. Full writeup: `KBB-SEO-Feature-List.md`.
+Rafi confirmed Yoast is the real plugin in use. Full writeup: `KBB-SEO-Feature-List.md`
+— ▲ **which does not exist.** Not in the repo root, not under `docs/`, and
+`git log --diff-filter=D` finds no commit that deleted it, so it was never checked
+in. This section's own text is the only surviving record of that audit; cited twice
+in this phase and required reading in two lane briefs before anyone checked.
 Broken out below by whether each piece is buildable now or blocked on the product edit
 page (Phase 6/`openProduct()` is still a complete mockup — "Update"/"Publish" just shows
 a fake success toast and saves nothing).
@@ -1574,10 +1605,37 @@ a fake success toast and saves nothing).
   the handful of category pages the earlier canonical fix covered) had the same
   canonical-defaults-to-site-root bug — confirmed and fixed the same way, a real HTTP
   request through the full kernel with the actual rendered `<head>` parsed, not a
-  variable checked in isolation. **Still open: GTIN and variant-level offers** —
-  genuinely blocked, no GTIN/barcode column exists anywhere in the schema and there's
-  no existing source of truth for it, unlike everything else in this item which either
-  already had the right data or needed only site-wide settings — *2.60.54*
+  variable checked in isolation — *2.60.54*.
+
+  **CLOSED, AND THE SENTENCE THAT CLOSED IT WAS WRONG TWICE.** This item read
+  "Still open: GTIN and variant-level offers — genuinely blocked, no GTIN/barcode
+  column exists anywhere in the schema and there's no existing source of truth for
+  it". Neither half survived being checked against the schema:
+
+  - `products.gtin` has existed since
+    `2026_10_05_000000_add_product_editor_columns` — indexed, `string(14)`, whose
+    own header calls it "the product identifier Google actually wants".
+    `App\Support\Gtin` validates the mod-10 check digit and the product editor
+    refuses a bad one. The receiving end was finished. **Nothing published it.**
+  - **Variant-level offers were never blocked at all** — they were listed beside
+    the GTIN line and inherited its verdict without the schema being read a second
+    time. `product_variants` has carried `price`, `sale_price`, `stock_status` and
+    `sku` since the *original* schema migration, and `store/product.blade.php` has
+    always printed a price on every option row. The page showed three prices while
+    the document told Google one.
+
+  Both now publish: a validated `gtin` on the Product node (re-validated at the
+  wire, because the importer and a hand-edited row reach that column without
+  passing through the editor's controller), and an `AggregateOffer` where there
+  are two or more options at two or more distinct prices. A simple product's
+  document is byte-identical to before.
+
+  **Still genuinely blocked, stated precisely this time:** per-variant GTINs.
+  `product_variants` has no `gtin` column — so it is a migration and a reader,
+  not missing data, and the owner need supply nothing. The migration is written
+  out in `docs/FX-YOAST-TIER-CENSUS.md` §5 and deliberately not applied, because
+  nothing would read it yet and that is exactly how this repo accumulates "built,
+  never wired up".
 - [~] Per-product SEO storage — a genuinely major find while starting this: `products`
   already has a `seo` json column, from the original schema, commented **"Yoast import
   target"** — deliberately built for exactly this, then never once read from. Same
@@ -1612,6 +1670,14 @@ a fake success toast and saves nothing).
   landed as a side effect of the blog outage fix above — the renderer already supported
   it, it just never had real data reach it before). Category pages still use plain
   `website` type rather than a proper `CollectionPage`/`ItemList` — the one piece left
+- [x] **The A-Z brand directory said nothing about itself.** `/korean-skincare-brands/`
+  published the store-wide default description — the identical sentence the homepage
+  and the cart publish — `og:type website`, and JSON-LD of `Organization` + `WebSite`
+  and nothing else. It now publishes its own subtitle and a `CollectionPage` +
+  `ItemList` of `Brand` nodes at the landing-page URLs. The item `@type` is
+  **allowlisted rather than passed through**, for the reason `Product::toApi()` and
+  `SettingController::PUBLIC_KEYS` are allowlists: the value is written into a
+  document search engines read as this shop's own claim about itself
 - [~] Image pipeline · cache strategy — **measured, and the homepage was the offender**:
   it served full-size photographs into tiles a few hundred pixels wide. The grid, the
   product cards, the quick-view and the frequently-bought-together strip now emit real
@@ -1620,8 +1686,22 @@ a fake success toast and saves nothing).
 
 ## Phase 13 — Data migration  *(one-time, idempotent Artisan command)*
 
-- [ ] Products **671** · Orders **4,159** · Customers **3,712**
-- [ ] Count-based verification after each bucket
+- [x] Products **671** · Orders **4,159** · Customers **3,712** — run end to end
+  on MySQL: 49 s, 34 MB peak, 107,258 queries. Run twice, second pass `created 0,
+  updated 0` and a byte-identical database. Killed with SIGKILL mid-orders and
+  resumed: no duplicates, no orphaned line items, and the 669 imported products
+  identical to the uninterrupted run. From Store → Import it is **62 browser
+  steps, slowest 2.2 s** — or 229 steps, slowest 0.67 s, at a step size of 100.
+  ▲ `kbb:import --limit` across a whole export imports orders before their
+  customers and loses them to guest collisions; the screen cannot
+- [x] **Count-based verification after each bucket** — every figure in the report
+  was the importer describing its own work, so a row read and then neither
+  written nor refused incremented nothing and was invisible. Two checks now run
+  after every bucket that do not take the importer's word for it: rows read
+  against rows accounted for, with any unaccounted row **named by line and id**,
+  and one COUNT per bucket against the table it writes to. An unaccounted row
+  fails the command even with nothing refused. Rehearsed at 671/4,159/3,712 on
+  MySQL — see `docs/FV-IMPORT-AT-VOLUME.md`
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [ ] Media and image paths · URL redirect map — **needs the two URL decisions in Phase 9**
 - [x] **Dry run** — the import can now say what it would change, what it would drop, and
@@ -1662,12 +1742,20 @@ a fake success toast and saves nothing).
   reads the same cache key the strip below it counts from; the free-delivery
   figure comes from the shipping reader. An unresolvable token drops its line
   rather than printing a nought.
-- [ ] ▲ **Hero visibility overrides two sections silently.** Switching the hero
-  off for a device sets `display:none` on the band the delivery strip and ticker
-  are drawn inside, so their own switches are overridden without saying so.
-  Measured; the screen states it; the repair is written up and not applied.
-- [ ] **`site_title`** — read by the storefront, written by nothing. Site-wide,
-  so it belongs with general settings rather than an Appearance screen.
+- [x] ▲ **Hero visibility no longer overrides two sections silently.** Switching
+  the hero off for a device set `display:none` on the band the delivery strip and
+  ticker are drawn inside, so their own switches were overridden without a word.
+  The band's visibility is now the OR of what it actually contains: turning the
+  hero off on mobile leaves a ticker that is switched on for mobile exactly where
+  it was. Screenshots at `docs/fw-appearance-shots/`
+- [x] **`site_title` — read by the storefront, written by nothing, and the Save
+  button on Business Details could not write it.** The screen had the box; its
+  two console blocks never sent `set_site_title`, so the shop's own name was
+  unwritable from the admin and the storefront went on printing the default.
+  Both blocks applied. This is the third settings screen found this way, which is
+  why `AdminConsoleWriteTokenTest` now sweeps for a box with no writer behind it
+- [x] **The homepage layout preview had no test at all** — now covered, which is
+  what caught the hero-band regression above before it shipped rather than after
 
 ### Original scope
 
@@ -1687,6 +1775,16 @@ a fake success toast and saves nothing).
       nothing published a red `-0% OFF`, and `Color::isValidHex()` accepted a hex
       without its `#`, which rendered `background:E23A4E` and drew transparent.
       Turning the module ON is what introduced the first — *2.60.200*
+- [x] **The first tests any marketing module has had.** Every `marketing`-group module
+      reports `live`, and each was switched on and exercised rather than read. The
+      pixels were picked because they are the only place in this shop reporting money
+      to a third party, and a pixel sending 12,600 for a 126 AED sale looks perfectly
+      healthy while overstating ROAS a hundredfold. They are correct; the test is what
+      keeps them so. ▲ A trap worth knowing: there are **two** enable mechanisms and
+      only one works — a `settings` row `module_marketing_pixels`, or bare
+      `ga4_id`/`meta_id` rows, are read by nothing. The toggle lives in `module_toggles`
+      and the ids under `SettingsService::moduleSetting()`, so by hand every screen can
+      look configured while no tag renders
 
 ## Phase 17 — Dead interface  *(new — found by `hooks_bound`)*
 
