@@ -336,6 +336,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
      */
     require __DIR__.'/payments-reconcile.php';
 
+    /*
+     * Stripe connect / disconnect. Same group: one of these takes a live secret
+     * key in a request body and another takes the shop off its card processor
+     * and deletes a webhook endpoint inside the owner's own Stripe account.
+     */
+    require __DIR__.'/payments-connect.php';
+
         // The storefront health check behind Dashboard → Check now and Safety →
         // Debug & Monitor. Inside this group and nowhere else: when a page is
         // broken it answers with the exception message and the application file

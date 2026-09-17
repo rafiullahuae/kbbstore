@@ -11959,7 +11959,13 @@ buildNav();
   }
 
   function odInvoiceCard(o){
-    var docs = ['Invoice','Packing slip','Delivery note','Shipping Label','Dispatch Label'];
+    /* FOUR BUTTONS, NOT FIVE. 'Shipping Label' and 'Dispatch Label' were two
+       names for one sheet, and neither was built; now that the sheet exists,
+       two buttons that print the identical A6 label would leave the operator a
+       standing question about which one to press and, worse, the impression
+       that the shop issues two different things. One button, named for what
+       the printed sheet calls itself. */
+    var docs = ['Invoice','Packing slip','Delivery note','Dispatch label'];
     return '<div class="odcard" id="odInvoice">'+odCardHead('Invoice / Packing')+'<div class="pad" style="padding:18px 20px">'+
       '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">INVOICE NUMBER</label><div style="font-size:13px">'+(o.invoice_number?sesc(String(o.invoice_number)):'<span style="color:var(--ink-faint)">Not yet invoiced</span>')+'</div></div>'+
       '<label style="font-size:10.5px;font-weight:700;color:var(--ink-faint)">PRINT / DOWNLOAD</label>'+
@@ -12192,20 +12198,29 @@ buildNav();
       }catch(e){ toast('That action could not be completed.'); }
     };
 
-    /* Invoice and Packing slip are real documents now; the other three are
-       still honest placeholders. The URLs come from the order-detail payload
-       (invoice_url / packing_slip_url) rather than being built here, so this
-       cannot drift from the route or lose the deployment's base path. Opened
-       in a new tab because the admin console is a single page — navigating it
-       away would lose the order the operator is working on. */
+    /* All four are real documents now — the placeholder toast that used to
+       answer three of these buttons is gone, and with it the last of it from
+       this card. The URLs come from the order-detail payload rather than being
+       built here, so this cannot drift from the route or lose the deployment's
+       base path. Opened in a new tab because the admin console is a single
+       page — navigating it away would lose the order the operator is working
+       on.
+
+       The toast is KEPT as the fallback for an empty URL. It is reachable
+       again the moment a console is served against an older endpoint that does
+       not send one of these keys, and a button that silently does nothing is
+       the harder fault to report. Its wording is now about this order rather
+       than about the feature. */
     document.querySelectorAll('#content [data-oddoc]').forEach(function(b){
       b.onclick = function(){
         var kind = b.dataset.oddoc;
-        var url  = kind === 'Invoice' ? (o.invoice_url || '')
-                 : kind === 'Packing slip' ? (o.packing_slip_url || '')
+        var url  = kind === 'Invoice'        ? (o.invoice_url || '')
+                 : kind === 'Packing slip'   ? (o.packing_slip_url || '')
+                 : kind === 'Delivery note'  ? (o.delivery_note_url || '')
+                 : kind === 'Dispatch label' ? (o.shipping_label_url || '')
                  : '';
         if (url) { window.open(url, '_blank', 'noopener'); return; }
-        toast(kind + ' is not built yet — this is a placeholder.');
+        toast('That document is not available for this order.');
       };
     });
   }
@@ -14675,7 +14690,17 @@ buildNav();
   function sesc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
   function sval(id){ var el=document.getElementById(id); return el?el.value:''; }
   function money2aed(k){ var v=SETTINGS[k]; return (v==null||v==='')?'':(parseInt(v,10)/100); }
-  async function loadSettings(){ try{ var d=await api('/admin-api/settings'); SETTINGS=d.settings||{}; }catch(e){ SETTINGS={}; } return SETTINGS; }
+  /* The endpoint sends `title_template_basis` BESIDE `settings` — it is not a
+     setting, it is the screen's own explanation of one, resolved from
+     AdminController::titleTemplateBasis() which sits next to the behaviour it
+     describes. Same arrangement as the `revenue_basis` the dashboard tiles
+     already take their captions from, and for the same reason: a sentence
+     written here would be wrong the first time either side changed, and this
+     particular control has already been reported twice as "does nothing" by
+     people reading its old caption literally. Defaults to {} so a shell served
+     against an older endpoint simply renders no note rather than throwing. */
+  var TITLE_BASIS={};
+  async function loadSettings(){ try{ var d=await api('/admin-api/settings'); SETTINGS=d.settings||{}; TITLE_BASIS=d.title_template_basis||{}; }catch(e){ SETTINGS={}; TITLE_BASIS={}; } return SETTINGS; }
 
   /* The currency table, rendered from app/Support/Currencies.php so a symbol or
      a decimal count is never restated here. Curated, not all ~135 Stripe
@@ -15888,10 +15913,21 @@ buildNav();
           smField('seo_sep','Title separator',
             '<input id="seo_sep" value="'+sesc(S.seo_separator||'|')+'">',
             'What {sep} becomes. Usually | or —.')+
-          smField('seo_tpl','Title template',
+          smField('seo_tpl',sesc(TITLE_BASIS.label||'Title template'),
             '<input id="seo_tpl" value="'+sesc(S.seo_title_template||'{title} {sep} {sitename}')+'" placeholder="{title} {sep} {sitename}">',
-            'Used on every page that has no title of its own.')+
+            /* WAS "Used on every page that has no title of its own." That was
+               the wrong way round and it is why the box kept being reported as
+               broken: the template reaches product, shop and category pages
+               too. What it cannot do there is MOVE the site name. */
+            sesc(TITLE_BASIS.note||''))+
         '</div>'+
+        /* The {sitename} caveat gets its own row rather than being crammed into
+           the field's help line: it is the answer to the question this box
+           actually raises, and a reader who has just typed {sitename} into it
+           needs to see it without hunting. */
+        (TITLE_BASIS.tokens_note
+          ? '<div class="sm-help" style="margin:-2px 0 14px">'+sesc(TITLE_BASIS.tokens_note)+'</div>'
+          : '')+
         '<div class="sm-grid">'+
           smField('seo_home_t','Homepage title',
             '<input id="seo_home_t" value="'+sesc(S.seo_home_title)+'" placeholder="K-Beauty Bliss — Korean skincare for the UAE">',
@@ -18132,8 +18168,13 @@ buildNav();
 
       payWebhook(g)+
 
+      (g.supports_connect ? '<div id="pay_conn_stripe" class="ecopt wide"><div class="ecom">'+
+        '<div class="ecl"><label>Connect to Stripe</label></div>'+
+        '<div class="echelp">Loading\u2026</div></div></div>' : '')+
+
       '<div class="row" style="justify-content:flex-end;gap:10px;padding:12px 0 4px">'+
       '<span class="echelp" id="pay_msg_'+sesc(g.id)+'" style="margin:0;margin-right:auto"></span>'+
+      (g.supports_connect ? '<button type="button" class="btn ghost" data-paydisc="'+sesc(g.id)+'">Disconnect Stripe</button>' : '')+
       '<button type="button" class="btn ghost" data-paycheck="'+sesc(g.id)+'">Check this setup</button>'+
       '<button type="button" class="btn" data-paysave="'+sesc(g.id)+'">Save '+sesc(g.title)+'</button></div>'+
       '<div id="pay_pre_'+sesc(g.id)+'"></div>'+
@@ -18524,6 +18565,108 @@ buildNav();
     payRefreshTabs();
   }
 
+  /* ---------- Store -> Payments -> Stripe -> Connect ----------
+     Everything dangerous is server-side in StripeConnect; this paints its
+     answers. It renders no credential because it is given none: the status
+     endpoint returns the account report and has_value-style flags only. */
+  var STRIPE_CONN=null;
+
+  async function payStripeStatus(){
+    var host=document.getElementById('pay_conn_stripe');
+    if(!host) return;
+    try{ STRIPE_CONN=await api('/admin-api/payments/stripe/connect/status'); }
+    catch(e){ host.innerHTML='<div class="ecom"><div class="echelp">Could not read the Stripe connection.</div></div>'; return; }
+    host.innerHTML=payStripePanel(STRIPE_CONN);
+    bindPayments();
+  }
+
+  function payStripePanel(s){
+    var a=s.account||{};
+    if(s.connected){
+      var bits=[];
+      if(a.name) bits.push(sesc(a.name));
+      if(a.country) bits.push(sesc(a.country));
+      if(a.currency) bits.push('settles in '+sesc(a.currency));
+      bits.push(a.charges_enabled?'charges enabled':'charges NOT enabled yet');
+      bits.push(a.livemode?'LIVE account':'test account');
+      return '<div class="ecom"><div class="ecl"><label>Connected to Stripe</label>'+
+        '<span class="pill '+(a.charges_enabled?'green':'amber')+'"><span class="d"></span>'+
+        (a.charges_enabled?'ready':'not ready')+'</span></div>'+
+        '<div class="echelp">'+bits.join(' · ')+'</div>'+
+        (a.currency && s.shop_currency && a.currency!==s.shop_currency
+          ? '<div class="nlwarn">This shop prices in '+sesc(s.shop_currency)+' but Stripe settles in '+
+            sesc(a.currency)+'. Stripe converts every payment, and the amounts on your Stripe dashboard '+
+            'will not match the order totals here.</div>' : '')+
+        '<div class="echelp">Payment notifications are set up for you. There is nothing to paste into Stripe.</div>'+
+        '</div>';
+    }
+    return '<div class="ecom"><div class="ecl"><label>Connect to Stripe</label>'+
+      '<span class="pill amber">not connected</span></div>'+
+      '<div class="echelp">Sign in at stripe.com, open Developers → API keys, copy the <b>Secret key</b> '+
+      '(it starts sk_test_ or sk_live_) and paste it here. Everything else is done for you.</div></div>'+
+      '<div class="ecctl" style="display:block;width:100%">'+
+      '<input type="password" class="inp" id="pay_conn_key" autocomplete="new-password" spellcheck="false" '+
+      'placeholder="sk_test_… or sk_live_…" style="max-width:none">'+
+      '<div class="row" style="gap:8px;margin-top:8px">'+
+      '<button type="button" class="btn" data-payconnect="1">Connect Stripe</button>'+
+      (s.oauth_available?'<button type="button" class="btn ghost" data-payoauth="1">Connect with Stripe (one click)</button>':'')+
+      '<span class="echelp" id="pay_conn_msg" style="margin:0"></span></div></div>';
+  }
+
+  async function payStripeConnect(){
+    var box=document.getElementById('pay_conn_key');
+    var msg=document.getElementById('pay_conn_msg');
+    var mode=document.getElementById('pay_mode_stripe');
+    if(!box) return;
+    if(msg) msg.textContent='Checking with Stripe…';
+    try{
+      var r=await fetch(fixAdminApiUrl('/admin-api/payments/stripe/connect'),{
+        method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','Accept':'application/json','X-Requested-With':'XMLHttpRequest'},
+        body:JSON.stringify({secret_key:box.value,mode:mode?mode.value:null})
+      });
+      var d=await r.json();
+      box.value='';                       /* the key never lingers in the DOM */
+      if(!d.ok){ if(msg) msg.textContent=d.error||'Stripe refused the connection.'; return; }
+      if(msg) msg.textContent='';
+      await renderPayments();
+      if((d.warnings||[]).length) alert(d.warnings.join('\n\n'));
+    }catch(e){ if(msg) msg.textContent='Could not reach this site to connect.'; }
+  }
+
+  async function payStripeDisconnect(){
+    var s=STRIPE_CONN||{};
+    var n=(s.in_flight||{}).count||0;
+    var warn='Disconnect this shop from Stripe?\n\n'+
+      'Card payments stop being offered and the stored keys are erased.\n';
+    if(n) warn+='\n'+n+' payment'+(n===1?' is':'s are')+' still in progress. Anyone already on '+
+      'Stripe\'s payment page can still pay, and that money will reach your Stripe account — but this '+
+      'shop will not hear about it, so the order stays unpaid here until you mark it paid or reconnect.\n';
+    warn+='\nYou can connect again at any time.';
+    if(!confirm(warn)) return;
+    try{
+      var r=await fetch(fixAdminApiUrl('/admin-api/payments/stripe/disconnect'),{
+        method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','Accept':'application/json','X-Requested-With':'XMLHttpRequest'},
+        body:JSON.stringify({confirm:'disconnect'})
+      });
+      var d=await r.json();
+      await renderPayments();
+      if((d.warnings||[]).length) alert(d.warnings.join('\n\n'));
+    }catch(e){ alert('Could not reach this site to disconnect.'); }
+  }
+
+  /* The popup reports back on this origin and closes itself. */
+  window.addEventListener('message',function(e){
+    if(e.origin!==window.location.origin) return;
+    if(!e.data||e.data.source!=='kbb.stripe.connect') return;
+    var r=e.data.result||{};
+    renderPayments().then(function(){
+      if(!r.ok && r.error) alert(r.error);
+      else if((r.warnings||[]).length) alert(r.warnings.join('\n\n'));
+    });
+  });
+
   function bindPayments(){
     /* Bound on the screen's own wrapper, never on document. Two separate bugs
        on this console came from document-level listeners matching another
@@ -18581,6 +18724,23 @@ buildNav();
       el.onclick=flip;
       el.onkeydown=function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); } };
     });
+
+    document.querySelectorAll('[data-payconnect]').forEach(function(b){
+      b.onclick=function(){ payStripeConnect(); };
+    });
+    document.querySelectorAll('[data-payoauth]').forEach(function(b){
+      b.onclick=function(){
+        /* window.open on the click itself, or the popup is blocked. The URL is
+           ours and 302s to Stripe, so there is no round trip in between. */
+        var m=document.getElementById('pay_mode_stripe');
+        window.open(fixAdminApiUrl('/admin-api/payments/stripe/connect/start?mode='+
+          encodeURIComponent(m?m.value:'test')),'kbbstripe','width=620,height=760');
+      };
+    });
+    document.querySelectorAll('[data-paydisc]').forEach(function(b){
+      b.onclick=function(){ payStripeDisconnect(); };
+    });
+    if(document.getElementById('pay_conn_stripe')) payStripeStatus();
 
     document.querySelectorAll('[data-paycheck]').forEach(function(b){
       b.addEventListener('click', function(){ payPreflight(b.getAttribute('data-paycheck')); });

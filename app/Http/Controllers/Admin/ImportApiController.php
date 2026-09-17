@@ -198,7 +198,25 @@ class ImportApiController extends Controller
     {
         $request->validate(['rows' => ['nullable', 'integer', 'min:1', 'max:'.ImportDriver::MAX_STEP_ROWS]]);
 
-        @set_time_limit(self::STEP_SECONDS);
+        /*
+         * RAISE ONLY. This call is correct on the shared host, where the default
+         * is around 30 seconds and one slice needs longer. Under the CLI the
+         * default is 0 — unlimited — so the same call is a *lower*, and it arms
+         * a 110-second countdown over the whole PHP process.
+         *
+         * That killed the test suite. The first test to touch this endpoint
+         * started the clock, and Pest was killed 110 wall-clock seconds later
+         * wherever it happened to be — in DateFactory, in Router, in Import\Row
+         * on three consecutive runs, never in the test that armed it. It stayed
+         * invisible only because the suite finished a couple of seconds inside
+         * the budget; one lane's new tests tipped it over and it began failing
+         * for everyone, with a stack trace pointing at innocent code.
+         */
+        $limit = (int) ini_get('max_execution_time');
+
+        if ($limit !== 0 && $limit < self::STEP_SECONDS) {
+            @set_time_limit(self::STEP_SECONDS);
+        }
 
         // A closed tab should not roll back a batch that was about to commit.
         @ignore_user_abort(true);

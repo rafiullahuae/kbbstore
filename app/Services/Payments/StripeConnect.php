@@ -91,6 +91,21 @@ final class StripeConnect
 {
     public const GATEWAY = 'stripe';
 
+    /**
+     * Does this gateway have a one-paste connect flow?
+     *
+     * Asked by PaymentsApiController so the console never has to name a
+     * gateway to decide where the Connect panel goes. PaymentsGatewayTabsTest
+     * forbids the screen naming one, and it is right to: a screen carrying its
+     * own gateway list stops following the registry the moment one is added or
+     * renamed. When a second provider gains a connect flow, this is the one
+     * line that changes.
+     */
+    public static function supports(string $gatewayId): bool
+    {
+        return $gatewayId === self::GATEWAY;
+    }
+
     private const API = 'https://api.stripe.com';
 
     private const OAUTH_AUTHORIZE = 'https://connect.stripe.com/oauth/authorize';

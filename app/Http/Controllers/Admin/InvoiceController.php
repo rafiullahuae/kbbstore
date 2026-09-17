@@ -13,7 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Response;
 
 /**
- * The two printable documents an order produces.
+ * The four printable documents an order produces.
  *
  * ── WHY HTML AND NOT A PDF ──────────────────────────────────────────────────
  *
@@ -49,11 +49,35 @@ use Illuminate\Http\Response;
  *
  * On the first render of the INVOICE, and nowhere else. Not at checkout: an
  * abandoned or failed order would burn a number out of a legal sequence and
- * leave a gap an accountant has to explain. Not on the packing slip either —
- * that document is a picking list, it is printed for orders that may never be
- * invoiced, and printing one must not consume a number. Allocation is
- * idempotent (see InvoiceNumbers), so reloading the invoice ten times, or two
- * admins opening it at once, still produces exactly one number for the order.
+ * leave a gap an accountant has to explain. Not on any of the other three
+ * either — a packing slip is a picking list, a delivery note is a handover
+ * record and a dispatch label is an address on a box. All three are printed for
+ * orders that may never be invoiced, and printing one must not consume a
+ * number. Allocation is idempotent (see InvoiceNumbers), so reloading the
+ * invoice ten times, or two admins opening it at once, still produces exactly
+ * one number for the order.
+ *
+ * ── WHAT EACH OF THE FOUR CARRIES, IN ONE PLACE ─────────────────────────────
+ *
+ *                     money   address   item names   SKU   gift message
+ *   invoice             yes     yes         yes      yes        yes
+ *   packing slip        NO      yes         yes      yes        yes
+ *   delivery note       NO      yes         yes      NO         NO
+ *   dispatch label      COD*    yes         NO       NO         NO
+ *
+ *   * the cash-on-delivery amount, and only on an unpaid COD order. See
+ *     InvoiceDocument::codToCollect().
+ *
+ * The row that matters is the last one. The label is on the OUTSIDE of the
+ * parcel and everybody on the route reads it, so it names no product, no brand
+ * and no SKU; the other three travel inside the box or to the customer. Each
+ * view's header argues its own line of that table, and DispatchDocumentsTest
+ * asserts the NOs over the whole rendered page rather than over a list of
+ * fields somebody has to remember to keep up to date.
+ *
+ * FOUR, NOT FIVE. The order screen offers "Shipping Label" and "Dispatch Label"
+ * as separate buttons. They are one document — see the shipping-label view's
+ * header — and both should open shippingLabelUrl().
  */
 class InvoiceController extends Controller
 {
@@ -81,6 +105,8 @@ class InvoiceController extends Controller
         return view('invoices.invoice', [
             'doc' => $this->documents->present($order),
             'packingSlipUrl' => self::packingSlipUrl($order->id),
+            'deliveryNoteUrl' => self::deliveryNoteUrl($order->id),
+            'labelUrl' => self::shippingLabelUrl($order->id),
         ]);
     }
 
@@ -102,6 +128,52 @@ class InvoiceController extends Controller
         return view('invoices.packing-slip', [
             'doc' => $this->documents->present($order),
             'invoiceUrl' => self::invoiceUrl($order->id),
+            'deliveryNoteUrl' => self::deliveryNoteUrl($order->id),
+            'labelUrl' => self::shippingLabelUrl($order->id),
+        ]);
+    }
+
+    /**
+     * The delivery note: what was handed over, with a signature block and no
+     * prices.
+     *
+     * Allocates nothing, for the same reason the packing slip does not.
+     */
+    public function deliveryNote(int $id): View|Response
+    {
+        $order = $this->find($id);
+
+        if ($order === null) {
+            return $this->missing();
+        }
+
+        return view('invoices.delivery-note', [
+            'doc' => $this->documents->present($order),
+            'packingSlipUrl' => self::packingSlipUrl($order->id),
+            'labelUrl' => self::shippingLabelUrl($order->id),
+        ]);
+    }
+
+    /**
+     * The dispatch label: the delivery address, the order number as a scannable
+     * code, and deliberately nothing that says what is in the box.
+     *
+     * Allocates nothing. Putting a parcel on a van is not issuing a financial
+     * document, and a label printed for an order that is later cancelled must
+     * not have consumed an invoice number.
+     */
+    public function shippingLabel(int $id): View|Response
+    {
+        $order = $this->find($id);
+
+        if ($order === null) {
+            return $this->missing();
+        }
+
+        return view('invoices.shipping-label', [
+            'doc' => $this->documents->present($order),
+            'deliveryNoteUrl' => self::deliveryNoteUrl($order->id),
+            'packingSlipUrl' => self::packingSlipUrl($order->id),
         ]);
     }
 
@@ -114,6 +186,16 @@ class InvoiceController extends Controller
     public static function packingSlipUrl(int $orderId): string
     {
         return Url::to('/admin-api/orders/' . $orderId . '/packing-slip');
+    }
+
+    public static function deliveryNoteUrl(int $orderId): string
+    {
+        return Url::to('/admin-api/orders/' . $orderId . '/delivery-note');
+    }
+
+    public static function shippingLabelUrl(int $orderId): string
+    {
+        return Url::to('/admin-api/orders/' . $orderId . '/shipping-label');
     }
 
     /**
@@ -133,7 +215,7 @@ class InvoiceController extends Controller
     /**
      * A plain 404 page rather than a JSON body.
      *
-     * These two routes sit in a JSON group but serve documents to a browser
+     * These routes sit in a JSON group but serve documents to a browser
      * window; handing that window `{"error":"not_found"}` as raw text is a
      * worse answer than a sentence.
      */

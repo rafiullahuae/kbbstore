@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>Packing slip — KBB-10427</title>
+    <title>Dispatch label — KBB-10428</title>
     <style>
         
-                    @page { size: A4; margin: 14mm 14mm 16mm; }
+                        @page { size: 105mm 148mm; margin: 6mm; }
         
         :root {
             --ink: #16161a;
@@ -198,7 +198,37 @@
         }
         .sign .cap { margin-top: 5px; font-size: 10.5px; color: var(--ink-soft); }
 
-        
+            .sheet.lbl { width: 105mm; min-height: 148mm; padding: 8mm; }
+    .lbl .from {
+        font-size: 10px; color: var(--ink-2); line-height: 1.45;
+        padding-bottom: 6px; border-bottom: 1px solid var(--rule);
+    }
+    .lbl .from .n { font-weight: 700; color: var(--ink); font-size: 11px; }
+    .lbl .to { margin-top: 10px; }
+    .lbl .to .name { font-size: 16px; font-weight: 750; line-height: 1.25; }
+    .lbl .to .addr { margin-top: 3px; font-size: 13.5px; line-height: 1.45; }
+    .lbl .to div { overflow-wrap: anywhere; }
+    .lbl .tel { margin-top: 7px; font-size: 14px; font-weight: 700; }
+    .lbl .strip {
+        display: flex; gap: 10px; margin-top: 10px;
+        border-top: 1px solid var(--rule); padding-top: 7px;
+        font-size: 11px; color: var(--ink-2);
+    }
+    .lbl .strip b { display: block; color: var(--ink); font-size: 12.5px; }
+    .lbl .cod {
+        margin-top: 10px; padding: 7px 10px;
+        border: 2px solid var(--ink); border-radius: 5px; text-align: center;
+    }
+    .lbl .cod .k {
+        font-size: 10px; font-weight: 750; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--ink-2);
+    }
+    .lbl .cod .v { font-size: 19px; font-weight: 800; margin-top: 1px; }
+    .lbl .code { margin-top: 12px; }
+    @media print {
+        .sheet.lbl { width: auto; min-height: 0; padding: 0; }
+    }
+
         /* ---- what printing changes ---- */
         @media print {
             html, body { background: #fff; }
@@ -226,46 +256,49 @@
 </head>
 <body>
     <div class="toolbar no-print">
-        <h1>Packing slip · KBB-10427</h1>
+        <h1>Dispatch label · KBB-10428</h1>
         <span class="spacer"></span>
         <span class="hint">Print, or choose “Save as PDF” in the print dialog.</span>
-                    <a class="btn ghost" href="/admin-api/orders/10427/invoice">Invoice</a>
-                <a class="btn ghost" href="/admin-api/orders/10427/delivery-note">Delivery note</a>
-                <a class="btn ghost" href="/admin-api/orders/10427/shipping-label">Dispatch label</a>
+                    <a class="btn ghost" href="/admin-api/orders/10428/delivery-note">Delivery note</a>
+                <a class="btn ghost" href="/admin-api/orders/10428/packing-slip">Packing slip</a>
             <button type="button" onclick="window.print()">Print</button>
     </div>
 
     
-    <div class="sheet">
-            <div class="head">
-        <div class="who">
-            <div class="biz" dir="auto">K Beauty Bliss Trading LLC</div>
-<div class="biz-lines">
-            <div dir="auto">Office 1902, Burlington Tower</div>
-            <div dir="auto">Business Bay, Dubai</div>
-            <div dir="auto">United Arab Emirates</div>
-                <div dir="auto">+971 58 505 2611</div>
-                <div dir="auto">info@kbeautybliss.com</div>
-                <div dir="auto">kbeautybliss.com</div>
-                
-        <div dir="auto">TRN 100123456700003</div>
+    <div class="sheet lbl">
+            <div class="from">
+        <span class="n" dir="auto">From: K Beauty Bliss Trading LLC</span>
+                    <div dir="auto">Office 1902, Burlington Tower</div>
+                    <div dir="auto">Business Bay, Dubai</div>
+                    <div dir="auto">United Arab Emirates</div>
+                            <div dir="auto">+971 58 505 2611</div>
+            </div>
+
+    <div class="to">
+        <div class="label">Deliver to</div>
+        
+        
+                    <div dir="auto" class="name">Aisha Khan</div>
+                    <div dir="auto" class="addr">Apartment 1204, Marina Heights</div>
+                    <div dir="auto" class="addr">Dubai</div>
+                    <div dir="auto" class="addr">United Arab Emirates</div>
+        
+                    <div class="tel" dir="auto">Tel +971 50 123 4567</div>
+            </div>
+
+    <div class="strip">
+        <div>Order<b dir="auto">KBB-10428</b></div>
+        <div>Items<b>1</b></div>
+        <div>Service<b>Standard delivery (1–3 working days)</b></div>
     </div>
+
+            <div class="cod">
+            <div class="k">Cash on delivery &mdash; collect</div>
+            <div class="v"><span class="woocommerce-Price-amount amount" dir="ltr"><span class="woocommerce-Price-currencySymbol" dir="auto">AED</span> 215.50</span></div>
         </div>
-
-        <div class="what">
-            <div class="doctype">Packing Slip</div>
-            <div class="docmeta">
-                <div class="row">Order <b>KBB-10427</b></div>
-                                    <div class="row">Invoice <b>01000</b></div>
-                                                    <div class="row">Ordered 14 September 2026</div>
-                            </div>
-                            <div class="stamp">Gift</div>
-                    </div>
-    </div>
-
     
-    <div style="margin-top:12px;display:inline-block">
-        <div class="bc"  style="height: 11mm"          role="img" aria-label="Barcode of KBB-10427">
+    <div class="code">
+        <div class="bc"  style="height: 13mm"          role="img" aria-label="Barcode of KBB-10428">
                                 
                             <i class="b" style="border-left-width: 0.680mm"></i>
                                             
@@ -379,25 +412,25 @@
                                             
                             <i class="s" style="width: 0.340mm"></i>
                                             
+                            <i class="b" style="border-left-width: 0.340mm"></i>
+                                            
+                            <i class="s" style="width: 0.680mm"></i>
+                                            
                             <i class="b" style="border-left-width: 0.680mm"></i>
                                             
-                            <i class="s" style="width: 0.340mm"></i>
+                            <i class="s" style="width: 0.680mm"></i>
+                                            
+                            <i class="b" style="border-left-width: 0.680mm"></i>
+                                            
+                            <i class="s" style="width: 0.680mm"></i>
+                                            
+                            <i class="b" style="border-left-width: 0.340mm"></i>
+                                            
+                            <i class="s" style="width: 0.680mm"></i>
                                             
                             <i class="b" style="border-left-width: 1.020mm"></i>
                                             
                             <i class="s" style="width: 0.340mm"></i>
-                                            
-                            <i class="b" style="border-left-width: 0.680mm"></i>
-                                            
-                            <i class="s" style="width: 1.020mm"></i>
-                                            
-                            <i class="b" style="border-left-width: 0.340mm"></i>
-                                            
-                            <i class="s" style="width: 0.680mm"></i>
-                                            
-                            <i class="b" style="border-left-width: 0.340mm"></i>
-                                            
-                            <i class="s" style="width: 0.680mm"></i>
                                             
                             <i class="b" style="border-left-width: 0.680mm"></i>
                                             
@@ -414,98 +447,8 @@
                             <i class="b" style="border-left-width: 0.680mm"></i>
                         </div>
 
-<div class="bc-text">KBB-10427</div>
+<div class="bc-text">KBB-10428</div>
     </div>
-
-    <hr class="rule">
-
-    <div class="parties">
-    <div class="party">
-        <div class="label">Ordered by</div>
-                    <div dir="auto" class="name">Aisha Khan</div>
-                    <div dir="auto" class="">Apartment 1204, Marina Heights</div>
-                    <div dir="auto" class="">Dubai</div>
-                    <div dir="auto" class="">United Arab Emirates</div>
-                    <div dir="auto" class="">+971 50 123 4567</div>
-                            <div dir="auto">aisha.khan@example.com</div>
-            </div>
-
-    <div class="party">
-        <div class="label">Deliver to</div>
-                                    <div dir="auto" class="name">Noura Al Mansoori</div>
-                            <div dir="auto" class="">Villa 7, Street 21</div>
-                            <div dir="auto" class="">Al Barsha South 2</div>
-                            <div dir="auto" class="">Dubai</div>
-                            <div dir="auto" class="">United Arab Emirates</div>
-                            <div dir="auto" class="">+971 55 987 6543</div>
-                        </div>
-</div>
-
-    <div class="facts">
-        <div class="fact">
-            <div class="label">Delivery</div>
-            <div class="v">Standard delivery (1–3 working days)</div>
-        </div>
-                    <div class="fact">
-                <div class="label">Phone</div>
-                <div class="v" dir="auto">+971 50 123 4567</div>
-            </div>
-                <div class="fact">
-            <div class="label">Items</div>
-            <div class="v">3</div>
-        </div>
-        <div class="fact">
-            <div class="label">Status</div>
-            <div class="v">processing</div>
-        </div>
-    </div>
-
-    <table class="lines">
-        <thead>
-            <tr>
-                <th class="num" style="width:16mm">Qty</th>
-                <th>Item</th>
-                <th style="width:34mm">SKU</th>
-                <th class="num" style="width:18mm">Picked</th>
-            </tr>
-        </thead>
-        <tbody>
-                            <tr>
-                    <td class="num"><strong>2</strong></td>
-                    <td>
-                        <div class="it-name" dir="auto">Rice Daily Moisturizing Toner 150ml</div>
-                                                                            <div class="it-sub" dir="auto">Haruharu Wonder</div>
-                                            </td>
-                    <td dir="auto">HH-RT-150</td>
-                    
-                    <td class="num" style="color:#aab0b9">☐</td>
-                </tr>
-                            <tr>
-                    <td class="num"><strong>1</strong></td>
-                    <td>
-                        <div class="it-name" dir="auto">Centella Ampoule</div>
-                                                                            <div class="it-sub" dir="auto">SKIN1004 · 30ml</div>
-                                            </td>
-                    <td dir="auto">SK-CA-030</td>
-                    
-                    <td class="num" style="color:#aab0b9">☐</td>
-                </tr>
-                    </tbody>
-    </table>
-
-            <div class="notes">
-                            <div class="note">
-                    <div class="label">Gift message — write this on the card</div>
-                    <div class="body" dir="auto">Happy birthday, Mama.
-Love from all of us x</div>
-                </div>
-                                        <div class="note">
-                    <div class="label">Note from the customer</div>
-                    <div class="body" dir="auto">Please ring the doorbell twice — the buzzer is broken.</div>
-                </div>
-                    </div>
-    
-    <div class="foot">No prices are shown on this sheet. It is safe to put in the parcel, including for a gift.</div>
     </div>
 </body>
 </html>

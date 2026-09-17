@@ -324,6 +324,12 @@ final class AdminCapabilities
         // ------------------------------------------------------------------ orders
         ['GET', 'admin-api/orders/*/invoice', 'invoices.view'],
         ['GET', 'admin-api/orders/*/packing-slip', 'invoices.view'],
+        // The delivery note and the dispatch label carry no money, but they do
+        // carry a customer's name, street address and phone number laid out for
+        // printing — which is the same reason the two above are mapped and not
+        // left to the unmapped-route default.
+        ['GET', 'admin-api/orders/*/delivery-note', 'invoices.view'],
+        ['GET', 'admin-api/orders/*/shipping-label', 'invoices.view'],
         ['GET', 'admin-api/orders-export', 'orders.export'],
         ['POST', 'admin-api/orders-bulk-delete', 'orders.delete'],
         ['POST', 'admin-api/orders-bulk-restore', 'orders.delete'],

@@ -213,7 +213,23 @@ it('carries the admin guard on every route this lane registers', function () {
 
     $routes = InvoiceAdminRoutes::registered();
 
-    expect($routes)->toHaveCount(2);
+    /*
+     * The list, not the count.
+     *
+     * `toHaveCount(4)` on its own passes just as well for four routes that are
+     * not these four — a lane that renamed one and added another would leave
+     * this green. The paths are named, and the count is asserted afterwards so
+     * a FIFTH route cannot be added without somebody reading this block and
+     * deciding whether it belongs behind invoices.view.
+     */
+    $uris = collect($routes)->map(fn ($r) => $r->uri())->sort()->values()->all();
+
+    expect($uris)->toBe([
+        'admin-api/orders/{id}/delivery-note',
+        'admin-api/orders/{id}/invoice',
+        'admin-api/orders/{id}/packing-slip',
+        'admin-api/orders/{id}/shipping-label',
+    ]);
 
     foreach ($routes as $route) {
         $middleware = $route->gatherMiddleware();

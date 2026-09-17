@@ -7,9 +7,9 @@ declare(strict_types=1);
 | Stripe connect / disconnect — Lane EO
 |------------------------------------------------------------------------------
 |
-| NOT YET MOUNTED. The integrator requires this file from routes/web.php, inside
-| the EXISTING admin-api group — the one that already carries `auth:admin` and
-| NoStoreAdminApi — beside the other payments requires:
+| MOUNTED. routes/web.php requires this file inside the EXISTING admin-api
+| group — the one that already carries `auth:admin` and NoStoreAdminApi —
+| beside the other payments requires:
 |
 |     require __DIR__.'/payments-admin.php';
 |     require __DIR__.'/payments-settlement.php';

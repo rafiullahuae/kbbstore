@@ -16,8 +16,26 @@
 
 @section('title', 'Packing slip')
 
+{{-- EVERY CROSS-LINK IS GUARDED, and that is not defensive habit.
+
+     These four views are rendered by InvoiceController, which passes the whole
+     set, AND directly by tests and previews that pass only the one or two they
+     care about. A bare {{ $deliveryNoteUrl }} turns such a caller into an
+     "Undefined variable" ViewException — a 500 on a document, caused by a link
+     in a toolbar that does not print and that the caller never asked for. The
+     toolbar is navigation between documents, not part of any document: it is
+     inside .no-print and is gone the moment anything is printed. So a missing
+     link drops the button and renders the sheet. --}}
 @section('toolbar')
-    <a class="btn ghost" href="{{ $invoiceUrl }}">Invoice</a>
+    @isset($invoiceUrl)
+        <a class="btn ghost" href="{{ $invoiceUrl }}">Invoice</a>
+    @endisset
+    @isset($deliveryNoteUrl)
+        <a class="btn ghost" href="{{ $deliveryNoteUrl }}">Delivery note</a>
+    @endisset
+    @isset($labelUrl)
+        <a class="btn ghost" href="{{ $labelUrl }}">Dispatch label</a>
+    @endisset
 @endsection
 
 @section('sheet')
@@ -43,6 +61,15 @@
         </div>
     </div>
 
+    {{-- The order number as bars, so the bench scans the parcel back into the
+         admin instead of reading nine characters off the sheet and typing them.
+         Drawn in CSS by App\Support\Code128 - nothing is fetched and no font is
+         loaded, and that class's header says why each of the ordinary ways of
+         making a barcode is closed on this host. --}}
+    <div style="margin-top:12px;display:inline-block">
+        @include('invoices.partials.barcode', ['value' => $doc['orderNumber'], 'height' => '11mm'])
+    </div>
+
     <hr class="rule">
 
     @include('invoices.partials.parties', [
@@ -59,7 +86,7 @@
         @if ($doc['phone'] !== '')
             <div class="fact">
                 <div class="label">Phone</div>
-                <div class="v">{{ $doc['phone'] }}</div>
+                <div class="v" dir="auto">{{ $doc['phone'] }}</div>
             </div>
         @endif
         <div class="fact">
@@ -86,15 +113,15 @@
                 <tr>
                     <td class="num"><strong>{{ $item['quantity'] }}</strong></td>
                     <td>
-                        <div class="it-name">{{ $item['name'] }}</div>
+                        <div class="it-name" dir="auto">{{ $item['name'] }}</div>
                         @php
                             $sub = array_values(array_filter([$item['brand'], $item['variant']], fn ($v) => $v !== ''));
                         @endphp
                         @if ($sub !== [])
-                            <div class="it-sub">{{ implode(' · ', $sub) }}</div>
+                            <div class="it-sub" dir="auto">{{ implode(' · ', $sub) }}</div>
                         @endif
                     </td>
-                    <td>{{ $item['sku'] !== '' ? $item['sku'] : '—' }}</td>
+                    <td dir="auto">{{ $item['sku'] !== '' ? $item['sku'] : '—' }}</td>
                     {{-- A box to tick with a pen while picking. --}}
                     <td class="num" style="color:#aab0b9">☐</td>
                 </tr>
@@ -107,13 +134,13 @@
             @if ($doc['giftNote'] !== '')
                 <div class="note">
                     <div class="label">Gift message — write this on the card</div>
-                    <div class="body">{{ $doc['giftNote'] }}</div>
+                    <div class="body" dir="auto">{{ $doc['giftNote'] }}</div>
                 </div>
             @endif
             @if ($doc['customerNote'] !== '')
                 <div class="note">
                     <div class="label">Note from the customer</div>
-                    <div class="body">{{ $doc['customerNote'] }}</div>
+                    <div class="body" dir="auto">{{ $doc['customerNote'] }}</div>
                 </div>
             @endif
         </div>

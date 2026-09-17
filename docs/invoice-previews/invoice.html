@@ -7,8 +7,9 @@
     <meta name="robots" content="noindex, nofollow, noarchive">
     <title>Invoice — KBB-10427</title>
     <style>
-        @page { size: A4; margin: 14mm 14mm 16mm; }
-
+        
+                    @page { size: A4; margin: 14mm 14mm 16mm; }
+        
         :root {
             --ink: #16161a;
             --ink-2: #4a4f58;
@@ -27,8 +28,14 @@
             padding: 0;
             color: var(--ink);
             background: #f3f4f6;
+            /* The Arabic faces are named explicitly and AFTER the Latin ones:
+               a font stack is consulted per character, so English still renders
+               in the system UI face while an Arabic name or address falls
+               through to whichever of these the printing machine has. See the
+               ARABIC note at the top of this file. */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                         Helvetica, Arial, "Noto Sans", sans-serif;
+                         Helvetica, Arial, "Noto Sans", "Noto Sans Arabic",
+                         "Geeza Pro", "Segoe UI Historic", Tahoma, sans-serif;
             font-size: 13px;
             line-height: 1.55;
             -webkit-print-color-adjust: exact;
@@ -153,6 +160,45 @@
             text-transform: uppercase;
         }
 
+        /* ---- the order number, drawn as Code 128 ----
+
+           Bars are ELEMENTS WITH A BORDER, not a background colour, and the
+           reason is the print dialog. "Background graphics" is off by default
+           in Chrome's and Safari's print settings, so a bar drawn with
+           `background:#000` prints as nothing at all on a default-settings
+           machine — a blank strip where the barcode should be, on paper, having
+           looked perfect on screen. A border is not a background and is printed
+           either way. `print-color-adjust: exact` on body asks for the other
+           behaviour, but it is a request a browser is free to decline and this
+           does not depend on it being granted.
+
+           Widths are in millimetres so the module is a physical size on the
+           page rather than a CSS pixel the printer rescales. .bc's own padding
+           is the specification's ten-module quiet zone; without it a scanner
+           finds no start to the code and reads nothing. */
+        .bc {
+            display: flex; align-items: stretch; background: #fff;
+            height: 14mm; padding: 0 3.4mm;   /* 10 modules of quiet zone */
+        }
+        .bc i { display: block; flex: 0 0 auto; }
+        /* A bar has no width of its own; its LEFT BORDER is the black. The
+           border-left-width is written inline, in mm, one element per bar. */
+        .bc i.b { width: 0; border-left-style: solid; border-left-color: #000; }
+        .bc-text {
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            letter-spacing: .14em; font-size: 11px; text-align: center;
+            margin-top: 3px; color: var(--ink);
+        }
+
+        /* ---- signature block, for a document somebody signs on receipt ---- */
+        .sign { display: flex; gap: 24px; margin-top: 24px; }
+        .sign > div { flex: 1 1 0; min-width: 0; }
+        .sign .line {
+            margin-top: 22px; border-bottom: 1px solid var(--ink);
+        }
+        .sign .cap { margin-top: 5px; font-size: 10.5px; color: var(--ink-soft); }
+
+        
         /* ---- what printing changes ---- */
         @media print {
             html, body { background: #fff; }
@@ -183,23 +229,26 @@
         <h1>Invoice · KBB-10427</h1>
         <span class="spacer"></span>
         <span class="hint">Print, or choose “Save as PDF” in the print dialog.</span>
-            <a class="btn ghost" href="/admin-api/orders/10427/packing-slip">Packing slip</a>
-        <button type="button" onclick="window.print()">Print</button>
+                    <a class="btn ghost" href="/admin-api/orders/10427/packing-slip">Packing slip</a>
+                <a class="btn ghost" href="/admin-api/orders/10427/delivery-note">Delivery note</a>
+                <a class="btn ghost" href="/admin-api/orders/10427/shipping-label">Dispatch label</a>
+            <button type="button" onclick="window.print()">Print</button>
     </div>
 
+    
     <div class="sheet">
             <div class="head">
         <div class="who">
-            <div class="biz">K Beauty Bliss Trading LLC</div>
+            <div class="biz" dir="auto">K Beauty Bliss Trading LLC</div>
 <div class="biz-lines">
-            <div>Office 1902, Burlington Tower</div>
-            <div>Business Bay, Dubai</div>
-            <div>United Arab Emirates</div>
-                <div>+971 58 505 2611</div>
-                <div>info@kbeautybliss.com</div>
-                <div>kbeautybliss.com</div>
+            <div dir="auto">Office 1902, Burlington Tower</div>
+            <div dir="auto">Business Bay, Dubai</div>
+            <div dir="auto">United Arab Emirates</div>
+                <div dir="auto">+971 58 505 2611</div>
+                <div dir="auto">info@kbeautybliss.com</div>
+                <div dir="auto">kbeautybliss.com</div>
                 
-        <div>TRN 100123456700003</div>
+        <div dir="auto">TRN 100123456700003</div>
     </div>
         </div>
 
@@ -221,22 +270,22 @@
     <div class="parties">
     <div class="party">
         <div class="label">Bill to</div>
-                    <div class="name">Aisha Khan</div>
-                    <div class="">Apartment 1204, Marina Heights</div>
-                    <div class="">Dubai</div>
-                    <div class="">United Arab Emirates</div>
-                    <div class="">+971 50 123 4567</div>
-                            <div>aisha.khan@example.com</div>
+                    <div dir="auto" class="name">Aisha Khan</div>
+                    <div dir="auto" class="">Apartment 1204, Marina Heights</div>
+                    <div dir="auto" class="">Dubai</div>
+                    <div dir="auto" class="">United Arab Emirates</div>
+                    <div dir="auto" class="">+971 50 123 4567</div>
+                            <div dir="auto">aisha.khan@example.com</div>
             </div>
 
     <div class="party">
         <div class="label">Deliver to</div>
-                                    <div class="name">Noura Al Mansoori</div>
-                            <div class="">Villa 7, Street 21</div>
-                            <div class="">Al Barsha South 2</div>
-                            <div class="">Dubai</div>
-                            <div class="">United Arab Emirates</div>
-                            <div class="">+971 55 987 6543</div>
+                                    <div dir="auto" class="name">Noura Al Mansoori</div>
+                            <div dir="auto" class="">Villa 7, Street 21</div>
+                            <div dir="auto" class="">Al Barsha South 2</div>
+                            <div dir="auto" class="">Dubai</div>
+                            <div dir="auto" class="">United Arab Emirates</div>
+                            <div dir="auto" class="">+971 55 987 6543</div>
                         </div>
 </div>
 
@@ -251,7 +300,7 @@
         </div>
                     <div class="fact">
                 <div class="label">Phone</div>
-                <div class="v">+971 50 123 4567</div>
+                <div class="v" dir="auto">+971 50 123 4567</div>
             </div>
                 <div class="fact">
             <div class="label">Currency</div>
@@ -271,8 +320,8 @@
         <tbody>
                             <tr>
                     <td>
-                        <div class="it-name">Rice Daily Moisturizing Toner 150ml</div>
-                                                                            <div class="it-sub">Haruharu Wonder · SKU HH-RT-150</div>
+                        <div class="it-name" dir="auto">Rice Daily Moisturizing Toner 150ml</div>
+                                                                            <div class="it-sub" dir="auto">Haruharu Wonder · SKU HH-RT-150</div>
                                             </td>
                     <td class="num">2</td>
                     <td class="num"><span class="woocommerce-Price-amount amount" dir="ltr"><span class="woocommerce-Price-currencySymbol" dir="auto">AED</span> 199.00</span></td>
@@ -280,8 +329,8 @@
                 </tr>
                             <tr>
                     <td>
-                        <div class="it-name">Centella Ampoule</div>
-                                                                            <div class="it-sub">SKIN1004 · 30ml · SKU SK-CA-030</div>
+                        <div class="it-name" dir="auto">Centella Ampoule</div>
+                                                                            <div class="it-sub" dir="auto">SKIN1004 · 30ml · SKU SK-CA-030</div>
                                             </td>
                     <td class="num">1</td>
                     <td class="num"><span class="woocommerce-Price-amount amount" dir="ltr"><span class="woocommerce-Price-currencySymbol" dir="auto">AED</span> 65.00</span></td>
@@ -323,16 +372,16 @@
             <div class="notes">
                             <div class="note">
                     <div class="label">Order note</div>
-                    <div class="body">Please ring the doorbell twice — the buzzer is broken.</div>
+                    <div class="body" dir="auto">Please ring the doorbell twice — the buzzer is broken.</div>
                 </div>
                                         <div class="note">
                     <div class="label">Gift message</div>
-                    <div class="body">Happy birthday, Mama.
+                    <div class="body" dir="auto">Happy birthday, Mama.
 Love from all of us x</div>
                 </div>
                     </div>
     
-            <div class="foot">Payment received in full — no further amount is due.
+            <div class="foot" dir="auto">Payment received in full — no further amount is due.
 Returns accepted within 14 days on unopened items.</div>
         </div>
 </body>

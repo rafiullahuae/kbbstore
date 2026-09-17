@@ -99,6 +99,21 @@ class PaymentsApiController extends Controller
                 'mode' => $row?->mode ?: 'test',
                 'position' => (int) ($row?->position ?? 0),
                 'configured' => $gateway->configured(),
+                /*
+                 * Whether this gateway has a one-paste connect flow, asked of
+                 * the code rather than named on the screen.
+                 *
+                 * The console used to have to test `g.id === 'stripe'` to know
+                 * where to draw the Connect panel, and PaymentsGatewayTabsTest
+                 * caught it: that guard forbids the page naming any gateway,
+                 * because a screen that hardcodes the list stops following the
+                 * registry the moment a gateway is added or renamed. This flag
+                 * is the honest form of the same question -- when a second
+                 * provider gains a connect flow, its panel appears with no edit
+                 * to the console at all.
+                 */
+                'supports_connect' => class_exists(\App\Services\Payments\StripeConnect::class)
+                    && \App\Services\Payments\StripeConnect::supports($gateway->id()),
                 'fields' => $fields,
                 // Built here so nobody has to assemble it by hand from the base
                 // path, the /api prefix and the secret. Empty until a webhook

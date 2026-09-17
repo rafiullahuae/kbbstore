@@ -496,3 +496,65 @@ it('leaves the owner a blank invoice footer to write his own terms in', function
     expect(str_contains(invoiceEmailHtml(invoiceOrder()), 'Returns accepted within 14 days, unopened.'))
         ->toBeTrue('the owner wrote his terms and the invoice did not print them');
 });
+
+/*
+|------------------------------------------------------------------------------
+| THE SEAM BETWEEN TWO LANES — added by the integrator at merge, not by either
+|------------------------------------------------------------------------------
+|
+| Two lanes reached InvoiceDocument in the same round from opposite ends. One
+| made the invoice's Paid stamp honest on cash on delivery, having established
+| that PaymentCapturer never writes `paid_at` for COD. The other added a
+| dispatch label whose collect-on-delivery box is suppressed once the money is
+| in — and wrote that guard as `$order->paid_at !== null`, the exact test the
+| first lane had just proved can never be true on a COD order.
+|
+| Each lane's own suite was green. The defect existed only in the merge, and
+| only as a consequence of a fact one lane knew and the other could not: the
+| guard excluded nothing, so a COD order whose cash the courier had already
+| handed over and which the operator had captured still printed
+| "COLLECT AED 225.00" on its label. The driver collects it a second time, or
+| stands at the door arguing with a customer holding a receipt.
+|
+| Both readings are now one method, InvoiceDocument::moneyCollected(). These
+| tests pin the seam so it cannot come apart again — the invoice and the label
+| must agree about whether this shop has been paid, in both directions.
+*/
+
+it('stops telling the driver to collect cash the shop has already captured', function () {
+    $order = invoiceOrder(['captured_at' => now(), 'captured_total' => 22500]);
+
+    $doc = app(InvoiceDocument::class)->present($order);
+
+    expect($doc['codToCollect'])
+        ->toBeNull('the dispatch label still asks the driver to collect money the shop already has');
+
+    expect($doc['paid'])
+        ->toBeTrue('the invoice denies a payment the same document was about to collect again');
+});
+
+it('still tells the driver what to collect on a cash order nobody has captured', function () {
+    // The other direction, and the one that actually loses the shop money if it
+    // regresses: a driver who does not know the amount asks the customer what
+    // they owe, or brings back the wrong sum.
+    $order = invoiceOrder();
+
+    $doc = app(InvoiceDocument::class)->present($order);
+
+    expect($doc['codToCollect'])->not->toBeNull('a cash order went out with no amount on its label');
+    expect($doc['codToCollect']['fils'])->toBe(22500);
+    expect($doc['paid'])->toBeFalse('an uncollected cash order printed as paid');
+});
+
+it('keeps the collect box off a card order, captured or not', function () {
+    // codToCollect is gated on the payment method first. A card order that has
+    // been authorised but not yet captured has `paid_at` and no `captured_at`,
+    // and must not acquire a cash box from the widened collected test.
+    $authorised = invoiceOrder(['payment_method' => 'card', 'paid_at' => now()]);
+
+    expect(app(InvoiceDocument::class)->present($authorised)['codToCollect'])
+        ->toBeNull('a card order printed a cash-on-delivery box');
+
+    expect(app(InvoiceDocument::class)->present($authorised)['paid'])
+        ->toBeTrue('an authorised card order stopped printing as paid');
+});
