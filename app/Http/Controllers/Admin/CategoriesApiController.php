@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Store\ShopController;
 use App\Models\Category;
 use App\Support\CategoryPath;
+use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -126,15 +127,50 @@ class CategoriesApiController extends Controller
             ->orderBy('categories.name')
             ->get();
 
-        return response()->json(['ok' => true, 'categories' => $categories]);
+        /*
+         * THE ARABIC BOXES' PREFILL. (Lane EX, T4b)
+         *
+         * ONE query for the whole tree, not one per row. translationsForEditor()
+         * is per model and would have added a query per category to a screen
+         * that goes out of its way to be a fixed number of them — the same
+         * argument the four selectSub counts above are written the way they are.
+         *
+         * Drafts included: a machine translation waiting for approval has to be
+         * in the box, or "Approve" approves something invisible.
+         */
+        $translations = TranslationInput::editorMapFor($categories);
+
+        // Set as an attribute so it rides along in the JSON, and NOT saved back:
+        // `translations` is also the name of the trait's relation method and
+        // there is no such column, so these instances are read-only from here.
+        foreach ($categories as $category) {
+            $category->setAttribute('translations', $translations[(int) $category->id] ?? null);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'categories' => $categories,
+            /*
+             * The EMPTY shape of the Arabic boxes, for the "add" form — a row
+             * being created has no translations but still has to draw a box for
+             * every translatable field. Handed down from the server so the
+             * screen never holds a second copy of Category::$translatable.
+             */
+            'translatable' => (new Category)->translationsForEditor(),
+        ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $this->validated($request, null);
+        $translations = $this->translationsFrom($data);
 
-        $category = DB::transaction(function () use ($data) {
+        $category = DB::transaction(function () use ($data, $translations) {
             $category = Category::query()->create($data);
+            // After create(), because the row has no id before it. Same call on
+            // both paths, in the same request and the same transaction as the
+            // English row. See App\Support\TranslationInput.
+            $category->saveTranslations($translations);
             $this->resyncTree();
 
             return $category;
@@ -177,12 +213,14 @@ class CategoriesApiController extends Controller
     public function update(Request $request, Category $category): JsonResponse
     {
         $data = $this->validated($request, $category);
+        $translations = $this->translationsFrom($data);
 
         // Snapshot every path in this subtree BEFORE the write, keyed by id.
         $before = $this->subtreePaths($category);
 
-        DB::transaction(function () use ($category, $data, $before) {
+        DB::transaction(function () use ($category, $data, $before, $translations) {
             $category->update($data);
+            $category->saveTranslations($translations);
             $this->resyncTree();
 
             foreach ($before as $id => $oldPath) {
@@ -613,7 +651,7 @@ class CategoriesApiController extends Controller
         $slug = Str::slug((string) $request->input('slug') ?: (string) $request->input('name'));
         $request->merge(['slug' => $slug]);
 
-        $data = $request->validate([
+        $english = [
             'name' => ['required', 'string', 'max:255'],
             'slug' => [
                 'required', 'string', 'max:255',
@@ -642,7 +680,15 @@ class CategoriesApiController extends Controller
             // definition of what a banner is rather than a validation rule
             // here and a renderer somewhere else that disagree.
             'banner' => ['nullable', 'array'],
-        ], [
+        ];
+
+        /*
+         * The Arabic boxes, shape-validated off the English rules above rather
+         * than restated — `name` is max:255 in both languages because there is
+         * one number. Required-ness does not carry: blank Arabic means "not
+         * translated yet" and deletes the row. See App\Support\TranslationInput.
+         */
+        $data = $request->validate($english + TranslationInput::rules(new Category, $english), [
             'slug.regex' => 'The slug may contain only lower-case letters, numbers and single hyphens.',
             'slug.unique' => 'Another category already uses that slug.',
             'slug.required' => 'A category needs a name it can make a slug from.',
@@ -666,6 +712,29 @@ class CategoriesApiController extends Controller
         $data['banner'] = \App\Support\PageBanner::sanitize($data['banner'] ?? null);
 
         return $data;
+    }
+
+    /**
+     * Lift the `translations` bag out of the validated data.
+     *
+     * It has to come OUT before the array reaches create() or update():
+     * Category is `$guarded = []`, so a stray `translations` key would be mass
+     * assigned as though it were a column and the write would fail on a column
+     * that does not exist. Taken by reference so there is one place this can be
+     * forgotten rather than two.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, array<string, string|null>>
+     */
+    private function translationsFrom(array &$data): array
+    {
+        $bag = $data['translations'] ?? [];
+        unset($data['translations']);
+
+        // `description` is the one field here the storefront prints as prose.
+        // It is plain text on both sides — the category dialog has no rich-text
+        // control — so nothing is named rich and RichText is not involved.
+        return TranslationInput::clean(is_array($bag) ? $bag : []);
     }
 
     /**

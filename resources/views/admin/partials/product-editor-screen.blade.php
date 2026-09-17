@@ -701,7 +701,7 @@
     try {
       var r = await api('/product-editor-load/' + id);
       if (mine !== seq) return;
-      model = r.product;
+      adopt(r.product);
       dirty = false;
 
       // Clicking a row in the picker calls this directly, without going back
@@ -716,6 +716,47 @@
     busy = false; render();
   }
 
+  /* Take a product from the endpoint and make it the model.
+     ONE door, because there are three ways in — the picker, a deep link and
+     the response to a save — and an Arabic box that was filled on two of them
+     is the bug this function exists to make impossible. */
+  function adopt(product){
+    model = product;
+    model.translations = model.translations || {};
+    model.ar = {};
+
+    var cells = model.translations[ARABIC] || {};
+
+    for (var field in cells) {
+      if (Object.prototype.hasOwnProperty.call(cells, field)) {
+        model.ar[field] = (cells[field] && cells[field].value) || '';
+      }
+    }
+  }
+
+  /* Which fields have an Arabic box is decided by the SERVER, not by this
+     screen: the prefill carries exactly Product::$translatable. Add a column
+     to that allowlist and its box appears here with no change to this file;
+     that is the point of asking rather than listing. */
+  var ARABIC = 'ar';
+
+  function hasArabic(field){
+    /* window.KBBArabic is the shared helper, included by
+       resources/views/admin/app.blade.php. If a build has the editor and not
+       the helper — which is exactly what happens between this lane landing and
+       the integrator applying the include — every Arabic box is simply absent
+       and the rest of the editor works unchanged. A screen that threw here
+       would take the whole product editor down over a missing script. */
+    if (!window.KBBArabic) return false;
+
+    return !!(model && model.translations && model.translations[ARABIC]
+              && Object.prototype.hasOwnProperty.call(model.translations[ARABIC], field));
+  }
+
+  function arabicPrefill(){
+    return (model && model.translations) || null;
+  }
+
   function blank(){
     return {
       id: null, name: '', slug: '', sku: null, gtin: null, brand_id: null,
@@ -725,6 +766,13 @@
       manage_stock: false, stock: null, stock_status: 'instock',
       short_description: '', description: '', ingredients: '', how_to_use: '',
       image: null, images: [], image_alts: {}, seo: null,
+      /* T4b. `translations` is the endpoint's prefill — locale => field =>
+         {value, status, source, stale} — and is what the boxes are DRAWN from.
+         `ar` is the flat map the boxes are EDITED into, and it is what goes
+         back up as translations[ar][…]. Two shapes rather than one because the
+         prefill carries a draft's status and staleness, which a box being
+         typed into does not have and must not lose by being overwritten. */
+      translations: (boot && boot.translations) || {}, ar: {},
       /* A product being created has no page yet, so there is nothing truthful
          to preview and these stay empty rather than guessing. They arrive real
          from the endpoint on the first save, and on every load of an existing
@@ -748,6 +796,32 @@
     if (b && b.message) return b.message;
     if (e && e.status === 401) return 'Your session expired. Sign in again.';
     return fallback;
+  }
+
+  /* {ar: {field: text}} for the save, or {} when this build drew no boxes.
+     An ABSENT bag leaves stored translations alone; a bag with an empty string
+     in it deletes that row. The two must stay distinguishable, so a screen with
+     no boxes sends nothing rather than an empty locale. */
+  function arabicPayload(){
+    if (!model || !hasAnyArabic()) return {};
+
+    var out = {};
+    out[ARABIC] = {};
+
+    for (var field in model.translations[ARABIC]) {
+      if (Object.prototype.hasOwnProperty.call(model.translations[ARABIC], field)) {
+        out[ARABIC][field] = model.ar[field] == null ? '' : model.ar[field];
+      }
+    }
+
+    return out;
+  }
+
+  function hasAnyArabic(){
+    if (!window.KBBArabic) return false;
+
+    return !!(model && model.translations && model.translations[ARABIC]
+              && Object.keys(model.translations[ARABIC]).length);
   }
 
   /* ----------------------------------------------------------------- save */
@@ -781,7 +855,15 @@
       image: model.image,
       images: model.images,
       image_alts: model.image_alts || {},
-      seo: model.seo || {}
+      seo: model.seo || {},
+
+      /* T4b — THE ARABIC, IN THE SAME REQUEST AS THE ENGLISH.
+         Not a second call afterwards: a second call can fail on its own, and a
+         product that saved while its Arabic did not is exactly the half-state
+         the owner would never be told about. Blank fields are SENT rather than
+         omitted, because blank means "not translated yet" and has to reach the
+         server to delete the row. */
+      translations: arabicPayload()
     };
 
     var creating = !model.id;
@@ -794,7 +876,7 @@
         creating ? '/product-editor-create' : '/product-editor-save/' + model.id,
         {json: body}
       );
-      model = r.product;
+      adopt(r.product);
       dirty = false;
       banner = null;
       say(creating ? 'Product created.' : 'Saved.');
@@ -1015,6 +1097,22 @@
 
   /* ------------------------------------------------------------ rich text */
 
+  /* model.name, or model.ar.description.
+     The Arabic panes carry a dotted field name so that the SAME rich-text
+     control, the same collect(), the same word counter and the same paste
+     handler serve both languages. A second set of them for Arabic is how the
+     two boxes on one panel would come to behave differently. */
+  function setField(path, value){
+    if (!model) return;
+
+    var dot = path.indexOf('.');
+    if (dot === -1) { model[path] = value; return; }
+
+    var head = path.slice(0, dot), tail = path.slice(dot + 1);
+    model[head] = model[head] || {};
+    model[head][tail] = value;
+  }
+
   /* Reads the editable panes back into the model.
      Called before every save and before every re-render, because innerHTML is
      the only place that text lives until then -- re-rendering without this
@@ -1029,13 +1127,13 @@
        the edit. That is the worst shape of bug: no error, no clue. */
     document.querySelectorAll('#content .peo-rte-code').forEach(function(code){
       if (code.hidden) return;
-      model[code.dataset.code] = code.value;
+      setField(code.dataset.code, code.value);
     });
 
     document.querySelectorAll('#content .peo-rte-area').forEach(function(el){
       var code = document.querySelector('#content .peo-rte-code[data-code="' + el.dataset.field + '"]');
       if (code && !code.hidden) return;    // the HTML view is the live one
-      model[el.dataset.field] = el.innerHTML;
+      setField(el.dataset.field, el.innerHTML);
     });
 
     // Alt text, keyed by the image URL rather than by position, so reordering
@@ -1052,6 +1150,8 @@
       if (k.indexOf('seo.') === 0) {
         model.seo = model.seo || {};
         model.seo[k.slice(4)] = v;
+      } else if (k.indexOf(ARABIC + '.') === 0) {
+        setField(k, v);
       } else if (k === 'brand_id' || k === 'primary_category_id') {
         model[k] = v === '' ? null : parseInt(v, 10);
       } else {
@@ -1084,8 +1184,31 @@
     ['code', '&lt;/&gt;', 'Edit the HTML directly']
   ];
 
-  function rte(field, label, hint, placeholder, html){
-    var bar = RTE_BUTTONS.map(function(b){
+  /**
+   * The Arabic counterpart of a PLAIN field (an <input>).
+   *
+   * Drawn only when the server's prefill says the field is translatable, so
+   * this screen never has to hold its own copy of Product::$translatable.
+   */
+  function arabicField(field, label, fromSelector, maxlength){
+    if (!hasArabic(field)) return '';
+
+    return KBBArabic.box({
+      field: field,
+      label: label,
+      prefill: arabicPrefill(),
+      value: model.ar[field] || '',
+      maxlength: maxlength,
+      from: fromSelector,
+      /* data-bind is this screen's own binding: bindEditor() listens on every
+         [data-bind] and collect() reads them all, so the Arabic box needs no
+         second event wiring and cannot be forgotten by one. */
+      attrs: 'data-bind="' + ARABIC + '.' + field + '"'
+    });
+  }
+
+  function rteBar(){
+    return RTE_BUTTONS.map(function(b){
       if (b[0] === 'sep') return '<i class="peo-sep"></i>';
       /* b[1] is markup for the code button (&lt;/&gt;) and plain text for the
          rest. It is authored in this file, never operator input, so it is the
@@ -1093,27 +1216,87 @@
       return '<button type="button" data-cmd="' + esc(b[0]) + '" title="' + esc(b[2]) + '">'
            + b[1] + '</button>';
     }).join('');
+  }
 
-    return '<div class="peo-card">'
-      + '<h3>' + esc(label) + '</h3>'
-      + (hint ? '<p class="peo-hint">' + esc(hint) + '</p>' : '')
-      + '<div class="peo-rte">'
-      +   '<div class="peo-rte-bar">' + bar + '</div>'
+  /* One rich-text control. `field` is the model path it writes to, which for
+     the Arabic pane is dotted ("ar.description") — see setField(). */
+  function rtePane(field, html, dir, placeholder){
+    var rtl = dir === 'rtl';
+    var ph = placeholder || (rtl ? KBBArabic.placeholder : '');
+
+    return '<div class="peo-rte">'
+      +   '<div class="peo-rte-bar">' + rteBar() + '</div>'
       +   '<div class="peo-rte-area" contenteditable="true" data-field="' + esc(field) + '" '
-      +        'data-ph="' + esc(placeholder) + '">' + (html || '') + '</div>'
+      +        (rtl ? 'dir="rtl" lang="ar" ' : '')
+      +        (rtl ? 'data-kbbar-rich="' + esc(field) + '" ' : '')
+      +        'data-ph="' + esc(ph) + '">' + (html || '') + '</div>'
       /* The HTML view. A plain textarea, because the point of it is to show
          the markup exactly as it is — escaped on the way in so that typing
          <p> shows <p> rather than making a paragraph. It sits alongside the
          written view rather than replacing it, so switching back and forth
          loses nothing. */
-      +   '<textarea class="peo-rte-code" data-code="' + esc(field) + '" spellcheck="false" hidden>'
+      +   '<textarea class="peo-rte-code" data-code="' + esc(field) + '" spellcheck="false" '
+      +        (rtl ? 'dir="rtl" ' : '') + 'hidden>'
       +     esc(html || '')
       +   '</textarea>'
       +   '<div class="peo-rte-foot">'
       +     '<span data-words="' + esc(field) + '"></span>'
       +     '<span class="peo-rte-mode">Paste from anywhere — use &lt;/&gt; to edit the HTML.</span>'
       +   '</div>'
-      + '</div></div>';
+      + '</div>';
+  }
+
+  /**
+   * T4b — THE ARABIC HALF OF A RICH-TEXT FIELD.
+   *
+   * A rich English field gets a rich ARABIC field: the same toolbar, the same
+   * HTML view, the same paste handling, the same word counter. A plain textarea
+   * here would mean the Arabic product page could not carry the headings, lists
+   * and links the English one does — which would make the two pages different
+   * pages rather than one page in two languages, and would quietly put a
+   * formatting ceiling on the language the owner has not written yet.
+   *
+   * `translate` is passed only for SHORT copy. The full description gets no
+   * Translate button, and that is the plan's decision rather than an oversight:
+   * every translation service given formatted text either breaks the formatting
+   * or translates it as though it were words, and the owner would be paying per
+   * character for the damage. Long descriptions are typed.
+   */
+  function arabicPane(field, label, translate){
+    if (!hasArabic(field)) return '';
+
+    var cell = KBBArabic.cellFor(arabicPrefill(), field);
+    var path = ARABIC + '.' + field;
+
+    var tags = (cell.status === 'draft'
+        ? '<span class="kbbar-tag is-draft">machine draft — read it, then Save</span>' : '')
+      + (cell.stale
+        ? '<span class="kbbar-tag is-stale">the English changed since this was written</span>' : '');
+
+    return '<div class="kbbar" data-kbbar-box="' + esc(field) + '">'
+      + '<div class="kbbar-h"><span class="kbbar-flag" dir="rtl" lang="ar">' + KBBArabic.native + '</span>'
+      +   '<b>Arabic</b><span>· ' + esc(label) + '</span>' + tags
+      +   (translate
+            ? '<button type="button" class="kbbar-btn" hidden style="margin-inline-start:auto"'
+              + ' data-kbbar-translate="' + esc(field) + '"'
+              + ' data-kbbar-from="#content .peo-rte-area[data-field=\'' + esc(field) + '\']"'
+              + ' data-kbbar-fromtext="1">Translate</button>'
+            : '')
+      + '</div>'
+      + rtePane(path, model.ar[field] || '', 'rtl')
+      + '<p class="kbbar-note">Leave it empty and this field counts as <b>not translated yet</b>. '
+      +   'If the Arabic really is the same as the English, type it in — that is how the shop '
+      +   'tells “deliberately identical” from “nobody has reached it”.</p>'
+      + '</div>';
+  }
+
+  function rte(field, label, hint, placeholder, html, translate){
+    return '<div class="peo-card">'
+      + '<h3>' + esc(label) + '</h3>'
+      + (hint ? '<p class="peo-hint">' + esc(hint) + '</p>' : '')
+      + rtePane(field, html, 'ltr', placeholder)
+      + arabicPane(field, label, !!translate)
+      + '</div>';
   }
 
   /* --------------------------------------------------------------- views */
@@ -1478,6 +1661,11 @@
       + '<h3>Basics</h3>'
       + '<div class="peo-fld"><label>Product name</label>'
       +   '<input class="peo-in" data-bind="name" id="peo-name" value="' + esc(model.name) + '" placeholder="e.g. Anua Heartleaf Toner"></div>'
+      /* T4b — the Arabic name, in this form, saved by this form's Save button,
+         present on a BLANK form as well as a saved one. That is the owner's
+         requirement in his own words: the Arabic is entered at the moment of
+         creation, not on a screen someone has to remember to visit. */
+      + arabicField('name', 'Product name', '#content #peo-name', 200)
       + (creating
           ? '<div class="peo-fld"><label>Web address</label>'
             + '<input class="peo-in" data-bind="slug" id="peo-slug" value="' + esc(model.slug) + '" placeholder="anua-heartleaf-toner">'
@@ -1532,10 +1720,15 @@
        keeps every other panel where they put it and finds Images appended to
        the main column -- a stale preference, not a broken screen. */
     { key: 'images',     label: 'Images',            col: 'main', view: function(){ return imagesView(); } },
+    /* `true` is the Translate button, and it is on the SHORT description only.
+       docs/BILINGUAL-PLAN.md: the machine does names, short descriptions and
+       interface text; long descriptions are typed, because every service given
+       formatted text either breaks the formatting or translates it as words,
+       and the owner pays per character for the damage either way. */
     { key: 'short_description', label: 'Short description', col: 'main', view: function(){
         return rte('short_description', 'Short description',
           'The summary beside the price. One or two lines.',
-          'A gentle daily toner that calms redness…', model.short_description); } },
+          'A gentle daily toner that calms redness…', model.short_description, true); } },
     { key: 'description', label: 'Full description', col: 'main', view: function(){
         return rte('description', 'Full description',
           'The main tab on the product page. Headings, bold, lists and links all work.',
@@ -2198,6 +2391,12 @@
     /* ---- rich text ---- */
     document.querySelectorAll('#content .peo-rte').forEach(bindRte);
 
+    /* ---- the Arabic boxes' Translate buttons ---- */
+    /* Idempotent and safe to call on every render. It also reveals the buttons,
+       which are drawn hidden: with no API key configured they are never shown
+       at all, and every manual path on this screen works with no key. */
+    if (window.KBBArabic) KBBArabic.wire(document.querySelector('#content') || document);
+
     snippet();
     counts();
   }
@@ -2248,13 +2447,13 @@
           document.execCommand(cmd, false, null);
         }
 
-        model[area.dataset.field] = area.innerHTML;
+        setField(area.dataset.field, area.innerHTML);
         dirty = true; markDirty(); words(area);
       };
     });
 
     area.addEventListener('input', function(){
-      model[area.dataset.field] = area.innerHTML;
+      setField(area.dataset.field, area.innerHTML);
       dirty = true; markDirty(); words(area);
     });
 

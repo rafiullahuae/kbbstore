@@ -299,9 +299,16 @@
   }
 
   /* ----------------------------------------------------------------- data */
+  /* The empty shape of the Arabic boxes, for the Add-brand form. A brand being
+     created has no translations but still has to draw a box for every
+     translatable field — that is the requirement. Held here rather than listed,
+     so Brand::$translatable stays the one place the answer lives. */
+  var ARABIC_SHAPE = null;
+
   async function loadBrands(){
     var d = await api('/brands');
     brands = (d && d.brands) || [];
+    ARABIC_SHAPE = (d && d.translatable) || ARABIC_SHAPE;
     return brands;
   }
 
@@ -706,6 +713,40 @@
     drawPreview(fallbackHeading);
   }
 
+  /**
+   * T4b — the Arabic counterpart of one brand field.
+   *
+   * Drawn only when the SERVER says the field is translatable. Add a column to
+   * Brand::$translatable and its box appears here with no change to this file.
+   *
+   * The maxlength mirrors the English control's own — the Arabic box must not
+   * accept what the English box would refuse. BrandsApiController enforces the
+   * same bound server-side, derived from the same English rule.
+   */
+  function arabicBox(brand, field, label, fromSelector, maxlength, type){
+    /* The shared helper is included by resources/views/admin/app.blade.php. A
+       build that has this screen and not the helper simply draws no Arabic
+       boxes, rather than throwing and taking the brands screen down with it. */
+    if (!window.KBBArabic) return '';
+
+    var shape = (brand && brand.translations) || ARABIC_SHAPE;
+
+    if (!shape || !shape[KBBArabic.locale]
+        || !Object.prototype.hasOwnProperty.call(shape[KBBArabic.locale], field)) {
+      return '';
+    }
+
+    return KBBArabic.box({
+      field: field,
+      label: label,
+      prefill: (brand && brand.translations) || null,
+      type: type || 'text',
+      maxlength: maxlength,
+      rows: 3,
+      from: fromSelector
+    });
+  }
+
   /* -------------------------------------------------------- brand editor */
   function editor(brand){
     var isNew = !brand;
@@ -738,7 +779,14 @@
       + '<button class="bz-x" data-close>✕</button></div>'
       + slugWarn
       + '<div class="bz-fld"><label for="bz-name">Name</label>'
-        + '<input type="text" id="bz-name" value="' + esc(brand.name) + '"></div>'
+        + '<input type="text" id="bz-name" value="' + esc(brand.name) + '">'
+        /* T4b — the Arabic name, in this form, saved by this form's button, and
+           present on the Add form as well as the Edit one. Blank means "not
+           translated yet"; a brand name that reads the same in both languages,
+           like Anua, is TYPED IN, and that is what keeps "deliberately
+           identical" distinguishable from "nobody has reached it". */
+        + arabicBox(brand, 'name', 'Name', '#bz-name', 255)
+        + '</div>'
       + '<div class="bz-fld"><label for="bz-slug">URL slug</label>'
         + '<input type="text" id="bz-slug" value="' + esc(brand.slug) + '" placeholder="left blank, made from the name">'
         + '<p class="bz-note">Lower case, numbers and single hyphens. Used in '
@@ -749,7 +797,9 @@
         + '</div>'
       + '<div class="bz-fld"><label for="bz-desc">Description</label>'
         + '<textarea id="bz-desc" rows="3" maxlength="5000">' + esc(brand.description || '') + '</textarea>'
-        + '<p class="bz-note">Shown under the heading on the brand’s page.</p></div>'
+        + '<p class="bz-note">Shown under the heading on the brand’s page.</p>'
+        + arabicBox(brand, 'description', 'Description', '#bz-desc', 5000, 'textarea')
+        + '</div>'
       + '<div class="bz-fld"><label for="bz-seotitle">SEO title</label>'
         + '<input type="text" id="bz-seotitle" maxlength="255" value="' + esc(seo.title || '') + '" placeholder="Defaults to the brand name"></div>'
       + '<div class="bz-fld"><label for="bz-seodesc">SEO description</label>'
@@ -774,6 +824,11 @@
     var nameEl = document.getElementById('bz-name');
     if (nameEl) nameEl.oninput = function(){ drawPreview(nameEl.value); };
 
+    /* Attaches the Translate buttons and reveals them only if an API key is
+       configured. With no key they stay hidden and every manual path here
+       works unchanged — typing Arabic needs no account and costs nothing. */
+    if (window.KBBArabic) KBBArabic.wire(modal || document);
+
     document.getElementById('bz-save').onclick = async function(){
       var payload = {
         name: val('bz-name'),
@@ -782,7 +837,15 @@
         description: val('bz-desc'),
         position: parseInt(val('bz-pos'), 10) || 0,
         seo: {title: val('bz-seotitle'), description: val('bz-seodesc')},
-        banner: bannerPayload()
+        banner: bannerPayload(),
+        /* The Arabic goes up in the SAME request as the English, saved by the
+           same button. Blank fields are sent rather than omitted, because blank
+           means "not translated yet" and has to reach the server to delete the
+           row. */
+        /* Scoped to THIS dialog. This screen also opens a category-banner
+           dialog that PUTs a category, and a document-wide read would carry
+           one form's Arabic into the other's save. */
+        translations: window.KBBArabic ? KBBArabic.collect(modal || document) : {}
       };
 
       if (!payload.name) { say('A brand needs a name'); return; }

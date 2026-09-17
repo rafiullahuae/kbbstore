@@ -13,6 +13,7 @@ use App\Support\MajorUnits;
 use App\Support\Money;
 use App\Support\ProductSeo;
 use App\Support\RichText;
+use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -152,6 +153,20 @@ class ProductEditorApiController extends Controller
                 'exponent' => Money::minorExponent(),
                 'max_major' => MajorUnits::maxMajor(),
             ],
+            /*
+             * THE EMPTY SHAPE OF THE ARABIC BOXES. (Lane EX, T4b)
+             *
+             * A product being CREATED has no row and therefore no translations,
+             * but the blank form still has to draw a box for every translatable
+             * field — that is the whole requirement, in the owner's words: "for
+             * addition of everything… we should must have arabic place for every
+             * field". Handing the shape down with the bootstrap is what lets the
+             * create form know which fields those are without this screen
+             * holding its own second copy of Product::$translatable, which is
+             * exactly the kind of list that drifts.
+             */
+            'translations' => (new Product)->translationsForEditor(),
+
             'statuses' => self::EDITOR_STATUSES,
             'stock_statuses' => ['instock', 'outofstock', 'onbackorder'],
             // The editor posts files here. There is exactly one upload endpoint
@@ -316,6 +331,23 @@ class ProductEditorApiController extends Controller
             // measures this, so "58 / 60" refers to the tag and not to the box.
             'seo_title' => \App\Support\ProductSeo::metaTitle($product),
             'seo_description' => \App\Support\ProductSeo::metaDescription($product),
+
+            /*
+             * THE ARABIC BOXES' PREFILL. (Lane EX, T4b)
+             *
+             * Shaped by HasTranslations::translationsForEditor(): locale =>
+             * field => {value, status, source, stale}. DRAFTS ARE INCLUDED, and
+             * that is the point — a machine translation waiting for approval
+             * has to appear in the box the owner is looking at, or "Approve"
+             * means approving something invisible.
+             *
+             * A product being created has no id and no rows, so this is the
+             * empty shape rather than absent: the screen draws the same boxes
+             * on a blank form as on a saved one, which is the whole requirement
+             * — the Arabic is entered AT THE MOMENT OF CREATION, not on a
+             * screen visited afterwards.
+             */
+            'translations' => $product->translationsForEditor(),
 
             // Read-only, and shown as such: these are computed from orders and
             // reviews and the editor has no control that writes them.
@@ -503,7 +535,22 @@ class ProductEditorApiController extends Controller
             $rules['wc_id'] = ['nullable', 'integer', 'min:1', Rule::unique('products', 'wc_id')];
         }
 
-        return $rules;
+        /*
+         * The Arabic boxes, validated by the SAME shape rules as the English
+         * ones they sit beside — derived from the array above rather than
+         * restated, so `name` cannot be 200 characters in one language and 300
+         * in the other. Required-ness does not carry: an Arabic box is optional
+         * by definition, because blank is how the shop says "not translated
+         * yet". See App\Support\TranslationInput.
+         *
+         * Note these rules are additive and never reject an unknown key: a
+         * field outside Product::$translatable and a locale the shop does not
+         * run both fall to the catch-all, pass, and are then dropped by
+         * saveTranslations(). A 422 in the middle of saving a product somebody
+         * spent ten minutes on is worse than a dropped field, and the allowlist
+         * is the guard that matters.
+         */
+        return $rules + TranslationInput::rules(new Product, $rules);
     }
 
     private function messages(): array
@@ -728,6 +775,24 @@ class ProductEditorApiController extends Controller
         }
 
         $product->save();
+
+        /* ---------------------------------------------------- translations */
+        /*
+         * One call, in the same request and inside the same transaction as the
+         * English row — which is what makes "the Arabic is entered at the
+         * moment of creation" true rather than aspirational. It runs AFTER
+         * save() because a new product has no id until then, so create and
+         * update take the same path and there is no second one to get wrong.
+         *
+         * The four rich fields are named so the Arabic goes through the very
+         * same RichText::clean() the English went through twenty lines above.
+         * product-tabs prints both with {!! !!}; a sanitiser applied to one
+         * language only is a stored-XSS hole opened by adding the second.
+         */
+        $product->saveTranslations(TranslationInput::clean(
+            $data['translations'] ?? [],
+            ['short_description', 'description'],
+        ));
 
         /* -------------------------------------------------- categories */
         if (array_key_exists('category_ids', $data) || array_key_exists('primary_category_id', $data)) {

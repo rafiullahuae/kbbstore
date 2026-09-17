@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Services\NavigationService;
+use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -311,7 +312,22 @@ class MegaMenuApiController extends Controller
             return response()->json([
                 'module_on' => app(\App\Services\SettingsService::class)->moduleEnabled('mega_menu', false),
                 'menu_id' => $menu->id,
-                'tree' => $this->tree($items, null),
+                /*
+                 * THE ARABIC BOXES' PREFILL. (Lane EX, T4b)
+                 *
+                 * One query for the whole menu, computed here and handed down
+                 * the recursion rather than fetched inside it — tree() visits
+                 * every item, so a per-item lookup would have been one query per
+                 * menu entry on a screen that loads all thirty-nine at once.
+                 */
+                'tree' => $this->tree($items, null, 0, TranslationInput::editorMapFor($items)),
+                /*
+                 * The EMPTY shape, for the "Add item" dialog. An item being
+                 * created has no translations but still has to draw an Arabic
+                 * box — a menu whose Arabic can only be entered on a second
+                 * visit is a menu that stays English.
+                 */
+                'translatable' => (new MenuItem)->translationsForEditor(),
             ]);
         } catch (\Throwable $e) {
             // This endpoint has thrown a raw 500 before with nothing useful
@@ -376,7 +392,7 @@ class MegaMenuApiController extends Controller
     }
 
     /** items keyed by parent_id, recursively — three levels deep is as far as the storefront ever reads. */
-    private function tree($items, ?int $parentId, int $depth = 0): array
+    private function tree($items, ?int $parentId, int $depth = 0, array $translations = []): array
     {
         if ($depth > 2) {
             return [];
@@ -391,7 +407,10 @@ class MegaMenuApiController extends Controller
             'highlight_color' => $i->highlight_color,
             'visibility' => $i->visibility,
             'new_tab' => (bool) $i->new_tab,
-            'children' => $this->tree($items, $i->id, $depth + 1),
+            // `label` only. `url` is deliberately not translatable — one address
+            // per item, with the language carried by the /ar prefix.
+            'translations' => $translations[(int) $i->id] ?? null,
+            'children' => $this->tree($items, $i->id, $depth + 1, $translations),
         ])->all();
     }
 
@@ -400,7 +419,7 @@ class MegaMenuApiController extends Controller
         try {
             $this->ensureColumns();
 
-            $data = $request->validate([
+            $english = [
                 'menu_id' => ['required', 'integer', 'exists:menus,id'],
                 'parent_id' => ['nullable', 'integer', 'exists:menu_items,id'],
                 'label' => ['required', 'string', 'max:60'],
@@ -411,7 +430,11 @@ class MegaMenuApiController extends Controller
                 'visibility' => ['nullable', 'in:always,guest,auth'],
                 'new_tab' => ['nullable', 'boolean'],
                 'columns' => ['nullable', 'integer', 'min:1', 'max:6'],
-            ]);
+            ];
+
+            // The Arabic label box, bounded at the same 60 characters as the
+            // English one — derived, not restated. See App\Support\TranslationInput.
+            $data = $request->validate($english + TranslationInput::rules(new MenuItem, $english));
 
             $depth = $this->depthOf($data['parent_id'] ?? null);
 
@@ -437,6 +460,9 @@ class MegaMenuApiController extends Controller
                 'position' => ($position ?? -1) + 1,
             ]);
 
+            // After create(), because the row has no id before it.
+            $item->saveTranslations(TranslationInput::clean($data['translations'] ?? []));
+
             $this->nav->flush();
 
             return response()->json(['ok' => true, 'id' => $item->id]);
@@ -450,7 +476,7 @@ class MegaMenuApiController extends Controller
         try {
             $this->ensureColumns();
 
-            $data = $request->validate([
+            $english = [
                 'label' => ['required', 'string', 'max:60'],
                 'url' => ['nullable', 'string', 'max:255'],
                 'icon' => ['nullable', 'string', 'max:10'],
@@ -459,7 +485,9 @@ class MegaMenuApiController extends Controller
                 'visibility' => ['nullable', 'in:always,guest,auth'],
                 'new_tab' => ['nullable', 'boolean'],
                 'columns' => ['nullable', 'integer', 'min:1', 'max:6'],
-            ]);
+            ];
+
+            $data = $request->validate($english + TranslationInput::rules(new MenuItem, $english));
 
             $item->update([
                 'label' => $data['label'],
@@ -471,6 +499,9 @@ class MegaMenuApiController extends Controller
                 'new_tab' => $data['new_tab'] ?? false,
                 'columns' => $data['columns'] ?? null,
             ]);
+
+            $item->saveTranslations(TranslationInput::clean($data['translations'] ?? []));
+
             $this->nav->flush();
 
             return response()->json(['ok' => true]);
