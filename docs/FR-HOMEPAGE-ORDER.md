@@ -126,6 +126,25 @@ the list jump after pressing Save.
 
 ---
 
+## Both blocks were applied and exercised, not just written
+
+Applied to a copy of `resources/views/admin/app.blade.php` by string match — both
+anchors matched first time, +1,495 bytes — and the resulting `paintHomepage()`
+region was checked to contain no Blade echo and to parse as JavaScript
+(`node --check`). The grouping logic was then run against a stub of the
+seventeen rows:
+
+```
+blocks: 15
+ticker up      -> refused
+categories up  -> categories, hero, delivery, ticker, bundles, …
+hero down      -> categories, bundles, hero, delivery, ticker, …
+newsletter up  -> …, reviews, newsletter, trust
+```
+
+Fifteen blocks for seventeen rows; a nested row refuses; the hero band moves
+whole and nothing lands inside it.
+
 ## What is NOT asked for
 
 - **No CSS.** `.hpmove` with no children is already how the Product page screen
