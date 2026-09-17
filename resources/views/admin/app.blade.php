@@ -2435,6 +2435,26 @@ const NAV=[
      built. One row now. The 'blog' id still routes — TITLES and the live
      wiring keep it — so #blog and ?go=blog reach the same screen as before. */
   {sec:'Content',items:[['posts','Blog Posts','<path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/><path d="M8 13h6"/>'],['htmlblocks','HTML Blocks','<path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'],['media','Media Library','<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L6 21"/>']]},
+  /* Translation (T1b, Lane FC). A parent menu of its own, beside Store and
+     Content, which is the owner's own requirement: the switches that publish a
+     second language are not settings to be scattered across other screens.
+
+     Four rows and not one screen with four tabs. They are four different
+     questions asked at four different times — is Arabic on, how far along is
+     it, what does this one string say, and what would the machine cost — and
+     the one the owner opens most is the strings list, which he will sit in for
+     hours. A tab strip would make him pass through the switch that publishes
+     the language to reach it.
+
+     Every one of these rows is drawn by admin/partials/translation-screens
+     .blade.php, which is included at the foot of this file (block 4) and wraps
+     window.go. They are in LATE_RENDERED (block 3) as well, without which a
+     deep link to any of them lands on the dashboard under its own heading.
+
+     NO `group:true` is needed: the section carries four items, so buildNav
+     renders it as a real .nav-group without being asked. Nothing injects rows
+     into this group, so it will never be a one-item section. */
+  {sec:'Translation',items:[['tr-settings','Language settings','<path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/><circle cx="9" cy="5" r="2.2"/><circle cx="15" cy="12" r="2.2"/><circle cx="8" cy="19" r="2.2"/>'],['tr-progress','Progress','<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12" y="8" width="3" height="10" rx="1"/><rect x="17" y="5" width="3" height="13" rx="1"/>'],['tr-strings','Strings','<path d="M4 7V5h16v2"/><path d="M9 19h6"/><path d="M12 5v14"/>'],['tr-machine','Machine translation','<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>']]},
   {sec:'Appearance',items:[['homepage','Homepage','<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>'],['prodstyles','Product styles','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="9" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/>'],['mobilehdr','Mobile Header','<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 9h10"/>'],['dividers','Section dividers','<path d="M4 12h5"/><path d="M15 12h5"/><circle cx="12" cy="12" r="1.6"/>'],['cartpanel','Cart panel','<path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>'],['acctpanel','Login / Register panel','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8M8 15h5"/>'],['header','Header','<path d="M3 5h18v5H3z"/><path d="M3 14h10"/>'],['mobilemenu','Mobile menu','<path d="M7 2h10v20H7z"/><path d="M10 18h4"/>'],['productpage','Product page','<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'],['bundles','Quantity bundles','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],['layout','Product grid','<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>']]},
   {sec:'Pages',items:[['pages-store','Store pages','<path d="M3 9h18M3 15h18M9 3v18"/><rect x="3" y="3" width="18" height="18" rx="2"/>'],['pages-user','User pages','<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>']]},
   {sec:'Growth & Marketing',items:[['newsletter','Newsletter','<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>'],['labels','Product Labels','<path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z"/><circle cx="7.5" cy="7.5" r="1.3"/>'],['meta','Meta & Facebook','<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>','lock'],['pixels','Marketing Pixels','<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>']]},
@@ -2615,7 +2635,7 @@ window.kbbAddNavEntry = kbbAddNavEntry;
    `modules` used to be declared twice in this object: once as ['Platform',…]
    and again, later, as ['Store',…]. The second silently won, so anyone editing
    the first saw nothing change. One declaration now. */
-const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
+const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
    open the same screen, whose two tabs are the two questions those screens used
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
@@ -6808,7 +6828,21 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    fails if this literal has drifted from it in either direction. Adding a
    screen to TITLES and forgetting to wire it up fails there, which is the whole
    point: the defect was silent, so the guard must not be. ===== */
-const LATE_RENDERED=new Set(['media','tax']);
+/* The four Translation screens join this set for exactly the reason the note
+   above gives. They are in TITLES, they have sidebar rows, and go()'s dispatch
+   object has no entry for any of them — their renderer is installed LATER in
+   the document, by admin/partials/translation-screens.blade.php, which does not
+   exist yet a few lines after buildNav(). Without them here, ?go=tr-settings
+   opens the DASHBOARD under the heading "Translation · Settings" with no error
+   anywhere on the page: the owner follows a link to the screen he turns Arabic
+   on from and is shown the dashboard instead, with nothing to report.
+
+   They are safe to arm, which is the condition this set carries. Each of the
+   four paints synchronously — window.go in that partial calls render() before
+   it awaits anything — so the replay's marker inside #content is already
+   destroyed by the time its task runs and nothing is drawn twice. That is the
+   rule 'rev-all' failed, and the reason it is in neither armed set. */
+const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -19426,6 +19460,31 @@ buildNav();
      literal '3' that used to be typed into the All Reviews NAV entry with the
      number of reviews actually waiting — see the note in the file. --}}
 @include('admin.partials.review-queue-badge')
+
+{{-- Translation -> Language settings, Progress, Strings and Machine
+     translation (T1b, Lane FC). Same arrangement as the screens above: its own file, its
+     own wrapper around window.go.
+
+     It appends NO sidebar entry, like review-settings, media-library and
+     html-blocks and unlike Coupons and New Order. All four ids are in the NAV
+     const and in TITLES above (blocks 1 and 2); adding entries here would give
+     the owner each row twice. A parent menu could not be created from a partial
+     in any case — kbbAddNavEntry() joins groups and never invents one, because
+     a group invented there would be a second place deciding this sidebar's
+     shape while TITLES, the breadcrumbs and buildNav all still used the first.
+
+     Paired with the four additions to LATE_RENDERED above (block 3), without
+     which a deep link to any of them opens the dashboard under its own heading.
+
+     WHAT IT IS FOR. Nine endpoints have existed under /admin-api/translations/*
+     since the bilingual foundation landed and nothing in this console called any
+     of them: the Arabic module had a database, an API, Arabic boxes in six
+     editors, a translated storefront and bilingual SEO, and no screen. This is
+     the screen, and it is the one the owner turns Arabic on from.
+
+     It changes nothing on the live shop by being applied. Both language
+     switches are absent-means-off and nothing here seeds a row. --}}
+@include('admin.partials.translation-screens')
 
 @verbatim
 </body>

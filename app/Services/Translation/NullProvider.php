@@ -31,7 +31,7 @@ final class NullProvider implements TranslationProvider
     public function translate(array $texts, string $from, string $to): array
     {
         throw new \RuntimeException(
-            'No machine-translation provider is configured. Save an API key in Store → Languages, '
+            'No machine-translation provider is configured. Save an API key in Translation → Language settings, '
             .'or type the translation in by hand — the manual path needs no key.'
         );
     }

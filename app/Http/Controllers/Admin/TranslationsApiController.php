@@ -15,6 +15,7 @@ use App\Services\Translation\TranslationEstimate;
 use App\Services\Translation\TranslationProvider;
 use App\Services\Translation\TranslationStore;
 use App\Support\Locale;
+use App\Support\TranslationConsole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -49,6 +50,8 @@ class TranslationsApiController extends Controller
         /** @var TranslationProvider $provider */
         $provider = app(TranslationProvider::class);
 
+        $can = TranslationConsole::capabilities();
+
         return response()->json([
             'arabic_enabled' => (bool) $this->settings->get(Locale::SETTING_ENABLED, false),
             'rtl_enabled' => (bool) $this->settings->get(Locale::SETTING_RTL, false),
@@ -70,6 +73,29 @@ class TranslationsApiController extends Controller
              * that refuses the state you asked for is not a control.
              */
             'warning' => $this->warning(),
+
+            /*
+             * Everything below is said BY THE SERVER because the screen's job
+             * is explaining state, and a sentence typed into the console is a
+             * second copy of an answer that goes stale silently. See
+             * App\Support\TranslationConsole.
+             */
+            'default_locale' => Locale::DEFAULT,
+            'default_locale_name' => Locale::LOCALES[Locale::DEFAULT]['name'],
+            'default_locale_note' => TranslationConsole::defaultLocaleNote(),
+            'root_serves' => TranslationConsole::rootServes(
+                (bool) $this->settings->get(Locale::SETTING_ENABLED, false),
+            ),
+            'provider_note' => TranslationConsole::providerNote($provider),
+
+            /*
+             * What THIS admin may do, so the screen can show a lever it cannot
+             * move as a reading rather than as a button that will 403. Looked
+             * up from AdminCapabilities by the endpoint's own method and path,
+             * so it cannot drift from the rules that actually guard them.
+             */
+            'can' => $can,
+            'capability_note' => TranslationConsole::capabilityNote($can),
         ]);
     }
 
@@ -152,22 +178,94 @@ class TranslationsApiController extends Controller
     }
 
     /**
-     * GET /admin-api/translations/estimate?locale=ar
+     * GET /admin-api/translations/estimate?locale=ar&limit=&group=
      *
      * The character count and the cost, taken BEFORE anything is spent. This
      * endpoint calls no external service and costs nothing to run.
+     *
+     * ── THE `run` BLOCK, AND WHY THE WHOLE-SHOP FIGURE IS NOT ENOUGH ───────
+     *
+     * The totals above describe THE WHOLE SHOP. The button on the screen
+     * translates a batch: one group, at most `limit` fields, and only the
+     * fields a machine should be sent at all — isMachineSafe() drops every
+     * product description, because they are HTML and both of the provider's
+     * format options mangle it. Those are three different reasons for the two
+     * numbers to differ, and they differ by most of the catalogue.
+     *
+     * machineRun() requires `confirm_characters` to match what it is about to
+     * send, within a tolerance, so that "I saw the number before I pressed it"
+     * is true rather than claimed. Showing the whole-shop total beside that
+     * button and posting it would fail that check on every press — and the
+     * screen would be showing a figure that was never the price of the thing
+     * the button does. `run.confirm_characters` below is counted from the same
+     * pending set machineRun() will re-count, through the same method, so the
+     * number on the screen is the number that gets authorised.
+     *
+     * It costs no money: pending() reads the database and never touches the
+     * provider, which is why it is safe to call here with no key configured.
+     * It costs some time — a cursor over the content tables — but it stops the
+     * moment it has `limit` fields, which on a shop that has barely started is
+     * a few hundred interface strings and no catalogue read at all. The screen
+     * asks for it when it is opened and when a selector changes, and never on a
+     * timer; the polled figures are progress(), which is seven aggregates.
      */
     public function estimate(Request $request): JsonResponse
     {
         /** @var TranslationProvider $provider */
         $provider = app(TranslationProvider::class);
 
-        return response()->json(TranslationEstimate::forLocale($this->locale($request)) + [
+        $locale = $this->locale($request);
+        $estimate = TranslationEstimate::forLocale($locale);
+
+        $limit = min(2000, max(1, (int) $request->query('limit', 100)));
+        $group = trim((string) $request->query('group', ''));
+        $group = $group === '' ? null : TranslationStore::normaliseKey($group);
+
+        $pending = (new MachineTranslationRunner($provider))->pending($locale, $limit, $group);
+
+        $runCharacters = array_sum(array_map(
+            static fn (array $slot): int => mb_strlen($slot['english'], 'UTF-8'),
+            $pending,
+        ));
+
+        $runUsd = round($runCharacters / 1_000_000 * TranslationEstimate::USD_PER_MILLION, 2);
+
+        return response()->json($estimate + [
             'provider' => $provider->name(),
             'provider_available' => $provider->available(),
+            'provider_note' => TranslationConsole::providerNote($provider),
             'usd_per_million' => TranslationEstimate::USD_PER_MILLION,
+            /*
+             * THE CURRENCY, SPELLED OUT, and rendered here rather than by the
+             * screen. This figure is Google's USD list price; this shop's own
+             * money is dirhams, and whole dirhams from this cycle onward. A
+             * console that formatted it would sooner or later format it the way
+             * it formats every other number on the site and print a dirham sign
+             * on a dollar amount. App\Support\Money is deliberately not
+             * involved — see TranslationConsole::costDisplay().
+             */
+            'currency' => TranslationConsole::COST_CURRENCY,
+            'usd_display' => TranslationConsole::costDisplay((float) $estimate['usd']),
+            'free_tier_note' => TranslationConsole::freeTierNote(),
+            'can' => TranslationConsole::capabilities(),
             'note' => 'An estimate. Your Google Cloud console is the authority on what you are '
                 .'actually billed and on how much of this month\'s free allowance is left.',
+
+            /*
+             * What the BUTTON will do, as opposed to what the shop still needs.
+             * confirm_characters is the value machineRun() checks against, so
+             * the figure printed beside the button is the figure that is
+             * authorised by pressing it.
+             */
+            'run' => [
+                'limit' => $limit,
+                'group' => $group,
+                'fields' => count($pending),
+                'characters' => $runCharacters,
+                'confirm_characters' => $runCharacters,
+                'usd' => $runUsd,
+                'usd_display' => TranslationConsole::costDisplay($runUsd),
+            ],
         ]);
     }
 
@@ -408,7 +506,7 @@ class TranslationsApiController extends Controller
         if (! $provider->available()) {
             return response()->json([
                 'message' => 'No translation service is connected. Add your own API key in '
-                    .'Translation → Settings, or type the Arabic in by hand — that never needs a key.',
+                    .'Translation → Language settings, or type the Arabic in by hand — that never needs a key.',
             ], 409);
         }
 
@@ -453,7 +551,7 @@ class TranslationsApiController extends Controller
         if (! $provider->available()) {
             return response()->json([
                 'message' => 'No translation service is connected. Add your own API key in '
-                    .'Translation → Settings. Typing the Arabic in by hand needs no key and costs nothing.',
+                    .'Translation → Language settings. Typing the Arabic in by hand needs no key and costs nothing.',
             ], 409);
         }
 
