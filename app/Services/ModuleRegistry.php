@@ -142,7 +142,37 @@ class ModuleRegistry
         'reassurance' => ['checkout', 'Reassurance block', 'Rating + authenticity block above the order summary.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'aside', 'The rating and authenticity block above the order summary.', 'live'],
         'checkout_thumbs' => ['checkout', 'Mobile order thumbnails', 'Circular product thumbnails on the mobile place-order box.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'bottom', 'Round product thumbnails on the mobile place-order box.', 'live'],
         'address_autocomplete' => ['checkout', 'Address autocomplete', 'Google Places suggestions on the address field (needs a key).', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'mid', 'Suggestions as the shopper types the address field.', 'todo'],
-        'inline_validation' => ['checkout', 'Inline field validation', 'Live green/red validation as the customer types.', true, '', '', 'checkout', 'mid', 'Green and red marks on each field as it is filled in.', 'todo'],
+        /*
+         * PORTED IN LANE FI, and previously `todo` with no settings screen at
+         * all — the row the console renders as "Not ported yet".
+         *
+         * §2 of the master plan files this under "blocked on a missing source",
+         * and that half is still true: the plugin's own entry is a settings LINK
+         * pointing at kbb-theme, which was never supplied, so there is nothing
+         * to copy. This is `legal_notice`'s shape — the module's description
+         * built against what this app already has — and what it already has is
+         * the CONTRACT: components/checkout/field.blade.php writes WooCommerce's
+         * validate-required / validate-email / validate-state / validate-phone
+         * classes onto every checkout row, and its own header records that
+         * nothing in this repo has ever read them. This module is that reader,
+         * and it puts back Woo's own woocommerce-invalid / woocommerce-validated
+         * rather than a second vocabulary for the same idea.
+         *
+         * THE DEFAULT FLIPS FROM THE PLUGIN'S, from true to false, and the
+         * reasoning is the same rule `seo_engine`, `brands` and the order emails
+         * each use pointed the other way: the default is measured against what
+         * this store does WITHOUT the switch. Without it this checkout shows no
+         * marks whatsoever — only the browser's own bubble on Place order — so
+         * shipping ON would start colouring in the one form the shop is paid
+         * through, on apply, without anybody asking. OFF, and applying this
+         * package changes the checkout by nothing.
+         *
+         * The route is 'ecommerce:checkout' and not 'ecommerce' for the reason
+         * `legal_notice` and `product_sorting` already established: the Checkout
+         * tab is one of five on that screen, and a row may name its sub-tab so
+         * the owner is not left guessing which one the module meant.
+         */
+        'inline_validation' => ['checkout', 'Inline field validation', 'Marks each checkout field as the shopper fills it in, using the shop’s existing form rules — a red mark and a short line on a field that needs attention, a green one on a field that is done. Off by default: without it the checkout says nothing until Place order is pressed.', false, 'Store → Ecommerce → Checkout', 'ecommerce:checkout', 'checkout', 'mid', 'Green and red marks on each field as it is filled in.', 'live'],
         'single_name' => ['checkout', 'Single “Full name” field', 'One name field instead of first + last (auto-split on save).', true, 'Store → Ecommerce → Checkout', 'ecommerce', 'checkout', 'mid', 'One Full name field in place of first and last name.', 'elsewhere'],
         // ── Cart & mini-cart ──
         'minicart_promo' => ['cart', 'Mini-cart promo', 'Editable promo line in the cart drawer.', true, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'bottom', 'The promo line above the subtotal in the cart panel.', 'live'],
