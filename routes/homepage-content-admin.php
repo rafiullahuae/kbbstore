@@ -7,19 +7,21 @@ declare(strict_types=1);
 | Appearance → Homepage content  (Lane FO, Phase 15)
 |------------------------------------------------------------------------------
 |
-| NOT MOUNTED YET. CLAUDE.md forbids this lane from editing routes/web.php, so
-| these two routes ship in their own file. The integrator adds ONE line, inside
-| the EXISTING admin-api group, directly under the three homepage routes that
-| are already there (routes/web.php, around line 542):
+| LIVE. routes/web.php requires this file inside the EXISTING admin-api group —
+| the one already carrying `auth:admin` and NoStoreAdminApi — directly under the
+| three homepage routes that were already there:
 |
 |     Route::post('/homepage/layout', [\App\Http\Controllers\Admin\HomepageApiController::class, 'applyLayout']);
-|     require __DIR__ . '/homepage-content-admin.php';
+|     require __DIR__.'/homepage-content-admin.php';        <-- this file
 |
-| When that line lands, this header must stop saying the routes are unmounted —
-| tests/Feature/RouteFileHeadersTest.php fails any route file that web.php
-| requires while the file still describes itself that way. Rewrite the sentence
-| rather than quoting the old one: the guard reads the whole file, and a quoted
-| claim is the claim as far as a regex is concerned.
+| Resulting paths:
+|
+|     GET  /admin-api/homepage/content
+|     POST /admin-api/homepage/content
+|
+| NOTHING IS CHAINED ONTO THEM. RouteRegistrar::middleware() REPLACES rather
+| than appends, so a `->middleware(...)` here would silently drop
+| NoStoreAdminApi from the group.
 |
 | THAT GROUP AND NO OTHER. These routes WRITE the words on the shop's front
 | page, including the page's only <h1>. /api/* in this app is unauthenticated by

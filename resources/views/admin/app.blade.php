@@ -2643,7 +2643,7 @@ const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],
 'rev-badge':['Reviews','Rating Badge'],'rev-capsule':['Reviews','Rating Badge'],'rev-settings':['Reviews','Review Settings'],orders:['Store','Orders'],'store-settings':['Store','Business Details'],tax:['Store','Tax'],customers:['Store','Customers'],mail:['Store','Mail'],payments:['Store','Payments'],analytics:['Store','Analytics'],search:['Store','Site Search'],'quiz-leads':['Store','Quiz Leads'],'seo':['Store','SEO & Meta'],/* 'blog' has no sidebar row of its own any more — it
    and 'posts' open the same screen. The id stays routable for #blog and
    ?go=blog, and it names that screen honestly rather than a second one. */
-'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
+'blog':['Content','Blog Posts'],'layout':['Appearance','Product grid'],'bundles':['Appearance','Quantity bundles'],'homepage':['Appearance','Homepage'],'hpcontent':['Appearance','Homepage content'],'productpage':['Appearance','Product page'],'mobilemenu':['Appearance','Mobile menu'],'header':['Appearance','Header'],'mobilehdr':['Appearance','Mobile Header'],'dividers':['Appearance','Section dividers'],'cartpanel':['Appearance','Cart panel'],'acctpanel':['Appearance','Login / Register panel'],'prodstyles':['Appearance','Product styles'],'modules':['Store','Modules'],'megamenu':['Store','Mega Menu'],'shipping':['Store','Delivery & Shipping'],'payship':['Store','Payment & Shipping Rules'],'ecommerce':['Store','Ecommerce'],'pages-store':['Pages','Store pages'],'pages-user':['Pages','User pages'],'posts':['Content','Blog Posts'],'htmlblocks':['Content','HTML Blocks'],'media':['Content','Media Library']};
 let cur='dash';
 /* `sub` is an optional sub-tab within the screen — only Catalog has them, and
    only the Modules screen passes one (product_sorting links to the Reorder
@@ -6842,7 +6842,7 @@ const LIVE_RENDERED=new Set(['orders','payments','analytics','seo','blog','posts
    it awaits anything — so the replay's marker inside #content is already
    destroyed by the time its task runs and nothing is drawn twice. That is the
    rule 'rev-all' failed, and the reason it is in neither armed set. */
-const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine']);
+const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent']);
 const FRAME_PROBE=new Map();
 
 /* One request per file per page load, shared by every later visit to the screen.
@@ -20065,6 +20065,21 @@ buildNav();
      It changes nothing on the live shop by being applied. Both language
      switches are absent-means-off and nothing here seeds a row. --}}
 @include('admin.partials.translation-screens')
+
+{{-- Appearance → Homepage content (Phase 15, Lane FO).
+
+     The words on the homepage, as opposed to which of its sections appear —
+     which is what Appearance → Homepage next door has always owned. Three
+     settings the storefront reads were written by nothing in the tree:
+     `home_banners` (the hero slider, carrying the page's only h1),
+     `about_text` and `home_ticker`. This is the screen that gives them an
+     owner. Every control on it is drawn from a field payload the server builds
+     with App\Services\ModuleSchema, so it cannot disagree with the validator.
+
+     It changes nothing on the live shop by being applied: `home_banners` stays
+     absent, and absent is what makes HomepageContent fall through to the three
+     slides the shop has been rendering all along. --}}
+@include('admin.partials.homepage-content-screen')
 
 {{-- Catalog → Build my routine (Lane FM). The role each product plays, which
      products are still untagged, the eight routines and the module's two

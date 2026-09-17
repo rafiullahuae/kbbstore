@@ -128,10 +128,21 @@ const LATE_RENDERED=new Set(['media','tax']);
    it awaits anything — so the replay's marker inside #content is already
    destroyed by the time its task runs and nothing is drawn twice. That is the
    rule 'rev-all' failed, and the reason it is in neither armed set. */
-const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine']);
+const LATE_RENDERED=new Set(['media','tax','tr-settings','tr-progress','tr-strings','tr-machine','hpcontent']);
 ```
 
 ---
+
+> **Integrator note, 2.60.208.** `'hpcontent'` above is not this lane's. Lane FO
+> (Appearance → Homepage content) joined the same set for the same reason and by
+> the same rule — its `window.go` calls `render()` synchronously before it awaits
+> anything, so the replay's marker is already gone by the time its task runs.
+> This document's replacement had to grow with it: the guard in
+> `TranslationConsoleTest` asserts the replacement appears in `app.blade.php`
+> **exactly once**, so a console that has legitimately moved on makes the record
+> false rather than making the console wrong. That is the guard doing its job —
+> it caught this within one merge — and the fix is to update the record, never to
+> narrow the assertion.
 
 ## Block 4 · include the Translation screens
 
