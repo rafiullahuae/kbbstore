@@ -76,7 +76,23 @@ use App\Support\TrustClaims;
  */
 function ctPendingShellControl(): array
 {
-    return ['product_authentic_text'];
+    /*
+     * EMPTY, AND IT SHOULD STAY EMPTY.
+     *
+     * Lane DT added `product_authentic_text` to TrustClaims::CLAIMS and could
+     * not build its box, because the admin shell was another lane's that round.
+     * Rather than weaken the loop below, it left the key here and wrote a test
+     * that fails the moment the shell DOES draw the box — so the exemption
+     * could not quietly outlive the reason for it. The integrator drew the box
+     * and the payload line in the same commit as this line, and that test is
+     * what told us to.
+     *
+     * A key belongs here only while its box genuinely does not exist yet, and
+     * only with the same forcing test still in place. The default for a new
+     * claim is to build both halves together; this list is the exception, not
+     * the workflow.
+     */
+    return [];
 }
 
 function ctAdmin(): AdminUser
@@ -128,6 +144,12 @@ it('leaves no claim pending a box that the admin shell already draws', function 
     // stopped being true is a hole. This closes it the moment the box lands.
     $shell = file_get_contents(resource_path('views/admin/app.blade.php'));
 
+    // Stated first so this test asserts something even when the list is empty,
+    // which is its healthy state: an empty loop is a test that passes without
+    // checking anything, and a pending list is meant to be unusual.
+    expect(ctPendingShellControl())
+        ->toBeArray('the pending list must stay a list, even when nothing is on it');
+
     foreach (ctPendingShellControl() as $key) {
         expect(str_contains($shell, "id=\"set_" . $key . "\""))
             ->toBeFalse("The Claims tab now draws a box for {$key}, so it must be removed from ctPendingShellControl() and guarded like every other claim.");
@@ -139,6 +161,13 @@ it('makes a claim awaiting its box reachable at the endpoint all the same', func
     // the control. If the endpoint rule were missing too, the integrator would
     // paste the box in and it would silently save nothing — which is the exact
     // defect `reassure_auth_text` shipped with and this file exists to catch.
+    //
+    // Every claim NOT on the pending list is already covered by the loop in
+    // the first test in this file, so the strongest thing to say here when the
+    // list is empty is that it is empty — which is the state we want.
+    expect(ctPendingShellControl())
+        ->toBeArray('the pending list must stay a list, even when nothing is on it');
+
     foreach (ctPendingShellControl() as $key) {
         expect(\App\Http\Controllers\Admin\AdminController::SETTING_RULES)
             ->toHaveKey($key);

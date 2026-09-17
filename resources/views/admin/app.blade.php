@@ -15377,6 +15377,20 @@ buildNav();
             'Currently reads “100% authentic K-beauty”. The star rating beside it comes from your approved reviews and cannot be typed.')+
         '</div>')+
 
+      /* Its own key, not the checkout one, and the reason is the feature's
+         whole point: on a shared key "take that off the product page" would
+         also strip the chip beside Place order — a second decision he never
+         made, on the page where being wrong costs money. TrustClaims already
+         has byte-identical defaults under separate keys for the same reason,
+         and the tab is organised by placement so the duplication is visible. */
+      bdSec('On the product page',
+        'The reassurance chips under the Add to basket button, on every product in the shop. Delivery and returns beside this one are set elsewhere.',
+        '<div class="bd-grid">'+
+          bdField('set_product_authentic_text','Beside delivery and returns',
+            '<input id="set_product_authentic_text" value="'+sesc(bdClaim('product_authentic_text'))+'" placeholder="empty — the chip is removed">',
+            'Currently reads “100% authentic”. Empty removes the chip and its shield icon, and the other chips close up around it. This is a separate box from the checkout one above on purpose: clearing one must not silently clear the other.')+
+        '</div>')+
+
       bdSec('On the announcement strip',
         'The thin bar that runs above the header. Kept here so every claim the shop makes is in one place — note that this strip is not switched on at the moment, so nothing you type here is visible yet.',
         '<div class="bd-grid">'+
@@ -15523,6 +15537,7 @@ buildNav();
         trust_support_title: sval('set_trust_support_title'),
         home_brands_note: sval('set_home_brands_note'),
         checkout_authentic_text: sval('set_checkout_authentic_text'),
+        product_authentic_text: sval('set_product_authentic_text'),
         reassure_auth_text: sval('set_reassure_auth_text'),
         anno_authentic_text: sval('set_anno_authentic_text')
 
