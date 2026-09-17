@@ -7,10 +7,15 @@ namespace App\Services\Payments\Gateways;
 use App\Models\Order;
 use App\Services\Payments\HandlesWebhooks;
 use App\Services\Payments\PaymentStart;
+use App\Services\Payments\Reconciliation\ListsTransactions;
+use App\Services\Payments\Reconciliation\ReconcileWindow;
+use App\Services\Payments\Reconciliation\RemotePage;
+use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\WebhookOutcome;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
 /**
@@ -55,7 +60,7 @@ use Illuminate\Http\Request;
  * `order_status` and is how an approval is announced; the webhook carries
  * `event_type` and is how expiry and decline are. Both are handled.
  */
-class TamaraGateway extends RemoteGateway implements HandlesWebhooks, SettlesPayments
+class TamaraGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments
 {
     private const LIVE = 'https://api.tamara.co';
 
@@ -494,6 +499,224 @@ class TamaraGateway extends RemoteGateway implements HandlesWebhooks, SettlesPay
             ['provider' => $this->id(), 'tamara_order_id' => $tamaraOrderId, 'refund_id' => $refundId],
             'Refunded through Tamara.',
         );
+    }
+
+    /* -------------------------------------------------------- reconciliation */
+
+    /**
+     * Tamara's books, a page at a time.
+     *
+     *   GET /merchants/orders?startDate=&endDate=&offset=&limit=
+     *
+     * The same collection the webhook and capture already read one member of
+     * (`/merchants/orders/{id}`), which is why the parsing below shares its
+     * field names with existingCaptureId() and with handleWebhook():
+     * `order_reference_id` is our order number, `total_amount` is
+     * {amount, currency} in MAJOR units, and settlement lives under
+     * `transactions.captures[]` and `transactions.refunds[]`.
+     *
+     * REFUNDS COME OUT OF THE SAME LIST, for the same reason they do on Tabby:
+     * Tamara keeps a refund inside the order it belongs to. refund() sends one
+     * `capture_id` and reads back `refunds[0].refund_id`; there is no separate
+     * collection of refunds to page.
+     *
+     * WHICH HOST. baseUrl() resolves the live/sandbox switch, so this reads the
+     * same books the checkout writes to. That is not a detail: sandbox keys
+     * pointed at the live host (or the reverse) is the commonest go-live
+     * failure on this gateway, and a reconciliation that read the sandbox would
+     * report every real payment in the window as money the provider has never
+     * heard of. remoteSourceLabel() prints the host it actually used so the
+     * screen can show which one answered.
+     *
+     * THE LIST FORM IS NOT PROVEN HERE, exactly as on Tabby — the by-id read is
+     * exercised by the webhook, the collection read is not, and this project
+     * has no Tamara merchant account to settle it with. It is confined to this
+     * method, and a wrong path returns RemotePage::failed(), which makes the
+     * run say "Tamara's list of orders could not be read" and skip every
+     * conclusion that depends on having read it. See RemotePage.
+     */
+    public function listRemotePayments(ReconcileWindow $window, ?string $cursor, int $limit): RemotePage
+    {
+        return $this->listTamara($window, $cursor, $limit, RemoteTxn::PAYMENT);
+    }
+
+    public function listRemoteRefunds(ReconcileWindow $window, ?string $cursor, int $limit): RemotePage
+    {
+        return $this->listTamara($window, $cursor, $limit, RemoteTxn::REFUND);
+    }
+
+    public function remoteSourceLabel(): string
+    {
+        return rtrim($this->baseUrl(), '/') . '/merchants/orders (refunds are nested in each order)';
+    }
+
+    private function listTamara(ReconcileWindow $window, ?string $cursor, int $limit, string $kind): RemotePage
+    {
+        if (! $this->configured()) {
+            return RemotePage::unsupported('Tamara has no API token stored, so its books cannot be read.');
+        }
+
+        $limit = max(1, min($limit, 100));
+        $offset = $cursor !== null && ctype_digit(trim($cursor)) ? (int) trim($cursor) : 0;
+
+        $attempt = $this->attempt('GET', '/merchants/orders?' . http_build_query([
+            'startDate' => $window->from->toIso8601ZuluString(),
+            'endDate' => $window->to->toIso8601ZuluString(),
+            'offset' => $offset,
+            'limit' => $limit,
+        ]));
+
+        if (! $attempt['ok']) {
+            return RemotePage::failed($attempt['error'] ?? 'unreachable', $attempt['status']);
+        }
+
+        $orders = $this->orderList($attempt['body']);
+        $items = [];
+
+        foreach ($orders as $remote) {
+            if (! is_array($remote)) {
+                continue;
+            }
+
+            if ($kind === RemoteTxn::PAYMENT) {
+                $txn = $this->tamaraOrderToTxn($remote);
+
+                if ($txn !== null) {
+                    $items[] = $txn;
+                }
+
+                continue;
+            }
+
+            foreach ($this->tamaraRefundsToTxns($remote) as $refund) {
+                $items[] = $refund;
+            }
+        }
+
+        // The cursor counts ORDERS in both modes. See the same note on Tabby:
+        // advancing by the number of refunds found would skip orders in
+        // proportion to how many refunds they happened to carry.
+        $more = count($orders) >= $limit;
+
+        return RemotePage::of($items, $more ? (string) ($offset + count($orders)) : null);
+    }
+
+    private function orderList(mixed $body): array
+    {
+        if (! is_array($body)) {
+            return [];
+        }
+
+        foreach (['data', 'orders', 'results', 'content'] as $key) {
+            if (isset($body[$key]) && is_array($body[$key])) {
+                return $body[$key];
+            }
+        }
+
+        return array_is_list($body) ? $body : [];
+    }
+
+    private function tamaraOrderToTxn(array $remote): ?RemoteTxn
+    {
+        $id = $this->stringOrNull($remote['order_id'] ?? null);
+
+        if ($id === null) {
+            return null;
+        }
+
+        $status = strtolower((string) ($remote['status'] ?? ''));
+
+        /*
+         * Captured is money. Authorised is money Tamara is holding and will
+         * release if nobody takes it — its own merchant plugin sweeps for
+         * exactly this up to 180 days out. `new`, `approved` and `declined` are
+         * all short of a commitment; `expired` and `canceled` are past one.
+         *
+         * `partially_captured` counts as settled and the amount compared is the
+         * order total, which will disagree with a short capture. That
+         * disagreement is a finding worth having rather than a false one: a
+         * partially captured Tamara order IS a case where the two sides hold
+         * different figures, and it is invisible from the orders list.
+         */
+        $state = match ($status) {
+            'fully_captured', 'partially_captured' => RemoteTxn::SETTLED,
+            'authorised', 'authorized' => RemoteTxn::AUTHORISED,
+            default => RemoteTxn::DEAD,
+        };
+
+        return new RemoteTxn(
+            provider: $this->id(),
+            kind: RemoteTxn::PAYMENT,
+            remoteId: $id,
+            matchKeys: [],
+            reference: $this->stringOrNull($remote['order_reference_id'] ?? null),
+            // Major units on this API, through toFils() and its round(). Never
+            // an (int) cast on a float.
+            amountFils: $this->toFils($remote['total_amount']['amount'] ?? 0),
+            currency: strtoupper((string) ($remote['total_amount']['currency'] ?? '')),
+            state: $state,
+            rawState: $status,
+            createdAt: $this->tamaraMoment($remote['created_at'] ?? null),
+        );
+    }
+
+    /** @return array<int, RemoteTxn> */
+    private function tamaraRefundsToTxns(array $remote): array
+    {
+        $refunds = $remote['transactions']['refunds'] ?? null;
+
+        if (! is_array($refunds)) {
+            return [];
+        }
+
+        $reference = $this->stringOrNull($remote['order_reference_id'] ?? null);
+        $currency = strtoupper((string) ($remote['total_amount']['currency'] ?? ''));
+        $out = [];
+
+        foreach ($refunds as $refund) {
+            if (! is_array($refund)) {
+                continue;
+            }
+
+            $id = $this->stringOrNull($refund['refund_id'] ?? null);
+
+            if ($id === null) {
+                continue;
+            }
+
+            $out[] = new RemoteTxn(
+                provider: $this->id(),
+                kind: RemoteTxn::REFUND,
+                remoteId: $id,
+                matchKeys: [],
+                reference: $reference,
+                amountFils: $this->toFils(
+                    $refund['total_amount']['amount'] ?? ($refund['amount'] ?? 0)
+                ),
+                currency: strtoupper((string) ($refund['total_amount']['currency'] ?? $currency)),
+                state: RemoteTxn::SETTLED,
+                rawState: 'refunded',
+                createdAt: $this->tamaraMoment($refund['created_at'] ?? null),
+                // The Tamara order this refund sits inside, which is what
+                // `payments.provider_ref` holds for this gateway.
+                parentKeys: [(string) ($remote['order_id'] ?? '')],
+            );
+        }
+
+        return $out;
+    }
+
+    private function tamaraMoment(mixed $value): ?CarbonImmutable
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::parse($value)->utc();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /** The capture id off an already-captured order, if Tamara volunteered one. */

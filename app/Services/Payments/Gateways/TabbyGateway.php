@@ -7,10 +7,15 @@ namespace App\Services\Payments\Gateways;
 use App\Models\Order;
 use App\Services\Payments\HandlesWebhooks;
 use App\Services\Payments\PaymentStart;
+use App\Services\Payments\Reconciliation\ListsTransactions;
+use App\Services\Payments\Reconciliation\ReconcileWindow;
+use App\Services\Payments\Reconciliation\RemotePage;
+use App\Services\Payments\Reconciliation\RemoteTxn;
 use App\Services\Payments\SettlementResult;
 use App\Services\Payments\SettlesPayments;
 use App\Services\Payments\Signature;
 use App\Services\Payments\WebhookOutcome;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 
 /**
@@ -52,7 +57,7 @@ use Illuminate\Http\Request;
  * ever leaked: the body is used for exactly one thing, reading the payment id
  * to go and ask about.
  */
-class TabbyGateway extends RemoteGateway implements HandlesWebhooks, SettlesPayments
+class TabbyGateway extends RemoteGateway implements HandlesWebhooks, ListsTransactions, SettlesPayments
 {
     private const API = 'https://api.tabby.ai';
 
@@ -428,6 +433,239 @@ class TabbyGateway extends RemoteGateway implements HandlesWebhooks, SettlesPaym
             ['provider' => $this->id(), 'payment_id' => $paymentId, 'refund_id' => $refundId],
             'Refunded through Tabby.',
         );
+    }
+
+    /* -------------------------------------------------------- reconciliation */
+
+    /**
+     * Tabby's books, a page at a time.
+     *
+     *   GET /api/v2/payments?created_at__gte=&created_at__lte=&offset=&limit=
+     *
+     * REFUNDS COME OUT OF THE SAME LIST, and that is not a shortcut. Tabby does
+     * not keep refunds anywhere else: a refund is an entry in the `refunds[]`
+     * array of the payment it reverses, exactly as a capture is an entry in
+     * `captures[]` — which is why refund() has to send a `capture_id` and why
+     * lastId() reads the whole array back. Inventing a `/refunds` endpoint to
+     * make this symmetrical with Stripe would be inventing an endpoint, and a
+     * reconciliation whose refund half 404s is a reconciliation that reports
+     * every refund this shop has made as unconfirmed.
+     *
+     * ---------------------------------------------------------------------
+     * THE ONE THING HERE THAT IS NOT PROVEN
+     *
+     * The single-payment read (`GET /api/v2/payments/{id}`) is exercised by
+     * the webhook and by capture, and is known good. The LIST form above —
+     * the same collection without an id, with a date filter and an offset — is
+     * taken from the same v2 API and cannot be verified from this project,
+     * which has no Tabby merchant account. It is deliberately confined to this
+     * one method for that reason.
+     *
+     * If it is wrong, the failure is safe and loud rather than quiet and
+     * wrong: a 404 or a 401 returns RemotePage::failed(), the run records
+     * `payments_source_unavailable` against Tabby, and every conclusion that
+     * would have been drawn from Tabby's silence is SKIPPED. What the owner
+     * sees is "Tabby's list of payments could not be read", not a clean bill
+     * of health and not a page of invented discrepancies. Read RemotePage's
+     * class comment; that property is the reason it is shaped the way it is.
+     */
+    public function listRemotePayments(ReconcileWindow $window, ?string $cursor, int $limit): RemotePage
+    {
+        return $this->listTabby($window, $cursor, $limit, RemoteTxn::PAYMENT);
+    }
+
+    public function listRemoteRefunds(ReconcileWindow $window, ?string $cursor, int $limit): RemotePage
+    {
+        return $this->listTabby($window, $cursor, $limit, RemoteTxn::REFUND);
+    }
+
+    public function remoteSourceLabel(): string
+    {
+        return 'api.tabby.ai /api/v2/payments (refunds are nested in each payment)';
+    }
+
+    private function listTabby(ReconcileWindow $window, ?string $cursor, int $limit, string $kind): RemotePage
+    {
+        if (! $this->configured()) {
+            return RemotePage::unsupported('Tabby has no keys stored, so its books cannot be read.');
+        }
+
+        $limit = max(1, min($limit, 100));
+        $offset = $cursor !== null && ctype_digit(trim($cursor)) ? (int) trim($cursor) : 0;
+
+        $attempt = $this->attempt('GET', '/api/v2/payments?' . http_build_query([
+            // RFC3339 with an explicit Z. Tabby timestamps in UTC and so does
+            // ReconcileWindow, so there is no conversion here and none to get
+            // wrong — see that class for why the boundary is padded instead.
+            'created_at__gte' => $window->from->toIso8601ZuluString(),
+            'created_at__lte' => $window->to->toIso8601ZuluString(),
+            'offset' => $offset,
+            'limit' => $limit,
+        ]));
+
+        if (! $attempt['ok']) {
+            return RemotePage::failed($attempt['error'] ?? 'unreachable', $attempt['status']);
+        }
+
+        $payments = $this->paymentList($attempt['body']);
+        $items = [];
+
+        foreach ($payments as $payment) {
+            if (! is_array($payment)) {
+                continue;
+            }
+
+            if ($kind === RemoteTxn::PAYMENT) {
+                $txn = $this->tabbyPaymentToTxn($payment);
+
+                if ($txn !== null) {
+                    $items[] = $txn;
+                }
+
+                continue;
+            }
+
+            foreach ($this->tabbyRefundsToTxns($payment) as $refund) {
+                $items[] = $refund;
+            }
+        }
+
+        /*
+         * Offset paging, so "is there more" is "was this page full". The cursor
+         * counts PAYMENTS in both modes, never refunds: the refund pass walks
+         * the same collection, and advancing by the number of refunds found
+         * would skip payments in proportion to how many refunds they happened
+         * to carry.
+         */
+        $more = count($payments) >= $limit;
+
+        return RemotePage::of($items, $more ? (string) ($offset + count($payments)) : null);
+    }
+
+    /** Tabby has answered collections as a bare array and as {payments:[…]}. */
+    private function paymentList(mixed $body): array
+    {
+        if (! is_array($body)) {
+            return [];
+        }
+
+        foreach (['payments', 'data', 'results'] as $key) {
+            if (isset($body[$key]) && is_array($body[$key])) {
+                return $body[$key];
+            }
+        }
+
+        return array_is_list($body) ? $body : [];
+    }
+
+    private function tabbyPaymentToTxn(array $payment): ?RemoteTxn
+    {
+        $id = trim((string) ($payment['id'] ?? ''));
+
+        if ($id === '') {
+            return null;
+        }
+
+        $status = strtoupper((string) ($payment['status'] ?? ''));
+
+        /*
+         * CLOSED is Tabby's word for captured — money taken. AUTHORIZED is
+         * money committed and not yet taken, which Tabby auto-voids; it is not
+         * settled and must not be counted as such. CREATED is a shopper who
+         * never finished.
+         */
+        $state = match ($status) {
+            'CLOSED' => RemoteTxn::SETTLED,
+            'AUTHORIZED' => RemoteTxn::AUTHORISED,
+            default => RemoteTxn::DEAD,
+        };
+
+        return new RemoteTxn(
+            provider: $this->id(),
+            kind: RemoteTxn::PAYMENT,
+            remoteId: $id,
+            matchKeys: [],
+            reference: $this->referenceOf($payment),
+            // Major-unit decimal string on this API. Through toFils(), which
+            // goes via round() rather than an (int) cast on a float — (int)
+            // (10.10 * 100) is 1009, and that is a one-fil discrepancy
+            // reported against a perfectly correct order.
+            amountFils: $this->toFils($payment['amount'] ?? 0),
+            currency: strtoupper((string) ($payment['currency'] ?? '')),
+            state: $state,
+            rawState: $status,
+            createdAt: $this->tabbyMoment($payment['created_at'] ?? null),
+        );
+    }
+
+    /** @return array<int, RemoteTxn> */
+    private function tabbyRefundsToTxns(array $payment): array
+    {
+        $refunds = $payment['refunds'] ?? null;
+
+        if (! is_array($refunds)) {
+            return [];
+        }
+
+        $reference = $this->referenceOf($payment);
+        $currency = strtoupper((string) ($payment['currency'] ?? ''));
+        $out = [];
+
+        foreach ($refunds as $refund) {
+            if (! is_array($refund)) {
+                continue;
+            }
+
+            $id = trim((string) ($refund['id'] ?? ''));
+
+            if ($id === '') {
+                continue;
+            }
+
+            $out[] = new RemoteTxn(
+                provider: $this->id(),
+                kind: RemoteTxn::REFUND,
+                remoteId: $id,
+                matchKeys: [],
+                reference: $reference,
+                amountFils: $this->toFils($refund['amount'] ?? 0),
+                currency: $currency,
+                // A refund that appears in Tabby's list is a refund Tabby made.
+                // There is no pending state on these entries.
+                state: RemoteTxn::SETTLED,
+                rawState: 'refunded',
+                createdAt: $this->tabbyMoment($refund['created_at'] ?? null),
+                // The payment this refund sits inside. Tabby does carry the
+                // order reference too, so this is belt as well as braces — but
+                // a reference is a string somebody could have changed, and the
+                // payment id is what `payments.provider_ref` actually holds.
+                parentKeys: [(string) ($payment['id'] ?? '')],
+            );
+        }
+
+        return $out;
+    }
+
+    private function referenceOf(array $payment): ?string
+    {
+        $reference = $payment['order']['reference_id'] ?? null;
+
+        return is_string($reference) && trim($reference) !== '' ? trim($reference) : null;
+    }
+
+    private function tabbyMoment(mixed $value): ?CarbonImmutable
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return CarbonImmutable::parse($value)->utc();
+        } catch (\Throwable) {
+            // A timestamp we cannot read is not a reason to drop a transaction
+            // out of a reconciliation. It is used for display only.
+            return null;
+        }
     }
 
     /**
