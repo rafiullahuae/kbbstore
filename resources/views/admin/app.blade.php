@@ -10530,12 +10530,20 @@ buildNav();
   /* ---------- Dashboard: real KPIs + recent orders ---------- */
   async function hydrateDash(){
     var s; try{ s = await api('/admin-api/stats'); }catch(e){ return; }
-    function setKpi(label, val, sub){
+    function setKpi(label, val, sub, opts){
+      opts = opts || {};
       document.querySelectorAll('#content .kpi').forEach(function(k){
         var l=k.querySelector('.lbl');
         if(l && l.textContent.trim()===label){
           var v=k.querySelector('.val'); if(v) v.textContent=val;
           if(sub!=null){ var su=k.querySelector('.sub'); if(su) su.textContent=sub; }
+          /* LANE DU: a tile may need to say what it is measuring, not only what
+             the number is. `note` is help text on hover; `rename` changes the
+             label AFTER the match, so the match above still keys off the label
+             the markup shipped with and a rename cannot make the tile
+             unfindable on the next render. */
+          if(opts.note){ k.setAttribute('title', opts.note); }
+          if(opts.rename){ l.textContent = opts.rename; }
         }
       });
     }
@@ -10543,8 +10551,21 @@ buildNav();
        partial refund leaves its order 'completed' (PaymentRefunder only moves
        the status on a FULL refund), so before this the whole of a partly
        refunded order stayed in the revenue figure for ever. */
+    /* LANE DU: the figure is what customers were BILLED, less refunds — so if
+       the shop ever charges VAT on top of its prices, this tile silently
+       includes money collected for the tax authority and handed straight on.
+       Today that amount is zero (the tax engine writes tax_total 0 while it is
+       in display mode), and the tile therefore says nothing extra; the day it
+       stops being zero the tile says so rather than quietly growing. The note
+       is rendered from the endpoint's own revenue_basis rather than written
+       here, so the screen cannot drift from what the figure actually sums. */
+    var rb = s.revenue_basis || {};
+    var vat30 = Number(s.tax_collected_30d_aed || 0);
     setKpi('Revenue (30d)', 'AED '+s.revenue_30d_aed.toLocaleString(),
-      s.refunds_30d_aed ? ('net of AED '+s.refunds_30d_aed.toLocaleString()+' refunded') : 'last 30 days, net of refunds');
+      vat30 > 0
+        ? ('includes AED '+vat30.toLocaleString()+' VAT collected for the tax authority')
+        : (s.refunds_30d_aed ? ('net of AED '+s.refunds_30d_aed.toLocaleString()+' refunded') : 'last 30 days, net of refunds'),
+      { note: rb.note || null, rename: vat30 > 0 ? 'Revenue (30d, incl. VAT)' : null });
     /* "Today" is the shop's own calendar day, not the server's. Storage is
        UTC; App\Support\StoreTime decides which local day a stored instant falls
        in, so an order placed at 01:30 in Dubai counts towards today rather than
@@ -11821,7 +11842,18 @@ buildNav();
     var h = o.customer_history||{};
     return '<div class="odcard" style="margin-bottom:14px" id="odHist">'+odCardHead('Customer history')+'<div class="pad" style="padding:18px 20px">'+
       '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">TOTAL ORDERS</label><div style="font-size:17px;font-weight:800">'+(h.total_orders||0)+'</div></div>'+
-      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)">TOTAL REVENUE</label><div style="font-size:17px;font-weight:800">AED '+(h.total_revenue_aed||0)+'</div></div>'+
+      /* LANE DU: this is what the customer was BILLED across their orders, so
+         where the shop charged VAT it is money inside a figure that is not the
+         shop's to keep. Named and explained only when there is something to
+         disclose — a suffix on a figure that contains no tax is noise. */
+      '<div class="odfld"><label style="font-weight:700;color:var(--ink-faint)" title="'+
+        sesc(((h.revenue_basis||{}).note)||'')+'">LIFETIME SPEND'+
+        (Number(h.tax_collected_aed||0) ? ' (INCL. VAT)' : '')+'</label>'+
+        '<div style="font-size:17px;font-weight:800">AED '+(h.total_revenue_aed||0)+'</div>'+
+        (Number(h.tax_collected_aed||0)
+          ? '<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">includes AED '+
+            sesc(String(h.tax_collected_aed))+' VAT collected for the tax authority</div>'
+          : '')+'</div>'+
       '<div class="odfld" style="margin-bottom:0"><label style="font-weight:700;color:var(--ink-faint)">AVERAGE ORDER VALUE</label><div style="font-size:17px;font-weight:800">AED '+(h.average_order_value_aed||0)+'</div></div>'+
       '</div></div>';
   }
@@ -14175,8 +14207,11 @@ buildNav();
     AN.period=period.key||AN.period;
     if(period.key==='custom'){ AN.from=period.from||AN.from; AN.to=period.to||AN.to; }
 
-    function stat(label,val,sub,cls){
-      return '<div class="an-stat'+(cls?' '+cls:'')+'"><span>'+sesc(label)+'</span><b>'+sesc(String(val))+'</b>'+
+    function stat(label,val,sub,cls,note){
+      /* LANE DU: `note` is help text on hover, taken from the endpoint's own
+         revenue_basis rather than written here, so a card cannot describe a
+         figure differently from the thing that sums it. */
+      return '<div class="an-stat'+(cls?' '+cls:'')+'"'+(note?' title="'+sesc(note)+'"':'')+'><span>'+sesc(label)+'</span><b>'+sesc(String(val))+'</b>'+
         (sub?'<i>'+sesc(sub)+'</i>':'')+'</div>';
     }
 
@@ -14256,10 +14291,21 @@ buildNav();
           'Orders placed '+sesc(inPeriod)+' in a status that counts as a sale'+
           (counted? ' — '+sesc(counted) : '')+'. Refunds are taken off.', period)+
         '<div class="an-stats">'+
-          stat('Net revenue', anMoney(a.revenue_total_aed), 'after refunds, '+period.range_label)+
+          /* LANE DU: "Net revenue" is net of REFUNDS, not net of tax, and the two
+             readings of "net" are easy to confuse on a money screen. The card
+             now carries the endpoint's own description of what it sums, and
+             the VAT collected on those orders sits beside it as its own figure
+             rather than staying invisible inside the headline. */
+          stat('Net revenue', anMoney(a.revenue_total_aed),
+               'after refunds, '+period.range_label, '', (a.revenue_basis||{}).note)+
           stat('Refunded', anMoney(a.refunds_total_aed),
                (a.refunds_total_aed? 'off '+anMoney(a.gross_revenue_aed)+' taken' : 'nothing given back'),
                a.refunds_total_aed? 'is-out' : '')+
+          stat('VAT collected', anMoney(a.tax_collected_aed||0),
+               (Number(a.tax_collected_aed||0)
+                 ? 'inside the revenue figure, owed onward'
+                 : 'no VAT charged on these orders'),
+               '', (a.revenue_basis||{}).note)+
           stat('Average order', anMoney(a.aov_aed),
                a.paid_orders? 'over '+a.paid_orders.toLocaleString()+' paid orders' : 'no paid orders in this period')+
           stat('Units sold', (a.units_sold||0).toLocaleString(), 'items across those orders')+
@@ -14314,8 +14360,16 @@ buildNav();
         anCardHead('Best sellers',
           'The eight products that brought in the most '+sesc(inPeriod)+', at what each line was actually '+
           'charged — not list price.', period)+
+        /* LANE DU: this column was also called "Revenue", and it is a different
+           quantity from the Revenue tile above it — the value of the LINES
+           sold, with no delivery, no fees and no refunds in it, and exclusive
+           VAT never reaching a line at all. Two columns called Revenue on one
+           screen, summing two different tables, is the defect being closed.
+           The label comes from the endpoint so it cannot drift from the sum. */
         (rows? '<div class="an-scroll"><table class="an-table"><thead><tr><th>Product</th>'+
-          '<th class="an-num">Units</th><th class="an-num">Revenue</th><th>Share</th></tr></thead>'+
+          '<th class="an-num">Units</th><th class="an-num"'+
+            (((a.top_products_basis||{}).note)? ' title="'+sesc(a.top_products_basis.note)+'"' : '')+'>'+
+            sesc((a.top_products_basis||{}).label || 'Product sales')+'</th><th>Share</th></tr></thead>'+
           '<tbody>'+rows+'</tbody></table></div>'
         : '<p class="an-empty">Nothing sold in this period.</p>')+
       '</div>'+
