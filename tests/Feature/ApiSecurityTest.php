@@ -511,3 +511,241 @@ it('keeps the mail settings out of the public settings allowlist', function () {
     expect($body)->not->toContain('owner@kbeautybliss.com');
     expect($body)->not->toContain('mail_last_test');
 });
+
+/*
+|------------------------------------------------------------------------------
+| PAYMENT GATEWAY CREDENTIALS ON THE PUBLIC SURFACE
+|------------------------------------------------------------------------------
+|
+| `payment_providers.config` holds live Stripe, Tabby and Tamara keys. The
+| existing cases in PaymentSecretsTest pin the two doors those keys are most
+| likely to walk out of — /api/settings and the admin payments screen — by
+| naming them.
+|
+| What follows is the same question asked the other way round: not "is this
+| endpoint safe" but "is there ANY public endpoint that is not". The list is
+| read out of the router rather than written here, so an endpoint added to
+| routes/api.php next month is covered by this test on the day it is added
+| rather than on the day somebody remembers to add it to a list.
+|
+| A secret key that leaks is not a broken page. It is somebody else charging
+| this shop's customers.
+*/
+
+/** Distinctive enough that a substring match cannot be a coincidence. */
+const GATEWAY_CANARIES = [
+    'sk_live_CANARY_stripe_secret_key_value',
+    'whsec_CANARY_stripe_signing_secret',
+    'sk_CANARY_tabby_secret_key_value',
+    'CANARY_tamara_api_token_value',
+    'CANARY_tamara_notification_token',
+    'whsec-CANARY-url-secret-0123456789',
+];
+
+function seedGatewaySecrets(): void
+{
+    \App\Models\PaymentProvider::query()->delete();
+
+    $configs = [
+        'stripe' => [
+            'publishable_key' => 'pk_live_safe_to_show',
+            'secret_key' => GATEWAY_CANARIES[0],
+            'webhook_signing_secret' => GATEWAY_CANARIES[1],
+            'webhook_secret' => GATEWAY_CANARIES[5],
+        ],
+        'tabby' => [
+            'public_key' => 'pk_test_safe',
+            'secret_key' => GATEWAY_CANARIES[2],
+            'merchant_code' => 'AE',
+            'webhook_secret' => GATEWAY_CANARIES[5],
+        ],
+        'tamara' => [
+            'api_token' => GATEWAY_CANARIES[3],
+            'notification_token' => GATEWAY_CANARIES[4],
+            'webhook_secret' => GATEWAY_CANARIES[5],
+        ],
+    ];
+
+    foreach ($configs as $id => $config) {
+        $row = \App\Models\PaymentProvider::create([
+            'id' => $id, 'enabled' => true, 'mode' => 'live', 'position' => 1,
+        ]);
+
+        $row->config = $config;
+        $row->save();
+    }
+
+    app(\App\Services\Payments\GatewayCredentials::class)->forget();
+}
+
+/**
+ * Every GET route the public can reach, read from the router.
+ *
+ * `auth:` in the middleware list is what makes a route non-public, so those
+ * are dropped. Routes with required parameters are dropped too -- there is
+ * nothing sensible to substitute for {slug} here, and the endpoints that
+ * matter for this question are the collection ones.
+ *
+ * @return array<int, string>
+ */
+function publicGetUris(): array
+{
+    $uris = [];
+
+    foreach (\Illuminate\Support\Facades\Route::getRoutes() as $route) {
+        if (! in_array('GET', $route->methods(), true)) {
+            continue;
+        }
+
+        $uri = $route->uri();
+
+        if (! str_starts_with($uri, 'api/') || str_contains($uri, '{')) {
+            continue;
+        }
+
+        foreach ($route->gatherMiddleware() as $middleware) {
+            if (is_string($middleware) && str_starts_with($middleware, 'auth:')) {
+                continue 2;
+            }
+        }
+
+        $uris[] = '/' . $uri;
+    }
+
+    return array_values(array_unique($uris));
+}
+
+it('leaks no gateway secret through any public api endpoint, whatever the list of them is', function () {
+    seedGatewaySecrets();
+
+    $uris = publicGetUris();
+
+    // A sweep that swept nothing would pass silently, which is the failure
+    // mode of every route-driven test.
+    expect($uris)->not->toBeEmpty()
+        ->and($uris)->toContain('/api/settings');
+
+    foreach ($uris as $uri) {
+        $raw = test()->get($uri)->getContent();
+
+        foreach (GATEWAY_CANARIES as $canary) {
+            expect($raw)->not->toContain($canary, $uri);
+        }
+    }
+});
+
+it('keeps every gateway config key out of the public settings allowlist', function () {
+    seedGatewaySecrets();
+
+    // Asked of the DOOR rather than of the constant behind it. The allowlist is
+    // private, and a test that reached into it would still pass if the endpoint
+    // stopped consulting it.
+    $served = array_keys(test()->getJson('/api/settings')->assertOk()->json());
+
+    expect($served)->not->toBeEmpty();
+
+    // Not "these particular names are absent" but "no key any gateway declares
+    // is present", so a gateway adding a field cannot quietly widen this.
+    foreach (app(\App\Services\Payments\GatewayRegistry::class)->all() as $gateway) {
+        foreach (array_keys($gateway->configSchema()) as $key) {
+            expect($served)->not->toContain($key, $gateway->id() . '.' . $key);
+        }
+    }
+});
+
+it('writes no gateway credential into the settings table, where nothing encrypts it', function () {
+    seedGatewaySecrets();
+
+    // `settings` is plain text in the database and in every backup of it. A
+    // secret that is not there cannot leak from there however /api/settings is
+    // rewritten later.
+    $all = Setting::query()->pluck('value')->implode(' ');
+
+    foreach (GATEWAY_CANARIES as $canary) {
+        expect($all)->not->toContain($canary);
+    }
+});
+
+it('never writes a gateway secret into the log, even when the provider fails', function () {
+    seedGatewaySecrets();
+
+    $order = \App\Models\Order::create([
+        'order_number' => 'LOG-' . uniqid(),
+        'email' => 'buyer@example.com',
+        'status' => 'pending',
+        'currency' => 'AED',
+        'subtotal' => 30000,
+        'total' => 30000,
+    ]);
+
+    $lines = [];
+
+    \Illuminate\Support\Facades\Log::listen(function ($message) use (&$lines) {
+        $lines[] = $message->message . ' ' . json_encode($message->context);
+    });
+
+    // Two shapes of failure, because they are logged by different branches:
+    // a transport exception, and a refusal with a body.
+    \Illuminate\Support\Facades\Http::fake(function () {
+        throw new \Illuminate\Http\Client\ConnectionException('cURL error 7');
+    });
+
+    app(\App\Services\Payments\GatewayRegistry::class)->find('stripe')->start($order);
+
+    \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response(
+        ['error' => ['code' => 'api_key_invalid', 'message' => 'Invalid API Key: ' . GATEWAY_CANARIES[0]]],
+        401,
+    )]);
+
+    app(\App\Services\Payments\GatewayRegistry::class)->find('tabby')->start($order);
+
+    expect($lines)->not->toBeEmpty();
+
+    $logged = implode("\n", $lines);
+
+    foreach (GATEWAY_CANARIES as $canary) {
+        expect($logged)->not->toContain($canary);
+    }
+});
+
+it('never puts a gateway secret in anything it hands back to a caller', function () {
+    seedGatewaySecrets();
+
+    $order = \App\Models\Order::create([
+        'order_number' => 'MSG-' . uniqid(),
+        'email' => 'buyer@example.com',
+        'status' => 'processing',
+        'currency' => 'AED',
+        'subtotal' => 30000,
+        'total' => 30000,
+        'paid_at' => now(),
+        'payment_method' => 'stripe',
+        'transaction_id' => 'pi_x',
+    ]);
+
+    // The provider echoes the key back inside its own error, which is a thing
+    // Stripe genuinely does on a bad key. Nothing we return may carry it: not
+    // the sentence shown to the shopper, not the settlement message shown to
+    // the admin, not the audit payload that lands in `payment_events`.
+    \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response(
+        ['error' => ['code' => 'api_key_invalid', 'message' => 'Invalid API Key: ' . GATEWAY_CANARIES[0]]],
+        401,
+    )]);
+
+    $start = app(\App\Services\Payments\GatewayRegistry::class)->find('stripe')->start($order);
+    $capture = app(\App\Services\Payments\PaymentCapturer::class)->capture($order->fresh(), 'Admin');
+
+    $surface = json_encode([
+        $start->message,
+        $start->redirectUrl,
+        $capture->message,
+        $capture->code,
+        $capture->summary,
+        \App\Models\PaymentEvent::query()->get()->toArray(),
+        $order->fresh()->notes->pluck('content')->all(),
+    ]);
+
+    foreach (GATEWAY_CANARIES as $canary) {
+        expect($surface)->not->toContain($canary);
+    }
+});

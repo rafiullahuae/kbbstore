@@ -46,6 +46,18 @@ use Illuminate\Support\Facades\DB;
  */
 class PaymentCapturer
 {
+    /**
+     * Statuses on which there is no longer an order to capture for.
+     *
+     * Deliberately the same list as PaymentConfirmer::VOID rather than a
+     * reference to it: these are two different questions that happen to have
+     * the same answer today ("may this order be marked paid" and "may this
+     * order's money be taken"), and tying them together would mean a future
+     * change to one silently changing the other. The reasoning is written out
+     * where the check is made, below.
+     */
+    private const VOID = ['cancelled', 'refunded', 'failed'];
+
     public function __construct(
         private GatewayRegistry $registry,
         private PaymentLedger $ledger,
@@ -71,6 +83,37 @@ class PaymentCapturer
 
         if ($order->trashed()) {
             return SettlementResult::failed('order_trashed', [], 'This order is in the trash.');
+        }
+
+        /*
+         * THE SALE IS OFF, SO THE MONEY IS NOT THE SHOP'S TO TAKE.
+         *
+         * The same three statuses PaymentConfirmer refuses a confirmation on,
+         * and for the same reason: all three have handed the coupon use back,
+         * and `cancelled` and `failed` have put the units back on the shelf,
+         * where they have since been sold to somebody else.
+         *
+         * Without this the Capture button worked perfectly on a cancelled
+         * order. On Tabby or Tamara that is the customer being charged for an
+         * order the shop cancelled and restocked — the authorisation is still
+         * live and capturable for weeks after the cancellation, which is
+         * exactly the window in which somebody works through the order list.
+         * On cash on delivery it is quieter and no better: capture writes
+         * `captured_total`, and `captured_total` is the ceiling
+         * PaymentRefunder::capturedFils() measures a refund against, so a
+         * cancelled order that never saw a fil became refundable for its full
+         * value.
+         *
+         * Not the same rule as `paid_at`, which is checked below: that one
+         * asks whether the money was ever authorised, this one asks whether
+         * there is still an order to take it for.
+         */
+        if (in_array((string) $order->status, self::VOID, true)) {
+            return SettlementResult::failed(
+                'order_not_live',
+                ['provider' => $providerId, 'status' => (string) $order->status],
+                sprintf('This order is %s, so there is nothing to capture.', $order->status),
+            );
         }
 
         $amountFils = (int) $order->total;
@@ -190,8 +233,12 @@ class PaymentCapturer
             'captured_total_aed' => Money::toAed((int) ($order->captured_total ?? 0)),
             'capture_ref' => $order->capture_ref,
             // COD is capturable the moment it is placed; everything else needs
-            // the authorisation that `paid_at` records.
+            // the authorisation that `paid_at` records. A cancelled, failed or
+            // refunded order is capturable on neither basis — capture() refuses
+            // it, and a button that is offered and then refused reads as a bug
+            // in the screen rather than as the rule it is.
             'capturable' => $supported && ! $captured && (int) $order->total > 0
+                && ! in_array((string) $order->status, self::VOID, true)
                 && ($windowDays === null || $authorisedAt !== null),
             'window' => $supported ? $gateway->captureWindow() : null,
             'window_days' => $windowDays,
