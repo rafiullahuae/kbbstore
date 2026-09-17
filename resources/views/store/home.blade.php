@@ -4,8 +4,43 @@
 @section('title', 'K-Beauty Bliss · Authentic Korean skincare in the UAE')
 
 @push('styles')
-    @vite('resources/css/kbb/kbb-grid-skins.css')
-@endpush
+{{-- SECTION ORDER — Lane FR.
+
+     Appearance → Homepage has had ↑/↓ on every row since it shipped;
+     HomepageSections::save() wrote an `order`, ::all() sorted by it, and the
+     five layout presets set it. This file rendered in template order and read
+     `order` nowhere, so the arrows moved a row on a screen and nothing on the
+     shop. docs/FO-HOMEPAGE-INVENTORY.md §3 has the reproduction.
+
+     THE WHOLE FIX ON THIS SIDE IS THE EXPRESSION ON THE NEXT LINE. Every one of
+     the seventeen sections already calls $sections->classFor(), which now adds
+     the ordering class as well as the visibility and divider ones, so not one
+     section had to be touched — the alternative costed in that document was a
+     635-line rewrite of this file into partials, in a week when four other
+     lanes were editing it.
+
+     IT SHARES A LINE WITH THE DIRECTIVE BELOW, for the reason this file already
+     records twice further down: orderStyle() returns '' while the order is the
+     template's own, and an expression on a line of its own would leave that
+     line's indent and newline in the output. StorefrontEnglishUnchangedTest
+     compares this page against itself byte for byte and cannot tell whitespace
+     that moved from a sentence that changed. Written this way a shop that has
+     never opened the screen emits the identical bytes, which is the whole
+     promise of the feature being gated on orderIsDefault().
+
+     AND @endpush SHARES THE LINE TOO, which looks wrong and is not. Blade
+     compiles a raw echo to `<?php echo ...; ?>` and DOUBLES the whitespace that
+     followed it, because PHP swallows one newline after a closing tag; with the
+     directive on the next line one of the two survives into <head>. That is a
+     stray newline in the document for every shop on earth, and
+     StorefrontEnglishUnchangedTest reported it, correctly, as a changed page —
+     at byte 2276, a diff with no words in it, which is exactly the kind that
+     file's header warns costs the next reader an hour to prove is nothing. With
+     nothing after the echo there is no whitespace to double.
+
+     Directive names inside this comment are safe, incidentally, and were
+     checked rather than assumed: BladeCompiler strips comments before it
+     tokenises, so the statements pass never sees them. --}}    @vite('resources/css/kbb/kbb-grid-skins.css'){!! $sections->orderStyle() !!}@endpush
 
 @section('content')
 <div class="kbb-home">

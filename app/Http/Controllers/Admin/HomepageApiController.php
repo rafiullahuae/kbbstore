@@ -28,6 +28,13 @@ class HomepageApiController extends Controller
     {
         return response()->json([
             'sections' => array_values($this->sections->all()),
+            // The two rows the arrows cannot move, and the sentence the screen
+            // puts on them instead. Named from the service rather than repeated
+            // in the console's javascript, so the screen cannot come to say
+            // something the template does not do — each row already carries
+            // `movable` and `note`; this is here for a screen that wants to
+            // explain the group once.
+            'nested_note' => HomepageSections::NESTED_NOTE,
             'skins' => collect(GridSkins::ALL)->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(),
             'layouts' => $this->layouts->summaries(),
             'layout' => $this->layouts->current(),
