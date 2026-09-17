@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Menu;
+use App\Support\BrandUrls;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -28,6 +29,13 @@ class NavigationService
      * to be only one thing.
      */
     private const SLOT_COLUMN = ['primary' => 'show_desktop', 'mobile' => 'show_mobile', 'footer' => 'show_footer'];
+
+    /*
+     * Injected for filterVisible()'s module check. Resolved from the container
+     * everywhere this service is used (StoreComposer takes it as a dependency
+     * and nothing constructs it by hand), so autowiring covers every call site.
+     */
+    public function __construct(private SettingsService $settings) {}
 
     public function menu(string $location): array
     {
@@ -101,6 +109,36 @@ class NavigationService
      */
     public function filterVisible(array $items, bool $loggedIn): array
     {
+        /*
+         * A SWITCHED-OFF MODULE MUST NOT LEAVE A LINK BEHIND — Lane EH.
+         *
+         * `brands` is a real switch now: with it off, BrandController aborts 404
+         * for the directory, every brand page and both legacy redirects. The
+         * menu is authored separately and knew nothing about that, so the
+         * primary nav's "Brands" item went on pointing at
+         * /korean-skincare-brands/ from the header of every page in the shop —
+         * a dead link the shopper finds by clicking, which is a louder trace
+         * than the section it was meant to replace.
+         *
+         * Resolved HERE, and here specifically, for the reason tree()'s own
+         * comment gives about `visibility`: this method is the per-request
+         * filter that runs AFTER the five-minute shared cache is read. Doing it
+         * inside the cached closure would bake whichever visitor's module state
+         * triggered the cache miss into every other visitor's menu — and unlike
+         * a login state, the owner can flip this one in the admin and would
+         * watch the header ignore him for five minutes.
+         *
+         * Resolved once per call rather than per item: moduleEnabled() is cheap
+         * (one cached map) but this recurses over every item at every level.
+         */
+        $hideBrands = ! $this->settings->moduleEnabled('brands', true);
+
+        return $this->filterItems($items, $loggedIn, $hideBrands);
+    }
+
+    /** @param array<int, array<string, mixed>> $items */
+    private function filterItems(array $items, bool $loggedIn, bool $hideBrands): array
+    {
         $out = [];
 
         foreach ($items as $item) {
@@ -113,7 +151,21 @@ class NavigationService
                 continue;
             }
 
-            $item['children'] = $this->filterVisible($item['children'] ?? [], $loggedIn);
+            /*
+             * Dropped whole, children included. The observed shape is a top-level
+             * "Brands" item that itself points at the directory, so removing it
+             * takes its per-brand leaves with it; a per-brand leaf under some
+             * other parent is matched on its own URL by the same rule.
+             *
+             * Only the module's OWN addresses are matched — /shop/?filter_brands=
+             * is a shop listing and keeps working with the module off, because
+             * the module gates brand PAGES, not the catalogue's brand facet.
+             */
+            if ($hideBrands && BrandUrls::matches($item['url'] ?? null)) {
+                continue;
+            }
+
+            $item['children'] = $this->filterItems($item['children'] ?? [], $loggedIn, $hideBrands);
             $out[] = $item;
         }
 

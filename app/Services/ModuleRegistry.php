@@ -117,7 +117,28 @@ class ModuleRegistry
         'cod_fee' => ['checkout', 'Cash-on-delivery fee', 'Adds the COD surcharge when Cash on delivery is chosen.', true, 'Store → Ecommerce → Checkout', 'ecommerce', 'checkout', 'aside', 'A surcharge row in the order summary when Cash on delivery is chosen.', 'elsewhere'],
         'delivery_line' => ['checkout', 'Delivery-info line', 'Country-aware “fast delivery” message under the summary.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'aside', 'The delivery message under the order summary.', 'live'],
         'coupon_hint' => ['checkout', 'Checkout coupon hint', 'Editable, clickable promo-code hint on the discount box.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'mid', 'A clickable promo-code hint on the discount box.', 'live'],
-        'legal_notice' => ['checkout', 'Checkout legal notice', 'Editable privacy / terms notice with page links.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'bottom', 'The privacy and terms notice above the place-order button.', 'todo'],
+        /*
+         * PORTED IN LANE EH, and previously `todo`.
+         *
+         * §2 of the master plan filed this under "blocked on a missing source":
+         * the plugin's own entry is a settings LINK pointing at kbb-theme, which
+         * was never supplied, so there is no implementation to copy. That is
+         * still true and this is still not a copy — it is the module's
+         * description built against what this app already has. The two pages it
+         * links to, /terms-and-conditions/ and /privacy-policy/, are the two the
+         * register form has always linked to.
+         *
+         * On by default, as the plugin ships it, and with no wording of its own:
+         * with nothing saved this renders no element at all, so applying the
+         * package changes no live checkout. App\Support\CheckoutLegalNotice
+         * carries the full reasoning for that split.
+         *
+         * The route is 'ecommerce:checkout' and not 'ecommerce': the Checkout
+         * tab is one of five on that screen, and `product_sorting` already
+         * established that a row may name its sub-tab so the owner does not have
+         * to guess which one the module meant.
+         */
+        'legal_notice' => ['checkout', 'Checkout legal notice', 'An editable notice above the Place order button, with links to your terms and privacy pages. On by default, and shows nothing until you write it.', true, 'Store → Ecommerce → Checkout', 'ecommerce:checkout', 'checkout', 'bottom', 'The privacy and terms notice above the place-order button.', 'live'],
         'reassurance' => ['checkout', 'Reassurance block', 'Rating + authenticity block above the order summary.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'aside', 'The rating and authenticity block above the order summary.', 'live'],
         'checkout_thumbs' => ['checkout', 'Mobile order thumbnails', 'Circular product thumbnails on the mobile place-order box.', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'bottom', 'Round product thumbnails on the mobile place-order box.', 'live'],
         'address_autocomplete' => ['checkout', 'Address autocomplete', 'Google Places suggestions on the address field (needs a key).', true, 'Store → Ecommerce', 'ecommerce', 'checkout', 'mid', 'Suggestions as the shopper types the address field.', 'todo'],
@@ -240,7 +261,38 @@ class ModuleRegistry
         // admin renders as "Its own screen — screen not built yet": the one
         // module whose settings the owner was told did not exist while they did.
         'product_sorting' => ['catalogue', 'Product Sorting', 'Bakes your curated product order (rwpp_sortorder) into WooCommerce’s native order so “Default sorting” shows it. Off by default.', false, 'Store → Catalog → Reorder', 'catalog:reorder', 'grid', 'all', 'Bakes your curated order into Default sorting on shop and category pages.', 'live'],
-        'brands' => ['catalogue', 'Brands', 'Brand taxonomy with logos, brand pages and a [kbb_brands] directory. Works with WooCommerce’s native brand taxonomy. Off by default.', false, 'Its own screen', '', 'grid', 'all', 'Brand pages, logos and the brand directory.', 'todo'],
+        /*
+         * SAID `todo` ABOUT A FEATURE THAT HAS BEEN LIVE SINCE 2.60.109 — Lane EH.
+         *
+         * This row was wrong in three separate ways at once, which is why it is
+         * worth the space:
+         *
+         *   - STATUS. `todo` renders on the Modules screen as "Not ported yet",
+         *     printed against a brand directory at /korean-skincare-brands/,
+         *     per-brand landing pages, 301s from /brands/ and /brand/{slug}/,
+         *     an admin editor, logos and a display-mode setting — all real, all
+         *     serving. §2 of the master plan still records this as "blocked on
+         *     the outstanding /brands/ URL decision"; the owner settled that
+         *     decision in 2.60.109 and the pages were built on it.
+         *
+         *   - SETTINGS SCREEN. 'Its own screen' with no console route, which the
+         *     admin renders as "Its own screen — screen not built yet". The
+         *     screen is Catalog → Brands and has existed as long as the pages
+         *     have. This is the identical fault the `product_sorting` row
+         *     carried until it was corrected to 'catalog:reorder'.
+         *
+         *   - DEFAULT. `false`. Now true, and NOT because the plugin says so —
+         *     the plugin ships it off. It is the seo_engine argument: the
+         *     default has to be measured against what this shop does WITHOUT
+         *     the switch, and without it those pages serve. Adding the gate
+         *     below while leaving the default off would 404 three live URL
+         *     families on apply.
+         *
+         * `live` is now true of it: BrandController's constructor reads the key
+         * for every action, and store/home.blade.php reads it for the brand
+         * strip, so switching it off leaves nothing of brands on the storefront.
+         */
+        'brands' => ['catalogue', 'Brands', 'The brand directory, each brand’s own page with its logo and description, and the brand strip on the home page. Turn it off and those pages 404 rather than sitting there empty.', true, 'Catalog → Brands', 'catalog:brands', 'grid', 'all', 'Brand pages, logos and the brand directory.', 'live'],
         'wishlist' => ['catalogue', 'Wishlist', 'Lets shoppers save products (works for guests too, via cookie). Heart button on cards/product pages plus a [kbb_wishlist] page. Off by default.', false, 'Its own screen', '', 'grid', 'card', 'The heart on every product card, and the wishlist page.', 'live'],
         'recently_viewed' => ['catalogue', 'Recently Viewed', 'Shows each shopper the products they just looked at (cookie-based, guests included). Auto-placed on product/cart pages plus a [kbb_recently_viewed] shortcode. Off by default.', false, 'Appearance → Cart panel', 'cartpanel', 'drawer', 'mid', 'The Browsed tab in the cart panel, and a rail on the product page.', 'elsewhere'],
         /*

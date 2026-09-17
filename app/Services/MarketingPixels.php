@@ -32,10 +32,31 @@ use App\Models\Product;
  */
 class MarketingPixels
 {
+    /**
+     * MIGRATED ONTO App\Services\ModuleSchema (Lane EH).
+     *
+     * The second of the two modules moved over, chosen because it is the
+     * awkward one: none of these three values lives where a module setting
+     * normally lives. Each is held by App\Services\Analytics, which is the
+     * single decider of which ID is live for a network — the SEO screen's `ga`
+     * and `meta_pixel` boxes are aliases of the same two values, not rival
+     * ones, and that is the whole reason this class stopped reading
+     * module_settings for them.
+     *
+     * So `store` is declared `none`... except there is no such store, and
+     * inventing one to describe "this module keeps its values somewhere else"
+     * would be a schema that describes the exception rather than the rule.
+     * Instead these stay `module` in shape and this class keeps its own
+     * all()/save(), which delegate to Analytics; what it takes from
+     * ModuleSchema is the RENDER and the CAST — the two jobs its controller was
+     * duplicating — and the guard checks the control/value pairing either way.
+     * A module whose values genuinely live in `module_settings` gets read() and
+     * write() as well, as PayShipRules now does.
+     */
     public const SCHEMA = [
-        'meta_id'   => ['text', 'Meta Pixel ID', '', 'Fires PageView, ViewContent, InitiateCheckout and Purchase.'],
-        'ga4_id'    => ['text', 'Google (GA4) Measurement ID', '', 'Fires page_view, view_item, begin_checkout and purchase.'],
-        'tiktok_id' => ['text', 'TikTok Pixel ID', '', 'Fires page browse and CompletePayment.'],
+        'meta_id'   => ['type' => 'text', 'label' => 'Meta Pixel ID', 'default' => '', 'help' => 'Fires PageView, ViewContent, InitiateCheckout and Purchase.'],
+        'ga4_id'    => ['type' => 'text', 'label' => 'Google (GA4) Measurement ID', 'default' => '', 'help' => 'Fires page_view, view_item, begin_checkout and purchase.'],
+        'tiktok_id' => ['type' => 'text', 'label' => 'TikTok Pixel ID', 'default' => '', 'help' => 'Fires page browse and CompletePayment.'],
     ];
 
     public const TABS = [
@@ -64,14 +85,34 @@ class MarketingPixels
         return $out;
     }
 
-    /** @param array<string, mixed> $values */
-    public function save(array $values): void
+    /**
+     * @param  array<string, mixed>  $values
+     * @return array<string, string> the fields refused, label by key
+     */
+    public function save(array $values): array
     {
-        foreach (self::SCHEMA as $key => $def) {
-            if (array_key_exists($key, $values)) {
-                $this->analytics->setId(self::NETWORK[$key], (string) $values[$key]);
+        $rejected = [];
+
+        foreach (ModuleSchema::normalise(self::SCHEMA) as $key => $field) {
+            if (! array_key_exists($key, $values)) {
+                continue;
             }
+
+            // Cast through the schema rather than `(string)`. An array posted
+            // into one of these boxes was `(string) []` — "Array", with a PHP
+            // notice — and Analytics stored it as the pixel ID.
+            $cast = ModuleSchema::cast($field, $values[$key]);
+
+            if ($cast === null) {
+                $rejected[$key] = $field['label'];
+
+                continue;
+            }
+
+            $this->analytics->setId(self::NETWORK[$key], $cast);
         }
+
+        return $rejected;
     }
 
     private function active(): bool

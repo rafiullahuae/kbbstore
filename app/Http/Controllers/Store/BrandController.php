@@ -90,7 +90,28 @@ class BrandController extends Controller
         };
     }
 
-    public function __construct(private SettingsService $settings) {}
+    /**
+     * The `brands` module's gate — Lane EH.
+     *
+     * Applied in the constructor so every action is covered, including the two
+     * legacy 301s: a redirect that still answers when the module is off would
+     * leave /brand/{slug}/ pointing at a page that 404s, which is worse than
+     * either end being consistent. This is the shape AddressController already
+     * uses, and for the same stated reason.
+     *
+     * ON by default in ModuleRegistry, unlike the plugin, and the accompanying
+     * migration turns it on for stores that already have a row. Both are
+     * necessary and the reasoning is seo_engine's, which this follows exactly:
+     * the brand directory, the per-brand landing pages and the two redirects
+     * have all been serving real pages, ungated, since 2.60.109. Shipping the
+     * plugin's `false` with a real gate behind it would 404 three live,
+     * indexed URL families the moment the package applied, with no visible
+     * symptom anywhere in the admin.
+     */
+    public function __construct(private SettingsService $settings)
+    {
+        abort_unless($this->settings->moduleEnabled('brands', true), 404);
+    }
 
     /** The configured mode, with anything unrecognised falling back to `auto`. */
     private function displayMode(): string

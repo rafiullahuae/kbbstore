@@ -138,6 +138,7 @@
 <div class="sumrow vat js-vat-row vat-note"@if (! ($totals['vat'] && ! $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
 
 @if ($withActions ?? true)
+    @include('partials.checkout.legal-notice')
     <button type="button" class="place" data-place="1">Place order</button>
     {{-- "100% authentic" WAS A LITERAL HERE — Lane DR.
 

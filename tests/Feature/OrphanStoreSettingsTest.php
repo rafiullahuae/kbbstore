@@ -35,6 +35,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Models\AdminUser;
+use App\Services\ModuleSchema;
 use App\Services\PayShipRules;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Hash;
@@ -308,7 +309,14 @@ it('explains the switch in words rather than pointing at a screen that is not th
      * sentence goes looking for a second switch to cross-check against and
      * finds nothing, which is worse than no help at all.
      */
-    $help = PayShipRules::SCHEMA['hide_paid_free'][3];
+    /*
+     * Read through ModuleSchema rather than by position. PayShipRules moved onto
+     * the shared schema in Lane EH, so `[3]` — which was the help slot in the
+     * positional `[type, label, default, help]` form — is no longer a key that
+     * exists. field() widens either form to the same named shape, which is what
+     * a test asking "what does the help say" wanted in the first place.
+     */
+    $help = ModuleSchema::field('hide_paid_free', PayShipRules::SCHEMA['hide_paid_free'])['help'];
 
     expect(str_contains($help, 'Ecommerce'))
         ->toBeFalse('the help still sends the owner to a screen that does not carry this setting');
