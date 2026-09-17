@@ -485,3 +485,71 @@ it('does not double the deployment base path into every entry URL', function () 
     expect(substr_count($url, '/kbb-upgrade/'))
         ->toBe(1, 'The deployment prefix was published twice in one entry URL.');
 });
+
+/* ───────────────────────── the admin's own preview ─────────────────────── */
+
+it('shows a listing as a CollectionPage in the Schema Inspector too', function () {
+    /*
+     * Admin\SchemaInspectorApiController's header promises that "what's shown
+     * here can never drift from what actually ships", and it went on reporting
+     * `website` for a category after the archive started publishing
+     * CollectionPage. An inspector that disagrees with the page is worse than
+     * no inspector: it is the screen an owner checks BEFORE deciding the engine
+     * is working.
+     *
+     * The one thing it deliberately does not reproduce is the product list --
+     * that would be a second copy of ShopController's query -- so it says so in
+     * its warnings rather than showing an empty list and letting the owner
+     * conclude the page has none.
+     */
+    csProduct('cs-a-toner', 'A Toner', 5000);
+    csCategory();
+
+    $admin = \App\Models\AdminUser::create([
+        'name' => 'CS Owner',
+        'email' => 'cs-owner-' . uniqid() . '@example.test',
+        'password' => 'secret-secret',
+        'role' => 'owner',
+    ]);
+
+    $body = test()->actingAs($admin, 'admin')
+        ->getJson('/admin-api/schema-inspect?type=category&slug=cs-serums')
+        ->assertOk()
+        ->json();
+
+    $types = array_column($body['nodes'], '@type');
+
+    expect($types)->toContain('CollectionPage');
+
+    expect(implode(' ', $body['warnings']))->toContain('ItemList');
+});
+
+it('publishes exactly the image the tile draws', function () {
+    /*
+     * `products.image` is already a usable address — the card renders it as
+     * src="{{ $product->image }}" with nothing applied — so the only correct
+     * thing to publish is that string with the site root in front of it.
+     *
+     * The mutation this exists for is running it through Url::media(), which
+     * prefixes the WordPress uploads root and turns a complete path into a 404
+     * in the one field Google uses to draw the picture. Asserted against the
+     * tile's own src rather than against a literal, so the schema and the page
+     * cannot be right about different pictures.
+     */
+    /*
+     * A path OUTSIDE /wp-content/uploads, and that is the whole point of the
+     * fixture: Url::media() passes a path that already carries the uploads root
+     * through untouched, so a case built on one would pass with the mutation
+     * applied and prove nothing. The Media Library writes outside that root,
+     * and this is the shape that breaks.
+     */
+    csProduct('cs-shot', 'Shot', 5000, ['image' => '/storage/media/2026/01/shot.jpg']);
+
+    $html = test()->get('/product-category/cs-serums/')->assertOk()->getContent();
+
+    expect(preg_match('#<img class="ph-img" src="([^"]+)"#', $html, $m))->toBe(1);
+
+    $item = csCollection('/product-category/cs-serums/')['mainEntity']['itemListElement'][0]['item'];
+
+    expect($item['image'])->toBe(CS_BASE . $m[1]);
+});

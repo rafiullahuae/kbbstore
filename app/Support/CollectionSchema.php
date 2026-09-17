@@ -80,10 +80,27 @@ final class CollectionSchema
             $items[] = array_filter([
                 'name' => (string) $product->name,
                 'url' => $base . $product->url(),
-                // The featured shot only. A tile draws one picture, and the
-                // gallery belongs to the product page that draws it.
+                /*
+                 * The featured shot only, AND EXACTLY THE STRING THE TILE PUTS
+                 * IN ITS src.
+                 *
+                 * `products.image` is already a usable address:
+                 * components/product-card.blade.php renders it as
+                 * `src="{{ $product->image }}"` with nothing applied to it, and
+                 * Store\ProductController hands the same column to the Product
+                 * node the same way. An earlier draft here ran it through
+                 * Url::media(), which prefixes the WordPress uploads root -- so
+                 * a path that was already complete would have been published as
+                 * /wp-content/uploads/<that path>, a 404 in the one field
+                 * Google uses to draw the picture. Seo::absolute() puts the
+                 * site root in front of whatever this is, which is the same
+                 * treatment og:image and the Product node already get.
+                 *
+                 * The gallery belongs to the product page that draws it; a tile
+                 * draws one picture and publishes one.
+                 */
                 'image' => is_string($product->image) && $product->image !== ''
-                    ? Url::media($product->image)
+                    ? $product->image
                     : null,
                 'sku' => is_string($product->sku ?? null) && $product->sku !== '' ? $product->sku : null,
                 // `brand` is eager-loaded by every caller. `?->` rather than a
