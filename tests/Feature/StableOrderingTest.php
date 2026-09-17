@@ -273,12 +273,20 @@ it('builds the two home rails with one query rather than two', function () {
         // catalogue, ordered by sales, eight at a time. The bundles rail asks
         // the same question of one category, so it is told apart by the
         // `whereHas` subquery it carries and this one does not.
-        if (preg_match('/order by "total_sales" desc, "id" desc limit 8$/i', $q->sql)
+        /*
+         * ENGINE-AGNOSTIC QUOTING. The suite runs on SQLite and the shop runs
+         * MySQL, and the two quote identifiers differently -- "id" against
+         * `id`. Written for one engine, this test passed on SQLite and, on
+         * MySQL, matched nothing at all: the rail counter stayed 0 and the
+         * offset sweep was blind. A test that cannot see the query it is about
+         * is worse than no test, because it is reported as coverage.
+         */
+        if (preg_match('/order by [`"]total_sales[`"] desc, [`"]id[`"] desc limit 8$/i', $q->sql)
             && ! str_contains($q->sql, 'exists (')) {
             $railQueries++;
         }
 
-        if (str_contains($q->sql, 'from "products"') && preg_match('/\boffset\b/i', $q->sql)) {
+        if (preg_match('/from [`"]products[`"]/i', $q->sql) && preg_match('/\boffset\b/i', $q->sql)) {
             $offsets[] = $q->sql;
         }
     });
@@ -362,7 +370,11 @@ it('leaves no storefront page slicing a list it has not finished ordering', func
         $keys = preg_split('/,(?![^(]*\))/', $match[1]);
         $last = trim((string) end($keys));
 
-        if (preg_match('/"id"\s*(asc|desc)?$/i', $last) === 1) {
+        // Both quoting styles, for the reason recorded on the rail counter
+        // above: on MySQL this pattern matched nothing, so every correctly
+        // ordered query in the shop was reported as unsettled and the test
+        // failed on the engine production actually runs.
+        if (preg_match('/[`"]id[`"]\s*(asc|desc)?$/i', $last) === 1) {
             continue;
         }
 
