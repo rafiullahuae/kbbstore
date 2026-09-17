@@ -1400,6 +1400,29 @@ class AdminController extends Controller
             $map[$legacyKey] = $analytics->id($network);
         }
 
+        /*
+         * THE CLAIMS BOXES HAVE TO OPEN SHOWING WHAT THE PAGE SHOWS.
+         *
+         * Setting::map() is the settings TABLE, and a claim whose row has never
+         * been written is simply not in it — while the storefront, reading
+         * through App\Support\TrustClaims, is rendering that claim's shipped
+         * default perfectly happily. Sent raw, the Claims tab would therefore
+         * open with seven empty boxes on a shop whose pages all say "100%
+         * original", and an owner who pressed Save without typing anything
+         * would post seven blanks and silently strip every claim off his own
+         * site. An empty box MEANS "remove this claim" on that screen, so an
+         * empty box has to mean the owner emptied it.
+         *
+         * So the resolved value is sent, exactly as the legacy analytics keys
+         * above are: row present, its value, blank included; row absent, the
+         * default the page is already printing. `?? ''` and not the default
+         * again, because text() answers null for a claim the owner really has
+         * cleared, and that one must arrive as an empty box.
+         */
+        foreach (array_keys(\App\Support\TrustClaims::CLAIMS) as $claimKey) {
+            $map[$claimKey] = \App\Support\TrustClaims::get($claimKey) ?? '';
+        }
+
         return response()->json(['settings' => $map]);
     }
 

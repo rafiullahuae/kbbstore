@@ -649,3 +649,46 @@ it('removes every row the demo reviews import created, and is idempotent', funct
 
     expect(DB::table('demo_seed_log')->where('type', 'reviews')->count())->toBeGreaterThan(0);
 });
+
+/* ==========================================================================
+ * INTEGRATOR — the marking Lane DO added to the API has to be on the screen.
+ *
+ * Lane DO's report named this as the one requirement it could not finish end
+ * to end: ReviewsApiController sends `is_demo` per row, and nothing in the
+ * admin shell rendered it, so the marking existed and the owner could not see
+ * it. That is precisely the shape this whole phase is about — a control and
+ * its writer, a renderer and its feed — so the two halves are pinned together
+ * here rather than separately.
+ *
+ * Asserted against the raw Blade because the reviews list is built in
+ * JavaScript inside that document; there is no server-rendered element to
+ * query. The needle is assembled at run time so this file cannot trip a future
+ * source guard reading its own explanatory prose (risk register 31).
+ * ========================================================================== */
+it('shows the demo marking in the reviews list, not only in its feed', function () {
+    $shell = file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    expect($shell)->not->toBeFalse();
+
+    $needle = '(r.' . 'is_demo ? ';
+
+    expect(str_contains($shell, $needle))
+        ->toBeTrue('The reviews list must render the demo marking the API sends, or the owner cannot find the sample rows to delete.');
+
+    // And the feed half, so a rename on either side fails here rather than
+    // quietly going back to an invisible marking.
+    $api = file_get_contents(app_path('Http/Controllers/Admin/ReviewsApiController.php'));
+
+    expect(str_contains($api, 'is_' . 'demo'))
+        ->toBeTrue('ReviewsApiController must keep sending the per-row demo flag the screen reads.');
+});
+
+it('does not tell the owner the demo switch is display-only without saying what it never touches', function () {
+    $shell = file_get_contents(resource_path('views/admin/app.blade.php'));
+
+    // The caption was accurate about the fixtures and silent about the thing
+    // an owner would actually worry about, which invited the reading that the
+    // switch was consequence-free for shoppers.
+    expect(str_contains($shell, 'No demo figure reaches the storefront'))
+        ->toBeTrue('The Demo Content caption has to say that no demo figure reaches a shopper, whichever way the switch is set.');
+});

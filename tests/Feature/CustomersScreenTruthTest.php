@@ -518,8 +518,25 @@ it('badges the demo customer row on the customers table', function () {
     expect(str_contains($blade, 'c.is_demo'))
         ->toBeTrue('the customers table does not read is_demo, so the flag is never shown');
 
-    // Same wording and same marker as the Orders table, so one screen cannot
-    // start calling it something else.
+    /*
+     * Same wording and same marker on every list that carries demo rows, so one
+     * screen cannot start calling it something else.
+     *
+     * This was 2 — Orders and Customers — until Lane DO gave the reviews list
+     * the same flag, for the same reason: demo rows stay visible in the admin
+     * and are marked, so the owner can find and delete them, while the
+     * storefront excludes them from every figure. The count is the point of the
+     * assertion (three lists, one badge), so it moves with the third list
+     * rather than being relaxed into "at least two", which would stop catching
+     * a screen that drifted.
+     */
+    $lists = ['o.is_demo', 'c.is_demo', 'r.is_demo'];
+
+    foreach ($lists as $reader) {
+        expect(str_contains($blade, $reader))
+            ->toBeTrue("a list that carries demo rows is not reading {$reader}");
+    }
+
     expect(substr_count($blade, '>demo</span>'))
-        ->toBe(2, 'the demo badge is not drawn identically on both lists');
+        ->toBe(count($lists), 'the demo badge is not drawn identically on every list that carries demo rows');
 });

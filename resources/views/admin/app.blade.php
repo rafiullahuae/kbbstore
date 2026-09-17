@@ -3558,7 +3558,7 @@ function paintHomepage(base){
       <div class="demo-ic">${DEMO && DEMO.enabled ? '👁' : '👁'}</div>
       <div class="demo-t"><b>Demo content</b>
         <span>Fills empty sections with sample products, brands, reviews and articles so the page can be judged before the catalogue is imported.</span>
-        <span class="demo-safe">Displayed only — never saved. Real content always takes priority and is never modified.</span></div>
+        <span class="demo-safe">Displayed only — never saved. Real content always takes priority and is never modified. No demo figure reaches the storefront: ratings, review counts and the shop’s size are counted from real rows only, whether this is on or off.</span></div>
       <span class="ectog${DEMO && DEMO.enabled ? ' on' : ''}" id="demotog" role="switch" aria-checked="${DEMO && DEMO.enabled}" tabindex="0"></span>
     </div>
 
@@ -13598,7 +13598,13 @@ buildNav();
           '<div class="rv-nm">' + sesc(r.author || 'Anonymous') + '</div>' +
           '<div class="rv-meta">' + sesc(r.author_email || '') +
             (r.author_email ? ' · ' : '') + product +
-            (r.created_at ? ' · ' + rvDate(r.created_at) : '') + '</div>' +
+            (r.created_at ? ' · ' + rvDate(r.created_at) : '') +
+            /* LANE DO: demo rows stay visible here and are marked, the same way
+               Orders and Customers mark theirs. The storefront excludes them
+               from every figure; this list is where the owner finds them to
+               delete. The API sends is_demo per row; without this the marking
+               exists and nobody can see it. */
+            (r.is_demo ? ' · <span style="color:var(--ink-faint)">demo</span>' : '') + '</div>' +
         '</div>' +
         '<div class="rv-badges">' + rvStars(r.rating) + rvPill(r.status) +
           (r.verified ? '<span class="pill green" title="Bought this product">✓ Verified</span>' : '') +
@@ -14552,6 +14558,15 @@ buildNav();
      it. */
   function bdAccentValue(){ var v=SETTINGS.brand_accent; return (v==null)?'':String(v).trim(); }
 
+  /* A claim's current value for its box. The DEFAULTS ARE ON THE SERVER, in
+     App\Support\TrustClaims::CLAIMS, and AdminController::settings() sends the
+     resolved value — so the box shows what the page shows, and this console
+     never carries a second copy of the wording that could drift from it.
+     An absent key gives '' rather than "undefined", and a cleared row gives ''
+     too, which is correct: both put an empty box on the screen, and only one
+     of them removes the claim from the site. */
+  function bdClaim(key){ var v=SETTINGS[key]; return (v==null)?'':String(v); }
+
   /* And the same colour as <input type="color"> needs it, which is not the same
      thing. That control accepts EXACTLY '#rrggbb': handed '' it shows black,
      and handed the three-digit form the storefront accepts ('#e57') it also
@@ -14944,13 +14959,24 @@ buildNav();
          called and where it trades, which is the sentence at the top of this
          very screen. */
       '<button type="button" class="bd-tab'+(BD_TAB==='invoice'?' on':'')+'" data-bdtab="invoice">Invoice</button>'+
+      /* THE FOURTH TAB — the integrator, finishing Lane DR.
+         The shop stated several things about itself — "100% original",
+         "24/7 support", "100% authentic" — as literals inside Blade files,
+         which on a host with no shell means the owner could not change or
+         withdraw a single one of them without a signed package. Lane DR made
+         every one of them a setting, defaulting to the wording that shipped, so
+         the page reads today exactly as it read yesterday. These are the boxes
+         that make them his. A tab and not a sidebar row, for the same reason
+         Invoice is: this is what the business says it is, which is the sentence
+         at the top of this screen. */
+      '<button type="button" class="bd-tab'+(BD_TAB==='claims'?' on':'')+'" data-bdtab="claims">Claims</button>'+
       '</div>';
   }
 
   async function renderStoreSettings(tab){
     await loadSettings();
     var taxLive = String(SETTINGS.tax_mode||'display')==='live';
-    if(tab==='tax'||tab==='business'||tab==='invoice') BD_TAB = tab;
+    if(tab==='tax'||tab==='business'||tab==='invoice'||tab==='claims') BD_TAB = tab;
     // Before the markup is built: vatRatesBand() renders from VAT_RATES.
     vatRatesLoad();
     document.querySelector('#content').innerHTML =
@@ -15250,6 +15276,63 @@ buildNav();
         '</div>')+
       '</div>'+
 
+      /* ===================================================================
+         CLAIMS — what the shop says about itself, in the owner's own words.
+
+         Every box below is pre-filled with the wording that is on the site
+         today, which is why opening this tab and saving without touching
+         anything changes nothing. The boxes are not required and must never
+         become required: CLEARING ONE REMOVES THE CLAIM FROM THE SITE, element
+         and all, and that is the half an owner actually needs — "I cannot
+         stand behind this" has to be expressible, and in a text box the only
+         way to express it is to empty it. App\Support\TrustClaims::text()
+         returns null for a cleared or whitespace-only value, which is what the
+         templates skip on; see its header for why null and not ''.
+
+         Counts are deliberately absent. The brand count, the product count and
+         the review count beside these claims are counted from the catalogue
+         and are not editable here, because a number an owner can type is a
+         number that can drift away from the shop it describes.
+         =================================================================== */
+      '<div class="bd-panel" data-bdpanel="claims"'+(BD_TAB==='claims'?'':' hidden')+'>'+
+      bdSec('On the home page',
+        'The three short promises in the row of badges under the hero, and the line beside your brands. Each is exactly as it reads on the site now. Change the words to what you actually stand behind — or empty a box and that badge disappears, with the row closing up neatly around it.',
+        '<div class="bd-grid">'+
+          bdField('set_trust_authentic_title','Authenticity badge — title',
+            '<input id="set_trust_authentic_title" value="'+sesc(bdClaim('trust_authentic_title'))+'" placeholder="empty — the badge is removed">',
+            'Currently reads “100% original”. Empty removes the whole badge, not just the words.')+
+          bdField('set_trust_authentic_text','Authenticity badge — the line under it',
+            '<input id="set_trust_authentic_text" value="'+sesc(bdClaim('trust_authentic_text'))+'" placeholder="empty — no line under the title">',
+            'Currently reads “Direct from brands and trusted suppliers”.')+
+          bdField('set_trust_support_title','Support badge — title',
+            '<input id="set_trust_support_title" value="'+sesc(bdClaim('trust_support_title'))+'" placeholder="empty — the badge is removed">',
+            'Currently reads “24/7 support”. Your WhatsApp number is printed underneath automatically, from Store identity above.')+
+          bdField('set_home_brands_note','Brands section — the line under the heading',
+            '<input id="set_home_brands_note" value="'+sesc(bdClaim('home_brands_note'))+'" placeholder="empty — no line under the heading">',
+            'Currently reads “Korean brands, all sourced direct.” The number of brands beside it is counted from your catalogue and cannot be typed.')+
+        '</div>')+
+
+      bdSec('At the checkout',
+        'The two reassurance lines a shopper reads with their card in their hand — the moment a claim matters most, and the moment it is hardest to take back.',
+        '<div class="bd-grid">'+
+          bdField('set_checkout_authentic_text','Beside the Place order button',
+            '<input id="set_checkout_authentic_text" value="'+sesc(bdClaim('checkout_authentic_text'))+'" placeholder="empty — the chip is removed">',
+            'Currently reads “100% authentic”, next to “SSL secure”. Empty removes the chip and its tick. “SSL secure” stays either way — that one is a fact about the connection, not a claim about the shop.')+
+          bdField('set_reassure_auth_text','Above the order summary',
+            '<input id="set_reassure_auth_text" value="'+sesc(bdClaim('reassure_auth_text'))+'" placeholder="empty — the line is removed">',
+            'Currently reads “100% authentic K-beauty”. The star rating beside it comes from your approved reviews and cannot be typed.')+
+        '</div>')+
+
+      bdSec('On the announcement strip',
+        'The thin bar that runs above the header. Kept here so every claim the shop makes is in one place — note that this strip is not switched on at the moment, so nothing you type here is visible yet.',
+        '<div class="bd-grid">'+
+          bdField('set_anno_authentic_text','Announcement strip — authenticity claim',
+            '<input id="set_anno_authentic_text" value="'+sesc(bdClaim('anno_authentic_text'))+'" placeholder="empty — the claim is removed">',
+            'Currently reads “100% authentic K-beauty”.')+
+        '</div>')+
+      '<div class="bd-note">Nothing here is required, and an empty box is a real instruction rather than a mistake: the claim is removed from the page entirely, leaving no gap and no empty badge. Whether any of these statements is true is a question about your business, not about this shop — which is exactly why the words belong to you and not to a file only a release can change.</div>'+
+      '</div>'+
+
       '</div>'+
       '<div class="bd-actions"><button class="btn" id="set_save_biz">Save changes</button></div>'+
       '</div></div>';
@@ -15374,7 +15457,20 @@ buildNav();
            writer, and neither half does anything without the other. Sent every
            time, blank included, because blank is the instruction to go back to
            the theme's own pink rather than an absent field. */
-        brand_accent: sval('set_brand_accent')
+        brand_accent: sval('set_brand_accent'),
+        /* Claims (Lane DR's readers, this console's writers). Sent every time,
+           blank included — blank is the instruction to remove the claim, and a
+           field that is only sent when non-empty can never carry it. All seven
+           are in AdminController::SETTING_RULES as `text`, which accepts
+           blank on purpose; without that line the endpoint answers ok and
+           writes nothing. */
+        trust_authentic_title: sval('set_trust_authentic_title'),
+        trust_authentic_text: sval('set_trust_authentic_text'),
+        trust_support_title: sval('set_trust_support_title'),
+        home_brands_note: sval('set_home_brands_note'),
+        checkout_authentic_text: sval('set_checkout_authentic_text'),
+        reassure_auth_text: sval('set_reassure_auth_text'),
+        anno_authentic_text: sval('set_anno_authentic_text')
 
       };
       try{ await api('/admin-api/settings',{method:'PUT',body:JSON.stringify({settings:payload})}); Object.assign(SETTINGS,payload); toast('Business details saved'); }
