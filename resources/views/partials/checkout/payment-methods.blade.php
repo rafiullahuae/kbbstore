@@ -60,6 +60,14 @@
                  rather than only ever the first one. --}}
             <div class="payment_box payment_method_{{ $g['id'] }}">
             <p>{!! $g['description'] !!}</p>
+            {{-- The card fields, for the one gateway that has any. Inside the
+                 same .payment_box as its description, so the existing
+                 `:has(input:checked)` rule in kbb-checkout.css reveals them
+                 exactly when Credit / Debit Card is selected and hides them
+                 otherwise — no JavaScript deciding visibility, and correct in
+                 the re-render this partial gets after a quantity or coupon
+                 change as well as on first paint. --}}
+            @if ($g['id'] === 'stripe')@include('partials.checkout.stripe-card')@endif
         </div>
             @endif
     </li>

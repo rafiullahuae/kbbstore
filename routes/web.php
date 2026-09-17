@@ -854,6 +854,16 @@ require __DIR__.'/checkout-browsed.php';
 require __DIR__.'/checkout-line.php';
 
 /*
+ * The two reports the card form on /checkout/ makes after a payment: that the
+ * bank approved it, and that the shopper gave up on it. Same group and the same
+ * reasoning again, and here the session is not merely convenient — it is the
+ * only thing that authorises either call. Both are refused outright on a
+ * request whose session does not name the order being asked about, so a group
+ * without session middleware would refuse every one of them.
+ */
+require __DIR__.'/checkout-card.php';
+
+/*
  * Required last, and that placement is load-bearing. The final route in this
  * file matches a single path segment at the site root -- the shape of every
  * storefront URL there is -- so registration order is what keeps /cart reaching

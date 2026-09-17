@@ -118,11 +118,16 @@ it('shows the real request it would send, without sending it', function () {
     expect($dry['ran'])->toBeTrue()
         ->and($dry['sent'])->toBeTrue()
         ->and($dry['method'])->toBe('POST')
-        ->and($dry['url'])->toBe('https://api.stripe.com/v1/checkout/sessions')
+        // A PaymentIntent, not a Checkout session. The card fields are on our
+        // own checkout now, so what this shop asks Stripe for is an intent the
+        // page can confirm — and a preflight still naming /v1/checkout/sessions
+        // would be telling the owner his shop does something it stopped doing.
+        ->and($dry['url'])->toBe('https://api.stripe.com/v1/payment_intents')
         // Stripe's API is form-encoded with bracketed nesting, and the amount
         // is already integer minor units. Both of those are things that are
         // silently wrong until a real payment is attempted.
-        ->and($dry['body'])->toContain('line_items%5B0%5D%5Bprice_data%5D%5Bunit_amount%5D=25000')
+        ->and($dry['body'])->toContain('amount=25000')
+        ->and($dry['body'])->toContain('payment_method_types%5B0%5D=card')
         ->and($dry['sample_total_fils'])->toBe(25000);
 });
 
@@ -232,6 +237,23 @@ it('still shows the fields that are not secret, or the dry run would be useless'
     // The publishable key is safe to show by definition, and the body has to
     // be readable or there is nothing to check.
     expect($dry['headers'])->toHaveKey('Authorization')
-        ->and($dry['body'])->toContain('preflight%40example.invalid')
         ->and($dry['body'])->toContain('PREFLIGHT-STRIPE');
+
+    /*
+     * AND THE BUYER'S EMAIL IS NO LONGER IN IT, which is a change worth
+     * pinning rather than merely tolerating.
+     *
+     * The Checkout session carried `customer_email` because Stripe's hosted
+     * page needed something to prefill. There is no hosted page now: the
+     * shopper's details are already on our own form, and what reaches Stripe
+     * from them is `billing_details` handed to confirmCardPayment by the
+     * browser, alongside the card and from the same iframe.
+     *
+     * So the request this SERVER makes to open a payment carries no buyer
+     * personal data at all — an order reference, an amount and a currency.
+     * That is the property being asserted. A future change that puts the email
+     * back into the intent payload should have to come here and say why.
+     */
+    expect($dry['body'])->not->toContain('preflight%40example.invalid');
+    expect($dry['body'])->not->toContain('preflight@example.invalid');
 });

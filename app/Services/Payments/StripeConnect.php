@@ -213,15 +213,36 @@ final class StripeConnect
      * The events this shop acts on.
      *
      * Read off StripeGateway::handleWebhook() rather than copied from a
-     * changelog: the two it confirms payment on, and the two it fails an order
-     * on. Subscribing to more would mean deliveries this shop ignores; to
-     * fewer would mean a payment it never hears about.
+     * changelog: the ones it confirms payment on, and the ones it fails an
+     * order on. Subscribing to more would mean deliveries this shop ignores;
+     * to fewer would mean a payment it never hears about, and the test that
+     * walks handleWebhook() and compares the two lists is in StripeConnectTest
+     * for exactly that reason — it is what caught the two added here.
+     *
+     * `payment_intent.succeeded` IS THE ONE THAT MATTERS NOW. The card fields
+     * are on our own checkout, so a card payment produces no Checkout session
+     * and `checkout.session.completed` never arrives for a new order. Without
+     * this subscription Stripe takes the money and the only thing that tells
+     * the shop so is the shopper's own browser — which is the half that can be
+     * closed, lose its connection or be a tab nobody came back to.
+     *
+     * `payment_intent.canceled` is its terminal counterpart, and the reason it
+     * is needed separately is in handleWebhook(): a DECLINE no longer fails the
+     * order, because with fields on the page the shopper is still sitting in
+     * front of them with another card. A cancelled intent is the event that
+     * genuinely ends the attempt.
+     *
+     * The three `checkout.session.*` events stay subscribed. Orders placed
+     * through the previous hosted flow still have deliveries in flight and
+     * still have to be applied.
      */
     public const EVENTS = [
+        'payment_intent.succeeded',
+        'payment_intent.canceled',
+        'payment_intent.payment_failed',
         'checkout.session.completed',
         'checkout.session.async_payment_succeeded',
         'checkout.session.expired',
-        'payment_intent.payment_failed',
     ];
 
     /**

@@ -874,6 +874,12 @@ final class InterfaceStrings
             'checkout.gift_characters_left' => ':remaining characters left|:remaining characters left',
             'checkout.or_pay_with' => 'or pay with',
             'checkout.no_payment_method' => 'No payment method is available for this order total. Please contact us and we will take your order directly.',
+            // The card form on this page — see partials/checkout/stripe-card.
+            'checkout.card_secure_note' => 'Your card details are entered directly into our payment processor and never reach this site.',
+            'checkout.card_return_to_basket' => 'Cancel this payment and return to your basket',
+            'checkout.card_not_ready' => 'The card form is still loading. Please wait a moment and try again.',
+            'checkout.card_generic_error' => 'We could not take that card. Please check the details or try another card.',
+            'checkout.card_working' => 'Confirming your payment…',
             'checkout.tab_summary' => 'Order summary',
             'checkout.tab_browsed' => 'Browsed',
             'checkout.browsed_heading' => 'Recently browsed — add in one tap',

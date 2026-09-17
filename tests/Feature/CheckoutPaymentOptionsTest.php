@@ -85,17 +85,35 @@ it('tells the shopper where the card details are actually typed', function () {
     expect($text)->not->toBe('');
 
     /*
-     * The old sentence — "Your card details never reach this site" — was true
-     * and answered a question nobody was asking. What a shopper looking at an
-     * empty card option needs to know is WHERE the card goes and WHEN, or they
-     * conclude the shop is broken and leave. That costs the same order a
-     * missing field would.
+     * THE SENTENCE FOLLOWS THE FEATURE, and it has now followed it twice.
+     *
+     * It first said "your card details never reach this site", which was true
+     * and answered a question nobody was asking. It was then rewritten to say
+     * the card is entered on Stripe's own page after Place order, which was
+     * the honest description of the hosted flow.
+     *
+     * The card fields are on this page now, so that second sentence would send
+     * a shopper looking for a step that does not happen — and would be read by
+     * the owner, on his own checkout, as the change not having been applied.
+     * What it has to say is that the fields are here.
      */
-    foreach (['Stripe', 'Place order'] as $must) {
-        expect(str_contains($text, $must))->toBeTrue(
-            'the card option no longer says "'.$must.'", so it does not tell the shopper where the card is entered'
-        );
-    }
+    expect(str_contains($text, 'below'))->toBeTrue(
+        'the card option does not point at the fields under it, so a shopper is not told where to type'
+    );
+
+    /*
+     * And it must not promise a page that no longer exists. Asserted as an
+     * absence because the failure is silent: a description left over from the
+     * hosted flow renders perfectly and simply tells the shopper something
+     * untrue, which is the one kind of copy bug no screenshot catches.
+     *
+     * Each needle is its own expect(). toContain() is VARIADIC — passing a
+     * message as the second argument makes it a second needle, so the
+     * assertion silently stops being the one that was written. See
+     * tests/Feature/ExpectationsThatCannotFailTest.php, which sweeps for it.
+     */
+    expect($text)->not->toContain('Stripe\'s own');
+    expect($text)->not->toContain('after you press Place order');
 });
 
 it('renders that explanation into the page, under the option it belongs to', function () {

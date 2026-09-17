@@ -292,8 +292,36 @@
     @endif
     </section>
 
-@push('scripts')
+{{--
+    The card fields' script is appended to the SCRIPTS PUSH BELOW rather than
+    given a push of its own, and where it sits on the line is load-bearing
+    rather than tidy. Both reasons are about bytes, which
+    StorefrontEnglishUnchangedTest compares: a shop with no card gateway
+    configured must render a checkout identical to the one it had before this
+    package, and "identical" is not a thing to be argued with afterwards.
+
+    A @push block of its own adds two blank lines before </main>, because the
+    directives emit nothing but the newlines around them are literal template
+    text.
+
+    And this @include goes on ITS OWN LINE, not appended to the one above.
+    Blade's echo compiler pads `{!! … !!}` with a newline to keep line numbers,
+    and PHP then eats the one after the closing `?>` — so the pair nets out to
+    the single newline the source had. Butting a directive straight onto the
+    end of that echo puts `<?php` where the padding would go, the padding is
+    not emitted, and the line silently loses its newline. Measured, not
+    assumed: it moved a byte on the rendered checkout and the walk caught it.
+
+    The partial draws nothing at all unless Stripe is on offer with a
+    publishable key, so such a shop also loads no Stripe script. The mount box
+    it drives is partials/checkout/stripe-card, which the payment list renders
+    inside the card option's own .payment_box.
+
+    This comment's closing marker is glued to @push for the first reason above:
+    Blade strips the comment and leaves the newline that followed it.
+--}}@push('scripts')
 @include('partials.checkout.inline-validation', ['validation' => \App\Support\InlineValidation::config(app(\App\Services\SettingsService::class))]){!! app(\App\Services\MarketingPixels::class)->beginCheckout((int) $totals['total']) !!}
+@include('partials.checkout.stripe-elements')
 @endpush
 
 @push('scripts')
