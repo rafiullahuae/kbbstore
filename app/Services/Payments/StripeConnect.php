@@ -177,8 +177,54 @@ final class StripeConnect
             'oauth_available' => $clientId !== '',
             'redirect_uri' => $this->redirectUri(),
             'in_flight' => $this->inFlight(),
+            'refundable' => $this->refundable(),
             'shop_currency' => Money::currency(),
         ];
+    }
+
+    /**
+     * Money this shop has taken through Stripe and not given back.
+     *
+     * ---------------------------------------------------------------------
+     * Why it belongs on the disconnect dialog
+     * ---------------------------------------------------------------------
+     *
+     * inFlight() next door counts orders with `paid_at IS NULL` — shoppers
+     * who may be on Stripe's payment page right now. That is the only risk this
+     * screen has ever named, and it is the smaller one. A FULLY CAPTURED order
+     * has `paid_at` set, so inFlight() does not count it, and the dialog on a
+     * shop holding a captured AED 250.00 Stripe order reported
+     * `in_flight.count = 0` — nothing at stake, press the button.
+     *
+     * Then the refund comes back `not_configured`. There is no key, so there
+     * is no Stripe refund, and that money cannot be returned through this panel
+     * at all. The owner is left telling the customer to wait while he
+     * reconnects, or refunding by hand in the Stripe dashboard with nothing in
+     * this shop's books to match it.
+     *
+     * The structural half of that cannot be fixed here: a refund needs a key.
+     * THE WARNING IS THE FIXABLE HALF. The owner may have every reason to
+     * disconnect — a compromised key is a reason to do it immediately — so
+     * nothing here blocks him. He needs to know what it costs.
+     *
+     * NOT BOUNDED TO A WINDOW, unlike inFlight(). Three days is right there,
+     * because a Checkout session expires inside one and an older row is an
+     * abandoned cart rather than pending money. It would be wrong here: an
+     * order from March the shop still holds money for is exactly as
+     * unrefundable after a disconnect as one from this morning.
+     *
+     * THE ARITHMETIC IS PaymentRefunder's OWN and is not repeated here. What
+     * "captured" means changed underneath this screen — it is the sum of the
+     * `paid` payment rows the provider confirmed now, not `orders.total`, which
+     * an operator can edit — and a second opinion about a refund ceiling on a
+     * confirm dialog is how a dialog ends up disagreeing with the button it is
+     * confirming.
+     *
+     * @return array<string, mixed>
+     */
+    public function refundable(): array
+    {
+        return app(PaymentRefunder::class)->gatewayPosition(self::GATEWAY);
     }
 
     /** @return array<string, mixed> */
@@ -972,12 +1018,49 @@ final class StripeConnect
 
         $steps[] = 'credentials_cleared';
 
+        /*
+         * THE ONE THE OWNER MUST NOT MISS, said in the channel the screen
+         * already reads out loud.
+         *
+         * `warnings` is alerted verbatim by the payments screen after a
+         * disconnect, so this reaches him today with no change to a view. The
+         * figure is also on the result and on status() for a dialog that wants
+         * to say it BEFORE the press, which is where it belongs — that half is
+         * a change to resources/views/admin/app.blade.php and is handed over
+         * rather than made here.
+         *
+         * Not a blocker, and never will be: a compromised key is a reason to
+         * disconnect this second, and a screen that argued with him about it
+         * would be the worse failure.
+         */
+        $refundable = $this->refundable();
+
+        if ($refundable['count'] > 0) {
+            $warnings[] = sprintf(
+                '%s is still refundable on %d Stripe order%s. With the keys cleared this shop can no longer send a '
+                . 'refund to Stripe, so that money can only go back from the Stripe dashboard by hand until you '
+                . 'reconnect — and a refund made there will not be recorded against the order here.',
+                $refundable['amount_display'],
+                $refundable['count'],
+                $refundable['count'] === 1 ? '' : 's',
+            );
+        }
+
         return [
             'ok' => true,
             'was_connected' => $key !== '',
             'steps' => $steps,
             'warnings' => $warnings,
             'in_flight' => $this->inFlight(),
+            /*
+             * Reported AFTER the disconnect as well as before it, and the
+             * figure does not change: nothing here refunds anything, and the
+             * orders are still there. It is on the result so the screen can say
+             * what has just become unreachable rather than only what was at
+             * risk — the owner who pressed the button anyway is the one who
+             * most needs the number in front of him.
+             */
+            'refundable' => $refundable,
         ];
     }
 

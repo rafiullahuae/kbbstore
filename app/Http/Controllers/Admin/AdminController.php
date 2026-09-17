@@ -3224,12 +3224,40 @@ class AdminController extends Controller
          * order completed can put it back to pending from this dropdown, which
          * on a host with no shell is the only way that mistake ever gets fixed.
          */
-        app(\App\Services\Orders\OrderStatus::class)->moveTo(
-            $o,
-            $data['status'],
-            by: auth('admin')->user()?->name ?: 'Admin',
-            reason: 'Changed on the order screen.',
-        );
+        /*
+         * IT CAN NOW FAIL, and that is the substance of this guard.
+         *
+         * A move back out of `cancelled`, `failed` or `refunded` has to take
+         * back the units the cancellation put on the shelf and the coupon use
+         * it handed out. When the units have been sold since, or the code has
+         * been redeemed to its limit since, the funnel refuses the whole
+         * transition and nothing is written. That refusal has to reach the
+         * operator: it is the one outcome where a cheerful `ok: true` and an
+         * unchanged order is exactly the silent oversell this exists to stop.
+         *
+         * 422 rather than 409 or 500 — the request is well formed and the
+         * server understood it, and the shop's state is what will not have it.
+         * `status` in the body is the status the order still has, which is the
+         * one the screen must go on showing.
+         */
+        try {
+            app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $o,
+                $data['status'],
+                by: auth('admin')->user()?->name ?: 'Admin',
+                reason: 'Changed on the order screen.',
+            );
+        } catch (\App\Services\Orders\OrderReviveRefused $e) {
+            return response()->json([
+                'error' => 'revive_refused',
+                'kind' => $e->kind,
+                'message' => $e->getMessage(),
+                'id' => $o->id,
+                // Read off the row rather than the instance: nothing was
+                // written, so this is what it was and still is.
+                'status' => (string) $o->fresh()?->status,
+            ], 422);
+        }
 
         // The shelf is not this screen's business either: OrderTransitionStock
         // is called by the funnel, once, for every site that moves a status —

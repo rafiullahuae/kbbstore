@@ -451,6 +451,242 @@ final class StockClaim
         });
     }
 
+
+    /* ---------------------------------------------------- and back off again */
+
+    /**
+     * Re-take the units a release put back, for an order that has come alive.
+     *
+     * ---------------------------------------------------------------------
+     * Why this exists, and what it is the inverse of
+     * ---------------------------------------------------------------------
+     *
+     * release() is called when an order moves to a status that means it will
+     * never ship. Until this method existed that was the end of it: the units
+     * were on the shelf, and an operator who set the order back to
+     * `processing` on the order screen got a live order holding a line for a
+     * unit the shop had already put back on sale. The order still had to be
+     * shipped; the unit was sellable to somebody else. That is an oversell,
+     * created by a dropdown, with nothing on the screen to say so.
+     *
+     * So the way back is now the same shape as the way out, and this is its
+     * other half.
+     *
+     * ---------------------------------------------------------------------
+     * THE LEDGER DECIDES, NOT THE ORDER'S STATUS
+     * ---------------------------------------------------------------------
+     *
+     * What comes off the shelf here is exactly the rows a release stamped —
+     * `released_at IS NOT NULL` — and nothing else. That is what makes the two
+     * properties this has to have true by construction rather than by a list
+     * somebody has to keep in step:
+     *
+     *   AN ORDER THAT NEVER RELEASED IS NEVER RE-CLAIMED. An order cancelled
+     *   from `shipped` never gave anything back, because
+     *   OrderTransitionStock::returns() said so; its rows are unreleased and
+     *   this finds nothing to take. Re-taking there would invent a shortage
+     *   out of nothing, which is the same bug pointing the other way.
+     *
+     *   A SECOND REVIVE TAKES NOTHING. The first one clears `released_at`, so
+     *   the second matches no rows. Cancel, revive, cancel, revive ends where
+     *   it started, and the arithmetic is the ledger's rather than a count of
+     *   how many times anybody pressed anything.
+     *
+     * It is also strictly better than re-reading the status lists would be.
+     * An order cancelled (units back), then refunded, then set to
+     * `processing` arrives here with `from = refunded` — a status that returns
+     * no stock and therefore looks, from the statuses alone, like an order
+     * with nothing to re-take. The ledger still carries the released rows from
+     * the cancellation, and they are what gets taken.
+     *
+     * ---------------------------------------------------------------------
+     * IT THROWS, AND THAT IS THE POINT
+     * ---------------------------------------------------------------------
+     *
+     * applied() next door cannot throw, on purpose: a failure to hand stock
+     * back must not turn an operator's Cancel button into a 500 on an order
+     * that is already cancelled. This is the opposite situation. If the unit
+     * has been sold since, there is no honest way to finish the revive — the
+     * shop would be promising a unit it does not have — so the whole
+     * transition is refused and the caller is told which product is short and
+     * by how many. The order is left exactly as it was.
+     *
+     * The refusal therefore has to roll back the rows already taken by this
+     * same call, which is why the throw happens inside the transaction below.
+     * Nested inside the caller's transaction that is a savepoint, and the
+     * exception carries on past it to roll the status change back too.
+     *
+     * WHAT IS NOT CHECKED: `stock_status`. A shelf the owner has marked sold
+     * out by hand while still holding the units is not a reason to refuse — the
+     * scarce thing is the unit, and the column is a shop-window flag. The
+     * conditional decrement below is the real test and it is the only one.
+     *
+     * NO $reason, deliberately, where release() takes one. A release WRITES a
+     * sentence to `released_reason` for the operator reading the table later;
+     * a re-take CLEARS that column, because the units are not on the shelf any
+     * more and the old sentence would say they were. There is nothing for a
+     * reason to be written to, and a parameter nobody can act on is a promise
+     * the next reader has to check. What the revive cost is recorded where an
+     * operator actually looks: the order note OrderStatus writes.
+     *
+     * @return int  units taken back off the shelves; 0 when nothing was released.
+     *
+     * @throws StockUnavailable  naming the shelf that is short, and nothing is left applied
+     */
+    public function reclaim(int $orderId): int
+    {
+        return DB::transaction(function () use ($orderId): int {
+            $rows = DB::table(self::LEDGER)
+                ->where('order_id', $orderId)
+                ->whereNotNull('released_at')
+                ->orderBy('id')
+                ->get();
+
+            $taken = 0;
+
+            foreach ($rows as $row) {
+                $table = (string) $row->shelf_table;
+
+                // The allowlist, applied to a value that is about to become a
+                // table name in a query. See SHELVES.
+                if (! in_array($table, self::SHELVES, true)) {
+                    continue;
+                }
+
+                $quantity = (int) $row->quantity;
+
+                if ($quantity < 1) {
+                    continue;
+                }
+
+                /*
+                 * Claim the row back first, on the same conditional-update
+                 * shape release() uses and for the same reason: two requests
+                 * reviving one order must re-take the units once between them,
+                 * and `released_at` is the fact that says whether there is
+                 * anything to re-take. The loser matches no row and stands
+                 * down.
+                 *
+                 * `released_reason` is cleared with it. Leaving the old
+                 * sentence on a row that is live again would tell the operator
+                 * reading the table that these units are back on the shelf
+                 * when they are not.
+                 */
+                $claimed = DB::table(self::LEDGER)
+                    ->where('id', $row->id)
+                    ->whereNotNull('released_at')
+                    ->update([
+                        'released_at' => null,
+                        'released_reason' => null,
+                        'updated_at' => now(),
+                    ]);
+
+                if ($claimed !== 1) {
+                    continue;
+                }
+
+                $this->takeBack($table, (int) $row->shelf_id, $quantity, (int) $row->id, $row);
+
+                $taken += $quantity;
+            }
+
+            return $taken;
+        });
+    }
+
+    /**
+     * One shelf, taken back conditionally, or the whole revive is refused.
+     *
+     * The same `WHERE stock >= n` that claimOne() relies on, for the identical
+     * reason: it is atomic in its own right, so the shelf cannot be driven
+     * negative by anything that slipped in between the read and the write, and
+     * a row count of zero is the honest "there are not enough".
+     *
+     * @throws StockUnavailable
+     */
+    private function takeBack(string $table, int $shelfId, int $quantity, int $ledgerId, object $row): void
+    {
+        $changed = DB::table($table)
+            ->where('id', $shelfId)
+            ->where('stock', '>=', $quantity)
+            ->update(['stock' => DB::raw('stock - ' . $quantity)]);
+
+        if ($changed !== 1) {
+            // Read what is actually there for the sentence. The shelf row may
+            // also be gone entirely — a product binned since the order was
+            // cancelled — which is a refusal too and reads as "sold out".
+            $have = DB::table($table)->where('id', $shelfId)->value('stock');
+
+            throw new StockUnavailable($this->shortBy($row, (int) ($have ?? 0), $quantity));
+        }
+
+        /*
+         * Delisting, and recording whether WE did it.
+         *
+         * `marked_outofstock` means "this claim is what took the shop window
+         * down", and release() reads it to decide whether to put the window
+         * back. It is recomputed here rather than trusted from before the
+         * release: the shelf may have been restocked, or delisted by hand in
+         * Store -> Products, in the meantime. Only a change this statement
+         * actually made is recorded, so a later release cannot re-list
+         * something the owner delisted himself.
+         */
+        $left = (int) (DB::table($table)->where('id', $shelfId)->value('stock') ?? 0);
+
+        $marked = false;
+
+        if ($left <= 0) {
+            $marked = DB::table($table)
+                ->where('id', $shelfId)
+                ->where('stock_status', 'instock')
+                ->update(['stock_status' => 'outofstock']) === 1;
+        }
+
+        DB::table(self::LEDGER)->where('id', $ledgerId)->update([
+            'marked_outofstock' => $marked,
+            'updated_at' => now(),
+        ]);
+    }
+
+    /**
+     * The sentence an operator reads when a revive cannot be paid for.
+     *
+     * It names the product, because "not enough stock" on a forty-order bulk
+     * action tells them nothing they can act on. The name is read here, once,
+     * only on the refusal path — the happy path never needs it.
+     */
+    private function shortBy(object $row, int $have, int $want): string
+    {
+        $name = null;
+
+        if ($row->product_id !== null) {
+            $name = DB::table('products')->where('id', (int) $row->product_id)->value('name');
+        }
+
+        if ($name === null && (string) $row->shelf_table === 'products') {
+            $name = DB::table('products')->where('id', (int) $row->shelf_id)->value('name');
+        }
+
+        $label = trim((string) ($name ?? '')) !== '' ? (string) $name : 'A product on this order';
+
+        if ($row->product_variant_id !== null) {
+            $sku = DB::table('product_variants')->where('id', (int) $row->product_variant_id)->value('sku');
+
+            if (trim((string) ($sku ?? '')) !== '') {
+                $label .= ' (' . $sku . ')';
+            }
+        }
+
+        return sprintf(
+            '%s is short by %d — this order needs %d and there %s %d in stock.',
+            $label,
+            max(0, $want - $have),
+            $want,
+            $have === 1 ? 'is' : 'are',
+            max(0, $have),
+        );
+    }
+
     /** Units this order took and has not had returned. Read-only; for tests and screens. */
     public function outstandingFor(int $orderId): int
     {

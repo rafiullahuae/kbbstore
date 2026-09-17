@@ -310,12 +310,24 @@ class OrdersApiController extends Controller
     /**
      * Set the status on a selection.
      *
-     * Two refusals, both deliberate. 'refunded' cannot be set at all — see
-     * BULK_SETTABLE. And moving a revenue-carrying order to a status that is
+     * Three refusals, all deliberate. 'refunded' cannot be set at all — see
+     * BULK_SETTABLE. Moving a revenue-carrying order to a status that is
      * NOT revenue (cancelling four completed orders, say) takes the money off
      * the store's own figures, so without force those orders are skipped and
      * reported back by name rather than the whole call failing: the operator
      * asked for the selection, and the safe half of it is still what they meant.
+     *
+     * And an order REVIVED out of `cancelled` or `failed` — which this endpoint
+     * can do, because BULK_SETTABLE carries `pending`, `processing` and
+     * `onhold` — has to take back the units the cancellation put on the shelf
+     * and the coupon use it handed out. When it cannot, that order is skipped
+     * and reported the same way, with the sentence naming the product that is
+     * short. `force` does NOT override this one; see the catch below for why.
+     *
+     * Every entry in `skipped` therefore carries a `reason` and a `forceable`
+     * flag now. They were implicit while there was one kind of skip; a screen
+     * that offers "change those too" over a refusal that force cannot change
+     * would be a button that silently does nothing.
      *
      * Every change writes an order note, so the detail screen's history shows
      * who did it and when. A bulk edit with no trace is how a store ends up
@@ -370,6 +382,10 @@ class OrdersApiController extends Controller
             ->whereIn('id', $ids)
             ->get(['id', 'order_number', 'status', 'total']);
 
+        // Keyed for the refusal path below, which needs an order's number and
+        // value to report it by name and has already loaded both.
+        $byId = $orders->keyBy(fn ($o) => (int) $o->id);
+
         $changeable = [];
         $skipped = [];
 
@@ -389,6 +405,16 @@ class OrdersApiController extends Controller
                     'status' => $current,
                     'total_fils' => (int) $order->total,
                     'total_display' => Money::plain((int) $order->total),
+                    // Why this one was left alone. It was implicit while there
+                    // was only ever one answer; there are two now, and a
+                    // dialog that prints "counts as revenue" over a refusal
+                    // about stock is worse than no dialog.
+                    'reason' => 'It counts as revenue, so changing it takes its value off the store\'s figures.',
+                    // Forceable: the operator can confirm this one and it will
+                    // go through. The refusals below cannot, and the screen has
+                    // to be able to tell them apart before it offers a button
+                    // that would do nothing.
+                    'forceable' => true,
                 ];
 
                 continue;
@@ -399,15 +425,55 @@ class OrdersApiController extends Controller
 
         $statuses = app(\App\Services\Orders\OrderStatus::class);
         $author = auth('admin')->user()?->name ?: 'Admin';
+        $changed = 0;
 
         foreach ($changeable as $id) {
-            $statuses->moveTo($id, $status, by: $author, reason: 'Set from the orders list.');
+            /*
+             * THE SAME GUARD THE SINGLE-ORDER SCREEN GETS, because a guard the
+             * bulk action walks around is not a guard — and this is the path
+             * that walks around it forty orders at a time. BULK_SETTABLE
+             * carries `pending`, `processing` and `onhold`, so a selection of
+             * cancelled orders set back to `processing` from this list was,
+             * until now, forty oversells in one press.
+             *
+             * Reported rather than fatal, which is the shape this endpoint
+             * already uses for the revenue guard above: the operator asked for
+             * a selection, the half of it that adds up is still what they
+             * meant, and the half that does not is named. One order refused
+             * must not cost the other thirty-nine their transition, and it
+             * cannot — each moveTo() is its own transaction and a refusal
+             * rolls back only its own.
+             */
+            try {
+                $statuses->moveTo($id, $status, by: $author, reason: 'Set from the orders list.');
+                $changed++;
+            } catch (\App\Services\Orders\OrderReviveRefused $e) {
+                $order = $byId[$id] ?? null;
+
+                $skipped[] = [
+                    'id' => $id,
+                    'label' => (string) ($order?->order_number ?? $id),
+                    'status' => (string) ($order?->status ?? ''),
+                    'total_fils' => (int) ($order?->total ?? 0),
+                    'total_display' => Money::plain((int) ($order?->total ?? 0)),
+                    'reason' => $e->getMessage(),
+                    // NOT forceable. `force` is the operator's answer to "this
+                    // takes money off your figures", which is a question only
+                    // they can settle. It is not an answer to "that jar has
+                    // been sold", and wiring it to one would put a button on
+                    // the screen whose whole job is to create the oversell.
+                    'forceable' => false,
+                ];
+            }
         }
 
         return response()->json([
             'ok' => true,
             'status' => $status,
-            'changed' => count($changeable),
+            // What actually moved, not what was scheduled to. A refusal in the
+            // loop above has to come off this number or the screen reports
+            // forty orders updated over thirty-nine.
+            'changed' => $changed,
             'skipped' => $skipped,
         ]);
     }

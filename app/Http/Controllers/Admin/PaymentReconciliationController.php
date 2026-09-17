@@ -202,6 +202,15 @@ class PaymentReconciliationController extends Controller
             'page' => $page,
             'per_page' => self::PAGE,
             'counts' => $this->reconciler->counts($run),
+            /*
+             * Whether this run actually READ the providers, beside the counts
+             * that say what it found. The two are different questions and the
+             * report used to answer only the second: a run an outage closed
+             * showed an empty list and said nothing about why it was empty.
+             * Computed without reference to acknowledged_at — see
+             * Reconciler::blindness().
+             */
+            'blindness' => $this->reconciler->blindness($run),
             'findings' => $rows->map(fn ($f) => [
                 'id' => (int) $f->id,
                 'provider' => (string) $f->provider,
@@ -238,6 +247,36 @@ class PaymentReconciliationController extends Controller
      * Who and when are recorded because an acknowledgement hides a money
      * discrepancy from the default view, and anything that hides a money
      * discrepancy has to say who hid it.
+     *
+     * ---------------------------------------------------------------------
+     * AND IT IS REFUSED ON THE TWO "COULD NOT BE READ" KINDS
+     * ---------------------------------------------------------------------
+     *
+     * Acknowledging a discrepancy means "I looked, it's fine". Acknowledging
+     * "I could not look" does not make the looking happen — and it used to be
+     * accepted, with Reconciler::counts() then leaving the row out. So the
+     * screen read ZERO outstanding on a run that had read nothing from the
+     * provider, while `run.status` said `complete` because every phase was
+     * finished, including the ones finished by failure. The window sat in the
+     * list looking reconciled and never got checked.
+     *
+     * The adversarial lane's rearmUnavailable() substantially defused this:
+     * reopening the run now re-runs exactly those phases for real. A run
+     * nobody reopens still read clean, and this is what closes that.
+     *
+     * WHY THE REFUSAL RATHER THAN A RUN-LEVEL FLAG ALONE. A flag needs a
+     * screen to read it, and this repository cannot ship a view change in this
+     * lane. The refusal needs nothing: with the row un-ackable, counts() can
+     * never reach zero on a blind run, on the screen exactly as it stands
+     * today. The flag is worth having as well and is on the run
+     * (Reconciler::blindness()), but it says WHY, and the count is what stops
+     * the owner believing a window has been answered.
+     *
+     * IT IS NOT A DEAD END, which is the thing that would make it the wrong
+     * call. The notice clears itself the moment the run is opened again and
+     * the provider answers — rearmUnavailable() deletes it and re-walks the
+     * phases — so the operator's way out is the one that actually reconciles
+     * the window rather than the one that hides the question.
      */
     public function acknowledge(Request $request, int $run, int $finding): JsonResponse
     {
@@ -249,6 +288,19 @@ class PaymentReconciliationController extends Controller
             return response()->json(['error' => 'not_found'], 404);
         }
 
+        if (in_array((string) $row->kind, Reconciler::COULD_NOT_LOOK, true)) {
+            return response()->json([
+                'error' => 'cannot_acknowledge',
+                'kind' => (string) $row->kind,
+                'message' => 'This is not a discrepancy to agree with — it is this run saying it could not read the '
+                    . 'provider\'s books at all. Acknowledging it would empty the count on a window nothing was '
+                    . 'checked against. Press Run over these dates again once the provider is reachable: the phases '
+                    . 'that outage skipped are re-run for real and this notice clears itself.',
+                'counts' => $this->reconciler->counts($run),
+                'blindness' => $this->reconciler->blindness($run),
+            ], 422);
+        }
+
         DB::table(Reconciler::FINDINGS)->where('id', $finding)->update([
             'acknowledged_at' => now(),
             'acknowledged_by' => substr((string) (auth('admin')->user()?->name ?? 'admin'), 0, 190),
@@ -256,7 +308,13 @@ class PaymentReconciliationController extends Controller
             'updated_at' => now(),
         ]);
 
-        return response()->json(['ok' => true, 'counts' => $this->reconciler->counts($run)]);
+        return response()->json([
+            'ok' => true,
+            'counts' => $this->reconciler->counts($run),
+            // Sent with every ack so the screen's summary line can never fall
+            // out of step with whether the run looked at anything.
+            'blindness' => $this->reconciler->blindness($run),
+        ]);
     }
 
     /**

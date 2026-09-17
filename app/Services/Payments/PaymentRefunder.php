@@ -245,26 +245,57 @@ class PaymentRefunder
      */
     public function capturedFils(Order $order): int
     {
-        $captured = (int) ($order->captured_total ?? 0);
+        return self::ceilingFrom(
+            (int) ($order->captured_total ?? 0),
+            $order->captured_at !== null,
+            $order->paid_at !== null,
+            // Only `paid` rows. A row whose status is `amount_mismatch`,
+            // `currency_mismatch` or a provider failure reason records a
+            // payment that was REFUSED, and summing it would build the ceiling
+            // out of money that never arrived.
+            //
+            // A CLOSURE so the query is not made when the two lines above have
+            // already answered — an order captured through this lane never
+            // needed it and must not start paying for it.
+            fn (): int => (int) Payment::query()
+                ->where('order_id', $order->getKey())
+                ->where('status', 'paid')
+                ->sum('amount'),
+            (int) $order->total,
+        );
+    }
 
-        if ($order->captured_at !== null && $captured > 0) {
-            return $captured;
+    /**
+     * The ceiling rule itself, in one place, taking facts rather than a model.
+     *
+     * Extracted so that a caller asking the same question about MANY orders at
+     * once — StripeConnect's disconnect warning does, over every order this
+     * gateway ever took money for — gets the identical answer without either
+     * re-deriving it or paying for one query per order. Two implementations of
+     * "how much of this could still come back" would drift, and the one that
+     * drifts is the one on the screen nobody is looking at.
+     *
+     * @param  \Closure(): int  $confirmedPaid  summed `paid` payment rows, asked
+     *                                          for only when it is needed.
+     */
+    private static function ceilingFrom(
+        int $capturedTotal,
+        bool $captured,
+        bool $paid,
+        \Closure $confirmedPaid,
+        int $total,
+    ): int {
+        if ($captured && $capturedTotal > 0) {
+            return $capturedTotal;
         }
 
-        if ($order->paid_at === null) {
+        if (! $paid) {
             return 0;
         }
 
-        // Only `paid` rows. A row whose status is `amount_mismatch`,
-        // `currency_mismatch` or a provider failure reason records a payment
-        // that was REFUSED, and summing it would build the ceiling out of
-        // money that never arrived.
-        $confirmed = (int) Payment::query()
-            ->where('order_id', $order->getKey())
-            ->where('status', 'paid')
-            ->sum('amount');
+        $confirmed = $confirmedPaid();
 
-        return $confirmed > 0 ? $confirmed : (int) $order->total;
+        return $confirmed > 0 ? $confirmed : $total;
     }
 
     /** Fils already refunded or reserved against this order. */
@@ -274,6 +305,145 @@ class PaymentRefunder
             ->where('order_id', $order->getKey())
             ->whereIn('status', self::COUNTED)
             ->sum('amount');
+    }
+
+
+    /**
+     * Money this gateway has taken and not given back, across the whole shop.
+     *
+     * ---------------------------------------------------------------------
+     * What it is for
+     * ---------------------------------------------------------------------
+     *
+     * StripeConnect::disconnect() shows a confirm dialog built from
+     * inFlight(), which counts orders with `paid_at IS NULL` — shoppers who may
+     * be on Stripe's payment page right now. It had NO notion of refundable
+     * money at all, so a shop holding a fully captured AED 250.00 Stripe order
+     * was told `in_flight.count = 0` and pressed Disconnect on a clean-looking
+     * dialog. The refund afterwards comes back `not_configured`: no key, no
+     * Stripe refund, and no way to return that money through the panel at all.
+     *
+     * The structural half of that is unavoidable — a refund needs a key. The
+     * WARNING is the fixable half, and this is it.
+     *
+     * ---------------------------------------------------------------------
+     * IT IS THIS CLASS'S OWN ARITHMETIC, NOT A SECOND OPINION
+     * ---------------------------------------------------------------------
+     *
+     * "Captured" means what capturedFils() means — the sum of `paid` payment
+     * rows the provider confirmed, `captured_total` when the order went
+     * through this lane, and `orders.total` only for an imported order with no
+     * payment row. It deliberately does NOT mean `orders.total`, which is a
+     * column an operator can edit and which used to be the ceiling; the header
+     * on capturedFils() sets out what that cost. "Refunded" means what
+     * refundedFils() means — `pending` and `succeeded` refunds both, because a
+     * refund in flight is money already spoken for.
+     *
+     * Both come from ceilingFrom() and COUNTED, the same two things the
+     * single-order path uses. What is different here is only HOW the inputs are
+     * gathered: two grouped queries per chunk instead of two queries per order,
+     * because this runs on a screen the owner opens rather than on a button he
+     * presses once.
+     *
+     * ---------------------------------------------------------------------
+     * WHAT IS COUNTED, AND WHAT IS NOT
+     * ---------------------------------------------------------------------
+     *
+     * Every order on this gateway that has either a `paid_at` or a
+     * `captured_at`, whatever its status. NOT bounded to a recent window, which
+     * is the one thing this must not copy from inFlight(): an order from March
+     * that the shop still holds money for is exactly as unrefundable after a
+     * disconnect as one from this morning, and hiding it would make the
+     * warning a lie in the direction that costs the owner money.
+     *
+     * Trashed orders are included on purpose. A soft-deleted order's money is
+     * still in the owner's Stripe account and still the buyer's.
+     *
+     * @param  int  $sample  how many to name on the dialog, oldest first. The
+     *                       COUNT and the TOTAL are over everything; only the
+     *                       list is cut.
+     * @return array{count: int, amount: int, amount_display: string, currency: string, orders: array<int, array<string, mixed>>}
+     */
+    public function gatewayPosition(string $gateway, int $sample = 10): array
+    {
+        $count = 0;
+        $amount = 0;
+        $orders = [];
+
+        Order::withTrashed()
+            ->where('payment_method', $gateway)
+            ->where(fn ($q) => $q->whereNotNull('paid_at')->orWhereNotNull('captured_at'))
+            ->select(['id', 'order_number', 'status', 'total', 'currency', 'paid_at', 'captured_at', 'captured_total', 'created_at'])
+            /*
+             * By id rather than by page: the set is being read while nothing
+             * stops an order being paid underneath it, and an offset walk would
+             * skip or repeat a row when that happens.
+             *
+             * chunkById imposes ascending id and no ordering of ours survives
+             * it, so the named list is the OLDEST of them. That is deliberate
+             * rather than merely accepted: an order from March the shop is
+             * still holding money for is the one the owner has stopped
+             * thinking about, and it is the one this dialog exists to put in
+             * front of him. The count and the total are over everything either
+             * way.
+             */
+            ->chunkById(500, function ($chunk) use (&$count, &$amount, &$orders, $sample) {
+                $ids = $chunk->map(fn (Order $o) => (int) $o->getKey())->all();
+
+                $paid = Payment::query()
+                    ->whereIn('order_id', $ids)
+                    ->where('status', 'paid')
+                    ->groupBy('order_id')
+                    ->selectRaw('order_id, SUM(amount) as total')
+                    ->pluck('total', 'order_id');
+
+                $back = Refund::query()
+                    ->whereIn('order_id', $ids)
+                    ->whereIn('status', self::COUNTED)
+                    ->groupBy('order_id')
+                    ->selectRaw('order_id, SUM(amount) as total')
+                    ->pluck('total', 'order_id');
+
+                foreach ($chunk as $order) {
+                    $id = (int) $order->getKey();
+
+                    $captured = self::ceilingFrom(
+                        (int) ($order->captured_total ?? 0),
+                        $order->captured_at !== null,
+                        $order->paid_at !== null,
+                        fn (): int => (int) ($paid[$id] ?? 0),
+                        (int) $order->total,
+                    );
+
+                    $outstanding = $captured - (int) ($back[$id] ?? 0);
+
+                    if ($outstanding <= 0) {
+                        continue;
+                    }
+
+                    $count++;
+                    $amount += $outstanding;
+
+                    if (count($orders) < $sample) {
+                        $orders[] = [
+                            'order_number' => (string) $order->order_number,
+                            'status' => (string) $order->status,
+                            'refundable' => $outstanding,
+                            'refundable_display' => Money::plain($outstanding),
+                            'currency' => strtoupper((string) ($order->currency ?: Money::currency())),
+                            'created_at' => optional($order->created_at)->toIso8601String(),
+                        ];
+                    }
+                }
+            });
+
+        return [
+            'count' => $count,
+            'amount' => $amount,
+            'amount_display' => Money::plain($amount),
+            'currency' => Money::currency(),
+            'orders' => $orders,
+        ];
     }
 
     /* ------------------------------------------------------------ internals */

@@ -149,6 +149,38 @@ final class Reconciler
 
     public const REFUNDS_SOURCE_UNAVAILABLE = 'refunds_source_unavailable';
 
+    /**
+     * The two kinds that mean "I could not look", rather than "I looked and
+     * these two disagree".
+     *
+     * ---------------------------------------------------------------------
+     * Why they are named together, and what turns on it
+     * ---------------------------------------------------------------------
+     *
+     * Every other kind in this class is a DISCREPANCY: a fact about money that
+     * a human can read, decide about, and be done with. Acknowledging one means
+     * "I looked, it's fine" — and counts() below then leaves it out, which is
+     * the whole reason acknowledgement exists: a report that shouts about
+     * settled business stops being read.
+     *
+     * These two are not that. They are the run saying it could not read the
+     * provider's books at all. Acknowledging "I could not look" does not make
+     * the looking happen, and until this constant existed the ack was accepted
+     * on them and counts() dropped them — so the screen read ZERO outstanding
+     * on a run that had checked nothing, while `run.status` said `complete`
+     * because every phase was finished, including the ones finished by
+     * failure. A window nobody had reconciled sat in the list looking
+     * reconciled, permanently, and the check it was missing is the one this
+     * whole class is for.
+     *
+     * @see PaymentReconciliationController::acknowledge() for the refusal
+     * @see blindness() for what the run says about itself instead
+     */
+    public const COULD_NOT_LOOK = [
+        self::PAYMENTS_SOURCE_UNAVAILABLE,
+        self::REFUNDS_SOURCE_UNAVAILABLE,
+    ];
+
     /* ------------------------------------------------------------ budgets */
 
     /**
@@ -1509,6 +1541,12 @@ final class Reconciler
             'phases_total' => count($phases),
             'complete' => $done === count($phases),
             'counts' => $this->counts($runId),
+            /*
+             * WHETHER THIS RUN ACTUALLY LOOKED. `complete` above says only
+             * that no phase is left to ask for, which is as true of a run an
+             * outage closed as of one that read everything — see blindness().
+             */
+            'blindness' => $this->blindness($runId),
         ];
     }
 
@@ -1524,6 +1562,58 @@ final class Reconciler
             'phase' => $phase,
             'processed' => $row !== null ? (int) $row->processed : 0,
             'finished' => $row !== null && $row->finished_at !== null,
+        ];
+    }
+
+
+    /**
+     * Is this run blind, and to whom?
+     *
+     * ---------------------------------------------------------------------
+     * Computed WITHOUT reference to acknowledged_at, on purpose
+     * ---------------------------------------------------------------------
+     *
+     * counts() takes acknowledgement into account, because that is what
+     * acknowledgement is for. This does not, because there is no such thing as
+     * acknowledging your way out of not having looked. A run that could not
+     * read Stripe's payments list is blind to Stripe's payments whether or not
+     * an operator has ticked the notice, and the screen must be able to say so
+     * from the run itself rather than from whatever happens to be outstanding.
+     *
+     * It is also the honest reading of `complete`, which stays exactly as it
+     * was and deliberately: `complete` means "there is nothing left for the
+     * browser to ask for", which is true of a blind run and is what stops the
+     * screen polling for ever. It has never meant "answered", and this is the
+     * field that says whether it was.
+     *
+     * @return array{blind: bool, providers: array<int, array{provider: string, payments: bool, refunds: bool}>}
+     */
+    public function blindness(int $runId): array
+    {
+        $rows = DB::table(self::FINDINGS)
+            ->where('run_id', $runId)
+            ->whereIn('kind', self::COULD_NOT_LOOK)
+            ->get(['provider', 'kind']);
+
+        $providers = [];
+
+        foreach ($rows as $row) {
+            $provider = (string) $row->provider;
+
+            $providers[$provider] ??= ['provider' => $provider, 'payments' => false, 'refunds' => false];
+
+            if ((string) $row->kind === self::PAYMENTS_SOURCE_UNAVAILABLE) {
+                $providers[$provider]['payments'] = true;
+            } else {
+                $providers[$provider]['refunds'] = true;
+            }
+        }
+
+        ksort($providers);
+
+        return [
+            'blind' => $providers !== [],
+            'providers' => array_values($providers),
         ];
     }
 
