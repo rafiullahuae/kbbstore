@@ -7,9 +7,10 @@ declare(strict_types=1);
 | Back-in-stock alerts and basket reminders — public (Lane EN)
 |------------------------------------------------------------------------------
 |
-| INTEGRATOR: this file needs one line in routes/web.php, at the TOP LEVEL of
-| the file — the ordinary `web` middleware group, beside auth-customer.php and
-| newsletter-public.php, which these routes are a sibling of. Immediately after
+| MOUNTED. routes/web.php requires this file at the TOP LEVEL — the ordinary
+| `web` middleware group, beside auth-customer.php and newsletter-public.php,
+| which these routes are a sibling of. The paragraph below is the reasoning
+| behind that mount, not a request for one. It sits immediately after
 |
 |     require __DIR__.'/newsletter-public.php';
 |

@@ -284,6 +284,27 @@ function walkExpectations(array $seed): array
             'params' => ['id' => '999999'],
             'status' => 200,
         ],
+        /*
+         * Getting out of the back-in-stock and basket-reminder mails. 200 for
+         * an unsigned link with an id that was never issued, and it is the
+         * newsletter reasoning immediately above rather than a slip: the page
+         * renders for any well-formed link and the signature is judged on
+         * SUBMIT. A 404 here would answer "is this address waiting for a
+         * product?" to anyone who can guess a small integer, and
+         * OutboundOptOut::act() verifies against a decoy row so the work, and
+         * therefore the timing, is the same on both paths.
+         *
+         * Walking it also pins the half that matters operationally: this is the
+         * address in the footer of every marketing mail this shop sends, and an
+         * unsubscribe link that 404s is the complaint that gets a sending
+         * domain blocked. The route is registered above the root catch-all and
+         * 'mail-preferences' is in RESERVED_SLUGS; if either regresses, this
+         * expectation goes red rather than the link going quiet.
+         */
+        'mail-preferences/{kind}/{id}'   => [
+            'params' => ['kind' => 'stock', 'id' => '999999'],
+            'status' => 200,
+        ],
         // An unsigned link with a wrong hash is refused, signed in or not.
         'my-account/verify/{id}/{hash}'  => [
             'params' => ['id' => (string) $customer->id, 'hash' => 'not-the-hash'],

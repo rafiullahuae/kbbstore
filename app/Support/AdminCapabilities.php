@@ -458,6 +458,24 @@ final class AdminCapabilities
         ['GET', 'admin-api/reviews/*', 'reviews.view'],
 
         // --------------------------------------------------------------- marketing
+        /*
+         * Back-in-stock alerts and basket reminders.
+         *
+         * WRITE FIRST, as this map requires: `sweep` is the button that
+         * actually sends mail to real customers, so it is marketing.manage and
+         * it is listed above the reads. A `['*', 'admin-api/outbound/**']` read
+         * rule placed first would match POST /outbound/sweep and hand the send
+         * to anyone who could merely look at the list.
+         *
+         * The reads are marketing.view rather than a catalogue capability even
+         * though `demand` looks like a stock report, because what it returns is
+         * every address that has asked this shop for a product — a list of real
+         * customers' email addresses, which is the same thing the newsletter
+         * export beside it is separated out for. Whoever can read it can take
+         * the shop's marketing list with them.
+         */
+        ['POST', 'admin-api/outbound/sweep', 'marketing.manage'],
+        ['GET', 'admin-api/outbound/**', 'marketing.view'],
         ['GET', 'admin-api/newsletter/export', 'marketing.export'],
         ['*', 'admin-api/newsletter', 'marketing.manage'],
         ['*', 'admin-api/marketing-pixels', 'marketing.manage'],

@@ -343,6 +343,15 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
      */
     require __DIR__.'/payments-connect.php';
 
+    /*
+     * The admin side of the back-in-stock and basket-reminder features: who is
+     * waiting for what, the demand report, and the send. Inside this group
+     * because the demand list is every address that has asked this shop for a
+     * product — a marketing list of real customers, and the sort of thing
+     * routes/api.php has leaked three times.
+     */
+    require __DIR__.'/outbound-admin.php';
+
         // The storefront health check behind Dashboard → Check now and Safety →
         // Debug & Monitor. Inside this group and nowhere else: when a page is
         // broken it answers with the exception message and the application file
@@ -778,6 +787,16 @@ require __DIR__.'/auth-customer.php';
  * reachable without a login AND carry CSRF, which only this group gives.
  */
 require __DIR__.'/newsletter-public.php';
+
+/*
+ * Back-in-stock alerts, basket reminders, and the one page that turns any of
+ * this shop's marketing mail off. Same group and the same reasoning again, with
+ * one addition of its own: /cart/remind-me reads the CART COOKIE to decide
+ * whose basket it is talking about, so it needs the web group's session, not
+ * merely its CSRF. Before the Phase 9 file, which ends in a catch-all
+ * root-segment route.
+ */
+require __DIR__.'/outbound-public.php';
 
 /*
  * Adding a browsed product from the checkout page. Web group: it is posted by a

@@ -9889,6 +9889,14 @@ function paintMail(){
       <div id="mlResult" style="margin-top:14px">${mailLastTest()}</div>
     </div>
 
+    <div class="sec-title">Waiting to go out</div>
+    <div class="card mlf-card">
+      <div class="mlf-sec-h" style="margin-bottom:10px">
+        <div class="mlf-sec-d">Back-in-stock alerts and basket reminders that this store owes somebody. The two features are off until you switch them on, and this panel says which of the things they need is still missing rather than showing you an empty list that looks healthy.</div>
+      </div>
+      <div id="mlBacklog"><p class="mlf-muted">Loading…</p></div>
+    </div>
+
     <div class="sec-title">Sent mail</div>
     <div class="card mlf-card">
       <div class="mlf-sec-h" style="margin-bottom:10px">
@@ -9910,11 +9918,135 @@ function paintMail(){
   bindMail();
   loadStatusEmails();
   loadMailLog();
+  loadOutboundBacklog();
   /* The filter has to do something. A select that changes nothing is the
      control-with-no-writer this console has shipped before; bound here rather
      than inline so the handler cannot outlive the element it reads. */
   var mlLogSel=$('#mlLogFilter');
   if(mlLogSel) mlLogSel.addEventListener('change', loadMailLog);
+}
+
+/* ---------------------------------------------------------------------------
+   What is owed and has not gone.
+
+   FETCHED SEPARATELY from the settings half and from the delivery log, for the
+   third time on this screen and for the same reason: a store whose SMTP is
+   half-configured is exactly the store whose owner needs to read this, so a
+   failure in one half must not black out the other two.
+
+   EVERY WORD OF THE EXPLANATION COMES FROM THE SERVER. The five states, the
+   sweep interval, the per-sweep budget and the paragraph about how sending is
+   triggered are all resolved in App\Services\OutboundBacklog and sent in the
+   payload. None of it is restated here. That is not ceremony -- this host has
+   no scheduler, messages go out on the tail of ordinary page views, and a
+   sentence written into this file explaining that would be wrong the first time
+   somebody changed OutboundTick::INTERVAL, on the one panel whose entire job is
+   to explain why nothing has been sent yet.
+--------------------------------------------------------------------------- */
+function outboundBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/outbound'; }
+
+/* The same formatting the delivery log below uses, so two panels on one screen
+   do not print the same instant two different ways. */
+function mlWhen(iso){ try{ return new Date(iso).toLocaleString(); }catch(err){ return String(iso||''); } }
+
+function mlBacklogRow(title, state, lines){
+  /* The five states, in the order OutboundBacklog::state() decides them. A
+     feature that is off is off whatever else is unset, and telling an owner to
+     write a subject line for something he has not switched on is the noise that
+     teaches him to ignore a panel like this one. */
+  var look = {
+    off:         ['var(--ink-faint)', 'Switched off',        'Nothing is being collected and nothing will be sent.'],
+    unwritten:   ['var(--amber)',          'No message written',  'It is switched on and collecting, but there is no wording to send, so nothing goes out.'],
+    unscheduled: ['var(--amber)',          'No schedule set',     'It is switched on with wording, but no times are set, so nothing is ever due.'],
+    due:         ['var(--green)',          'Ready to send',       'These are owed now and will go out on the next sweep.'],
+    waiting:     ['var(--green)',          'On, nothing owed',    'Working. Nothing is owed at this moment.']
+  }[state] || ['var(--ink-faint)', state, ''];
+
+  return '<div style="padding:12px 0;border-bottom:1px solid var(--line-2,var(--border))">'+
+    '<div class="between" style="align-items:baseline">'+
+      '<span style="font-size:13px;font-weight:700">'+escHtml(title)+'</span>'+
+      '<span style="font-size:11px;font-weight:700;color:'+look[0]+'">'+escHtml(look[1])+'</span>'+
+    '</div>'+
+    (look[2]?'<div class="mlf-help" style="margin-top:2px">'+escHtml(look[2])+'</div>':'')+
+    '<div class="mlf-help" style="margin-top:6px">'+lines.map(escHtml).join(' &middot; ')+'</div>'+
+  '</div>';
+}
+
+async function loadOutboundBacklog(){
+  const host=$('#mlBacklog');
+  if(!host) return;
+
+  let d;
+  try{
+    const r=await fetch(outboundBase()+'/backlog',{credentials:'same-origin',headers:{Accept:'application/json'}});
+    if(!r.ok) throw new Error(r.status);
+    d=await r.json();
+  }catch(e){
+    /* Says which panel failed. "Could not load" on a screen with three
+       independently fetched panels sends the reader to the wrong one. */
+    host.innerHTML='<p class="mlf-muted">The waiting list could not be loaded. The delivery log below is unaffected.</p>';
+    return;
+  }
+
+  var stock=d.stock||{}, cart=d.cart||{};
+
+  /* "at least", not an exact figure, once the count hits the ceiling.
+     OutboundBacklog bounds the due query at 500 deliberately -- it is a join,
+     and this is a screen rather than a sweep -- so printing 500 as though it
+     were the total would be the panel stating a number it does not have. */
+  function due(n){ return (n>=500? 'at least 500':String(n))+' owed now'; }
+
+  var stockLines=[due(stock.due||0), (stock.pending||0)+' waiting for a product to come back'];
+  if(stock.oldest_due_at){ stockLines.push('oldest owed since '+mlWhen(stock.oldest_due_at)); }
+
+  var cartLines=[due(cart.due||0), (cart.live||0)+' baskets being followed'];
+  var hrs=cart.schedule_hours||[];
+  cartLines.push(hrs.length? ('sent after '+hrs.join(', ')+' hours') : 'no times set');
+
+  host.innerHTML =
+    mlBacklogRow('Back-in-stock alerts', stock.state, stockLines)+
+    mlBacklogRow('Basket reminders', cart.state, cartLines)+
+    '<div style="padding:12px 0 2px">'+
+      '<div class="mlf-help">'+escHtml(d.trigger||'')+'</div>'+
+      '<div class="mlf-help" style="margin-top:4px">'+
+        (d.last_swept_at
+          ? 'Last sweep '+escHtml(mlWhen(d.last_swept_at))+'.'
+          : 'No sweep has run yet on this store.')+
+      '</div>'+
+      '<div style="margin-top:12px"><button class="btn small" id="mlSweep">Send what is owed now</button></div>'+
+      /* The button's own caption, not a tooltip: an owner who thinks a button
+         might send twice will not press it, and this button exists precisely to
+         answer "is any of this actually working" on a shop too quiet to trigger
+         a sweep by itself. Pressing it twice cannot send twice -- every send
+         goes through the same claim the tick uses. */
+      '<div class="mlf-help" style="margin-top:6px">Sends only what is already owed. Nothing is sent twice, however many times you press it.</div>'+
+      '<div id="mlSweepResult" style="margin-top:10px"></div>'+
+    '</div>';
+
+  var btn=$('#mlSweep');
+  if(btn) btn.onclick=async function(){
+    btn.disabled=true; var was=btn.textContent; btn.textContent='Sending…';
+    var out=$('#mlSweepResult');
+    try{
+      const rs=await fetch(outboundBase()+'/sweep',{
+        method:'POST',
+        credentials:'same-origin',
+        headers:{Accept:'application/json','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')||{}).content||''}
+      });
+      if(!rs.ok) throw new Error(rs.status);
+      var r=await rs.json();
+      var sent=(r&&r.sent)||{};
+      var n=(sent.stock||0)+(sent.cart||0);
+      if(out) out.innerHTML='<p class="mlf-muted">'+(n
+        ? escHtml(n+' message'+(n===1?'':'s')+' sent. Check the delivery log below for what the mail server said.')
+        : 'Nothing was owed, so nothing was sent.')+'</p>';
+    }catch(e){
+      if(out) out.innerHTML='<p class="mlf-muted">The sweep could not be run.</p>';
+    }
+    btn.disabled=false; btn.textContent=was;
+    /* Both panels, because a sweep changes what each of them shows. */
+    loadOutboundBacklog(); loadMailLog();
+  };
 }
 
 /* ---------------------------------------------------------------------------
@@ -14219,7 +14351,7 @@ buildNav();
      without the dates it covers. */
   function anCardHead(title, desc, period){
     var chip = period ? '<span class="an-chip">'+sesc(period.label)+' · '+sesc(period.range_label)+'</span>' : '';
-    return '<div class="an-sec-h">'+chip+'<div class="an-sec-t">'+sesc(title)+'</div>'+
+    return '<div class="an-sec-h">'+chip+'<div class="an-sec-t">'+sescHtml(title)+'</div>'+
       '<div class="an-sec-d">'+desc+'</div></div>';
   }
 

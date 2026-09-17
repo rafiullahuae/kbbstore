@@ -7,15 +7,10 @@ declare(strict_types=1);
 | Back-in-stock and cart recovery — admin API (Lane EN)
 |------------------------------------------------------------------------------
 |
-| INTEGRATOR: this file needs one line INSIDE the existing admin-api group in
-| routes/web.php — the one already carrying `auth:admin` and NoStoreAdminApi —
-| directly below
-|
-|     require __DIR__.'/mail-admin.php';
-|
-| giving
-|
-|     require __DIR__.'/outbound-admin.php';
+| MOUNTED. routes/web.php requires this file INSIDE the existing admin-api
+| group — the one already carrying `auth:admin` and NoStoreAdminApi — beside
+| the other admin requires. The paragraph below is the reasoning behind that
+| mount, not a request for one.
 |
 | It must go inside that group and this is not a style preference:
 |

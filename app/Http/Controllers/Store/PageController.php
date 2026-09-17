@@ -63,6 +63,13 @@ class PageController extends Controller
         // this the root catch-all below swallows them and every confirmation
         // link in every mail this shop sends resolves to a post lookup.
         'newsletter',
+        // Back-in-stock alerts, basket reminders, and the page that turns this
+        // shop's marketing mail off. Same reason as 'newsletter' above, and one
+        // of them matters more: /mail-preferences is the address in the footer
+        // of every marketing mail this shop sends. Swallowed by the root
+        // catch-all it becomes a post lookup, which is a 404 — an unsubscribe
+        // link that 404s is the complaint that gets a sending domain blocked.
+        'notify-me', 'mail-preferences',
         'about', 'delivery', 'faqs', 'contact-us',
         'privacy-policy', 'terms-and-conditions',
         // Served off disk by the web server, never by PHP
