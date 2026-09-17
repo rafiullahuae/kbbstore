@@ -43,9 +43,125 @@ class MenuDemo
         'Torriden', 'TOSOWOONG', 'VT Cosmetics',
     ];
 
-    private static function slug(string $name): string
+    /**
+     * A label reduced to its letters and digits, lower-cased.
+     *
+     * The join between a published label and a `brands` row, for the cases
+     * where neither the slug nor the name matches character for character:
+     * "SKIN 1004" and "SKIN1004" both fold to `skin1004`, and "Dr.Althea",
+     * "Dr. Althea" and the slug `dr-althea` all fold to `dralthea`. It is a
+     * LAST resort — brandIndex() tries the slug and then the name first, and
+     * discards any fold key two different brands share.
+     */
+    private static function fold(string $s): string
     {
-        return \Illuminate\Support\Str::slug($name);
+        return (string) preg_replace('/[^a-z0-9]+/', '', mb_strtolower(trim($s)));
+    }
+
+    /**
+     * The brands this shop actually carries, indexed three ways for lookup.
+     *
+     * ── WHY A LOOKUP AND NOT Str::slug() ────────────────────────────────────
+     *
+     * The brand leaves used to build their slug by transforming the LABEL:
+     * Str::slug('Dr.Althea') is `dralthea`, and the brand's real slug — the one
+     * the seeded menu carries, explicitly mapped, and the one an import brings
+     * in — is `dr-althea`. Nine of the sixty-five labels here disagree with
+     * their own brand that way.
+     *
+     * A brand slug that names no brand is NOT a 404. ShopController applies the
+     * facet whenever it is non-empty (`whereHas('brand', whereIn slug)`), so
+     * /shop/?filter_brands=dralthea answers 200 with an empty grid and the
+     * words "No products match those filters" — the shop telling a shopper who
+     * asked for Dr.Althea that it stocks nothing by Dr.Althea, when what is
+     * actually true is that the menu named a brand the shop does not carry.
+     * Measured, not assumed: /shop/ renders 24 cards on the demo fixture,
+     * ?filter_brands=cosrx renders 3, and ?filter_brands=dralthea renders 0.
+     *
+     * So the slug is READ OFF THE `brands` TABLE, and a label that matches no
+     * brand is not published at all — see tree(). Unlike the category URLs in
+     * App\Support\LegacyCategoryUrls, resolving here bakes nothing in: this
+     * tree is rebuilt on every render, so a brand arriving by WordPress import
+     * makes its menu item appear by itself on the next request, and a brand
+     * deleted in the admin makes it disappear.
+     *
+     * @return array{slug: array<string,string>, name: array<string,string>, fold: array<string,string|null>}
+     */
+    private static function brandIndex(): array
+    {
+        $empty = ['slug' => [], 'name' => [], 'fold' => []];
+
+        try {
+            /** @var list<object{name: ?string, slug: ?string}> $rows */
+            $rows = \App\Models\Brand::query()->orderBy('id')->get(['name', 'slug'])->all();
+        } catch (\Throwable) {
+            // No database, or no `brands` table yet: this runs from a Blade
+            // partial on a real request, and a menu is never worth a 500. With
+            // no brands known, no brand leaf is published — which is the same
+            // rule the rest of this method keeps.
+            return $empty;
+        }
+
+        $index = $empty;
+
+        foreach ($rows as $row) {
+            $slug = trim((string) ($row->slug ?? ''));
+
+            if ($slug === '') {
+                continue;
+            }
+
+            $index['slug'][$slug] ??= $slug;
+
+            $name = mb_strtolower(trim((string) ($row->name ?? '')));
+
+            if ($name !== '') {
+                $index['name'][$name] ??= $slug;
+            }
+
+            foreach ([self::fold((string) ($row->name ?? '')), self::fold($slug)] as $key) {
+                if ($key === '') {
+                    continue;
+                }
+
+                // Two brands sharing a fold key make that key useless: there is
+                // no way to tell which one a label meant, and guessing is how a
+                // menu item ends up filtering for the wrong brand. Null marks it
+                // as ambiguous and brandSlug() then declines to answer.
+                if (array_key_exists($key, $index['fold']) && $index['fold'][$key] !== $slug) {
+                    $index['fold'][$key] = null;
+
+                    continue;
+                }
+
+                $index['fold'][$key] ??= $slug;
+            }
+        }
+
+        return $index;
+    }
+
+    /**
+     * The slug of the brand a published label names, or null if this shop has
+     * no such brand.
+     *
+     * @param  array{slug: array<string,string>, name: array<string,string>, fold: array<string,string|null>}  $index
+     */
+    private static function brandSlug(string $label, array $index): ?string
+    {
+        $bySlug = $index['slug'][\Illuminate\Support\Str::slug($label)] ?? null;
+
+        if ($bySlug !== null) {
+            return $bySlug;
+        }
+
+        $byName = $index['name'][mb_strtolower(trim($label))] ?? null;
+
+        if ($byName !== null) {
+            return $byName;
+        }
+
+        return $index['fold'][self::fold($label)] ?? null;
     }
 
     private static function leaf(string $label, string $url, bool $hot = false): array
@@ -132,17 +248,47 @@ class MenuDemo
          * here, on a shop that has not run the WordPress import. It also meant
          * the mobile drawer (which this fallback tops up) and the header
          * published the same brand at two different addresses.
+         *
+         * Moving them onto /shop/?filter_brands= fixed the address and left the
+         * SLUG wrong, which was the worse half: Str::slug('Dr.Althea') is
+         * `dralthea` and the brand is `dr-althea`, so the link stopped 404ing
+         * and started answering 200 with an empty grid. The slug now comes off
+         * the `brands` table (brandIndex()), and a label with no brand behind it
+         * is DROPPED rather than published — a menu entry that names a brand
+         * and then shows the shopper nothing is the defect, not the mitigation.
          */
-        $brandLeaf = fn (string $b) => self::leaf($b, '/shop/?filter_brands=' . self::slug($b));
+        $index = self::brandIndex();
+
+        $brandLeaves = static function (array $labels) use ($index): array {
+            $out = [];
+
+            foreach ($labels as $label) {
+                $slug = self::brandSlug($label, $index);
+
+                if ($slug === null) {
+                    continue;
+                }
+
+                $out[] = self::leaf($label, '/shop/?filter_brands=' . $slug);
+            }
+
+            return $out;
+        };
 
         return [
             [
                 'id' => 0, 'label' => 'Brands', 'url' => '/korean-skincare-brands/', 'icon' => null, 'badge' => null,
                 'children' => [
+                    /*
+                     * Both nodes keep their own link to the brand directory
+                     * even when every child has been dropped: /korean-skincare-
+                     * brands/ lists whatever brands the shop has, so an empty
+                     * Trending Brands still takes the shopper somewhere true.
+                     */
                     ['id' => 0, 'label' => 'Trending Brands', 'url' => '/korean-skincare-brands/', 'icon' => null, 'badge' => null,
-                     'children' => array_map($brandLeaf, self::TRENDING)],
+                     'children' => $brandLeaves(self::TRENDING)],
                     ['id' => 0, 'label' => 'All Brands', 'url' => '/korean-skincare-brands/', 'icon' => null, 'badge' => null,
-                     'children' => array_map($brandLeaf, self::BRANDS)],
+                     'children' => $brandLeaves(self::BRANDS)],
                 ],
             ],
             [

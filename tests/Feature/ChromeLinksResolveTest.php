@@ -102,33 +102,48 @@ function chromeHeader(string $html): string
 }
 
 /**
- * Everything the mobile chrome emits: the slide-out menu and the bottom tab
- * bar, both rendered server-side by partials/mobile-chrome.blade.php.
+ * The slide-out mobile drawer, `<nav class="mmenu" id="mmenu">` in
+ * partials/mobile-chrome.blade.php. Rendered on every page, so it is never
+ * optional and never allowed to parse to nothing.
  */
-function chromeMobile(string $html): string
+function chromeDrawer(string $html): string
 {
-    $regions = '';
-
     /*
-     * LANE DS: the first pattern here matched NOTHING. The drawer is
-     * `<nav class="mmenu" id="mmenu">` (partials/mobile-chrome.blade.php), not
-     * a div with id="mmDrawer", so this helper returned the empty string and
-     * the mobile half of the walk below was silently inert — thirty-six links
-     * that nobody was checking. It still passed, because the header alone
-     * clears the "more than 10 hrefs" floor.
+     * LANE DS: the pattern here matched NOTHING. It looked for a div with
+     * id="mmDrawer" and the drawer is a nav with class="mmenu", so the helper
+     * returned the empty string and the mobile half of the walk below was
+     * silently inert — thirty-six links that nobody was checking. It still
+     * passed, because the header alone clears the "more than 10 hrefs" floor.
      *
-     * The count assertion in each caller is what turns that class of mistake
-     * into a failure rather than a silent pass, so there is one here too.
+     * LANE EC: that fix left two halves of the same shape behind, and both are
+     * closed now. The drawer and the tab bar were concatenated into one string
+     * and checked for being non-empty TOGETHER, so either one going stale was
+     * still masked by the other — so they are separate helpers with separate
+     * assertions. And the caller's floor was over the header and the mobile
+     * chrome COMBINED, which is the very masking Lane DS's note describes; it
+     * is now one floor per region.
      */
-    foreach (['#<nav[^>]+class="[^"]*\bmmenu\b[^"]*".*?</nav>#si', '#<nav[^>]+class="[^"]*\btb\b[^"]*".*?</nav>#si'] as $pattern) {
-        if (preg_match($pattern, $html, $m)) {
-            $regions .= $m[0];
-        }
-    }
+    expect((bool) preg_match('#<nav[^>]+class="[^"]*\bmmenu\b[^"]*".*?</nav>#si', $html, $m))
+        ->toBeTrue('The page rendered no mobile drawer at all; the region pattern is stale.');
 
-    expect($regions)->not->toBe('', 'The mobile chrome parsed to nothing at all; the region patterns are stale.');
+    return $m[0];
+}
 
-    return $regions;
+/**
+ * The bottom tab bar, `<nav class="tabbar">` — behind the `mobile_tabbar`
+ * module, which is OFF by default, so this returns null when it is not on.
+ *
+ * LANE EC: the pattern used to look for `\btb\b`. The element's class is
+ * `tabbar`, and `\btb\b` does not match inside it, so this region had never
+ * matched anything on any run — a second stale selector hiding behind the
+ * first. Nobody noticed because the module is off in the fixture and a region
+ * that is legitimately absent looks exactly like a region whose selector is
+ * wrong. That is why the caller below TURNS THE MODULE ON: an optional region
+ * can only be checked by making it non-optional first.
+ */
+function chromeTabbar(string $html): ?string
+{
+    return preg_match('#<nav[^>]+class="[^"]*\btabbar\b[^"]*".*?</nav>#si', $html, $m) ? $m[0] : null;
 }
 
 function chromeIsInternal(string $href): bool
@@ -356,12 +371,27 @@ it('backs every hard-coded page slug with a published row', function () {
 it('emits nothing in the header or mobile chrome that 500s or points nowhere', function () {
     $html = $this->get('/')->assertOk()->getContent();
 
-    $hrefs = array_unique(array_merge(
-        chromeHrefs(chromeHeader($html)),
-        chromeHrefs(chromeMobile($html)),
-    ));
+    $headerHrefs = chromeHrefs(chromeHeader($html));
+    $drawerHrefs = chromeHrefs(chromeDrawer($html));
 
-    expect(count($hrefs))->toBeGreaterThan(10, 'The header and mobile chrome rendered almost no links; the parse is wrong.');
+    /*
+     * ONE FLOOR PER REGION, and this is the point of the whole exercise.
+     *
+     * The single combined floor that stood here — "more than 10 hrefs" over the
+     * header and the mobile chrome together — is exactly what let Lane DR's
+     * broken drawer selector pass for as long as it did: the header emits forty
+     * links on its own, so the drawer could contribute zero and the assertion
+     * never noticed. A floor that one section can satisfy on behalf of another
+     * is not measuring either of them.
+     *
+     * The numbers are the measured counts rounded well down — 40 in the header
+     * and 36 in the drawer on this fixture — so they catch a region collapsing
+     * without failing every time a menu item is added or removed.
+     */
+    expect(count($headerHrefs))->toBeGreaterThan(10, 'The header rendered almost no links; the parse is wrong.');
+    expect(count($drawerHrefs))->toBeGreaterThan(10, 'The mobile drawer rendered almost no links; the parse is wrong.');
+
+    $hrefs = array_values(array_unique(array_merge($headerHrefs, $drawerHrefs)));
 
     $broken = [];
     $tolerated = [];
@@ -417,6 +447,59 @@ it('emits nothing in the header or mobile chrome that 500s or points nowhere', f
         12,
         'More chrome links now depend on catalogue rows that may not exist: ' . implode(', ', $tolerated),
     );
+});
+
+it('emits no dead link in the floating bottom bar once it is switched on', function () {
+    /*
+     * LANE EC — the region nobody had ever parsed.
+     *
+     * The bottom tab bar is behind Store → Modules → "Floating bottom menu
+     * (mobile)", which is OFF by default, so on the fixture the walk above runs
+     * against it never renders. Its selector was ALSO wrong (`\btb\b` against a
+     * class of `tabbar`), and the two faults hid each other perfectly: an
+     * absent region and a stale selector produce the same empty string, and no
+     * assertion could tell them apart while the module stayed off.
+     *
+     * The only way to check an optional region is to make it mandatory, so this
+     * test turns the module on and then requires the bar to be there, to carry
+     * links, and for every one of them to resolve. Its own test file
+     * (MobileTabbarToggleTest) proves the switch works; this one proves the bar
+     * it switches on is not five dead links.
+     */
+    app(\App\Services\SettingsService::class)->setModule('mobile_tabbar', true);
+
+    $html = $this->get('/')->assertOk()->getContent();
+    $tabbar = chromeTabbar($html);
+
+    expect($tabbar)->not->toBeNull(
+        'The tab bar did not render with its own module switched on, so either the module is '
+        . 'broken or the region selector is stale again.',
+    );
+
+    $hrefs = chromeHrefs((string) $tabbar);
+
+    expect(count($hrefs))->toBeGreaterThanOrEqual(
+        4,
+        'The tab bar parsed but emitted almost no links; the region matched the wrong element.',
+    );
+
+    $dead = [];
+
+    foreach ($hrefs as $href) {
+        if (! chromeIsInternal($href)) {
+            continue;
+        }
+
+        $status = $this->get($href)->getStatusCode();
+
+        // A redirect is fine here and is what /my-wishlist/ gives a logged-out
+        // visitor; only a real dead end counts.
+        if ($status >= 400) {
+            $dead[] = $href . ' → ' . $status;
+        }
+    }
+
+    expect($dead)->toBe([], 'The floating bottom bar links to pages that do not exist: ' . implode(', ', $dead));
 });
 
 it('reaches the account area from the chrome without a 404', function () {
