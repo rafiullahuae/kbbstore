@@ -86,7 +86,38 @@ final class OrderItemImporter extends EntityImporter
             }
         }
 
-        $quantity = max(0, $row->int(1, 'quantity', 'qty', 'item_quantity'));
+        $report = $context->report->for($this->name());
+
+        $rawQuantity = $row->int(1, 'quantity', 'qty', 'item_quantity');
+        $quantity = max(0, $rawQuantity);
+
+        /*
+         * A NEGATIVE QUANTITY IS A REFUND LINE, and max(0, ...) turned it into
+         * a line that says nothing was bought while its money column still says
+         * minus fifty dirhams. WooCommerce writes refunds as line items with
+         * negative quantities and negative totals against the original order,
+         * so this is not an exotic case -- it is every refunded order in the
+         * store, and this shop's own report shows 520 orders in `refunded`.
+         *
+         * The clamp is kept, because `order_items.quantity` is unsigned in the
+         * Phase 0 schema and MySQL in strict mode would refuse the insert
+         * outright. What was missing is the sentence: a line whose quantity the
+         * import CHANGED from -1 to 0, while leaving the money alone, is a line
+         * whose quantity and whose total now disagree, and only the owner can
+         * say whether a refund belongs in this store's history at all.
+         */
+        if ($rawQuantity < 0) {
+            $report->adjusted(
+                'a negative quantity clamped to zero -- WooCommerce writes a refund as a line with a '
+                .'negative quantity, and order_items.quantity is unsigned, so the quantity was changed '
+                .'and the money was not: the two no longer agree',
+                $row->line,
+                $this->identify($row),
+                'quantity',
+                (string) $rawQuantity,
+                '0',
+            );
+        }
 
         $subtotal = $row->money('subtotal', 'subtotal', 'item_subtotal', 'line_subtotal');
         $total = $row->money('total', 'total', 'item_total', 'line_total');
@@ -101,6 +132,34 @@ final class OrderItemImporter extends EntityImporter
         if ($unitPrice === null) {
             $basis = $subtotal ?? $total;
             $unitPrice = ($basis !== null && $quantity > 0) ? intdiv($basis, $quantity) : 0;
+
+            /*
+             * intdiv() TRUNCATES, and three-for-AED-100 is not a rare shape in
+             * a shop that runs bundle promotions. 10,000 fils over three units
+             * is 3,333 fils each and 9,999 fils of line, so the unit price
+             * printed on the order page multiplies back to a penny less than
+             * the total printed beside it.
+             *
+             * The truncation stays -- subtotal and total are the exact columns
+             * and every money figure is computed from them, which is the right
+             * design. But the order page prints unit_price, and a customer
+             * service call about "your own invoice does not add up" is a real
+             * cost. Counted, so the owner knows how many lines it is true of
+             * before they find out from a customer.
+             */
+            if ($basis !== null && $quantity > 0 && $unitPrice * $quantity !== $basis) {
+                $report->adjusted(
+                    'a unit price truncated by integer division -- the line total does not divide evenly '
+                    .'by its quantity, so unit price x quantity is a fil or two short of the total printed '
+                    .'beside it on the order page',
+                    $row->line,
+                    $this->identify($row),
+                    'unit_price',
+                    \App\Support\Money::amount($basis, 2).' over '.$quantity,
+                    \App\Support\Money::amount($unitPrice, 2).' each ('
+                        .\App\Support\Money::amount($unitPrice * $quantity, 2).' back)',
+                );
+            }
         }
 
         $item = OrderItem::query()->where('wc_item_id', $itemId)->first() ?? new OrderItem;

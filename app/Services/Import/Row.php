@@ -26,6 +26,30 @@ namespace App\Services\Import;
 final class Row
 {
     /**
+     * Every column this row has been ASKED for, whether or not it held a value.
+     *
+     * WHY THE ROW COUNTS ITS OWN READS. Phase 13's third bucket is "discard",
+     * and the plan says the owner approves it. The report could name a row it
+     * refused and a row it took. It could not name a COLUMN it ignored -- and a
+     * WooCommerce export is mostly columns this schema has no home for: tax
+     * lines, downloadable file permissions, attribute pairs, subscription
+     * metadata, every `meta:` key a plugin ever wrote. Some of those the owner
+     * is content to lose. Some of them -- a second phone number, a delivery
+     * instruction, a gift message -- they would not be, and they had no way to
+     * find out, because an unread column looks exactly like a column that
+     * imported cleanly: absent from the report either way.
+     *
+     * Recorded on the ACCESS and not on the value, deliberately. `sale_price`
+     * asked for and empty is a column this importer understands and a product
+     * that is not on sale. `meta:_wcj_gift_message` never asked for is a column
+     * nothing in this application knows exists. Those are different facts and
+     * only the access distinguishes them.
+     *
+     * @var array<string, true>
+     */
+    private array $read = [];
+
+    /**
      * @param  array<string, string>  $cells
      */
     public function __construct(
@@ -39,6 +63,8 @@ final class Row
     public function raw(string ...$aliases): ?string
     {
         foreach ($aliases as $alias) {
+            $this->read[$alias] = true;
+
             if (array_key_exists($alias, $this->cells)) {
                 return $this->cells[$alias];
             }
@@ -197,7 +223,32 @@ final class Row
 
     public function has(string $alias): bool
     {
+        $this->read[$alias] = true;
+
         return array_key_exists($alias, $this->cells);
+    }
+
+    /**
+     * The aliases anything asked this row for.
+     *
+     * Unioned ACROSS THE WHOLE ENTITY by the runner rather than judged one row
+     * at a time, because a row that was rejected on its first field never got
+     * as far as asking for the rest -- and a column is only genuinely ignored
+     * if NO row ever asked for it. Per-row it would name every column of every
+     * refused row as discarded, which is the false-positive shape that makes a
+     * discard list unreadable and therefore unread.
+     *
+     * @return array<string, true>
+     */
+    public function readKeys(): array
+    {
+        return $this->read;
+    }
+
+    /** @return list<string> */
+    public function columns(): array
+    {
+        return array_keys($this->cells);
     }
 
     /** @return array<string, string> */

@@ -16,9 +16,14 @@ it.
 
 ```bash
 # 1. Look before you write. This does the whole import and rolls it back.
-php artisan kbb:import --dir=storage/app/woo --dry-run --rejects=storage/app/rejects.csv
+#    --changes= is the discard list Phase 13 says you have to approve.
+php artisan kbb:import --dir=storage/app/woo --dry-run \
+    --rejects=storage/app/rejects.csv --changes=storage/app/changes.csv
 
-# 2. Read storage/app/rejects.csv. Fix the export. Repeat step 1.
+# 2. Read BOTH files. rejects.csv is what will not be in the database; fix the
+#    export and repeat step 1. changes.csv is what goes in altered and what is
+#    dropped on the way — nothing there stops the import, and all of it is
+#    yours to approve before it happens.
 
 # 3. Do it for real.
 php artisan kbb:import --dir=storage/app/woo
@@ -162,6 +167,44 @@ refused:
   store's revenue.
 - **A category whose parent is not in the export.** Imported at the root.
 
+### What it changes on the way in, and what it drops
+
+Refused rows are not in the database and are listed in full. These are the other
+two cases: a row that IS imported and is not what the export said, and something
+in the export that is not imported at all. Both are in the `ADJUSTED` and
+`DISCARDED` columns of the report, grouped by kind with a full count and a few
+worked examples each, and `--changes=<file>` writes them to a CSV.
+
+Phase 13's own line is *"three-bucket classification: migrate / discard / ask —
+Rafi approves any discard list"*. This is that list. Every one of these was
+found by running the importer at the shop's real volume and reading what came
+back; before, each one reported as `created` and was indistinguishable from a
+row that arrived intact.
+
+| What | Bucket | Why it is not simply refused |
+|---|---|---|
+| Two products sharing one SKU | adjusted | `products.sku` has no unique index, so both import — and only one is findable by the handle the warehouse and the Meta feed use. Reported once per SKU. |
+| A product with no SKU | adjusted | It is in the shop with no warehouse handle at all. |
+| A price or an order amount carrying fils | adjusted | The shop prints whole dirhams (`Money::displayDecimals()` is 0), so AED 99.50 is charged exactly and **printed as AED 100**. Rounding it on the way in would be a silent edit to the owner's prices. |
+| An order in a currency that is not the store's | adjusted | Every revenue figure is a `SUM` with no currency in the `GROUP BY`, so USD 100 is added to AED revenue at face value. The importer has no rate for the day and will not invent one. |
+| A slug invented from the product name | adjusted | Only happens when the export carries **no slug column**. `Str::slug()` transliterates: an Arabic name becomes a romanised address and the CJK is dropped. The old `/product/<slug>/` 404s unless a redirect is written. Each one is named with its before and after so you can write it. |
+| A refund line's negative quantity | adjusted | `order_items.quantity` is unsigned, so `-1` is clamped to `0` while the money stays at `-50`: the two no longer agree. Every refunded order has one. |
+| A unit price that does not divide evenly | adjusted | Three for AED 100 imports as 33.33 each, which multiplies back to 99.99. `subtotal` and `total` stay exact; the order page prints `unit_price`. |
+| HTML the allowlist removed | **discarded** | The `<script>` has to go. What the owner needs to know is that the description is no longer byte-for-byte what WooCommerce held, and by how much. |
+| Columns nothing reads | **discarded** | One entry per entity, naming every column and the first real value found in it. This is where `meta:_delivery_instructions = Ring the bell twice` and `order_notes` and `refund_amount` show up — real content nobody had a way to notice losing. |
+| Files nothing opens | **discarded** | `ImportRunner::entities()` is seven importers and there is no eighth. **`coupons.csv` and `reviews.csv` are never opened.** This application has coupons and it has reviews; the import does not carry either. Suppressed under `--only`, where ignoring a file is the point. |
+
+Two of those are gaps rather than behaviour, and they are the owner's to decide:
+
+- **There is no coupon importer and no review importer.** The report now names
+  the files so nobody discovers this from a customer who cannot use a code
+  printed on a card in an outgoing parcel. Writing them is a separate job.
+- **The demo catalogue survives the import.** `seed_demo_catalogue` leaves 24
+  products, 8 brands and 6 categories with a NULL external id, and the import
+  does not touch them. Measured on a full-volume run: 703 products in the
+  database for 679 imported. `--adopt-by-slug` claims the ones whose slugs
+  collide; the rest have to be deleted deliberately.
+
 ---
 
 ## 4. Resuming
@@ -261,6 +304,38 @@ by a sliver nobody can account for.
 A timestamp that carries an explicit offset or a `Z` is honoured as written and
 not re-interpreted, so an export of `post_date_gmt` is safe whatever
 `--timezone` says.
+
+### The importer checks you, where it can
+
+`--timezone` was the one assumption in this importer that nothing verified: get
+it wrong and every order shifts by four hours, the rows stay perfectly
+well-formed, and the only symptom is that daily revenue disagrees with
+WooCommerce by a sliver nobody can account for. This shop has already paid for
+that bug once from the other direction — see *The shop's own clock* in the
+master plan.
+
+WooCommerce writes **both** columns, and its exporters emit both as
+`date_created` and `date_created_gmt`. Where a row carries both, the difference
+between them *is* the site's offset at that instant, measured rather than
+declared. If reading the local column under `--timezone` does not land on the
+GMT column, the report says so with a count:
+
+```
+orders — would be imported CHANGED:
+  4,159x  the export's own GMT column disagrees with --timezone=UTC — every date in
+          this file is being read in the wrong zone, which shifts the whole store's
+          order history and every daily revenue figure derived from it.
+            date_created: 2023-05-05 21:40:00Z (reading it as UTC)
+                       -> 2023-05-05 17:40:00Z (what the export's GMT column says)
+```
+
+It is reported rather than fatal because the import is still recoverable if you
+know: re-run with the right zone and every row reports as `updated`. What is not
+recoverable is not being told.
+
+**Where the export carries only the local column, this check cannot be made and
+is silent.** That is a run whose timezone is unverified, not a run whose
+timezone is confirmed. Re-export with the GMT column if you want the check.
 
 ---
 

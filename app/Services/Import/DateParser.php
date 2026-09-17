@@ -175,6 +175,68 @@ final class DateParser
     }
 
     /**
+     * Check a declared source timezone against the export's own GMT column.
+     *
+     * THE ONE ASSUMPTION IN THIS IMPORTER THAT NOTHING COULD CHECK. `--timezone`
+     * is a value the owner types, it defaults to Asia/Dubai, and getting it
+     * wrong shifts every order in the store by four hours in a way that leaves
+     * no trace: the rows are well-formed, the totals reconcile, and the only
+     * symptom is that daily revenue disagrees with WooCommerce's own reports by
+     * a sliver nobody can account for. The shop has already paid for this once
+     * -- the plan's "The shop's own clock" is the same bug arriving from the
+     * other direction, where every order placed between midnight and 4am was
+     * filed under the previous day.
+     *
+     * WHAT MAKES IT CHECKABLE. WooCommerce stores both: `post_date` in the
+     * site's WordPress timezone and `post_date_gmt` in UTC, and its exporters
+     * emit both as `date_created` and `date_created_gmt`. When a row carries
+     * both, the difference between them IS the site's offset at that instant,
+     * measured rather than declared. If parsing the local column under the
+     * declared zone does not land on the GMT column, the declared zone is
+     * wrong, and it is wrong for every row in the file.
+     *
+     * DST IS WHY THIS COMPARES INSTANTS AND NOT A FIXED NUMBER OF HOURS.
+     * Asia/Dubai has no daylight saving, but an export from a store that was
+     * configured in Europe/London does, and an offset check hard-coded to one
+     * number would pass in January and fail in July on the same correct zone.
+     * Converting the local reading to UTC and comparing it with the GMT column
+     * asks the question that is actually being asked.
+     *
+     * Returns null when the row does not carry both columns, which is most
+     * exporters and is not an error -- it is simply a run this check cannot
+     * make, and the report says so rather than implying a verification that
+     * did not happen.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}|null  [what the declared
+     *         zone gives, what the GMT column says] when they DISAGREE; null when
+     *         they agree or the check cannot be made.
+     *
+     * @throws RowRejected
+     */
+    public static function disagreementWithGmt(
+        mixed $localRaw,
+        mixed $gmtRaw,
+        string $field,
+        string $sourceTimezone,
+    ): ?array {
+        if ($localRaw === null || $gmtRaw === null) {
+            return null;
+        }
+
+        $local = self::utc($localRaw, $field, $sourceTimezone);
+        // The GMT column is UTC by definition, whatever the site timezone is.
+        $gmt = self::utc($gmtRaw, $field.'_gmt', 'UTC');
+
+        if ($local === null || $gmt === null) {
+            return null;
+        }
+
+        // A whole-second comparison: the two columns are written by the same
+        // WordPress call and differ only by the offset, never by a fraction.
+        return $local->equalTo($gmt) ? null : [$local, $gmt];
+    }
+
+    /**
      * A date far outside the life of an e-commerce store is much more likely to
      * be a mis-parse than a real value, and a mis-parse that lands in 1901 or
      * 3013 sorts to one end of every date-ordered screen where it is maximally
