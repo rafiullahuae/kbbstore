@@ -49,6 +49,9 @@ final class TranslationEstimate
     /** Characters per calendar month at no charge, on Google's free tier. */
     public const FREE_TIER_CHARACTERS = 500_000;
 
+    /** What the interface-strings group is called on a screen. One spelling. */
+    public const UI_LABEL = 'Interface text';
+
     /**
      * Every model whose content is translatable, and the columns that are.
      *
@@ -75,7 +78,7 @@ final class TranslationEstimate
      *
      * @return array{
      *     locale: string,
-     *     groups: array<string, array{characters: int, fields: int, translated: int}>,
+     *     groups: array<string, array{label: string, characters: int, fields: int, translated: int}>,
      *     characters: int,
      *     fields: int,
      *     free_tier: int,
@@ -94,7 +97,12 @@ final class TranslationEstimate
 
         // Interface strings.
         [$uiChars, $uiFields, $uiDone] = self::countInterface($done);
-        $groups[Translation::GROUP_UI] = ['characters' => $uiChars, 'fields' => $uiFields, 'translated' => $uiDone];
+        // The label travels with the figure. A screen that mapped 'menu_items'
+        // to "Menu labels" itself would be a second copy of progress()'s
+        // vocabulary, drifting the first time a table is renamed.
+        $groups[Translation::GROUP_UI] = [
+            'label' => self::UI_LABEL, 'characters' => $uiChars, 'fields' => $uiFields, 'translated' => $uiDone,
+        ];
         $total += $uiChars;
         $fields += $uiFields;
 
@@ -110,7 +118,9 @@ final class TranslationEstimate
 
             [$chars, $count, $already] = self::countTable($table, $columns, $done);
 
-            $groups[$table] = ['characters' => $chars, 'fields' => $count, 'translated' => $already];
+            $groups[$table] = [
+                'label' => self::label($table), 'characters' => $chars, 'fields' => $count, 'translated' => $already,
+            ];
             $total += $chars;
             $fields += $count;
         }
@@ -274,7 +284,7 @@ final class TranslationEstimate
         // Interface strings: the denominator is code, so it is free.
         $uiTotal = count(InterfaceStrings::flat());
         $areas[Translation::GROUP_UI] = self::area(
-            'Interface text',
+            self::UI_LABEL,
             $uiTotal,
             $translated[Translation::GROUP_UI] ?? 0,
             $drafts[Translation::GROUP_UI] ?? 0,
@@ -307,23 +317,71 @@ final class TranslationEstimate
             'total' => $total,
             'translated' => $done,
             'drafts' => $draft,
-            'percent' => $total > 0 ? (int) round($done / $total * 100) : 0,
+            // The same rule as each area's own figure, for the same reason:
+            // a whole shop one string short of done must not read 100.
+            'percent' => $total > 0 ? self::percent($done, $total) : 0,
         ];
     }
 
     /** @return array{label: string, total: int, translated: int, drafts: int, percent: int} */
     private static function area(string $label, int $total, int $translated, int $drafts): array
     {
+        // A translation can outlive the English row it described — a deleted
+        // product leaves its rows behind until they are pruned — so the
+        // numerator is capped rather than allowed to read 103%.
+        $done = min($translated, $total);
+
         return [
             'label' => $label,
             'total' => $total,
-            // A translation can outlive the English row it described — a
-            // deleted product leaves its rows behind until they are pruned —
-            // so the numerator is capped rather than allowed to read 103%.
-            'translated' => min($translated, $total),
+            'translated' => $done,
             'drafts' => $drafts,
-            'percent' => $total > 0 ? (int) round(min($translated, $total) / $total * 100) : 100,
+            'percent' => self::percent($done, $total),
         ];
+    }
+
+    /**
+     * How far along, as a whole number, with 0 and 100 reserved for the ends.
+     *
+     * ── WHAT WAS WRONG WITH round() ON ITS OWN ───────────────────────────
+     *
+     * `(int) round(999 / 1000 * 100)` is 100. The interface-string area of this
+     * shop is 752 keys; a locale ONE STRING short of complete reported 100%,
+     * and the console draws a pill green at exactly 100 — so the screen whose
+     * entire job is answering "is the Arabic finished?" answered yes while a
+     * shopper was still being shown an English word.
+     *
+     * The same round() lies at the other end: 1 translated row out of 1,000 is
+     * 0.1%, which rounds to 0, and 0 on this screen means "not started". Both
+     * ends are milestones, and a milestone reached by rounding has not been
+     * reached. So 100 means every field, 0 means none, and everything in
+     * between is squeezed into 1..99 — round() is untouched inside that range,
+     * so no figure anybody has already read moves.
+     *
+     * This is the fix the free-delivery bar already carries, one screen over:
+     * see the `$toFree === 0 ? 100 : min(99, ...)` in
+     * App\Services\CartService::totals(). A bar is a claim about whether
+     * something is done, and this is the same claim about the same kind of bar.
+     *
+     * An empty area is 100 and not 0: there is nothing left to translate in it,
+     * which is the honest reading of "nothing to do". A shop with no journal
+     * posts must not be told its journal is 0% translated forever.
+     */
+    private static function percent(int $done, int $total): int
+    {
+        if ($total <= 0) {
+            return 100;
+        }
+
+        if ($done >= $total) {
+            return 100;
+        }
+
+        if ($done <= 0) {
+            return 0;
+        }
+
+        return max(1, min(99, (int) round($done / $total * 100)));
     }
 
     /**
