@@ -366,6 +366,33 @@ it('leaves no storefront page slicing a list it has not finished ordering', func
             continue;
         }
 
+        /*
+         * A key that IS the statement's own GROUP BY key is already total:
+         * the group by guarantees one row per value, so there is nothing left
+         * to tie. The source scan beside this test keeps a named allowlist for
+         * exactly this case because it cannot see the SQL; here the SQL is in
+         * hand, so the condition can be checked rather than listed.
+         *
+         * Deliberately narrow: the last ORDER BY key must appear in a GROUP BY
+         * in the same statement, as the ONLY key of that GROUP BY. A group on
+         * (a, b) ordered by b alone still ties, and must still be reported.
+         */
+        // The LAST group by in the statement, not the first: a derived table
+        // carries its own, and the outer query's is the one that governs the
+        // rows this ORDER BY is sorting. Matching the first one made a
+        // two-key inner group hide a single-key outer group, which is the
+        // wrong answer in the safe direction but still the wrong answer.
+        if (preg_match_all('/\bgroup by\s+(.+?)(?:\s+having\b|\s+order by\b|\s*\)|$)/is', $statement, $groupMatches, PREG_SET_ORDER) > 0) {
+            $groupMatch = end($groupMatches);
+            $groupKeys = preg_split('/,(?![^(]*\))/', $groupMatch[1]);
+            $onlyKey = count($groupKeys) === 1 ? trim((string) $groupKeys[0]) : null;
+            $bareLast = trim(preg_replace('/\s+(asc|desc)$/i', '', $last));
+
+            if ($onlyKey !== null && $onlyKey === $bareLast) {
+                continue;
+            }
+        }
+
         $unsettled[] = $last . '  —  in: ' . $statement;
     }
 
@@ -393,7 +420,14 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
      *   - the customer filter's country list, `distinct()` on the one column
      *     it orders by;
      *   - the review screen's per-product counts, grouped by product_id and
-     *     ordered by it.
+     *     ordered by it;
+     *   - RepeatPurchase's map, grouped by rp.product_id and ending on it. The
+     *     scan caught this query the moment it landed, which is the guard
+     *     working: its real tie was `repeat_buyers`, a small integer that most
+     *     products with any repeat buyers at all share, so the MAX_PRODUCTS cut
+     *     fell inside a tied block. That was fixed with a genuine tie-break
+     *     rather than an exemption, and the exemption below is only for the
+     *     scan's inability to see that the remaining key is the GROUP BY key.
      *
      * Anything else reported is the defect this file is about. If one of these
      * three is later rewritten so it no longer needs the exemption, delete its
@@ -404,6 +438,7 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         ['Admin/AdminController.php', "orderBy('order_items.brand')"],
         ['Admin/CustomersApiController.php', "orderBy('country')"],
         ['Admin/ReviewsApiController.php', "orderByDesc('reviews.product_id')"],
+        ['Support/RepeatPurchase.php', "orderBy('rp.product_id')"],
     ];
 
     $root = app_path();
@@ -415,7 +450,20 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
     $reported = [];
 
     foreach ($findings as $finding) {
-        $relative = str_replace($root . '/Http/Controllers/', '', $finding['file']);
+        /*
+         * Normalised the same way the report below is, and for a reason worth
+         * recording: this used to strip only `app/Http/Controllers/`, so the
+         * three entries above (all controllers) matched and a file anywhere
+         * else in app/ kept its absolute path and could never be exempted. The
+         * list was therefore controller-only by accident rather than by
+         * design, which nobody would have discovered until the first non-
+         * controller entry was added -- as it just was.
+         */
+        $relative = str_replace(
+            [$root . '/Http/Controllers/', $root . '/'],
+            '',
+            $finding['file'],
+        );
         $exempt = false;
 
         foreach ($allowed as [$path, $call]) {

@@ -37,7 +37,12 @@ class CollectionController extends Controller
         ],
         'best-sellers' => [
             'Best Sellers',
-            'The products our customers keep coming back for.',
+            // Resolved in show(): the sentence is only true if the order
+            // history says so. App\Support\RepeatPurchase measures it, and
+            // hands back a units-sold wording on a shop that has no repeat
+            // purchases yet -- which is every shop before its first returning
+            // customer, and was the state this page claimed loyalty in.
+            '',
             'popular',
         ],
         'super-sale' => [
@@ -59,6 +64,10 @@ class CollectionController extends Controller
         abort_unless(isset(self::COLLECTIONS[$key]), 404);
 
         [$title, $intro, $mode] = self::COLLECTIONS[$key];
+
+        if ($mode === 'popular') {
+            $intro = \App\Support\RepeatPurchase::intro();
+        }
 
         $query = Product::query()
             ->select(self::CARD_COLUMNS)
@@ -98,7 +107,13 @@ class CollectionController extends Controller
             // Newest by publication where it exists, falling back to id so a
             // catalogue imported without dates still orders sensibly.
             'newest' => $query->orderByDesc('created_at')->orderByDesc('id'),
-            'popular' => $query->orderByDesc('total_sales')->orderByDesc('review_count')->orderByDesc('id'),
+            /*
+             * Repeat buyers first, then the ordering this page already had.
+             * On a shop with no repeat purchases in its history applyTo()
+             * emits byte-for-byte the SQL this line used to, tie-break
+             * included -- pinned by comparing toSql().
+             */
+            'popular' => \App\Support\RepeatPurchase::applyTo($query),
             'on_sale' => $query
                 ->whereNotNull('sale_price')
                 ->where('sale_price', '>', 0)

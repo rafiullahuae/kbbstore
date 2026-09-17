@@ -252,7 +252,11 @@ it('gives each curated listing its own description and a self-referencing canoni
     // Two collections must not describe themselves identically.
     $best = scsHead(scsGet('/best-sellers'));
 
-    expect($best)->toContain('The products our customers keep coming back for')
+    // The sentence now follows the data (App\Support\RepeatPurchase): this test
+    // builds no orders, so the honest answer here is the units-sold wording.
+    // The test's actual point -- two collections must not describe themselves
+    // identically -- is unchanged.
+    expect($best)->toContain(\App\Support\RepeatPurchase::intro())
         ->toContain('<link rel="canonical" href="' . SCS_BASE . '/best-sellers/">');
 });
 

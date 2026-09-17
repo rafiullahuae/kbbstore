@@ -13160,7 +13160,16 @@ buildNav();
     var t=snip.querySelector('.t'), d=snip.querySelector('.d'), u=snip.querySelector('.u');
     var slug=peSeo.slug||peCtx.slug||'';
     if(t) t.textContent = yResolve(peSeo.seo_title) || ((peCtx.n||'Product')+' | '+ySite());
-    if(d) d.textContent = (peSeo.meta_description||'').trim() || ('Shop '+(peCtx.n||'this product')+(peCtx.b?(' by '+peCtx.b):'')+' at '+ySite()+' — authentic Korean skincare, fast UAE delivery.');
+    /* The preview shows what the STOREFRONT will publish, not a sentence
+       invented here. The old fallback was a shop-wide guess the site has never
+       emitted -- and it promised "fast UAE delivery" on a shop that ships
+       across the Gulf on different terms per country. `seo_fallback_description`
+       comes from App\Support\ProductSeo via the product endpoint and is the
+       exact tag content the page will carry with this box empty, including the
+       empty case: a product whose short description was cleared publishes no
+       description at all, and the preview now shows that rather than hiding it
+       behind a sentence nobody will ever see. */
+    if(d) d.textContent = (peSeo.meta_description||'').trim() || (peCtx.fallbackDesc||'');
     if(u) u.textContent = 'kbeautybliss.com \u203a product \u203a '+slug;
   }
   function yCheck(status, label, msg){
@@ -13362,7 +13371,15 @@ buildNav();
         if(areas[0]) areas[0].value = full.description || '';
         if(areas[1]) areas[1].value = full.short_description || '';
         enhanceRTE();
-        if(full.seo && typeof full.seo==='object'){ peSeo=full.seo; if(typeof yoastTab!=='undefined' && yoastTab==='seo') window.renderYoastBody(); }
+        peCtx.fallbackDesc = full.seo_fallback_description || '';
+        if(full.seo && typeof full.seo==='object'){ peSeo=full.seo; }
+        /* Repaint UNCONDITIONALLY, which is part of the fix rather than tidying:
+           this call used to sit inside the `full.seo` branch, so a product with
+           no per-product SEO blob -- most of them, and every product whose
+           preview is falling back in the first place -- never repainted after
+           the fetch resolved, and the panel kept whatever it had drawn before
+           the data arrived. */
+        if(typeof yoastTab!=='undefined' && yoastTab==='seo') window.renderYoastBody();
       }).catch(function(){ enhanceRTE(); });
     };
   }

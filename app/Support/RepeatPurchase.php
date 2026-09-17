@@ -177,7 +177,17 @@ final class RepeatPurchase
             $query->orderByRaw($case . ' ELSE 0 END DESC');
         }
 
-        return $query->orderByDesc('total_sales')->orderByDesc('review_count');
+        /*
+         * Ends on `id`, which is not decoration: this ordering feeds a
+         * PAGINATED listing, `total_sales` and `review_count` tie across most
+         * of the catalogue, and a tie the database may break differently
+         * between the page-one and page-two queries prints one product twice
+         * and drops another entirely. That is the defect StableOrderingTest
+         * exists for; the same key was added to this arm in the same package,
+         * and this method now carries it so it cannot be lost by moving the
+         * ordering in here.
+         */
+        return $query->orderByDesc('total_sales')->orderByDesc('review_count')->orderByDesc('id');
     }
 
     /** Throw the cached map away — for tests, and for anything that backfills orders. */
@@ -228,6 +238,20 @@ final class RepeatPurchase
             ->selectRaw('COUNT(*) as repeat_buyers')
             ->groupBy('rp.product_id')
             ->orderByDesc('repeat_buyers')
+            /*
+             * The tie-break, caught by StableOrderingTest's scan the moment
+             * this file landed beside it — which is the guard doing its job.
+             *
+             * `repeat_buyers` is a small integer and most products that have
+             * any repeat buyers at all will have the same one or two, so the
+             * MAX_PRODUCTS cut below falls inside a tied block on any real
+             * catalogue. Without a key the database cannot tie on, which
+             * product survives that cut is arbitrary and free to differ
+             * between calls — and this map decides the order of a
+             * shopper-facing listing, so an arbitrary cut here is the same
+             * defect one layer up from the one this lane closed.
+             */
+            ->orderBy('rp.product_id')
             ->limit(self::MAX_PRODUCTS)
             ->get();
 

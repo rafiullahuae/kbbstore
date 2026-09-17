@@ -232,7 +232,13 @@ it('orders exactly as the page always has when nobody has come back', function (
     $low = rpcProduct(3);
 
     $applied = RepeatPurchase::applyTo(Product::query()->visible())->toSql();
-    $today = Product::query()->visible()->orderByDesc('total_sales')->orderByDesc('review_count')->toSql();
+    // Ends on `id` because /best-sellers/ paginates: the tie-break landed in
+    // the same package (StableOrderingTest), and applyTo() carries it so that
+    // moving the ordering into this class could not quietly drop it. The point
+    // of this assertion is unchanged -- with no repeat history, applyTo() must
+    // issue exactly what the page issues on its own.
+    $today = Product::query()->visible()
+        ->orderByDesc('total_sales')->orderByDesc('review_count')->orderByDesc('id')->toSql();
 
     expect($applied)->toBe($today);
 
@@ -357,7 +363,12 @@ it('measures once and serves the rest from the cache', function () {
  */
 function cbPendingIntroWiring(): bool
 {
-    return true;
+    // Wired by the integrator in the same package that merged this lane:
+    // CollectionController::show() resolves the intro through
+    // RepeatPurchase::intro(), and the 'popular' arm orders through
+    // RepeatPurchase::applyTo(). Both halves together, because either alone
+    // gives a page that describes itself wrongly in the other direction.
+    return false;
 }
 
 it('describes /best-sellers/ with a measurement it actually made', function () {

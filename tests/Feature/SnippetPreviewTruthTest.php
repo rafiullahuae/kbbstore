@@ -93,7 +93,11 @@ use Illuminate\Support\Str;
  */
 function sdpSnippetEditPending(): bool
 {
-    return true;
+    // Wired by the integrator in the same package that merged this lane: the
+    // preview reads seo_fallback_description from the product endpoint, and
+    // the panel repaints after the fetch whether or not the product carries a
+    // per-product SEO blob.
+    return false;
 }
 
 /** The invented sentence's tail, assembled so this file is not a copy of it. */
