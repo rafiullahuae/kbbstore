@@ -67,3 +67,37 @@ it('keeps the finger-sized targets for an actual touch device', function () {
         );
     }
 });
+
+it('gives the phone a bigger stepper, not a different one', function () {
+    /*
+     * THE SECOND HALF OF THE SAME REPORT, and it needed looking at rather than
+     * measuring. The first fix handed the desktop control back to a mouse; the
+     * owner then pointed at a real phone and said the buttons were still messy.
+     * They were: the mobile block gave each checkout button its own 1px border
+     * and 10px radius on a white ground and pulled them 8px apart — INSIDE
+     * `.qty`, which is already a bordered 99px pill. Two boxes drawn inside a
+     * pill, 130px wide, crowding the price off the row.
+     *
+     * Desktop `.co-q` has no border, no radius and no background: it is a glyph
+     * inside the pill. The phone now gets that same control with a 44px hit
+     * area, which is what "bigger, not different" means.
+     *
+     * Asserted on the MOBILE block specifically, because the desktop rule was
+     * always right and a whole-file search would pass on it.
+     */
+    $css = file_get_contents(base_path('resources/css/kbb/kbb-checkout.css'));
+
+    $start = strpos($css, '@media (max-width: 900px)');
+    expect($start)->not->toBeFalse('the checkout mobile block is gone; this guard is reading nothing');
+
+    $block = substr($css, (int) $start);
+    $stepper = substr($block, (int) strpos($block, '.kbb-checkout .qty .co-q{'), 400);
+
+    expect(str_contains($stepper, 'border:0'))->toBeTrue('the mobile checkout stepper draws its own border again, inside the pill')
+        ->and(str_contains($stepper, 'background:transparent'))->toBeTrue('the mobile checkout stepper has a filled ground again')
+        ->and(str_contains($stepper, 'width:44px'))->toBeTrue('the 44px touch target was removed instead of the chrome');
+
+    // The gap is what pulled the two buttons apart inside the pill.
+    expect(preg_match('/\.kbb-checkout \.qty\{[^}]*gap:8px/', $block))
+        ->toBe(0, 'the 8px gap is back, so the buttons float apart inside the pill again');
+});
