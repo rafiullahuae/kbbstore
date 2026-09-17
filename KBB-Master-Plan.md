@@ -1113,6 +1113,95 @@ tests to **2,936**, every file byte-compared against the repo before it shipped.
       (SQLite 3063, MySQL 3068). **A test that is engine-specific and silent
       about it is reported as coverage, which is worse than no test**
 
+### The seams between lanes  *(2.60.200 – .201)*
+
+Eleven lanes across two packages. What is worth recording is not the feature
+list but the class of defect this round produced, because it is a new one for
+this project and it will recur every time lanes run in parallel.
+
+**A bug that existed only in the merge.** One lane made the invoice's Paid stamp
+honest on cash on delivery, having established that `PaymentCapturer`
+deliberately never writes `paid_at` for COD. Another added the dispatch label
+and wrote its collect-on-delivery guard as `paid_at !== null` — the exact test
+the first lane had just proved can never be true on a COD order. **Both suites
+were green.** The guard excluded nothing, so a COD order whose cash the courier
+had already handed over, and which the operator had captured, still printed
+`COLLECT AED 225.00` on its label: the driver collects it twice, or argues at
+the door with a customer holding a receipt. Both readings are now one method,
+`InvoiceDocument::moneyCollected()`.
+
+The lesson is narrow and worth stating: **two lanes reaching one file from
+opposite ends will each encode their own reading of the same question, and
+neither one's tests can see the other's.** Merging is where that is caught, so
+merging is not a mechanical step.
+
+**And then the seams were attacked on purpose.** A lane given nothing but
+"break the money" found four more, each with a measured consequence:
+
+- ▲ **The refund ceiling was a column an operator can edit.** `PaymentRefunder`
+  fell back to `orders.total`, and between a verified callback and a capture an
+  order sits in `processing`, which is editable. Measured both directions on a
+  200.00 paid order: edit it up and a **300.00 refund was accepted and sent to
+  Stripe**, returning money the shop never took; edit it down and a 100.00
+  refund settled the order in full while **100.00 of the buyer's money stayed in
+  the shop's account** with the panel reporting it settled
+- ▲ **One method, two branches, two answers.** `recalcTotals()` clamped the
+  discount on the taxed branch and not on the untaxed one, so removing a line
+  from a discounted order wrote `total = -5000`. A negative total is summed as
+  revenue on the dashboard, printed on the invoice as the amount due, and read
+  as a refund ceiling where `<= 0` means "nothing captured"
+- ▲ **A window a provider was down for could never be answered.** A
+  reconciliation run is keyed on window plus providers, and a phase closed by
+  *failure* is still "finished". So pressing Run again after fixing the key made
+  **zero HTTP requests** and re-displayed yesterday's outage notices — the check
+  the whole class exists for, sitting unrun in a window the owner believes he
+  has reconciled
+- ▲ **One guard on `confirm()`, none on `fail()`.** A Stripe session abandoned
+  in favour of cash on delivery expires ~24h later; the notice landed on a
+  **shipped** order and moved it to `failed`, because `fail()` guarded only on
+  `paid_at` and a dispatched COD order has no `paid_at` by design. The order
+  left `REAL_STATUSES` — it stopped counting as revenue — and handed its
+  one-use coupon back after the goods had gone
+
+Eleven further hypotheses were driven through the real code and came back clean,
+including the one most expected to break. All 359 admin routes were enumerated
+against the capability map: none falls to the owner-only fallback, and no money
+write sits on a `.view` capability.
+
+**Performance, measured for the first time rather than counted.** Query counts
+had been pinned by two budget guards for several lanes and there was no N+1 left
+to find — but a page can run seven statements and spend two hundred milliseconds
+in them. Against 3,025 products and 27,000 order lines: **admin products list
+209 ms → 60 ms, admin orders list 131 ms → 76 ms, search 48 ms → 22 ms, /shop
+17 ms → 9 ms.** The two admin lists had one defect twice over — grouped derived
+tables joined onto the query *every* statement is built from, so the pagination
+COUNT was aggregating the whole of `order_items` to answer a question about at
+most fifty orders.
+
+The most valuable result in that lane is **an index that is not in the tree**. A
+covering index on `order_items` appeared to save 14 ms; re-measured with
+drop-and-recreate and a warm pool both times, it was 7.3 against 7.7. The first
+win was the InnoDB buffer pool warming up. A redundant index costs every write
+and buys nothing.
+
+**Two more guards caught asserting nothing**, bringing the running count to six.
+A growth check passed with a real N+1 in place, because its fixture added
+products to the 24 the demo set already seeds while `products_per_page` is 24 —
+both arms drew the same 24 cards. And a required-fields guard would have gone on
+passing once the checkout's inputs moved into a component, because it grepped
+the template for `<input>` rather than reading the rendered page.
+
+**A landmine aimed at the integrator.** Several tests write *tracked* files from
+rendered output, and every link inside them is built from `APP_URL`, which
+nothing pinned. Run the suite with `APP_URL` pointed at a staging host and six
+committed preview files change underneath you **with a green run** — then the
+next `git add -A` commits them. Pinned in `tests/bootstrap.php` and not in
+`phpunit.xml`, because an `<env>` entry there, even forced, writes `putenv()`
+and `$_ENV` but leaves an exported value sitting in `$_SERVER`, which
+`Env::getRepository()` stacks first: measured, `getenv()` read the pinned value
+while `config('app.url')` read the staging host and the files still rewrote. **A
+pin that looks applied and is not is worse than none.**
+
 ## Phase 9 — Content pages
 
 - [x] Privacy, terms, New In, Best Sellers, Super Sale, Under 54 AED, Wishlist
@@ -1342,7 +1431,14 @@ a fake success toast and saves nothing).
 - [x] **Newsletter double opt-in, and an unsubscribe that needs no login.** Signup
       wrote `subscribed` the instant a stranger typed an address into the public
       box, so anyone could put anyone on this shop's marketing list — *2.60.199*
-- [ ] Product Labels · Meta & Facebook — existing screens, not yet checked for parity
+- [x] **Product Labels · Meta & Facebook — checked by running them, not by reading
+      them.** Meta & Facebook needed nothing: the screen says it is not installed,
+      ModuleRegistry has no key for it and the nav row carries a `soon` chip, so
+      all three agree and there was no parity gap to close. Product Labels was
+      genuinely wired, with two defects in the badge — a markdown rounding to
+      nothing published a red `-0% OFF`, and `Color::isValidHex()` accepted a hex
+      without its `#`, which rendered `background:E23A4E` and drew transparent.
+      Turning the module ON is what introduced the first — *2.60.200*
 
 ## Phase 17 — Dead interface  *(new — found by `hooks_bound`)*
 
@@ -1457,9 +1553,27 @@ descriptions, validation messages).
 
 ### Queued, in dependency order
 
-- [ ] **T1 · Foundation** — locale resolution, the database store, the fallback
-      chain, the admin editing surface, proved end to end on a handful of real
-      strings. **In flight.** Everything below waits on the shape it settles
+- [x] **T1 · Foundation — landed *2.60.200*.** Locale resolution, the database
+      store, the fallback chain, the admin write path, proved end to end.
+      Arabic and RTL are two independent switches, both off, nothing seeded.
+      **Off means `/ar` does not exist** — the prefix is never stripped, so the
+      router 404s it, there is no hreflang, no switcher, nothing in the sitemap.
+      That is the payoff from stripping the locale in global middleware rather
+      than registering a `Route::prefix('ar')` group: a prefixed group is
+      registered or not at boot, and on this host the compiled route table is
+      only cleared by a migration, so flipping the switch would not take effect
+      until somebody shipped a package.
+
+      **Storage is the database, and it was forced rather than chosen:** `lang/`
+      is not on `UpdateGuard::ALLOWED_PREFIXES`, so a package containing
+      `lang/ar.json` is rejected before a file is written. Laravel's
+      conventional home for translations is, on this host, a directory that
+      cannot be shipped to.
+
+      ▲ **One line of `bootstrap/app.php` must be applied to the server by
+      hand** — that file is on `NEVER_SHIP` and `UpdateGuard` refuses it. Built
+      so that forgetting it is safe: without it `/ar` simply 404s and the shop
+      stays English-only, which is what the shop is today
 - [ ] ▲ **T1b · A `Translation` section in the admin, with real switches** —
       owner's requirement: a **parent menu of its own** in the sidebar, beside
       Store and Content, rather than settings scattered across other screens.
@@ -1515,7 +1629,30 @@ descriptions, validation messages).
 - [ ] **T5 · The translate-from-Google accelerator** — pluggable provider, his
       own key, batched, cost shown before it runs, output as a draft. The manual
       path must keep working with no key at all
-- [ ] ▲ **T6 · RTL** — the stylesheet is full of `margin-left` / `padding-right` /
+- [~] ▲ **T6 · RTL — audit and mechanical half landed *2.60.201*; the manual
+      half remains.** 678 physical direction declarations counted with a real
+      CSS declaration reader rather than grep (because `margin-left` occurs both
+      as a declaration and inside comments explaining why a rule keeps
+      `margin-left`). 368 converted to logical properties, 57 left physical on
+      purpose and each marked `RTL-PHYSICAL:` with its reason.
+
+      **The 57 are the work that is left, and 16 of them are one finding:**
+      every slide-in panel anchors with an inset and opens with `translateX`,
+      which has no logical form — convert the inset alone and in RTL the drawer
+      sits *on screen in its closed state*. Thirteen more are the
+      `left:50%` + `translateX(-50%)` centring idiom, which is not a direction
+      at all.
+
+      Proved a no-op today: 22 of 22 page pairs byte-identical, then a control
+      run of the same tree against itself flaking at the identical rate, then
+      computed geometry for ~10,000 nodes identical everywhere, then the diff
+      itself shown to be only renames by reversing them mechanically and
+      getting back byte-identical files. Cost: +171 gzipped bytes across eight
+      stylesheets. Cairo is wired in on Arabic pages only, weight 800 included
+      — the storefront styles 79 declarations at `font-weight:800` and every one
+      dropped to 700 without it, for no extra bytes (the same variable WOFF2).
+
+      Original note, still true of the remainder: the stylesheet is full of `margin-left` / `padding-right` /
       `text-align:left`; CSS logical properties let one sheet serve both
       directions. Plus an Arabic face (Cairo or Tajawal alongside Poppins).
       **Audit first, rewrite second**; the storefront CSS is contended
