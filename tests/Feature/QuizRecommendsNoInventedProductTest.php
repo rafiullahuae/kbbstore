@@ -215,3 +215,104 @@ it('still shows the owner a lead\'s routine names on the leads screen', function
         ->toContain('Old Row')
         ->toContain('New Row');
 });
+
+/* ═══════════ what the capture endpoint actually keeps, measured ═══════════ */
+
+it('never stored an invented product name in the first place, so nothing needs repairing', function () {
+    /*
+     * THE CORRECTION THIS LANE OWES ITS OWN EARLIER NOTES.
+     *
+     * The first pass at this lane recorded that buildPayload() posted the
+     * seventeen invented products to /api/quiz and that they were kept in
+     * quiz_submissions.recommended_routines "against a real customer's phone
+     * number". That was read off the page rather than measured, and it is
+     * wrong in the direction that matters: it implies stored rows to clean up.
+     *
+     * Api\QuizController::store() validates a fixed key list and hands only
+     * those keys to create(). `recommended_routines` is not a column it writes,
+     * and nothing else in this application writes it. So a body carrying a
+     * product list and a bundle total is accepted, and both are dropped on
+     * arrival.
+     *
+     * This is pinned rather than merely written down because it is the whole
+     * basis for "no migration": if somebody later adds `recommended_routines`
+     * to store()'s create() without also deciding what may go in it, this fails
+     * and says why.
+     */
+    $this->postJson('/api/quiz', [
+        'skin_type' => 'Oily',
+        'concerns' => ['Hydration'],
+        'name' => 'Probe', 'phone' => '+971500000000', 'consent' => true,
+        // The two keys the old page sent and the new one does not.
+        'products' => [['name' => 'Invented Serum', 'brand' => 'Numbuzin', 'price' => 129]],
+        'bundle_aed' => 411,
+    ])->assertCreated();
+
+    $row = \App\Models\QuizSubmission::query()->latest('id')->first();
+
+    expect($row)->not->toBeNull()
+        ->and($row->recommended_routines)->toBeNull(
+            'store() has started writing recommended_routines; decide what may go in it before it can carry a product name again'
+        );
+});
+
+it('accepts seven contact and answer fields that the quiz page has never sent', function () {
+    /*
+     * REPORTED, NOT FIXED — and pinned so it cannot be lost.
+     *
+     * The brief asked that this conversion not "leave the endpoint accepting
+     * fields nothing sends". Measured, the endpoint accepts NINE and the page
+     * sends TWO of them, and that is not something this lane introduced: the
+     * page has always posted camelCase under nested objects —
+     * `skinType`, `contact.name`, `contact.phone`, `contact.email`,
+     * `answers.age`, `answers.routineDepth`, `answers.budget` — while store()
+     * validates flat snake_case. Laravel's validate() silently drops every key
+     * it was not asked about, so the columns are written NULL.
+     *
+     * The consequence is bigger than this lane and is why it is reported rather
+     * than quietly patched: the skin quiz asks a shopper for their name, phone
+     * and email on a consent-gated form and keeps NONE of them. The owner's
+     * leads screen shows a concern list and a blank contact.
+     *
+     * Fixing it is a real change — it starts writing personal data that is not
+     * being written today, against a consent record, and it needs the owner to
+     * say which of the two spellings is canonical. This case exists so that the
+     * day somebody does it, the gap is already described and already has a test
+     * to invert.
+     */
+    $this->postJson('/api/quiz', [
+        // Exactly what resources/views/store/skin-quiz.blade.php posts.
+        'skinType' => 'Oily',
+        'concerns' => ['Hydration', 'Pores & texture'],
+        'answers' => ['age' => '25-34', 'routineDepth' => 'Full', 'budget' => 'AED 200-400'],
+        'contact' => ['name' => 'Aisha', 'phone' => '+971500000000', 'email' => 'a@example.com'],
+        'recommendedRoutines' => [['name' => 'Balanced glow', 'steps' => ['Cleanse', 'Tone']]],
+        'consent' => true,
+    ])->assertCreated();
+
+    $row = \App\Models\QuizSubmission::query()->latest('id')->first();
+
+    // What survives the round trip today.
+    expect($row->concerns)->toBe('Hydration,Pores & texture')
+        ->and((int) $row->consent)->toBe(1);
+
+    // And what does not. Each of these is a column the endpoint validates a
+    // flat key for and the page supplies under a different spelling.
+    expect([
+        'skin_type' => $row->skin_type,
+        'age' => $row->age,
+        'routine_depth' => $row->routine_depth,
+        'budget' => $row->budget,
+        'name' => $row->name,
+        'phone' => $row->phone,
+        'email' => $row->email,
+    ])->toBe([
+        'skin_type' => null,
+        'age' => null,
+        'routine_depth' => null,
+        'budget' => null,
+        'name' => null,
+        'phone' => null,
+        'email' => null,
+    ], 'the capture gap has been closed — invert this case and delete the note above it');
+});

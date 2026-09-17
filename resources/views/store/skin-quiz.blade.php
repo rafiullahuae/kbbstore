@@ -282,9 +282,23 @@ const ALLERGENS=[
  * set, and printed a 15% bundle saving that no discount rule in this shop has
  * ever offered.
  *
- * The preview banner did not contain any of it, because buildPayload() posted
- * those names and that total to /api/quiz and they were kept in
- * quiz_submissions.recommended_routines.
+ * WHERE THE INVENTED NAMES ACTUALLY WENT, MEASURED RATHER THAN ASSUMED. An
+ * earlier pass at this lane recorded that buildPayload() posted them to
+ * /api/quiz and that they were kept in quiz_submissions.recommended_routines.
+ * That is NOT what happens, and the correction matters because it changes what
+ * anybody has to clean up: nothing.
+ *
+ * Api\QuizController::store() validates a fixed list of keys and passes only
+ * those to create(); `recommended_routines` is not among the columns it writes,
+ * and nothing else in the application writes it either. Posting a product list
+ * and a bundle total to that endpoint and then reading the row back leaves
+ * `recommended_routines` NULL. So the fiction reached the wire and stopped
+ * there — it was never persisted, no stored lead carries an invented product
+ * name, and no migration or data repair is owed.
+ *
+ * What the banner genuinely failed to contain was the PAGE: a shopper read
+ * seventeen products, their prices and a 15% saving on a public URL, and the
+ * word PREVIEW above them does not make a price true.
  *
  * WHAT REPLACES IT, AND WHAT DOES NOT. The quiz can say truthfully which STEPS
  * a skin type and a set of concerns call for, and in what order — that is
@@ -484,11 +498,11 @@ function buildPayload(){
     answers:{age:state.age,routineDepth:state.depth,budget:state.budget,allergies:state.allergies.slice(),allergyNote:state.allergyNote},
     contact:{name:state.name,phone:state.phone,email:state.email},
     /* The routine's NAME and its STEPS. A product list and a bundle total used
-       to ride along here and were kept in quiz_submissions.recommended_routines
-       — products the shop does not sell and a total nobody set, stored against
-       a real customer's phone number. The admin leads screen reads only
-       $r['name'], so dropping them renders rows already stored exactly as
-       before and needs no migration. */
+       to ride along here — products the shop does not sell and a total nobody
+       set. They were never stored: store() writes a fixed column list and
+       `recommended_routines` is not in it, so the key was dropped on arrival.
+       Dropping it at the source changes no row and needs no migration, and the
+       admin leads screen reads only $r['name'] from a routine in any case. */
     recommendedRoutines:recommend().map(r=>({name:r.t,steps:r.items.map(s=>s.n)})),
     expertRequest:state.expertSent?{requested:true,message:state.expertMsg}:{requested:false},status:'new'};
 }
