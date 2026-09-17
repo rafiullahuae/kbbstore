@@ -10,6 +10,16 @@ namespace App\Services;
  * Used only when no menu has been built in the admin, so the sheet is never
  * empty before the WordPress menus are migrated. A real menu always wins — this
  * is a fallback, not a seed, and nothing here is written to the database.
+ *
+ * CATEGORY URLS ARE /product-category/{slug}/ — URL Contract U-03 — and not the
+ * flat /toners/ addresses the live WordPress site published. Written flat, they
+ * fell through routes/kbb-brands-blog.php's `/{slug}/` catch-all to
+ * PageController@post, which looks up a BLOG POST by that slug and 404s. This
+ * fallback reaches a real shopper: fill() tops up the MOBILE DRAWER whenever
+ * Store → Modules → Demo content is on, so the addresses here are not
+ * decoration. Slugs are preserved exactly as the live site spells them rather
+ * than remapped onto whatever categories exist today — App\Support\
+ * LegacyCategoryUrls gives the reasoning.
  */
 class MenuDemo
 {
@@ -111,7 +121,19 @@ class MenuDemo
     /** The full tree, in the same order as the live site. */
     public static function tree(): array
     {
-        $brandLeaf = fn (string $b) => self::leaf($b, '/brand/' . self::slug($b) . '/');
+        /*
+         * URL Contract U-05: a brand's listing is /shop/?filter_brands={slug},
+         * which is exactly what Brand::url() returns and what the real seeded
+         * menu's brand items carry.
+         *
+         * These leaves used to publish /brand/{slug}/ instead. That route is a
+         * legacy 301 whose handler does firstOrFail() on the brands table, so
+         * every brand not yet imported was a 404 — sixty of the sixty-five
+         * here, on a shop that has not run the WordPress import. It also meant
+         * the mobile drawer (which this fallback tops up) and the header
+         * published the same brand at two different addresses.
+         */
+        $brandLeaf = fn (string $b) => self::leaf($b, '/shop/?filter_brands=' . self::slug($b));
 
         return [
             [
@@ -124,30 +146,30 @@ class MenuDemo
                 ],
             ],
             [
-                'id' => 0, 'label' => 'Skincare', 'url' => '/skincare/', 'icon' => null, 'badge' => null,
+                'id' => 0, 'label' => 'Skincare', 'url' => '/product-category/skincare/', 'icon' => null, 'badge' => null,
                 'children' => [
-                    self::leaf('Sunscreens', '/sunscreens/'),
-                    self::leaf('Exfoliators', '/exfoliators/'),
-                    self::leaf('Toners', '/toners/'),
-                    self::leaf('Eye Care', '/eye-care/'),
-                    ['id' => 0, 'label' => 'Face Cleansers', 'url' => '/face-cleansers/', 'icon' => null, 'badge' => null,
+                    self::leaf('Sunscreens', '/product-category/sunscreens/'),
+                    self::leaf('Exfoliators', '/product-category/exfoliators/'),
+                    self::leaf('Toners', '/product-category/toners/'),
+                    self::leaf('Eye Care', '/product-category/eye-care/'),
+                    ['id' => 0, 'label' => 'Face Cleansers', 'url' => '/product-category/face-cleansers/', 'icon' => null, 'badge' => null,
                      'children' => [
-                         self::leaf('Cleansing Oils', '/cleansing-oils/'),
-                         self::leaf('Face Washes', '/face-washes/'),
+                         self::leaf('Cleansing Oils', '/product-category/cleansing-oils/'),
+                         self::leaf('Face Washes', '/product-category/face-washes/'),
                      ]],
-                    self::leaf('Face Masks', '/face-masks/'),
-                    self::leaf('Face Serums', '/face-serums/'),
-                    self::leaf('Moisturizers', '/moisturizers/'),
+                    self::leaf('Face Masks', '/product-category/face-masks/'),
+                    self::leaf('Face Serums', '/product-category/face-serums/'),
+                    self::leaf('Moisturizers', '/product-category/moisturizers/'),
                 ],
             ],
-            self::leaf('Sunscreens', '/sunscreens/'),
-            self::leaf('Moisturizers', '/moisturizers/'),
-            self::leaf('Toners', '/toners/'),
-            self::leaf('Lip Care', '/lip-care/'),
-            self::leaf('Hair Care', '/hair-care/'),
-            self::leaf('Skincare sets', '/skincare-sets/'),
+            self::leaf('Sunscreens', '/product-category/sunscreens/'),
+            self::leaf('Moisturizers', '/product-category/moisturizers/'),
+            self::leaf('Toners', '/product-category/toners/'),
+            self::leaf('Lip Care', '/product-category/lip-care/'),
+            self::leaf('Hair Care', '/product-category/hair-care/'),
+            self::leaf('Skincare sets', '/product-category/skincare-sets/'),
             self::leaf('SUPER SALE', '/super-sale/', true),
-            self::leaf('Beauty Devices', '/beauty-devices/'),
+            self::leaf('Beauty Devices', '/product-category/beauty-devices/'),
             self::leaf('Everything under 54 AED', '/everything-under-54-aed/'),
             self::leaf('BLOG', '/skincare-guide/'),
         ];

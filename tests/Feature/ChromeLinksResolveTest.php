@@ -109,11 +109,24 @@ function chromeMobile(string $html): string
 {
     $regions = '';
 
-    foreach (['#<div[^>]+id="mmDrawer".*?</div>\s*</div>#si', '#<nav[^>]+class="[^"]*\btb\b[^"]*".*?</nav>#si'] as $pattern) {
+    /*
+     * LANE DS: the first pattern here matched NOTHING. The drawer is
+     * `<nav class="mmenu" id="mmenu">` (partials/mobile-chrome.blade.php), not
+     * a div with id="mmDrawer", so this helper returned the empty string and
+     * the mobile half of the walk below was silently inert — thirty-six links
+     * that nobody was checking. It still passed, because the header alone
+     * clears the "more than 10 hrefs" floor.
+     *
+     * The count assertion in each caller is what turns that class of mistake
+     * into a failure rather than a silent pass, so there is one here too.
+     */
+    foreach (['#<nav[^>]+class="[^"]*\bmmenu\b[^"]*".*?</nav>#si', '#<nav[^>]+class="[^"]*\btb\b[^"]*".*?</nav>#si'] as $pattern) {
         if (preg_match($pattern, $html, $m)) {
             $regions .= $m[0];
         }
     }
+
+    expect($regions)->not->toBe('', 'The mobile chrome parsed to nothing at all; the region patterns are stale.');
 
     return $regions;
 }
@@ -161,14 +174,37 @@ function chromeRouteFor(string $path): ?\Illuminate\Routing\Route
  * is tolerated, and anything else — a route that hard-codes its target, or no
  * route at all — is not.
  *
- * THIS IS NOT A CLEAN BILL OF HEALTH FOR THOSE LINKS. Fourteen mega-menu items
- * point at WooCommerce-era flat category URLs (/toners/) while this application
- * serves categories at /product-category/{path}/, and the root catch-all that
- * currently answers them looks up a POST. Whether they resolve on the live
- * site depends on the redirects table and on imported data, which is a
- * catalogue and navigation question this lane does not own and cannot answer
- * from here. It is named in the lane report and the count is pinned below so
- * that it cannot quietly grow.
+ * ── LANE DS: THE TOLERANCE IS NOW NARROWER, AND WHY ─────────────────────────
+ *
+ * The paragraph that stood here said this was NOT a clean bill of health: that
+ * fourteen mega-menu items pointed at WooCommerce-era flat category URLs while
+ * the application serves categories at /product-category/{path}/, and that the
+ * root catch-all answering them looked up a POST. That was correct, and it has
+ * been fixed at the source — 2026_11_07_000000_repoint_menu_category_urls
+ * repoints the rows, and MenuDemo and MegaMenuApiController::loadDemo() no
+ * longer seed the flat form.
+ *
+ * Two things follow, and both tighten this file:
+ *
+ *   PageController@post IS NO LONGER TOLERATED. It was in the list below only
+ *   because every one of those fourteen items landed on it. Nothing in the
+ *   chrome reaches the blog catch-all now, and a navigation link that did
+ *   would be the original defect returning, so it fails here instead.
+ *
+ *   THE COUNT CAME DOWN FROM 20 TO 12. Twelve is what remains: menu items
+ *   whose category the shop has not imported yet. They now reach
+ *   CategoryArchiveController with a correctly shaped URL, which is an honest
+ *   404 against a real archive route rather than a blog-post lookup — a
+ *   different thing from what was tolerated before, even where the count
+ *   overlaps.
+ *
+ * AND THE REMAINING TOLERANCE IS SMALLER THAN IT LOOKS. Lane DR's note assumed
+ * the test database has no catalogue at all. It has six categories:
+ * DemoCatalogueSeeder's placeholders, which 2026_08_27_100000 runs on every
+ * install, production included. So `toners` and `sunscreens` resolve for real
+ * here, and MenuUrlsResolveTest checks each tolerated path against the
+ * categories table rather than waving through anything that reaches a
+ * catalogue controller.
  */
 function chromeToleratedDeadEnd(string $path): bool
 {
@@ -190,9 +226,9 @@ function chromeToleratedDeadEnd(string $path): bool
         'CategoryArchiveController',
         'BrandController',
         'ProductController',
-        // The single-segment catch-all at the site root, which looks a post up
-        // by slug. Everything the mega menu emits lands here.
-        'PageController@post',
+        // 'PageController@post' WAS HERE, and is deliberately gone — see the
+        // Lane DS note above. A chrome link answered by a blog-post lookup is
+        // the defect this tolerance was hiding, not an instance of it.
     ] as $catalogue) {
         if (str_contains($action, $catalogue)) {
             return true;
@@ -365,16 +401,20 @@ it('emits nothing in the header or mobile chrome that 500s or points nowhere', f
     /*
      * THE CATALOGUE GAP, PINNED SO THAT IT CANNOT GROW QUIETLY.
      *
-     * Fourteen of these are the mega menu's flat category URLs and the rest are
-     * the home page's routine steps. They are tolerated because a bare test
-     * database has no catalogue, NOT because they are known to be fine — see
-     * chromeToleratedDeadEnd(). If this number rises, somebody added another
-     * link that only resolves when the right row happens to exist, and they
-     * should be made to look at it. If it falls, the navigation lane has fixed
-     * some and this bound comes down with them.
+     * TWELVE, down from twenty — Lane DS. All twelve are menu items whose
+     * category this shop has not imported yet, reached through a correctly
+     * shaped /product-category/ URL. The mega menu's flat category URLs are
+     * gone, and the home page's routine steps resolve for real now (they are
+     * not in this region anyway; they are pinned in MenuUrlsResolveTest).
+     *
+     * They are tolerated because the taxonomy arrives by WordPress import, NOT
+     * because they are known to be fine — see chromeToleratedDeadEnd(). If this
+     * number rises, somebody added another link that only resolves when the
+     * right row happens to exist, and they should be made to look at it. If it
+     * falls, a lane has fixed some and this bound comes down with them.
      */
     expect(count($tolerated))->toBeLessThanOrEqual(
-        20,
+        12,
         'More chrome links now depend on catalogue rows that may not exist: ' . implode(', ', $tolerated),
     );
 });
