@@ -805,6 +805,23 @@
       + '<div class="bz-fld"><label for="bz-seodesc">SEO description</label>'
         + '<textarea id="bz-seodesc" rows="2" maxlength="500" placeholder="Defaults to a generated sentence">' + esc(seo.description || '') + '</textarea>'
         + '<p class="bz-note">Google truncates past roughly 155 characters on desktop and 120 on mobile.</p></div>'
+      /* The three the STOREFRONT ALREADY READ off brands.seo and this screen
+         had no box for. Store\BrandController::seoCtx() resolves all three,
+         and Store\SeoFilesController reads noindex again to decide whether the
+         sitemap may advertise the brand — so until these boxes existed the
+         owner could not set, see, or correct any of them. */
+      + '<div class="bz-fld"><label for="bz-seocanon">Canonical URL</label>'
+        + '<input type="text" id="bz-seocanon" maxlength="500" value="' + esc(seo.canonical || '') + '" placeholder="Leave empty to use this page\u2019s own address">'
+        + '<p class="bz-note">A full address, including https://. Use it only when this page is a duplicate of one somewhere else.</p></div>'
+      + '<div class="bz-fld"><label for="bz-seoog">Share image</label>'
+        + '<input type="text" id="bz-seoog" maxlength="500" value="' + esc(seo.og_image || '') + '" placeholder="Defaults to the banner photo, then the logo">'
+        + '<p class="bz-note">Shown when the brand page is shared on WhatsApp, Facebook or X.</p></div>'
+      + '<div class="bz-switch" style="margin-bottom:12px">'
+        + '<input type="checkbox" id="bz-seonoindex"' + (seo.noindex ? ' checked' : '') + '>'
+        + '<label for="bz-seonoindex" style="margin:0"><b>Ask Google not to list this brand page</b>'
+        + '<div class="bz-note" style="margin-top:3px">Removes the page from search results AND from the sitemap. '
+        + 'The brand\u2019s products stay listed \u2014 this hides its own landing page only.</div></label>'
+      + '</div>'
       + '<div class="bz-grid2"><div class="bz-fld"><label for="bz-pos">Position</label>'
         + '<input type="number" id="bz-pos" min="0" max="65535" value="' + esc(brand.position || 0) + '">'
         + '<p class="bz-note">Lowest first in the shop’s brand filter. Or drag the row on Categories &amp; Brands.</p>'
@@ -836,7 +853,18 @@
         logo: val('bz-logo'),
         description: val('bz-desc'),
         position: parseInt(val('bz-pos'), 10) || 0,
-        seo: {title: val('bz-seotitle'), description: val('bz-seodesc')},
+        /* Every box is sent on every save, including an unchecked checkbox as
+           an explicit false. The server treats a key it RECEIVES as
+           authoritative and leaves one it does not receive alone, so omitting
+           the checkbox when it is off would mean a noindex could be set and
+           never cleared. See App\Support\ProductSeo::mergeFromForm(). */
+        seo: {
+          title: val('bz-seotitle'),
+          description: val('bz-seodesc'),
+          canonical: val('bz-seocanon'),
+          og_image: val('bz-seoog'),
+          noindex: !!(document.getElementById('bz-seonoindex') || {}).checked
+        },
         banner: bannerPayload(),
         /* The Arabic goes up in the SAME request as the English, saved by the
            same button. Blank fields are sent rather than omitted, because blank

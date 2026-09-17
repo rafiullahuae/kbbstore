@@ -674,6 +674,20 @@ class CategoriesApiController extends Controller
             'seo' => ['nullable', 'array'],
             'seo.title' => ['nullable', 'string', 'max:255'],
             'seo.description' => ['nullable', 'string', 'max:500'],
+            /*
+             * The other three the STOREFRONT ALREADY READS off this column.
+             *
+             * Store\ShopController resolves canonical, og_image and noindex out
+             * of `categories.seo` for the archive, and
+             * Store\SeoFilesController reads noindex again to decide whether
+             * the sitemap may advertise the category. Until this rule block
+             * named them, `$request->validate()` stripped all three out of the
+             * payload before the screen's own rebuild deleted whatever was left
+             * in the column — so the three had readers and no writer at all.
+             */
+            'seo.canonical' => ['nullable', 'string', 'max:500', 'url'],
+            'seo.og_image' => ['nullable', 'string', 'max:500'],
+            'seo.noindex' => ['nullable', 'boolean'],
             // The banner bag is validated as a shape only. Every field inside
             // it is clamped by App\Support\PageBanner::sanitize(), which is
             // also what the storefront reads it back through, so there is one
@@ -693,22 +707,27 @@ class CategoriesApiController extends Controller
             'slug.unique' => 'Another category already uses that slug.',
             'slug.required' => 'A category needs a name it can make a slug from.',
             'parent_id.exists' => 'That parent category no longer exists.',
+            'seo.canonical.url' => 'The canonical URL must be a full address, including https://.',
         ]);
 
         $data['parent_id'] = $this->safeParentId($category, $data['parent_id'] ?? null);
         $data['image'] = $this->safeImageUrl($data['image'] ?? null);
         $data['position'] = (int) ($data['position'] ?? $category?->position ?? 0);
 
-        // Only the two keys the screen edits are kept, and empties are dropped
-        // rather than stored as "". A stored empty title is not the same as no
-        // title: the archive would render an empty <title> instead of falling
-        // back to the category name.
-        $seo = array_filter([
-            'title' => trim((string) ($data['seo']['title'] ?? '')),
-            'description' => trim((string) ($data['seo']['description'] ?? '')),
-        ], fn ($v) => $v !== '');
-
-        $data['seo'] = $seo === [] ? null : $seo;
+        /*
+         * The boxes this screen draws are authoritative — blank means the
+         * operator cleared one and the key goes — and ANY OTHER KEY IN THE
+         * COLUMN IS LEFT ALONE. This used to be an array_filter() that rebuilt
+         * `seo` from the two boxes the screen drew, which DELETED every other
+         * key rather than leaving it; App\Support\ProductSeo::mergeFromForm()
+         * carries the full reasoning and the same change is made to
+         * Admin\BrandsApiController, which had the identical builder.
+         */
+        $data['seo'] = \App\Support\ProductSeo::mergeFromForm(
+            $category?->seo,
+            $data['seo'] ?? null,
+            ['title', 'description', 'canonical', 'og_image', 'noindex']
+        );
         $data['banner'] = \App\Support\PageBanner::sanitize($data['banner'] ?? null);
 
         return $data;

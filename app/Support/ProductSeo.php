@@ -202,13 +202,120 @@ final class ProductSeo
     }
 
     /**
+     * One editor screen's SEO boxes, merged onto what the column already holds.
+     *
+     * WHY THIS IS NOT `array_filter([...the boxes...])`, WHICH IS WHAT IT
+     * REPLACED. Admin\BrandsApiController and Admin\CategoriesApiController
+     * both ended their payload builder by REBUILDING `seo` out of the two boxes
+     * their screen draws:
+     *
+     *     $seo = array_filter([
+     *         'title'       => trim(... ['seo']['title'] ...),
+     *         'description' => trim(... ['seo']['description'] ...),
+     *     ], fn ($v) => $v !== '');
+     *     $data['seo'] = $seo === [] ? null : $seo;
+     *
+     * Every other key in the column was dropped on the floor by that — not left
+     * alone, DELETED. And the column is not a two-key column: it is read
+     * through normalise() by Store\BrandController::seoCtx() and
+     * Store\ShopController on the full published vocabulary, and
+     * Store\SeoFilesController::isNoindex() reads `noindex` out of both tables
+     * to decide whether the sitemap may advertise the URL at all.
+     *
+     * So a `noindex` — set by the Yoast importer, by a migration, or by hand —
+     * survived precisely until the next time somebody opened that brand in the
+     * admin and pressed Save. The page silently became indexable again and the
+     * sitemap silently began advertising it, with nothing on any screen saying
+     * so, because the screen did not know the key existed. That is the same
+     * write-path/read-path vocabulary split this class's header was written
+     * for, committed a second time against two different tables.
+     *
+     * THE RULE, AND IT IS THE WHOLE POINT: a key is authoritative when the
+     * request ACTUALLY CARRIES IT, and then it is authoritative even blank —
+     * blank means the operator cleared the box and the key goes. A key the
+     * request does not mention is none of its business and is carried through
+     * untouched. Preservation must not become "nothing can ever be removed",
+     * which is why a sent-but-empty value still deletes.
+     *
+     * PRESENCE, NOT THE $draws LIST, IS WHAT DECIDES THAT — and the difference
+     * is not academic. Keying it off "everything this screen draws" means any
+     * client that posts a SHORTER body than the current screen silently deletes
+     * the difference: a cached copy of yesterday's admin JavaScript, a script,
+     * the reorder endpoint, a future screen that splits this form in two. That
+     * is the same "wrote nothing about it, therefore destroy it" mistake this
+     * method exists to undo, merely moved one level up. A request that never
+     * mentions `noindex` is not a request to start indexing the page.
+     *
+     * $draws REMAINS, as an ALLOWLIST rather than as the authority: only a key
+     * this screen is known to render may be written through here at all, so a
+     * hand-crafted payload cannot stuff arbitrary keys into a json column that
+     * five readers pull apart. Both halves are needed — the allowlist says what
+     * MAY be written, presence says what IS being written.
+     *
+     * A BODY WITH NO `seo` KEY AT ALL leaves the column entirely alone. The
+     * brands screen's own source comments that a body without `seo` "would wipe
+     * the SEO overrides"; now it does not, so a partial save from a script, a
+     * future screen, or a reorder endpoint cannot cost the owner their
+     * overrides.
+     *
+     * @param  mixed  $stored  the column as it is now
+     * @param  mixed  $sent    the `seo` bag out of the validated request, if any
+     * @param  list<string>  $draws  the keys this screen actually renders
+     * @return array<string, mixed>|null
+     */
+    public static function mergeFromForm(mixed $stored, mixed $sent, array $draws): ?array
+    {
+        $merged = is_array($stored) ? $stored : [];
+
+        // No `seo` in the body: this request is not speaking about SEO.
+        if (! is_array($sent)) {
+            return self::normalise($merged, rename: false);
+        }
+
+        foreach ($draws as $key) {
+            // Not mentioned by this request, so not this request's business.
+            if (! array_key_exists($key, $sent)) {
+                continue;
+            }
+
+            if ($key === 'noindex') {
+                // A checkbox is not posted when it is unchecked, so the SCREEN
+                // sends `noindex: false` explicitly rather than omitting it —
+                // otherwise there would be no way to turn one off. normalise()
+                // then drops the false, which is how the key disappears.
+                $merged['noindex'] = filter_var($sent['noindex'], FILTER_VALIDATE_BOOL);
+
+                continue;
+            }
+
+            $merged[$key] = trim((string) $sent[$key]);
+        }
+
+        // rename: false — these two tables store `description`, not `desc`, and
+        // their readers already normalise on the way out. Renaming on write
+        // would leave the tables holding both spellings at once.
+        return self::normalise($merged, rename: false);
+    }
+
+    /**
      * A payload from any of the editors into the stored shape.
      *
      * Returns null rather than an empty array when nothing survives, so that
      * `is_array($product->seo)` — the test every reader uses — is false for a
      * product with no overrides instead of true-but-empty.
      */
-    public static function normalise(mixed $seo): ?array
+    /**
+     * @param  bool  $rename  apply RENAME. True for a payload arriving from an
+     *   editor or an import, which is every caller that existed when this was
+     *   written. FALSE for a bag that is already in the stored vocabulary and
+     *   is only being tidied — see mergeFromForm(), which needs the trimming,
+     *   the real-bool `noindex` and the blank-dropping WITHOUT turning the
+     *   `description` that `brands.seo` and `categories.seo` are full of into a
+     *   `desc`. Renaming there would leave those two tables carrying both
+     *   spellings at once, and a row holding `description` AND `desc` resolves
+     *   to whichever this loop reaches last.
+     */
+    public static function normalise(mixed $seo, bool $rename = true): ?array
     {
         if (! is_array($seo)) {
             return null;
@@ -217,7 +324,7 @@ final class ProductSeo
         $out = [];
 
         foreach ($seo as $key => $value) {
-            $key = self::RENAME[$key] ?? $key;
+            $key = $rename ? (self::RENAME[$key] ?? $key) : $key;
 
             if ($key === 'noindex') {
                 // A checkbox arrives as true/false, "1"/"0", "on", or absent.

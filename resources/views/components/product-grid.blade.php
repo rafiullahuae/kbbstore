@@ -57,7 +57,9 @@
         <a class="kbb-card" href="{{ $p->url() }}">
             <div class="kbb-card-thumb">
                 @if ($p->image)
-                    <img src="{{ $p->image }}" alt="{{ $p->name }}" loading="lazy" width="400" height="500">
+                    @php $pgSrcset = \App\Support\ImageVariants::srcsetFor($p->image); @endphp
+                    <img src="{{ $p->image }}" alt="{{ $p->name }}" loading="lazy" width="400" height="500"
+                         @if ($pgSrcset !== '') srcset="{{ $pgSrcset }}" sizes="{{ \App\Support\ImageVariants::skinGridSizesAttribute() }}" @endif>
                 @else
                     {{-- Same gradient fallback the rest of the site uses, so a
                          product without a photo still fills the frame. --}}

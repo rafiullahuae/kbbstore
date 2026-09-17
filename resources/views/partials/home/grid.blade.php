@@ -15,7 +15,9 @@
         <a class="kbb-card" href="{{ $p->url() }}">
             <div class="kbb-card-thumb">
                 @if ($p->image)
-                    <img src="{{ $p->image }}" alt="{{ $p->name }}" loading="lazy" width="400" height="500">
+                    @php $hgSrcset = \App\Support\ImageVariants::srcsetFor($p->image); @endphp
+                    <img src="{{ $p->image }}" alt="{{ $p->name }}" loading="lazy" width="400" height="500"
+                         @if ($hgSrcset !== '') srcset="{{ $hgSrcset }}" sizes="{{ \App\Support\ImageVariants::skinGridSizesAttribute() }}" @endif>
                 @else
                     <span class="ph2" style="background:{{ Gradient::for($brand . $p->name) }}"></span>
                 @endif
