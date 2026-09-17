@@ -67,14 +67,27 @@ function hbBlock(array $attributes = []): Block
     ]);
 }
 
+/*
+ * updateOrCreate AND NOT create — Lane DR.
+ *
+ * This helper built its fixture at slug 'about', 'delivery' or 'contact-us',
+ * all three of which the router hard-codes and none of which had a `pages` row:
+ * every footer link to them was a 404, which is why create() had never
+ * collided. 2026_11_06_000000_seed_footer_content_pages seeds them, so the
+ * fixture now writes over a row that exists rather than failing on the unique
+ * index. The test's own content still wins, which is what these cases are
+ * about.
+ */
 function hbPage(string $content, string $slug = 'about'): Page
 {
-    return Page::create([
-        'slug' => $slug,
-        'title' => 'About us',
-        'content' => $content,
-        'status' => 'published',
-    ]);
+    return Page::updateOrCreate(
+        ['slug' => $slug],
+        [
+            'title' => 'About us',
+            'content' => $content,
+            'status' => 'published',
+        ],
+    );
 }
 
 /* ===========================================================================

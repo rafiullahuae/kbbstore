@@ -292,8 +292,24 @@
 {{-- BRANDS --}}
 @unless ($sections->hidden('brands'))
 <section class="sec tinted {{ $sections->classFor('brands') }}" style="padding-top:0"><div class="wrap">
+  {{-- The COUNT is counted and the CLAIM is the owner's — Lane DR.
+
+       "{n} brands" is read off the catalogue and stays that way; "Korean
+       brands, all sourced direct" is a statement about how the shop buys, it
+       was a literal in this file, and it is a setting now with this wording as
+       its default. Cleared, the line disappears and the heading stands alone. --}}
+  {{-- BLOCK FORM, NOT @php(...) — this file's own headers, thirty and
+       seventy lines from the top, record why: Blade pairs @php/@endphp
+       with one non-greedy regex over the whole template, so an inline
+       @php(...) above the newsletter section's block borrows THAT
+       block's @endphp and swallows every directive in between. Written
+       inline, this exact line killed the home page with "unexpected
+       token class" two hundred lines below itself. --}}
+  @php
+    $brandsNote = \App\Support\TrustClaims::text($settings, 'home_brands_note');
+  @endphp
   <div class="sh"><div><h2>Top brands <span class="cnt">{{ $brandTotal }} brands</span></h2>
-    <p>Korean brands, all sourced direct.</p></div>
+    @if ($brandsNote !== null)<p>{{ $brandsNote }}</p>@endif</div>
     <a class="lnk" href="{{ Url::to('/brands/') }}">All brands</a></div>
   <div class="brands">
     @foreach ($brands as $b)
@@ -508,12 +524,42 @@
     }
 
     $trustCards[] = ['Secure payments', 'Card, Tabby, Tamara and COD', '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'];
-    $trustCards[] = ['100% original', 'Direct from brands and trusted suppliers', '<path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>'];
+
+    /* THE SOURCING AND SUPPORT CARDS ARE THE OWNER'S WORDS NOW — Lane DR.
+
+       "100% original", "Direct from brands and trusted suppliers" and
+       "24/7 support" were literals in this file: three statements about how the
+       business buys and how many hours a day it answers, made to every visitor,
+       on a host where changing a template needs a signed package. Nobody at the
+       shop had ever approved them and nobody at the shop could take them down.
+
+       They are settings now, with exactly this wording as the default, so
+       nothing changes for a shop that leaves them alone. Clearing one in the
+       admin DROPS THE WHOLE CARD — the same rule the delivery card above
+       already follows, and the reason both are built into $trustCards rather
+       than written into the markup: the row closes up instead of showing an
+       icon with nothing beside it.
+
+       App\Support\TrustClaims holds the keys and the defaults, and is the one
+       place that decides an empty box means "do not say this". */
+    $trustAuthTitle = \App\Support\TrustClaims::text($settings, 'trust_authentic_title');
+    $trustAuthText  = \App\Support\TrustClaims::text($settings, 'trust_authentic_text');
+
+    if ($trustAuthTitle !== null) {
+        $trustCards[] = [$trustAuthTitle, $trustAuthText ?? '', '<path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>'];
+    }
+
     /* A FOURTH COPY OF THE SHOP'S PHONE NUMBER — Lane DI. This card sits on the
        home page of every shop and carried the number as a literal, so an owner
        who changed it in the header still advertised the old one here. Same
-       source as the header chip and the footer: App\Support\SupportContact. */
-    $trustCards[] = ['24/7 support', 'WhatsApp ' . \App\Support\SupportContact::phone(), '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'];
+       source as the header chip and the footer: App\Support\SupportContact.
+       The TITLE is the claim — "24/7" is a promise about opening hours — so it
+       goes through TrustClaims; the number underneath stays measured. */
+    $trustSupportTitle = \App\Support\TrustClaims::text($settings, 'trust_support_title');
+
+    if ($trustSupportTitle !== null) {
+        $trustCards[] = [$trustSupportTitle, 'WhatsApp ' . \App\Support\SupportContact::phone(), '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'];
+    }
 @endphp
 <section class="sec {{ $sections->classFor('trust') }}" style="padding-top:0"><div class="wrap">
   <div class="trust"><div class="g">

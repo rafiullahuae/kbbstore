@@ -224,9 +224,21 @@ function walkExpectations(array $seed): array
         // --- Standalone pages -------------------------------------------
         'skin-quiz'                => ['status' => 200],
         'reviews'                  => ['status' => 200],
-        // Regression: this route pointed at a method that did not exist from
-        // the 2.60.41 baseline until 2.60.110.
-        'app'                      => ['status' => 200],
+        /*
+         * Regression: this route pointed at a method that did not exist from
+         * the 2.60.41 baseline until 2.60.110, and 500'd on every visit.
+         *
+         * 404 AND NOT 200 SINCE LANE DR. Writing the method turned the 500 into
+         * a 200, and the 200 is what made the real defect reachable: the view is
+         * a complete second storefront whose catalogue is twenty-four invented
+         * products at invented prices, offering two discount codes `coupons`
+         * has never held. It is a developer preview, so PageController::app()
+         * serves it to an authenticated admin and gives everybody else the same
+         * 404 the router gives for a path that was never registered. This walk
+         * is a logged-out visitor, so 404 is the correct answer here, and
+         * tests/Feature/PublicPagesQuoteRealPricesTest.php holds both halves.
+         */
+        'app'                      => ['status' => 404],
 
         // --- Cart and checkout ------------------------------------------
         'cart'                     => ['status' => 200],

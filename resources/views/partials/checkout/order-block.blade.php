@@ -139,9 +139,26 @@
 
 @if ($withActions ?? true)
     <button type="button" class="place" data-place="1">Place order</button>
+    {{-- "100% authentic" WAS A LITERAL HERE — Lane DR.
+
+         The last sentence a shopper reads before pressing Place order, on the
+         one page where being wrong costs money, and nobody at the shop had
+         approved it or could remove it: it lived in this template, and this
+         template only changes by signed package.
+
+         It is App\Support\TrustClaims now, defaulting to exactly this wording,
+         so the button looks the same today as it did yesterday. Cleared in the
+         admin, the whole chip goes — icon included — rather than leaving a tick
+         with nothing after it.
+
+         "SSL secure" is left alone deliberately: it is a fact about the
+         connection this page was served over, not a claim about the business. --}}
+    @php($checkoutAuth = \App\Support\TrustClaims::text($settings, 'checkout_authentic_text'))
     <div class="trust">
         <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> SSL secure</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> 100% authentic</span>
+        @if ($checkoutAuth !== null)
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> {{ $checkoutAuth }}</span>
+        @endif
     </div>
     @include('partials.checkout.delivery-line')
 @endif

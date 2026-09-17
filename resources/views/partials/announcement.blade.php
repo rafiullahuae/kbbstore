@@ -59,6 +59,33 @@
         @if ($kbbFreeShipThreshold !== null)
             Free delivery over <b>{!! \App\Support\Money::format($kbbFreeShipThreshold, 0) !!}</b> ·
         @endif
-        Pay later with Tabby &amp; Tamara · <b>100% authentic</b> K-beauty
+        {{-- THE CLAIM IS A SETTING NOW, THOUGH NOTHING RENDERS THIS FILE — Lane DR.
+
+             The header above is right that no layout includes this partial, so
+             "100% authentic K-beauty" is not currently reaching anybody. It is
+             one `@include` line away from the chrome of every page, and the
+             comments in this repository already describe it as if it were
+             there, so it goes through the same box as the claims that ARE live:
+             App\Support\TrustClaims, defaulting to this wording, and cleared it
+             disappears along with the separator in front of it.
+
+             "Pay later with Tabby & Tamara" is NOT routed through TrustClaims
+             and is left exactly as it was. It is a claim about which payment
+             methods are enabled, which is a question `payment_providers`
+             answers — a text box would be the wrong fix for it, and the right
+             one belongs to whoever wires this strip up. The header above
+             already records that debt.
+
+             THE @if IS ON ITS OWN LINE, AND THAT IS NOT COSMETIC. Blade's
+             directive pattern is anchored with \B, so an @if written directly
+             after a word character — `Tamara@if (...)` — is not a directive at
+             all: it is compiled through as literal text and its @endif then
+             closes the @unless wrapping this file, which fails as "unexpected
+             endif" somewhere else entirely. Confirmed here the hard way. --}}
+        @php($annoAuth = \App\Support\TrustClaims::text($kbbSettings, 'anno_authentic_text'))
+        Pay later with Tabby &amp; Tamara
+        @if ($annoAuth !== null)
+            · <b>{{ $annoAuth }}</b>
+        @endif
     </div>
 @endunless

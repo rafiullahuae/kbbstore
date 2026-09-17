@@ -20,7 +20,21 @@
 @if ($settings->moduleEnabled('reassurance', true) && $settings->get('reassure_enabled', true))
 @php
     $rating = \App\Support\StoreRating::summary();
-    $auth   = trim((string) $settings->get('reassure_auth_text', '100% authentic K-beauty'));
+    /* THE KEY WAS REAL AND THE OWNER COULD NOT REACH IT — Lane DR.
+
+       `reassure_auth_text` looked settings-driven and was not: it appeared in
+       no admin screen, in no seeder, and in no AdminController::SETTING_RULES
+       entry, and updateSettings() REJECTS any key that is not in that list. So
+       the default below was the shipped value and the only value, printed at
+       the moment of payment on every shop that has ever run this code — which
+       is the same defect as a literal in the template, wearing a setting's
+       clothes. The key is in SETTING_RULES now.
+
+       Read through App\Support\TrustClaims so that the empty case is decided in
+       one place: SettingsService::get() returns its default only when the ROW
+       IS ABSENT, and an owner who clears the box stores '', which must mean
+       "do not say this" and not "say the shipped line again". */
+    $auth   = \App\Support\TrustClaims::text($settings, 'reassure_auth_text') ?? '';
 @endphp
 @if ($rating !== null || $auth !== '')
 <div class="kbb-reassure">
