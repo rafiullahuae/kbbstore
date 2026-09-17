@@ -80,7 +80,18 @@ class ReviewBadgeApiController extends Controller
             'review_badge_avg' => ['sometimes', 'boolean'],
             'review_badge_count' => ['sometimes', 'boolean'],
             'review_badge_sold' => ['sometimes', 'boolean'],
-            'review_badge_label' => ['sometimes', 'string', 'max:' . ReviewBadgeSettings::LABEL_MAX],
+            /*
+             * `nullable`, for the reason ReviewSettingsApiController's own
+             * header sets out: Laravel's global ConvertEmptyStringsToNull runs
+             * before validation, so an owner who clears this box sends NULL and
+             * a bare `string` rule answered 422 "The review badge label field
+             * must be a string." Measured. Clearing it is a legitimate request
+             * meaning "put the default wording back", and
+             * ReviewBadgeSettings::label() already does exactly that with a
+             * blank value — so the rule was refusing the one thing the
+             * normaliser was written to handle.
+             */
+            'review_badge_label' => ['sometimes', 'nullable', 'string', 'max:' . ReviewBadgeSettings::LABEL_MAX],
             // Validated here AND normalised again below. The rule is the
             // message the owner sees; ReviewBadgeSettings::normalise() is what
             // actually decides what may reach a style attribute, and it is the

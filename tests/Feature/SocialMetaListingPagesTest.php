@@ -302,7 +302,16 @@ it('publishes nothing from the settings table that is not meant to be public', f
 
         foreach (['kbb-secret-console', 'aaaabbbbccccdddd', 'hunter2-smtp',
             'sk_live_notreal', 'owner@kbeautybliss.test'] as $secret) {
-            expect($head)->not->toContain($secret, "{$secret} leaked into the <head> of {$path}");
+            /*
+             * str_contains() inside toBeFalse(), never ->not->toContain(
+             * $needle, $message) -- toContain() is VARIADIC and the message was
+             * a second needle, so `not` passed as soon as the <head> failed to
+             * contain the sentence "... leaked into the <head> of /shop", which
+             * it always did. THIS GUARD WATCHES LIVE SECRETS and it was
+             * asserting nothing: measured with each secret appended to $head,
+             * the old form stayed green on all four pages.
+             */
+            expect(str_contains($head, $secret))->toBeFalse("{$secret} leaked into the <head> of {$path}");
         }
     }
 });

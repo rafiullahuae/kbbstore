@@ -745,8 +745,52 @@ class EcommerceApiController extends Controller
             'int' => $this->castInt($raw, self::INT_BOUNDS[$name] ?? null),
             'select' => $options && array_key_exists((string) $raw, $options) ? (string) $raw : null,
             'colour' => preg_match('/^#[0-9a-f]{6}$/i', (string) $raw) ? (string) $raw : null,
-            default => is_string($raw) && mb_strlen($raw) <= 2000 ? $raw : null,
+            default => $this->castText($raw),
         };
+    }
+
+    /**
+     * Free text — and an EMPTY BOX IS A VALUE, not a refusal.
+     *
+     * THE BUG THIS CLOSES. Laravel's global ConvertEmptyStringsToNull runs
+     * before this controller sees anything, so a box the owner has left blank
+     * arrives as NULL, not as ''. The old arm was
+     * `is_string($raw) && mb_strlen($raw) <= 2000 ? $raw : null`, and
+     * `is_string(null)` is false — so it answered null, which save() reads as
+     * its "not acceptable" sentinel and turns into
+     * “Suggested coupon code” is not a valid value. Measured against the live
+     * endpoint as an owner: {"checkout_coupon":""} → 422,
+     * {"checkout_coupon":"GLOW"} → 200.
+     *
+     * IT IS NOT ONE FIELD. ecSaveNow() in the admin console collects every
+     * [data-ec] control on the open tab and posts the lot, and thirteen of
+     * this schema's sixteen text boxes ship empty. So on a fresh store the
+     * Cart tab (six empty boxes), the Checkout tab (three) and the Product tab
+     * (four) could not be saved AT ALL — not the tab, not one field on it,
+     * whatever the owner had typed elsewhere on the same tab. The help text on
+     * those boxes documents the empty state as the way to switch something off
+     * ("Empty shows nothing", "Empty means no box, and no addresses
+     * collected", "Empty means nothing is ever sent"), and every one of those
+     * states was unreachable through the screen.
+     *
+     * ReviewSettingsApiController's `nullable` rule carries the same note and
+     * the same measurement; this controller never got the treatment.
+     * AdminController::checkSetting() gets there by a different road —
+     * `trim((string) $raw)` folds null to '' before the switch — which is why
+     * Store → Business Details never had this.
+     *
+     * Only the TEXT arm folds null. `int` and `money` keep refusing it: a
+     * number box that has been emptied has no value, and "is not a valid
+     * value" is the right answer for one. `colour` keeps refusing it too —
+     * the screen renders <input type="color">, which cannot be blank.
+     */
+    private function castText(mixed $raw): ?string
+    {
+        if ($raw === null) {
+            return '';
+        }
+
+        return is_string($raw) && mb_strlen($raw) <= 2000 ? $raw : null;
     }
 
     /** A whole number of fils, within what a 32-bit money column can hold. */

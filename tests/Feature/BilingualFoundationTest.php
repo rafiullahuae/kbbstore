@@ -1052,7 +1052,15 @@ it('never lets an identifier onto a translatable list', function () {
     // and breaks the redirect map.
     foreach (TranslationEstimate::CONTENT as $class => $columns) {
         foreach (['sku', 'slug', 'code', 'order_number', 'currency', 'price', 'url'] as $forbidden) {
-            expect($columns)->not->toContain($forbidden, $class.' would translate '.$forbidden);
+            /*
+             * in_array() inside toBeFalse(), not ->not->toContain($needle,
+             * $message): toContain() is VARIADIC, so the message was a second
+             * needle and `not` passed because no column list contains the
+             * sentence. Measured with each forbidden name pushed onto
+             * $columns -- the old form stayed green.
+             */
+            expect(in_array($forbidden, (array) $columns, true))
+                ->toBeFalse($class.' would translate '.$forbidden);
         }
     }
 });

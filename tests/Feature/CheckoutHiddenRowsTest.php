@@ -492,8 +492,16 @@ it('leaves the cash-on-delivery rows to CSS, which switches them live', function
                 ->toBeTrue("the cash-on-delivery fee row is off screen at {$width}px although COD is selected and a fee is charged");
             expect(in_array('flex', array_column($feeTotal, 'display'), true))
                 ->toBeTrue("the fee-inclusive Total is off screen at {$width}px although COD is selected");
-            expect(array_column($plainTotal, 'display'))
-                ->not->toContain('flex', "both Totals are on screen at {$width}px, so the checkout shows two different Totals at once");
+            /*
+             * in_array() inside toBeFalse(), never ->not->toContain($needle,
+             * $message). toContain() is VARIADIC: the sentence was a second
+             * needle, the positive expectation could never find it, and `not`
+             * therefore passed whatever the displays actually were. Measured
+             * with 'flex' appended to the list -- the old form stayed green
+             * through the very state it exists to catch.
+             */
+            expect(in_array('flex', array_column($plainTotal, 'display'), true))
+                ->toBeFalse("both Totals are on screen at {$width}px, so the checkout shows two different Totals at once");
         }
     } finally {
         $preview['stop']();

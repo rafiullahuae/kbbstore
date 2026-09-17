@@ -155,7 +155,17 @@ it('never stores the body of a message', function () {
     $row = (array) DB::table('mail_deliveries')->orderByDesc('id')->first();
 
     foreach ($row as $column => $value) {
-        expect((string) $value)->not->toContain('SECRET-TOKEN-abc123', "column {$column} carried the body");
+        /*
+         * str_contains() inside toBeFalse(), never ->not->toContain($needle,
+         * $message). toContain() is VARIADIC: "column config carried the body"
+         * was a SECOND NEEDLE, no column ever contains that sentence, and `not`
+         * passed on the failure of the positive expectation rather than on the
+         * absence of the token. THIS GUARD WATCHES A LIVE CREDENTIAL and it was
+         * asserting nothing -- measured with the token appended to every
+         * column's value, the old form stayed green.
+         */
+        expect(str_contains((string) $value, 'SECRET-TOKEN-abc123'))
+            ->toBeFalse("column {$column} carried the body");
     }
 });
 

@@ -292,9 +292,18 @@ it('records the collection when the courier hands the cash over, without any HTT
     // The order note says it in words the owner can read.
     expect((string) $order->notes()->latest('id')->first()?->content)->toContain('Captured');
 
-    // COD has nobody to call, and the preventStrayRequests() above means this
-    // is enforced rather than asserted.
-    expect(true)->toBeTrue();
+    /*
+     * COD has nobody to call, and preventStrayRequests() in beforeEach() is
+     * what enforces it -- a stray request throws before this line is reached.
+     *
+     * This used to read `expect(true)->toBeTrue();`, which is an expectation
+     * that cannot fail: it stated the conclusion instead of asking anything,
+     * and it counted as coverage of the claim the test's own NAME makes. The
+     * enforcing mechanism is asked directly instead, so this line goes red if
+     * the fake is ever removed from beforeEach() and the claim stops being
+     * enforced at all.
+     */
+    Http::assertNothingSent();
 });
 
 /**

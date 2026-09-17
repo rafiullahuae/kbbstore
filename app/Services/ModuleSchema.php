@@ -326,6 +326,19 @@ final class ModuleSchema
      * "12.50" in one is a hundredfold error that reads back as a plausible
      * number, so it is refused rather than truncated.
      *
+     * AND INCLUDING, UNTIL NOW, ITS BUG. Laravel's global
+     * ConvertEmptyStringsToNull turns a box the owner has cleared into NULL
+     * before any of this runs, `is_scalar(null)` is false, and the text arm
+     * answered null — which every caller of this method reads as "not
+     * acceptable". Measured on Store → Marketing Pixels, the only screen that
+     * casts through here: {"settings":{"meta_id":""}} answered 422
+     * “Meta Pixel ID” is not a valid value, while the field's own help text
+     * says "Leave any of them blank to skip it". Clearing a pixel ID was the
+     * one thing that screen could not do.
+     *
+     * The fold is in the TEXT arm alone. `money`, `int` and `range` still
+     * refuse null, because an emptied number box holds no number.
+     *
      * @param  array<string, mixed>  $field  a normalise()d field
      */
     public static function cast(array $field, mixed $raw): mixed
@@ -337,8 +350,18 @@ final class ModuleSchema
                 ? (string) $raw
                 : null,
             'colour' => preg_match('/^#[0-9a-f]{6}$/i', (string) $raw) === 1 ? (string) $raw : null,
-            default => is_scalar($raw) && mb_strlen((string) $raw) <= 5000 ? (string) $raw : null,
+            default => self::castText($raw),
         };
+    }
+
+    /** Free text; a cleared box is '' rather than a refusal. See cast(). */
+    private static function castText(mixed $raw): ?string
+    {
+        if ($raw === null) {
+            return '';
+        }
+
+        return is_scalar($raw) && mb_strlen((string) $raw) <= 5000 ? (string) $raw : null;
     }
 
     /**

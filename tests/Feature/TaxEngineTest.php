@@ -527,7 +527,13 @@ it('sends the moved total and the new row position back from the country-change 
      */
     expect($saudi->json('vat.added'))->toBeTrue('the endpoint never told the page the row has to move');
     expect(strip_tags((string) $saudi->json('total')))->toContain('287.50');
-    expect(strip_tags((string) $saudi->json('total')))->not->toContain('288',
+    /*
+     * str_contains() inside toBeFalse(). The old ->not->toContain('288',
+     * $message) asserted nothing -- toContain() is VARIADIC, so the message was
+     * a second needle and `not` passed because the total never contains that
+     * sentence. Measured with '288' appended to the total: still green.
+     */
+    expect(str_contains(strip_tags((string) $saudi->json('total')), '288'))->toBeFalse(
         'an exclusive tax was rounded into a total nobody was charged');
 });
 

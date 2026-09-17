@@ -52,7 +52,31 @@
         . '<span class="e">' . str_repeat('★', 5 - $n) . '</span></span>';
 @endphp
 <!DOCTYPE html>
-<html lang="en">
+{{--
+    THE DOCUMENT SAYS WHICH LANGUAGE IT IS IN.
+
+    This page carries its own <html> and does not extend
+    layouts/store.blade.php, so it never picked up the two attributes that
+    layout has emitted since the bilingual foundation landed. /ar/ served this
+    document with a correct Arabic canonical and a correct hreflang set while
+    declaring itself English -- a lie to every screen reader, hyphenator and
+    translation tool that reads the attribute, on the pages a shopper is most
+    likely to read with one.
+
+    `dir` GOES THROUGH Locale::direction(), NEVER THROUGH THE LANGUAGE. This
+    shop has two switches and not one: Arabic can be live while the mirrored
+    layout is still being built, and direction() is the single place that
+    answers which of the two states the shop is in. That is the contract
+    resources/views/invoices/document.blade.php sets out at length and
+    layouts/store.blade.php already follows; this is the same two attributes,
+    not a second opinion on them.
+
+    WHAT IS STILL PHYSICAL. The stylesheet below is inline and this file's own.
+    Turning the mirrored layout on gives this document the right TEXT direction
+    and not yet a mirrored layout, and it does not give it an Arabic-capable
+    webfont either. Both measured, named and left for their owners in
+    docs/rtl-standalone-documents.md rather than papered over here.
+--}}<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">

@@ -113,8 +113,12 @@ it('names both tax figures at full precision, so a sub-dirham move is not record
     expect($content)->toContain(Money::plain($now, Money::minorExponent()));
 
     // And the note must not be the sentence that records no change.
-    expect($content)->not->toContain(
-        Money::plain($was, 0) . ' → ' . Money::plain($now, 0),
-        'the audit note records the figure changing to the value it already had'
-    );
+    /*
+     * str_contains() inside toBeFalse(). toContain() is VARIADIC, so the third
+     * argument was a second needle and `not` passed because the note never
+     * contains that sentence -- the guard asserted nothing. Measured with the
+     * rounded pair appended to $content: still green.
+     */
+    expect(str_contains($content, Money::plain($was, 0) . ' → ' . Money::plain($now, 0)))
+        ->toBeFalse('the audit note records the figure changing to the value it already had');
 });
