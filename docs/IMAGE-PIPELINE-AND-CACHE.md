@@ -215,3 +215,134 @@ offered once they exist, and **nothing** is emitted when they do not.
 - **No third width was added.** Nothing on this storefront draws a tile wider
   than ~424 CSS px, so 800w remains the ceiling every candidate list stops at.
 - **No dependency was added.** `vendor/` cannot ship to this host.
+
+---
+
+## 9. The cache strategy — and which half of it PHP can actually enforce
+
+Phase 12 pairs "image pipeline" with "cache strategy" in one line. §1–§8 above
+are the image half. This is the other half, and the first thing it has to say
+is **where each rule is enforced**, because on this host that is not one place.
+
+### 9.1 The policy
+
+| what | rule | enforced by |
+|---|---|---|
+| `/build/assets/*` — hashed CSS, JS, source maps | `public, max-age=31536000, immutable` | the web server, `.htaccess` |
+| `/img-cache/**` — generated variants | `public, max-age=31536000, immutable` | the web server, `.htaccess` |
+| storefront HTML | `private, no-cache, max-age=0, must-revalidate` | PHP, `App\Http\Middleware\CacheHeaders` |
+| `/my-account`, `/my-wishlist`, `/wishlist`, `/cart`, `/checkout`, `/track-my-order` | `no-store, no-cache, max-age=0, must-revalidate` | PHP, same middleware |
+| the admin console | `no-store` | PHP, `Admin\PageController`, unchanged |
+| `/admin-api/*` | `no-store` | PHP, `NoStoreAdminApi`, unchanged |
+
+The year is written once, as `CacheHeaders::IMMUTABLE`, and
+`docs/cache-headers.htaccess` repeats the same string.
+`tests/Feature/CacheHeaderPolicyTest.php` holds the two to each other, so the
+file and the application cannot state different numbers.
+
+### 9.2 Why a year is safe on those two paths and nowhere else
+
+Both are content-addressed, and neither property is assumed — the test asserts
+both:
+
+- **`/build/`** — Vite writes `kbb-NawQuIF5.css`, and a rebuild is a new name.
+  Every entry in `public/build/manifest.json` is checked against the hash shape;
+  a build that stopped hashing would otherwise mean every browser that has seen
+  the site keeps last year's stylesheet for a year, and **no package can reach
+  it** — there is nothing to reinstall, because the URL never changes.
+- **`/img-cache/`** — variant paths mirror originals named `Ymd-His-<random>.ext`,
+  and `MediaUploadController` cannot overwrite an original (§6). The test strips
+  comments with `token_get_all()` and looks for the naming rule in the code
+  rather than in the prose, because prose is what is left saying it after
+  somebody has changed the code.
+
+### 9.3 HTML: `no-cache` was already right, and that is the problem
+
+Every storefront response already leaves as `no-cache, private`. **Nothing chose
+it.** Symfony's `ResponseHeaderBag` computes that value for any response that
+carries no `Cache-Control` of its own, so the correct policy on the most
+sensitive pages of the shop was an accident of a framework default.
+
+The cost of it changing is specific and already written down in this
+repository: `NoStoreAdminApi`'s docblock records that **shared hosting commonly
+caches GET responses by default**. A storefront page carries a cart badge, a
+signed-in name and a CSRF token. `public` on this host is one shopper's basket
+shown to the next.
+
+So the middleware states it, and the test asserts it **on a fetched page**.
+
+The account, wishlist, cart and checkout paths get `no-store` instead, which is
+a real change and not a restatement: `no-cache` still writes the page to the
+browser's disk, and on a shared or borrowed computer the back button after a
+sign-out renders it without ever asking this server. The private list is
+consulted **before** the status check, because `/checkout` redirects an empty
+basket and `/my-account` redirects a signed-out visitor, and a 302 carrying that
+Location is still something a shared machine should not keep.
+
+### 9.4 The `.htaccess`, and why it is not shipped
+
+**It is an `.htaccess`, not PHP headers, and that is not a preference.** On this
+host `public_path()` is a different directory from the application root
+(`bootstrap/app.php`), the web server serves files out of it directly, and a
+request for `/build/assets/kbb-NawQuIF5.css` never reaches PHP at all. There is
+no PHP hook to hang a header on. `ImageSizesApiController`'s docblock reached
+the same conclusion from the other direction when it rejected on-request
+resizing: "that rewrite lives in an .htaccess in the web root, which no package
+can ship and no shell can fix if it is wrong."
+
+The file is `docs/cache-headers.htaccess`. `docs/` is on
+`BuildPackage::NEVER_SHIP`, so it cannot reach the server by accident.
+
+**Whether this host honours it is NOT VERIFIED, and must not be guessed at.**
+Three things are unknown from here and all three are checkable in a minute by
+somebody with the hosting panel open:
+
+1. **Is the server Apache or LiteSpeed?** Both read `.htaccess`. nginx does not,
+   and on nginx the file is inert — harmless, and doing nothing.
+2. **What is already in the web root?** `kbb-doctor.php` lists that directory
+   ("This directory — the public web root itself"). If an `.htaccess` is in the
+   listing it is almost certainly carrying the rewrite that puts every URL in
+   front of `index.php`, and it must be **appended to, never replaced**.
+   Replacing it is the 2.60.102–.106 failure mode with a different file.
+3. **Is `AllowOverride` wide enough?** `Header` needs `FileInfo`. If the site's
+   routing already comes from an `.htaccess` `RewriteRule`, `FileInfo` is
+   granted and so is `Header`. If routing comes from the vhost instead, a
+   directive Apache is not allowed to process is a **500 on every file in that
+   directory** — which for `/build/` means a shop with no stylesheet.
+
+Because of (3) the file scopes its own blast radius: it contains **no
+`RewriteRule`, no `Options` and nothing outside an `<IfModule mod_headers.c>`
+guard**, and the test asserts that (with the comment lines stripped first — the
+file's own header explains that it contains no rewrite, and an unstripped search
+finds the explanation and reports it as the defect).
+
+**Installing it.** Put it at `<web root>/build/.htaccess` and, separately, at
+`<web root>/img-cache/.htaccess`, by hand, through the hosting file manager —
+**not** at the web root itself, where it would sit beside the file that routes
+the site. Load a product page, check the response headers on a `.css` under
+`/build/`, and if anything 500s, delete the file: nothing else depends on it and
+the site is back the moment it is gone.
+
+**Shipping it in a package later.** `UpdateGuard::ALLOWED_PREFIXES` already
+permits `public/build/`, and `htaccess` is on `ALLOWED_EXTENSIONS`, so
+`public/build/.htaccess` is a path a package *can* carry once (3) has been
+answered once. `public/.htaccess` is on `ALLOWED_FILES` too and should stay
+unused: it is the file the whole site's routing may depend on.
+
+### 9.5 What is deliberately not done
+
+- **No cache headers on `sitemap.xml`, `robots.txt` or `llms.txt`.** They are
+  public documents and marking them `public, max-age=` would be an obvious win,
+  except that they are served through the `web` group and therefore leave with a
+  `Set-Cookie` for a freshly minted session. A `public` response carrying
+  `Set-Cookie` is one that a shared cache may keep and hand to the next visitor
+  — cookie and all. Moving the routes out of the group is a `routes/web.php`
+  change, which this lane does not own, and the gain (a handful of crawler
+  fetches an hour) does not justify guessing at it. Written up rather than
+  shipped.
+- **No ETag on HTML.** A 304 saves the body and not the render, and the render
+  is the scarce thing on a host with a handful of PHP workers.
+- **No `Expires` header and no `mod_expires` block.** `Cache-Control: max-age`
+  supersedes it everywhere, and `ExpiresByType` sits in a different
+  `AllowOverride` class (`Indexes`) from `Header` (`FileInfo`) — two chances to
+  hit (3) instead of one.

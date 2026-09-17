@@ -31,7 +31,16 @@ class SchemaInspectorApiController extends Controller
         $ctx = match ($type) {
             'product' => $this->productCtx($slug, $base),
             'category' => $this->categoryCtx($slug, $base),
-            'shop' => ['type' => 'website', 'title' => 'Shop all', 'url' => $base . '/shop/'],
+            /*
+             * `collection`, not `website`, since the listings started
+             * publishing a CollectionPage of their own. This class's own header
+             * promises that "what's shown here can never drift from what
+             * actually ships", and an inspector reporting `website` for a page
+             * that ships `CollectionPage` is that promise broken. See
+             * categoryCtx() for the one thing this preview still does not
+             * reproduce, and for how it says so.
+             */
+            'shop' => ['type' => 'collection', 'title' => 'Shop all', 'url' => $base . '/shop/'],
             'home' => ['type' => 'home'],
             default => null,
         };
@@ -115,8 +124,21 @@ class SchemaInspectorApiController extends Controller
             return ['error' => "No category with slug \"{$slug}\"."];
         }
 
+        /*
+         * NO ItemList HERE, AND THE WARNING BELOW SAYS SO OUT LOUD.
+         *
+         * The live archive's list is the page window ShopController produces --
+         * its visibility predicate, its facets, its sort, its per-page setting
+         * and its clamped page number. Rebuilding any of that here would be a
+         * SECOND copy of the query, and a second copy that drifts is worse than
+         * no copy: this screen exists to be trusted about what ships.
+         *
+         * So the preview shows the page-level node, which is what an owner
+         * checking their title, description and canonical came for, and
+         * warnings() states plainly that the products are not in it.
+         */
         return [
-            'type' => 'website',
+            'type' => 'collection',
             'title' => $category->name,
             'url' => $base . $category->url(),
             'breadcrumb' => [
@@ -139,6 +161,11 @@ class SchemaInspectorApiController extends Controller
         $warnings = [];
 
         foreach ($nodes as $node) {
+            if (($node['@type'] ?? '') === 'CollectionPage' && empty($node['mainEntity'])) {
+                $warnings[] = 'The live page also publishes an ItemList of the products on it. '
+                    . 'This preview does not run the listing query, so only the page-level node is shown here.';
+            }
+
             if (($node['@type'] ?? '') === 'Product') {
                 if (empty($node['offers'])) {
                     $warnings[] = 'Product schema has no offer — no price will show in search results.';
