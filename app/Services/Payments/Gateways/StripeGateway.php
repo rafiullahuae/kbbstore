@@ -20,14 +20,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Stripe — cards, via Checkout.
+ * Stripe — cards, entered on our own checkout page.
  *
- * Stripe Checkout rather than the Payment Intents API with our own card form,
- * deliberately: a hosted page means card numbers never touch this server, and
- * the PCI obligation stays SAQ-A. This app runs on shared hosting.
+ * The card fields are on /checkout/ and there is no redirect to Stripe. The
+ * fields themselves are Stripe Elements: cross-origin iframes served by
+ * js.stripe.com and mounted into our page, so the shopper types into Stripe's
+ * document and the card number is posted from there straight to Stripe. It
+ * never enters this application's DOM and it is never sent to this server.
  *
- *   POST /v1/checkout/sessions   create a session -> url
- *   GET  /v1/checkout/sessions/{id}
+ * What that costs, stated once because it changes an obligation rather than a
+ * preference: an integration that serves the page the card is entered on is
+ * SAQ-A-EP rather than SAQ-A. Elements is the arrangement that keeps it as
+ * close to SAQ-A as an on-site form can be — it is what WooCommerce's own
+ * Stripe plugin uses for its inline mode, which is the behaviour this store
+ * is being matched against.
+ *
+ *   POST /v1/payment_intents        create an intent -> client_secret
+ *   GET  /v1/payment_intents/{id}
+ *   POST /v1/payment_intents/{id}/capture
+ *   GET  /v1/checkout/sessions/{id} still read: orders placed through the
+ *                                   previous hosted flow carry `cs_...` in
+ *                                   `transaction_id` and must stay refundable
  *   Auth: Authorization: Bearer sk_...
  *   Form-encoded, NOT JSON — Stripe's API takes application/x-www-form-urlencoded
  *   Amounts are integer MINOR units, which is already how this schema stores
@@ -61,9 +74,9 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     /**
      * Days an uncaptured PaymentIntent survives before Stripe releases it.
      *
-     * Only reachable at all if the Checkout session is created with manual
-     * capture, which this build does not do — see capture(). Kept because the
-     * window is real whenever a session IS created that way, and because a
+     * Only reachable at all if the intent is created with manual capture,
+     * which this build does not do — see capture(). Kept because the window is
+     * real whenever an intent IS created that way, and because a
      * capture screen that quietly reported "no window" for cards would be
      * telling the merchant something that stops being true the moment
      * somebody sets capture_method.
@@ -80,9 +93,52 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         return 'Credit or debit card';
     }
 
+    /**
+     * Can this gateway talk to Stripe at all? The secret key, and only that.
+     *
+     * Deliberately NOT widened to include the publishable key, although the
+     * checkout now needs one. `configured()` gates settlement as well as
+     * checkout — PaymentCapturer and PaymentRefunder both ask it — and an
+     * account that is missing a publishable key must not thereby lose the
+     * ability to refund money it has already taken. Whether a card can be
+     * TYPED is a different question from whether this shop can reach Stripe,
+     * and it is answered by availableFor() below.
+     */
     public function configured(): bool
     {
         return $this->credentials->filled($this->id(), 'secret_key');
+    }
+
+    /**
+     * On offer at the checkout — which now also needs the publishable key.
+     *
+     * The publishable key is what boots Stripe.js, and without it the card
+     * iframes never mount. A shop with only the secret key filled in would
+     * offer "Credit or debit card", draw an empty box under it and refuse
+     * every Place order — the exact shape of the complaint that started this
+     * work, with the fields missing for a different reason. Taking the option
+     * off the list instead leaves the shopper something they can act on, and
+     * leaves the merchant a gateway whose old orders are still refundable.
+     *
+     * The parent's rule still applies on top: nothing is offered for a
+     * zero-total order.
+     */
+    public function availableFor(int $totalFils, ?string $country = null): bool
+    {
+        return parent::availableFor($totalFils, $country)
+            && $this->credentials->filled($this->id(), 'publishable_key');
+    }
+
+    /**
+     * The publishable key, for the checkout page to boot Stripe.js with.
+     *
+     * Public by design and by name — it identifies the account to Stripe and
+     * authorises nothing. The secret key has no accessor here and never leaves
+     * GatewayCredentials; PaymentSecretsTest pins that.
+     */
+    public function publishableKey(): string
+    {
+        return $this->credentials->get($this->id(), 'publishable_key');
     }
 
     public function description(int $totalFils): ?string
@@ -93,20 +149,19 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
          * the checkout, chose Credit / Debit Card and asked why the card fields
          * were not showing.
          *
-         * They are not showing because there are none, and that is the design
-         * this gateway's header argues for at length: Stripe CHECKOUT, a hosted
-         * page, so a card number never touches this server and the shop's PCI
-         * obligation stays SAQ-A on shared hosting. The flow is correct. What
-         * was missing was a sentence telling the shopper — and the owner
-         * reading his own checkout — that the card is entered on Stripe's page
-         * after Place order rather than on this one.
+         * They are showing now. The sentence that stood here said they would
+         * appear on Stripe's page after Place order, which was true of the
+         * hosted flow and is the opposite of what this page does today, so
+         * leaving it would be worse than saying nothing at all.
          *
-         * A shopper who expects a card field and sees none assumes the shop is
-         * broken and leaves. That is the same defect as a missing field, and it
-         * costs the same order.
+         * What it does NOT say is anything about a redirect, and it does not
+         * promise there will be no further step: a 3-D Secure challenge is the
+         * card issuer's, not Stripe's, it is mandatory on most UAE cards, and
+         * it opens over this page rather than navigating away from it.
          */
-        return 'Pay securely by card. You will enter your card details on Stripe\'s own '
-            .'secure page after you press Place order, so they never reach this site.';
+        return 'Pay securely by card. Enter your card details below — they go straight '
+            .'to our payment processor and are never stored on this site. Your bank may '
+            .'ask you to confirm the payment.';
     }
 
     public function configSchema(): array
@@ -139,76 +194,192 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
 
         $currency = strtolower((string) ($order->currency ?: 'AED'));
 
-        // One line item for the order total rather than a per-product
-        // breakdown. The breakdown would have to reproduce this order's
-        // discount and shipping apportionment exactly or Stripe's total would
-        // disagree with ours by a fil, and the order's own total is the figure
-        // the webhook will be checked against.
+        /*
+         * AN INTENT THIS ORDER ALREADY HAS IS REUSED, NEVER REPLACED.
+         *
+         * This is the first half of the double-submit guard, and it is the
+         * half that is about Stripe rather than about us. The second half is
+         * older than this change and belongs to the checkout: placing an order
+         * marks the cart `converted`, and CartService::resolve() only ever
+         * finds an `active` one, so the second of two POSTs arrives with no
+         * cart and is turned away before it can mint an order at all.
+         *
+         * That leaves the case this guard covers: the SAME order reaching
+         * start() twice — a retried request, a package that re-runs the step,
+         * or the shopper coming back to a payment they abandoned. Creating a
+         * second intent there would leave two live authorisations against one
+         * order, only one of which `transaction_id` can name, and the other is
+         * money nobody is watching.
+         *
+         * A live intent is handed back with its own client secret, so the
+         * browser confirms the one that already exists. A declined card leaves
+         * the intent in `requires_payment_method` — alive and retryable, which
+         * is Stripe's own model for a retry and the reason a decline needs no
+         * new order and no new intent.
+         */
+        $existing = $this->reusableIntent($order, $currency);
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        /*
+         * One amount, not a line-item breakdown — the same reasoning the
+         * Checkout session had. A breakdown would have to reproduce this
+         * order's discount and shipping apportionment exactly or Stripe's
+         * total would disagree with ours by a fil, and the order's own total
+         * is the figure the webhook will be checked against.
+         */
         $payload = [
-            'mode' => 'payment',
-            'client_reference_id' => $this->reference($order),
-            'customer_email' => (string) $order->email,
-            'success_url' => $this->returnUrl($order, 'success'),
-            'cancel_url' => $this->returnUrl($order, 'cancel'),
-            'line_items' => [[
-                'quantity' => 1,
-                'price_data' => [
-                    'currency' => $currency,
-                    // Already integer minor units. No conversion, no float.
-                    'unit_amount' => (int) $order->total,
-                    'product_data' => ['name' => 'Order ' . $this->reference($order)],
-                ],
-            ]],
-            'metadata' => ['order_number' => $this->reference($order)],
+            // Already integer minor units. No conversion, no float.
+            'amount' => (int) $order->total,
+            'currency' => $currency,
             /*
-             * THE SAME REFERENCE, STAMPED ON THE PAYMENTINTENT AS WELL.
+             * CARDS, NAMED EXPLICITLY, rather than automatic_payment_methods.
              *
-             * Session metadata does not propagate: a Checkout session's
-             * `metadata` and `client_reference_id` stay on the session, and the
-             * charge that comes out of it carries neither. That is invisible on
-             * the webhook path, which reads the session, and it is exactly what
-             * breaks reconciliation — GET /v1/charges lists money with no way
-             * to say which order it belongs to, so a payment whose webhook
-             * never arrived can be reported as "Stripe has taken money we have
-             * no record of" without being able to name the order.
+             * Two reasons and both are about not surprising anybody. The
+             * option on the checkout says "Credit or debit card" and that is
+             * what it must be — automatic methods would put whatever is
+             * switched on in the Stripe dashboard into this box, including
+             * methods that navigate away from the page, which is the one thing
+             * this build is not allowed to do. And a fixed list makes the
+             * Payment Element deterministic: the same fields render for every
+             * shopper regardless of a dashboard setting nobody here can see.
              *
-             * `payment_intent_data.metadata` is copied onto the PaymentIntent
-             * and from there onto its charge, which is what lets the
-             * reconciliation say "order KBB-1042" instead of "some charge".
-             * Two identical stamps, and the redundancy is the point: neither
-             * path depends on the other's object.
+             * 3-D Secure is unaffected. It is not a payment method, it is the
+             * issuer's authentication step on a card payment, and Stripe runs
+             * it in a modal over our page.
              */
-            'payment_intent_data' => [
-                'metadata' => ['order_number' => $this->reference($order)],
-            ],
+            'payment_method_types' => ['card'],
+            'description' => 'Order ' . $this->reference($order),
+            /*
+             * The stamp every other path reads. `metadata` on a PaymentIntent
+             * is copied onto its charge, which is what lets reconciliation say
+             * "order KBB-1042" instead of "some charge" — see chargeToTxn().
+             *
+             * Under the Checkout flow this had to be set twice, once on the
+             * session and once through `payment_intent_data`, because session
+             * metadata does not propagate. There is no session now, so there
+             * is one place to set it and no second copy to fall out of step.
+             */
+            'metadata' => ['order_number' => $this->reference($order)],
         ];
 
-        $result = $this->form('/v1/checkout/sessions', $payload);
+        /*
+         * Stripe's own replay guard, keyed on the order.
+         *
+         * The reuse check above reads `orders.transaction_id`, so it cannot
+         * see a request that reached Stripe and whose response never reached
+         * us — the intent exists, we never learned its id, and nothing was
+         * written. This key makes the retry of that request return the
+         * ORIGINAL intent rather than create a second one. Same role the
+         * unique index on `refunds.idempotency_key` plays for refunds, for the
+         * one case an index cannot see.
+         */
+        $attempt = $this->stripeAttempt(
+            'POST',
+            '/v1/payment_intents',
+            $payload,
+            'kbb-intent-' . $this->reference($order),
+        );
 
-        $url = $result['url'] ?? null;
+        $result = $attempt['body'];
+        $secret = $result['client_secret'] ?? null;
+        $intentId = $result['id'] ?? null;
 
-        if ($result === null || ! is_string($url) || $url === '') {
+        if (! is_string($secret) || $secret === '' || ! is_string($intentId) || $intentId === '') {
             return PaymentStart::failed('We could not reach our card processor. Please try another payment method.');
         }
 
-        $sessionId = (string) ($result['id'] ?? '');
+        $order->forceFill(['transaction_id' => $intentId])->save();
 
-        $order->forceFill(['transaction_id' => $sessionId])->save();
+        // The id, never the secret. This log goes to a file a support person
+        // reads; a client secret in it is a handle to the payment.
+        $this->log('payment intent created', '/v1/payment_intents', 200, [
+            'reference' => $this->reference($order),
+            'payment_intent' => $intentId,
+        ]);
 
-        $this->log('checkout session created', '/v1/checkout/sessions', 200, ['reference' => $this->reference($order)]);
-
-        return PaymentStart::redirect($url, $sessionId);
+        return PaymentStart::confirm($secret, $intentId);
     }
 
     /**
-     * Stripe's API is form-encoded, with nested data as bracketed keys
-     * (line_items[0][price_data][currency]). RemoteGateway::call() sends JSON,
-     * which Stripe ignores, so this is its own method rather than a flag.
+     * An intent this order can still be paid with, or null.
+     *
+     * Deliberately strict about what counts as reusable, because the failure
+     * mode of getting it wrong is charging somebody twice:
+     *
+     *   - it must be a PaymentIntent. An order carrying a `cs_...` was placed
+     *     through the old hosted flow; there is nothing on this page that can
+     *     confirm one, so it gets a fresh intent.
+     *   - the amount and currency must still match the order. A basket that
+     *     changed between attempts is a different sum of money, and
+     *     PaymentConfirmer would refuse the confirmation anyway — better to
+     *     find that out here, where a new intent for the right amount is the
+     *     answer, than at the webhook where the money has already moved.
+     *   - the status must be one that can still be confirmed. `succeeded`,
+     *     `processing` and `requires_capture` are all money that has already
+     *     moved and must never be re-offered to a card form; `canceled` is
+     *     dead.
+     *
+     * A read that fails for any reason returns null and a new intent is made.
+     * That is the safe direction: at worst one unused intent, which expires
+     * without ever having been confirmed, against the alternative of a
+     * checkout that cannot take a payment because Stripe was briefly slow.
      */
-    private function form(string $path, array $payload): ?array
+    private function reusableIntent(Order $order, string $currency): ?PaymentStart
     {
-        return $this->stripeAttempt('POST', $path, $payload)['body'];
+        $ref = trim((string) $order->transaction_id);
+
+        if ($ref === '' || ! str_starts_with($ref, 'pi_')) {
+            return null;
+        }
+
+        $read = $this->stripeAttempt('GET', '/v1/payment_intents/' . urlencode($ref));
+
+        if (! $read['ok'] || ! is_array($read['body'])) {
+            return null;
+        }
+
+        $intent = $read['body'];
+        $status = (string) ($intent['status'] ?? '');
+
+        $confirmable = ['requires_payment_method', 'requires_confirmation', 'requires_action'];
+
+        if (! in_array($status, $confirmable, true)) {
+            return null;
+        }
+
+        if ((int) ($intent['amount'] ?? -1) !== (int) $order->total
+            || strtolower((string) ($intent['currency'] ?? '')) !== $currency) {
+            return null;
+        }
+
+        $secret = $intent['client_secret'] ?? null;
+        $id = $intent['id'] ?? null;
+
+        if (! is_string($secret) || $secret === '' || ! is_string($id) || $id === '') {
+            return null;
+        }
+
+        $this->log('payment intent reused', '/v1/payment_intents', 200, [
+            'reference' => $this->reference($order),
+            'payment_intent' => $id,
+            'status' => $status,
+        ]);
+
+        return PaymentStart::confirm($secret, $id);
     }
+
+    /*
+     * form() stood here: a POST that kept only a successful body, and the only
+     * caller was start() creating a Checkout session. start() now needs the
+     * failure as well — an intent that could not be created is the difference
+     * between "try another method" and a checkout that silently offers a card
+     * form with nothing behind it — so it uses stripeAttempt() directly, and a
+     * method with no callers is a method that will be wired up to the wrong
+     * thing later.
+     */
 
     /**
      * The same form-encoded call, with the failure kept.
@@ -281,6 +452,128 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
         return $out;
     }
 
+    /* ---------------------------------------------- the browser's own report */
+
+    /**
+     * The page says the card went through. Ask Stripe.
+     *
+     * WHY THIS EXISTS AT ALL, given the webhook is the authority. Confirming
+     * on the webhook alone means the order is still `pending` at the moment
+     * the shopper is looking at the order-received page — the receipt, the
+     * status and the stock movement all land a few seconds later, and on a
+     * shop whose webhook endpoint is not configured yet, never. Under the
+     * hosted flow nobody noticed, because the shopper spent those seconds on
+     * Stripe's domain. On our own page the gap is in front of them.
+     *
+     * WHY IT IS SAFE. Nothing the browser says is believed. The order number
+     * only selects which order is being asked about; the amount, the currency
+     * and the status all come from a server-to-server read of the intent named
+     * by `orders.transaction_id`, which the browser has never been in a
+     * position to write. A shopper who posts somebody else's order number gets
+     * whatever that order's own intent actually says, which for an unpaid
+     * order is "not paid" — and CheckoutController gates the call on the
+     * session that placed the order before it ever reaches here.
+     *
+     * WHY IT CANNOT DOUBLE-APPLY. It goes through PaymentConfirmer, exactly as
+     * the webhook does, with the same PaymentIntent id as the reference. The
+     * confirmer takes its claim under a lock against a null `paid_at`, so of
+     * this call and the webhook — in either order, or at the same instant —
+     * the first applies and the second reports "already applied".
+     */
+    public function confirmFromBrowser(Order $order): WebhookOutcome
+    {
+        $intentId = trim((string) $order->transaction_id);
+
+        if ($intentId === '' || ! str_starts_with($intentId, 'pi_')) {
+            return WebhookOutcome::refused('this order has no card payment to confirm');
+        }
+
+        $read = $this->stripeAttempt('GET', '/v1/payment_intents/' . urlencode($intentId));
+
+        if (! $read['ok'] || ! is_array($read['body'])) {
+            // Not a refusal: we could not ask. The webhook is still coming and
+            // is still the authority, so this says "not yet", not "no".
+            return WebhookOutcome::failed('could not reach the card processor');
+        }
+
+        $intent = $read['body'];
+        $status = (string) ($intent['status'] ?? '');
+
+        if ($status !== 'succeeded') {
+            return WebhookOutcome::ignored('the payment has not succeeded');
+        }
+
+        return $this->confirmer->confirm(
+            $order,
+            $this->id(),
+            $intentId,
+            // Stripe's figures, read from Stripe. Never the browser's.
+            (int) ($intent['amount_received'] ?? $intent['amount'] ?? 0),
+            (string) ($intent['currency'] ?? ''),
+            [
+                'event_type' => 'browser_confirmation',
+                'payment_intent' => $intentId,
+                'reference' => $this->reference($order),
+            ],
+        );
+    }
+
+    /**
+     * The shopper gave up on this card payment. Close the intent.
+     *
+     * Returns true only when Stripe has confirmed the intent is `canceled`, or
+     * that it was already dead. The caller releases the order's stock and
+     * coupon on a true and on nothing else, and that ordering is the whole
+     * point: an intent that is still confirmable is one a stale tab, a
+     * back-button or a half-finished 3-D Secure window can still put money
+     * through, and doing that against an order whose stock has gone back on
+     * the shelf is the one outcome that costs a real customer a real product.
+     *
+     * A payment that has already succeeded is never cancelled here. Stripe
+     * would refuse it anyway, but saying so explicitly keeps the reason in the
+     * code that depends on it: money that has moved is a refund, which is
+     * PaymentRefunder's job and a decision for the merchant.
+     */
+    public function abandonIntent(Order $order): bool
+    {
+        $intentId = trim((string) $order->transaction_id);
+
+        if ($intentId === '' || ! str_starts_with($intentId, 'pi_')) {
+            // Nothing was ever opened, so there is nothing to keep open.
+            return true;
+        }
+
+        $read = $this->stripeAttempt('GET', '/v1/payment_intents/' . urlencode($intentId));
+
+        if (! $read['ok'] || ! is_array($read['body'])) {
+            return false;
+        }
+
+        $status = (string) ($read['body']['status'] ?? '');
+
+        if (in_array($status, ['succeeded', 'processing', 'requires_capture'], true)) {
+            return false;
+        }
+
+        if ($status === 'canceled') {
+            return true;
+        }
+
+        $cancel = $this->stripeAttempt(
+            'POST',
+            '/v1/payment_intents/' . urlencode($intentId) . '/cancel',
+            ['cancellation_reason' => 'abandoned'],
+        );
+
+        $this->log('payment intent cancelled', '/v1/payment_intents/cancel', $cancel['status'], [
+            'reference' => $this->reference($order),
+            'payment_intent' => $intentId,
+            'ok' => $cancel['ok'] ? 'yes' : 'no',
+        ]);
+
+        return $cancel['ok'] && (string) ($cancel['body']['status'] ?? '') === 'canceled';
+    }
+
     /* -------------------------------------------------------------- webhook */
 
     public function handleWebhook(Request $request): WebhookOutcome
@@ -326,12 +619,86 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
             'reference' => $reference,
         ];
 
-        if (in_array($type, ['checkout.session.expired', 'payment_intent.payment_failed'], true)) {
+        /*
+         * ------------------------------------------------- the card path now
+         *
+         * `payment_intent.succeeded` is the event that matters since the card
+         * fields moved onto our own page: there is no Checkout session, so
+         * `checkout.session.completed` never arrives for a new order.
+         *
+         * IT IS NOT DECORATIVE. The browser also tells us the payment
+         * succeeded, and the browser is the half that can vanish — a closed
+         * laptop between the bank's approval and the confirmation request
+         * leaves money taken and, without this, a shop that never heard about
+         * it. That is strictly worse than the redirect this replaced, so the
+         * webhook is the authority and the browser's report is the fast path.
+         * Both go through PaymentConfirmer, which applies at most once, so
+         * whichever arrives second is refused as a replay.
+         *
+         * `amount_received`, not `amount`. `amount` is what the intent asked
+         * for; `amount_received` is what was actually taken, and on a partial
+         * capture the two differ. PaymentConfirmer compares this figure with
+         * the order's own total and refuses a mismatch, which is precisely the
+         * comparison that must be made against money moved rather than money
+         * requested.
+         */
+        if ($type === 'payment_intent.succeeded') {
+            return $this->confirmer->confirm(
+                $order,
+                $this->id(),
+                (string) ($object['id'] ?? ''),
+                (int) ($object['amount_received'] ?? $object['amount'] ?? 0),
+                (string) ($object['currency'] ?? ''),
+                $summary,
+            );
+        }
+
+        /*
+         * A DECLINE IS NOT THE END OF THE ORDER, and this distinction is the
+         * one the move to on-site fields makes load bearing.
+         *
+         * Stripe puts a PaymentIntent back to `requires_payment_method` when a
+         * charge is declined. The intent is alive; the shopper is still on our
+         * checkout, still holding their basket, and the whole point of card
+         * fields on the page is that they can try another card into the same
+         * form. Stripe emits `payment_intent.payment_failed` for that attempt.
+         *
+         * Failing the order on it would mean the shopper's second card
+         * succeeds against an order that, by then, is `failed` — a status in
+         * PaymentConfirmer::VOID, so the confirmation is refused, the order is
+         * never marked paid, and the stock and the coupon have already been
+         * handed back to somebody else. Money taken, nothing sold. Under the
+         * hosted flow this was survivable because Stripe's own page retried
+         * internally and the shopper never came back to ours.
+         *
+         * So the intent's own status decides. Still confirmable means a failed
+         * attempt, not a failed order, and is left alone. `canceled` is
+         * terminal and is the one that fails the order — as is
+         * `checkout.session.expired`, which is the same fact for an order
+         * placed through the previous hosted flow.
+         */
+        if ($type === 'payment_intent.payment_failed') {
+            $intentStatus = (string) ($object['status'] ?? '');
+
+            if (in_array($intentStatus, ['requires_payment_method', 'requires_confirmation', 'requires_action'], true)) {
+                return WebhookOutcome::ignored('card declined; the payment can still be retried');
+            }
+        }
+
+        if (in_array($type, ['checkout.session.expired', 'payment_intent.payment_failed', 'payment_intent.canceled'], true)) {
             return $this->confirmer->fail(
                 $order, $this->id(), (string) ($object['id'] ?? ''), str_replace('.', '_', $type), $summary,
             );
         }
 
+        /*
+         * ------------------------------------------- the hosted path, kept
+         *
+         * Orders placed before this package carry a Checkout session and their
+         * webhooks are still in flight, still being retried, and still have to
+         * be applied. Deleting this arm would strand every payment that was in
+         * progress when the update landed.
+         */
         if ($type !== 'checkout.session.completed' && $type !== 'checkout.session.async_payment_succeeded') {
             return WebhookOutcome::ignored('event type not acted on');
         }
@@ -537,11 +904,15 @@ class StripeGateway extends RemoteGateway implements HandlesWebhooks, ListsTrans
     /**
      * The PaymentIntent for this order.
      *
-     * `transaction_id` holds whichever of the two Stripe ids was written last:
-     * start() stores the Checkout session (`cs_...`) and the webhook replaces
-     * it with the PaymentIntent (`pi_...`). Settlement needs the intent, so a
-     * session id is exchanged for one rather than sent to an endpoint that
-     * will reject it.
+     * `transaction_id` holds a PaymentIntent (`pi_...`) from the moment
+     * start() runs, so capture and refund work on an order the instant it is
+     * placed rather than only after its webhook lands.
+     *
+     * The `cs_...` arm is not dead code and must not be deleted. Every order
+     * placed through the previous hosted flow carries a Checkout session id in
+     * this column, and those orders stay refundable for as long as Stripe will
+     * refund them — years. Settlement needs the intent, so a session id is
+     * exchanged for one rather than sent to an endpoint that will reject it.
      */
     private function paymentIntentId(Order $order): ?string
     {

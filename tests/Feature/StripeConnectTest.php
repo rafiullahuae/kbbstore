@@ -420,7 +420,15 @@ describe('the requests it sends to Stripe', function () {
             'GET /v1/webhook_endpoints' => ['object' => 'list', 'data' => [[
                 'id' => 'we_KBBOLD1',
                 'url' => $url,
-                // Missing the two failure events.
+                /*
+                 * An endpoint as a shop had it before the card fields moved
+                 * onto our own checkout. This is not a hypothetical: every
+                 * shop already connected is subscribed to the hosted flow's
+                 * events and to nothing else, so unless reconnecting ADDS the
+                 * payment_intent ones, the first card taken on the new
+                 * checkout succeeds at Stripe and the shop never hears a word
+                 * about it.
+                 */
                 'enabled_events' => ['checkout.session.completed', 'checkout.session.async_payment_succeeded'],
             ]]],
             'POST /v1/webhook_endpoints/we_KBBOLD1' => ['id' => 'we_KBBOLD1', 'enabled_events' => StripeConnect::EVENTS],
@@ -431,9 +439,34 @@ describe('the requests it sends to Stripe', function () {
         expect($result['ok'])->toBeTrue()
             ->and($result['webhook_action'])->toBe('reused_events_updated');
 
-        Http::assertSent(fn (Illuminate\Http\Client\Request $r) => $r->method() === 'POST'
-            && parse_url($r->url(), PHP_URL_PATH) === '/v1/webhook_endpoints/we_KBBOLD1'
-            && ($r->data()['enabled_events[3]'] ?? null) === 'payment_intent.payment_failed');
+        /*
+         * BY VALUE, NOT BY INDEX. This read `enabled_events[3]` and named the
+         * event that happened to sit there, so reordering EVENTS — which is
+         * not a behaviour change — broke it, and, worse, ADDING an event at
+         * the front would have left it passing while asserting about a
+         * different one. What the test is for is that every event the gateway
+         * acts on reaches the endpoint, so that is what it now says.
+         */
+        Http::assertSent(function (Illuminate\Http\Client\Request $r) {
+            if ($r->method() !== 'POST'
+                || parse_url($r->url(), PHP_URL_PATH) !== '/v1/webhook_endpoints/we_KBBOLD1') {
+                return false;
+            }
+
+            $sent = [];
+
+            foreach ($r->data() as $key => $value) {
+                if (str_starts_with((string) $key, 'enabled_events[')) {
+                    $sent[] = $value;
+                }
+            }
+
+            sort($sent);
+            $wanted = StripeConnect::EVENTS;
+            sort($wanted);
+
+            return $sent === $wanted;
+        });
     });
 
     it('leaves an endpoint alone when it already subscribes to everything', function () {

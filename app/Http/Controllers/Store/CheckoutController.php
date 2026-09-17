@@ -187,7 +187,21 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function place(Request $request): RedirectResponse
+    /**
+     * THE RETURN TYPE IS WIDER THAN IT WAS, and only for the card path.
+     *
+     * A card typed into fields on this page cannot be confirmed by a form
+     * POST: the browser has to stay on the page, hand the card to Stripe and
+     * deal with whatever the issuer asks for next. So the checkout submits
+     * this endpoint with fetch() when the chosen gateway wants that, and gets
+     * JSON back instead of a 302.
+     *
+     * Every other caller is byte-for-byte unaffected. The branch is
+     * `$request->expectsJson()`, which an ordinary form POST never is, and
+     * each refusal below is translated by refused() rather than rewritten —
+     * so a validation failure says the same thing through both doors.
+     */
+    public function place(Request $request): RedirectResponse|JsonResponse
     {
         // The form marks Last name as required only when the single-name
         // field is off (Store → Ecommerce → Checkout → Form fields); the
@@ -225,7 +239,9 @@ class CheckoutController extends Controller
         $cart = $this->loadCart($request);
 
         if (! $cart || $cart->items->isEmpty()) {
-            return redirect(Url::redirect('/cart/'))->withErrors('Your bag is empty.');
+            return $request->expectsJson()
+                ? $this->refused($request, 'Your bag is empty.')
+                : redirect(Url::redirect('/cart/'))->withErrors('Your bag is empty.');
         }
 
         /*
@@ -274,7 +290,7 @@ class CheckoutController extends Controller
             );
 
             if (! $check['ok']) {
-                return back()->withInput()->withErrors($check['error']);
+                return $this->refused($request, $check['error']);
             }
         }
 
@@ -285,7 +301,7 @@ class CheckoutController extends Controller
             $this->netSubtotal($cart), (bool) $this->settings->get('hide_paid_when_free', true));
 
         if (! $rates) {
-            return back()->withInput()->withErrors('We do not deliver to that country yet.');
+            return $this->refused($request, 'We do not deliver to that country yet.');
         }
 
         // Only a rate actually offered for this destination is accepted.
@@ -312,7 +328,7 @@ class CheckoutController extends Controller
             // specific sentence to say ("available on orders over X"), which
             // the generic check below cannot produce.
             if ($reason !== null) {
-                return back()->withInput()->withErrors($reason);
+                return $this->refused($request, $reason);
             }
         }
 
@@ -323,7 +339,7 @@ class CheckoutController extends Controller
         // id this build has no code for are all the same answer — it was not
         // on offer, so it is not accepted.
         if (! collect($offered)->contains('id', $data['payment_method'])) {
-            return back()->withInput()->withErrors('That payment method is not available.');
+            return $this->refused($request, 'That payment method is not available.');
         }
 
         // The wording the shopper actually saw on the checkout page. It is
@@ -338,7 +354,7 @@ class CheckoutController extends Controller
         $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find($data['payment_method']);
 
         if ($gateway === null) {
-            return back()->withInput()->withErrors('That payment method is not available.');
+            return $this->refused($request, 'That payment method is not available.');
         }
 
         // Gift fee is read from settings, never from the request. The form
@@ -581,14 +597,14 @@ class CheckoutController extends Controller
              * fields. That is the promise this change makes: the customer is
              * told, in words, before any money moves.
              */
-            return back()->withInput()->withErrors($e->getMessage());
+            return $this->refused($request, $e->getMessage());
         } catch (\App\Services\CouponExhausted $e) {
             // The code ran out between this shopper applying it and pressing
             // Place Order — someone else took the last use, or this is their
             // own second go at a one-per-customer code. The transaction rolled
             // back, so there is no order and no redemption; the basket is still
             // theirs to buy at full price.
-            return back()->withInput()->withErrors($e->getMessage());
+            return $this->refused($request, $e->getMessage());
         }
 
         // Marks this browser session as the one that actually just placed
@@ -654,7 +670,8 @@ class CheckoutController extends Controller
                 reason: 'The payment could not be started.',
             );
 
-            return back()->withInput()->withErrors(
+            return $this->refused(
+                $request,
                 $start->message ?? 'We could not start that payment. Please try another method.'
             );
         }
@@ -684,10 +701,264 @@ class CheckoutController extends Controller
             // Away to the provider's hosted page. Not Url::redirect(), which
             // prefixes our own base path — this is an absolute URL on somebody
             // else's domain.
-            return redirect()->away($start->redirectUrl);
+            return $request->expectsJson()
+                ? response()->json(['ok' => true, 'action' => 'redirect', 'url' => $start->redirectUrl])
+                : redirect()->away($start->redirectUrl);
         }
 
-        return redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number);
+        /*
+         * ------------------------------------------ the card fields on this page
+         *
+         * The gateway has an intent open and wants the browser to finish it.
+         * Nothing here has taken any money and the order is still `pending`;
+         * what goes back is the handle for this one intent and the address to
+         * come back to.
+         *
+         * THE HANDLE ONLY REACHES THE BROWSER THAT PLACED THE ORDER. It is
+         * minted inside this request, in the response to the POST that created
+         * the order, and is never readable afterwards — there is no endpoint
+         * that will hand out an order's client secret. That matters because a
+         * client secret is not merely a token to confirm with: its holder can
+         * also read that intent's amount and status.
+         */
+        if ($start->clientSecret !== null) {
+            /*
+             * NO JAVASCRIPT, NO CARD, AND THEREFORE NO ORDER.
+             *
+             * A shopper with scripting off sees no card fields — they are
+             * Stripe's iframes and Stripe.js mounts them — so they cannot have
+             * entered a card, and this is an ordinary form POST rather than
+             * the fetch() the page makes. Falling through to the success
+             * redirect below would show "thank you for your order" for an
+             * order nobody has paid for and nobody can pay for.
+             *
+             * The order is failed the same way a refused gateway fails it,
+             * which hands the stock and the coupon back, and the shopper is
+             * told what to do instead.
+             */
+            if (! $request->expectsJson()) {
+                app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                    $order,
+                    'failed',
+                    by: 'system',
+                    reason: 'The card form could not be completed in this browser.',
+                );
+
+                return back()->withInput()->withErrors(
+                    'Paying by card needs JavaScript switched on in your browser. '
+                    . 'Please turn it on and try again, or choose another payment method.'
+                );
+            }
+
+            return response()->json([
+                'ok' => true,
+                'action' => 'confirm',
+                'client_secret' => $start->clientSecret,
+                'order' => $order->order_number,
+                /*
+                 * Where the ISSUER sends the shopper back to, on the minority
+                 * of cards whose 3-D Secure step is a full-page redirect
+                 * rather than the modal Stripe runs over this page. Stripe
+                 * appends its own query parameters to it; the success page
+                 * reads `order` and ignores the rest.
+                 */
+                'return_url' => url(Url::redirect('/checkout/success')) . '?order=' . urlencode((string) $order->order_number),
+                'success_url' => Url::redirect('/checkout/success') . '?order=' . urlencode((string) $order->order_number),
+            ]);
+        }
+
+        return $request->expectsJson()
+            ? response()->json([
+                'ok' => true,
+                'action' => 'placed',
+                'order' => $order->order_number,
+                'success_url' => Url::redirect('/checkout/success') . '?order=' . urlencode((string) $order->order_number),
+            ])
+            : redirect(Url::redirect('/checkout/success') . '?order=' . $order->order_number);
+    }
+
+    /**
+     * A refusal, said the same way through both doors.
+     *
+     * The form POST keeps what it always did: back to the checkout with the
+     * fields repopulated and the message above them. The fetch() from the card
+     * form gets the same sentence as JSON with a 422, which is what the page
+     * prints next to the card fields.
+     *
+     * 422 and not 400: this is a request that was understood and refused on
+     * its content, and it is the status Laravel's own validator returns for
+     * the same class of thing, so the browser half has one code to check.
+     */
+    private function refused(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => false, 'error' => $message], 422);
+        }
+
+        return back()->withInput()->withErrors($message);
+    }
+
+    /* ------------------------------------------- the card form's two reports */
+
+    /**
+     * The card form says the payment went through.
+     *
+     * The browser calls this the instant Stripe.js reports `succeeded`, so the
+     * order-received page it then opens shows an order that is actually paid
+     * rather than one that is still `pending` until a webhook lands. Nothing
+     * the browser claims is believed: the amount, the currency and the status
+     * are read back from Stripe server-to-server, and the whole thing goes
+     * through PaymentConfirmer, so this and the webhook can both arrive and
+     * only one of them applies.
+     *
+     * It is not the authority and must never become it. If this call is lost —
+     * a closed tab, a dropped connection, a shopper who navigates away the
+     * moment their bank approves — the webhook still marks the order paid.
+     * That is the arrangement that makes card fields on our own page no worse
+     * than the redirect they replaced.
+     */
+    public function cardConfirmed(Request $request): JsonResponse
+    {
+        $order = $this->orderThisSessionPlaced($request);
+
+        if ($order === null) {
+            // The same answer for a wrong order number and for one that was
+            // never this browser's, so this cannot be used to find out which
+            // order numbers exist. It is the rule success() already follows.
+            return response()->json(['ok' => false], 404);
+        }
+
+        $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find('stripe');
+
+        if (! $gateway instanceof \App\Services\Payments\Gateways\StripeGateway) {
+            return response()->json(['ok' => false], 404);
+        }
+
+        $outcome = $gateway->confirmFromBrowser($order);
+
+        /*
+         * `ok` here means "this browser may go to the order-received page",
+         * which is true whenever the payment is not in doubt — applied now, or
+         * applied already by the webhook that beat us to it. It is NOT a
+         * report of what happened to the order, and it deliberately says
+         * nothing about the order's status: the page has no decision left to
+         * make and a shopper cannot act on the difference.
+         */
+        return response()->json(['ok' => $outcome->accepted], $outcome->accepted ? 200 : 202);
+    }
+
+    /**
+     * The shopper gave up on the card and wants their basket back.
+     *
+     * Reached from the "Return to your basket" control that appears beside a
+     * declined card, and from nowhere else — there is no timer and no
+     * unload handler doing this silently, because the events that look like
+     * abandonment (a 3-D Secure window, a tab switch, a slow bank) are exactly
+     * the events that also look like a payment in progress.
+     *
+     * Three things happen, and the order matters:
+     *
+     *  1. The intent is CANCELLED AT STRIPE FIRST, and everything else is
+     *     conditional on that succeeding. An intent left confirmable is one a
+     *     stale tab can still put money through; doing that after step 2 has
+     *     handed this order's units back to the shelf is how a paying customer
+     *     ends up with no product.
+     *  2. The order is failed through OrderStatus, which is what returns the
+     *     stock and releases the coupon use. Same call, same funnel and the
+     *     same consequences as a gateway that refused the payment outright —
+     *     see the `$start->ok()` branch in place().
+     *  3. The cart goes back to `active`, which is the whole point. The
+     *     shopper still holds its cookie and CartService::resolve() only ever
+     *     finds an active cart, so this is the single field that decides
+     *     whether their basket exists. Without it a declined card empties the
+     *     bag, which is the thing that would make an on-site card form worse
+     *     than the redirect for anybody whose first card does not work.
+     */
+    public function cardAbandoned(Request $request): JsonResponse
+    {
+        $order = $this->orderThisSessionPlaced($request);
+
+        if ($order === null) {
+            return response()->json(['ok' => false], 404);
+        }
+
+        // A paid order is not abandonable. Whatever the browser thinks it saw,
+        // money that has moved is a refund and a decision for the merchant.
+        if ($order->paid_at !== null) {
+            return response()->json(['ok' => false, 'error' => 'That payment has already gone through.'], 409);
+        }
+
+        $gateway = app(\App\Services\Payments\GatewayRegistry::class)->find('stripe');
+
+        if (! $gateway instanceof \App\Services\Payments\Gateways\StripeGateway) {
+            return response()->json(['ok' => false], 404);
+        }
+
+        if (! $gateway->abandonIntent($order)) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'We could not cancel that payment. Please refresh the page before trying again.',
+            ], 409);
+        }
+
+        /*
+         * The cart by its own cookie, not by a column on the order — `orders`
+         * has never carried a cart id. CartService::resolve() finds a cart by
+         * exactly this token and refuses anything that is not `active`, which
+         * is why `status` is the single field that decides whether this
+         * shopper still has a basket, and why it is the one being put back.
+         */
+        $token = (string) $request->cookie(CartService::COOKIE);
+
+        $cart = $token === '' ? null : \App\Models\Cart::query()
+            ->where('token', $token)
+            ->where('status', 'converted')
+            ->first();
+
+        DB::transaction(function () use ($order, $cart) {
+            app(\App\Services\Orders\OrderStatus::class)->moveTo(
+                $order,
+                'failed',
+                by: 'system',
+                reason: 'The shopper cancelled the card payment and returned to their basket.',
+                only: ['paid_at' => null],
+            );
+
+            $cart?->forceFill(['status' => 'active', 'converted_at' => null, 'last_activity_at' => now()])->save();
+        });
+
+        $request->session()->forget('kbb_last_order');
+
+        return response()->json(['ok' => true, 'url' => Url::to('/checkout/')]);
+    }
+
+    /**
+     * The order this browser placed a moment ago, or null.
+     *
+     * `kbb_last_order` is the marker place() writes into the session, and it
+     * is the same one Marketing Pixels' Purchase event is gated on — the
+     * comment beside it in place() sets out why a query-string order number is
+     * not on its own evidence of anything. Both endpoints above act on an
+     * order, so both take the marker and nothing else: a posted order number
+     * that does not match it is simply not found.
+     *
+     * The gateway is checked here too. Neither endpoint means anything for an
+     * order paid another way, and an order number is not a secret.
+     */
+    private function orderThisSessionPlaced(Request $request): ?Order
+    {
+        $number = trim((string) $request->input('order'));
+        $mine = trim((string) $request->session()->get('kbb_last_order'));
+
+        if ($number === '' || $mine === '' || ! hash_equals($mine, $number)) {
+            return null;
+        }
+
+        $order = Order::where('order_number', $number)
+            ->where('payment_method', 'stripe')
+            ->first();
+
+        return $order;
     }
 
     /**
