@@ -1443,6 +1443,7 @@ rather than by a browser plugin, at `/ar`. **Greenfield**: no `lang/` directory,
 | Machine translation | **A draft he approves, never a publish.** His own key, character count and cost shown first | Makes "if we find anything incorrect we correct it manually" true rather than discovered after customers read it. ~700k characters across the shop; Google's free monthly allowance is ~500k, so two batches across two months costs nothing |
 | RTL | **Proper** — real `dir="rtl"`, mirrored layout, an Arabic face, since Poppins carries no Arabic glyphs | A flip is a plugin's answer, not a shop's |
 | Never mirrored | **Prices stay `AED 199`, photographs keep their orientation, the logo is unchanged** | Told to the owner as part of the approval |
+| Control | **A `Translation` parent menu in the admin. Arabic and RTL are separate switches, both off by default** | His requirement. Separate, because he may want to publish Arabic before the mirrored layout is finished — and because a single switch would make "turn the layout back" mean "take Arabic down" |
 | Never translated | SKUs, coupon codes, order numbers, **and slugs** | One slug per row keeps the redirect map intact and halves the URL surface |
 
 ### The surface, measured
@@ -1459,6 +1460,32 @@ descriptions, validation messages).
 - [ ] **T1 · Foundation** — locale resolution, the database store, the fallback
       chain, the admin editing surface, proved end to end on a handful of real
       strings. **In flight.** Everything below waits on the shape it settles
+- [ ] ▲ **T1b · A `Translation` section in the admin, with real switches** —
+      owner's requirement: a **parent menu of its own** in the sidebar, beside
+      Store and Content, rather than settings scattered across other screens.
+      Everything **off by default**, so applying the package changes nothing on
+      the live shop — the pattern `legal_notice` and `brands` already follow.
+
+      The controls, and two of them are deliberately independent:
+
+      - **Arabic storefront — off / on.** Off means `/ar` does not exist at all:
+        no routes, nothing in the sitemap, no language switcher. This is the
+        master switch, and it stays off until he says the translation is good
+        enough to show a customer
+      - **Right-to-left — off / on, separately from Arabic.** He asked for RTL
+        to be fully switchable. Worth stating what "Arabic on, RTL off" means:
+        Arabic text in a left-to-right layout, which is legitimate during a
+        rollout and wrong to an Arabic reader afterwards. The screen says so
+        rather than letting him discover it
+      - **Default language**, and what a bare `/` serves
+      - **Progress** — how much of each area is translated, counted rather than
+        claimed: interface strings, products, categories, brands, pages, posts.
+        Only answerable because blank means untranslated rather than
+        "same as English" (see T4b)
+      - **Machine translation** — provider, his own key, the character count and
+        estimated cost, and the batch run. Absent key must leave every manual
+        path working
+
 - [ ] **T2 · Interface strings** — the 95 Blade files. The bulk of the work and
       almost entirely mechanical once T1 lands. An Arabic page silently half in
       English is a designed-for outcome, not an accident: the fallback has to be
