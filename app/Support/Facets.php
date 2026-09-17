@@ -35,6 +35,73 @@ final class Facets
         '300p' => ['AED 300+', 300, null],
     ];
 
+    /**
+     * The sort options in the shopper's language, still keyed by the value the
+     * URL carries.
+     *
+     * WHY NOT IN THE CONST. A constant expression cannot call __(), and a
+     * static memo of the resolved labels would be the Setting::map() trap in a
+     * new place: one process serving an Arabic request and then an English one
+     * would answer the second in Arabic. Resolved per call, which is once per
+     * page — ShopController passes the result to the view.
+     *
+     * SORTS stays the English source and the list of valid keys; sort() still
+     * validates against array_key_exists on THIS array's keys, never on a
+     * label.
+     *
+     * @return array<string, string> url value => label
+     */
+    public static function sortLabels(): array
+    {
+        $out = [];
+
+        foreach (self::SORTS as $key => $english) {
+            $out[$key] = (string) __('store.shop.sort_' . $key);
+        }
+
+        return $out;
+    }
+
+    /**
+     * The price bands in the shopper's language — THE SAME SHAPE AS BUCKETS,
+     * [label, min, max], with only the label translated.
+     *
+     * WHY THE SHAPE IS PRESERVED RATHER THAN REDUCED TO key => label, which is
+     * all the template actually reads. tests/Feature/StorefrontEnglishUnchangedTest
+     * renders the PRE-CONVERSION templates (checked out of git at a fixed
+     * commit) against the CURRENT controllers, so it pins the data contract
+     * between the two and not merely the wording inside a .blade.php. Handing
+     * the view a string where it had an array made the old template's `$b[0]`
+     * evaluate to 'U' — the first character — and the guard caught it.
+     *
+     * That test is right and the shape is part of the interface. The bounds
+     * stay beside the label for a second reason as well: a band whose wording
+     * and whose min/max came from different places is the drift this shop has
+     * already paid for elsewhere.
+     *
+     * @return array<string, array{0: string, 1: int|null, 2: int|null}>
+     */
+    public static function buckets(): array
+    {
+        $out = [];
+
+        foreach (self::BUCKETS as $key => [$english, $min, $max]) {
+            $out[$key] = [self::bucketLabel($key), $min, $max];
+        }
+
+        return $out;
+    }
+
+    /** One band's label, or '' for a key BUCKETS does not carry. */
+    public static function bucketLabel(string $key): string
+    {
+        if (! array_key_exists($key, self::BUCKETS)) {
+            return '';
+        }
+
+        return (string) __('store.shop.price_' . str_replace('-', '_', $key));
+    }
+
     /** Legacy names from the live site mapped onto the theme's. */
     private const ALIASES = [
         'filter_brands' => 'brand',

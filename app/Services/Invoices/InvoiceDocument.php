@@ -383,7 +383,9 @@ class InvoiceDocument
      *
      * The same rows, labels and splits as the emailed receipt — the customer
      * has one of those in their inbox and must not find the invoice disagreeing
-     * with it. Delivery prints even at zero, because "we charged you nothing to
+     * with it. Since Lane FB that is enforced rather than merely intended: both
+     * copies call the SAME `email.totals.*` keys, so a translator renaming a row
+     * renames it on the receipt and the invoice together or on neither. Delivery prints even at zero, because "we charged you nothing to
      * deliver this" is a statement and a missing row is not.
      *
      * `fee_total` is the gift-wrapping charge plus whatever the gateway added
@@ -398,7 +400,7 @@ class InvoiceDocument
         $giftFee = (int) $order->gift_fee;
         $otherFees = max(0, (int) $order->fee_total - $giftFee);
 
-        $rows = [['Subtotal', (int) $order->subtotal, false]];
+        $rows = [[__('email.totals.subtotal'), (int) $order->subtotal, false]];
 
         if ((int) $order->discount_total !== 0) {
             // Rendered negative, because it came off the bill. The column
@@ -406,21 +408,21 @@ class InvoiceDocument
             // document somebody adds up by hand.
             $rows[] = [
                 trim((string) $order->coupon_code) !== ''
-                    ? 'Discount (' . trim((string) $order->coupon_code) . ')'
-                    : 'Discount',
+                    ? __('email.totals.discount_coupon', ['code' => trim((string) $order->coupon_code)])
+                    : __('email.totals.discount'),
                 -abs((int) $order->discount_total),
                 false,
             ];
         }
 
-        $rows[] = ['Delivery', (int) $order->shipping_total, false];
+        $rows[] = [__('email.totals.delivery'), (int) $order->shipping_total, false];
 
         if ($giftFee > 0) {
-            $rows[] = ['Gift wrapping', $giftFee, false];
+            $rows[] = [__('email.totals.gift_wrapping'), $giftFee, false];
         }
 
         if ($otherFees > 0) {
-            $rows[] = [$order->paymentLabel() . ' fee', $otherFees, false];
+            $rows[] = [__('email.totals.payment_fee', ['method' => $order->paymentLabel()]), $otherFees, false];
         }
 
         /*
@@ -442,13 +444,19 @@ class InvoiceDocument
         if ($taxRecord === null) {
             if ((int) $order->tax_total !== 0) {
                 // An imported order carrying real tax. Already inside `total`.
-                $rows[] = ['VAT', (int) $order->tax_total, false];
+                $rows[] = [__('email.totals.vat'), (int) $order->tax_total, false];
             }
         } elseif ($taxRecord['added'] && $taxRecord['fils'] !== 0) {
-            $rows[] = ['VAT at ' . (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate() . '%', $taxRecord['fils'], false];
+            $rows[] = [
+                __('email.totals.vat_at_rate', [
+                    'rate' => (new \App\Support\TaxRule($taxRecord['rate'], $taxRecord['basis']))->printableRate(),
+                ]),
+                $taxRecord['fils'],
+                false,
+            ];
         }
 
-        $rows[] = ['Total', (int) $order->total, true];
+        $rows[] = [__('email.totals.total'), (int) $order->total, true];
 
         return array_map(static fn (array $row) => [
             'label' => $row[0],

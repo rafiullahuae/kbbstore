@@ -260,11 +260,211 @@ final class InterfaceStrings
             'shop.clear_all' => 'Clear all',
             'shop.empty_heading' => 'No products match those filters',
             'shop.empty_body' => 'Try removing a filter or clearing all.',
+
+            /*
+             * THE SORT SELECT AND THE PRICE BANDS — Lane FB.
+             *
+             * Their English source is App\Support\Facets::SORTS and ::BUCKETS,
+             * which stay as they are: a const cannot call __(), BUCKETS carries
+             * the filter's own min/max beside each label, and both are compared
+             * BY KEY everywhere ('plow', 'u54'), never by the label — which is
+             * what makes translating the label safe at all.
+             *
+             * The key here is the constant's array key, so the two cannot be
+             * matched up by eye and get it wrong. ShopPhpLabelsAreKeyedTest
+             * fails if an English source here ever stops matching the constant.
+             *
+             * The figures in the price bands are left exactly as the constant
+             * writes them. They are the band's own definition rather than a
+             * claim that can go stale, and money DISPLAY is being changed under
+             * this lane by another — see the note in the report.
+             */
+            'shop.sort_featured' => 'Featured',
+            'shop.sort_popularity' => 'Best selling',
+            'shop.sort_plow' => 'Price: low to high',
+            'shop.sort_phigh' => 'Price: high to low',
+            'shop.sort_rating' => 'Top rated',
+            'shop.sort_date' => 'Newest',
+            'shop.sort_name' => 'Name A–Z',
+            'shop.price_u54' => 'Under AED 54',
+            'shop.price_54_150' => 'AED 54 – 150',
+            'shop.price_150_300' => 'AED 150 – 300',
+            'shop.price_300p' => 'AED 300+',
+
+            // The chips above the grid, which name the filter the shopper just
+            // applied and are the control for removing it.
+            'shop.chip_on_sale' => 'On sale',
+            'shop.chip_in_stock' => 'In stock',
+
+            // ShopController::heading() — the listing's own title, subtitle and
+            // the crumb after Home. A category supplies its own name and
+            // description from the catalogue; these are the fallbacks and the
+            // unfiltered /shop/ case.
+            'shop.title_all' => 'Shop all',
+            'shop.title_search' => 'Search: :term',
+            'shop.sub_default' => 'Authentic Korean skincare, curated for the UAE.',
+            'shop.sub_search' => 'Results across products and brands.',
+            'shop.crumb_category' => 'Category',
+            'shop.crumb_search' => 'Search',
+
+            /*
+             * THE SKIN QUIZ'S INLINE SCRIPT — Lane FB.
+             *
+             * Prefixed quiz.js_ rather than js_, so FrontEndStrings::forLocale()
+             * does NOT pick them up: that table ships to every page in the shop,
+             * and these are strings only /skin-quiz says. The quiz emits its own
+             * window.KBB_T through FrontEndStrings::forPrefix() — see the note
+             * there for the whole argument.
+             *
+             * WHAT IS DELIBERATELY ABSENT. Every value the shopper PICKS — the
+             * skin types, concerns, ages, routine depths, budgets and allergens.
+             * Those strings are compared (state.concerns.includes('Hydration'),
+             * /Oily|Combination/.test(state.skin)) and are POSTed to /api/quiz as
+             * the lead's answers. Translating them breaks recommend() and writes
+             * Arabic answers into a table the owner reads in English. They need
+             * label and value separated first, which is a change with a
+             * persistence contract attached.
+             *
+             * The routine titles and step names below are the DISPLAY copies.
+             * The English in the script stays the canonical value and is what
+             * the payload carries.
+             */
+            'quiz.js_about_a_minute' => '~1 min',
+            'quiz.js_allergy_placeholder' => 'Anything else we should avoid? (optional)',
+            'quiz.js_avoiding' => 'Avoiding for you:',
+            'quiz.js_back' => '‹ Back',
+            'quiz.js_backend_preview' => 'What your store saves (backend preview)',
+            'quiz.js_continue' => 'Continue',
+            'quiz.js_err_email' => 'Enter a valid email',
+            'quiz.js_err_name' => 'Please enter your name',
+            'quiz.js_err_phone' => 'Enter a valid phone',
+            'quiz.js_expert_body' => 'Send your quiz to a K-Beauty Bliss skin expert — we\'ll review your routine and message you on WhatsApp.',
+            'quiz.js_expert_heading' => 'Want a human to check it?',
+            'quiz.js_expert_placeholder' => 'Optional note (allergies, pregnancy, current products…)',
+            'quiz.js_expert_reach' => 'An expert will reach out on :phone.',
+            'quiz.js_expert_send' => 'Send request to skin expert',
+            'quiz.js_expert_sent' => 'Request sent — talk soon!',
+            'quiz.js_eye_about' => 'About you',
+            'quiz.js_eye_almost' => 'Almost there',
+            'quiz.js_eye_goals' => 'Your goals',
+            'quiz.js_eye_results' => 'Your results',
+            'quiz.js_eye_routine' => 'Your routine',
+            'quiz.js_eye_safety' => 'Safety check',
+            'quiz.js_eye_skin' => 'Your skin',
+            'quiz.js_label_email' => 'Email',
+            'quiz.js_label_name' => 'Name',
+            'quiz.js_label_phone' => 'Phone (WhatsApp)',
+            'quiz.js_last_step' => 'Last step',
+            'quiz.js_perk_expert' => 'Free expert help',
+            'quiz.js_perk_minute' => '~1 minute',
+            'quiz.js_perk_routines' => 'Personalised routines',
+            'quiz.js_ph_name' => 'e.g. Fatima',
+            'quiz.js_q_age' => 'Your age range?',
+            'quiz.js_q_allergy' => 'Any allergies or sensitivities?',
+            'quiz.js_q_budget' => 'Your budget vibe?',
+            'quiz.js_q_contact' => 'Where do we send your routine?',
+            'quiz.js_q_depth' => 'How many steps feel right?',
+            'quiz.js_q_goals' => 'What do you want to work on?',
+            'quiz.js_q_skin' => 'What\'s your skin type?',
+            'quiz.js_results_sub' => 'Built for your skin & the UAE climate · emailed to :email',
+            'quiz.js_results_title' => ':name, here\'s your glow plan',
+            'quiz.js_retake' => '↺ Retake the quiz',
+            'quiz.js_routine_boosters_desc' => 'Extra steps for your top concerns.',
+            'quiz.js_routine_boosters_tag' => 'Add-ons',
+            'quiz.js_routine_boosters_title' => 'Targeted Boosters',
+            'quiz.js_routine_essentials_desc' => 'The core steps for 90% of your goals.',
+            'quiz.js_routine_essentials_tag' => 'Start here',
+            'quiz.js_routine_essentials_title' => 'Everyday Essentials',
+            'quiz.js_routine_glass_desc' => 'The full layering routine, in order.',
+            'quiz.js_routine_glass_tag' => 'Best results',
+            'quiz.js_routine_glass_title' => 'Glass-Skin Ritual',
+            'quiz.js_see_routine' => 'See my routine →',
+            'quiz.js_shop_steps' => 'Shop these steps',
+            'quiz.js_start_cta' => 'Start the quiz →',
+            'quiz.js_start_eye' => '1-minute skin quiz',
+            'quiz.js_start_sub' => 'A few quick questions → a personalised Korean routine, matched to your concerns and the UAE climate.',
+            'quiz.js_start_title' => 'Find your glow.',
+            'quiz.js_step_barrier_desc' => 'A calming, repairing layer when skin feels reactive.',
+            'quiz.js_step_barrier_name' => 'Barrier',
+            'quiz.js_step_boost_desc' => 'A second active for your next concern.',
+            'quiz.js_step_boost_name' => 'Boost',
+            'quiz.js_step_cleanse_desc' => 'Lift off sunscreen, sweat and the day.',
+            'quiz.js_step_cleanse_name' => 'Cleanse',
+            'quiz.js_step_cleanse_oil_desc' => 'An oil or balm to break down SPF, then a gentle wash.',
+            'quiz.js_step_cleanse_oil_name' => 'Cleanse (oil first)',
+            'quiz.js_step_count' => ':count steps',
+            'quiz.js_step_eye_desc' => 'A lighter formula for the thinner skin around the eye.',
+            'quiz.js_step_eye_name' => 'Eye',
+            'quiz.js_step_mask_desc' => 'A mask once or twice a week, not daily.',
+            'quiz.js_step_mask_name' => 'Weekly',
+            'quiz.js_step_moisturise_desc' => 'Seal the water in so the actives are tolerated.',
+            'quiz.js_step_moisturise_name' => 'Moisturise',
+            'quiz.js_step_of' => 'Step :n / :total',
+            'quiz.js_step_protect_desc' => 'Sunscreen every morning — the UAE sun is the whole game.',
+            'quiz.js_step_protect_name' => 'Protect',
+            'quiz.js_step_rich_desc' => 'A heavier cream for dry or mature skin.',
+            'quiz.js_step_rich_name' => 'Moisturise (richer)',
+            'quiz.js_step_tone_desc' => 'Rebalance and soften before anything active.',
+            'quiz.js_step_tone_name' => 'Tone',
+            'quiz.js_step_treat_desc' => 'The active step for your main concern.',
+            'quiz.js_step_treat_name' => 'Treat',
+            'quiz.js_sub_age' => 'Helps us pick the right actives.',
+            'quiz.js_sub_allergy' => 'So we steer clear of ingredients that don\'t agree with you. Optional — pick any that apply.',
+            'quiz.js_sub_budget' => 'So picks feel right for you.',
+            'quiz.js_sub_contact' => 'We\'ll save your results & email your plan. No spam, ever.',
+            'quiz.js_sub_depth' => 'We\'ll size it to your life.',
+            'quiz.js_sub_goals' => 'Choose up to 3.',
+            'quiz.js_sub_skin' => 'Pick what sounds most like you.',
+            'quiz.js_tap_continue' => 'Tap to continue',
+            'quiz.js_toast_expert_sent' => 'Sent to a skin expert ✓',
+            'quiz.js_toast_max_three' => 'Pick up to 3 concerns',
+            'quiz.js_your_plan' => 'Your plan ✨',
             'collection.page_title' => ':title · K-Beauty Bliss',
             'collection.product_count' => ':formatted product|:formatted products',
             'collection.all_products' => 'All products',
             'collection.empty' => 'Nothing here just yet. :link.',
             'collection.empty_link' => 'Browse the full range',
+
+            /*
+             * THE FOUR CURATED LISTINGS — Store\CollectionController::COLLECTIONS.
+             *
+             * /new-in/, /best-sellers/, /super-sale/ and /under-54/ are the
+             * header links, and every one of them drew an Arabic page under an
+             * English heading and an English sentence beneath it.
+             *
+             * THE CONSTANT STAYS AS IT IS, for the reason Facets::SORTS does: a
+             * const cannot call __(), and COLLECTIONS carries the SELECTION MODE
+             * ('newest', 'popular', 'on_sale', 'budget') in the same row as the
+             * wording. The mode is what show() switches on; the title and intro
+             * are never compared against anything. The key here is built from
+             * the collection's own URL key, so the two cannot be paired up by
+             * eye and got wrong, and CollectionPhpLabelsAreKeyedTest fails if an
+             * English source here ever stops matching the constant.
+             *
+             * THE FIGURE IN 'title_under_54' IS LEFT EXACTLY AS THE CONSTANT
+             * WRITES IT. It is not a price this shop quotes, it is the name of
+             * the listing, and the band it names is the 5400 fils ceiling in
+             * show()'s 'budget' arm. The two are coupled and neither is this
+             * lane's to move — money display is being changed under this lane by
+             * another.
+             */
+            'collection.title_new_in' => 'New In',
+            'collection.intro_new_in' => 'The latest Korean skincare to land, newest first.',
+            'collection.title_best_sellers' => 'Best Sellers',
+            'collection.title_super_sale' => 'Super Sale',
+            'collection.intro_super_sale' => 'Every product currently reduced.',
+            'collection.title_under_54' => 'Everything under AED 54',
+            'collection.intro_under_54' => 'Small joys, gently priced.',
+
+            /*
+             * /best-sellers/ HAS NO INTRO IN THE CONSTANT: it is the one page
+             * whose sentence is a MEASUREMENT, chosen by App\Support\RepeatPurchase
+             * from the order history — "customers keep coming back" only if some
+             * of them did. Both wordings are keyed, and intro() picks between
+             * the keys exactly as it picked between the constants.
+             */
+            'collection.intro_best_sellers_measured' => 'The products our customers keep coming back for.',
+            'collection.intro_best_sellers_by_units' => 'Our best sellers, by the number of units sold.',
             'product_card.badge_new' => 'New',
             // The discount badge. ':percent% OFF', not '-' . $off . '% OFF' — the
             // sign, the number and the word were three pieces of PHP string
@@ -837,7 +1037,7 @@ final class InterfaceStrings
             // than changed here: it is a claim about shipping, not an interface
             // string, and it belongs with the other free-delivery figures that already
             // come from ShippingService.
-            'account.aside_free_delivery' => 'Free delivery on orders over د.إ150.',
+            'account.aside_free_delivery' => 'Free delivery on orders over :amount.',
             'account.forgot_title' => 'Reset password',
             'account.forgot_heading' => 'Reset your password',
             'account.forgot_lead' => 'Enter your email and we will send you a link to set a new one.',
@@ -1115,6 +1315,99 @@ final class InterfaceStrings
             'items.col_total' => 'Total',
             'items.sku' => 'SKU :sku',
             'items.each' => 'each',
+
+            /*
+             * THE MONEY BREAKDOWN'S ROW LABELS — Lane FB.
+             *
+             * ONE KEY SET, TWO CALLERS, AND THAT IS THE POINT. These labels are
+             * built in Services\Mail\OrderEmailPresenter::totals() for the four
+             * emails, and AGAIN, row for row, in Services\Invoices\InvoiceDocument::totals()
+             * for the emailed invoice and the printed one. The two are separate
+             * copies of the same decision — the customer has the receipt in
+             * their inbox and the invoice beside it, and the two may not
+             * disagree about what a line is called. So both call the SAME keys
+             * rather than each getting its own: a translator who renames
+             * "Delivery" renames it on both documents or on neither.
+             * OrderPaperworkLabelsAreKeyedTest holds the two callers to this set.
+             *
+             * THE `email` GROUP RATHER THAN `invoice`, although an invoice uses
+             * them, because the receipt is where they are decided and a key that
+             * lives in two groups is two rows to translate.
+             *
+             * THE COUPON CODE, THE PAYMENT METHOD AND THE VAT RATE ARE
+             * PLACEHOLDERS, never concatenation. A code is an identifier and is
+             * never translated; a rate is a figure. Arabic puts a qualifier on
+             * the other side of its noun, and ':method fee' can express that
+             * where $method . ' fee' cannot.
+             *
+             * NO FIGURE'S WIDTH IS DECIDED HERE. Every amount beside these
+             * labels is still rendered by the presenter at the receipt's own
+             * precision — see OrderEmailPresenter::ledgerWidth().
+             */
+            'totals.subtotal' => 'Subtotal',
+            'totals.discount' => 'Discount',
+            'totals.discount_coupon' => 'Discount (:code)',
+            'totals.delivery' => 'Delivery',
+            'totals.gift_wrapping' => 'Gift wrapping',
+            'totals.payment_fee' => ':method fee',
+            'totals.vat' => 'VAT',
+            'totals.vat_at_rate' => 'VAT at :rate%',
+            'totals.total' => 'Total',
+
+            /*
+             * THE DISPATCH AND CANCELLATION EMAILS' HEADING AND BODY — the
+             * wording in Mail\OrderStatusChanged::WORDING.
+             *
+             * THE CONSTANT STAYS, and it stays as the English source: handles()
+             * asks it which statuses are worth an email at all, three test files
+             * assert against it by name, and bodyFor() hands WORDING['shipped'][2]
+             * back UNTOUCHED while the owner's timing box is blank — a property
+             * DispatchEmailTimingTest pins by identity. content() looks the
+             * display wording up by key instead, and
+             * OrderPaperworkLabelsAreKeyedTest fails the day the English here and
+             * the English there stop being the same sentence.
+             *
+             * THE SUBJECT IS NOT HERE. WORDING[0] carries numbered sprintf
+             * placeholders that SettingsBlankAndSupportIdentityTest pins, and a
+             * subject line is a separate decision from the body — it is named in
+             * the report rather than swept in beside these.
+             */
+            'order_status.shipped_heading' => 'Your order is on its way',
+            'order_status.shipped_body' => 'Your order has left us and is with the courier. Delivery in the UAE normally takes one to three working days from dispatch.',
+            'order_status.cancelled_heading' => 'Your order has been cancelled',
+            'order_status.cancelled_body' => 'This order has been cancelled and nothing further will be sent.',
+
+            /*
+             * THE REST OF THE DISPATCH BODY. bodyFor() picks one of three by
+             * where the parcel is going, and keying only the default would have
+             * sent a Gulf customer an Arabic heading over an English paragraph —
+             * worse than the English email they get today, not better.
+             *
+             * 'shipped_dispatched' is the half true of every destination and is
+             * also what an order with no country recorded gets on its own.
+             */
+            'order_status.shipped_dispatched' => 'Your order has left us and is with the courier.',
+            'order_status.shipped_abroad' => 'Your order has left us and is with the courier. Deliveries outside the UAE take longer than local ones and also wait on customs clearance in your country, so please allow a few extra days.',
+
+            /*
+             * AND THE CANCELLATION'S MONEY SENTENCE — the three cases set out
+             * above OrderStatusChanged::CANCELLED_REFUND_NOTE.
+             *
+             * :amount is a placeholder rather than sprintf's %s so that the
+             * figure can sit where Arabic puts it. The AMOUNT ITSELF IS NOT
+             * TOUCHED: it arrives already rendered by OrderEmailPresenter::plain()
+             * at the receipt's own precision, and this only decides the sentence
+             * around it.
+             *
+             * `mail_cancelled_refund_note` is NOT keyed and must not be. It is
+             * the owner's own typed sentence from Store → Mail, it ships blank,
+             * and a second English source for a settings row is one place to
+             * correct it and one place silently wrong — the exclusion
+             * InterfaceStrings' header describes.
+             */
+            'order_status.cancelled_refunded' => 'A refund of :amount has been recorded against it.',
+            'order_status.cancelled_nothing_taken' => 'Our records show no payment taken on this order, so there is nothing to refund.',
+            'order_status.cancelled_unrefunded' => 'Our records show :amount paid on this order and no refund recorded against it yet.',
             'delivery.address_heading' => 'Delivery address',
             'delivery.method_heading' => 'Delivery method',
             'delivery.payment_heading' => 'Payment method',
