@@ -58,6 +58,45 @@ final class FrontEndStrings
     }
 
     /**
+     * One page's own table, for a page that is not part of the shared one.
+     *
+     * WHY A SECOND TABLE EXISTS AT ALL. forLocale() above ships EVERY store.js.*
+     * key to every page, which is right while that set is the handful of
+     * messages the bundled modules build themselves — 33 of them today. The
+     * skin quiz is a different shape: it is a standalone document that does not
+     * extend layouts.store, does not include partials/js-strings.blade.php, and
+     * builds its whole interface in one inline <script> worth ~70 strings.
+     * Putting those in the shared group would nearly quadruple the table on
+     * every Arabic page in the shop to carry strings only /skin-quiz says,
+     * which is precisely what this class's header argues against.
+     *
+     * So the quiz asks for its own prefix and emits its own window.KBB_T. The
+     * fallback contract is unchanged: every call site in that script carries
+     * its English, so a page with no table renders exactly as it did.
+     *
+     * @return array<string, string>
+     */
+    public static function forPrefix(string $prefix, string $locale): array
+    {
+        if ($locale === Locale::DEFAULT) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (array_keys(InterfaceStrings::group(self::GROUP)) as $key) {
+            if (! str_starts_with($key, $prefix)) {
+                continue;
+            }
+
+            $full = self::GROUP . '.' . $key;
+            $out[$full] = (string) __($full, [], $locale);
+        }
+
+        return $out;
+    }
+
+    /**
      * Every front-end key, fully qualified.
      *
      * Read off InterfaceStrings rather than listed again here, so a key added
