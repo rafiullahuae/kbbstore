@@ -24,16 +24,22 @@ declare(strict_types=1);
  *     because LoadConfiguration `require`s it instead of calling env(). One
  *     `php artisan migrate` running anywhere against this checkout leaves such
  *     a file for as long as it takes the migration set to reach the
- *     clear_caches_* migrations.
+ *     clear_caches_* migrations. Worse than wrong settings: the file is written
+ *     with a plain file_put_contents, so a run that boots while it is being
+ *     written gets a ParseError out of half a file and the application does not
+ *     come up at all.
  *
- * tests/bootstrap.php settles the first two before Laravel boots, and
- * Tests\TestCase::createApplication() clears the third before each application
- * is built. This file is the other end of all of it: it asserts the connection
- * the application actually opened, rather than trusting that the configuration
- * said the right thing.
+ * tests/bootstrap.php settles all of these before Laravel boots -- the last one
+ * by giving this process compiled caches of its own, so the shared files are
+ * not merely emptied first but never read -- and
+ * Tests\TestCase::createApplication() clears both locations before every
+ * application it builds. This file is the other end of all of it: it asserts
+ * the connection the application actually opened, rather than trusting that the
+ * configuration said the right thing.
  */
 
 use Illuminate\Support\Facades\DB;
+use Tests\Support\CompiledCaches;
 
 /* ------------------------------------------------------- the database name -- */
 
@@ -129,6 +135,13 @@ it('discards a config cache another process left in bootstrap/cache', function (
      * Without the discard the reproduction is brutal and silent: with a config
      * cache naming sqlite present, every test in OrderNumbersTest.php fails a
      * MySQL run with "no such column: deleted_at (Connection: sqlite)".
+     *
+     * This now passes for TWO reasons, and it is kept because the weaker one is
+     * still worth pinning: the file is discarded, AND the application no longer
+     * reads that path at all (the test below asserts the second). Somebody who
+     * undoes the redirection should still be held to the discard, and somebody
+     * who undoes the discard should still be held to a developer's stray
+     * `php artisan config:cache` not surviving in this checkout.
      */
     file_put_contents($poison, '<?php return '.var_export([
         'database' => ['default' => 'kbb-poison-not-a-real-connection'],
@@ -163,6 +176,71 @@ it('discards a config cache another process left in bootstrap/cache', function (
     // The container really is back, and the connection with it.
     expect(app())->toBe($original)
         ->and(DB::connection()->getName())->toBe(config('database.default'));
+});
+
+it('boots from a compiled config nothing else in this checkout can write', function () {
+    /*
+     * The race, stated as the set difference that prevents it rather than as a
+     * timing window that cannot be reproduced on demand -- the same shape as
+     * "it compiles nothing into the set of files the migration set sweeps"
+     * below, and for a sharper reason.
+     *
+     * Deleting the file first, which is what discard() does and for a long time
+     * was the whole of the fix, does not close this. Illuminate\Filesystem\
+     * Filesystem::put() -- what config:cache calls -- is file_put_contents()
+     * with no LOCK_EX and no rename, so warm_caches_2_60_4 TRUNCATES the shared
+     * file and refills it in place. A run that boots inside that interval does
+     * not read stale settings, it reads half a file:
+     *
+     *     ParseError: syntax error, unexpected string content "Mon"
+     *       at bootstrap/cache/config.php:568
+     *       at tests/TestCase.php:40
+     *
+     * which is the application failing to come up, in a test about something
+     * else. Measured at 27µs per write at p50 and 192µs at worst, taken on 515
+     * of 2,328 boots that found a file. discard() cannot win a race it does not
+     * start; the only way out is for this run to read a different file.
+     */
+    $reading = [
+        app()->getCachedConfigPath(),
+        app()->getCachedRoutesPath(),
+        app()->getCachedEventsPath(),
+    ];
+
+    $shared = [
+        base_path('bootstrap/cache/config.php'),
+        base_path('bootstrap/cache/routes-v7.php'),
+        base_path('bootstrap/cache/events.php'),
+    ];
+
+    /*
+     * in_array() and toBeTrue() rather than toContain(), because toContain()
+     * takes a list of NEEDLES and has no message parameter -- a string passed
+     * after the path is silently asserted as a second needle, which is how the
+     * first draft of this test managed to fail against a correct application.
+     */
+    foreach ($reading as $path) {
+        expect(in_array($path, $shared, true))
+            ->toBeFalse("the application boots from a shared compiled cache: {$path}")
+            ->and(str_contains($path, '-'.getmypid().'-'))
+            ->toBeTrue("a compiled cache is not in a directory named for this process: {$path}");
+    }
+
+    /*
+     * And discard() reaches both halves. This is not a restatement of the
+     * above: the 237 clear_caches_* migrations unlink the LITERAL
+     * base_path('bootstrap/cache/config.php') and walk straight past a
+     * redirected file, so once the paths move, discard() before every
+     * createApplication() is the ONLY thing that ever empties the half this run
+     * actually reads. If paths() stopped returning them, nothing would say so
+     * until a stale config cache from earlier in the run decided a later test.
+     */
+    $discarded = CompiledCaches::paths();
+
+    foreach (array_merge($reading, $shared) as $path) {
+        expect(in_array($path, $discarded, true))
+            ->toBeTrue("CompiledCaches::discard() would not remove {$path}");
+    }
 });
 
 /* ------------------------------------------------------ the compiled views -- */

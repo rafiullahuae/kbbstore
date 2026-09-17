@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Models\AdminUser;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * Two faults in the admin console, and the two guards that keep them fixed.
@@ -300,6 +302,17 @@ function bootCrPreview(): array
         'PHP_CLI_SERVER_WORKERS' => '4',
     ];
 
+    /*
+     * A compiled-cache directory of this preview's own. A shell env prefix ADDS
+     * to the inherited environment, so without this the `migrate --force` below
+     * follows the suite's APP_CONFIG_CACHE: it boots from the suite's compiled
+     * config -- the wrong database -- and its own warm_caches_2_60_4 then
+     * overwrites that file with this preview's settings, which the suite reads
+     * at its next boot. Tests\Support\CompiledCaches::environmentFor() carries
+     * the reasoning and the measurement.
+     */
+    $env += CompiledCaches::environmentFor($dir . '/compiled');
+
     $envPrefix = '';
     foreach ($env as $k => $v) {
         $envPrefix .= $k . '=' . escapeshellarg($v) . ' ';
@@ -323,7 +336,7 @@ function bootCrPreview(): array
 
     DB::purge('lane_cr_preview');
 
-    $port = 8600 + random_int(30, 140);
+    $port = PreviewPort::claim(8630, 8740);
     $command = $envPrefix . 'php -S 127.0.0.1:' . $port . ' -t ' . escapeshellarg($root) . ' ' . escapeshellarg($root . '/index.php');
 
     $process = proc_open(

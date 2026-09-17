@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Models\AdminUser;
+use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * Sixteen admin screens could be clicked but not linked to.
@@ -352,6 +354,17 @@ function bootDeepLinkPreview(): array
         'PHP_CLI_SERVER_WORKERS' => '4',
     ];
 
+    /*
+     * A compiled-cache directory of this preview's own. A shell env prefix ADDS
+     * to the inherited environment, so without this the `migrate --force` below
+     * follows the suite's APP_CONFIG_CACHE: it boots from the suite's compiled
+     * config -- the wrong database -- and its own warm_caches_2_60_4 then
+     * overwrites that file with this preview's settings, which the suite reads
+     * at its next boot. Tests\Support\CompiledCaches::environmentFor() carries
+     * the reasoning and the measurement.
+     */
+    $env += CompiledCaches::environmentFor($dir.'/compiled');
+
     $envPrefix = '';
 
     foreach ($env as $k => $v) {
@@ -377,7 +390,7 @@ function bootDeepLinkPreview(): array
 
     \Illuminate\Support\Facades\DB::purge('lane_da_preview');
 
-    $port = 8740 + random_int(30, 120);
+    $port = PreviewPort::claim(8770, 8860);
     $command = $envPrefix.'php -S 127.0.0.1:'.$port.' -t '.escapeshellarg($root).' '.escapeshellarg($root.'/index.php');
 
     $process = proc_open(

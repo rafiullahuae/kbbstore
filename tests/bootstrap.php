@@ -7,11 +7,38 @@ declare(strict_types=1);
  * vendor/autoload.php. It gives this process its own copy of everything every
  * process in this checkout otherwise shares and destroys for the others: the
  * database it migrates, the directory it compiles Blade into, the package
- * manifest it reads, and the two roots it writes to -- storage/ and the public
- * web root.
+ * manifest it reads, the compiled config, route and event caches it boots from,
+ * and the two roots it writes to -- storage/ and the public web root.
  *
- * Taken together those are the whole of it. Two suites can now run at the same
- * time, from one worktree or from two, and neither can observe the other.
+ * WHAT THAT BUYS, stated narrowly enough to be true.
+ *
+ * On SQLite, with nothing exported, two suites can run at the same time -- from
+ * one worktree or from two -- and neither can observe the other. Every mutable
+ * thing either of them touches is named for the process that owns it, including
+ * the compiled caches, which is the half that used to be missing: a torn
+ * bootstrap/cache/config.php is a ParseError at boot rather than a test failure,
+ * and no amount of deleting it first closes that. See the compiled-caches block
+ * below for the measurement.
+ *
+ * On MySQL the same holds only once each run has been given a database of its
+ * own. The engine has no equivalent of a private file, and phpunit-mysql.xml
+ * forces one shared name, so this is the one part of the guarantee that needs a
+ * word from the caller:
+ *
+ *     KBB_TEST_DB=kbb_test_ce vendor/bin/pest -c phpunit-mysql.xml
+ *
+ * Two MySQL runs that both take the forced default still destroy each other,
+ * exactly as incident 1 below describes. Nothing here can prevent that; this
+ * file can only give the override a name that nothing else sets by accident.
+ *
+ * One shared resource is not a path and so is not settled here at all: the TCP
+ * ports the browser previews listen on. Tests\Support\PreviewPort settles those,
+ * and incident 7 below says why guessing them was not enough.
+ *
+ * And what is genuinely shared stays shared: the checkout's own source, vendor/
+ * and public/build are read by both runs and owned by neither, so a lane that
+ * edits a file mid-run changes what the other run is testing. That is a working
+ * agreement between lanes, not something a bootstrap can enforce.
  *
  * Why here, and why it has to be here. PHPUnit applies <php><env> and then
  * loads the bootstrap script -- in that order, see TextUI\Application::run(),
@@ -71,12 +98,33 @@ declare(strict_types=1);
  *    filesystem failures left over once 1-4 were closed. See the comment on
  *    LARAVEL_STORAGE_PATH and KBB_PUBLIC_PATH below.
  *
+ * 6. bootstrap/cache/config.php is shared, and warm_caches_2_60_4 rewrites it
+ *    from inside the migration set with a plain file_put_contents -- truncate
+ *    and refill IN PLACE. A run booting an application during those 27µs does
+ *    not read stale settings, it reads broken PHP and dies with a ParseError
+ *    at tests/TestCase.php:40. Deleting the file first, which is what the suite
+ *    did for a long time, narrows that window and cannot close it. See the
+ *    comment on APP_CONFIG_CACHE below.
+ *
+ * 7. The one shared thing that is NOT a path, and so is the one settled outside
+ *    this file: the TCP ports the browser previews' `php -S` servers listen on.
+ *    Each helper drew one at random from a band of ninety-one and used it
+ *    blind, so two lanes collided on about one boot in ninety-one -- and a
+ *    preview server that outlived a SIGKILLed run held its port against every
+ *    future run in every worktree, for as long as the machine stayed up. Five
+ *    such ports on this host belonged to four other lanes' leaked servers, and
+ *    one of them is what made AdminMobileOverflowTest fail with "preview server
+ *    never answered", which names the wrong thing entirely. Settled in
+ *    Tests\Support\PreviewPort, which asks the operating system for a port that
+ *    will bind rather than guessing one.
+ *
  * Nothing here can be asserted from inside itself, so the outcome is asserted
- * from the other end instead. tests/Feature/SuiteIsolationTest.php covers 1-4:
- * that the connection the app actually opened is the database that was asked
- * for, and that the views it compiles are its own.
- * tests/Feature/WritableRootIsolationTest.php covers 5, and does it by
- * performing the purge rather than by reading the variable back.
+ * from the other end instead. tests/Feature/SuiteIsolationTest.php covers 1-4
+ * and 6: that the connection the app actually opened is the database that was
+ * asked for, that the views it compiles are its own, and that a config cache
+ * planted in bootstrap/cache is neither read nor able to decide what this run
+ * connects to. tests/Feature/WritableRootIsolationTest.php covers 5, and does
+ * it by performing the purge rather than by reading the variable back.
  */
 
 require_once __DIR__.'/../vendor/autoload.php';
@@ -161,15 +209,22 @@ require_once __DIR__.'/../vendor/autoload.php';
      * Measured in a pair of concurrent runs, in PaymentGatewayTest, which has
      * nothing whatever to do with packages.
      *
-     * Redirecting is safe for THESE two and not for the other three. packages
-     * and services describe what is installed in vendor/, which every process
-     * in this checkout agrees about, so a subprocess inheriting the variable
-     * reads a manifest identical to the one it would have built. config, routes
-     * and events encode the ENVIRONMENT, and a preview's `php artisan migrate`
-     * inheriting APP_CONFIG_CACHE reads the suite's database settings instead of
-     * its own -- measured, as a preview reporting "Nothing to migrate" against
-     * the wrong database. Those three are handled the other way, by
-     * Tests\Support\CompiledCaches::discard() before each application is built.
+     * Redirecting these two needs nothing else alongside it. packages and
+     * services describe what is installed in vendor/, which every process in
+     * this checkout agrees about, so a subprocess inheriting the variable reads
+     * a manifest identical to the one it would have built.
+     *
+     * config, routes and events are NOT like that -- they encode the
+     * ENVIRONMENT, and a preview's `php artisan migrate` inheriting
+     * APP_CONFIG_CACHE reads the suite's database settings instead of its own
+     * (measured, as a preview reporting "Nothing to migrate" against the wrong
+     * database). For a long time that was the reason those three were left
+     * shared and handled the other way, by Tests\Support\CompiledCaches::
+     * discard() before each application is built. They are redirected now TOO,
+     * in the block below, because discard() turned out to narrow that race
+     * rather than close it -- but only together with the subprocess half, which
+     * is Tests\Support\CompiledCaches::environmentFor(). Both halves, or the
+     * measurement above comes back.
      */
     $manifests = dirname(__DIR__).'/storage/framework/testing/manifest-'.getmypid().'-'.bin2hex(random_bytes(4));
 
@@ -186,6 +241,70 @@ require_once __DIR__.'/../vendor/autoload.php';
         }
 
         @rmdir($manifests);
+    });
+
+    /*
+     * THE COMPILED CONFIG, ROUTE AND EVENT CACHES, one directory per process.
+     *
+     * These are the ENVIRONMENT compiled to a file, and bootstrap/cache holds
+     * one copy of each for the whole checkout. A compiled config cache outranks
+     * everything: LoadConfiguration checks configurationIsCached() first and
+     * `require`s the file instead of ever calling env(), so one written by any
+     * other process replaces this run's database settings entirely -- past
+     * phpunit-mysql.xml's force="true" and past everything above.
+     *
+     * And writing one is ordinary. warm_caches_2_60_4 calls config:cache and
+     * route:cache from inside the migration set, so EVERY `php artisan migrate`
+     * against this checkout holds one in place until the clear_caches_*
+     * migrations remove it again: another lane's terminal, the `migrate --force`
+     * subprocess the preview tests boot, an UpdateRunner apply.
+     *
+     * Tests\TestCase::createApplication() deletes them before every application
+     * it builds, and that was for a long time the whole of the fix. It is not
+     * enough, for a reason that is a fatal rather than a failure. Filesystem::
+     * put() is file_put_contents() with no LOCK_EX and no rename, so the file is
+     * truncated and refilled IN PLACE, and a reader in between gets broken PHP:
+     *
+     *     ParseError: syntax error, unexpected string content "Mon"
+     *       at bootstrap/cache/config.php:568
+     *       at tests/TestCase.php:40
+     *
+     * Measured against this checkout's real config cache (20,886 bytes): the
+     * write is 27µs at p50 and 192µs at worst, and a reader doing exactly what
+     * createApplication() does took a ParseError on 515 of the 2,328 boots that
+     * found a file. A directory per process ends it, and ends the intact-but-
+     * wrong case with it, because this run stops reading the shared file at all.
+     *
+     * THE CATCH, and it is the whole reason this needs two halves. A shell env
+     * prefix ADDS to the inherited environment, so a preview's `artisan migrate`
+     * would follow these variables to the suite's own files -- boot from the
+     * suite's config, then overwrite it with the preview's. Every helper that
+     * spawns one passes Tests\Support\CompiledCaches::environmentFor() to give
+     * the child a directory of its own. And because the 237 clear_caches_*
+     * migrations unlink the LITERAL bootstrap/cache path and would never reach a
+     * redirected file, Tests\Support\CompiledCaches::paths() returns both
+     * locations so discard() empties both.
+     *
+     * Asserted from the other end in tests/Feature/SuiteIsolationTest.php: that
+     * a config cache planted in bootstrap/cache cannot decide what this run
+     * connects to, and that what the application reads is not that file.
+     */
+    $compiled = dirname(__DIR__).'/storage/framework/testing/compiled-'.getmypid().'-'.bin2hex(random_bytes(4));
+
+    if (! is_dir($compiled)) {
+        @mkdir($compiled, 0o755, true);
+    }
+
+    $put('APP_CONFIG_CACHE', $compiled.'/config.php');
+    $put('APP_ROUTES_CACHE', $compiled.'/routes-v7.php');
+    $put('APP_EVENTS_CACHE', $compiled.'/events.php');
+
+    register_shutdown_function(static function () use ($compiled): void {
+        foreach (glob($compiled.'/*') ?: [] as $file) {
+            @unlink($file);
+        }
+
+        @rmdir($compiled);
     });
 
     /*

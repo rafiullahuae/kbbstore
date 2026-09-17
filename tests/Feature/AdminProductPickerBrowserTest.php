@@ -9,6 +9,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\CompiledCaches;
+use Tests\Support\PreviewPort;
 
 /**
  * The product picker, driven the way the owner drives it.
@@ -129,6 +131,17 @@ function bootPickerPreview(): array
         'PHP_CLI_SERVER_WORKERS' => '4',
     ];
 
+    /*
+     * A compiled-cache directory of this preview's own. A shell env prefix ADDS
+     * to the inherited environment, so without this the `migrate --force` below
+     * follows the suite's APP_CONFIG_CACHE: it boots from the suite's compiled
+     * config -- the wrong database -- and its own warm_caches_2_60_4 then
+     * overwrites that file with this preview's settings, which the suite reads
+     * at its next boot. Tests\Support\CompiledCaches::environmentFor() carries
+     * the reasoning and the measurement.
+     */
+    $env += CompiledCaches::environmentFor($dir.'/compiled');
+
     $envPrefix = '';
 
     foreach ($env as $k => $v) {
@@ -229,7 +242,7 @@ function bootPickerPreview(): array
 
     DB::purge('lane_bu_preview');
 
-    $port = 8760 + random_int(30, 120);
+    $port = PreviewPort::claim(8790, 8880);
     $command = $envPrefix.'php -S 127.0.0.1:'.$port.' -t '.escapeshellarg($root).' '.escapeshellarg($root.'/router.php');
 
     $process = proc_open(

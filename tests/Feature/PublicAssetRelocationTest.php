@@ -27,6 +27,7 @@ declare(strict_types=1);
  */
 
 use Illuminate\Support\Facades\File;
+use Tests\Support\CompiledCaches;
 
 /**
  * The migration under test, loaded the way the other migration tests load one.
@@ -113,6 +114,18 @@ it('leaves the repository build assets alone when migrate runs against another p
             'SESSION_DRIVER' => 'array',
             'APP_KEY' => (string) config('app.key'),
         ];
+
+        /*
+         * A compiled-cache directory of its own, for the same reason the
+         * browser previews get one: a shell env prefix ADDS to the inherited
+         * environment, so without this the migrate below follows the suite's
+         * APP_CONFIG_CACHE and its warm_caches_2_60_4 overwrites the suite's
+         * compiled config with this sandbox's settings. That would be read back
+         * by the suite at its next boot -- an sqlite sandbox deciding what the
+         * run connects to, which is the failure Tests\Support\CompiledCaches
+         * exists to prevent.
+         */
+        $env += CompiledCaches::environmentFor($dir.'/compiled');
 
         $prefix = '';
 
