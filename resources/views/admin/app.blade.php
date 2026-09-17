@@ -10133,7 +10133,7 @@ async function loadOutboundBacklog(){
       const rs=await fetch(outboundBase()+'/sweep',{
         method:'POST',
         credentials:'same-origin',
-        headers:{Accept:'application/json','X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')||{}).content||''}
+        headers:{Accept:'application/json','X-XSRF-TOKEN':uToken()}
       });
       if(!rs.ok) throw new Error(rs.status);
       var r=await rs.json();
@@ -10259,7 +10259,7 @@ function paintStatusEmails(rows){
         const r=await fetch(mailBase()+'/status-emails',{
           method:'POST', credentials:'same-origin',
           headers:{'Content-Type':'application/json',Accept:'application/json',
-                   'X-CSRF-TOKEN':(document.querySelector('meta[name=csrf-token]')||{}).content||''},
+                   'X-XSRF-TOKEN':uToken()},
           body:JSON.stringify({status:status,enabled:wanted}),
         });
         const body=await r.json();
@@ -18993,19 +18993,30 @@ buildNav();
     }
     return '<div class="ecom"><div class="ecl"><label>Connect to Stripe</label>'+
       '<span class="pill amber">not connected</span></div>'+
-      '<div class="echelp">Sign in at stripe.com, open Developers → API keys, copy the <b>Secret key</b> '+
-      '(it starts sk_test_ or sk_live_) and paste it here. Everything else is done for you.</div></div>'+
+      '<div class="echelp">Press <b>Set up Stripe</b>. It asks which mode you want, opens the Stripe page your '+
+      'key is on, and takes it from there — the account details, the publishable key, the payment '+
+      'notifications and their signing secret are all set up for you.</div></div>'+
       '<div class="ecctl" style="display:block;width:100%">'+
-      '<input type="password" class="inp" id="pay_conn_key" autocomplete="new-password" spellcheck="false" '+
-      'placeholder="sk_test_… or sk_live_…" style="max-width:none">'+
-      '<div class="row" style="gap:8px;margin-top:8px">'+
-      '<button type="button" class="btn" data-payconnect="1">Connect Stripe</button>'+
+      '<div class="row" style="gap:8px;flex-wrap:wrap">'+
+      '<button type="button" class="btn" data-paywizard="1">Set up Stripe</button>'+
       (s.oauth_ready
         ? '<button type="button" class="btn ghost" data-payoauth="1">Connect with Stripe (one click)</button>'
         : '')+
       '<span class="echelp" id="pay_conn_msg" style="margin:0"></span></div>'+
       /* Where a blocked popup writes its way out. Empty until it has to be. */
-      '<div id="pay_conn_fallback"></div></div>';
+      '<div id="pay_conn_fallback"></div>'+
+      /* The old paste box, kept and demoted rather than removed. Somebody who
+         already has the key in the clipboard should not have to walk a wizard,
+         and every automated check that drove this panel drove this box. */
+      '<details style="margin-top:12px"><summary style="cursor:pointer;font-size:12.5px;color:var(--ink-soft)">'+
+      'Already have your secret key? Paste it instead</summary>'+
+      '<div class="echelp" style="margin:8px 0 6px">Sign in at stripe.com, open Developers → API keys, copy '+
+      'the <b>Secret key</b> (it starts sk_test_ or sk_live_) and paste it here. Everything else is done for you.</div>'+
+      '<input type="password" class="inp" id="pay_conn_key" autocomplete="new-password" spellcheck="false" '+
+      'placeholder="sk_test_… or sk_live_…" style="max-width:none">'+
+      '<div class="row" style="gap:8px;margin-top:8px">'+
+      '<button type="button" class="btn ghost" data-payconnect="1">Connect Stripe</button></div>'+
+      '</details></div>';
   }
 
   /* The whole Stripe pane: what is connected, then how to switch on one click. */
@@ -19152,7 +19163,8 @@ buildNav();
     try{
       var r=await fetch(fixAdminApiUrl('/admin-api/payments/stripe/connect/application'),{
         method:'POST',credentials:'same-origin',
-        headers:{'Content-Type':'application/json','Accept':'application/json','X-Requested-With':'XMLHttpRequest'},
+        headers:{'Content-Type':'application/json','Accept':'application/json',
+                 'X-Requested-With':'XMLHttpRequest','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
         body:JSON.stringify(body)
       });
       var d=await r.json();
@@ -19165,16 +19177,288 @@ buildNav();
     }catch(e){ if(msg) msg.textContent='Could not reach this site to save.'; }
   }
 
+  /* ---------- the setup wizard ----------
+     WHAT THE OWNER ASKED FOR, TWICE, AND IN HIS OWN WORDS: press one button,
+     get a window with the Stripe steps and the choices in it, come back
+     configured. The OAuth path below is the literal one-click version of that
+     and it only exists once a Connect application has been registered in his
+     own Stripe Dashboard — fifteen minutes of work in somebody else's console
+     that no code here can do for him. This is the rest of the answer, and it
+     needs nothing registered: pick a mode, fetch one value from a page this
+     screen opens for you, and the server does every other part of the setup.
+
+     WHAT "CONFIGURED AUTOMATICALLY" ACTUALLY COVERS, because it is easy to say
+     and this is the list: the account is read back from Stripe and its name,
+     country and currency stored; the publishable key is fetched rather than
+     asked for; a webhook endpoint is created in his Stripe account pointed at
+     this shop's own unguessable URL; and the signing secret Stripe returns
+     exactly once, at that moment and never again, is captured and stored. The
+     only thing he supplies is the secret key.
+
+     IT IS A MODAL, NOT A SECOND BROWSER WINDOW, and that is a decision rather
+     than a shortcut. A window this page opens onto ITSELF is the one kind a
+     popup blocker stops for no benefit at all — and it would leave him copying
+     a key out of one window and into another. The windows that DO open point
+     at Stripe: the API keys page, from a real anchor, which no blocker stops;
+     and the OAuth authorize page, through the existing popup path that already
+     has a blocked-popup fallback.
+
+     THE TWO LINKS BELOW ARE THE ONLY STRIPE URLS IN THIS CONSOLE. A wrong link
+     in a credential-setup guide is the shape of a phishing page, so neither is
+     guessed: both are dashboard.stripe.com's own API-keys pages, one per mode,
+     and StripeConnectConsole's written guide still carries menu paths and not
+     one URL. A test pins these two so a later edit cannot quietly add a third. */
+  var STRIPE_KEY_URL={test:'https://dashboard.stripe.com/test/apikeys',
+                      live:'https://dashboard.stripe.com/apikeys'};
+
+  var STRIPE_WIZ={step:1,mode:'test',done:null,busy:false,forceKey:false};
+
+  function payStripeWizardOpen(){
+    var m=document.getElementById('pay_mode_stripe');
+    STRIPE_WIZ={step:1,mode:(m&&m.value==='live')?'live':'test',done:null,busy:false,forceKey:false};
+    openModal(payStripeWizardHtml());
+    payStripeWizardBind();
+  }
+
+  /* Can the one-click button be drawn FOR THE MODE THE WIZARD IS ON?
+     s.oauth_ready is the server's answer for the mode the gateway row is
+     currently labelled with, and the wizard's first screen can move off that
+     before anything is saved. Asking the platform block directly is the only
+     answer that is about the mode in front of him — and drawing the button on
+     a half-set-up mode would fail AFTER he had granted this shop access to his
+     Stripe account, which is the failure FG built the whole hold-back for. */
+  function payStripeWizardOneClick(){
+    var s=STRIPE_CONN||{}, p=s.platform||{}, live=STRIPE_WIZ.mode==='live';
+    var pair=live ? (!!p.client_id_live && !!p.has_client_secret_live)
+                  : (!!p.client_id_test && !!p.has_client_secret_test);
+    return pair || (!!s.oauth_ready && ((p.mode==='live')===live));
+  }
+
+  function payStripeWizardHtml(){
+    var w=STRIPE_WIZ, live=w.mode==='live';
+    var head='<div class="modal-h"><b>Set up Stripe</b>'+
+      '<button type="button" class="x" data-wizclose="1" aria-label="Close">✕</button></div>';
+    var crumb='<div class="echelp" style="margin:0 0 14px;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px">'+
+      'Step '+w.step+' of 3</div>';
+
+    /* ---- 1. the choice. It is first because it changes every screen after
+       it: which Stripe page opens, which key is accepted, and whether the
+       one-click button can be drawn at all. */
+    if(w.step===1){
+      var card=function(mode,title,body){
+        var on=(w.mode===mode);
+        return '<button type="button" data-wizmode="'+mode+'" style="display:block;width:100%;text-align:left;'+
+          'border:1px solid '+(on?'var(--brand,#c2185b)':'var(--border)')+';background:'+
+          (on?'var(--surface-2)':'transparent')+';border-radius:10px;padding:12px 14px;margin:0 0 10px;cursor:pointer">'+
+          '<b style="font-size:13.5px">'+title+'</b>'+
+          '<div class="echelp" style="margin:3px 0 0">'+body+'</div></button>';
+      };
+      return head+'<div class="modal-b">'+crumb+
+        '<div class="echelp" style="margin:0 0 12px">Which one are we setting up? You can do the other one later '+
+        '— they are separate keys and separate settings at Stripe, and this shop stores them one at a time.</div>'+
+        card('test','Test mode','Practise with Stripe’s fake cards. No real money moves and no real card '+
+             'works. This is the safe one to do first.')+
+        card('live','Live mode','Real cards, real money, into the Stripe account you are signed in to.')+
+        '<div class="row" style="gap:8px;justify-content:flex-end;margin-top:6px">'+
+        '<button type="button" class="btn ghost" data-wizclose="1">Cancel</button>'+
+        '<button type="button" class="btn" data-wizstep="2">Continue</button></div></div>';
+    }
+
+    /* ---- 2. the work. Two genuinely different screens, because when the
+       Connect application is registered there is nothing to fetch at all. */
+    if(w.step===2){
+      var back='<button type="button" class="btn ghost" data-wizstep="1">Back</button>';
+      if(payStripeWizardOneClick() && !w.forceKey){
+        return head+'<div class="modal-b">'+crumb+
+          '<div class="ecnote" style="margin:0 0 14px"><b>One click is available for '+(live?'Live':'Test')+
+          ' mode.</b> This shop has a Connect application registered, so there is no key to fetch and nothing to '+
+          'copy. A Stripe window opens, you approve it there, and it closes itself.</div>'+
+          '<div class="row" style="gap:8px;justify-content:flex-end">'+back+
+          '<button type="button" class="btn" data-wizoauth="1">Connect with Stripe</button></div>'+
+          '<div class="echelp" style="margin-top:12px;text-align:right">'+
+          '<a href="#" data-wizstep="3sub" style="color:var(--ink-soft)">or paste a key instead</a></div></div>';
+      }
+      var url=STRIPE_KEY_URL[live?'live':'test'];
+      var li=function(n,html){
+        return '<li style="margin:0 0 12px"><b style="font-size:13px">'+n+'</b>'+
+          '<div class="echelp" style="margin:3px 0 0">'+html+'</div></li>';
+      };
+      return head+'<div class="modal-b">'+crumb+
+        '<div class="echelp" style="margin:0 0 12px">Setting up <b>'+(live?'Live':'Test')+' mode</b>. '+
+        'There is one value to fetch and the button below opens the exact page it is on.</div>'+
+        '<ol style="margin:0 0 4px 18px;padding:0">'+
+        li('Open your Stripe API keys',
+           'It opens in a new tab at <span style="word-break:break-all">'+sesc(url)+'</span> — Stripe’s own '+
+           'dashboard. Sign in there if it asks.'+
+           '<div style="margin-top:8px"><a class="btn ghost" href="'+sesc(url)+'" target="_blank" '+
+           'rel="noopener noreferrer">Open my Stripe '+(live?'live':'test')+' API keys ↗</a></div>')+
+        li('Copy the Secret key',
+           'Not the Publishable key above it. The secret one starts <b>'+(live?'sk_live_':'sk_test_')+'</b> and is '+
+           'hidden behind a <i>Reveal</i> link. Stripe shows it once — if it will not reveal, create a new one '+
+           'and use that.')+
+        li('Paste it here and press Finish',
+           'It goes straight to the server, is stored encrypted, and is never sent back to this screen.')+
+        '</ol>'+
+        '<input type="password" class="inp" id="wiz_key" autocomplete="new-password" spellcheck="false" '+
+        'placeholder="'+(live?'sk_live_…':'sk_test_…')+'" style="max-width:none;margin-top:4px">'+
+        '<div class="echelp" id="wiz_msg" style="margin:8px 0 0;min-height:16px"></div>'+
+        '<div class="row" style="gap:8px;justify-content:flex-end;margin-top:8px">'+back+
+        '<button type="button" class="btn" data-wizfinish="1">Finish setup</button></div></div>';
+    }
+
+    /* ---- 3. what actually happened. Named item by item, because "connected"
+       on its own is the claim and this is the evidence for it. */
+    var d=w.done||{}, a=d.account||{};
+    var rows=[];
+    if(a.name) rows.push(['Stripe account',sesc(a.name)]);
+    if(a.country) rows.push(['Country',sesc(a.country)]);
+    if(a.currency) rows.push(['Settles in',sesc(a.currency)]);
+    rows.push(['Card payments',a.charges_enabled?'enabled by Stripe':'NOT enabled by Stripe yet']);
+    rows.push(['Mode stored',(d.mode==='live'?'Live':'Test')+(a.livemode?' · real money':' · test money')]);
+    rows.push(['Publishable key','fetched from Stripe for you']);
+    rows.push(['Payment notifications',
+      (d.webhook_action==='reused'||d.webhook_action==='reused_existing')
+        ? 'endpoint already existed, reused'
+        : (d.webhook_action==='replaced' ? 'endpoint replaced and re-secured' : 'endpoint created in your Stripe account')]);
+    rows.push(['Signing secret','captured and stored']);
+    var table=rows.map(function(r){
+      return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">'+
+        '<span class="echelp" style="margin:0;flex:0 0 42%">'+r[0]+'</span>'+
+        '<span style="font-size:12.5px;font-weight:600">'+r[1]+'</span></div>';
+    }).join('');
+    var warn=(d.warnings||[]).map(function(x){
+      return '<div class="nlwarn" style="margin-top:10px">'+sesc(x)+'</div>';
+    }).join('');
+    return head+'<div class="modal-b">'+crumb+
+      '<div class="ecnote" style="margin:0 0 12px"><b>Connected.</b> Everything below was done for you. '+
+      'Card payments are not being offered at the till yet — that is the <i>Offer this at checkout</i> switch '+
+      'on the screen behind this one, and it stays your decision.</div>'+
+      table+warn+
+      '<div class="row" style="gap:8px;justify-content:flex-end;margin-top:14px">'+
+      '<button type="button" class="btn" data-wizdone="1">Done</button></div></div>';
+  }
+
+  function payStripeWizardPaint(){
+    var host=document.getElementById('modal');
+    if(!host) return;
+    host.innerHTML=payStripeWizardHtml();
+    payStripeWizardBind();
+  }
+
+  function payStripeWizardBind(){
+    var root=document.getElementById('modal');
+    if(!root) return;
+    root.querySelectorAll('[data-wizclose]').forEach(function(b){
+      b.onclick=function(){ closeModal(); };
+    });
+    root.querySelectorAll('[data-wizmode]').forEach(function(b){
+      b.onclick=function(){ STRIPE_WIZ.mode=b.getAttribute('data-wizmode'); payStripeWizardPaint(); };
+    });
+    root.querySelectorAll('[data-wizstep]').forEach(function(b){
+      b.onclick=function(e){
+        e.preventDefault();
+        /* '3sub' is the escape hatch off the one-click screen: it is step 2
+           with the one-click answer forced off, not a third screen. */
+        var v=b.getAttribute('data-wizstep');
+        if(v==='3sub'){ STRIPE_WIZ.step=2; STRIPE_WIZ.forceKey=true; }
+        else { STRIPE_WIZ.step=Number(v)||1; STRIPE_WIZ.forceKey=false; }
+        payStripeWizardPaint();
+      };
+    });
+    root.querySelectorAll('[data-wizoauth]').forEach(function(b){
+      /* window.open has to happen inside this gesture or the blocker takes it,
+         so the modal is closed synchronously and the existing popup path runs
+         in the same turn. Its blocked-popup fallback writes onto the panel
+         behind, which is why the modal goes first rather than after. */
+      b.onclick=function(){ var m=STRIPE_WIZ.mode; closeModal(); payStripeOauth(m); };
+    });
+    root.querySelectorAll('[data-wizfinish]').forEach(function(b){
+      b.onclick=function(){ payStripeWizardFinish(); };
+    });
+    root.querySelectorAll('[data-wizdone]').forEach(function(b){
+      b.onclick=function(){ closeModal(); renderPayments(); };
+    });
+    var k=document.getElementById('wiz_key');
+    if(k){
+      k.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); payStripeWizardFinish(); } };
+      try{ k.focus(); }catch(e){}
+    }
+  }
+
+  /* The one network call the wizard makes, and it is the SAME endpoint the
+     paste box has always used. Nothing new is trusted with a secret key.
+
+     A failure repaints NOTHING: the message lands in #wiz_msg and the rest of
+     the screen is left alone, so a rejected key does not throw away the step
+     list he is reading. The box is emptied on every outcome either way — a
+     refused key left sitting in an input is a secret key sitting in the DOM. */
+  async function payStripeWizardFinish(){
+    var box=document.getElementById('wiz_key');
+    var msg=document.getElementById('wiz_msg');
+    var btn=document.querySelector('#modal [data-wizfinish]');
+    if(!box || STRIPE_WIZ.busy) return;
+    if(!box.value.trim()){ if(msg) msg.textContent='Paste the secret key from Stripe first.'; return; }
+    STRIPE_WIZ.busy=true;
+    if(msg) msg.textContent='';
+    if(btn){ btn.disabled=true; btn.textContent='Checking with Stripe…'; }
+    try{
+      var r=await fetch(fixAdminApiUrl('/admin-api/payments/stripe/connect'),{
+        method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json','Accept':'application/json',
+                 'X-Requested-With':'XMLHttpRequest','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
+        body:JSON.stringify({secret_key:box.value,mode:STRIPE_WIZ.mode})
+      });
+      var d=await r.json();
+      box.value='';
+      STRIPE_WIZ.busy=false;
+      if(btn){ btn.disabled=false; btn.textContent='Finish setup'; }
+      if(!d.ok){
+        /* THE ONE MESSAGE THAT HAS TO BE REWRITTEN HERE. The server's
+           mode-mismatch sentence ends "Switch Mode to Live and press Connect
+           again" — correct on the panel, where there is a Mode select and a
+           Connect button, and wrong inside this wizard, where there is
+           neither. Sending an owner to look for a control that is not on the
+           screen is the small lie that makes him distrust the rest of it. The
+           branch is taken on d.step, which the server sets, not on the text. */
+        if(msg){
+          msg.textContent = (d.step==='mode')
+            ? (STRIPE_WIZ.mode==='live'
+                ? 'That is a TEST key and you chose Live mode. Press Back and choose Test mode, or fetch the '
+                  +'sk_live_ key from the page the button above opens.'
+                : 'That is a LIVE key and you chose Test mode — real cards would be charged. Press Back and '
+                  +'choose Live mode if that is what you meant, or fetch the sk_test_ key instead.')
+            : (d.error||'Stripe refused the connection.');
+        }
+        return;
+      }
+      STRIPE_WIZ.done=d; STRIPE_WIZ.step=3;
+      payStripeWizardPaint();
+      /* The panel behind is now wrong. Repainting it while the result is on
+         screen means pressing Done reveals a screen that already agrees. */
+      payStripeStatus();
+    }catch(e){
+      box.value='';
+      STRIPE_WIZ.busy=false;
+      if(btn){ btn.disabled=false; btn.textContent='Finish setup'; }
+      if(msg) msg.textContent='Could not reach this site to connect.';
+    }
+  }
+
   /* ---------- the popup ----------
      Opened by the click itself. A round trip before window.open is what the
      browser's popup blocker is looking for, so the URL is ours and 302s to
      Stripe rather than being fetched first and navigated to second. */
   var STRIPE_POPUP=null, STRIPE_POPUP_TIMER=null, STRIPE_POPUP_DONE=false;
 
-  function payStripeOauth(){
+  function payStripeOauth(mode){
+    /* The wizard knows which mode the owner chose on its own first screen, and
+       that screen is in front of the Mode select rather than the other way
+       round. Called with nothing, as the panel's own button calls it, this
+       reads the select exactly as before. */
     var m=document.getElementById('pay_mode_stripe');
+    var use=(mode==='live'||mode==='test')?mode:(m?m.value:'test');
     var url=fixAdminApiUrl('/admin-api/payments/stripe/connect/start?mode='+
-      encodeURIComponent(m?m.value:'test'));
+      encodeURIComponent(use));
     var msg=document.getElementById('pay_conn_msg');
     var fb=document.getElementById('pay_conn_fallback');
     if(fb) fb.innerHTML='';
@@ -19245,7 +19529,8 @@ buildNav();
     try{
       var r=await fetch(fixAdminApiUrl('/admin-api/payments/stripe/connect'),{
         method:'POST',credentials:'same-origin',
-        headers:{'Content-Type':'application/json','Accept':'application/json','X-Requested-With':'XMLHttpRequest'},
+        headers:{'Content-Type':'application/json','Accept':'application/json',
+                 'X-Requested-With':'XMLHttpRequest','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
         body:JSON.stringify({secret_key:box.value,mode:mode?mode.value:null})
       });
       var d=await r.json();
@@ -19282,7 +19567,8 @@ buildNav();
     try{
       var r=await fetch(fixAdminApiUrl('/admin-api/payments/stripe/disconnect'),{
         method:'POST',credentials:'same-origin',
-        headers:{'Content-Type':'application/json','Accept':'application/json','X-Requested-With':'XMLHttpRequest'},
+        headers:{'Content-Type':'application/json','Accept':'application/json',
+                 'X-Requested-With':'XMLHttpRequest','X-XSRF-TOKEN':cookie('XSRF-TOKEN')},
         body:JSON.stringify({confirm:'disconnect'})
       });
       var d=await r.json();
@@ -19374,6 +19660,9 @@ buildNav();
       el.onkeydown=function(e){ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); } };
     });
 
+    document.querySelectorAll('[data-paywizard]').forEach(function(b){
+      b.onclick=function(){ payStripeWizardOpen(); };
+    });
     document.querySelectorAll('[data-payconnect]').forEach(function(b){
       b.onclick=function(){ payStripeConnect(); };
     });
