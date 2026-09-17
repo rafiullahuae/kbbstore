@@ -881,7 +881,14 @@ describe('Connect OAuth', function () {
     });
 
     it('builds an authorize URL with an unguessable single-use state', function () {
-        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1']);
+        // LANE FG changed the precondition, and deliberately: a client id on
+        // its own no longer opens the popup, because the token exchange that
+        // finishes the flow cannot be authenticated without a platform secret
+        // and failing there costs the owner a grant he then has to revoke. The
+        // stored merchant key is one of the three things that can serve as that
+        // secret (StripeConnect::platformSecret()), so adding it here restores
+        // the precondition this test was always about without weakening it.
+        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1', 'secret_key' => CONNECT_TEST_KEY]);
 
         $a = connectService()->authorizeUrl('test');
         $b = connectService()->authorizeUrl('test');
@@ -1125,7 +1132,10 @@ describe('the endpoints', function () {
     });
 
     it('sends the owner to Stripe and remembers the state in his session', function () {
-        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1']);
+        // See the note on 'builds an authorize URL ...': a platform secret is
+        // now required before the popup opens, and the stored merchant key
+        // serves as one.
+        connectRow(['connect_client_id' => 'ca_KBBPLATFORM1', 'secret_key' => CONNECT_TEST_KEY]);
 
         $response = $this->actingAs(connectAdmin(), 'admin')
             ->get('/admin-api/payments/stripe/connect/start?mode=test')
@@ -1138,7 +1148,16 @@ describe('the endpoints', function () {
         parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
 
         $this->assertNotEmpty($query['state']);
-        expect(session(StripeConnect::STATE_SESSION_KEY))->toBe($query['state']);
+
+        // LANE FG: the session now holds the state together with the two facts
+        // the callback has to check it against — when it was minted, and which
+        // mode the popup was opened in. One key and one array, because two keys
+        // are two things that can fall out of step.
+        $stored = session(StripeConnect::STATE_SESSION_KEY);
+
+        expect($stored['value'])->toBe($query['state'])
+            ->and($stored['mode'])->toBe('test')
+            ->and($stored['issued_at'])->toBeGreaterThan(0);
     });
 
     it('changes nothing on a callback whose state does not match', function () {
