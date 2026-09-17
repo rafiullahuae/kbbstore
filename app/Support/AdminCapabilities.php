@@ -376,6 +376,28 @@ final class AdminCapabilities
         ['GET', 'admin-api/catalog-products-detail/*', 'catalog.view'],
         ['*', 'admin-api/catalog-products-*', 'catalog.manage'],
         ['*', 'admin-api/catalog-products-*/*', 'catalog.manage'],
+        /*
+         * Phase 10 — Build my routine (Lane FM). WRITES ABOVE READS, which is
+         * the rule this block is a fresh instance of rather than a repetition
+         * of: `admin-api/routines` and `admin-api/routines/{concern}` are
+         * different patterns, but `admin-api/routine-products` and
+         * `admin-api/routine-products/{id}` differ only by a segment, and a
+         * GET rule written first would be reached for a POST to the second and
+         * let an `editor` on catalog.view retag the whole catalogue.
+         *
+         * catalog.*, not store.settings, and the line is worth stating: what
+         * these endpoints change is WHICH PRODUCT FILLS WHICH STEP and which
+         * coupon the offer strip names — merchandising, the same job as the
+         * category tree and the product editor beside them. The one control
+         * that can put two new pages on the storefront is the module toggle on
+         * Store → Modules, which is `admin-api/modules` above, store.settings,
+         * and is not touched here.
+         */
+        ['POST', 'admin-api/routines-settings', 'catalog.manage'],
+        ['POST', 'admin-api/routine-products/*', 'catalog.manage'],
+        ['POST', 'admin-api/routines/*', 'catalog.manage'],
+        ['GET', 'admin-api/routine-products', 'catalog.view'],
+        ['GET', 'admin-api/routines', 'catalog.view'],
         ['GET', 'admin-api/catalog/**', 'catalog.view'],
         ['*', 'admin-api/catalog/**', 'catalog.manage'],
         ['GET', 'admin-api/product-editor-load/*', 'catalog.view'],

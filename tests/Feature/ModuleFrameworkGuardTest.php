@@ -52,6 +52,7 @@
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Models\AdminUser;
+use App\Services\BuildMyRoutine;
 use App\Services\MarketingPixels;
 use App\Services\ModuleRegistry;
 use App\Services\ModuleSchema;
@@ -405,6 +406,9 @@ function ehSchemaModules(): array
     return [
         'pay_ship_rules' => ['schema' => PayShipRules::SCHEMA, 'tabs' => PayShipRules::TABS],
         'marketing_pixels' => ['schema' => MarketingPixels::SCHEMA, 'tabs' => MarketingPixels::TABS],
+        // Lane FM. Adopting the schema is what buys the checks below, and
+        // this line is the whole cost of it — the header above says so.
+        'build_my_routine' => ['schema' => BuildMyRoutine::SCHEMA, 'tabs' => BuildMyRoutine::TABS],
     ];
 }
 
