@@ -293,7 +293,23 @@
 @endunless
 
 {{-- BRANDS --}}
-@unless ($sections->hidden('brands'))
+{{-- TWO GATES, AND THEY ASK DIFFERENT QUESTIONS — Lane EH.
+
+     `$sections->hidden('brands')` is the HomepageSections entry: "do I want
+     this strip on my home page", edited on Appearance → Homepage, and it has
+     governed this section all along.
+
+     `moduleEnabled('brands')` is the module on Store → Modules: "does this shop
+     have brands at all", which also decides whether the directory at
+     /korean-skincare-brands/ and the per-brand landing pages answer. A module
+     switched off has to leave NO trace on the storefront, and a brand strip
+     still sitting on the home page — every tile linking to a page that now
+     404s — is the loudest trace there is.
+
+     Not folded into one: the homepage section must stay independently
+     removable, or turning the strip off would be the only way to keep the
+     brand pages and would take them with it. --}}
+@unless ($sections->hidden('brands') || ! $settings->moduleEnabled('brands', true))
 <section class="sec tinted {{ $sections->classFor('brands') }}" style="padding-top:0"><div class="wrap">
   {{-- The COUNT is counted and the CLAIM is the owner's — Lane DR.
 

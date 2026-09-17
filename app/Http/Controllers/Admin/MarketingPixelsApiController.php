@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\MarketingPixels;
+use App\Services\ModuleSchema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,26 +17,9 @@ class MarketingPixelsApiController extends Controller
 
     public function show(): JsonResponse
     {
-        $values = $this->pixels->all();
-        $fields = [];
-
-        foreach (MarketingPixels::SCHEMA as $key => $def) {
-            [$type, $label, $default, $help] = array_pad($def, 4, '');
-
-            $fields[$key] = [
-                'key' => $key, 'type' => $type, 'label' => $label, 'help' => $help,
-                'default' => $default, 'value' => $values[$key],
-            ];
-        }
-
-        $tabs = [];
-
-        foreach (MarketingPixels::TABS as $key => [$label, $description, $keys]) {
-            $tabs[] = [
-                'key' => $key, 'label' => $label, 'description' => $description,
-                'fields' => array_values(array_filter(array_map(fn ($k) => $fields[$k] ?? null, $keys))),
-            ];
-        }
+        // Built by ModuleSchema, which is where this loop now lives once instead
+        // of identically in two controllers.
+        $tabs = ModuleSchema::tabs(MarketingPixels::SCHEMA, MarketingPixels::TABS, $this->pixels->all());
 
         return response()->json([
             'tabs' => $tabs,
@@ -53,7 +37,14 @@ class MarketingPixelsApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Unknown setting: ' . implode(', ', $unknown)], 422);
         }
 
-        $this->pixels->save($data['settings']);
+        $rejected = $this->pixels->save($data['settings']);
+
+        if ($rejected !== []) {
+            return response()->json([
+                'ok' => false,
+                'error' => '“' . implode('”, “', $rejected) . '” is not a valid value.',
+            ], 422);
+        }
 
         return response()->json(['ok' => true]);
     }

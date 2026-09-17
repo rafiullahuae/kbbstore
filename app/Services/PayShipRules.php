@@ -22,9 +22,35 @@ namespace App\Services;
  */
 class PayShipRules
 {
+    /** The ModuleRegistry key, and the `module_settings.module` value. */
+    public const MODULE = 'pay_ship_rules';
+
+    /**
+     * MIGRATED ONTO App\Services\ModuleSchema (Lane EH).
+     *
+     * The positional `[type, label, default, help]` form this constant used is
+     * still accepted — ModuleSchema::field() widens it — so what changed here
+     * is the addition of `store`, which records the one thing the old shape
+     * could not say: WHERE each value lives.
+     *
+     * It matters on this module more than most, because the three fields do not
+     * agree. `cod_min` and `cod_max` are the module's own and live in
+     * `module_settings`; `hide_paid_free` is an ALIAS for `hide_paid_when_free`,
+     * a pre-existing key in the global `settings` table that
+     * ShippingService::ratesFor() has read since before this module existed.
+     * That divergence used to live in save(), as a loop over two named keys and
+     * an `if` for the third, where nothing could check it. Naming it in the
+     * schema is what lets one value keep one control instead of growing a
+     * rival key beside it — which is the reasoning in this class's own header,
+     * now written where the renderer and the guard can both read it.
+     *
+     * `setting` and not `admin`: this screen's own endpoint saves it, so
+     * AdminController::updateSettings() — and its SETTING_RULES list, which
+     * drops anything not on it — is not in the path.
+     */
     public const SCHEMA = [
-        'cod_min'        => ['money', 'Hide Cash on delivery below', 0, 'Zero means no lower limit.'],
-        'cod_max'        => ['money', 'Hide Cash on delivery above', 0, 'Zero means no upper limit.'],
+        'cod_min'        => ['type' => 'money', 'label' => 'Hide Cash on delivery below', 'default' => 0, 'help' => 'Zero means no lower limit.', 'store' => ModuleSchema::STORE_MODULE],
+        'cod_max'        => ['type' => 'money', 'label' => 'Hide Cash on delivery above', 'default' => 0, 'help' => 'Zero means no upper limit.', 'store' => ModuleSchema::STORE_MODULE],
         /*
          * THE HELP TEXT NAMED A SCREEN THAT DOES NOT EXIST (Lane DN).
          *
@@ -42,7 +68,7 @@ class PayShipRules
          * on actually needs. Where it is edited is answered by the fact that
          * he is looking at it.
          */
-        'hide_paid_free' => ['bool',  'Only offer free delivery when it is available', true, 'When an order already qualifies for free delivery, hide the paid delivery options instead of listing them beside it.'],
+        'hide_paid_free' => ['type' => 'bool', 'label' => 'Only offer free delivery when it is available', 'default' => true, 'help' => 'When an order already qualifies for free delivery, hide the paid delivery options instead of listing them beside it.', 'store' => ModuleSchema::STORE_SETTING, 'alias' => self::FREE_KEY],
     ];
 
     public const TABS = [
@@ -64,27 +90,24 @@ class PayShipRules
             return $this->cache;
         }
 
-        return $this->cache = [
-            'cod_min' => (int) $this->settings->moduleSetting('pay_ship_rules', 'cod_min', 0),
-            'cod_max' => (int) $this->settings->moduleSetting('pay_ship_rules', 'cod_max', 0),
-            'hide_paid_free' => (bool) $this->settings->get(self::FREE_KEY, true),
-        ];
+        // Each field read from wherever its own `store` says it lives, rather
+        // than from a hand-written list that has to be kept in step with the
+        // schema above. cod_min/cod_max come from module_settings, hide_paid_free
+        // from the aliased global key.
+        return $this->cache = ModuleSchema::read($this->settings, self::MODULE, self::SCHEMA);
     }
 
-    /** @param array<string, mixed> $values */
-    public function save(array $values): void
+    /**
+     * @param  array<string, mixed>  $values
+     * @return array<string, string> the fields refused, label by key
+     */
+    public function save(array $values): array
     {
-        foreach (['cod_min', 'cod_max'] as $key) {
-            if (array_key_exists($key, $values)) {
-                $this->settings->setModuleSetting('pay_ship_rules', $key, max(0, (int) $values[$key]));
-            }
-        }
-
-        if (array_key_exists('hide_paid_free', $values)) {
-            $this->settings->set(self::FREE_KEY, (bool) $values['hide_paid_free']);
-        }
+        $result = ModuleSchema::write($this->settings, self::MODULE, self::SCHEMA, $values);
 
         $this->cache = null;
+
+        return $result['rejected'];
     }
 
     /**
@@ -95,6 +118,22 @@ class PayShipRules
      */
     public function codAllowed(int $totalFils): bool
     {
+        /*
+         * THE KEY IS SPELLED OUT AND NOT self::MODULE, DELIBERATELY — Lane EH.
+         *
+         * It was briefly the constant, which reads better and quietly broke the
+         * thing that keeps this registry honest: ModuleFrameworkGuardTest finds
+         * a module's readers by TOKENISING for `moduleEnabled('<key>')` with a
+         * literal argument, because that is all static analysis can see. Behind
+         * a constant this gate became invisible to it, and the `live` row for
+         * pay_ship_rules was left resting on the admin screen's status flag
+         * instead — which is the precise shape of the defect the guard exists
+         * to catch, introduced by tidying.
+         *
+         * A storefront gate is written as a literal here. Where the key is used
+         * as DATA rather than as a gate — the module_settings rows read and
+         * written through ModuleSchema — the constant is used as normal.
+         */
         if (! $this->settings->moduleEnabled('pay_ship_rules', false)) {
             return true;
         }

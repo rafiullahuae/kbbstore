@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ModuleSchema;
 use App\Services\PayShipRules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,26 +17,9 @@ class PayShipRulesApiController extends Controller
 
     public function show(): JsonResponse
     {
-        $values = $this->rules->all();
-        $fields = [];
-
-        foreach (PayShipRules::SCHEMA as $key => $def) {
-            [$type, $label, $default, $help] = array_pad($def, 4, '');
-
-            $fields[$key] = [
-                'key' => $key, 'type' => $type, 'label' => $label, 'help' => $help,
-                'default' => $default, 'value' => $values[$key],
-            ];
-        }
-
-        $tabs = [];
-
-        foreach (PayShipRules::TABS as $key => [$label, $description, $keys]) {
-            $tabs[] = [
-                'key' => $key, 'label' => $label, 'description' => $description,
-                'fields' => array_values(array_filter(array_map(fn ($k) => $fields[$k] ?? null, $keys))),
-            ];
-        }
+        // The field and tab payloads are ModuleSchema's job now — this loop was
+        // one of the two copies of it that had to agree by hand.
+        $tabs = ModuleSchema::tabs(PayShipRules::SCHEMA, PayShipRules::TABS, $this->rules->all());
 
         return response()->json([
             'tabs' => $tabs,
@@ -54,7 +38,19 @@ class PayShipRulesApiController extends Controller
             return response()->json(['ok' => false, 'error' => 'Unknown setting: ' . implode(', ', $unknown)], 422);
         }
 
-        $this->rules->save($data['settings']);
+        // A value the schema refuses is reported, not clamped. The previous
+        // save() ran `max(0, (int) $value)` over the two money fields, so a
+        // mistyped "12.50" became 12 fils and the screen said Saved — the
+        // hundredfold error EcommerceApiController::castFils() already refuses
+        // for the same reason, now refused here by the same rule.
+        $rejected = $this->rules->save($data['settings']);
+
+        if ($rejected !== []) {
+            return response()->json([
+                'ok' => false,
+                'error' => '“' . implode('”, “', $rejected) . '” is not a valid value.',
+            ], 422);
+        }
 
         return response()->json(['ok' => true]);
     }

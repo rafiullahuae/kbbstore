@@ -66,9 +66,36 @@ class EcommerceApiController extends Controller
                     'coupon' => ['Coupon hint', 'The suggested code above the contact section.', 'pct', ['checkout_coupon', 'checkout_coupon_text', 'checkout_coupon_color']],
                     'mobile' => ['Mobile layout', 'The place-order box shoppers see on a phone.', 'phone', ['checkout_thumbs_style', 'mobile_sticky_bar', 'backtocart_style']],
                     'fees' => ['Fees', 'Charges added at checkout.', 'pct', ['cod_enabled', 'cod_fee']],
+                    /*
+                     * The `legal_notice` module's control — Lane EH.
+                     *
+                     * The module's registry row has always named Store →
+                     * Ecommerce as its settings screen, and until now there was
+                     * nothing there: the row read "Not ported yet". It is added
+                     * HERE rather than on a screen of its own because this
+                     * schema is, in its own header's words, "a deliberate step
+                     * towards the Phase 3 schema renderer" — the console draws
+                     * this tab generically, so a field added to the list below
+                     * gets a real control with no change to
+                     * resources/views/admin/app.blade.php, which no single lane
+                     * owns.
+                     */
+                    'legal' => ['Legal notice', 'The line above the Place order button. Leave it empty to show nothing.', 'card', ['checkout_legal_text']],
                 ],
                 'fields' => [
                     'checkout_single_name'  => ['bool', 'Single full-name field', true, 'Off splits it into first and last name.'],
+                    /*
+                     * Read by App\Support\CheckoutLegalNotice, which is read by
+                     * partials/checkout/legal-notice.blade.php. Both halves, and
+                     * ModuleFrameworkGuardTest fails if either goes missing.
+                     *
+                     * The default is '' on purpose and that is not an oversight:
+                     * this app applies onto a live store, and a sentence of
+                     * legal wording defaulted into existence would appear above
+                     * Place order without the owner ever writing it. The full
+                     * reasoning is in CheckoutLegalNotice's header.
+                     */
+                    'checkout_legal_text'   => ['textarea', 'Legal notice', '', 'Shown above the Place order button. Write {terms} or {privacy} where you want a link to those pages. Empty shows nothing.'],
                     // Not a plain setting — this is the on/off switch for the
                     // Cash on Delivery row in payment_providers, the same flag
                     // the checkout's own gateway list already reads. show()
