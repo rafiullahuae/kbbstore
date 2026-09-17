@@ -1,6 +1,41 @@
-@verbatim<!doctype html>
-<html lang="en">
-<head>
+{{--
+  <html lang> AND <html dir> FOLLOW THE LOCALE THIS DOCUMENT IS SERVED IN.
+
+  This is one of five storefront documents that carry their own <html> element
+  instead of extending layouts/store.blade.php, and all five had the language
+  written into the markup as the literal "en". /ar/skincare-guide/,
+  /ar/skin-quiz/, /ar/reviews/ and an Arabic article all answered 200 and all
+  four declared themselves English -- verified by fetching them against a
+  running preview with Arabic switched on, not by reading the template.
+
+  What that costs is not cosmetic. <html lang> is what a screen reader picks a
+  voice from, what a hyphenator and a spell checker read, and what Google reads
+  when it decides whether the page it found matches the hreflang cluster
+  pointing at it -- and Seo::alternateLinks() has been emitting that cluster for
+  these pages since it moved out of the layout. A page advertised as the Arabic
+  member of a cluster while declaring lang="en" contradicts its own alternates.
+
+  dir comes from Locale::direction() and never from the language, because this
+  shop has two switches: Arabic can be on while the mirrored layout is still
+  being built, and direction() is the one place that answers which state the
+  shop is in. invoices/document.blade.php is the worked example and its own
+  comment carries the full argument.
+
+  WITH ARABIC OFF, WHICH IS HOW THIS SHIPS, htmlLang() is 'en' and direction()
+  is 'ltr', so the only change to the English page is the dir attribute the
+  shared layout has always emitted on every page that uses it.
+
+  It sits OUTSIDE the verbatim block below, and that is not a style choice:
+  Blade does not interpolate inside one, which is how the literal "en" survived
+  here in the first place. (Nor may the word for that directive appear in this
+  comment, spelled with its at-sign: storeVerbatimBlocks() runs over the whole
+  file before anything else and would pair the mention with the real closing
+  tag, swallowing the document element it is written to explain. Found by
+  fetching the page and reading the 500.)
+--}}
+<!doctype html>
+<html lang="{{ \App\Support\Locale::htmlLang() }}" dir="{{ \App\Support\Locale::direction() }}">
+@verbatim<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 @endverbatim

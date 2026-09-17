@@ -167,6 +167,54 @@ class ShopController extends Controller
             ? Url::absolute($canonicalBase)
             : $this->absoluteListingUrl($category);
 
+        /*
+         * WHAT THIS PAGE IS, AND WHICH PRODUCTS ARE ON IT.
+         *
+         * A category archive published no @type of its own: sitewide
+         * Organization, sitewide WebSite, a BreadcrumbList, and nothing at all
+         * saying the document is a list of products or naming one of them.
+         * `collection` is now that statement -- see App\Support\Seo's
+         * CollectionPage branch for the shape and App\Support\CollectionSchema
+         * for why the price in it is a decimal string and not the fils column.
+         *
+         * ── ONLY WHEN THE CANONICAL IS THIS PAGE ──────────────────────────
+         *
+         * Facets::canonicalUrl() collapses every filtered and every sorted view
+         * of an archive onto the clean archive URL, deliberately: a sort order
+         * is not a new document. But the twenty-four rows THIS request drew are
+         * the filtered ones, and attaching them to a canonical that names a
+         * different document states that the other document contains them. That
+         * is the same defect as a canonical pointing at the wrong address --
+         * the thing five Arabic page types did before 2.60.109 -- wearing an
+         * ItemList instead of a <link>. So the list is built only when the
+         * canonical this page emits IS this page.
+         *
+         * Search is caught by the same test without naming it: /shop/?s=foo
+         * canonicalises to /shop/, so a search result set is never published as
+         * the shop's list.
+         *
+         * THE TEST IS Facets::narrowed(), NOT URL EQUALITY, and the difference
+         * matters. On page one a filtered view's canonical and the clean
+         * listing URL are the same string -- /shop/?filter_brands=cosrx
+         * canonicalises to /shop/ -- so comparing the two reports
+         * "self-canonical" for precisely the case this exists to exclude, and
+         * the shop published three COSRX products as the whole catalogue's
+         * list. Measured against a running preview, which is how it was found.
+         * narrowed() is canonicalUrl()'s own filter test, extracted so there is
+         * one copy of the rules and not two that can drift.
+         */
+        $canonical = Facets::canonicalUrl($listingUrl);
+
+        /*
+         * AND NEVER WHEN THE OWNER HAS TYPED A CANONICAL. An override in
+         * Catalog -> Categories -> SEO names a document this controller did not
+         * render and whose contents it does not know; the rows below are this
+         * page's, and hanging them off that URL would describe somebody else's
+         * page. The override case keeps the CollectionPage node -- what it
+         * points at is still a collection -- and carries no list.
+         */
+        $selfCanonical = $canonicalBase === '' && ! Facets::narrowed();
+
         return view('store.shop', [
             'banner' => $banner,
             'products' => $products,
@@ -225,7 +273,29 @@ class ShopController extends Controller
                 'image' => trim((string) ($catSeo['og_image'] ?? '')) !== ''
                     ? $catSeo['og_image']
                     : (is_string($banner['image'] ?? null) && $banner['image'] !== '' ? $banner['image'] : null),
-                'url' => Facets::canonicalUrl($listingUrl),
+                'url' => $canonical,
+                /*
+                 * `collection` on every listing this controller serves -- the
+                 * shop root and every category archive. The type is set even
+                 * when there is no list to carry (a filtered view), because the
+                 * canonical it points at IS a collection page and saying so is
+                 * true either way; og:type is unaffected, Seo::render() maps
+                 * everything that is not a product or an article to `website`.
+                 *
+                 * The offset is the number of rows before this page's first,
+                 * computed from the SAME clamped page number forPage() used
+                 * above, so page two of Serums publishes positions 25..48 and a
+                 * clamped out-of-range page cannot publish positions past the
+                 * end of the catalogue.
+                 */
+                'type' => 'collection',
+                'collection' => $selfCanonical
+                    ? \App\Support\CollectionSchema::from(
+                        $products,
+                        rtrim((string) (\App\Models\Setting::map()['site_url'] ?? ''), '/'),
+                        (min($page, $lastPage) - 1) * $perPage
+                    ) + ['name' => $title]
+                    : null,
                 /*
                  * A category the owner has marked noindex is noindexed on
                  * EVERY view of itself — page two, a filtered view, a sort —
