@@ -28,9 +28,21 @@ php artisan kbb:import --dir=storage/app/woo
 
 # 5. Prove it worked: run it once more. Everything should say "unchanged".
 php artisan kbb:import --dir=storage/app/woo
+
+# 6. The old addresses Google still holds. Look first; --write when it reads right.
+php artisan kbb:import-redirects --csv=storage/app/url-map.csv
+php artisan kbb:import-redirects --write
+
+# 7. The pictures. Read-only, and there is no --write to forget.
+php artisan kbb:import-media --csv=storage/app/images.csv
 ```
 
 Exit status is 0 only when nothing was refused, so it can be used in a script.
+
+**Steps 6 and 7 are not optional and they are not part of step 3.** The row
+import can finish perfectly with every category unreachable at the address
+Google has and every product photo still being served by the old shop. Neither
+shows up in a row count. See §10.
 
 ---
 
@@ -71,10 +83,24 @@ those synthetic rows.
 Run everything in one invocation, or run `--only=customers` before
 `--only=orders`.
 
-**Not imported by this lane:** product variants, attributes, tags, reviews,
-coupons, refunds, order notes, media, posts, pages, menus, redirects. The
-external-id columns exist for all of them (see IMPORT-READINESS §4) and the
-`EntityImporter` base class is what a new one plugs into.
+**Not imported by `kbb:import`:** product variants, attributes, tags, coupons,
+refunds, order notes, posts, pages, menus. The external-id columns exist for all
+of them (see IMPORT-READINESS §4) and the `EntityImporter` base class is what a
+new one plugs into.
+
+**Covered, but not by this command — do not read the list above as "missing":**
+
+- **Redirects** — `kbb:import-redirects`, §10. It derives the map from the rows
+  this command imported, so it has to run after, not as a seventh entity.
+- **Media** — `kbb:import-media`, §10. Image *paths* are imported here, on the
+  product, brand and category rows. Whether the file those paths name exists is
+  a separate, read-only question.
+- **Reviews** — a different door entirely: Store → Reviews → Import, backed by
+  `App\Services\Reviews\ReviewCsvImport`, which takes a WooCommerce comment
+  export keyed on `comment_id` and maintains `products.rating` and
+  `products.review_count`. It is idempotent on its own key and is pinned by
+  `tests/Feature/ReviewImportExportTest.php`. Nothing in `kbb:import` touches
+  the `reviews` table.
 
 ### Column names
 
@@ -283,3 +309,82 @@ that is stable for the same data, and **no change at all** to the mapping.
 The one thing a new source must get right is `fingerprint()`. It is what makes
 resume safe: a checkpoint saying "18,000 rows done" is a lie the moment the
 source behind it changes.
+
+---
+
+## 10. After the rows: URLs and pictures
+
+Two things the row import cannot tell you about, because both are invisible to
+a count of rows written.
+
+### `kbb:import-redirects` — the addresses Google already has
+
+WooCommerce commonly publishes a category at its leaf slug,
+`/product-category/serums/`. This shop's URL contract U-03 is the full nested
+path, `/product-category/skincare/treatments/serums/`. Every indexed flat URL
+therefore 404s after the import. This is not hypothetical: fourteen menu links
+carried exactly that shape and 404'd until two packages ago, and those were
+only the ones somebody was looking at.
+
+```bash
+php artisan kbb:import-redirects                              # look
+php artisan kbb:import-redirects --csv=storage/app/url-map.csv # look, in a spreadsheet
+php artisan kbb:import-redirects --write                       # apply
+php artisan kbb:import-redirects --rollback                    # undo the above
+```
+
+It writes nothing without `--write`. Every row lands in one of Phase 13's three
+buckets:
+
+| Bucket | Means |
+|---|---|
+| `migrate` | a redirect that will be written |
+| `discard` | nothing to do — the address did not move |
+| `ask` | the owner has to decide; never written |
+
+**If the export can give you real permalinks, use them.** A CSV of
+`type,wc_id,permalink` passed as `--permalinks=` replaces guesswork with what
+the old site really served, and wins over the derived rule wherever the two
+disagree.
+
+**What it will not do:** guess a brand-archive base (U-05 says this shop has no
+brand archive at all, and what the old one used depends on which plugin it
+ran), or redirect `/?p=123` — `CheckRedirects::findMatch()` matches on
+`getPathInfo()`, which excludes the query string, so such a row would be stored
+and never match.
+
+**It is reversible**, which the row import is not. `--rollback` removes only
+rows whose source is in the current map, whose target is still the one this
+command writes, and which are flagged `auto_created`. An admin's own row, or
+one an admin has since re-pointed, is kept and named.
+
+### `kbb:import-media` — do the pictures exist?
+
+The importer copies image paths as strings. It does not fetch anything and does
+not check that what was named is there — which is the right call for the import
+(a 404ing photo is no reason to refuse an order, and the uploads folder is
+usually copied across separately and afterwards), but it means a clean import
+report is not evidence that a single picture will load.
+
+```bash
+php artisan kbb:import-media
+php artisan kbb:import-media --csv=storage/app/images.csv
+php artisan kbb:import-media --verdict=remote
+```
+
+Read-only, always. Three verdicts:
+
+| Verdict | Means |
+|---|---|
+| `present` | the file is where the row says it is |
+| `missing` | a local path naming nothing — expected before the uploads folder is copied, alarming after |
+| `remote` | **still served by the old shop** |
+
+**`remote` is the number to watch, not `missing`.** A missing image is visibly
+broken and somebody reports it. A remote one renders perfectly for as long as
+WooCommerce is still up, and every one of them breaks on the day the old site
+is switched off — which is usually the day after the migration is declared
+finished.
+
+Exit status is non-zero while anything is `missing` or `remote`, so it can be
+used in a script.
