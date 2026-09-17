@@ -736,6 +736,21 @@
       + '<div class="ct-fld"><label for="ct-seodesc">SEO description</label>'
         + '<textarea id="ct-seodesc" rows="2" maxlength="500" placeholder="Defaults to a generated sentence">' + esc(seo.description || '') + '</textarea>'
         + '<p class="ct-note">Google truncates past roughly 155 characters on desktop and 120 on mobile.</p></div>'
+      /* The three the STOREFRONT ALREADY READ off categories.seo and this
+         screen had no box for. Store\ShopController resolves all three for the
+         archive, and Store\SeoFilesController reads noindex again to decide
+         whether the sitemap may advertise the category. */
+      + '<div class="ct-fld"><label for="ct-seocanon">Canonical URL</label>'
+        + '<input id="ct-seocanon" maxlength="500" value="' + esc(seo.canonical || '') + '" placeholder="Leave empty to use this page\u2019s own address">'
+        + '<p class="ct-note">A full address, including https://. Use it only when this archive duplicates one somewhere else.</p></div>'
+      + '<div class="ct-fld"><label for="ct-seoog">Share image</label>'
+        + '<input id="ct-seoog" maxlength="500" value="' + esc(seo.og_image || '') + '" placeholder="Defaults to the category banner">'
+        + '<p class="ct-note">Shown when the category page is shared on WhatsApp, Facebook or X.</p></div>'
+      + '<div class="ct-fld"><label for="ct-seonoindex" style="display:flex;gap:9px;align-items:flex-start">'
+        + '<input type="checkbox" id="ct-seonoindex" style="width:auto;margin-top:2px"' + (seo.noindex ? ' checked' : '') + '>'
+        + '<span><b>Ask Google not to list this category page</b>'
+        + '<span class="ct-note" style="display:block;margin-top:3px;font-weight:400">Removes the archive from search results AND from the sitemap. '
+        + 'The products stay listed \u2014 this hides the category page only.</span></span></label></div>'
       + '<div class="ct-grid2"><div class="ct-fld"><label for="ct-pos">Position</label>'
         + '<input id="ct-pos" type="number" min="0" value="' + esc(cat.position || 0) + '">'
         + '<p class="ct-note">Or just drag the row.</p></div><div></div></div>'
@@ -802,7 +817,18 @@
         description: val('ct-desc'),
         image: val('ct-image'),
         position: parseInt(val('ct-pos'), 10) || 0,
-        seo: {title: val('ct-seotitle'), description: val('ct-seodesc')},
+        /* Every box on every save, including an unchecked checkbox as an
+           explicit false. The server treats a key it RECEIVES as authoritative
+           and leaves one it does not receive alone, so omitting the checkbox
+           when it is off would mean a noindex could be set and never cleared.
+           See App\Support\ProductSeo::mergeFromForm(). */
+        seo: {
+          title: val('ct-seotitle'),
+          description: val('ct-seodesc'),
+          canonical: val('ct-seocanon'),
+          og_image: val('ct-seoog'),
+          noindex: !!(document.getElementById('ct-seonoindex') || {}).checked
+        },
         /* The Arabic goes up in the SAME request as the English. Scoped to this
            dialog, because this screen opens several. Blank fields are sent
            rather than omitted: blank means "not translated yet" and has to

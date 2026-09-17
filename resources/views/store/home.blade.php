@@ -354,7 +354,22 @@
            is why this does not simply repeat $p->name. --}}
       <a href="{{ $p->url() }}"><div class="im" style="background:{{ $p->image ? '#fff' : Gradient::for($p->name) }}">
         @if ($p->image)
-          <img src="{{ $p->image }}" alt="{{ $p->altFor($p->image) }}" width="400" height="400" loading="lazy">
+          @php $ugcSrcset = \App\Support\ImageVariants::srcsetFor($p->image); @endphp
+          {{-- The phone-sized copies, when the catalogue has been through
+               Media Library -> Image Sizes. These four tiles were the only
+               product photographs on the storefront still emitting no srcset:
+               /shop has one through <x-product-card> and the product page
+               through the gallery partial, and this strip was missed. A tile
+               here is never wider than about 424 CSS pixels and was being
+               handed the 1000x1000 original.
+
+               '' when no variant is on disk, in which case no srcset and no
+               sizes are emitted and the browser loads src exactly as before --
+               ImageVariants::srcsetFor() is built from the filesystem for that
+               reason, so a catalogue that has never run the batch renders the
+               markup it renders today. --}}
+          <img src="{{ $p->image }}" alt="{{ $p->altFor($p->image) }}" width="400" height="400" loading="lazy"
+               @if ($ugcSrcset !== '') srcset="{{ $ugcSrcset }}" sizes="{{ \App\Support\ImageVariants::homeTileSizesAttribute() }}" @endif>
         @endif
         <span class="shop"><b>{{ $p->name }}</b><span>{!! Money::format($p->effectivePrice()) !!}</span></span></div></a>
     @endforeach

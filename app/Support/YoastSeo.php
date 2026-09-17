@@ -91,9 +91,62 @@ namespace App\Support;
  *    because the per-product panel emits it — so they are stored as written
  *    rather than expanded at import time. Expanding them would freeze this
  *    store's name into 671 rows.
+ *
+ * 4. ...BUT ONLY FOUR OF YOAST'S TOKENS RESOLVE, AND THE REST GO SILENTLY.
+ *    This is the half rule 3 did not say, and it is the one that damages
+ *    titles.
+ *
+ *    App\Support\Seo::tokens() supplies exactly `title`, `sep`, `sitename`
+ *    and `page`. Yoast ships several dozen — `%%primary_category%%`,
+ *    `%%ct_product_cat%%`, `%%currentyear%%`, `%%pt_single%%`, `%%excerpt%%`,
+ *    `%%cf_<field>%%`, the WooCommerce set — and a real store's SEO templates
+ *    use them. TitleTemplate::render() DELETES any token it cannot resolve,
+ *    deliberately, so that a misspelled `{sitname}` never reaches a browser
+ *    tab as literal braces.
+ *
+ *    The two behaviours compose badly. Importing verbatim does not publish
+ *    percent signs — it publishes a TRUNCATED SENTENCE, which is worse,
+ *    because it looks like a title somebody wrote. Measured against this
+ *    shop's own renderer:
+ *
+ *        Best %%ct_product_cat%% Cream        ->  "Best Cream"
+ *        Buy %%title%% for %%currentyear%%    ->  "Buy Dokdo Toner for"
+ *        %%wc_price%% only                    ->  "only"
+ *        %%title%% %%sep%% %%primary_category%%  ->  "Dokdo Toner"
+ *
+ *    Nothing in the export is wrong and nothing in the renderer is wrong; the
+ *    import is what puts one in front of the other. So the value is still
+ *    stored verbatim — the alternative is expanding tokens at import time,
+ *    which rule 3 rejects for good reason — and the run REPORTS it, through
+ *    the adjusted() channel, with the template and what this shop will make of
+ *    it. An owner approving an import can then see the four titles that will
+ *    come out mangled and fix those four, instead of discovering them in
+ *    Search Console a month later.
+ *
+ *    unresolvableTokens() and afterStripping() below are that report.
  */
 final class YoastSeo
 {
+    /**
+     * The `%%…%%` tokens this shop actually resolves.
+     *
+     * Exactly the keys App\Support\Seo::tokens() builds. Anything else is
+     * deleted by TitleTemplate::render() on the way to the page, which is what
+     * unresolvableTokens() exists to warn about. Kept as a list here rather
+     * than read out of tokens() because that method is private, is built per
+     * request out of a page context this class does not have, and is the wrong
+     * shape to ask a static question of.
+     *
+     * If a token is ever added there, add it here — TokenParityTest fails
+     * otherwise, so the two cannot drift silently.
+     *
+     * @var list<string>
+     */
+    public const RESOLVED_TOKENS = ['title', 'sep', 'sitename', 'page'];
+
+    /** The `%%token%%` syntax, matching TitleTemplate's own definition. */
+    private const TOKEN_RE = '/%%([A-Za-z][A-Za-z0-9_\-]*)%%/';
+
     /** Yoast post-meta key => the key `products.seo` is read by. */
     public const MAPPED = [
         '_yoast_wpseo_title' => 'title',
@@ -277,6 +330,101 @@ final class YoastSeo
             : $current + $fragment;
 
         return ProductSeo::normalise($merged);
+    }
+
+    /**
+     * The unmapped Yoast keys this row carried, WITH the value each carried.
+     *
+     * skipped() answers which fields were present; this answers what was in
+     * them. The report needs the value, not just the name: "a focus keyphrase
+     * was dropped" is a fact the owner can do nothing with, and
+     * "_yoast_wpseo_focuskw carried 'snail mucin serum' and was dropped" is one
+     * they can paste somewhere. It is also what the discarded() channel is
+     * specified to carry — before and after, both — and a `before` of the field
+     * name repeated is the shape of a report that looks complete and says
+     * nothing.
+     *
+     * @param  array<string, string|null>  $cells
+     * @return array<string, string>  meta key => the value it held
+     */
+    public static function skippedWithValues(array $cells): array
+    {
+        $out = [];
+
+        foreach (self::UNMAPPED as $meta) {
+            $value = self::pick($cells, $meta);
+
+            if ($value !== null) {
+                $out[$meta] = $value;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The `%%…%%` tokens in this value that this shop will DELETE rather than
+     * resolve.
+     *
+     * Names are returned bare and de-duplicated, in the order they appear, so a
+     * report line reads `%%ct_product_cat%%` once however many times the
+     * template repeats it.
+     *
+     * @return list<string>
+     */
+    public static function unresolvableTokens(string $value): array
+    {
+        if (preg_match_all(self::TOKEN_RE, $value, $m) === 0) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ($m[1] as $name) {
+            // Case-insensitively, because TitleTemplate::render() registers
+            // both spellings of every token it knows and an operator's
+            // %%SITENAME%% therefore resolves perfectly well.
+            if (in_array(strtolower($name), self::RESOLVED_TOKENS, true)) {
+                continue;
+            }
+
+            if (! in_array($name, $out, true)) {
+                $out[] = $name;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * What is left of a template once the unresolvable tokens are removed.
+     *
+     * The `after` half of the adjusted() report. Deliberately NOT the fully
+     * rendered title: rendering needs this store's name, its separator and the
+     * product's own head, and a report line that has baked those in describes
+     * one product rather than the template every product using it shares. The
+     * resolvable tokens are therefore left standing, so the line shows exactly
+     * what the import cost and nothing else —
+     *
+     *     before  Buy %%title%% for %%currentyear%%
+     *     after   Buy %%title%% for
+     *
+     * — which is the dangling preposition the page will publish, with the part
+     * that still works still visible.
+     *
+     * Whitespace is tidied the way TitleTemplate::tidy() tidies it, so the
+     * `after` matches what the page does rather than leaving a double space
+     * where the token was.
+     */
+    public static function afterStripping(string $value): string
+    {
+        $stripped = (string) preg_replace_callback(
+            self::TOKEN_RE,
+            static fn (array $m): string => in_array(strtolower($m[1]), self::RESOLVED_TOKENS, true) ? $m[0] : '',
+            $value
+        );
+
+        return \App\Services\Seo\TitleTemplate::tidy($stripped);
     }
 
     /**

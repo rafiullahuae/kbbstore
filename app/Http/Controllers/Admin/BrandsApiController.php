@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Support\PageBanner;
+use App\Support\ProductSeo;
 use App\Support\TranslationInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -211,6 +212,25 @@ class BrandsApiController extends Controller
             'seo' => ['nullable', 'array'],
             'seo.title' => ['nullable', 'string', 'max:255'],
             'seo.description' => ['nullable', 'string', 'max:500'],
+            /*
+             * The other three the STOREFRONT ALREADY READS off this column.
+             *
+             * Store\BrandController::seoCtx() resolves canonical, og_image and
+             * noindex out of `brands.seo`, and Store\SeoFilesController reads
+             * noindex again to decide whether the sitemap may advertise the
+             * brand. Until this rule block named them, `$request->validate()`
+             * stripped all three out of the payload before the screen's own
+             * rebuild deleted whatever was left in the column — so the three
+             * had readers and no writer at all.
+             *
+             * Bounded and shaped like the product editor's equivalents
+             * (Admin\ProductEditorApiController), because it is the same
+             * column shape and a second opinion about what a canonical is, is
+             * how the two drift.
+             */
+            'seo.canonical' => ['nullable', 'string', 'max:500', 'url'],
+            'seo.og_image' => ['nullable', 'string', 'max:500'],
+            'seo.noindex' => ['nullable', 'boolean'],
             // The banner bag is validated as a shape only. Every field inside
             // it is clamped by App\Support\PageBanner::sanitize(), which is
             // also what the storefront reads it back through, so there is one
@@ -231,21 +251,31 @@ class BrandsApiController extends Controller
             'slug.regex' => 'The slug may contain only lower-case letters, numbers and single hyphens.',
             'slug.unique' => 'Another brand already uses that slug.',
             'slug.required' => 'A brand needs a name it can make a slug from.',
+            'seo.canonical.url' => 'The canonical URL must be a full address, including https://.',
         ]);
 
         $data['logo'] = $this->safeLogoUrl($data['logo'] ?? null);
         $data['position'] = (int) ($data['position'] ?? $brand?->position ?? 0);
 
-        // Only the two keys the screen edits are kept, and empties are dropped
-        // rather than stored as "". A stored empty title is not the same as no
-        // title: the page would render an empty <title> instead of falling
-        // back to the brand name.
-        $seo = array_filter([
-            'title' => trim((string) ($data['seo']['title'] ?? '')),
-            'description' => trim((string) ($data['seo']['description'] ?? '')),
-        ], fn ($v) => $v !== '');
-
-        $data['seo'] = $seo === [] ? null : $seo;
+        /*
+         * The boxes this screen draws are authoritative — blank means the
+         * operator cleared one and the key goes — and ANY OTHER KEY IN THE
+         * COLUMN IS LEFT ALONE.
+         *
+         * This used to be an array_filter() that rebuilt `seo` from the two
+         * boxes the screen drew, which DELETED every other key rather than
+         * leaving it: a `noindex` set by the Yoast importer or by hand survived
+         * only until the next time somebody opened this brand and pressed Save,
+         * at which point the page silently became indexable again and the
+         * sitemap silently began advertising it. App\Support\ProductSeo's
+         * mergeFromForm() carries the full reasoning; the list below is simply
+         * what this screen renders.
+         */
+        $data['seo'] = ProductSeo::mergeFromForm(
+            $brand?->seo,
+            $data['seo'] ?? null,
+            ['title', 'description', 'canonical', 'og_image', 'noindex']
+        );
         $data['banner'] = PageBanner::sanitize($data['banner'] ?? null);
 
         return $data;

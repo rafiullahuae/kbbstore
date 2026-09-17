@@ -23,7 +23,9 @@
             <label class="kbb-fbt-item{{ 0 === $i ? ' is-main' : '' }}">
                 <input type="checkbox" class="kbb-fbt-cb" value="{{ $p->id }}" data-price="{{ $price / 100 }}" checked>
                 @if ($p->image)
-                    <img src="{{ $p->image }}" alt="{{ $p->name }}" width="90" height="90" loading="lazy">
+                    @php $fbtSrcset = \App\Support\ImageVariants::srcsetFor($p->image); @endphp
+                    <img src="{{ $p->image }}" alt="{{ $p->name }}" width="90" height="90" loading="lazy"
+                         @if ($fbtSrcset !== '') srcset="{{ $fbtSrcset }}" sizes="{{ \App\Support\ImageVariants::fbtSizesAttribute() }}" @endif>
                 @else
                     <span class="ph-fallback" style="background:{{ \App\Support\Gradient::for($brand . $p->name) }};width:90px;height:90px;display:grid;place-items:center;border-radius:10px">{{ \App\Support\Gradient::initials($brand ?: $p->name) }}</span>
                 @endif

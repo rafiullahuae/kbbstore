@@ -17,7 +17,9 @@
 <div class="qv-wrap">
   <div class="qv-media">
     @if ($img)
-      <img src="{{ $img }}" alt="{{ $product->name }}" loading="lazy">
+      @php $qvSrcset = \App\Support\ImageVariants::srcsetFor($img); @endphp
+      <img src="{{ $img }}" alt="{{ $product->name }}" loading="lazy"
+           @if ($qvSrcset !== '') srcset="{{ $qvSrcset }}" sizes="{{ \App\Support\ImageVariants::quickViewSizesAttribute() }}" @endif>
     @else
       <div class="qv-noimg"></div>
     @endif
