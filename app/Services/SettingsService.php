@@ -208,6 +208,42 @@ class SettingsService
         return array_key_exists($module, $map) ? (bool) $map[$module] : $default;
     }
 
+    /**
+     * Is a module on, WITHOUT going to the database to find out?
+     *
+     * Returns null — meaning "do not know" — when the module snapshot is not
+     * in the cache, rather than building it. Every other caller wants the
+     * answer and is happy to pay one query for it once per cache lifetime;
+     * this is for the one caller that would rather skip its work than ask.
+     *
+     * WHY IT EXISTS (Lane EN). Services\OutboundTick runs on the tail of EVERY
+     * request in the application, and both features it drives ship off. The
+     * shipped state therefore has to cost nothing measurable, and
+     * moduleEnabled() above costs one SELECT the first time it is called in a
+     * process — which is never noticed on the server, where the cache is a warm
+     * file and every storefront page has already read it, and is one extra
+     * query on a cold cache. tests/Feature/AdminCustomersTest.php counts the
+     * queries on the customer detail page and was right to fail when a feature
+     * that is switched OFF added one to it.
+     *
+     * So the tick asks this instead: if somebody has already warmed the
+     * snapshot, use it; if nobody has, do nothing this request and try again on
+     * the next one. A skipped tick costs at most one interval's delay, and
+     * nothing is lost because everything owed is a row in a table.
+     *
+     * @return bool|null true/false if the snapshot is cached, null if it is not
+     */
+    public function moduleEnabledIfKnown(string $module, bool $default = false): ?bool
+    {
+        $map = Cache::get(self::MODULES_KEY);
+
+        if (! is_array($map)) {
+            return null;
+        }
+
+        return array_key_exists($module, $map) ? (bool) $map[$module] : $default;
+    }
+
     public function setModule(string $module, bool $enabled): void
     {
         ModuleToggle::updateOrCreate(['module' => $module], ['enabled' => $enabled]);

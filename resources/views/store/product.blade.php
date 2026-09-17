@@ -303,6 +303,21 @@
 @endunless
       </form>
 
+      {{-- "Tell me when this is back" (Lane EN).
+
+           OUTSIDE the form above, and that is structural rather than
+           stylistic: a form inside a form is invalid HTML and browsers
+           resolve it by throwing the inner one away, so nested here the
+           notify button would submit the cart.
+
+           Renders nothing at all unless the product is sold out AND the
+           back_in_stock module is on AND the owner has written the line of
+           prose that goes above it — both of the last two ship as they ship,
+           off and unwritten, so applying the package changes this page by
+           exactly nothing. partials/notify-me.blade.php argues the placement
+           and carries the rest of the reasoning. --}}
+      @include('partials.notify-me', ['notifyLabel' => app(\App\Services\StockAlerts::class)->formLabel()])
+
       {{-- TWO OF THESE FOUR WERE PROMISES NOTHING RECORDED.
            "Fast UAE delivery" and "Easy 14-day returns" were literals here.
            No returns window exists anywhere in this application — not a

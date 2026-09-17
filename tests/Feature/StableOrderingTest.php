@@ -433,6 +433,15 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
      *     it orders by;
      *   - the review screen's per-product counts, grouped by product_id and
      *     ordered by it;
+     *   - StockAlerts' demand list, grouped by stock_alerts.product_id and
+     *     ending on it. Identical in shape to the review-screen entry above and
+     *     admitted on identical terms: the real tie was `COUNT(*)` and then
+     *     `products.name`, both of which several products can share, so the
+     *     limit could fall inside a tied block and the reorder report would
+     *     drop a different product each time it was opened. That was fixed with
+     *     a genuine tie-break — the group key, which is one row per product and
+     *     therefore total — and the exemption below is only for the scan's
+     *     inability to see that a GROUP BY key cannot tie within its own query.
      *   - RepeatPurchase's map, grouped by rp.product_id and ending on it. The
      *     scan caught this query the moment it landed, which is the guard
      *     working: its real tie was `repeat_buyers`, a small integer that most
@@ -451,6 +460,7 @@ it('leaves no query in app/ that slices a list it has not finished ordering', fu
         ['Admin/CustomersApiController.php', "orderBy('country')"],
         ['Admin/ReviewsApiController.php', "orderByDesc('reviews.product_id')"],
         ['Support/RepeatPurchase.php', "orderBy('rp.product_id')"],
+        ['Services/StockAlerts.php', "orderBy('stock_alerts.product_id')"],
     ];
 
     $root = app_path();
