@@ -399,6 +399,18 @@ class StockAlerts
                 ->groupBy('stock_alerts.product_id', 'products.name', 'products.sku', 'products.stock_status')
                 ->orderByDesc(DB::raw('COUNT(*)'))
                 ->orderBy('products.name')
+                /*
+                 * The tiebreaker, and it is not decoration. This query is
+                 * SLICED by limit(), and two products with the same waiting
+                 * count and the same name have no defined order between them —
+                 * so which of them falls off the end of the list is whatever
+                 * the engine felt like, and it can differ between SQLite and
+                 * MySQL, or between two runs on one of them. A reorder report
+                 * that drops a different product each time it is opened is
+                 * worse than one that is merely arbitrary. StableOrderingTest
+                 * enforces this across the whole of app/.
+                 */
+                ->orderBy('stock_alerts.product_id')
                 ->limit($limit)
                 ->get([
                     'stock_alerts.product_id',

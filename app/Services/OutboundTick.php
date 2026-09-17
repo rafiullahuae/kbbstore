@@ -225,10 +225,28 @@ class OutboundTick
         return $result;
     }
 
-    /** Is either feature switched on? The whole of the shipped-state guard. */
+    /**
+     * Is either feature switched on? The whole of the shipped-state guard.
+     *
+     * ASKED WITHOUT A QUERY, and that is the point rather than a refinement.
+     *
+     * This runs on the tail of every request in the application. The ordinary
+     * `moduleEnabled()` builds the module snapshot when it is cold, which is
+     * one SELECT — invisible on the server, where the cache is a warm file that
+     * every storefront page has already read, and one extra query on a cold
+     * cache. That is a real cost imposed by two features that are switched OFF,
+     * and tests/Feature/AdminCustomersTest.php counts the queries on the
+     * customer detail page and was right to fail when it appeared.
+     *
+     * `moduleEnabledIfKnown()` returns null when nobody has warmed the
+     * snapshot, and null here means "not now". A skipped tick costs one
+     * interval at most, and costs nothing at all in the end, because everything
+     * owed is a row in a table and the next tick will find it. A feature that is
+     * off must not be a tax on every page of a shop that never turns it on.
+     */
     public function anythingOn(): bool
     {
-        return $this->settings->moduleEnabled(StockAlerts::MODULE, false)
-            || $this->settings->moduleEnabled(CartRecovery::MODULE, false);
+        return $this->settings->moduleEnabledIfKnown('back_in_stock', false) === true
+            || $this->settings->moduleEnabledIfKnown('abandoned_cart', false) === true;
     }
 }
