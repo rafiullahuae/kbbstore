@@ -33,6 +33,44 @@ use Illuminate\Support\Facades\DB;
 class PaymentConfirmer
 {
     /**
+     * Statuses on which a confirmation must NOT be applied.
+     *
+     * Every one of these has already handed back what the order was holding:
+     * OrderStatus::RELEASES_COUPON gives the coupon use back on all three, and
+     * OrderTransitionStock::RETURNS_STOCK puts the units back on the shelf for
+     * `cancelled` and `failed`. Those units have since been sold to somebody
+     * else.
+     *
+     * Until this existed a verified callback arriving afterwards moved the
+     * order to `processing` and set `paid_at`, and NOTHING re-took either. The
+     * warehouse got a live, paid order for stock the shop no longer had, the
+     * coupon had been handed back, and the only trace was a status note. It is
+     * reachable on all three remote gateways: a shopper who abandons the
+     * redirect and an order the merchant then cancels, followed by the
+     * provider's own retry of the delivery; or, because webhook delivery is
+     * not ordered, an `expired` notice overtaking the `completed` one that
+     * `fail()` turned into this very status.
+     *
+     * The money is real, so it is not thrown away: the attempt is written to
+     * `payments`/`payment_events` and to an order note naming the amount and
+     * the provider's reference, which is what the merchant needs in order to
+     * give it back at the provider's end. What does not happen is the order
+     * silently coming back to life.
+     */
+    private const VOID = ['cancelled', 'refunded', 'failed'];
+
+    /**
+     * Statuses a confirmation records against but must not move.
+     *
+     * `moveTo` was always handed the literal 'processing'. On an order that
+     * had already shipped that is a DOWNGRADE — an order out with the courier
+     * reverting to "processing" the moment its (perfectly valid, merely late)
+     * payment callback lands. The payment still has to be recorded; the status
+     * is simply already further along than anything this class should set.
+     */
+    private const HOLDS_PLACE = ['shipped', 'completed'];
+
+    /**
      * Confirm a payment.
      *
      * @param  int    $amountFils  what the PROVIDER says was paid, in fils
@@ -63,6 +101,36 @@ class PaymentConfirmer
         }
 
         /*
+         * IS THERE STILL AN ORDER TO PAY FOR?
+         *
+         * Checked after the amount and the currency deliberately: those two
+         * say the callback is about a different sum of money and nothing here
+         * is true of it. This one says the money is right and the order is
+         * gone, which is a different problem with a different answer — a human
+         * has to give it back.
+         *
+         * 422 rather than 503, so the provider stops retrying. There is
+         * nothing a further delivery could change, and a provider retrying a
+         * cancelled order for a day would write the note below once per
+         * attempt if it could get that far.
+         */
+        $status = (string) $order->status;
+
+        if ($order->trashed() || in_array($status, self::VOID, true)) {
+            $this->recordLate($order, $provider, $providerRef, $amountFils, $currency, $summary);
+
+            return WebhookOutcome::refused('order is no longer live');
+        }
+
+        /*
+         * Where the order should end up. Its own status when that is already
+         * past `processing`, so a late callback records the payment without
+         * winding a shipped order backwards; `processing` otherwise, which is
+         * what every caller has always got.
+         */
+        $target = in_array($status, self::HOLDS_PLACE, true) ? $status : 'processing';
+
+        /*
          * The guard and the write are still one indivisible act, and it is
          * still true that a second delivery of the same webhook applies
          * nothing. What changed is where the claim is taken: the status moves
@@ -78,10 +146,10 @@ class PaymentConfirmer
          * rather than in a second statement, so an order can never be marked
          * paid without recording what paid it.
          */
-        $applied = DB::transaction(function () use ($order, $provider, $providerRef, $amountFils, $currency, $summary) {
+        $applied = DB::transaction(function () use ($order, $provider, $providerRef, $amountFils, $currency, $summary, $status, $target) {
             $moved = app(\App\Services\Orders\OrderStatus::class)->moveTo(
                 $order,
-                'processing',
+                $target,
                 by: 'system',
                 reason: sprintf('Payment confirmed via %s.', $provider),
                 also: [
@@ -89,7 +157,17 @@ class PaymentConfirmer
                     'transaction_id' => $providerRef,
                     'payment_method' => $provider,
                 ],
-                only: ['paid_at' => null],
+                /*
+                 * The status is a precondition as well as `paid_at`, and that
+                 * is what closes the window between the read above and this
+                 * lock. Without it an order cancelled in those microseconds
+                 * would still be resurrected — the check would simply have
+                 * been made against a row that no longer said what it says
+                 * now. `$only` is tested against the LOCKED row, so pinning
+                 * the status we decided on means a decision taken against a
+                 * stale read cannot be acted on.
+                 */
+                only: ['paid_at' => null, 'status' => $status],
             );
 
             if ($moved === null) {
@@ -115,9 +193,27 @@ class PaymentConfirmer
 
         $order->refresh();
 
-        return $applied
-            ? WebhookOutcome::applied('payment applied')
-            : WebhookOutcome::ignored('already applied');
+        if ($applied) {
+            return WebhookOutcome::applied('payment applied');
+        }
+
+        /*
+         * The claim was not taken, and there are now two reasons for that.
+         *
+         * `paid_at` set means a second delivery of a webhook that has already
+         * been applied — the ordinary replay, a 200, nothing to do.
+         *
+         * Otherwise the status moved between the read above and the lock, so
+         * this delivery was decided against a row that no longer exists in
+         * that shape. Nothing was written. 503 asks the provider to deliver it
+         * again, and the next attempt reads the current status and reaches the
+         * right answer — which may well be the refusal above. Reporting this
+         * as "already applied" would end the retries on an order that is NOT
+         * paid, which is the one outcome a payment system may not produce.
+         */
+        return $order->paid_at !== null
+            ? WebhookOutcome::ignored('already applied')
+            : WebhookOutcome::failed('order changed while the callback was being applied');
     }
 
     /**
@@ -206,9 +302,75 @@ class PaymentConfirmer
 
         PaymentEvent::create([
             'payment_id' => $payment->getKey(),
+            /*
+             * The two columns the Phase 11 idempotency migration added to this
+             * table for exactly this, and which this method was the only
+             * writer never to fill in. PaymentLedger has always set them;
+             * confirmation events came out with both NULL, so the audit rows
+             * for the one thing that matters most — an order being marked
+             * paid — were the only ones that could not be traced back to a
+             * provider transaction without joining through `payments`. That
+             * join is precisely what is unavailable when a webhook arrives for
+             * an order we cannot match, which is the case the columns were
+             * added for.
+             */
+            'provider' => $provider,
+            'external_id' => $providerRef !== '' ? $providerRef : null,
             'type' => $status,
             'payload' => $summary,
             'received_at' => now(),
+        ]);
+    }
+
+    /**
+     * Money arrived for an order that is no longer live.
+     *
+     * Recorded rather than applied, and said out loud on the order. The
+     * merchant is the only one who can finish this: the funds are sitting at
+     * the provider against an order whose stock went back on the shelf, and
+     * somebody has to refund them there. A silent 422 would leave that money
+     * discoverable only by reconciling the provider's dashboard against this
+     * database by hand.
+     *
+     * The note is written once. `payments` is keyed (provider, provider_ref)
+     * by a unique index, so a provider that retries in spite of the 422 finds
+     * its own row already carrying this status and adds no second note — the
+     * test for it is in PaymentInvariantsTest.
+     */
+    private function recordLate(
+        Order $order,
+        string $provider,
+        string $providerRef,
+        int $amountFils,
+        string $currency,
+        array $summary,
+    ): void {
+        $seen = Payment::query()
+            ->where('provider', $provider)
+            ->where('provider_ref', $providerRef)
+            ->where('status', 'late_confirmation')
+            ->exists();
+
+        $this->record($order, $provider, $providerRef, $amountFils, $currency, 'late_confirmation', $summary);
+
+        if ($seen) {
+            return;
+        }
+
+        $order->notes()->create([
+            'author' => 'system',
+            'is_customer_note' => false,
+            'content' => sprintf(
+                'ACTION NEEDED — %s confirmed a payment of %s %s (reference %s) for this order, '
+                . 'but the order is %s and its stock and coupon have already been released. '
+                . 'The order has NOT been marked paid. Refund this payment in the %s dashboard.',
+                $provider,
+                \App\Support\Money::amount($amountFils, 2),
+                strtoupper($currency),
+                $providerRef,
+                $order->trashed() ? 'in the trash' : (string) $order->status,
+                $provider,
+            ),
         ]);
     }
 }
