@@ -160,10 +160,34 @@ class CouponService
          * whole-dirham basket the cap changes nothing; it is the guard for the
          * one basket where it would.
          *
-         * A FIXED-AMOUNT COUPON PASSES THROUGH UNTOUCHED, because its amount
-         * is refused unless it is whole (CouponAdminApiController) and
-         * `fixed_product` multiplies it by an integer quantity. This is a
-         * no-op on those two types rather than a second rule they survive.
+         * A FIXED-AMOUNT COUPON IS USUALLY A NO-OP HERE, because its amount is
+         * refused unless it is whole (CouponAdminApiController) and
+         * `fixed_product` multiplies it by an integer quantity.
+         *
+         * ── BUT THERE IS A SECOND DOOR INTO `coupons`, AND IT IS NOT THAT ───
+         *
+         * This used to say "passes through untouched", which was true of every
+         * coupon the OWNER TYPES and not true of an imported one.
+         * Import\Entities\CouponImporter writes the same column and does not
+         * go through that controller — deliberately, because a 40,000-row
+         * migration must not die on a rounding policy.
+         *
+         * So a WooCommerce `fixed_cart` coupon of AED 99.50 arrives as 9950
+         * fils, and this line rounds it UP at the till: the shopper gets
+         * AED 100.00 off while Store → Coupons shows 99.50. Fifty fils a use,
+         * the shop's way, and the screen disagrees with the basket.
+         *
+         * It is rounded here rather than refused on the way in ON PURPOSE. The
+         * alternative — honouring 9950 exactly — would put fils back into a
+         * basket total on a shop whose owner asked for whole dirhams, which is
+         * the thing this method exists to prevent. Rounding up keeps the one
+         * rule and costs the shop the difference, the same trade the percentage
+         * branch above makes and for the same reason.
+         *
+         * The importer REPORTS every such coupon in its adjusted channel, and
+         * `kbb:whole-dirhams` reads these three columns, so the owner can
+         * settle them all at once with the figures in front of him. Run it
+         * after a migration; the import runbook says so.
          */
         return min(WholeDirhams::away($discount), $eligibleSubtotal);
     }

@@ -99,11 +99,22 @@ class WholeDirhamAudit extends Command
         $movement = 0;
         $rows = 0;
 
+        /*
+         * Counted separately because it is reported separately below: a coupon
+         * carrying fils is the one entry on this list that is costing money
+         * right now rather than merely printing oddly. Keyed off the group's
+         * own label so it cannot drift from what couponGroup() returns.
+         */
+        $couponsWithFils = 0;
 
         foreach ($this->groups() as $group) {
             [$found, $delta] = $this->report($group, $fix, $limit);
             $rows += $found;
             $movement += $delta;
+
+            if ($group['label'] === 'Coupons') {
+                $couponsWithFils = $found;
+            }
         }
 
         $this->newLine();
@@ -121,6 +132,28 @@ class WholeDirhamAudit extends Command
         $this->line('Making them whole would move ' . Money::currency() . ' '
             . Money::decimalString(abs($movement))
             . ($movement >= 0 ? ' UP' : ' DOWN') . ' in total.');
+
+        /*
+         * A FIXED-AMOUNT COUPON CARRYING FILS IS ALREADY COSTING MONEY, and
+         * that has to be said louder than the rest of the list.
+         *
+         * Everything else here is a figure that merely prints oddly until it is
+         * fixed. A coupon is not: CouponService::discountFor() rounds a
+         * discount UP, so an imported fixed_cart coupon of AED 99.50 hands back
+         * AED 100.00 on every single order while Store -> Coupons shows 99.50.
+         * The owner is paying the difference on every use, and the screen he
+         * would check to find out disagrees with the basket.
+         *
+         * Only when there is one, and only on the reporting path — a --fix run
+         * has just settled them.
+         */
+        if ($couponsWithFils > 0 && ! $fix) {
+            $this->newLine();
+            $this->warn($couponsWithFils . ' of those ' . ($couponsWithFils === 1 ? 'is a coupon' : 'are coupons')
+                . ', which is the expensive kind.');
+            $this->line('A fixed-amount coupon carrying fils is rounded UP when it is spent, so it gives away more');
+            $this->line('than Store -> Coupons shows — on every order it is used on, until it is made whole.');
+        }
 
         if (! $fix) {
             $this->newLine();
