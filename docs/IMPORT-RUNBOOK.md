@@ -53,18 +53,22 @@ shows up in a row count. See §10.
 
 ## 2. What it imports
 
-Six entities, in this order, because it is a dependency graph and not a
-preference — products reference categories and brands, orders reference
-customers, order lines reference both orders and products.
+Eight entities, in this order, because it is a dependency graph and not a
+preference — products reference categories and brands, coupons name the
+products they are restricted to, orders reference customers and name a coupon
+code, order lines reference both orders and products, and a review names both
+its product and its reviewer.
 
 | Entity | File | Matched on | Notes |
 |---|---|---|---|
 | `categories` | `categories.csv` | `source_term_id` | Also computes the cached `depth` and `path`. Production nests four deep and the URL path is cached, not derived. |
 | `brands` | `brands.csv` | `source_term_id` | Production keeps brands as the `pa_brands` attribute; export those terms. |
 | `products` | `products.csv` | `wc_id` | Writes `products.category_id` (primary) and the `category_product` pivot. |
+| `coupons` | `coupons.csv` | `wc_id` | After products, because a restriction list names products and categories by WooCommerce id and has to be translated through them. Before orders, because an order names its code. |
 | `customers` | `customers.csv` | `wp_user_id` | Plus their billing/shipping addresses, from columns on the same row. |
 | `orders` | `orders.csv` | `wc_order_id` | Plus the order's own address snapshot and its `addresses` rows. |
 | `order-items` | `order_items.csv` | `wc_item_id` | Matched on the WooCommerce `order_item_id`. |
+| `reviews` | `reviews.csv` | `source` + `source_id` | WordPress comments with `comment_type = 'review'`. After products (each names its product by post id) and after customers (a review carries the reviewer's WP user id). Recomputes `products.rating` and `products.review_count` at the end of the entity. |
 
 A file that is not there is skipped without complaint — a delta pass that only
 carries new orders is a normal thing to run.
@@ -88,8 +92,8 @@ those synthetic rows.
 Run everything in one invocation, or run `--only=customers` before
 `--only=orders`.
 
-**Not imported by `kbb:import`:** product variants, attributes, tags, coupons,
-refunds, order notes, posts, pages, menus. The external-id columns exist for all
+**Not imported by `kbb:import`:** product variants, attributes, tags, refunds,
+order notes, posts, pages, menus. The external-id columns exist for all
 of them (see IMPORT-READINESS §4) and the `EntityImporter` base class is what a
 new one plugs into.
 
@@ -100,12 +104,19 @@ new one plugs into.
 - **Media** — `kbb:import-media`, §10. Image *paths* are imported here, on the
   product, brand and category rows. Whether the file those paths name exists is
   a separate, read-only question.
-- **Reviews** — a different door entirely: Store → Reviews → Import, backed by
-  `App\Services\Reviews\ReviewCsvImport`, which takes a WooCommerce comment
-  export keyed on `comment_id` and maintains `products.rating` and
-  `products.review_count`. It is idempotent on its own key and is pinned by
-  `tests/Feature/ReviewImportExportTest.php`. Nothing in `kbb:import` touches
-  the `reviews` table.
+- **Reviews, the other door.** `kbb:import` now carries `reviews.csv` as an
+  entity of its own (above), and Store → Reviews → Import still exists, backed
+  by `App\Services\Reviews\ReviewCsvImport`. **They are two doors into one
+  table and they agree**, which is deliberate rather than lucky: both key on
+  `source` + `source_id`, both fold `comment_approved` through
+  `App\Support\ReviewStatus`, and both put the aggregates back with the same
+  `App\Support\ProductRating::refresh()` the moderation screen calls. So a
+  file imported through one and then the other updates its rows instead of
+  doubling them.
+
+  Which to use: the admin screen for a reviews-only file the owner has in his
+  hand, `kbb:import` for the migration, where the reviews arrive in the same
+  export as everything else and need the products to be there first.
 
 ### Column names
 
@@ -192,13 +203,21 @@ row that arrived intact.
 | A unit price that does not divide evenly | adjusted | Three for AED 100 imports as 33.33 each, which multiplies back to 99.99. `subtotal` and `total` stay exact; the order page prints `unit_price`. |
 | HTML the allowlist removed | **discarded** | The `<script>` has to go. What the owner needs to know is that the description is no longer byte-for-byte what WooCommerce held, and by how much. |
 | Columns nothing reads | **discarded** | One entry per entity, naming every column and the first real value found in it. This is where `meta:_delivery_instructions = Ring the bell twice` and `order_notes` and `refund_amount` show up — real content nobody had a way to notice losing. |
-| Files nothing opens | **discarded** | `ImportRunner::entities()` is seven importers and there is no eighth. **`coupons.csv` and `reviews.csv` are never opened.** This application has coupons and it has reviews; the import does not carry either. Suppressed under `--only`, where ignoring a file is the point. |
+| Files nothing opens | **discarded** | One entry per file in the export folder that no entity opens — `refunds.csv`, `order_notes.csv`, `variations.csv`, `tags.csv` — with its row count. Suppressed under `--only`, where ignoring a file is the point. `coupons.csv` and `reviews.csv` used to be the two worst entries on this list and are now entities; the channel stays for whatever the next export carries. |
+| A coupon amount carrying fils | adjusted | The owner prices in whole dirhams (`App\Support\WholeDirhams`), and **nothing in WooCommerce ever enforced that**. Imported exactly — a 40,000-row migration must not die on a rounding policy — and named so `kbb:whole-dirhams` can settle it. Worse than the price case above: `CouponService::discountFor()` rounds a discount **up**, so a `fixed_cart` coupon imported at AED 99.50 hands back AED 100.00 on every order while Store → Coupons shows 99.50. |
+| A coupon expiry with no time on it | adjusted | WooCommerce reads `date_expires` as end-of-day-inclusive; this schema checks `now() > expires_at`. Imported bare, the code would die a day early and silently, so a date with no time is moved to 23:59:59. |
+| A coupon's `usage_limit_per_user` | **discarded** | Enforced here by counting `coupon_redemptions` rows, and an imported coupon has none. There is no column that could hold "who has already used this", so a shopper who spent a one-per-customer code in WooCommerce can spend it again here. Named per coupon with the limit's real value, because only the owner can decide whether to shorten the code's life instead. |
+| A coupon's `used_by` | **discarded** | Woo's list of who redeemed the code. It carries no order, so every row synthesised from it would be a redemption with `order_id` NULL that Store → Coupons would then report as usage history. |
+| A review whose product is gone | rejected | Published with no product it becomes a review *of the shop*, sitting in the moderation queue with nothing to attach it to. |
+| A review with no author | adjusted | Imported as **Anonymous**. The review is the rating and the words; a blank name is a visibly broken card, and dropping the row would move the product's star average. |
+| A `comment_approved` with no equivalent | rejected | `1`, `0`, `spam` and `trash` all map (trash folds onto `spam`, and is reported). Anything else is refused rather than guessed onto `pending`, because guessing publishes — or hides — a real customer's words. |
 
-Two of those are gaps rather than behaviour, and they are the owner's to decide:
+Two of those remain gaps rather than behaviour, and they are the owner's to
+decide:
 
-- **There is no coupon importer and no review importer.** The report now names
-  the files so nobody discovers this from a customer who cannot use a code
-  printed on a card in an outgoing parcel. Writing them is a separate job.
+- **The per-customer coupon limit does not survive the migration**, and cannot:
+  it is a fact about the two data models, not a mapping that was skipped. Every
+  imported code starts every shopper again from zero uses.
 - **The demo catalogue survives the import.** `seed_demo_catalogue` leaves 24
   products, 8 brands and 6 categories with a NULL external id, and the import
   does not touch them. Measured on a full-volume run: 703 products in the

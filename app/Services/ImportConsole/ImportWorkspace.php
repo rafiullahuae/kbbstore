@@ -67,7 +67,7 @@ final class ImportWorkspace
     public const MAX_BYTES = 64 * 1024 * 1024;
 
     /**
-     * The six entities, in the importer's own fixed dependency order.
+     * The entities, in the importer's own fixed dependency order.
      *
      * `id` is the alias list a row of this entity must carry at least one of.
      * It is the external id — the column the importer matches on — and a file
@@ -102,6 +102,13 @@ final class ImportWorkspace
             'unique' => false,
             'help' => 'Products → Export in WooCommerce. Variations, tags and images are not imported yet.',
         ],
+        'coupons' => [
+            'file' => 'coupons.csv',
+            'label' => 'Coupons',
+            'id' => ['id', 'wc_id', 'coupon_id', 'post_id'],
+            'unique' => false,
+            'help' => 'Marketing → Coupons in WooCommerce. They come after products because a coupon restricted to particular products or categories names them by their WooCommerce id, which has to already be here to be translated.',
+        ],
         'customers' => [
             'file' => 'customers.csv',
             'label' => 'Customers',
@@ -122,6 +129,13 @@ final class ImportWorkspace
             'id' => ['item_id', 'order_item_id'],
             'unique' => true,
             'help' => 'The individual lines inside each order. They come last because they point at both orders and products.',
+        ],
+        'reviews' => [
+            'file' => 'reviews.csv',
+            'label' => 'Reviews',
+            'id' => ['comment_id', 'id', 'source_id', 'wp_comment_id'],
+            'unique' => false,
+            'help' => 'WordPress comments with comment_type = \'review\' and their rating meta. They come after products and customers so each one can be attached, and importing them recomputes every affected product\'s star rating.',
         ],
         /*
          * MUST MIRROR ImportRunner::entities(). This list and that one are two

@@ -338,6 +338,101 @@ final class ImageVariants
     }
 
     /**
+     * The HOMEPAGE's product strip (`.ugc .im`), measured off the stylesheet
+     * the same way the others are.
+     *
+     * These four tiles were the largest images on the most-visited page of the
+     * shop and the only product photographs on the storefront emitting no
+     * srcset at all — /shop and the product page both had one, the homepage was
+     * missed. A 1000x1000 original was being painted into a box that is never
+     * wider than about 424 CSS pixels.
+     *
+     * `.ugc` is a grid inside `.wrap` (max-width 1200, 20px padding a side, so
+     * 1160 of content) and it restates its column count four times as the
+     * viewport narrows (kbb-BOOpsTt7.css):
+     *
+     *   >= 1200   6 cols, 12px gap  (1160 - 5x12) / 6      = 183px
+     *   1101-1199 6 cols            (100vw - 40 - 60) / 6  = 16.7vw - 17px
+     *   901-1100  3 cols            (100vw - 40 - 24) / 3  = 33.3vw - 21px
+     *   <= 900    2 cols, 9px gap   (100vw - 40 - 9) / 2   = 50vw - 24px
+     *
+     * Two of those bands are declared ABOVE the measurement, deliberately and
+     * in the same direction detailSizesAttribute() rounds: overstating costs a
+     * slightly larger candidate, understating makes the browser choose a file
+     * too small for the frame and the photograph is visibly soft. The 901-1100
+     * band is declared 34vw where the box is 33.3vw - 21px, and the top band
+     * 190px where it is 183px.
+     *
+     * The widest this can ask for is 50vw of 900 = 424 CSS px, which at
+     * device-pixel-ratio 2 wants 848 real pixels — above the 800w ceiling, so
+     * the 800w copy is chosen and that is the largest copy that exists. No
+     * third width is needed for this strip.
+     */
+    public static function homeTileSizesAttribute(): string
+    {
+        return '(max-width: 900px) 50vw, (max-width: 1100px) 34vw, (max-width: 1200px) 25vw, 190px';
+    }
+
+    /**
+     * The SKIN GRID (`.kbb-pgrid .kbb-card-thumb img`) — the tile markup used by
+     * components/product-grid.blade.php and partials/home/grid.blade.php.
+     *
+     * A SECOND tile shape, and not the one sizesAttribute() describes. That one
+     * was measured against `.pc` cards and declares 300px above 820px of
+     * viewport; this grid is wider at every band and bottoms out two columns
+     * later, so borrowing that declaration would UNDERSTATE the frame across
+     * 820-900px — the direction that makes a browser choose a file too small
+     * and leaves the photograph visibly soft. Measured instead
+     * (kbb-grid-skins-BYV5y8gk.css, `.wrap` 1200 max with 20px padding a side):
+     *
+     *   >= 1200    4 cols, 14px gap  (1160 - 3x14) / 4     = 279px
+     *   1181-1199  4 cols            (100vw - 40 - 42) / 4 = 25vw - 20px
+     *   901-1180   3 cols            (100vw - 40 - 28) / 3 = 33.3vw - 23px
+     *   <= 900     2 cols, 10px gap  (100vw - 40 - 10) / 2 = 50vw - 25px
+     *
+     * Declared a shade above each, the same direction the others round.
+     *
+     * The column counts are themselves overridable per skin through
+     * `--kbb-cols`, `--kbb-cols-t` and `--kbb-cols-m`, so a shop configured to
+     * fewer columns draws WIDER tiles than this says. That is the understating
+     * direction, and it is why the top band is declared 290px against a 279px
+     * measurement rather than trimmed to fit: a `sizes` value is a hint a
+     * browser resolves against candidates that stop at 800w, and the cost of
+     * the whole error is at most one step up the candidate list.
+     */
+    public static function skinGridSizesAttribute(): string
+    {
+        return '(max-width: 900px) 50vw, (max-width: 1180px) 34vw, 290px';
+    }
+
+    /**
+     * The "frequently bought together" row: `.kbb-fbt-item img` is a fixed 90px
+     * square at every viewport, declared inline on the element itself, so there
+     * is no viewport term to write. 400w covers it to device-pixel-ratio 4.
+     */
+    public static function fbtSizesAttribute(): string
+    {
+        return '90px';
+    }
+
+    /**
+     * The quick-view modal's photograph (`.qv-media img`, width:100%).
+     *
+     * `.qv-modal` is max-width:760px with 22px of padding a side (716px of
+     * content) and `.qv-wrap` is two equal columns with a 22px gap until it
+     * collapses to one at 640px; the backdrop adds 18px of padding a side.
+     *
+     *   > 640   (716 - 22) / 2      = 347px
+     *   <= 640  100vw - 36 - 44     = 100vw - 80px
+     *
+     * 350px declared for the top band, a shade above the 347 measured.
+     */
+    public static function quickViewSizesAttribute(): string
+    {
+        return '(max-width: 640px) calc(100vw - 80px), 350px';
+    }
+
+    /**
      * And what a gallery THUMBNAIL will be drawn at: `.gthumb` is a fixed 66px
      * square at every viewport (kbb-product.css:82), so there is no viewport
      * term to write. 400w covers it to device-pixel-ratio 6.

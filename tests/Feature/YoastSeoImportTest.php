@@ -397,9 +397,26 @@ it('reports an unmapped field it saw rather than losing it silently', function (
         '_yoast_wpseo_metadesc' => 'A daily toner.',
     ]));
 
-    // EntityReport keys notes by their text, so this is note => count.
-    expect(implode("\n", array_keys($context->report->for('seo')->notes())))
-        ->toContain('_yoast_wpseo_focuskw');
+    /*
+     * discarded(), not note(). This used to assert on notes(), which named the
+     * field and never said what was IN it — "671 products had a focus keyphrase
+     * and it was dropped" is a fact the owner can do nothing with. The
+     * discarded() channel is the one Phase 13 specified for a discard list the
+     * owner approves, and it carries the value.
+     */
+    $discards = $context->report->for('seo')->discards();
+
+    expect(implode("\n", array_keys($discards)))->toContain('_yoast_wpseo_focuskw');
+
+    // And the VALUE is in the report, which is the half a note could not carry.
+    $kind = array_key_first(array_filter(
+        $discards,
+        static fn (string $k): bool => str_contains($k, '_yoast_wpseo_focuskw'),
+        ARRAY_FILTER_USE_KEY
+    ));
+
+    expect($discards[$kind]['samples'][0]['before'])->toBe('korean toner')
+        ->and($discards[$kind]['samples'][0]['field'])->toBe('_yoast_wpseo_focuskw');
 
     // And it really did not keep it. A focus keyphrase nothing analyses is the
     // defect this codebase has spent twenty packages removing — so it is
@@ -425,16 +442,18 @@ it('says it as one line with a count, not as one line per row', function () {
         $importer->import(new Row(2, ysRow($wcId, ['_yoast_wpseo_focuskw' => 'korean toner'])), $context);
     }
 
-    $notes = $context->report->for('seo')->notes();
+    $discards = $context->report->for('seo')->discards();
 
     $keyphrase = array_filter(
-        $notes,
-        static fn (string $n): bool => str_contains($n, '_yoast_wpseo_focuskw'),
+        $discards,
+        static fn (string $k): bool => str_contains($k, '_yoast_wpseo_focuskw'),
         ARRAY_FILTER_USE_KEY
     );
 
+    // One KIND, counted three times — EntityReport keys discards by their
+    // headline exactly as it keys notes, and bounds the samples per kind.
     expect($keyphrase)->toHaveCount(1)
-        ->and(array_values($keyphrase)[0])->toBe(3);
+        ->and(array_values($keyphrase)[0]['count'])->toBe(3);
 });
 
 it('lists no field in both the mapped and the unmapped table', function () {
@@ -513,3 +532,103 @@ it('is registered on the runner, in an order that lets it find its products', fu
             'seo runs before products, so every row will be rejected for an unknown wc_id');
 })->skip(fn (): bool => ! in_array('seo', ImportRunner::entityNames(), true),
     'pending the one-line ImportRunner::entities() edit — see this file\'s footer');
+
+/*
+|------------------------------------------------------------------------------
+| 9. The tokens this shop cannot resolve, and the titles they shorten
+|------------------------------------------------------------------------------
+|
+| Yoast titles are TEMPLATES. Four of Yoast's placeholders resolve here —
+| %%title%%, %%sep%%, %%sitename%%, %%page%% — and TitleTemplate::render()
+| DELETES every other one on its way to the page, deliberately, so a misspelled
+| token never reaches a browser tab as literal braces.
+|
+| Composed with a verbatim import, that does not publish percent signs. It
+| publishes a TRUNCATED SENTENCE, which is worse, because it looks like a title
+| somebody wrote. These pin that the run says so.
+*/
+
+it('reports a Yoast placeholder this storefront will delete from the title', function () {
+    ysProduct(5101);
+
+    $context = ysImport(ysRow(5101, [
+        '_yoast_wpseo_title' => 'Buy %%title%% for %%currentyear%%',
+    ]));
+
+    $adjustments = $context->report->for('seo')->adjustments();
+
+    expect(implode("\n", array_keys($adjustments)))->toContain('currentyear');
+
+    $kind = array_key_first($adjustments);
+    $sample = $adjustments[$kind]['samples'][0];
+
+    // Before and after, both — the channel's whole contract. The `after` is the
+    // dangling preposition the page will actually publish.
+    expect($sample['before'])->toBe('Buy %%title%% for %%currentyear%%')
+        ->and($sample['after'])->toBe('Buy %%title%% for')
+        ->and($sample['field'])->toBe('_yoast_wpseo_title');
+});
+
+it('says nothing about a template built only from placeholders it does resolve', function () {
+    ysProduct(5102);
+
+    // The commonest Yoast title in any real export. Every token here resolves,
+    // so a report line about it would be noise the owner learns to skip — and a
+    // report that cries wolf on the common case is one nobody reads on the
+    // uncommon one.
+    $context = ysImport(ysRow(5102, [
+        '_yoast_wpseo_title' => '%%title%% %%page%% %%sep%% %%sitename%%',
+    ]));
+
+    expect($context->report->for('seo')->adjustments())->toBe([]);
+});
+
+it('reports an unresolvable placeholder in the description too, not just the title', function () {
+    ysProduct(5103);
+
+    $context = ysImport(ysRow(5103, [
+        '_yoast_wpseo_metadesc' => 'Shop %%ct_product_cat%% online in the UAE.',
+    ]));
+
+    $adjustments = $context->report->for('seo')->adjustments();
+
+    expect(implode("\n", array_keys($adjustments)))->toContain('ct_product_cat');
+
+    $sample = $adjustments[array_key_first($adjustments)]['samples'][0];
+
+    expect($sample['field'])->toBe('_yoast_wpseo_metadesc')
+        ->and($sample['after'])->toBe('Shop online in the UAE.');
+});
+
+it('still imports the template verbatim rather than rewriting the owner\'s text', function () {
+    $product = ysProduct(5104);
+
+    ysImport(ysRow(5104, ['_yoast_wpseo_title' => 'Buy %%title%% for %%currentyear%%']));
+
+    // Reported, NOT corrected. Expanding tokens at import time would freeze
+    // this store's name into every row — rule 3 on App\Support\YoastSeo — so
+    // the run says what will happen and leaves the owner's text alone.
+    expect($product->fresh()->seo['title'])->toBe('Buy %%title%% for %%currentyear%%');
+});
+
+it('agrees with the renderer about which placeholders survive', function () {
+    // The guard against YoastSeo::RESOLVED_TOKENS drifting from what
+    // App\Support\Seo::tokens() actually supplies. If a token is added there
+    // and not here, the import starts warning about a placeholder that works.
+    foreach (YoastSeo::RESOLVED_TOKENS as $name) {
+        $rendered = \App\Services\Seo\TitleTemplate::render(
+            'x %%'.$name.'%% y',
+            ['title' => 'T', 'sep' => '|', 'sitename' => 'S', 'page' => ''],
+            '|'
+        );
+
+        // A token this list calls resolvable must be one render() replaces
+        // rather than deletes: the marker survives as its VALUE, so the
+        // rendered string is not simply "x y" for a token with a value.
+        expect(YoastSeo::unresolvableTokens('%%'.$name.'%%'))->toBe([]);
+        expect($rendered)->not->toContain('%%');
+    }
+
+    // And one it does not know is reported.
+    expect(YoastSeo::unresolvableTokens('%%primary_category%%'))->toBe(['primary_category']);
+});

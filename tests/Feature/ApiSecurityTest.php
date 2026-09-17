@@ -73,6 +73,34 @@ it('never exposes reviewer email or ip', function () {
         ->not->toContain('author_email');
 });
 
+it('pins the review api to an allowlist, not to an exclusion', function () {
+    /*
+     * The same standard the settings endpoint is held to just below, applied to
+     * the other table CLAUDE.md names: asserted against the CONSTANT and not
+     * only against a response, so a column added to `reviews` later is private
+     * until somebody publishes it deliberately.
+     *
+     * It matters more since the WooCommerce import began carrying this table.
+     * `reviews` used to be a handful of rows; after a migration it is the whole
+     * shop's reviewer base, and author_email and ip are in every one of them.
+     */
+    $columns = (new ReflectionClass(App\Http\Controllers\Api\ReviewController::class))
+        ->getConstant('PUBLIC_COLUMNS');
+
+    expect($columns)->toBeArray()
+        ->not->toContain('author_email')
+        ->not->toContain('ip')
+        ->not->toContain('customer_id')
+        ->not->toContain('status')
+        ->not->toContain('source')
+        ->and($columns)->toContain('author_name')
+        ->and($columns)->toContain('rating');
+
+    // And Review::$hidden is the second net, for anything that serialises a
+    // whole model rather than going through the controller.
+    expect((new Review)->getHidden())->toContain('author_email')->toContain('ip');
+});
+
 it('returns only approved reviews, whatever status is asked for', function () {
     $p = product();
     Review::create(['product_id' => $p->id, 'author_name' => 'A', 'rating' => 5, 'content' => 'Approved one', 'status' => 'approved']);

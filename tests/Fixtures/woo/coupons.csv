@@ -1,0 +1,12 @@
+id,code,post_status,description,discount_type,coupon_amount,date_expires,usage_count,usage_limit,usage_limit_per_user,limit_usage_to_x_items,free_shipping,individual_use,exclude_sale_items,minimum_amount,maximum_amount,product_ids,exclude_product_ids,product_categories,customer_email,used_by
+9101,WELCOME20,publish,Twenty per cent off,percent,20,2027-01-01,462,1000,1,,no,no,no,,,,,,,buyer@example.test
+9102,HALFPC,publish,A fractional percentage,percent,12.5,,3,,,,no,no,no,,,,,,,
+9103,AED99OFF,publish,Fils in a whole-dirham shop,fixed_cart,99.50,,11,,,,no,no,no,250,499.50,,,,,
+9104,TENOFFEACH,publish,Ten off every unit,fixed_product,10,,0,,,2,yes,yes,yes,,,,,,,
+9105,EXPIRED10,publish,Long expired and still referenced by orders,percent,10,2022-01-01,118,,,,no,no,no,,,,,,,
+9106,SERUMONLY,publish,Restricted to ids that do translate,percent,15,,4,,,,no,no,no,,,4021,4022,22,,
+9107,GHOSTONLY,publish,Restricted to ids that are not here,percent,50,,0,,,,no,no,no,,,99998,,,,
+9108,TRASHED,trash,Withdrawn in WordPress,percent,30,,0,,,,no,no,no,,,,,,,
+9109,PERPRODUCTPC,publish,A type this shop cannot re-price,percent_product,10,,0,,,,no,no,no,,,,,,,
+9110,TOOMUCH,publish,More than one hundred per cent,percent,150,,0,,,,no,no,no,,,,,,,
+,NOPOSTID,publish,Cannot be matched on a re-run,percent,5,,0,,,,no,no,no,,,,,,,

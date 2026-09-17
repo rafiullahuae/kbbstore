@@ -121,22 +121,84 @@ final class SeoImporter extends EntityImporter
 
         $fragment = YoastSeo::fragment($cells);
 
-        foreach (YoastSeo::skipped($cells) as $meta) {
-            /*
-             * Seen, understood, and deliberately not kept — said in the report
-             * so "the focus keyphrases did not come across" is something the
-             * owner READS rather than discovers months later.
-             *
-             * Called per row and NOT de-duplicated here, because EntityReport
-             * already keys notes by their text and counts them — its own header
-             * says these are "the cases that recur across thousands of rows"
-             * and need "to be said once with a count". So the report ends up
-             * with one line per field carrying the number of products that had
-             * one, which is the more useful answer and is not this class's to
-             * reimplement.
-             */
-            $context->report->for($this->name())->note(
-                $meta.' is in this export and has no home in this application — not imported'
+        $report = $context->report->for($this->name());
+
+        /*
+         * ── WHAT THIS EXPORT CARRIES THAT THIS SHOP HAS NO HOME FOR ─────────
+         *
+         * discarded(), NOT note(), AND THAT IS THE POINT OF THIS BLOCK.
+         *
+         * This used to be a note() reading "<field> is in this export and has
+         * no home in this application — not imported". EntityReport counts
+         * notes by their text, so the run produced one line per field with the
+         * number of products that had one — which sounds complete and is not,
+         * because it never said WHAT WAS IN THE FIELD. "671 products had a
+         * focus keyphrase and it was dropped" is a fact the owner can do
+         * nothing at all with.
+         *
+         * discarded() is the channel Phase 13 specified for exactly this — "the
+         * three-bucket classification: migrate / discard / ask — Rafi approves
+         * any discard list" — and it carries the before and the after. So the
+         * owner now reads the field, the product it was on, and the actual
+         * string being dropped, five examples per field with a full count
+         * beside it. That is a discard list somebody can approve. A count of
+         * anonymous drops is not.
+         */
+        foreach (YoastSeo::skippedWithValues($cells) as $meta => $value) {
+            $report->discarded(
+                $meta.' has no equivalent in this application — the export carries it and nothing here '
+                .'reads it, so it is not imported',
+                $row->line,
+                (string) $wcId,
+                $meta,
+                $value,
+            );
+        }
+
+        /*
+         * ── AND WHAT IS IMPORTED BUT WILL NOT COME OUT THE WAY IT WENT IN ───
+         *
+         * A Yoast title or description is a TEMPLATE. Four of Yoast's tokens
+         * resolve on this storefront — %%title%%, %%sep%%, %%sitename%%,
+         * %%page%% — and every other one is DELETED by TitleTemplate::render()
+         * on its way to the page. So `Buy %%title%% for %%currentyear%%` is
+         * imported intact, is perfectly valid in the column, and publishes as
+         * "Buy Dokdo Toner for".
+         *
+         * That is neither a rejection (the row imports fine) nor a discard (the
+         * value is in the database) — it is the definition of an ADJUSTMENT:
+         * imported, and not what the export said. It is reported per FIELD and
+         * per TOKEN rather than per row, so an export whose whole catalogue
+         * shares one template produces one line with a count of 671 and five
+         * examples, which is what the owner needs to decide whether to fix the
+         * template before importing or the four odd products afterwards.
+         *
+         * The value is still stored verbatim. Expanding tokens at import time
+         * would freeze this store's name into every row — see rule 3 on
+         * App\Support\YoastSeo — so the answer is to SAY SO, not to rewrite
+         * the owner's templates on the way past.
+         */
+        foreach (['title' => '_yoast_wpseo_title', 'desc' => '_yoast_wpseo_metadesc'] as $key => $meta) {
+            if (! isset($fragment[$key]) || ! is_string($fragment[$key])) {
+                continue;
+            }
+
+            $template = $fragment[$key];
+            $unresolvable = YoastSeo::unresolvableTokens($template);
+
+            if ($unresolvable === []) {
+                continue;
+            }
+
+            $report->adjusted(
+                '%%'.implode('%%, %%', $unresolvable).'%% is a Yoast placeholder this storefront does not '
+                .'resolve — it is imported as written and DELETED from the page when the tag is rendered, '
+                .'which shortens the '.($key === 'title' ? 'title' : 'description').' rather than showing it',
+                $row->line,
+                (string) $wcId,
+                $meta,
+                $template,
+                YoastSeo::afterStripping($template),
             );
         }
 
