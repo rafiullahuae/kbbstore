@@ -199,6 +199,47 @@ final class Money
         return self::config()['decimals'] ?? 0;
     }
 
+    /**
+     * The width a RECEIPT COLUMN should print at, given every figure in it.
+     *
+     * The owner's rule for this shop is whole dirhams — "no decimals; if any
+     * decimals come, adjust the price" — so a receipt prints whole dirhams
+     * whenever it truthfully can, and widens only when it cannot.
+     *
+     * It cannot when any figure in the column carries fils. Rounding one then
+     * is not a presentation choice, it is a misstatement of three kinds at
+     * once, all measured on one real order (subtotal 9040, discount 60, total
+     * 8980):
+     *
+     *     Subtotal   AED 90      40 fils short of what was charged
+     *     TINY     - AED 1       90 - 1 = 90, so the column does not add up
+     *     Total      AED 90      20 fils MORE than the emailed receipt states
+     *
+     * WHY THE WHOLE COLUMN, NOT EACH FIGURE. Money::decimalsToDistinguish()
+     * answers about a PAIR, which is right for a price beside its strike-through
+     * and wrong here: a column whose rows print at different widths reads as a
+     * fault, and a reader cannot add up figures quoted three ways. So every
+     * figure that belongs to one receipt is passed in, and they all move
+     * together.
+     *
+     * Once the whole-dirham policy is enforced on everything the owner types,
+     * every ordinary order takes the narrow branch and receipts read AED 220,
+     * as he asked. Orders placed before it — and any derived figure that
+     * genuinely cannot be whole, such as a percentage coupon on AED 199 — take
+     * the wide one and stay honest. That is the point of asking rather than
+     * hardcoding either answer.
+     */
+    public static function receiptDecimals(int ...$fils): int
+    {
+        foreach ($fils as $amount) {
+            if ($amount % (10 ** self::minorExponent()) !== 0) {
+                return self::minorExponent();
+            }
+        }
+
+        return self::displayDecimals();
+    }
+
     // -----------------------------------------------------------------
     // Conversion
     // -----------------------------------------------------------------

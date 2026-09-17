@@ -101,7 +101,7 @@
                              and in the emailed receipt — this screen is reached by order number
                              and email, so it is frequently the only copy a guest ever sees. And
                              the label is keyed, so it reaches an Arabic reader in Arabic. --}}
-                        <div class="kbbtr-row"><span>{{ __('email.refunded.row_order_total') }}</span><span>{!! Money::format((int) $order->total, Money::minorExponent()) !!}</span></div>
+                        <div class="kbbtr-row"><span>{{ __('email.refunded.row_order_total') }}</span><span>{!! Money::format((int) $order->total, Money::receiptDecimals((int) $order->total)) !!}</span></div>
                     </div>
                 </div>
                 <p class="acw-fine">{!! __('store.track.signed_up', ['link' => '<a href="' . e(Url::to('/my-account/orders/')) . '">' . e(__('store.track.signed_up_link')) . '</a>']) !!}</p>

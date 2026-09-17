@@ -55,7 +55,6 @@
     the word states the truth the figure would. ReceiptFiguresAgreeTest reads
     it as 0 fils and holds it to the emailed AED 0.00.
 --}}
-@php $receiptMoney = static fn (int $fils): string => Money::format($fils, Money::minorExponent()); @endphp
 @php
     /*
      * The order's own tax record, split the way a receipt reads it: a ROW when
@@ -176,6 +175,28 @@
     // CheckoutController::place). Gift wrapping has its own row below, so what
     // is left is the payment fee — shown only when there is one.
     $paymentFee = max(0, (int) $order->fee_total - (int) $order->gift_fee);
+
+    /*
+     * ONE WIDTH FOR THE WHOLE RECEIPT, decided once from every figure on it.
+     *
+     * The owner's rule is whole dirhams — "no decimals; if any decimals come,
+     * adjust the price" — so this prints AED 220 whenever it truthfully can.
+     * It widens only when some figure on this particular receipt carries fils,
+     * because rounding one then understates what was charged AND breaks the
+     * column's arithmetic AND puts this copy 20 fils away from the emailed one.
+     *
+     * Every figure is passed in, including the line items and the tax, so the
+     * rows cannot print at different widths — a column quoted three ways reads
+     * as a fault and cannot be added up by eye.
+     */
+    $receiptFigures = array_merge(
+        [(int) $order->subtotal, (int) $order->discount_total, (int) $order->shipping_total,
+         (int) $order->gift_fee, (int) $paymentFee, (int) $order->total,
+         (int) ($taxRecorded['fils'] ?? 0)],
+        $order->items->flatMap(fn ($i) => [(int) $i->unit_price, (int) $i->total])->all(),
+    );
+    $receiptDp = Money::receiptDecimals(...$receiptFigures);
+    $receiptMoney = static fn (int $fils): string => Money::format($fils, $receiptDp);
 @endphp
 
 <div class="acw wide">
