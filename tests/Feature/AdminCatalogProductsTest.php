@@ -864,13 +864,23 @@ it('saves a price typed as a decimal string to the exact fil', function () {
      * 114. A store that is a fil light on every hundredth product is a store
      * whose books do not add up, so the parse is done on the digits.
      */
+    /*
+     * WHOLE DIRHAMS ONLY SINCE LANE FA. The owner's "no decimals. if any
+     * decimals comes. adjust to the price" made a typed price a whole number
+     * of dirhams, so the fils values this list used to carry are now REFUSED
+     * rather than stored — see the assertion below, and
+     * tests/Feature/WholeDirhamPricingTest.php for the rule itself.
+     *
+     * The point of this test is untouched and is still the parse: the digits
+     * an operator typed become the exact integer, with no float in between.
+     * `199` must become 19900 and not 19899 however large the number gets, and
+     * that is what the list still checks.
+     */
     foreach ([
-        ['1.15', 115],
-        ['0.07', 7],
+        ['1', 100],
         ['199', 19900],
-        ['199.99', 19999],
-        ['0.01', 1],
-        ['8.29', 829],
+        ['8', 800],
+        ['21474836', 2147483600],
     ] as [$typed, $fils]) {
         $out = test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => $typed])
             ->assertOk()
@@ -880,6 +890,15 @@ it('saves a price typed as a decimal string to the exact fil', function () {
             ->and($out['product']['price_fils'])->toBe($fils)
             ->and($out['product']['price_fils'])->toBeInt();
     }
+
+    // And the fils values this list used to carry are refused, with the old
+    // price left where it was rather than half-applied.
+    foreach (['1.15', '0.07', '199.99', '0.01', '8.29'] as $typed) {
+        test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => $typed])
+            ->assertStatus(422);
+    }
+
+    expect((int) $product->fresh()->price)->toBe(2147483600);
 });
 
 it('refuses more decimals than the currency has instead of truncating them', function () {
@@ -907,12 +926,28 @@ it('refuses more decimals than the currency has instead of truncating them', fun
     // And it did not half-apply: the old price is still there.
     expect((int) $product->fresh()->price)->toBe(10000);
 
-    // Two decimals remain fine, which is the whole point -- this refuses
-    // precision the currency cannot hold, not decimals as such.
+    /*
+     * TWO DECIMALS ARE NOW REFUSED TOO, AND BY A DIFFERENT RULE — Lane FA.
+     *
+     * This used to accept '1.19'. It does not, because this shop prices in
+     * whole dirhams; the refusal named here is the SHAPE rule (precision the
+     * currency cannot hold at all) and the one below is the POLICY rule
+     * (precision the shop does not price in). Both are refusals rather than
+     * truncations, which is what this test has always been about: an operator
+     * who typed something the shop will not store is told so, not quietly
+     * given a price they did not type.
+     */
     test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => '1.19'])
+        ->assertStatus(422);
+
+    expect((int) $product->fresh()->price)->toBe(10000);
+
+    // A whole dirham goes through, which is what keeps this a rule about
+    // precision rather than a rule against prices.
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => '1'])
         ->assertOk();
 
-    expect((int) $product->fresh()->price)->toBe(119);
+    expect((int) $product->fresh()->price)->toBe(100);
 });
 
 it('refuses a price larger than the column can hold rather than overflowing it', function () {
@@ -944,17 +979,38 @@ it('refuses a price larger than the column can hold rather than overflowing it',
 
     expect($exactMax)->toBe('21474836.47');
 
+    /*
+     * THE COLUMN'S OWN MAXIMUM IS NOW UNREACHABLE BY TYPING, AND THAT IS THE
+     * POLICY RATHER THAN A SMALLER CEILING — Lane FA.
+     *
+     * AED 21,474,836.47 is the largest value the signed 32-bit column holds,
+     * and it carries 47 fils, so the whole-dirham rule refuses it. The largest
+     * price this shop can be GIVEN is therefore AED 21,474,836 — one whole
+     * dirham below the column, refused for having decimals rather than for
+     * being too large, which is what the assertion below distinguishes.
+     *
+     * The original point of this test is kept intact underneath: the ceiling
+     * is the column's own and not an invented smaller number, so the largest
+     * whole dirham that fits is accepted and the next one is refused.
+     */
     test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => $exactMax])
-        ->assertOk();
-
-    expect((int) $product->fresh()->price)->toBe($maxFils);
-
-    // And one fil past it is refused, so the boundary is exact rather than
-    // approximate.
-    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => '21474836.48'])
         ->assertStatus(422);
 
-    expect((int) $product->fresh()->price)->toBe($maxFils);
+    $maxWhole = intdiv($maxFils, 100);
+
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => (string) $maxWhole])
+        ->assertOk();
+
+    expect((int) $product->fresh()->price)->toBe($maxWhole * 100)
+        ->and($maxWhole * 100)->toBe(2147483600);
+
+    // And one whole dirham past it is refused by the COLUMN — 2,147,483,700
+    // fils does not fit — so the boundary is still exact rather than
+    // approximate.
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['price' => (string) ($maxWhole + 1)])
+        ->assertStatus(422);
+
+    expect((int) $product->fresh()->price)->toBe($maxWhole * 100);
 });
 
 it('saves stock, status, visibility and the stock status from an inline cell', function () {
@@ -1027,10 +1083,15 @@ it('refuses a sale price that is not a discount', function () {
 
     expect($product->fresh()->sale_price)->toBeNull();
 
-    // A real discount goes through, to the fil.
-    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['sale_price' => '51.75'])->assertOk();
+    // A real discount goes through. Whole dirhams since Lane FA — the sale
+    // price is typed, so 51.75 is refused by the whole-dirham rule, not by
+    // this test's subject. 51 is the same discount stated in the shop's money.
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['sale_price' => '51.75'])
+        ->assertStatus(422);
 
-    expect((int) $product->fresh()->sale_price)->toBe(5175);
+    test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['sale_price' => '51'])->assertOk();
+
+    expect((int) $product->fresh()->sale_price)->toBe(5100);
 
     // And clearing it is a null, not an empty string that becomes zero.
     test()->postJson('/admin-api/catalog-products-save/'.$product->id, ['sale_price' => null])->assertOk();
@@ -1298,30 +1359,49 @@ it('adjusts prices by a percentage with integer arithmetic, to the exact fil', f
      * every product. The percentage is carried as integer basis points and the
      * division is intdiv, so 10000 at -30% is exactly 7000 and nothing else.
      */
-    $a = cpProduct(['price' => 10000]);
-    $b = cpProduct(['price' => 6900]);
-    $c = cpProduct(['price' => 1]);
+    /*
+     * THE EXACT ARITHMETIC, TESTED WHERE IT IS STILL EXACT — Lane FA.
+     *
+     * bulkPrice() now rounds every derived price to a whole dirham, and one
+     * fil of float drift is invisible once the answer is a dirham: 6,999 and
+     * 7,000 both become AED 70. So the sum itself is asserted directly on
+     * applyBasisPoints(), which is the method the defect lived in and is
+     * public for exactly this reason, and the endpoint below is asserted
+     * against the POLICY. Both halves, neither hiding the other.
+     */
+    $bulk = new \App\Http\Controllers\Admin\CatalogProductsApiController();
+    $bp = $bulk->basisPoints('-30');
 
-    test()->postJson('/admin-api/catalog-products-bulk-price', [
-        'ids' => [$a->id, $b->id, $c->id],
-        'target' => 'price', 'mode' => 'percent', 'percent' => '-30', 'confirm' => true,
-    ])->assertOk()
-        // Two changed, not three: 1 fil at -30% rounds back to 1 fil, and a
-        // write that would not change the value is not counted as one.
-        ->assertJson(['changed' => 2]);
-
-    expect((int) $a->fresh()->price)->toBe(7000)
-        ->and((int) $b->fresh()->price)->toBe(4830)
+    expect($bulk->applyBasisPoints(10000, $bp))->toBe(7000)
+        ->and($bulk->applyBasisPoints(6900, $bp))->toBe(4830)
         // 1 fil at -30% is 0.7 of a fil, which rounds to 1. Not 0, and not
         // 0.7 — a price is an integer number of the smallest unit there is.
-        ->and((int) $c->fresh()->price)->toBe(1);
+        ->and($bulk->applyBasisPoints(1, $bp))->toBe(1)
+        // A fractional percentage, still on integers: 7000 at +12.5% is 7875.
+        ->and($bulk->applyBasisPoints(7000, $bulk->basisPoints('12.5')))->toBe(7875);
 
-    // A fractional percentage, still on integers: 7000 at +12.5% is 7875.
-    test()->postJson('/admin-api/catalog-products-bulk-price', [
-        'ids' => [$a->id], 'target' => 'price', 'mode' => 'percent', 'percent' => '12.5', 'confirm' => true,
-    ])->assertOk();
+    $a = cpProduct(['price' => 10000]);
+    $b = cpProduct(['price' => 6900]);
+    $c = cpProduct(['price' => 100]);
 
-    expect((int) $a->fresh()->price)->toBe(7875);
+    $out = test()->postJson('/admin-api/catalog-products-bulk-price', [
+        'ids' => [$a->id, $b->id, $c->id],
+        'target' => 'price', 'mode' => 'percent', 'percent' => '-30', 'confirm' => true,
+    ])->assertOk()->json();
+
+    expect((int) $a->fresh()->price)->toBe(7000)      // exact, already whole
+        // 6,900 at -30% is 4,830 exactly, which is AED 48.30 — a figure
+        // nobody typed, so it is ADJUSTED to the nearest whole dirham rather
+        // than refused. See CatalogProductsApiController::bulkPrice().
+        ->and((int) $b->fresh()->price)->toBe(4800)
+        // 100 fils at -30% is 70, which rounds to AED 1 — the price does not
+        // move, so it is not counted as a change.
+        ->and((int) $c->fresh()->price)->toBe(100)
+        ->and($out['changed'])->toBe(2)
+        // AND IT IS SAID OUT LOUD. A derived figure may be adjusted; it may
+        // never be adjusted quietly.
+        ->and($out['adjusted_to_whole'])->toBe(2)
+        ->and($out['adjusted_note'])->toContain('whole dirhams');
 });
 
 it('adjusts prices by a flat amount and sets them outright', function () {
@@ -1334,15 +1414,27 @@ it('adjusts prices by a flat amount and sets them outright', function () {
         'ids' => [$a->id, $b->id], 'target' => 'price', 'mode' => 'amount', 'amount' => '-5.05', 'confirm' => true,
     ])->assertOk();
 
-    expect((int) $a->fresh()->price)->toBe(9495)
+    // AED 100.00 − AED 5.05 is AED 94.95, a DERIVED figure, so it is adjusted
+    // to the nearest whole dirham — AED 95 — rather than refused. `b` was
+    // AED 5.05 and goes to zero, which is whole and unchanged. Lane FA.
+    expect((int) $a->fresh()->price)->toBe(9500)
         ->and((int) $b->fresh()->price)->toBe(0);
 
+    /*
+     * `set` IS THE ONE MODE WHERE A PRICE IS TYPED, so it is REFUSED rather
+     * than adjusted: the operator is entering the price every selected product
+     * will carry, and he should see what he set. Lane FA.
+     */
     test()->postJson('/admin-api/catalog-products-bulk-price', [
         'ids' => [$a->id, $b->id], 'target' => 'price', 'mode' => 'set', 'value' => '19.99', 'confirm' => true,
+    ])->assertStatus(422);
+
+    test()->postJson('/admin-api/catalog-products-bulk-price', [
+        'ids' => [$a->id, $b->id], 'target' => 'price', 'mode' => 'set', 'value' => '20', 'confirm' => true,
     ])->assertOk();
 
-    expect((int) $a->fresh()->price)->toBe(1999)
-        ->and((int) $b->fresh()->price)->toBe(1999);
+    expect((int) $a->fresh()->price)->toBe(2000)
+        ->and((int) $b->fresh()->price)->toBe(2000);
 });
 
 it('never writes a bulk price below zero or a sale price above its regular price', function () {

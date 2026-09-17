@@ -10,6 +10,7 @@ use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\Money;
 use App\Support\VatDisplay;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -505,6 +506,24 @@ class CartService
     }
 
     /**
+     * The width a whole ledger prints at: totals()' own, widened by whatever
+     * the caller adds on top of it — the COD surcharge and the gift-wrapping
+     * fee, both of which the templates add after totals() returns.
+     *
+     * ONE PLACE, so the checkout summary, the cart page and the JSON the
+     * country-change refresh returns cannot pick three different widths for
+     * one basket. See the `decimals` key in totals() for what the width means
+     * and why it exists.
+     */
+    public function ledgerDecimals(array $totals, int ...$extra): int
+    {
+        return max(
+            (int) ($totals['decimals'] ?? 0),
+            Money::receiptDecimals(...$extra),
+        );
+    }
+
+    /**
      * Every figure the cart, drawer and checkout display, computed in one place.
      * All amounts are fils.
      */
@@ -698,6 +717,46 @@ class CartService
              * says.
              */
             'vat' => $this->vat->line($taxableBase, $country),
+            /*
+             * THE WIDTH EVERY ROW OF THIS LEDGER PRINTS AT — Lane FA.
+             *
+             * The lane began with a basket of AED 90.40 carrying a 60-fil
+             * discount that printed
+             *
+             *     Subtotal AED 90 / − AED 1 / Total AED 90
+             *
+             * because Money::displayDecimals() is 0 on this store and each row
+             * was rounded on its own on the way to the screen. The policy
+             * removes the cause for anything the owner sets — his prices are
+             * whole dirhams now, so the rows are whole and printing them at 0
+             * decimals states them exactly. This key is what covers the rest:
+             * a basket still holding a product priced in fils before the
+             * policy existed, or a coupon imported from WooCommerce.
+             *
+             * Money::receiptDecimals() answers 0 when every figure here is a
+             * whole dirham — which is the ordinary case, so the shop looks
+             * exactly as the owner asked — and the currency's full precision
+             * the moment one of them is not, for the WHOLE column at once, so
+             * the figures still sum.
+             *
+             * THE COD AND GIFT FEES ARE NOT IN IT, because they are added by
+             * the templates after this method returns (see the note on
+             * $taxableBase above). Each of those two is a settings value the
+             * whole-dirham rule already refuses unless it is whole, so they
+             * cannot be the reason a column needs widening; the template ORs
+             * them in anyway, through ledgerDecimals(), rather than resting on
+             * that.
+             *
+             * Read by the Blade partials AND by the JSON the country-change
+             * refresh returns, so the server decides the width once and the
+             * live-updating rows cannot disagree with the rendered ones. There
+             * is no arithmetic in checkout.js to keep in step — it assigns the
+             * strings this side formats.
+             */
+            'decimals' => Money::receiptDecimals(
+                $subtotal, $discount, $shipping, $taxableBase, $total,
+                $threshold ?? 0, $toFree ?? 0,
+            ),
         ];
     }
 }

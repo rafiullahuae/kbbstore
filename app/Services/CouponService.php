@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
+use App\Support\WholeDirhams;
 use Illuminate\Support\Facades\DB;
 use LogicException;
 
@@ -107,8 +108,95 @@ class CouponService
         return (bool) $this->withRules($coupon)->free_shipping;
     }
 
-    /** Discount in fils. Never exceeds the eligible subtotal. */
+    /**
+     * The discount this shop actually takes off, in whole dirhams.
+     *
+     * The percentage arithmetic itself lives in exactDiscountFor() and is
+     * unchanged and still exact to the fil; this is the whole-dirham step on
+     * top of it. The two are separate methods ON PURPOSE rather than one with
+     * a rounding at the end: CouponPercentRoundingTest pins the property that
+     * the percentage equals exact integer arithmetic for every percentage the
+     * editor can store, and a fil of float drift is invisible once the answer
+     * has been rounded to a dirham. Folding the two together would leave that
+     * test passing over the defect it was written for.
+     */
     public function discountFor(Coupon $coupon, Cart $cart): int
+    {
+        $eligibleSubtotal = $this->eligibleSubtotalFor($coupon, $cart);
+        $discount = $this->exactDiscountFor($coupon, $cart);
+
+        if ($discount <= 0) {
+            return 0;
+        }
+
+        /*
+         * WHOLE DIRHAMS, ROUNDED UP — Lane FA, and the direction is the whole
+         * decision, so it is written down rather than left to the reader.
+         *
+         * THE ARITHMETIC. 10% off AED 199 is AED 19.90 exactly. Every figure
+         * that went into it is whole — the price, the quantity — and the
+         * result is not, because a percentage of a whole number is not one.
+         * There is no version of the owner's "no decimals" that reaches this
+         * number by making the inputs tidier.
+         *
+         * WHY IT IS ADJUSTED AND NOT REFUSED. Nobody typed AED 19.90. The
+         * shopper typed a code; the owner typed "10%". There is no operator
+         * standing in front of this figure to show it to, which is the test
+         * App\Support\WholeDirhams sets for the two halves of the policy.
+         *
+         * WHY UP, WHICH COSTS THE SHOP. Rounding a discount DOWN takes money
+         * from the customer: a code advertised as "10% off" would hand back
+         * AED 19 on a AED 199 basket, which is 9.55%, and the shop would have
+         * printed a percentage it did not honour. Rounding UP costs the shop
+         * at most one dirham less a fil per order and makes the advertised
+         * percentage a floor rather than a ceiling. Between a shop that pays
+         * 90 fils and a customer quietly short-changed 90 fils on a promise
+         * the shop made, this lane picks the shop. There is no neutral choice
+         * here and this one is deliberate.
+         *
+         * STILL CAPPED at the eligible subtotal, AFTER the rounding as well as
+         * inside exactDiscountFor(): rounding up a discount that was already
+         * the whole basket would hand back more than was spent. On a
+         * whole-dirham basket the cap changes nothing; it is the guard for the
+         * one basket where it would.
+         *
+         * A FIXED-AMOUNT COUPON PASSES THROUGH UNTOUCHED, because its amount
+         * is refused unless it is whole (CouponAdminApiController) and
+         * `fixed_product` multiplies it by an integer quantity. This is a
+         * no-op on those two types rather than a second rule they survive.
+         */
+        return min(WholeDirhams::away($discount), $eligibleSubtotal);
+    }
+
+    /**
+     * The eligible subtotal a coupon is priced against — the cap, and the base.
+     *
+     * Extracted so discountFor() can apply the whole-dirham cap without
+     * recomputing the basket a second way and risking a different answer.
+     */
+    private function eligibleSubtotalFor(Coupon $coupon, Cart $cart): int
+    {
+        $coupon = $this->withRules($coupon);
+        $total = 0;
+
+        foreach ($this->cappedLines($coupon, $this->eligibleItems($coupon, $cart)) as $line) {
+            $total += $line['unit_price'] * $line['quantity'];
+        }
+
+        return $total;
+    }
+
+    /**
+     * The discount to the exact fil, BEFORE the whole-dirham policy is applied.
+     *
+     * This is the sum itself, and the integer arithmetic in it is the point:
+     * see the note on the `percent` arm. Public so the property test can hold
+     * it to exact rational arithmetic — the whole-dirham rounding in
+     * discountFor() would otherwise hide a fil of float drift behind a dirham.
+     *
+     * Not what the shop charges. discountFor() is.
+     */
+    public function exactDiscountFor(Coupon $coupon, Cart $cart): int
     {
         // Before anything reads a rule off it. eligibleItems() does this for
         // itself, but the item cap below is read HERE, on this variable, and a

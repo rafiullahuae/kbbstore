@@ -29,6 +29,20 @@
  * The percentages that happen to be exact in binary (10%, 12.5%, 20%, 25%, 50%)
  * were never wrong, which is why this survived: every round number anyone would
  * test with is in that set.
+ *
+ * ── WHY THESE NOW CALL exactDiscountFor() — Lane FA ─────────────────────────
+ *
+ * The whole-dirham policy rounds the FINAL discount to a whole dirham
+ * (CouponService::discountFor, and the direction is argued there). A fil of
+ * float drift is invisible once the answer has been rounded to a dirham —
+ * 7,171 and 7,172 are both AED 72 — so testing the public method would leave
+ * this file passing over the exact defect it was written for.
+ *
+ * So the sum itself is now a method of its own, exactDiscountFor(), and these
+ * assertions hold THAT to exact integer arithmetic, unchanged to the fil. What
+ * is being tested has not moved; only the name of the seam it is tested
+ * through. The last test in the file pins the other half: that the public
+ * method rounds the exact figure up to a whole dirham.
  */
 
 use App\Models\Cart;
@@ -78,7 +92,7 @@ it('rounds a half-fil percentage discount up, not down', function () {
 
     expect((int) $cart->items->sum(fn ($i) => $i->lineTotal()))->toBe(20490);
 
-    expect(app(CouponService::class)->discountFor($coupon, $cart))
+    expect(app(CouponService::class)->exactDiscountFor($coupon, $cart))
         ->toBe(7172, 'the percentage discount lost a fil to floating point');
 });
 
@@ -102,7 +116,7 @@ it('agrees with exact integer arithmetic across every percentage and basket', fu
                 'usage_count' => 0,
             ]);
 
-            $got = $service->discountFor($coupon, $cart);
+            $got = $service->exactDiscountFor($coupon, $cart);
             $want = intdiv($subtotal * $amount + 5000, 10000);
 
             if ($got !== $want) {
@@ -143,7 +157,31 @@ it('leaves the exactly-representable percentages exactly where they were', funct
             'usage_count' => 0,
         ]);
 
-        expect(app(CouponService::class)->discountFor($coupon, $cart))
+        expect(app(CouponService::class)->exactDiscountFor($coupon, $cart))
             ->toBe($expected, "the {$amount} hundredths-of-a-percent coupon moved");
     }
+});
+
+/*
+ * AND THE OTHER HALF: what the shop actually takes off. The exact figure above
+ * is the arithmetic; this is the policy applied to it — rounded UP to a whole
+ * dirham, because a percentage a shop advertises should be a floor and not a
+ * ceiling. See CouponService::discountFor() for the argument, and Lane FA's
+ * report for what the direction costs.
+ */
+it('takes the exact discount up to a whole dirham before charging it', function () {
+    $cart = roundingCart(10245, 2);                 // AED 204.90 eligible
+
+    $coupon = Coupon::create([
+        'code' => 'THIRTYFIVEWHOLE',
+        'type' => 'percent',
+        'amount' => 3500,
+        'usage_count' => 0,
+    ]);
+
+    $service = app(CouponService::class);
+
+    expect($service->exactDiscountFor($coupon, $cart))->toBe(7172)
+        ->and($service->discountFor($coupon, $cart))->toBe(7200)
+        ->and(\App\Support\WholeDirhams::isWhole($service->discountFor($coupon, $cart)))->toBeTrue();
 });

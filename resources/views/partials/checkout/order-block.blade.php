@@ -10,15 +10,54 @@
     @include('partials.checkout.freeship-bar')
 </div>
 
-<div class="sumrow"><span>{{ __('store.checkout.subtotal') }}</span><span class="js-subtotal">{!! \App\Support\Money::format($totals['subtotal']) !!}</span></div>
+@php
+    /*
+     * THE WIDTH EVERY ROW BELOW PRINTS AT — Lane FA.
+     *
+     * This ledger is where the lane started. A basket of AED 90.40 carrying a
+     * 60-fil discount printed "Subtotal AED 90 / − AED 1 / Total AED 90",
+     * because Money::displayDecimals() is 0 on this store and each row was
+     * rounded on its own on the way to the screen.
+     *
+     * The whole-dirham policy removes the cause for everything the owner sets,
+     * so in the ordinary case every figure here is a whole dirham, this is 0,
+     * and the shop looks exactly as he asked. When a basket still holds a price
+     * from before the policy, the SAME call widens the whole column at once and
+     * the figures sum again. Honest first; tidy where honest allows.
+     *
+     * THE TWO FEES ARE READ FROM SETTINGS HERE rather than from $codFeeFils /
+     * $giftFeeFils below — those are computed further down this file and would
+     * be undefined at this point, and the width has to be settled before the
+     * first row is printed. Neither can actually widen anything: both are
+     * settings the whole-dirham rule refuses unless they are whole. They are
+     * passed anyway, because a column must never be narrower than a figure it
+     * contains.
+     *
+     * checkout.js assigns the strings this side formats and does no arithmetic
+     * of its own, so the live-updating rows cannot disagree with these — the
+     * same width reaches them through CheckoutController's JSON.
+     *
+     * AT COLUMN 0, WITH NO BLANK LINE AROUND IT: Blade compiles a raw-PHP block to
+     * one <?php ?> and PHP swallows the newline after it, so written this way
+     * the block contributes exactly zero bytes to the rendered page. That is
+     * what StorefrontEnglishUnchangedTest, which compares this partial byte for
+     * byte, requires.
+     */
+    $kbbLedgerDp = app(\App\Services\CartService::class)->ledgerDecimals(
+        $totals,
+        (int) $settings->get('cod_fee', 0),
+        (int) $settings->get('gift_fee', '1500'),
+    );
+@endphp
+<div class="sumrow"><span>{{ __('store.checkout.subtotal') }}</span><span class="js-subtotal">{!! \App\Support\Money::format($totals['subtotal'], $kbbLedgerDp) !!}</span></div>
 
 <div class="js-coupons">
     @if ($totals['discount'])
-        <div class="sumrow disc"><span>{{ $totals['coupon_code'] }}</span><span>&ndash; {!! \App\Support\Money::format($totals['discount']) !!}</span></div>
+        <div class="sumrow disc"><span>{{ $totals['coupon_code'] }}</span><span>&ndash; {!! \App\Support\Money::format($totals['discount'], $kbbLedgerDp) !!}</span></div>
     @endif
 </div>
 
-<div class="sumrow"><span>{{ __('store.checkout.delivery') }}</span><span class="js-shipping">@if ($totals['shipping'] > 0){!! \App\Support\Money::format($totals['shipping']) !!}@else<span style="color:var(--green);font-weight:700">{{ __('store.checkout.free') }}</span>@endif</span></div>
+<div class="sumrow"><span>{{ __('store.checkout.delivery') }}</span><span class="js-shipping">@if ($totals['shipping'] > 0){!! \App\Support\Money::format($totals['shipping'], $kbbLedgerDp) !!}@else<span style="color:var(--green);font-weight:700">{{ __('store.checkout.free') }}</span>@endif</span></div>
 
 @php
     // Flat, global, does not vary by country — computed once here rather than
@@ -47,7 +86,7 @@
      Hidden, not omitted, when nothing is being charged: checkout.js unhides it
      from the gift endpoint's answer, and an element that is not there cannot be
      unhidden. --}}
-<div class="sumrow js-gift-row"@if ($giftFeeFils <= 0) hidden @endif><span>{{ __('store.checkout.gift_wrapping') }}</span><span class="js-gift">{!! \App\Support\Money::format($giftFeeFils) !!}</span></div>
+<div class="sumrow js-gift-row"@if ($giftFeeFils <= 0) hidden @endif><span>{{ __('store.checkout.gift_wrapping') }}</span><span class="js-gift">{!! \App\Support\Money::format($giftFeeFils, $kbbLedgerDp) !!}</span></div>
 
 @if ($codFeeFils > 0)
 {{-- Visible only while Cash on delivery is the selected option — pure CSS,
@@ -63,7 +102,7 @@
      attribute would mean adding JavaScript to something that already works
      with none, on the one part of the checkout where a stale bundle would
      leave a shopper looking at the wrong Total. --}}
-<div class="sumrow js-fee-row"><span>{{ __('store.checkout.cod_fee') }}</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils) !!}</span></div>
+<div class="sumrow js-fee-row"><span>{{ __('store.checkout.cod_fee') }}</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils, $kbbLedgerDp) !!}</span></div>
 @endif
 
 {{-- THE TAX ROW THAT IS PART OF THE SUM.
@@ -105,7 +144,7 @@
      the server, so this Blade change needs the rebuilt asset in the same
      package. CheckoutHiddenRowsTest pins both halves in source. --}}
 <div class="sumrow vat js-vat-row vat-add"@if (! ($totals['vat'] && $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
-<div class="sumrow tot js-total-row"><span>{{ __('store.checkout.total') }}</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils) !!}</span></div>
+<div class="sumrow tot js-total-row"><span>{{ __('store.checkout.total') }}</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils, $kbbLedgerDp) !!}</span></div>
 {{-- THE COD TOTAL IS NOT CONDITIONAL ON THERE BEING A COD FEE.
 
      kbb-checkout.css hides `.js-total-row` and shows `.js-total-row-fee`
@@ -117,7 +156,7 @@
 
      With a fee of zero the two rows simply carry the same number, which is the
      truth, and exactly one of them is ever on screen. --}}
-<div class="sumrow tot js-total-row-fee"><span>{{ __('store.checkout.total') }}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils) !!}</span></div>
+<div class="sumrow tot js-total-row-fee"><span>{{ __('store.checkout.total') }}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils, $kbbLedgerDp) !!}</span></div>
 
 {{-- THE "OF WHICH" NOTE, under the Total and not part of it.
 

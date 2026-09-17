@@ -1576,11 +1576,17 @@
       + '<h3>Price</h3>'
       + '<div class="peo-row">'
       +   '<div class="peo-fld"><label>Price (' + esc(code) + ')</label>'
-      +     '<input class="peo-in" inputmode="decimal" data-bind="price_aed" value="' + esc(model.price_aed || '') + '" placeholder="99.50"></div>'
+      +     '<input class="peo-in" inputmode="numeric" data-bind="price_aed" value="' + esc(model.price_aed || '') + '" placeholder="99"></div>'
       +   '<div class="peo-fld"><label>Sale price</label>'
-      +     '<input class="peo-in" inputmode="decimal" data-bind="sale_aed" value="' + esc(model.sale_aed || '') + '" placeholder="79.00"></div>'
+      +     '<input class="peo-in" inputmode="numeric" data-bind="sale_aed" value="' + esc(model.sale_aed || '') + '" placeholder="79"></div>'
       + '</div>'
-      + '<div class="peo-note" style="margin:-4px 0 12px">Plain numbers only — no symbol, no commas.</div>'
+      /* WHOLE DIRHAMS — Lane FA. inputmode="numeric" rather than "decimal",
+         so a phone keypad does not offer a decimal point the server will
+         refuse, and the note says the rule rather than leaving the operator to
+         discover it from a 422. The refusal itself lives on the server
+         (ProductEditorApiController::apply), because this is markup and markup
+         is not a guard; this is only the half that stops him typing it. */
+      + '<div class="peo-note" style="margin:-4px 0 12px">Whole ' + esc(code) + ' only — no decimals, no symbol, no commas.</div>'
       + '<div class="peo-row">'
       +   '<div class="peo-fld"><label>Sale starts</label>'
       +     '<input class="peo-in" type="datetime-local" data-bind="sale_starts_at" value="' + esc(model.sale_starts_at || '') + '"></div>'

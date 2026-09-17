@@ -504,16 +504,31 @@ it('sends the moved total and the new row position back from the country-change 
     $saudi = taxShopper($cart)->postJson('/api/checkout/rates', ['country' => 'SA'])->assertOk();
 
     /*
-     * 100.00 + 150.00 delivery = 250.00 taxable, +15% = 287.50 charged. The
-     * endpoint sends Money::format(), and this shop's display precision is 0
-     * decimals, so the string reads AED 288 — the point being that it is not
-     * AED 250. The exact fils are pinned on totals() above; a formatted string
-     * cannot carry them.
+     * 100.00 + 150.00 delivery = 250.00 taxable, +15% = 287.50 charged, and
+     * the string now reads AED 287.50 rather than AED 288 — Lane FA.
+     *
+     * THIS IS THE ONE CASE WHERE "NO DECIMALS" CANNOT HOLD, and the assertion
+     * is where it is written down. The owner's answer to a basket that did not
+     * add up was "no decimals. if any decimals comes. adjust to the price",
+     * and App\Support\WholeDirhams makes that true of every figure the shop
+     * SETS. An EXCLUSIVE VAT rate is not one of those: 15% of a whole-dirham
+     * base is AED 37.50, the tax is added on top, and the total the customer
+     * is charged carries fils however tidy the inputs were. Rounding it would
+     * mean charging or recording a tax that is not the rate — which is not the
+     * shop's to round.
+     *
+     * So the ledger WIDENS instead. Money::receiptDecimals() takes the whole
+     * column to the currency's precision the moment one figure needs it, which
+     * is why this reads 287.50 and not 288: honest beats tidy, and a receipt
+     * that rounds a charged total is a receipt that misstates money.
+     *
+     * Reachable only with tax_mode = 'live' AND a country on an exclusive
+     * basis — neither of which is the shipped configuration.
      */
     expect($saudi->json('vat.added'))->toBeTrue('the endpoint never told the page the row has to move');
-    expect(strip_tags((string) $saudi->json('total')))->toContain('288');
-    expect(strip_tags((string) $saudi->json('total')))->not->toContain('250',
-        'the Total did not move when the destination moved to an exclusive country');
+    expect(strip_tags((string) $saudi->json('total')))->toContain('287.50');
+    expect(strip_tags((string) $saudi->json('total')))->not->toContain('288',
+        'an exclusive tax was rounded into a total nobody was charged');
 });
 
 /*

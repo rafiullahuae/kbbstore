@@ -455,7 +455,35 @@ final class VatDisplay
             // never describe two different rates.
             'label' => $quote['label'],
             'amount' => $quote['printed'],
-            'formatted' => Money::format($quote['printed']),
+            /*
+             * PRINTED EXACTLY, NOT AT THE STOREFRONT'S ROUNDED WIDTH — Lane FA.
+             *
+             * This was a bare Money::format(), which follows
+             * Money::displayDecimals() — 0 on this store. Inclusive VAT on a
+             * whole-dirham basket is the one figure in the shop that is
+             * REQUIRED to carry fils: 5% inside AED 100 is AED 4.76, and there
+             * is no arrangement of whole inputs that makes it whole. Rounded
+             * to "AED 5" it was a false statement about a real tax, on the
+             * checkout, under the owner's own wording.
+             *
+             * It is safe to widen exactly this one figure and leave the column
+             * around it alone, and the reason is structural rather than lucky:
+             * an inclusive or flat VAT line is a NOTE printed BELOW the total
+             * (partials/checkout/order-block's `.vat-note` row), not a row in
+             * the sum, so a figure at a different precision from the rows above
+             * it cannot make the column fail to add up. quote()['total'] adds
+             * the tax only when `added` is true.
+             *
+             * WHEN IT IS `added` — live mode on an exclusive basis — the figure
+             * IS part of the sum, and this widening makes the row honest while
+             * the rows above it stay rounded. That is a mixed-width column and
+             * it is deliberate: the alternative is printing AED 10 where
+             * AED 9.95 was charged, and a receipt that lies is worse than a
+             * receipt that looks uneven. It is also the case the lane report
+             * puts in front of the owner as the one place "no decimals" cannot
+             * hold; see App\Support\TaxRule.
+             */
+            'formatted' => Money::format($quote['printed'], Money::receiptDecimals($quote['printed'])),
             'added' => $quote['added'],
             'basis' => $quote['basis'],
         ];

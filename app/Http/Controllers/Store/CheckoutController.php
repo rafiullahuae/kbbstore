@@ -1007,18 +1007,45 @@ class CheckoutController extends Controller
         $gift = $on ? (int) $this->settings->get('gift_fee', '1500') : 0;
         $cod = (int) $this->settings->get('cod_fee', 0);
 
+        /*
+         * THE SAME LEDGER WIDTH THE RENDERED SUMMARY USED — Lane FA.
+         *
+         * checkout.js assigns these strings straight into the rows the Blade
+         * printed, so a width decided differently here would leave one column
+         * mixing two precisions the moment a shopper ticked the gift box.
+         * partials/checkout/order-block.blade.php makes the identical call.
+         */
+        $dp = $this->carts->ledgerDecimals($totals, $cod, $gift);
+
         return response()->json([
             'ok' => true,
             'on' => $on,
-            'giftFee' => \App\Support\Money::format($gift),
-            'total' => \App\Support\Money::format((int) $totals['total'] + $gift),
+            'giftFee' => \App\Support\Money::format($gift, $dp),
+            'total' => \App\Support\Money::format((int) $totals['total'] + $gift, $dp),
             // Always sent, never null. `.js-total-row-fee` is the row the CSS
             // puts on screen whenever Cash on delivery is selected, whatever
             // the fee is (see order-block.blade.php), so a null here left the
             // ONLY visible total stale the moment a COD shopper ticked the
             // gift box on a shop with no COD surcharge.
-            'totalWithFee' => \App\Support\Money::format((int) $totals['total'] + $cod + $gift),
+            'totalWithFee' => \App\Support\Money::format((int) $totals['total'] + $cod + $gift, $dp),
         ]);
+    }
+
+    /**
+     * The width this request's checkout ledger prints at — Lane FA.
+     *
+     * A thin wrapper over CartService::ledgerDecimals() that supplies the two
+     * fees this controller adds on top of totals(), so every JSON figure the
+     * country-change refresh returns lands at the same precision as the rows
+     * the Blade printed. See CartService::totals()' `decimals` key.
+     */
+    private function ledgerDp(array $totals, Request $request): int
+    {
+        return $this->carts->ledgerDecimals(
+            $totals,
+            (int) $this->settings->get('cod_fee', 0),
+            $this->giftFee($request),
+        );
     }
 
     /** Gift fee in fils for this request, or zero. Settings are the price. */
@@ -1128,11 +1155,17 @@ class CheckoutController extends Controller
             // answer here and means "say nothing", so it is sent as a string
             // and never withheld.
             'deliveryText' => $this->deliveryText($country),
-            'subtotal' => \App\Support\Money::format((int) $totals['subtotal']),
+            /*
+             * ONE WIDTH FOR THE WHOLE REFRESHED COLUMN — Lane FA. Same call as
+             * partials/checkout/order-block.blade.php makes when it renders
+             * these rows, so a country change cannot leave the ledger printing
+             * two precisions at once. See CartService::totals()' `decimals`.
+             */
+            'subtotal' => \App\Support\Money::format((int) $totals['subtotal'], $this->ledgerDp($totals, $request)),
             'shipping' => $totals['shipping'] > 0
-                ? \App\Support\Money::format((int) $totals['shipping'])
+                ? \App\Support\Money::format((int) $totals['shipping'], $this->ledgerDp($totals, $request))
                 : '<span style="color:var(--green);font-weight:700">Free</span>',
-            'total' => \App\Support\Money::format((int) $totals['total'] + $this->giftFee($request)),
+            'total' => \App\Support\Money::format((int) $totals['total'] + $this->giftFee($request), $this->ledgerDp($totals, $request)),
             // The COD-fee-inclusive total, kept in step with the country so
             // it is never wrong after switching country while Cash on
             // delivery happens to be selected. The fee itself is flat and
@@ -1146,7 +1179,7 @@ class CheckoutController extends Controller
             'totalWithFee' => (function () use ($totals, $request) {
                 $fee = (int) $this->settings->get('cod_fee', 0);
 
-                return \App\Support\Money::format((int) $totals['total'] + $fee + $this->giftFee($request));
+                return \App\Support\Money::format((int) $totals['total'] + $fee + $this->giftFee($request), $this->ledgerDp($totals, $request));
             })(),
             // `added` is the third thing the refresh needs and the newest: on
             // an exclusive basis the tax row belongs ABOVE the Total, where it
@@ -1447,8 +1480,10 @@ class CheckoutController extends Controller
             'browsedHtml' => view('partials.checkout.browsed-list', ['browsed' => $browsed])->render(),
             'browsedCount' => $browsed->count(),
             // For the optional sticky bar, which carries a .js-total of its own
-            // outside every slot above. Formatted here like everything else.
-            'total' => \App\Support\Money::format($totalFils + $this->giftFee($request)),
+            // outside every slot above. Formatted here like everything else —
+            // including at the ledger's own width, so the bar cannot show a
+            // rounded total over a summary that widened (Lane FA).
+            'total' => \App\Support\Money::format($totalFils + $this->giftFee($request), $this->ledgerDp($totals, $request)),
             'payNotice' => $payNotice,
         ];
     }

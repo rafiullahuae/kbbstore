@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Support\WholeDirhams;
 
 /**
  * The per-module settings schema — Phase 3's last open item.
@@ -267,6 +268,42 @@ final class ModuleSchema
                 $rejected[$key] = $f['label'];
 
                 continue;
+            }
+
+            /*
+             * WHOLE DIRHAMS on every `money` field any module declares —
+             * Lane FA.
+             *
+             * Today that is PayShipRules' cod_min and cod_max, the window
+             * outside which Cash on delivery is hidden. They are bounds, not
+             * prices, but they are compared against an order total that is now
+             * always a whole dirham, so a floor of 9,950 fils is a rule whose
+             * boundary falls between two totals that can exist — its own
+             * preview screen already had to explain that ("a rule whose floor
+             * is 9950 fils previewed as AED 100 — Cash on delivery hidden",
+             * which reads as a contradiction). At whole dirhams the boundary
+             * is where the owner can see it.
+             *
+             * By TYPE and not by key, so a `money` field added to any module
+             * later gets the rule without anyone remembering to ask for it.
+             * This is the one place every module's money passes through.
+             *
+             * REJECTED, not adjusted — a bound is typed. Compared against what
+             * is stored, through the same store the value would be written to,
+             * so a module carrying a legacy value can still have its other
+             * fields saved. `rejected` is the caller's existing channel for
+             * saying so on screen; nothing here is silent.
+             */
+            if ($f['type'] === 'money' && ! WholeDirhams::isWhole((int) $cast)) {
+                $current = $f['store'] === self::STORE_MODULE
+                    ? $settings->moduleSetting($module, $f['alias'], $f['default'])
+                    : $settings->get($f['alias'], $f['default']);
+
+                if ((int) $current !== (int) $cast) {
+                    $rejected[$key] = $f['label'];
+
+                    continue;
+                }
             }
 
             if ($f['store'] === self::STORE_MODULE) {

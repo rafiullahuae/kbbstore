@@ -97,7 +97,13 @@ it('creates a real order through the api checkout session', function () {
         ->and($order->email)->toBe('api-buyer@example.com')
         ->and($order->payment_method)->toBe('cod')
         /*
-         * 2 x د.إ142.50 = د.إ285.00, in fils.
+         * 2 x د.إ142 = د.إ284, in fils.
+         *
+         * THE BUNDLE UNIT IS A WHOLE DIRHAM SINCE LANE FA. 5% off د.إ150 is
+         * د.إ142.50 exactly, and a discounted unit is rounded TOWARD the
+         * shopper — down — so the line is charged at د.إ142 and two of them
+         * are د.إ284. `unit x qty` is still exact, which is why the rounding
+         * is on the unit; see BundleService::unitFor().
          *
          * NOT 2 x د.إ150. This basket is two of the same product, which is
          * the 2-pack bundle every simple product's page offers at 5% off, and
@@ -107,7 +113,7 @@ it('creates a real order through the api checkout session', function () {
          * asserted here was the endpoint's old answer, which was د.إ15.00
          * MORE than the page quoted for the identical basket.
          */
-        ->and($order->subtotal)->toBe(28500)
+        ->and($order->subtotal)->toBe(28400)
         // CashOnDelivery::start() moved it on without marking it paid.
         ->and($order->status)->toBe('processing')
         ->and($order->paid_at)->toBeNull();
@@ -117,8 +123,8 @@ it('creates a real order through the api checkout session', function () {
 
     expect($item)->not->toBeNull()
         ->and($item->quantity)->toBe(2)
-        ->and($item->unit_price)->toBe(14250)
-        ->and($item->total)->toBe(28500);
+        ->and($item->unit_price)->toBe(14200)
+        ->and($item->total)->toBe(28400);
 
     // And the response carries the number the success page keys off.
     $response->assertJsonStructure(['ok', 'order_id', 'orderId', 'order_number', 'redirect']);

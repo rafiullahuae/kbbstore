@@ -22,6 +22,7 @@ use App\Support\Money;
 use App\Support\OrderTax;
 use App\Support\StoreTime;
 use App\Support\TaxRule;
+use App\Support\WholeDirhams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -854,7 +855,38 @@ class AdminOrderController extends Controller
         }
 
         if (isset($data['unit_price_aed'])) {
-            $item->unit_price = (int) Fils::parse((string) $data['unit_price_aed']);
+            $typed = (int) Fils::parse((string) $data['unit_price_aed']);
+
+            /*
+             * WHOLE DIRHAMS on a manual order line — Lane FA.
+             *
+             * The one money field an operator types on this screen, so it is
+             * REFUSED rather than adjusted; App\Support\WholeDirhams carries
+             * the rule. An order is where every other figure in this shop ends
+             * up, and a line priced at AED 99.80 puts a fil into a subtotal, a
+             * total, an invoice, a receipt and a payment capture at once.
+             *
+             * AGAINST THE STORED PRICE, so an order REVIVED from the
+             * WooCommerce era — whose lines were priced before this policy —
+             * can still have its quantity corrected without the line price
+             * being refused alongside it. The screen posts quantity and unit
+             * price together.
+             *
+             * Refused BEFORE the overflow check below rather than after,
+             * because refuseOverflowingLine() reports on the product of two
+             * figures and this reports on one of them; naming the wrong
+             * problem first is how an operator ends up changing the quantity
+             * to fix a price.
+             */
+            if ($typed !== (int) $item->unit_price && ! WholeDirhams::isWhole($typed)) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => WholeDirhams::message('Unit price', $typed),
+                    'errors' => ['unit_price_aed' => ['Whole ' . WholeDirhams::plural() . ' only.']],
+                ], 422);
+            }
+
+            $item->unit_price = $typed;
         }
 
         // Both factors are individually in range by now. Their PRODUCT is the
@@ -1273,8 +1305,33 @@ class AdminOrderController extends Controller
             // Typed by the operator in AED. Parsed digit-by-digit below; the
             // rule only checks it is a shape Fils::parse can hold exactly.
             'shipping_override' => ['nullable', 'string', 'max:20', function (string $attribute, $value, $fail) {
-                if ($value !== null && $value !== '' && ! Fils::isValid($value)) {
+                if ($value === null || $value === '') {
+                    return;
+                }
+
+                if (! Fils::isValid($value)) {
                     $fail('Enter the delivery charge as a plain amount, with at most two decimals.');
+
+                    return;
+                }
+
+                /*
+                 * WHOLE DIRHAMS — Lane FA. A delivery charge typed by hand
+                 * on the manual-order screen, so it is REFUSED rather than
+                 * adjusted, like every other money box an operator fills in.
+                 *
+                 * NO STORED-VALUE EXEMPTION HERE, and the asymmetry with the
+                 * line-price rule above is deliberate rather than an
+                 * oversight. This box is blank unless the operator chooses to
+                 * override the calculated rate: there is no previous value
+                 * being posted back, so a value in it is always one somebody
+                 * has just typed. Exempting "unchanged" would mean exempting
+                 * a figure that was typed this minute.
+                 */
+                $fils = (int) Fils::parse((string) $value);
+
+                if (! WholeDirhams::isWhole($fils)) {
+                    $fail(WholeDirhams::message('Delivery charge', $fils));
                 }
             }],
 

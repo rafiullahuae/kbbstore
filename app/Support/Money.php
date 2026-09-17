@@ -228,6 +228,15 @@ final class Money
      * genuinely cannot be whole, such as a percentage coupon on AED 199 — take
      * the wide one and stay honest. That is the point of asking rather than
      * hardcoding either answer.
+     *
+     * THE ONE AUTHORITY FOR THIS QUESTION, and deliberately so — Lane FA. Two
+     * lanes reached this method independently while the whole-dirham policy was
+     * landing, and a shop with two ways to decide a receipt's width is a shop
+     * whose two copies of one receipt can disagree, which is the exact defect
+     * Lane EZ closed. So everything asks here: the emailed receipt and the
+     * invoice through OrderEmailPresenter::ledgerWidth(), the cart and the
+     * checkout ledger through CartService::totals()' `decimals` key, the VAT
+     * line through VatDisplay::line(), and the four account pages directly.
      */
     public static function receiptDecimals(int ...$fils): int
     {

@@ -199,10 +199,27 @@ it('renders every order email and saves it for review', function () {
         $customerFacing = $name !== 'new-order-alert';
 
         expect($html)->toContain('KBB-10427')
-            // AED 473.00 — full precision, from 47300 fils. The storefront
-            // would print AED 473 by rounding; a receipt may not. See
-            // OrderEmailPresenter.
-            ->and($html)->toContain('473.00')
+            /*
+             * AED 473, from 47300 fils, and the decimals are GONE ON PURPOSE
+             * — Lane FA.
+             *
+             * This used to assert "473.00": a receipt may not round, so every
+             * emailed figure printed at the currency's full precision. The
+             * principle is unchanged and OrderEmailPresenter still states it.
+             * What changed is that this preview order is whole dirhams in
+             * every column, and on a whole-dirham order "AED 473.00" and
+             * "AED 473" state the same money — so the wide form was no longer
+             * buying truth, only decimals on a shop whose owner asked for
+             * none ("no decimals. if any decimals comes. adjust to the
+             * price").
+             *
+             * The safety net is asserted rather than assumed: the second
+             * expectation below renders the SAME email for an order carrying
+             * fils and requires the full precision back. A change that simply
+             * rounded receipts would pass the first and fail the second.
+             */
+            ->and($html)->toContain('473')
+            ->and(str_contains($html, '473.00'))->toBeFalse()
             // Blade escaped the customer's own words rather than running them.
             ->and($html)->not->toContain('<script');
 
@@ -250,6 +267,42 @@ it('renders every order email and saves it for review', function () {
 
         $written[] = previewWrite($name . '.txt', $text);
     }
+
+    /*
+     * THE OTHER HALF OF THE WIDTH RULE, ASSERTED AND NOT ASSUMED — Lane FA.
+     *
+     * The receipt above prints whole dirhams because every figure on that
+     * order is one. An order carrying fils — one placed before the policy, or
+     * one whose tax genuinely cannot be made whole — must still print at full
+     * precision, as a whole column, so that the figures still sum. That is the
+     * safety net Lane EZ put up and this lane keeps; a change that simply
+     * rounded receipts would pass every assertion above and fail here.
+     *
+     * The same order, moved 40 fils, rendered through the same mailable.
+     */
+    $order->forceFill([
+        'subtotal' => 46340,
+        'total' => 46340 - 4000 + 2000 + 3000,
+    ])->save();
+
+    $legacy = (string) (new OrderConfirmation($order->fresh()))->render();
+
+    expect($legacy)->toContain('473.40')
+        ->and($legacy)->toContain('463.40')
+        /*
+         * And the column still adds up at that width, every row printed
+         * exactly and none of them rounded:
+         *
+         *   Subtotal        463.40
+         *   Discount       − 40.00
+         *   Delivery         20.00
+         *   Gift wrapping    15.00
+         *   COD fee          15.00
+         *   Total           473.40
+         */
+        ->and($legacy)->toContain('40.00')
+        ->and($legacy)->toContain('20.00')
+        ->and($legacy)->toContain('15.00');
 
     // Ten files: five emails, each with its HTML and its text part.
     expect($written)->toHaveCount(10);

@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Support\MajorUnits;
 use App\Support\Money;
 use App\Support\RichText;
+use App\Support\WholeDirhams;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -486,10 +487,40 @@ class CatalogProductsApiController extends Controller
             }
         }
 
-        foreach (['price', 'sale_price'] as $key) {
-            if (array_key_exists($key, $data)) {
-                $changes[$key] = $this->filsFromMajor($data[$key]);
+        foreach (['price' => 'Price', 'sale_price' => 'Sale price'] as $key => $label) {
+            if (! array_key_exists($key, $data)) {
+                continue;
             }
+
+            $fils = $this->filsFromMajor($data[$key]);
+
+            /*
+             * WHOLE DIRHAMS, REFUSED ON A CHANGE ONLY — the same rule the
+             * product editor applies, for the same reasons, written out in
+             * full in App\Support\WholeDirhams and in
+             * ProductEditorApiController::apply().
+             *
+             * It has to be here as well as there because this is a SECOND
+             * write path onto the same two columns: the inline price cell on
+             * the catalogue list posts here, and a rule that lived on only one
+             * of the two screens would be a rule the shop does not have.
+             *
+             * The comparison against the stored value is what lets the inline
+             * cell keep working on the products this catalogue already holds
+             * at 9,980 fils — clicking into the cell and pressing Enter
+             * without changing the digits saves, rather than refusing an edit
+             * nobody made.
+             */
+            $stored = $product->{$key} === null ? null : (int) $product->{$key};
+
+            if ($fils !== null && $fils !== $stored && ! WholeDirhams::isWhole($fils)) {
+                return response()->json([
+                    'message' => WholeDirhams::message($label, $fils),
+                    'errors' => [$key => ['Whole ' . WholeDirhams::plural() . ' only.']],
+                ], 422);
+            }
+
+            $changes[$key] = $fils;
         }
 
         foreach (['sale_starts_at', 'sale_ends_at'] as $key) {
@@ -784,6 +815,44 @@ class CatalogProductsApiController extends Controller
         $target = (string) $data['target'];
         $mode = (string) $data['mode'];
 
+        /*
+         * WHOLE DIRHAMS ON THE ONE MODE WHERE A PRICE IS TYPED — Lane FA.
+         *
+         * `set` is an operator typing an amount that will become the price of
+         * every selected product, so it is REFUSED here exactly as the single
+         * price cell refuses one. The other three modes are DERIVED — a
+         * percentage, a signed adjustment, a clear — and are adjusted per
+         * product in the loop below with a count reported back; see the note
+         * on $adjusted.
+         *
+         * No stored-value comparison on this branch, and there cannot be one:
+         * one typed figure is being applied to many products, so there is no
+         * "the value did not change" to exempt. That is the right answer here
+         * anyway — a bulk set is unambiguously somebody entering a new price.
+         */
+        if ($mode === 'set') {
+            $typed = $this->filsFromMajor($data['value']);
+
+            if ($typed !== null && ! WholeDirhams::isWhole($typed)) {
+                return response()->json([
+                    'message' => WholeDirhams::message($target === 'price' ? 'Price' : 'Sale price', $typed),
+                    'errors' => ['value' => ['Whole ' . WholeDirhams::plural() . ' only.']],
+                ], 422);
+            }
+        }
+
+        /*
+         * How many products had their new price moved to a whole dirham.
+         *
+         * REPORTED, NEVER SILENT. A bulk price change is confirmed explicitly
+         * ("A bulk price change cannot be undone"), so adjusting a derived
+         * result here is the owner's own action rather than something done to
+         * him — but he still has to be told how many of his prices are not the
+         * arithmetic he asked for. A 10% cut across the catalogue that lands
+         * 40 products on a rounded dirham is a fact about his prices.
+         */
+        $adjusted = 0;
+
         $products = Product::query()
             ->whereIn('id', $ids)
             ->get(['id', 'name', 'sku', 'status', 'price', 'sale_price']);
@@ -838,6 +907,32 @@ class CatalogProductsApiController extends Controller
                 continue;
             }
 
+            /*
+             * THE DERIVED RESULT, ADJUSTED TO A WHOLE DIRHAM.
+             *
+             * 10% off AED 199 is AED 179.10 and nobody typed that figure —
+             * which is exactly the case App\Support\WholeDirhams calls
+             * "adjust" rather than "refuse". Refusing here would be refusing
+             * the owner's own percentage because of arithmetic he did not
+             * choose, and skipping the product would leave a catalogue where
+             * the sale applied to some rows and not others.
+             *
+             * NEAREST, not up and not down. A bulk adjustment is not a promise
+             * to a customer the way a coupon discount is (which rounds in the
+             * shopper's favour) and not a discount off a shelf price the way a
+             * bundle unit is (which rounds the same way): it is the owner
+             * repricing his own stock, and the honest rounding of a figure
+             * with no other claim on it is the closest one. Over a catalogue
+             * it is also the only direction that does not drift the whole
+             * price list one way.
+             *
+             * Counted, and reported in the response.
+             */
+            if (! WholeDirhams::isWhole($next)) {
+                $next = WholeDirhams::nearest($next);
+                $adjusted++;
+            }
+
             $regular = $target === 'price' ? $next : $price;
             $discount = $target === 'sale_price' ? $next : $sale;
 
@@ -885,6 +980,16 @@ class CatalogProductsApiController extends Controller
             'changed' => count($updates),
             'statements' => count($byValue),
             'skipped' => $skipped,
+            /*
+             * Said out loud, on the screen, beside the count that changed.
+             * A derived figure may be adjusted; it may never be adjusted
+             * quietly. See the note where $adjusted is incremented.
+             */
+            'adjusted_to_whole' => $adjusted,
+            'adjusted_note' => $adjusted === 0 ? null
+                : $adjusted . ' ' . ($adjusted === 1 ? 'price was' : 'prices were')
+                    . ' rounded to the nearest whole ' . rtrim(WholeDirhams::plural(), 's')
+                    . ' — this shop prices in whole ' . WholeDirhams::plural() . '.',
         ]);
     }
 
@@ -1769,7 +1874,8 @@ class CatalogProductsApiController extends Controller
      * A percentage string -> integer basis points. "12.5" is 1250, "-30" is
      * -3000. Two decimal places of percent, which is a hundredth of a percent.
      */
-    private function basisPoints(string $percent): int
+    /** PUBLIC for the same reason as applyBasisPoints() above — Lane FA. */
+    public function basisPoints(string $percent): int
     {
         $percent = trim($percent);
         $negative = str_starts_with($percent, '-');
@@ -1794,7 +1900,18 @@ class CatalogProductsApiController extends Controller
      * rounding is done by adding half the divisor before the integer division,
      * which is what a price rounds like.
      */
-    private function applyBasisPoints(int $fils, int $bp): int
+    /**
+     * PUBLIC so the arithmetic can be tested where it is exact — Lane FA.
+     *
+     * bulkPrice() now rounds every derived result to a whole dirham, and a fil
+     * of float drift is invisible once the answer has been rounded to a dirham:
+     * 6,999 and 7,000 are both AED 70. AdminCatalogProductsTest was written
+     * for exactly that fil (`1 - 30 / 100` is 0.69999999999999995559), so it
+     * holds THIS method to the exact figure and the endpoint to the policy.
+     * Folding the two together would leave that test passing over the defect
+     * it exists for. Same arrangement as CouponService::exactDiscountFor().
+     */
+    public function applyBasisPoints(int $fils, int $bp): int
     {
         $numerator = $fils * (10000 + $bp);
 

@@ -12,6 +12,7 @@ use App\Models\CouponRedemption;
 use App\Models\Product;
 use App\Support\AggregatesQueries;
 use App\Support\Money;
+use App\Support\WholeDirhams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -568,6 +569,50 @@ class CouponAdminApiController extends Controller
             throw ValidationException::withMessages([
                 'amount' => 'A percentage discount cannot be more than 100%.',
             ]);
+        }
+
+        /*
+         * WHOLE DIRHAMS ON THE TWO FIXED TYPES, AND ONLY ON THOSE — Lane FA.
+         *
+         * `coupons.amount` means two different things depending on `type`, and
+         * this file's own header is where that is written down: hundredths of
+         * a PERCENT for `percent`, minor units (fils) for `fixed_cart` and
+         * `fixed_product`. The shop's whole-dirham policy is a policy about
+         * money, so it binds the second reading and must not touch the first —
+         * a 10.5% code is a rate and refusing its decimals would be applying a
+         * money rule to a number that is not money.
+         *
+         * Getting that wrong in either direction is the exact defect this
+         * column invites: refuse "10.5" and the owner cannot enter the sale he
+         * wants; let "12.50" through on a fixed code and the shop prints a
+         * discount of AED 12.50 against whole-dirham totals for ever.
+         *
+         * `minimum_amount` and `maximum_amount` are money on EVERY type — they
+         * are basket thresholds in fils — so they are checked below regardless
+         * of what `amount` means here.
+         *
+         * Each value is compared against what the coupon already holds, so
+         * editing the EXPIRY of a code imported from WooCommerce at AED 12.50
+         * still saves. See ProductEditorApiController::apply() for the full
+         * reasoning on why an unchanged value passes.
+         */
+        $wholeChecks = [
+            'minimum_amount' => ['Minimum spend', $this->moneyToStorage($input['minimum_amount'] ?? null), $existing?->minimum_amount],
+            'maximum_amount' => ['Maximum spend', $this->moneyToStorage($input['maximum_amount'] ?? null), $existing?->maximum_amount],
+        ];
+
+        if ($type !== 'percent') {
+            $wholeChecks['amount'] = ['Amount', $amount, $existing?->type === $type ? $existing->amount : null];
+        }
+
+        foreach ($wholeChecks as $field => [$label, $value, $stored]) {
+            $stored = $stored === null ? null : (int) $stored;
+
+            if ($value !== null && $value !== $stored && ! WholeDirhams::isWhole($value)) {
+                throw ValidationException::withMessages([
+                    $field => WholeDirhams::message($label, $value),
+                ]);
+            }
         }
 
         $starts = $this->dayStart($input['starts_at'] ?? null);

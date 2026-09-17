@@ -199,18 +199,31 @@ it('discounts through CouponService, not through arithmetic of its own', functio
         'items' => [['product_id' => $item->id, 'quantity' => 3]],
         'coupon_code' => 'WELCOME10',
     ]))->assertCreated()
-        // 26700 subtotal, 10% = 2670 exactly.
+        /*
+         * 26700 subtotal; 10% of it is 2670 fils exactly — AED 26.70. Since
+         * Lane FA the shop charges whole dirhams, so CouponService rounds that
+         * UP to AED 27, in the shopper's favour. The point of this test is
+         * unchanged and is the delegation: the manual order takes whatever
+         * CouponService says rather than working a discount out itself, which
+         * is exactly why its figure moved when the service's policy did.
+         */
         ->assertJsonPath('order.subtotal_fils', 26700)
-        ->assertJsonPath('order.discount_fils', 2670)
+        ->assertJsonPath('order.discount_fils', 2700)
         ->assertJsonPath('order.coupon_code', 'WELCOME10')
-        // 26700 - 2670 = 24030, still over the 19900 threshold.
+        // 26700 - 2700 = 24000, still over the 19900 threshold.
         ->assertJsonPath('order.shipping_fils', 0)
-        ->assertJsonPath('order.total_fils', 24030);
+        ->assertJsonPath('order.total_fils', 24000);
 });
 
 it('rounds a percentage discount the way the storefront rounds it', function () {
-    // 8900 x 3 = 26700; 12.5% of that is 3337.5 fils. CouponService uses
-    // round(), so 3338 — not 3337 from truncation, and not a float anywhere.
+    /*
+     * 8900 x 3 = 26700; 12.5% of that is 3337.5 fils exactly. CouponService
+     * rounds half up in integers to 3338 — not 3337 from truncation, and not a
+     * float anywhere — and then takes that up to the whole dirham this shop
+     * prices in, AED 34. The name of this test is still the whole of it: the
+     * manual order rounds the way the storefront rounds, whatever that is, and
+     * these two figures move together or the screens disagree.
+     */
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
     ManualOrders::coupon('HALFPC', 'percent', 1250);
@@ -220,8 +233,8 @@ it('rounds a percentage discount the way the storefront rounds it', function () 
         'items' => [['product_id' => $item->id, 'quantity' => 3]],
         'coupon_code' => 'HALFPC',
     ]))->assertCreated()
-        ->assertJsonPath('order.discount_fils', 3338)
-        ->assertJsonPath('order.total_fils', 23362);
+        ->assertJsonPath('order.discount_fils', 3400)
+        ->assertJsonPath('order.total_fils', 23300);
 });
 
 it('refuses an expired coupon in the storefront’s own words', function () {
@@ -261,11 +274,23 @@ it('takes the operator’s delivery charge digit by digit', function () {
     moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 1]],
-        // The value that breaks the naive conversion: (int)(1.15*100) is 114.
+        /*
+         * The value that breaks the naive conversion — (int)(1.15*100) is 114
+         * — is now refused outright, because a delivery charge is money the
+         * operator types and this shop prices in whole dirhams (Lane FA). Both
+         * halves are asserted: the fils value is refused, and a whole one is
+         * parsed digit by digit at a magnitude where a float would show.
+         */
         'shipping_override' => '1.15',
+    ]))->assertStatus(422);
+
+    moPost(ManualOrders::payload([
+        'customer_id' => $customer->id,
+        'items' => [['product_id' => $item->id, 'quantity' => 1]],
+        'shipping_override' => '1150',
     ]))->assertCreated()
-        ->assertJsonPath('order.shipping_fils', 115)
-        ->assertJsonPath('order.total_fils', 9015);
+        ->assertJsonPath('order.shipping_fils', 115000)
+        ->assertJsonPath('order.total_fils', 123900);
 });
 
 it('accepts a typed delivery charge of zero as a real answer, not a blank', function () {
@@ -410,15 +435,24 @@ it('applies the quantity-bundle tier, because CartService is what prices a line'
     $customer = ManualOrders::customer();
     $item = ManualOrders::product('Toner', 8900);
 
-    // The default tiers are 5% at two units, 10% at three.
-    // round(8900 x 0.95) = 8455, x 2 = 16910.
+    /*
+     * The default tiers are 5% at two units, 10% at three. 8900 x 0.95 is 8455
+     * fils exactly — AED 84.55 — and since Lane FA a bundle unit is charged at
+     * the whole dirham below it, AED 84, so two of them is AED 168. The line
+     * total is still exactly `unit x qty`, which is why the rounding is
+     * applied to the unit; see BundleService::unitFor().
+     *
+     * The subject of this test is unchanged: the manual order goes through
+     * BundleService rather than multiplying price by quantity itself, and the
+     * unit price moving when the module is turned on is what proves it.
+     */
     moPost(ManualOrders::payload([
         'customer_id' => $customer->id,
         'items' => [['product_id' => $item->id, 'quantity' => 2]],
     ]))->assertCreated()
-        ->assertJsonPath('order.subtotal_fils', 16910)
-        ->assertJsonPath('order.items.0.unit_price_fils', 8455)
-        ->assertJsonPath('order.items.0.line_total_fils', 16910);
+        ->assertJsonPath('order.subtotal_fils', 16800)
+        ->assertJsonPath('order.items.0.unit_price_fils', 8400)
+        ->assertJsonPath('order.items.0.line_total_fils', 16800);
 });
 
 it('ignores a sale price whose window has not opened', function () {
@@ -573,7 +607,9 @@ it('quotes the same numbers the create call then writes', function () {
         ],
         'coupon_code' => 'SAVE7',
         'payment_method' => 'cod',
-        'shipping_override' => '17.85',
+        // Whole dirhams — Lane FA. The subject here is that the quote and the
+        // created order agree, not what a delivery charge may hold.
+        'shipping_override' => '1785',
     ]);
 
     $quoted = moQuote($payload)->assertOk()->json('totals');
@@ -585,14 +621,20 @@ it('quotes the same numbers the create call then writes', function () {
         ->and($created['fee_fils'])->toBe($quoted['fee_fils'])
         ->and($created['total_fils'])->toBe($quoted['total_fils']);
 
-    // And the numbers themselves, so this cannot pass by both being wrong.
-    // 8900*2 + 6125*3 = 17800 + 18375 = 36175. 7% = 2532.25 -> round 2532.
-    // 36175 - 2532 = 33643, + 1785 delivery + 500 COD fee = 35928.
+    /*
+     * And the numbers themselves, so this cannot pass by both being wrong.
+     * 8900*2 + 6125*3 = 17800 + 18375 = 36175. 7% of that is 2532.25, which
+     * rounds half up in integers to 2532 and then UP to the whole dirham the
+     * shop charges, AED 26 (Lane FA). Delivery is the operator's AED 1,785 and
+     * the COD fee is AED 5.
+     *
+     * 36175 - 2600 = 33575, + 178500 delivery + 500 COD = 212575.
+     */
     expect($created['subtotal_fils'])->toBe(36175)
-        ->and($created['discount_fils'])->toBe(2532)
-        ->and($created['shipping_fils'])->toBe(1785)
+        ->and($created['discount_fils'])->toBe(2600)
+        ->and($created['shipping_fils'])->toBe(178500)
         ->and($created['fee_fils'])->toBe(500)
-        ->and($created['total_fils'])->toBe(35928);
+        ->and($created['total_fils'])->toBe(212575);
 });
 
 /* ----------------------------------------------------- the email decision */

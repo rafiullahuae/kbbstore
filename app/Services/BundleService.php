@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Product;
+use App\Support\WholeDirhams;
 
 /**
  * Quantity bundles: buy more of the same product for a further discount.
@@ -141,7 +142,93 @@ class BundleService
      * `+ 5000` before the division is round-half-up on a positive value, which
      * is what round() did.
      */
+    /**
+     * The unit price a bundle actually charges, in whole dirhams.
+     *
+     * The percentage arithmetic lives in exactUnitFor() and is unchanged and
+     * still exact to the fil; this is the whole-dirham step on top of it.
+     *
+     * TWO METHODS AND NOT ONE WITH A ROUNDING AT THE END, on purpose.
+     * StorefrontMoneyExactTest pins the property that this sum equals exact
+     * integer arithmetic for every price and tier, and a fil of float drift is
+     * invisible once the answer has been rounded to a dirham — 31 and 32 fils
+     * are both AED 0. Folding the two together would leave that test passing
+     * over the defect it was written for. Same arrangement as
+     * CouponService::exactDiscountFor().
+     */
     public function unitFor(int $unitPrice, int $qty): int
+    {
+        $unit = $this->exactUnitFor($unitPrice, $qty);
+
+        /*
+         * NO DISCOUNT, NO ROUNDING. THIS GUARD IS LOAD-BEARING — Lane FA.
+         *
+         * Every path that prices a cart line goes through here, bundles on or
+         * off: with no tier matching, exactUnitFor() returns the product's own
+         * price unchanged and this method is the identity. Rounding on that
+         * branch would mean a product priced at 6,125 fils before this policy
+         * existed being CHARGED at AED 61 — a price the owner never set,
+         * applied silently, on every order, with nothing on any screen saying
+         * so. That is the one outcome this lane exists to prevent, and it is
+         * reachable here precisely because this method is on the path for
+         * products it has no opinion about.
+         *
+         * The rounding below is the whole-dirham policy applied to a DISCOUNT
+         * this service itself computed. Where it computed nothing, it changes
+         * nothing. Legacy prices carrying fils are the audit command's
+         * business (kbb:whole-dirhams), where the owner deals with them
+         * deliberately and can see what it costs.
+         */
+        if ($unit === $unitPrice) {
+            return $unitPrice;
+        }
+
+        /*
+         * WHOLE DIRHAMS, ROUNDED DOWN — Lane FA.
+         *
+         * THE ARITHMETIC. A 30% tier on a AED 199 product is AED 139.30 a
+         * unit. The price is whole and the tier is whole and the result is
+         * not, for the same reason a percentage coupon's is not: a percentage
+         * of a whole number is not one. See App\Support\WholeDirhams.
+         *
+         * ADJUSTED, NOT REFUSED, because nobody typed AED 139.30. The owner
+         * typed "30%" against a quantity; the price it lands on depends on
+         * which product a shopper is looking at, and there is no screen on
+         * which to refuse it.
+         *
+         * WHY THE UNIT AND NOT THE LINE TOTAL. totalFor() is unitFor() x qty
+         * and the cart stores a UNIT price per line, so rounding the line
+         * would leave a unit price that does not multiply up to it — the
+         * product page would advertise one figure per unit and the basket
+         * would charge another. Rounding the unit keeps `unit x qty` exactly
+         * the line total, at every quantity, with no second rounding anywhere.
+         * That is what makes the whole ledger add up rather than only its
+         * bottom line.
+         *
+         * WHY DOWN. This is a DISCOUNTED price, so toward zero is toward the
+         * shopper: AED 139.30 becomes AED 139 and the advertised saving grows
+         * by 30 fils rather than shrinking by 70. Same instinct as the coupon
+         * rounding next door — where a figure the shop has advertised cannot
+         * be made exact, the shop pays the difference — and it also guarantees
+         * the bundle price stays strictly below the undiscounted one, which
+         * the product page's "was/now" pair and its Save badge both depend on.
+         *
+         * A 0% TIER IS UNAFFECTED, and by the guard above rather than by luck:
+         * a shop that has never touched its tiers sees no movement at all, and
+         * neither does a product this service declined to discount.
+         */
+        return WholeDirhams::toward($unit);
+    }
+
+    /**
+     * The discounted unit price to the exact fil, BEFORE the whole-dirham
+     * policy is applied.
+     *
+     * The integer arithmetic in here is the point — see the note below. Public
+     * so the property test can hold it to exact arithmetic. Not what the shop
+     * charges; unitFor() is.
+     */
+    public function exactUnitFor(int $unitPrice, int $qty): int
     {
         // Discount in hundredths of a percent: 30% -> 3000, 12.5% -> 1250.
         $discount = (int) round($this->discountFor($qty) * 100);

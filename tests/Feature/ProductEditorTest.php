@@ -192,13 +192,23 @@ it('parses operator money to exact fils and never through a float', function () 
 
     $product = peProduct();
 
+    /*
+     * WHOLE DIRHAMS SINCE LANE FA. The owner's "no decimals. if any decimals
+     * comes. adjust to the price" made a typed price a whole number of
+     * dirhams, so the fils values this list used to carry are REFUSED rather
+     * than stored — checked below, and the rule itself is in
+     * tests/Feature/WholeDirhamPricingTest.php.
+     *
+     * The subject of this test is unchanged and is the PARSE: the digits an
+     * operator typed become the exact integer with no float in between, at
+     * every magnitude including one large enough to matter.
+     */
     foreach ([
-        ['99.50', 9950],
-        ['1.15', 115],
-        ['0.29', 29],
+        ['99', 9900],
+        ['1', 100],
         ['100', 10000],
         ['0', 0],
-        ['15000.00', 1500000],
+        ['15000', 1500000],
     ] as [$typed, $fils]) {
         test()->postJson('/admin-api/product-editor-save/'.$product->id, [
             'price_aed' => $typed,
@@ -206,6 +216,15 @@ it('parses operator money to exact fils and never through a float', function () 
 
         expect((int) $product->fresh()->price)->toBe($fils, "typed {$typed}");
     }
+
+    // And a price carrying fils is refused, leaving the last one in place.
+    foreach (['99.50', '1.15', '0.29', '15000.01'] as $typed) {
+        test()->postJson('/admin-api/product-editor-save/'.$product->id, [
+            'price_aed' => $typed,
+        ])->assertStatus(422);
+    }
+
+    expect((int) $product->fresh()->price)->toBe(1500000);
 });
 
 it('refuses a price with more precision than the currency has', function () {
@@ -255,11 +274,13 @@ it('accepts a padded number because the web stack trims it first, and parses it 
 
     $product = peProduct();
 
+    // Whole dirhams since Lane FA, so the padded number is a whole one — the
+    // subject here is the surrounding space being trimmed, not the decimals.
     test()->postJson('/admin-api/product-editor-save/'.$product->id, [
-        'price_aed' => '  1.50  ',
+        'price_aed' => '  150  ',
     ])->assertOk();
 
-    expect((int) $product->fresh()->price)->toBe(150);
+    expect((int) $product->fresh()->price)->toBe(15000);
 });
 
 it('round-trips a large price through the editor without a comma refusing it', function () {
@@ -991,7 +1012,9 @@ it('creates a product, and only puts it on the shop when asked to', function () 
         'brand_id' => $brand->id,
         'category_ids' => [$category->id],
         'primary_category_id' => $category->id,
-        'price_aed' => '129.50',
+        // Whole dirhams — Lane FA. The subject of this test is what a create
+        // writes, not what a price may hold.
+        'price_aed' => '129',
         'status' => 'draft',
         'description' => '<p>Lovely.</p><script>alert(1)</script>',
     ])->assertCreated();
@@ -999,7 +1022,7 @@ it('creates a product, and only puts it on the shop when asked to', function () 
     $id = $response->json('product.id');
     $product = Product::find($id);
 
-    expect((int) $product->price)->toBe(12950)
+    expect((int) $product->price)->toBe(12900)
         ->and($product->status)->toBe('draft')
         ->and((string) $product->description)->not->toContain('<script')
         ->and($product->categories->pluck('id')->all())->toBe([$category->id])

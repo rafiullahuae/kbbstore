@@ -299,7 +299,7 @@ class OrderStatusChanged extends OrderMail
             $refunded = $refunder->refundedFils($order);
 
             if ($refunded > 0) {
-                return sprintf(self::CANCELLED_REFUNDED, OrderEmailPresenter::plain($refunded));
+                return sprintf(self::CANCELLED_REFUNDED, OrderEmailPresenter::plain($refunded, \App\Support\Money::receiptDecimals($refunded)));
             }
 
             $captured = $refunder->capturedFils($order);
@@ -308,7 +308,7 @@ class OrderStatusChanged extends OrderMail
                 return self::CANCELLED_NOTHING_TAKEN;
             }
 
-            $sentence = sprintf(self::CANCELLED_UNREFUNDED, OrderEmailPresenter::plain($captured));
+            $sentence = sprintf(self::CANCELLED_UNREFUNDED, OrderEmailPresenter::plain($captured, \App\Support\Money::receiptDecimals($captured)));
 
             $note = trim((string) app(SettingsService::class)->get(self::CANCELLED_REFUND_NOTE, ''));
 
