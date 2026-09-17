@@ -137,7 +137,17 @@ $kbbSeoCtx = array_merge([
         $apFont = $apSignedIn ? app(\App\Services\AccountPanel::class)->fontHref() : null;
     @endphp
     @if ($apFont)<link rel="stylesheet" href="{{ $apFont }}">@endif
-    {!! app(\App\Services\MarketingPixels::class)->baseTags() !!}
+    {{--
+        The analytics loaders, from the one class that emits them.
+
+        This line used to be MarketingPixels::baseTags(), and Seo::render() at
+        the top of this same <head> emitted a SECOND Google loader from a
+        SECOND setting. Both now go through App\Services\Analytics, which
+        resolves one ID per network and emits the loader once per request — so
+        even if a future partial, layout or include calls it again, the second
+        call returns nothing.
+    --}}
+    {!! app(\App\Services\Analytics::class)->headTags() !!}
     {!! app(\App\Services\MarketingPixels::class)->addToCart() !!}
 </head>
 @php

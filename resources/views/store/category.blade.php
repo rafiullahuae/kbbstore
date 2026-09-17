@@ -1,3 +1,23 @@
+{{--
+    A DESIGN MOCK. This view is rendered by no controller and reachable at no
+    URL: its own 60-brand menu links to /category?cat=…, a route this
+    application does not register. ShopController serves the real category
+    archive (routes/web.php, /product-category/{path}).
+
+    IT ALSO CARRIED A THIRD ANALYTICS LOADER, removed here. A client-side
+    block fetched /api/settings and, from the JSON, injected a gtag loader
+    from `ga4_id` and a Meta loader from `meta_pixel` — a third GA emitter
+    and a second Meta emitter, on top of the two in App\Support\Seo and
+    App\Services\MarketingPixels, reading key names that belong to neither.
+    It could not in fact have fired: SettingController::PUBLIC_KEYS has never
+    published either key, so the fetch returned JSON with neither field in it.
+    A loader that is one allowlist entry away from double-counting every page
+    view is not worth keeping on a page nobody can load.
+
+    App\Services\Analytics is the only thing that emits an analytics tag in
+    this application now. If this mock is ever wired to a route, it gets its
+    tags from there like every other page.
+--}}
 @verbatim<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -311,32 +331,6 @@
   $('#sort').addEventListener('change',applySort);
 </script>
 
-<script>
-/* SEO/analytics: inject Google site-verification, GA4 and Meta Pixel from saved Settings */
-(async()=>{
-  try{
-    const r=await fetch('/api/settings'); if(!r.ok) return;
-    const s=await r.json();
-    try{
-      const seo=s.seo_json?JSON.parse(s.seo_json):{};
-      const p=location.pathname;
-      const key=/kbb-home/.test(p)?'home':/kbb-shop/.test(p)?'shop':/kbb-skin-quiz/.test(p)?'quiz':'';
-      const m=key?(seo[key]||seo.default):null;
-      if(m&&m.title)document.title=m.title;
-      if(m&&m.description){let md=document.head.querySelector('meta[name="description"]');if(!md){md=document.createElement('meta');md.name='description';document.head.appendChild(md);}md.setAttribute('content',m.description);}
-    }catch(e){}
-    if(s.google_site_verification){const m=document.createElement('meta');m.name='google-site-verification';m.content=s.google_site_verification;document.head.appendChild(m);}
-    if(s.ga4_id&&/^G-[A-Z0-9]+$/i.test(s.ga4_id)){
-      const g=document.createElement('script');g.async=true;g.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(s.ga4_id);document.head.appendChild(g);
-      window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments);};gtag('js',new Date());gtag('config',s.ga4_id);
-    }
-    if(s.meta_pixel&&/^\d{6,}$/.test(s.meta_pixel)){
-      !function(f,b,e,v,n,t,x){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;x=b.getElementsByTagName(e)[0];x.parentNode.insertBefore(t,x)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-      window.fbq('init',s.meta_pixel);window.fbq('track','PageView');
-    }
-  }catch(e){/* offline — no analytics */}
-})();
-</script>
 
 </body>
 </html>
