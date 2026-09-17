@@ -10,7 +10,7 @@
     @include('partials.checkout.freeship-bar')
 </div>
 
-<div class="sumrow"><span>Subtotal</span><span class="js-subtotal">{!! \App\Support\Money::format($totals['subtotal']) !!}</span></div>
+<div class="sumrow"><span>{{ __('store.checkout.subtotal') }}</span><span class="js-subtotal">{!! \App\Support\Money::format($totals['subtotal']) !!}</span></div>
 
 <div class="js-coupons">
     @if ($totals['discount'])
@@ -18,7 +18,7 @@
     @endif
 </div>
 
-<div class="sumrow"><span>Delivery</span><span class="js-shipping">@if ($totals['shipping'] > 0){!! \App\Support\Money::format($totals['shipping']) !!}@else<span style="color:var(--green);font-weight:700">Free</span>@endif</span></div>
+<div class="sumrow"><span>{{ __('store.checkout.delivery') }}</span><span class="js-shipping">@if ($totals['shipping'] > 0){!! \App\Support\Money::format($totals['shipping']) !!}@else<span style="color:var(--green);font-weight:700">{{ __('store.checkout.free') }}</span>@endif</span></div>
 
 @php
     // Flat, global, does not vary by country — computed once here rather than
@@ -47,7 +47,7 @@
      Hidden, not omitted, when nothing is being charged: checkout.js unhides it
      from the gift endpoint's answer, and an element that is not there cannot be
      unhidden. --}}
-<div class="sumrow js-gift-row"@if ($giftFeeFils <= 0) hidden @endif><span>Gift wrapping</span><span class="js-gift">{!! \App\Support\Money::format($giftFeeFils) !!}</span></div>
+<div class="sumrow js-gift-row"@if ($giftFeeFils <= 0) hidden @endif><span>{{ __('store.checkout.gift_wrapping') }}</span><span class="js-gift">{!! \App\Support\Money::format($giftFeeFils) !!}</span></div>
 
 @if ($codFeeFils > 0)
 {{-- Visible only while Cash on delivery is the selected option — pure CSS,
@@ -63,7 +63,7 @@
      attribute would mean adding JavaScript to something that already works
      with none, on the one part of the checkout where a stale bundle would
      leave a shopper looking at the wrong Total. --}}
-<div class="sumrow js-fee-row"><span>Cash-on-delivery fee</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils) !!}</span></div>
+<div class="sumrow js-fee-row"><span>{{ __('store.checkout.cod_fee') }}</span><span class="js-fee">{!! \App\Support\Money::format($codFeeFils) !!}</span></div>
 @endif
 
 {{-- THE TAX ROW THAT IS PART OF THE SUM.
@@ -105,7 +105,7 @@
      the server, so this Blade change needs the rebuilt asset in the same
      package. CheckoutHiddenRowsTest pins both halves in source. --}}
 <div class="sumrow vat js-vat-row vat-add"@if (! ($totals['vat'] && $totals['vat']['added'])) hidden @endif><span class="js-vat-label">{{ $totals['vat']['label'] ?? '' }}</span><span class="js-vat">{!! $totals['vat']['formatted'] ?? '' !!}</span></div>
-<div class="sumrow tot js-total-row"><span>Total</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils) !!}</span></div>
+<div class="sumrow tot js-total-row"><span>{{ __('store.checkout.total') }}</span><span class="js-total">{!! \App\Support\Money::format($totals['total'] + $giftFeeFils) !!}</span></div>
 {{-- THE COD TOTAL IS NOT CONDITIONAL ON THERE BEING A COD FEE.
 
      kbb-checkout.css hides `.js-total-row` and shows `.js-total-row-fee`
@@ -117,7 +117,7 @@
 
      With a fee of zero the two rows simply carry the same number, which is the
      truth, and exactly one of them is ever on screen. --}}
-<div class="sumrow tot js-total-row-fee"><span>Total</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils) !!}</span></div>
+<div class="sumrow tot js-total-row-fee"><span>{{ __('store.checkout.total') }}</span><span class="js-total-fee">{!! \App\Support\Money::format($totals['total'] + $codFeeFils + $giftFeeFils) !!}</span></div>
 
 {{-- THE "OF WHICH" NOTE, under the Total and not part of it.
 
@@ -139,7 +139,7 @@
 
 @if ($withActions ?? true)
     @include('partials.checkout.legal-notice')
-    <button type="button" class="place" data-place="1">Place order</button>
+    <button type="button" class="place" data-place="1">{{ __('store.checkout.place_order') }}</button>
     {{-- "100% authentic" WAS A LITERAL HERE — Lane DR.
 
          The last sentence a shopper reads before pressing Place order, on the
@@ -156,7 +156,7 @@
          connection this page was served over, not a claim about the business. --}}
     @php($checkoutAuth = \App\Support\TrustClaims::text($settings, 'checkout_authentic_text'))
     <div class="trust">
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> SSL secure</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> {{ __('store.checkout.ssl_secure') }}</span>
         @if ($checkoutAuth !== null)
             <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> {{ $checkoutAuth }}</span>
         @endif

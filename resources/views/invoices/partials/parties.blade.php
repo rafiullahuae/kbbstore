@@ -25,7 +25,7 @@
 --}}
 <div class="parties">
     <div class="party">
-        <div class="label">{{ $billLabel ?? 'Bill to' }}</div>
+        <div class="label">{{ $billLabel ?? __('email.invoice.bill_to') }}</div>
         @forelse ($doc['billTo'] as $i => $line)
             <div dir="auto" @class(['name' => $i === 0])>{{ $line }}</div>
         @empty
@@ -37,9 +37,9 @@
     </div>
 
     <div class="party">
-        <div class="label">{{ $shipLabel ?? 'Deliver to' }}</div>
+        <div class="label">{{ $shipLabel ?? __('email.invoice.deliver_to') }}</div>
         @if ($doc['sameAddress'] && ($collapseSame ?? true))
-            <div>Same as the billing address</div>
+            <div>{{ __('email.invoice.same_as_billing') }}</div>
         @else
             @forelse ($doc['shipTo'] as $i => $line)
                 <div dir="auto" @class(['name' => $i === 0])>{{ $line }}</div>

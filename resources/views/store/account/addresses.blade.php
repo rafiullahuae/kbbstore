@@ -1,12 +1,12 @@
 @extends('layouts.store')
-@section('title', 'Addresses')
+@section('title', __('store.addresses.page_title'))
 
 @section('content')
 @php use App\Support\Url; @endphp
 <div class="acw wide">
   <div class="acw-in">
-    <h1>Addresses</h1>
-    <p class="acw-sub">Where we deliver. Your default is used first at checkout.</p>
+    <h1>{{ __('store.addresses.heading') }}</h1>
+    <p class="acw-sub">{{ __('store.addresses.subtitle') }}</p>
 
     @if (session('kbb_status'))
       <p class="ab-note">{{ session('kbb_status') }}</p>
@@ -19,14 +19,14 @@
     @endif
 
     @if ($addresses->isEmpty())
-      <p class="acw-empty">No addresses saved yet. Add one below and it will be offered at checkout.</p>
+      <p class="acw-empty">{{ __('store.addresses.empty') }}</p>
     @else
       <div class="ab-grid">
         @foreach ($addresses as $a)
           <div class="ab-card{{ $a->is_default ? ' is-def' : '' }}">
             <div class="ab-head">
               <span class="ab-type">{{ ucfirst($a->type) }}</span>
-              @if ($a->is_default)<span class="ab-badge">Default</span>@endif
+              @if ($a->is_default)<span class="ab-badge">{{ __('store.addresses.badge_default') }}</span>@endif
             </div>
             <div class="ab-body">
               <strong>{{ trim($a->first_name . ' ' . $a->last_name) }}</strong>
@@ -38,15 +38,15 @@
               @if ($a->phone)<span>{{ $a->phone }}</span>@endif
             </div>
             <div class="ab-acts">
-              <a class="ab-link" href="{{ route('account.addresses.edit', $a->id) }}">Edit</a>
+              <a class="ab-link" href="{{ route('account.addresses.edit', $a->id) }}">{{ __('store.addresses.edit') }}</a>
               @unless ($a->is_default)
                 <form method="post" action="{{ route('account.addresses.default', $a->id) }}">@csrf
-                  <button type="submit" class="ab-link">Make default</button>
+                  <button type="submit" class="ab-link">{{ __('store.addresses.make_default') }}</button>
                 </form>
               @endunless
               <form method="post" action="{{ route('account.addresses.delete', $a->id) }}"
-                    onsubmit="return confirm('Delete this address?')">@csrf
-                <button type="submit" class="ab-link ab-del">Delete</button>
+                    onsubmit="return confirm('{{ __('store.addresses.delete_confirm') }}')">@csrf
+                <button type="submit" class="ab-link ab-del">{{ __('store.addresses.delete') }}</button>
               </form>
             </div>
           </div>
@@ -54,14 +54,14 @@
       </div>
     @endif
 
-    <h2 class="ab-h2">{{ $editing ? 'Edit address' : 'Add an address' }}</h2>
+    <h2 class="ab-h2">{{ $editing ? __('store.addresses.form_heading_edit') : __('store.addresses.form_heading_add') }}</h2>
 
     <form class="ab-form" method="post"
           action="{{ $editing ? route('account.addresses.update', $editing->id) : route('account.addresses.store') }}">
       @csrf
 
       <label class="ab-f">
-        <span>Type</span>
+        <span>{{ __('store.addresses.field_type') }}</span>
         <select name="type">
           @foreach ($types as $t)
             <option value="{{ $t }}" @selected(old('type', $editing->type ?? 'shipping') === $t)>{{ ucfirst($t) }}</option>
@@ -69,40 +69,40 @@
         </select>
       </label>
 
-      <label class="ab-f"><span>First name *</span>
+      <label class="ab-f"><span>{{ __('store.addresses.field_first_name') }}</span>
         <input type="text" name="first_name" value="{{ old('first_name', $editing->first_name ?? '') }}" required></label>
-      <label class="ab-f"><span>Last name</span>
+      <label class="ab-f"><span>{{ __('store.addresses.field_last_name') }}</span>
         <input type="text" name="last_name" value="{{ old('last_name', $editing->last_name ?? '') }}"></label>
-      <label class="ab-f ab-wide"><span>Company</span>
+      <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_company') }}</span>
         <input type="text" name="company" value="{{ old('company', $editing->company ?? '') }}"></label>
-      <label class="ab-f ab-wide"><span>Address line 1 *</span>
+      <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_line1') }}</span>
         <input type="text" name="line1" value="{{ old('line1', $editing->line1 ?? '') }}" required></label>
-      <label class="ab-f ab-wide"><span>Address line 2</span>
+      <label class="ab-f ab-wide"><span>{{ __('store.addresses.field_line2') }}</span>
         <input type="text" name="line2" value="{{ old('line2', $editing->line2 ?? '') }}"></label>
-      <label class="ab-f"><span>City *</span>
+      <label class="ab-f"><span>{{ __('store.addresses.field_city') }}</span>
         <input type="text" name="city" value="{{ old('city', $editing->city ?? '') }}" required></label>
-      <label class="ab-f"><span>Emirate / State</span>
+      <label class="ab-f"><span>{{ __('store.addresses.field_state') }}</span>
         <input type="text" name="state" value="{{ old('state', $editing->state ?? '') }}"></label>
-      <label class="ab-f"><span>Postcode</span>
+      <label class="ab-f"><span>{{ __('store.addresses.field_postcode') }}</span>
         <input type="text" name="postcode" value="{{ old('postcode', $editing->postcode ?? '') }}"></label>
-      <label class="ab-f"><span>Country *</span>
+      <label class="ab-f"><span>{{ __('store.addresses.field_country') }}</span>
         <select name="country">
           @foreach ($countries as $code => $label)
             <option value="{{ $code }}" @selected(old('country', $editing->country ?? 'AE') === $code)>{{ $label }}</option>
           @endforeach
         </select>
       </label>
-      <label class="ab-f"><span>Phone</span>
+      <label class="ab-f"><span>{{ __('store.addresses.field_phone') }}</span>
         <input type="tel" name="phone" value="{{ old('phone', $editing->phone ?? '') }}"></label>
 
       <label class="ab-chk">
         <input type="checkbox" name="is_default" value="1" @checked(old('is_default', $editing->is_default ?? false))>
-        <span>Use as my default for this type</span>
+        <span>{{ __('store.addresses.use_as_default') }}</span>
       </label>
 
       <div class="ab-submit">
-        <button type="submit" class="ab-btn">{{ $editing ? 'Save changes' : 'Add address' }}</button>
-        @if ($editing)<a class="ab-link" href="{{ route('account.addresses') }}">Cancel</a>@endif
+        <button type="submit" class="ab-btn">{{ $editing ? __('store.addresses.save_changes') : __('store.addresses.add_address') }}</button>
+        @if ($editing)<a class="ab-link" href="{{ route('account.addresses') }}">{{ __('store.addresses.cancel') }}</a>@endif
       </div>
     </form>
   </div>

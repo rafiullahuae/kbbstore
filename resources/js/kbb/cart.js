@@ -11,6 +11,7 @@
 
 import { open, closeAll } from './overlay.js';
 import { toast } from './toast.js';
+import { t } from './i18n.js';
 
 /* Requests are queued, not dropped.
    Adding the same product twice in quick succession used to lose the second
@@ -57,7 +58,7 @@ const send = async (path, body) => {
         apply(data);
         return data;
     } catch {
-        toast('Something went wrong — please try again.');
+        toast(t('store.js.generic_error', 'Something went wrong — please try again.'));
         return null;
     } finally {
         page?.classList.remove('busy');
@@ -132,7 +133,7 @@ const noteAdded = (productId) => {
 
     const tag = document.createElement('span');
     tag.className = 'kc-added';
-    tag.textContent = 'Added';
+    tag.textContent = t('store.js.added', 'Added');
     name.appendChild(tag);
 
     setTimeout(() => tag.remove(), Number(config().noteMs) || 1400);

@@ -150,7 +150,7 @@
 
 @section('content')
 <div class="wrap">
-  <div class="crumb"><a href="{{ Url::to('/') }}">Home</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->name ?? 'Shop' }}</a> / {{ $product->name }}</div>
+  <div class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ $product->categories->first()?->url() ?? Url::to('/shop/') }}">{{ $product->categories->first()?->name ?? __('store.breadcrumb.shop') }}</a> / {{ $product->name }}</div>
   <div class="pdp">
     <!-- gallery -->
     @include('partials.product-gallery')
@@ -164,7 +164,7 @@
           $badgeAvg    = (bool) $settings->get('review_badge_avg', true);
           $badgeCount  = (bool) $settings->get('review_badge_count', true);
           $badgeSold   = (bool) $settings->get('review_badge_sold', true);
-          $badgeLabel  = str_replace('{n}', number_format($rcount), (string) $settings->get('review_badge_label', '{n} reviews'));
+          $badgeLabel  = str_replace('{n}', number_format($rcount), (string) $settings->get('review_badge_label', __('store.product.review_badge_label')));
           $badgeColour = (string) $settings->get('review_badge_colour', '#E8A33D');
       @endphp
       <div class="cap-area" id="capArea">
@@ -178,7 +178,7 @@
           @endif
       </div>
       @if ($rcount)
-      <div class="{{ $modules->classFor('rating') }} bb-rate" id="bbRate" @unless ($showRate) style="display:none" @endunless><span class="stars" id="bbStars" style="color:{{ $badgeColour }}">@for ($i = 1; $i <= 5; $i++){!! $i <= round($rating) ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span> @if ($badgeAvg)<span>{{ number_format($rating, 1) }}</span> @endif @if ($badgeCount)· <a href="#sr">{{ $badgeLabel }}</a>@endif @if ($badgeSold && $product->total_sales > 999) · <span style="color:var(--green);font-weight:600">{{ round($product->total_sales / 1000) }}k+ sold</span>@endif</div>
+      <div class="{{ $modules->classFor('rating') }} bb-rate" id="bbRate" @unless ($showRate) style="display:none" @endunless><span class="stars" id="bbStars" style="color:{{ $badgeColour }}">@for ($i = 1; $i <= 5; $i++){!! $i <= round($rating) ? '<span class="f">★</span>' : '<span>★</span>' !!}@endfor</span> @if ($badgeAvg)<span>{{ number_format($rating, 1) }}</span> @endif @if ($badgeCount)· <a href="#sr">{{ $badgeLabel }}</a>@endif @if ($badgeSold && $product->total_sales > 999) · <span style="color:var(--green);font-weight:600">{{ __('store.product.sold_thousands', ['count' => round($product->total_sales / 1000)]) }}</span>@endif</div>
       @endif
       <div class="bb-price" id="bbPrice">{{-- The current price is always inside .now, on sale or not.
         Without it an ordinary price rendered bare and then jumped in size the
@@ -203,7 +203,7 @@
       <form class="cart kbb-cart-form" data-product_id="{{ $product->id }}" method="post">
         @csrf
         @if ($isVar)
-        <div class="opt-label">Choose your option <span id="optNote">{{ $optNote }}</span></div>
+        <div class="opt-label">{{ __('store.product.choose_option') }} <span id="optNote">{{ $optNote }}</span></div>
         <div class="{{ $modules->classFor('options') }} variants" id="variants">
           @foreach ($variants as $n => $v)
             @php
@@ -223,7 +223,7 @@
                  field below is set to. `0 === $n` selected nothing at all when
                  option 0 was sold out. --}}
             <div class="variant{{ $buyable && $v->is($buyable) ? ' on' : '' }}{{ $oos ? ' oos' : '' }}" data-i="{{ $n }}" data-vid="{{ $v->id }}" data-qty="1" data-price="{{ Money::plain($vsale, $vdp) }}">
-              @if ($v->image)<span class="vsw" style="background-image:url('{{ $v->image }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: 'Option ' . ($n + 1) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">Sold out</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">Save {{ $voff }}%</span>@endif
+              @if ($v->image)<span class="vsw" style="background-image:url('{{ $v->image }}')"></span>@else<span class="vr"></span>@endif<span class="vn">{{ $v->label() ?: __('store.product.option_fallback', ['number' => $n + 1]) }}</span><span class="vp">@if ($vsale < $vreg)<s>{!! Money::format($vreg, $vdp) !!}</s>@endif{!! Money::format($vsale, $vdp) !!}</span>@if ($oos)<span class="vtag sold">{{ __('store.product.sold_out_tag') }}</span>@elseif ($v->tag)<span class="vtag">{{ $v->tag }}</span>@elseif ($voff)<span class="vtag">{{ __('store.product.save_percent', ['percent' => $voff]) }}</span>@endif
             </div>
           @endforeach
         </div>
@@ -235,7 +235,7 @@
         {{-- Quantity bundles: the same product at a better rate for buying more.
              Generated from the tier table, so every product has them without
              per-product setup. --}}
-        <div class="opt-label">Choose your option <span id="optNote">Save more with bundles</span></div>
+        <div class="opt-label">{{ __('store.product.choose_option') }} <span id="optNote">{{ __('store.product.bundles_note') }}</span></div>
         <div class="variants" id="variants">
           @foreach ($bundles as $n => $b)
             {{-- TWO REASONS THIS ROW MAY HAVE TO WIDEN, and the second was
@@ -297,11 +297,11 @@
              treats it as literal text and every branch prints at once. --}}
         <div class="{{ $modules->classFor('stockline') }} stockline{{ $out ? ' out' : '' }}"><span class="dot"></span>
             @if ($out)
-                Sold out — check back soon
+                {{ __('store.product.stock_sold_out') }}
             @elseif ($low)
-                Only {{ (int) $left }} left · order soon
+                {{ trans_choice('store.product.stock_low', (int) $left) }}
             @else
-                In stock · ready to ship
+                {{ __('store.product.stock_in') }}
             @endif
         </div>
         {{-- THE ARRIVAL DATE IS ONLY OFFERED WHERE ARRIVAL IS KNOWN.
@@ -327,19 +327,19 @@
         @if ($cutoff)
         <div class="{{ $modules->classFor('cutoff') }} deliver">
             @if ($cutoff['date'] !== null)
-                Order within <b id="cutoff">{{ $cutoff['remaining'] }}</b> for delivery by <b>{{ $cutoff['date'] }}</b>
+                {!! __('store.product.cutoff_delivery', ['remaining' => '<b id="cutoff">' . e($cutoff['remaining']) . '</b>', 'date' => '<b>' . e($cutoff['date']) . '</b>']) !!}
             @else
-                Order within <b id="cutoff">{{ $cutoff['remaining'] }}</b> to ship on <b>{{ $cutoff['ship'] }}</b>
+                {!! __('store.product.cutoff_dispatch', ['remaining' => '<b id="cutoff">' . e($cutoff['remaining']) . '</b>', 'ship' => '<b>' . e($cutoff['ship']) . '</b>']) !!}
             @endif
         </div>
         @endif
 
         <div class="buyrow">
           <div class="{{ $modules->classFor('quantity') }} qty"><button type="button" data-q="-1">−</button><span id="qtyVal">1</span><button type="button" data-q="1">+</button><input type="hidden" name="quantity" id="qtyInput" value="1"></div>
-          <button class="addcart" id="mainAdd" type="submit" @disabled($out)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $out ? 'Sold out' : 'Add to cart' }}</button>
+          <button class="addcart" id="mainAdd" type="submit" @disabled($out)><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $out ? __('store.product.sold_out_tag') : __('store.product_card.add_to_cart') }}</button>
         </div>
         @unless ($modules->hidden('buynow'))
-<button class="buynow" type="submit" data-buynow="1" @disabled($out)>Buy it now</button>
+<button class="buynow" type="submit" data-buynow="1" @disabled($out)>{{ __('store.product.buy_now') }}</button>
 @endunless
       </form>
 
@@ -423,9 +423,9 @@
         @if ($trustAuthentic !== null)<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/></svg> {{ $trustAuthentic }}</div>@endif
         @if ($trustDelivery !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13v10H3z"/><path d="M16 10h4l1 3v4h-5z"/><circle cx="7" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></svg> {{ $trustDelivery }}</div>@endif
         @if ($trustReturns !== '')<div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 5v4h4"/></svg> {{ $trustReturns }}</div>@endif
-        <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg> Tabby &amp; Tamara</div>
+        <div class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg> {{ __('store.product.trust_pay_later') }}</div>
       </div>
-      <div class="{{ $modules->classFor('paychips') }} paychips"><span>Tabby</span><span>Tamara</span><span>Visa</span><span>Mastercard</span><span>Apple Pay</span><span>COD</span></div>
+      <div class="{{ $modules->classFor('paychips') }} paychips"><span>Tabby</span><span>Tamara</span><span>Visa</span><span>Mastercard</span><span>Apple Pay</span><span>{{ __('store.footer.pay_cod') }}</span></div>
     </div>
   </div>
 
@@ -435,8 +435,8 @@
 
   <!-- details tabs -->
   <section class="sec">
-    <div class="eyebrow">The details</div>
-    <h2>Product details</h2>
+    <div class="eyebrow">{{ __('store.product.details_eyebrow') }}</div>
+    <h2>{{ __('store.product.details_heading') }}</h2>
     @unless ($modules->hidden('tabs'))
 @include('partials.product-tabs')
 @endunless
@@ -450,8 +450,8 @@
   <!-- related -->
   @if ($related->isNotEmpty())
   <section class="sec">
-    <div class="eyebrow">Complete your routine</div>
-    <h2>You may also like</h2>
+    <div class="eyebrow">{{ __('store.product.related_eyebrow') }}</div>
+    <h2>{{ __('store.product.related_heading') }}</h2>
     <div class="{{ $modules->classFor('related') }} rel" id="related">@foreach ($related as $item)<x-product-card :product="$item" />@endforeach</div>
   </section>
   @endif
@@ -501,7 +501,7 @@
          AED 100. --}}
     <span class="sp" id="stickyPrice"><span class="now">{!! Money::format($price, $kbbSaleDp) !!}</span></span>
     @endif
-    <button class="addcart" type="button" onclick="document.querySelector('.kbb-cart-form .addcart')?.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $settings->get('sticky_label', 'Add to cart') }}</button>
+    <button class="addcart" type="button" onclick="document.querySelector('.kbb-cart-form .addcart')?.click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg> {{ $settings->get('sticky_label', __('store.product_card.add_to_cart')) }}</button>
   </div>
 </div>
 @endif

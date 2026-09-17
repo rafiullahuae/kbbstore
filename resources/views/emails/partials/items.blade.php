@@ -27,9 +27,9 @@
 @php $c = $brand['colours'] ?? \App\Services\Mail\EmailBranding::PALETTE; @endphp
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;margin:16px 0 4px;">
     <tr>
-        <td style="padding:0 0 7px;border-bottom:2px solid {{ $c['blush'] }};font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">Item</td>
-        <td width="52" align="center" style="width:52px;padding:0 0 7px;border-bottom:2px solid {{ $c['blush'] }};font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;text-align:center;">Qty</td>
-        <td width="92" align="right" style="width:92px;padding:0 0 7px;border-bottom:2px solid {{ $c['blush'] }};font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;text-align:right;">Total</td>
+        <td style="padding:0 0 7px;border-bottom:2px solid {{ $c['blush'] }};font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;">{{ __('email.items.col_item') }}</td>
+        <td width="52" align="center" style="width:52px;padding:0 0 7px;border-bottom:2px solid {{ $c['blush'] }};font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;text-align:center;">{{ __('email.items.col_qty') }}</td>
+        <td width="92" align="right" style="width:92px;padding:0 0 7px;border-bottom:2px solid {{ $c['blush'] }};font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:{{ $c['muted'] }};font-weight:700;text-align:right;">{{ __('email.items.col_total') }}</td>
     </tr>
 
     @foreach ($order['items'] as $item)
@@ -46,14 +46,14 @@
                 @endif
 
                 @if ($item['sku'] !== '')
-                    <div style="font-size:11.5px;color:{{ $c['muted'] }};">SKU {{ $item['sku'] }}</div>
+                    <div style="font-size:11.5px;color:{{ $c['muted'] }};">{{ __('email.items.sku', ['sku' => $item['sku']]) }}</div>
                 @endif
 
                 {{-- The unit price keeps its figure and gains a word. "AED
                      199.00 each" cannot be misread as a line total the way a
                      bare second number under a name can. --}}
                 <div style="font-size:12.5px;color:{{ $c['ink2'] }};margin-top:4px;">
-                    {!! $item['unitHtml'] !!} <span style="color:{{ $c['muted'] }};">each</span>
+                    {!! $item['unitHtml'] !!} <span style="color:{{ $c['muted'] }};">{{ __('email.items.each') }}</span>
                 </div>
             </td>
 

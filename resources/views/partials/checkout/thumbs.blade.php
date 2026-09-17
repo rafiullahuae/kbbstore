@@ -7,7 +7,7 @@
     $style = (string) $settings->get('checkout_thumbs_style', 'badges');
     $show  = $settings->moduleEnabled('checkout_thumbs', true) && $style !== 'off' && $items->isNotEmpty();
     $count = (int) $items->sum('quantity');
-    $countLbl = $count . ' ' . ($count === 1 ? 'item' : 'items');
+    $countLbl = trans_choice('store.cart.item_count', $count);
 
     $circle = function ($item, $withQty = false) {
         $p = $item->product;
@@ -25,18 +25,18 @@
     @if ($style === 'total')
         <div class="kthumb-row"><span class="kstack">@foreach ($items->take(4) as $it){!! $circle($it) !!}@endforeach</span><span class="kmeta">{{ $countLbl }}<b>{!! \App\Support\Money::format($totals['total']) !!}</b></span></div>
     @elseif ($style === 'names')
-        <div class="kthumb-lbl">Your order</div><div class="kthumb-row">
+        <div class="kthumb-lbl">{{ __('store.checkout.thumbs_your_order') }}</div><div class="kthumb-row">
         @foreach ($items as $it)<span class="kthumb-it">{!! $circle($it) !!}<span class="kthumb-nm">{{ $it->product?->name }}</span></span>@endforeach
         </div>
     @elseif ($style === 'stack')
         @php $more = $items->count() - min(4, $items->count()); @endphp
-        <div class="kthumb-lbl">You're ordering <span class="n">&middot; {{ $countLbl }}</span></div><div class="kthumb-row">
+        <div class="kthumb-lbl">{!! \App\Support\Phrase::inline(__('store.checkout.thumbs_youre_ordering')) !!} <span class="n">&middot; {{ $countLbl }}</span></div><div class="kthumb-row">
         @foreach ($items->take(4) as $it){!! $circle($it) !!}@endforeach
         @if ($more > 0)<span class="kthumb kthumb-more" aria-hidden="true">+{{ $more }}</span>@endif
         </div>
     @else
-        @php $lbl = ['badges' => 'Your bag', 'scroll' => 'Your order', 'rings' => "You're ordering"][$style] ?? 'Your bag'; @endphp
-        <div class="kthumb-lbl">{{ $lbl }} <span class="n">&middot; {{ $countLbl }}</span></div><div class="kthumb-row">
+        @php $lbl = ['badges' => __('store.checkout.thumbs_your_bag'), 'scroll' => __('store.checkout.thumbs_your_order'), 'rings' => __('store.checkout.thumbs_youre_ordering')][$style] ?? __('store.checkout.thumbs_your_bag'); @endphp
+        <div class="kthumb-lbl">{!! \App\Support\Phrase::inline($lbl) !!} <span class="n">&middot; {{ $countLbl }}</span></div><div class="kthumb-row">
         @foreach ($items as $it){!! $circle($it, $style === 'badges') !!}@endforeach
         </div>
     @endif

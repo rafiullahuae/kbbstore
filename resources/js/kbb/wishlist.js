@@ -13,6 +13,8 @@
  * same-origin fetch, which is what `GET /wishlist/ids` is for.
  */
 
+import { t } from './i18n.js';
+
 let wishIds = null;
 
 async function markSaved() {
@@ -71,7 +73,7 @@ export function initWishlist() {
             const data = await response.json();
 
             if (!data.ok) {
-                window.kbbToast?.(data.error || 'Could not update your wishlist.');
+                window.kbbToast?.(data.error || t('store.js.wishlist_failed', 'Could not update your wishlist.'));
                 return;
             }
 
@@ -88,9 +90,11 @@ export function initWishlist() {
             }
 
             setBadge(data.count);
-            window.kbbToast?.(data.saved ? 'Saved to your wishlist' : 'Removed from your wishlist');
+            window.kbbToast?.(data.saved
+                ? t('store.js.wishlist_saved', 'Saved to your wishlist')
+                : t('store.js.wishlist_removed', 'Removed from your wishlist'));
         } catch {
-            window.kbbToast?.('Could not update your wishlist — please try again.');
+            window.kbbToast?.(t('store.js.wishlist_retry', 'Could not update your wishlist — please try again.'));
         } finally {
             btn.disabled = false;
         }

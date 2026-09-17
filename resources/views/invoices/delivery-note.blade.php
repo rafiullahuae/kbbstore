@@ -36,7 +36,7 @@
 --}}
 @extends('invoices.document')
 
-@section('title', 'Delivery note')
+@section('title', __('invoice.doc.delivery_note'))
 
 {{-- EVERY CROSS-LINK IS GUARDED, and that is not defensive habit.
 
@@ -50,10 +50,10 @@
      link drops the button and renders the sheet. --}}
 @section('toolbar')
     @isset($packingSlipUrl)
-        <a class="btn ghost" href="{{ $packingSlipUrl }}">Packing slip</a>
+        <a class="btn ghost" href="{{ $packingSlipUrl }}">{{ __('invoice.doc.packing_slip') }}</a>
     @endisset
     @isset($labelUrl)
-        <a class="btn ghost" href="{{ $labelUrl }}">Dispatch label</a>
+        <a class="btn ghost" href="{{ $labelUrl }}">{{ __('invoice.doc.dispatch_label') }}</a>
     @endisset
 @endsection
 
@@ -64,18 +64,18 @@
         </div>
 
         <div class="what">
-            <div class="doctype">Delivery Note</div>
+            <div class="doctype">{{ __('invoice.delivery_note.doctype') }}</div>
             <div class="docmeta">
-                <div class="row">Order <b>{{ $doc['orderNumber'] }}</b></div>
+                <div class="row">{!! __('email.invoice.order', ['number' => '<b>' . e($doc['orderNumber']) . '</b>']) !!}</div>
                 @if ($doc['invoiceReference'] !== '')
-                    <div class="row">Invoice <b>{{ $doc['invoiceReference'] }}</b></div>
+                    <div class="row">{!! __('email.invoice.reference', ['reference' => '<b>' . e($doc['invoiceReference']) . '</b>']) !!}</div>
                 @endif
                 @if ($doc['placedAt'] !== '')
-                    <div class="row">Ordered {{ $doc['placedAt'] }}</div>
+                    <div class="row">{{ __('email.invoice.ordered', ['date' => $doc['placedAt']]) }}</div>
                 @endif
             </div>
             @if ($doc['isGift'])
-                <div class="stamp">Gift</div>
+                <div class="stamp">{{ __('invoice.packing.stamp_gift') }}</div>
             @endif
         </div>
     </div>
@@ -86,29 +86,29 @@
          than the address written out, and the person checking this sheet is
          checking the delivery address specifically. --}}
     @include('invoices.partials.parties', [
-        'billLabel' => 'Ordered by',
-        'shipLabel' => 'Delivered to',
+        'billLabel' => __('invoice.packing.ordered_by'),
+        'shipLabel' => __('invoice.delivery_note.delivered_to'),
         'collapseSame' => false,
         'showEmail' => false,
     ])
 
     <div class="facts">
         <div class="fact">
-            <div class="label">Delivery</div>
+            <div class="label">{{ __('invoice.invoice.label_delivery') }}</div>
             <div class="v">{{ $doc['deliveryMethod'] }}</div>
         </div>
         @if ($doc['phone'] !== '')
             <div class="fact">
-                <div class="label">Phone</div>
+                <div class="label">{{ __('invoice.invoice.label_phone') }}</div>
                 <div class="v" dir="auto">{{ $doc['phone'] }}</div>
             </div>
         @endif
         <div class="fact">
-            <div class="label">Items</div>
+            <div class="label">{{ __('invoice.packing.label_items') }}</div>
             <div class="v">{{ $doc['itemCount'] }}</div>
         </div>
         <div class="fact">
-            <div class="label">Status</div>
+            <div class="label">{{ __('invoice.packing.label_status') }}</div>
             <div class="v">{{ $doc['orderStatus'] }}</div>
         </div>
     </div>
@@ -116,8 +116,8 @@
     <table class="lines">
         <thead>
             <tr>
-                <th>Item</th>
-                <th class="num" style="width:24mm">Quantity</th>
+                <th>{{ __('email.items.col_item') }}</th>
+                <th class="num" style="width:24mm">{{ __('invoice.delivery_note.col_quantity') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -140,21 +140,21 @@
 
     <div class="sign">
         <div>
-            <div class="label">Received by</div>
+            <div class="label">{{ __('invoice.delivery_note.received_by') }}</div>
             <div class="line"></div>
-            <div class="cap">Print name</div>
+            <div class="cap">{{ __('invoice.delivery_note.print_name') }}</div>
         </div>
         <div>
-            <div class="label">Signature</div>
+            <div class="label">{{ __('invoice.delivery_note.signature') }}</div>
             <div class="line"></div>
-            <div class="cap">On delivery</div>
+            <div class="cap">{{ __('invoice.delivery_note.on_delivery') }}</div>
         </div>
         <div>
-            <div class="label">Date</div>
+            <div class="label">{{ __('invoice.delivery_note.date') }}</div>
             <div class="line"></div>
-            <div class="cap">Day / month / year</div>
+            <div class="cap">{{ __('invoice.delivery_note.date_format') }}</div>
         </div>
     </div>
 
-    <div class="foot">This is a delivery note and not a receipt: no prices are shown on it, and no payment is requested by it. The invoice for this order is issued separately.</div>
+    <div class="foot">{{ __('invoice.delivery_note.footer') }}</div>
 @endsection

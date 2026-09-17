@@ -60,13 +60,13 @@
      link drops the button and renders the sheet. --}}
 @section('toolbar')
     @isset($packingSlipUrl)
-        <a class="btn ghost" href="{{ $packingSlipUrl }}">Packing slip</a>
+        <a class="btn ghost" href="{{ $packingSlipUrl }}">{{ __('invoice.doc.packing_slip') }}</a>
     @endisset
     @isset($deliveryNoteUrl)
-        <a class="btn ghost" href="{{ $deliveryNoteUrl }}">Delivery note</a>
+        <a class="btn ghost" href="{{ $deliveryNoteUrl }}">{{ __('invoice.doc.delivery_note') }}</a>
     @endisset
     @isset($labelUrl)
-        <a class="btn ghost" href="{{ $labelUrl }}">Dispatch label</a>
+        <a class="btn ghost" href="{{ $labelUrl }}">{{ __('invoice.doc.dispatch_label') }}</a>
     @endisset
 @endsection
 
@@ -87,18 +87,18 @@
             <div class="doctype">{{ $doc['docType'] }}</div>
             <div class="docmeta">
                 @if ($doc['invoiceReference'] !== '')
-                    <div class="row">Invoice <b>{{ $doc['invoiceReference'] }}</b></div>
+                    <div class="row">{!! __('email.invoice.reference', ['reference' => '<b>' . e($doc['invoiceReference']) . '</b>']) !!}</div>
                 @endif
-                <div class="row">Order <b>{{ $doc['orderNumber'] }}</b></div>
+                <div class="row">{!! __('email.invoice.order', ['number' => '<b>' . e($doc['orderNumber']) . '</b>']) !!}</div>
                 @if ($doc['invoicedAt'] !== '')
-                    <div class="row">Issued {{ $doc['invoicedAt'] }}</div>
+                    <div class="row">{{ __('email.invoice.issued', ['date' => $doc['invoicedAt']]) }}</div>
                 @endif
                 @if ($doc['placedAt'] !== '')
-                    <div class="row">Ordered {{ $doc['placedAt'] }}</div>
+                    <div class="row">{{ __('email.invoice.ordered', ['date' => $doc['placedAt']]) }}</div>
                 @endif
             </div>
             @if ($doc['paid'])
-                <div class="stamp">Paid</div>
+                <div class="stamp">{{ __('invoice.invoice.stamp_paid') }}</div>
             @endif
         </div>
     </div>
@@ -109,21 +109,21 @@
 
     <div class="facts">
         <div class="fact">
-            <div class="label">Payment</div>
+            <div class="label">{{ __('invoice.invoice.label_payment') }}</div>
             <div class="v">{{ $doc['paymentLabel'] }}</div>
         </div>
         <div class="fact">
-            <div class="label">Delivery</div>
+            <div class="label">{{ __('invoice.invoice.label_delivery') }}</div>
             <div class="v">{{ $doc['deliveryMethod'] }}</div>
         </div>
         @if ($doc['phone'] !== '')
             <div class="fact">
-                <div class="label">Phone</div>
+                <div class="label">{{ __('invoice.invoice.label_phone') }}</div>
                 <div class="v" dir="auto">{{ $doc['phone'] }}</div>
             </div>
         @endif
         <div class="fact">
-            <div class="label">Currency</div>
+            <div class="label">{{ __('invoice.invoice.label_currency') }}</div>
             <div class="v">{{ $doc['currency'] }}</div>
         </div>
     </div>
@@ -131,10 +131,10 @@
     <table class="lines">
         <thead>
             <tr>
-                <th>Item</th>
-                <th class="num">Qty</th>
-                <th class="num">Unit price</th>
-                <th class="num">Amount</th>
+                <th>{{ __('email.items.col_item') }}</th>
+                <th class="num">{{ __('email.items.col_qty') }}</th>
+                <th class="num">{{ __('invoice.invoice.col_unit_price') }}</th>
+                <th class="num">{{ __('email.invoice.col_amount') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -181,7 +181,7 @@
         <div class="vatnote">
             {{ $doc['vatNote']['label'] }}: {!! $doc['vatNote']['html'] !!}
             @if ($doc['vatNote']['trn'] !== '')
-                · TRN {{ $doc['vatNote']['trn'] }}
+                · {{ __('email.invoice.trn', ['trn' => $doc['vatNote']['trn']]) }}
             @endif
         </div>
     @endif
@@ -190,13 +190,13 @@
         <div class="notes">
             @if ($doc['customerNote'] !== '')
                 <div class="note">
-                    <div class="label">Order note</div>
+                    <div class="label">{{ __('email.delivery.note_heading') }}</div>
                     <div class="body" dir="auto">{{ $doc['customerNote'] }}</div>
                 </div>
             @endif
             @if ($doc['giftNote'] !== '')
                 <div class="note">
-                    <div class="label">Gift message</div>
+                    <div class="label">{{ __('email.delivery.gift_heading') }}</div>
                     <div class="body" dir="auto">{{ $doc['giftNote'] }}</div>
                 </div>
             @endif

@@ -17,7 +17,7 @@
     none and a fallback here would defeat it.
 --}}
 <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1d1d1f;">
-    <p>Hello,</p>
+    <p>{{ __('email.greeting.hello') }}</p>
 
     {{--
         nl2br(e()) and not {!! !!}. The owner types prose into an admin box and
@@ -33,7 +33,7 @@
         <a href="{{ $productUrl }}" style="display:inline-block;padding:12px 22px;background:#1d1d1f;color:#ffffff;text-decoration:none;border-radius:6px;">{{ $productName }}</a>
     </p>
 
-    <p style="font-size:13px;color:#555;">Or paste this into your browser:<br>
+    <p style="font-size:13px;color:#555;">{{ __('email.common.paste_link') }}<br>
         <span style="word-break:break-all;">{{ $productUrl }}</span></p>
 
     {{--
@@ -45,12 +45,12 @@
         row in `stock_alerts` was written when they pressed the button, and
         nothing else can produce this email.
     --}}
-    <p style="font-size:13px;color:#555;">You asked to be told when this product came back in stock. This is that one message — we will not email you about it again unless you ask us to.</p>
+    <p style="font-size:13px;color:#555;">{{ __('email.back_in_stock.why') }}</p>
 
     <p style="color:#555;">— {{ $brand['storeName'] ?? config('app.name') }}</p>
 
     <p style="font-size:12px;color:#888;border-top:1px solid #eee;padding-top:12px;">
-        Never want email like this?
-        <a href="{{ $unsubscribeUrl }}" style="color:#888;">Unsubscribe</a>.
+        {{ __('email.back_in_stock.unsubscribe_prompt') }}
+        <a href="{{ $unsubscribeUrl }}" style="color:#888;">{{ __('email.common.unsubscribe') }}</a>.
     </p>
 </div>

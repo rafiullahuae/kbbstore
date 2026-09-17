@@ -30,7 +30,7 @@
     @if ((int) $product->review_count > 0)
       <div class="qv-rate">
         <span>{{ str_repeat('★', max(1, (int) round((float) $product->rating))) }}</span>
-        {{ number_format((float) $product->rating, 1) }} · {{ (int) $product->review_count }} reviews
+        {{ number_format((float) $product->rating, 1) }} · {{ trans_choice('store.reviews.review_count', (int) $product->review_count) }}
       </div>
     @endif
 
@@ -56,7 +56,7 @@
       @endif
     </div>
 
-    <div class="qv-stock{{ $inStock ? '' : ' out' }}">{{ $inStock ? 'In stock' : 'Out of stock' }}</div>
+    <div class="qv-stock{{ $inStock ? '' : ' out' }}">{{ $inStock ? __('store.quick_view.in_stock') : __('store.quick_view.out_of_stock') }}</div>
 
     @if ($blurb !== '')
       <p class="qv-blurb">{{ \Illuminate\Support\Str::limit($blurb, 260) }}</p>
@@ -64,9 +64,9 @@
 
     <div class="qv-acts">
       @if ($inStock)
-        <button type="button" class="qv-add" data-kbb-add="{{ $product->id }}" data-quantity="1" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $product->name }}">Add to cart</button>
+        <button type="button" class="qv-add" data-kbb-add="{{ $product->id }}" data-quantity="1" data-price="{{ number_format($product->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $product->name }}">{{ __('store.product_card.add_to_cart') }}</button>
       @endif
-      <a class="qv-full" href="{{ $product->url() }}">View full details</a>
+      <a class="qv-full" href="{{ $product->url() }}">{{ __('store.quick_view.view_full') }}</a>
     </div>
   </div>
 </div>

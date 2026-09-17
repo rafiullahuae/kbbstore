@@ -63,16 +63,16 @@
   .mnav a{padding:14px 6px;text-decoration:none;font-weight:500;border-bottom:1px solid var(--line-2)}
   .mnav-x{align-self:flex-end;font-size:20px;background:none;border:none;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
   @media(max-width:900px){h1{font-size:26px}.mgrid{grid-template-columns:1fr}.nav-links{display:none}.burger{display:grid}}
-</style>
+</style>@endverbatim
 </head>
 <body>
 <header class="head"><div class="wrap head-in">
   <button class="burger" onclick="document.getElementById('mnav').classList.add('on');document.getElementById('navov').classList.add('on')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <a class="logo" href="/">K-Beauty<span>Bliss</span></a>
   <nav class="nav-links">
-    <a href="/shop">Shop</a>
-    <a href="/skin-quiz">Skin Quiz</a>
-    <a href="/blog" class="on">Journal</a>
+    <a href="/shop">{{ __('store.journal.nav_shop') }}</a>
+    <a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a>
+    <a href="/blog" class="on">{{ __('store.journal.nav_journal') }}</a>
   </nav>
   <div class="tools">
     <a class="tool" href="/shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg></a>
@@ -83,12 +83,12 @@
 <div class="navov" id="navov" onclick="this.classList.remove('on');document.getElementById('mnav').classList.remove('on')"></div>
 <nav class="mnav" id="mnav">
   <button class="mnav-x" onclick="document.getElementById('mnav').classList.remove('on');document.getElementById('navov').classList.remove('on')">✕</button>
-  <a href="/">Home</a><a href="/shop">Shop</a><a href="/skin-quiz">Skin Quiz</a><a href="/blog">Journal</a>
+  <a href="/">{{ __('store.breadcrumb.home') }}</a><a href="/shop">{{ __('store.journal.nav_shop') }}</a><a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a><a href="/blog">{{ __('store.journal.nav_journal') }}</a>
 </nav>
 
 <article id="article">
-  @endverbatim
-  <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">Home</a> / <a href="{{ \App\Support\Url::to('/skincare-guide/') }}">Journal</a></div>
+  
+  <div class="crumb"><a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <a href="{{ \App\Support\Url::to('/skincare-guide/') }}">{{ __('store.journal.nav_journal') }}</a></div>
   @if($post->tag)<span class="atag">{{ $post->tag }}</span>@endif
   <h1>{{ $post->title }}</h1>
   <div class="ameta"><span>{{ $post->author ?: 'K-Beauty Bliss' }}</span> · <span>{{ optional($post->published_at)->format('j F Y') }}</span></div>
@@ -125,17 +125,17 @@
 @endverbatim
 {{-- Straight to the index. "/blog" only 301s here, and a hardcoded root path
      drops the base prefix the staging subdirectory needs. --}}
-<div class="backrow"><a href="{{ \App\Support\Url::to('/skincare-guide/') }}">&larr; Back to the Journal</a></div>
+<div class="backrow"><a href="{{ \App\Support\Url::to('/skincare-guide/') }}">&larr; {{ __('store.journal.back_to_index') }}</a></div>
 @verbatim
 
 <div class="wrap">
 @endverbatim
 @unless($related->isEmpty())
-  @verbatim
+  
   <div class="more" id="more">
-    <h2>More from the Journal</h2>
+    <h2>{{ __('store.journal.more_heading') }}</h2>
     <div class="mgrid" id="mgrid">
-  @endverbatim
+  
   @foreach($related as $r)
     <a class="mcard" href="{{ \App\Support\Url::to('/' . $r->slug . '/') }}">
       @php
@@ -156,13 +156,13 @@
   </div>
   @endverbatim
 @endunless
-@verbatim
+
 </div>
 
 <footer><div class="wrap fin">
-  <div>© K-Beauty Bliss · Authentic Korean beauty in the UAE</div>
-  <div><a href="/shop">Shop</a> · <a href="/skin-quiz">Skin Quiz</a> · <a href="/blog">Journal</a></div>
-</div></footer>
+  <div>{{ __('store.journal.footer_line') }}</div>
+  <div><a href="/shop">{{ __('store.journal.nav_shop') }}</a> · <a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a> · <a href="/blog">{{ __('store.journal.nav_journal') }}</a></div>
+</div></footer>@verbatim
 </body>
 </html>
 

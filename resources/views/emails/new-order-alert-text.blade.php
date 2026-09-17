@@ -1,11 +1,10 @@
-A NEW ORDER HAS COME IN
+{!! mb_strtoupper(__('email.text.alert_heading')) !!}
 
-Customer: {!! $order['email'] !!}@if ($order['phone'] !== '') / {!! $order['phone'] !!}@endif
+{!! __('email.text.customer', ['email' => $order['email']]) !!}@if ($order['phone'] !== '') / {!! $order['phone'] !!}@endif
 
 
-@include('emails.partials.body-text', ['itemsHeading' => 'ITEMS'])
+@include('emails.partials.body-text', ['itemsHeading' => mb_strtoupper(__('email.text.items_heading'))])
 
-Open Orders in your store admin and search for {!! $order['number'] !!} to pick,
-pack and mark it dispatched.
+{!! wordwrap(__('email.alert.next_step', ['number' => $order['number']]), 68) !!}
 
 — {!! $brand['storeName'] !!}

@@ -9,9 +9,9 @@
     <div class="free">
         @if ($unlocked)
             {{-- The live site wraps this in .fs-done and adds the emoji from CSS. --}}
-            <span class="fs-done">Congratulations! You've unlocked free delivery</span>
+            <span class="fs-done">{!! \App\Support\Phrase::inline(__('store.checkout.freeship_done')) !!}</span>
         @else
-            You're <b>{!! \App\Support\Money::format($totals['free_shipping_remaining']) !!}</b> away from <b>free delivery</b>
+            {!! __('store.cart.free_delivery_away', ['amount' => '<b>' . \App\Support\Money::format($totals['free_shipping_remaining']) . '</b>', 'free_delivery' => '<b>' . e(__('store.cart.free_delivery_phrase')) . '</b>']) !!}
         @endif
     </div>
     <div class="ftrack">

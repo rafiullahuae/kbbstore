@@ -11,4 +11,4 @@
 
     Input: $browsed.
 --}}
-@forelse ($browsed as $bp)@include('partials.checkout.browsed-item', ['bp' => $bp])@empty<p class="bempty">Everything you've looked at is already in your bag.</p>@endforelse
+@forelse ($browsed as $bp)@include('partials.checkout.browsed-item', ['bp' => $bp])@empty<p class="bempty">{!! \App\Support\Phrase::inline(__('store.checkout.browsed_empty')) !!}</p>@endforelse

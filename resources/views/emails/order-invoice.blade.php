@@ -23,14 +23,14 @@
         <tr>
             <td style="padding:10px 0 0;font-size:13.5px;color:#4b5563;line-height:1.7;vertical-align:top;">
                 @if ($doc['invoiceReference'] !== '')
-                    <div>Invoice <strong style="color:#1d1d1f;">{{ $doc['invoiceReference'] }}</strong></div>
+                    <div>{!! __('email.invoice.reference', ['reference' => '<strong style="color:#1d1d1f;">' . e($doc['invoiceReference']) . '</strong>']) !!}</div>
                 @endif
-                <div>Order <strong style="color:#1d1d1f;">{{ $doc['orderNumber'] }}</strong></div>
+                <div>{!! __('email.invoice.order', ['number' => '<strong style="color:#1d1d1f;">' . e($doc['orderNumber']) . '</strong>']) !!}</div>
                 @if ($doc['invoicedAt'] !== '')
-                    <div>Issued {{ $doc['invoicedAt'] }}</div>
+                    <div>{{ __('email.invoice.issued', ['date' => $doc['invoicedAt']]) }}</div>
                 @endif
                 @if ($doc['placedAt'] !== '')
-                    <div>Ordered {{ $doc['placedAt'] }}</div>
+                    <div>{{ __('email.invoice.ordered', ['date' => $doc['placedAt']]) }}</div>
                 @endif
             </td>
             <td style="padding:10px 0 0;font-size:12.5px;color:#6b7280;line-height:1.6;text-align:right;vertical-align:top;">
@@ -39,7 +39,7 @@
                     <div>{{ $line }}</div>
                 @endforeach
                 @if ($doc['seller']['trn'] !== '')
-                    <div>TRN {{ $doc['seller']['trn'] }}</div>
+                    <div>{{ __('email.invoice.trn', ['trn' => $doc['seller']['trn']]) }}</div>
                 @endif
             </td>
         </tr>
@@ -48,7 +48,7 @@
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;margin:0 0 20px;">
         <tr>
             <td width="50%" style="padding:0 12px 0 0;font-size:13px;color:#4b5563;line-height:1.6;vertical-align:top;">
-                <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;margin-bottom:3px;">Bill to</div>
+                <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;margin-bottom:3px;">{{ __('email.invoice.bill_to') }}</div>
                 @forelse ($doc['billTo'] as $i => $line)
                     <div @if ($i === 0) style="font-weight:700;color:#1d1d1f;" @endif>{{ $line }}</div>
                 @empty
@@ -56,9 +56,9 @@
                 @endforelse
             </td>
             <td width="50%" style="padding:0;font-size:13px;color:#4b5563;line-height:1.6;vertical-align:top;">
-                <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;margin-bottom:3px;">Deliver to</div>
+                <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;margin-bottom:3px;">{{ __('email.invoice.deliver_to') }}</div>
                 @if ($doc['sameAddress'])
-                    <div>Same as the billing address</div>
+                    <div>{{ __('email.invoice.same_as_billing') }}</div>
                 @else
                     @forelse ($doc['shipTo'] as $i => $line)
                         <div @if ($i === 0) style="font-weight:700;color:#1d1d1f;" @endif>{{ $line }}</div>
@@ -72,10 +72,10 @@
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-collapse:collapse;">
         <tr>
-            <th align="left" style="padding:0 6px 7px 0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;">Item</th>
-            <th align="right" style="padding:0 6px 7px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">Qty</th>
-            <th align="right" style="padding:0 6px 7px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">Unit</th>
-            <th align="right" style="padding:0 0 7px 6px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">Amount</th>
+            <th align="left" style="padding:0 6px 7px 0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;">{{ __('email.items.col_item') }}</th>
+            <th align="right" style="padding:0 6px 7px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">{{ __('email.items.col_qty') }}</th>
+            <th align="right" style="padding:0 6px 7px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">{{ __('email.invoice.col_unit') }}</th>
+            <th align="right" style="padding:0 0 7px 6px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#9096a1;font-weight:700;border-bottom:1.5px solid #1d1d1f;white-space:nowrap;">{{ __('email.invoice.col_amount') }}</th>
         </tr>
         @foreach ($doc['items'] as $item)
             <tr>
@@ -115,7 +115,7 @@
     @if ($doc['vatNote'] !== null)
         {{-- A portion OF the total, never an addition to it. Decision D-64. --}}
         <p style="margin:7px 0 0;text-align:right;font-size:12.5px;color:#6b7280;">
-            {{ $doc['vatNote']['label'] }}: {!! $doc['vatNote']['html'] !!}@if ($doc['vatNote']['trn'] !== '') · TRN {{ $doc['vatNote']['trn'] }}@endif
+            {{ $doc['vatNote']['label'] }}: {!! $doc['vatNote']['html'] !!}@if ($doc['vatNote']['trn'] !== '') · {{ __('email.invoice.trn', ['trn' => $doc['vatNote']['trn']]) }}@endif
         </p>
     @endif
 
@@ -136,9 +136,9 @@
          an invoice is most often read for. --}}
     <p style="margin:20px 0 0;font-size:13.5px;color:#4b5563;">
         @if ($doc['paid'])
-            Paid by {{ $doc['paymentLabel'] }}@if ($doc['paidAt'] !== '') on {{ $doc['paidAt'] }}@endif · {{ $doc['deliveryMethod'] }}
+            {{ $doc['paidAt'] !== '' ? __('email.invoice.paid_by_on', ['method' => $doc['paymentLabel'], 'date' => $doc['paidAt']]) : __('email.invoice.paid_by', ['method' => $doc['paymentLabel']]) }} · {{ $doc['deliveryMethod'] }}
         @else
-            Payment method {{ $doc['paymentLabel'] }} · {{ $doc['deliveryMethod'] }}
+            {{ __('email.invoice.payment_method', ['method' => $doc['paymentLabel']]) }} · {{ $doc['deliveryMethod'] }}
         @endif
     </p>
 

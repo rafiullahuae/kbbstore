@@ -10,7 +10,7 @@
 @php use App\Support\Money; use App\Support\Url; @endphp
 
 @section('bare', '1')
-@section('title', 'Checkout · K-Beauty Bliss')
+@section('title', __('store.checkout.page_title'))
 
 @push('styles')
     @vite('resources/css/kbb/kbb-checkout.css')
@@ -24,7 +24,7 @@
         <a class="logo" href="{{ Url::to('/') }}">K-Beauty<span>Bliss</span></a>
         <span class="secure">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-            Secure checkout        </span>
+            {{ __('store.checkout.secure_badge') }}        </span>
     </div></header>
 
     <div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">
@@ -39,18 +39,18 @@
             <div>
                 <div class="co-titlebar">
                     <div class="co-titlebar-main">
-                        <a class="backlink" href="{{ Url::to('/shop/') }}">← Back to shop</a>
-                        <h1 class="co-h">Checkout</h1>
-                        <p class="co-lead">Almost glowing — just a few details.</p>
+                        <a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.checkout.back_to_shop') }}</a>
+                        <h1 class="co-h">{{ __('store.checkout.heading') }}</h1>
+                        <p class="co-lead">{{ __('store.checkout.lead') }}</p>
                     </div>
                     @include('partials.checkout.back-to-cart')
                 </div>
 
                 <div class="coupon">
-                    <div class="ch"><span class="gift">🎁</span> Have a discount code?</div>
+                    <div class="ch"><span class="gift">🎁</span> {{ __('store.checkout.coupon_prompt') }}</div>
                     <div class="crow">
-                        <input type="text" name="coupon_code" class="input-text" id="kbb_coupon_code" placeholder="Enter promo code" autocomplete="off">
-                        <button type="button" class="apply" id="kbb_apply_coupon">Apply</button>
+                        <input type="text" name="coupon_code" class="input-text" id="kbb_coupon_code" placeholder="{{ __('store.checkout.coupon_placeholder') }}" autocomplete="off">
+                        <button type="button" class="apply" id="kbb_apply_coupon">{{ __('store.checkout.coupon_apply') }}</button>
                     </div>
                     @include('partials.checkout.coupon-hint')                </div>
 
@@ -58,17 +58,17 @@
 
                     <!-- 1 · Contact -->
                     <div class="sec">
-                        <h2><span class="n">1</span> Contact</h2>
+                        <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}</h2>
                         <div class="row2">
-                            <x-checkout.field name="billing_email" label="Email address" type="email" required
+                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required
                                 validate="validate-required validate-email" priority="1"
-                                placeholder="you@email.com" inputmode="email"
+                                :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
                                 autocomplete="section-billing billing email"
                                 :value="old('billing_email', $prefill['email'] ?? '')" />
 
-                            <x-checkout.field name="billing_phone" label="Phone" type="tel" optional
+                            <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" optional
                                 validate="validate-phone" priority="100"
-                                placeholder="+971 5x xxx xxxx" inputmode="tel"
+                                :placeholder="__('store.checkout.field_phone_placeholder')" inputmode="tel"
                                 autocomplete="section-billing billing tel"
                                 :value="old('billing_phone', $prefill['phone'] ?? '')" />
                         </div>
@@ -86,11 +86,11 @@
                             <p class="form-row form-row-wide kbb-acct" id="create_account_field">
                                 <label for="create_account" class="kbb-acct-opt">
                                     <input type="checkbox" name="create_account" id="create_account" value="1" @checked(old('create_account'))>
-                                    <span>Create an account for faster checkout next time</span>
+                                    <span>{{ __('store.checkout.create_account') }}</span>
                                 </label>
                                 <span class="woocommerce-input-wrapper kbb-acct-pw" id="account_password_wrap" hidden>
                                     <input type="password" class="input-text" name="account_password" id="account_password"
-                                           placeholder="Choose a password (8 characters or more)" autocomplete="new-password" minlength="8">
+                                           placeholder="{{ __('store.checkout.password_placeholder') }}" autocomplete="new-password" minlength="8">
                                 </span>
                                 @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
                             </p>
@@ -99,20 +99,20 @@
 
 
                         <div class="co-note ok" id="kbbReturning" style="display:none"></div>
-                            <div class="kbb-wa"><p class="form-row form-row-wide" id="billing_kbb_whatsapp_field" data-priority="25"><span class="woocommerce-input-wrapper"><label class="checkbox " ><input type="checkbox" name="billing_kbb_whatsapp" id="billing_kbb_whatsapp" value="1" class="input-checkbox " @checked(old('billing_kbb_whatsapp', true)) /> Send order updates on WhatsApp — confirmation, dispatch &amp; delivery alerts.&nbsp;<span class="optional">(optional)</span></label></span></p></div>
+                            <div class="kbb-wa"><p class="form-row form-row-wide" id="billing_kbb_whatsapp_field" data-priority="25"><span class="woocommerce-input-wrapper"><label class="checkbox " ><input type="checkbox" name="billing_kbb_whatsapp" id="billing_kbb_whatsapp" value="1" class="input-checkbox " @checked(old('billing_kbb_whatsapp', true)) /> {{ __('store.checkout.whatsapp_optin') }}&nbsp;<span class="optional">{{ __('store.checkout.optional_note') }}</span></label></span></p></div>
                     </div>
 
                     <!-- 2 · Shipping address -->
                     <div class="sec">
-                        <h2><span class="n">2</span> Shipping address</h2>
+                        <h2><span class="n">2</span> {{ __('store.checkout.step_shipping') }}</h2>
 @if ($singleName ?? true)
                             {{-- autocomplete="name", not "given-name". This one box holds the
                                  whole name -- splitName() in the controller cuts it up -- and a
                                  browser told "given-name" fills it with the first name alone,
                                  leaving the surname to be typed by hand on a phone. --}}
-                            <x-checkout.field name="billing_first_name" label="Full name" required
+                            <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_full_name')" required
                                 validate="validate-required" priority="10"
-                                placeholder="First and last name"
+                                :placeholder="__('store.checkout.field_full_name_placeholder')"
                                 autocomplete="section-billing billing name"
                                 :value="old('billing_first_name', $prefill['name'] ?? '')" />
 @else
@@ -121,34 +121,34 @@
                                  in the controller has accepted this shape all along; only the form
                                  itself never offered it. --}}
                             <div class="row2">
-                                <x-checkout.field name="billing_first_name" label="First name" required
+                                <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_first_name')" required
                                     rowClass="form-row-first" validate="validate-required" priority="10"
                                     autocomplete="section-billing billing given-name"
                                     :value="old('billing_first_name', $prefill['first_name'] ?? '')" />
 
-                                <x-checkout.field name="billing_last_name" label="Last name" required
+                                <x-checkout.field name="billing_last_name" :label="__('store.checkout.field_last_name')" required
                                     rowClass="form-row-last" validate="validate-required" priority="20"
                                     autocomplete="section-billing billing family-name"
                                     :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
                             </div>
 @endif
-                        <x-checkout.field name="billing_address_1" label="Address" required
+                        <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_address')" required
                             validate="validate-required" priority="50"
-                            placeholder="Street, building / villa no."
+                            :placeholder="__('store.checkout.field_address_placeholder')"
                             autocomplete="section-billing billing address-line1"
                             :value="old('billing_address_1', $prefill['line1'] ?? '')" />
 
                         <div class="row2">
                             {{-- A text input, exactly as the live site. It was a select whose
                                  change handler reloaded the page, which made the field unusable. --}}
-                            <x-checkout.field name="billing_state" label="Emirate" required
+                            <x-checkout.field name="billing_state" :label="__('store.checkout.field_state')" required
                                 validate="validate-required validate-state" priority="80"
                                 autocomplete="section-billing billing address-level1"
                                 :value="old('billing_state', $prefill['state'] ?? '')" />
 
-                            <x-checkout.field name="billing_city" label="City / area" required
+                            <x-checkout.field name="billing_city" :label="__('store.checkout.field_city')" required
                                 validate="validate-required" priority="70"
-                                placeholder="e.g. Al Reem Island"
+                                :placeholder="__('store.checkout.field_city_placeholder')"
                                 autocomplete="section-billing billing address-level2"
                                 :value="old('billing_city', $prefill['city'] ?? '')" />
                         </div>
@@ -157,11 +157,11 @@
                              charge always depends on which one is picked. It carries the
                              checkout's own .input-text class, the same wrapper as Emirate and
                              City, so it matches rather than being a new look bolted in. --}}
-                        <x-checkout.field name="billing_country" label="Country" type="select" required
+                        <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required
                             validate="validate-required" priority="40"
                             autocomplete="section-billing billing country">
                             @if ($countryDetected ?? false)
-                                <x-slot:badge><span class="xd-detected">Detected</span></x-slot:badge>
+                                <x-slot:badge><span class="xd-detected">{{ __('store.checkout.country_detected') }}</span></x-slot:badge>
                             @endif
                             @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $name }}</option>@endforeach
                         </x-checkout.field>
@@ -169,18 +169,16 @@
 
                     <!-- 3 · Delivery -->
                     <div class="sec">
-                        <h2><span class="n">3</span> Delivery</h2>
+                        <h2><span class="n">3</span> {{ __('store.checkout.step_delivery') }}</h2>
                         @if (!empty($unservedCountry))
-                            <p class="xd-unserved">We do not deliver to
-                                {{ \App\Support\Countries::NAMES[$unservedCountry] ?? $unservedCountry }} yet.
-                                Choose another country above, or contact us and we will see what we can do.</p>
+                            <p class="xd-unserved">{{ __('store.checkout.unserved_country', ['country' => \App\Support\Countries::NAMES[$unservedCountry] ?? $unservedCountry]) }}</p>
                         @endif
                         <div id="kbbDeliverySlot" class="kbb-delivery">
                             @include('partials.checkout.delivery-options')
                         </div>
-                            <x-checkout.field name="customer_note" label="Delivery notes" type="textarea" optional
+                            <x-checkout.field name="customer_note" :label="__('store.checkout.field_notes')" type="textarea" optional
                                 rowClass="form-row-wide kbb-note" rows="2" maxlength="600"
-                                placeholder="Delivery instructions, a landmark, a preferred time"
+                                :placeholder="__('store.checkout.field_notes_placeholder')"
                                 :value="old('customer_note')" />
                             @if (app(\App\Services\SettingsService::class)->get('gift_enabled', '1'))
                             <p class="form-row form-row-wide kbb-gift" id="gift_field">
@@ -190,15 +188,15 @@
                                 @endphp
                                 <label class="kbb-gift-opt" for="is_gift">
                                     <input type="checkbox" name="is_gift" id="is_gift" value="1" @checked(old('is_gift', session('kbb_gift')))>
-                                    <span>This order is a gift</span>
+                                    <span>{{ __('store.checkout.gift_option') }}</span>
                                     @if ($giftFee > 0)
                                         <b class="kbb-gift-fee">+{!! \App\Support\Money::format($giftFee) !!}</b>
                                     @endif
                                 </label>
                                 <span class="woocommerce-input-wrapper kbb-gift-msg" id="gift_note_wrap" hidden>
                                     <textarea name="gift_note" id="gift_note" class="input-text" rows="3" maxlength="600"
-                                              placeholder="Your message, printed on the gift card">{{ old('gift_note') }}</textarea>
-                                    <span class="kbb-gift-count"><span id="gift_left">600</span> characters left</span>
+                                              placeholder="{{ __('store.checkout.gift_note_placeholder') }}">{{ old('gift_note') }}</textarea>
+                                    <span class="kbb-gift-count">{!! trans_choice('store.checkout.gift_characters_left', 600, ['remaining' => '<span id="gift_left">600</span>']) !!}</span>
                                 </span>
                             </p>
                             @endif
@@ -206,13 +204,13 @@
 
                     <!-- 4 · Payment -->
                     <div class="sec pay">
-                        <h2><span class="n">4</span> Payment</h2>
+                        <h2><span class="n">4</span> {{ __('store.checkout.step_payment') }}</h2>
 
                             <div class="express" aria-hidden="true">
                                 <button type="button" class="xbtn xapple" tabindex="-1"> Apple&nbsp;Pay</button>
                                 <button type="button" class="xbtn xgoogle" tabindex="-1"><b><span class="xg-b">G</span><span class="xg-o">o</span><span class="xg-y">o</span><span class="xg-b">g</span><span class="xg-gr">l</span><span class="xg-o">e</span></b>&nbsp;Pay</button>
                             </div>
-                            <div class="ordiv">or pay with</div>
+                            <div class="ordiv">{{ __('store.checkout.or_pay_with') }}</div>
 
                         {{-- The list itself lives in its own partial: adding a
                              product from Browsed can move the order total
@@ -232,8 +230,8 @@
             <aside class="summary" id="kbbSummary">
                 @if ($showBrowsed)
                 <div class="sumtabs" role="tablist">
-                    <button type="button" class="stab on" data-stab="summary">Order summary</button>
-                    <button type="button" class="stab" data-stab="browsed">Browsed <span class="bcount">{{ $browsed->count() }}</span></button>
+                    <button type="button" class="stab on" data-stab="summary">{{ __('store.checkout.tab_summary') }}</button>
+                    <button type="button" class="stab" data-stab="browsed">{{ __('store.checkout.tab_browsed') }} <span class="bcount">{{ $browsed->count() }}</span></button>
                 </div>
                 @endif
 
@@ -258,7 +256,7 @@
                              below, which would take a note living on the row
                              with it. It is absolutely positioned so appearing
                              costs no height — nothing on the page moves. --}}
-                        <p class="bhead">Recently browsed — add in one tap<span class="baddnote" id="kbbBrowsedNote" role="status" aria-live="polite"></span></p>
+                        <p class="bhead">{{ __('store.checkout.browsed_heading') }}<span class="baddnote" id="kbbBrowsedNote" role="status" aria-live="polite"></span></p>
                         <div id="kbbBrowsedList" data-add-url="{{ Url::to('/checkout/browsed-add') }}">@include('partials.checkout.browsed-list')</div>
                     </div>
                     @endif
@@ -267,7 +265,7 @@
                 </div>
 
                 <!-- mobile: expand/collapse the summary -->
-                <button type="button" class="viewfull" id="kbbViewItems" aria-controls="kbbPanels" aria-expanded="false">View full summary ▾</button>
+                <button type="button" class="viewfull" id="kbbViewItems" aria-controls="kbbPanels" aria-expanded="false">{{ __('store.checkout.view_summary_open') }}</button>
             </aside>
 
         </div>
@@ -288,8 +286,8 @@
     {{-- Optional, off by default. The on-page box above is the design; this is
          an extra for stores that want the total always visible while scrolling. --}}
     <div class="mpbar">
-        <div><div class="ml">Total</div><div class="mt js-total">{!! Money::format($totals['total']) !!}</div></div>
-        <button type="button" class="mb" data-place="1">Place order</button>
+        <div><div class="ml">{{ __('store.checkout.total') }}</div><div class="mt js-total">{!! Money::format($totals['total']) !!}</div></div>
+        <button type="button" class="mb" data-place="1">{{ __('store.checkout.place_order') }}</button>
     </div>
     @endif
     </section>

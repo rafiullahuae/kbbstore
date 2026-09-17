@@ -293,13 +293,14 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
     ];
 @endphp
 <script>window.KBB = @json($kbbJs);</script>
+@include('partials.js-strings')
 
 @if (app(\App\Services\SettingsService::class)->moduleEnabled('quick_view', true))
 {{-- Quick view: one shell per page, filled on demand from /quick-view/{id}. --}}
 <div class="qv-back" id="kbbQv" hidden>
-  <div class="qv-modal" role="dialog" aria-modal="true" aria-label="Quick view">
-    <button class="qv-x" type="button" aria-label="Close">&times;</button>
-    <div class="qv-slot"><div class="qv-load">Loading…</div></div>
+  <div class="qv-modal" role="dialog" aria-modal="true" aria-label="{{ __('store.quick_view.dialog_label') }}">
+    <button class="qv-x" type="button" aria-label="{{ __('store.quick_view.close_label') }}">&times;</button>
+    <div class="qv-slot"><div class="qv-load">{{ __('store.quick_view.loading') }}</div></div>
   </div>
 </div>
 <style>
@@ -343,7 +344,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
   function open() { box.hidden = false; document.body.style.overflow = 'hidden'; }
   function close() {
     box.hidden = true; document.body.style.overflow = '';
-    slot.innerHTML = '<div class="qv-load">Loading…</div>';
+    slot.innerHTML = '<div class="qv-load">{{ __('store.quick_view.loading') }}</div>';
     if (last && last.focus) last.focus();
   }
 
@@ -358,7 +359,7 @@ $kbbSeoCtx['noindex_editorial'] = ! empty(($seoCtx ?? [])['noindex']);
         .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
         .then(function (d) { slot.innerHTML = d.html; })
         .catch(function () {
-          slot.innerHTML = '<div class="qv-load">Sorry — that product could not be loaded.</div>';
+          slot.innerHTML = '<div class="qv-load">{{ __('store.quick_view.load_failed') }}</div>';
         });
       return;
     }

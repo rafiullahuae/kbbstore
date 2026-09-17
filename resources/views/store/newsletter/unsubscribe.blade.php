@@ -1,5 +1,5 @@
 @extends('layouts.store')
-@section('title', 'Unsubscribe')
+@section('title', __('store.newsletter.unsub_title'))
 
 @section('content')
 @php use App\Support\Url; @endphp
@@ -24,8 +24,8 @@
 <div class="auth">
     <div class="auth-grid">
         <div class="authcard">
-            <h1>Unsubscribe</h1>
-            <p class="lede">Stop sending marketing emails to this address?</p>
+            <h1>{{ __('store.newsletter.unsub_title') }}</h1>
+            <p class="lede">{{ __('store.newsletter.unsub_lead') }}</p>
 
             <form method="post" action="{{ Url::to('/newsletter/unsubscribe') }}">
                 @csrf
@@ -33,13 +33,10 @@
                 <input type="hidden" name="expires" value="{{ $expires }}">
                 <input type="hidden" name="signature" value="{{ $signature }}">
 
-                <button type="submit" class="btn btn-primary">Yes, unsubscribe me</button>
+                <button type="submit" class="btn btn-primary">{{ __('store.newsletter.unsub_button') }}</button>
             </form>
 
-            <p class="muted" style="margin-top:16px;font-size:13px;">
-                Order confirmations, delivery updates and receipts are not marketing and will still be sent.
-                They are how you find out what is happening to something you paid for.
-            </p>
+            <p class="muted" style="margin-top:16px;font-size:13px;">{{ __('store.newsletter.unsub_note') }}</p>
         </div>
     </div>
 </div>

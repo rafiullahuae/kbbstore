@@ -26,9 +26,9 @@
 <div class="mscrim" id="mscrim"></div>
 
 <nav class="mmenu {{ $mm->bodyClass() }}" id="mmenu" style="{{ $mm->cssVariables() }}"
-     data-single-open="{{ $cfg['single_open'] ? '1' : '0' }}" aria-label="Menu">
+     data-single-open="{{ $cfg['single_open'] ? '1' : '0' }}" aria-label="{{ __('store.mobile_menu.nav_label') }}">
     @if ($cfg['show_grab'])<div class="mm-grab" data-mm-close></div>@endif
-    @if ($cfg['show_close'])<button class="mm-x" type="button" id="mmx" aria-label="Close">&times;</button>@endif
+    @if ($cfg['show_close'])<button class="mm-x" type="button" id="mmx" aria-label="{{ __('store.mobile_menu.close_label') }}">&times;</button>@endif
 
     @if ($cfg['show_heading'])
         <div class="mm-head"><b>{{ $cfg['heading_text'] }}</b></div>
@@ -49,16 +49,16 @@
         @if ($cfg['show_account'])
             <div class="mm-grp">{{ $cfg['account_label'] }}</div>
             @auth
-                <a class="mm-it" href="{{ Url::to('/my-account/') }}">My account</a>
-                <a class="mm-it" href="{{ Url::to('/my-account/orders/') }}">Orders</a>
+                <a class="mm-it" href="{{ Url::to('/my-account/') }}">{{ __('store.mobile_menu.link_account') }}</a>
+                <a class="mm-it" href="{{ Url::to('/my-account/orders/') }}">{{ __('store.mobile_menu.link_orders') }}</a>
             @else
-                <a class="mm-it" href="{{ Url::to('/my-account/') }}">Sign in</a>
-                <a class="mm-it" href="{{ Url::to('/my-account/?action=register') }}">Create an account</a>
+                <a class="mm-it" href="{{ Url::to('/my-account/') }}">{{ __('store.mobile_menu.link_sign_in') }}</a>
+                <a class="mm-it" href="{{ Url::to('/my-account/?action=register') }}">{{ __('store.mobile_menu.link_register') }}</a>
             @endauth
-            <a class="mm-it" href="{{ Url::to('/my-wishlist/') }}">Wishlist</a>
+            <a class="mm-it" href="{{ Url::to('/my-wishlist/') }}">{{ __('store.mobile_menu.link_wishlist') }}</a>
         @endif
 
-        <p class="mm-empty" id="mmEmpty" hidden>Nothing matches that.</p>
+        <p class="mm-empty" id="mmEmpty" hidden>{{ __('store.mobile_menu.no_matches') }}</p>
     </div>
 
     @if ($cfg['show_support'])
@@ -93,17 +93,17 @@
 @endphp
 
 @if ($kbbTabbar)
-<nav class="tabbar" aria-label="Quick navigation">
+<nav class="tabbar" aria-label="{{ __('store.tabbar.label') }}">
     <a href="{{ Url::to('/') }}" @class(['on' => '/' === request()->path()])>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>Home</span></a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg><span>{{ __('store.tabbar.home') }}</span></a>
     <a href="{{ Url::to('/shop/') }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Shop</span></a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>{{ __('store.tabbar.shop') }}</span></a>
     <a class="tb-q" href="{{ Url::to('/skin-quiz/') }}">
-        <span class="qb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .9-1 1.7v.5"/><circle cx="12" cy="17.5" r="1"/></svg></span><span>Quiz</span></a>
+        <span class="qb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .9-1 1.7v.5"/><circle cx="12" cy="17.5" r="1"/></svg></span><span>{{ __('store.tabbar.quiz') }}</span></a>
     <a href="{{ Url::to('/my-wishlist/') }}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg><span>Saved</span></a>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg><span>{{ __('store.tabbar.saved') }}</span></a>
     <a href="{{ Url::to('/cart/') }}" data-kbb-open="cart">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg><span>Bag</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg><span>{{ __('store.tabbar.bag') }}</span>
         @if (($kbbCartCount ?? 0) > 0)<i id="tabCartCt">{{ $kbbCartCount }}</i>@endif</a>
 </nav>
 @endif

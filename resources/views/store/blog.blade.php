@@ -59,16 +59,16 @@
   .mnav a{padding:14px 6px;text-decoration:none;font-weight:500;border-bottom:1px solid var(--line-2)}
   .mnav-x{align-self:flex-end;font-size:20px;background:none;border:none;color:var(--ink-2);cursor:pointer;margin-bottom:6px}
   @media(max-width:900px){.grid{grid-template-columns:1fr}h1{font-size:29px}.nav-links{display:none}.burger{display:grid}}
-</style>
+</style>@endverbatim
 </head>
 <body>
 <header class="head"><div class="wrap head-in">
   <button class="burger" onclick="document.getElementById('mnav').classList.add('on');document.getElementById('navov').classList.add('on')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <a class="logo" href="/">K-Beauty<span>Bliss</span></a>
   <nav class="nav-links">
-    <a href="/shop">Shop</a>
-    <a href="/skin-quiz">Skin Quiz</a>
-    <a href="/blog" class="on">Journal</a>
+    <a href="/shop">{{ __('store.journal.nav_shop') }}</a>
+    <a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a>
+    <a href="/blog" class="on">{{ __('store.journal.nav_journal') }}</a>
   </nav>
   <div class="tools">
     <a class="tool" href="/shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg></a>
@@ -79,18 +79,18 @@
 <div class="navov" id="navov" onclick="this.classList.remove('on');document.getElementById('mnav').classList.remove('on')"></div>
 <nav class="mnav" id="mnav">
   <button class="mnav-x" onclick="document.getElementById('mnav').classList.remove('on');document.getElementById('navov').classList.remove('on')">✕</button>
-  <a href="/">Home</a><a href="/shop">Shop</a><a href="/skin-quiz">Skin Quiz</a><a href="/blog">Journal</a>
+  <a href="/">{{ __('store.breadcrumb.home') }}</a><a href="/shop">{{ __('store.journal.nav_shop') }}</a><a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a><a href="/blog">{{ __('store.journal.nav_journal') }}</a>
 </nav>
 
 <section class="hero"><div class="wrap hero-in">
-  <div class="ey">The Glow Journal</div>
-  <h1>Skincare tips &amp; the K-beauty edit</h1>
-  <p>Honest guides on routines, ingredients and sun care — written for the UAE.</p>
+  <div class="ey">{{ __('store.journal.eyebrow') }}</div>
+  <h1>{{ __('store.journal.heading') }}</h1>
+  <p>{{ __('store.journal.subtitle') }}</p>
   <div class="chips" id="chips"></div>
 </div></section>
 
 <div class="wrap"><div class="grid" id="grid">
-@endverbatim
+
 @forelse($posts as $p)
   {{-- Posts live at the site root, one slug per post — the Phase 9 decision.
        The /skincare-guide/{slug}/ form this app used is now a 301. --}}
@@ -118,20 +118,20 @@
       <div class="pdate">{{ optional($p->published_at)->format('j F Y') }}</div>
       <div class="ptitle">{{ $p->title }}</div>
       <div class="pex">{{ $p->excerpt }}</div>
-      <div class="pmore">Read more →</div>
+      <div class="pmore">{{ __('store.journal.read_more') }}</div>
     </div>
   </a>
 @empty
-  <div class="empty">No articles yet — check back soon.</div>
+  <div class="empty">{{ __('store.journal.empty') }}</div>
 @endforelse
-@verbatim
+
 </div></div>
 
 <footer><div class="wrap fin">
-  <div>© K-Beauty Bliss · Authentic Korean beauty in the UAE</div>
-  <div><a href="/shop">Shop</a> · <a href="/skin-quiz">Skin Quiz</a> · <a href="/">Home</a></div>
+  <div>{{ __('store.journal.footer_line') }}</div>
+  <div><a href="/shop">{{ __('store.journal.nav_shop') }}</a> · <a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a> · <a href="/">{{ __('store.breadcrumb.home') }}</a></div>
 </div></footer>
-
+@verbatim
 <script>
   // Tag filter — client-side show/hide over the server-rendered cards
   // above, not a re-fetch against an API. The cards and their content are

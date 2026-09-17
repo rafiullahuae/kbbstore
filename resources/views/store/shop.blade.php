@@ -14,7 +14,7 @@
 @extends('layouts.store')
 @php use App\Support\Facets; use App\Support\Url; @endphp
 
-@section('title', $title . ' · K-Beauty Bliss')
+@section('title', __('store.shop.page_title', ['title' => $title]))
 
 @push('styles')
     @vite('resources/css/kbb/kbb-shop.css')
@@ -41,9 +41,9 @@
     whichever way the title is drawn.
 --}}
 <div class="wrap">
-    <div class="crumb"><b>Home</b> / {{ $crumb }}</div>
+    <div class="crumb"><b>{{ __('store.breadcrumb.home') }}</b> / {{ $crumb }}</div>
     @unless ($banner ?? null)
-        <div class="eyebrow">K-Beauty · Skincare</div>
+        <div class="eyebrow">{{ __('store.shop.eyebrow') }}</div>
         <h1 class="ptitle">{{ $title }}</h1>
         <p class="psub">{{ $sub }}</p>
     @endunless
@@ -55,13 +55,13 @@
     <aside class="filtercol" id="fcol">
         <div class="fpanel">
             <div class="fhead">
-                <span class="ftitle">Filters</span>
-                <button class="fhide" type="button" onclick="document.body.classList.add('filters-hidden')">Hide</button>
+                <span class="ftitle">{{ __('store.shop.filters_heading') }}</span>
+                <button class="fhide" type="button" onclick="document.body.classList.add('filters-hidden')">{{ __('store.shop.filters_hide') }}</button>
                 <button class="fclose" type="button" onclick="document.body.classList.remove('filters-open')">✕</button>
             </div>
             <div id="filters">
                 @if ($cats->isNotEmpty())
-                <div class="fgroup"><h4>Category</h4>
+                <div class="fgroup"><h4>{{ __('store.shop.facet_category') }}</h4>
                     @foreach ($cats as $c)
                         <a class="fopt{{ Facets::isOn('cat', $c->slug) ? ' on' : '' }}" href="{{ Facets::url('cat', $c->slug) }}">
                             <span class="cb">{!! $ck !!}</span>
@@ -73,7 +73,7 @@
                 @endif
 
                 @if ($brands->isNotEmpty())
-                <div class="fgroup"><h4>Brand</h4>
+                <div class="fgroup"><h4>{{ __('store.shop.facet_brand') }}</h4>
                     @foreach ($brands as $b)
                         <a class="fopt{{ Facets::isOn('brand', $b->slug) ? ' on' : '' }}" href="{{ Facets::url('brand', $b->slug) }}">
                             <span class="cb">{!! $ck !!}</span> {{ $b->name }}
@@ -83,7 +83,7 @@
                 </div>
                 @endif
 
-                <div class="fgroup"><h4>Price</h4>
+                <div class="fgroup"><h4>{{ __('store.shop.facet_price') }}</h4>
                     <div class="pchips">
                         @foreach ($buckets as $key => $b)
                             <a class="pchip{{ request('price') === $key ? ' on' : '' }}" href="{{ Facets::url('price', request('price') === $key ? null : $key, false) }}">{{ $b[0] }}</a>
@@ -91,9 +91,9 @@
                     </div>
                 </div>
 
-                <div class="fgroup"><h4>Offers</h4>
-                    <a class="ftog" href="{{ Facets::url('sale', request('sale') === '1' ? null : '1', false) }}">On sale only<span class="tog{{ request('sale') === '1' ? ' on' : '' }}"></span></a>
-                    <a class="ftog" href="{{ Facets::url('instock', request('instock') === '1' ? null : '1', false) }}">In stock only<span class="tog{{ request('instock') === '1' ? ' on' : '' }}"></span></a>
+                <div class="fgroup"><h4>{{ __('store.shop.facet_offers') }}</h4>
+                    <a class="ftog" href="{{ Facets::url('sale', request('sale') === '1' ? null : '1', false) }}">{{ __('store.shop.facet_on_sale_only') }}<span class="tog{{ request('sale') === '1' ? ' on' : '' }}"></span></a>
+                    <a class="ftog" href="{{ Facets::url('instock', request('instock') === '1' ? null : '1', false) }}">{{ __('store.shop.facet_in_stock_only') }}<span class="tog{{ request('instock') === '1' ? ' on' : '' }}"></span></a>
                 </div>
             </div>
         </div>
@@ -101,16 +101,16 @@
 
     <main>
         <div class="gtop">
-            <button class="mobi-filter" type="button" onclick="document.body.classList.add('filters-open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> Filters</button>
-            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> Show filters</button>
-            <span class="gcount"><b>{{ $total }}</b> product{{ 1 === $total ? '' : 's' }}</span>
+            <button class="mobi-filter" type="button" onclick="document.body.classList.add('filters-open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_heading') }}</button>
+            <button id="showFilters" type="button" onclick="document.body.classList.remove('filters-hidden')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg> {{ __('store.shop.filters_show') }}</button>
+            <span class="gcount">{!! trans_choice('store.shop.product_count', $total, ['formatted' => '<b>' . e($total) . '</b>']) !!}</span>
             <div class="gright">
                 <div class="colsel" id="colsel">
-                    <button type="button" data-c="2"@if ('2' === $cols) class="on"@endif title="2 columns"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>
-                    <button type="button" data-c="3"@if ('3' === $cols) class="on"@endif title="3 columns"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="4.5" height="14" rx="1.3"/><rect x="9.75" y="5" width="4.5" height="14" rx="1.3"/><rect x="16.5" y="5" width="4.5" height="14" rx="1.3"/></svg></button>
-                    <button type="button" data-c="4"@if ('4' === $cols) class="on"@endif title="4 columns"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
+                    <button type="button" data-c="2"@if ('2' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 2) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="6.5" height="14" rx="1.5"/><rect x="13.5" y="5" width="6.5" height="14" rx="1.5"/></svg></button>
+                    <button type="button" data-c="3"@if ('3' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 3) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="5" width="4.5" height="14" rx="1.3"/><rect x="9.75" y="5" width="4.5" height="14" rx="1.3"/><rect x="16.5" y="5" width="4.5" height="14" rx="1.3"/></svg></button>
+                    <button type="button" data-c="4"@if ('4' === $cols) class="on"@endif title="{{ trans_choice('store.shop.columns_option', 4) }}"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2.5" y="5" width="3.4" height="14" rx="1"/><rect x="7.7" y="5" width="3.4" height="14" rx="1"/><rect x="12.9" y="5" width="3.4" height="14" rx="1"/><rect x="18.1" y="5" width="3.4" height="14" rx="1"/></svg></button>
                 </div>
-                <div class="sortsel">Sort
+                <div class="sortsel">{{ __('store.shop.sort_label') }}
                     <select id="sort" onchange="var u=new URL(location.href);u.searchParams.set('orderby',this.value);u.searchParams.delete('paged');location.href=u.toString()">
                         @foreach ($sorts as $val => $lbl)
                             <option value="{{ $val }}" @selected($curorder === $val)>{{ $lbl }}</option>
@@ -126,7 +126,7 @@
                     @php $toggle = ! in_array($c['key'], ['price', 'sale', 'instock', 'max_price'], true); @endphp
                     <span class="achip">{{ $c['label'] }}<a href="{{ Facets::url($c['key'], $toggle ? $c['value'] : null, $toggle) }}" style="display:grid;place-items:center">✕</a></span>
                 @endforeach
-                <a class="achip clear" href="{{ $clearUrl }}">Clear all</a>
+                <a class="achip clear" href="{{ $clearUrl }}">{{ __('store.shop.clear_all') }}</a>
             </div>
         @endif
 
@@ -138,7 +138,7 @@
                      prioritising. Every other card is lazy. --}}
                 <x-product-card :product="$product" :eager="$loop->first" />
             @empty
-                <div class="empty" style="grid-column:1/-1"><b>No products match those filters</b>Try removing a filter or clearing all.</div>
+                <div class="empty" style="grid-column:1/-1"><b>{{ __('store.shop.empty_heading') }}</b>{{ __('store.shop.empty_body') }}</div>
             @endforelse
         </div>
 

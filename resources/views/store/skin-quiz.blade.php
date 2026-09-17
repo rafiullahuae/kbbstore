@@ -172,11 +172,11 @@ input,textarea{font-family:inherit}
 </style>
 </head>
 <body>
-<div class="deco"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
-<div class="preview-flag">PREVIEW · front-end only</div>
+<div class="deco"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>@endverbatim
+<div class="preview-flag">{{ __('store.quiz.preview_flag') }}</div>
 <div class="shell">
   <div class="qhead">
-@endverbatim
+
     {{-- <h1>, not <div>. /skin-quiz served no heading of any level: every
          heading on this page is written by renderStart() and the step
          renderers into #stage, so they exist only after the script runs and
@@ -189,14 +189,14 @@ input,textarea{font-family:inherit}
          verbatim region, and a Blade comment inside a verbatim region is not a
          comment at all — it is literal text, and it was being served to every
          visitor as part of the page. --}}
-@verbatim
-    <h1 class="brand">K-Beauty Bliss <span>· Skin Quiz</span></h1>
+
+    <h1 class="brand">{!! __('store.quiz.brand_heading', ['suffix' => '<span>' . e(__('store.quiz.brand_suffix')) . '</span>']) !!}</h1>
     <div class="qcount" id="qcount"></div>
   </div>
   <div class="pips" id="pips"></div>
   <div id="stage"></div>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast"></div>@verbatim
 
 <script>
 const $=(s,r=document)=>r.querySelector(s);

@@ -15,7 +15,7 @@
 --}}
 @extends('layouts.store')
 @php use App\Support\Money; use App\Support\Url; @endphp
-@section('title', 'Orders · K-Beauty Bliss')
+@section('title', __('store.orders.page_title'))
 
 @push('styles')
 <style>
@@ -53,11 +53,11 @@
 @section('content')
 <div class="acw wide">
   <div class="acw-in">
-    <h1>Orders</h1>
-    <p class="acw-sub">Everything you have ordered.</p>
+    <h1>{{ __('store.orders.heading') }}</h1>
+    <p class="acw-sub">{{ __('store.orders.subtitle') }}</p>
 
     @if ($orders->isEmpty())
-      <p class="acw-empty">Nothing here yet. <a href="{{ Url::to('/shop/') }}">Start shopping</a>.</p>
+      <p class="acw-empty">{!! __('store.account.orders_empty', ['link' => '<a href="' . e(Url::to('/shop/')) . '">' . e(__('store.account.orders_empty_link')) . '</a>']) !!}</p>
     @else
       <div class="kbbol-list">
         @foreach ($orders as $order)
@@ -73,28 +73,32 @@
           @endphp
           <a class="kbbol-row" href="{{ Url::to('/my-account/orders/' . $order->id) }}">
             <span class="kbbol-id">
-              <b>Order #{{ $order->order_number }}</b>
-              <span>{{ $order->created_at?->format('j M Y') ?? '' }}@if (isset($order->items_count)) · {{ $order->items_count }} {{ $order->items_count === 1 ? 'item' : 'items' }}@endif</span>
+              <b>{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</b>
+              <span>{{ $order->created_at?->format('j M Y') ?? '' }}@if (isset($order->items_count)) · {{ trans_choice('store.cart.item_count', (int) $order->items_count) }}@endif</span>
             </span>
-            {{-- Receipt precision. The same order's total is printed at full precision
-                 on its detail page and in its emailed receipt; rounding it here made
-                 the list disagree with the row it links to. --}}
+            {{-- Both halves of this row changed in the same round and both are kept.
+                 Receipt precision: the same order's total is printed at full precision
+                 on its detail page and in its emailed receipt, so rounding it here made
+                 the list disagree with the row it links to. Translated status: the pill
+                 went through ucfirst(str_replace(...)) on a raw column value, which
+                 cannot be translated because it is not a sentence — OrderStatusLabel
+                 is the lookup that can be. --}}
             <span class="kbbol-total">{!! Money::format((int) $order->total, Money::minorExponent()) !!}</span>
-            <span class="kbbol-pill {{ $statusClass }}">{{ ucfirst(str_replace('-', ' ', $status)) }}</span>
+            <span class="kbbol-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span>
             <span class="kbbol-chev">›</span>
           </a>
         @endforeach
       </div>
 
       @if ($orders->hasPages())
-        <nav class="kbbol-pager" aria-label="Orders pages">
+        <nav class="kbbol-pager" aria-label="{{ __('store.orders.pager_label') }}">
           <a class="kbbol-step {{ $orders->onFirstPage() ? 'is-off' : '' }}"
              href="{{ $orders->previousPageUrl() ?: '#' }}"
-             @if ($orders->onFirstPage()) aria-disabled="true" tabindex="-1" @endif>&larr; Newer</a>
-          <span class="kbbol-page">Page {{ $orders->currentPage() }} of {{ $orders->lastPage() }}</span>
+             @if ($orders->onFirstPage()) aria-disabled="true" tabindex="-1" @endif>&larr; {{ __('store.orders.pager_newer') }}</a>
+          <span class="kbbol-page">{{ __('store.orders.pager_page', ['current' => $orders->currentPage(), 'total' => $orders->lastPage()]) }}</span>
           <a class="kbbol-step {{ $orders->hasMorePages() ? '' : 'is-off' }}"
              href="{{ $orders->nextPageUrl() ?: '#' }}"
-             @unless ($orders->hasMorePages()) aria-disabled="true" tabindex="-1" @endunless>Older &rarr;</a>
+             @unless ($orders->hasMorePages()) aria-disabled="true" tabindex="-1" @endunless>{{ __('store.orders.pager_older') }} &rarr;</a>
         </nav>
       @endif
     @endif

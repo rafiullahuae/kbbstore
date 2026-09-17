@@ -18,7 +18,7 @@
 @extends('layouts.store')
 @php use App\Support\Money; use App\Support\Url; @endphp
 @section('bare', '1')
-@section('title', 'Order received · K-Beauty Bliss')
+@section('title', __('store.order_received.page_title'))
 @push('styles')@vite('resources/css/kbb/kbb-checkout.css')
 <style>
 /* Scoped to this page. Everything else on it is an existing checkout class. */
@@ -86,7 +86,7 @@
 <section class="kbb-checkout">
     <header class="co-head"><div class="in">
         <a class="logo" href="{{ Url::to('/') }}">K-Beauty<span>Bliss</span></a>
-        <span class="secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> Order received</span>
+        <span class="secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg> {{ __('store.order_received.header_badge') }}</span>
     </div></header>
 
     <div class="co-received">
@@ -111,26 +111,31 @@
 
             <div class="formbox">
                 <div class="sec co-ok">
-                    <h2><span class="n">✓</span> Thank you</h2>
-                    <p class="co-lead">Your order <b>#{{ $order->order_number }}</b> is confirmed. A copy is on its way to {{ $order->email }}.</p>
+                    <h2><span class="n">✓</span> {{ __('store.order_received.thank_you') }}</h2>
+                    <p class="co-lead">{!! __('store.order_received.lead', ['number' => '<b>#' . e($order->order_number) . '</b>', 'email' => e($order->email)]) !!}</p>
 
                     <dl class="co-facts">
-                        <div class="co-fact"><dt>Order number</dt><dd>#{{ $order->order_number }}</dd></div>
+                        <div class="co-fact"><dt>{{ __('store.order_received.fact_order_number') }}</dt><dd>#{{ $order->order_number }}</dd></div>
                         {{-- "Total paid" was printed over every order, including
                              a cash-on-delivery one where not a dirham has moved.
                              The application's own record disagrees with that:
                              CashOnDelivery deliberately leaves `paid_at` null and
                              says why — "No money has moved; the courier collects
                              it" — so `paid_at` is what decides the word here. --}}
-                        {{-- Receipt precision, not the storefront's rounded display. This is the
-                             first copy of the receipt the customer sees and the emailed copy
-                             follows a minute later; Money::format() with no width ROUNDS
+                        {{-- Both halves kept, and both are load-bearing.
+
+                             Receipt precision, not the storefront's rounded display: this is
+                             the first copy of the receipt the customer sees and the emailed
+                             copy follows a minute later. Money::format() with no width ROUNDS
                              (displayDecimals() is 0 here), so a total of 8980 fils printed
                              AED 90 on screen and AED 89.80 in the inbox — two figures for one
                              order. OrderEmailPresenter's header settled which is right: "a
-                             receipt may not round". --}}
-                        <div class="co-fact"><dt>{{ $order->paid_at ? 'Total paid' : 'Total to pay' }}</dt><dd>{!! Money::format((int) $order->total, Money::minorExponent()) !!}</dd></div>
-                        <div class="co-fact"><dt>Payment</dt><dd>{{ $order->paymentLabel() }}</dd></div>
+                             receipt may not round."
+
+                             And the labels are keyed, so an Arabic reader gets them in
+                             Arabic. --}}
+                        <div class="co-fact"><dt>{{ $order->paid_at ? __('store.order_received.fact_total_paid') : __('store.order_received.fact_total_to_pay') }}</dt><dd>{!! Money::format((int) $order->total, Money::minorExponent()) !!}</dd></div>
+                        <div class="co-fact"><dt>{{ __('store.order_received.fact_payment') }}</dt><dd>{{ $order->paymentLabel() }}</dd></div>
                         {{-- The rate name answered "what did I pay for", never
                              "when does it come" — which is the question a
                              shopper actually has on this screen. The window is
@@ -138,14 +143,14 @@
                              `delivery_texts` and shown under Place order, for
                              this order's own destination, so a country with no
                              line recorded still gets none. --}}
-                        <div class="co-fact"><dt>Delivery</dt><dd>{{ $order->shipping_method }}@if (trim((string) ($deliveryText ?? '')) !== '')<span class="co-when">{{ $deliveryText }}</span>@endif</dd></div>
+                        <div class="co-fact"><dt>{{ __('store.order_received.fact_delivery') }}</dt><dd>{{ $order->shipping_method }}@if (trim((string) ($deliveryText ?? '')) !== '')<span class="co-when">{{ $deliveryText }}</span>@endif</dd></div>
                     </dl>
                 </div>
 
                 {{-- Next actions, above the summary on purpose: this is what the
                      shopper came here to do, and the summary can be long. --}}
                 <div class="sec">
-                    <h2><span class="n">→</span> What next</h2>
+                    <h2><span class="n">→</span> {{ __('store.order_received.next_heading') }}</h2>
                     <div class="co-acts">
                         @php
                             /* Sign in is offered only when signing in is possible.
@@ -164,26 +169,26 @@
                         @if ($signedIn)
                             <a class="co-act co-act--primary" href="{{ Url::to('/my-account/orders/') }}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4M20 12H4M20 17H4"/></svg>
-                                <span class="co-t">Your orders<span class="co-s">Every order on your account, including this one</span></span>
+                                <span class="co-t">{{ __('store.order_received.act_orders') }}<span class="co-s">{{ __('store.order_received.act_orders_note') }}</span></span>
                                 <span class="co-go">›</span>
                             </a>
                         @elseif ($accountReady)
                             <a class="co-act co-act--primary" href="{{ Url::to('/my-account/') }}">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <span class="co-t">Sign in to your account<span class="co-s">Your account is ready — use {{ $order->email }}</span></span>
+                                <span class="co-t">{{ __('store.order_received.act_sign_in') }}<span class="co-s">{{ __('store.order_received.act_sign_in_note', ['email' => $order->email]) }}</span></span>
                                 <span class="co-go">›</span>
                             </a>
                         @endif
 
                         <a class="co-act" href="{{ Url::to('/track-my-order/') }}?order={{ urlencode((string) $order->order_number) }}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                            <span class="co-t">Track your order<span class="co-s">Order #{{ $order->order_number }} — we will ask for your email to confirm it is you</span></span>
+                            <span class="co-t">{{ __('store.order_received.act_track') }}<span class="co-s">{{ __('store.order_received.act_track_note', ['number' => $order->order_number]) }}</span></span>
                             <span class="co-go">›</span>
                         </a>
 
                         <a class="co-act" href="{{ Url::to('/') }}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-                            <span class="co-t">Go to home<span class="co-s">Back to the shop front</span></span>
+                            <span class="co-t">{{ __('store.order_received.act_home') }}<span class="co-s">{{ __('store.order_received.act_home_note') }}</span></span>
                             <span class="co-go">›</span>
                         </a>
                     </div>
@@ -196,20 +201,20 @@
                          avoid. The endpoint answers the same either way. --}}
                     @unless (session('kbb_account_done'))
                     <div class="sec co-acct">
-                        <h2><span class="n">+</span> Finish your account</h2>
+                        <h2><span class="n">+</span> {{ __('store.order_received.account_heading') }}</h2>
                             <div class="co-user">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity=".0"/><path d="M22 6l-10 7L2 6"/><path d="M2 6h20v12H2z"/></svg>
-                                <span>{{ $order->email }} is your username</span>
+                                <span>{{ __('store.order_received.account_username', ['email' => $order->email]) }}</span>
                             </div>
-                            <p class="co-lead" style="margin:7px 0 0">Set a password to finish.</p>
+                            <p class="co-lead" style="margin:7px 0 0">{{ __('store.order_received.account_prompt') }}</p>
                             <form method="post" action="{{ Url::to('/checkout/claim-account') }}">
                                 @csrf
                                 <input type="hidden" name="order" value="{{ $order->order_number }}">
                                 <div class="crow">
-                                    <input type="password" name="account_password" aria-label="Set a password"
-                                           placeholder="Password (8+ characters)"
+                                    <input type="password" name="account_password" aria-label="{{ __('store.order_received.account_password_label') }}"
+                                           placeholder="{{ __('store.order_received.account_password_placeholder') }}"
                                            autocomplete="new-password" minlength="8" required>
-                                    <button type="submit">Save</button>
+                                    <button type="submit">{{ __('store.order_received.account_save') }}</button>
                                 </div>
                                 @error('account_password')<span class="kbb-acct-err">{{ $message }}</span>@enderror
                             </form>
@@ -218,12 +223,12 @@
                 @endguest
 
                 <div class="sec">
-                    <h2><span class="n">☰</span> Your order</h2>
+                    <h2><span class="n">☰</span> {{ __('store.order_received.summary_heading') }}</h2>
                     @include('partials.checkout.received-summary', ['order' => $order])
                 </div>
 
                 <div class="sec">
-                    <h2><span class="n">⌂</span> Delivering to</h2>
+                    <h2><span class="n">⌂</span> {{ __('store.order_received.address_heading') }}</h2>
                     @if ($addressLines)
                         <p class="co-lead" style="margin-bottom:0">
                             @foreach ($addressLines as $line)
@@ -231,20 +236,20 @@
                             @endforeach
                         </p>
                     @else
-                        <p class="co-lead" style="margin-bottom:0">We will confirm your delivery address by email.</p>
+                        <p class="co-lead" style="margin-bottom:0">{{ __('store.order_received.address_unknown') }}</p>
                     @endif
 
                     @if ($order->customer_note)
-                        <div class="co-gift"><b>Your note</b>{{ $order->customer_note }}</div>
+                        <div class="co-gift"><b>{{ __('store.order_received.your_note') }}</b>{{ $order->customer_note }}</div>
                     @endif
 
                     @if ($order->is_gift)
                         <div class="co-gift">
-                            <b>Gift wrapped 🎁</b>
+                            <b>{{ __('store.order_received.gift_wrapped') }}</b>
                             @if ($order->gift_note)
-                                “{{ $order->gift_note }}” — printed on the gift card.
+                                {{ __('store.order_received.gift_note', ['note' => $order->gift_note]) }}
                             @else
-                                Your order is wrapped as a gift.
+                                {{ __('store.order_received.gift_no_note') }}
                             @endif
                         </div>
                     @endif
@@ -270,11 +275,11 @@
             {{-- The same panel for an order number that does not exist and for
                  one that exists but is not this visitor's. Two different
                  answers here would be a way to enumerate real orders. --}}
-            <div class="formbox"><div class="sec"><h2>Order not found</h2><p class="co-lead">We could not find that order. If you have just placed one, the confirmation email has a link that will open it.</p></div></div>
-            <p style="text-align:center;margin-top:18px"><a class="backlink" href="{{ Url::to('/track-my-order/') }}">Track an order with your email →</a></p>
+            <div class="formbox"><div class="sec"><h2>{{ __('store.order_received.not_found_heading') }}</h2><p class="co-lead">{{ __('store.order_received.not_found_body') }}</p></div></div>
+            <p style="text-align:center;margin-top:18px"><a class="backlink" href="{{ Url::to('/track-my-order/') }}">{{ __('store.order_received.not_found_track') }}</a></p>
         @endif
 
-        <p style="text-align:center;margin-top:22px"><a class="backlink" href="{{ Url::to('/shop/') }}">← Continue shopping</a></p>
+        <p style="text-align:center;margin-top:22px"><a class="backlink" href="{{ Url::to('/shop/') }}">{{ __('store.cart.continue_shopping') }}</a></p>
     </div>
 </section>
 @endsection

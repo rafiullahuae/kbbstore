@@ -1,12 +1,12 @@
 @extends('layouts.store')
 @php use App\Support\Url; @endphp
 
-@section('title', strip_tags($page->title) . ' · K-Beauty Bliss')
+@section('title', __('store.page.page_title', ['title' => strip_tags($page->title)]))
 
 @section('content')
 <div class="kbb-home">
 <section class="sec"><div class="wrap">
-    <nav class="crumb"><a href="{{ Url::to('/') }}">Home</a> / <span>{!! $page->title !!}</span></nav>
+    <nav class="crumb"><a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> / <span>{!! $page->title !!}</span></nav>
 
     <article class="policy">
         <h1>{!! $page->title !!}</h1>
@@ -27,7 +27,7 @@
         <div class="policy-body">{!! \App\Support\BodyHeadings::demoteH1(\App\Support\Shortcodes::render($page->content)) !!}</div>
 
         @if ($page->updated_at)
-            <p class="policy-date">Last updated {{ $page->updated_at->format('j F Y') }}</p>
+            <p class="policy-date">{{ __('store.page.last_updated', ['date' => $page->updated_at->format('j F Y')]) }}</p>
         @endif
     </article>
 </div></section>

@@ -1,5 +1,5 @@
 @extends('layouts.store')
-@section('title', 'Email preferences')
+@section('title', __('store.mail_prefs.title'))
 
 @section('content')
 @php use App\Support\Url; @endphp
@@ -24,8 +24,8 @@
 <div class="auth">
     <div class="auth-grid">
         <div class="authcard">
-            <h1>Email preferences</h1>
-            <p class="lede">Stop sending stock alerts and basket reminders to this address?</p>
+            <h1>{{ __('store.mail_prefs.title') }}</h1>
+            <p class="lede">{{ __('store.mail_prefs.lead') }}</p>
 
             <form method="post" action="{{ Url::to('/mail-preferences') }}">
                 @csrf
@@ -34,14 +34,10 @@
                 <input type="hidden" name="expires" value="{{ $expires }}">
                 <input type="hidden" name="signature" value="{{ $signature }}">
 
-                <button type="submit" class="btn btn-primary">Yes, stop these emails</button>
+                <button type="submit" class="btn btn-primary">{{ __('store.mail_prefs.button') }}</button>
             </form>
 
-            <p class="muted" style="margin-top:16px;font-size:13px;">
-                This stops both back-in-stock alerts and basket reminders, for good, at this address.
-                Order confirmations, delivery updates and receipts are not affected — they are how you
-                find out what is happening to something you paid for.
-            </p>
+            <p class="muted" style="margin-top:16px;font-size:13px;">{{ __('store.mail_prefs.confirm_note') }}</p>
         </div>
     </div>
 </div>

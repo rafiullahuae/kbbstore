@@ -17,7 +17,7 @@
         @foreach ($tabs as $i => $tab)
             <div class="dtabpanel{{ 0 === $i ? ' on' : '' }}" data-panel="{{ $i }}">
                 <div class="dcontent clamp">{!! $tab['body'] !!}</div>
-                <button class="readmore" type="button">Read more ↓</button>
+                <button class="readmore" type="button">{{ __('store.product.read_more') }}</button>
             </div>
         @endforeach
     </div>

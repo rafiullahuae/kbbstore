@@ -57,7 +57,7 @@
     <div class="anno">
         ✨
         @if ($kbbFreeShipThreshold !== null)
-            Free delivery over <b>{!! \App\Support\Money::format($kbbFreeShipThreshold, 0) !!}</b> ·
+            {!! __('store.delivery.free_over', ['amount' => '<b>' . \App\Support\Money::format($kbbFreeShipThreshold, 0) . '</b>']) !!} ·
         @endif
         {{-- THE CLAIM IS A SETTING NOW, THOUGH NOTHING RENDERS THIS FILE — Lane DR.
 
@@ -83,7 +83,7 @@
              closes the @unless wrapping this file, which fails as "unexpected
              endif" somewhere else entirely. Confirmed here the hard way. --}}
         @php($annoAuth = \App\Support\TrustClaims::text($kbbSettings, 'anno_authentic_text'))
-        Pay later with Tabby &amp; Tamara
+        {{ __('store.announcement.pay_later') }}
         @if ($annoAuth !== null)
             · <b>{{ $annoAuth }}</b>
         @endif

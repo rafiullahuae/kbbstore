@@ -55,8 +55,8 @@
         </a>
       @endforeach
     </div>
-    <button class="sarr prev" id="sprev" type="button" aria-label="Previous">‹</button>
-    <button class="sarr next" id="snext" type="button" aria-label="Next">›</button>
+    <button class="sarr prev" id="sprev" type="button" aria-label="{{ __('store.home.slider_previous') }}">‹</button>
+    <button class="sarr next" id="snext" type="button" aria-label="{{ __('store.home.slider_next') }}">›</button>
     <div class="sdots" id="sdots"></div>
   </div>
 
@@ -136,7 +136,7 @@
     @if ($homeDeliveryText !== '')<b>{{ $homeDeliveryText }}</b>@endif
     @if ($homeFreeShip !== null)
       @if ($homeDeliveryText !== '')<span>·</span>@endif
-      <span>Free delivery over {!! Money::format($homeFreeShip) !!}</span>
+      <span>{!! __('store.delivery.free_over', ['amount' => Money::format($homeFreeShip)]) !!}</span>
     @endif
   </div>
   @endif
@@ -181,7 +181,7 @@
     }
 
     if ($homeFreeShip !== null) {
-        $tickerChips[] = 'Free delivery over <b>' . Money::format($homeFreeShip, 0) . '</b>';
+        $tickerChips[] = __('store.delivery.free_over', ['amount' => '<b>' . Money::format($homeFreeShip, 0) . '</b>']);
     }
 
     if ($homeDeliveryText !== '') {
@@ -214,7 +214,7 @@
         {{-- The tally only when there is one. A demo stand-in tile counts no
              real category and so carries 0; printing "0 products" under a tile
              that links to a full shop would be its own small untruth. --}}
-        <b>{{ $c->name }}</b>@if ((int) $c->products_count > 0)<span class="n">{{ $c->products_count }} products</span>@endif
+        <b>{{ $c->name }}</b>@if ((int) $c->products_count > 0)<span class="n">{{ trans_choice('store.home.category_product_count', (int) $c->products_count) }}</span>@endif
       </a>
     @endforeach
   </div>
@@ -224,28 +224,28 @@
 {{-- BUNDLES --}}
 @unless ($sections->hidden('bundles'))
 <section class="sec {{ $sections->classFor('bundles') }}" style="padding-top:8px"><div class="wrap">
-  <div class="sh"><div><h2>Big savings bundles <span class="cnt">{{ $rails['bundles']->count() }} sets</span></h2>
-    <p>Complete routines, priced below the sum of their parts.</p></div>
-    <a class="lnk" href="{{ Url::to('/shop/?cat=skincare-sets') }}">All sets</a></div>
-  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => 'Skincare sets'])
+  <div class="sh"><div><h2>{{ __('store.home.bundles_heading') }} <span class="cnt">{{ trans_choice('store.home.bundles_count', $rails['bundles']->count()) }}</span></h2>
+    <p>{{ __('store.home.bundles_subtitle') }}</p></div>
+    <a class="lnk" href="{{ Url::to('/shop/?cat=skincare-sets') }}">{{ __('store.home.bundles_link') }}</a></div>
+  @include('partials.home.grid', ['items' => $rails['bundles'], 'skin' => $sections->skinFor('bundles'), 'catLabel' => __('store.home.bundles_grid_label')])
 </div></section>
 @endunless
 
 {{-- RECOMMENDED --}}
 @unless ($sections->hidden('recommended'))
 <section class="sec {{ $sections->classFor('recommended') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>Recommended for you <span class="cnt">Updated daily</span></h2>
-    <p>Handpicked K-beauty essentials for glowing skin.</p></div>
-    <a class="lnk" href="{{ Url::to('/shop/') }}">Shop more</a></div>
-  @include('partials.home.grid', ['items' => $rails['recommended'], 'skin' => $sections->skinFor('recommended'), 'catLabel' => 'Recommended'])
+  <div class="sh"><div><h2>{{ __('store.home.recommended_heading') }} <span class="cnt">{{ __('store.home.recommended_badge') }}</span></h2>
+    <p>{{ __('store.home.recommended_subtitle') }}</p></div>
+    <a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.home.recommended_link') }}</a></div>
+  @include('partials.home.grid', ['items' => $rails['recommended'], 'skin' => $sections->skinFor('recommended'), 'catLabel' => __('store.home.recommended_grid_label')])
 </div></section>
 @endunless
 
 {{-- ROUTINE --}}
 @unless ($sections->hidden('routine'))
 <section class="sec tinted {{ $sections->classFor('routine') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>Build your routine <span class="cnt">6 steps</span></h2></div>
-    <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">Routine guide</a></div>
+  <div class="sh"><div><h2>{{ __('store.home.routine_heading') }} <span class="cnt">{{ trans_choice('store.home.routine_steps', 6) }}</span></h2></div>
+    <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">{{ __('store.home.routine_link') }}</a></div>
   <div class="rsteps">
     @foreach ($routine as $step)
       <a class="rstep" href="{{ Url::to($step['url']) }}">
@@ -259,7 +259,7 @@
     @endforeach
   </div>
   @if ($routineTotal > 0)
-    <a class="rall" href="{{ Url::to('/shop/') }}">Add the whole routine · <b>{!! Money::format($routineTotal) !!}</b></a>
+    <a class="rall" href="{{ Url::to('/shop/') }}">{!! __('store.home.routine_add_all', ['amount' => '<b>' . Money::format($routineTotal) . '</b>']) !!}</a>
   @endif
 </div></section>
 @endunless
@@ -269,24 +269,24 @@
 <section class="sec {{ $sections->classFor('quiz') }}" style="padding-top:0"><div class="wrap">
   <div class="quiz">
     <div class="q-left">
-      <span class="q-k">Two minutes · free</span>
-      <h2>Not sure where<br>to start?</h2>
-      <p>Answer five questions and we will build a routine from what we actually stock — with the reasoning behind every pick.</p>
+      <span class="q-k">{{ __('store.home.quiz_kicker') }}</span>
+      <h2>{!! __('store.home.quiz_heading') !!}</h2>
+      <p>{{ __('store.home.quiz_body') }}</p>
       <div class="q-why">
-        <div><b>{{ number_format($catalogueCount) }}</b><span>products matched</span></div>
-        <div><b>5</b><span>quick questions</span></div>
-        <div><b>0</b><span>cost, no signup</span></div>
+        <div><b>{{ number_format($catalogueCount) }}</b><span>{{ __('store.home.quiz_stat_matched') }}</span></div>
+        <div><b>5</b><span>{{ __('store.home.quiz_stat_questions') }}</span></div>
+        <div><b>0</b><span>{{ __('store.home.quiz_stat_cost') }}</span></div>
       </div>
     </div>
     <form class="q-card" method="get" action="{{ Url::to('/skin-quiz/') }}">
-      <div class="q-top"><span class="q-step">Question 1 of 5</span><div class="q-bar"><i style="width:20%"></i></div></div>
-      <h3 class="q-q">How does your skin usually feel by mid-afternoon?</h3>
+      <div class="q-top"><span class="q-step">{{ __('store.home.quiz_step', ['current' => 1, 'total' => 5]) }}</span><div class="q-bar"><i style="width:20%"></i></div></div>
+      <h3 class="q-q">{{ __('store.home.quiz_question') }}</h3>
       <div class="q-opts">
-        @foreach ([['oily','Shiny all over','Oily'],['dry','Tight or flaky','Dry'],['combo','Oily T-zone, dry cheeks','Combination'],['sensitive','Red or stinging','Sensitive'],['normal','Comfortable, no change','Normal']] as [$v, $l, $t])
+        @foreach ([['oily', __('store.home.quiz_option_oily'), __('store.home.quiz_skin_oily')], ['dry', __('store.home.quiz_option_dry'), __('store.home.quiz_skin_dry')], ['combo', __('store.home.quiz_option_combo'), __('store.home.quiz_skin_combo')], ['sensitive', __('store.home.quiz_option_sensitive'), __('store.home.quiz_skin_sensitive')], ['normal', __('store.home.quiz_option_normal'), __('store.home.quiz_skin_normal')]] as [$v, $l, $t])
           <label class="q-o"><input type="radio" name="skin" value="{{ $v }}"><span class="d"></span><span class="l"><b>{{ $l }}</b><span>{{ $t }}</span></span></label>
         @endforeach
       </div>
-      <div class="q-foot"><span class="q-hint">Pick the closest one</span><button class="q-next" type="submit">Continue →</button></div>
+      <div class="q-foot"><span class="q-hint">{{ __('store.home.quiz_hint') }}</span><button class="q-next" type="submit">{{ __('store.home.quiz_continue') }}</button></div>
     </form>
   </div>
 </div></section>
@@ -327,9 +327,9 @@
   @php
     $brandsNote = \App\Support\TrustClaims::text($settings, 'home_brands_note');
   @endphp
-  <div class="sh"><div><h2>Top brands <span class="cnt">{{ $brandTotal }} brands</span></h2>
+  <div class="sh"><div><h2>{{ __('store.home.brands_heading') }} <span class="cnt">{{ trans_choice('store.home.brands_count', (int) $brandTotal) }}</span></h2>
     @if ($brandsNote !== null)<p>{{ $brandsNote }}</p>@endif</div>
-    <a class="lnk" href="{{ Url::to('/brands/') }}">All brands</a></div>
+    <a class="lnk" href="{{ Url::to('/brands/') }}">{{ __('store.home.brands_link') }}</a></div>
   <div class="brands">
     @foreach ($brands as $b)
       {{-- As with the category tiles above: no tally for a stand-in brand. --}}
@@ -342,9 +342,9 @@
 {{-- SPOTTED --}}
 @unless ($sections->hidden('spotted'))
 <section class="sec {{ $sections->classFor('spotted') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>#KBeautyBliss spotted <span class="cnt">Shoppable</span></h2>
-    <p>Real routines from our community.</p></div>
-    <a class="lnk" href="{{ Url::to('/shop/') }}">Discover more</a></div>
+  <div class="sh"><div><h2>{{ __('store.home.spotted_heading') }} <span class="cnt">{{ __('store.home.spotted_badge') }}</span></h2>
+    <p>{{ __('store.home.spotted_subtitle') }}</p></div>
+    <a class="lnk" href="{{ Url::to('/shop/') }}">{{ __('store.home.spotted_link') }}</a></div>
   <div class="ugc">
     @foreach ($rails['best1']->take(4) as $p)
       {{-- These tiles are product photographs, so they are the images on this
@@ -365,20 +365,20 @@
 {{-- BEST SELLERS --}}
 @unless ($sections->hidden('bestsellers'))
 <section class="sec {{ $sections->classFor('bestsellers') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>Best sellers <span class="cnt">This month</span></h2>
-    <p>The products customers keep coming back for.</p></div>
-    <a class="lnk" href="{{ Url::to('/shop/?orderby=popularity') }}">Shop more</a></div>
-  @include('partials.home.grid', ['items' => $rails['best1'], 'skin' => $sections->skinFor('bestsellers'), 'catLabel' => 'Best sellers', 'rank' => true])
+  <div class="sh"><div><h2>{{ __('store.home.bestsellers_heading') }} <span class="cnt">{{ __('store.home.bestsellers_badge') }}</span></h2>
+    <p>{{ __('store.home.bestsellers_subtitle') }}</p></div>
+    <a class="lnk" href="{{ Url::to('/shop/?orderby=popularity') }}">{{ __('store.home.bestsellers_link') }}</a></div>
+  @include('partials.home.grid', ['items' => $rails['best1'], 'skin' => $sections->skinFor('bestsellers'), 'catLabel' => __('store.home.bestsellers_grid_label'), 'rank' => true])
 </div></section>
 @endunless
 
 {{-- FLASH --}}
 @unless ($sections->hidden('flash'))
 <section class="sec {{ $sections->classFor('flash') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>Flash sale · up to 50% off <span class="cnt">While stocks last</span></h2>
-    <p>Deep cuts, limited stock.</p></div>
-    <a class="lnk" href="{{ Url::to('/shop/?on_sale=1') }}">See all</a></div>
-  @include('partials.home.grid', ['items' => $rails['flash'], 'skin' => $sections->skinFor('flash'), 'catLabel' => 'Flash sale'])
+  <div class="sh"><div><h2>{{ __('store.home.flash_heading') }} <span class="cnt">{{ __('store.home.flash_badge') }}</span></h2>
+    <p>{{ __('store.home.flash_subtitle') }}</p></div>
+    <a class="lnk" href="{{ Url::to('/shop/?on_sale=1') }}">{{ __('store.home.flash_link') }}</a></div>
+  @include('partials.home.grid', ['items' => $rails['flash'], 'skin' => $sections->skinFor('flash'), 'catLabel' => __('store.home.flash_grid_label')])
 </div></section>
 @endunless
 
@@ -386,8 +386,8 @@
 @unless ($sections->hidden('blog'))
 @if ($posts->isNotEmpty())
 <section class="sec tinted {{ $sections->classFor('blog') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>Skincare guide <span class="cnt">Journal</span></h2><p>Read before you buy.</p></div>
-    <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">All articles</a></div>
+  <div class="sh"><div><h2>{{ __('store.home.journal_heading') }} <span class="cnt">{{ __('store.home.journal_badge') }}</span></h2><p>{{ __('store.home.journal_subtitle') }}</p></div>
+    <a class="lnk" href="{{ Url::to('/skincare-guide/') }}">{{ __('store.home.journal_link') }}</a></div>
   <div class="blog">
     @foreach ($posts as $post)
       <a class="bl" href="{{ Url::to('/' . $post->slug . '/') }}">
@@ -415,7 +415,7 @@
           @if ($post->tag)<span class="chip">{{ $post->tag }}</span>@endif</div>
         <h3>{{ $post->title }}</h3>
         <p>{{ \Illuminate\Support\Str::limit(strip_tags((string) ($post->excerpt ?: $post->body)), 110) }}</p>
-        <span class="meta">{{ $post->readMinutes() }} min read · {{ $post->published_at?->format('j M') }}</span>
+        <span class="meta">{{ trans_choice('store.home.read_minutes', $post->readMinutes()) }} · {{ $post->published_at?->format('j M') }}</span>
       </a>
     @endforeach
   </div>
@@ -429,12 +429,12 @@
   <div class="about">
     <div class="im"></div>
     <div>
-      <h2>About K-Beauty Bliss</h2>
-      <p>{{ $settings->get('about_text', 'We are passionate about bringing the best of Korean beauty to skincare enthusiasts across the UAE. Every item is curated to meet the highest standards of quality and effectiveness.') }}</p>
+      <h2>{{ __('store.home.about_heading') }}</h2>
+      <p>{{ $settings->get('about_text', __('store.home.about_body')) }}</p>
       <div class="astats">
-        <div><b>{{ number_format($catalogueCount) }}</b><span>products stocked</span></div>
-        <div><b>{{ $brandTotal }}</b><span>Korean brands</span></div>
-        <div><b>{{ $reviews['total'] > 999 ? round($reviews['total'] / 1000, 1) . 'k+' : $reviews['total'] }}</b><span>verified reviews</span></div>
+        <div><b>{{ number_format($catalogueCount) }}</b><span>{{ __('store.home.about_stat_products') }}</span></div>
+        <div><b>{{ $brandTotal }}</b><span>{{ __('store.home.about_stat_brands') }}</span></div>
+        <div><b>{{ $reviews['total'] > 999 ? __('store.home.count_thousands_plus', ['count' => round($reviews['total'] / 1000, 1)]) : $reviews['total'] }}</b><span>{{ __('store.home.about_stat_reviews') }}</span></div>
         {{-- A DELIVERY WINDOW WAS THE FOURTH STAT HERE, AND IT IS GONE.
 
              The other three are counted from the database — products stocked,
@@ -457,7 +457,7 @@
              fed by that one sentence. It does not need a fourth wearing a
              number's clothes. --}}
       </div>
-      <a class="lnk" style="display:inline-block;margin-top:18px" href="{{ Url::to('/about/') }}">Our story</a>
+      <a class="lnk" style="display:inline-block;margin-top:18px" href="{{ Url::to('/about/') }}">{{ __('store.home.about_link') }}</a>
     </div>
   </div>
 </div></section>
@@ -467,14 +467,14 @@
 @unless ($sections->hidden('reviews'))
 @if ($reviews['total'] > 0)
 <section class="sec {{ $sections->classFor('reviews') }}" style="padding-top:0"><div class="wrap">
-  <div class="sh"><div><h2>What our customers say <span class="cnt">{{ number_format($reviews['average'], 1) }} average</span></h2>
-    <p>{{ number_format($reviews['total']) }} verified reviews from real orders.</p></div>
-    <a class="lnk" href="{{ Url::to('/reviews/') }}">Read all</a></div>
+  <div class="sh"><div><h2>{{ __('store.home.reviews_heading') }} <span class="cnt">{{ __('store.home.reviews_average', ['rating' => number_format($reviews['average'], 1)]) }}</span></h2>
+    <p>{{ trans_choice('store.home.reviews_subtitle', (int) $reviews['total'], ['formatted' => number_format($reviews['total'])]) }}</p></div>
+    <a class="lnk" href="{{ Url::to('/reviews/') }}">{{ __('store.home.reviews_link') }}</a></div>
 
   <div class="rev-top">
     <div class="rev-score"><div class="big">{{ number_format($reviews['average'], 1) }}</div>
       <div class="stars">@for ($i = 1; $i <= 5; $i++)<span class="{{ $i <= round($reviews['average']) ? 'f' : '' }}">★</span>@endfor</div>
-      <small>{{ number_format($reviews['total']) }} reviews</small></div>
+      <small>{{ trans_choice('store.home.reviews_count', (int) $reviews['total'], ['formatted' => number_format($reviews['total'])]) }}</small></div>
     <div class="rbars">
       @foreach ($reviews['bars'] as $star => $pct)
         <div class="rbar"><span class="t">{{ $star }}★</span><span class="track"><i style="width:{{ $pct }}%"></i></span><span class="n">{{ $pct }}%</span></div>
@@ -483,7 +483,7 @@
   </div>
 
   <div class="rfilters">
-    @foreach ([['all', 'All'], ['photos', 'With photos'], ['5', '5★'], ['4', '4★'], ['helpful', 'Most helpful']] as [$k, $l])
+    @foreach ([['all', __('store.reviews.filter_all')], ['photos', __('store.reviews.filter_photos')], ['5', '5★'], ['4', '4★'], ['helpful', __('store.reviews.filter_helpful')]] as [$k, $l])
       <a class="rfilter{{ $k === 'all' ? ' on' : '' }}" href="{{ Url::to('/reviews/?rfilter=' . $k) }}">{{ $l }}</a>
     @endforeach
   </div>
@@ -492,7 +492,7 @@
     @foreach ($reviews['items'] as $r)
       <div class="rcard">
         <div class="rh"><span class="av" style="background:{{ Gradient::for($r->author_name ?: '?') }}">{{ mb_substr($r->author_name ?: '?', 0, 1) }}</span>
-          <div class="rwho"><div class="rline"><span class="nm">{{ $r->author_name }}</span>@if ($r->verified)<span class="vf">✓ Verified</span>@endif</div>
+          <div class="rwho"><div class="rline"><span class="nm">{{ $r->author_name }}</span>@if ($r->verified)<span class="vf">{{ __('store.reviews.verified_badge') }}</span>@endif</div>
             <span class="rstars">@for ($i = 1; $i <= 5; $i++)<span class="{{ $i <= (int) $r->rating ? 'f' : '' }}">★</span>@endfor</span></div></div>
         @if ($r->product)<div class="rprod">{{ $r->product->name }}</div>@endif
         <div class="rtext">{{ \Illuminate\Support\Str::limit(strip_tags((string) $r->content), 150) }}</div>
@@ -534,16 +534,16 @@
     $trustFreeShip = app(\App\Services\ShippingService::class)->thresholdHere();
     $trustDelivery = trim(implode(' · ', array_filter([
         \App\Support\DeliveryLine::here(),
-        $trustFreeShip === null ? null : 'Free over ' . Money::plain($trustFreeShip, 0),
+        $trustFreeShip === null ? null : __('store.home.trust_free_over', ['amount' => Money::plain($trustFreeShip, 0)]),
     ])));
 
     $trustCards = [];
 
     if ($trustDelivery !== '') {
-        $trustCards[] = ['Delivery', $trustDelivery, '<path d="M2 7h13v10H2z"/><path d="M15 10h4l3 3.5V17h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/>'];
+        $trustCards[] = [__('store.home.trust_delivery_title'), $trustDelivery, '<path d="M2 7h13v10H2z"/><path d="M15 10h4l3 3.5V17h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/>'];
     }
 
-    $trustCards[] = ['Secure payments', 'Card, Tabby, Tamara and COD', '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'];
+    $trustCards[] = [__('store.home.trust_payments_title'), __('store.home.trust_payments_text'), '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'];
 
     /* THE SOURCING AND SUPPORT CARDS ARE THE OWNER'S WORDS NOW — Lane DR.
 
@@ -578,7 +578,7 @@
     $trustSupportTitle = \App\Support\TrustClaims::text($settings, 'trust_support_title');
 
     if ($trustSupportTitle !== null) {
-        $trustCards[] = [$trustSupportTitle, 'WhatsApp ' . \App\Support\SupportContact::phone(), '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'];
+        $trustCards[] = [$trustSupportTitle, __('store.home.trust_support_text', ['phone' => \App\Support\SupportContact::phone()]), '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'];
     }
 @endphp
 <section class="sec {{ $sections->classFor('trust') }}" style="padding-top:0"><div class="wrap">

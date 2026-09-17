@@ -63,7 +63,7 @@
 --}}
 @extends('invoices.document')
 
-@section('title', 'Dispatch label')
+@section('title', __('invoice.doc.dispatch_label'))
 
 {{-- A6, 105 x 148 mm: the ordinary self-adhesive label stock, and four to an A4
      sheet if the shop prints on plain paper and cuts. The margin is small
@@ -123,16 +123,16 @@
      link drops the button and renders the sheet. --}}
 @section('toolbar')
     @isset($deliveryNoteUrl)
-        <a class="btn ghost" href="{{ $deliveryNoteUrl }}">Delivery note</a>
+        <a class="btn ghost" href="{{ $deliveryNoteUrl }}">{{ __('invoice.doc.delivery_note') }}</a>
     @endisset
     @isset($packingSlipUrl)
-        <a class="btn ghost" href="{{ $packingSlipUrl }}">Packing slip</a>
+        <a class="btn ghost" href="{{ $packingSlipUrl }}">{{ __('invoice.doc.packing_slip') }}</a>
     @endisset
 @endsection
 
 @section('sheet')
     <div class="from">
-        <span class="n" dir="auto">From: {{ $doc['seller']['name'] }}</span>
+        <span class="n" dir="auto">{{ __('invoice.label.from', ['name' => $doc['seller']['name']]) }}</span>
         @foreach ($doc['seller']['addressLines'] as $line)
             <div dir="auto">{{ $line }}</div>
         @endforeach
@@ -142,7 +142,7 @@
     </div>
 
     <div class="to">
-        <div class="label">Deliver to</div>
+        <div class="label">{{ __('email.invoice.deliver_to') }}</div>
         {{-- The shipping snapshot, falling back to billing exactly as
              InvoiceDocument::present() already decided — one definition of
              "where this order goes", so the label and the delivery note cannot
@@ -160,19 +160,19 @@
         @endforelse
 
         @if ($doc['shipPhone'] !== '')
-            <div class="tel" dir="auto">Tel {{ $doc['shipPhone'] }}</div>
+            <div class="tel" dir="auto">{{ __('invoice.label.tel', ['phone' => $doc['shipPhone']]) }}</div>
         @endif
     </div>
 
     <div class="strip">
-        <div>Order<b dir="auto">{{ $doc['orderNumber'] }}</b></div>
-        <div>Items<b>{{ $doc['itemCount'] }}</b></div>
-        <div>Service<b>{{ $doc['deliveryMethod'] }}</b></div>
+        <div>{{ __('invoice.label.strip_order') }}<b dir="auto">{{ $doc['orderNumber'] }}</b></div>
+        <div>{{ __('invoice.label.strip_items') }}<b>{{ $doc['itemCount'] }}</b></div>
+        <div>{{ __('invoice.label.strip_service') }}<b>{{ $doc['deliveryMethod'] }}</b></div>
     </div>
 
     @if ($doc['codToCollect'] !== null)
         <div class="cod">
-            <div class="k">Cash on delivery &mdash; collect</div>
+            <div class="k">{{ __('invoice.label.cod_collect') }}</div>
             <div class="v">{!! $doc['codToCollect']['html'] !!}</div>
         </div>
     @endif

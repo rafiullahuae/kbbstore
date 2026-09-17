@@ -11,6 +11,7 @@
  */
 
 import { addToCart } from './cart.js';
+import { t } from './i18n.js';
 
 export function initPdp() {
     const form = document.querySelector('.kbb-cart-form');
@@ -41,7 +42,9 @@ export function initPdp() {
         const dead = event.target.closest('.variant.oos');
         if (dead) {
             const name = dead.querySelector('.vn')?.textContent?.trim();
-            window.kbbToast?.(name ? `${name} is sold out — please choose another option.` : 'That option is sold out.');
+            window.kbbToast?.(name
+                ? t('store.js.variant_sold_out_named', ':name is sold out — please choose another option.', { name })
+                : t('store.js.variant_sold_out', 'That option is sold out.'));
             return;
         }
 
@@ -109,7 +112,7 @@ export function initPdp() {
             });
 
             if (!data || data.ok === false) {
-                window.kbbToast?.(data?.error || 'Could not add that.');
+                window.kbbToast?.(data?.error || t('store.js.add_failed_short', 'Could not add that.'));
                 return;
             }
 

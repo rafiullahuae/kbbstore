@@ -16,6 +16,6 @@
     @if ($doc['seller']['trn'] !== '')
         {{-- Printed only when it has really been entered: an invoice showing an
              invented tax registration number is worse than one showing none. --}}
-        <div dir="auto">TRN {{ $doc['seller']['trn'] }}</div>
+        <div dir="auto">{{ __('email.invoice.trn', ['trn' => $doc['seller']['trn']]) }}</div>
     @endif
 </div>

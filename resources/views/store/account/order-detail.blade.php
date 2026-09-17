@@ -90,7 +90,7 @@
         }
     }
 @endphp
-@section('title', 'Order #' . $order->order_number . ' · K-Beauty Bliss')
+@section('title', __('store.orders.detail_title', ['number' => $order->order_number]))
 
 @push('styles')
 <style>
@@ -180,21 +180,21 @@
 
 <div class="acw wide">
   <div class="acw-in">
-    <a class="kbbod-back" href="{{ Url::to('/my-account/orders/') }}">&larr; All orders</a>
+    <a class="kbbod-back" href="{{ Url::to('/my-account/orders/') }}">&larr; {{ __('store.orders.all_orders') }}</a>
 
     <div class="kbbod-head">
       <div style="flex:1 1 auto;min-width:0">
-        <h1>Order #{{ $order->order_number }}</h1>
+        <h1>{{ __('store.orders.order_number', ['number' => $order->order_number]) }}</h1>
         <p class="kbbod-when">
-          Placed {{ $order->created_at?->format('j F Y') ?? '' }}
-          @if ($items->count()) · {{ $items->count() }} {{ $items->count() === 1 ? 'item' : 'items' }} @endif
+          {{ __('store.orders.placed_on', ['date' => $order->created_at?->format('j F Y') ?? '']) }}
+          @if ($items->count()) · {{ trans_choice('store.cart.item_count', $items->count()) }} @endif
         </p>
       </div>
-      <span class="kbbod-pill {{ $statusClass }}">{{ ucfirst(str_replace('-', ' ', $status)) }}</span>
+      <span class="kbbod-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span>
     </div>
 
     <div class="kbbod-sec">
-      <h2 class="kbbod-h2">What you ordered</h2>
+      <h2 class="kbbod-h2">{{ __('store.orders.what_you_ordered') }}</h2>
       <div class="kbbod-lines">
         @foreach ($items as $item)
           @php
@@ -222,20 +222,29 @@
     </div>
 
     <div class="kbbod-sec">
-      <div class="kbbod-totals">
-        <div class="kbbod-row"><span>Subtotal</span><span>{!! $receiptMoney((int) $order->subtotal) !!}</span></div>
+      <div class="kbbod-totals">{{-- BOTH LANES' WORK IS IN THIS BLOCK. The
+             structure and the precision come from the receipts lane; every
+             LABEL comes from the text lane, so an Arabic reader gets this
+             column in Arabic. The VAT row's own label is built from the order's
+             snapshotted rate and the owner's `vat_label` wording, which is why
+             it is not keyed here — it is his sentence, not the shop's.
+
+             ATTACHED TO THE DIV ABOVE, not on a line of its own: a Blade
+             comment is removed but the newline after it is not, and this
+             column's bytes are pinned by StorefrontEnglishUnchangedTest. --}}
+        <div class="kbbod-row"><span>{{ __('store.checkout.subtotal') }}</span><span>{!! $receiptMoney((int) $order->subtotal) !!}</span></div>
         @if ((int) $order->discount_total > 0)
-          <div class="kbbod-row"><span>{{ $order->coupon_code ?: 'Discount' }}</span><span>&ndash; {!! $receiptMoney((int) $order->discount_total) !!}</span></div>
+          <div class="kbbod-row"><span>{{ $order->coupon_code ?: __('store.checkout.discount') }}</span><span>&ndash; {!! $receiptMoney((int) $order->discount_total) !!}</span></div>
         @endif
         <div class="kbbod-row">
-          <span>Delivery{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
-          <span>@if ((int) $order->shipping_total > 0){!! $receiptMoney((int) $order->shipping_total) !!}@else<span class="kbbod-free">Free</span>@endif</span>
+          <span>{{ __('store.checkout.delivery') }}{{ $order->shipping_method ? ' · ' . $order->shipping_method : '' }}</span>
+          <span>@if ((int) $order->shipping_total > 0){!! $receiptMoney((int) $order->shipping_total) !!}@else<span class="kbbod-free">{{ __('store.checkout.free') }}</span>@endif</span>
         </div>
         @if ((int) $order->gift_fee > 0)
-          <div class="kbbod-row"><span>Gift wrapping</span><span>{!! $receiptMoney((int) $order->gift_fee) !!}</span></div>
+          <div class="kbbod-row"><span>{{ __('store.checkout.gift_wrapping') }}</span><span>{!! $receiptMoney((int) $order->gift_fee) !!}</span></div>
         @endif
         @if ($paymentFee > 0)
-          <div class="kbbod-row"><span>{{ $order->paymentLabel() }} fee</span><span>{!! $receiptMoney($paymentFee) !!}</span></div>
+          <div class="kbbod-row"><span>{{ __('store.checkout.payment_fee', ['method' => $order->paymentLabel()]) }}</span><span>{!! $receiptMoney($paymentFee) !!}</span></div>
         @endif
         {{--
             VAT, ONLY WHERE IT WAS ADDED TO THE FIGURES ABOVE IT.
@@ -259,7 +268,7 @@
         @if ($vatRow !== null)
           <div class="kbbod-row"><span>{{ $vatRow['label'] }}</span><span>{!! $receiptMoney($vatRow['fils']) !!}</span></div>
         @endif
-        <div class="kbbod-row is-total"><span>Total</span><span>{!! $receiptMoney((int) $order->total) !!}</span></div>
+        <div class="kbbod-row is-total"><span>{{ __('store.checkout.total') }}</span><span>{!! $receiptMoney((int) $order->total) !!}</span></div>
       </div>
       @if ($vatNote !== null)
         <p class="kbbod-vatnote">{{ $vatNote['label'] }}: {!! $receiptMoney($vatNote['fils']) !!}</p>
@@ -267,20 +276,20 @@
     </div>
 
     <div class="kbbod-sec">
-      <h2 class="kbbod-h2">Delivery &amp; payment</h2>
+      <h2 class="kbbod-h2">{{ __('store.orders.delivery_and_payment') }}</h2>
       <dl class="kbbod-facts">
         <div class="kbbod-fact">
-          <dt>Delivering to</dt>
+          <dt>{{ __('store.order_received.address_heading') }}</dt>
           <dd>
             @forelse ($addressLines as $line)
               {{ $line }}@if (! $loop->last)<br>@endif
             @empty
-              We will confirm your delivery address by email.
+              {{ __('store.order_received.address_unknown') }}
             @endforelse
           </dd>
         </div>
         <div class="kbbod-fact">
-          <dt>Payment</dt>
+          <dt>{{ __('store.order_received.fact_payment') }}</dt>
           <dd>
             {{ $order->paymentLabel() }}
             @if ($order->email)<br>{{ $order->email }}@endif
@@ -289,16 +298,16 @@
       </dl>
 
       @if ($order->customer_note)
-        <div class="kbbod-note"><b>Your note</b>{{ $order->customer_note }}</div>
+        <div class="kbbod-note"><b>{{ __('store.order_received.your_note') }}</b>{{ $order->customer_note }}</div>
       @endif
 
       @if ($order->is_gift)
         <div class="kbbod-note">
-          <b>Gift wrapped 🎁</b>
+          <b>{{ __('store.order_received.gift_wrapped') }}</b>
           @if ($order->gift_note)
-            “{{ $order->gift_note }}” — printed on the gift card.
+            {{ __('store.order_received.gift_note', ['note' => $order->gift_note]) }}
           @else
-            This order is wrapped as a gift.
+            {{ __('store.order_received.gift_no_note') }}
           @endif
         </div>
       @endif

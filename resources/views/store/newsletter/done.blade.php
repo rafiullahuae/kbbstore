@@ -1,5 +1,5 @@
 @extends('layouts.store')
-@section('title', $ok ? ($action === 'confirm' ? 'You are subscribed' : 'Unsubscribed') : 'That link did not work')
+@section('title', $ok ? ($action === 'confirm' ? __('store.newsletter.done_subscribed_title') : __('store.newsletter.done_unsub_title')) : __('store.newsletter.bad_link_title'))
 
 @section('content')
 
@@ -21,17 +21,17 @@
     <div class="auth-grid">
         <div class="authcard">
             @if ($ok && $action === 'confirm')
-                <h1>You are on the list</h1>
-                <p class="lede">Thank you — that is confirmed. You will hear from us when there is something worth an email.</p>
-                <p class="muted" style="font-size:13px;">Every email we send carries an unsubscribe link, and it will always work.</p>
+                <h1>{{ __('store.newsletter.done_subscribed_heading') }}</h1>
+                <p class="lede">{{ __('store.newsletter.done_subscribed_lead') }}</p>
+                <p class="muted" style="font-size:13px;">{{ __('store.newsletter.done_subscribed_note') }}</p>
             @elseif ($ok)
-                <h1>Unsubscribed</h1>
-                <p class="lede">Done. This address has been taken off our marketing list and we will not add it back unless you ask us to.</p>
-                <p class="muted" style="font-size:13px;">Order confirmations and delivery updates are not marketing and will still reach you.</p>
+                <h1>{{ __('store.newsletter.done_unsub_title') }}</h1>
+                <p class="lede">{{ __('store.newsletter.done_unsub_lead') }}</p>
+                <p class="muted" style="font-size:13px;">{{ __('store.newsletter.done_unsub_note') }}</p>
             @else
-                <h1>That link did not work</h1>
-                <p class="lede">It may have expired, or it may have been copied incompletely — links wrap badly in some email programs.</p>
-                <p class="muted" style="font-size:13px;">Try opening it again straight from the email. If it still does not work, sign up once more from the homepage and we will send a fresh one.</p>
+                <h1>{{ __('store.newsletter.bad_link_title') }}</h1>
+                <p class="lede">{{ __('store.newsletter.bad_link_lead') }}</p>
+                <p class="muted" style="font-size:13px;">{{ __('store.newsletter.bad_link_note') }}</p>
             @endif
         </div>
     </div>

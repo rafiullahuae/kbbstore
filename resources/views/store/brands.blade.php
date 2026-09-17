@@ -11,7 +11,7 @@
     both modes link to it rather than reproducing it.
 --}}
 @extends('layouts.store')
-@section('title', $brand ? $brand->name : 'All brands')
+@section('title', $brand ? $brand->name : __('store.brands.all_heading'))
 
 @push('styles')
     {{-- Only when there is a banner to draw. A brand with none configured —
@@ -27,9 +27,9 @@
 
 <div class="brw">
     @if ($brand)
-        <nav class="brw-crumb" aria-label="Breadcrumb">
-            <a href="{{ Url::to('/') }}">Home</a> <span>&rsaquo;</span>
-            <a href="{{ Url::to('/korean-skincare-brands/') }}">Brands</a> <span>&rsaquo;</span>
+        <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">
+            <a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> <span>&rsaquo;</span>
+            <a href="{{ Url::to('/korean-skincare-brands/') }}">{{ __('store.breadcrumb.brands') }}</a> <span>&rsaquo;</span>
             <span aria-current="page">{{ $brand->name }}</span>
         </nav>
 
@@ -69,26 +69,26 @@
                     so this link and the directory's tiles can never drift
                     apart, and so U-05 has exactly one place to change.
                 --}}
-                <a class="brw-cta" href="{{ $brand->url() }}">Shop all {{ $brand->name }}</a>
+                <a class="brw-cta" href="{{ $brand->url() }}">{{ __('store.brands.shop_all', ['brand' => $brand->name]) }}</a>
             </div>
         </div>
 
         @if ($products->isEmpty())
-            <p class="brw-empty">Nothing from this brand is in the shop right now.</p>
+            <p class="brw-empty">{{ __('store.brands.brand_empty') }}</p>
         @else
-            <x-product-grid :products="$products" heading="Popular right now"
-                            :more-url="$brand->url()" more-label="View all" />
+            <x-product-grid :products="$products" :heading="__('store.brands.popular_heading')"
+                            :more-url="$brand->url()" :more-label="__('store.product_grid.view_all')" />
         @endif
     @else
-        <nav class="brw-crumb" aria-label="Breadcrumb">
-            <a href="{{ Url::to('/') }}">Home</a> <span>&rsaquo;</span> <span aria-current="page">Brands</span>
+        <nav class="brw-crumb" aria-label="{{ __('store.breadcrumb.label') }}">
+            <a href="{{ Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a> <span>&rsaquo;</span> <span aria-current="page">{{ __('store.breadcrumb.brands') }}</span>
         </nav>
 
-        <h1 class="brw-h1">All brands</h1>
-        <p class="brw-sub">{{ $brands->count() }} brands, {{ $stocked }} with products in the shop right now.</p>
+        <h1 class="brw-h1">{{ __('store.brands.all_heading') }}</h1>
+        <p class="brw-sub">{{ trans_choice('store.brands.all_subtitle', $brands->count(), ['total' => $brands->count(), 'stocked' => $stocked]) }}</p>
 
         @if ($brands->isEmpty())
-            <p class="brw-empty">No brands have been added yet.</p>
+            <p class="brw-empty">{{ __('store.brands.none_yet') }}</p>
         @else
             {{--
                 The count-derived numbers the grid is built from — see
@@ -137,7 +137,7 @@
                         @if ($showName)
                             <span class="brw-name">{{ $item->name }}</span>
                         @endif
-                        <span class="brw-count">{{ $n > 0 ? $n . ' ' . \Illuminate\Support\Str::plural('product', $n) : 'Coming soon' }}</span>
+                        <span class="brw-count">{{ $n > 0 ? trans_choice('store.brands.card_count', $n) : __('store.brands.card_coming_soon') }}</span>
                     </a>
                 @endforeach
             </div>

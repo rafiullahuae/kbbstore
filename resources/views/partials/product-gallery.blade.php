@@ -25,7 +25,7 @@
 
     $brandName = $product->brand?->name;
     $shotCount = count($gallery);
-    $mainShot = $gallery[0] ?? ['image' => null, 'label' => 'Front', 'video' => false];
+    $mainShot = $gallery[0] ?? ['image' => null, 'label' => __('store.product.gallery_front'), 'video' => false];
     $mainImage = $mainShot['image'] ?? null;
 
     /* THE MAIN SHOT IS THE LARGEST ASSET ON THIS PAGE, and until now every
@@ -87,7 +87,7 @@
 
         @unless ($modules->hidden('wishlist'))
             <button class="{{ $modules->classFor('wishlist') }} gwish" type="button" id="gwish"
-                    data-kbb-wish="{{ $product->id }}" aria-label="Save to wishlist">
+                    data-kbb-wish="{{ $product->id }}" aria-label="{{ __('store.product.save_to_wishlist') }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg>
             </button>
         @endunless

@@ -1,5 +1,5 @@
 @extends('layouts.store')
-@section('title', 'login' === $tab ? 'Sign in' : 'Create account')
+@section('title', 'login' === $tab ? __('store.account.sign_in_title') : __('store.account.register_title'))
 
 @section('content')
 @php
@@ -12,46 +12,46 @@
         <div class="authcard">
             @if ($panel['form_mark'])<span class="mark">KB</span>@endif
 
-            <h1>{{ 'login' === $tab ? 'Welcome back' : 'Create your account' }}</h1>
+            <h1>{{ 'login' === $tab ? __('store.account.sign_in_heading') : __('store.account.register_heading') }}</h1>
             <p class="lede">{{ 'login' === $tab
-                ? 'Sign in to see your orders and wishlist.'
-                : 'It takes about a minute.' }}</p>
+                ? __('store.account.sign_in_lead')
+                : __('store.account.register_lead') }}</p>
 
             @if ($errors->any())<div class="auth-err">{{ $errors->first() }}</div>@endif
             @if (session('status'))<div class="auth-ok">{{ session('status') }}</div>@endif
 
             <div class="segs">
-                <a class="seg {{ 'login' === $tab ? 'on' : '' }}" href="{{ Url::to('/my-account/') }}">Sign in</a>
-                <a class="seg {{ 'register' === $tab ? 'on' : '' }}" href="{{ Url::to('/my-account/') }}?tab=register">Create account</a>
+                <a class="seg {{ 'login' === $tab ? 'on' : '' }}" href="{{ Url::to('/my-account/') }}">{{ __('store.account_panel.tab_sign_in') }}</a>
+                <a class="seg {{ 'register' === $tab ? 'on' : '' }}" href="{{ Url::to('/my-account/') }}?tab=register">{{ __('store.account_panel.tab_register') }}</a>
             </div>
 
             @if ('login' === $tab)
                 <form method="post" action="{{ Url::to('/my-account/login') }}">
                     @csrf
                     <div class="fgroup">
-                        <x-field name="email" label="Email address" type="email"
+                        <x-field name="email" :label="__('store.checkout.field_email')" type="email"
                                  :value="old('email')" icon="mail" autocomplete="email" />
-                        <x-field name="password" label="Password" type="password"
+                        <x-field name="password" :label="__('store.account_panel.field_password')" type="password"
                                  icon="lock" autocomplete="current-password" reveal />
                     </div>
 
                     <div class="row">
-                        <label class="chk"><input type="checkbox" name="remember" value="1"><span></span>Stay signed in</label>
-                        <a href="{{ Url::to('/my-account/forgot/') }}">Forgot password?</a>
+                        <label class="chk"><input type="checkbox" name="remember" value="1"><span></span>{{ __('store.account_panel.stay_signed_in') }}</label>
+                        <a href="{{ Url::to('/my-account/forgot/') }}">{{ __('store.account.forgot_link') }}</a>
                     </div>
 
-                    <button class="go" type="submit">Sign in</button>
+                    <button class="go" type="submit">{{ __('store.account_panel.sign_in_button') }}</button>
                 </form>
-                <p class="alt">New here? <a href="{{ Url::to('/my-account/') }}?tab=register">Create an account</a></p>
+                <p class="alt">{!! __('store.account.new_here', ['link' => '<a href="' . e(Url::to('/my-account/') . '?tab=register') . '">' . e(__('store.account.new_here_link')) . '</a>']) !!}</p>
             @else
                 <form method="post" action="{{ Url::to('/my-account/register') }}">
                     @csrf
                     <div class="fgroup">
-                        <x-field name="name" label="Full name" :value="old('name')" icon="user" autocomplete="name" />
-                        <x-field name="email" label="Email address" type="email" :value="old('email')" icon="mail" autocomplete="email" />
-                        <x-field name="password" label="Password" type="password" icon="lock"
+                        <x-field name="name" :label="__('store.checkout.field_full_name')" :value="old('name')" icon="user" autocomplete="name" />
+                        <x-field name="email" :label="__('store.checkout.field_email')" type="email" :value="old('email')" icon="mail" autocomplete="email" />
+                        <x-field name="password" :label="__('store.account_panel.field_password')" type="password" icon="lock"
                                  autocomplete="new-password" minlength="8" reveal />
-                        <x-field name="password_confirmation" label="Confirm password" type="password"
+                        <x-field name="password_confirmation" :label="__('store.account_panel.field_password_confirm')" type="password"
                                  icon="lock" autocomplete="new-password" minlength="8" />
                     </div>
 
@@ -62,7 +62,7 @@
                             <span class="meter-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
                             <span class="meter-label" role="status" aria-live="polite"></span>
                         </div>
-                        <p class="hint">Eight characters or more, with a mix of letters and numbers.</p>
+                        <p class="hint">{{ __('store.account.password_hint') }}</p>
                     @endif
 
                     @if ($hc)
@@ -72,33 +72,34 @@
                             <div class="fld tiny">
                                 <input type="text" name="hc_answer" id="f-hc" placeholder=" "
                                        inputmode="numeric" autocomplete="off" required>
-                                <label for="f-hc">Answer</label>
+                                <label for="f-hc">{{ __('store.reviews.field_captcha_placeholder') }}</label>
                             </div>
                         </div>
                     @endif
 
-                    <button class="go" type="submit">Create account</button>
+                    <button class="go" type="submit">{{ __('store.account_panel.register_button') }}</button>
 
                     @if ($panel['terms_show'])
-                        <p class="alt">By continuing you agree to our
-                            <a href="{{ Url::to('/terms-and-conditions/') }}">terms</a> and
-                            <a href="{{ Url::to('/privacy-policy/') }}">privacy policy</a>.</p>
+                        <p class="alt">{!! __('store.account.terms_notice', [
+                            'terms' => '<a href="' . e(Url::to('/terms-and-conditions/')) . '">' . e(__('store.account_panel.terms_link')) . '</a>',
+                            'privacy' => '<a href="' . e(Url::to('/privacy-policy/')) . '">' . e(__('store.account_panel.privacy_link')) . '</a>',
+                        ]) !!}</p>
                     @endif
                 </form>
-                <p class="alt">Already have an account? <a href="{{ Url::to('/my-account/') }}">Sign in</a></p>
+                <p class="alt">{!! __('store.account.have_account', ['link' => '<a href="' . e(Url::to('/my-account/')) . '">' . e(__('store.account_panel.tab_sign_in')) . '</a>']) !!}</p>
             @endif
         </div>
 
         @if ($panel['form_aside'])
             <aside class="authside">
-                <h2>Why an account</h2>
+                <h2>{{ __('store.account.aside_heading') }}</h2>
                 <ul>
-                    <li>Your orders and their status in one place</li>
-                    <li>Checkout without retyping your address</li>
-                    <li>Your wishlist kept across devices</li>
-                    <li>Early access to restocks</li>
+                    <li>{{ __('store.account.aside_point_orders') }}</li>
+                    <li>{{ __('store.account.aside_point_checkout') }}</li>
+                    <li>{{ __('store.account.aside_point_wishlist') }}</li>
+                    <li>{{ __('store.account.aside_point_restocks') }}</li>
                 </ul>
-                <p class="authside-note">Free delivery on orders over د.إ150.</p>
+                <p class="authside-note">{{ __('store.account.aside_free_delivery') }}</p>
             </aside>
         @endif
     </div>

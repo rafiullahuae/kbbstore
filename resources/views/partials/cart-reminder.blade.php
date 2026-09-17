@@ -78,12 +78,12 @@
                 <span>{{ $reminderLabel }}</span>
             </label>
 
-            <label for="cartReminderEmail" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Your email address</label>
+            <label for="cartReminderEmail" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">{{ __('store.cart_reminder.email_label') }}</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
                 <input id="cartReminderEmail" type="email" name="email" required maxlength="160"
-                       autocomplete="email" placeholder="you@example.com"
+                       autocomplete="email" placeholder="{{ __('store.cart_reminder.email_placeholder') }}"
                        style="flex:1 1 200px;min-width:0;padding:10px 12px;border:1px solid var(--line,#e6e6e6);border-radius:8px;font-size:15px;">
-                <button type="submit" style="padding:10px 18px;border:0;border-radius:8px;background:#1d1d1f;color:#fff;font-size:15px;cursor:pointer;">Remind me</button>
+                <button type="submit" style="padding:10px 18px;border:0;border-radius:8px;background:#1d1d1f;color:#fff;font-size:15px;cursor:pointer;">{{ __('store.cart_reminder.submit') }}</button>
             </div>
 
             {{--
@@ -96,9 +96,7 @@
                 capture is refused rather than merely stopped.
             --}}
             <p style="margin:10px 0 0;font-size:12px;color:#666;line-height:1.5;">
-                We will store your email address with this basket so we can remind you about it.
-                If you place your order, we stop. Every reminder has an unsubscribe link, and using
-                it stops these emails for good.
+                {{ __('store.cart_reminder.privacy') }}
             </p>
         </form>
     </div>
