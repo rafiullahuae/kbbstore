@@ -130,6 +130,24 @@
 .tr-acts{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:14px}
 
 .tr-field{display:block;margin-top:12px}
+
+/* ── How to get a key ──────────────────────────────────────────────────────
+   A <details>, so the guide is one line when a key is already saved and a full
+   page when it is not. The summary keeps a real focus ring: this is the only
+   control in the card a keyboard user can reach that is not a button, and the
+   browser's default outline is what tells them where they are. */
+.tr-guide{margin-top:18px;border-top:1px solid var(--line-2,var(--border,#e6e8eb));padding-top:14px}
+.tr-guide > summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink,#111827);list-style:none;display:flex;align-items:center;gap:7px}
+.tr-guide > summary::-webkit-details-marker{display:none}
+.tr-guide > summary::before{content:'';width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;border-bottom:4px solid transparent;transition:transform .15s ease;flex:none}
+.tr-guide[open] > summary::before{transform:rotate(90deg)}
+@media (prefers-reduced-motion:reduce){.tr-guide > summary::before{transition:none}}
+.tr-steps{margin:12px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:13px}
+.tr-steps li{font-size:12.5px;line-height:1.55;color:var(--ink-soft,#6b7280)}
+.tr-steps li b{display:block;color:var(--ink,#111827);font-weight:600;margin-bottom:2px}
+.tr-steps li a{display:inline-block;margin-top:5px;color:var(--brand,#0f7b4f);text-decoration:none;font-weight:600;word-break:break-word}
+.tr-steps li a:hover,.tr-steps li a:focus-visible{text-decoration:underline}
+.tr-guide .tr-sub{margin-top:14px}
 .tr-field span{display:block;font-size:11.5px;font-weight:650;text-transform:uppercase;
                letter-spacing:.05em;color:var(--ink-soft,#6b7280);margin-bottom:5px}
 .tr-field input,.tr-field select,.tr-field textarea{width:100%;box-sizing:border-box;padding:8px 10px;font:inherit;
@@ -432,6 +450,51 @@
   }
 
   /* =============================== screen 1: settings =============================== */
+  /* ---------------------------------------------------------------------------
+     HOW TO GET A KEY, under the box that wants one.
+
+     A field asking for something the owner does not have and cannot guess is a
+     dead end, and this one asks for a credential from somebody else's console
+     six clicks deep. The steps come from the SERVER
+     (TranslationConsole::setupGuide()), not from here, for the reason that
+     applies to every sentence on these screens: they are true of one provider,
+     and swapping the provider has to change them in the same commit.
+
+     OPEN WHEN THERE IS NO KEY, COLLAPSED WHEN THERE IS. With no key, this is
+     what the screen is for and it should not need a click. With a key saved,
+     the owner is usually here to replace one — the guide is still the right
+     answer, just not the first thing he should have to scroll past.
+
+     Every link opens in a new tab with rel="noopener": these leave for Google's
+     console, and a console tab that can reach back into this one through
+     window.opener is a needless hole. The MENU PATH is printed beside each link
+     on purpose — a deep link into somebody else's product is the part of this
+     that rots first, and a moved page should cost a look rather than a dead end.
+  --------------------------------------------------------------------------- */
+  function setupGuideHTML(s){
+    var g = s && s.setup_guide;
+    if (!g || !g.steps || !g.steps.length) return '';
+
+    var open = s.has_api_key ? '' : ' open';
+
+    return '<details class="tr-guide"' + open + '>'
+      + '<summary>' + esc(g.heading) + '</summary>'
+      + '<ol class="tr-steps">'
+      + g.steps.map(function(step){
+          return '<li>'
+            + '<b>' + esc(step.title) + '</b>'
+            + '<div>' + esc(step.body) + '</div>'
+            + (step.url
+                ? '<a href="' + esc(step.url) + '" target="_blank" rel="noopener noreferrer">'
+                  + esc(step.link_label || step.url) + ' \u2197</a>'
+                : '')
+            + '</li>';
+        }).join('')
+      + '</ol>'
+      + (g.closing ? '<p class="tr-sub">' + esc(g.closing) + '</p>' : '')
+      + '</details>';
+  }
+
   function settingsView(){
     if (!settings) return '<div class="tr-card tr-empty">' + (busy() ? 'Loading…' : 'Not loaded.') + '</div>';
 
@@ -486,9 +549,12 @@
             + (s.has_api_key
                 ? '<button type="button" class="tr-btn is-danger" data-tr-act="clear-key"' + (busy() ? ' disabled' : '') + '>Remove the saved key</button>'
                 : '')
+
+
             + '</div>'
           : '<p class="tr-sub" style="margin-top:10px">' + (s.has_api_key ? 'A key is saved.' : 'No key is saved.')
             + '</p>')
+      + setupGuideHTML(s)
       + '</div>';
 
     return '<div class="tr-wrap">' + bannerHTML() + capabilityHTML() + switches + addresses + key + '</div>';

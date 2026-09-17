@@ -87,6 +87,13 @@ class TranslationsApiController extends Controller
                 (bool) $this->settings->get(Locale::SETTING_ENABLED, false),
             ),
             'provider_note' => TranslationConsole::providerNote($provider),
+            /*
+             * How to get a key, sent whether or not one is saved — and from
+             * BOTH payloads, because the screen repaints from the save
+             * response and a guide that vanished on save would disappear at
+             * the moment a failed key most needs it explained.
+             */
+            'setup_guide' => TranslationConsole::setupGuide(),
 
             /*
              * What THIS admin may do, so the screen can show a lever it cannot
@@ -234,6 +241,13 @@ class TranslationsApiController extends Controller
             'provider' => $provider->name(),
             'provider_available' => $provider->available(),
             'provider_note' => TranslationConsole::providerNote($provider),
+            /*
+             * How to get a key, sent whether or not one is saved — and from
+             * BOTH payloads, because the screen repaints from the save
+             * response and a guide that vanished on save would disappear at
+             * the moment a failed key most needs it explained.
+             */
+            'setup_guide' => TranslationConsole::setupGuide(),
             'usd_per_million' => TranslationEstimate::USD_PER_MILLION,
             /*
              * THE CURRENCY, SPELLED OUT, and rendered here rather than by the

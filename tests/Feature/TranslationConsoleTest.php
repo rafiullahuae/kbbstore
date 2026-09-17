@@ -642,3 +642,88 @@ it('ships nothing switched on', function () {
         ->and($migration)->not->toContain('Schema::')
         ->and($migration)->toContain("storage_path('framework/views/*.php')");
 });
+
+/*
+|------------------------------------------------------------------------------
+| HOW TO GET A KEY
+|------------------------------------------------------------------------------
+|
+| A field asking for a credential from somebody else's console, six clicks deep,
+| with no instructions, is a dead end — and it is the one field on this screen
+| the owner cannot fill in by thinking harder.
+*/
+
+it('tells the owner how to get a key, with links he can actually press', function () {
+    $guide = \App\Support\TranslationConsole::setupGuide();
+
+    expect($guide['steps'])->not->toBeEmpty();
+
+    foreach ($guide['steps'] as $i => $step) {
+        expect(trim($step['title']))->not->toBe('', "step {$i} has no title");
+        expect(trim($step['body']))->not->toBe('', "step {$i} has no body");
+
+        if ($step['url'] !== null) {
+            // https only, and Google's own hosts only. A setup guide is exactly
+            // the place a wrong link costs the most: the owner is being asked
+            // to create a credential, so a link to somewhere that merely LOOKS
+            // like Google is the shape of a phishing page.
+            expect($step['url'])->toStartWith('https://');
+            expect(
+                str_starts_with($step['url'], 'https://console.cloud.google.com/')
+                || str_starts_with($step['url'], 'https://cloud.google.com/')
+            )->toBeTrue("step {$i} links somewhere that is not Google: {$step['url']}");
+        }
+    }
+});
+
+it('names the credential this shop can actually use, not the one it cannot', function () {
+    /*
+     * GoogleProvider calls the v2 endpoint with the key as a query parameter,
+     * so what the owner needs is an API KEY. Google's Credentials screen offers
+     * a service account and a JSON file just as prominently, and that is the
+     * wrong kind — it is what v3 wants and it will not work here. The guide has
+     * to say so, or the likeliest wrong turn is the one the console nudges him
+     * towards.
+     */
+    $text = json_encode(\App\Support\TranslationConsole::setupGuide());
+
+    expect($text)->toContain('API key');
+    expect(strtolower((string) $text))->toContain('service account');
+
+    // And the endpoint really is the one this claim rests on.
+    $provider = (string) file_get_contents(app_path('Services/Translation/GoogleProvider.php'));
+    expect($provider)->toContain('/language/translate/v2');
+});
+
+it('says the free allowance is a credit, because that is what Google bills', function () {
+    /*
+     * Google's published pricing: the first 500,000 characters a month are
+     * "Free (applied as a $10 credit every month)". A credit is not a cap —
+     * billing must be set up before a single free character is translated, and
+     * going past the allowance charges the card rather than refusing.
+     *
+     * An owner told "the first 500,000 are free" reasonably concludes he cannot
+     * be charged by accident. He can. This is the sentence that has to carry
+     * that, and the guide's billing step depends on the same fact.
+     */
+    $note = \App\Support\TranslationConsole::freeTierNote();
+
+    expect(strtolower($note))->toContain('credit');
+    expect($note)->not->toContain('at no charge');
+
+    $guide = json_encode(\App\Support\TranslationConsole::setupGuide());
+    expect(strtolower((string) $guide))->toContain('billing');
+});
+
+it('serves the guide from the settings endpoint whether or not a key is saved', function () {
+    // Sent from BOTH payloads: the screen repaints from the save response, and
+    // a guide that vanished on save would disappear at the moment a rejected
+    // key most needs explaining.
+    $body = test()->actingAs(fcAdmin(), 'admin')
+        ->getJson('/admin-api/translations/settings')
+        ->assertOk()
+        ->json();
+
+    expect($body)->toHaveKey('setup_guide');
+    expect($body['setup_guide']['steps'])->not->toBeEmpty();
+});
