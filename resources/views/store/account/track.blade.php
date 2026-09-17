@@ -37,7 +37,7 @@
     border-bottom:1px solid var(--line-2)}
 .kbbtr-row:last-child{border-bottom:0}
 .kbbtr-row span:first-child{color:var(--muted);font-weight:600}
-.kbbtr-row span:last-child{text-align:right;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
+.kbbtr-row span:last-child{text-align:end;font-weight:700;color:var(--ink);overflow-wrap:anywhere}
 .kbbtr-msg{margin-top:18px;border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.55}
 .kbbtr-msg.is-miss{background:#FDECEF;border:1px solid #F6C9D2;color:#B3243F}
 .kbbtr-msg.is-slow{background:#FFF4E5;border:1px solid #F3DCB8;color:#B26A00}

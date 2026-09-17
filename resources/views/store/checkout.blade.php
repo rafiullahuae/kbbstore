@@ -357,13 +357,13 @@
 .kbb-checkout .kbb-acct-opt input[type="checkbox"],
 .kbb-checkout .kbb-gift-opt input[type="checkbox"]{width:17px;height:17px;margin-top:1px;
   accent-color:var(--pink);flex-shrink:0;margin-top:0}
-.kbb-checkout .kbb-gift-fee{margin-left:7px;font-weight:700;color:var(--pink)}
+.kbb-checkout .kbb-gift-fee{margin-inline-start:7px;font-weight:700;color:var(--pink)}
 .kbb-checkout .kbb-acct-pw,
 .kbb-checkout .kbb-gift-msg{display:block;margin-top:9px}
 .kbb-checkout .kbb-acct-err{display:block;margin-top:6px;font-size:12px;color:var(--pink)}
 .kbb-checkout .kbb-note textarea,
 .kbb-checkout .kbb-gift textarea{resize:vertical;min-height:62px}
-.kbb-checkout .kbb-gift-count{display:block;margin-top:5px;font-size:11px;color:var(--muted);text-align:right}
+.kbb-checkout .kbb-gift-count{display:block;margin-top:5px;font-size:11px;color:var(--muted);text-align:end}
 </style>
 <script>
 /* The order summary's quantity endpoint, prefixed for this deployment.

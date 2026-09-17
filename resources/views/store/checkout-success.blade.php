@@ -25,7 +25,7 @@
 .kbb-checkout .co-received{max-width:640px;margin:0 auto;padding:28px 20px 60px}
 /* The confirmation heading is the one green moment on the page: the order
    succeeded, and green says so faster than any wording. */
-.kbb-checkout .sec.co-ok > h2{background:#EEF8F1;border-left-color:#2E9E68;color:#1F7D52}
+.kbb-checkout .sec.co-ok > h2{background:#EEF8F1;border-inline-start-color:#2E9E68;color:#1F7D52}
 .kbb-checkout .sec.co-ok > h2 .n{background:#2E9E68;color:#fff}
 .kbb-checkout .co-acts{display:grid;gap:9px;margin-top:4px}
 .kbb-checkout .co-act{display:flex;align-items:center;gap:11px;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;font-weight:700;color:var(--ink);transition:.15s var(--ease)}

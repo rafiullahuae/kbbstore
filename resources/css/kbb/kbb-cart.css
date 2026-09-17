@@ -17,7 +17,7 @@
    count was therefore lifted out of the heading and pinned to the page.
    Renaming the class removes the collision instead of layering another
    override on top of it. */
-.kbb-cartpage .cart-count{display:inline;position:static;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-left:6px;white-space:nowrap}
+.kbb-cartpage .cart-count{display:inline;position:static;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:0;margin-inline-start:6px;white-space:nowrap}
 
 .kbb-cartpage .grid{display:grid;grid-template-columns:1fr 372px;gap:26px;align-items:start}
 @media(max-width:860px){.kbb-cartpage .grid{grid-template-columns:1fr}}
@@ -42,7 +42,7 @@
 .kbb-cartpage .qty button{width:28px;height:28px;font-size:15px;color:var(--ink-2)}
 .kbb-cartpage .qty button:hover{background:var(--pink-soft);color:var(--pink-deep)}
 .kbb-cartpage .qty span{min-width:28px;text-align:center;font-size:13px;font-weight:700}
-.kbb-cartpage .cright{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
+.kbb-cartpage .cright{text-align:end;display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
 .kbb-cartpage .cpr{font-size:14px;font-weight:700;white-space:nowrap;color:var(--ink)}
 .kbb-cartpage .cwas{display:block;font-size:11.5px;color:var(--muted);text-decoration:line-through;margin-top:2px;font-weight:400}
 .kbb-cartpage .crm{font-size:11px;color:var(--muted);cursor:pointer}
@@ -84,9 +84,9 @@
 /* WooCommerce notices, restyled to match */
 .kbb-cartpage .woocommerce-message,
 .kbb-cartpage .woocommerce-error,
-.kbb-cartpage .woocommerce-info{list-style:none;background:#fff;border:1px solid var(--line-2);border-left:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:14px;box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}
-.kbb-cartpage .woocommerce-error{border-left-color:var(--sale)}
-.kbb-cartpage .woocommerce-message{border-left-color:var(--green)}
+.kbb-cartpage .woocommerce-info{list-style:none;background:#fff;border:1px solid var(--line-2);border-inline-start:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:14px;box-shadow:0 12px 30px -24px rgba(42,34,40,.3)}
+.kbb-cartpage .woocommerce-error{border-inline-start-color:var(--sale)}
+.kbb-cartpage .woocommerce-message{border-inline-start-color:var(--green)}
 
 /* ===== mobile ===== */
 @media(max-width:600px){
