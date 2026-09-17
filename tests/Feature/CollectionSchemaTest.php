@@ -28,9 +28,18 @@ declare(strict_types=1);
  *    is 12600 in the column, and an earlier pass at Product schema wired that
  *    column straight into the Offer -- caught in 2.60.36 before it shipped, and
  *    the plan records it. `it('publishes the price in dirhams, never the fils
- *    column')` is the guard, and the mutation that proves it is live is
- *    replacing CollectionSchema's Money::decimalString($minor) with $minor:
- *    the test then reads 12600.00 and fails.
+ *    column')` is the guard. Two mutations were run against it and both make it
+ *    red: casting the integer to a STRING under the `price` key (12600 arrives
+ *    as an already-formatted price and is published verbatim), and passing the
+ *    bare integer with `price_minor` dropped (Money::fromMajor multiplies it by
+ *    a hundred again and publishes 12600.00).
+ *
+ *    A THIRD was run and does NOT go red, and it is recorded because it looks
+ *    like it should: passing the bare integer under `price` while LEAVING
+ *    `price_minor` in place. Seo::priceString() reads price_minor first, so the
+ *    pair is genuinely redundant and the redundancy absorbs the mistake. That
+ *    is a property of the design worth knowing about and not a hole in this
+ *    guard -- the two mutations above cover the shapes that reach the wire.
  *
  * 2. THE SALE PRICE. A product on sale prints the sale price on the tile.
  *    Publishing the list price beside it is a mismatch Google reports against

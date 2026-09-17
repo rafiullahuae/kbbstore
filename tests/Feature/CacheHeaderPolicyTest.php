@@ -31,15 +31,25 @@ declare(strict_types=1);
  * through the kernel: the alternative is calling handle() with a hand-built
  * request, which proves the method and not the site.
  *
- * ── MUTATIONS THESE CATCH ─────────────────────────────────────────────────
+ * ── MUTATIONS THESE CATCH, EACH ONE RUN ──────────────────────────────────
  *
- *   - CacheHeaders::REVALIDATE changed to anything containing `public`
- *   - the account/cart/checkout list emptied, or read before the locale
- *     segment is stripped so /ar/my-account/ stops being private
- *   - the guard that leaves an existing Cache-Control alone removed, which
- *     would let this overwrite NoStoreAdminApi's stricter header
+ *   - CacheHeaders::REVALIDATE changed to `public, max-age=60`
+ *   - the guard that leaves an existing Cache-Control alone deleted, which
+ *     downgrades the admin console from no-store to must-revalidate
  *   - the max-age in docs/cache-headers.htaccess edited away from the constant
- *   - a Vite build that stops hashing its output names
+ *   - a rewrite added to docs/cache-headers.htaccess
+ *   - a Vite manifest entry whose built file carries no content hash
+ *
+ * ── AND ONE IT DOES NOT, RECORDED RATHER THAN CLAIMED ────────────────────
+ *
+ * Replacing the Locale::splitPath() call in isPrivatePage() with a raw
+ * $request->path() changes nothing any case here can see. SetLocaleFromPath is
+ * PREPENDED to the global stack and rewrites the request, so /ar/my-account/
+ * already reads as /my-account/ by the time this middleware runs. The Arabic
+ * case below is therefore a statement about the OUTCOME -- an Arabic private
+ * page is private -- and not a guard on how that outcome is reached. The
+ * middleware's own comment says the same thing in the same words, so nobody
+ * reading either one is left thinking the split is load-bearing today.
  */
 
 use App\Http\Middleware\CacheHeaders;
