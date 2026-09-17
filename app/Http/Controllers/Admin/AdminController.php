@@ -1811,6 +1811,41 @@ class AdminController extends Controller
          * stylesheet, and the Theme screen still says so about those.
          */
         'brand_accent' => ['hex', 'Brand colour'],
+
+        /*
+         * THE SHOP'S TRUST CLAIMS — Lane DR.
+         *
+         * "100% original", "Direct from brands and trusted suppliers",
+         * "24/7 support", "Korean brands, all sourced direct" and two spellings
+         * of "100% authentic" were literals inside Blade templates: statements
+         * about how this business buys stock and how many hours a day it
+         * answers the phone, made to every visitor and, on the checkout, to
+         * every shopper in the second before they pay. Whether any of them is
+         * true is the owner's question; that he could neither see them nor
+         * withdraw them was ours. On shared hosting with no shell, a claim in a
+         * template is a claim only a signed package can retract.
+         *
+         * `reassure_auth_text` was already read from settings by
+         * partials/checkout/reassurance.blade.php and had NO ENTRY HERE, which
+         * on this endpoint is the same as not existing: updateSettings()
+         * rejects every key that is not in this list, so the screen would have
+         * reported success and written nothing. That is the failure the header
+         * of this list warns about, caught in the wild.
+         *
+         * `text` for all six, and the empty string is ACCEPTED ON PURPOSE.
+         * Clearing the box is how the owner says "do not print this", and
+         * App\Support\TrustClaims turns a cleared value into a removed badge
+         * rather than an empty one. A rule that refused blanks would take that
+         * answer away. Defaults live in TrustClaims::CLAIMS, not here, so the
+         * wording has one home.
+         */
+        'trust_authentic_title' => ['text', 'Home page: authenticity badge title'],
+        'trust_authentic_text' => ['text', 'Home page: authenticity badge wording'],
+        'trust_support_title' => ['text', 'Home page: support badge title'],
+        'home_brands_note' => ['text', 'Home page: brands section note'],
+        'checkout_authentic_text' => ['text', 'Checkout: authenticity chip'],
+        'reassure_auth_text' => ['text', 'Checkout: reassurance line'],
+        'anno_authentic_text' => ['text', 'Announcement bar: authenticity claim'],
     ];
 
     /** PUT /admin-api/settings — upsert a whitelisted set of store settings. */

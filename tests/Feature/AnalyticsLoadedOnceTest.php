@@ -308,8 +308,25 @@ it('loads analytics on the standalone documents too, and only once', function ()
     // /skincare-guide/ is the blog index (routes/web.php names it `blog`;
     // /blog 301s to it). Asserted at 200 rather than skipped on anything else,
     // so a renamed route fails this test instead of quietly emptying it.
+    /*
+     * /app IS WALKED AS AN ADMIN — Lane DR.
+     *
+     * PageController::app() gives a logged-out visitor a 404 now: the preview
+     * priced twenty-four invented products and offered two discount codes the
+     * coupons table has never held, so it is served to an authenticated admin
+     * and to nobody else. It still renders its own <head>, which is what this
+     * test is about, so it stays in the sweep with a session that can reach it
+     * rather than dropping out of coverage.
+     */
+    $admin = \App\Models\AdminUser::create([
+        'name' => 'DP Owner',
+        'email' => 'dp-owner-' . uniqid() . '@example.test',
+        'password' => 'secret-secret',
+        'role' => 'owner',
+    ]);
+
     foreach (['/skincare-guide/', '/skin-quiz/', '/reviews/', '/app/'] as $path) {
-        $html = test()->get($path)->assertOk()->getContent();
+        $html = test()->actingAs($admin, 'admin')->get($path)->assertOk()->getContent();
 
         expect(dpGaLoaders($html))->toBe(1, "{$path}: Google's tag must be loaded exactly once");
         expect(dpGaConfigs($html))->toBe(1, "{$path}: one config call");

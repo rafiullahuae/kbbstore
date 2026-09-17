@@ -190,7 +190,15 @@ function shapePages(array $seed): array
         'review wall'         => ['/reviews', null],
         'review wall filter'  => ['/reviews?rfilter=photos', null],
         'skin quiz'           => ['/skin-quiz', null],
-        'app prototype'       => ['/app', null],
+        /*
+         * /app WAS HERE AND IS GONE (Lane DR). PageController::app() serves the
+         * prototype only to an authenticated admin now and 404s everybody else,
+         * because the page priced twenty-four invented products and offered two
+         * discount codes `coupons` has never held. A 404 has no SQL to shape,
+         * and a fixture that logged in as an admin to keep it in this list
+         * would be shape-checking the admin, which is not what this file is.
+         * tests/Feature/PublicPagesQuoteRealPricesTest.php owns it now.
+         */
         'content page'        => ['/about', null],
         'my account'          => ['/my-account', $customerId],
         'account orders'      => ['/my-account/orders', $customerId],
@@ -215,9 +223,11 @@ function shapePages(array $seed): array
  * guard below does not read them as having silently rendered nothing.
  *
  * Each one is server-rendered chrome around a client-side page: the quiz is
- * entirely in JavaScript, and /app is a self-contained prototype with its
- * catalogue baked into the page. A page appearing here that does have data to
- * load is a bug, not an exemption.
+ * entirely in JavaScript. A page appearing here that does have data to load is
+ * a bug, not an exemption.
+ *
+ * /app WAS THE SECOND ENTRY AND IS NO LONGER SWEPT AT ALL (Lane DR) — see the
+ * note where it left the case list above.
  *
  * THE REVIEW WALL WAS HERE AND SHOULD NOT HAVE BEEN (Lane DM). The exemption
  * read "the review wall fetches /api/reviews from the browser", and it did not:
@@ -225,7 +235,7 @@ function shapePages(array $seed): array
  * JavaScript array, which is exactly the "page that does have data to load"
  * this list is not for. It reads `reviews` now and is shape-checked.
  */
-const SHAPE_STATIC = ['skin quiz', 'app prototype'];
+const SHAPE_STATIC = ['skin quiz'];
 
 /**
  * Drop the framework's own schema introspection from a captured log.

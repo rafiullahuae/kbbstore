@@ -15,6 +15,7 @@ use App\Support\Seo;
 use App\Support\Url;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Editable content pages: privacy policy, terms, delivery and so on.
@@ -200,28 +201,62 @@ class PageController extends Controller
     }
 
     /**
-     * The standalone app prototype at /app.
+     * The standalone app prototype at /app — now a developer preview behind the
+     * admin session, and a 404 to everybody else.
      *
-     * The third instance of the same bug skinQuiz() and reviewWall() above were
-     * written to fix, and the one nobody caught: routes/web.php has pointed
-     * /app at PageController::app() since the 2.60.41 baseline and the method
-     * was never written, so the page has thrown
+     * THE HISTORY. routes/web.php has pointed /app at this method since the
+     * 2.60.41 baseline and the method was never written, so the page threw
      * "Call to undefined method ...PageController::app()" — a 500 to every
-     * visitor — for the entire life of the repo. The Blade view
-     * (resources/views/store/app.blade.php) has been complete the whole time;
-     * only the controller half was missing, which is why the tree looked fine.
+     * visitor — for most of the life of the repo. Writing the method turned a
+     * 500 into a 200, and a 200 is what made the real defect reachable.
      *
-     * The page is entirely client-side — it renders its own catalogue from a
-     * JavaScript array and calls itself a "standalone app prototype" in its own
-     * footer — so, like skinQuiz(), there is nothing to fetch: it needs its
-     * <head> and nothing else.
+     * WHAT A LOGGED-OUT VISITOR WAS BEING SERVED. resources/views/store/app.blade.php
+     * is a complete second storefront: the same logo, the same lockup, the same
+     * nav, the same payment chips. It is not recognisable as a prototype. And
+     * everything in it is invented:
      *
-     * noindex, because that prototype catalogue is invented. Letting a search
-     * engine index a second copy of the storefront, listing products at prices
-     * that are not real, competes with the pages that are.
+     *   - `const PRODUCTS=[...]` — twenty-four products with names, brands,
+     *     "was" prices, sale prices, star ratings and review counts, none of
+     *     which is read from, or checked against, the products table.
+     *   - `const COUPONS={GLOW30:..., KBB10:...}` — two discount codes the
+     *     coupons table has never contained, advertised in the hero slide, on
+     *     the product view, in the cart's own coupon box ("try GLOW30") and in
+     *     the error toast a wrong code produces. The box accepts them and
+     *     shows the money coming off.
+     *   - "50+ Korean brands", "100% original" and "24/7 support" as literals.
+     *
+     * 2.60.190 shipped for exactly one of these: the real front page offering a
+     * discount code the shop has not got. That fix was incomplete, because this
+     * page went on offering the same code, plus a second one, at a public URL.
+     *
+     * WHY noindex WAS NOT A FIX. The old docblock reasoned that noindex kept
+     * the invented catalogue out of search results, which it does. It does
+     * nothing about the customer who has the URL — from a chat message, a
+     * bookmark, a shared link — and that customer is the one who sees a price
+     * and a coupon code that will not survive contact with the checkout.
+     *
+     * WHAT IT DOES NOW. The page is a developer preview, so it is served to a
+     * developer: an authenticated admin session sees it exactly as before, and
+     * everyone else gets the same 404 the router gives for a path that was
+     * never registered. abort(404), not a redirect and not a 403, because a 403
+     * confirms the page is there; the route is not a secret, but there is no
+     * reason to advertise it either.
+     *
+     * The gate lives here rather than in routes/web.php on purpose: this deploys
+     * as a signed zip to shared hosting with a compiled route cache, and a
+     * middleware added to the route file does not take effect until that cache
+     * is cleared. A check inside the controller is live the moment the file
+     * lands. See CLAUDE.md, "How this ships".
+     *
+     * noindex stays for the admin who does reach it, for the same reason it was
+     * added.
      */
     public function app()
     {
+        if (! Auth::guard('admin')->check()) {
+            abort(404);
+        }
+
         $base = self::siteBase();
 
         return view('store.app', [
