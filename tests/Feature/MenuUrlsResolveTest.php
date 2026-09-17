@@ -172,7 +172,19 @@ function menuStoredUrls(): array
     )));
 }
 
-/** Every URL in a MenuDemo-shaped nested tree, at any depth. */
+/**
+ * Every URL in a MenuDemo-shaped nested tree, at any depth.
+ *
+ * LANE EC: the three tests below walk MenuDemo::tree() and every one of them
+ * passes against an empty list — `array_filter([], …)` is `[]` and
+ * menuBrokenAmong([]) is `[]`, so a tree that emitted nothing would be reported
+ * as clean. That was already a latent hole and it stopped being latent when the
+ * brand leaves became data-dependent: they are now resolved against the
+ * `brands` table per render, so a broken lookup empties most of the tree
+ * instead of pointing it somewhere wrong. menuDemoUrls() is the floored
+ * entry point the tests use; this stays unfloored because it also walks
+ * arbitrary sub-trees.
+ */
 function menuTreeUrls(array $items): array
 {
     $out = [];
@@ -188,6 +200,27 @@ function menuTreeUrls(array $items): array
     }
 
     return array_values(array_unique($out));
+}
+
+/**
+ * The demo menu's URLs, with the floor that stops a walk over nothing being
+ * reported as a walk that found nothing wrong.
+ *
+ * Twenty-three is the measured count rounded well down — the tree carries
+ * thirteen category and collection addresses that do not depend on any table,
+ * plus one brand leaf per brand this shop carries.
+ */
+function menuDemoUrls(): array
+{
+    $urls = menuTreeUrls(MenuDemo::tree());
+
+    expect(count($urls))->toBeGreaterThan(
+        15,
+        'MenuDemo::tree() emitted almost no URLs, so every assertion over it below passes '
+        . 'without checking anything. The tree has collapsed, not been cleaned.',
+    );
+
+    return $urls;
 }
 
 /**
@@ -243,7 +276,7 @@ it('holds no legacy flat category URL in the menu rows', function () {
 });
 
 it('holds no legacy flat category URL in the demo-content menu', function () {
-    $legacy = array_values(array_filter(menuTreeUrls(MenuDemo::tree()), LegacyCategoryUrls::isLegacy(...)));
+    $legacy = array_values(array_filter(menuDemoUrls(), LegacyCategoryUrls::isLegacy(...)));
 
     expect($legacy)->toBe(
         [],
@@ -287,7 +320,7 @@ it('holds no legacy flat category URL in what the admin seed button writes', fun
 */
 
 it('routes no navigation URL to the blog catch-all', function () {
-    $urls = array_unique(array_merge(menuStoredUrls(), menuTreeUrls(MenuDemo::tree())));
+    $urls = array_unique(array_merge(menuStoredUrls(), menuDemoUrls()));
 
     $posts = [];
 
@@ -325,7 +358,7 @@ it('emits no dead link among the stored menu rows', function () {
 });
 
 it('emits no dead link in the demo-content menu', function () {
-    $broken = menuBrokenAmong(menuTreeUrls(MenuDemo::tree()));
+    $broken = menuBrokenAmong(menuDemoUrls());
 
     expect($broken)->toBe([], 'The demo menu points at pages that do not exist: ' . implode(', ', $broken));
 });

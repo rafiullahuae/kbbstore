@@ -278,6 +278,34 @@ it('leaves no sidebar screen blank', function () {
 
     $framesSafe = $mountIsSafe && $framesRouted;
 
+    /*
+     * LANE EC — the floor that stops this walk grading itself.
+     *
+     * goDispatch() reads go()'s dispatch object out of the shell with
+     * strpos('[id]||renderDash)()') and jsBlock(), both of which hand back
+     * NOTHING rather than failing when the anchor moves. The loop below then
+     * takes `$dispatch[$id] ?? null` as "falls through to renderDash, which
+     * renders" and `continue`s — so an empty dispatch map excuses every single
+     * screen and the walk reports a clean bill of health having checked none of
+     * them. Same shape as the mobile drawer selector in
+     * ChromeLinksResolveTest: a parse that fails by returning nothing.
+     *
+     * Thirty is the measured size rounded well down. It moves only when screens
+     * are added or removed, and if it ever trips it is telling you the anchor
+     * string above has drifted, not that the panel has.
+     */
+    expect(count($dispatch))->toBeGreaterThan(
+        30,
+        'goDispatch() parsed almost no renderers out of go(), so every screen below is waved '
+        . 'through as "falls back to renderDash" and this walk checks nothing. The anchor it '
+        . 'searches for has moved.',
+    );
+
+    expect(count($frameSrc))->toBeGreaterThan(
+        0,
+        'jsMapKeys(\'FRAME_SRC\') parsed nothing; the frame screens are no longer being recognised as frames.',
+    );
+
     $blank = [];
 
     foreach (navIds() as $id) {

@@ -38,12 +38,22 @@ beforeEach(function () {
     scsSettings();
 });
 
-/** The <head> of a page, so a match cannot come from body copy or a script. */
+/**
+ * The <head> of a page, so a match cannot come from body copy or a script.
+ *
+ * LANE EC: this used to return '' when the pattern missed, which is the
+ * parse-then-assert-nothing shape. Every caller today asserts ->toContain(),
+ * which fails on an empty string, so nothing was actually inert — but the first
+ * `->not->toContain()` written against it would have been, and a helper whose
+ * failure mode is "hand back nothing" gets that wrong silently. It fails here
+ * instead, once, where the parse is.
+ */
 function scsHead(string $html): string
 {
-    preg_match('#<head>(.*?)</head>#s', $html, $m);
+    expect((bool) preg_match('#<head>(.*?)</head>#s', $html, $m))
+        ->toBeTrue('The page rendered no <head> element at all; the parse is wrong, not the assertion below it.');
 
-    return $m[1] ?? '';
+    return $m[1];
 }
 
 function scsGet(string $path): string
