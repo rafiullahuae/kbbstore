@@ -148,7 +148,11 @@ textarea.hpc-in{min-height:64px;resize:vertical;line-height:1.5}
 
 .hpc-note{border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;
           border:1px solid var(--border,#e6e6e6);background:rgba(127,127,127,.06)}
-.hpc-note b{display:block;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+/* The note's own HEADING, and only that one. Written as `> b:first-child`
+   because a bold word inside the sentence underneath inherited the block
+   display and the uppercasing, and broke the sentence across three lines with
+   a comma stranded at the start of one. */
+.hpc-note > b:first-child{display:block;margin-bottom:3px;font-size:12px;text-transform:uppercase;letter-spacing:.05em}
 .hpc-note.is-warn{border-color:#b7791f;color:#8a5b12;background:rgba(183,121,31,.08)}
 .hpc-note.is-bad{border-color:#b4443c;color:#8f332d;background:rgba(180,68,60,.08)}
 .hpc-note ul{margin:6px 0 0;padding-inline-start:18px}
