@@ -81,6 +81,18 @@ declare(strict_types=1);
 
 require_once __DIR__.'/../vendor/autoload.php';
 
+/*
+ * THE PSEUDO-RANDOM STREAM, pinned for the whole process.
+ *
+ * Tests\Support\DeterministicRandom carries the reasoning and the measurement:
+ * the demo catalogue is drawn by a MIGRATION with an unseeded mt_rand(), once
+ * per process, and everything the storefront tests render is that draw. The
+ * per-application reseed in Tests\TestCase::createApplication() is what makes
+ * it deterministic in practice; this is the same call once at process start, so
+ * that anything drawing before the first application exists is pinned too.
+ */
+\Tests\Support\DeterministicRandom::reseed();
+
 (static function (): void {
     /**
      * Publish a value everywhere Laravel's env() looks for one.
