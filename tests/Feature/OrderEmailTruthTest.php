@@ -46,11 +46,28 @@ use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Setting;
 use App\Services\Mail\OrderEmailPresenter;
+use App\Support\Money;
 use App\Services\SettingsService;
 use App\Support\OrderTax;
 use App\Support\TaxRule;
 use App\Support\VatDisplay;
 use Illuminate\Support\Facades\Mail;
+
+/*
+ * RECEIPT WIDTH IS THE ORDER'S, NOT THE CURRENCY'S MAXIMUM — Lane FA.
+ *
+ * These assertions have always meant "printed the way this shop prints a
+ * receipt figure", and they expressed it by calling the presenter's own
+ * helper. That helper's default is still Money::minorExponent(); what changed
+ * is that the receipt no longer uses the default. Under the whole-dirham
+ * policy a receipt prints at the narrowest width that states ALL of its
+ * figures exactly (Money::receiptDecimals), so a whole-dirham order reads
+ * "AED 235" and an order carrying fils still reads "AED 89.80".
+ *
+ * So the assertions pass the width the receipt actually used. What is asserted
+ * is unchanged — the email prints this exact amount — and it still fails if the
+ * email prints a rounded or a widened figure that is not the money charged.
+ */
 
 /**
  * Settings are memoised in PROCESS-LEVEL STATICS as well as in the cache, which
@@ -195,13 +212,13 @@ it('prints on the receipt the inclusive-VAT line the order recorded', function (
     expect(str_contains($html, e($label)))
         ->toBeTrue('the confirmation email prints no VAT line for an order that recorded tax');
 
-    expect(str_contains($html, OrderEmailPresenter::html(1048)))
+    expect(str_contains($html, OrderEmailPresenter::html(1048, Money::receiptDecimals(1048))))
         ->toBeTrue('the confirmation email does not print the VAT figure the order recorded');
 
     expect(str_contains($text, $label))
         ->toBeTrue('the plain-text receipt prints no VAT line');
 
-    expect(str_contains($text, OrderEmailPresenter::plain(1048)))
+    expect(str_contains($text, OrderEmailPresenter::plain(1048, Money::receiptDecimals(1048))))
         ->toBeTrue('the plain-text receipt does not print the VAT figure');
 });
 
@@ -427,7 +444,7 @@ it('does not tell a cash customer their refund is on its way to a card', functio
         ->toBeFalse('the plain-text refund note tells a cash customer to watch their card statement');
 
     // And it still says the two things that ARE true: how much, and which order.
-    expect(str_contains($html, OrderEmailPresenter::html(5000)))->toBeTrue('the refunded amount is missing')
+    expect(str_contains($html, OrderEmailPresenter::html(5000, Money::receiptDecimals(5000))))->toBeTrue('the refunded amount is missing')
         ->and(str_contains($html, (string) $order->order_number))->toBeTrue('the order number is missing');
 });
 

@@ -74,7 +74,24 @@ final class EnglishRenderWalk
      * merged, and that proof is recorded in its merge commit. From here the
      * guard answers the next question — has anything since changed the English?
      */
-    public const BASE_COMMIT = '0a0f77f6d9ba081f56832ccde7d3379628853de5';
+    /*
+     * MOVED AGAIN, for the other half of the same reviewed copy change — Lane FA.
+     *
+     * 0a0f77f made the four ACCOUNT receipts print whole dirhams. The owner's
+     * rule applies to the basket he is looking at as well: the cart summary and
+     * the checkout ledger ask Money::receiptDecimals() too now, through
+     * CartService::totals()' `decimals` key, so a whole-dirham basket prints
+     * whole dirhams and one still holding a price from before the policy widens
+     * as a whole column and adds up. That changes the bytes of /cart and
+     * /checkout on purpose, so the contract moves with it.
+     *
+     * What the earlier bases guaranteed is not lost. The text conversion was
+     * proved byte-identical against 77149bd at the moment it merged and that
+     * proof is in its merge commit; 0a0f77f's receipt change is in this one's
+     * history. From here the guard answers the next question — has anything
+     * SINCE changed the English?
+     */
+    public const BASE_COMMIT = '52ef58a0ed7049226eca675aa97b5fd22e6310e7';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

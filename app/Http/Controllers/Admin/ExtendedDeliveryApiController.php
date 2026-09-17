@@ -11,6 +11,7 @@ use App\Services\Import\Money as ImportMoney;
 use App\Services\SettingsService;
 use App\Services\ShippingService;
 use App\Support\Countries;
+use App\Support\WholeDirhams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -114,6 +115,61 @@ class ExtendedDeliveryApiController extends Controller
                 'ok' => false,
                 'error' => implode(', ', $clash) . ' already delivers via a zone. Edit it under the Zones tab instead.',
             ], 422);
+        }
+
+        /*
+         * WHOLE DIRHAMS, CHECKED BEFORE ANYTHING IS WRITTEN — Lane FA.
+         *
+         * A per-country delivery charge and its free-delivery threshold are
+         * both money the owner types, so both are REFUSED rather than
+         * adjusted. App\Support\WholeDirhams carries the rule and the reason.
+         *
+         * The threshold matters as much as the charge: it is compared against
+         * a subtotal that is now always a whole dirham, so a threshold of
+         * 19,950 fils is one no basket can land exactly on, and the shop's own
+         * "AED 0 away from free delivery" line is computed from the
+         * difference.
+         *
+         * A PASS OF ITS OWN, ahead of the writes below, for the reason
+         * ShippingApiController::save() gives at the same point: the loop
+         * writes each row as it goes and refusing inside it would leave the
+         * earlier countries saved and the later ones not.
+         *
+         * Compared against what the row already holds, so a country carrying a
+         * rate from before this policy can still be renamed, re-ordered or
+         * switched off. The audit command (kbb:whole-dirhams) is where those
+         * are dealt with deliberately.
+         */
+        $existing = DeliveryCountry::query()->pluck('free_from', 'code')->all();
+        $existingCharge = DeliveryCountry::query()->pluck('charge', 'code')->all();
+
+        foreach ($data['rows'] as $row) {
+            $code = strtoupper($row['code']);
+
+            $checks = [
+                'charge' => ['Delivery charge', (int) $row['charge'], $existingCharge[$code] ?? null],
+                'free_from' => ['Free-delivery threshold', $row['free_from'], $existing[$code] ?? null],
+            ];
+
+            foreach ($checks as $field => [$label, $value, $stored]) {
+                if ($value === null) {
+                    continue;
+                }
+
+                $value = (int) $value;
+                $stored = $stored === null ? null : (int) $stored;
+
+                if ($value !== $stored && ! WholeDirhams::isWhole($value)) {
+                    return response()->json([
+                        'ok' => false,
+                        'error' => WholeDirhams::message(
+                            $label . ' for ' . (Countries::NAMES[$code] ?? $code),
+                            $value
+                        ),
+                        'errors' => ['rows.' . $field => ['Whole ' . WholeDirhams::plural() . ' only.']],
+                    ], 422);
+                }
+            }
         }
 
         $this->settings->set(ExtendedDelivery::SETTING_ON, $data['on']);

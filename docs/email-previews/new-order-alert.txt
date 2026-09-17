@@ -7,19 +7,19 @@ Order KBB-10427 — placed 14 September 2026
 ITEMS
 - Rice Daily Moisturizing Toner 150ml (Haruharu Wonder)
   SKU HH-RT-150
-  QTY 2  ·  AED 199.00 each  ·  line total AED 398.00
+  QTY 2  ·  AED 199 each  ·  line total AED 398
 - Centella Ampoule (SKIN1004)
   30ml
   SKU SK-CA-030
-  QTY 1  ·  AED 65.00 each  ·  line total AED 65.00
+  QTY 1  ·  AED 65 each  ·  line total AED 65
 
 TOTALS
-Subtotal: AED 463.00
-Discount (GLOW10): AED -40.00
-Delivery: AED 20.00
-Gift wrapping: AED 15.00
-Cash on delivery fee: AED 15.00
-Total: AED 473.00
+Subtotal: AED 463
+Discount (GLOW10): AED -40
+Delivery: AED 20
+Gift wrapping: AED 15
+Cash on delivery fee: AED 15
+Total: AED 473
 
 DELIVERY ADDRESS
 Aisha Khan

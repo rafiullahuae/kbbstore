@@ -134,7 +134,7 @@
 
                              And the labels are keyed, so an Arabic reader gets them in
                              Arabic. --}}
-                        <div class="co-fact"><dt>{{ $order->paid_at ? __('store.order_received.fact_total_paid') : __('store.order_received.fact_total_to_pay') }}</dt><dd>{!! Money::format((int) $order->total, Money::receiptDecimals((int) $order->total)) !!}</dd></div>
+                        <div class="co-fact"><dt>{{ $order->paid_at ? __('store.order_received.fact_total_paid') : __('store.order_received.fact_total_to_pay') }}</dt><dd>{!! Money::format((int) $order->total, \App\Services\Mail\OrderEmailPresenter::ledgerWidth($order)) !!}</dd></div>
                         <div class="co-fact"><dt>{{ __('store.order_received.fact_payment') }}</dt><dd>{{ $order->paymentLabel() }}</dd></div>
                         {{-- The rate name answered "what did I pay for", never
                              "when does it come" — which is the question a

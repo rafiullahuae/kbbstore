@@ -7,6 +7,7 @@ namespace App\Mail;
 use App\Models\Order;
 use App\Models\Refund;
 use App\Services\Mail\OrderEmailPresenter;
+use App\Support\Money;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
@@ -98,8 +99,18 @@ class OrderRefunded extends OrderMail
         parent::__construct($order);
 
         $this->amountFils = (int) $refund->amount;
-        $this->amountHtml = OrderEmailPresenter::html($this->amountFils);
-        $this->amountPlain = OrderEmailPresenter::plain($this->amountFils);
+        /*
+         * ONE FIGURE, PRINTED EXACTLY — Lane FA. A refund is its own amount
+         * and is not part of a column, so the width is decided over it alone:
+         * whole dirhams when the refund is whole, full precision when it is
+         * not. A partial refund of an order carrying fils is exactly the case
+         * that must not be rounded, and Money::receiptDecimals() widens for
+         * it without anything here having to know.
+         */
+        $refundWidth = Money::receiptDecimals($this->amountFils);
+
+        $this->amountHtml = OrderEmailPresenter::html($this->amountFils, $refundWidth);
+        $this->amountPlain = OrderEmailPresenter::plain($this->amountFils, $refundWidth);
 
         /*
          * PARTIAL MEANS "SOMETHING IS STILL UNREFUNDED", NOT "THIS REFUND IS

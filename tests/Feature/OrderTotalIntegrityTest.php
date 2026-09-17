@@ -144,8 +144,19 @@ it('stores a Gulf order whose total is exactly its parts', function () {
             ->and($line->subtotal)->toBe($line->total);
     }
 
-    // 46,525 x 12.5% = 5,815.625 -> 5,816 (round half up), never 5,815.
-    expect($order->discount_total)->toBe(5816, 'the coupon discount lost or gained a fil');
+    /*
+     * 46,525 x 12.5% = 5,815.625, which rounds half up in integers to 5,816
+     * and never to 5,815 — the exact figure CouponService::exactDiscountFor()
+     * still answers, and CouponPercentRoundingTest still pins to the fil.
+     *
+     * What the ORDER records is what was charged, and since Lane FA that is
+     * the exact discount taken up to a whole dirham — AED 59 — because this
+     * shop prices in whole dirhams and a percentage the shop advertised should
+     * be a floor rather than a ceiling. The subject of this file is that the
+     * order's columns are internally consistent, and they are: the assertion
+     * below still holds subtotal - discount + delivery to the stored total.
+     */
+    expect($order->discount_total)->toBe(5900, 'the coupon discount is not the whole-dirham figure the till charges');
 
     // The Gulf rate, taken from the zone rather than repeated as a constant.
     $gulfRate = (int) ShippingMethod::whereHas('zone', fn ($q) => $q->where('name', 'Gulf Countries'))
@@ -161,7 +172,7 @@ it('stores a Gulf order whose total is exactly its parts', function () {
     expect($order->total)->toBe(
         $order->subtotal - $order->discount_total + $order->shipping_total + $order->tax_total + $order->fee_total,
         'orders.total is not subtotal - discount + shipping + tax + fee'
-    )->and($order->total)->toBe(46525 - 5816 + 15000);
+    )->and($order->total)->toBe(46525 - 5900 + 15000);
 
     // Integer fils throughout. A float here is the bug, not a rounding detail.
     foreach (['subtotal', 'discount_total', 'shipping_total', 'tax_total', 'fee_total', 'total'] as $column) {

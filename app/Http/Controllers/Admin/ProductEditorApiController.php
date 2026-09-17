@@ -14,6 +14,7 @@ use App\Support\Money;
 use App\Support\ProductSeo;
 use App\Support\RichText;
 use App\Support\TranslationInput;
+use App\Support\WholeDirhams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -582,7 +583,7 @@ class ProductEditorApiController extends Controller
     private function apply(Product $product, array $data): ?JsonResponse
     {
         /* ------------------------------------------------------------ money */
-        foreach (['price_aed' => 'price', 'sale_aed' => 'sale_price'] as $field => $column) {
+        foreach (['price_aed' => ['price', 'Price'], 'sale_aed' => ['sale_price', 'Sale price']] as $field => [$column, $label]) {
             if (! array_key_exists($field, $data)) {
                 continue;
             }
@@ -595,6 +596,47 @@ class ProductEditorApiController extends Controller
                     'message' => 'That amount is larger than this shop can store (maximum '
                         . Money::currency() . ' ' . MajorUnits::maxMajor() . ').',
                     'errors' => [$field => ['Too large.']],
+                ], 422);
+            }
+
+            /*
+             * WHOLE DIRHAMS — REFUSED, NOT ADJUSTED, AND ONLY ON A CHANGE.
+             *
+             * The owner's words were "no decimals. if any decimals comes.
+             * adjust to the price." A price is the one figure on this screen
+             * that he TYPES, so the adjustment is his to make and not this
+             * controller's: a price that silently became AED 100 while he was
+             * looking at 99.80 is a price he would next hear about from a
+             * customer. App\Support\WholeDirhams' header sets out the whole
+             * refuse-vs-adjust rule; this is the refusing half.
+             *
+             * ── AND ONLY ON A CHANGE, WHICH IS THE HALF THAT MATTERS MORE ──
+             *
+             * This shop has products priced in fils today, imported from
+             * WooCommerce before any of this existed. The editor posts every
+             * field it holds on every save, so without the `!== $stored`
+             * comparison, opening a 9,980-fil product, fixing a typo in its
+             * DESCRIPTION and pressing Save would be refused — and the owner
+             * would have no way to edit the description at all short of
+             * repricing the product.
+             *
+             * The alternative, adjusting it to AED 100 on the way past, is
+             * worse than either: money moving because somebody edited a
+             * description is the one outcome this lane exists to prevent. So
+             * an unchanged value passes through untouched, whatever it holds,
+             * and the audit command (kbb:whole-dirhams) is where an owner
+             * deals with the legacy prices deliberately and all at once.
+             *
+             * `$stored` is read BEFORE the assignment below, so on a create —
+             * where it is null — any fils value is a new one and is refused.
+             */
+            $stored = $product->{$column} === null ? null : (int) $product->{$column};
+
+            if ($fils !== null && $fils !== $stored && ! WholeDirhams::isWhole($fils)) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => WholeDirhams::message($label, $fils),
+                    'errors' => [$field => ['Whole ' . WholeDirhams::plural() . ' only.']],
                 ], 422);
             }
 

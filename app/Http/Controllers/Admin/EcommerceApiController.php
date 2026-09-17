@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Store\ShopController;
 use App\Models\PaymentProvider;
 use App\Services\SettingsService;
+use App\Support\Money;
 use App\Support\Shortcodes;
+use App\Support\WholeDirhams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -645,6 +647,38 @@ class EcommerceApiController extends Controller
 
                 if ($value === null) {
                     return response()->json(['ok' => false, 'error' => "“{$def[1]}” is not a valid value."], 422);
+                }
+
+                /*
+                 * WHOLE DIRHAMS on every `money` field this screen owns —
+                 * today that is the COD fee, and it is checked by TYPE rather
+                 * than by name so a money field added to the schema later
+                 * inherits the rule instead of quietly escaping it.
+                 *
+                 * Refused, because these are figures the owner types. The wire
+                 * is fils (the screen's own legend says so: "Entered in fils:
+                 * 500 means د.إ5.00"), so the message is in fils, matching the
+                 * box rather than the policy's own vocabulary — see the same
+                 * note on AdminController's `fils` rule.
+                 *
+                 * Compared against what is stored, so a shop already carrying
+                 * a 750-fil fee can still change its dispatch cutoff on this
+                 * tab. This screen writes as it goes and returns on the first
+                 * failure, so a refusal here can leave a tab half-applied;
+                 * that is pre-existing and not this lane's to change, but it
+                 * is another reason not to refuse a value nobody touched.
+                 */
+                if ($def[0] === 'money'
+                    && (string) $this->settings->get($name, '') !== (string) $value
+                    && ! WholeDirhams::isWhole((int) $value)) {
+                    return response()->json([
+                        'ok' => false,
+                        'error' => "“{$def[1]}” is " . $value . ' fils, which is AED '
+                            . Money::decimalString((int) $value)
+                            . '. This shop prices in whole ' . WholeDirhams::plural()
+                            . ', so enter ' . WholeDirhams::toward((int) $value)
+                            . ' or ' . WholeDirhams::away((int) $value) . '.',
+                    ], 422);
                 }
 
                 if ($name === 'cod_enabled') {

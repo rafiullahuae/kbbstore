@@ -47,6 +47,14 @@ class OrderEmailPresenter
      */
     public function present(Order $order): array
     {
+        /*
+         * ONE WIDTH FOR THE WHOLE RECEIPT, decided once and handed to every
+         * figure below. See ledgerWidth(). Computed here rather than inside
+         * each helper so that a row added later cannot quietly print at a
+         * different precision from the column it joins.
+         */
+        $w = self::ledgerWidth($order);
+
         return [
             'number' => (string) ($order->order_number ?: $order->id),
             // The shop's clock, not UTC — an order placed at 01:30 in Dubai
@@ -56,12 +64,12 @@ class OrderEmailPresenter
             'placedAt' => \App\Support\StoreTime::formatDate($order->created_at),
             'status' => (string) $order->status,
             'customerName' => $this->customerName($order),
-            'items' => $this->items($order),
-            'totals' => $this->totals($order),
-            'vatNote' => $this->vatNote($order),
+            'items' => $this->items($order, $w),
+            'totals' => $this->totals($order, $w),
+            'vatNote' => $this->vatNote($order, $w),
             'totalFils' => (int) $order->total,
-            'totalHtml' => self::html((int) $order->total),
-            'totalPlain' => self::plain((int) $order->total),
+            'totalHtml' => self::html((int) $order->total, $w),
+            'totalPlain' => self::plain((int) $order->total, $w),
             'address' => $this->address($order->shipping_address ?: $order->billing_address),
             'deliveryMethod' => trim((string) $order->shipping_method) ?: 'Standard delivery',
             'destinationCountry' => $this->destinationCountry($order),
@@ -110,7 +118,7 @@ class OrderEmailPresenter
      *
      * @return list<array<string, mixed>>
      */
-    private function items(Order $order): array
+    private function items(Order $order, ?int $w = null): array
     {
         $out = [];
 
@@ -129,11 +137,11 @@ class OrderEmailPresenter
                 'variant' => implode(', ', $variant),
                 'quantity' => (int) $item->quantity,
                 'unitFils' => (int) $item->unit_price,
-                'unitHtml' => self::html((int) $item->unit_price),
-                'unitPlain' => self::plain((int) $item->unit_price),
+                'unitHtml' => self::html((int) $item->unit_price, $w),
+                'unitPlain' => self::plain((int) $item->unit_price, $w),
                 'lineFils' => (int) $item->total,
-                'lineHtml' => self::html((int) $item->total),
-                'linePlain' => self::plain((int) $item->total),
+                'lineHtml' => self::html((int) $item->total, $w),
+                'linePlain' => self::plain((int) $item->total, $w),
             ];
         }
 
@@ -154,7 +162,7 @@ class OrderEmailPresenter
      *
      * @return list<array{label:string,fils:int,html:string,plain:string,strong:bool}>
      */
-    private function totals(Order $order): array
+    private function totals(Order $order, ?int $w = null): array
     {
         $giftFee = (int) $order->gift_fee;
         $otherFees = max(0, (int) $order->fee_total - $giftFee);
@@ -206,8 +214,8 @@ class OrderEmailPresenter
         return array_map(static fn (array $row) => [
             'label' => $row[0],
             'fils' => $row[1],
-            'html' => self::html($row[1]),
-            'plain' => self::plain($row[1]),
+            'html' => self::html($row[1], $w),
+            'plain' => self::plain($row[1], $w),
             'strong' => $row[2],
         ], $rows);
     }
@@ -270,7 +278,7 @@ class OrderEmailPresenter
      *
      * @return array{label:string,fils:int,html:string,plain:string}|null
      */
-    private function vatNote(Order $order): ?array
+    private function vatNote(Order $order, ?int $w = null): ?array
     {
         $taxRecord = \App\Support\OrderTax::recorded($order);
 
@@ -291,8 +299,8 @@ class OrderEmailPresenter
                 (string) app(\App\Services\SettingsService::class)->get('vat_label', "You're paying VAT ({rate}%)")
             ),
             'fils' => $taxRecord['fils'],
-            'html' => self::html($taxRecord['fils']),
-            'plain' => self::plain($taxRecord['fils']),
+            'html' => self::html($taxRecord['fils'], $w),
+            'plain' => self::plain($taxRecord['fils'], $w),
         ];
     }
 
@@ -345,15 +353,81 @@ class OrderEmailPresenter
         return array_values(array_filter(array_map('trim', $lines), static fn (string $l) => $l !== ''));
     }
 
-    /** Receipt precision, never the storefront's rounded display. See the header. */
-    public static function html(int $fils): string
+    /**
+     * Receipt precision, never the storefront's rounded display.
+     *
+     * ── WHAT "RECEIPT PRECISION" MEANS SINCE THE WHOLE-DIRHAM POLICY ───────
+     *
+     * It used to mean minorExponent(), always. The principle behind that is
+     * unchanged and is in this class's header: a receipt may not round,
+     * because a rounded figure on a receipt is a claim about money that is not
+     * true. What changed is that the shop no longer produces the figures that
+     * needed the room. App\Support\WholeDirhams makes every amount the owner
+     * can set a whole dirham, and on a whole-dirham order "AED 220.00" and
+     * "AED 220" are the same claim — so the wide form is no longer buying
+     * truth, only decimals on a shop whose owner asked for none.
+     *
+     * So the width is now Money::receiptDecimals() over the whole receipt,
+     * decided ONCE per order in ledgerWidth() below and passed in. A receipt
+     * that can be stated in whole dirhams is; one that cannot — a legacy
+     * order, or one carrying a figure this shop cannot make whole — widens as
+     * a whole, automatically. The default is still minorExponent(), so any
+     * caller that passes no width keeps exactly the behaviour it had.
+     *
+     * The two copies of a receipt cannot disagree, because both compute this
+     * from the same order columns: ReceiptFiguresAgreeTest parses each surface
+     * independently and holds them to each other and to the columns.
+     */
+    public static function html(int $fils, ?int $decimals = null): string
     {
-        return Money::format($fils, Money::minorExponent());
+        return Money::format($fils, $decimals ?? Money::minorExponent());
     }
 
     /** The same figure with no markup, for the plain-text part. */
-    public static function plain(int $fils): string
+    public static function plain(int $fils, ?int $decimals = null): string
     {
-        return Money::plain($fils, Money::minorExponent());
+        return Money::plain($fils, $decimals ?? Money::minorExponent());
+    }
+
+    /**
+     * The one width every figure on THIS order's receipt prints at.
+     *
+     * Every money column the receipt can show is offered to
+     * receiptDecimals() — including the line prices, which are printed
+     * beside the totals and are part of the same column of figures a customer
+     * reads down. A receipt whose subtotal is whole but whose unit price is
+     * not would otherwise print the unit price rounded, and the customer could
+     * not multiply the line back.
+     *
+     * PUBLIC, because the customer's own on-screen copies
+     * (store/account/order-detail, checkout-success, the account order list
+     * and the tracker) have to ask the same question of the same order and get
+     * the same answer. One authority, one width; two would be the twenty-fil
+     * disagreement Lane EZ closed, reopened in a new shape.
+     */
+    public static function ledgerWidth(\App\Models\Order $order): int
+    {
+        $amounts = [
+            (int) $order->subtotal,
+            (int) $order->discount_total,
+            (int) $order->shipping_total,
+            (int) $order->fee_total,
+            (int) $order->gift_fee,
+            (int) $order->tax_total,
+            (int) $order->total,
+        ];
+
+        $record = \App\Support\OrderTax::recorded($order);
+
+        if ($record !== null) {
+            $amounts[] = (int) $record['fils'];
+        }
+
+        foreach ($order->items as $item) {
+            $amounts[] = (int) $item->unit_price;
+            $amounts[] = (int) $item->total;
+        }
+
+        return Money::receiptDecimals(...$amounts);
     }
 }

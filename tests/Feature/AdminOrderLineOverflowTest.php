@@ -66,10 +66,28 @@ function addItem(array $payload)
 /* ------------------------------------------------------------ the unit price */
 
 it('accepts a unit price of exactly the column ceiling', function () {
-    // 2147483647 fils is AED 21474836.47 — the largest value the column holds.
-    editItem(['unit_price_aed' => '21474836.47', 'quantity' => 1])->assertOk();
+    /*
+     * THE CEILING A LINE CAN BE GIVEN IS THE TOP WHOLE DIRHAM — Lane FA.
+     *
+     * 2,147,483,647 fils is AED 21,474,836.47, the largest value the column
+     * holds, and it carries 47 fils — so the whole-dirham policy refuses it.
+     * The largest a line can be priced at is one whole dirham below that, and
+     * the refusal is for the decimals rather than for the size, which is what
+     * the two assertions here separate.
+     *
+     * The point of this test is untouched: a legitimate value at the very top
+     * of the range is ACCEPTED, so the bound is the column's own rather than
+     * something narrower that silently blocks a real price.
+     */
+    editItem(['unit_price_aed' => '21474836.47', 'quantity' => 1])
+        ->assertStatus(422)
+        ->assertJsonPath('ok', false);
 
-    expect(OrderItem::find($this->line->id)->unit_price)->toBe(ImportMoney::MAX_FILS);
+    $topWhole = intdiv(ImportMoney::MAX_FILS, 100);
+
+    editItem(['unit_price_aed' => (string) $topWhole, 'quantity' => 1])->assertOk();
+
+    expect(OrderItem::find($this->line->id)->unit_price)->toBe($topWhole * 100);
 });
 
 it('refuses a unit price one fil past the ceiling', function () {
@@ -88,14 +106,27 @@ it('refuses the absurd unit price that overflows on its own', function () {
 });
 
 it('parses the unit price digit by digit, not through a float', function () {
-    // (int) round(1.15 * 100) happens to give 115, but 1.15 is not
-    // representable and round() is rescuing it. The parse never builds the
-    // float at all.
-    editItem(['unit_price_aed' => '1.15', 'quantity' => 1])->assertOk();
-    expect(OrderItem::find($this->line->id)->unit_price)->toBe(115);
+    /*
+     * (int) round(1.15 * 100) happens to give 115, but 1.15 is not
+     * representable and round() is rescuing it. The parse never builds the
+     * float at all.
+     *
+     * Since Lane FA a line price is a whole number of dirhams, so the two fils
+     * values this test was written around are refused. What it checks is the
+     * PARSE — the digits an operator typed become the exact integer at every
+     * magnitude — and that is unchanged; the refusals below pin the other half
+     * so the accepted list cannot be read as "decimals were forgotten".
+     */
+    editItem(['unit_price_aed' => '1', 'quantity' => 1])->assertOk();
+    expect(OrderItem::find($this->line->id)->unit_price)->toBe(100);
 
-    editItem(['unit_price_aed' => '8.20', 'quantity' => 1])->assertOk();
-    expect(OrderItem::find($this->line->id)->unit_price)->toBe(820);
+    editItem(['unit_price_aed' => '8', 'quantity' => 1])->assertOk();
+    expect(OrderItem::find($this->line->id)->unit_price)->toBe(800);
+
+    editItem(['unit_price_aed' => '1.15', 'quantity' => 1])->assertStatus(422);
+    editItem(['unit_price_aed' => '8.20', 'quantity' => 1])->assertStatus(422);
+
+    expect(OrderItem::find($this->line->id)->unit_price)->toBe(800);
 });
 
 it('refuses more precision than a fil can hold rather than rounding it away', function () {
@@ -138,9 +169,12 @@ it('refuses an unbounded quantity on update', function () {
 /* ------------------------------------------- the product, which is the real bug */
 
 it('refuses a quantity that overflows the line even though the unit price is fine', function () {
-    // Each factor on its own is perfectly sane. AED 21,474,836.47 is a real
-    // ceiling, and 2 is a real quantity; their product is not.
-    editItem(['unit_price_aed' => '21474836.47', 'quantity' => 1])->assertOk();
+    // Each factor on its own is perfectly sane. AED 21,474,836 is a real
+    // ceiling under the whole-dirham policy (Lane FA), and 2 is a real
+    // quantity; their product is not.
+    $topWhole = intdiv(ImportMoney::MAX_FILS, 100);
+
+    editItem(['unit_price_aed' => (string) $topWhole, 'quantity' => 1])->assertOk();
 
     editItem(['quantity' => 2])
         ->assertStatus(422)
@@ -149,7 +183,7 @@ it('refuses a quantity that overflows the line even though the unit price is fin
     // Nothing was written. The quantity is still 1 and the line is intact.
     $line = OrderItem::find($this->line->id);
     expect($line->quantity)->toBe(1)
-        ->and($line->total)->toBe(ImportMoney::MAX_FILS);
+        ->and($line->total)->toBe($topWhole * 100);
 });
 
 it('refuses an add whose product overflows, with both factors in range', function () {

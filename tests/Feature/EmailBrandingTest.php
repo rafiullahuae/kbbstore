@@ -35,8 +35,25 @@ use App\Services\Mail\EmailBranding;
 use App\Services\Mail\MailCredentials;
 use App\Services\Mail\MailSettings;
 use App\Services\Mail\OrderEmailPresenter;
+use App\Support\Money;
 use App\Services\ModuleRegistry;
 use App\Services\SettingsService;
+
+/*
+ * RECEIPT WIDTH IS THE ORDER'S, NOT THE CURRENCY'S MAXIMUM — Lane FA.
+ *
+ * These assertions have always meant "printed the way this shop prints a
+ * receipt figure", and they expressed it by calling the presenter's own
+ * helper. That helper's default is still Money::minorExponent(); what changed
+ * is that the receipt no longer uses the default. Under the whole-dirham
+ * policy a receipt prints at the narrowest width that states ALL of its
+ * figures exactly (Money::receiptDecimals), so a whole-dirham order reads
+ * "AED 235" and an order carrying fils still reads "AED 89.80".
+ *
+ * So the assertions pass the width the receipt actually used. What is asserted
+ * is unchanged — the email prints this exact amount — and it still fails if the
+ * email prints a rounded or a widened figure that is not the money charged.
+ */
 
 beforeEach(function () {
     app(SettingsService::class)->flush();
@@ -135,10 +152,10 @@ it('prints quantity as its own column in the customer receipt', function () {
 
     // Nothing was lost on the way: unit price, line total and order total, at
     // the currency's real precision rather than the storefront's rounding.
-    expect($html)->toContain(OrderEmailPresenter::html(19900))
-        ->and($html)->toContain(OrderEmailPresenter::html(59700))
-        ->and($html)->toContain(OrderEmailPresenter::html(6500))
-        ->and($html)->toContain(OrderEmailPresenter::html(68200))
+    expect($html)->toContain(OrderEmailPresenter::html(19900, Money::receiptDecimals(19900)))
+        ->and($html)->toContain(OrderEmailPresenter::html(59700, Money::receiptDecimals(59700)))
+        ->and($html)->toContain(OrderEmailPresenter::html(6500, Money::receiptDecimals(6500)))
+        ->and($html)->toContain(OrderEmailPresenter::html(68200, Money::receiptDecimals(68200)))
         // And the unit price is labelled, so it cannot be read as a line total.
         ->and($html)->toContain('each')
         // The old shape is gone.
@@ -151,8 +168,8 @@ it('prints quantity as its own column in the merchant alert', function () {
 
     expect($html)->toContain('>Qty<')
         ->and($html)->toMatch('/font-weight:700;color:#C13E63;line-height:1\.35;">3</')
-        ->and($html)->toContain(OrderEmailPresenter::html(19900))
-        ->and($html)->toContain(OrderEmailPresenter::html(59700));
+        ->and($html)->toContain(OrderEmailPresenter::html(19900, Money::receiptDecimals(19900)))
+        ->and($html)->toContain(OrderEmailPresenter::html(59700, Money::receiptDecimals(59700)));
 });
 
 it('names all three figures in the plain-text part too', function () {
@@ -160,8 +177,8 @@ it('names all three figures in the plain-text part too', function () {
 
     expect($text)->toContain('QTY 3')
         ->and($text)->toContain('QTY 1')
-        ->and($text)->toContain(OrderEmailPresenter::plain(19900) . ' each')
-        ->and($text)->toContain('line total ' . OrderEmailPresenter::plain(59700))
+        ->and($text)->toContain(OrderEmailPresenter::plain(19900, Money::receiptDecimals(19900)) . ' each')
+        ->and($text)->toContain('line total ' . OrderEmailPresenter::plain(59700, Money::receiptDecimals(59700)))
         // No markup leaked into text/plain.
         ->and($text)->not->toContain('<td')
         ->and($text)->not->toContain('<div');
@@ -229,7 +246,7 @@ it('shows no support block at all when nothing is configured anywhere', function
     expect($html)->not->toContain('We are here if you need us')
         // ...and the rest of the receipt is untouched.
         ->and($html)->toContain('KBB-BRAND-1')
-        ->and($html)->toContain(OrderEmailPresenter::html(68200));
+        ->and($html)->toContain(OrderEmailPresenter::html(68200, Money::receiptDecimals(68200)));
 });
 
 it('keeps the support block out of the merchant alert', function () {

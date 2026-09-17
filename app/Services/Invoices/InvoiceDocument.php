@@ -83,6 +83,15 @@ class InvoiceDocument
     {
         $order->loadMissing('items');
 
+        /*
+         * ONE WIDTH FOR THE WHOLE DOCUMENT, decided once and handed to every
+         * figure on it — the same call the emailed receipt and the customer's
+         * on-screen copy make about the same order, so an invoice and a
+         * receipt for one order cannot state the money two ways. See
+         * OrderEmailPresenter::ledgerWidth() and Money::receiptDecimals().
+         */
+        $w = \App\Services\Mail\OrderEmailPresenter::ledgerWidth($order);
+
         $invoiceNumber = $order->invoice_number === null ? null : (int) $order->invoice_number;
 
         return [
@@ -136,13 +145,13 @@ class InvoiceDocument
             // claim on an invoice that a developer may not settle alone.
             'docType' => $this->docType($order),
 
-            'items' => $this->items($order),
+            'items' => $this->items($order, $w),
             'itemCount' => (int) $order->items->sum('quantity'),
-            'totals' => $this->totals($order),
+            'totals' => $this->totals($order, $w),
             'totalFils' => (int) $order->total,
-            'totalHtml' => self::money((int) $order->total),
-            'totalPlain' => self::moneyPlain((int) $order->total),
-            'vatNote' => $this->vatNote($order),
+            'totalHtml' => self::money((int) $order->total, $w),
+            'totalPlain' => self::moneyPlain((int) $order->total, $w),
+            'vatNote' => $this->vatNote($order, $w),
 
             'paymentLabel' => $order->paymentLabel(),
 
@@ -197,7 +206,7 @@ class InvoiceDocument
              * method's.
              */
             'paid' => self::moneyCollected($order),
-            'codToCollect' => $this->codToCollect($order),
+            'codToCollect' => $this->codToCollect($order, $w),
             'deliveryMethod' => trim((string) $order->shipping_method) ?: 'Standard delivery',
             'couponCode' => trim((string) $order->coupon_code),
             'isGift' => (bool) $order->is_gift,
@@ -339,7 +348,7 @@ class InvoiceDocument
      *
      * @return list<array<string, mixed>>
      */
-    private function items(Order $order): array
+    private function items(Order $order, ?int $w = null): array
     {
         $out = [];
 
@@ -358,11 +367,11 @@ class InvoiceDocument
                 'variant' => implode(', ', $variant),
                 'quantity' => (int) $item->quantity,
                 'unitFils' => (int) $item->unit_price,
-                'unitHtml' => self::money((int) $item->unit_price),
-                'unitPlain' => self::moneyPlain((int) $item->unit_price),
+                'unitHtml' => self::money((int) $item->unit_price, $w),
+                'unitPlain' => self::moneyPlain((int) $item->unit_price, $w),
                 'lineFils' => (int) $item->total,
-                'lineHtml' => self::money((int) $item->total),
-                'linePlain' => self::moneyPlain((int) $item->total),
+                'lineHtml' => self::money((int) $item->total, $w),
+                'linePlain' => self::moneyPlain((int) $item->total, $w),
             ];
         }
 
@@ -384,7 +393,7 @@ class InvoiceDocument
      *
      * @return list<array{label:string,fils:int,html:string,plain:string,strong:bool}>
      */
-    private function totals(Order $order): array
+    private function totals(Order $order, ?int $w = null): array
     {
         $giftFee = (int) $order->gift_fee;
         $otherFees = max(0, (int) $order->fee_total - $giftFee);
@@ -444,8 +453,8 @@ class InvoiceDocument
         return array_map(static fn (array $row) => [
             'label' => $row[0],
             'fils' => $row[1],
-            'html' => self::money($row[1]),
-            'plain' => self::moneyPlain($row[1]),
+            'html' => self::money($row[1], $w),
+            'plain' => self::moneyPlain($row[1], $w),
             'strong' => $row[2],
         ], $rows);
     }
@@ -521,7 +530,7 @@ class InvoiceDocument
      *
      * @return array{label:string,fils:int,html:string,plain:string,trn:string}|null
      */
-    private function vatNote(Order $order): ?array
+    private function vatNote(Order $order, ?int $w = null): ?array
     {
         $taxRecord = \App\Support\OrderTax::recorded($order);
 
@@ -534,8 +543,8 @@ class InvoiceDocument
         return [
             'label' => 'Includes VAT at ' . $rate . '%',
             'fils' => $taxRecord['fils'],
-            'html' => self::money($taxRecord['fils']),
-            'plain' => self::moneyPlain($taxRecord['fils']),
+            'html' => self::money($taxRecord['fils'], $w),
+            'plain' => self::moneyPlain($taxRecord['fils'], $w),
             'trn' => $this->setting('invoice_trn'),
         ];
     }
@@ -625,7 +634,7 @@ class InvoiceDocument
         return $order->paid_at !== null || $order->captured_at !== null;
     }
 
-    private function codToCollect(Order $order): ?array
+    private function codToCollect(Order $order, ?int $w = null): ?array
     {
         /*
          * `paid_at` WAS THE WRONG COLUMN HERE, AND WRONG IN THE WAY THAT COSTS
@@ -652,8 +661,8 @@ class InvoiceDocument
 
         return [
             'fils' => (int) $order->total,
-            'html' => self::money((int) $order->total),
-            'plain' => self::moneyPlain((int) $order->total),
+            'html' => self::money((int) $order->total, $w),
+            'plain' => self::moneyPlain((int) $order->total, $w),
         ];
     }
 
@@ -745,12 +754,25 @@ class InvoiceDocument
     }
 
     /**
-     * Invoice precision, never the storefront's rounded display. See the
-     * class header.
+     * Invoice precision, never the storefront's rounded display.
+     *
+     * The width is now the ORDER's rather than the currency's flat maximum —
+     * OrderEmailPresenter::ledgerWidth(), the same authority the emailed
+     * receipt and the customer's own on-screen copies use, so an invoice
+     * cannot state a figure differently from the receipt for the same order.
+     *
+     * The principle in this class's header is unchanged: an invoice may not
+     * round. What changed is that on an order whose every figure is a whole
+     * dirham there is nothing left to round — see App\Support\WholeDirhams and
+     * Money::receiptDecimals(). An order that does carry fils widens the
+     * whole document back to full precision automatically.
+     *
+     * The default stays minorExponent(), so a caller that passes no width
+     * behaves exactly as it did.
      */
-    public static function money(int $fils): string
+    public static function money(int $fils, ?int $decimals = null): string
     {
-        return Money::format($fils, Money::minorExponent());
+        return Money::format($fils, $decimals ?? Money::minorExponent());
     }
 
     /**
@@ -758,8 +780,8 @@ class InvoiceDocument
      * invoice. Money::plain() is markup-free by contract; the HTML variant
      * would arrive in a text body as literal <span> tags.
      */
-    public static function moneyPlain(int $fils): string
+    public static function moneyPlain(int $fils, ?int $decimals = null): string
     {
-        return Money::plain($fils, Money::minorExponent());
+        return Money::plain($fils, $decimals ?? Money::minorExponent());
     }
 }

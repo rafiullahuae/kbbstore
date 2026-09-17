@@ -53,8 +53,25 @@ use App\Models\Order;
 use App\Models\PaymentProvider;
 use App\Models\Setting;
 use App\Services\Mail\OrderEmailPresenter;
+use App\Support\Money;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Mail;
+
+/*
+ * RECEIPT WIDTH IS THE ORDER'S, NOT THE CURRENCY'S MAXIMUM — Lane FA.
+ *
+ * These assertions have always meant "printed the way this shop prints a
+ * receipt figure", and they expressed it by calling the presenter's own
+ * helper. That helper's default is still Money::minorExponent(); what changed
+ * is that the receipt no longer uses the default. Under the whole-dirham
+ * policy a receipt prints at the narrowest width that states ALL of its
+ * figures exactly (Money::receiptDecimals), so a whole-dirham order reads
+ * "AED 235" and an order carrying fils still reads "AED 89.80".
+ *
+ * So the assertions pass the width the receipt actually used. What is asserted
+ * is unchanged — the email prints this exact amount — and it still fails if the
+ * email prints a rounded or a widened figure that is not the money charged.
+ */
 
 /**
  * Settings memoise in a process-level static as well as in the cache
@@ -168,7 +185,7 @@ it('states the amount paid and that no refund has been recorded, and promises no
     // every order this store has confirmed to date.
     [$html, $text] = cancelParts(cancelOrder(['paid_at' => now()]));
 
-    $amount = OrderEmailPresenter::plain(23500);
+    $amount = OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500));
 
     expect(str_contains($html, 'Our records show ' . $amount . ' paid on this order and no refund recorded against it yet.'))
         ->toBeTrue('The cancellation email does not state what was paid and that no refund exists.');
@@ -248,15 +265,15 @@ it('states the refund that has actually been recorded against the order', functi
 
     [$html, $text] = cancelParts($order->fresh('items'));
 
-    expect(str_contains($html, 'A refund of ' . OrderEmailPresenter::plain(10000) . ' has been recorded against it.'))
+    expect(str_contains($html, 'A refund of ' . OrderEmailPresenter::plain(10000, Money::receiptDecimals(10000)) . ' has been recorded against it.'))
         ->toBeTrue('A recorded refund is not named in the cancellation email.');
 
-    expect(str_contains($text, 'A refund of ' . OrderEmailPresenter::plain(10000)))
+    expect(str_contains($text, 'A refund of ' . OrderEmailPresenter::plain(10000, Money::receiptDecimals(10000))))
         ->toBeTrue('A recorded refund is not named in the plain-text cancellation email.');
 
     // It is the REFUND's amount, never the order total. On a partial refund
     // those differ, and printing the total would overstate what is coming back.
-    expect(str_contains($html, 'A refund of ' . OrderEmailPresenter::plain(23500)))
+    expect(str_contains($html, 'A refund of ' . OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500))))
         ->toBeFalse('The email describes the order total as the refund.');
 });
 
@@ -274,7 +291,7 @@ it('counts a pending refund as recorded, because pending money is claimed money'
 
     [$html] = cancelParts($order->fresh('items'));
 
-    expect(str_contains($html, 'A refund of ' . OrderEmailPresenter::plain(23500) . ' has been recorded against it.'))
+    expect(str_contains($html, 'A refund of ' . OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500)) . ' has been recorded against it.'))
         ->toBeTrue('A pending refund is treated as though no refund existed.');
 });
 

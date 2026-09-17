@@ -921,8 +921,15 @@
       fixed_product: 'This much off <b>each</b> eligible item, multiplied by how many of it are in the basket, and never more than the item itself costs.'
     }[draft.type] || '';
 
+    /* WHOLE DIRHAMS ON THE FIXED TYPES ONLY — Lane FA.
+       coupons.amount is hundredths of a PERCENT for a percentage code and fils
+       for both fixed ones, which is this screen's oldest trap. The policy is
+       about money, so it binds the second reading and must leave the first
+       alone: 10.5% is a rate and a decimal in it is legitimate. So the keypad
+       and the placeholder follow isPercent, exactly as the server's own rule
+       does (CouponAdminApiController::validated). */
     var amountBox = '<div class="ce-unit">'
-      + '<input class="ce-input" data-bind="amount" inputmode="decimal" value="' + esc(draft.amount) + '" placeholder="' + (isPercent ? '10' : '25.00') + '">'
+      + '<input class="ce-input" data-bind="amount" inputmode="' + (isPercent ? 'decimal' : 'numeric') + '" value="' + esc(draft.amount) + '" placeholder="' + (isPercent ? '10' : '25') + '">'
       + '<span>' + esc(isPercent ? '%' : meta.currency) + '</span>'
       + '</div>';
 
@@ -1039,9 +1046,11 @@
 
     var spend = row(
         field('Minimum spend', 'Empty for no minimum.',
-              textInput('minimum_amount', 'inputmode="decimal" placeholder="100.00"'), 'minimum_amount'),
+              /* Basket thresholds are money on every coupon type, so both take
+                 whole dirhams whatever `type` says — Lane FA. */
+              textInput('minimum_amount', 'inputmode="numeric" placeholder="100"'), 'minimum_amount'),
         field('Maximum spend', 'Empty for no maximum.',
-              textInput('maximum_amount', 'inputmode="decimal" placeholder="500.00"'), 'maximum_amount'))
+              textInput('maximum_amount', 'inputmode="numeric" placeholder="500"'), 'maximum_amount'))
       + option('data-check="exclude_sale_items"', draft.exclude_sale_items,
           'Exclude sale items',
           'Anything already reduced is left out of the discount. If that leaves nothing for the code to apply to, the code is refused.',

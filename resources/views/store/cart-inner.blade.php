@@ -98,12 +98,33 @@
         </div>
 
         <aside class="sum">
+@php
+    /*
+     * THE WIDTH EVERY ROW OF THIS SUMMARY PRINTS AT — Lane FA.
+     *
+     * The basket this lane started from printed "Subtotal AED 90 / − AED 1 /
+     * Total AED 90" because each row was rounded on its own on the way to the
+     * screen. See CartService::totals()' `decimals` key: 0 when every figure is
+     * a whole dirham, which is the ordinary case under the whole-dirham policy,
+     * and the currency's full precision for the WHOLE column the moment one of
+     * them is not.
+     *
+     * AT COLUMN 0, WITH NO BLANK LINE AROUND IT, and that is not tidiness.
+     * Blade compiles a raw-PHP block to one <?php ?> and PHP swallows the
+     * single newline after it, so a block written this way contributes zero
+     * bytes to the rendered page — which is what
+     * StorefrontEnglishUnchangedTest, comparing this page byte for byte,
+     * requires. Indented, it leaves its own indentation behind; given a blank
+     * line of its own, it adds one.
+     */
+    $kbbCartDp = (int) ($totals['decimals'] ?? 0);
+@endphp
             <h2>{{ __('store.cart.summary_heading') }}</h2>
-            <div class="srow"><span>{{ __('store.cart.subtotal') }}</span><span>{!! \App\Support\Money::format($totals['subtotal']) !!}</span></div>
+            <div class="srow"><span>{{ __('store.cart.subtotal') }}</span><span>{!! \App\Support\Money::format($totals['subtotal'], $kbbCartDp) !!}</span></div>
             @if ($totals['discount'])
                 <div class="srow disc">
                     <span>{{ $totals['coupon_code'] }}</span>
-                    <span>– {!! \App\Support\Money::format($totals['discount']) !!}</span>
+                    <span>– {!! \App\Support\Money::format($totals['discount'], $kbbCartDp) !!}</span>
                 </div>
                 <div class="appliedcoupon"><span>✓ {{ strtoupper($totals['coupon_code']) }}</span><a data-kcpremovecoupon="{{ $totals['coupon_code'] }}">{{ __('store.cart.remove_coupon') }}</a></div>
             @endif
@@ -121,7 +142,7 @@
                 @endif
             @endif
 
-            <div class="srow tot"><span>{{ __('store.cart.total') }}</span><span>{!! \App\Support\Money::format($totals['total']) !!}</span></div>
+            <div class="srow tot"><span>{{ __('store.cart.total') }}</span><span>{!! \App\Support\Money::format($totals['total'], $kbbCartDp) !!}</span></div>
             {{-- CartController::payload() calls totals() with no shipping cost,
                  so this figure is the subtotal less any discount and nothing
                  else. A basket of AED 130 read "Total AED 130" here and became

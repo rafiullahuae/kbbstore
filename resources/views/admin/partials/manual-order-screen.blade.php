@@ -587,8 +587,13 @@
     if (!form.state.trim()) errors.state = 'Which emirate or region?';
     if (!form.country) errors.country = 'Choose a country.';
     if (!form.payment_method) errors.payment_method = 'Choose how they are paying.';
-    if (form.shipping_override && !/^\d*(\.\d{1,2})?$/.test(form.shipping_override.trim())) {
-      errors.shipping_override = 'A plain amount, at most two decimals.';
+    /* WHOLE DIRHAMS — Lane FA. Digits only: this shop prices in whole
+       dirhams, so a decimal point in a delivery charge is refused here as
+       well as by the server (AdminOrderController's shipping_override rule),
+       and the operator finds out before he presses Create rather than after.
+       The server rule is the guard; this is the courtesy. */
+    if (form.shipping_override && !/^\d+$/.test(form.shipping_override.trim())) {
+      errors.shipping_override = 'A whole number of dirhams — this shop does not price in fils.';
     }
     return Object.keys(errors).length === 0;
   }
@@ -924,7 +929,7 @@
       '<p>Left blank, the zone rate for that address is used and the free-delivery threshold ' +
       'still applies.</p>' +
       fld('shipping_override', 'Delivery charge (AED)',
-          textInput('shipping_override', 'Leave blank for the normal rate', form.shipping_override),
+          textInput('shipping_override', 'Leave blank for the normal rate — whole dirhams', form.shipping_override),
           'Overrides the zone rate for this order only — for a courier fee agreed in the chat. ' +
           'Read digit by digit, so 1.15 is exactly 115 fils.') +
       '</div></div>';

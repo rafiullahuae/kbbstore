@@ -212,10 +212,24 @@ it('accepts the largest amount the money column can actually hold', function () 
 
     $max = (string) \App\Services\Import\Money::MAX_FILS;
 
+    /*
+     * THE COLUMN'S OWN MAXIMUM CARRIES 47 FILS, so the whole-dirham policy
+     * refuses it — Lane FA. The largest fee this shop can be GIVEN is the
+     * largest whole dirham that fits, one dirham below the column, and it is
+     * refused for its decimals rather than for its size. The original point of
+     * this test survives underneath: the ceiling is the column's own and not
+     * an invented smaller number.
+     */
     test()->putJson('/admin-api/settings', ['settings' => ['cod_fee' => $max]])
+        ->assertStatus(422);
+
+    $maxWhole = (string) (intdiv(\App\Services\Import\Money::MAX_FILS, 100) * 100);
+
+    test()->putJson('/admin-api/settings', ['settings' => ['cod_fee' => $maxWhole]])
         ->assertOk();
 
-    expect(Setting::query()->where('key', 'cod_fee')->value('value'))->toBe($max);
+    expect(Setting::query()->where('key', 'cod_fee')->value('value'))->toBe($maxWhole)
+        ->and($maxWhole)->toBe('2147483600');
 });
 
 // ---------------------------------------------------------------------------
@@ -223,25 +237,35 @@ it('accepts the largest amount the money column can actually hold', function () 
 // ---------------------------------------------------------------------------
 
 /**
- * This key is major units, not fils: the SEO screen posts it raw from a
- * `step="0.01"` box and App\Support\Seo compares it against price_aed and
- * publishes it to Google as the offer's shipping rate. So the rule here has to
- * accept "25.50" and reject "abc" — the opposite of the fils keys above, which
- * is exactly why one blanket "money" rule would have been wrong.
+ * This key is major units, not fils: the SEO screen posts it raw and
+ * App\Support\Seo compares it against price_aed and publishes it to Google as
+ * the offer's shipping rate. So the rule here reads the value as DIRHAMS where
+ * the fils keys above read the same digits as hundredths — which is exactly
+ * why one blanket "money" rule would have been wrong, and is still the subject
+ * of this test.
  *
  * The consequence of getting it wrong is not an internal total: `(float) 'abc'`
  * is 0.0, so the store publishes "we ship free" in structured data while still
  * charging for delivery at checkout.
+ *
+ * WHOLE DIRHAMS APPLY HERE TOO — Lane FA. A feed advertising "AED 25.50
+ * delivery" beside a till that charges whole dirhams has published a rate the
+ * shop does not honour, and the crawler compares the two. So "25.50" is now
+ * refused and "25" is stored; the major-units reading is unchanged and is
+ * still what this test pins.
  */
-it('accepts a decimal shipping cost for the merchant feed and refuses a non-number', function () {
-    seedSetting('merchant_ship_cost', '19.99');
+it('reads the merchant shipping cost as dirhams and refuses a non-number', function () {
+    seedSetting('merchant_ship_cost', '19');
 
     settingsAdmin();
 
     test()->putJson('/admin-api/settings', ['settings' => ['merchant_ship_cost' => '25.50']])
+        ->assertStatus(422);
+
+    test()->putJson('/admin-api/settings', ['settings' => ['merchant_ship_cost' => '25']])
         ->assertOk();
 
-    expect(Setting::query()->where('key', 'merchant_ship_cost')->value('value'))->toBe('25.50');
+    expect(Setting::query()->where('key', 'merchant_ship_cost')->value('value'))->toBe('25');
 
     test()->putJson('/admin-api/settings', ['settings' => ['merchant_ship_cost' => 'abc']])
         ->assertStatus(422);
@@ -249,7 +273,7 @@ it('accepts a decimal shipping cost for the merchant feed and refuses a non-numb
     // Still the real rate, so the feed still says what the store really charges.
     $published = (float) storefrontSetting('merchant_ship_cost', '0');
 
-    expect($published)->toBe(25.50);
+    expect($published)->toBe(25.0);
 });
 
 // ---------------------------------------------------------------------------

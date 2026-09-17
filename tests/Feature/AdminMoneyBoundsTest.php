@@ -125,15 +125,27 @@ it('still saves a delivery charge at the very top of the range', function () {
 
     boundsAdmin();
 
+    /*
+     * THE TOP OF THE RANGE IS NOW THE TOP WHOLE DIRHAM — Lane FA.
+     *
+     * MAX_FILS itself carries 47 fils, so the whole-dirham policy refuses it.
+     * The largest charge this screen can be GIVEN is the largest whole dirham
+     * that fits, which is one dirham below the column. The point of this test
+     * is unchanged: a legitimate value at the very top is SAVED, so the bound
+     * added in the test above it is the column's own and not something
+     * narrower that silently blocks a real rate.
+     */
+    $topWhole = intdiv(ImportMoney::MAX_FILS, 100) * 100;
+
     test()->postJson('/admin-api/shipping', ['methods' => [[
         'id' => $flat->id,
         'title' => 'Standard',
         'enabled' => true,
-        'cost' => ImportMoney::MAX_FILS,
+        'cost' => $topWhole,
         'min_amount' => null,
     ]]])->assertOk();
 
-    expect((int) $flat->fresh()->cost)->toBe(ImportMoney::MAX_FILS);
+    expect((int) $flat->fresh()->cost)->toBe($topWhole);
 });
 
 // ---------------------------------------------------------------------------
@@ -197,10 +209,19 @@ it('refuses a COD fee larger than the money column on the Ecommerce screen', fun
 it('still saves an ordinary COD fee on the Ecommerce screen', function () {
     boundsAdmin();
 
+    /*
+     * WHOLE DIRHAMS — Lane FA. 750 fils is AED 7.50, which this shop does not
+     * price in, so an ordinary fee is now a whole number of dirhams. The
+     * subject of this test is that a legitimate mid-range value still saves,
+     * and that is unchanged; only what counts as legitimate has moved.
+     */
     test()->postJson('/admin-api/ecommerce', ['settings' => ['cod_fee' => '750']])
+        ->assertStatus(422);
+
+    test()->postJson('/admin-api/ecommerce', ['settings' => ['cod_fee' => '700']])
         ->assertOk();
 
-    expect((int) app(SettingsService::class)->get('cod_fee', 0))->toBe(750);
+    expect((int) app(SettingsService::class)->get('cod_fee', 0))->toBe(700);
 });
 
 /**

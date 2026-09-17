@@ -3195,8 +3195,13 @@ function ecField(f){
   }else if(f.type==='colour'){
     ctl = `<input type="color" id="${id}" data-ec="${f.name}" data-t="colour" value="${escAttr(v||'#000000')}" class="ecclr">`;
   }else if(f.type==='int'||f.type==='money'){
-    ctl = `<input type="number" min="0" id="${id}" data-ec="${f.name}" data-t="${f.type}" value="${escAttr(v??0)}" class="inp" style="width:130px">`
-        + (f.type==='money' ? ` <span class="ecunit">fils</span>` : '');
+    /* WHOLE DIRHAMS. A money field here is entered in FILS, so the step is a
+       whole dirham and the legend says so IN FILS: the server refuses 750 with
+       "enter 700 or 800", and a box that lets him type 750 teaches him the
+       wrong unit. Saying "enter AED 7" beside a box that wants 700 would
+       re-make the hundredfold error these rules exist to stop. */
+    ctl = `<input type="number" min="0" step="${f.type==='money' ? '100' : '1'}" id="${id}" data-ec="${f.name}" data-t="${f.type}" value="${escAttr(v??0)}" class="inp" style="width:130px">`
+        + (f.type==='money' ? ` <span class="ecunit">fils — whole dirhams, so 700 not 750</span>` : '');
   }else{
     ctl = `<input type="text" id="${id}" data-ec="${f.name}" data-t="text" value="${escAttr(v??'')}" class="inp" style="width:100%;max-width:440px">`;
   }
@@ -8153,7 +8158,15 @@ function sizeStyle(s){return s==='L'?'font-size:12px;padding:6px 11px':s==='M'?'
 let SH=null;
 
 function shBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/shipping'; }
-function shMoney(fils){ return Math.round(Number(fils||0)/100); }
+/* SHOWS A LEGACY RATE HONESTLY. Math.round() printed a stored 1,250-fil rate
+   as "13" in a box the operator reads as dirhams — the screen said AED 13 while
+   the shop charged AED 12.50, with nothing anywhere to say so. Every rate this
+   screen can now SAVE is whole, so this only fires on a rate that predates the
+   policy, which is exactly when he needs to see the real figure. */
+function shMoney(fils){
+  const v = Number(fils||0) / 100;
+  return Number.isInteger(v) ? v : v.toFixed(2);
+}
 
 async function renderShipping(){
   $('#content').innerHTML=`<div class="wrap"><div class="page-head"><h2>Delivery &amp; Shipping</h2><p>Loading…</p></div></div>`;
@@ -8949,7 +8962,12 @@ async function loadExtended(){
 }
 
 function xdName(c){ return (XD.names||{})[c] || c; }
-function xdMoney(f){ return Math.round(Number(f||0)/100); }
+/* Same as shMoney() above: a legacy per-country rate is shown as it is rather
+   than rounded into a figure the shop does not charge. */
+function xdMoney(f){
+  const v = Number(f||0) / 100;
+  return Number.isInteger(v) ? v : v.toFixed(2);
+}
 function xdChosen(){ return XD.rows.map(r=>r.code); }
 
 function xdPick(){
@@ -9125,7 +9143,7 @@ function psrField(f){
   if(f.type==='money')
     return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <span class="psmoney"><i>${escHtml(PSR.currency)}</i>
-        <input type="number" min="0" step="1" value="${Math.round(Number(v)/100)}" data-ps="${f.key}"></span></div>`;
+        <input type="number" min="0" step="1" value="${(Number(v)/100) % 1 === 0 ? Number(v)/100 : (Number(v)/100).toFixed(2)}" data-ps="${f.key}"></span></div>`;
   return `<div class="mmrow"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
     <input type="text" value="${escAttr(String(v))}" data-ps="${f.key}"></div>`;
 }
@@ -12017,7 +12035,11 @@ buildNav();
         ? '<input class="odinp odqty" data-itemid="'+it.id+'" type="number" min="1" value="'+it.quantity+'" style="width:60px;padding:6px 7px">'
         : '\u00d7 '+it.quantity;
       var priceCell = editable
-        ? '<input class="odinp odprice" data-itemid="'+it.id+'" type="number" step="0.01" min="0" value="'+it.unit_price_aed+'" style="width:84px;padding:6px 7px">'
+        /* WHOLE DIRHAMS. AdminOrderController refuses a NEW line price
+           carrying fils. The stored value is still printed as it is, so a line
+           revived from a WooCommerce order shows its real 99.80 rather than a
+           rounded lie — only a figure he types has to be whole. */
+        ? '<input class="odinp odprice" data-itemid="'+it.id+'" type="number" step="1" min="0" value="'+it.unit_price_aed+'" title="Whole dirhams" style="width:84px;padding:6px 7px">'
         : 'AED '+it.unit_price_aed;
       var removeCell = editable
         ? '<button class="btn ghost sm oditemdel" data-itemid="'+it.id+'" style="color:var(--sale,#c0392b);padding:4px 9px">Remove</button>'
@@ -16239,7 +16261,11 @@ buildNav();
         '</div>'+
         '<div class="sm-grid">'+
           smField('seo_merch_cost','Shipping cost (AED)',
-            '<input id="seo_merch_cost" type="number" step="0.01" value="'+sesc(S.merchant_ship_cost||'0')+'">',
+            /* WHOLE DIRHAMS. This is published to Google as the offer's
+               shipping rate and the crawler compares it against the till: a
+               feed advertising AED 12.50 delivery beside a shop that charges
+               whole dirhams is a price this shop does not honour. */
+            '<input id="seo_merch_cost" type="number" step="1" value="'+sesc(S.merchant_ship_cost||'0')+'">',
             'The figure quoted in the result, before any threshold.')+
           smField('seo_merch_freeover','Free shipping over (AED)',
             '<input id="seo_merch_freeover" type="number" step="1" value="'+sesc(S.merchant_ship_free_over||'0')+'">',

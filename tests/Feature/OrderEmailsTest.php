@@ -42,6 +42,7 @@ use App\Services\CartService;
 use App\Services\Mail\MailCredentials;
 use App\Services\Mail\MailSettings;
 use App\Services\Mail\OrderEmailPresenter;
+use App\Support\Money;
 use App\Services\Mail\ServerMailTransport;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Mail;
@@ -49,6 +50,22 @@ use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mime\RawMessage;
+
+/*
+ * RECEIPT WIDTH IS THE ORDER'S, NOT THE CURRENCY'S MAXIMUM — Lane FA.
+ *
+ * These assertions have always meant "printed the way this shop prints a
+ * receipt figure", and they expressed it by calling the presenter's own
+ * helper. That helper's default is still Money::minorExponent(); what changed
+ * is that the receipt no longer uses the default. Under the whole-dirham
+ * policy a receipt prints at the narrowest width that states ALL of its
+ * figures exactly (Money::receiptDecimals), so a whole-dirham order reads
+ * "AED 235" and an order carrying fils still reads "AED 89.80".
+ *
+ * So the assertions pass the width the receipt actually used. What is asserted
+ * is unchanged — the email prints this exact amount — and it still fails if the
+ * email prints a rounded or a widened figure that is not the money charged.
+ */
 
 const ORDER_MAIL_SMTP_PASSWORD = 'KBBORDERMAIL-pw-0007';
 
@@ -213,10 +230,10 @@ it('emails the customer a receipt when an order is placed', function () {
     expect($body)->toContain($order->order_number)
         // Rendered at the currency's real precision, not the storefront's
         // rounded whole-dirham display. AED 235.00, from 23500 fils exactly.
-        ->and($body)->toContain(OrderEmailPresenter::html(23500))
-        ->and($body)->toContain(OrderEmailPresenter::html(20000))
-        ->and($body)->toContain(OrderEmailPresenter::html(2000))
-        ->and($body)->toContain(OrderEmailPresenter::html(1500))
+        ->and($body)->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)))
+        ->and($body)->toContain(OrderEmailPresenter::html(20000, Money::receiptDecimals(20000)))
+        ->and($body)->toContain(OrderEmailPresenter::html(2000, Money::receiptDecimals(2000)))
+        ->and($body)->toContain(OrderEmailPresenter::html(1500, Money::receiptDecimals(1500)))
         // The snapshot line, the address, the delivery method.
         ->and($body)->toContain('Rice Toner')
         ->and($body)->toContain('12 Marina Walk')
@@ -250,7 +267,7 @@ it('carries a plain-text part with the same figures as the HTML one', function (
         ->and($text)->toContain('Rice Toner')
         // Money::plain — the markup-free form. An HTML span in a text/plain
         // part is the bug this assertion exists to catch.
-        ->and($text)->toContain(OrderEmailPresenter::plain(23500))
+        ->and($text)->toContain(OrderEmailPresenter::plain(23500, Money::receiptDecimals(23500)))
         ->and($text)->not->toContain('<span')
         ->and($text)->not->toContain('woocommerce-Price-amount');
 });
@@ -295,7 +312,7 @@ it('tells the store an order has come in, at the configured address', function (
     $body = orderMailBody(NewOrderAlert::class);
 
     expect($body)->toContain('buyer@example.com')
-        ->and($body)->toContain(OrderEmailPresenter::html(23500));
+        ->and($body)->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)));
 });
 
 it('falls back to the From address when no alert address is set', function () {
@@ -438,7 +455,7 @@ it('emails the customer when an order is marked shipped', function () {
 
     expect($body)->toContain('on its way')
         ->and($body)->toContain($order->order_number)
-        ->and($body)->toContain(OrderEmailPresenter::html(23500));
+        ->and($body)->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)));
 });
 
 it('emails the customer when an order is cancelled', function () {
@@ -505,7 +522,7 @@ it('emails the customer when a refund actually settles', function () {
         && $mail->isPartial === false);
 
     expect(orderMailBody(OrderRefunded::class))
-        ->toContain(OrderEmailPresenter::html(23500))
+        ->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)))
         ->toContain($order->order_number);
 });
 
@@ -522,8 +539,8 @@ it('says a partial refund is partial, in the refunded amount not the order total
     // AED 50.00 refunded against an AED 235.00 order — both printed, neither
     // mistaken for the other.
     expect(orderMailBody(OrderRefunded::class))
-        ->toContain(OrderEmailPresenter::html(5000))
-        ->toContain(OrderEmailPresenter::html(23500));
+        ->toContain(OrderEmailPresenter::html(5000, Money::receiptDecimals(5000)))
+        ->toContain(OrderEmailPresenter::html(23500, Money::receiptDecimals(23500)));
 });
 
 it('sends nothing for a refund that failed at the gateway', function () {

@@ -83,7 +83,7 @@
                  went through ucfirst(str_replace(...)) on a raw column value, which
                  cannot be translated because it is not a sentence — OrderStatusLabel
                  is the lookup that can be. --}}
-            <span class="kbbol-total">{!! Money::format((int) $order->total, Money::receiptDecimals((int) $order->total)) !!}</span>
+            <span class="kbbol-total">{!! Money::format((int) $order->total, \App\Services\Mail\OrderEmailPresenter::ledgerWidth($order)) !!}</span>
             <span class="kbbol-pill {{ $statusClass }}">{{ \App\Support\OrderStatusLabel::for($status) }}</span>
             <span class="kbbol-chev">›</span>
           </a>

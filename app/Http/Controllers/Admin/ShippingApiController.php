@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Services\Import\Money;
+use App\Support\WholeDirhams;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -98,6 +99,57 @@ class ShippingApiController extends Controller
             'methods.*.cost.max' => 'A delivery charge cannot be more than AED 21,474,836.47.',
             'methods.*.min_amount.max' => 'A free-delivery threshold cannot be more than AED 21,474,836.47.',
         ]);
+
+        /*
+         * WHOLE DIRHAMS, CHECKED BEFORE ANYTHING IS WRITTEN — Lane FA.
+         *
+         * A delivery charge and a free-delivery threshold are both money the
+         * owner types, so both are REFUSED rather than adjusted. See
+         * App\Support\WholeDirhams for the rule.
+         *
+         * The threshold matters as much as the charge and for a different
+         * reason: it is compared against a subtotal that is now always a whole
+         * dirham, so a threshold of 19,950 fils is one no basket can ever land
+         * exactly on, and the shop's own "AED 0 away from free delivery"
+         * arithmetic is computed from the difference. A threshold on the same
+         * grid as the baskets it measures is what makes that line able to
+         * reach zero.
+         *
+         * A SEPARATE PASS, ahead of the write loop, deliberately. The loop
+         * below saves each method as it goes, so refusing inside it would
+         * leave the earlier rows of the form applied and the later ones not —
+         * a screen showing a mixture of saved and unsaved rates with a single
+         * error message over the top. This is the same "validate everything
+         * first, write nothing until it all passes" rule
+         * AdminController::updateSettings() states at length.
+         *
+         * Each figure is compared against what the method already holds, so a
+         * zone carrying a legacy 1,250-fil rate can still be renamed or
+         * switched off. The audit command is where those are dealt with.
+         */
+        foreach ($data['methods'] as $row) {
+            $method = ShippingMethod::find($row['id']);
+
+            if (! $method) {
+                continue;
+            }
+
+            $checks = $method->type === 'free_shipping'
+                ? ['min_amount' => ['Free-delivery threshold', $row['min_amount'] ?? 0, $method->min_amount]]
+                : ['cost' => ['Delivery charge', $row['cost'], $method->cost]];
+
+            foreach ($checks as $field => [$label, $value, $stored]) {
+                $value = (int) $value;
+
+                if ($value !== ($stored === null ? null : (int) $stored)
+                    && ! WholeDirhams::isWhole($value)) {
+                    return response()->json([
+                        'message' => WholeDirhams::message($label . ' on “' . $method->title . '”', $value),
+                        'errors' => ['methods.' . $field => ['Whole ' . WholeDirhams::plural() . ' only.']],
+                    ], 422);
+                }
+            }
+        }
 
         foreach ($data['methods'] as $row) {
             $method = ShippingMethod::find($row['id']);

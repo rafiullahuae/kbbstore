@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Support\DemoSeed;
 use App\Support\Money;
 use App\Support\StoreTime;
+use App\Support\WholeDirhams;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -2120,6 +2121,28 @@ class AdminController extends Controller
         $clean = [];
 
         /*
+         * WHAT EACH KEY HOLDS RIGHT NOW, read once, straight off the table.
+         *
+         * Only the whole-dirham rule uses it, and it uses it for one thing: to
+         * tell a value the owner has just TYPED apart from one that is merely
+         * being posted back unchanged. This screen submits a whole tab at a
+         * time, so without it a shop carrying a legacy COD fee of 1,250 fils
+         * could not save its store name — the fee would be refused on every
+         * save of that tab for ever, and updateSettings() writes none of a tab
+         * when one value fails. That is the same trap the `optint` note on
+         * `currency_decimals` below records, and it is worth paying one query
+         * to stay out of it.
+         *
+         * Through the query builder rather than Setting::map() or
+         * SettingsService::get(), because both of those apply defaults and
+         * memoise — and what is wanted here is the raw row, or nothing.
+         */
+        $stored = \App\Models\Setting::query()
+            ->whereIn('key', array_keys($incoming))
+            ->pluck('value', 'key')
+            ->all();
+
+        /*
          * VALIDATE EVERYTHING FIRST, WRITE NOTHING UNTIL IT ALL PASSES.
          *
          * The screen posts a whole tab in one request. Writing as we went would
@@ -2136,7 +2159,7 @@ class AdminController extends Controller
             [$type, $label] = self::SETTING_RULES[$key];
             $extra = self::SETTING_RULES[$key][2] ?? null;
 
-            $result = $this->checkSetting($type, $label, $value, $extra);
+            $result = $this->checkSetting($type, $label, $value, $extra, $stored[$key] ?? null);
 
             if ($result['error'] !== null) {
                 $errors[$key] = [$result['error']];
@@ -2214,7 +2237,7 @@ class AdminController extends Controller
      *
      * @return array{value: mixed, error: ?string}
      */
-    private function checkSetting(string $type, string $label, mixed $raw, mixed $extra): array
+    private function checkSetting(string $type, string $label, mixed $raw, mixed $extra, mixed $stored = null): array
     {
         $ok = static fn (string $v): array => ['value' => $v, 'error' => null];
         $no = static fn (string $m): array => ['value' => null, 'error' => $m];
@@ -2349,6 +2372,40 @@ class AdminController extends Controller
                         . '(up to AED 21,474,836.47).');
                 }
 
+                /*
+                 * WHOLE DIRHAMS — Lane FA. "no decimals. if any decimals
+                 * comes. adjust to the price."
+                 *
+                 * These four keys (free_ship, delivery_flat, cod_fee,
+                 * gift_fee) are money the owner types, so this REFUSES rather
+                 * than adjusts — see App\Support\WholeDirhams for the rule and
+                 * why it falls that way. 1,250 fils is AED 12.50, and a COD
+                 * surcharge of AED 12.50 on a shop whose totals are whole
+                 * dirhams is the fil that reappears on every cash order.
+                 *
+                 * THE WIRE IS FILS HERE, not dirhams — the screen multiplies
+                 * before posting — so the message is built in fils too. The
+                 * whole-dirham helper talks in major units, which is the right
+                 * vocabulary for the owner and the wrong one for the box he is
+                 * actually looking at, and telling him "enter AED 12" beside a
+                 * field that wants 1200 is how the hundredfold mistake the
+                 * `fils` rule above exists to prevent gets made a second time.
+                 *
+                 * Unchanged values pass. See the $stored note in
+                 * updateSettings() — without it, one legacy fee makes a whole
+                 * settings tab unsaveable.
+                 */
+                if ((string) $stored !== $value && ! WholeDirhams::isWhole((int) $value)) {
+                    $unit = WholeDirhams::unit();
+
+                    return $no("“{$label}” is " . $value . ' fils, which is AED '
+                        . \App\Support\Money::decimalString((int) $value)
+                        . '. This shop prices in whole ' . WholeDirhams::plural()
+                        . ', so enter ' . WholeDirhams::toward((int) $value)
+                        . ' or ' . WholeDirhams::away((int) $value)
+                        . ' (fils come in ' . $unit . 's).');
+                }
+
                 return $ok((string) (int) $value);
 
             case 'aed':
@@ -2366,6 +2423,26 @@ class AdminController extends Controller
                     || $this->filsFromAedText($value) > \App\Services\Import\Money::MAX_FILS) {
                     return $no("“{$label}” is more than the money column can store "
                         . '(up to AED 21,474,836.47).');
+                }
+
+                /*
+                 * WHOLE DIRHAMS on the two major-unit money keys —
+                 * merchant_ship_cost and merchant_ship_free_over.
+                 *
+                 * These feed App\Support\Seo, which publishes them to Google
+                 * Merchant as a shipping rate and a free-shipping threshold
+                 * beside the product's own price. A shop that advertises
+                 * "AED 12.50 delivery" in a product feed while charging whole
+                 * dirhams at the till has published a price it does not honour
+                 * — which is a worse failure than an untidy admin screen,
+                 * because the crawler compares the two.
+                 *
+                 * Here the wire IS major units, so the ordinary message reads
+                 * correctly and no fils translation is needed.
+                 */
+                if ((string) $stored !== $value
+                    && ! WholeDirhams::isWhole($this->filsFromAedText($value))) {
+                    return $no(WholeDirhams::message($label, $this->filsFromAedText($value)));
                 }
 
                 return $ok($value);

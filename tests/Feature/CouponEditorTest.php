@@ -166,13 +166,31 @@ it('creates a coupon from the editor', function () {
 });
 
 it('stores a fixed cart amount as minor units, not as a percentage', function () {
-    $response = ceditorPost(['code' => 'TENOFF', 'type' => 'fixed_cart', 'amount' => '25.50'])
+    $response = ceditorPost(['code' => 'TENOFF', 'type' => 'fixed_cart', 'amount' => '25'])
         ->assertCreated();
 
-    // AED 25.50 is 2550 fils. The same "25.50" typed against a percentage code
-    // would be 2550 hundredths of a percent, which is 25.5% — one string, two
-    // meanings, decided by `type`.
-    expect(Coupon::find($response->json('id'))->amount)->toBe(2550);
+    // AED 25 is 2500 fils. The same "25" typed against a percentage code would
+    // be 2500 hundredths of a percent, which is 25% — one string, two
+    // meanings, decided by `type`. That is still the whole ballgame here.
+    expect(Coupon::find($response->json('id'))->amount)->toBe(2500);
+
+    /*
+     * AND THE TWO MEANINGS NOW DIVERGE ON A SECOND AXIS — Lane FA. A fixed
+     * amount is MONEY, so "25.50" is refused: this shop prices in whole
+     * dirhams. The same string against a PERCENTAGE code is a rate, not money,
+     * and is still accepted — 25.5% is a sale the owner may legitimately want.
+     * Getting that distinction backwards in either direction is the defect
+     * this file exists for.
+     */
+    ceditorPost(['code' => 'FILSOFF', 'type' => 'fixed_cart', 'amount' => '25.50'])
+        ->assertStatus(422);
+
+    expect(Coupon::where('code', 'FILSOFF')->exists())->toBeFalse();
+
+    $pct = ceditorPost(['code' => 'PCTOFF', 'type' => 'percent', 'amount' => '25.50'])
+        ->assertCreated()->json('id');
+
+    expect(Coupon::find($pct)->amount)->toBe(2550);
 });
 
 it('keeps two decimal places on a percentage exactly', function () {
@@ -648,10 +666,21 @@ it('prices a percentage coupon created through the editor exactly as the shop do
 
     $service = app(CouponService::class);
 
-    // 35% of 20,490 fils is exactly 7,171.5, which rounds half-up to 7,172.
-    // If the editor had stored 35 instead of 3500 this would be 72 — a hundred
-    // times too small, and the shop would quietly hand out 0.35% off.
-    expect($service->discountFor($coupon, $cart))->toBe(7172);
+    /*
+     * 35% of 20,490 fils is exactly 7,171.5, which rounds half-up to 7,172.
+     * If the editor had stored 35 instead of 3500 this would be 72 — a hundred
+     * times too small, and the shop would quietly hand out 0.35% off. That is
+     * what this assertion is for, so it is made against exactDiscountFor(),
+     * where the figure is still to the fil.
+     *
+     * discountFor() is what the shop charges, and since Lane FA it rounds that
+     * exact figure UP to a whole dirham — AED 72 — because a percentage the
+     * shop advertises should be a floor and not a ceiling. Both are asserted:
+     * a hundredfold error would be caught by either, and the second one pins
+     * the policy so that a later lane cannot quietly drop it.
+     */
+    expect($service->exactDiscountFor($coupon, $cart))->toBe(7172)
+        ->and($service->discountFor($coupon, $cart))->toBe(7200);
 
     $check = $service->validate('THIRTYFIVE', $cart);
     expect($check['ok'])->toBeTrue();
