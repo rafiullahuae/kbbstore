@@ -190,11 +190,21 @@ final class EnglishRenderWalk
      * that assertion is what this constant cannot do for its own move. See
      * docs/rtl-standalone-documents.md.
      *
-     * The commit named below is Lane FK's merge of claude/kind-mayer-rpqesv at
-     * the point the RTL manual half and Lane FO's hero had both landed, so it
-     * carries their moves as well as this one.
+     * It carries the RTL manual half's moves and Lane FO's hero as well as this
+     * one; all three had landed by the commit named below.
+     *
+     * AND ONE CSS DECLARATION, in the same lane and for the same reason. Giving
+     * those documents a real `dir` is what unblocked T6 §11.4's deferred
+     * `.mnav` conversion, so blog and post also moved `left: 0` to
+     * `inset-inline-start: 0` and gained one `[dir="rtl"]` rule that cannot
+     * match in an English document. In LTR `inset-inline-start` IS `left`, so
+     * the four pages render identically — what moved is the bytes of the
+     * <style> block the browser is sent, which is exactly the kind of change
+     * this walk exists to put in front of someone.
+     *
+     * The commit named below is the one that made both moves.
      */
-    public const BASE_COMMIT = '45a57c1392dec428b1a0dbe82d9cd06fde8c3ced';
+    public const BASE_COMMIT = '44d4f12edc970b459a06f2e08c8e0b2c5d4940e7';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
