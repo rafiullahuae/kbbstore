@@ -1,0 +1,204 @@
+T6 render check — raw results
+==============================================================================
+
+Six full-page interleaved capture runs, 22 page/viewport pairs each.
+  cross N   = tree at 7315120 (:8942) vs this branch (:8941)
+  control N = tree at 7315120 (:8942) vs ITSELF (:8942)
+
+The control is the point: if the cross runs and the control runs flake at
+the same rate, the flake is the harness. They do.
+
+px = differing pixels; d = maximum single-channel difference out of 255.
+
+cross1  CROSS  (before vs after)   19/22 identical
+    desktop-account        byte-identical
+    desktop-brands         DIFFERS  313 px, d=5, bbox=[102, 10, 957, 231], 1440x1000
+    desktop-cart           byte-identical
+    desktop-category       byte-identical
+    desktop-checkout       byte-identical
+    desktop-home           byte-identical
+    desktop-product        byte-identical
+    desktop-quiz           byte-identical
+    desktop-reviews        byte-identical
+    desktop-shop           byte-identical
+    desktop-wishlist       byte-identical
+    mobile-account         byte-identical
+    mobile-brands          byte-identical
+    mobile-cart            byte-identical
+    mobile-category        byte-identical
+    mobile-checkout        byte-identical
+    mobile-home            DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x9331
+    mobile-product         DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x4023
+    mobile-quiz            byte-identical
+    mobile-reviews         byte-identical
+    mobile-shop            byte-identical
+    mobile-wishlist        byte-identical
+
+cross2  CROSS  (before vs after)   19/22 identical
+    desktop-account        byte-identical
+    desktop-brands         byte-identical
+    desktop-cart           byte-identical
+    desktop-category       byte-identical
+    desktop-checkout       byte-identical
+    desktop-home           byte-identical
+    desktop-product        byte-identical
+    desktop-quiz           byte-identical
+    desktop-reviews        byte-identical
+    desktop-shop           byte-identical
+    desktop-wishlist       byte-identical
+    mobile-account         DIFFERS  18 px, d=15, bbox=[1, 10, 371, 856], 390x1519
+    mobile-brands          DIFFERS  17 px, d=3, bbox=[1, 10, 371, 856], 390x1757
+    mobile-cart            byte-identical
+    mobile-category        byte-identical
+    mobile-checkout        byte-identical
+    mobile-home            byte-identical
+    mobile-product         byte-identical
+    mobile-quiz            byte-identical
+    mobile-reviews         byte-identical
+    mobile-shop            DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x6270
+    mobile-wishlist        byte-identical
+
+cross3  CROSS  (before vs after)   19/22 identical
+    desktop-account        byte-identical
+    desktop-brands         DIFFERS  313 px, d=5, bbox=[102, 10, 957, 231], 1440x1000
+    desktop-cart           byte-identical
+    desktop-category       byte-identical
+    desktop-checkout       byte-identical
+    desktop-home           byte-identical
+    desktop-product        byte-identical
+    desktop-quiz           byte-identical
+    desktop-reviews        byte-identical
+    desktop-shop           byte-identical
+    desktop-wishlist       byte-identical
+    mobile-account         byte-identical
+    mobile-brands          byte-identical
+    mobile-cart            byte-identical
+    mobile-category        byte-identical
+    mobile-checkout        byte-identical
+    mobile-home            byte-identical
+    mobile-product         DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x4023
+    mobile-quiz            byte-identical
+    mobile-reviews         byte-identical
+    mobile-shop            DIFFERS  15 px, d=3, bbox=[1, 10, 371, 856], 390x6270
+    mobile-wishlist        byte-identical
+
+ctrl1  CONTROL(before vs before)   19/22 identical
+    desktop-account        byte-identical
+    desktop-brands         byte-identical
+    desktop-cart           byte-identical
+    desktop-category       byte-identical
+    desktop-checkout       byte-identical
+    desktop-home           byte-identical
+    desktop-product        byte-identical
+    desktop-quiz           byte-identical
+    desktop-reviews        byte-identical
+    desktop-shop           byte-identical
+    desktop-wishlist       byte-identical
+    mobile-account         byte-identical
+    mobile-brands          DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x1757
+    mobile-cart            byte-identical
+    mobile-category        byte-identical
+    mobile-checkout        byte-identical
+    mobile-home            DIFFERS  17 px, d=3, bbox=[1, 10, 371, 856], 390x9331
+    mobile-product         byte-identical
+    mobile-quiz            byte-identical
+    mobile-reviews         byte-identical
+    mobile-shop            DIFFERS  15 px, d=3, bbox=[1, 10, 371, 856], 390x6270
+    mobile-wishlist        byte-identical
+
+ctrl2  CONTROL(before vs before)   19/22 identical
+    desktop-account        byte-identical
+    desktop-brands         DIFFERS  313 px, d=5, bbox=[102, 10, 957, 231], 1440x1000
+    desktop-cart           byte-identical
+    desktop-category       byte-identical
+    desktop-checkout       byte-identical
+    desktop-home           byte-identical
+    desktop-product        byte-identical
+    desktop-quiz           byte-identical
+    desktop-reviews        byte-identical
+    desktop-shop           byte-identical
+    desktop-wishlist       byte-identical
+    mobile-account         byte-identical
+    mobile-brands          byte-identical
+    mobile-cart            byte-identical
+    mobile-category        byte-identical
+    mobile-checkout        byte-identical
+    mobile-home            DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x9331
+    mobile-product         byte-identical
+    mobile-quiz            byte-identical
+    mobile-reviews         byte-identical
+    mobile-shop            byte-identical
+    mobile-wishlist        DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x1384
+
+ctrl3  CONTROL(before vs before)   19/22 identical
+    desktop-account        byte-identical
+    desktop-brands         DIFFERS  313 px, d=5, bbox=[102, 10, 957, 231], 1440x1000
+    desktop-cart           byte-identical
+    desktop-category       byte-identical
+    desktop-checkout       byte-identical
+    desktop-home           byte-identical
+    desktop-product        byte-identical
+    desktop-quiz           byte-identical
+    desktop-reviews        byte-identical
+    desktop-shop           byte-identical
+    desktop-wishlist       byte-identical
+    mobile-account         DIFFERS  18 px, d=15, bbox=[1, 10, 371, 856], 390x1519
+    mobile-brands          byte-identical
+    mobile-cart            byte-identical
+    mobile-category        byte-identical
+    mobile-checkout        byte-identical
+    mobile-home            byte-identical
+    mobile-product         byte-identical
+    mobile-quiz            byte-identical
+    mobile-reviews         byte-identical
+    mobile-shop            DIFFERS  12 px, d=3, bbox=[366, 10, 371, 72], 390x6270
+    mobile-wishlist        byte-identical
+
+==============================================================================
+SHA-256 of every full-resolution PNG in cross1, for anyone who wants to
+verify a specific pair rather than take the table above on trust.
+
+87527b0d6f53e3d80a6099e19399fb53c659d40658d0ce8b323f25f0a769ae47 desktop-account-after.png
+87527b0d6f53e3d80a6099e19399fb53c659d40658d0ce8b323f25f0a769ae47 desktop-account-before.png
+74b3294abb8f5b9b64592fc75dd87c96dcc99e87847f5edd1e0bf9ba72e160de desktop-brands-after.png
+2220add1a2bb8ea042567d1348748840b2595c13b3acc08143351ef8be86a2cb desktop-brands-before.png
+cb35b9d9beab3d02c38b4b527951b128f9e58b50dc8069f5420ec58d87483df1 desktop-cart-after.png
+cb35b9d9beab3d02c38b4b527951b128f9e58b50dc8069f5420ec58d87483df1 desktop-cart-before.png
+58518436a606b5d8f616cd8ddceeeef0cf4b406726c1d203f1dee11a2b47c355 desktop-category-after.png
+58518436a606b5d8f616cd8ddceeeef0cf4b406726c1d203f1dee11a2b47c355 desktop-category-before.png
+29cf6385d83f0a463136970dad055852d62ee4403656a706543844411d18ddec desktop-checkout-after.png
+29cf6385d83f0a463136970dad055852d62ee4403656a706543844411d18ddec desktop-checkout-before.png
+6c55aaaf4550d2e5eb28d67ad476b2e2a23332044ec8f14dc8bd766635e239ff desktop-home-after.png
+6c55aaaf4550d2e5eb28d67ad476b2e2a23332044ec8f14dc8bd766635e239ff desktop-home-before.png
+d7f237fbe6b98df5d288012ce1c680098adbe717d473f33ed84568944bf38563 desktop-product-after.png
+d7f237fbe6b98df5d288012ce1c680098adbe717d473f33ed84568944bf38563 desktop-product-before.png
+757bec1dea5a5060d82d06afdac5ad4ebc9934b9cf14fbd0567eee49e0c4c399 desktop-quiz-after.png
+757bec1dea5a5060d82d06afdac5ad4ebc9934b9cf14fbd0567eee49e0c4c399 desktop-quiz-before.png
+2cd79675d6c6653967ee96b4d25730e6bd953b0146d6ececf9e68c343c3b0882 desktop-reviews-after.png
+2cd79675d6c6653967ee96b4d25730e6bd953b0146d6ececf9e68c343c3b0882 desktop-reviews-before.png
+499e452162c4ab3e3a0f450937e8e2c93b96810030ec18d019dae8190637f1c5 desktop-shop-after.png
+499e452162c4ab3e3a0f450937e8e2c93b96810030ec18d019dae8190637f1c5 desktop-shop-before.png
+e3f3483878e4e793c18d0797209f80592e8a4fb96383f679ef8885aa0d0dfdeb desktop-wishlist-after.png
+e3f3483878e4e793c18d0797209f80592e8a4fb96383f679ef8885aa0d0dfdeb desktop-wishlist-before.png
+f19006e0e10913a540abc72048d73c3b568f04b7a9df03161e506c0f220b0c52 mobile-account-after.png
+f19006e0e10913a540abc72048d73c3b568f04b7a9df03161e506c0f220b0c52 mobile-account-before.png
+ca141188dd564f4550d95eec29900dee9750c37f956405ac39abbfa8ae9e6521 mobile-brands-after.png
+ca141188dd564f4550d95eec29900dee9750c37f956405ac39abbfa8ae9e6521 mobile-brands-before.png
+cf92676f163c26d34110b7463682946dc94e3f1a26f84a13bae6bfe60d3aec9a mobile-cart-after.png
+cf92676f163c26d34110b7463682946dc94e3f1a26f84a13bae6bfe60d3aec9a mobile-cart-before.png
+ce44d297db005dd76a9ec27cb4e93e5aadfd054a10f4f0a55d192e59f5d56dbf mobile-category-after.png
+ce44d297db005dd76a9ec27cb4e93e5aadfd054a10f4f0a55d192e59f5d56dbf mobile-category-before.png
+ab8e0f85344aba52eb25c8728e360d85637a06e5029fdf5348f8b9ec8524b4b5 mobile-checkout-after.png
+ab8e0f85344aba52eb25c8728e360d85637a06e5029fdf5348f8b9ec8524b4b5 mobile-checkout-before.png
+484a400e6b3d69fa5c0554c880ef0ab220b29b4a626e1b55a93c8bcac42da0f0 mobile-home-after.png
+53c32009badc8ec668aeaa6a22d658997c577bb5606e1d12fae62ad7ad9687ea mobile-home-before.png
+76c65315e78fee79f5b9b8fbf8a60e0fc1075abe63cba8f999d1d6ac7711c44a mobile-product-after.png
+98c8950ce2438455fb32e26e292324db9a1c9e5cc28cb29a6e8b604e1e2f4c46 mobile-product-before.png
+0f1fc71a960a2ff4eea326f5db588a69250e081dfec575fa6f7804c90238d5a7 mobile-quiz-after.png
+0f1fc71a960a2ff4eea326f5db588a69250e081dfec575fa6f7804c90238d5a7 mobile-quiz-before.png
+e0e6431c540cefefb95e052ee896b2ae1bc565228ac20915f9c4270d2055d48a mobile-reviews-after.png
+e0e6431c540cefefb95e052ee896b2ae1bc565228ac20915f9c4270d2055d48a mobile-reviews-before.png
+3edebd3e3153674ef57da10bdbb0b7b374c0b46f5b1a35a019111b080733d2cb mobile-shop-after.png
+3edebd3e3153674ef57da10bdbb0b7b374c0b46f5b1a35a019111b080733d2cb mobile-shop-before.png
+36b7fe1a58679186082e3823f26d40df05d642bca0f756d8e2d8c1ddd776eef4 mobile-wishlist-after.png
+36b7fe1a58679186082e3823f26d40df05d642bca0f756d8e2d8c1ddd776eef4 mobile-wishlist-before.png

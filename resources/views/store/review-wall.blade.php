@@ -82,7 +82,7 @@
   .sr-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 0;border-bottom:1px solid var(--line);margin-bottom:26px}
   .sr-logo{font-size:19px;font-weight:700;letter-spacing:-.02em;text-decoration:none}
   .sr-logo span{color:var(--pink)}
-  .sr-topnav{margin-left:auto;display:flex;gap:16px;font-size:13.5px;font-weight:600}
+  .sr-topnav{margin-inline-start:auto;display:flex;gap:16px;font-size:13.5px;font-weight:600}
   .sr-topnav a{color:var(--ink-2);text-decoration:none}
   .sr-topnav a:hover{color:var(--pink-deep)}
 
@@ -102,7 +102,7 @@
   .sr-bar .lab{width:30px;font-weight:600;color:var(--ink-2)}
   .sr-bar .track{flex:1;height:8px;border-radius:30px;background:var(--pink-soft);overflow:hidden}
   .sr-bar .fill{height:100%;border-radius:30px;background:linear-gradient(90deg,var(--blush),var(--pink));display:block}
-  .sr-bar .pct{width:34px;text-align:right;font-variant-numeric:tabular-nums}
+  .sr-bar .pct{width:34px;text-align:end;font-variant-numeric:tabular-nums}
 
   /* said instead of a score, below the threshold */
   .sr-too-few{background:var(--pink-soft);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:16px;font-size:13px;line-height:1.6;color:var(--ink-2)}
@@ -137,7 +137,7 @@
      path edited by hand in the admin) must not spill its alt text across the
      card. */
   .sr-ph{width:62px;height:62px;border-radius:9px;object-fit:cover;background:var(--pink-soft);display:block;overflow:hidden;font-size:9px;color:var(--muted)}
-  .sr-reply{margin-top:10px;border-left:2px solid var(--blush);padding-left:10px;font-size:12px;color:var(--ink-2)}
+  .sr-reply{margin-top:10px;border-inline-start:2px solid var(--blush);padding-inline-start:10px;font-size:12px;color:var(--ink-2)}
   .sr-cf{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;font-size:11.5px;color:var(--muted)}
 
   .sr-more-wrap{text-align:center;margin-top:8px}

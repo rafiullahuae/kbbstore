@@ -48,7 +48,7 @@
 .kbbod-line:last-child{border-bottom:0}
 .kbbod-thumb{flex:0 0 auto;position:relative;width:56px;height:56px;border-radius:10px;background-size:cover;
     background-position:center;border:1px solid var(--line-2)}
-.kbbod-qty{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:99px;background:var(--ink);
+.kbbod-qty{position:absolute;top:-6px;inset-inline-end:-6px;min-width:20px;height:20px;border-radius:99px;background:var(--ink);
     color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 5px}
 .kbbod-name{flex:1 1 auto;min-width:0}
 .kbbod-brand{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--pink);font-weight:700}
@@ -56,7 +56,7 @@
 .kbbod-meta{display:block;margin-top:3px;font-size:11.5px;color:var(--muted);font-weight:600}
 .kbbod-linetotal{flex:0 0 auto;font-size:13.5px;font-weight:700;color:var(--ink);white-space:nowrap}
 
-.kbbod-totals{margin-left:auto;max-width:340px}
+.kbbod-totals{margin-inline-start:auto;max-width:340px}
 .kbbod-row{display:flex;justify-content:space-between;gap:16px;padding:7px 0;font-size:13px;color:var(--ink-2)}
 .kbbod-row.is-total{border-top:1px solid var(--line-2);margin-top:5px;padding-top:11px;font-size:15px;font-weight:800;color:var(--ink)}
 .kbbod-free{color:#1F7D52;font-weight:700}
@@ -71,7 +71,7 @@
 
 @media (max-width:560px){
   .kbbod-facts{grid-template-columns:1fr}
-  .kbbod-totals{max-width:none;margin-left:0}
+  .kbbod-totals{max-width:none;margin-inline-start:0}
   .kbbod-thumb{width:48px;height:48px}
   .kbbod-line{gap:11px}
 }

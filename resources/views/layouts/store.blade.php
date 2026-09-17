@@ -292,13 +292,14 @@ $kbbSeoCtx = array_merge([
 </div>
 <style>
 .pc .ph{position:relative}
+/* RTL-PHYSICAL: centring idiom (left:50% + translate(-50%,...)). */
 .qv-btn{position:absolute;left:50%;bottom:10px;transform:translate(-50%,6px);opacity:0;transition:.18s;background:rgba(255,255,255,.95);border:1px solid #e6dbe0;border-radius:99px;padding:6px 16px;font-size:11px;letter-spacing:.03em;cursor:pointer;color:#5e545a;white-space:nowrap;z-index:3}
 .pc:hover .qv-btn,.qv-btn:focus-visible{opacity:1;transform:translate(-50%,0)}
 @media (hover:none){.qv-btn{display:none}}
 .qv-back{position:fixed;inset:0;background:rgba(40,30,36,.5);display:grid;place-items:center;z-index:9999;padding:18px}
 .qv-back[hidden]{display:none}
 .qv-modal{position:relative;background:#fff;border-radius:14px;max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:22px}
-.qv-x{position:absolute;top:10px;right:12px;background:none;border:0;font-size:26px;line-height:1;color:#8a7f85;cursor:pointer}
+.qv-x{position:absolute;top:10px;inset-inline-end:12px;background:none;border:0;font-size:26px;line-height:1;color:#8a7f85;cursor:pointer}
 .qv-load{padding:46px 0;text-align:center;color:#8a7f85;font-size:13px}
 .qv-wrap{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 @media (max-width:640px){.qv-wrap{grid-template-columns:1fr}}
@@ -309,9 +310,9 @@ $kbbSeoCtx = array_merge([
 .qv-rate{font-size:12px;color:#6d6369;margin-bottom:9px}
 .qv-rate span{color:#e0a33c}
 .qv-price{font-size:19px;margin-bottom:8px}
-.qv-price del{color:#a79aa1;font-size:15px;margin-right:7px}
+.qv-price del{color:#a79aa1;font-size:15px;margin-inline-end:7px}
 .qv-price ins{text-decoration:none;color:#b4517a}
-.qv-off{font-size:11px;background:#fff0f4;color:#b4517a;border-radius:99px;padding:2px 8px;margin-left:6px}
+.qv-off{font-size:11px;background:#fff0f4;color:#b4517a;border-radius:99px;padding:2px 8px;margin-inline-start:6px}
 .qv-stock{font-size:12px;color:#2f6b41;margin-bottom:11px}
 .qv-stock.out{color:#a33a55}
 .qv-blurb{font-size:13px;color:#5e545a;line-height:1.55;margin:0 0 16px}

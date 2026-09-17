@@ -27,8 +27,8 @@
 
 .kbb-badge{position:absolute;top:9px;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:20px;font-family:'Poppins',sans-serif;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 
-.kbb-badge-new{left:9px;background:linear-gradient(135deg,#1cc36a,#12965a)}
-.kbb-badge-sale{right:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
+.kbb-badge-new{inset-inline-start:9px;background:linear-gradient(135deg,#1cc36a,#12965a)}
+.kbb-badge-sale{inset-inline-end:9px;background:linear-gradient(135deg,#ff6f91,#C13E63)}
 
 .kbb-card-cat{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8C828A;font-weight:600;margin-bottom:2px}
 
@@ -62,7 +62,7 @@
 
 .kbb-pgrid[data-skin="overlay"] .kbb-card-thumb{aspect-ratio:3/4}
 
-.kbb-pgrid[data-skin="overlay"] .cb{position:absolute;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.15) 62%,transparent)}
+.kbb-pgrid[data-skin="overlay"] .cb{position:absolute;inset-inline-start:0;inset-inline-end:0;bottom:0;padding:14px;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.15) 62%,transparent)}
 
 .kbb-pgrid[data-skin="overlay"] .cn,.kbb-pgrid[data-skin="overlay"] .kbb-card-brand,.kbb-pgrid[data-skin="overlay"] .cp,.kbb-pgrid[data-skin="overlay"] .kbb-card-price{color:#fff}
 
@@ -122,6 +122,7 @@
 
 .kbb-pgrid[data-skin="editorial"] .cn{position:relative;padding-bottom:8px}
 
+/* RTL-PHYSICAL: centring idiom (left:50% + translateX(-50%)). */
 .kbb-pgrid[data-skin="editorial"] .cn:after{content:'';position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:26px;height:2px;background:var(--kbb-acc,#E0567B);opacity:.5}
 
 .kbb-pgrid[data-skin="classic"] .kbb-card{background:linear-gradient(180deg,#fff,#fffafc)}
@@ -162,7 +163,7 @@
 
 .kbb-pgrid[data-skin="glass"] .kbb-card-thumb{aspect-ratio:3/4}
 
-.kbb-pgrid[data-skin="glass"] .cb{position:absolute;left:10px;right:10px;bottom:10px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.35)}
+.kbb-pgrid[data-skin="glass"] .cb{position:absolute;inset-inline-start:10px;inset-inline-end:10px;bottom:10px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.35)}
 
 .kbb-pgrid[data-skin="glass"] .cn,.kbb-pgrid[data-skin="glass"] .kbb-card-brand,.kbb-pgrid[data-skin="glass"] .cp,.kbb-pgrid[data-skin="glass"] .kbb-card-price{color:#fff}
 
@@ -258,7 +259,7 @@
 
 .kbb-pgrid[data-skin="rosegold"] .kbb-card{border:0;background:#fff;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 6px 18px rgba(42,34,40,.07)}
 
-.kbb-pgrid[data-skin="rosegold"] .kbb-card:before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f7c6a8,#e8a0b0,#d98fae,#f0b9c8);z-index:3}
+.kbb-pgrid[data-skin="rosegold"] .kbb-card:before{content:'';position:absolute;top:0;inset-inline-start:0;inset-inline-end:0;height:4px;background:linear-gradient(90deg,#f7c6a8,#e8a0b0,#d98fae,#f0b9c8);z-index:3}
 
 .kbb-pgrid[data-skin="rosegold"] .cb{padding:13px}
 
@@ -270,12 +271,13 @@
 
 .kbb-pgrid[data-skin="actions"] .cb{padding:12px 12px 14px}
 
-.kbb-pgrid[data-skin="actions"] .kbb-card-cart{position:absolute;left:0;right:0;bottom:0;margin:0;border-radius:0;transform:translateY(100%);transition:transform .28s ease}
+.kbb-pgrid[data-skin="actions"] .kbb-card-cart{position:absolute;inset-inline-start:0;inset-inline-end:0;bottom:0;margin:0;border-radius:0;transform:translateY(100%);transition:transform .28s ease}
 
 .kbb-pgrid[data-skin="actions"] .kbb-card:hover .kbb-card-cart{transform:none}
 
 .kbb-pgrid[data-skin="ribbon"] .kbb-card{border:1px solid rgba(42,34,40,.1);border-radius:12px;overflow:hidden;background:#fff}
 
+/* RTL-PHYSICAL: corner ribbon offset tied to rotate(45deg). */
 .kbb-pgrid[data-skin="ribbon"] .kbb-badge-sale{top:16px;right:-36px;left:auto;transform:rotate(45deg);width:140px;text-align:center;border-radius:0;padding:5px 0;box-shadow:0 2px 6px rgba(0,0,0,.2)}
 
 .kbb-pgrid[data-skin="frame"] .kbb-card{border:0;background:#fff;padding:14px;position:relative}
@@ -310,7 +312,7 @@
 
 .kbb-pgrid[data-skin="fab"] .cb{position:relative;padding:22px 12px 12px}
 
-.kbb-pgrid[data-skin="fab"] .kbb-card-cart{position:absolute;right:12px;top:-22px;margin:0;width:44px;height:44px;border-radius:50%;padding:0;font-size:0;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(224,86,123,.4);transition:transform .2s}
+.kbb-pgrid[data-skin="fab"] .kbb-card-cart{position:absolute;inset-inline-end:12px;top:-22px;margin:0;width:44px;height:44px;border-radius:50%;padding:0;font-size:0;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(224,86,123,.4);transition:transform .2s}
 
 .kbb-pgrid[data-skin="fab"] .kbb-card-cart:after{content:'+';font-size:24px;font-weight:400;line-height:1}
 
@@ -324,7 +326,7 @@
 
 .kbb-pgrid[data-skin="pricetag"] .cb{position:relative;padding:20px 12px 12px}
 
-.kbb-pgrid[data-skin="pricetag"] .cp{position:absolute;left:12px;top:-26px;margin:0;background:#fff;border-radius:24px;padding:8px 14px;box-shadow:0 6px 16px rgba(42,34,40,.16);font-size:13px;z-index:3}
+.kbb-pgrid[data-skin="pricetag"] .cp{position:absolute;inset-inline-start:12px;top:-26px;margin:0;background:#fff;border-radius:24px;padding:8px 14px;box-shadow:0 6px 16px rgba(42,34,40,.16);font-size:13px;z-index:3}
 
 .kbb-pgrid[data-skin="reveal"] .kbb-card{position:relative;border:0;border-radius:16px;overflow:hidden}
 
@@ -342,7 +344,7 @@
 
 .kbb-pgrid[data-skin="reveal"] .kbb-card-cart{background:rgba(255,255,255,.92);color:#2A2228}
 
-.kbb-pgrid[data-skin="accentbar"] .kbb-card{border:1px solid rgba(42,34,40,.08);border-left:4px solid #E0567B;border-radius:0 12px 12px 0;overflow:hidden;background:#fff}
+.kbb-pgrid[data-skin="accentbar"] .kbb-card{border:1px solid rgba(42,34,40,.08);border-inline-start:4px solid #E0567B;border-radius:0 12px 12px 0;overflow:hidden;background:#fff}
 
 .kbb-pgrid[data-skin="accentbar"] .cp{font-size:16px}
 

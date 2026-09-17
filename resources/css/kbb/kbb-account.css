@@ -42,7 +42,7 @@
 /* orders / addresses tables */
 .kbb-account .woocommerce-orders-table,
 .kbb-account .shop_table{width:100%;border-collapse:collapse;font-size:13px}
-.kbb-account .shop_table thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+.kbb-account .shop_table thead th{text-align:start;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
 .kbb-account .shop_table tbody td{padding:13px 12px;border-bottom:1px solid var(--line-2);color:var(--ink-2)}
 .kbb-account .shop_table tbody tr:hover{background:var(--pink-soft)}
 .kbb-account .woocommerce-button,
@@ -65,4 +65,4 @@
 .kbb-account .status-processing{background:var(--pink-soft);color:var(--pink-deep)}
 .kbb-account .status-on-hold{background:#FFF4E5;color:#B26A00}
 
-.kbb-account .woocommerce-message,.kbb-account .woocommerce-error,.kbb-account .woocommerce-info{list-style:none;background:var(--cream);border:1px solid var(--line-2);border-left:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:16px}
+.kbb-account .woocommerce-message,.kbb-account .woocommerce-error,.kbb-account .woocommerce-info{list-style:none;background:var(--cream);border:1px solid var(--line-2);border-inline-start:3px solid var(--pink);border-radius:10px;padding:12px 15px;font-size:13px;margin-bottom:16px}
