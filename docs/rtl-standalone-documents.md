@@ -47,8 +47,8 @@ not with grep:
 
 | file | physical direction declarations left | logical | declarations parsed |
 |---|---|---|---|
-| `store/blog.blade.php` | 1 | 3 | 224 |
-| `store/post.blade.php` | 1 | 2 | 223 |
+| `store/blog.blade.php` | 1 → **0** | 3 → 4 | 224 |
+| `store/post.blade.php` | 1 → **0** | 2 → 3 | 223 |
 | `store/skin-quiz.blade.php` | 1 | 9 | 545 |
 | `store/app.blade.php` | 4 | 22 | 1400 |
 | `store/review-wall.blade.php` | 0 | 4 | 302 |
@@ -56,14 +56,23 @@ not with grep:
 
 Every one of the eight, named:
 
-- `blog.blade.php` and `post.blade.php` — `.mnav { left: 0 }`. **This is the one
-  that is wrong under RTL**: the mobile navigation sheet slides in from the left
-  of the viewport on a mirrored page, where every other sheet on the site comes
-  from the reading edge. Two declarations, one rule each, and the fix is
-  `inset-inline-start`. Left alone deliberately: the inline stylesheets in these
-  files belong to `lane/rtl-logical-properties`, whose audit
-  (`docs/rtl-audit.md`) already counts them, and bolting one conversion on here
-  would put this lane's fingerprints on another lane's floor numbers.
+- `blog.blade.php` and `post.blade.php` — `.mnav { left: 0 }`. **Converted, and
+  it was owed to this change.** `docs/rtl-audit.md` §11.4 deferred exactly these
+  two and said why: "`[dir="rtl"]` cannot match there", because the documents
+  declared no direction, so converting them bought nothing while moving a live
+  page's English bytes and turning `StorefrontEnglishUnchangedTest` red. It
+  asked for them to be done "when someone gives those views a real
+  `<html dir>`, in one change that repins the guard once", which is this one.
+
+  `left: 0` is `inset-inline-start: 0` now, **and** the transform is flipped
+  under `[dir="rtl"]` — the second half matters more than the first. The panel
+  hides itself with `translateX(-100%)`, which has no logical form, so a logical
+  inset on its own would pin it to the reading edge under RTL while the
+  transform went on pushing it the other way: off screen in English, ON screen
+  in Arabic. Both halves are copied from `kbb.css`'s own `.mnav`, which is this
+  same panel in the shared layout, override before `.mnav.on` so the open state
+  still wins. The two rows are out of the audit's physical table, which its own
+  paired guards in `RtlReadinessTest` require.
 - `skin-quiz.blade.php` and `app.blade.php` — `.toast { left: 50% }`. Direction
   neutral: a centring rule paired with `translateX(-50%)`. The shared layout's
   own `.qv-btn { left: 50% }` is the same shape and was left physical by the RTL
@@ -78,18 +87,21 @@ Nothing else in the five documents carries a physical direction.
 ### 2. The larger gap: no Arabic-capable webfont on any of the five
 
 `layouts/store.blade.php` swaps the typeface on an Arabic page — it loads
-**Cairo**, "drawn as an Arabic face with a Latin companion", and says so at
-length above the `<link>`. None of the five standalone documents ever got that
-swap. Fetched with Arabic and the mirrored layout both on:
+**Cairo**, "drawn as an Arabic face with a Latin companion", and since T6's
+manual half (`docs/rtl-audit.md` §11.8) it also **appends** Cairo to the
+`font-family` stack inside the same `@if ($kbbLocale !== DEFAULT)`, which is
+what makes the face actually render rather than merely download. None of the
+five standalone documents got either half. Fetched with Arabic and the mirrored
+layout both on:
 
-| URL | webfonts served |
-|---|---|
-| `/ar/skincare-guide/` | Poppins |
-| `/ar/<post>/` | Poppins |
-| `/ar/skin-quiz/` | Poppins |
-| `/ar/app/` | Fraunces, Hanken Grotesk |
-| `/ar/reviews/` | Poppins |
-| `/ar/shop/` (control) | Poppins, **Cairo**, Cormorant Garamond |
+| URL | webfonts linked | `font-family` rules naming Cairo |
+|---|---|---|
+| `/ar/skincare-guide/` | Poppins | 0 |
+| `/ar/<post>/` | Poppins | 0 |
+| `/ar/skin-quiz/` | Poppins | 0 |
+| `/ar/app/` | Fraunces, Hanken Grotesk | 0 |
+| `/ar/reviews/` | Poppins | 0 |
+| `/ar/shop/` (control) | Poppins, **Cairo**, Cormorant Garamond | **5** |
 
 Poppins, Fraunces and Hanken Grotesk have no Arabic coverage, so the browser
 falls back per glyph to whatever system Arabic face it has. The page is
@@ -97,11 +109,23 @@ readable; it is not the shop's typeface, the weights do not match, and the line
 heights the inline stylesheet sets were measured against Poppins.
 
 **This predates the change and is not made worse by it** — the text was already
-Arabic; only the declaration was wrong. But `lang="ar"` is the attribute a font
-stack would key off, so the two belong together, and whoever owns the bilingual
-typography should take these five with the layout. Not fixed here: adding a
-webfont to five documents is a decision about page weight on the shop's
-heaviest pages, not a correction.
+Arabic; only the declaration was wrong.
+
+**It is a named hand-back to T6.** §11.8 records the Cairo fix as covering "the
+Arabic home, shop, product, cart and checkout pages", and says what it left:
+"the blog views from §9.5, which are not bilingual at all". They are bilingual
+now — that is what §9.5 was waiting for and what this change did — so the
+sentence that excused them no longer holds. The repair is §11.8's own two lines
+(the `<link>` and the appended `font-family`, appended and never substituted so
+the English page is unchanged byte for byte) applied inside each document's own
+`<head>`.
+
+Not done here, and the reason is not squeamishness: §11.8's fix was accepted on
+the strength of a per-codepoint rendering measurement (960 → 1800 elements on a
+Cairo-capable stack, at 479.05 vs 537.88 for the two weights). Repeating that
+apparatus on five more documents is T6's work with T6's instruments, and adding
+a webfont by eye to the shop's heaviest pages without it is how a page-weight
+regression gets in.
 
 ### 3. `[dir="rtl"]` rules: none, anywhere
 

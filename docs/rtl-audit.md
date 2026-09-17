@@ -138,8 +138,6 @@ exactly, in both directions, so the document cannot drift from the code.
 | `resources/views/layouts/store.blade.php` | `.qv-btn` | `left: 50%` | centre |
 | `resources/views/store/app.blade.php` | `.toast` | `left: 50%` | centre |
 | `resources/views/store/skin-quiz.blade.php` | `.toast` | `left: 50%` | centre |
-| `resources/views/store/blog.blade.php` | `.mnav` | `left: 0` | off-canvas |
-| `resources/views/store/post.blade.php` | `.mnav` | `left: 0` | off-canvas |
 <!-- rtl-audit:physical:end -->
 
 ### The reasons in full
@@ -574,18 +572,24 @@ than a prediction. With RTL on and nothing else changed:
 | filter column (`.filtercol`) | opened from the **left**, trigger on the right |
 | shop/product drawers (`.dw`, `.dw.left`) | both on the wrong side |
 
-Two of the 16 are not fixed here. `.mnav` in `store/blog.blade.php` and
-`store/post.blade.php` is the same panel in two standalone layouts that
-hard-code `<html lang="en">` with no `dir` attribute — `/ar/skincare-guide/`
-serves an English-tagged, left-to-right page (§9.5). `[dir="rtl"]` cannot match
-there, so the conversion buys nothing today, while it does change the rendered
-English bytes of a live page and turns `StorefrontEnglishUnchangedTest` red.
-That guard is repinned by moving a `BASE_COMMIT` SHA forward, and its own
-docblock warns the SHA must survive a rebase — so repinning it to a lane commit
-that is about to be rebased is exactly the failure it describes. The right time
-to convert these two is when someone gives those views a real `<html dir>`, in
-one change that repins the guard once. The rows stay in the table above with the
-reason `off-canvas`, so nothing is silently forgotten.
+Two of the 16 were not fixed here, and **have since been fixed by Lane FK**.
+`.mnav` in `store/blog.blade.php` and `store/post.blade.php` is the same panel
+in two standalone layouts that hard-coded `<html lang="en">` with no `dir`
+attribute — `/ar/skincare-guide/` served an English-tagged, left-to-right page
+(§9.5). `[dir="rtl"]` could not match there, so the conversion bought nothing
+while changing the rendered English bytes of a live page and turning
+`StorefrontEnglishUnchangedTest` red. This section asked for it to be done "when
+someone gives those views a real `<html dir>`, in one change that repins the
+guard once".
+
+Lane FK gave all five standalone documents `Locale::htmlLang()` and
+`Locale::direction()` (see `docs/rtl-standalone-documents.md`) and converted
+these two in the same change: `left: 0` is `inset-inline-start: 0`, and because
+`translateX` has no logical form the panel's hidden position is flipped under
+`[dir="rtl"]` exactly as `kbb.css`'s own `.mnav` does it — without which the
+logical inset alone would have pushed the panel INTO the Arabic viewport
+instead of out of it. Their rows are gone from the table above, which is what
+the paired guards in `RtlReadinessTest` require.
 
 Not "on screen when closed" — the audit's prediction was for converting the
 inset *alone*, which is exactly why the previous lane did not. Left untouched
