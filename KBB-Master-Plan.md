@@ -465,8 +465,24 @@ something half-right.
   `weight` column is not a gap. Struck rather than deleted: the next person to
   notice that couriers elsewhere want a weight should find the decision, not
   re-open the question
-- [ ] **Bulk printing** — wanted: "bulk printing or download is also fine".
-  Pick several orders and get all their packing slips or invoices in one go
+- [x] **Bulk printing — many orders, one document, one Print.** Asked for by the
+  owner ("bulk printing or download is also fine"). Orders screen, tick the
+  orders, Print → Packing slips / Dispatch labels / Delivery notes / Invoices.
+  One HTML page holding one sheet per order with a real page break between them,
+  so one Print → Save as PDF gives one file with one order per page; confirmed
+  by printing a four-order batch of each through Chromium and reading the
+  geometry back (4 pages each, A4 594.96x841.92pt, the label run A6
+  298.08x420pt, one order per page — and reproduced the defect by deleting the
+  break rule, which puts two orders on page one). Capped at 100 per document:
+  the blast radius of an irreversible invoice allocation, not a memory limit —
+  100 orders cost 127 ms and 8 MB. The four sheet bodies moved into partials
+  that the single documents and the bulk one both include, so they cannot drift,
+  and the five tracked previews regenerate byte for byte across that move. See
+  `docs/GC-BULK-PRINTING.md` — *2.60.219*
+
+  ▲ The selection UI already existed — `olSelectionBar()` has drawn a bulk bar
+  with select-all and bulk status/trash/restore all along, so this needed one
+  control added to a bar that was already there, not a selection UI built
 - [x] **No PDF attachments — owner's answer, so browser-print is the permanent
   arrangement.** "no attachments." That closes the one open question about the
   document format: there is no server-side PDF byte stream, none is wanted, and

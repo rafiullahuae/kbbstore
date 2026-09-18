@@ -439,6 +439,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // between an order id and somebody's delivery address.
         require __DIR__.'/invoices-admin.php';
 
+        // The same four documents for several orders at once (Lane GC). Same
+        // group and the same reason as the file above, only more so: one
+        // response can carry a hundred buyers' names, street addresses, phone
+        // numbers and order values.
+        require __DIR__.'/bulk-documents-admin.php';
+
         // Mail settings and the test-send. Inside this group deliberately: an
         // unauthenticated endpoint that sends mail to a caller-supplied address
         // is an open relay.

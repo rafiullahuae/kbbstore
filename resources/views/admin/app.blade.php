@@ -11594,6 +11594,14 @@ buildNav();
       '<b style="font-size:12.5px">' + selected.length + ' selected</b>' +
       '<button class="btn ghost sm" id="olClearSel">Clear</button>' +
       '<div style="flex:1"></div>' +
+      /* BULK DOCUMENTS (Lane GC). Before the trashView ternary on purpose, so
+         it is offered in the trash view too: a soft-deleted order is still an
+         order that was placed and may have been paid for, and the server prints
+         one withTrashed() exactly as the single documents do. */
+      '<select class="inp" id="olBulkPrint" style="width:auto;min-width:150px">' +
+        '<option value="">Print&hellip;</option>' +
+        OL_DOCS.map(function(d){ return '<option value="' + d[0] + '">' + d[1] + '</option>'; }).join('') +
+      '</select>' +
       (trashView
         ? '<button class="btn sm" id="olBulkRestore">Restore</button>'
         : '<select class="inp" id="olBulkStatus" style="width:auto;min-width:150px">' +
@@ -11728,8 +11736,86 @@ buildNav();
     }
   }
 
-  function olSelectedIds(){
-    return Object.keys(OL.sel).filter(function(k){ return OL.sel[k]; }).map(Number);
+
+  /* -------- bulk documents: many orders, one printable page (Lane GC) -------- */
+
+  /* The four documents, in the order a packing bench wants them: the two that
+     go on and in the parcel first, the invoice last because it is the one that
+     issues a number. */
+  var OL_DOCS = [
+    ['packing-slip', 'Packing slips'],
+    ['dispatch-label', 'Dispatch labels'],
+    ['delivery-note', 'Delivery notes'],
+    ['invoice', 'Invoices']
+  ];
+
+  /* Services\Invoices\BulkDocumentSelection::MAX. Checked here as well as on
+     the server so the operator is told in a dialog rather than in a new tab
+     that turns out to hold a refusal. The server is still the one that decides:
+     it refuses over the cap before it loads an order or issues a number. */
+  var OL_DOC_MAX = 100;
+
+  /* A NEW TAB, NOT A FETCH. The page is a document for the browser to print,
+     the browser carries the same admin session cookie, and leaving the Orders
+     screen behind means the operator's ticks are still there when they come
+     back for the next document. Same reasoning as the Export button below.
+
+     window.open MUST HAPPEN IN THE CLICK. A browser blocks a popup opened from
+     an async continuation, so this is called straight from the change handler,
+     or straight from the confirm button's own click - never after an await. */
+  function olPrintDocs(ids, type){
+    if(!ids.length) return;
+
+    window.open(
+      fixAdminApiUrl('/admin-api/orders-bulk-documents') +
+        '?type=' + encodeURIComponent(type) + '&ids=' + ids.join(','),
+      '_blank',
+      'noopener'
+    );
+  }
+
+  function olDocLabel(type){
+    return (OL_DOCS.filter(function(d){ return d[0] === type; })[0] || [type, type])[1];
+  }
+
+  /**
+   * Three of the four just print. The invoice asks first.
+   *
+   * Not because printing is dangerous, but because an invoice number is: the
+   * server issues one to every selected order that has none, out of a sequence
+   * an accountant reconciles, and nothing in this admin can take one back. The
+   * other three documents allocate nothing at all and open straight away -
+   * asking about a picking list would only train the operator to click through
+   * the dialog that matters.
+   */
+  function olConfirmDocs(ids, type){
+    if(!ids.length) return;
+
+    if(ids.length > OL_DOC_MAX){
+      openModal('<div class="modal-h"><b>Too many at once</b><button class="x" onclick="closeModal()">&#10005;</button></div>' +
+        '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">You picked <b>' + ids.length +
+        '</b> orders, and one document holds at most <b>' + OL_DOC_MAX + '</b>.</p>' +
+        '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Nothing has been printed and no invoice numbers have been issued. ' +
+        'Print them in batches of ' + OL_DOC_MAX + ' or fewer - your ticks are still here.</p>' +
+        '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+        '<button class="btn" onclick="closeModal()">Close</button></div></div>');
+      return;
+    }
+
+    if(type !== 'invoice'){ olPrintDocs(ids, type); return; }
+
+    openModal('<div class="modal-h"><b>Print invoices</b><button class="x" onclick="closeModal()">&#10005;</button></div>' +
+      '<div class="modal-b"><p style="font-size:13px;color:var(--ink-2)">Print invoices for <b>' + ids.length +
+      '</b> order' + (ids.length === 1 ? '' : 's') + '?</p>' +
+      '<p style="font-size:12.5px;color:var(--ink-soft);margin-top:8px">Any of them that has never been invoiced is given its invoice number now, ' +
+      'exactly as opening one invoice from the order screen does. That cannot be undone from here, so pick the orders you are really invoicing. ' +
+      'Orders that already have a number keep it.</p>' +
+      '<div class="row" style="justify-content:flex-end;gap:8px;margin-top:14px">' +
+      '<button class="btn ghost" onclick="closeModal()">Cancel</button>' +
+      '<button class="btn" id="olDocsYes">Print invoices</button></div></div>');
+
+    var yes = document.getElementById('olDocsYes');
+    if(yes) yes.onclick = function(){ closeModal(); olPrintDocs(ids, 'invoice'); };
   }
 
   function olBind(){
@@ -11820,8 +11906,15 @@ buildNav();
       if(status) olConfirmStatus(olSelectedIds(), status);
     };
 
-    var bulkDelete = byId('olBulkDelete');
-    if(bulkDelete) bulkDelete.onclick = function(){ olConfirmDelete(olSelectedIds()); };
+    var bulkPrint = byId('olBulkPrint');
+    if(bulkPrint) bulkPrint.onchange = function(e){
+      var type = e.target.value;
+      /* Reset first: the select is a menu, not a setting, and leaving it on
+         "Invoices" would make the next Print look like it had already been
+         chosen. Also lets the same document be picked twice in a row. */
+      e.target.value = '';
+      if(type) olConfirmDocs(olSelectedIds(), type);
+    };
 
     var bulkRestore = byId('olBulkRestore');
     if(bulkRestore) bulkRestore.onclick = async function(){
