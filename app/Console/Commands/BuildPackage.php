@@ -43,6 +43,14 @@ class BuildPackage extends Command
         'CLAUDE.md', 'README.md', 'KBB-Master-Plan.md', 'KBB-Progress-Dashboard.html',
         'env.staging.txt', 'package.json', 'package-lock.json', 'composer.lock',
         'public-web-root/', 'vendor/', 'node_modules/', '.env',
+        // WordPress code, not shop code. App\Services\Update\UpdateGuard
+        // already refuses it -- `wordpress-plugin/` is not an allowed prefix,
+        // so checkPath() answers "Path outside the permitted areas" and the
+        // whole package is rejected -- and tests/Feature/GeWpExporterTest.php
+        // measures that rather than assuming it. This is the second lock: the
+        // guard refusing a zip that should never have been built is a worse
+        // outcome than the zip not containing it.
+        'wordpress-plugin/',
         // Repo-only. UpdateGuard rejects it twice over -- no allowed prefix and
         // no extension -- and the server does not read it anyway: the installed
         // version is the newest applied row in update_releases.

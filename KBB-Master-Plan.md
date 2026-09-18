@@ -103,10 +103,6 @@ what `KBB-Progress-Dashboard.html` renders under "In flight". A lane that has
 landed is deleted from here and written into its phase below, so a stale entry
 is a bug in this section rather than a second opinion about the phase.
 
-- **Lane GE — the WordPress exporter plugin.** A real plugin for the live
-  kbeautybliss.com that exports everything in the shape this shop already
-  imports, so the migration stops inferring what the old site held. Building
-  against `docs/WP-EXPORT-CONTRACT.md`
 - **Lane GF — the import side, refined.** A progress bar with a real
   denominator (the manifest's row counts), a duplicate-import guard that tells
   the owner before he waits rather than silently doing nothing, and a record of
@@ -1898,6 +1894,38 @@ a fake success toast and saves nothing).
   whole point: the two commands the runbook documents have been unusable since
   the day they were written, because the owner has no shell. See
   `docs/GB-MEDIA-AND-REDIRECTS.md`
+- [x] **A WordPress exporter plugin, so the migration stops inferring** —
+  *2.60.221*. `wordpress-plugin/kbb-exporter` runs on the live kbeautybliss.com
+  and writes the file set this importer already reads, with the columns the
+  existing importers already parse — derived by reading those importers, not
+  from WooCommerce documentation. Plus the seven files `ImportRunner` itself
+  names as what a real export carries and nothing here opens, `permalinks.csv`,
+  `media.csv`, and the `manifest.json` the contract requires.
+
+  **The deliverable is the round trip, not the plugin.** A real export written by
+  the plugin's own stages over WordPress-shaped tables in MySQL, fed to the real
+  `ImportRunner` with no test double in the path: **0 rejections**, every row
+  count agreeing with the manifest, money exact to the fil with each order's
+  lines summing to its total, and a second pass reporting `updated: 0`.
+
+  ▲ **Both order storages, and measuring both found two things.** HPOS keeps
+  money in `DECIMAL(26,8)` and postmeta in `DECIMAL(2)`, so the same shop
+  produced different bytes; and HPOS stores every date in GMT while `wp_posts`
+  stores both. Detection reads the option AND the table and **refuses** when they
+  disagree, rather than falling back — a fallback reads the sync stubs in
+  `wp_posts` and writes zero for every total with a row count that looks right.
+
+  Four places the obvious column was wrong, each caught by reading the importer:
+  the gallery is pipe-separated (a comma in a filename is a defect this repo has
+  already shipped once), coupon expiry is a bare date (a datetime silently
+  retires every live discount code a day early), `is_visible` is computed from a
+  four-state taxonomy, and `category_term_ids` is primary-first or every product
+  files itself one level too high.
+
+  It settled two questions this migration had been guessing at: categories were
+  flat at the site root (read from `category_base`, not deduced from a menu
+  seed), and the brand taxonomy has no public archive on the harness shop —
+  reported as an answer rather than left as a gap. See `docs/GE-WP-EXPORTER.md`
 - [x] **Dry run** — the import can now say what it would change, what it would drop, and
   what it never reads, before a row moves. Rafi approves the drop list from a screen
   rather than from a promise — *2.60.203*

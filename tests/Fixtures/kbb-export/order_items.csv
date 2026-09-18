@@ -1,0 +1,5 @@
+"item_id","order_id","product_id","variation_id","name","sku","brand","quantity","subtotal","total","tax_total"
+"5501","10233","4021","","Ginseng Serum","KBB-4021","Beauty of Joseon","3","298.50","298.50","0.00"
+"5502","10234","4022","","Rice Toner","KBB-4022","COSRX","1","1234.50","1229.50","0.00"
+"5506","10235","4021","","Ginseng Serum","KBB-4021","Beauty of Joseon","2","199.00","199.00","0.00"
+"5508","10233","4023","4101","Rice Cleanser - 50ml","KBB-4023-50ml","COSRX","1","60.00","60.00","0.00"

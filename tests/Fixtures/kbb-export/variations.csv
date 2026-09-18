@@ -1,0 +1,3 @@
+"id","parent_id","sku","status","position","regular_price","sale_price","sale_starts_at","sale_ends_at","stock_status","stock","manage_stock","backorders","weight","length","width","height","tax_class","image","description","attributes","date_created"
+"4101","4023","KBB-4023-50ml","publish","1","60.00","","","","instock","","no","","","","","","","","","attribute_pa_size=50ml","2021-02-01 09:00:00"
+"4102","4023","KBB-4023-100ml","private","1","100.00","","","","instock","","no","","","","","","","","","attribute_pa_size=100ml","2021-02-01 09:00:00"

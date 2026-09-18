@@ -505,6 +505,26 @@ source behind it changes.
 
 ---
 
+## 9b. Producing the export (WordPress side)
+
+Upload `wordpress-plugin/kbb-exporter` as a zip through Plugins -> Add New on
+kbeautybliss.com, then Tools -> KBB Export. It says which order storage the shop
+uses before it starts, writes one batch per request so a shared host cannot time
+it out, and resumes from the last completed batch if a request dies.
+
+It writes into `wp-content/uploads/kbb-export/<export id>/`. Download the folder
+over FTP and **delete it from the server**: `customers.csv` holds every
+shopper's address and password hash, and `reviews.csv` holds reviewers' email
+addresses and the IPs they posted from.
+
+`manifest.json` is written LAST, so a folder without one is an export that did
+not finish. Read `source.timezone` out of it and pass it as `--timezone`;
+`App\Services\Import\DateParser` refuses to default it and reading Dubai
+timestamps as UTC shifts the whole order history by four hours.
+
+The full column derivation, the round-trip evidence and what still needs one
+real run are in `docs/GE-WP-EXPORTER.md`.
+
 ## 10. After the rows: URLs and pictures
 
 Two things the row import cannot tell you about, because both are invisible to

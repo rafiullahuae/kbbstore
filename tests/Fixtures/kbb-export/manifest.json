@@ -1,0 +1,179 @@
+{
+    "format": "kbb-export/1",
+    "export_id": "b2bd695c-dedd-494b-ac08-e6392f12606e",
+    "generated_at": "2026-09-18T18:39:28+04:00",
+    "source": {
+        "site_url": "https://kbeautybliss.com",
+        "home_url": "https://kbeautybliss.com",
+        "wp_version": "6.5.2",
+        "woo_version": "8.7.0",
+        "plugin_version": "1.0.0",
+        "timezone": "Asia/Dubai",
+        "order_storage": "posts",
+        "permalink_structure": "/%postname%/",
+        "woocommerce_permalinks": {
+            "product_base": "/product",
+            "category_base": "",
+            "tag_base": "product-tag",
+            "attribute_base": ""
+        },
+        "taxonomies": {
+            "category": 1,
+            "pa_brands": 2,
+            "pa_size": 2,
+            "product_cat": 3,
+            "product_tag": 1,
+            "product_type": 2,
+            "product_visibility": 3
+        },
+        "post_types": {
+            "attachment": {
+                "inherit": 6
+            },
+            "page": {
+                "publish": 1
+            },
+            "post": {
+                "publish": 1
+            },
+            "product": {
+                "publish": 4,
+                "trash": 1
+            },
+            "product_variation": {
+                "private": 1,
+                "publish": 1
+            },
+            "shop_coupon": {
+                "draft": 1,
+                "publish": 1
+            },
+            "shop_order": {
+                "wc-completed": 1,
+                "wc-processing": 1,
+                "wc-refunded": 1
+            },
+            "shop_order_refund": {
+                "wc-completed": 1
+            }
+        }
+    },
+    "files": {
+        "categories.csv": {
+            "rows": 3,
+            "bytes": 294,
+            "sha256": "cb2973c7e2770dc89d0a6ffe85c64f464dcb15e0947359b529d103d11c18b5b5"
+        },
+        "brands.csv": {
+            "rows": 2,
+            "bytes": 222,
+            "sha256": "0485cbcfdbc091ddfea44f9c3ddf5d505b6aa4b660776ea3ed5f4d6ba5932cbc"
+        },
+        "tags.csv": {
+            "rows": 1,
+            "bytes": 115,
+            "sha256": "53417209467ee05ac663b8df53bac45dac0819b03808f3ddbb5f3e47d3a04195"
+        },
+        "attributes.csv": {
+            "rows": 2,
+            "bytes": 355,
+            "sha256": "9a6ff11f5f9637b5b4752a4de12d79c7ebeea42ba63bb6a2765ab1b0a02cb662"
+        },
+        "products.csv": {
+            "rows": 4,
+            "bytes": 2018,
+            "sha256": "bce8adca019abe25f880240c7355a94dd5a084da92791440724b569f943094e5"
+        },
+        "variations.csv": {
+            "rows": 2,
+            "bytes": 555,
+            "sha256": "75624fa26b3f4ca2829d5e16e4c1b0da3830051a732d9b1817c1265a2f2e1c4c"
+        },
+        "seo.csv": {
+            "rows": 4,
+            "bytes": 594,
+            "sha256": "2dc9a0d7c5404948d3f09ebb60ee9d052078f89735c881c408a50edc7ad8f484"
+        },
+        "coupons.csv": {
+            "rows": 1,
+            "bytes": 583,
+            "sha256": "0a663f4e0a5d293bb4b2965c2f9de949345d2773476e6d5910396b5ab5bc5a18"
+        },
+        "customers.csv": {
+            "rows": 3,
+            "bytes": 1198,
+            "sha256": "7877a3892bd6c0a640d40a8459d7aa1518c4c8cfefdf25ad4b7be4c7282c2e64"
+        },
+        "orders.csv": {
+            "rows": 3,
+            "bytes": 1972,
+            "sha256": "be6e5fca8379d7bbb549d882363960e7b3bd293625d9601a1d2feb2021e2e0ce"
+        },
+        "order_items.csv": {
+            "rows": 4,
+            "bytes": 503,
+            "sha256": "04c1c4675518b2e182aa817d7ce9292a05ded07e255c95c569243a746da34250"
+        },
+        "refunds.csv": {
+            "rows": 1,
+            "bytes": 211,
+            "sha256": "016d006efd0769bdfe71a0607b95b730c7ea996b8ac382e8d40d7ee9ce35ba64"
+        },
+        "order_notes.csv": {
+            "rows": 1,
+            "bytes": 270,
+            "sha256": "f37e029bc3f3b2eddca904601bb569afda225c70f88201986a684fbe39d5e38b"
+        },
+        "reviews.csv": {
+            "rows": 2,
+            "bytes": 498,
+            "sha256": "897ce08bd6dc429292118c9391fffd99a87d1ba2bf469701f29680c13c87dcf9"
+        },
+        "posts.csv": {
+            "rows": 2,
+            "bytes": 831,
+            "sha256": "ac2343d53e96cd7a6bf3304e03a1d718e2012091a6dbcea8a1bb4f6c66d27e44"
+        },
+        "permalinks.csv": {
+            "rows": 15,
+            "bytes": 1916,
+            "sha256": "79a4b99a1bcab82aa7baba7fce0b3e19e8bda93dee37401127594be7c116f0e5"
+        },
+        "media.csv": {
+            "rows": 8,
+            "bytes": 1306,
+            "sha256": "f9708962133f7d827106d7cdd51ad8450b34757f5ecea3c76a71b4dfffdd106e"
+        }
+    },
+    "counts": {
+        "categories": 3,
+        "brands": 2,
+        "tags": 1,
+        "attributes": 2,
+        "products": 4,
+        "variations": 2,
+        "seo": 4,
+        "coupons": 1,
+        "customers": 3,
+        "orders": 3,
+        "order_items": 4,
+        "refunds": 1,
+        "order_notes": 1,
+        "reviews": 2,
+        "posts": 2,
+        "permalinks": 15,
+        "media": 8
+    },
+    "notes": [
+        "Orders were read from legacy (wp_posts): orders are shop_order posts and their fields are wp_postmeta keys.",
+        "brands.csv was read from the `pa_brands` taxonomy. BrandImporter promotes these terms to their own table with source_term_id carrying this term id.",
+        "attributes.csv excludes `pa_brands`, which brands.csv carries instead -- exporting it in both would make every brand an attribute value as well as a brand.",
+        "1 product is in the WordPress trash and NOT in products.csv. ProductImporter refuses a trashed product outright -- importing it would make it a live row -- so this export does what that refusal asks. Empty the trash or turn off \"skip trashed\" and re-export if you want them.",
+        "1 coupon is not published (draft, pending or trashed) and NOT in coupons.csv. The shop has no status column for a coupon, so importing one would turn a code the owner had withdrawn back into a live discount; CouponImporter refuses them for that reason and this export does not offer them.",
+        "customers.csv carries EVERY WordPress user, not only the ones with the customer role (1 administrator, 2 customer). A shopper whose role was changed, or an administrator who has ordered, would otherwise be left out and OrderImporter would synthesise a second, guest customer row for the same person.",
+        "1 review had a comment_type that was not 'review' (WooCommerce before 3.0 left it empty) and it was written as 'review' in the export. Each is a comment on a product post carrying a star rating, which is the definition of a product review; left as it was, ReviewImporter would have refused every one of them.",
+        "1 comment on products carries no star rating and is NOT in reviews.csv -- these are customer questions, not reviews. ReviewImporter refuses a rating-less row rather than defaulting it to five stars, so exporting them would only produce refusals. The shop has nowhere to put a product question, so this is a real loss and it is named here rather than left silent.",
+        "posts.csv does not carry these WordPress post types, which are either another file's job or WordPress's own machinery: 6 attachment. `attachment` in that list is the whole media library; media.csv carries the attachments the catalogue actually references, which is a smaller set and the one the new shop has to fetch.",
+        "This site's permalink settings, which produced every address in permalinks.csv: WordPress structure \"/%postname%/\"; WooCommerce product base \"/product\", category base \"\", tag base \"product-tag\", attribute base \"\". The category base is EMPTY, which means product category archives were served flat at the site root -- /toners/, not /product-category/toners/. That is the shape App\\Support\\LegacyCategoryUrls describes and this export confirms it from the setting itself rather than from the navigation menu."
+    ]
+}
