@@ -446,9 +446,22 @@ something half-right.
   physical-skincare shop
 - [ ] Order source/device/session-page-view tracking — deliberately deferred; the panel
   shows "Not tracked yet" honestly rather than fabricated numbers
-- [ ] Real PDF generation for Invoice/Packing slip/Delivery note/Shipping Label/
-  Dispatch Label — buttons are real, visible placeholders; wiring actual document
-  generation is a separate, later piece of work
+- [x] **Real documents for Invoice/Packing slip/Delivery note/Dispatch label** —
+  shipped by Lane AE (invoice, packing slip) and Lane EK (delivery note,
+  dispatch label); all four buttons on the order screen open real documents.
+  Verified end to end by Lane FZ, which was opened to build this and found it
+  already done: routes under the admin-api guard, both clear_caches_*
+  migrations present, 158 tests green on SQLite and MySQL, three of four
+  guard mutations red. There is no PDF *library* and cannot be one — vendor/
+  never ships — so the documents are print-ready HTML with @page rules that
+  the browser's Print → Save as PDF turns into a real PDF: confirmed by
+  rendering, A4 at 594.96x841.92pt and the A6 label at 298.08x420pt. The
+  consequence to know is that there is no server-side PDF byte stream, so no
+  PDF email attachment and none stored against an order. See
+  docs/FZ-ORDER-DOCUMENTS.md — *2.60.216*
+- [ ] Parcel weight on the dispatch label — blocked for real: no `weight`
+  column exists on `products` or anywhere else in the schema
+- [ ] Bulk printing (pick many orders, print all their packing slips)
 - [x] **Visual revision, requested after first review** — billing and shipping split
   into their own explicit two-column card (previously a 3-column grid mixing them
   with order status/customer). A genuine color system replaces the flat, single-accent

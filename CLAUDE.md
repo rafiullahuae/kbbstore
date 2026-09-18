@@ -73,6 +73,18 @@ by luck:
   `Product::toApi()`, which did not exist, for months — its `status` filter
   matched no rows, so the closure never ran. Fixing the filter turned it into a
   500.
+- **A full disk looks exactly like a transaction bug.** `ImportAtVolumeTest > it
+  resumes onto exactly the rows it had not done` failed about one run in two with
+  `SQLSTATE[HY000]: General error: 1 no such savepoint: trans3`, and passed every
+  time in isolation. It is not the importer and it is not test pollution: when
+  SQLite cannot write it aborts the transaction, which destroys every savepoint
+  inside it, and Laravel then rolls back to a savepoint that is no longer there.
+  The row it blames moves between runs, which is the tell — a real data bug
+  blames the same row. `df -h /` read **26 MB free, 100% used**, from ~14 GB of
+  finished lane worktrees each carrying its own copied `vendor/`. Removing them
+  (`git worktree remove --force`, which keeps the branch) freed 19 GB and the
+  test went six for six. **So: check `df -h /` before debugging any intermittent
+  database error, and remove a lane's worktree when its branch is merged.**
 - **`Setting::map()` memoises in a process-level static** as well as the cache.
   Within one long-lived process it will not see writes made after the first
   call. Fine under PHP-FPM, a trap in tests and queue workers.
