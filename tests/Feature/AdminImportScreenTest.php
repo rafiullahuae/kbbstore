@@ -448,7 +448,14 @@ it('imports the whole fixture through the screen, in slices, and does it again w
 
     // The second pass is the proof. Every row is re-presented and the database
     // comes out identical — which is the only evidence an importer cannot fake.
-    impStart('live');
+    //
+    // `confirm_duplicate` is Lane GF's: the screen now recognises an export it
+    // has already read and refuses it with a sentence rather than spending five
+    // minutes reporting every row as unchanged. That refusal is the feature,
+    // and THIS is the deliberate override it ships with — which makes this test
+    // the proof that the override does what it says as well as the proof that
+    // the importer is idempotent.
+    impStart('live', ['confirm_duplicate' => true]);
     $steps = impRunToEnd(rows: 500);
 
     $status = end($steps)['status'];
@@ -486,7 +493,12 @@ it('reaches the same database whether it is stepped in twos or done in one go', 
 
     $this->postJson('/admin-api/import/reset')->assertOk();
 
-    impStart('live');
+    // Reset forgets this screen's PROGRESS and deliberately not the record of
+    // what was imported — `import_history` is the only answer the owner has to
+    // "what is already in my shop" and a Reset must not take it. So the rows
+    // are still there, the duplicate guard still recognises these exact files,
+    // and this run says so out loud. Lane GF.
+    impStart('live', ['confirm_duplicate' => true]);
     $steps = impRunToEnd(rows: 5000);
 
     expect(impSnapshot())->toEqual($sliced);

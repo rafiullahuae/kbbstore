@@ -535,7 +535,20 @@ final class ImportRunner
          * an unread file, it is a file read by the other half of Phase 13.
          * Naming it here would train the owner to ignore this list.
          */
-        $claimed = ['permalinks.csv' => true];
+        $claimed = [
+            'permalinks.csv' => true,
+            /*
+             * manifest.json IS READ — App\Services\ImportConsole\ImportManifest
+             * reads it for the progress denominator, the duplicate guard and the
+             * record of which export this data came from. Before the export
+             * contract existed it genuinely was a file nothing opened, and the
+             * volume rehearsal duly named it in the discard list
+             * (docs/FV-IMPORT-AT-VOLUME.md §10). Naming it now would be false,
+             * and would train the owner to skim the one list that is only worth
+             * anything if every line in it is true.
+             */
+            'manifest.json' => true,
+        ];
 
         foreach (self::entities() as $importer) {
             $claimed[strtolower($importer->conventionalFile())] = true;
