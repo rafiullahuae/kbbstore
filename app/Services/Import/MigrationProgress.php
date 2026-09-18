@@ -225,19 +225,68 @@ final class MigrationProgress
             ->orderBy('id')
             ->get();
 
+        /*
+         * THE DENOMINATOR THIS STAGE DID NOT HAVE.
+         *
+         * The note below used to end "a bar would not be", and it was right
+         * about what it had: this stage reads `import_checkpoints`, which
+         * records rows consumed and nothing about how many there are. What it
+         * was over-broad about is the word "nothing" — ImportWorkspace has
+         * counted every uploaded file to the end since Lane AD, and an export
+         * carrying the manifest the contract now defines states the count
+         * outright.
+         *
+         * So the denominator is asked for, per entity, from the class that owns
+         * the question — and it comes back null exactly as often as it used to,
+         * for a command-line import against a folder this screen never saw. The
+         * old behaviour is the fallback, not the exception: a stage with no
+         * total still draws no bar, which is what the page's own renderer does
+         * with `total: 0`.
+         */
+        $denominators = [];
+        $everyDenominator = true;
+
+        foreach ((new \App\Services\ImportConsole\ImportDriver)->denominators() as $entity => $d) {
+            if ($d['rows'] !== null && $d['mismatch'] === null) {
+                $denominators[(string) $entity] = (int) $d['rows'];
+            }
+        }
+
         $entities = [];
         $processed = 0;
         $rejected = 0;
         $finished = 0;
+        $total = 0;
 
         foreach ($rows as $row) {
+            $entity = (string) $row->entity;
+            $rowsTotal = $denominators[$entity] ?? null;
+
             $processed += (int) $row->processed;
             $rejected += (int) $row->rejected_rows;
             $finished += $row->finished_at === null ? 0 : 1;
 
+            if ($rowsTotal === null) {
+                /*
+                 * ONE ENTITY WITHOUT A TOTAL COSTS THE WHOLE BAR, and it has to.
+                 * Summing the eight that are known would produce a denominator
+                 * smaller than the work, so the bar would run ahead of the
+                 * import and sit at 100% with a whole file still to come. That
+                 * is a worse lie than no bar, which is the thing this page was
+                 * built to stop telling.
+                 */
+                $everyDenominator = false;
+            } else {
+                $total += $rowsTotal;
+            }
+
             $entities[] = [
-                'entity' => (string) $row->entity,
+                'entity' => $entity,
                 'processed' => (int) $row->processed,
+                'rows_total' => $rowsTotal,
+                'percent' => $rowsTotal !== null && $rowsTotal > 0
+                    ? (int) min(100, (int) round(100 * (int) $row->processed / $rowsTotal))
+                    : null,
                 'created' => (int) $row->created_rows,
                 'updated' => (int) $row->updated_rows,
                 'unchanged' => (int) $row->unchanged_rows,
@@ -246,6 +295,8 @@ final class MigrationProgress
                 'finished_at' => $row->finished_at === null ? null : (string) $row->finished_at,
             ];
         }
+
+        $barTotal = $everyDenominator && $rows->count() > 0 ? $total : 0;
 
         $run = Schema::hasTable(\App\Services\ImportConsole\ImportDriver::TABLE)
             ? DB::table(\App\Services\ImportConsole\ImportDriver::TABLE)
@@ -261,18 +312,29 @@ final class MigrationProgress
             'state' => $status === 'running' ? 'running' : ($rows->count() === 0 ? 'never' : 'idle'),
             'headline' => $rows->count() === 0
                 ? 'No catalogue import has been run from the admin screen.'
-                : number_format($processed).' source rows imported across '.$rows->count().' entities'
+                : number_format($processed).($barTotal > 0 ? ' of '.number_format($barTotal) : '')
+                    .' source rows imported across '.$rows->count().' entities'
                     .($rejected > 0 ? ', '.number_format($rejected).' refused' : '').'.',
             /*
-             * Said on the screen and not only in a doc, because the absence of
-             * a percentage here is a deliberate answer and not an oversight.
+             * Said on the screen and not only in a doc, in both directions:
+             * where the denominator came from when there is one, and why there
+             * is none when there is not. The absence of a percentage here was a
+             * deliberate answer before there was anything to count against, and
+             * the presence of one now has to name its source or it is the same
+             * unaccountable number wearing a bar.
              */
-            'note' => 'There is no percentage for this stage and there cannot be one: `import_checkpoints` records '
-                .'how many source rows were consumed, and nothing records how many a CSV contains until it has '
-                .'been read to the end. Rows done is a true number; a bar would not be.',
+            'note' => $barTotal > 0
+                ? 'The total comes from the export itself — `rows` in its manifest.json where it carries one, '
+                    .'and otherwise the count this shop took when the file was uploaded. `import_checkpoints` '
+                    .'still only records rows consumed; it is the export that says how many there are.'
+                : 'There is no percentage for this stage and there cannot be one from what this shop has: '
+                    .'`import_checkpoints` records how many source rows were consumed, and nothing here knows '
+                    .'how many there are to consume. An export uploaded on the Import screen is counted as it '
+                    .'arrives, and one carrying a manifest.json states its own counts — with neither, rows '
+                    .'done is a true number and a bar would not be.',
             'done' => $processed,
-            'total' => 0,
-            'remaining' => 0,
+            'total' => $barTotal,
+            'remaining' => max(0, $barTotal - $processed),
             'mode' => $run === null ? null : (string) $run->mode,
             'status' => $status,
             'entities_finished' => $finished,

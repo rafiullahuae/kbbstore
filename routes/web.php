@@ -427,6 +427,13 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // outside auth:admin that is a stranger rewriting the catalogue.
         require __DIR__.'/import-admin.php';
 
+        // Store → Import → "What has been imported" (Lane GF). The read side of
+        // the same screen: the record of which export this shop's data came
+        // from, when it was taken and what each run did. Same group, because it
+        // names the owner's own site, the digests of his export files and the
+        // note text lifted out of his catalogue.
+        require __DIR__.'/import-history-admin.php';
+
         // Store → Import → "Addresses & pictures" (Lane GB). Same group and the
         // same reason: one of these endpoints writes the redirect rows that
         // move every visitor who lands on an address this shop does not serve,

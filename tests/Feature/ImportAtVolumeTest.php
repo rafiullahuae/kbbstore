@@ -65,7 +65,14 @@ function volDir(): string
 /** @return array<string, int> */
 function volManifest(): array
 {
-    return json_decode((string) file_get_contents(volDir().'/manifest.json'), true);
+    /*
+     * `counts` — the generator now writes manifest.json in the shape
+     * docs/WP-EXPORT-CONTRACT.md defines, because the importer reads that
+     * name and refuses a format it does not speak. The flat map this has
+     * always asserted against is under `counts`, which is where the
+     * contract puts it, `unread.*` keys and all. Lane GF.
+     */
+    return json_decode((string) file_get_contents(volDir().'/manifest.json'), true)['counts'];
 }
 
 function volImport(array $overrides = []): ImportReport

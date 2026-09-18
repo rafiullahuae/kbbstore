@@ -183,6 +183,32 @@ final class ImportWorkspace
         return $dir;
     }
 
+    /**
+     * Where the row-count sidecars live, and why it is NOT beside the CSVs.
+     *
+     * It used to be. `products.csv.meta.json` sat next to `products.csv`, and
+     * ImportRunner::reportUnreadFiles() globs `*.{csv,CSV,tsv,txt,json,xml}`
+     * over the import directory and names everything no importer opens — so
+     * every preview run from this screen reported the screen's own bookkeeping
+     * files back to the owner as "files in the export folder that no importer
+     * opens", one per uploaded entity, in the discard list he is asked to
+     * approve. (The live run never showed it: it passes `only`, and that method
+     * exempts a narrowed run. The preview passes no `only`, so it did.)
+     *
+     * The channel was right and the folder was wrong. The import directory is
+     * the export; nothing that is not part of the export belongs in it.
+     */
+    public function metaDirectory(): string
+    {
+        $dir = storage_path('app/import/meta');
+
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        return $dir;
+    }
+
     public function path(string $entity): string
     {
         return $this->directory().'/'.self::ENTITIES[$entity]['file'];
@@ -191,6 +217,38 @@ final class ImportWorkspace
     public function has(string $entity): bool
     {
         return is_file($this->path($entity));
+    }
+
+    /* ----------------------------------------------------------- manifest */
+
+    public function manifestPath(): string
+    {
+        return $this->directory().'/'.ImportManifest::FILE;
+    }
+
+    public function hasManifest(): bool
+    {
+        return is_file($this->manifestPath());
+    }
+
+    /**
+     * The export's manifest, or the absent one.
+     *
+     * Read from disk each time rather than held: this is called from the status
+     * endpoint the screen polls, and a manifest the owner has just replaced has
+     * to be the one that answers. It is a file of a few hundred bytes with a
+     * hard size cap in the reader.
+     */
+    public function manifest(): ImportManifest
+    {
+        return ImportManifest::read($this->manifestPath());
+    }
+
+    public function forgetManifest(): void
+    {
+        if (is_file($this->manifestPath())) {
+            @unlink($this->manifestPath());
+        }
     }
 
     /**
@@ -281,6 +339,22 @@ final class ImportWorkspace
         }
 
         $temp = (string) $file->getRealPath();
+
+        /*
+         * THE MANIFEST IS A FILE OF THE EXPORT AND ARRIVES THE SAME WAY, so it
+         * is recognised here rather than through an endpoint of its own. The
+         * owner drags nine CSVs and a manifest.json into the same box; asking
+         * him to know which one goes in the other box would be a way of losing
+         * the manifest.
+         *
+         * It is recognised by BOTH its name and its contents, and a CSV can
+         * satisfy neither: a file called manifest.json, or a file whose first
+         * bytes parse as a JSON object carrying a `format` key. A products
+         * export does not begin with `{`.
+         */
+        if ($entity === null && $this->looksLikeManifest($temp, (string) $file->getClientOriginalName())) {
+            return $this->acceptManifest($file, $temp);
+        }
 
         $this->refuseNonText($temp);
 
@@ -373,6 +447,88 @@ final class ImportWorkspace
     }
 
     /* --------------------------------------------------------------- guts */
+
+    /**
+     * Is this the export's manifest rather than one of its CSV files?
+     *
+     * Two independent tests, either of which is enough, because the two failure
+     * modes are opposite: a browser that sends `manifest (1).json` after a
+     * second download still has JSON inside it, and a manifest saved by a tool
+     * that mangled its contents is still named manifest.json and should be
+     * refused AS a broken manifest rather than as an unrecognisable CSV.
+     */
+    private function looksLikeManifest(string $path, string $originalName): bool
+    {
+        $base = mb_strtolower(basename(str_replace('\\', '/', $originalName)));
+
+        if ($base === ImportManifest::FILE || str_starts_with($base, 'manifest') && str_ends_with($base, '.json')) {
+            return true;
+        }
+
+        $handle = @fopen($path, 'rb');
+
+        if ($handle === false) {
+            return false;
+        }
+
+        $head = (string) fread($handle, 4096);
+        fclose($handle);
+
+        if (! str_starts_with(ltrim($head, "\xEF\xBB\xBF \t\r\n"), '{')) {
+            return false;
+        }
+
+        // The whole file, only once it is known to start like JSON and to be
+        // small enough to be a manifest.
+        clearstatcache(true, $path);
+
+        if ((int) filesize($path) > ImportManifest::MAX_BYTES) {
+            return false;
+        }
+
+        $decoded = json_decode((string) @file_get_contents($path), true);
+
+        return is_array($decoded) && array_key_exists('format', $decoded);
+    }
+
+    /**
+     * Store the manifest, or say exactly what is wrong with it.
+     *
+     * A manifest that this shop cannot read is refused AT UPLOAD, which is the
+     * only place the owner is looking at the file he just chose. Letting it
+     * land and refusing at Start instead would put the sentence four screens
+     * away from the thing it is about.
+     *
+     * @return array{entity: string, rows: int, bytes: int}
+     *
+     * @throws ImportUploadRejected
+     */
+    private function acceptManifest(UploadedFile $file, string $temp): array
+    {
+        $manifest = ImportManifest::parse((string) @file_get_contents($temp));
+
+        if ($manifest->refusal() !== null) {
+            throw new ImportUploadRejected($manifest->refusal());
+        }
+
+        $destination = $this->manifestPath();
+
+        if (is_file($destination)) {
+            @unlink($destination);
+        }
+
+        $file->move($this->directory(), ImportManifest::FILE);
+
+        @chmod($destination, 0664);
+
+        clearstatcache(true, $destination);
+
+        return [
+            'entity' => 'manifest',
+            'rows' => count($manifest->files()),
+            'bytes' => (int) filesize($destination),
+        ];
+    }
 
     /**
      * Refuse the things that are definitely not a CSV before parsing one.
@@ -512,7 +668,19 @@ final class ImportWorkspace
     private function stat(string $entity): array
     {
         $path = $this->path($entity);
-        $sidecar = $path.'.meta.json';
+        $sidecar = $this->metaDirectory().'/'.$entity.'.json';
+
+        /*
+         * A sidecar from before they moved out of the export folder. Removed
+         * rather than read: it is one file, it is cheap to recompute, and
+         * leaving it would leave ImportRunner still reporting it to the owner
+         * as a file nothing opens.
+         */
+        $legacy = $path.'.meta.json';
+
+        if (is_file($legacy)) {
+            @unlink($legacy);
+        }
 
         clearstatcache(true, $path);
 
@@ -551,10 +719,10 @@ final class ImportWorkspace
 
     private function forgetStat(string $entity): void
     {
-        $sidecar = $this->path($entity).'.meta.json';
-
-        if (is_file($sidecar)) {
-            @unlink($sidecar);
+        foreach ([$this->metaDirectory().'/'.$entity.'.json', $this->path($entity).'.meta.json'] as $sidecar) {
+            if (is_file($sidecar)) {
+                @unlink($sidecar);
+            }
         }
     }
 

@@ -7735,6 +7735,7 @@ function impPaint(){
     +impRejectsCard(s)
     +gbUrlsMediaCard()
     +gdLiveProgressCard()
+    +gfHistoryCard()
     +impExportCard()
     +'</div>';
 
@@ -7926,12 +7927,22 @@ function impRunCard(s){
   const busy=impRunning;
 
   const rows=s.entities.filter(e=>e.present).map(e=>{
-    const pct=e.rows_total?Math.min(100,Math.round(100*e.processed/e.rows_total)):0;
+    /* THE SERVER DECIDES WHETHER THERE IS A BAR. `percent` is null when the
+       number would be a lie — no denominator, a manifest whose row count
+       disagrees with the file on disk, or a checkpoint recorded against a file
+       that has since been replaced. Dividing processed by rows_total here drew
+       a confident bar in all three. Lane GF; docs/GF-IMPORT-REFINEMENT.md §3. */
+    const pct=e.percent==null?null:e.percent;
     const state=!isLive?'waiting':(e.done_this_run?'done':(run.current_entity===e.entity?'importing…':(e.processed>0?'part way':'waiting')));
     return '<div style="margin-bottom:11px"><div class="between" style="margin-bottom:4px">'
       +'<span style="font-size:12.5px;font-weight:600">'+impEsc(e.label)+'</span>'
       +'<span style="font-size:11.5px;color:var(--ink-soft)">'+impNum(e.processed)+' of '+impNum(e.rows_total)+' · '+impEsc(state)+'</span></div>'
-      +'<div class="impbar"><i style="width:'+pct+'%"></i></div></div>';
+      +(pct==null?'<div style="font-size:11.5px;color:var(--ink-soft)">'
+          +(e.rows_mismatch?impEsc(e.rows_mismatch.sentence)
+            :(e.source_changed?'This file has changed since the run stopped, so there is no honest '
+              +'progress bar for it — start it again from row one.'
+              :'No row count for this file, so there is no progress bar.'))+'</div>'
+        :'<div class="impbar"><i style="width:'+pct+'%"></i></div>')+'</div>';
   }).join('');
 
   return '<div class="card pad" style="margin-bottom:16px">'
@@ -8035,6 +8046,17 @@ let gbUM=null, gbUMBusy=false, gbUMMsg='';
    on this bundle — deliberately, because its whole job is to be trustworthy at
    the moment something has gone wrong, and this file is the thing most likely
    to be what is broken. See MediaSideloadApiController::page(). */
+function gfHistoryCard(){
+  return '<div class="card pad">'
+    +'<b style="font-size:14px">What has been imported</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:680px">'
+    +'Every import this shop has run: which export it came from, when that export was taken off the old '
+    +'site, and what each run created, updated, left alone or refused. It is kept even when you press '
+    +'&ldquo;Forget progress and start over&rdquo;.</p>'
+    +'<a href="'+impBase()+'/import/history-page" target="_blank" rel="noopener">'
+    +'<button class="btn" style="margin-top:10px">Open the record</button></a></div>';
+}
+
 function gdLiveProgressCard(){
   return '<div class="card pad">'
     +'<b style="font-size:14px">Pictures &amp; live progress</b>'

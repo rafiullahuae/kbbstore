@@ -103,10 +103,6 @@ what `KBB-Progress-Dashboard.html` renders under "In flight". A lane that has
 landed is deleted from here and written into its phase below, so a stale entry
 is a bug in this section rather than a second opinion about the phase.
 
-- **Lane GF — the import side, refined.** A progress bar with a real
-  denominator (the manifest's row counts), a duplicate-import guard that tells
-  the owner before he waits rather than silently doing nothing, and a record of
-  every import that survives the run
 
 ### Waiting on the owner, not on us
 
@@ -1866,6 +1862,18 @@ a fake success toast and saves nothing).
   screenshots: the catalogue stage drew a full green bar at 0/0 under "No
   catalogue import has been run" — the exact fake number the page exists to
   prevent. A stage with no denominator now gets no bar
+- [x] **The import refined: an honest bar, a duplicate guard, and a record that
+  outlives the run** — `manifest.json`'s `rows` gives the catalogue import a real
+  denominator, per file and for the whole export, and **five separate conditions
+  suppress a bar rather than draw a wrong one** — including a manifest whose
+  count disagrees with the file, which is the only way a truncated upload is
+  ever noticed. An export already imported is **refused with a sentence** before
+  the owner waits several minutes, with a deliberate override; a part-way import
+  and a **corrected re-export are never refused**. `import_history` records which
+  export the shop's data came from, taken from where and when, and what every
+  run did — it survives the next run and it survives Reset, and there is a page
+  at Store → Import. 47 tests, 28 mutations, driven end to end in a browser at
+  4,042 rows — see `docs/GF-IMPORT-REFINEMENT.md`
 - [ ] ▲ **Fetching does not re-point the rows.** Two steps, and between them the
   picture is on disk while the product still names the old host. **The old site
   must not be switched off between them.** The rewrite is Store → Import →

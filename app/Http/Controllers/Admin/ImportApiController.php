@@ -95,8 +95,20 @@ class ImportApiController extends Controller
      */
     public function upload(Request $request): JsonResponse
     {
+        /*
+         * `max:6` WAS WRONG AND HAD BEEN SINCE THE SEO ENTITY WAS ADDED.
+         *
+         * ImportWorkspace::ENTITIES holds NINE entities, and an export now also
+         * carries manifest.json — ten files. The rule refused the whole request
+         * with a 422 the moment the owner selected all of them at once, which
+         * is the obvious thing to do with a folder of exports, and the message
+         * he got was Laravel's own about an array being too large. The number
+         * is derived from the table now, so the next entity does not reintroduce
+         * it; +4 leaves room for the manifest and for the files the contract
+         * lists as gaps whose importers come later.
+         */
         $request->validate([
-            'files' => ['sometimes', 'array', 'max:6'],
+            'files' => ['sometimes', 'array', 'max:'.(count(ImportWorkspace::entities()) + 4)],
             'files.*' => ['file'],
             'file' => ['sometimes', 'file'],
             'entity' => ['nullable', 'string', 'max:32'],
@@ -149,6 +161,18 @@ class ImportApiController extends Controller
     {
         $entity = $request->string('entity')->toString();
 
+        /*
+         * 'manifest' is not one of the entities and is removable all the same.
+         * It is the named escape hatch from a manifest this shop cannot read —
+         * the refusal sentence tells the owner to remove it — so there has to
+         * be a button that does.
+         */
+        if ($entity === 'manifest') {
+            $this->workspace->forgetManifest();
+
+            return response()->json(['ok' => true, 'status' => $this->driver->status()]);
+        }
+
         if (! ImportWorkspace::isEntity($entity)) {
             return response()->json(['ok' => false, 'message' => 'Unknown entity.'], 422);
         }
@@ -175,6 +199,13 @@ class ImportApiController extends Controller
             'adopt_by_slug' => ['nullable', 'boolean'],
             'restart' => ['nullable', 'boolean'],
             'force' => ['nullable', 'boolean'],
+            /*
+             * "Yes, import it again." Separate from `force`, which is about a
+             * run that is already part-way through, because these are two
+             * different refusals and folding them together would mean one tick
+             * box silently answering the other one's question.
+             */
+            'confirm_duplicate' => ['nullable', 'boolean'],
         ]);
 
         try {
@@ -185,9 +216,19 @@ class ImportApiController extends Controller
                 'adopt_by_slug' => $request->boolean('adopt_by_slug'),
                 'restart' => $request->boolean('restart'),
                 'force' => $request->boolean('force'),
+                'confirm_duplicate' => $request->boolean('confirm_duplicate'),
             ]);
         } catch (ImportDriverRefused $e) {
-            return response()->json(['ok' => false, 'message' => $e->getMessage()], 409);
+            // The status goes back with the refusal so the screen can draw the
+            // reason rather than only the sentence — which of the files are
+            // already in, which have changed, and the tick box that overrides
+            // it. A refusal the owner cannot see the workings of is a refusal
+            // he presses again.
+            return response()->json([
+                'ok' => false,
+                'message' => $e->getMessage(),
+                'status' => $this->driver->status(),
+            ], 409);
         }
 
         return response()->json(['ok' => true, 'status' => $this->driver->status()]);

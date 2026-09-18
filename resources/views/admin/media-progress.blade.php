@@ -192,9 +192,26 @@ td.u{word-break:break-all;max-width:330px}
         + '</div>';
     }
     if (s.key === 'catalogue' && s.entities && s.entities.length) {
-      extra = '<table><tr><th>entity</th><th>rows</th><th>created</th><th>updated</th><th>refused</th><th>finished</th></tr>';
+      /* A BAR PER ENTITY, AND ONLY WHERE THERE IS A DENOMINATOR TO DRAW IT ON.
+         The server sends `percent: null` for an entity whose row count it
+         cannot vouch for — no manifest and no uploaded file, a manifest whose
+         count disagrees with the file, a checkpoint that counted a different
+         file — and null renders as the rows figure with nothing beside it,
+         exactly as this whole table did before. The same rule as the stage bar
+         above it: a denominator or no bar. */
+      extra = '<table><tr><th>entity</th><th>rows</th><th>progress</th><th>created</th><th>updated</th>'
+        + '<th>refused</th><th>finished</th></tr>';
       s.entities.forEach(function(e){
-        extra += '<tr><td>' + esc(e.entity) + '</td><td>' + num(e.processed) + '</td><td>' + num(e.created)
+        var cell;
+        if (e.percent == null) {
+          cell = '<span class="why">no row count for this file</span>';
+        } else {
+          cell = '<div class="bar" style="margin:0"><i style="width:' + e.percent + '%"></i></div>'
+            + '<span class="why">' + e.percent + '%</span>';
+        }
+        extra += '<tr><td>' + esc(e.entity) + '</td><td>' + num(e.processed)
+          + (e.rows_total == null ? '' : ' of ' + num(e.rows_total)) + '</td>'
+          + '<td style="min-width:120px">' + cell + '</td><td>' + num(e.created)
           + '</td><td>' + num(e.updated) + '</td><td>' + num(e.rejected) + '</td><td>'
           + (e.finished_at ? esc(e.finished_at) : '—') + '</td></tr>';
       });
