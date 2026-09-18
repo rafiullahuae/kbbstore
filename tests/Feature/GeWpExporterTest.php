@@ -642,6 +642,24 @@ it('writes the manifest last, and describes every file it wrote', function () {
     // in the export could tell the shop.
     expect($manifest['source']['timezone'])->toBe('Asia/Dubai');
     expect($manifest['source']['order_storage'])->toBeIn(['posts', 'hpos']);
+
+    /*
+     * AND THE CENSUS OF WHAT ELSE THIS SITE HAS.
+     *
+     * permalinks.csv says what each thing's address is; this says what things
+     * there ARE, including the ones no file carries — which is the list
+     * somebody will want the first time a page turns out to be missing. The
+     * trashed product and the withdrawn coupon are both counted here even
+     * though neither is in a CSV, which is the point: the export states what it
+     * left behind rather than leaving a hole.
+     */
+    expect($manifest['source']['taxonomies'])->toHaveKeys(['product_cat', 'pa_brands', 'pa_size', 'product_tag']);
+    expect($manifest['source']['post_types']['product'])->toBe(['publish' => 4, 'trash' => 1]);
+    expect($manifest['source']['post_types']['shop_coupon'])->toBe(['draft' => 1, 'publish' => 1]);
+
+    // products.csv carries the four published ones and not the trashed one, and
+    // the census is how you can tell that from the outside.
+    expect($manifest['files']['products.csv']['rows'])->toBe($manifest['source']['post_types']['product']['publish']);
 });
 
 it('pins its settings to the export, not to the request that asked for a batch', function () {
@@ -764,6 +782,62 @@ it('regenerates the fixture from the plugin and gets the same bytes, from either
         // has to agree with `files` rather than being computed a second way.
         expect($manifest['counts']['products'])->toBe($manifest['files']['products.csv']['rows']);
         expect($manifest['counts']['orders'])->toBe($manifest['files']['orders.csv']['rows']);
+
+        /*
+         * AND THE WHOLE MANIFEST, against the committed one.
+         *
+         * Also found by mutation: dropping `source.post_types` from the runner
+         * left the suite green, because the only test that reads that key reads
+         * the checked-in snapshot. Asserting the keys one at a time would fix
+         * the one key and leave the next one added just as unprotected, so the
+         * whole document is compared instead, minus the three fields that
+         * legitimately differ per run:
+         *
+         *   export_id                — random, and identifying ONE export is its job
+         *   generated_at             — the clock
+         *   source.order_storage     — the thing this loop is varying
+         *   source.post_types        — an HPOS shop has NO shop_order rows in
+         *                              wp_posts, and saying so is the census
+         *                              doing its job
+         *   notes[0]                 — the sentence naming the storage
+         *
+         * The last two are asserted separately below rather than merely
+         * excluded, because "these two legitimately differ" and "these two are
+         * not checked" are different claims.
+         */
+        $expected = geManifest();
+
+        // Unset on each array directly. `foreach ([$a, $b] as &$x)` iterates a
+        // temporary array of COPIES, so unsetting through the reference changes
+        // nothing -- which this test did on its first run, and reported the two
+        // random export ids as the difference.
+        foreach (['export_id', 'generated_at'] as $volatile) {
+            unset($manifest[$volatile], $expected[$volatile]);
+        }
+
+        foreach (['order_storage', 'post_types'] as $perStorage) {
+            unset($manifest['source'][$perStorage], $expected['source'][$perStorage]);
+        }
+
+        $storageNote = array_shift($manifest['notes']);
+
+        array_shift($expected['notes']);
+
+        expect($manifest)->toEqual(
+            $expected,
+            "the manifest written from the {$storage} storage no longer matches tests/Fixtures/kbb-export/manifest.json"
+        );
+
+        // The two that do differ, said out loud.
+        expect($storageNote)->toContain('posts' === $storage ? 'legacy (wp_posts)' : 'HPOS (wp_wc_orders)');
+
+        $census = json_decode((string) file_get_contents($dir.'/manifest.json'), true)['source']['post_types'];
+
+        expect($census['product'])->toBe(['publish' => 4, 'trash' => 1]);
+
+        // On HPOS the orders are not wp_posts rows at all, and the census says
+        // so rather than pretending the shop has none.
+        expect(isset($census['shop_order']))->toBe('posts' === $storage);
     }
 
     // --batch=7 above, against the fixture's --batch=500: 200-odd separate

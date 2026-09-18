@@ -28,8 +28,9 @@ comes out as:
 | `permalinks.csv` | consumed by `RedirectMap::fromPermalinks()` without it learning a new word — products `discard` (they did not move), `/toners/` → `/product-category/toners/`, brands no proposal at all |
 | resume | `--batch=7` and `--batch=500` produce byte-identical CSVs across 200-odd separate runner instances |
 
-20 tests. 19 mutations, 19 red — §8, including **two that survived** and
-what closing each one took.
+20 tests. 21 guards mutated; **three survived** first time and all 21 are red
+now — §8, including what closing each one took and the hole it was the same
+hole as.
 
 The export it was measured on is checked in at `tests/Fixtures/kbb-export/`, and
 one of the tests regenerates it from the plugin and compares sha256 per file, so
@@ -467,7 +468,7 @@ wanting the download list groups by `url`.
 
 ---
 
-## 8. Mutation testing — 19 of 19 red
+## 8. Mutation testing — 21 guards, 3 survived, all 21 red once closed
 
 Each guard was broken, the suite run, and the guard restored.
 
@@ -490,7 +491,13 @@ Each guard was broken, the suite run, and the guard restored.
 | permalinks: report a missing archive as a URL anyway | red |
 | `UpdateGuard`: let `wordpress-plugin/` into a package | red |
 | **runner: stop pinning the settings to the export** | **GREEN — survived**, then red |
+| **manifest: drop `source.post_types`** | **GREEN — survived**, then red |
+| manifest: drop `source.taxonomies` | red |
 | **manifest: count the header row as data** | **GREEN — survived**, then red |
+
+Three of the twenty-one are in bold. They went green on the first run and red on
+the re-run after the gap each one exposed was closed; the rest went red first
+time.
 
 ### The one that survived, which is the valuable line
 
@@ -530,6 +537,25 @@ asserts the output is byte-identical to an unflipped run. Re-run: red.
 `batch` is deliberately **not** pinned: how many rows fit in a request is a
 property of the host, not of the data, and an operator who finds 200 too slow
 should be able to drop it without starting again.
+
+### The third — the same hole as the first, which is why the fix was general
+
+Dropping `source.post_types` from the manifest left the suite **green** for
+exactly the reason the row count had: the only test that reads that key reads the
+checked-in snapshot, and the regeneration test compared the CSVs and a handful of
+named manifest fields.
+
+Fixing the one key would have left the next key added just as unprotected. So the
+regeneration test now compares the **whole manifest document** against the
+committed one, minus five fields — `export_id` and `generated_at`, which are
+random and the clock; `source.order_storage`, which is what the loop varies; and
+`source.post_types` and `notes[0]`, which **legitimately differ between the
+storages** because an HPOS shop has no `shop_order` rows in `wp_posts` at all.
+Those last two are then asserted separately per storage, because "these differ
+legitimately" and "these are not checked" are different claims.
+
+`source.taxonomies`, mutated afterwards, went red first time — which is the
+point of fixing it generally.
 
 ### Two more that survived, in a narrower sense, and what that showed
 

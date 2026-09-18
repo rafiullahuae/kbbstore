@@ -1,7 +1,7 @@
 {
     "format": "kbb-export/1",
-    "export_id": "9be367f6-f349-4007-b51f-59cddcc236a2",
-    "generated_at": "2026-09-18T18:20:08+04:00",
+    "export_id": "b2bd695c-dedd-494b-ac08-e6392f12606e",
+    "generated_at": "2026-09-18T18:39:28+04:00",
     "source": {
         "site_url": "https://kbeautybliss.com",
         "home_url": "https://kbeautybliss.com",
@@ -16,6 +16,46 @@
             "category_base": "",
             "tag_base": "product-tag",
             "attribute_base": ""
+        },
+        "taxonomies": {
+            "category": 1,
+            "pa_brands": 2,
+            "pa_size": 2,
+            "product_cat": 3,
+            "product_tag": 1,
+            "product_type": 2,
+            "product_visibility": 3
+        },
+        "post_types": {
+            "attachment": {
+                "inherit": 6
+            },
+            "page": {
+                "publish": 1
+            },
+            "post": {
+                "publish": 1
+            },
+            "product": {
+                "publish": 4,
+                "trash": 1
+            },
+            "product_variation": {
+                "private": 1,
+                "publish": 1
+            },
+            "shop_coupon": {
+                "draft": 1,
+                "publish": 1
+            },
+            "shop_order": {
+                "wc-completed": 1,
+                "wc-processing": 1,
+                "wc-refunded": 1
+            },
+            "shop_order_refund": {
+                "wc-completed": 1
+            }
         }
     },
     "files": {

@@ -253,6 +253,24 @@ class KBB_Export_Runner {
 				'order_storage'   => (string) $this->state['order_storage'],
 				'permalink_structure'   => KBB_Export_Wp::option( 'permalink_structure', '' ),
 				'woocommerce_permalinks' => $this->woocommerce_permalinks(),
+				/*
+				 * WHAT ELSE THIS SITE HAS, answered by the export rather than
+				 * by asking the owner.
+				 *
+				 * Every taxonomy and every post type that actually has rows,
+				 * with its count. `permalinks.csv` says what each thing's
+				 * address is; this says what things there ARE -- including the
+				 * ones no file carries, which is the list somebody will want
+				 * the first time a page turns out to be missing. A taxonomy
+				 * nobody remembered registering, a custom post type from a
+				 * plugin removed in 2022: both are one line here and invisible
+				 * everywhere else.
+				 *
+				 * The contract permits it: "Unknown keys are ignored, never
+				 * fatal."
+				 */
+				'taxonomies'    => KBB_Export_Wp::taxonomies_in_database(),
+				'post_types'    => KBB_Export_Wp::post_types_in_database(),
 			),
 			'files'        => $files,
 			'counts'       => $counts,
