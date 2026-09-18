@@ -38,113 +38,23 @@
     @endisset
 @endsection
 
-@section('sheet')
-    <div class="head">
-        <div class="who">
-            @include('invoices.partials.seller')
-        </div>
+{{-- THE SHEET BODY LIVES IN A PARTIAL, AND THE FOUR SPACES BEFORE @include ARE
+     LOAD-BEARING.
 
-        <div class="what">
-            <div class="doctype">{{ __('invoice.packing.doctype') }}</div>
-            <div class="docmeta">
-                <div class="row">{!! __('email.invoice.order', ['number' => '<b>' . e($doc['orderNumber']) . '</b>']) !!}</div>
-                @if ($doc['invoiceReference'] !== '')
-                    <div class="row">{!! __('email.invoice.reference', ['reference' => '<b>' . e($doc['invoiceReference']) . '</b>']) !!}</div>
-                @endif
-                @if ($doc['placedAt'] !== '')
-                    <div class="row">{{ __('email.invoice.ordered', ['date' => $doc['placedAt']]) }}</div>
-                @endif
-            </div>
-            @if ($doc['isGift'])
-                <div class="stamp">{{ __('invoice.packing.stamp_gift') }}</div>
-            @endif
-        </div>
-    </div>
+     The partial is shared with invoices/bulk.blade.php, which includes the same
+     file once per selected order — so a column heading changed here reaches the
+     batch of twenty a packer prints and the single sheet at the same time,
+     which two copies of this markup could not promise.
 
-    {{-- The order number as bars, so the bench scans the parcel back into the
-         admin instead of reading nine characters off the sheet and typing them.
-         Drawn in CSS by App\Support\Code128 - nothing is fetched and no font is
-         loaded, and that class's header says why each of the ordinary ways of
-         making a barcode is closed on this host. --}}
-    <div style="margin-top:12px;display:inline-block">
-        @include('invoices.partials.barcode', ['value' => $doc['orderNumber'], 'height' => '11mm'])
-    </div>
-
-    <hr class="rule">
-
-    @include('invoices.partials.parties', [
-        'billLabel' => __('invoice.packing.ordered_by'),
-        'shipLabel' => __('email.invoice.deliver_to'),
-        'collapseSame' => false,
-    ])
-
-    <div class="facts">
-        <div class="fact">
-            <div class="label">{{ __('invoice.invoice.label_delivery') }}</div>
-            <div class="v">{{ $doc['deliveryMethod'] }}</div>
-        </div>
-        @if ($doc['phone'] !== '')
-            <div class="fact">
-                <div class="label">{{ __('invoice.invoice.label_phone') }}</div>
-                <div class="v" dir="auto">{{ $doc['phone'] }}</div>
-            </div>
-        @endif
-        <div class="fact">
-            <div class="label">{{ __('invoice.packing.label_items') }}</div>
-            <div class="v">{{ $doc['itemCount'] }}</div>
-        </div>
-        <div class="fact">
-            <div class="label">{{ __('invoice.packing.label_status') }}</div>
-            <div class="v">{{ $doc['orderStatus'] }}</div>
-        </div>
-    </div>
-
-    <table class="lines">
-        <thead>
-            <tr>
-                <th class="num" style="width:16mm">{{ __('email.items.col_qty') }}</th>
-                <th>{{ __('email.items.col_item') }}</th>
-                <th style="width:34mm">{{ __('invoice.packing.col_sku') }}</th>
-                <th class="num" style="width:18mm">{{ __('invoice.packing.col_picked') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($doc['items'] as $item)
-                <tr>
-                    <td class="num"><strong>{{ $item['quantity'] }}</strong></td>
-                    <td>
-                        <div class="it-name" dir="auto">{{ $item['name'] }}</div>
-                        @php
-                            $sub = array_values(array_filter([$item['brand'], $item['variant']], fn ($v) => $v !== ''));
-                        @endphp
-                        @if ($sub !== [])
-                            <div class="it-sub" dir="auto">{{ implode(' · ', $sub) }}</div>
-                        @endif
-                    </td>
-                    <td dir="auto">{{ $item['sku'] !== '' ? $item['sku'] : '—' }}</td>
-                    {{-- A box to tick with a pen while picking. --}}
-                    <td class="num" style="color:#aab0b9">☐</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    @if ($doc['customerNote'] !== '' || $doc['giftNote'] !== '')
-        <div class="notes">
-            @if ($doc['giftNote'] !== '')
-                <div class="note">
-                    <div class="label">{{ __('invoice.packing.gift_message') }}</div>
-                    <div class="body" dir="auto">{{ $doc['giftNote'] }}</div>
-                </div>
-            @endif
-            @if ($doc['customerNote'] !== '')
-                <div class="note">
-                    <div class="label">{{ __('invoice.packing.customer_note') }}</div>
-                    <div class="body" dir="auto">{{ $doc['customerNote'] }}</div>
-                </div>
-            @endif
-        </div>
-    @endif
-
-    <div class="foot">{{ __('invoice.packing.footer') }}</div>
-@endsection
+     The whole thing is ONE LINE, and the indent is on THIS side of the
+     @include, because of two measured behaviours that pull in opposite
+     directions. PHP eats one newline after a `?>`, so the newline that used to
+     follow @section('sheet') was never in the output; put it back by writing
+     the directives on separate lines and every tracked preview under
+     docs/invoice-previews/ gains a blank line. And Illuminate\View\Engines\
+     PhpEngine::evaluatePath returns ltrim(ob_get_clean()), so leading
+     whitespace inside an included file is stripped before it is echoed — the
+     partial cannot carry its own indent. Four spaces here reproduce the
+     previous output byte for byte, which is how this refactor leaves those
+     five reviewed files untouched. --}}
+@section('sheet')    @include('invoices.partials.sheet-packing-slip')@endsection

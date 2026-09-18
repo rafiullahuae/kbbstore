@@ -69,42 +69,9 @@
      sheet if the shop prints on plain paper and cuts. The margin is small
      because the sheet is small; the .sheet rule below matches it so what is on
      screen is what comes out. --}}
-@section('page')
-    @page { size: 105mm 148mm; margin: 6mm; }
-@endsection
+@section('page')    @include('invoices.partials.page-dispatch-label')@endsection
 
-@section('style')
-    .sheet.lbl { width: 105mm; min-height: 148mm; padding: 8mm; }
-    .lbl .from {
-        font-size: 10px; color: var(--ink-2); line-height: 1.45;
-        padding-bottom: 6px; border-bottom: 1px solid var(--rule);
-    }
-    .lbl .from .n { font-weight: 700; color: var(--ink); font-size: 11px; }
-    .lbl .to { margin-top: 10px; }
-    .lbl .to .name { font-size: 16px; font-weight: 750; line-height: 1.25; }
-    .lbl .to .addr { margin-top: 3px; font-size: 13.5px; line-height: 1.45; }
-    .lbl .to div { overflow-wrap: anywhere; }
-    .lbl .tel { margin-top: 7px; font-size: 14px; font-weight: 700; }
-    .lbl .strip {
-        display: flex; gap: 10px; margin-top: 10px;
-        border-top: 1px solid var(--rule); padding-top: 7px;
-        font-size: 11px; color: var(--ink-2);
-    }
-    .lbl .strip b { display: block; color: var(--ink); font-size: 12.5px; }
-    .lbl .cod {
-        margin-top: 10px; padding: 7px 10px;
-        border: 2px solid var(--ink); border-radius: 5px; text-align: center;
-    }
-    .lbl .cod .k {
-        font-size: 10px; font-weight: 750; letter-spacing: .1em;
-        text-transform: uppercase; color: var(--ink-2);
-    }
-    .lbl .cod .v { font-size: 19px; font-weight: 800; margin-top: 1px; }
-    .lbl .code { margin-top: 12px; }
-    @media print {
-        .sheet.lbl { width: auto; min-height: 0; padding: 0; }
-    }
-@endsection
+@section('style')    @include('invoices.partials.style-dispatch-label')@endsection
 
 {{-- The FULL class attribute, `sheet` included: document.blade.php yields this
      as the whole value, with "sheet" as the default for every document that
@@ -130,54 +97,23 @@
     @endisset
 @endsection
 
-@section('sheet')
-    <div class="from">
-        <span class="n" dir="auto">{{ __('invoice.label.from', ['name' => $doc['seller']['name']]) }}</span>
-        @foreach ($doc['seller']['addressLines'] as $line)
-            <div dir="auto">{{ $line }}</div>
-        @endforeach
-        @if ($doc['seller']['phone'] !== '')
-            <div dir="auto">{{ $doc['seller']['phone'] }}</div>
-        @endif
-    </div>
+{{-- THE SHEET BODY LIVES IN A PARTIAL, AND THE FOUR SPACES BEFORE @include ARE
+     LOAD-BEARING.
 
-    <div class="to">
-        <div class="label">{{ __('email.invoice.deliver_to') }}</div>
-        {{-- The shipping snapshot, falling back to billing exactly as
-             InvoiceDocument::present() already decided — one definition of
-             "where this order goes", so the label and the delivery note cannot
-             name different doors. --}}
-        {{-- shipToPostal, not shipTo: the same address WITHOUT its phone line.
-             The phone is the one thing on a label a driver reads before they
-             set off, so it is printed once, large, on its own line below —
-             printing it twice, small and inside the address block, is how a
-             label ends up with two numbers on it that a rushed reader assumes
-             are different. --}}
-        @forelse ($doc['shipToPostal'] as $i => $line)
-            <div dir="auto" @class(['name' => $i === 0, 'addr' => $i !== 0])>{{ $line }}</div>
-        @empty
-            <div class="name">&mdash;</div>
-        @endforelse
+     The partial is shared with invoices/bulk.blade.php, which includes the same
+     file once per selected order — so a column heading changed here reaches the
+     batch of twenty a packer prints and the single sheet at the same time,
+     which two copies of this markup could not promise.
 
-        @if ($doc['shipPhone'] !== '')
-            <div class="tel" dir="auto">{{ __('invoice.label.tel', ['phone' => $doc['shipPhone']]) }}</div>
-        @endif
-    </div>
-
-    <div class="strip">
-        <div>{{ __('invoice.label.strip_order') }}<b dir="auto">{{ $doc['orderNumber'] }}</b></div>
-        <div>{{ __('invoice.label.strip_items') }}<b>{{ $doc['itemCount'] }}</b></div>
-        <div>{{ __('invoice.label.strip_service') }}<b>{{ $doc['deliveryMethod'] }}</b></div>
-    </div>
-
-    @if ($doc['codToCollect'] !== null)
-        <div class="cod">
-            <div class="k">{{ __('invoice.label.cod_collect') }}</div>
-            <div class="v">{!! $doc['codToCollect']['html'] !!}</div>
-        </div>
-    @endif
-
-    <div class="code">
-        @include('invoices.partials.barcode', ['value' => $doc['orderNumber'], 'height' => '13mm'])
-    </div>
-@endsection
+     The whole thing is ONE LINE, and the indent is on THIS side of the
+     @include, because of two measured behaviours that pull in opposite
+     directions. PHP eats one newline after a `?>`, so the newline that used to
+     follow @section('sheet') was never in the output; put it back by writing
+     the directives on separate lines and every tracked preview under
+     docs/invoice-previews/ gains a blank line. And Illuminate\View\Engines\
+     PhpEngine::evaluatePath returns ltrim(ob_get_clean()), so leading
+     whitespace inside an included file is stripped before it is echoed — the
+     partial cannot carry its own indent. Four spaces here reproduce the
+     previous output byte for byte, which is how this refactor leaves those
+     five reviewed files untouched. --}}
+@section('sheet')    @include('invoices.partials.sheet-dispatch-label')@endsection

@@ -1775,6 +1775,29 @@ final class InterfaceStrings
             'doc.packing_slip' => 'Packing slip',
             'doc.delivery_note' => 'Delivery note',
             'doc.dispatch_label' => 'Dispatch label',
+
+            /*
+             * The bulk document — many orders on one printable page.
+             *
+             * OPERATOR CHROME, EVERY ONE OF THEM. The sheets inside a bulk
+             * document are drawn by the same partials the single documents use
+             * and carry the same keys; these are the tab name, the on-screen
+             * sheet counter and the two refusal sentences, all read by the
+             * person standing at the printer. That is why they are counted and
+             * not concatenated: an Arabic operator gets "٣ من ١٢" from one
+             * string rather than from three pieces glued together in English
+             * word order.
+             */
+            'bulk.title.invoice' => 'Invoices',
+            'bulk.title.packing-slip' => 'Packing slips',
+            'bulk.title.delivery-note' => 'Delivery notes',
+            'bulk.title.dispatch-label' => 'Dispatch labels',
+            'bulk.subject' => ':count orders',
+            'bulk.sheet_of' => 'Sheet :n of :total',
+            'bulk.missing_headline' => ':count of the orders you picked could not be found',
+            'bulk.missing_body' => 'Nothing is printed for them and the rest are below. Order ids: :ids. They were most likely deleted for good after this list was loaded.',
+            'bulk.refused_title' => 'Nothing was printed',
+            'bulk.refused_close' => 'Close this tab',
             'invoice.stamp_paid' => 'Paid',
             'invoice.label_payment' => 'Payment',
             'invoice.label_delivery' => 'Delivery',

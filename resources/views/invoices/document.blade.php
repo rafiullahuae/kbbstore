@@ -82,7 +82,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {{-- A print document is never a page a search engine should hold. --}}
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>@yield('title') — {{ $doc['orderNumber'] }}</title>
+    {{-- $subject, WHEN THERE IS ONE, BECAUSE A BULK DOCUMENT HAS NO ONE ORDER.
+         The four single documents pass $doc and no $subject, so this resolves to
+         exactly what it was before. invoices/bulk.blade.php passes $subject
+         ("12 orders") and no $doc at all — the right-hand side is never
+         evaluated, so an undefined $doc there is not an error. The tab name is
+         also the name the browser proposes for the saved PDF, which is the one
+         place the operator sees it.
+
+         THE COMMENT CLOSES ONTO THE TAG, as the toolbar note below already has to:
+         a Blade comment is removed and the whitespace around it is not, so a
+         newline here rewrites all five tracked previews. --}}<title>@yield('title') — {{ $subject ?? $doc['orderNumber'] }}</title>
     <style>
         {{-- A4 unless a document says otherwise. The dispatch label is A6 and
              says so in its own `page` section; yielding here rather than
@@ -311,7 +321,7 @@
 </head>
 <body>
     <div class="toolbar no-print">
-        <h1>@yield('title') · {{ $doc['orderNumber'] }}</h1>
+        <h1>@yield('title') · {{ $subject ?? $doc['orderNumber'] }}</h1>
         <span class="spacer"></span>
         {{-- THE TOOLBAR IS THE OPERATOR'S, EVEN WHEN THE SHEET IS NOT.
 

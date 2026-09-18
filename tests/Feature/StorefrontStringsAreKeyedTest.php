@@ -48,6 +48,10 @@ function keyedExcludedFiles(): array
             => '/_design-check, a developer page for comparing the port against the theme. Not linked, not indexed, and it names the theme directory.',
         'store/app.blade.php'
             => '/app, served to an authenticated admin and 404 to everybody else (PublicPagesQuoteRealPricesTest pins both halves). It is a second, invented storefront with invented prices; translating it would be translating a fixture.',
+        'invoices/partials/page-dispatch-label.blade.php'
+            => "One @page rule and nothing else. It used to sit inside @section('page') in invoices/shipping-label.blade.php, which BladeProse blanks by name; Lane GC moved it into a partial so the single label and a BULK run of labels cannot end up with two answers to how big A6 is. Same bytes, same output, no prose — the scanner reads a CSS at-rule as a sentence, which is the failure this exclusion is for.",
+        'invoices/partials/style-dispatch-label.blade.php'
+            => "The dispatch label's stylesheet, 26 lines of CSS and not one word. Moved out of @section('style') in invoices/shipping-label.blade.php by Lane GC for the same reason as the file above, and excluded for the same reason: BladeProse blanks that section by name and cannot tell that a file holding only its body is still CSS. docs/invoice-previews/dispatch-label.html regenerates byte-for-byte across the move, which is the check that it is the same stylesheet.",
         'store/skin-quiz.blade.php'
             => "The script is converted now (Lane FB): ~90 keys under store.quiz.js_*, its own window.KBB_T, and the invented catalogue deleted. Still excluded for what REMAINS English on purpose — the skin types, concerns, ages, depths, budgets and allergens the shopper picks, which are compared by recommend() and POSTed to /api/quiz as the lead's answers. QuizScriptStringsAreKeyedTest pins both halves: the converted chrome, and those values staying English.",
     ];

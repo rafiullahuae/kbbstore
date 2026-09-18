@@ -344,6 +344,15 @@ final class AdminCapabilities
         // left to the unmapped-route default.
         ['GET', 'admin-api/orders/*/delivery-note', 'invoices.view'],
         ['GET', 'admin-api/orders/*/shipping-label', 'invoices.view'],
+        /*
+         * The same four documents, a hundred orders at a time (Lane GC). Same
+         * capability, because it is the same information — and a SIBLING of
+         * 'admin-api/orders', not a child, so neither the exact 'admin-api/
+         * orders' read rule below nor the single-segment 'admin-api/orders/*'
+         * wildcard above can claim it. An unmapped admin route is owner-only,
+         * which would have left the shop's own packing staff unable to print.
+         */
+        ['GET', 'admin-api/orders-bulk-documents', 'invoices.view'],
         ['GET', 'admin-api/orders-export', 'orders.export'],
         ['POST', 'admin-api/orders-bulk-delete', 'orders.delete'],
         ['POST', 'admin-api/orders-bulk-restore', 'orders.delete'],
