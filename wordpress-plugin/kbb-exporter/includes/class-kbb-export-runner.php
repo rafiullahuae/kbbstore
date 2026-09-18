@@ -345,6 +345,22 @@ class KBB_Export_Runner {
 			$this->orders = $detected['source'];
 		}
 
+		if ( null === $this->orders ) {
+			/*
+			 * start() refuses when detection fails, so getting here means the
+			 * shop CHANGED under a running export -- HPOS switched on, or the
+			 * wc_orders table dropped, between two batches. Rare, and the reason
+			 * to handle it is what the alternative looks like: passing null to
+			 * KBB_Export_Stage_Orders' typed constructor is a TypeError, which
+			 * on a WordPress admin screen is a white page with nothing on it,
+			 * on a host whose owner has no error log to read.
+			 */
+			throw new RuntimeException(
+				'The order storage changed while this export was running (' . $detected['error'] . '). '
+					. 'Nothing written so far is lost -- start a new export, which will detect the storage again.'
+			);
+		}
+
 		$s = $this->pinned_settings();
 
 		$this->stages = array(

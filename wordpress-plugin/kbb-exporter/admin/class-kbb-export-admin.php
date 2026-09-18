@@ -79,9 +79,19 @@ class KBB_Export_Admin {
 	public static function ajax_step() {
 		self::guard();
 
-		$runner = new KBB_Export_Runner( self::settings_from_request() );
+		/*
+		 * A thrown exception here would be a 500 with WordPress's own HTML in
+		 * it, which the screen's fetch() reads as a parse failure and reports
+		 * as "stalled" -- true, but with no reason on it. Caught and returned
+		 * as the error the screen already knows how to print.
+		 */
+		try {
+			$runner = new KBB_Export_Runner( self::settings_from_request() );
 
-		wp_send_json( $runner->step() );
+			wp_send_json( $runner->step() );
+		} catch ( Exception $e ) { // phpcs:ignore
+			wp_send_json( array( 'ok' => false, 'error' => $e->getMessage() ) );
+		}
 	}
 
 	public static function ajax_reset() {
