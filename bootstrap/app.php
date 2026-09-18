@@ -29,9 +29,26 @@ return Application::configure(basePath: dirname(__DIR__))
          * existing route, RESERVED_SLUGS, the redirect map and the sitemap stay
          * exactly as they are.
          *
-         * FORGETTING IT IS SAFE. With the line absent, /ar/... finds no route
-         * and 404s and the shop is English-only — which is what the shop is
-         * today. Nothing else in this feature depends on it: the admin screens,
+         * ▲ AND IT WAS FORGOTTEN, WHICH IS HOW WE LEARNED IT NEED NOT BE HERE.
+         * The owner switched Arabic on and reported "/ar gives everywhere 404
+         * not found" — twice. He had done nothing wrong: this line had never
+         * reached the server and could not. AppServiceProvider::boot() now
+         * prepends the same middleware, and app/ DOES ship. Providers boot
+         * before Kernel::handle() reads $this->middleware to build the Pipeline,
+         * so the prepend still lands in the global stack in time; the whole
+         * suite passes with THIS line commented out, which is how that was
+         * established rather than argued.
+         *
+         * THIS LINE STAYS ANYWAY, and is not redundant. prependMiddleware()
+         * array_searches before it unshifts, so a host that did get the
+         * hand-edit registers one copy and not two. Removing it would also make
+         * the global-pipeline registration depend entirely on a provider hook, a
+         * quieter thing to lose to a future Laravel upgrade than a line in the
+         * file whose job is the middleware stack. Both are pinned by
+         * tests/Feature/ArabicUrlsWorkWithoutTheHandEditTest.php.
+         *
+         * FORGETTING IT IS SAFE. With the line absent, the provider still
+         * registers the middleware. Nothing else in this feature depends on it: the admin screens,
          * the translations table and __() all work without it. That is
          * deliberate, because the failure mode of a hand-applied edit has to be
          * "the new thing is not live yet", never "the shop is down".

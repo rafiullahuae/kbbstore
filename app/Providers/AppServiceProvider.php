@@ -90,6 +90,49 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         /*
+         * ── THE LINE THAT MAKES /ar EXIST, FROM A FILE A PACKAGE CAN SHIP ───
+         *
+         * SetLocaleFromPath has to run BEFORE the router, because it strips the
+         * /ar segment so every existing route, RESERVED_SLUGS, the redirect map
+         * and the sitemap can stay exactly as they are. Only the global
+         * pipeline runs that early, which is why bootstrap/app.php prepends it.
+         *
+         * AND bootstrap/ IS ON BuildPackage::NEVER_SHIP. So that line has never
+         * reached the server, and could not: it was documented as the one change
+         * in this feature to be applied by hand. It was not applied, which is
+         * why the owner reported "/ar gives 404 everywhere" after switching
+         * Arabic on — the switch was on and the middleware that acts on it was
+         * not there.
+         *
+         * A hand-edit to bootstrap/app.php is the worst thing to ask of an owner
+         * with no shell: a mistake in that file stops the application booting at
+         * all, which also stops the updater that would roll it back.
+         *
+         * PROVIDERS BOOT BEFORE THE PIPELINE IS BUILT, which is what makes this
+         * work. Kernel::handle() calls bootstrap() — including BootProviders —
+         * and only then reads $this->middleware to build the Pipeline. So a
+         * prepend from here lands in the global stack in time, and this file
+         * ships in a package like any other.
+         *
+         * BOTH REGISTRATIONS ARE SAFE TOGETHER. prependMiddleware() does an
+         * array_search before it unshifts, so a server whose bootstrap/app.php
+         * DOES carry the hand-applied line gets one registration, not two. The
+         * bootstrap line is deliberately left in place rather than removed: a
+         * shop that already applied it must not be broken by this, and losing
+         * the global-pipeline registration on a future Laravel upgrade would
+         * silently turn Arabic off again.
+         *
+         * STILL INERT UNTIL SWITCHED ON. The middleware reads Locale::enabled(),
+         * false until Arabic is turned on in Translation → Settings, so this
+         * changes nothing a shopper of an English-only shop can see.
+         */
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+
+        if (method_exists($kernel, 'prependMiddleware')) {
+            $kernel->prependMiddleware(\App\Http\Middleware\SetLocaleFromPath::class);
+        }
+
+        /*
          * `media_usages` — which image belongs to which product, brand or
          * category. One call, because the hooks themselves live with the
          * writer rather than being spelled out here: this file is shared by
