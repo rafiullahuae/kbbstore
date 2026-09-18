@@ -318,6 +318,20 @@ final class AdminCapabilities
 
         // --------------------------------------------------- import & demo content
         ['*', 'admin-api/import/**', 'data.import'],
+        /*
+         * Store -> Import -> "Addresses & pictures" (Lane GB). `data.import`
+         * and not a capability of its own: these endpoints are the migration,
+         * reached from the Import screen, and the two that write are as heavy
+         * as anything under `import/**` -- one writes the redirect rows that
+         * move every visitor landing on an address this shop does not serve,
+         * the other rewrites every image path in the catalogue. Anyone trusted
+         * to run the import is trusted with these; anyone not, is not.
+         *
+         * A `*` rule covering both verbs, which is what CLAUDE.md's
+         * write-before-read ordering asks for -- there is no reading half here
+         * that a narrower role should reach without the writing half.
+         */
+        ['*', 'admin-api/urls-media/**', 'data.import'],
         ['*', 'admin-api/demo-content', 'data.import'],
         ['*', 'admin-api/demo-content/**', 'data.import'],
 

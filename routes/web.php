@@ -427,6 +427,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // outside auth:admin that is a stranger rewriting the catalogue.
         require __DIR__.'/import-admin.php';
 
+        // Store → Import → "Addresses & pictures" (Lane GB). Same group and the
+        // same reason: one of these endpoints writes the redirect rows that
+        // move every visitor who lands on an address this shop does not serve,
+        // and another rewrites every image path in the catalogue.
+        require __DIR__.'/urls-media-admin.php';
+
         // Invoices and packing slips. Same group: an invoice carries the
         // customer's name, address and phone, and the URL deliberately holds
         // no token of its own — the admin session is the only thing standing

@@ -7733,6 +7733,7 @@ function impPaint(){
     +(anyFile?impPreviewCard(s):'')
     +(anyFile?impRunCard(s):'')
     +impRejectsCard(s)
+    +gbUrlsMediaCard()
     +impExportCard()
     +'</div>';
 
@@ -8007,6 +8008,127 @@ function impExportCard(){
     +'</div>';
 }
 
+/* ---------------------------------------------- addresses & pictures (GB) */
+/*
+ * The half of the migration that has no rows, and therefore no row count to
+ * tell the owner it went wrong. Two jobs:
+ *
+ *   URLs     the addresses Google already holds. A redirect only fires on an
+ *            address that 404s — the table is read from the 404 handler alone —
+ *            so the map's discard and ask buckets carry the reason per row.
+ *
+ *   PICTURES the import copies image URLs as strings, so after a clean import
+ *            every photograph is still served by the old WordPress site and
+ *            breaks the day it is switched off. This is where they come across.
+ *
+ * Its own state, loaded on demand: the card is at the bottom of a long screen
+ * and the status call walks the whole catalogue, so it is not paid for by
+ * someone who came here to upload a CSV.
+ */
+let gbUM=null, gbUMBusy=false, gbUMMsg='';
+
+function gbUrlsMediaCard(){
+  if(!gbUM) return '<div class="card pad">'
+    +'<b style="font-size:14px">Addresses &amp; pictures</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:680px">'
+    +'The two things a row count cannot see: the old addresses people still follow, and whether the product '
+    +'photographs are yours yet or still being served by the old site.</p>'
+    +'<button class="btn" id="gbUMLoad" style="margin-top:10px">Have a look</button></div>';
+
+  const u=gbUM.urls, m=gbUM.media;
+  const hosts=(m.hosts||[]).filter(h=>!h.own);
+
+  return '<div class="card pad">'
+    +'<b style="font-size:14px">Addresses &amp; pictures</b>'
+    +(gbUMMsg?'<div class="impbanner" style="margin-top:9px">'+gbUMMsg+'</div>':'')
+
+    +'<div style="margin-top:12px"><b>Old addresses</b></div>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:3px 0 0;max-width:680px">'+u.note+'</p>'
+    +'<div class="impgrid" style="margin-top:8px">'
+    +'<div class="impfile"><b>'+u.buckets.migrate.count+'</b><span>redirects to write</span></div>'
+    +'<div class="impfile"><b>'+u.buckets.ask.count+'</b><span>need your decision</span></div>'
+    +'<div class="impfile"><b>'+u.buckets.discard.count+'</b><span>nothing to do</span></div>'
+    +'</div>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 0">'
+    +u.diff.create+' new, '+u.diff.update+' corrected, '+u.diff.unchanged+' already right'
+    +(u.diff.conflict?', <b>'+u.diff.conflict+' refused</b> — you pointed those somewhere yourself and this will not overrule you':'')
+    +'</p>'
+    +'<div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap">'
+    +'<a class="btn" href="'+impBase()+'/urls-media/map.csv">Download the whole map</a>'
+    +'<button class="btn primary" id="gbUMWrite"'+(gbUMBusy?' disabled':'')+'>Write '+u.diff.create+' redirect(s)</button>'
+    +'<button class="btn" id="gbUMUndo"'+(gbUMBusy?' disabled':'')+'>Undo</button>'
+    +'</div>'
+
+    +'<div style="margin-top:16px"><b>Pictures</b></div>'
+    +'<div class="impgrid" style="margin-top:8px">'
+    +'<div class="impfile"><b>'+m.summary.present+'</b><span>on this site</span></div>'
+    +'<div class="impfile"><b>'+m.summary.missing+'</b><span>named but not there</span></div>'
+    +'<div class="impfile"><b>'+m.summary.remote+'</b><span>still on another site</span></div>'
+    +'</div>'
+    +(m.summary.remote
+      ? '<p class="impwhy" style="max-width:680px">These load today and stop the day that site is switched off. '
+        +'Copy <code>wp-content/uploads</code> across first — nothing below will re-point a row whose file is not here yet.</p>'
+        +'<div style="margin-top:9px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+        +hosts.map(h=>'<label style="font-size:12.5px"><input type="checkbox" class="gbUMHost" value="'+h.host+'"> '
+          +h.host+' <span style="color:var(--ink-soft)">('+h.references+')</span></label>').join('')
+        +'<button class="btn primary" id="gbUMMedia"'+(gbUMBusy?' disabled':'')+'>Bring these across</button>'
+        +'<button class="btn" id="gbUMMediaUndo"'+(gbUMBusy?' disabled':'')+'>Undo</button>'
+        +'</div>'
+      : '<p class="impwhy" style="max-width:680px">Nothing is being served by another site. This is the state to be in before the old shop is switched off.</p>')
+    +'<div style="margin-top:9px"><button class="btn" id="gbUMRebase"'+(gbUMBusy?' disabled':'')+'>The shop has moved folder — re-spell the picture paths</button></div>'
+    +'</div>';
+}
+
+async function gbUMLoad(){
+  gbUMBusy=true; impPaint();
+  const r=await impApi('/urls-media/status');
+  gbUMBusy=false;
+  if(r.data&&r.data.ok){ gbUM=r.data; gbUMMsg=''; }
+  else gbUMMsg='Could not read the addresses and pictures.'+(r.raw?' '+r.raw:'');
+  impPaint();
+}
+
+async function gbUMPost(path,body,say){
+  gbUMBusy=true; impPaint();
+  const r=await impApi(path,{method:'POST',body:JSON.stringify(body)});
+  gbUMBusy=false;
+  gbUMMsg=(r.data&&r.data.ok)?say(r.data):('That did not work.'+(r.raw?' '+r.raw:''));
+  await gbUMLoad();
+}
+
+function gbUMWire(){
+  const load=$('#gbUMLoad'); if(load) load.onclick=gbUMLoad;
+
+  const write=$('#gbUMWrite');
+  if(write) write.onclick=()=>gbUMPost('/urls-media/redirects',{action:'write'},
+    d=>d.written+' redirect(s) written'+(d.conflict?', '+d.conflict+' left alone because you had pointed them yourself':'')+'.');
+
+  const undo=$('#gbUMUndo');
+  if(undo) undo.onclick=()=>{
+    if(!confirm('Remove the redirects this screen wrote?\n\nOnly those — anything you wrote yourself, or have since re-pointed, is kept.')) return;
+    gbUMPost('/urls-media/redirects',{action:'rollback'},d=>d.removed+' redirect(s) removed.');
+  };
+
+  const media=$('#gbUMMedia');
+  if(media) media.onclick=()=>{
+    const hosts=Array.from(document.querySelectorAll('.gbUMHost:checked')).map(b=>b.value);
+    if(!hosts.length){ gbUMMsg='Tick the site the pictures are coming from first.'; impPaint(); return; }
+    gbUMPost('/urls-media/media',{action:'apply',hosts:hosts},
+      d=>d.rewritten+' picture(s) are now served by this shop'+(d.summary.absent?', '+d.summary.absent+' left alone because the file is not here yet':'')+'.');
+  };
+
+  const mundo=$('#gbUMMediaUndo');
+  if(mundo) mundo.onclick=()=>{
+    const hosts=Array.from(document.querySelectorAll('.gbUMHost:checked')).map(b=>b.value);
+    if(!hosts.length){ gbUMMsg='Tick the site to put the pictures back on.'; impPaint(); return; }
+    gbUMPost('/urls-media/media',{action:'restore',hosts:hosts},d=>d.restored+' picture(s) put back.');
+  };
+
+  const rebase=$('#gbUMRebase');
+  if(rebase) rebase.onclick=()=>gbUMPost('/urls-media/media',{action:'rebase-apply'},
+    d=>d.rewritten?(d.rewritten+' picture path(s) re-spelled for this shop\'s folder.'):'Every picture path already matches this shop\'s folder.');
+}
+
 /* ------------------------------------------------------------------- wiring */
 
 function impWire(){
@@ -8050,6 +8172,8 @@ function impWire(){
   const cont=$('#impContinue'); if(cont) cont.onclick=()=>{ impMsg=''; impDrive(); };
   const pause=$('#impPause'); if(pause) pause.onclick=()=>{ impRunning=false; impPaint(); };
   const stop=$('#impStop'); if(stop) stop.onclick=async()=>{ impRunning=false; await impApi('/import/stop',{method:'POST'}); await impRefresh(); impPaint(); };
+
+  gbUMWire();
 
   const reset=$('#impReset');
   if(reset) reset.onclick=async()=>{

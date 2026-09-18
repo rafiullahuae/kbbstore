@@ -1755,7 +1755,29 @@ a fake success toast and saves nothing).
   fails the command even with nothing refused. Rehearsed at 671/4,159/3,712 on
   MySQL — see `docs/FV-IMPORT-AT-VOLUME.md`
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
-- [ ] Media and image paths · URL redirect map — **needs the two URL decisions in Phase 9**
+- [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
+  by Phase 9, and never was: `/brands/` was settled in 2.60.109 and
+  `/skincare-guide/` is a blog-permalink question that sits downstream of
+  neither categories nor images. ▲ **The map that existed could not fire.**
+  `CheckRedirects` is not registered as middleware, so the redirects table is
+  consulted only from the 404 handler — and every row the shipped rule proposed
+  was for `/product-category/{leaf}/`, which the archive controller already 301s
+  itself. Proved against a running server with a deliberately wrong row in
+  place: the row changed nothing. ▲ **And the addresses Google really holds had
+  no row at all.** kbeautybliss.com served its categories flat at the site root
+  (`LegacyCategoryUrls`, the seeded live navigation, and the owner's own
+  confirmation of the same shape for articles); `/toners/` and `/sunscreens/`
+  404'd. Both slash forms are now written, per the Phase 9 seed's precedent, and
+  a reachability check demotes any row that could not fire. ▲ **Every product
+  photograph is hot-linked to WordPress** — the importer copies the export's
+  absolute URL — and the `remote` count that was meant to warn about it was
+  counting the shop's own Media Library uploads, because every one of those is
+  stored absolute too. `kbb:import-media-rewrite` re-points them once the
+  uploads folder is across, refuses to touch a file that is not there, and is
+  exactly reversible. **All of it is driven from Store → Import**, which is the
+  whole point: the two commands the runbook documents have been unusable since
+  the day they were written, because the owner has no shell. See
+  `docs/GB-MEDIA-AND-REDIRECTS.md`
 - [x] **Dry run** — the import can now say what it would change, what it would drop, and
   what it never reads, before a row moves. Rafi approves the drop list from a screen
   rather than from a promise — *2.60.203*

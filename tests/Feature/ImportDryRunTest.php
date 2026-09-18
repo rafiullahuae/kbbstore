@@ -499,13 +499,22 @@ it('does not ask the owner about two rules that propose the same redirect', func
     $leaf->forceFill(['depth' => 1, 'path' => 'skincare-fd/serums-fd'])->save();
     $parent->forceFill(['depth' => 0, 'path' => 'skincare-fd'])->save();
 
+    /*
+     * MOVED ONTO THE ROOT-FLAT ADDRESS BY LANE GB. The collapse rule this test
+     * owns is unchanged; the address had to move because
+     * `/product-category/serums-fd/` no longer reaches the migrate bucket at
+     * all — the archive controller 301s it itself, so a stored row could never
+     * fire and both claims on it are discarded before anybody reads them. On
+     * `/serums-fd/`, which does 404, the two rules genuinely agree about a row
+     * that WILL be written, which is the case this test is about.
+     */
     $proposals = (new RedirectMap)->propose([
-        ['type' => 'category', 'wc_id' => '611002', 'url' => '/product-category/serums-fd/'],
+        ['type' => 'category', 'wc_id' => '611002', 'url' => '/serums-fd/'],
     ]);
 
     $mine = array_values(array_filter(
         $proposals,
-        static fn (array $p): bool => $p['source'] === '/product-category/serums-fd/',
+        static fn (array $p): bool => $p['source'] === '/serums-fd/',
     ));
 
     expect($mine)->toHaveCount(2, 'both rules should still be visible in the map');
@@ -540,12 +549,13 @@ it('still asks when two rules send one address to two different places', functio
 
     $proposals = (new RedirectMap)->propose([
         // The old site served this leaf address at something else entirely.
-        ['type' => 'category', 'wc_id' => '612001', 'url' => '/product-category/toners-fd2/'],
+        // Root-flat, for the reason the previous test gives.
+        ['type' => 'category', 'wc_id' => '612001', 'url' => '/toners-fd2/'],
     ]);
 
     $mine = array_values(array_filter(
         $proposals,
-        static fn (array $p): bool => $p['source'] === '/product-category/toners-fd2/',
+        static fn (array $p): bool => $p['source'] === '/toners-fd2/',
     ));
 
     expect(array_column($mine, 'decision'))->toContain(RedirectMap::ASK);
