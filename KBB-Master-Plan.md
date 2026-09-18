@@ -1364,7 +1364,14 @@ pin that looks applied and is not is worse than none.**
 
 ## Phase 11 — Payments
 
-- [ ] COD → Tabby → Tamara → Stripe (order per D-39)
+- [x] **Card → Tabby → Tamara → Cash on delivery** — *2.60.215*. ▲ **D-39 was
+  reversed by the owner**, who asked for it the other way round in his own words:
+  "Stripe by default on first, then Tabby, Then Tamara and at last Cash on
+  Delivery." This line recorded the old order and is corrected rather than
+  deleted, because the reversal is a decision and not a slip. The seeder writes
+  that order for a new shop and a migration moves an existing one — and the
+  migration **skips entirely if any row has already been moved by hand**, so it
+  cannot overwrite a choice the owner made on the screen.
 - [x] ▲ **CARD FIELDS ON THE SHOP'S OWN CHECKOUT, no redirect — *2.60.215*.** The
   owner asked twice and was explicit the second time. `start()` opens a
   **PaymentIntent** and returns a client secret instead of a hosted URL; the
@@ -2191,7 +2198,7 @@ and remain binding meanwhile.
 | D-34 | WordPress is retired completely | locked |
 | D-35 | Storefront design = the WordPress theme, ported close to verbatim | **amendment pending** — required before checkout is restyled |
 | D-38 | Stack: Blade + Alpine.js + Vite | **amended** — no Alpine exists or ever did; vanilla JS bound by `data-` attributes is the decision |
-| D-39 | Payments order: COD → Tabby → Tamara → Stripe | locked |
+| D-39 | Payments order: **Card → Tabby → Tamara → Cash on delivery** | **amended by the owner** — reversed from the original COD-first order, in his own words: "Stripe by default on first, then Tabby, Then Tamara and at last Cash on Delivery". Shipped 2.60.215 |
 | D-41 | Credentials never pasted into chat | **violated** — see ▲1 |
 | D-74 | Every delivery ships a preview built from real output | binding |
 | D-75 | Build order: module framework → search → my account → migration → licensing | binding |
