@@ -176,11 +176,10 @@ Route::get('/skincare-guide/', [PageController::class, 'blog'])->name('blog');
 // now live in routes/kbb-brands-blog.php, required at the end of this file.
 
 // The Laravel-era addresses, kept as 301s so existing links and anything
-// already indexed survive.
-Route::get('/blog', fn () => redirect()->route('blog', [], 301));
-Route::get('/post/{slug?}', fn (string $slug = '') => $slug === ''
-    ? redirect()->route('blog', [], 301)
-    : redirect()->route('post', ['slug' => $slug], 301));
+// already indexed survive. Lane GA: the Location they emit has to be the
+// canonical form (trailing slash, current language), which is what
+// Url::redirect() returns and what route() cannot.
+require __DIR__ . '/kbb-journal-legacy.php';
 Route::get('/app',         [PageController::class, 'app'])->name('app');
 
 // ---------------------------------------------------------------------------

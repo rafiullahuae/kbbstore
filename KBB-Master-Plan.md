@@ -1299,8 +1299,40 @@ pin that looks applied and is not is worse than none.**
       `/korean-skincare-brands/` is the live address in 2.60.109; `/brands/` now
       answers 301 to it, and only the canonical address is in the sitemap.
       Verified against a running server, not read off the router — *2.60.109*
-- [ ] ▲ `/skincare-guide/` — a permalink structure, not one page: the homepage builds
-      `/skincare-guide/{slug}/`, the router serves `/blog` and `/post/{slug}`
+- [x] ▲ **`/skincare-guide/` — finished, and both clauses of this item were
+      false.** Measured by fetching against a running server rather than reading
+      the router: the homepage builds `/{slug}/`, not `/skincare-guide/{slug}/`,
+      and a census of every producer found **no producer of the prefixed article
+      address anywhere**; `/blog` and `/post/{slug}` are not served, they have
+      been 301s since 2.60.93 and 2.60.109. Articles live at the site root,
+      `/skincare-guide/` is the index, and `/skincare-guide/{slug}/` 301s to the
+      root address.
+
+      What WAS wrong, and is fixed: those two 301s were built with
+      `redirect()->route()`, which trims the trailing slash and knows nothing
+      about `/ar` — so `/ar/blog` and `/ar/post/{slug}` landed an Arabic reader
+      on the **English** page, and the Location was a near-miss of the canonical.
+      Both now use `Url::redirect()`, the same helper the sibling redirect ten
+      lines away already used. Verified through the real route table:
+      `/ar/post/x` → 301 `/ar/x/`, `/ar/blog` → 301 `/ar/skincare-guide/` —
+      *2.60.217*
+- [ ] ▲ **`posts` is empty and nothing in the repo can fill it.** No post seeder,
+      no post importer (`app/Services/Import/Entities/` has nine importers and
+      none reads `wp_posts`), and the admin Blog Posts screen is read-only by its
+      own comment. So the permalink structure above is finished and serving
+      nothing. **Needs the owner:** how do the live articles reach this app, and
+      how many are there? Their slugs are needed BEFORE an importer is written —
+      articles now live at the site root and `RESERVED_SLUGS` refuses a reserved
+      first segment, so a live article slugged `about`, `wishlist` or `feed` is an
+      indexed URL this app can never serve
+- [ ] ▲ **The Journal's own chrome links itself with a bare `href="/blog"`**, five
+      times across `store/post.blade.php` and `store/blog.blade.php`. Measured
+      under `KBB_BASE_PATH=/kbb-upgrade` — which is the live mount — those emit
+      `/blog` with no prefix while their `Url::to()` siblings carry
+      `/kbb-upgrade/…`, so the "Journal" link in every article's header leaves
+      the application. Both pages are byte-pinned by
+      `StorefrontEnglishUnchangedTest`, so the fix moves `BASE_COMMIT`; the exact
+      replacement is in `docs/GA-SKINCARE-GUIDE.md`
 - [x] **Blog — was a complete, silent outage.** Checked directly rather than assuming
   from the plan's own listing: both `/blog` and every `/post/{slug}` returned a real
   500, not a placeholder — `PageController::blog()` and `::post()` were called by the
@@ -2256,7 +2288,7 @@ Blog, Posts, HTML Blocks, Media — and stay flagged as such below.
 
 | ▲1 | **Secrets to rotate, overdue.** The HMAC signing secret and doctor token sit in `KBB-Handover.md` §7 in plain text and have appeared in chat. The signing secret authorises a package to be applied to the live server |
 | ▲2 | ~~Mobile sticky add-to-cart may be dead~~ — closed, 2.39.0 |
-| ▲3 | `/brands/` and `/skincare-guide/` still have no route, and the desktop nav drops the base path |
+| ▲3 | ~~`/brands/` and `/skincare-guide/` still have no route~~, and the desktop nav drops the base path — **both routes exist**: `/brands/` since 2.60.109, `/skincare-guide/` measured serving 200 by Lane GA. The base-path half is still live and is now pinned precisely: five bare `href="/blog"` in the Journal's own chrome |
 | ▲4 | Checkout and account forms use different field styling — needs D-35 amended |
 | ▲5 | Ledger completion is stale at 36%; the ~44% above is an estimate, not a count |
 | ▲6 | ~~The plugin ZIP has never been sent~~ — **closed.** Received and inventoried, 2.44.0 |
