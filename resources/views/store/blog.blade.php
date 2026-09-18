@@ -141,22 +141,22 @@
 <body>
 <header class="head"><div class="wrap head-in">
   <button class="burger" onclick="document.getElementById('mnav').classList.add('on');document.getElementById('navov').classList.add('on')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-  <a class="logo" href="/">K-Beauty<span>Bliss</span></a>
+  <a class="logo" href="{{ \App\Support\Url::to('/') }}">K-Beauty<span>Bliss</span></a>
   <nav class="nav-links">
-    <a href="/shop">{{ __('store.journal.nav_shop') }}</a>
-    <a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a>
-    <a href="/blog" class="on">{{ __('store.journal.nav_journal') }}</a>
+    <a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a>
+    <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a>
+    <a href="{{ \App\Support\Url::to('/skincare-guide/') }}" class="on">{{ __('store.journal.nav_journal') }}</a>
   </nav>
   <div class="tools">
-    <a class="tool" href="/shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg></a>
-    <a class="tool" href="/shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/></svg></a>
+    <a class="tool" href="{{ \App\Support\Url::to('/shop/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg></a>
+    <a class="tool" href="{{ \App\Support\Url::to('/shop/') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M6 6 5 3H2"/></svg></a>
   </div>
 </div></header>
 
 <div class="navov" id="navov" onclick="this.classList.remove('on');document.getElementById('mnav').classList.remove('on')"></div>
 <nav class="mnav" id="mnav">
   <button class="mnav-x" onclick="document.getElementById('mnav').classList.remove('on');document.getElementById('navov').classList.remove('on')">✕</button>
-  <a href="/">{{ __('store.breadcrumb.home') }}</a><a href="/shop">{{ __('store.journal.nav_shop') }}</a><a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a><a href="/blog">{{ __('store.journal.nav_journal') }}</a>
+  <a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a><a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a><a href="{{ \App\Support\Url::to('/skincare-guide/') }}">{{ __('store.journal.nav_journal') }}</a>
 </nav>
 
 <section class="hero"><div class="wrap hero-in">
@@ -206,7 +206,7 @@
 
 <footer><div class="wrap fin">
   <div>{{ __('store.journal.footer_line') }}</div>
-  <div><a href="/shop">{{ __('store.journal.nav_shop') }}</a> · <a href="/skin-quiz">{{ __('store.journal.nav_quiz') }}</a> · <a href="/">{{ __('store.breadcrumb.home') }}</a></div>
+  <div><a href="{{ \App\Support\Url::to('/shop/') }}">{{ __('store.journal.nav_shop') }}</a> · <a href="{{ \App\Support\Url::to('/skin-quiz/') }}">{{ __('store.journal.nav_quiz') }}</a> · <a href="{{ \App\Support\Url::to('/') }}">{{ __('store.breadcrumb.home') }}</a></div>
 </div></footer>
 <script>
   /* The "All" chip's LABEL, rendered here in the shopper's language.
