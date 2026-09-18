@@ -699,6 +699,93 @@ it('writes the manifest last, and describes every file it wrote', function () {
     expect($manifest['files']['products.csv']['rows'])->toBe($manifest['source']['post_types']['product']['publish']);
 });
 
+it('never shows a finished bar on an unfinished export', function () {
+    /*
+     * FOUND BY CHECKING A CLAIM THIS DOCUMENT MADE, not by a test failing.
+     *
+     * The media stage's total() counts the objects that can reference a picture
+     * -- one per product -- and the stage writes one row per (url, referrer,
+     * field). On the fixture, one product writes FOUR rows; on a real shop it is
+     * a featured image plus a gallery plus whatever the description embeds. The
+     * denominator under-estimates by about five to one.
+     *
+     * The runner used to clamp with min(100, ...), which turns that into a bar
+     * that reads 100% while the export carries on for another minute. That is
+     * the fake 100% docs/GD-MEDIA-SIDELOADER.md already found and removed once,
+     * reintroduced through the denominator instead of through the bar.
+     *
+     * The harness records the highest percentage the screen would have shown
+     * while `done` was still false. Anything at 100 there is the bar lying.
+     */
+    $script = base_path('wordpress-plugin/harness/run-export.php');
+    $out = sys_get_temp_dir().'/kbb-ge-peak-'.bin2hex(random_bytes(4));
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg($script)
+            .' --storage=posts --out='.escapeshellarg($out).' --db=kbb_ge_wp --batch=3 2>&1',
+        $lines,
+        $status
+    );
+
+    if (3 === $status) {
+        $this->markTestSkipped('no MySQL here: '.implode(' ', $lines));
+    }
+
+    expect($status)->toBe(0, implode("\n", $lines));
+
+    $result = json_decode(implode("\n", $lines), true);
+
+    expect($result['peak_while_running'])->toBeLessThan(
+        100,
+        'the progress bar reached 100% before the export had finished'
+    );
+
+    // and the under-estimate this is protecting against is real, measured here
+    // so the guard cannot quietly become untested by the stage getting better.
+    $manifest = json_decode((string) file_get_contents($out.'/export/manifest.json'), true);
+    $objects = array_sum($manifest['source']['post_types']['product'])
+        + $manifest['source']['taxonomies']['product_cat']
+        + $manifest['source']['taxonomies']['pa_brands']
+        + array_sum($manifest['source']['post_types']['post'])
+        + array_sum($manifest['source']['post_types']['page']);
+
+    expect($manifest['files']['media.csv']['rows'])->toBeGreaterThan(
+        (int) ($objects / 2),
+        'the media stage no longer writes several rows per object, so this guard proves nothing'
+    );
+
+    /*
+     * AND THE ARITHMETIC ITSELF, because end to end on this fixture cannot see
+     * it. `percent` is computed over the SUM of every stage's rows and totals,
+     * and media's handful against a dozen does not move a sum that includes
+     * fifty other rows. On a real shop with four gallery images per product it
+     * does — which is the shape a fixture cannot have without being contorted
+     * into one.
+     *
+     * `--probe=progress` puts the shipped state into the crossed condition
+     * (written past total, done still false) and calls the shipped progress().
+     * Nothing is stubbed: it is the method the admin screen calls.
+     */
+    $probe = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg($script)
+            .' --storage=posts --out='.escapeshellarg($out).' --db=kbb_ge_wp --batch=500 --probe=progress 2>&1',
+        $probe,
+        $probeStatus
+    );
+
+    expect($probeStatus)->toBe(0, implode("\n", $probe));
+
+    $progress = json_decode(implode("\n", $probe), true);
+
+    expect($progress['done'])->toBeFalse();
+    expect($progress['percent'])->toBe(99, 'a stage past its own estimate still showed a finished bar');
+    // The denominator moved with the numerator, so the bar cannot run past its
+    // own end however wrong the estimate was.
+    expect($progress['rows_total'])->toBe($progress['rows_done']);
+});
+
 it('pins its settings to the export, not to the request that asked for a batch', function () {
     /*
      * The admin screen posts the whole form with EVERY batch, because that is

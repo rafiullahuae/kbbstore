@@ -78,14 +78,19 @@ class KBB_Export_Stage_Media extends KBB_Export_Stage {
 	}
 
 	/**
-	 * An OVER-estimate on purpose: one row per referencing object, where most
-	 * objects reference several pictures.
+	 * One per referencing OBJECT, which is an UNDER-estimate of the rows.
 	 *
-	 * KBB_Export_Stage::total()'s own contract allows that and forbids the
-	 * other direction -- "A bar that reaches 100% and keeps going is a bar
-	 * nobody believes again" -- and the true count cannot be known without
-	 * doing the work. The bar therefore runs slightly ahead on this stage and
-	 * manifest.json carries the real number afterwards.
+	 * This stage writes one row per (url, referrer, field): the fixture's serum
+	 * alone is four, and a real product is a featured image plus a gallery of
+	 * four plus whatever the description embeds. The true count cannot be known
+	 * without doing the work -- which would mean scanning every description
+	 * twice, once to count and once to write.
+	 *
+	 * So the denominator is honestly wrong here, and the RUNNER is where that is
+	 * made safe rather than here: progress() divides by max(total, written) and
+	 * caps the percentage at 99 until the export is actually done, so 100% is a
+	 * statement about finishing rather than about arithmetic. See the comment
+	 * there; it was written after this stage's bar sat at 100% while it worked.
 	 */
 	public function total() {
 		global $wpdb;

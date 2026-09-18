@@ -113,6 +113,8 @@ $steps = 0;
  */
 $flip_after = isset( $args['flip_after'] ) ? max( 1, (int) $args['flip_after'] ) : 0;
 
+$peak_while_running = 0;
+
 do {
 	// A FRESH RUNNER PER BATCH. This is the whole point of the harness being
 	// a loop rather than a method: each iteration reloads the checkpoint from
@@ -129,6 +131,14 @@ do {
 	if ( empty( $progress['ok'] ) ) {
 		fwrite( STDERR, 'FAILED: ' . $progress['error'] . "\n" );
 		exit( 5 );
+	}
+
+	// The highest percentage the screen would have shown while the export was
+	// STILL RUNNING. 100 here means the bar claimed to be finished and then
+	// carried on, which is the fake 100% docs/GD-MEDIA-SIDELOADER.md removed
+	// once already and which this export reintroduced through its denominator.
+	if ( empty( $progress['done'] ) ) {
+		$peak_while_running = max( $peak_while_running, (int) $progress['percent'] );
 	}
 
 	$steps++;
@@ -155,6 +165,49 @@ foreach ( glob( $progress['dir'] . '/*' ) as $file ) {
 	copy( $file, $target . '/' . basename( $file ) );
 }
 
+/*
+ * ── PROBING THE PROGRESS ARITHMETIC DIRECTLY ────────────────────────────────
+ *
+ * The guard being checked is "the bar never says 100% before the export is
+ * done", and the case that breaks it is a stage writing more rows than its
+ * total() predicted -- which the media stage really does, about five to one.
+ *
+ * End to end on this fixture that is invisible: `percent` is computed over the
+ * SUM of every stage's rows and every stage's total, and media's eight rows
+ * against twelve do not move a sum that includes fifty other rows. On a real
+ * shop with four gallery images per product it does, which is exactly the shape
+ * a fixture cannot have without being contorted into one.
+ *
+ * So the arithmetic is exercised on its own, through the real method, with a
+ * state that has already crossed: written past total, done still false. Nothing
+ * here is a stub of the thing being tested -- progress() is the shipped method,
+ * reading the shipped state.
+ */
+if ( isset( $args['probe'] ) && 'progress' === $args['probe'] ) {
+	$state = get_option( KBB_Export_Runner::STATE_OPTION, array() );
+
+	$state['done']    = false;
+	$state['totals']  = array( 'media.csv' => 10 );
+	$state['written'] = array( 'media.csv' => 47 );
+
+	update_option( KBB_Export_Runner::STATE_OPTION, $state );
+
+	$probe = ( new KBB_Export_Runner( $settings ) )->progress();
+
+	echo json_encode(
+		array(
+			'probe'      => 'progress',
+			'percent'    => $probe['percent'],
+			'rows_done'  => $probe['rows_done'],
+			'rows_total' => $probe['rows_total'],
+			'done'       => $probe['done'],
+		),
+		JSON_PRETTY_PRINT
+	) . "\n";
+
+	exit( 0 );
+}
+
 echo json_encode(
 	array(
 		'dir'       => $target,
@@ -162,6 +215,7 @@ echo json_encode(
 		'steps'     => $steps,
 		'export_id' => $progress['export_id'],
 		'rows'      => $progress['rows_done'],
+		'peak_while_running' => $peak_while_running,
 		'notes'     => $progress['notes'],
 	),
 	JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES

@@ -315,8 +315,36 @@ class KBB_Export_Runner {
 			// the export's own screen for the same reason: a bar without one is
 			// the fake 100% docs/GD-MEDIA-SIDELOADER.md already removed once.
 			'rows_done' => $written,
-			'rows_total'=> $total,
-			'percent'   => $total > 0 ? min( 100, (int) floor( $written * 100 / $total ) ) : ( ! empty( $this->state['done'] ) ? 100 : 0 ),
+			'rows_total'=> max( $total, $written ),
+			/*
+			 * ── 100% MEANS FINISHED AND NOTHING ELSE ────────────────────────
+			 *
+			 * MEASURED, and it was wrong first. The media stage's total() counts
+			 * the objects that can reference a picture -- one per product -- and
+			 * it writes one row per (url, referrer, field), which on the fixture
+			 * is FOUR rows for one product and on a real shop is a featured
+			 * image plus a gallery of four plus whatever is in the description.
+			 * So its denominator under-estimates by about five to one.
+			 *
+			 * The old line clamped with min(100, ...), which turned that into a
+			 * bar sitting at 100% while the export carried on for another
+			 * minute: the exact fake 100% docs/GD-MEDIA-SIDELOADER.md already
+			 * found and removed once, reintroduced through the denominator
+			 * instead of through the bar.
+			 *
+			 * Two changes, and neither of them is "make the estimate better",
+			 * because an estimate that has to be right is a bug waiting for a
+			 * shop shaped differently from this one:
+			 *
+			 *   - the denominator is max(total, written), so the bar cannot run
+			 *     past its own end however wrong the estimate is;
+			 *   - the percentage is capped at 99 until `done`, so 100% is a
+			 *     statement about the export having finished rather than about
+			 *     arithmetic.
+			 */
+			'percent'   => ! empty( $this->state['done'] )
+				? 100
+				: ( max( $total, $written ) > 0 ? min( 99, (int) floor( $written * 100 / max( $total, $written ) ) ) : 0 ),
 			'done'      => ! empty( $this->state['done'] ),
 			'storage'   => isset( $this->state['storage_note'] ) ? $this->state['storage_note'] : '',
 			'notes'     => isset( $this->state['notes'] ) ? $this->state['notes'] : array(),

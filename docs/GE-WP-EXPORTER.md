@@ -28,9 +28,9 @@ comes out as:
 | `permalinks.csv` | consumed by `RedirectMap::fromPermalinks()` without it learning a new word — products `discard` (they did not move), `/toners/` → `/product-category/toners/`, brands no proposal at all |
 | resume | `--batch=7` and `--batch=500` produce byte-identical CSVs across 200-odd separate runner instances |
 
-21 tests. 22 guards mutated; **three survived** first time and all 22 are red
-now — §8, including what closing each one took and the hole it was the same
-hole as.
+22 tests. 23 guards mutated; **three survived** first time and all 23 are red
+now — §8, including what closing each one took, and §8.1 for the defect that
+was found by checking a claim this document made rather than by a test.
 
 The export it was measured on is checked in at `tests/Fixtures/kbb-export/`, and
 one of the tests regenerates it from the plugin and compares sha256 per file, so
@@ -462,10 +462,12 @@ wanting the download list groups by `url`.
   `docs/GD-MEDIA-SIDELOADER.md` insisted on. A bar that has not moved because the
   export finished and one that has not moved because the request died look
   identical unless somebody makes them different.
-- **A real denominator.** Every stage answers `total()` before it starts, so the
-  bar is honest rather than the fake 100% that lane removed. The media stage
-  over-estimates — one row per referencing object, where most reference several —
-  which the stage contract permits and the reverse forbids.
+- **A real denominator, and 100% meaning finished.** Every stage answers
+  `total()` before it starts. The media stage's answer is an **under**-estimate
+  — see §8.1 — so `progress()` divides by `max(total, written)` and caps the
+  percentage at 99 until `done`. 100% is therefore a statement about the export
+  having finished rather than about arithmetic, and an estimate that is wrong
+  makes the bar slower at the end rather than a liar.
 - **The export is customer data in the web root.** A random export id in the
   path, an `index.php` in the folder and its parent, and a deny-all `.htaccess`.
   The admin screen says in words to delete the folder once it is downloaded:
@@ -477,7 +479,7 @@ wanting the download list groups by `url`.
 
 ---
 
-## 8. Mutation testing — 22 guards, 3 survived, all 22 red once closed
+## 8. Mutation testing — 23 guards, 3 survived, all 23 red once closed
 
 Each guard was broken, the suite run, and the guard restored.
 
@@ -503,9 +505,10 @@ Each guard was broken, the suite run, and the guard restored.
 | **manifest: drop `source.post_types`** | **GREEN — survived**, then red |
 | manifest: drop `source.taxonomies` | red |
 | plugin: call a PHP 8 function (`str_contains`) | red |
+| runner: go back to the clamped percentage | red |
 | **manifest: count the header row as data** | **GREEN — survived**, then red |
 
-Three of the twenty-two are in bold. They went green on the first run and red on
+Three of the twenty-three are in bold. They went green on the first run and red on
 the re-run after the gap each one exposed was closed; the rest went red first
 time.
 
@@ -597,6 +600,48 @@ bug that passes every test that happens not to cover customers. And `csv: stop
 doubling an embedded quote` went red only because the fixture's product
 description contains an `<img src="…">` with real quotation marks in it; a
 fixture of prose would have let it through.
+
+---
+
+## 8.1 The defect that no mutation found, because the claim was wrong
+
+§7 of this document said the media stage **over**-estimates its rows, "which the
+stage contract permits and the reverse forbids". Checking that sentence against
+the fixture instead of trusting it:
+
+```
+media rows written: 8      media total() would be: 5 + 3 + 2 + 2 = 12
+rows per referrer:  ('product', '4021') -> 4
+```
+
+One product wrote **four** rows against a denominator of **one**. The stage
+writes one row per (url, referrer, field) and `total()` counts referencing
+objects, so on a real shop — a featured image plus a gallery of four plus
+whatever the description embeds — it under-estimates by roughly five to one.
+
+The runner clamped that with `min(100, …)`, which turns an under-estimate into
+**a bar that reads 100% while the export carries on for another minute**. That
+is the fake 100% `docs/GD-MEDIA-SIDELOADER.md` already found and removed once,
+reintroduced through the denominator instead of through the bar, by this lane.
+
+The fix is not a better estimate — an estimate that has to be right is a bug
+waiting for a shop shaped differently from this one. It is two lines in
+`progress()`: divide by `max(total, written)` so the bar cannot run past its own
+end, and cap at 99 until `done`.
+
+**Testing it needed the arithmetic exercised on its own.** End to end on this
+fixture the defect is invisible: `percent` is computed over the sum of every
+stage's rows and every stage's total, and media's eight against twelve does not
+move a sum including fifty other rows. So `run-export.php --probe=progress` puts
+the **shipped state** into the crossed condition — written past total, `done`
+still false — and calls the **shipped** `progress()`. Nothing is stubbed; it is
+the method the admin screen calls. Mutating the runner back to the clamped
+formula turns it red.
+
+Worth saying plainly: **21 mutations did not find this.** A mutation test asks
+whether a guard is tested; it cannot ask whether the guard is the right one, and
+this guard was doing precisely the wrong thing in the one place the document
+claimed it could not.
 
 ---
 
