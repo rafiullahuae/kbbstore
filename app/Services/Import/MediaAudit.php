@@ -7,6 +7,7 @@ namespace App\Services\Import;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Support\MediaUsage;
 
 /**
@@ -36,7 +37,14 @@ use App\Support\MediaUsage;
  *    importing the catalogue before copying the uploads folder, so it is
  *    expected on the first pass and alarming on the last one.
  *
- *  - STILL ON THE OLD SITE. An absolute URL pointing at another host. These
+ *  - STILL ON THE OLD SITE. An absolute URL pointing at ANOTHER host — this
+ *    shop's own is not one, and reading "has a host" as "is remote" was a false
+ *    positive in the exact number this command exists to produce. Every image
+ *    picked from the Media Library is stored absolute (`Media::urlFor()` builds
+ *    `site_url . '/' . $path` for an admin upload, and the product editor
+ *    stores what it is given), so on a shop that has never run a WooCommerce
+ *    import every photograph the owner uploaded himself was counted as still
+ *    being served by WordPress. See judge(). These
  *    LOOK FINE IN A BROWSER, which is what makes them the dangerous category:
  *    the shop renders perfectly while WooCommerce is still up, and every
  *    product image breaks on the day the old site is switched off. A migration
@@ -129,6 +137,34 @@ final class MediaAudit
     {
         $host = parse_url($url, PHP_URL_HOST);
 
+        /*
+         * THIS SHOP'S OWN HOST IS NOT "THE OLD SITE", and reading a host as
+         * proof that it is was a false positive in the one number the runbook
+         * tells the owner to watch.
+         *
+         * Every image chosen from the Media Library is stored ABSOLUTE.
+         * `MediaUploadController` writes `Media::urlFor($path)`, which for an
+         * admin upload (`uploads/…`) builds `site_url . '/' . $path` — a full
+         * URL with a host — and `ProductEditorApiController` stores whatever
+         * the editor sent straight into `products.image`. So on a shop that has
+         * never seen WooCommerce, every product photograph the owner uploaded
+         * himself counted as "still served by the old site".
+         *
+         * `remote` is the number that decides whether a migration is finished.
+         * A count that includes the shop's own uploads is a count nobody can
+         * act on, and the first time it is looked at is the day the old site is
+         * switched off.
+         *
+         * The shop's own host is `site_url`, falling back to `app.url` —
+         * exactly the pair `Media::urlFor()` uses, so the two cannot drift.
+         * Matching is on HOST ONLY: scheme moves (http → https behind the
+         * host's TLS proxy, which `AppServiceProvider` forces in production)
+         * and a port does not make a file a different file.
+         */
+        if (is_string($host) && $host !== '' && $this->isOwnHost($host)) {
+            return $this->judgeLocal($owner, $field, $url, $this->ownPath($url));
+        }
+
         if (is_string($host) && $host !== '') {
             return [
                 'owner' => $owner,
@@ -143,8 +179,70 @@ final class MediaAudit
             ];
         }
 
-        $path = MediaUsage::normalise($url);
+        return $this->judgeLocal($owner, $field, $url, MediaUsage::normalise($url));
+    }
 
+    /** Is this the host this shop is served from? */
+    public function isOwnHost(string $host): bool
+    {
+        $host = strtolower(trim($host));
+
+        foreach ($this->ownHosts() as $own) {
+            if ($own === $host) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Every host this shop answers to, lowercased.
+     *
+     * @return list<string>
+     */
+    private function ownHosts(): array
+    {
+        $out = [];
+
+        foreach ([Setting::map()['site_url'] ?? null, config('app.url')] as $candidate) {
+            $host = parse_url((string) $candidate, PHP_URL_HOST);
+
+            if (is_string($host) && $host !== '') {
+                $out[] = strtolower($host);
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
+     * The path under the WEB ROOT that one of this shop's own URLs names.
+     *
+     * The subtlety is the subfolder. `site_url` already carries whatever folder
+     * the app is served under — `https://…/kbb-upgrade` — and `public_path()`
+     * IS that folder on disk, so `/kbb-upgrade/uploads/x.png` resolves to
+     * `public_path('uploads/x.png')` and not to `public_path('kbb-upgrade/…')`.
+     * `Media::urlFor()` adds that prefix; this takes it back off, and the two
+     * are inverses on purpose.
+     */
+    private function ownPath(string $url): string
+    {
+        $path = MediaUsage::normalise($url);
+        $base = rtrim((string) (parse_url((string) (Setting::map()['site_url'] ?? config('app.url')), PHP_URL_PATH) ?: ''), '/');
+
+        if ($base !== '' && $base !== '/' && str_starts_with($path, $base.'/')) {
+            $path = substr($path, strlen($base));
+        }
+
+        return $path;
+    }
+
+    /**
+     * @return array{owner: string, field: string, url: string, path: string, verdict: string, decision: string, reason: string}
+     */
+    private function judgeLocal(string $owner, string $field, string $url, string $path): array
+    {
         if ($path === '') {
             return [
                 'owner' => $owner,

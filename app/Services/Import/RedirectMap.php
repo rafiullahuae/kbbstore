@@ -8,9 +8,47 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Redirect;
+use App\Support\LegacyCategoryUrls;
 
 /**
  * The URL map: old WordPress addresses to this shop's.
+ *
+ * =============================================================================
+ * READ THIS FIRST — TWO THINGS BELOW THIS BANNER ARE WRONG, AND ARE KEPT
+ * =============================================================================
+ *
+ * Lane GB checked this class against a running server rather than against its
+ * own reasoning, and two of its stated premises did not survive that. Both are
+ * left in place, immediately below, because they are exactly what a reader will
+ * reach for next time and each one needs its refutation attached to it. The
+ * full transcript is `docs/GB-MEDIA-AND-REDIRECTS.md`.
+ *
+ * 1. "THE ONE RULE THE DATA ACTUALLY PROVES is the category one" —
+ *    `/product-category/{leaf}/` → `/product-category/{nested/path}/`. Every
+ *    row that rule puts in the `migrate` bucket is INERT. Measured: with a
+ *    category `toners` nested under `skincare`, `GET /product-category/toners/`
+ *    answers 301 to the nested path with NO redirect row in the database at
+ *    all, because `CategoryArchiveController` → `CategoryPath::resolve()` does
+ *    it. A row was then written for that source pointing at `/PROOF-INERT/`
+ *    and the same request still answered 301 to the nested path. The redirect
+ *    table is only consulted from the 404 handler (`CheckRedirects` is not
+ *    registered as middleware — see its own comment), so an address that does
+ *    not 404 can never be redirected by a row. `reachable()` below now demotes
+ *    these to `discard`, per row and with the reason, rather than the rule
+ *    being deleted: the derivation is still how the two shapes are related.
+ *
+ * 2. "WooCommerce commonly publishes a category at its leaf slug" — the default,
+ *    but not what kbeautybliss.com ran. `App\Support\LegacyCategoryUrls` says in
+ *    as many words that it "served its category archives at the site root —
+ *    /toners/, /sunscreens/, /cleansing-oils/", lists fifteen of them off the
+ *    live navigation, and `2026_09_14_160000_seed_phase9_post_url_redirects`
+ *    records the owner confirming the same root-flat shape for articles. Those
+ *    root addresses 404 today — measured — and nothing proposed a redirect for
+ *    a single one of them. `fromLegacyRootCategories()` below does.
+ *
+ * What did NOT change: the prefix rule, the self-redirect rule, the collision
+ * handling and the chain collapsing are all still right, and the class is worth
+ * more with its two bad premises annotated than it would be rewritten clean.
  *
  * Phase 13 asks for this beside the row import and it is a genuinely different
  * job, which is why it is not an entity in `ImportRunner`. The entities read a
@@ -73,6 +111,15 @@ final class RedirectMap
     public const ASK = 'ask';
 
     /**
+     * Injectable only so a test can pin the reachability verdicts it depends on
+     * without standing up the route it is describing.
+     */
+    public function __construct(private ?SourceReachability $reachability = null)
+    {
+        $this->reachability ??= new SourceReachability;
+    }
+
+    /**
      * Work out the whole map without writing any of it.
      *
      * @param  iterable<int, array<string, string>>  $permalinks  rows from an optional
@@ -87,11 +134,219 @@ final class RedirectMap
             $proposals[] = $proposal;
         }
 
+        foreach ($this->fromLegacyRootCategories() as $proposal) {
+            $proposals[] = $proposal;
+        }
+
         foreach ($this->fromPermalinks($permalinks) as $proposal) {
             $proposals[] = $proposal;
         }
 
-        return $this->resolve($proposals);
+        return $this->reachable($this->resolve($proposals));
+    }
+
+    /**
+     * The address a kbeautybliss.com category archive was REALLY published at:
+     * flat at the site root, `/toners/`, with no base of any kind.
+     *
+     * =========================================================================
+     * WHY THIS RULE EXISTS AND fromCategoryNesting() BELOW DOES NOT COVER IT
+     * =========================================================================
+     *
+     * That rule is built on "WooCommerce commonly publishes a category at its
+     * leaf slug, `/product-category/serums/`". That is the WooCommerce DEFAULT.
+     * It is not what this shop ran, and the repository says so in three places
+     * written by people who had looked at the live site:
+     *
+     *   - `App\Support\LegacyCategoryUrls`: "kbeautybliss.com served its
+     *     category archives at the site root — /toners/, /sunscreens/,
+     *     /cleansing-oils/ — because that is what its WooCommerce permalink
+     *     settings produced", with fifteen exact addresses listed.
+     *
+     *   - `2026_09_09_040000_seed_kbeautybliss_menu` and
+     *     `..._070000_fix_kbeautybliss_menu_structure` seed the LIVE site's own
+     *     navigation, and every category row in it is a flat root path.
+     *
+     *   - `2026_09_14_160000_seed_phase9_post_url_redirects`: "The owner
+     *     confirmed that blog posts live at the site root, one slug per post,
+     *     with no prefix." One permalink setting, one shape, and the articles
+     *     half of it is confirmed by the owner himself.
+     *
+     * So `/product-category/serums/` is an address the old site most likely
+     * never served, and `/serums/` is one it did. A map that writes the first
+     * and not the second redirects nothing Google actually holds.
+     *
+     * =========================================================================
+     * WHAT IS EVIDENCE HERE AND WHAT IS INFERENCE, kept apart on the row
+     * =========================================================================
+     *
+     * CORROBORATED: the fifteen paths in `LegacyCategoryUrls::PATHS` were
+     * copied off the live navigation. For those the shape is not a guess.
+     *
+     * INFERRED: every other imported category. WooCommerce has ONE product
+     * category base for the whole site, so a shop that served `/toners/` served
+     * `/serums/` too — but the inference is written on the row rather than
+     * hidden, and the command counts the two separately.
+     *
+     * The asymmetry is what makes writing the inferred ones the right call.
+     * These addresses 404 today, per row, proved by `reachable()` and not
+     * assumed. A redirect written for an address the old site never served gets
+     * no traffic and costs one row; an address the old site DID serve and that
+     * carries no redirect loses every visitor and every link still pointing at
+     * it. This takes the cheap error.
+     *
+     * NOT EXTENDED BEYOND CATEGORIES. A product's old address cannot be derived
+     * from anything in this repository — see `docs/GB-MEDIA-AND-REDIRECTS.md`,
+     * where it is the question put to the owner — and this rule does not guess
+     * at one.
+     *
+     * @return list<array{source: string, target: string, rule: string, decision: string, reason: string, subject: string}>
+     */
+    private function fromLegacyRootCategories(): array
+    {
+        $out = [];
+
+        $categories = Category::query()
+            ->select(['id', 'slug', 'path'])
+            ->orderBy('id')
+            ->get();
+
+        foreach ($categories as $category) {
+            $slug = (string) $category->slug;
+            $path = (string) ($category->path ?? '');
+
+            if ($slug === '' || $path === '') {
+                // A slugless row has no old address, and a pathless one is the
+                // parent cycle fromCategoryNesting() already asks about. One
+                // question about it is enough.
+                continue;
+            }
+
+            $source = '/'.$slug.'/';
+
+            $reason = LegacyCategoryUrls::isLegacy($source)
+                ? 'kbeautybliss.com published its category archives flat at the site root, and this exact '
+                    .'address is one of the fifteen in LegacyCategoryUrls::PATHS, copied off the live navigation'
+                : 'kbeautybliss.com published its category archives flat at the site root '
+                    .'(App\Support\LegacyCategoryUrls); WooCommerce has one category base for the whole site, '
+                    .'so this address is inferred from that setting rather than corroborated row by row';
+
+            /*
+             * BOTH SLASH FORMS, and this is not belt and braces.
+             *
+             * `CheckRedirects::findMatch()` compares `source` against
+             * `getPathInfo()` with a plain equality, and `getPathInfo()` keeps
+             * exactly the spelling the client sent. U-01 says this site's URLs
+             * carry a trailing slash and that is the form that was indexed —
+             * but a link somebody pasted into Instagram without one arrives as
+             * `/toners`, matches no row, and 404s.
+             *
+             * This is the same call `2026_09_14_160000_seed_phase9_post_url_redirects`
+             * made for the five confirmed articles, in the same words: "one
+             * extra row per article is a much smaller price than a 404 on a URL
+             * somebody actually posted." Following the precedent rather than
+             * inventing a second policy for the same table.
+             */
+            foreach ([$source, rtrim($source, '/')] as $spelling) {
+                $out[] = [
+                    'source' => $spelling,
+                    'target' => $this->categoryPath($path),
+                    'rule' => 'legacy-root-category',
+                    'decision' => self::MIGRATE,
+                    'reason' => $reason.($spelling === $source
+                        ? ''
+                        : '; this is the same address without its trailing slash, which getPathInfo() reports '
+                            .'verbatim and the table matches exactly'),
+                    'subject' => 'category '.$category->id.' ('.$path.')',
+                ];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Drop every proposal that could not fire, and say why.
+     *
+     * =========================================================================
+     * THE REDIRECT TABLE IS ONLY READ ON A 404
+     * =========================================================================
+     *
+     * `CheckRedirects` is written as middleware and is not registered as one —
+     * its own comment records that a redirect on a matched route still returned
+     * 200 that way, from both boot() and register() — so the live check is the
+     * `NotFoundHttpException` closure in `AppServiceProvider`. An address that
+     * answers 200, or that the application already redirects by itself, never
+     * reaches it. The Master Plan names this as a limitation of the Redirects
+     * SCREEN for rows an admin types; nobody had applied it to the rows this
+     * map writes, which is the larger number by two orders of magnitude.
+     *
+     * THREE OUTCOMES, and only two of them are questions:
+     *
+     *  - MOVED. The shop already 301s this address on its own. DISCARD, with
+     *    the destination named — "the shop already does this" is an answer, not
+     *    a question, and `docs/FV-IMPORT-AT-VOLUME.md` §10 is explicit that a
+     *    question list which is mostly noise is one nobody finishes.
+     *
+     *  - SERVED. A real page answers here. ASK: pointing a live address
+     *    somewhere else is a change to this shop's routing and cannot be done
+     *    with a row at all.
+     *
+     *  - UNKNOWN. A parameterised route claims it and this cannot say what its
+     *    controller will find. ASK, stated as such rather than rounded off.
+     *
+     * The TARGET is checked too, for the one failure that matters: a redirect
+     * whose destination 404s moves a visitor from one not-found page to another
+     * and tells a search engine the address was replaced by nothing.
+     *
+     * @param  list<array{source: string, target: string, rule: string, decision: string, reason: string, subject: string}>  $proposals
+     * @return list<array{source: string, target: string, rule: string, decision: string, reason: string, subject: string}>
+     */
+    private function reachable(array $proposals): array
+    {
+        foreach ($proposals as $index => $proposal) {
+            if ($proposal['decision'] !== self::MIGRATE) {
+                continue;
+            }
+
+            $verdict = $this->reachability->verdict($proposal['source']);
+
+            if ($verdict['status'] === SourceReachability::MOVED) {
+                $proposals[$index]['decision'] = self::DISCARD;
+                $proposals[$index]['reason'] = 'nothing to write — '.$verdict['why'].'. The redirects table is '
+                    .'only consulted from the 404 handler, so a row stored for this address would never be read';
+
+                continue;
+            }
+
+            if ($verdict['status'] === SourceReachability::SERVED) {
+                $proposals[$index]['decision'] = self::ASK;
+                $proposals[$index]['reason'] = 'this address still answers on this shop — '.$verdict['why']
+                    .'. A redirect row cannot move it, because the table is only consulted from the 404 handler. '
+                    .'Moving it is a routing change, not a redirect';
+
+                continue;
+            }
+
+            if ($verdict['status'] === SourceReachability::UNKNOWN) {
+                $proposals[$index]['decision'] = self::ASK;
+                $proposals[$index]['reason'] = 'cannot tell whether this address 404s today, and a redirect only '
+                    .'fires on a 404 — '.$verdict['why'];
+
+                continue;
+            }
+
+            $target = $this->reachability->verdict($proposal['target']);
+
+            if ($target['status'] === SourceReachability::NOT_FOUND) {
+                $proposals[$index]['decision'] = self::ASK;
+                $proposals[$index]['reason'] = 'the destination "'.$proposal['target'].'" does not exist on this '
+                    .'shop — '.$target['why'].'. A 301 to a 404 is worse than the 404 it replaces: it tells a '
+                    .'search engine the address was replaced by nothing';
+            }
+        }
+
+        return $proposals;
     }
 
     /**

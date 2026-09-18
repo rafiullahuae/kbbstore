@@ -30,6 +30,21 @@
  *
  * THESE RUN ON BOTH ENGINES, for the reason WooImportTest gives: the fixture
  * and the assertions are about the importer's behaviour, not about an index.
+ *
+ * ── AMENDED BY LANE GB ──────────────────────────────────────────────────────
+ *
+ * Four tests here moved onto a different ADDRESS, and one changed its expected
+ * decision. Nothing about the map's logic changed with them.
+ *
+ * `/product-category/{leaf}/` can no longer reach the migrate bucket: the
+ * archive controller 301s that address itself, and the redirects table is
+ * consulted only from the 404 handler, so a row stored for it is never read.
+ * Proved against a running server with a deliberately wrong row in place. The
+ * addresses that CAN carry a redirect are the flat root ones kbeautybliss.com
+ * really published — `/toners/`, `/face-cleansers/` — and those are what the
+ * collision, rollback and admin-row tests below now use.
+ *
+ * `docs/GB-MEDIA-AND-REDIRECTS.md` and `tests/Feature/GbUrlsAndMediaTest.php`.
  */
 
 use App\Models\Category;
@@ -73,7 +88,20 @@ function proposalFor(string $source, array $proposals): ?array
 
 /* ------------------------------------------------------------ the URL map */
 
-it('sends a flat WooCommerce category address to the nested one this shop serves', function () {
+it('derives the nested address correctly and then declines to write it, because the shop already does', function () {
+    /*
+     * REWRITTEN BY LANE GB, and the old expectation is worth stating because it
+     * was the whole point of this file: these two rows used to be MIGRATE.
+     *
+     * The derivation was right and is still asserted. What was wrong was the
+     * conclusion. `/product-category/face-cleansers/` does not 404 — the archive
+     * controller 301s it to the nested path on its own, through
+     * `CategoryPath::resolve()` — and the redirects table is consulted ONLY
+     * from the 404 handler. So the rows this rule put in the migrate bucket
+     * were stored, listed on the admin screen, and never read. Proved against a
+     * running server with a deliberately wrong row in place; see
+     * `docs/GB-MEDIA-AND-REDIRECTS.md` and `tests/Feature/GbUrlsAndMediaTest.php`.
+     */
     urlMapImport();
 
     // The fixture nests three deep: skincare > face-cleansers > makeup-removers.
@@ -86,11 +114,22 @@ it('sends a flat WooCommerce category address to the nested one this shop serves
     $grandchild = proposalFor('/product-category/makeup-removers/', $proposals);
 
     expect($child)->not->toBeNull()
-        ->and($child['decision'])->toBe(RedirectMap::MIGRATE)
+        ->and($child['decision'])->toBe(RedirectMap::DISCARD)
         ->and($child['target'])->toBe('/product-category/skincare/face-cleansers/')
+        ->and($child['reason'])->toContain('404 handler')
         ->and($grandchild)->not->toBeNull()
-        ->and($grandchild['decision'])->toBe(RedirectMap::MIGRATE)
+        ->and($grandchild['decision'])->toBe(RedirectMap::DISCARD)
         ->and($grandchild['target'])->toBe('/product-category/skincare/face-cleansers/makeup-removers/');
+
+    /*
+     * And the address that IS worth a row: the flat root form kbeautybliss.com
+     * really published (App\Support\LegacyCategoryUrls), which 404s here.
+     */
+    $root = proposalFor('/face-cleansers/', $proposals);
+
+    expect($root)->not->toBeNull()
+        ->and($root['decision'])->toBe(RedirectMap::MIGRATE)
+        ->and($root['target'])->toBe('/product-category/skincare/face-cleansers/');
 });
 
 it('never writes the base path into a redirect, because getPathInfo strips it', function () {
@@ -172,17 +211,30 @@ it('sends two rules claiming one address to the owner rather than picking one', 
      * record of what the site really served, so it wins — and the loser is
      * still reported rather than dropped.
      */
+    /*
+     * MOVED ONTO A ROOT-FLAT SOURCE BY LANE GB. The collision logic is
+     * unchanged and is what is under test; the address had to change because
+     * `/product-category/face-cleansers/` does not 404, so BOTH claims on it
+     * are now discarded before a human ever sees them — which would have made
+     * this test assert the collision rule against two rows that no longer
+     * disagree about anything that matters.
+     *
+     * `/face-cleansers/` is the shape the old site served and it 404s here, so
+     * the two rules genuinely compete for a row that will be written: the
+     * legacy-root rule sends it to face-cleansers' own nested path, and this
+     * permalink row claims it belongs to term 15 (Skincare) instead.
+     */
     $proposals = (new RedirectMap)->propose([
         [
             'type' => 'category',
             'wc_id' => '15',
-            'permalink' => 'https://kbeautybliss.com/product-category/face-cleansers/',
+            'permalink' => 'https://kbeautybliss.com/face-cleansers/',
         ],
     ]);
 
     $claims = array_values(array_filter(
         $proposals,
-        static fn (array $p): bool => $p['source'] === '/product-category/face-cleansers/',
+        static fn (array $p): bool => $p['source'] === '/face-cleansers/',
     ));
 
     expect($claims)->toHaveCount(2);
@@ -246,22 +298,24 @@ it('rolls back exactly what it wrote and leaves an admin\'s own redirect alone',
     ]);
 
     // And one the map DID write, which an admin has since re-pointed.
-    $edited = Redirect::query()->where('source', '/product-category/face-cleansers/')->firstOrFail();
+    // A row the map DID write. Root-flat, because that is the shape it writes
+    // now — the /product-category/ forms are discarded, never stored.
+    $edited = Redirect::query()->where('source', '/face-cleansers/')->firstOrFail();
     $edited->update(['target' => '/somewhere-a-person-chose/']);
 
     $this->artisan('kbb:import-redirects --rollback')->assertExitCode(0);
 
     expect(Redirect::query()->where('source', '/an-admin-decision/')->exists())->toBeTrue()
-        ->and(Redirect::query()->where('source', '/product-category/face-cleansers/')->value('target'))
+        ->and(Redirect::query()->where('source', '/face-cleansers/')->value('target'))
         ->toBe('/somewhere-a-person-chose/')
-        ->and(Redirect::query()->where('source', '/product-category/makeup-removers/')->exists())->toBeFalse();
+        ->and(Redirect::query()->where('source', '/makeup-removers/')->exists())->toBeFalse();
 });
 
 it('does not overrule a redirect an admin created by hand', function () {
     urlMapImport();
 
     Redirect::query()->create([
-        'source' => '/product-category/makeup-removers/',
+        'source' => '/makeup-removers/',
         'target' => '/a-landing-page/',
         'code' => 301,
         'enabled' => true,
@@ -273,11 +327,11 @@ it('does not overrule a redirect an admin created by hand', function () {
 
     $sources = array_column($diff['conflict'], 'source');
 
-    expect($sources)->toContain('/product-category/makeup-removers/');
+    expect($sources)->toContain('/makeup-removers/');
 
     $this->artisan('kbb:import-redirects --write')->assertExitCode(1);
 
-    expect(Redirect::query()->where('source', '/product-category/makeup-removers/')->value('target'))
+    expect(Redirect::query()->where('source', '/makeup-removers/')->value('target'))
         ->toBe('/a-landing-page/');
 });
 
