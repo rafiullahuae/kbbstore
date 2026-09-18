@@ -259,7 +259,7 @@ final class EnglishRenderWalk
      * what it buys is the Arabic page, where -30% otherwise paints 30%- and
      * inside Arabic text %30-.
      */
-    public const BASE_COMMIT = '244c264769dcb8fb5f6803990fca1b58f9253911';
+    public const BASE_COMMIT = '17b83304413896a6df6cec1888fd48656bd7128c';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
