@@ -608,6 +608,43 @@ it('has a plugin header WordPress will accept', function () {
     expect($unguarded)->toBe([], 'these files run when fetched directly: '.implode(', ', $unguarded));
 });
 
+it('stays inside the PHP version its header claims', function () {
+    /*
+     * The plugin header says `Requires PHP: 7.4`, and that is a promise to a
+     * shared host. This sandbox only has PHP 8.4, so `php -l` cannot check it —
+     * and `php -l` would not catch these anyway, because calling a function
+     * that does not exist is a RUNTIME error. It would fatal on the owner's
+     * server, on the row that called it, halfway through an export.
+     *
+     * So the check is the grep: the six functions PHP 8.0 added that a plugin
+     * author reaches for without thinking, plus the syntax that is 8.0-only.
+     */
+    $banned = [
+        'str_contains(' => 'PHP 8.0',
+        'str_starts_with(' => 'PHP 8.0',
+        'str_ends_with(' => 'PHP 8.0',
+        'array_is_list(' => 'PHP 8.1',
+        'enum ' => 'PHP 8.1',
+        '?->' => 'PHP 8.0 nullsafe operator',
+        'match (' => 'PHP 8.0 match',
+    ];
+
+    $found = [];
+
+    foreach (geePluginFiles() as $file) {
+        // Comments quote other files' prose, which can contain anything.
+        $source = preg_replace('#/\*.*?\*/|//[^\n]*#s', '', (string) file_get_contents($file)) ?? '';
+
+        foreach ($banned as $needle => $since) {
+            if (str_contains($source, $needle)) {
+                $found[] = basename($file).' uses '.$needle.' ('.$since.')';
+            }
+        }
+    }
+
+    expect($found)->toBe([], implode('; ', $found));
+});
+
 it('writes the manifest last, and describes every file it wrote', function () {
     $manifest = geManifest();
 

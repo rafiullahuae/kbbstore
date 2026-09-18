@@ -28,7 +28,7 @@ comes out as:
 | `permalinks.csv` | consumed by `RedirectMap::fromPermalinks()` without it learning a new word — products `discard` (they did not move), `/toners/` → `/product-category/toners/`, brands no proposal at all |
 | resume | `--batch=7` and `--batch=500` produce byte-identical CSVs across 200-odd separate runner instances |
 
-20 tests. 21 guards mutated; **three survived** first time and all 21 are red
+21 tests. 22 guards mutated; **three survived** first time and all 22 are red
 now — §8, including what closing each one took and the hole it was the same
 hole as.
 
@@ -65,6 +65,15 @@ right outcome but it is one lock, not two. The anchor is in §10.
 The plugin has **no Composer dependencies and no build step** — asserted — so it
 installs by uploading a zip through Plugins → Add New, which is the only door
 this owner has.
+
+Its header says `Requires PHP: 7.4`, and that is a promise to a shared host that
+this sandbox cannot check by running it: only PHP 8.4 is here, and `php -l` would
+not catch it anyway, because calling a function that does not exist is a
+**runtime** error — it would fatal on the owner's server, on the row that called
+it, halfway through an export. So `it stays inside the PHP version its header
+claims` greps for `str_contains`, `str_starts_with`, `str_ends_with`,
+`array_is_list`, `enum`, `?->` and `match (`, outside comments. Introducing one
+turns it red.
 
 ---
 
@@ -468,7 +477,7 @@ wanting the download list groups by `url`.
 
 ---
 
-## 8. Mutation testing — 21 guards, 3 survived, all 21 red once closed
+## 8. Mutation testing — 22 guards, 3 survived, all 22 red once closed
 
 Each guard was broken, the suite run, and the guard restored.
 
@@ -493,9 +502,10 @@ Each guard was broken, the suite run, and the guard restored.
 | **runner: stop pinning the settings to the export** | **GREEN — survived**, then red |
 | **manifest: drop `source.post_types`** | **GREEN — survived**, then red |
 | manifest: drop `source.taxonomies` | red |
+| plugin: call a PHP 8 function (`str_contains`) | red |
 | **manifest: count the header row as data** | **GREEN — survived**, then red |
 
-Three of the twenty-one are in bold. They went green on the first run and red on
+Three of the twenty-two are in bold. They went green on the first run and red on
 the re-run after the gap each one exposed was closed; the rest went red first
 time.
 
