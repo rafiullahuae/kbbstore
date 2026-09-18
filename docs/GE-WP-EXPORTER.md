@@ -673,13 +673,14 @@ Replacement:
 export half of it is now a plugin and an admin screen. **Inserts a new section**;
 no existing line changes.
 
-Anchor — verified **1 occurrence** in `docs/IMPORT-RUNBOOK.md`:
+Anchor — the whole line, verified **1 occurrence** in `docs/IMPORT-RUNBOOK.md`:
 
 ```
-## 10.
+## 10. After the rows: URLs and pictures
 ```
 
-Insert immediately **before** that anchor:
+Insert immediately **before** that anchor, leaving the anchor line itself
+untouched:
 
 ```markdown
 ## 9b. Producing the export (WordPress side)
