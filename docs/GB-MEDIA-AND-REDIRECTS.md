@@ -725,13 +725,30 @@ Both are now covered (M10, M13, M14 above).
 
 ## 9. What only the owner can settle
 
-1. **What address did a PRODUCT live at on kbeautybliss.com?** The one shape
-   nothing in this repository records. If it was `/product/{slug}/` there is
-   nothing to do and the map can say so with a count. If the product base was
-   removed the way the category base was — `kbeautybliss.com/ginseng-serum/` —
-   then **671 product URLs 404 today** and each one needs a row, which this map
-   will write from a `permalinks.csv` the moment there is one. **Open one
-   product on the old site and paste the address.** That single line settles it.
+1. ~~**What address did a PRODUCT live at on kbeautybliss.com?**~~ **ANSWERED BY
+   THE OWNER — and the answer is the good one: there is nothing to do.** He
+   pasted a live product address:
+
+   ```
+   https://kbeautybliss.com/product/medicube-vanilla-deodrant-and-body-mist-duo/
+   ```
+
+   So the product base was **kept**, unlike the category base, and it is the
+   shape this application already serves. Verified rather than assumed, by
+   fetching that exact slug through the real route table:
+
+   | URL | Status | canonical |
+   | --- | --- | --- |
+   | `/product/medicube-…-duo/` | **200** | `…/product/medicube-…-duo/` (self) |
+   | `/product/medicube-…-duo` (no slash) | **200** | the slashed form |
+   | `/ar/product/medicube-…-duo/` | **200** | — |
+
+   **All 671 product URLs already resolve, in both languages, and each
+   self-canonicalises.** No row is needed, no `permalinks.csv` is needed, and
+   the largest bucket this map might have had does not exist. This was the
+   single biggest SEO risk left in the migration and it turned out to be
+   nothing — which is only knowable because the address was checked instead of
+   guessed.
 
 2. **Did the old site have brand archive pages, and at what base?** `/brand/`,
    `/product-brand/`, something else, or none at all because brands were only

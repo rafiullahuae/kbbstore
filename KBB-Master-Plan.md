@@ -1772,6 +1772,24 @@ a fake success toast and saves nothing).
   and one COUNT per bucket against the table it writes to. An unaccounted row
   fails the command even with nothing refused. Rehearsed at 671/4,159/3,712 on
   MySQL — see `docs/FV-IMPORT-AT-VOLUME.md`
+- [x] ▲ **Product URLs: the biggest remaining migration risk, and it is nothing.**
+  The one URL shape nothing in this repo recorded was the product one — if the
+  product base had been stripped the way the category base plainly was, 671
+  indexed addresses would be 404ing and each would need a redirect row. The
+  owner pasted a live address and settled it:
+  `kbeautybliss.com/product/medicube-vanilla-deodrant-and-body-mist-duo/`. The
+  base was kept, and it is the shape this app already serves — checked through
+  the real route table, not assumed: 200 with a self-canonical, with and without
+  the trailing slash, and 200 on `/ar/product/{slug}/` too. **No rows needed.**
+  Recorded because "we checked and there is nothing to do" and "nobody looked"
+  are the same empty table otherwise
+- [ ] ▲ **`wp-content/uploads` has not been copied across** — the owner's answer,
+  so every product photograph is still served by the old WordPress site and goes
+  dark the day it is switched off. Nothing re-points a picture until the files
+  are there. Destination is the WEB ROOT, which is a different directory from
+  the application root: `…/public_html/kbb-upgrade/wp-content/uploads/`. Once
+  copied, Store → Import → Addresses & pictures does the rest and reports what
+  it could not find
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and
