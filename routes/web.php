@@ -432,6 +432,7 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // move every visitor who lands on an address this shop does not serve,
         // and another rewrites every image path in the catalogue.
         require __DIR__.'/urls-media-admin.php';
+        require __DIR__.'/media-sideload-admin.php';
 
         // Invoices and packing slips. Same group: an invoice carries the
         // customer's name, address and phone, and the URL deliberately holds

@@ -7734,6 +7734,7 @@ function impPaint(){
     +(anyFile?impRunCard(s):'')
     +impRejectsCard(s)
     +gbUrlsMediaCard()
+    +gdLiveProgressCard()
     +impExportCard()
     +'</div>';
 
@@ -8026,6 +8027,24 @@ function impExportCard(){
  * someone who came here to upload a CSV.
  */
 let gbUM=null, gbUMBusy=false, gbUMMsg='';
+
+/* Store → Import → the live progress page (Lane GD).
+
+   A LINK, NOT A PANEL. The page it points at is a standalone document served
+   from /admin-api/urls-media/progress-page with no build step and no dependency
+   on this bundle — deliberately, because its whole job is to be trustworthy at
+   the moment something has gone wrong, and this file is the thing most likely
+   to be what is broken. See MediaSideloadApiController::page(). */
+function gdLiveProgressCard(){
+  return '<div class="card pad">'
+    +'<b style="font-size:14px">Pictures &amp; live progress</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:680px">'
+    +'Fetch the product photographs off the old site, straight into this shop, and watch it happen. '
+    +'The page keeps going until there are none left, tells you which ones failed and why, and says '
+    +'plainly whether a run is going, finished, or stopped halfway.</p>'
+    +'<a href="'+impBase()+'/urls-media/progress-page" target="_blank" rel="noopener">'
+    +'<button class="btn" style="margin-top:10px">Open the live progress page</button></a></div>';
+}
 
 function gbUrlsMediaCard(){
   if(!gbUM) return '<div class="card pad">'

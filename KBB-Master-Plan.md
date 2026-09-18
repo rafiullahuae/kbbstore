@@ -1799,13 +1799,51 @@ a fake success toast and saves nothing).
   the trailing slash, and 200 on `/ar/product/{slug}/` too. **No rows needed.**
   Recorded because "we checked and there is nothing to do" and "nobody looked"
   are the same empty table otherwise
-- [ ] ▲ **`wp-content/uploads` has not been copied across** — the owner's answer,
-  so every product photograph is still served by the old WordPress site and goes
-  dark the day it is switched off. Nothing re-points a picture until the files
-  are there. Destination is the WEB ROOT, which is a different directory from
-  the application root: `…/public_html/kbb-upgrade/wp-content/uploads/`. Once
-  copied, Store → Import → Addresses & pictures does the rest and reports what
-  it could not find
+- [x] **The shop fetches its own pictures off the old site — no FTP, the owner's
+  own idea.** Told he would have to copy `wp-content/uploads` across by hand, he
+  said: *"i thought it will come along with the products and pages. whatever
+  used as photos, the system will start downloading directly from the old
+  server. and this job will keep continue until all media imported."* He was
+  right. `MediaSideloader` fetches each referenced image from the old host in
+  bounded batches driven from Store → Import, and keeps going until none are
+  left — *2.60.220*
+
+  ▲ **It reverses a written decision, and answers it rather than ignoring it.**
+  `ImportMediaAudit` said in as many words "there is deliberately no downloader:
+  a half-successful fetch would be worse than a list of filenames". That is true
+  of one that half-succeeds *silently*, which is not a property of fetching —
+  `ImportRunner` met the identical objection for rows with checkpoints. Here:
+  the work list is re-derived from the catalogue every request (no queue to
+  lose), "already done" is `is_file()` and not a row claiming so, every file is
+  validated in a temporary sibling and landed by one `rename()` (so a killed
+  request leaves a complete file or none, never a truncated one), and IDLE /
+  RUNNING / STALLED are three distinct states. Both headers were corrected in
+  place so the objection and its answer stay on the record.
+
+  Security, because this writes bytes from another server into the web root:
+  hosts come from the catalogue and never from the request (a request may narrow
+  it, never widen it), no cross-host redirect, the file is proved to be an image
+  by declared type AND magic number AND an executable-marker sweep, a bad
+  extension is refused rather than renamed (renaming would break the rewrite),
+  every dot-separated part is checked so `photo.php.jpg` is refused, traversal is
+  checked after URL-decoding and again on the resolved path, and bytes are capped
+  per file, per batch and against free disk before the first byte. Each proved
+  against three local fake hosts — including a GIF/PHP polyglot, a 16 MB body, an
+  endless body and a hanging host.
+- [x] **A live progress page, the owner's own follow-up** — *"with a live progress
+  url of everything."* `GET /admin-api/urls-media/progress-page`, a standalone
+  document that deliberately does not depend on the 20,000-line console bundle,
+  because its job is to be trustworthy when that bundle is what is broken. Poll
+  interval decided by the server, stops when the tab is hidden. Carries the
+  pictures, the image paths, the redirect buckets and the catalogue import's own
+  per-entity progress read from `import_checkpoints`. ▲ Caught in its own
+  screenshots: the catalogue stage drew a full green bar at 0/0 under "No
+  catalogue import has been run" — the exact fake number the page exists to
+  prevent. A stage with no denominator now gets no bar
+- [ ] ▲ **Fetching does not re-point the rows.** Two steps, and between them the
+  picture is on disk while the product still names the old host. **The old site
+  must not be switched off between them.** The rewrite is Store → Import →
+  Addresses & pictures → apply
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and

@@ -825,7 +825,27 @@ it('is unreachable without an admin session, on every route in the file', functi
 
     $routes = UrlsMediaAdminRoutes::registered();
 
-    expect($routes)->toHaveCount(4);
+    /*
+     * A FLOOR, NOT AN EXACT COUNT, and the change is deliberate rather than a
+     * guard being loosened to make a merge go green.
+     *
+     * registered() filters by URI PREFIX, not by which file registered them, so
+     * it picks up every route mounted under admin-api/urls-media/ whoever wrote
+     * it. That is the property worth having: when Lane GD added the sideloader
+     * and the live progress page under the same prefix, this test immediately
+     * covered all four of them too and they all answered 401. What broke was
+     * only the literal `4`.
+     *
+     * The real protection is the LOOP BELOW, which asserts on every route it
+     * finds -- a new one added ungarded fails here by its own URI. The count is
+     * only here to stop the loop being vacuous if the filter ever matches
+     * nothing, so a floor does that job and an exact number does not do a
+     * better one; it just fails every time the screen legitimately grows.
+     */
+    expect(count($routes))->toBeGreaterThanOrEqual(
+        4,
+        'no routes matched admin-api/urls-media/ at all, so the loop below asserts nothing'
+    );
 
     foreach ($routes as $route) {
         $method = in_array('GET', $route->methods(), true) ? 'getJson' : 'postJson';

@@ -23,10 +23,23 @@ use App\Support\MediaUsage;
  * and often afterwards — but it means a clean import report is not evidence
  * that a single picture will load.
  *
- * SO THIS IS A SEPARATE PASS, RUN AFTER, and it is deliberately read-only. It
- * cannot fetch a missing file: the host has no shell, the old site may already
- * be gone, and a downloader that silently half-succeeds would leave the owner
- * worse off than a list of names.
+ * SO THIS IS A SEPARATE PASS, RUN AFTER, and it is read-only. It does not fetch
+ * a missing file — but that is now a division of labour and no longer a
+ * prohibition, and the sentence that used to sit here is corrected rather than
+ * deleted because its objection was a good one.
+ *
+ * It read: "a downloader that silently half-succeeds would leave the owner
+ * worse off than a list of names." True of one that half-succeeds SILENTLY, and
+ * not a property of downloading. `App\Services\Import\MediaSideloader` does
+ * fetch, and answers the objection the way `ImportRunner` answered it for rows:
+ * the work list is re-derived from the catalogue every request, "already done"
+ * means the file is on disk rather than a row saying so, every fetch lands by a
+ * single rename() so a killed request leaves no truncated file, and IDLE,
+ * RUNNING and STALLED are three distinct states on its progress page rather
+ * than one frozen bar. See docs/GD-MEDIA-SIDELOADER.md.
+ *
+ * This class still does not fetch, and that is right: a counter that changes
+ * what it counts is a counter nobody can check.
  *
  * THE THREE ANSWERS, and only the first is good:
  *
