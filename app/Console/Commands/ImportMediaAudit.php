@@ -11,9 +11,47 @@ use Illuminate\Console\Command;
  * `kbb:import-media` — does every picture the imported catalogue names actually
  * exist?
  *
- * READ-ONLY, ALWAYS. There is no --write and there is deliberately no
- * downloader: see `App\Services\Import\MediaAudit` for why a half-successful
- * fetch would be worse than a list of filenames.
+ * READ-ONLY, ALWAYS. There is no --write here and there never will be: this
+ * command's job is to count, and a counter that also changes what it counts is
+ * a counter nobody can check.
+ *
+ * THE "NO DOWNLOADER" HALF OF THIS HEADER IS NO LONGER TRUE, and it is left
+ * standing here rather than deleted because the objection it made was a good
+ * one and deserves its answer on the record.
+ *
+ * It used to read: "there is deliberately no downloader: see MediaAudit for why
+ * a half-successful fetch would be worse than a list of filenames." That is
+ * true of a fetch that half-succeeds SILENTLY. It is not a property of
+ * fetching. A half-finished download is worse than a list only when two things
+ * are true of it — it cannot be resumed, so the half that failed has to be
+ * guessed at, and it cannot be told apart from a finished one, so nobody knows
+ * to look.
+ *
+ * `ImportRunner` met the identical objection for ROWS and answered it with
+ * checkpoints; it was SIGKILLed mid-run eight times during the volume work
+ * (`docs/FV-IMPORT-AT-VOLUME.md`) and resumed onto exactly the rows it had not
+ * done. `App\Services\Import\MediaSideloader` is that answer for BYTES:
+ *
+ *   - the work list is re-derived from the catalogue on every request, so there
+ *     is no queue to lose;
+ *   - "already done" means `is_file(public_path($path))` — the file itself, not
+ *     a row claiming there is one — and every fetch is validated in a temporary
+ *     file and moved into place with a single rename(), so a killed request
+ *     leaves a complete file or no file, never a truncated one;
+ *   - "N still to go" is recomputed from the catalogue and the disk, never from
+ *     a tally, so it is true after a killed request, after an FTP upload and
+ *     after a database restore;
+ *   - and IDLE, RUNNING and STALLED are three different states on the live
+ *     progress page, so a run that died is visible as one rather than as a
+ *     progress bar sitting at a stale number.
+ *
+ * So the audit still does not fetch, and that separation is still right — but
+ * it is a division of labour now, not a prohibition. This command answers "is
+ * every picture here?"; the sideloader answers "then go and get the ones that
+ * are not", and the owner drives it from Store → Import because he has no
+ * shell. See docs/GD-MEDIA-SIDELOADER.md for the security model, which is the
+ * part that actually needed the care: it writes bytes the old host chose into
+ * this shop's web root.
  *
  *   php artisan kbb:import-media
  *   php artisan kbb:import-media --csv=storage/app/missing-images.csv
