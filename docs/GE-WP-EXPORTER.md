@@ -70,7 +70,7 @@ this owner has.
 ## 3. HPOS: which storage, stated plainly
 
 **Both are supported.** `KBB_Export_Orders_Source` is the whole of the
-difference and it is 380 lines of one file.
+difference and it is 429 lines of one file.
 
 | | legacy | HPOS |
 |---|---|---|
@@ -467,7 +467,7 @@ wanting the download list groups by `url`.
 
 ---
 
-## 8. Mutation testing — 18 of 18 red
+## 8. Mutation testing — 19 of 19 red
 
 Each guard was broken, the suite run, and the guard restored.
 
