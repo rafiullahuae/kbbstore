@@ -459,9 +459,27 @@ something half-right.
   consequence to know is that there is no server-side PDF byte stream, so no
   PDF email attachment and none stored against an order. See
   docs/FZ-ORDER-DOCUMENTS.md — *2.60.216*
-- [ ] Parcel weight on the dispatch label — blocked for real: no `weight`
-  column exists on `products` or anywhere else in the schema
-- [ ] Bulk printing (pick many orders, print all their packing slips)
+- [–] ~~Parcel weight on the dispatch label~~ — **not wanted, owner's answer.**
+  "in UAE we usually don't required weight. it's per order fix rate." Shipping
+  here is a flat rate per order, so the label needs no weight and the missing
+  `weight` column is not a gap. Struck rather than deleted: the next person to
+  notice that couriers elsewhere want a weight should find the decision, not
+  re-open the question
+- [ ] **Bulk printing** — wanted: "bulk printing or download is also fine".
+  Pick several orders and get all their packing slips or invoices in one go
+- [x] **No PDF attachments — owner's answer, so browser-print is the permanent
+  arrangement.** "no attachments." That closes the one open question about the
+  document format: there is no server-side PDF byte stream, none is wanted, and
+  nobody needs to revisit it when they notice a Composer PDF package exists
+- [x] **What the invoice calls itself — answered by the code, which was already
+  right.** `docType()` prints **"Tax Invoice"** by itself once BOTH halves of
+  what that heading asserts are true: tax really charged or really contained,
+  and a registration number recorded under the seller's name. Both the box
+  (Store → Business Details → Invoice) and the rule exist and are tested. So
+  there is nothing to build and nothing to guess — **the owner enters his TRN
+  and every invoice re-heads itself.** If his accountant prefers "Simplified Tax
+  Invoice", which UAE rules allow for a consumer sale, typing that in
+  `invoice_doctype` overrides the heading in every state
 - [x] **Visual revision, requested after first review** — billing and shipping split
   into their own explicit two-column card (previously a 3-column grid mixing them
   with order status/customer). A genuine color system replaces the flat, single-accent
