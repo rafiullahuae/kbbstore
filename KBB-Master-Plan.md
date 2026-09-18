@@ -26,8 +26,8 @@ Legend: **[x]** done · **[~]** partly done · **[ ]** not started · **▲** bl
 | | |
 |---|---|
 | Ledger completion at last count | **36%** (110 Fn ☑ / 94 Dsp ☑ of 305) |
-| Estimated now | **~49%** — see the note below |
-| Releases shipped this stretch | 2.38.0 → 2.60.41 *built*, **2.60.36 actually verified live on the server** — see the note directly below. Every applied patch from 2.60.41 onward is archived and downloadable directly from the server — see Core Updates → history table |
+| **Counted now** | **92%** across 22 phases, 254 items — and that number is *counted*, not estimated: `tools/progress-dashboard/build.php` reads the checkboxes out of this file. A part-done item counts as half; an item struck as not-wanted is left out of the total entirely. Open `KBB-Progress-Dashboard.html` |
+| Releases shipped this stretch | 2.38.0 → **2.60.220**. ▲ Five packages are built and waiting to be applied: 2.60.216 → .220, in that order |
 | **Server drift, found 2026-09-10** | Rafi uploaded the real app directly from the server for a GitHub sync. Comparison showed the live server is genuinely at **2.60.36** — 2.60.37 through 2.60.41 (SEO description quality, the Core Updates escaping/session bugs, and the patch archive system) were built, packaged, and handed over, but never actually applied — almost certainly because the server got stuck exactly at 2.60.36, which is the version whose own release notes caused the Core Updates screen to break. GitHub now reflects the verified 2.60.36 state, not the assumed 2.60.41 one. **2.60.41 (a superset of everything since) still needs to be applied to catch the live site up** |
 | Modules identified | **31** — 29 from the plugin + 2 native to this app |
 | Modules registered in the framework | **31** — *2.44.0* |
@@ -94,6 +94,36 @@ This file's own direct visibility resumes at 2.60.22 — see the progress-table 
 **On GitHub**: proposed as the durable, diffable complement to the zip archive above — the zip archive is what your hosting can actually deploy (no shell access, hence zip-based updates at all), a git repo would be the full source history underneath it, readable by any future session without needing an upload. Awaiting a private repo + a repo-scoped access token from Rafi before the first push happens.
 
 ---
+
+## In flight right now
+
+Kept here because this file records what is DONE and nothing recorded what was
+being worked on — the owner asked for both. The integrator maintains it; it is
+what `KBB-Progress-Dashboard.html` renders under "In flight". A lane that has
+landed is deleted from here and written into its phase below, so a stale entry
+is a bug in this section rather than a second opinion about the phase.
+
+- **Lane GE — the WordPress exporter plugin.** A real plugin for the live
+  kbeautybliss.com that exports everything in the shape this shop already
+  imports, so the migration stops inferring what the old site held. Building
+  against `docs/WP-EXPORT-CONTRACT.md`
+- **Lane GF — the import side, refined.** A progress bar with a real
+  denominator (the manifest's row counts), a duplicate-import guard that tells
+  the owner before he waits rather than silently doing nothing, and a record of
+  every import that survives the run
+
+### Waiting on the owner, not on us
+
+- **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
+  webhook is subscribed to the hosted-checkout events a card payment no longer
+  produces: the shop takes the money and never hears about it
+- **One real test-mode payment**, which is the only thing a sandbox cannot stand
+  in for
+- **Did the old site have brand archive pages, and at what base?** 93 redirect
+  rows hang on it, and inventing a base writes 93 redirects from an address that
+  may never have existed
+- **Three bulk-printing questions** — the cap of 100, whether a bulk invoice run
+  should skip cancelled orders, and whether the "Sheet 3 of 12" line should print
 
 ## The plugin, inventoried — *v2.39.0, verified 2.44.0*
 
