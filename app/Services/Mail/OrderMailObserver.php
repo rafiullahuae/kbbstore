@@ -143,6 +143,33 @@ class OrderMailObserver
      */
     private static function mailRefund(Refund $refund): void
     {
+        /*
+         * A REFUND WOOCOMMERCE ALREADY MADE IS NOT NEWS.
+         *
+         * App\Services\Import\Entities\RefundImporter writes rows that arrive
+         * already `succeeded` -- which is exactly the shape the `created`
+         * listener above exists for -- so importing a five-year refund history
+         * would tell several hundred real people, today, that their money is on
+         * its way back. It is not: WooCommerce moved it years ago and emailed
+         * them at the time.
+         *
+         * THE GUARD IS ON THE ROW, NOT ON THE IMPORT. OrderStatusMailPolicy's
+         * suppression is process-scoped and, as its own header says, refund mail
+         * has never passed through it. `wc_refund_id` is a permanent property of
+         * the row instead: a refund that came from WooCommerce never mails, from
+         * this importer, from a delta re-run, from a row touched by hand, or
+         * from any later save that moves its status. That is the difference
+         * between a guard that holds and one that holds while somebody remembers
+         * to wrap the call.
+         *
+         * A refund this shop performed carries no `wc_refund_id` and is
+         * unaffected -- see RefundImporter's header for why the two are told
+         * apart this way and not by `provider`.
+         */
+        if ($refund->wc_refund_id !== null) {
+            return;
+        }
+
         DB::afterCommit(static function () use ($refund): void {
             try {
                 $order = $refund->order;

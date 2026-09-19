@@ -36,7 +36,9 @@ use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderNote;
 use App\Models\Product;
+use App\Models\Refund;
 use App\Models\Review;
 use App\Services\Import\ImportOptions;
 use App\Services\Import\ImportRunner;
@@ -255,14 +257,32 @@ it('does not let a refund line leak into the order items', function () {
     expect(OrderItem::query()->where('wc_item_id', 5507)->exists())->toBeFalse();
 
     // and the refund itself is carried, in refunds.csv, with the line it gave
-    // back named. Nothing imports that file yet; this asserts the plugin wrote
-    // it, which is the half this lane owns.
+    // back named.
     $refunds = array_map('str_getcsv', file(geExportDir().'/refunds.csv', FILE_IGNORE_NEW_LINES));
     $row = array_combine($refunds[0], $refunds[1]);
 
     expect($row['order_id'])->toBe('10235');
     expect($row['amount'])->toBe('99.50');
     expect($row['refunded_items'])->toBe('5506:-1:-99.50');
+
+    /*
+     * AND IT ARRIVES. App\Services\Import\Entities\RefundImporter reads that
+     * file now (Lane GI), so the money the plugin took out of order_items.csv
+     * is not lost — it lands as one refund against the parent order, which is
+     * what stops that order reading as its full total. The whole before/after
+     * is in tests/Feature/GiRefundsAndNotesTest.php; this is the round trip
+     * closing on the row the two lanes hand to each other.
+     */
+    $refund = Refund::query()->where('wc_refund_id', 10236)->firstOrFail();
+
+    expect((int) $refund->amount)->toBe(9950)
+        ->and((int) $refund->order_id)->toBe(
+            (int) Order::query()->where('wc_order_id', 10235)->value('id')
+        );
+
+    // The order note travelled with it, on the same round trip.
+    expect(OrderNote::query()->where('source_comment_id', 8201)->value('content'))
+        ->toBe('Order status changed from Processing to Completed.');
 });
 
 it('carries the Yoast SEO the shop reads, and says what it dropped', function () {

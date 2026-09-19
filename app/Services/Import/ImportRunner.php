@@ -11,6 +11,8 @@ use App\Services\Import\Entities\CustomerImporter;
 use App\Services\Import\Entities\EntityImporter;
 use App\Services\Import\Entities\OrderImporter;
 use App\Services\Import\Entities\OrderItemImporter;
+use App\Services\Import\Entities\OrderNoteImporter;
+use App\Services\Import\Entities\RefundImporter;
 use App\Services\Import\Entities\ReviewImporter;
 use App\Services\Import\Entities\SeoImporter;
 use App\Services\Import\Entities\ProductImporter;
@@ -101,6 +103,24 @@ final class ImportRunner
             new CustomerImporter,
             new OrderImporter,
             new OrderItemImporter,
+            /*
+             * AFTER ORDERS, and that is the whole of the dependency. Both of
+             * these attach to an order by `wc_order_id` through this run's id
+             * map and reject a row whose order is not here -- `refunds.order_id`
+             * and `order_notes.order_id` are both NOT NULL, so there is nothing
+             * to attach an orphan to.
+             *
+             * NOT dependent on order-items, and placed after it only so the
+             * order-shaped entities stay together on the Store -> Import screen,
+             * which walks this array in order and steps one entity per request.
+             *
+             * Refunds are what stop an imported order reading as full revenue:
+             * every total on this shop nets `SUM(refunds.amount)` where the
+             * status is in PaymentRefunder::COUNTED, and with the table empty
+             * the subtrahend was zero. See RefundImporter's header.
+             */
+            new RefundImporter,
+            new OrderNoteImporter,
             /*
              * AFTER PRODUCTS, for the same reason as SEO below -- every review
              * names its product by the WooCommerce post id that ProductImporter

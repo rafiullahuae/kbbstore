@@ -1360,7 +1360,10 @@ it('does not name manifest.json as a file no importer opens, now that one does',
     mkdir($dir, 0775, true);
 
     file_put_contents($dir.'/manifest.json', (string) json_encode(['format' => 'kbb-export/1']));
-    file_put_contents($dir.'/refunds.csv', "refund_id,amount\n1,5\n");
+    // variations.csv, because refunds.csv is an entity now (RefundImporter) and
+    // a file this runner opens proves nothing about the channel for files it
+    // does not.
+    file_put_contents($dir.'/variations.csv', "variation_id,parent_id,sku\n1,4021,VAR-1\n");
     copy(base_path('tests/Fixtures/woo/products.csv'), $dir.'/products.csv');
 
     $report = (new ImportRunner)->run(new \App\Services\Import\ImportOptions(
@@ -1385,7 +1388,7 @@ it('does not name manifest.json as a file no importer opens, now that one does',
 
     expect($named)->not->toBeEmpty('nothing was named at all, so this proves nothing');
 
-    expect(in_array('refunds.csv', $named, true))->toBeTrue('the unread-file channel stopped working')
+    expect(in_array('variations.csv', $named, true))->toBeTrue('the unread-file channel stopped working')
         ->and(in_array('manifest.json', $named, true))->toBeFalse('manifest.json was named as unread');
 
     array_map('unlink', glob($dir.'/*') ?: []);

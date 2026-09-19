@@ -130,6 +130,25 @@ final class ImportWorkspace
             'unique' => true,
             'help' => 'The individual lines inside each order. They come last because they point at both orders and products.',
         ],
+        /*
+         * MUST MIRROR ImportRunner::entities(), in the same order -- see the
+         * note on `seo` below for what registering on one list and not the
+         * other cost.
+         */
+        'refunds' => [
+            'file' => 'refunds.csv',
+            'label' => 'Refunds',
+            'id' => ['refund_id', 'id', 'wc_refund_id'],
+            'unique' => true,
+            'help' => 'Money WooCommerce gave back, one row per refund. They come after orders because each one attaches to its order, and until they are here every refunded order still reads as full revenue on the dashboard and still offers its whole total as refundable.',
+        ],
+        'order-notes' => [
+            'file' => 'order_notes.csv',
+            'label' => 'Order notes',
+            'id' => ['note_id', 'comment_id', 'id'],
+            'unique' => true,
+            'help' => 'The history of what was said and done on each order, from WooCommerce. They come after orders so each note can be attached, and they appear on the order screen alongside the notes this shop writes itself.',
+        ],
         'reviews' => [
             'file' => 'reviews.csv',
             'label' => 'Reviews',
