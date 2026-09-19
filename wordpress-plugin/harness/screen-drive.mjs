@@ -256,6 +256,119 @@ if (args.static) {
     process.exit(0);
 }
 
+/*
+ * ── --plumbing: "WHY YOU MENTIONED NUMBER OF ROWS TO SELECT?" ───────────────
+ *
+ * Lane GN moved `Rows per batch` out of the Run row and behind a <details>,
+ * because it is plumbing and not a decision the owner can make (293 ms against
+ * a 30-second limit -- docs/GN-EXPORT-SCREEN.md). Moved, NOT removed: an
+ * unusually strict host is a real case.
+ *
+ * Every claim in that sentence is invisible to the PHP suite, which is the hole
+ * docs/GK-EXPORT-GROUPS.md §6.1 paid for -- a single deleted line of this
+ * page's JavaScript left the whole suite green. So the four claims are DRIVEN:
+ *
+ *   1. The disclosure starts CLOSED and the input is really inside it, so the
+ *      input is not merely duplicated somewhere out of sight.
+ *   2. Collapsed means not visible -- otherwise nothing was moved out of his
+ *      way at all.
+ *   3. An export started WITHOUT EVER OPENING IT still posts batch=200. This is
+ *      the one that matters: a <details> keeps its contents in the DOM, and the
+ *      whole reason this is the cheap correct answer is that post() reads the
+ *      value the same way it always did. A move that silently stopped sending
+ *      the field would look identical on the screen.
+ *   4. Opened, it still works: a changed value reaches the NEXT request, which
+ *      is the escape hatch actually being used.
+ *
+ * And the checkbox beside it is checked the other way round: the trashed tick
+ * is a genuine decision and must have stayed in the main flow, so a change that
+ * swept the whole row behind the disclosure fails here rather than passing.
+ */
+if (args.plumbing) {
+    const inDetails = (sel) =>
+        page.$eval(sel, (el) => !!el.closest('#kbb-batch-details'));
+
+    /*
+     * checkVisibility(), and NOT getClientRects()/offsetParent -- measured,
+     * because the obvious probe reports the opposite of the truth here.
+     *
+     * This Chromium closes a <details> with `content-visibility: hidden` on the
+     * slot rather than `display: none`. The input therefore still HAS a layout
+     * box while the disclosure is shut: getClientRects().length is 1 and
+     * offsetParent is non-null, so both read "visible" on a page where nothing
+     * of the sort is on screen. checkVisibility() understands content-visibility
+     * and answers false. Playwright's own isVisible() is recorded beside it as a
+     * second, independent opinion: two mechanisms that agree is the point, since
+     * a single wrong one would have passed this test vacuously.
+     */
+    const isVisible = (sel) => page.$eval(sel, (el) => el.checkVisibility());
+
+    const batchesPosted = () =>
+        page.evaluate(() =>
+            window.__posts
+                .filter((p) => p.action === 'kbb_export_start' || p.action === 'kbb_export_step')
+                .map((p) => p.batch),
+        );
+
+    findings.plumbing = {
+        details_present: (await page.$('#kbb-batch-details')) !== null,
+        details_open_at_rest: await page.$eval('#kbb-batch-details', (d) => d.open),
+        summary: await page.$eval('#kbb-batch-details summary', (s) => s.textContent.trim()),
+        batch_inside_details: await inDetails('#kbb-batch'),
+        batch_visible_at_rest: await isVisible('#kbb-batch'),
+        batch_visible_at_rest_playwright: await page.locator('#kbb-batch').isVisible(),
+        batch_value_at_rest: await page.$eval('#kbb-batch', (i) => i.value),
+        batch_min: await page.$eval('#kbb-batch', (i) => i.getAttribute('min')),
+        batch_max: await page.$eval('#kbb-batch', (i) => i.getAttribute('max')),
+        // The genuine decision, which must NOT have gone behind the disclosure.
+        trashed_inside_details: await inDetails('#kbb-include-trashed'),
+        trashed_visible_at_rest: await isVisible('#kbb-include-trashed'),
+    };
+
+    await shot(args.shotname_closed || '01-at-rest-collapsed.png');
+
+    // ── Started without the disclosure ever being touched ───────────────────
+    await page.click('#kbb-start');
+    await page.waitForTimeout(400);
+    await page.click('#kbb-stop');
+
+    findings.plumbing.batches_never_opened = await batchesPosted();
+    // Still `open === false`: the export above ran without the disclosure ever
+    // being touched, which is what makes the line above mean anything.
+    findings.plumbing.details_open_after_start = await page.$eval('#kbb-batch-details', (d) => d.open);
+
+    // ── Opened, which is the escape hatch being reached ─────────────────────
+    await page.click('#kbb-batch-details summary');
+    await page.waitForTimeout(100);
+
+    findings.plumbing.details_open_after_click = await page.$eval('#kbb-batch-details', (d) => d.open);
+    findings.plumbing.batch_visible_after_open = await isVisible('#kbb-batch');
+    findings.plumbing.batch_visible_after_open_playwright = await page.locator('#kbb-batch').isVisible();
+
+    await shot(args.shotname_open || '02-disclosure-opened.png');
+
+    // ── And a changed value reaches the next request ────────────────────────
+    await page.fill('#kbb-batch', '50');
+    await page.evaluate(() => { window.__posts = []; });
+    await page.click('#kbb-start');
+    await page.waitForTimeout(400);
+    await page.click('#kbb-stop');
+
+    findings.plumbing.batches_after_change = await batchesPosted();
+
+    findings.posts = await page.evaluate(() => window.__posts);
+
+    await browser.close();
+
+    if (args.out) {
+        writeFileSync(resolve(args.out), JSON.stringify(findings, null, 2) + '\n');
+    }
+
+    console.log(JSON.stringify(findings, null, 2));
+
+    process.exit(0);
+}
+
 // ── 1. At rest ──────────────────────────────────────────────────────────────
 findings.at_rest = {
     groups: await page.$$eval('.kbb-group', (b) => b.map((x) => x.value)),

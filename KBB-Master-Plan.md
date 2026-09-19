@@ -2030,6 +2030,35 @@ a fake success toast and saves nothing).
   test, but the owner will download that group and be told twice that it was not
   imported. The screen should route those two files to the screen that does read
   them rather than refuse them
+- [x] **The export screen stopped asking the owner a question he could not
+  answer.** He asked *"why you mentioned number of rows to select? what's the
+  purpose?"* — fairly. `Rows per batch` exists so one request cannot outlive a
+  shared host's time limit, but Lane GL had already measured the real shop and
+  the slowest bounded unit was **293 ms** against a typical 30-second limit, so
+  there was no value he could sensibly pick. Moved behind a disclosure whose
+  summary names the symptom rather than the jargon — *"Only if the export keeps
+  stopping before it finishes"* — and which says **leave this alone**, then names
+  **Resume** as the thing to press after lowering it, which is the half that is
+  easy to omit and is the whole procedure
+
+  ▲ **The lane corrected my brief, and it was right.** I asked for `batch` to be
+  pinned at `start()` the way `skip_trashed` and `groups` are. It is deliberately
+  the one exception: those two change the `WHERE` and the stage list, so they
+  split a file under two rules, while `batch` is only the bite size on an ordered
+  cursor scan. Pinning it would have broken the escape hatch the same change
+  documents, whose only procedure is *lower it and press Resume* — on the one
+  host where finishing is already the problem. Verified in the code before
+  accepting the correction
+- [ ] ▲ **The export screen tells the owner to delete a folder he cannot reach,
+  and it holds every shopper's password hash.** The instruction is correct —
+  `customers.csv` carries addresses and password hashes, `reviews.csv` carries
+  emails and IPs — but he has no shell and no FTP, which the paragraph two lines
+  above says itself. There is no control that does it. `wp_ajax_kbb_export_reset`
+  **is registered and reachable**, and `KBB_Export_Runner::reset()` only
+  `delete_option()`s the state: wiring the existing endpoint to a button would
+  report success while the hashes stayed on disk, now unreferenced and
+  un-downloadable. Wants a real delete, which is a new destructive path and not
+  plumbing
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and
