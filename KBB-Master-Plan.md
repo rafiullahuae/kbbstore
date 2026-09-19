@@ -2032,13 +2032,70 @@ a fake success toast and saves nothing).
   wrong and **Lane GF's existing suite caught both**, not its own mutations: one
   reported a corrected re-export as a truncated upload, telling the owner to
   re-upload the one file that was finally right
-- [ ] ▲ **The "Addresses and pictures" group downloads, unpacks, and is then
-  refused.** `permalinks.csv` and `media.csv` have no importer on the main Import
-  screen — they are read by Store → Import → Addresses & pictures instead. Nothing
-  regressed (a loose upload of them does the same today) and it is pinned by a
-  test, but the owner will download that group and be told twice that it was not
-  imported. The screen should route those two files to the screen that does read
-  them rather than refuse them
+- [x] **The "Addresses and pictures" group lands, and every old URL is checked by
+  fetching it** — *2.60.223*. `permalinks.csv` and `media.csv` are **companions**,
+  a second table beside `ImportWorkspace::ENTITIES`: accepted into the export
+  folder under their own names and read by the machinery that already reads them,
+  loose or inside a group zip. Not entities, for three separate reasons — they
+  have no importer, they are statements about the *old* site rather than rows
+  this shop stores, and two do-nothing steps in the drive loop is drift on
+  purpose. `ImportDriver` is untouched.
+
+  **Measured against a running server rather than counted out of a table: 54 of
+  the old site's 54 published addresses resolve after the import, up from 39.**
+  The fifteen that did not were every category archive on the shop. The eight
+  remaining rows in `permalinks.csv` carry no address at all — `pa_brands` never
+  had a public archive, so there is nothing to land.
+
+  ▲ **The refusal was the smaller of two bugs, and nobody had the other one.**
+  `RedirectMap::fromPermalinks()` has read this exact file shape since the day it
+  was written and **nothing with a screen had ever handed it a file** — its only
+  caller was `kbb:import-redirects`, a command the owner cannot run because there
+  is no shell, which is the same gap `UrlsMediaApiController` exists to close,
+  left open one level down inside it. Fixing only the refusal would have produced
+  the quieter failure: the file lands, the screen says "Uploaded", and the map is
+  exactly what it was.
+
+  ▲ **And 15 of 15 redirects were landing on a non-canonical address** — a 301 to
+  a URL whose own `<link rel="canonical">` pointed somewhere else. That is now
+  0 of 15. See `docs/GP-ADDRESSES-LAND.md`
+- [x] **The import keeps running with the tab closed** — *2.60.223*, the owner's
+  own requirement: *"i want this job must be running in background, even i close
+  the tab."* A run holds a single-use **256-bit baton**, stored only as a
+  SHA-256, and the server calls itself back at `POST /import-chain/continue` to
+  take the next slice. There is no browser, no cookie and no session — which is
+  the feature, and is why that one route sits outside `auth:admin`.
+
+  Four properties make it safe to mount unauthenticated, and they are the whole
+  argument: the baton travels in a **header**, never a path segment or query
+  parameter, so it is not written into this host's access log or any proxy's; it
+  exists only while a run does, and only because a signed-in admin pressed a
+  button; **the request decides nothing** — entity, row count, options and mode
+  are all read from the run row an authenticated admin wrote, and the body is
+  never looked at; and **it answers nothing** — 204 or an empty 404, no status,
+  no counts, no filenames, which is what the `/api/*` landmine is about.
+
+  ▲ **`import-chain` had to join `RESERVED_SLUGS`.** Articles live at the site
+  root, so an article published at that slug would shadow the one endpoint that
+  carries no `auth:admin`. `RootSlugCollisionTest` caught it within a minute of
+  the route being mounted. Pause, Stop and Resume are real states, a killed
+  slice is picked back up, and a host that refuses loopback says so rather than
+  reporting a run that is not moving. See `docs/GO-BACKGROUND-IMPORT.md`
+- [x] **A census of the migration, column by column, and three things it found**
+  — *2.60.223*. Every file the exporter writes, every column of every file, and
+  for each one a named table and column it lands in or the report channel it is
+  dropped through — asserted against **what the report says**, not against a
+  second copy of the importer's logic. A column that stops crossing does not
+  disappear; it moves from one side of the comparison to the other and fails
+  with its own name in the message.
+
+  ▲ **Read and landed are different claims**, which is why the census checks
+  both: deleting `sku` from `ProductImporter::apply()` leaves the read check
+  green, because `ProductImporter` asks for `sku` in a second place — the
+  duplicate-SKU guard — so the column is still *read* while the SKU has stopped
+  *arriving*. The three it caught are the GTIN the WooCommerce SEO add-on
+  carried, the variation actually sold on a variable product, and an OpenGraph
+  image a hyphen had been eating
 - [x] **The export screen stopped asking the owner a question he could not
   answer.** He asked *"why you mentioned number of rows to select? what's the
   purpose?"* — fairly. `Rows per batch` exists so one request cannot outlive a
@@ -2073,8 +2130,9 @@ a fake success toast and saves nothing).
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and
   `/skincare-guide/` is a blog-permalink question that sits downstream of
   neither categories nor images. ▲ **The map that existed could not fire.**
-  `CheckRedirects` is not registered as middleware, so the redirects table is
-  consulted only from the 404 handler — and every row the shipped rule proposed
+  `CheckRedirects` was not registered as middleware, so the redirects table was
+  consulted only from the 404 handler — **registered in 2.60.223** — and every
+  row the shipped rule proposed
   was for `/product-category/{leaf}/`, which the archive controller already 301s
   itself. Proved against a running server with a deliberately wrong row in
   place: the row changed nothing. ▲ **And the addresses Google really holds had
