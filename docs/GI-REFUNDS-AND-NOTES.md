@@ -378,7 +378,70 @@ that account. No migration at all is added.
 Every guard broken, the suite run, the guard restored. **Money guards twice**, as
 the brief requires — eight money mutations in total.
 
-MUTATION_TABLE_PLACEHOLDER
+**24 mutations. 21 red first time, 3 survived, all 3 red once the gap was closed.**
+The three survivors are reported rather than hidden; two of them were real holes
+in this lane's tests and one said something about the guard itself.
+
+| # | mutation | verdict |
+|---|---|---|
+| 1 | **money** — a refund lands `failed` instead of `succeeded` | red (8) |
+| 2 | **money** — a refund lands `pending` (still in `COUNTED`, so only the screen notices) | red (2) |
+| 3 | **money** — `abs()` dropped, so Woo's negative `total` lands negative and **adds** to revenue | red |
+| 4 | **money** — `amount` vs `total` disagreement accepted, picking `amount` | red |
+| 5 | **money** — a zero refund imported instead of refused | red |
+| 6 | **money** — fils rounded away to whole dirhams | red (7) |
+| 7 | **money** — an over-total refund imported with nothing said | red |
+| 8 | **money** — refunds stop counting against the ceiling | red |
+| 9 | `provider` filed under the order's gateway, which `Reconciler` would chase for ever | red |
+| 10 | an `idempotency_key` invented for a call that was never made | red |
+| 11 | `created_at`/`updated_at` left to Eloquent on a refund | **SURVIVED** → red |
+| 12 | the `wc_refund_id` lookup dropped, so a second pass doubles every refund | red (2) |
+| 13 | a refund whose order is absent silently skipped instead of refused | red |
+| 14 | `refunded_by` left as a bare WordPress user id | red |
+| 15 | the `refunded_items` breakdown dropped from the discard channel | **SURVIVED** → red |
+| 16 | `is_customer_note` defaults **true**, publishing every internal remark | red |
+| 17 | an empty note imported instead of refused | **SURVIVED** → red |
+| 18 | `created_at`/`updated_at` left to Eloquent on a note | red |
+| 19 | the `source_comment_id` lookup dropped, so a second pass doubles every note | red (2) |
+| 20 | the note author's email dropped from the discard channel | red |
+| 21 | the `wc_refund_id` mail guard removed — every imported refund emails the customer | red |
+| 22 | `RefundImporter` dropped from `ImportRunner::entities()` | red (17) |
+| 23 | `OrderNoteImporter` dropped from `ImportRunner::entities()` | red (10) |
+| 24 | `refunds` dropped from `ImportWorkspace::ENTITIES` (the `seo` defect, repeated) | red (25) |
+
+### The three survivors, and what each was
+
+**11 — a refund's dates.** Removing `'created_at'`/`'updated_at'` from the write
+left every test green, and it is worth understanding why the idempotency test did
+not catch it: with the keys absent, Eloquent stamps them on insert, and on the
+second pass `forceFill` carries no timestamp attributes, so nothing is dirty and
+the row still reports `unchanged`. Nothing looked at the column. The whole refund
+history would have landed under the day of the import — the same defect
+`OrderImporter`'s header opens with, and `Reconciler`'s window is built from
+exactly this column. Closed by *it dates an imported refund when it happened, not
+when it was imported*, which also pins the timezone conversion (10:00
+Asia/Dubai → 06:00Z).
+
+**15 — the refund breakdown.** Dropping the discard entry changed nothing,
+because nothing asked for it. `refunded_items` is the only thing in `refunds.csv`
+that does not reach the database; a loss nobody is told about is the exact
+failure the discard channel exists to prevent. Closed by *it names the refund
+breakdown it cannot keep, with its value*, which asserts the value
+(`5506:-1:-99.50`) and not just the headline.
+
+**17 — an empty note. This one said something about the guard, not only about
+the test.** No fixture carries an empty note, so the guard was untested. Writing
+a test for it was *still* not enough: the row is refused **either way**, because
+`order_notes.content` is NOT NULL and `ImportRunner` catches a `QueryException`
+per row and rejects it in the driver's own words — which happen to contain the
+string "NOT NULL" on SQLite, so the obvious assertion passed against the mutant.
+
+So the guard is **not** what keeps the bad row out; the column is. What it buys
+is a reason the owner can act on, identical on both engines, instead of `NOT NULL
+constraint failed: order_notes.content` on SQLite and `Column 'content' cannot be
+null` on MySQL. The test now asserts the importer's own sentence, which is the
+only thing the guard actually contributes, and it goes red. Kept on those terms
+and documented as such rather than sold as a data-integrity check.
 
 ---
 
@@ -386,7 +449,7 @@ MUTATION_TABLE_PLACEHOLDER
 
 | | |
 |---|---|
-| new | `tests/Feature/GiRefundsAndNotesTest.php` — 19 tests |
+| new | `tests/Feature/GiRefundsAndNotesTest.php` — 22 tests |
 | extended | `tests/Feature/GeWpExporterTest.php` — the round trip now closes on the refund and the note |
 | new fixtures | `tests/Fixtures/woo/refunds.csv`, `tests/Fixtures/woo/order_notes.csv` (defect-bearing, in the style of the rest of that folder) |
 | moved | the unread-file channel in `ImportDryRunTest`, `ImportAtVolumeTest` and `GfImportRefinementTest` now pins on `variations.csv` and `tags.csv` |

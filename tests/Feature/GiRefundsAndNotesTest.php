@@ -268,6 +268,59 @@ it('shows the imported refund and the imported note on the order screen', functi
  | Imported vs. performed here
  |========================================================================*/
 
+it('dates an imported refund when it happened, not when it was imported', function () {
+    /*
+     * FOUND BY MUTATION. Removing `created_at`/`updated_at` from the write left
+     * every test green: Eloquent stamps them, the second pass still reports
+     * `unchanged` (the attribute array no longer carries them, so nothing is
+     * dirty), and nothing looked at the column. The whole refund history would
+     * have landed under the day of the import — which is the same defect
+     * OrderImporter's header opens with, and the reconcile window in
+     * Store -> Payments is built from exactly this column.
+     */
+    giImport();
+
+    $refund = Refund::query()->where('wc_refund_id', 10236)->firstOrFail();
+
+    expect($refund->created_at->toDateString())->toBe('2023-09-05')
+        // updated_at too, and for its own reason: an updated_at of now() makes
+        // "recently modified" meaningless the moment the import finishes.
+        ->and($refund->updated_at->toDateString())->toBe('2023-09-05')
+        // Read in the site's zone, out of the manifest, and stored UTC. 10:00
+        // Asia/Dubai is 06:00Z.
+        ->and($refund->created_at->utc()->format('H:i'))->toBe('06:00');
+});
+
+it('names the refund breakdown it cannot keep, with its value', function () {
+    /*
+     * ALSO FOUND BY MUTATION. Dropping the discard entry left everything green,
+     * because nothing asked for it. `refunded_items` is the only thing in
+     * refunds.csv that does not reach the database, and a loss nobody is told
+     * about is the exact failure the discard channel exists to prevent.
+     */
+    $report = giImport();
+
+    $discards = $report->for('refunds')->discards();
+    $named = implode(' ', array_keys($discards));
+
+    expect(str_contains($named, 'which lines of the order a refund covered'))->toBeTrue(
+        'the refund breakdown was dropped in silence: '.$named
+    );
+
+    $samples = [];
+
+    foreach ($discards as $group) {
+        foreach ($group['samples'] as $sample) {
+            $samples[] = $sample['before'];
+        }
+    }
+
+    // The value, so the owner approves a fact and not a column heading.
+    expect(in_array('5506:-1:-99.50', $samples, true))->toBeTrue(
+        'the discard named the column and not what was in it: '.implode(' | ', $samples)
+    );
+});
+
 it('tells an imported refund apart from one this shop performed, and keeps both counting', function () {
     giImport();
 
@@ -566,6 +619,53 @@ it('defaults a note with no is_customer_note column to internal', function () {
 
     expect(OrderNote::query()->where('source_comment_id', 8401)->value('is_customer_note'))
         ->toBeIn([false, 0, '0']);
+});
+
+it('refuses an empty note rather than putting a blank line in the history', function () {
+    /*
+     * FOUND BY MUTATION, AND THE MUTATION SAID SOMETHING WORTH KEEPING.
+     *
+     * No fixture carries an empty note, so removing the guard changed nothing
+     * anybody was looking at. Putting a test on it was not enough either: the
+     * row is refused EITHER WAY, because `order_notes.content` is NOT NULL and
+     * ImportRunner catches a QueryException per row and rejects it with the
+     * driver's own words. So this guard is not what keeps the bad row out — the
+     * column is. What it buys is a reason the owner can act on, in the same
+     * sentence on both engines, instead of "NOT NULL constraint failed:
+     * order_notes.content" on SQLite and "Column 'content' cannot be null" on
+     * MySQL.
+     *
+     * Which is why this asserts the IMPORTER'S OWN WORDING and not merely that
+     * two rows were refused. An assertion that the database's message also
+     * satisfies is an assertion about the database.
+     */
+    giImport(['only' => giWithoutRefundsAndNotes()]);
+
+    $dir = sys_get_temp_dir().'/kbb-gi-'.bin2hex(random_bytes(6));
+    mkdir($dir, 0775, true);
+    file_put_contents($dir.'/order_notes.csv',
+        "note_id,order_id,date_created,author,content\n"
+        ."8501,10233,2019-03-06 09:05:00,admin,\n"
+        ."8502,10233,2019-03-06 09:06:00,admin,   \n"
+    );
+
+    $report = (new ImportRunner)->run(new ImportOptions(
+        directory: $dir,
+        only: ['order-notes'],
+        sourceTimezone: 'Asia/Dubai',
+        runKey: 'gi-notes-'.bin2hex(random_bytes(4)),
+    ));
+
+    array_map('unlink', glob($dir.'/*') ?: []);
+    rmdir($dir);
+
+    $rejections = $report->for('order-notes')->rejections();
+
+    expect($rejections)->toHaveCount(2)
+        ->and($rejections[0]['reason'])->toContain('a blank line in an order')
+        ->and($rejections[1]['reason'])->toContain('a blank line in an order')
+        ->and($rejections[0]['id'])->toBe('note_id=8501')
+        ->and(OrderNote::query()->whereNotNull('source_comment_id')->count())->toBe(0);
 });
 
 it('does not keep the note author email, and says so', function () {
