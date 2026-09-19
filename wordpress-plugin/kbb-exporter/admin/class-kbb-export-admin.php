@@ -401,11 +401,41 @@ class KBB_Export_Admin {
 			<div id="kbb-warnings"></div>
 
 			<h2>Run</h2>
+			<?php
+			/*
+			 * ── ONE DECISION HERE, AND THE PLUMBING IS BELOW ────────────────
+			 *
+			 * The owner asked, looking at this row: "why you mentioned number
+			 * of rows to select? what's the purpose?" -- and he was right to.
+			 * Trashed products is a DECISION: he knows whether his trash holds
+			 * something he wants, the new shop refuses them either way, and the
+			 * answer is his. `Rows per batch` is not a decision, it is how this
+			 * screen avoids a host's request limit, and there is no value he
+			 * could sensibly pick: docs/GL-GROUP-DOWNLOADS.md measured the real
+			 * shop -- 671 products, 4,159 orders, 10,571 line items, 3,712
+			 * customers -- and the slowest bounded unit at the default 200 was
+			 * 293 ms against a limit that is typically 30 seconds. Two orders of
+			 * magnitude of headroom is not a dial, and putting it in the main
+			 * flow made plumbing look like something he had to have an opinion
+			 * about before pressing Start.
+			 *
+			 * So it is MOVED, not removed. An unusually strict host is the case
+			 * it exists for and that host is real, so it stays reachable, keeps
+			 * its 10-1000 bounds and still posts with every request. A
+			 * <details> does all of that with no JavaScript and no CSS: the
+			 * input is in the DOM whether or not the disclosure was ever opened,
+			 * so post()'s getElementById('kbb-batch').value is unchanged and the
+			 * default 200 goes out exactly as it did before.
+			 *
+			 * It sits AFTER the buttons on purpose. It is reached by somebody
+			 * who has already pressed Start and watched the export stop, which
+			 * is the only moment it is the answer to anything -- and the way out
+			 * from there is Resume, which takes the new value on the next batch
+			 * because `batch` is deliberately the one setting start() does not
+			 * pin. See KBB_Export_Runner::pinned_settings().
+			 */
+			?>
 			<p>
-				<label>Rows per batch
-					<input type="number" id="kbb-batch" value="200" min="10" max="1000" step="10">
-				</label>
-				&nbsp;
 				<label>
 					<input type="checkbox" id="kbb-include-trashed">
 					Include trashed products and unpublished coupons
@@ -419,6 +449,29 @@ class KBB_Export_Admin {
 				<button class="button" id="kbb-stop">Pause</button>
 				<span id="kbb-blocked" class="description" style="color:#b32d2e"></span>
 			</p>
+
+			<details id="kbb-batch-details" style="margin:0 0 1em;max-width:52em">
+				<summary style="cursor:pointer">Only if the export keeps stopping before it finishes</summary>
+				<div style="margin:.5em 0 0;padding:.75em 1em;border-left:4px solid #c3c4c7;background:#fff">
+					<p style="margin-top:0">
+						The export is written in small pieces rather than all at once, so that no single piece
+						takes long enough for your web host to cut it off part way.
+						<strong>Rows per batch</strong> is how many rows go into one piece.
+					</p>
+					<p>
+						<strong>Leave this alone.</strong> On a shop this size the slowest piece takes about a
+						third of a second, and hosts normally allow thirty &mdash; so there is nothing to gain by
+						changing it. The one time it helps is a host that is stricter than that: if the export
+						keeps stopping on its own, make this number smaller and press <strong>Resume</strong>.
+						It carries on from where it got to, and nothing already written is lost or done twice.
+					</p>
+					<p style="margin-bottom:0">
+						<label>Rows per batch
+							<input type="number" id="kbb-batch" value="200" min="10" max="1000" step="10">
+						</label>
+					</p>
+				</div>
+			</details>
 
 			<div id="kbb-state" style="margin:1em 0;padding:.75em 1em;border-left:4px solid #72aee6;background:#fff;">
 				<p id="kbb-status"><strong>Idle.</strong> Nothing is running.</p>
