@@ -53,11 +53,12 @@ shows up in a row count. See §10.
 
 ## 2. What it imports
 
-Eight entities, in this order, because it is a dependency graph and not a
+Eleven entities, in this order, because it is a dependency graph and not a
 preference — products reference categories and brands, coupons name the
 products they are restricted to, orders reference customers and name a coupon
-code, order lines reference both orders and products, and a review names both
-its product and its reviewer.
+code, order lines reference both orders and products, a refund and an order
+note each attach to an order, and a review names both its product and its
+reviewer.
 
 | Entity | File | Matched on | Notes |
 |---|---|---|---|
@@ -68,6 +69,8 @@ its product and its reviewer.
 | `customers` | `customers.csv` | `wp_user_id` | Plus their billing/shipping addresses, from columns on the same row. |
 | `orders` | `orders.csv` | `wc_order_id` | Plus the order's own address snapshot and its `addresses` rows. |
 | `order-items` | `order_items.csv` | `wc_item_id` | Matched on the WooCommerce `order_item_id`. |
+| `refunds` | `refunds.csv` | `wc_refund_id` | Money WooCommerce gave back. After orders; `refunds.order_id` is NOT NULL. Imported rows carry `provider = woocommerce` and no provider reference or idempotency key — they are a record of money that has already moved, not a call this shop can make. They land `succeeded`, so they count in `PaymentRefunder::COUNTED` and net out of every revenue figure and out of the Refund button's ceiling. **Until these are imported, a partially refunded order reads as full revenue and offers its whole total as refundable.** See `docs/GI-REFUNDS-AND-NOTES.md`. |
+| `order-notes` | `order_notes.csv` | `source_comment_id` | The history of what was said and done on an order, shown beside the notes this shop writes itself. `is_customer_note` defaults to internal, which is the safe direction on a column whose other value is "show this to the buyer". |
 | `reviews` | `reviews.csv` | `source` + `source_id` | WordPress comments with `comment_type = 'review'`. After products (each names its product by post id) and after customers (a review carries the reviewer's WP user id). Recomputes `products.rating` and `products.review_count` at the end of the entity. |
 
 A file that is not there is skipped without complaint — a delta pass that only
@@ -203,7 +206,7 @@ row that arrived intact.
 | A unit price that does not divide evenly | adjusted | Three for AED 100 imports as 33.33 each, which multiplies back to 99.99. `subtotal` and `total` stay exact; the order page prints `unit_price`. |
 | HTML the allowlist removed | **discarded** | The `<script>` has to go. What the owner needs to know is that the description is no longer byte-for-byte what WooCommerce held, and by how much. |
 | Columns nothing reads | **discarded** | One entry per entity, naming every column and the first real value found in it. This is where `meta:_delivery_instructions = Ring the bell twice` and `order_notes` and `refund_amount` show up — real content nobody had a way to notice losing. |
-| Files nothing opens | **discarded** | One entry per file in the export folder that no entity opens — `refunds.csv`, `order_notes.csv` — with its row count. Suppressed under `--only`, where ignoring a file is the point. `coupons.csv` and `reviews.csv` used to be the two worst entries on this list and are now entities, and Lane GH took `variations.csv`, `attributes.csv` and `tags.csv` off it the same way; the channel stays for whatever the next export carries. |
+| Files nothing opens | **discarded** | One entry per file in the export folder that no entity opens — today `posts.csv` and whatever else the next export carries — with its row count. Suppressed under `--only`, where ignoring a file is the point. `coupons.csv` and `reviews.csv` were once the two worst entries on this list; `variations.csv`, `attributes.csv` and `tags.csv` came off it with Lane GH and `refunds.csv` and `order_notes.csv` with Lane GI, all in one round. The channel is not shrinking towards empty — it stays for whatever the next export carries, which is the whole reason it was never about two filenames. |
 | A coupon amount carrying fils | adjusted | The owner prices in whole dirhams (`App\Support\WholeDirhams`), and **nothing in WooCommerce ever enforced that**. Imported exactly — a 40,000-row migration must not die on a rounding policy — and named so `kbb:whole-dirhams` can settle it. Worse than the price case above: `CouponService::discountFor()` rounds a discount **up**, so a `fixed_cart` coupon imported at AED 99.50 hands back AED 100.00 on every order while Store → Coupons shows 99.50. |
 | A coupon expiry with no time on it | adjusted | WooCommerce reads `date_expires` as end-of-day-inclusive; this schema checks `now() > expires_at`. Imported bare, the code would die a day early and silently, so a date with no time is moved to 23:59:59. |
 | A coupon's `usage_limit_per_user` | **discarded** | Enforced here by counting `coupon_redemptions` rows, and an imported coupon has none. There is no column that could hold "who has already used this", so a shopper who spent a one-per-customer code in WooCommerce can spend it again here. Named per coupon with the limit's real value, because only the owner can decide whether to shorten the code's life instead. |

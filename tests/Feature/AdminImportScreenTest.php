@@ -680,7 +680,13 @@ it('walks the entities in the importer\'s own dependency order, never its own co
             // Coupons after the products their restriction lists name and
             // before the orders that name their code; reviews after both the
             // products they are of and the customers who wrote them.
-            'coupons', 'customers', 'orders', 'order-items', 'reviews', 'seo',
+            'coupons', 'customers', 'orders', 'order-items',
+            // Refunds and order notes after the orders they attach to. Both
+            // reject a row whose order is not here, because their order_id is
+            // NOT NULL; refunds are also what stops an imported order reading
+            // as full revenue, so their place in this walk is load-bearing.
+            'refunds', 'order-notes',
+            'reviews', 'seo',
         ])
         ->and(ImportWorkspace::entities())->toBe(ImportWorkspace::runnerOrder());
 
