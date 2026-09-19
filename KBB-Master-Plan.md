@@ -105,6 +105,27 @@ is a bug in this section rather than a second opinion about the phase.
 
 
 
+- **Lane GO — the import runs in the background.** The owner's own requirement:
+  *"i want this job must be running in background, even i close the tab."*
+  Batch-by-batch, real progress and stop already exist; what does not is a run
+  that survives the browser. No shell, no queue worker and no cron that can be
+  assumed, so it is a self-chaining run — and the hazards are the whole job: two
+  chains racing import every row twice, a lock a crash leaves held is a shop that
+  can never import again, and a runaway is worse than a stall
+- **Lane GP — the addresses group lands, and every old URL with it.** *"will have
+  all new urls as per our app."* Today that group downloads, unpacks and is
+  refused twice, because `permalinks.csv` and `media.csv` are read by a different
+  screen. ▲ And Lane GB measured the trap to re-check: `CheckRedirects` is
+  written as middleware and is not registered as one, so the table is consulted
+  only from the 404 handler — a row for an address the shop already answers can
+  never fire
+- **Lane GQ — is everything there?** *"make sure everything is there in export and
+  competible to our app."* Not a feature: a census three columns wide — what a
+  real WooCommerce shop holds, what the export carries, what the import lands —
+  because the dangerous case is the column that appears in neither the export nor
+  any report channel. `coupons.csv` and `reviews.csv` were ignored in silence
+  until something finally listed the files nobody opened
+
 ### Waiting on the owner, not on us
 
 - **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
