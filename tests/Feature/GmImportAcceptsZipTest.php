@@ -676,36 +676,75 @@ it('accepts a zip made on a Mac, junk folders and all', function () {
     expect(gmEverythingUnderImport())->toBe(['meta/products.json', 'woo/products.csv']);
 });
 
-it('refuses the addresses group file by file, exactly as a loose upload would', function () {
+it('takes the addresses group, both files, exactly as a loose upload would', function () {
     $this->actingAs(gmAdmin(), 'admin');
 
     /*
-     * A FINDING, NOT A FEATURE — and pinned so it cannot change by accident.
+     * ════════════════════════════════════════════════════════════════════════
+     * THIS TEST USED TO ASSERT THE OPPOSITE, AND SAYING SO IS THE POINT
+     * ════════════════════════════════════════════════════════════════════════
      *
-     * Lane GK's `addresses` group is permalinks.csv and media.csv. Neither is in
-     * ImportWorkspace::ENTITIES: docs/WP-EXPORT-CONTRACT.md lists both as GAP
-     * files whose importers come later, and they are read by
-     * `kbb:import-redirects` and MediaSideloader rather than by `kbb:import`.
+     * It was called `it refuses the addresses group file by file, exactly as a
+     * loose upload would`, and it pinned a FINDING rather than a feature: Lane
+     * GK's `addresses` group is permalinks.csv and media.csv, neither was in
+     * ImportWorkspace::ENTITIES, so that zip unpacked and both files were then
+     * refused one at a time with "Which export is this?". GM's §10.2 put the
+     * decision to somebody else: name it up front, write an importer, or say
+     * so on the export screen.
      *
-     * So that group's zip unpacks and both files are then refused one at a time
-     * — which is EXACTLY what a loose upload of the same two files does today,
-     * so the invariant holds and nothing regressed. The owner will still
-     * download that group and get two refusals and no import, which is
-     * docs/GM-IMPORT-ACCEPTS-ZIP.md §10.2 and somebody's decision to make.
+     * The answer was the fourth one, and it is in ImportWorkspace::COMPANIONS:
+     * neither file is an entity and neither needs to be, because the machinery
+     * that reads them — RedirectMap::fromPermalinks() and MediaIndex — already
+     * existed and had never been handed a file by anything with a screen.
+     *
+     * The INVARIANT this file exists for is untouched and is still what is
+     * asserted: a zip behaves exactly as if its members had been uploaded
+     * loose. What changed is what a loose upload of those two files does.
+     */
+    $zip = ZipBuilder::ordinary([
+        'permalinks.csv' => "type,wc_id,slug,permalink,status,source,note\n"
+            ."product_cat,17,toners,https://kbeautybliss.com/toners/,publish,wp,\n",
+        'media.csv' => "url,attachment_id,size,path,exists,bytes,referenced_by,referenced_id,field\n"
+            ."https://kbeautybliss.com/wp-content/uploads/2019/03/a.jpg,9,full,2019/03/a.jpg,1,120,product,4021,_thumbnail_id\n",
+    ]);
+
+    $body = gmUpload($zip, 'addresses.zip')->assertOk()->json();
+
+    expect($body['refused'])->toBe([]);
+    expect(array_column($body['accepted'], 'entity'))->toBe(['permalinks', 'media']);
+
+    // Filed in the export directory under their own literal names, beside the
+    // CSVs, which is where ImportRunner::reportUnreadFiles() already exempts
+    // both of them from the discard list the owner is asked to approve.
+    expect(gmEverythingUnderImport())->toContain('woo/permalinks.csv');
+    expect(gmEverythingUnderImport())->toContain('woo/media.csv');
+
+    // And they are not entities: nothing was added to the drive loop.
+    expect(ImportWorkspace::entities())->not->toContain('permalinks');
+    expect(array_diff(['permalinks', 'media'], ImportWorkspace::entities()))
+        ->toBe(['permalinks', 'media'], 'a companion file became an entity the drive loop would have to step');
+});
+
+it('refuses a file named permalinks.csv that the redirect map could not use', function () {
+    $this->actingAs(gmAdmin(), 'admin');
+
+    /*
+     * The guard that matters more than the acceptance. Neither companion file
+     * is imported, so neither produces a report anybody reads: a permalinks.csv
+     * with no `wc_id` does not fail, it makes fromPermalinks() skip every row
+     * and propose nothing — a map missing exactly the addresses the file was
+     * uploaded to supply, with nothing on the screen to say so. That is the
+     * broken-filter shape CLAUDE.md names.
      */
     $zip = ZipBuilder::ordinary([
         'permalinks.csv' => "old_url,new_url\n/a/,/b/\n",
-        'media.csv' => "src,alt\nhttps://example.test/a.jpg,A\n",
     ]);
 
     $body = gmUpload($zip, 'addresses.zip')->assertStatus(422)->json();
 
-    expect($body['refused'])->toHaveCount(2);
-
-    foreach ($body['refused'] as $refusal) {
-        expect($refusal['message'])->toContain('Which export is this?');
-    }
-
+    expect($body['refused'])->toHaveCount(1);
+    expect($body['refused'][0]['message'])->toContain('"wc_id" or "id" column');
+    expect($body['refused'][0]['message'])->toContain('Old addresses');
     expect(gmEverythingUnderImport())->toBe([]);
 });
 

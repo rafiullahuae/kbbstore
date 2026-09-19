@@ -62,7 +62,24 @@ it('serves a stored redirect instead of the 404 the path would otherwise raise',
     // Not a route this app serves — which is the point. The check lives in the
     // 404 exception handler, not in middleware, because middleware demonstrably
     // did not run for most requests.
-    $this->get('/an-old-marketing-url')->assertStatus(301)->assertRedirect('/shop/');
+    $response = $this->get('/an-old-marketing-url')->assertStatus(301);
+
+    /*
+     * ════════════════════════════════════════════════════════════════════════
+     * THE HEADER IS READ DIRECTLY, AND assertRedirect() CANNOT DO THIS
+     * ════════════════════════════════════════════════════════════════════════
+     *
+     * This line used to be `->assertRedirect('/shop/')` and it PASSED against a
+     * Location of `http://localhost/shop`. assertRedirect() builds its expected
+     * URL through the same UrlGenerator the redirect went through, and that
+     * generator strips a trailing slash — so both sides were stripped and the
+     * assertion could not see the difference it was written to check.
+     *
+     * The stored target keeps its slash (U-01), and since Lane GP the Location
+     * does too, because the handler goes through Url::redirect(). Asserting the
+     * raw header is the only spelling of this that would go red if it stopped.
+     */
+    expect((string) $response->headers->get('Location'))->toEndWith('/shop/');
 
     expect(Redirect::where('source', '/an-old-marketing-url')->value('hits'))->toBe(1);
 });

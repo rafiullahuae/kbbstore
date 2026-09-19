@@ -196,7 +196,21 @@ class AppServiceProvider extends ServiceProvider
                 if ($redirect !== null) {
                     \App\Http\Middleware\CheckRedirects::recordHit($redirect);
 
-                    return redirect($redirect->target, $redirect->code);
+                    /*
+                     * Url::redirect(), not the bare target. See
+                     * CheckRedirects::handle() for the whole argument; the
+                     * short version is that redirect() hands a relative target
+                     * to Laravel's UrlGenerator, which strips the trailing
+                     * slash and knows nothing about the reader's language.
+                     * Measured both ways on a running server: 15 of 15 rows
+                     * landed on a non-canonical address, and an Arabic reader
+                     * following one was dropped onto the English page. The
+                     * BASE PATH was already right — UrlGenerator takes it from
+                     * the request root — which is a correction to
+                     * docs/GB-MEDIA-AND-REDIRECTS.md §6.4; the other two were
+                     * not. This is the copy that actually runs.
+                     */
+                    return redirect(\App\Support\Url::redirect($redirect->target), $redirect->code);
                 }
 
                 if ($request->isMethod('GET') && !$request->is('admin*', 'admin-api*', 'api*')) {
