@@ -335,7 +335,7 @@ machine exists to prevent. Mutation **M12** is that reordering, and it goes red.
 
 ---
 
-## 8. The defect the rehearsal found, before the rehearsal
+## 8. The defect found before the rehearsal, and confirmed by it
 
 `STALE_SECONDS` (240) is **less** than `ImportDriver::LOCK_SECONDS` (300), and
 that gap was a real bug.
@@ -363,6 +363,11 @@ Two candidate fixes were weighed:
 
 It reads `ImportDriver::LOCK_SECONDS` rather than a number of its own, so the two
 constants cannot drift apart. Mutation **M13** removes the guard and goes red.
+
+**The rehearsal then played the whole window out in real time** (§11.3): RUNNING
+until t+233s, STALLED from t+233s to t+284s, and at t+294s — the first poll after
+the dead slice's claim aged out — the revival fired, `slices` reset to 1, and the
+run finished.
 
 ---
 
