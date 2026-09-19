@@ -60,11 +60,40 @@ kbb_harness_build( $pdo, $prefix, isset( $args['storage'] ) ? $args['storage'] :
  * capability checks that pass because the screen is only ever rendered for
  * somebody who has already got past add_management_page().
  */
+/*
+ * STEERABLE, because the download endpoint's first guard is a capability check
+ * and a stub that always answers true cannot fail it. $kbb_harness_caps unset
+ * means "the shop manager this screen is only ever rendered for"; set to an
+ * empty list it is the subscriber who should get 403 and not a zip.
+ */
 function current_user_can( $capability ) { // phpcs:ignore
-	return true;
+	global $kbb_harness_caps;
+
+	if ( ! isset( $kbb_harness_caps ) ) {
+		return true;
+	}
+
+	return in_array( $capability, (array) $kbb_harness_caps, true );
 }
 
-function wp_die( $message ) { // phpcs:ignore
+/*
+ * THROWN, NOT EXITED, in the download probe. Every refusal in
+ * KBB_Export_Admin::download() ends in wp_die(), and a stub that exits can
+ * report one refusal per process -- which would make "a bogus group and a group
+ * that was never exported give the SAME answer" an assertion across two runs
+ * that could silently stop comparing anything.
+ */
+class KBB_Harness_Died extends Exception {} // phpcs:ignore
+
+function wp_die( $message, $title = '', $args = array() ) { // phpcs:ignore
+	global $kbb_harness_throw;
+
+	$status = isset( $args['response'] ) ? (int) $args['response'] : 0;
+
+	if ( ! empty( $kbb_harness_throw ) ) {
+		throw new KBB_Harness_Died( (string) $message, $status );
+	}
+
 	fwrite( STDERR, $message . "\n" );
 	exit( 1 );
 }
@@ -99,6 +128,17 @@ function disabled( $condition, $value = true, $echo = true ) {
 	return $out;
 }
 
+function nocache_headers() { // phpcs:ignore
+}
+
+function wp_verify_nonce( $nonce, $action ) {
+	return wp_create_nonce( $action ) === $nonce ? 1 : false;
+}
+
+function wp_nonce_url( $url, $action ) {
+	return $url . ( false === strpos( $url, '?' ) ? '?' : '&' ) . '_wpnonce=' . wp_create_nonce( $action );
+}
+
 function add_action( $hook, $callback ) { // phpcs:ignore
 }
 
@@ -109,6 +149,7 @@ require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-media-index.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-groups.php';
+require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-zip.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-stage.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-orders-source.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-runner.php';
@@ -174,6 +215,215 @@ if ( isset( $args['probe'] ) && 'settings' === $args['probe'] ) {
 		JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
 	) . "
 ";
+
+	exit( 0 );
+}
+
+/*
+ * ── A REAL FINISHED EXPORT BEHIND THE SCREEN ────────────────────────────────
+ *
+ *   --with_export=catalogue,sales --confirm=sales:customers
+ *
+ * Runs the export and the zip phase to completion against this fixture, then
+ * renders the page on top of the state it left. That is what gets the DOWNLOAD
+ * table drawn from the SERVER on load, which is a different code path from the
+ * one the live run draws and is the one that matters most: the owner will close
+ * the tab and come back, and a download table that only exists in the page that
+ * started the export is a download table he cannot reach.
+ *
+ * Passing a subset of the groups is how the "Not in this export" state is
+ * reached, which is the state the screen has to be honest about rather than
+ * offering a button that 404s.
+ */
+if ( isset( $args['with_export'] ) ) {
+	$chosen = ( '' === $args['with_export'] || '1' === $args['with_export'] )
+		? KBB_Export_Groups::keys()
+		: explode( ',', $args['with_export'] );
+
+	$export_settings = array(
+		'batch'        => 500,
+		'skip_trashed' => true,
+		'groups'       => $chosen,
+		'confirmed'    => isset( $args['confirm'] ) && '' !== $args['confirm'] ? explode( ',', $args['confirm'] ) : array(),
+	);
+
+	$export_runner = new KBB_Export_Runner( $export_settings );
+	$export_runner->reset();
+
+	$export_runner = new KBB_Export_Runner( $export_settings );
+	$started       = $export_runner->start();
+
+	if ( empty( $started['ok'] ) ) {
+		fwrite( STDERR, 'REFUSED: ' . $started['error'] . "\n" );
+		exit( 4 );
+	}
+
+	$guard = 0;
+
+	do {
+		$step = ( new KBB_Export_Runner( $export_settings ) )->step();
+		$guard++;
+	} while ( empty( $step['done'] ) && $guard < 20000 );
+
+	$guard = 0;
+
+	do {
+		$zip = ( new KBB_Export_Runner( $export_settings ) )->zip_step();
+		$guard++;
+	} while ( empty( $zip['done'] ) && $guard < 5000 );
+}
+
+/*
+ * ── THE DOWNLOAD ENDPOINT, PROBED FROM OUTSIDE THE BROWSER ──────────────────
+ *
+ *   php wordpress-plugin/harness/screen.php --with_export=catalogue \
+ *       --probe=download --scenario=no_cap
+ *
+ * KBB_Export_Admin::download() hands over customers.csv, which carries every
+ * shopper's address and their WordPress password hash. Four guards stand in
+ * front of it and each one is reached here on its own, because a test that only
+ * ever exercises the happy path proves the happy path.
+ *
+ *   no_cap       a user without manage_woocommerce -> 403, and no bytes
+ *   bad_nonce    the right user, a wrong nonce     -> 403, and no bytes
+ *   absent_group a group this export did not carry -> 404
+ *   bogus_group  a group key that does not exist   -> 404, THE SAME SENTENCE
+ *   traversal    ../ in the group parameter        -> 404, THE SAME SENTENCE
+ *   ok           the real thing                    -> the archive's exact bytes
+ *
+ * `ok` streams to stdout and exits, which is what the endpoint really does, so
+ * it gets a process of its own and the test compares what came out against the
+ * file on disk. The refusals throw instead of exiting (see wp_die above) so
+ * that all of them can be compared against each other in ONE run -- which is
+ * what makes "the same answer" an assertion rather than a coincidence.
+ */
+if ( isset( $args['probe'] ) && 'download' === $args['probe'] ) {
+	$scenario = isset( $args['scenario'] ) ? $args['scenario'] : 'ok';
+	$good     = wp_create_nonce( KBB_Export_Admin::DOWNLOAD_NONCE );
+
+	$run = function ( $caps, $nonce, $group, $part ) {
+		global $kbb_harness_caps, $kbb_harness_throw;
+
+		$kbb_harness_caps  = $caps;
+		$kbb_harness_throw = true;
+
+		$_GET = array( '_wpnonce' => $nonce, 'group' => $group, 'part' => $part );
+
+		try {
+			ob_start();
+			KBB_Export_Admin::download();
+			$body = ob_get_clean();
+
+			return array( 'died' => false, 'status' => 200, 'message' => '', 'bytes' => strlen( $body ) );
+		} catch ( KBB_Harness_Died $e ) {
+			$body = ob_get_clean();
+
+			return array(
+				'died'    => true,
+				'status'  => $e->getCode(),
+				'message' => $e->getMessage(),
+				// A refusal that has already written half the archive is not a
+				// refusal, so what reached the buffer is counted, not assumed.
+				'bytes'   => strlen( (string) $body ),
+			);
+		}
+	};
+
+	if ( 'ok' === $scenario ) {
+		$state = get_option( KBB_Export_Runner::STATE_OPTION, array() );
+		$found = ( new KBB_Export_Runner() )->archive_path( isset( $args['group'] ) ? $args['group'] : 'catalogue', 1 );
+
+		if ( isset( $args['describe'] ) ) {
+			echo json_encode(
+				array(
+					'ok'       => $found['ok'],
+					'name'     => $found['name'],
+					// The path is reported so the test can assert it is INSIDE
+					// the guarded export folder rather than somewhere the web
+					// server would serve without WordPress in the path.
+					'path'     => $found['path'],
+					'dir'      => isset( $state['dir'] ) ? $state['dir'] : '',
+					'bytes'    => $found['ok'] ? filesize( $found['path'] ) : 0,
+				),
+				JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+			) . "\n";
+
+			exit( 0 );
+		}
+
+		/*
+		 * ── --pad=N: MAKING "IT STREAMS" A MEASUREMENT ──────────────────────
+		 *
+		 * download() reads the archive in 8 KB chunks rather than with
+		 * file_get_contents(), because a 40 MB archive read whole is 40 MB of
+		 * PHP memory on a shared host whose limit is often 128 MB and is shared
+		 * with everything else the request loaded. On a 4 KB fixture archive
+		 * both spellings behave identically, so the mutation "read the whole
+		 * file into memory" would survive every test in the suite -- which is
+		 * the shape of hole docs/GK-EXPORT-GROUPS.md section 6.1 paid for once.
+		 *
+		 * So the archive is padded with N MB of INCOMPRESSIBLE bytes, stored
+		 * rather than deflated, and the caller runs this process under a
+		 * memory_limit well below N. Streaming survives; reading it whole is a
+		 * fatal error. The padding is written and added in 1 MB pieces so that
+		 * building it does not need the memory the test is about.
+		 */
+		if ( isset( $args['pad'] ) && (int) $args['pad'] > 0 ) {
+			$megabytes = (int) $args['pad'];
+			$found     = ( new KBB_Export_Runner() )->archive_path( isset( $args['group'] ) ? $args['group'] : 'catalogue', 1 );
+			$blob      = sys_get_temp_dir() . '/kbb-pad-' . getmypid() . '.bin';
+			$handle    = fopen( $blob, 'wb' );
+
+			for ( $written = 0; $written < $megabytes; $written++ ) {
+				$chunk = '';
+
+				// Incompressible on purpose: padding that deflates to nothing
+				// would make the archive small again and measure nothing.
+				for ( $piece = 0; $piece < 64; $piece++ ) {
+					$chunk .= random_bytes( 16384 );
+				}
+
+				fwrite( $handle, $chunk );
+			}
+
+			fclose( $handle );
+
+			$zip = new ZipArchive();
+			$zip->open( $found['path'] );
+			$zip->addFile( $blob, 'padding.bin' );
+			$zip->setCompressionName( 'padding.bin', ZipArchive::CM_STORE );
+			$zip->close();
+
+			unlink( $blob );
+		}
+
+		global $kbb_harness_caps, $kbb_harness_throw;
+
+		$kbb_harness_caps  = null;
+		$kbb_harness_throw = false;
+
+		$_GET = array(
+			'_wpnonce' => $good,
+			'group'    => isset( $args['group'] ) ? $args['group'] : 'catalogue',
+			'part'     => '1',
+		);
+
+		// Streams to stdout and exits, exactly as it does on the server.
+		KBB_Export_Admin::download();
+
+		exit( 0 );
+	}
+
+	$results = array(
+		'no_cap'       => $run( array(), $good, 'catalogue', '1' ),
+		'bad_nonce'    => $run( null, 'not-the-nonce', 'catalogue', '1' ),
+		'absent_group' => $run( null, $good, 'reviews', '1' ),
+		'bogus_group'  => $run( null, $good, 'not_a_group', '1' ),
+		'traversal'    => $run( null, $good, '../../../../etc/passwd', '1' ),
+		'absent_part'  => $run( null, $good, 'catalogue', '9' ),
+	);
+
+	echo json_encode( $results, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
 
 	exit( 0 );
 }

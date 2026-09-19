@@ -35,11 +35,40 @@ class KBB_Export_Admin {
 	const CAPABILITY = 'manage_woocommerce';
 	const NONCE      = 'kbb_export';
 
+	/*
+	 * A SEPARATE NONCE FOR THE DOWNLOAD, and it is separate on purpose.
+	 *
+	 * The export nonce travels in a POST body that the page holds for as long as
+	 * the tab is open. The download is a GET -- it has to be, because a browser
+	 * saves a navigation and not a fetch -- so its nonce ends up in a URL, which
+	 * is a place URLs get: the history, a referrer, a screenshot, an over-the-
+	 * shoulder photograph of the thing he is asking for help with. Giving it its
+	 * own action means a leaked download URL cannot be replayed as a request to
+	 * START an export, and vice versa. WordPress's own admin does the same thing
+	 * for the same reason.
+	 */
+	const DOWNLOAD_NONCE = 'kbb_export_download';
+
 	public static function boot() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'wp_ajax_kbb_export_start', array( __CLASS__, 'ajax_start' ) );
 		add_action( 'wp_ajax_kbb_export_step', array( __CLASS__, 'ajax_step' ) );
+		add_action( 'wp_ajax_kbb_export_zip', array( __CLASS__, 'ajax_zip' ) );
 		add_action( 'wp_ajax_kbb_export_reset', array( __CLASS__, 'ajax_reset' ) );
+
+		/*
+		 * admin-post.php and NOT admin-ajax.php, and not a URL under uploads.
+		 *
+		 * `admin_post_<action>` is reached only by a logged-in user -- the
+		 * nopriv twin, which this deliberately does not register, is the hook a
+		 * logged-out request lands on -- and the handler then checks the
+		 * capability and the nonce itself rather than trusting that. A link
+		 * straight into wp-content/uploads would be none of those things: it is
+		 * served by the web server with no WordPress in the path, so the only
+		 * thing standing between a stranger and every shopper's password hash
+		 * would be nobody having guessed the folder name.
+		 */
+		add_action( 'admin_post_kbb_export_download', array( __CLASS__, 'download' ) );
 	}
 
 	public static function menu() {
@@ -92,6 +121,139 @@ class KBB_Export_Admin {
 		} catch ( Exception $e ) { // phpcs:ignore
 			wp_send_json( array( 'ok' => false, 'error' => $e->getMessage() ) );
 		}
+	}
+
+	/**
+	 * ONE BOUNDED UNIT OF THE ZIP PHASE, driven by the browser exactly as the
+	 * export's batches are. See KBB_Export_Runner::zip_step().
+	 */
+	public static function ajax_zip() {
+		self::guard();
+
+		try {
+			$runner = new KBB_Export_Runner( self::settings_from_request() );
+
+			wp_send_json( $runner->zip_step() );
+		} catch ( Exception $e ) { // phpcs:ignore
+			wp_send_json( array( 'ok' => false, 'error' => $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * Send one group's archive to the browser.
+	 *
+	 * ============================================================================
+	 * THIS IS THE ENDPOINT THAT HANDS OVER EVERY SHOPPER'S PASSWORD HASH
+	 * ============================================================================
+	 *
+	 * customers.csv carries every shopper's address and their WordPress password
+	 * hash; reviews.csv carries the reviewer's email and the IP they posted from
+	 * -- the exact pair this repository has already had leak out of an
+	 * unauthenticated /api/* route. So four things, and none of them is
+	 * sufficient alone:
+	 *
+	 *  1. CAPABILITY. manage_woocommerce is what a shop manager has and a
+	 *     subscriber does not. Checked here and not merely on the menu entry,
+	 *     because add_management_page() decides what is in a menu and not what
+	 *     answers a URL.
+	 *
+	 *  2. NONCE, its own (see DOWNLOAD_NONCE). Without it a page on another site
+	 *     can put <img src="...admin-post.php?action=kbb_export_download..."> in
+	 *     front of a logged-in administrator and read the response.
+	 *
+	 *  3. NO PATH FROM THE REQUEST. The request names a group and a part. The
+	 *     folder comes from the runner's own state and the file name is computed
+	 *     from that state's export id -- see KBB_Export_Runner::archive_path().
+	 *     Nothing the browser sent is concatenated into a path, so there is no
+	 *     traversal to sanitise rather than a sanitiser to get right.
+	 *
+	 *  4. THE FOLDER STAYS DENIED. The archive is written INSIDE
+	 *     uploads/kbb-export/<id>/, which already carries index.php and whose
+	 *     parent carries a deny-all .htaccess. Putting the zip anywhere the web
+	 *     server would serve it -- the uploads root, a "public" folder -- would
+	 *     hand back with one hand what the guard took with the other. The test
+	 *     `it does not undo the folder guard by adding an archive to it` reads
+	 *     the guard files back AFTER the archives are written.
+	 *
+	 * ── AND IT STREAMS ─────────────────────────────────────────────────────
+	 *
+	 * file_get_contents() on a 40 MB archive is 40 MB of PHP memory on a shared
+	 * host whose limit is frequently 128 MB and is shared with whatever else the
+	 * request loaded. Read in 8 KB chunks with the buffers torn down first, so
+	 * the memory cost is the chunk and not the file -- and so the download
+	 * starts moving immediately rather than after the whole thing is in RAM,
+	 * which is also the difference between a progress bar and a hung browser.
+	 */
+	public static function download() {
+		if ( ! current_user_can( self::CAPABILITY ) && ! current_user_can( 'manage_options' ) ) {
+			wp_die( 'You do not have permission to download this export.', '', array( 'response' => 403 ) );
+		}
+
+		$nonce = isset( $_GET['_wpnonce'] ) ? (string) $_GET['_wpnonce'] : '';
+
+		if ( ! wp_verify_nonce( $nonce, self::DOWNLOAD_NONCE ) ) {
+			wp_die( 'That download link has expired. Reload the export screen and try again.', '', array( 'response' => 403 ) );
+		}
+
+		$group = isset( $_GET['group'] ) ? preg_replace( '/[^a-z_]/', '', strtolower( (string) $_GET['group'] ) ) : '';
+		$part  = isset( $_GET['part'] ) ? (int) $_GET['part'] : 1;
+
+		$found = ( new KBB_Export_Runner() )->archive_path( $group, $part );
+
+		if ( ! $found['ok'] ) {
+			/*
+			 * ONE ANSWER FOR EVERY WAY OF NOT HAVING IT. A group that was never
+			 * exported, a part that was never planned and a group key that does
+			 * not exist all get the same sentence and the same status, so the
+			 * endpoint cannot be used to ask which groups this shop exported.
+			 * The screen already knows all of it and says so there, where the
+			 * person asking is the person entitled to the answer.
+			 */
+			wp_die( esc_html( $found['error'] ), '', array( 'response' => 404 ) );
+		}
+
+		// Every buffer torn down before a byte goes out, or the "stream" is a
+		// buffer that holds the whole file anyway. @ because a host with
+		// output_buffering off has none to close and says so loudly.
+		while ( ob_get_level() > 0 ) {
+			@ob_end_clean(); // phpcs:ignore
+		}
+
+		nocache_headers();
+
+		header( 'Content-Type: application/zip' );
+		header( 'Content-Disposition: attachment; filename="' . $found['name'] . '"' );
+		header( 'Content-Length: ' . filesize( $found['path'] ) );
+		header( 'X-Content-Type-Options: nosniff' );
+
+		$handle = fopen( $found['path'], 'rb' );
+
+		if ( false === $handle ) {
+			wp_die( 'The archive could not be opened for reading.', '', array( 'response' => 500 ) );
+		}
+
+		while ( ! feof( $handle ) ) {
+			echo fread( $handle, 8192 ); // phpcs:ignore
+
+			flush();
+		}
+
+		fclose( $handle );
+
+		exit;
+	}
+
+	/**
+	 * The URL for one group's archive, nonce and all.
+	 *
+	 * Built here rather than in the page's JavaScript so that the nonce is
+	 * minted by WordPress on the server for the action it actually guards.
+	 */
+	public static function download_url( $group, $part = 1 ) {
+		return wp_nonce_url(
+			admin_url( 'admin-post.php?action=kbb_export_download&group=' . rawurlencode( $group ) . '&part=' . (int) $part ),
+			self::DOWNLOAD_NONCE
+		);
 	}
 
 	public static function ajax_reset() {
@@ -174,11 +336,22 @@ class KBB_Export_Admin {
 
 			<p>
 				Writes the CSV set the new shop imports into
-				<code><?php echo esc_html( KBB_Export_Wp::uploads_dir() . '/kbb-export/' ); ?></code>.
-				Download the folder over FTP when it finishes, then <strong>delete it from the server</strong> &mdash;
-				<code>customers.csv</code> holds every shopper&rsquo;s address and password hash and
-				<code>reviews.csv</code> holds reviewers&rsquo; email addresses and IPs.
+				<code><?php echo esc_html( KBB_Export_Wp::uploads_dir() . '/kbb-export/' ); ?></code>,
+				and then packs <strong>one zip per group</strong> so you can download each one straight from this
+				page &mdash; no FTP, and no single heavy file. Each zip is a complete import on its own: unpack it
+				and point the new shop at the folder.
 			</p>
+			<p>
+				When you have downloaded them all, <strong>delete the folder from the server</strong> &mdash;
+				<code>customers.csv</code> holds every shopper&rsquo;s address and password hash and
+				<code>reviews.csv</code> holds reviewers&rsquo; email addresses and IPs. The folder is already
+				protected (a random name, an <code>index.php</code> and a deny-all <code>.htaccess</code>), and the
+				downloads below go through WordPress with your login checked &mdash; but the only completely safe
+				copy is the one that is not there.
+			</p>
+			<?php if ( ! KBB_Export_Zip::available() ) : ?>
+				<div class="notice notice-warning inline"><p><?php echo esc_html( KBB_Export_Zip::unavailable_reason() ); ?></p></div>
+			<?php endif; ?>
 
 			<h2>Where this shop keeps its orders</h2>
 			<?php if ( null === $detected['source'] ) : ?>
@@ -256,6 +429,15 @@ class KBB_Export_Admin {
 				<div id="kbb-group-bars"></div>
 			</div>
 
+			<h2>Download</h2>
+			<p class="description" id="kbb-download-intro" style="max-width:52em">
+				One zip per group. Each one carries its own <code>manifest.json</code> describing only its own
+				files, and every zip of one export carries the <strong>same export id</strong> &mdash; which is how
+				the new shop can tell these are parts of one export rather than several. Import them in the order
+				they are listed above.
+			</p>
+			<div id="kbb-downloads"></div>
+
 			<div id="kbb-notes"></div>
 
 			<script>
@@ -264,6 +446,18 @@ class KBB_Export_Admin {
 				var nonce = <?php echo wp_json_encode( $nonce ); ?>;
 				var ajax = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
 				var GROUPS = <?php echo wp_json_encode( KBB_Export_Groups::all() ); ?>;
+				var DOWNLOAD_BASE = <?php echo wp_json_encode( admin_url( 'admin-post.php?action=kbb_export_download' ) ); ?>;
+				var DOWNLOAD_NONCE = <?php echo wp_json_encode( wp_create_nonce( self::DOWNLOAD_NONCE ) ); ?>;
+				/*
+				 * WHAT THIS SCREEN ALREADY HAS, drawn before anything is clicked.
+				 *
+				 * He will close this tab. An export that finished on Tuesday and
+				 * eight archives sitting in the folder are worth nothing if the
+				 * only way to reach them is to have kept the page open since,
+				 * so the finished state is rendered from the server on load and
+				 * the same function redraws it live.
+				 */
+				var INITIAL_ZIP = <?php echo wp_json_encode( ! empty( $state['done'] ) ? $runner->zip_progress() : null ); ?>;
 				var lastMoved = Date.now();
 				var lastDone = -1;
 
@@ -454,6 +648,11 @@ class KBB_Export_Admin {
 						running = false;
 						say('Finished', p.rows_done + ' rows written to ' + p.dir + '. manifest.json is written last, so its presence means the export completed.');
 						renderNotes(p.notes || []);
+						// The export is complete and importable at this moment
+						// whether or not anything is zipped. Packing is the next
+						// phase, not part of this one.
+						renderDownloads(p.zip);
+						packing(p.zip);
 						return;
 					}
 
@@ -462,6 +661,106 @@ class KBB_Export_Admin {
 						' — ' + p.rows_done + ' of about ' + p.rows_total + ' rows.');
 
 					if (running) { post('kbb_export_step', {}, render); }
+				}
+
+				/*
+				 * ── THE DOWNLOAD TABLE, AND ITS THREE HONEST STATES ─────────
+				 *
+				 * "Keep the screen honest about what it has." A group that was
+				 * not exported has no archive, and the row SAYS SO instead of
+				 * offering a button that answers 404 -- because a 404 tells him
+				 * nothing about which of the three reasons it is, and the screen
+				 * knows all three.
+				 *
+				 *   ready    -- a link, with the archive's name and its size, so
+				 *               he can see before clicking that it is not heavy.
+				 *   building -- the export is done and this group is still being
+				 *               packed. Not pressable, and it says which.
+				 *   absent   -- not in this export. Not pressable, and it says
+				 *               so in words rather than by being missing: a row
+				 *               that is simply not drawn reads as a bug.
+				 */
+				function downloadUrl(group, part) {
+					return DOWNLOAD_BASE + '&group=' + encodeURIComponent(group) +
+						'&part=' + encodeURIComponent(part) + '&_wpnonce=' + encodeURIComponent(DOWNLOAD_NONCE);
+				}
+
+				function bytes(n) {
+					if (n < 1024) { return n + ' B'; }
+					if (n < 1024 * 1024) { return (n / 1024).toFixed(0) + ' KB'; }
+					return (n / 1024 / 1024).toFixed(1) + ' MB';
+				}
+
+				function renderDownloads(zip) {
+					var box = document.getElementById('kbb-downloads');
+
+					if (!zip) { box.innerHTML = ''; return; }
+
+					if (zip.available === false) {
+						box.innerHTML = '<div class="notice notice-warning inline"><p>' + esc(zip.reason) + '</p></div>';
+						return;
+					}
+
+					var html = '<table class="widefat striped" id="kbb-download-table" style="max-width:60em"><tbody>';
+
+					(zip.groups || []).forEach(function (g) {
+						var cell = '';
+
+						if (g.state === 'absent') {
+							cell = '<button type="button" class="button kbb-download" disabled ' +
+								'data-group="' + esc(g.key) + '" data-state="absent">Not in this export</button>' +
+								'<br><span class="description">' + esc(g.why) + '</span>';
+						} else {
+							(g.parts || []).forEach(function (part) {
+								if (part.ready) {
+									cell += '<a class="button button-primary kbb-download" data-state="ready" ' +
+										'data-group="' + esc(g.key) + '" data-part="' + esc(part.part) + '" ' +
+										'href="' + esc(downloadUrl(g.key, part.part)) + '">Download' +
+										(part.parts > 1 ? ' part ' + esc(part.part) + ' of ' + esc(part.parts) : '') +
+										'</a> <span class="description">' + esc(part.archive) + ' &middot; ' +
+										esc(bytes(part.bytes)) + '</span><br>';
+								} else {
+									cell += '<button type="button" class="button kbb-download" disabled ' +
+										'data-group="' + esc(g.key) + '" data-state="building">Packing&hellip;</button><br>';
+								}
+
+								cell += '<span class="description">' + esc((part.files || []).join('  ')) + '</span><br>';
+							});
+						}
+
+						html += '<tr><td style="width:14em"><strong>' + esc(g.label) + '</strong></td>' +
+							'<td>' + cell + '</td></tr>';
+					});
+
+					box.innerHTML = html + '</tbody></table>';
+				}
+
+				/*
+				 * THE ZIP PHASE IS A LOOP, exactly like the export's, because it
+				 * is bounded the same way: one file into one archive per
+				 * request. A group is not a unit of work a shared host's
+				 * 110-second limit respects, and 10,571 order lines compressed
+				 * inside the request that finished the export is that limit put
+				 * straight back.
+				 */
+				function packing(z) {
+					if (!z || z.ok === false) {
+						say('Stopped', z && z.error ? z.error : 'The archives could not be packed.');
+						return;
+					}
+
+					renderDownloads(z);
+
+					if (z.done || z.available === false) {
+						say('Finished', z.available === false
+							? 'The export is written to the folder above. ' + z.reason
+							: 'Every group is packed. Download each one below, then delete the folder from the server.');
+						return;
+					}
+
+					say('Packing', 'Building the downloads — ' + z.units_done + ' of ' + z.units + '.');
+
+					post('kbb_export_zip', {}, packing);
 				}
 
 				function renderNotes(notes) {
@@ -504,6 +803,17 @@ class KBB_Export_Admin {
 				});
 
 				recompute();
+				renderDownloads(INITIAL_ZIP);
+
+				/*
+				 * A FINISHED EXPORT WHOSE ARCHIVES ARE NOT ALL THERE gets picked
+				 * up where it was left. He closed the tab during the zip phase,
+				 * or the request died; either way the cursor is in the option
+				 * and the work left is whatever is left. Nothing is re-exported.
+				 */
+				if (INITIAL_ZIP && INITIAL_ZIP.available !== false && !INITIAL_ZIP.done) {
+					packing(INITIAL_ZIP);
+				}
 			})();
 			</script>
 		</div>

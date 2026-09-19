@@ -55,6 +55,7 @@ require_once __DIR__ . '/includes/class-kbb-export-csv.php';
 require_once __DIR__ . '/includes/class-kbb-export-wp.php';
 require_once __DIR__ . '/includes/class-kbb-export-media-index.php';
 require_once __DIR__ . '/includes/class-kbb-export-groups.php';
+require_once __DIR__ . '/includes/class-kbb-export-zip.php';
 require_once __DIR__ . '/includes/class-kbb-export-stage.php';
 require_once __DIR__ . '/includes/class-kbb-export-orders-source.php';
 require_once __DIR__ . '/includes/class-kbb-export-runner.php';

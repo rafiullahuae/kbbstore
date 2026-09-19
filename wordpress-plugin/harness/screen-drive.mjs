@@ -80,10 +80,89 @@ await page.addInitScript(() => {
         { key: 'addresses', label: 'Addresses and pictures', files: ['permalinks.csv', 'media.csv'], rows_done: 0, rows_total: 18, percent: 0, state: 'pending' },
     ];
 
+    /*
+     * ── THE ZIP PHASE, FAKED THE SAME WAY THE EXPORT IS ─────────────────────
+     *
+     * Lane GL added a second browser-driven loop: once the export is done the
+     * page posts kbb_export_zip until every archive is packed, and redraws the
+     * download table between units. That loop is JavaScript too, and the PHP
+     * suite can no more see it than it could see the group ticks -- which is
+     * the whole finding docs/GK-EXPORT-GROUPS.md section 6.1 paid for. So the
+     * stub answers that action as well, and it answers it with the SHAPE
+     * KBB_Export_Runner::zip_progress() really returns: a group left out of the
+     * export comes back `absent`, a group not yet packed comes back with
+     * ready:false, and one comes back ready with a size. All three have to draw
+     * differently, and a stub that only ever produced the happy one would prove
+     * only that the happy one draws.
+     */
+    const zipGroups = (packed) => ([
+        { key: 'catalogue', label: 'Catalogue', state: packed > 0 ? 'ready' : 'building', why: '',
+          parts: [{ part: 1, parts: 1, archive: 'kbb-export-catalogue-8f14e45f.zip', ready: packed > 0, bytes: 727245, files: ['categories.csv', 'products.csv'] }] },
+        { key: 'seo', label: 'SEO (Yoast)', state: 'absent', why: 'SEO (Yoast) was not in this export, so there is no file to download.', parts: [] },
+        { key: 'coupons', label: 'Coupons', state: packed > 1 ? 'ready' : 'building', why: '',
+          parts: [{ part: 1, parts: 1, archive: 'kbb-export-coupons-8f14e45f.zip', ready: packed > 1, bytes: 8294, files: ['coupons.csv'] }] },
+        { key: 'customers', label: 'Customers', state: packed > 1 ? 'ready' : 'building', why: '',
+          parts: [{ part: 1, parts: 1, archive: 'kbb-export-customers-8f14e45f.zip', ready: packed > 1, bytes: 653619, files: ['customers.csv'] }] },
+        { key: 'sales', label: 'Orders', state: packed > 2 ? 'ready' : 'building', why: '',
+          parts: [{ part: 1, parts: 1, archive: 'kbb-export-sales-8f14e45f.zip', ready: packed > 2, bytes: 2264924, files: ['orders.csv', 'order_items.csv', 'refunds.csv', 'order_notes.csv'] }] },
+        { key: 'reviews', label: 'Reviews', state: 'absent', why: 'Reviews was not in this export, so there is no file to download.', parts: [] },
+        { key: 'content', label: 'Journal articles', state: 'absent', why: 'Journal articles was not in this export, so there is no file to download.', parts: [] },
+        { key: 'addresses', label: 'Addresses and pictures', state: 'absent', why: 'Addresses and pictures was not in this export, so there is no file to download.', parts: [] },
+    ]);
+
+    const zipReply = (packed) => ({
+        ok: true,
+        error: '',
+        available: true,
+        reason: '',
+        units_done: packed,
+        units: 3,
+        done: packed >= 3,
+        percent: Math.floor((packed / 3) * 100),
+        groups: zipGroups(packed),
+    });
+
+    window.__steps = 0;
+    window.__zipUnits = 0;
+
     window.fetch = function (url, options) {
         const body = String(options && options.body ? options.body : '');
+        const sent = Object.fromEntries(new URLSearchParams(body));
 
-        window.__posts.push(Object.fromEntries(new URLSearchParams(body)));
+        window.__posts.push(sent);
+
+        if (sent.action === 'kbb_export_zip') {
+            window.__zipUnits = Math.min(3, window.__zipUnits + 1);
+
+            const reply = zipReply(window.__zipUnits);
+
+            return new Promise((resolve) => setTimeout(() => resolve({
+                json: () => Promise.resolve(reply),
+            }), 90));
+        }
+
+        /*
+         * The export finishes after a few batches when __hold is released, so
+         * the page reaches the state that STARTS the zip loop. Without this the
+         * stub answers done:false for ever and the download table is never
+         * drawn -- which is the shape of hole that let M13 survive.
+         */
+        if (sent.action === 'kbb_export_step' && !window.__hold) {
+            window.__steps++;
+
+            if (window.__steps > 1) {
+                return new Promise((resolve) => setTimeout(() => resolve({
+                    json: () => Promise.resolve({
+                        ok: true, error: '', export_id: '8f14e45f-ceea-467a-9c31-1a2b3c4d5e6f',
+                        dir: '/home/kbb/public_html/wp-content/uploads/kbb-export/8f14e45f',
+                        stage: 'manifest.json', stage_index: 17, stage_count: 17,
+                        groups: groupsMidRun, written: {}, totals: {},
+                        rows_done: 51, rows_total: 51, percent: 100, done: true,
+                        storage: 'legacy (wp_posts)', notes: [], zip: zipReply(0),
+                    }),
+                }), 90));
+            }
+        }
 
         /*
          * A REAL DELAY, not an immediately-resolved promise. The page answers
@@ -132,6 +211,50 @@ const warnings = () =>
             heading: n.querySelector('strong').textContent.trim(),
         })),
     );
+
+/*
+ * ── --static: THE PAGE AS HE FINDS IT WHEN HE COMES BACK ────────────────────
+ *
+ * screen.php --with_export= runs a REAL export and a REAL zip phase, then
+ * renders the page on top of the state it left. The download table is then
+ * drawn from the SERVER on load rather than by the loop that packed it, which
+ * is a different code path and the one that matters most: he will close the tab
+ * and come back, and a download table that only exists in the page that started
+ * the export is a download table he cannot reach.
+ *
+ * Nothing is intercepted or clicked here. What is read back is what the server
+ * put on the page.
+ */
+if (args.static) {
+    findings.static_downloads = await page.$$eval('#kbb-downloads tr', (rows) =>
+        rows.map((row) => {
+            const control = row.querySelector('.kbb-download');
+
+            return {
+                label: row.children[0].textContent.trim(),
+                state: control ? control.getAttribute('data-state') : 'none',
+                tag: control ? control.tagName.toLowerCase() : '',
+                disabled: control ? !!control.disabled : null,
+                href: control && control.tagName.toLowerCase() === 'a' ? control.getAttribute('href') : '',
+                description: row.children[1].textContent.trim(),
+            };
+        }),
+    );
+
+    await shot(args.shotname || '02-after-a-run.png');
+
+    findings.posts = await page.evaluate(() => window.__posts);
+
+    await browser.close();
+
+    if (args.out) {
+        writeFileSync(resolve(args.out), JSON.stringify(findings, null, 2) + '\n');
+    }
+
+    console.log(JSON.stringify(findings, null, 2));
+
+    process.exit(0);
+}
 
 // ── 1. At rest ──────────────────────────────────────────────────────────────
 findings.at_rest = {
@@ -215,7 +338,54 @@ findings.mid_run = {
 
 await shot('04-mid-run-bars.png');
 
-// ── 5. What the page actually sent ──────────────────────────────────────────
+/*
+ * ── 5. THE DOWNLOAD TABLE ───────────────────────────────────────────────────
+ *
+ * The owner's whole request: "allow to download each group seperate files".
+ * Three things have to be true of what the page draws, and none of them is
+ * visible to a PHP test:
+ *
+ *   1. A group that WAS exported gets a real link, with the archive's name and
+ *      its size on it, so he can see before clicking that it is not heavy.
+ *   2. A group that was NOT gets a DISABLED control saying so -- not a link
+ *      that 404s, and not a missing row, which reads as a bug.
+ *   3. Every link carries the download nonce and the group it is for, and
+ *      nothing else. A download URL with a path in it is the bug this design
+ *      exists to make impossible, so the query is read back and reported.
+ */
+const readDownloads = () =>
+    page.$$eval('#kbb-downloads tr', (rows) =>
+        rows.map((row) => {
+            const control = row.querySelector('.kbb-download');
+
+            return {
+                label: row.children[0].textContent.trim(),
+                state: control ? control.getAttribute('data-state') : 'none',
+                tag: control ? control.tagName.toLowerCase() : '',
+                text: control ? control.textContent.trim() : '',
+                disabled: control ? !!control.disabled : null,
+                href: control && control.tagName.toLowerCase() === 'a' ? control.getAttribute('href') : '',
+                description: row.children[1].textContent.trim(),
+            };
+        }),
+    );
+
+// Release the hold so the export can finish, which is what starts the zip loop.
+// Start rather than Resume: Resume is disabled on a screen with no half-finished
+// export in the option, which is exactly what this harness renders and is the
+// state the button is correct to be in.
+await page.evaluate(() => { window.__hold = false; });
+await page.click('#kbb-start');
+await page.waitForSelector('#kbb-downloads .kbb-download[data-state="ready"]', { timeout: 15000 });
+await page.waitForFunction(() => window.__zipUnits >= 3, null, { timeout: 15000 });
+await page.waitForTimeout(200);
+
+findings.downloads = await readDownloads();
+findings.zip_posts = (await page.evaluate(() => window.__posts)).filter((p) => p.action === 'kbb_export_zip').length;
+
+await shot('05-downloads-per-group.png');
+
+// ── 6. What the page actually sent ──────────────────────────────────────────
 findings.posts = await page.evaluate(() => window.__posts);
 
 await browser.close();

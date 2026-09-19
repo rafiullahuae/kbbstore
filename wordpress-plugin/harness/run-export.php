@@ -76,6 +76,7 @@ require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-media-index.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-groups.php';
+require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-zip.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-stage.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-orders-source.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-runner.php';
@@ -207,6 +208,38 @@ if ( empty( $progress['done'] ) ) {
 	exit( 6 );
 }
 
+/*
+ * ── THE ZIP PHASE, DRIVEN THE SAME WAY THE EXPORT IS ────────────────────────
+ *
+ * One file into one archive per call, each call through a FRESH runner that
+ * reloads the cursor from the options table, exactly as a separate HTTP request
+ * would. Same reason as the batch loop above: anything a step kept in a property
+ * between calls is caught here rather than on the owner's server.
+ *
+ * --no_zip skips it, which is how a test reaches the state the screen is in
+ * between "the export finished" and "the archives are packed".
+ */
+$zip_steps = 0;
+$zip_progress = array( 'done' => true, 'units' => 0, 'units_done' => 0, 'available' => false, 'groups' => array() );
+
+if ( ! isset( $args['no_zip'] ) ) {
+	do {
+		$zip_progress = ( new KBB_Export_Runner( $settings ) )->zip_step();
+
+		if ( empty( $zip_progress['ok'] ) ) {
+			fwrite( STDERR, 'ZIP FAILED: ' . $zip_progress['error'] . "\n" );
+			exit( 7 );
+		}
+
+		$zip_steps++;
+	} while ( empty( $zip_progress['done'] ) && $zip_steps < 5000 );
+
+	if ( empty( $zip_progress['done'] ) ) {
+		fwrite( STDERR, "ZIP FAILED: the zip phase did not finish in 5,000 units.\n" );
+		exit( 8 );
+	}
+}
+
 // The runner writes into uploads/kbb-export/<export id>/; move it to a stable
 // place so the test does not have to go looking for a random directory.
 $target = rtrim( $out, '/' ) . '/export';
@@ -276,6 +309,25 @@ echo json_encode(
 		'peak_while_running' => $peak_while_running,
 		'group_progress' => isset( $progress['groups'] ) ? $progress['groups'] : array(),
 		'group_peaks'    => $group_peaks,
+		'zip_steps'      => $zip_steps,
+		'zip'            => $zip_progress,
+		/*
+		 * The guard files, read back AFTER the archives were written into the
+		 * same folder. A zip added beside customers.csv must not be the thing
+		 * that undoes the folder's protection, and "it did not" is a
+		 * measurement, not an assumption -- so the three facts travel out of the
+		 * harness and the test asserts on them.
+		 */
+		'guards'         => array(
+			'dir_index'       => file_exists( $progress['dir'] . '/index.php' ),
+			'parent_index'    => file_exists( dirname( $progress['dir'] ) . '/index.php' ),
+			'parent_htaccess' => file_exists( dirname( $progress['dir'] ) . '/.htaccess' ),
+			'htaccess_body'   => file_exists( dirname( $progress['dir'] ) . '/.htaccess' )
+				? file_get_contents( dirname( $progress['dir'] ) . '/.htaccess' )
+				: '',
+			'archives_inside' => count( glob( $progress['dir'] . '/*.zip' ) ),
+			'archives_outside'=> count( glob( dirname( $progress['dir'] ) . '/*.zip' ) ),
+		),
 		'notes'     => $progress['notes'],
 	),
 	JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES

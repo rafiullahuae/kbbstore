@@ -37,6 +37,15 @@ It writes the file set `docs/WP-EXPORT-CONTRACT.md` names into
 `wp-content/uploads/kbb-export/<export id>/`, batched and resumable from the
 admin screen, with `manifest.json` written last.
 
+It then packs **one zip per exported group**, into the same folder, and offers a
+Download button for each on the screen — so nothing has to be fetched over FTP
+and no single file is heavy. Each archive holds that group's CSVs **at the
+archive root** plus a `manifest.json` of its own, which makes it a complete
+import in its own right; every archive of one export carries the same
+`export_id`. The download goes through `admin-post.php` with a capability check
+and a nonce of its own, and never through a URL under `wp-content/uploads`.
+`docs/GL-GROUP-DOWNLOADS.md` is the account, §2 is the archive shape.
+
 To build the zip:
 
 ```bash
@@ -69,6 +78,22 @@ plugin cannot be installed and run here. What can be done, and is:
 ```bash
 php wordpress-plugin/harness/run-export.php --storage=posts --out=/tmp/x --db=kbb_ge_wp --batch=200
 php wordpress-plugin/harness/run-export.php --storage=hpos  --out=/tmp/y --db=kbb_ge_wp --batch=200
+```
+
+4. `groups.php` answers the group, dependency and zip-plan questions with **no
+   database at all**, so the guards that most need to run in CI do.
+5. `screen.php` renders `KBB_Export_Admin::screen()` with the same stubs, and
+   `screen-drive.mjs` drives it in Chromium — because everything the last two
+   lanes added to that page is JavaScript, which no PHP test can see. It also
+   probes the download endpoint's refusals directly (`--probe=download`).
+6. `volume.php` builds every CSV at the **real shop's** row counts — 671
+   products, 4,159 orders, 10,571 line items, 3,712 customers, 2,514 reviews —
+   and zips each group through the shipped class, which is how the question "is
+   any group's download heavy?" was answered with figures instead of a guess.
+
+```bash
+php wordpress-plugin/harness/volume.php                    # the table
+php wordpress-plugin/harness/volume.php --description=6000 # sensitivity
 ```
 
 The two produce **byte-identical CSVs**, and the output goes straight into this
