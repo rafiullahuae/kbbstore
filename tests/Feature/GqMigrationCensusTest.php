@@ -1201,15 +1201,41 @@ it('finds a real value in every column the census says things land in', function
                     continue;
                 }
 
-                expect($markers)->toHaveKey($table);
+                expect(array_key_exists($table, $markers))->toBeTrue(
+                    'no imported-row marker for `'.$table.'`; add one to gqImportedRowMarker()'
+                );
 
-                $query = DB::table($table)->whereNotNull($target)->where($target, '!=', '');
+                $query = DB::table($table)->whereNotNull($target);
 
                 if ($markers[$table] !== null) {
                     $query->whereNotNull($markers[$table]);
                 }
 
-                if ($query->count() === 0) {
+                /*
+                 * ── EMPTINESS IS DECIDED IN PHP, NOT IN SQL ────────────────
+                 *
+                 * This was `->where($target, '!=', '')`, which is green on
+                 * SQLite and WRONG on MySQL — and it is the kind of divergence
+                 * docs/MYSQL-PARITY.md exists for, found by the parity run
+                 * rather than by reading it.
+                 *
+                 * MySQL applies its own type juggling to that comparison. On a
+                 * DATETIME column it casts '' to a date, fails, and excludes
+                 * the row; on a boolean or an integer it casts '' to 0, so
+                 * every `false` and every legitimate zero looks empty. The
+                 * result was 21 destinations reported as never arriving —
+                 * `orders.created_at`, `coupons.free_shipping`,
+                 * `order_items.tax_total` — while every one of them held
+                 * exactly what it should.
+                 *
+                 * Pulling the non-null values and testing them here asks the
+                 * same question of both engines. The tables are the fixture's,
+                 * so this is tens of rows, not thousands.
+                 */
+                $carries = $query->pluck($target)
+                    ->contains(static fn ($value): bool => trim((string) $value) !== '');
+
+                if (! $carries) {
                     $missing[] = $destination.'  (from '.$file.' `'.$column.'`)';
                 }
             }

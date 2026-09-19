@@ -466,6 +466,23 @@ PDF Invoices plugin, so a shop that never ran it has none; and `coupons.starts_a
 comes from Smart Coupons' `_wc_sc_start_date`, which core WooCommerce does not
 write.
 
+### ▲ And the parity run caught the census itself
+
+The value check was first written as `->whereNotNull($c)->where($c, '!=', '')`.
+Green on SQLite; on MySQL it reported **21 destinations as never arriving** —
+`orders.created_at`, `coupons.free_shipping`, `order_items.tax_total` and
+eighteen more — every one of which held exactly what it should.
+
+MySQL type-juggles that comparison. Against a `DATETIME` it casts `''` to a date,
+fails, and excludes the row; against a boolean or an integer it casts `''` to `0`,
+so every `false` and every legitimate zero looks empty. SQLite compares the
+stored text and says nothing.
+
+The census now pulls the non-null values and decides emptiness **in PHP**, which
+asks both engines the same question. It is exactly the divergence
+`docs/MYSQL-PARITY.md` exists for, and it was found by running the parity job
+rather than by reading about it — which is the argument for running it.
+
 Also worth recording: `expect(...)->toContain($needle, $message)` is **variadic**,
 so the message is read as a second needle. It failed one assertion here for the
 wrong reason before it was noticed — the same family as
@@ -578,5 +595,6 @@ KBB_WP_DB=kbb_wp_gq vendor/bin/pest
 KBB_TEST_DB=kbb_gq KBB_WP_DB=kbb_wp_gq vendor/bin/pest -c phpunit-mysql.xml
 ```
 
-Green on both: **4,692 passed, 24 skipped** on file-based SQLite (never
-`:memory:` — the migration set does not survive it), and the same on MySQL.
+Green on both: **4,692 passed / 24 skipped** on file-based SQLite (never
+`:memory:` — the migration set does not survive it) and **4,698 passed / 18
+skipped** on MySQL, no failures on either.
