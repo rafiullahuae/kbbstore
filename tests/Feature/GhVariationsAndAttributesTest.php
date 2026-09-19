@@ -183,7 +183,34 @@ it('imports the plugin export cleanly, and lands every count the manifest declar
 
     $rejections = ghRejections($report);
 
-    expect($rejections)->toBe([], 'the plugin export produced rejections: '.implode(' | ', $rejections));
+    /*
+     * ONE DELIBERATE DECLINE IS EXPECTED, AND IT IS NARROWED TO ITS OWN ROW.
+     *
+     * This assertion was `toBe([])` when this lane wrote it, and it was right
+     * then. Lane GJ landed PostImporter in the same round, and GE's fixture
+     * carries a WordPress PAGE among its posts -- which that importer refuses
+     * on purpose, because this shop already ships its own /about/, /delivery/
+     * and /faqs/ and which of the two wins is the owner's decision rather than
+     * a mapping.
+     *
+     * So the expected set is pinned to that ONE row, by its id, not by
+     * excusing the `posts` entity. Excusing the entity would make every future
+     * post rejection invisible here, which is the shape of exactly the
+     * vacuous guard this repository sweeps for -- a second refused article,
+     * or this one refused for a different reason, still fails.
+     */
+    $expected = array_values(array_filter(
+        $rejections,
+        static fn (string $r): bool => str_contains($r, 'posts line 3 (id=7002)')
+            && str_contains($r, "post type 'page' is not an article")
+    ));
+
+    expect(count($expected))->toBe(1, 'the WordPress page in the fixture is no longer being declined by name');
+
+    expect(array_values(array_diff($rejections, $expected)))->toBe(
+        [],
+        'the plugin export produced rejections beyond the one expected page: '.implode(' | ', $rejections)
+    );
 
     $manifest = ghManifest();
 

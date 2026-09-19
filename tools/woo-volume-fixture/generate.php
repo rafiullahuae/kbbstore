@@ -138,6 +138,7 @@ final class VolumeFixture
         $this->refunds();
         $this->orderNotes();
         $this->seo();
+        $this->posts();
         $this->unreadFiles();
 
         ksort($this->counts);
@@ -1084,6 +1085,106 @@ final class VolumeFixture
         ], $rows);
 
         $this->count('order_notes', count($rows));
+    }
+
+    /**
+     * `posts.csv` — the blog, at the density a five-year WooCommerce shop has
+     * one, and carrying the defects that cost an article rather than a row.
+     *
+     * SCALED OFF THE CATALOGUE rather than given its own knob, like the unread
+     * files below, so the shape survives being generated small for the suite.
+     *
+     * THE DEFECTS ARE THE POINT and each is one a real export carries:
+     *
+     *   a RESERVED first segment — `wishlist` and `about` are addresses this
+     *   storefront already serves, so an article published there on the live
+     *   WordPress site is an indexed URL this application can never serve. It
+     *   is the finding docs/GA-SKINCARE-GUIDE.md §10 asked to be settled before
+     *   an importer was written, and it is refused by name;
+     *
+     *   a WordPress PAGE, because posts.csv carries every post type by the
+     *   exporter's own design and this entity writes the Journal only;
+     *
+     *   an unservable SLUG SHAPE (capitals and underscores), normalised;
+     *
+     *   a SCHEDULED post, which must not reach the index -- imported as a
+     *   draft, never published on the owner's behalf.
+     */
+    private function posts(): void
+    {
+        /*
+         * At least five, because there are five shapes below and a fixture
+         * that is too small to carry one of them is a test that silently stops
+         * asserting it -- the failure this file's everyNth() comment names.
+         */
+        $total = max(5, intdiv($this->products, 8));
+        $tags = ['ingredients', 'routine', 'spf', 'news'];
+        $rows = [];
+        $id = 7000;
+
+        for ($i = 0; $i < $total; $i++) {
+            $id++;
+            $title = 'The '.$this->one(['gentle', 'honest', 'quiet', 'short']).' guide to '
+                .$this->one(['cleansing', 'retinol', 'sunscreen', 'niacinamide', 'toners']).' '.$id;
+            $slug = 'guide-'.$id;
+            $type = 'post';
+            $status = 'publish';
+
+            /*
+             * A FIXED CYCLE OF FIVE rather than everyNth()'s density, because
+             * these are KINDS and not a defect rate: one reserved address, one
+             * page, one unservable slug shape, and two ordinary articles, in
+             * every five rows at every scale this generator is run at.
+             */
+            switch ($i % 5) {
+                case 1:
+                    // An article at an address the storefront already owns.
+                    $slug = $i % 2 === 1 ? 'wishlist' : 'about';
+                    $this->count('posts.reserved_slug_refused');
+                    break;
+                case 2:
+                    // A WordPress page, which is not an article.
+                    $type = 'page';
+                    $slug = 'page-'.$id;
+                    $this->count('posts.not_an_article_refused');
+                    break;
+                case 3:
+                    /*
+                     * `future`, not `draft`, every time. A scheduled post is
+                     * the one that would bite -- PageController::blog() filters
+                     * on status and not on the date, so imported as published
+                     * it is on the index the moment the import finishes. A
+                     * plain draft maps to a draft and has nothing to prove, and
+                     * picking between the two by row number would make which
+                     * shape this fixture carries depend on how big it is.
+                     */
+                    $slug = 'Guide_'.$id.'_SCHEDULED';
+                    $status = 'future';
+                    $this->count('posts.slug_normalised');
+                    $this->count('posts.scheduled_held_as_draft');
+                    break;
+            }
+
+            $rows[] = [
+                $id, $type, $slug, $status, $title,
+                'What it is and when to use it.',
+                '<h1>'.$title.'</h1><p>Body copy for '.$title.'.</p>'
+                    .($i % 7 === 0 ? '<script>alert(1)</script>' : ''),
+                1, 'Rafi', 'owner@kbeautybliss.com',
+                $this->stamp(2021 + ($i % 5), 1 + ($i % 12), 1 + ($i % 28), 13, 0, 0),
+                $this->stamp(2021 + ($i % 5), 1 + ($i % 12), 1 + ($i % 28), 9, 0, 0),
+                $this->stamp(2021 + ($i % 5), 1 + ($i % 12), 1 + ($i % 28), 9, 0, 0),
+                0, 0, '', $tags[$i % count($tags)], '', 'open',
+            ];
+        }
+
+        $this->count('posts', count($rows));
+        $this->csv('posts.csv', [
+            'id', 'type', 'slug', 'status', 'title', 'excerpt', 'content',
+            'author_id', 'author_name', 'author_email',
+            'date_created', 'date_created_gmt', 'date_modified',
+            'parent_id', 'position', 'image', 'categories', 'tags', 'comment_status',
+        ], $rows);
     }
 
     private function unreadFiles(): void

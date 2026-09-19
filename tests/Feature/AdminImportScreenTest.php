@@ -687,6 +687,16 @@ it('walks the entities in the importer\'s own dependency order, never its own co
             // as full revenue, so their place in this walk is load-bearing.
             'refunds', 'order-notes',
             'reviews', 'seo',
+            /*
+             * `posts` is last and, unlike `seo`, that is NOT a dependency --
+             * an article references nothing this import writes. It is last
+             * because this list is the order the owner's browser walks, and
+             * the catalogue and the orders are what the shop cannot open
+             * without. Stated rather than left to be inferred, because the
+             * assertion above says the order IS a dependency graph and the
+             * next reader would otherwise look for the dependency.
+             */
+            'posts',
         ])
         ->and(ImportWorkspace::entities())->toBe(ImportWorkspace::runnerOrder());
 
@@ -779,4 +789,58 @@ it('ships a real Import / Export screen and not the mock wizard it replaces', fu
      */
     expect($blade)->toContain("function impBase()")
         ->and($blade)->not->toContain("fetch('/admin-api/import");
+});
+
+/* ------------------------------ 10. the counters across a second import run */
+
+it('shows the second import\'s own numbers, not the first import\'s added to them', function () {
+    /*
+     * THE FULL -> DELTA SEQUENCE, WHICH IS WHAT THIS SCREEN IS FOR, and a pair
+     * of compensations that have to agree with each other.
+     *
+     * `import_checkpoints.processed` is reset to zero when a FINISHED entity is
+     * run again, because a delta has to re-present every row. The four outcome
+     * counters beside it are zeroed at the same moment (App\Services\Import\
+     * Checkpoint::open) -- they count outcomes among the `processed` rows, and
+     * leaving them behind makes them describe a pass that is over.
+     *
+     * WHY THEY ARE ZEROED AT ALL, which is not this screen's reason:
+     * EntityReport::verification() uses `rejected_rows` to work out how many of
+     * the rows a resumed run did not re-read were refusals, and a stale refusal
+     * in it understates the rows the table should hold -- turning a shortfall
+     * into "verified" on exactly this second run. See
+     * Checkpoint::$resumedCountsTrusted and docs/GJ-POSTS-AND-VERDICT.md.
+     *
+     * WHAT THIS PINS is the other half. ImportDriver used to subtract a
+     * per-run baseline from those counters to undo the carry-over itself; with
+     * the counters now zeroed at the source, subtracting the pre-zero values
+     * as well would take the second pass's numbers off their own baseline and
+     * show the owner nothing but noughts. baselineFor() therefore returns zero
+     * for a finished entity. Nothing covered that before: removing the branch
+     * left this whole file green.
+     */
+    $this->actingAs(impAdmin(), 'admin');
+    impUploadAll();
+
+    impStart('live');
+    impRunToEnd();
+
+    $first = collect(impStatus()['entities'])->firstWhere('entity', 'products');
+
+    expect($first['created'])->toBeGreaterThan(0)
+        ->and($first['unchanged'])->toBe(0);
+
+    // The same export again, which is the cheapest proof the import was
+    // idempotent and the reason the owner presses it a second time.
+    impStart('live', ['confirm_duplicate' => true]);
+    impRunToEnd();
+
+    $second = collect(impStatus()['entities'])->firstWhere('entity', 'products');
+
+    expect($second['created'])->toBe(0, 'a created row on the second pass is a duplicate')
+        ->and($second['unchanged'])->toBe(
+            $first['created'] + $first['unchanged'],
+            'the second pass must report its own rows, not nought and not the two passes added together'
+        )
+        ->and($second['rejected'])->toBe($first['rejected']);
 });
