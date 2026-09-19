@@ -100,7 +100,33 @@ final class ImportWorkspace
             'label' => 'Products',
             'id' => ['id', 'wc_id', 'product_id', 'post_id'],
             'unique' => false,
-            'help' => 'Products → Export in WooCommerce. Variations, tags and images are not imported yet.',
+            'help' => 'Products → Export in WooCommerce. Images are not imported here — kbb:import-media fetches those.',
+        ],
+        /*
+         * MUST MIRROR ImportRunner::entities(), IN ORDER. The two lists are
+         * hand-maintained and a test pins them against each other; see the note
+         * on `seo` below for what it cost the last time they drifted.
+         */
+        'tags' => [
+            'file' => 'tags.csv',
+            'label' => 'Tags',
+            'id' => ['term_id', 'id', 'tag_id'],
+            'unique' => false,
+            'help' => 'Product tags, and which products carry each one — the terms and the membership are in the same file. They come after products so each membership can be resolved.',
+        ],
+        'attributes' => [
+            'file' => 'attributes.csv',
+            'label' => 'Attributes',
+            'id' => ['term_id', 'id'],
+            'unique' => false,
+            'help' => 'The pa_* attributes other than brands, one row per term with the attribute repeated on it. One file fills three tables: the attribute, its terms, and which products offer each term.',
+        ],
+        'variations' => [
+            'file' => 'variations.csv',
+            'label' => 'Variations',
+            'id' => ['id', 'variation_id', 'wc_id'],
+            'unique' => false,
+            'help' => 'Every variable product\'s sizes and shades, with their own prices, SKUs and stock. They come after attributes because a variation names the terms defining it by slug.',
         ],
         'coupons' => [
             'file' => 'coupons.csv',

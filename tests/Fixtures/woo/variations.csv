@@ -1,0 +1,10 @@
+id,parent_id,sku,status,position,regular_price,sale_price,sale_starts_at,sale_ends_at,stock_status,stock,manage_stock,backorders,weight,length,width,height,tax_class,image,description,attributes,date_created
+4101,4021,KBB-4021-50ml,publish,1,60.00,,,,instock,5,yes,,0.10,,,,,,,attribute_pa_size=50ml,2019-03-04 10:00:00
+4102,4021,KBB-4021-100ml,private,2,100.00,,,,instock,3,yes,,0.20,,,,,,,attribute_pa_size=100ml,2019-03-04 10:00:00
+4103,4021,KBB-4021-rose,publish,3,70.00,65.00,2021-01-01 00:00:00,2021-02-01 00:00:00,instock,,no,,,,,,,,,attribute_pa_shades=rose,2019-03-04 10:00:00
+4104,9999,KBB-ORPHAN,publish,1,10.00,,,,instock,1,no,,,,,,,,,attribute_pa_size=50ml,2021-01-01 00:00:00
+4105,4022,KBB-4022-any,publish,1,20.00,,,,instock,1,no,,,,,,,,,attribute_pa_size=,2021-01-01 00:00:00
+4106,4022,KBB-4022-scent,publish,2,25.00,,,,instock,1,no,,,,,,,,,attribute_scent=Unscented,2021-01-01 00:00:00
+4107,4022,KBB-4022-archived,archived,3,30.00,,,,instock,1,no,,,,,,,,,attribute_pa_size=50ml,2021-01-01 00:00:00
+4108,4022,KBB-4022-rose-50ml,publish,4,45.00,,,,instock,2,no,,,,,,,,,attribute_pa_shades=rose|attribute_pa_size=50ml,2021-01-01 00:00:00
+4109,4022,KBB-4022-saleonly,publish,5,,5.00,,,instock,1,no,,,,,,,,,attribute_pa_size=50ml,2021-01-01 00:00:00
