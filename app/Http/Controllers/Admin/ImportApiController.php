@@ -81,7 +81,39 @@ class ImportApiController extends Controller
     /** Everything the screen draws itself from. One call, so the screen is never half-fresh. */
     public function status(): JsonResponse
     {
-        return response()->json($this->driver->status());
+        /*
+         * THE TWO COMPANION FILES ARE ADDED HERE AND NOT IN ImportDriver.
+         *
+         * `permalinks.csv` and `media.csv` are files of the export that no
+         * importer steps — the long argument is on ImportWorkspace::COMPANIONS
+         * — so they have no place in `status()`'s entity list, which is what
+         * the drive loop, the progress bar and the duplicate guard are all
+         * computed over. Adding them there would mean special-casing two rows
+         * in each of those. Adding them here is one key on one payload that
+         * nothing else reads.
+         *
+         * It has to be SAID somewhere, though: before this they were refused by
+         * name, and now they are accepted silently — the owner drops the
+         * "Addresses and pictures" download in the box, gets "Uploaded", and
+         * the files card looks exactly as it did before. A file that lands
+         * without a trace is not much better than one that is turned away.
+         */
+        return response()->json($this->statusPayload());
+    }
+
+    /**
+     * The status every endpoint on this screen answers with.
+     *
+     * One method rather than ten call sites, because the screen repaints from
+     * whichever of them it called last: a `companions` key present on `status`
+     * and absent on the response to Remove would make the file it had just
+     * removed reappear until the next poll.
+     *
+     * @return array<string, mixed>
+     */
+    private function statusPayload(): array
+    {
+        return $this->driver->status() + ['companions' => $this->workspace->companions()];
     }
 
     /**
@@ -171,7 +203,7 @@ class ImportApiController extends Controller
             'ok' => $refused === [],
             'accepted' => $accepted,
             'refused' => $refused,
-            'status' => $this->driver->status(),
+            'status' => $this->statusPayload(),
         ], $accepted === [] && $refused !== [] ? 422 : 200);
     }
 
@@ -189,7 +221,20 @@ class ImportApiController extends Controller
         if ($entity === 'manifest') {
             $this->workspace->forgetManifest();
 
-            return response()->json(['ok' => true, 'status' => $this->driver->status()]);
+            return response()->json(['ok' => true, 'status' => $this->statusPayload()]);
+        }
+
+        /*
+         * And the same for the two companion files, for the same reason. They
+         * can be uploaded, so they have to be removable: a permalinks.csv from
+         * the wrong export silently changes every redirect this shop proposes,
+         * and "delete it off the server" is not an instruction anyone with no
+         * shell can follow.
+         */
+        if (ImportWorkspace::isCompanion($entity)) {
+            $this->workspace->forgetCompanion($entity);
+
+            return response()->json(['ok' => true, 'status' => $this->statusPayload()]);
         }
 
         if (! ImportWorkspace::isEntity($entity)) {
@@ -198,7 +243,7 @@ class ImportApiController extends Controller
 
         $this->workspace->forget($entity);
 
-        return response()->json(['ok' => true, 'status' => $this->driver->status()]);
+        return response()->json(['ok' => true, 'status' => $this->statusPayload()]);
     }
 
     /**
@@ -246,11 +291,11 @@ class ImportApiController extends Controller
             return response()->json([
                 'ok' => false,
                 'message' => $e->getMessage(),
-                'status' => $this->driver->status(),
+                'status' => $this->statusPayload(),
             ], 409);
         }
 
-        return response()->json(['ok' => true, 'status' => $this->driver->status()]);
+        return response()->json(['ok' => true, 'status' => $this->statusPayload()]);
     }
 
     /** One slice. Called repeatedly by the browser until the run says it is complete. */
@@ -287,7 +332,7 @@ class ImportApiController extends Controller
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 409);
         }
 
-        return response()->json($result + ['status' => $this->driver->status()]);
+        return response()->json($result + ['status' => $this->statusPayload()]);
     }
 
     /** Put the run down without undoing anything it has already committed. */
@@ -295,7 +340,7 @@ class ImportApiController extends Controller
     {
         $this->driver->stop();
 
-        return response()->json(['ok' => true, 'status' => $this->driver->status()]);
+        return response()->json(['ok' => true, 'status' => $this->statusPayload()]);
     }
 
     /**
@@ -349,6 +394,6 @@ class ImportApiController extends Controller
             }
         }
 
-        return response()->json(['ok' => true, 'status' => $this->driver->status()]);
+        return response()->json(['ok' => true, 'status' => $this->statusPayload()]);
     }
 }

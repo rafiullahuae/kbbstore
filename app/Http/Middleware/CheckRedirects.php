@@ -34,7 +34,49 @@ class CheckRedirects
 
         self::recordHit($redirect);
 
-        return redirect($redirect->target, $redirect->code);
+        /*
+         * ═══════════════════════════════════════════════════════════════════
+         * Url::redirect(), NOT THE BARE TARGET — and this is the one line in
+         * this shop that decides where every old address lands
+         * ═══════════════════════════════════════════════════════════════════
+         *
+         * `redirect($path)` hands a relative target to Laravel's UrlGenerator,
+         * which does three things to it, all of them wrong here:
+         *
+         *   IT STRIPS THE TRAILING SLASH. `redirects.target` is stored in the
+         *   canonical form U-01 defines — `/product-category/skincare/toners/`
+         *   — and the Location header came out without it. Measured on a
+         *   running server: FIFTEEN OF FIFTEEN redirects landed on an address
+         *   whose own <link rel="canonical"> pointed somewhere else, so every
+         *   old URL cost a crawler a 301 and then a canonical hop.
+         *
+         *   THE BASE PATH WAS ALREADY RIGHT, and saying so is a correction to
+         *   docs/GB-MEDIA-AND-REDIRECTS.md §6.4, which implied it was not.
+         *   UrlGenerator builds on the request ROOT, which on a subfolder
+         *   mount already carries /kbb-upgrade — measured against a preview
+         *   mounted exactly that way. Url::redirect() adds it once and knows
+         *   APP_URL may already end in it, so the two agree; this line does
+         *   not fix the base path because the base path was not broken.
+         *
+         *   IT DROPS THE READER'S LANGUAGE. SetLocaleFromPath strips /ar
+         *   before the router sees the request, so an Arabic visitor following
+         *   an old link matched the row and was then sent to the English page.
+         *   Url::redirect() → Url::to() puts the segment back.
+         *
+         * This is not a new convention. PageController::legacyPost() already
+         * does exactly this, for exactly these reasons, for /blog and
+         * /skincare-guide/{slug}/ — which made the redirects TABLE the only
+         * producer of a 301 in this application that still did it the other
+         * way. See docs/GP-ADDRESSES-LAND.md for the before/after fetches.
+         *
+         * THE COST, stated because it is real: Url::redirect() builds on
+         * APP_URL rather than on the request's host, so a wrong APP_URL sends
+         * every redirect to the wrong host. That is already true of password
+         * resets, payment webhooks and Stripe's callback, all of which go
+         * through the same helper, so it is a precondition this shop already
+         * has rather than a new one.
+         */
+        return redirect(\App\Support\Url::redirect($redirect->target), $redirect->code);
     }
 
     /**

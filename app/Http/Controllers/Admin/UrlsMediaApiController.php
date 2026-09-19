@@ -7,8 +7,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Redirect;
 use App\Services\Import\MediaAudit;
+use App\Services\Import\MediaIndex;
 use App\Services\Import\MediaRewrite;
 use App\Services\Import\RedirectMap;
+use App\Services\ImportConsole\ImportWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -84,7 +86,50 @@ class UrlsMediaApiController extends Controller
         private readonly RedirectMap $map = new RedirectMap,
         private readonly MediaAudit $audit = new MediaAudit,
         private readonly MediaRewrite $rewrite = new MediaRewrite,
+        private readonly ImportWorkspace $workspace = new ImportWorkspace,
     ) {}
+
+    /**
+     * =========================================================================
+     * THE ADDRESSES GROUP, WHICH IS WHY THE WORKSPACE IS IN HERE
+     * =========================================================================
+     *
+     * `RedirectMap::fromPermalinks()` has read this exact shape since the day
+     * it was written and NOTHING ON A SCREEN HAD EVER HANDED IT A FILE. The
+     * only caller was `kbb:import-redirects --permalinks=…`, a command the
+     * owner of this shop cannot run — the same gap this whole controller
+     * exists to close, left open one level down.
+     *
+     * So the map was proposing addresses it had DERIVED (every category, at
+     * both slash spellings, from this shop's own rows) and none of the ones
+     * the old site actually published. `permalinks.csv` is the plugin's record
+     * of every public URL that site serves, taken from inside WordPress with
+     * every rewrite rule and every filter applied — which is the difference
+     * between a map of where we think things were and a map of where they were.
+     *
+     * READ ON EVERY CALL, not held. This is the same rule
+     * `ImportWorkspace::manifest()` follows: the file the owner uploaded thirty
+     * seconds ago has to be the one that answers, and a map built from a stale
+     * copy would write redirects for addresses a corrected re-export had
+     * already removed.
+     *
+     * ALL THREE ENDPOINTS READ IT. `status` draws the buckets, `map.csv` is the
+     * spreadsheet he approves from and `redirects` is what writes the rows, so
+     * a version of this that fed the file to one of them would show him a map
+     * and then write a different one.
+     *
+     * @return list<array<string, string>>
+     */
+    private function permalinks(): array
+    {
+        $out = [];
+
+        foreach ($this->workspace->companionRows('permalinks') as $row) {
+            $out[] = $row;
+        }
+
+        return $out;
+    }
 
     /**
      * Everything the screen draws itself from, in one call.
@@ -95,12 +140,25 @@ class UrlsMediaApiController extends Controller
      */
     public function status(): JsonResponse
     {
-        $proposals = $this->map->propose();
+        $permalinks = $this->permalinks();
+        $proposals = $this->map->propose($permalinks);
         $diff = $this->map->diff($proposals);
         $media = $this->audit->audit();
+        $index = new MediaIndex($this->workspace->companionRows('media'));
 
         return response()->json([
             'ok' => true,
+            /*
+             * WHICH OF THE TWO COMPANION FILES THIS ANSWER WAS BUILT FROM.
+             *
+             * Said out loud because the failure it prevents is silent in both
+             * directions. Without permalinks.csv this screen still draws a
+             * perfectly confident map — of addresses derived from this shop's
+             * own rows — and nothing distinguishes it from one built on the old
+             * site's published URLs. The owner who downloaded the group, dropped
+             * it in the box and got a refusal would have had no way to tell.
+             */
+            'sources' => $this->sources($permalinks, $index),
             'urls' => [
                 'buckets' => $this->buckets($proposals),
                 'diff' => [
@@ -121,6 +179,14 @@ class UrlsMediaApiController extends Controller
             'media' => [
                 'summary' => $this->audit->summarise($media),
                 'hosts' => $this->rewrite->hostsSeen(),
+                /*
+                 * The one thing media.csv knows and this shop cannot work out:
+                 * the picture was already gone on WordPress when the export was
+                 * taken. Copying wp-content across will not produce it and the
+                 * sideloader will 404 on it forever, so `remote` never reaches
+                 * zero and nothing says why.
+                 */
+                'gone_at_source' => $this->goneAtSource($media, $index),
                 'remote' => array_slice(array_values(array_filter(
                     $media,
                     static fn (array $row): bool => $row['verdict'] === MediaAudit::REMOTE,
@@ -136,7 +202,7 @@ class UrlsMediaApiController extends Controller
     /** The whole map, every bucket, as the spreadsheet the owner approves from. */
     public function map(): Response
     {
-        $proposals = $this->map->propose();
+        $proposals = $this->map->propose($this->permalinks());
 
         $handle = fopen('php://temp', 'w+b');
 
@@ -175,7 +241,7 @@ class UrlsMediaApiController extends Controller
     {
         $request->validate(['action' => ['required', 'string', 'in:write,rollback']]);
 
-        $proposals = $this->map->propose();
+        $proposals = $this->map->propose($this->permalinks());
 
         if ($request->string('action')->toString() === 'rollback') {
             return response()->json(['ok' => true] + $this->rollback($proposals));
@@ -281,6 +347,78 @@ class UrlsMediaApiController extends Controller
                 static fn (array $row): bool => $row['decision'] === MediaRewrite::ABSENT,
             )), 0, self::SHOW),
         ]);
+    }
+
+    /**
+     * What the two companion files contributed, and what is missing without
+     * them.
+     *
+     * @param  list<array<string, string>>  $permalinks
+     * @return array<string, array<string, mixed>>
+     */
+    private function sources(array $permalinks, MediaIndex $index): array
+    {
+        return [
+            'permalinks' => [
+                'file' => 'permalinks.csv',
+                'present' => $permalinks !== [],
+                'rows' => count($permalinks),
+                'note' => $permalinks === []
+                    ? 'Every address below was worked out from this shop\'s own rows. Upload permalinks.csv '
+                        .'from the "Addresses and pictures" download and this becomes the list of addresses the '
+                        .'old site really published, rather than the list of the ones we can derive.'
+                    : count($permalinks).' address(es) the old site published, read from the export.',
+            ],
+            'media' => [
+                'file' => 'media.csv',
+                'present' => ! $index->isEmpty(),
+                'rows' => $index->read(),
+                'pictures' => $index->pictures(),
+                'note' => $index->isEmpty()
+                    ? 'Without media.csv there is no way to tell a picture that has not been copied across yet '
+                        .'from one the old site had already lost.'
+                    : $index->pictures().' picture(s) indexed; '.count($index->goneAtSource())
+                        .' of them were already gone on the old site when the export was taken.',
+            ],
+        ];
+    }
+
+    /**
+     * The catalogue's own image references that media.csv says were already
+     * missing on the old site.
+     *
+     * Only the ones this shop is still waiting for. A picture that is PRESENT
+     * here has arrived, whatever the old site's disk looked like on the day of
+     * the export, and reporting it would be reporting a problem that has been
+     * solved.
+     *
+     * @param  list<array{owner: string, field: string, url: string, path: string, verdict: string, decision: string, reason: string}>  $media
+     * @return array{count: int, rows: list<array<string, string>>}
+     */
+    private function goneAtSource(array $media, MediaIndex $index): array
+    {
+        $rows = [];
+
+        foreach ($media as $row) {
+            if ($row['verdict'] === MediaAudit::PRESENT) {
+                continue;
+            }
+
+            if ($index->existedAtSource($row['url']) !== false) {
+                continue;
+            }
+
+            $rows[] = [
+                'owner' => $row['owner'],
+                'field' => $row['field'],
+                'url' => $row['url'],
+                'reason' => 'the export recorded this file as already missing on the old site, so copying '
+                    .'wp-content across will not produce it and the sideloader will keep getting a 404. '
+                    .'This picture has to be replaced, not moved.',
+            ];
+        }
+
+        return ['count' => count($rows), 'rows' => array_slice($rows, 0, self::SHOW)];
     }
 
     /**

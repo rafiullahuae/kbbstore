@@ -671,7 +671,7 @@ it('lands every column the census says lands, and drops exactly the ones it says
     }
 });
 
-it('names the one file in the export that nothing opens, with its row count', function () {
+it('leaves no file in the export that nothing opens', function () {
     $report = gqImport();
 
     $named = [];
@@ -689,29 +689,101 @@ it('names the one file in the export that nothing opens, with its row count', fu
     sort($named);
 
     /*
-     * media.csv AND NOTHING ELSE. permalinks.csv is claimed by
-     * kbb:import-redirects and manifest.json by ImportManifest, and naming
-     * either would train the owner to skim the one list that is only worth
-     * anything if every line in it is true.
+     * NOTHING. This used to be `['media.csv']`, and the change is a merge of
+     * two lanes rather than a weakening of the guard.
      *
-     * MUTATION: register any importer for media.csv, or add a file to the
-     * fixture. Red either way.
+     * media.csv had no reader when this was written, so naming it was true.
+     * Lane GP gave it one -- ImportWorkspace accepts it into the export folder
+     * instead of refusing it by name, and MediaIndex reads it on Store ->
+     * Import -> Addresses & pictures -- and added it to ImportRunner's
+     * $claimed list in the same commit. Leaving this at ['media.csv'] would
+     * have made the report say a file nothing opens about a file something
+     * opens, which is the ONE failure mode this whole assertion exists to
+     * prevent: one false line teaches the owner to skim the list, and the list
+     * is only worth anything if every line in it is true.
+     *
+     * permalinks.csv is claimed by RedirectMap and manifest.json by
+     * ImportManifest, as before.
+     *
+     * An empty expectation is the STRONGER one, not the weaker: any file added
+     * to the fixture without an importer or a place on the $claimed list turns
+     * this red by name. What it no longer proves is that the line carries a row
+     * count when there IS such a file -- so the test below proves that on a
+     * file deliberately made unreadable, rather than leaving the property
+     * pinned to an assertion that can no longer reach it.
+     *
+     * MUTATION: drop 'media.csv' from ImportRunner's $claimed. Red, by name.
      */
-    expect($named)->toBe(['media.csv'], 'the set of unopened files in the export has changed');
+    expect($named)->toBe([], 'the set of unopened files in the export has changed');
+});
 
-    $rows = $report->for('export')->discards();
-    $sample = array_values(array_filter($rows, static fn (string $k): bool => str_contains($k, 'no importer opens'), ARRAY_FILTER_USE_KEY));
-
+it('names a file nothing opens with its row count, when there is one', function () {
     /*
-     * str_contains, NOT expect()->toContain(): toContain is VARIADIC, so the
-     * message would be read as a second needle and the assertion would fail for
-     * the wrong reason -- which it did, once, here. The same shape as
-     * expect()->not->toContain() passing vacuously, which CLAUDE.md's lanes
-     * have paid for before.
+     * A COPY. tests/Fixtures/kbb-export is byte-pinned by GeWpExporterTest and
+     * the census above, so the stray file goes in a temporary copy of it; the
+     * fixture itself is never touched.
+     *
+     * This is the half of the old assertion that the merge above cannot reach
+     * any more, kept non-vacuous by constructing the case rather than by
+     * asserting `if there is one` -- which would pass on an empty list, the
+     * shape CLAUDE.md's lanes have paid for before.
      */
-    expect(str_contains($sample[0]['samples'][0]['before'], (string) gqManifest()['files']['media.csv']['rows']))->toBeTrue(
-        'the unread-file line has to carry the row count, or the owner cannot tell a stray file from 8 photographs'
+    $dir = sys_get_temp_dir().'/gq-stray-'.bin2hex(random_bytes(6));
+
+    mkdir($dir, 0o755, true);
+
+    foreach (glob(gqExportDir().'/*') ?: [] as $path) {
+        copy($path, $dir.'/'.basename($path));
+    }
+
+    /* Three data rows under a header, and a name no importer and no entry on
+     * ImportRunner::reportUnreadFiles()'s $claimed list answers to. */
+    file_put_contents(
+        $dir.'/loyalty-points.csv',
+        "customer_id,points\n1,120\n2,45\n3,900\n"
     );
+
+    try {
+        $report = (new ImportRunner)->run(new ImportOptions(
+            directory: $dir,
+            sourceTimezone: gqManifest()['source']['timezone'],
+            adoptBySlug: true,
+        ));
+
+        $lines = [];
+
+        foreach ($report->for('export')->discards() as $kind => $discard) {
+            if (! str_contains($kind, 'no importer opens')) {
+                continue;
+            }
+
+            foreach ($discard['samples'] as $sample) {
+                $lines[$sample['field']] = $sample['before'];
+            }
+        }
+
+        expect(array_keys($lines))->toBe(
+            ['loyalty-points.csv'],
+            'a file with no importer was dropped into the export folder and the report did not name it -- '
+            .'which is the silence this channel exists to break'
+        );
+
+        /*
+         * str_contains, NOT expect()->toContain(): toContain is VARIADIC, so
+         * the message would be read as a second needle and the assertion would
+         * fail for the wrong reason -- which it did, once, here.
+         */
+        expect(str_contains($lines['loyalty-points.csv'], '3 data rows'))->toBeTrue(
+            'the unread-file line has to carry the row count, or the owner cannot tell a stray file from '
+            .'8 photographs'
+        );
+    } finally {
+        foreach (glob($dir.'/*') ?: [] as $path) {
+            unlink($path);
+        }
+
+        rmdir($dir);
+    }
 });
 
 /* ═════════════════════════════════ column one: what a WordPress shop holds */

@@ -7868,6 +7868,7 @@ function impFilesCard(s){
     +'form limit '+impEsc(lim.post_max_size)+'). Files are stored outside the website folder and are never reachable from the web. '
     +'If an order export is larger than that, split it — the importer carries on across files.</div>'
     +'<div class="impgrid" style="margin-top:14px">'+cards+'</div>'
+    +gpCompanionsStrip(s)
     +'<div id="impUploadMsg"></div>'
     +'</div>';
 }
@@ -8099,6 +8100,50 @@ function gdLiveProgressCard(){
     +'<button class="btn" style="margin-top:10px">Open the live progress page</button></a></div>';
 }
 
+/* -------------------------------------- the addresses group (Lane GP) */
+/*
+ * permalinks.csv and media.csv: the two files of the export that no importer
+ * steps. Store → Import used to refuse both BY NAME, so the owner downloaded
+ * the "Addresses and pictures" group and was told twice it had not imported.
+ * They are accepted now — but a file that lands silently is not much better
+ * than one that is turned away, so these two blocks are where he sees them.
+ */
+function gpCompanionsStrip(s){
+  const rows=(s.companions||[]);
+  if(!rows.length) return '';
+
+  return '<div class="impgrid" style="margin-top:10px">'+rows.map(c=>
+    '<div class="impfile'+(c.present?' on':'')+'">'
+    +'<div class="between" style="align-items:flex-start"><b>'+impEsc(c.label)+'</b>'
+    +(c.present
+      ?'<span class="pill green">ready</span>'
+      :'<span style="font-size:11px;color:#94A3B8;font-weight:600">not uploaded</span>')+'</div>'
+    +'<p>'+impEsc(c.help)+'</p>'
+    +(c.present
+      ?'<div class="impmeta"><span>'+impNum(c.rows)+' rows</span><span>'+impBytes(c.bytes)+'</span>'
+        +'<button class="btn ghost sm impforget" data-e="'+impEsc(c.key)+'" style="margin-left:auto;padding:3px 9px;font-size:11px">Remove</button></div>'
+      :'<div class="impmeta">expects <code style="font-family:var(--mono);font-size:11px">'+impEsc(c.file)+'</code></div>')
+    +'<p style="font-size:11px;color:var(--ink-soft);margin:6px 0 0">Read by '+impEsc(c.read_by)+'. Not imported as rows.</p>'
+    +'</div>').join('')+'</div>';
+}
+
+/*
+ * Which of the two files this answer was built from, said on the screen for
+ * the reason UrlsMediaApiController::sources() gives: without permalinks.csv
+ * the map still draws a perfectly confident list — of addresses derived from
+ * this shop's own rows — and nothing distinguishes it from one built on the
+ * addresses the old site really published.
+ */
+function gpSourceLine(src){
+  if(!src) return '';
+
+  return ['permalinks','media'].map(k=>{
+    const x=src[k]; if(!x) return '';
+    return '<p style="font-size:12px;margin:6px 0 0;color:'+(x.present?'var(--ink-soft)':'#b45309')+'">'
+      +'<code style="font-family:var(--mono);font-size:11px">'+impEsc(x.file)+'</code> — '+impEsc(x.note)+'</p>';
+  }).join('');
+}
+
 function gbUrlsMediaCard(){
   if(!gbUM) return '<div class="card pad">'
     +'<b style="font-size:14px">Addresses &amp; pictures</b>'
@@ -8116,6 +8161,7 @@ function gbUrlsMediaCard(){
 
     +'<div style="margin-top:12px"><b>Old addresses</b></div>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:3px 0 0;max-width:680px">'+u.note+'</p>'
+    +gpSourceLine(gbUM.sources)
     +'<div class="impgrid" style="margin-top:8px">'
     +'<div class="impfile"><b>'+u.buckets.migrate.count+'</b><span>redirects to write</span></div>'
     +'<div class="impfile"><b>'+u.buckets.ask.count+'</b><span>need your decision</span></div>'
