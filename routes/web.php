@@ -432,7 +432,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // from, when it was taken and what each run did. Same group, because it
         // names the owner's own site, the digests of his export files and the
         // note text lifted out of his catalogue.
-        require __DIR__.'/import-history-admin.php';
+
+        // Store → Import → the run that keeps going with the tab closed (Lane
+        // GO). Same group and the same reason as the two files above: pressing
+        // this makes the shop rewrite its own catalogue, customer list and
+        // order history, unattended, for as long as it takes.
+        require __DIR__.'/import-background-admin.php';
 
         // Store → Import → "Addresses & pictures" (Lane GB). Same group and the
         // same reason: one of these endpoints writes the redirect rows that
@@ -880,7 +885,17 @@ require __DIR__.'/checkout-line.php';
  * request whose session does not name the order being asked about, so a group
  * without session middleware would refuse every one of them.
  */
-require __DIR__.'/checkout-card.php';
+
+/*
+ * The loopback call that keeps a background import going (Lane GO). Top level
+ * in the web group, NOT inside admin-api and NOT in routes/api.php: it is made
+ * by this server with no session, because the owner has closed the tab, and its
+ * own file's header is the argument for every part of that. It excludes CSRF at
+ * the route because the caller has no token to carry. Two path segments, so the
+ * Phase 9 root-segment catch-all below cannot reach it — but registered before
+ * it all the same.
+ */
+require __DIR__.'/import-chain.php';
 
 /*
  * Required last, and that placement is load-bearing. The final route in this

@@ -7982,10 +7982,12 @@ function impRunCard(s){
     +'<div class="row" style="gap:8px">'
     +(busy?'<button class="btn ghost" id="impPause">Pause</button>'
           :'<button class="btn" id="impRun">'+(isLive&&run.status==='running'?'Continue import':'Import')+'</button>')
+    +(isLive&&run&&run.status==='running'?'<button class="btn ghost" id="impBackground">Keep importing in the background</button>':'')
     +'</div></div>'
     +'<div style="margin-top:14px">'+rows+'</div>'
     +'<div class="impnote">Your browser does this in small pieces, a few seconds at a time, so this shared server never has to hold one long request open. '
-    +'You can close this tab: whatever had finished stays finished, and coming back here offers to carry on. It will not start over and it will not import anything twice.'
+    +'Closing this tab stops it here — whatever had finished stays finished, and coming back offers to carry on from the row after the last one. '
+    +'To have the server keep going with the tab closed, press “Keep importing in the background”.'
     +(busy?' <b>Working — about '+impNum(impRows)+' rows per piece.</b>':'')+'</div>'
     +(isLive?impResultTable(s,'Created','Updated','Unchanged','Refused'):'')
     +'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="impReset" style="color:#c0392b">Forget progress and start over</button></div>'
@@ -8241,7 +8243,23 @@ function impWire(){
 
   const cont=$('#impContinue'); if(cont) cont.onclick=()=>{ impMsg=''; impDrive(); };
   const pause=$('#impPause'); if(pause) pause.onclick=()=>{ impRunning=false; impPaint(); };
-  const stop=$('#impStop'); if(stop) stop.onclick=async()=>{ impRunning=false; await impApi('/import/stop',{method:'POST'}); await impRefresh(); impPaint(); };
+
+  /* Lane GO. Hands the run to the server and opens the live page, which is
+     where Pause, Stop and the real bars then live. The browser loop is stopped
+     first: leaving it going would be a second driver, and the chain's baton
+     exists precisely so there is only ever one. A refusal is shown here rather
+     than on the page, because a host that will not call itself means the owner
+     stays on THIS screen and keeps pressing Continue. */
+  const bg=$('#impBackground');
+  if(bg) bg.onclick=async()=>{
+    impRunning=false;
+    const r=await impApi('/import/background',{method:'POST',body:'{}'});
+    if(!r.data||r.data.ok===false){
+      impMsg=(r.data&&r.data.message)||'Could not hand this over to the server.'; impMsgKind='bad'; impPaint(); return;
+    }
+    window.open(impBase()+'/import/background-page','_blank');
+    impMsg='The server is carrying this on by itself. You can close this tab.'; impMsgKind=''; impPaint();
+  };
 
   gbUMWire();
 
