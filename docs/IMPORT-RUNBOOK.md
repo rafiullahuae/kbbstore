@@ -521,6 +521,15 @@ over FTP and **delete it from the server**: `customers.csv` holds every
 shopper's address and password hash, and `reviews.csv` holds reviewers' email
 addresses and the IPs they posted from.
 
+The screen offers the export in eight ticked groups rather than all at once, so
+a second pass can carry only this month's orders. The order the new shop needs
+them in is the order they are listed on the screen, and it matters: importing
+orders before the customers they belong to costs customer rows. The screen will
+not let you start a selection that does that until you have either added the
+missing group or confirmed it is already imported here, and either way it writes
+what you chose into `manifest.json`. `docs/GK-EXPORT-GROUPS.md` has the reasoning
+and what each choice costs.
+
 `manifest.json` is written LAST, so a folder without one is an export that did
 not finish. Read `source.timezone` out of it and pass it as `--timezone`;
 `App\Services\Import\DateParser` refuses to default it and reading Dubai

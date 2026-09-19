@@ -1926,6 +1926,31 @@ a fake success toast and saves nothing).
   the discard list with its title and the URL it wanted. **Run a preview** — it
   writes nothing — and it produces the list Lane GA asked the owner for. Each
   one is rename-and-redirect in WordPress, or a routing change here
+- [x] **The export runs section by section, like the import does** — the owner's
+  own observation: *"in our app you section by section made the import process,
+  why you didn't in export… please group the related stuff and give options to
+  choose any with live export progress bar."* Eight ticked groups on the plugin's
+  screen, labelled with `ImportWorkspace::ENTITIES`' own words so the two screens
+  read as one system, with a live bar per group.
+
+  ▲ **The dependency between groups was the whole job, not the grouping.** Every
+  edge was derived by reading the IMPORTER rather than the exporter — which is
+  how `seo` turned out not to depend on `content`, even though `seo.csv` carries
+  blog Yoast meta, because `SeoImporter` matches on `products.wc_id` and refuses
+  everything else by name.
+
+  The screen neither refuses a crossed edge nor silently auto-ticks it: both
+  take the decision away from the only person who knows what is already in the
+  new shop. It prints the consequence in words, disables Start until each edge is
+  answered, and `start()` re-checks server-side with the same sentence, because a
+  disabled button is a statement about one browser. Exactly **one** edge is red —
+  orders without customers, the 14-of-80 loss FV measured — and a test fails if a
+  second red edge ever appears, because a red banner shown eight times is one
+  nobody reads.
+
+  A skipped group's files are **absent** from `manifest.json` rather than present
+  with `rows: 0`. The contract has said those are different facts since it was
+  written; nothing had ever produced the second case until now
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and

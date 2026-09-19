@@ -98,6 +98,15 @@ taken" months later.
   means the plugin did not write it at all, which is a different statement and
   the importer must be able to tell the two apart — "this shop has no coupons"
   and "this export does not carry coupons" are not the same fact.
+- **`groups` says which sections the export carries.** The plugin's screen lets
+  the owner tick named groups — catalogue, coupons, customers, orders, reviews,
+  articles, SEO, addresses and pictures — so an export need not be the whole
+  shop. `groups.selected`, `groups.skipped` and `groups.files` name what was
+  exported; `groups.assumed_already_imported` records a dependency the operator
+  stated was already in this shop, which the plugin cannot check. This is what
+  makes the rule above load-bearing: a skipped group's files are ABSENT from
+  `files`, never listed with `"rows": 0`. `docs/GK-EXPORT-GROUPS.md` is the
+  account.
 - **Unknown keys are ignored, never fatal.** A newer plugin writing a field this
   shop does not read must not stop an import.
 - **`format` is checked.** Anything other than `kbb-export/1` is refused with a
