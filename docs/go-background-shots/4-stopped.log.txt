@@ -1,0 +1,13 @@
+=== Stop, pressed while the server is importing on its own ===
+background: ok=true via=the shop's own address
+>>> pressing Stop at 13:18:19
+stop: ok=true state=finished · Stopped. Nothing it had already imported was undone.
+>>> what a separate process saw across the Stop:
+  7.06s  brands=10026  processed=10026  status=running   slices=6   rows/slice=4197  baton=held 
+  7.26s  brands=10326  processed=10326  status=running   slices=6   rows/slice=4197  baton=held 
+  7.47s  brands=10523  processed=10523  status=stopped   slices=6   rows/slice=6716  baton=gone · stopped from the progress page
+RUN IS OVER: stopped
+>>> eight seconds later, still nothing moving:
+status=stopped background=1 paused=0 slices=6 fails=0 rows/slice=6716 baton=gone lock=free
+  processed=10523 finished=no brands=10523 distinct=10523
+  note=stopped from the progress page

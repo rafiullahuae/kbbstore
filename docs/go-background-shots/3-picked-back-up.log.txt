@@ -1,0 +1,48 @@
+server back at 12:40:02. The killed slice left this behind:
+status=running background=1 paused=0 slices=6 fails=0 rows/slice=4197 baton=held lock=2026-09-19 12:39:47
+  processed=7526 finished=no brands=7526 distinct=7526
+  note=-
+
+From here nothing exists but this page's own poll. Every 10 seconds:
+  t+0   s state=running  slices=6   beat=15  s rows=7526  /80000  (9%)
+  t+11  s state=running  slices=6   beat=26  s rows=7526  /80000  (9%)
+  t+21  s state=running  slices=6   beat=36  s rows=7526  /80000  (9%)
+  t+31  s state=running  slices=6   beat=46  s rows=7526  /80000  (9%)
+  t+41  s state=running  slices=6   beat=56  s rows=7526  /80000  (9%)
+  t+51  s state=running  slices=6   beat=66  s rows=7526  /80000  (9%)
+  t+61  s state=running  slices=6   beat=76  s rows=7526  /80000  (9%)
+  t+71  s state=running  slices=6   beat=87  s rows=7526  /80000  (9%)
+  t+82  s state=running  slices=6   beat=97  s rows=7526  /80000  (9%)
+  t+92  s state=running  slices=6   beat=107 s rows=7526  /80000  (9%)
+  t+102 s state=running  slices=6   beat=117 s rows=7526  /80000  (9%)
+  t+112 s state=running  slices=6   beat=127 s rows=7526  /80000  (9%)
+  t+122 s state=running  slices=6   beat=137 s rows=7526  /80000  (9%)
+  t+132 s state=running  slices=6   beat=147 s rows=7526  /80000  (9%)
+  t+142 s state=running  slices=6   beat=157 s rows=7526  /80000  (9%)
+  t+152 s state=running  slices=6   beat=168 s rows=7526  /80000  (9%)
+  t+163 s state=running  slices=6   beat=178 s rows=7526  /80000  (9%)
+  t+173 s state=running  slices=6   beat=188 s rows=7526  /80000  (9%)
+  t+183 s state=running  slices=6   beat=198 s rows=7526  /80000  (9%)
+  t+193 s state=running  slices=6   beat=208 s rows=7526  /80000  (9%)
+  t+203 s state=running  slices=6   beat=218 s rows=7526  /80000  (9%)
+  t+213 s state=running  slices=6   beat=228 s rows=7526  /80000  (9%)
+  t+223 s state=running  slices=6   beat=238 s rows=7526  /80000  (9%)
+  t+233 s state=stalled  slices=6   beat=248 s rows=7526  /80000  (9%)
+  t+243 s state=stalled  slices=6   beat=259 s rows=7526  /80000  (9%)
+  t+254 s state=stalled  slices=6   beat=269 s rows=7526  /80000  (9%)
+  t+264 s state=stalled  slices=6   beat=279 s rows=7526  /80000  (9%)
+  t+274 s state=stalled  slices=6   beat=289 s rows=7526  /80000  (9%)
+  t+284 s state=stalled  slices=6   beat=299 s rows=7526  /80000  (9%)
+  t+294 s state=running  slices=1   beat=0   s rows=7526  /80000  (9%)
+  t+304 s state=running  slices=3   beat=3   s rows=22139 /80000  (28%)
+  t+315 s state=running  slices=4   beat=6   s rows=37885 /80000  (47%)
+  t+325 s state=running  slices=6   beat=1   s rows=50977 /80000  (64%)
+  t+335 s state=running  slices=7   beat=2   s rows=64023 /80000  (80%)
+  t+345 s state=running  slices=8   beat=4   s rows=77369 /80000  (97%)
+  t+355 s state=finished slices=8   beat=8   s rows=80000 /80000  (100%)
+  >>> the run is complete at t+355s
+
+FINAL:
+status=complete background=1 paused=0 slices=8 fails=0 rows/slice=10746 baton=gone lock=free
+  processed=80000 finished=2026-09-19 12:45:49 brands=80000 distinct=80000
+  note=the import finished
