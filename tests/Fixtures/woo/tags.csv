@@ -1,0 +1,4 @@
+term_id,name,slug,description,parent,count,product_ids
+601,K-Beauty,k-beauty,Korean beauty staples,0,2,"4021,4022"
+602,Hanbang,hanbang,,0,2,"4021,9999"
+603,,no-name-tag,A tag with no name at all,0,0,

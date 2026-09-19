@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Import;
 
+use App\Services\Import\Entities\AttributeImporter;
 use App\Services\Import\Entities\BrandImporter;
 use App\Services\Import\Entities\CategoryImporter;
 use App\Services\Import\Entities\CouponImporter;
@@ -14,6 +15,8 @@ use App\Services\Import\Entities\OrderItemImporter;
 use App\Services\Import\Entities\ReviewImporter;
 use App\Services\Import\Entities\SeoImporter;
 use App\Services\Import\Entities\ProductImporter;
+use App\Services\Import\Entities\TagImporter;
+use App\Services\Import\Entities\VariationImporter;
 use App\Services\Import\Sources\CsvRowSource;
 use App\Services\Import\Sources\RowSource;
 use App\Services\Mail\OrderStatusMailPolicy;
@@ -79,6 +82,26 @@ final class ImportRunner
             new CategoryImporter,
             new BrandImporter,
             new ProductImporter,
+            /*
+             * TAGS, ATTRIBUTES AND VARIATIONS -- AFTER PRODUCTS, AND
+             * VARIATIONS AFTER ATTRIBUTES. Both halves are dependencies.
+             *
+             * After products, because all three carry WordPress ids that only
+             * ProductImporter can translate: `tags.product_ids` and
+             * `attributes.product_ids` fill pivots keyed on the LOCAL product
+             * id, and `variations.parent_id` is the post id of the variable
+             * product the variant hangs off -- product_variants.product_id is
+             * NOT NULL, so a variation registered before products refuses every
+             * row.
+             *
+             * Variations after attributes, because a variation names the terms
+             * defining it by SLUG (`attribute_pa_size=50ml`) and those slugs
+             * have to already be attribute_values rows to be pinned to. The
+             * order of this array is the order the runner walks it.
+             */
+            new TagImporter,
+            new AttributeImporter,
+            new VariationImporter,
             /*
              * AFTER PRODUCTS AND CATEGORIES, BEFORE ORDERS, and both halves of
              * that are dependencies rather than preferences.

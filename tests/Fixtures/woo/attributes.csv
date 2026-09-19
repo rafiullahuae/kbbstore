@@ -1,0 +1,5 @@
+taxonomy,attribute_id,attribute_name,attribute_label,attribute_type,attribute_orderby,attribute_public,term_id,name,slug,description,count,product_ids
+pa_size,2,size,Size,select,menu_order,0,701,50ml,50ml,,2,"4021,4022"
+pa_size,2,size,Size,select,menu_order,0,702,100ml,100ml,,1,4021
+pa_shades,3,shades,Shades,select,name,1,703,Rose,rose,,2,"4021,4242"
+,,,,,,,704,Nowhere,nowhere,,0,

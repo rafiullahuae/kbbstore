@@ -128,6 +128,9 @@ final class VolumeFixture
         $this->categories();
         $this->brands();
         $this->products();
+        $this->tags();
+        $this->attributes();
+        $this->variations();
         $this->coupons();
         $this->customers();
         $this->orders();
@@ -325,6 +328,9 @@ final class VolumeFixture
     /** @var array<int, string> */
     private array $productNames = [];
 
+    /** @var list<int> Products that are not in the WordPress trash. */
+    private array $livingProductIds = [];
+
     private function products(): void
     {
         $kinds = ['Serum', 'Ampoule', 'Essence', 'Toner', 'Cleanser', 'Cream', 'Mask', 'Sunscreen', 'Oil', 'Mist'];
@@ -384,6 +390,16 @@ final class VolumeFixture
                 $this->count('products.trashed_refused');
             }
 
+            if ($status !== 'trash') {
+                // The parents a variation, a tag or an attribute term can
+                // actually be hung off. ProductImporter refuses a trashed
+                // product by name, and everything downstream of it follows it
+                // out -- so a fixture that ignored this would spend its
+                // variations bucket on refusals instead of on the resume and
+                // idempotency properties it is here to measure.
+                $this->livingProductIds[] = $wcId;
+            }
+
             $brand = $this->brandIds[$this->next() % count($this->brandIds)];
             $catA = $this->categoryIds[$this->next() % count($this->categoryIds)];
             $catB = $this->categoryIds[$this->next() % count($this->categoryIds)];
@@ -425,6 +441,194 @@ final class VolumeFixture
             'id', 'name', 'slug', 'sku', 'status', 'type', 'regular_price', 'sale_price', 'stock_status',
             'stock', 'brand_term_id', 'category_term_ids', 'position', 'date_created', 'image', 'images',
             'description', 'meta:_delivery_instructions',
+        ], $rows);
+    }
+
+    /* --------------------------------------------- tags, attributes, variations */
+
+    /**
+     * `tags.csv` -- the terms AND the membership, which is one file by the
+     * contract's own decision: "a tags file without the pivot needs a second
+     * file before anything can use it".
+     */
+    private function tags(): void
+    {
+        $stems = ['K-Beauty', 'Hanbang', 'Vegan', 'Best Seller', 'Gift Set', 'Travel Size', 'New In'];
+        $rows = [];
+        $seen = [];
+        $id = 30000;
+
+        $wanted = max(4, intdiv($this->products, 9));
+
+        for ($i = 0; $i < $wanted; $i++) {
+            $name = $stems[$i % count($stems)].($i < count($stems) ? '' : ' '.($i + 1));
+            $members = [];
+
+            // A handful of real products per tag, plus -- on one tag -- an id
+            // that is not in the export at all, which has to be a note and not
+            // a refusal.
+            for ($n = 0; $n < 3; $n++) {
+                $members[] = $this->livingProductIds[$this->next() % count($this->livingProductIds)];
+            }
+
+            if ($i === 1) {
+                $members[] = 999999;
+                $this->count('tags.member_not_in_export');
+            }
+
+            $rows[] = [
+                $id++,
+                $name,
+                $this->slug($name, $seen),
+                'Everything we file under '.$name.'.',
+                0,
+                count($members),
+                implode(',', array_values(array_unique($members))),
+            ];
+        }
+
+        $this->count('tags', count($rows));
+        $this->csv(
+            'tags.csv',
+            ['term_id', 'name', 'slug', 'description', 'parent', 'count', 'product_ids'],
+            $rows,
+        );
+    }
+
+    /** @var list<array{0: string, 1: string, 2: int}> taxonomy, term slug, term id */
+    private array $attributeTerms = [];
+
+    /**
+     * `attributes.csv` -- one row per TERM with the attribute repeated on it,
+     * which is what lets one file fill `attributes`, `attribute_values` and
+     * `product_attribute_value`.
+     *
+     * `attribute_public` is 0 on the size axis and 1 on the shade axis, because
+     * it is NOT `is_filterable` and a fixture where both happened to agree
+     * could not show that.
+     */
+    private function attributes(): void
+    {
+        $definitions = [
+            ['pa_size', 2, 'size', 'Size', 'select', 'menu_order', 0, ['30ml', '50ml', '100ml', '150ml']],
+            ['pa_shades', 3, 'shades', 'Shades', 'select', 'name', 1, ['Rose', 'Beige', 'Sand']],
+        ];
+
+        $rows = [];
+        $id = 7000;
+
+        foreach ($definitions as [$taxonomy, $attributeId, $name, $label, $type, $orderby, $public, $terms]) {
+            foreach ($terms as $term) {
+                $termId = $id++;
+                $members = [];
+
+                for ($n = 0; $n < 4; $n++) {
+                    $members[] = $this->livingProductIds[$this->next() % count($this->livingProductIds)];
+                }
+
+                $this->attributeTerms[] = [$taxonomy, $this->attributeSlug($term), $termId];
+
+                $rows[] = [
+                    $taxonomy, $attributeId, $name, $label, $type, $orderby, $public,
+                    $termId, $term, $this->attributeSlug($term), '', count($members),
+                    implode(',', array_values(array_unique($members))),
+                ];
+            }
+        }
+
+        $this->count('attributes', count($rows));
+        $this->csv('attributes.csv', [
+            'taxonomy', 'attribute_id', 'attribute_name', 'attribute_label', 'attribute_type',
+            'attribute_orderby', 'attribute_public',
+            'term_id', 'name', 'slug', 'description', 'count', 'product_ids',
+        ], $rows);
+    }
+
+    private function attributeSlug(string $term): string
+    {
+        return strtolower(str_replace(' ', '-', $term));
+    }
+
+    /**
+     * `variations.csv` -- every other living product sold in two sizes, with
+     * the three states the importer has to tell apart.
+     *
+     *  - a size WooCommerce has disabled (`private`), which must not come back
+     *    on sale;
+     *  - a variation carrying its own sale window, which this schema cannot
+     *    hold and which must be reported rather than dropped;
+     *  - a variation whose parent is not in the export, which must be refused
+     *    with a reason rather than left to the database.
+     */
+    private function variations(): void
+    {
+        $sizes = array_values(array_filter(
+            $this->attributeTerms,
+            static fn (array $term): bool => $term[0] === 'pa_size',
+        ));
+
+        $rows = [];
+        $id = 60000;
+        $n = 0;
+
+        foreach ($this->livingProductIds as $index => $parent) {
+            if ($index % 2 !== 0) {
+                continue;
+            }
+
+            foreach ([0, 1] as $slot) {
+                $term = $sizes[($index + $slot) % count($sizes)];
+
+                // Two distinct prices per parent, which is the condition
+                // App\Support\Seo::aggregateOffer() needs to publish a range.
+                $price = number_format(40 + (($index * 7 + $slot * 23) % 210), 2, '.', '');
+
+                $status = 'publish';
+                $sale = ['', '', ''];
+
+                if ($slot === 1 && $this->everyNth($n, 5, $this->products, 3)) {
+                    $status = 'private';
+                    $this->count('variations.disabled_size');
+                }
+
+                if ($slot === 0 && $this->everyNth($n, 9, $this->products, 2)) {
+                    $sale = [
+                        number_format((float) $price - 10, 2, '.', ''),
+                        '2021-01-01 00:00:00',
+                        '2021-02-01 00:00:00',
+                    ];
+                    $this->count('variations.own_sale_window_discarded');
+                }
+
+                $rows[] = [
+                    $id++, $parent, 'VAR-'.$parent.'-'.$term[1], $status, $slot + 1,
+                    $price, $sale[0], $sale[1], $sale[2],
+                    'instock', '', 'no', '', '', '', '', '', '', '', '',
+                    'attribute_'.$term[0].'='.$term[1],
+                    '2021-02-01 09:00:00',
+                ];
+
+                $n++;
+            }
+        }
+
+        // One orphan: the parent is not in this export at all.
+        $rows[] = [
+            $id++, 999999, 'VAR-ORPHAN', 'publish', 1,
+            '99.00', '', '', '',
+            'instock', '', 'no', '', '', '', '', '', '', '', '',
+            'attribute_pa_size='.$sizes[0][1],
+            '2021-02-01 09:00:00',
+        ];
+        $this->count('variations.orphan_refused');
+
+        $this->count('variations', count($rows));
+        $this->csv('variations.csv', [
+            'id', 'parent_id', 'sku', 'status', 'position',
+            'regular_price', 'sale_price', 'sale_starts_at', 'sale_ends_at',
+            'stock_status', 'stock', 'manage_stock', 'backorders',
+            'weight', 'length', 'width', 'height', 'tax_class',
+            'image', 'description', 'attributes', 'date_created',
         ], $rows);
     }
 
@@ -817,17 +1021,17 @@ final class VolumeFixture
         ));
         $this->count('unread.order_notes.csv', max(4, intdiv($this->orders, 3)));
 
-        $this->csv('variations.csv', ['variation_id', 'parent_id', 'sku', 'price', 'attributes'], array_map(
-            fn (int $n): array => [60000 + $n, 4000 + ($n % $this->products), 'VAR-'.$n, '99.00', 'size:50ml'],
-            range(1, max(4, intdiv($this->products, 2))),
-        ));
-        $this->count('unread.variations.csv', max(4, intdiv($this->products, 2)));
-
-        $this->csv('tags.csv', ['term_id', 'name', 'slug', 'count'], array_map(
-            fn (int $n): array => [30000 + $n, 'Tag '.$n, 'tag-'.$n, (string) $n],
-            range(1, max(4, intdiv($this->products, 9))),
-        ));
-        $this->count('unread.tags.csv', max(4, intdiv($this->products, 9)));
+        /*
+         * variations.csv and tags.csv USED TO BE WRITTEN HERE, as four columns
+         * of placeholder, because nothing opened them. Lane GH's importers do,
+         * so they are generated in the export contract's own shape by
+         * variations()/tags()/attributes() above and the volume properties --
+         * second pass rewrites nothing, a killed run resumes onto exactly the
+         * rows it had not done -- now cover them like everything else.
+         *
+         * refunds.csv and order_notes.csv stay here. They are still files no
+         * importer opens, which is what this method is for.
+         */
     }
 
     /* -------------------------------------------------------------- helpers */

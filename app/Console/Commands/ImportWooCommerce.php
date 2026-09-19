@@ -46,7 +46,7 @@ class ImportWooCommerce extends Command
     protected $signature = 'kbb:import
         {--dir= : directory holding the WooCommerce CSV exports}
         {--file=* : entity:path, overriding the conventional filename (e.g. --file=orders:/tmp/o.csv)}
-        {--only=* : only these entities (categories, brands, products, coupons, customers, orders, order-items, reviews, seo)}
+        {--only=* : only these entities (categories, brands, products, tags, attributes, variations, coupons, customers, orders, order-items, reviews, seo)}
         {--dry-run : report what would change and write nothing}
         {--batch=500 : rows per committed transaction}
         {--limit=0 : stop after this many rows per entity, for a trial run}
