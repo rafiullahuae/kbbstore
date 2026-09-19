@@ -60,6 +60,11 @@ by luck:
   have the integrator wire them up.
 - **Do not edit `KBB-Master-Plan.md` or `KBB-Progress-Dashboard.html`.** Note
   what you did in the PR body; the integrator merges the plan.
+- **Never `pkill` by pattern on this machine.** Three lanes run at once and
+  `pkill -f 'php vendor/bin/pest'` kills the other two mid-suite. It happened:
+  one lane cleared its own run and cost another lane a full re-run, and the
+  failures it produced in a third looked exactly like flake. Match on your own
+  worktree path, or kill the PID you started.
 - **Commit as Claude, not as the owner.** A lane's first act in a new worktree
   is `git config user.email noreply@anthropic.com && git config user.name Claude`.
   Five lane commits reached the integrator authored `rite2rafi2@gmail.com`,

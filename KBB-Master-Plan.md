@@ -105,12 +105,6 @@ is a bug in this section rather than a second opinion about the phase.
 
 
 
-- **Lane GM — Store → Import accepts those zips.** `upload()` takes loose files
-  only today, so the owner would unzip by hand, which defeats the point. The
-  lane's real work is the unpacking: zip slip, symlink entries, bombs, and a
-  `.php` that must never land anywhere — and several group zips having to add up
-  to one import without the duplicate guard mistaking the second for a repeat
-
 ### Waiting on the owner, not on us
 
 - **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
@@ -1981,6 +1975,40 @@ a fake success toast and saves nothing).
   key return the same sentence and the same 404. Streaming is measured rather
   than asserted: a 96 MB archive served from a 64 MB process, and the streamed
   bytes re-opened as a valid zip
+- [x] **Store → Import takes a group's zip.** Recognised from its bytes, never
+  from its name or content type, at the existing endpoint — so no new route, no
+  capability rule and no cache migration. The invariant that makes it safe is
+  that a zip behaves *identically* to its files uploaded loose: every member goes
+  through the same `ImportWorkspace::accept()`, so the parse, the id-column check
+  and every refusal sentence are the ones the loose path already had.
+
+  ▲ **Zip slip was tested twice on purpose**, and the second fixture is the
+  point: `../../../.env` is caught by two guards, so a test on that alone stays
+  green with the traversal check deleted — the dead-filter shape this repo has
+  already paid for in `Api\ProductController`. `../../../../products.csv` has a
+  basename the allowlist is happy with, so only the traversal check can refuse it.
+
+  ▲ **And a claimed-redundant guard was measured and was not redundant.** The
+  lane wrote that the non-text check would catch a symlink entry anyway, then
+  measured it: with the symlink guard removed the upload returns 200 and the file
+  lands. A claim that a guard is redundant is exactly what gets a guard deleted,
+  so it is corrected at length in the doc rather than quietly fixed.
+
+  Several group zips add up to one import: the manifests **merge** rather than
+  the second replacing the first, because a replace leaves a file on disk and
+  absent from the manifest beside it — which the contract defines as "this export
+  does not carry it", discarding the one thing a manifest count does that a file
+  count cannot, notice a truncated upload. Two of the lane's own merge rules were
+  wrong and **Lane GF's existing suite caught both**, not its own mutations: one
+  reported a corrected re-export as a truncated upload, telling the owner to
+  re-upload the one file that was finally right
+- [ ] ▲ **The "Addresses and pictures" group downloads, unpacks, and is then
+  refused.** `permalinks.csv` and `media.csv` have no importer on the main Import
+  screen — they are read by Store → Import → Addresses & pictures instead. Nothing
+  regressed (a loose upload of them does the same today) and it is pinned by a
+  test, but the owner will download that group and be told twice that it was not
+  imported. The screen should route those two files to the screen that does read
+  them rather than refuse them
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and

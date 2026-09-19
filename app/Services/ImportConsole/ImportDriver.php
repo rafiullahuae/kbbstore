@@ -593,6 +593,36 @@ final class ImportDriver
                 'label' => $onDisk->label(),
                 'files' => $onDisk->files(),
                 /*
+                 * WHICH GROUPS THIS EXPORT CARRIES, and the one claim in it
+                 * that nothing verified.
+                 *
+                 * Lane GK's export screen lets the owner tick named groups, and
+                 * Lane GL downloads each as its own zip. `groups.selected` and
+                 * `groups.skipped` are facts about the export. `assumed_already_imported`
+                 * is not: it is what the operator ASSERTED on the WordPress
+                 * screen — that a prerequisite group is already in this shop —
+                 * and GK is explicit that the plugin cannot see this shop and
+                 * did not check it.
+                 *
+                 * It goes out with the status because the person pressing
+                 * Import is standing in front of the only shop that can answer
+                 * it. GK's one `loses` edge — orders exported without customers,
+                 * 14 of 80 customers lost on the measured rehearsal — is damage
+                 * whose REPORT appears weeks later at a different button press,
+                 * with nothing in it naming the export that caused it. Printing
+                 * the claim here is the last moment the connection costs
+                 * nothing to make.
+                 *
+                 * It is a NOTICE AND NOT A REFUSAL. GK refuses to let the
+                 * export start with a warning unanswered, which is the right
+                 * place for a refusal; refusing again here would refuse the
+                 * partial import this whole console exists to make possible,
+                 * and would be this shop overruling a decision it has strictly
+                 * less information about than the person who made it.
+                 */
+                'groups' => $onDisk->usable() ? $onDisk->groups() : null,
+                'merged_from' => $onDisk->usable() ? ($onDisk->raw()['merged_from'] ?? null) : null,
+                /*
                  * Said on the screen, not only in a doc: an export with no
                  * manifest is not a broken export. Ten of the eleven files this
                  * importer reads existed before the plugin did.

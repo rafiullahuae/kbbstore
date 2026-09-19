@@ -7728,6 +7728,7 @@ function impPaint(){
     +'Upload the exports, look at what <b>would</b> happen, fix anything it refuses, then import for real. '
     +'Nothing is written until you press Import.</p></div>'
     +impBanner(run)
+    +impAssumedCard(s)
     +impFilesCard(s)
     +(anyFile?impChoicesCard(s):'')
     +(anyFile?impPreviewCard(s):'')
@@ -7790,6 +7791,34 @@ function impCss(){
   +'</style>';
 }
 
+/*
+ * What the operator SAID was already in this shop, which the export plugin
+ * could not check. docs/GK-EXPORT-GROUPS.md §5: the claim travels in the
+ * manifest so it does not have to live in his memory, and this is the one
+ * moment somebody is looking at the shop the claim is about.
+ *
+ * A notice, never a refusal. The export screen already refused to start with
+ * an unanswered warning, which is where a refusal belongs; refusing here
+ * would refuse the partial import this console exists to make possible.
+ */
+function impAssumedCard(s){
+  const claims=((s.manifest&&s.manifest.groups&&s.manifest.groups.assumed_already_imported)||[]);
+  if(!claims.length) return '';
+
+  return '<div class="card pad" style="margin-bottom:16px;border-left:3px solid '
+    +(claims.some(c=>c.severity==='loses')?'#96271F':'var(--ink-soft)')+'">'
+    +'<b style="font-size:14px">Before you import — something this export assumes</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 10px">When this export was taken you '
+    +'confirmed on the WordPress screen that these were already in this shop. The export plugin cannot '
+    +'see this shop and did not check. If any of them is not true, read the note before importing.</p>'
+    +claims.map(c=>'<div class="impmeta" style="margin-top:8px"><b>'+impEsc(c.needs)+'</b> was assumed to be '
+      +'already imported when <b>'+impEsc(c.group)+'</b> was exported.'
+      +(c.severity==='loses'?' <b style="color:#96271F">If it was not, rows will be lost and the report of '
+        +'this run will not say so.</b>':'')
+      +(c.claim?'<div style="margin-top:4px">'+impEsc(c.claim)+'</div>':'')+'</div>').join('')
+    +'</div>';
+}
+
 function impBanner(run){
   if(impMsg){
     return '<div class="impbanner '+(impMsgKind||'warn')+'"><div>'+impEsc(impMsg)+'</div>'
@@ -7830,11 +7859,11 @@ function impFilesCard(s){
     +'<div class="between" style="margin-bottom:12px;flex-wrap:wrap;gap:10px"><div><b style="font-size:14px">1 · Your exports</b>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0">Upload as many as you have. You do not need all six — a file you leave out is simply not touched, '
     +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div></div>'
-    +'<div class="impdrop" id="impDrop"><b>Drop your CSV files here, or click to choose</b>'
+    +'<div class="impdrop" id="impDrop"><b>Drop your CSV files or a group\'s .zip here, or click to choose</b>'
     +'<span>Name them <code style="font-family:var(--mono)">categories.csv</code>, <code style="font-family:var(--mono)">brands.csv</code>, '
     +'<code style="font-family:var(--mono)">products.csv</code>, <code style="font-family:var(--mono)">customers.csv</code>, '
     +'<code style="font-family:var(--mono)">orders.csv</code>, <code style="font-family:var(--mono)">order_items.csv</code> and they sort themselves out.</span>'
-    +'<input type="file" id="impFileInput" accept=".csv,text/csv" multiple hidden></div>'
+    +'<input type="file" id="impFileInput" accept=".csv,text/csv,.zip,application/zip" multiple hidden></div>'
     +'<div class="impnote">This server accepts uploads up to <b>'+impEsc(lim.upload_max_filesize)+'</b> each ('
     +'form limit '+impEsc(lim.post_max_size)+'). Files are stored outside the website folder and are never reachable from the web. '
     +'If an order export is larger than that, split it — the importer carries on across files.</div>'
