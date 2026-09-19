@@ -135,6 +135,8 @@ final class VolumeFixture
         $this->customers();
         $this->orders();
         $this->reviews();
+        $this->refunds();
+        $this->orderNotes();
         $this->seo();
         $this->unreadFiles();
 
@@ -1007,19 +1009,116 @@ final class VolumeFixture
      * were exactly this, and were found only because something finally listed
      * the files nothing had opened.
      */
+    /**
+     * Money the shop gave back — Lane GI's RefundImporter reads this.
+     *
+     * One order in twenty carries a PARTIAL refund, which is the case that
+     * matters: docs/FV-IMPORT-AT-VOLUME.md §9 measured that a partial refund
+     * imported as an order at its FULL total, so the history did not merely
+     * omit money given back, it overstated revenue. The volume properties —
+     * second pass rewrites nothing, a killed run resumes onto exactly the rows
+     * it had not done, the money is exact to the fil — now cover that too.
+     *
+     * `total` is NEGATIVE and `amount` positive, which is WooCommerce's own
+     * arrangement and not a tidying: a refund post stores its value as a
+     * negative order total, and an importer that read the wrong one of the two
+     * would add money to the shop instead of taking it away.
+     */
+    private function refunds(): void
+    {
+        $rows = [];
+
+        for ($n = 1; $n <= max(4, intdiv($this->orders, 20)); $n++) {
+            $orderId = 10000 + ($n * 20);
+            $rows[] = [
+                90000 + $n,
+                $orderId,
+                '2024-01-01 10:00:00',
+                '50.00',
+                'One item came back',
+                1,
+                'AED',
+                '-50.00',
+                '',
+            ];
+        }
+
+        $this->csv('refunds.csv', [
+            'refund_id', 'order_id', 'date_created', 'amount', 'reason',
+            'refunded_by', 'currency', 'total', 'refunded_items',
+        ], $rows);
+
+        $this->count('refunds', count($rows));
+    }
+
+    /**
+     * The notes on an order — Lane GI's OrderNoteImporter reads this.
+     *
+     * Both kinds, because they are not the same thing to a shopper: a private
+     * note is the shop talking to itself and a customer note was mailed to the
+     * buyer, and an importer that lost the distinction would show staff remarks
+     * on a customer's own order page.
+     */
+    private function orderNotes(): void
+    {
+        $rows = [];
+
+        for ($n = 1; $n <= max(4, intdiv($this->orders, 3)); $n++) {
+            $orderId = 10000 + ($n * 3);
+            $customerNote = $n % 4 === 0;
+
+            $rows[] = [
+                70000 + $n,
+                $orderId,
+                '2024-01-01 09:00:00',
+                $customerNote ? 'Layla' : 'WooCommerce',
+                $customerNote ? 'layla@example.test' : 'woocommerce@example.test',
+                $customerNote ? 'Your parcel is on its way.' : 'Order status changed from Processing to Completed.',
+                $customerNote ? 'yes' : 'no',
+            ];
+        }
+
+        $this->csv('order_notes.csv', [
+            'note_id', 'order_id', 'date_created', 'author',
+            'author_email', 'content', 'is_customer_note',
+        ], $rows);
+
+        $this->count('order_notes', count($rows));
+    }
+
     private function unreadFiles(): void
     {
-        $this->csv('refunds.csv', ['refund_id', 'order_id', 'amount', 'reason', 'date'], array_map(
-            fn (int $n): array => [90000 + $n, 10000 + $n, '50.00', 'Returned', '2024-01-01 00:00:00'],
+        /*
+         * TWO FILES NO IMPORTER OPENS, and they are deliberately not the two
+         * that used to be here.
+         *
+         * refunds.csv and order_notes.csv were written here as four columns of
+         * placeholder for exactly as long as nothing read them. Lane GI gave
+         * both an importer in the same round Lane GH gave one to variations,
+         * attributes and tags -- so leaving them here would have fed the new
+         * RefundImporter a shape the contract does not describe, and would have
+         * gone on telling the owner his refunds were dropped on a run that
+         * imported them. They are generated in the contract's own shape above.
+         *
+         * These two replace them because THE CHANNEL MUST KEEP BEING PROVED.
+         * Both are real WooCommerce extension exports: a shop with Subscriptions
+         * or Bookings installed hands over these files with everything else, and
+         * this application has no concept of either. That is the whole point --
+         * coupons.csv and reviews.csv were found only because something finally
+         * listed the files nothing had opened, and a channel with nothing left
+         * to name is a channel nobody would notice had stopped working.
+         */
+        $this->csv('subscriptions.csv', ['subscription_id', 'customer_id', 'status', 'next_payment', 'total'], array_map(
+            fn (int $n): array => [60000 + $n, 400 + $n, 'active', '2026-10-01 00:00:00', '129.00'],
             range(1, max(4, intdiv($this->orders, 20))),
         ));
-        $this->count('unread.refunds.csv', max(4, intdiv($this->orders, 20)));
+        $this->count('unread.subscriptions.csv', max(4, intdiv($this->orders, 20)));
 
-        $this->csv('order_notes.csv', ['note_id', 'order_id', 'author', 'note', 'date'], array_map(
-            fn (int $n): array => [70000 + $n, 10000 + $n, 'admin', 'Called the customer', '2024-01-01 00:00:00'],
-            range(1, max(4, intdiv($this->orders, 3))),
+        $this->csv('bookings.csv', ['booking_id', 'order_id', 'product_id', 'start', 'end'], array_map(
+            fn (int $n): array => [50000 + $n, 10000 + $n, 4000 + $n, '2026-10-01 09:00:00', '2026-10-01 10:00:00'],
+            range(1, max(4, intdiv($this->orders, 25))),
         ));
-        $this->count('unread.order_notes.csv', max(4, intdiv($this->orders, 3)));
+        $this->count('unread.bookings.csv', max(4, intdiv($this->orders, 25)));
 
         /*
          * variations.csv and tags.csv USED TO BE WRITTEN HERE, as four columns
@@ -1029,8 +1128,10 @@ final class VolumeFixture
          * second pass rewrites nothing, a killed run resumes onto exactly the
          * rows it had not done -- now cover them like everything else.
          *
-         * refunds.csv and order_notes.csv stay here. They are still files no
-         * importer opens, which is what this method is for.
+         * refunds.csv and order_notes.csv left this method in the same round,
+         * for the same reason: Lane GI's RefundImporter and OrderNoteImporter
+         * read them now, so they are generated above in the contract's shape
+         * and the volume properties cover them like everything else.
          */
     }
 

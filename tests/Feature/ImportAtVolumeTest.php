@@ -521,18 +521,27 @@ it('names every file in the export folder that no importer opens, with its row c
     }
 
     /*
-     * `variations.csv` and `tags.csv` USED TO BE IN THIS LIST and are not any
-     * more: Lane GH registered importers for them, and `attributes.csv` beside
-     * them. Naming a file the import really does open would train the owner to
-     * skim the one list that is only worth anything if every line in it is
-     * true. refunds.csv and order_notes.csv are still genuinely unread.
+     * FIVE FILES LEFT THIS LIST IN ONE ROUND, which is what the merged state of
+     * two lanes looks like: Lane GH registered importers for variations.csv,
+     * attributes.csv and tags.csv, and Lane GI for refunds.csv and
+     * order_notes.csv. Naming any of the five would train the owner to skim the
+     * one list that is only worth anything if every line in it is true -- and in
+     * the refund case it would be telling him his refunds were dropped on a run
+     * that imported them.
+     *
+     * subscriptions.csv and bookings.csv replaced them in the fixture, and are
+     * not filler. Both are real WooCommerce extension exports that this
+     * application has no concept of, so the channel keeps being proved against
+     * something genuinely unread. coupons.csv and reviews.csv were found only
+     * because something finally listed the files nothing had opened; a channel
+     * with nothing left to name is one nobody would notice had stopped working.
      */
-    foreach (['variations.csv', 'tags.csv', 'attributes.csv'] as $file) {
+    foreach (['variations.csv', 'tags.csv', 'attributes.csv', 'refunds.csv', 'order_notes.csv'] as $file) {
         expect(array_key_exists($file, $named))
             ->toBeFalse($file.' is imported now and was still reported as a file nothing opens');
     }
 
-    foreach (['refunds.csv', 'order_notes.csv'] as $file) {
+    foreach (['subscriptions.csv', 'bookings.csv'] as $file) {
         expect(array_key_exists($file, $named))->toBeTrue($file.' was in the folder and nothing said it was ignored');
         expect($named[$file])->toContain((string) $manifest['unread.'.$file]);
     }

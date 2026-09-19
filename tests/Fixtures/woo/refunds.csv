@@ -1,0 +1,4 @@
+refund_id,order_id,date_created,amount,reason,refunded_by,currency,total,refunded_items
+90001,10233,2019-03-10 10:00:00,99.50,One bottle came back,1,AED,-99.50,5501:-1:-99.50
+90002,99999,2019-03-10 10:00:00,10.00,A refund of an order that is not in this export,1,AED,-10.00,
+90003,10234,2021-07-20 10:00:00,25.00,The two money conventions disagree,1,AED,-30.00,

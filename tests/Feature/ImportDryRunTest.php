@@ -23,7 +23,7 @@
  *   a slug invented from the product name, moving an address Google has
  *   a description with its <script> removed, which is right, and unannounced
  *   fourteen columns of the export that nothing reads
- *   two whole files — refunds.csv, order_notes.csv — that nothing opens
+ *   two whole files — subscriptions.csv, bookings.csv — that nothing opens
  *
  * The fixture is BUILT rather than checked in, because the point of most of
  * these is a count over many rows, and a 4,000-row CSV in the repository is a
@@ -136,25 +136,30 @@ function fdExport(array $options = []): string
         /*
          * Two exports this application has no entity for at all.
          *
-         * THESE USED TO BE coupons.csv AND reviews.csv, and that is the whole
-         * history of this channel: they were the two worst files on the list,
-         * this test is what made them visible, and they are now entities of
-         * their own (CouponImporter, ReviewImporter --
-         * tests/Feature/CouponReviewImportTest.php). The guard is not about
-         * those two names. It is about a file being ignored in silence, which
-         * is still true of everything a WooCommerce export carries that nothing
-         * here opens -- so it is pinned on two files that really are unread.
+         * THESE USED TO BE coupons.csv AND reviews.csv, then refunds.csv AND
+         * order_notes.csv, then variations.csv AND tags.csv -- and that is the
+         * whole history of this channel. Each pair was the worst file on the
+         * list, this test is what made it visible, and each pair is now an
+         * entity of its own (CouponImporter and ReviewImporter; RefundImporter
+         * and OrderNoteImporter; VariationImporter, AttributeImporter and
+         * TagImporter). The last two pairs left in the SAME round, which is why
+         * this comment now names three.
+         *
+         * The guard is not about any of those six names. It is about a file
+         * being ignored in silence. So it moves again, onto two exports this
+         * application genuinely has no concept of: a shop with WooCommerce
+         * Subscriptions or Bookings installed hands these over with everything
+         * else. It will have to move again when they are not unread either, and
+         * that is the guard working rather than the guard rotting.
          */
-        fdWrite($dir.'/refunds.csv', ['refund_id', 'order_id', 'amount', 'reason'], [
-            ['refund_id' => '61001', 'order_id' => '21001', 'amount' => '50', 'reason' => 'Returned'],
-            ['refund_id' => '61002', 'order_id' => '21002', 'amount' => '25', 'reason' => 'Damaged'],
+        fdWrite($dir.'/subscriptions.csv', ['subscription_id', 'customer_id', 'status', 'total'], [
+            ['subscription_id' => '81001', 'customer_id' => '401', 'status' => 'active', 'total' => '129.00'],
+            ['subscription_id' => '81002', 'customer_id' => '402', 'status' => 'on-hold', 'total' => '89.00'],
         ]);
 
-        fdWrite($dir.'/order_notes.csv', ['note_id', 'order_id', 'author', 'note'], [
-            ['note_id' => '71001', 'order_id' => '21001', 'author' => 'admin',
-                'note' => 'Customer asked for delivery after 6pm'],
-            ['note_id' => '71002', 'order_id' => '21002', 'author' => 'admin',
-                'note' => 'Left with the concierge'],
+        fdWrite($dir.'/bookings.csv', ['booking_id', 'order_id', 'product_id', 'start'], [
+            ['booking_id' => '91001', 'order_id' => '31001', 'product_id' => '21001', 'start' => '2026-10-01 09:00:00'],
+            ['booking_id' => '91002', 'order_id' => '31002', 'product_id' => '21002', 'start' => '2026-10-02 11:00:00'],
         ]);
     }
 
@@ -336,16 +341,24 @@ it('names the export files no importer opens at all', function () {
 
     $named = implode(' ', array_column($discards[$headline]['samples'], 'field'));
 
-    expect($named)->toContain('refunds.csv')->and($named)->toContain('order_notes.csv');
+    expect($named)->toContain('subscriptions.csv')->and($named)->toContain('bookings.csv');
 
     /*
-     * AND THE TWO FILES THIS CHANNEL WAS WRITTEN FOR ARE NOT ON IT ANY MORE,
+     * AND THE FOUR FILES THIS CHANNEL WAS WRITTEN FOR ARE NOT ON IT ANY MORE,
      * because they are entities now. Asserted rather than assumed: a channel
      * that still named them would mean the importers were registered and the
-     * runner had not noticed, and the owner would be told his coupons were
-     * dropped on a run that imported them.
+     * runner had not noticed, and the owner would be told his coupons -- or his
+     * refunds -- were dropped on a run that imported them.
+     *
+     * str_contains, NOT expect()->not->toContain(). `toContain` is variadic, so
+     * a `not->toContain($a)->not->toContain($b)` chain is fine but the message
+     * form is not, and the four asserted here are worth spelling out one way.
      */
-    expect($named)->not->toContain('coupons.csv')->and($named)->not->toContain('reviews.csv');
+    foreach (['coupons.csv', 'reviews.csv', 'refunds.csv', 'order_notes.csv', 'variations.csv', 'tags.csv', 'attributes.csv'] as $imported) {
+        expect(str_contains($named, $imported))->toBeFalse(
+            $imported.' was named as a file no importer opens, and one does'
+        );
+    }
 });
 
 it('does not call a file unread when the run was deliberately narrowed', function () {

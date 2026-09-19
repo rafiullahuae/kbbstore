@@ -1360,7 +1360,13 @@ it('does not name manifest.json as a file no importer opens, now that one does',
     mkdir($dir, 0775, true);
 
     file_put_contents($dir.'/manifest.json', (string) json_encode(['format' => 'kbb-export/1']));
-    file_put_contents($dir.'/refunds.csv', "refund_id,amount\n1,5\n");
+    // subscriptions.csv. This line has moved twice in one round and the moves
+    // are the point: it was refunds.csv until RefundImporter existed, then
+    // variations.csv until VariationImporter did. A file this runner OPENS
+    // proves nothing about the channel for files it does not, so the fixture
+    // has to keep being something genuinely unread -- and WooCommerce
+    // Subscriptions is an export this application has no concept of at all.
+    file_put_contents($dir.'/subscriptions.csv', "subscription_id,customer_id,status\n1,401,active\n");
     copy(base_path('tests/Fixtures/woo/products.csv'), $dir.'/products.csv');
 
     $report = (new ImportRunner)->run(new \App\Services\Import\ImportOptions(
@@ -1385,7 +1391,7 @@ it('does not name manifest.json as a file no importer opens, now that one does',
 
     expect($named)->not->toBeEmpty('nothing was named at all, so this proves nothing');
 
-    expect(in_array('refunds.csv', $named, true))->toBeTrue('the unread-file channel stopped working')
+    expect(in_array('subscriptions.csv', $named, true))->toBeTrue('the unread-file channel stopped working')
         ->and(in_array('manifest.json', $named, true))->toBeFalse('manifest.json was named as unread');
 
     array_map('unlink', glob($dir.'/*') ?: []);
