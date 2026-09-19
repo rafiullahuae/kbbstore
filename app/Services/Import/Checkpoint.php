@@ -27,12 +27,70 @@ final class Checkpoint
 {
     public const TABLE = 'import_checkpoints';
 
+    /**
+     * REFUSALS AMONG THE ROWS AN EARLIER PROCESS ALREADY COMMITTED, which is
+     * the one number a resumed run needs and cannot work out for itself.
+     *
+     * `EntityReport::verification()` compares `rows read - rows refused`
+     * against a COUNT of the table. A resumed run has read only part of the
+     * file in this process, so its own refusal tally covers only part of it,
+     * and Lane FV withheld the verdict entirely rather than compare the wrong
+     * two numbers (docs/FV-IMPORT-AT-VOLUME.md §7, fifth bullet). On the admin
+     * screen EVERY step after the first resumes, so the verdict was never
+     * reached there at all -- the owner had Phase 13's count check in name only
+     * (docs/GF-IMPORT-REFINEMENT.md N2).
+     *
+     * `rejected_rows` is that missing number: it is incremented inside the same
+     * transaction as the rows of the batch that produced it, so it survives a
+     * killed request exactly the way `processed` does.
+     *
+     * BUT ONLY IF IT DESCRIBES THE SAME ROWS `processed` DOES, and it does not
+     * always -- see $resumedCountsTrusted.
+     */
+    public readonly int $resumedRejected;
+
+    /**
+     * Whether the counters above genuinely describe the `processed` rows.
+     *
+     * THE INVARIANT. A row of a batch either moved this entity's tally
+     * (created / updated / unchanged), or was refused, or moved nothing at all
+     * -- and advance() adds exactly those deltas alongside the batch's row
+     * count. So for a checkpoint whose counters describe its own `processed`
+     * rows:
+     *
+     *     created + updated + unchanged + rejected  <=  processed
+     *
+     * with the shortfall being the rows that moved nothing, which is precisely
+     * the defect this whole verification exists to find.
+     *
+     * The counters can EXCEED `processed`, and that is not a rounding
+     * question, it is a different pass's numbers: `processed` is reset to zero
+     * when a FINISHED entity is run again (the full -> delta -> cutover
+     * sequence the runbook describes), and until this class was changed the
+     * four counters were not reset with it. A second pass then carried the
+     * first pass's refusals, `processed - rejected_rows` came out too SMALL,
+     * and the verdict would have been "verified" over a table that was short.
+     * A verdict that is wrong is worse than one that is absent.
+     *
+     * open() now zeroes the counters wherever it zeroes `processed`, so a
+     * checkpoint written by this code always satisfies the invariant. The
+     * check stays because a checkpoint written by the PREVIOUS code is sitting
+     * in the owner's database right now: it is detected, the verdict is
+     * withheld for that entity, and the reason is printed.
+     */
+    public readonly bool $resumedCountsTrusted;
+
     private function __construct(
         private readonly string $runKey,
         private readonly string $entity,
         public int $processed,
         public readonly ?string $fingerprint,
-    ) {}
+        int $resumedRejected = 0,
+        bool $resumedCountsTrusted = true,
+    ) {
+        $this->resumedRejected = $resumedRejected;
+        $this->resumedCountsTrusted = $resumedCountsTrusted;
+    }
 
     /**
      * Load this entity's checkpoint, creating it if the entity has not run.
@@ -84,8 +142,34 @@ final class Checkpoint
              * and reports them as unchanged, which is also the cheapest
              * available proof that the import was idempotent.
              */
+            $counters = [];
+
             if ($existing->finished_at !== null) {
                 $processed = 0;
+
+                /*
+                 * AND THE FOUR COUNTERS ARE ZEROED WITH IT. They count
+                 * outcomes among the `processed` rows; leaving them behind
+                 * while the offset goes back to zero makes them describe a
+                 * pass that is over. That was not merely untidy: it is the
+                 * arithmetic EntityReport::verification() now uses to reach a
+                 * verdict on a resumed run, and a stale refusal in it
+                 * understates the rows the table should hold -- turning a
+                 * shortfall into "verified" on the SECOND import, which is the
+                 * delta the owner runs on cutover night. See
+                 * $resumedCountsTrusted.
+                 *
+                 * App\Services\ImportConsole\ImportDriver kept a per-run
+                 * baseline to subtract these stale values for its own display;
+                 * its baselineFor() is updated alongside this so the two agree
+                 * rather than compensating twice.
+                 */
+                $counters = [
+                    'created_rows' => 0,
+                    'updated_rows' => 0,
+                    'unchanged_rows' => 0,
+                    'rejected_rows' => 0,
+                ];
             }
 
             /*
@@ -109,7 +193,7 @@ final class Checkpoint
                 );
             }
 
-            DB::table(self::TABLE)->where('id', $existing->id)->update([
+            DB::table(self::TABLE)->where('id', $existing->id)->update($counters + [
                 'processed' => $processed,
                 'source_fingerprint' => $fingerprint,
                 'source_label' => $label,
@@ -118,7 +202,19 @@ final class Checkpoint
                 'updated_at' => now(),
             ]);
 
-            return new self($runKey, $entity, $processed, $fingerprint);
+            $accounted = (int) $existing->created_rows + (int) $existing->updated_rows
+                + (int) $existing->unchanged_rows;
+            $rejected = (int) $existing->rejected_rows;
+
+            return new self(
+                $runKey,
+                $entity,
+                $processed,
+                $fingerprint,
+                $processed === 0 ? 0 : $rejected,
+                // Zeroed above, or genuinely describing these rows.
+                $processed === 0 || $accounted + $rejected <= $processed,
+            );
         }
 
         DB::table(self::TABLE)->insert([

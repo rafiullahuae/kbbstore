@@ -123,6 +123,62 @@ function geRejections(App\Services\Import\ImportReport $report): array
     return $out;
 }
 
+/**
+ * The ROWS of this fixture that an entity declines ON PURPOSE, keyed by the
+ * row rather than by the reason.
+ *
+ * WHY THIS LIST EXISTS AND WHY IT IS THIS NARROW. The two tests below assert
+ * that the plugin's own output imports with NOTHING refused, which is the
+ * whole point of a round trip -- an export this shop cannot read is not an
+ * export. The list was empty until `posts.csv` had an importer, because
+ * nothing opened the file.
+ *
+ * `posts.csv` carries the blog AND the pages AND every other post type, by the
+ * exporter's own design (see class-kbb-export-stage-posts.php: a DENYlist,
+ * because an allowlist "would drop it silently"). PostImporter writes the
+ * Journal only, so the fixture's one WordPress page is declined -- by name, in
+ * the rejection list and again in the discard list the owner approves. That is
+ * a decision this repository has written down, not a row the round trip
+ * failed on.
+ *
+ * KEYED BY ROW, NOT BY REASON TEXT, so that this list cannot be widened by
+ * accident: an entity that started refusing a DIFFERENT row, or refusing this
+ * one for a different reason, still fails the assertions below. The reason is
+ * checked separately, once, in its own test.
+ *
+ * @return list<string>
+ */
+function geDeclinedByDesign(): array
+{
+    return ['posts line 3 (id=7002)'];
+}
+
+/**
+ * Every refusal that is NOT one of those.
+ *
+ * array_diff on the row prefixes, not expect()->not->toContain() -- see the
+ * comment on the first test for why that idiom passes vacuously.
+ *
+ * @return list<string>
+ */
+function geUnexpectedRejections(App\Services\Import\ImportReport $report): array
+{
+    $declined = geDeclinedByDesign();
+
+    return array_values(array_filter(
+        geRejections($report),
+        static function (string $rejection) use ($declined): bool {
+            foreach ($declined as $prefix) {
+                if (str_starts_with($rejection, $prefix)) {
+                    return false;
+                }
+            }
+
+            return true;
+        },
+    ));
+}
+
 it('imports the plugin export cleanly, with nothing refused that should not be', function () {
     $report = geImport();
 
@@ -134,9 +190,32 @@ it('imports the plugin export cleanly, with nothing refused that should not be',
      * string is absent -- which it always is. An assertion that cannot fail is
      * worse than no assertion, because it is counted.
      */
-    $rejections = geRejections($report);
+    $rejections = geUnexpectedRejections($report);
 
     expect($rejections)->toBe([], 'the plugin export produced rejections: '.implode(' | ', $rejections));
+
+    /*
+     * AND THE ONE DECLINE IS STILL A DECLINE, asserted rather than merely
+     * excused. If PostImporter stopped refusing the page -- or started
+     * importing WordPress pages over this shop's own /about/ -- the list above
+     * would go on being empty and this would go red instead.
+     */
+    $declined = array_values(array_filter(
+        geRejections($report),
+        static fn (string $r): bool => str_starts_with($r, 'posts line 3 (id=7002)'),
+    ));
+
+    expect($declined)->toHaveCount(1);
+    expect(str_contains($declined[0], "post type 'page' is not an article"))->toBeTrue($declined[0]);
+
+    /*
+     * AND THE ARTICLE IN THE SAME FILE IS IN THE JOURNAL. The round trip is
+     * only proved by the rows that landed: posts.csv was a file the contract
+     * marked as a gap, written by the plugin and opened by nothing, and
+     * /skincare-guide/ rendered an empty index because of it.
+     */
+    expect(App\Models\Post::query()->where('source_post_id', 7001)->value('slug'))
+        ->toBe('how-to-layer-a-k-beauty-routine');
 
     // The manifest's own denominators, against the rows that actually landed.
     $manifest = geManifest();
@@ -553,7 +632,14 @@ it('is idempotent: a second pass changes nothing', function () {
     ];
 
     expect($after)->toBe($before);
-    expect(geRejections($second))->toBe([]);
+
+    /*
+     * The one row declined by design is declined on every pass, which is
+     * itself the idempotent answer -- see geDeclinedByDesign(). Anything else
+     * refused on a second pass is a row the first pass wrote and the second
+     * could not.
+     */
+    expect(geUnexpectedRejections($second))->toBe([]);
 
     // Not merely "the rows are the same": the importer's own dirty check has to
     // agree that nothing moved, which is the only evidence a second pass did

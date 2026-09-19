@@ -104,20 +104,6 @@ landed is deleted from here and written into its phase below, so a stale entry
 is a bug in this section rather than a second opinion about the phase.
 
 
-- **Lane GH — variations, attributes and tags.** The plugin exports them and
-  nothing imports them. A variable product still lands as its parent only, which
-  `docs/FV-IMPORT-AT-VOLUME.md` §9 measured as the largest missing entity by
-  revenue — and `Seo`'s AggregateOffer has never once seen a real variant
-- **Lane GI — refunds and order notes.** The sharpest of the three: a partial
-  refund imports as an order at its FULL total, so the order history does not
-  merely omit money given back, it overstates revenue, silently, in the table the
-  owner reads to judge how the shop is doing
-- **Lane GJ — posts, and a verdict the owner has never seen.** The Journal's
-  permalinks are finished and serving nothing because `posts` is empty and
-  nothing could fill it. And Phase 13's count verification — the check Lane FV
-  built because every other figure was the importer describing its own work —
-  reaches a verdict on the command line and never through the admin screen, which
-  is the only route the owner has
 
 ### Waiting on the owner, not on us
 
@@ -1897,6 +1883,49 @@ a fake success toast and saves nothing).
   picture is on disk while the product still names the old host. **The old site
   must not be switched off between them.** The rewrite is Store → Import →
   Addresses & pictures → apply
+- [x] **Everything the exporter writes now has an importer** — *2.60.222*.
+  Variations, attributes and tags (Lane GH), refunds and order notes (Lane GI),
+  posts (Lane GJ). Fifteen entities, all fifteen driven one per request from
+  Store → Import. The plugin was writing seven files nothing read, which is the
+  "built, never wired up" shape this repo keeps finding — caught this time
+  before it set rather than months later.
+
+  ▲ **A variable product was telling Google it was free.** WooCommerce keeps no
+  price on a variable parent, so `products.price` is genuinely NULL for one and
+  `Seo` published `{"@type":"Offer","price":"0.00"}`. It now publishes a real
+  AggregateOffer. **Still open and named:** the headline price on the tile is
+  still AED 0 and sorts first by price, because four readers take
+  `products.price` directly — backfilling it breaks idempotency unless
+  `ProductImporter` stops writing null over it in the same change, and what the
+  tile should read is the owner's call.
+
+  ▲ **A partial refund read as full revenue.** Not merely incomplete —
+  overstated, silently, in the table the owner judges the shop by. Measured: one
+  order's refundable amount fell from AED 199.00 to AED 99.50, the Refund button
+  having been offering the whole of an order already half returned, and a
+  customer's lifetime value from 358.50 to 258.50. Nothing was added to the
+  schema; every reader was already correct and waiting on rows.
+
+  ▲ **And the fix the previous round proposed for the count verdict was
+  wrong.** `processed − rejected_rows` is right for a first import and wrong for
+  every one after it: `Checkpoint::open()` resets `processed` for a finished
+  entity and did not reset the counters beside it, so on the delta run the owner
+  does on cutover night a genuinely short table would have read **VERIFIED** —
+  the check that exists to catch vanishing rows certifying their absence. Three
+  changes land together, and the verdict is still withheld when the invariant
+  fails, because checkpoints written by the old code are in the owner's database
+  now
+- [ ] ▲ **Journal images are still hot-linked after an import.** `MediaRewrite`
+  does not know about `posts`: `posts.cover` is a one-line addition, the `<img>`
+  tags inside `posts.body` are not, because that rewriter changes cells and not
+  documents
+- [ ] ▲ **An article at a reserved address cannot be served, and the import now
+  names them.** Articles live at the site root and `RESERVED_SLUGS` owns the
+  first segment, so a live article slugged `about`, `wishlist` or `feed` is an
+  indexed URL this app can never answer. Refused rather than written, named in
+  the discard list with its title and the URL it wanted. **Run a preview** — it
+  writes nothing — and it produces the list Lane GA asked the owner for. Each
+  one is rename-and-redirect in WordPress, or a routing change here
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and

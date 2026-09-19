@@ -46,7 +46,7 @@ class ImportWooCommerce extends Command
     protected $signature = 'kbb:import
         {--dir= : directory holding the WooCommerce CSV exports}
         {--file=* : entity:path, overriding the conventional filename (e.g. --file=orders:/tmp/o.csv)}
-        {--only=* : only these entities (categories, brands, products, tags, attributes, variations, coupons, customers, orders, order-items, reviews, seo)}
+        {--only=* : only these entities (categories, brands, products, tags, attributes, variations, coupons, customers, orders, order-items, refunds, order-notes, reviews, seo, posts)}
         {--dry-run : report what would change and write nothing}
         {--batch=500 : rows per committed transaction}
         {--limit=0 : stop after this many rows per entity, for a trial run}
@@ -310,7 +310,16 @@ class ImportWooCommerce extends Command
                 $entity->name,
                 number_format($v['read']),
                 number_format($v['accounted']),
-                number_format($v['rejected']),
+                /*
+                 * THE FILE'S REFUSALS, not this invocation's. On a resumed run
+                 * they differ, and this column is the one the reader checks
+                 * against the database column beside it: read - refused is
+                 * what the table should hold. `rejected` (this process only)
+                 * would make that subtraction fail to reach the database count
+                 * on every resumed run, for a reason the table has no room to
+                 * explain. The sentence in the notes spells out both.
+                 */
+                number_format($v['refused_in_file']),
                 $v['in_database'] === null ? '—' : number_format($v['in_database']),
                 match ($v['verdict']) {
                     'verified' => '<info>VERIFIED</info>',
