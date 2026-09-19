@@ -105,10 +105,6 @@ is a bug in this section rather than a second opinion about the phase.
 
 
 
-- **Lane GL — one downloadable file per group.** The groups pick what to export;
-  the output is still one folder fetched over FTP. Each group becomes its own
-  zip, downloaded from the browser, each independently importable and all
-  sharing one `export_id`
 - **Lane GM — Store → Import accepts those zips.** `upload()` takes loose files
   only today, so the owner would unzip by hand, which defeats the point. The
   lane's real work is the unpacking: zip slip, symlink entries, bombs, and a
@@ -1961,6 +1957,30 @@ a fake success toast and saves nothing).
   A skipped group's files are **absent** from `manifest.json` rather than present
   with `rows: 0`. The contract has said those are different facts since it was
   written; nothing had ever produced the second case until now
+- [x] **One downloadable file per group, and no FTP** — the owner's correction of
+  the round before it: *"you didn't group… allow to download each group seperate
+  files. so will have no any heavy file."* Grouping the selection did not help
+  while the output was still one folder fetched over FTP. Each group now packs
+  into its own zip with a Download button on the screen, each a complete import
+  on its own — that group's CSVs at the archive root plus a `manifest.json`
+  narrowed to them, every archive of one export carrying the same `export_id`.
+
+  ▲ **The size question was answered by measuring, not by guessing.** A harness
+  builds all 17 CSVs at the real shop's volume and zips each group through the
+  shipped class: whole folder 15.85 MB, largest single download **2.16 MB**
+  (Orders), slowest bounded unit 293 ms. **Nothing needs splitting** — and
+  Orders stays the largest across a product-description sensitivity sweep, so it
+  is the one that would go first and it does not. A splitter exists behind a
+  25 MiB raw cap anyway, derived from the worst measured compression ratio
+  (Customers, 35.6% — bcrypt hashes do not deflate), and is reached by a test
+  rather than left unexercised.
+
+  The archives stay inside the already-guarded folder and are served through
+  WordPress with the capability checked and a nonce, never a URL under uploads;
+  the request names a group and a part and no path, so a traversal and a bogus
+  key return the same sentence and the same 404. Streaming is measured rather
+  than asserted: a 96 MB archive served from a 64 MB process, and the streamed
+  bytes re-opened as a valid zip
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and

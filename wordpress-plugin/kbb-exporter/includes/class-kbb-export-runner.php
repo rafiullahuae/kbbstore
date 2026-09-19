@@ -353,10 +353,229 @@ class KBB_Export_Runner {
 
 		file_put_contents( $this->state['dir'] . '/manifest.json', $json . "\n" );
 
+		/*
+		 * ── AND NOW THE ZIPS, AS THEIR OWN PHASE ────────────────────────────
+		 *
+		 * The owner's words: "allow to download each group seperate files. so
+		 * will have no any heavy file." One archive per group, built HERE and
+		 * not during the export, because the manifest each archive carries is
+		 * derived from this one and this one is written last.
+		 *
+		 * The queue is seeded and NOT drained. Compressing 10,571 order lines in
+		 * the request that finished the export would put the timeout back
+		 * exactly where the per-batch loop took it from, so the browser drives
+		 * the zip phase the same way it drives the export: one file into one
+		 * archive per request. See KBB_Export_Zip::plan().
+		 *
+		 * `done` keeps its existing meaning -- every CSV written and the
+		 * manifest closed -- because the folder is a complete, importable export
+		 * at that moment whether or not anything is zipped, and every test and
+		 * every reader that already depends on that sentence is right. The zip
+		 * phase reports itself separately.
+		 */
+		$this->state['zip'] = array(
+			'cursor'    => 0,
+			'plan'      => KBB_Export_Zip::plan( $manifest ),
+			'error'     => KBB_Export_Zip::available() ? '' : KBB_Export_Zip::unavailable_reason(),
+			'available' => KBB_Export_Zip::available(),
+		);
+
 		$this->state['done'] = true;
 		$this->save_state();
 
 		return $manifest;
+	}
+
+	/**
+	 * The manifest this export wrote, read back off disk.
+	 *
+	 * Read back rather than kept in the state on purpose: it is what the ZIPS
+	 * are built from, and building them from the file that will actually be
+	 * shipped means a zip cannot describe a manifest that differs from the one
+	 * beside it in the folder.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function manifest() {
+		if ( empty( $this->state['dir'] ) ) {
+			return array();
+		}
+
+		$path = $this->state['dir'] . '/manifest.json';
+
+		if ( ! file_exists( $path ) ) {
+			return array();
+		}
+
+		$decoded = json_decode( (string) file_get_contents( $path ), true );
+
+		return is_array( $decoded ) ? $decoded : array();
+	}
+
+	/**
+	 * ONE BOUNDED UNIT OF THE ZIP PHASE: one file into one group's archive.
+	 *
+	 * Driven by the browser exactly as step() is, and for exactly the same
+	 * reason -- this host kills a request at 110 seconds and a group is not a
+	 * unit of work that respects that. A request that dies costs one file, and
+	 * the cursor in the option means pressing Resume picks up on the next one.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function zip_step() {
+		if ( empty( $this->state ) || empty( $this->state['done'] ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'There is no finished export to pack. Run the export first.',
+			);
+		}
+
+		if ( ! KBB_Export_Zip::available() ) {
+			/*
+			 * NOT FATAL, AND NOT SILENT. A host without ext-zip has a complete,
+			 * correct export sitting in the folder; what it does not have is the
+			 * convenience of downloading it from this screen. Saying so and
+			 * stopping is the honest answer, and the screen prints the sentence
+			 * beside the FTP path.
+			 */
+			$this->state['zip'] = array(
+				'cursor'    => 0,
+				'plan'      => array(),
+				'error'     => KBB_Export_Zip::unavailable_reason(),
+				'available' => false,
+			);
+
+			$this->save_state();
+
+			return $this->zip_progress();
+		}
+
+		if ( empty( $this->state['zip'] ) || ! isset( $this->state['zip']['plan'] ) ) {
+			// An export finished before this lane existed has no queue. Build
+			// one now rather than telling him to run the whole export again.
+			$this->state['zip'] = array(
+				'cursor'    => 0,
+				'plan'      => KBB_Export_Zip::plan( $this->manifest() ),
+				'error'     => '',
+				'available' => true,
+			);
+		}
+
+		$plan   = (array) $this->state['zip']['plan'];
+		$cursor = (int) $this->state['zip']['cursor'];
+
+		if ( $cursor >= count( $plan ) ) {
+			return $this->zip_progress();
+		}
+
+		$result = KBB_Export_Zip::add( $this->state['dir'], $this->manifest(), $plan[ $cursor ] );
+
+		if ( ! $result['ok'] ) {
+			$this->state['zip']['error'] = $result['error'];
+
+			$this->save_state();
+
+			return array( 'ok' => false, 'error' => $result['error'] );
+		}
+
+		// Written first, saved second, for the reason step() gives: a request
+		// killed between them repeats a unit, which is harmless because adding
+		// the same entry to the same archive again is the same archive.
+		$this->state['zip']['cursor'] = $cursor + 1;
+
+		$this->save_state();
+
+		return $this->zip_progress();
+	}
+
+	/**
+	 * What the screen prints beside each group's Download button.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function zip_progress() {
+		$manifest = $this->manifest();
+		$zip      = isset( $this->state['zip'] ) ? (array) $this->state['zip'] : array();
+		$plan     = isset( $zip['plan'] ) ? (array) $zip['plan'] : array();
+		$cursor   = isset( $zip['cursor'] ) ? (int) $zip['cursor'] : 0;
+		$ok       = ! isset( $zip['available'] ) || ! empty( $zip['available'] );
+
+		return array(
+			'ok'         => true,
+			'error'      => '',
+			'available'  => $ok,
+			'reason'     => isset( $zip['error'] ) ? (string) $zip['error'] : '',
+			'units_done' => min( $cursor, count( $plan ) ),
+			'units'      => count( $plan ),
+			'done'       => ! $ok || $cursor >= count( $plan ),
+			'percent'    => count( $plan ) > 0
+				? ( $cursor >= count( $plan ) ? 100 : (int) floor( $cursor * 100 / count( $plan ) ) )
+				: 100,
+			'groups'     => empty( $manifest ) ? array() : array_values( KBB_Export_Zip::status( $this->state['dir'], $manifest ) ),
+		);
+	}
+
+	/**
+	 * The archive a download request is asking for, resolved SERVER SIDE.
+	 *
+	 * ── NO PATH FROM THE REQUEST EVER REACHES THE FILESYSTEM ────────────────
+	 *
+	 * The request carries a group key and a part number and nothing else. The
+	 * folder comes from this runner's own state and the file name is computed by
+	 * KBB_Export_Zip::zip_name() from that state's export id. There is no
+	 * concatenation of anything the browser sent into a path, so there is no
+	 * traversal to defend against rather than a defence to get right -- which is
+	 * the difference between this and a sanitised `?file=` parameter.
+	 *
+	 * The group key is checked against the plugin's own declaration and the part
+	 * against the queue, so an id that was never issued and a group that was
+	 * never exported do the same work and give the same answer. That is the same
+	 * shape docs/CLAUDE notes require of QuizSubmission::findByPublicToken().
+	 *
+	 * @param string $group
+	 * @param int    $part
+	 * @return array{ok: bool, error: string, path: string, name: string}
+	 */
+	public function archive_path( $group, $part = 1 ) {
+		$miss = array( 'ok' => false, 'error' => 'There is no such download.', 'path' => '', 'name' => '' );
+
+		if ( empty( $this->state['dir'] ) || empty( $this->state['done'] ) ) {
+			return $miss;
+		}
+
+		if ( ! KBB_Export_Groups::exists( (string) $group ) ) {
+			return $miss;
+		}
+
+		$manifest = $this->manifest();
+
+		if ( empty( $manifest ) ) {
+			return $miss;
+		}
+
+		$part = max( 1, (int) $part );
+
+		foreach ( KBB_Export_Zip::plan( $manifest ) as $unit ) {
+			if ( $unit['group'] !== $group || (int) $unit['part'] !== $part ) {
+				continue;
+			}
+
+			$name = KBB_Export_Zip::zip_name( $group, $manifest['export_id'], $part, $unit['parts'] );
+			$path = $this->state['dir'] . '/' . $name;
+
+			if ( ! file_exists( $path ) ) {
+				return array(
+					'ok'    => false,
+					'error' => 'That archive has not been packed yet.',
+					'path'  => '',
+					'name'  => $name,
+				);
+			}
+
+			return array( 'ok' => true, 'error' => '', 'path' => $path, 'name' => $name );
+		}
+
+		return $miss;
 	}
 
 	/** @return array<string,mixed> */
@@ -421,6 +640,13 @@ class KBB_Export_Runner {
 			'done'      => ! empty( $this->state['done'] ),
 			'storage'   => isset( $this->state['storage_note'] ) ? $this->state['storage_note'] : '',
 			'notes'     => isset( $this->state['notes'] ) ? $this->state['notes'] : array(),
+			/*
+			 * The zip phase, on the same document the bar is drawn from, so the
+			 * screen does not have to ask twice to know whether a group can be
+			 * downloaded yet. Empty until the export finishes, because there is
+			 * nothing to pack before the manifest exists.
+			 */
+			'zip'       => ! empty( $this->state['done'] ) ? $this->zip_progress() : null,
 		);
 	}
 

@@ -30,6 +30,13 @@ composer install
 vendor/bin/pest                  # test suite
 vendor/bin/pest --compact
 find app database routes -name '*.php' -print0 | xargs -0 -n1 php -l
+
+# The WordPress-exporter harness builds its own MySQL database and DROPS every
+# table it uses. Two lanes running the suite at once tore it down under each
+# other -- three tests failed with "Table 'kbb_ge_wp.wp_options' doesn't exist"
+# and passed alone immediately before and after, which reads exactly like flake.
+# Name it per lane, the way KBB_TEST_DB already is:
+KBB_WP_DB=kbb_wp_<lane> KBB_TEST_DB=kbb_<lane> vendor/bin/pest -c phpunit-mysql.xml
 ```
 
 Tests run on file-based SQLite. **Do not switch them to `:memory:`** — the
