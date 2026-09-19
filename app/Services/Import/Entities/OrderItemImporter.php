@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Import\Entities;
 
 use App\Models\OrderItem;
+use App\Models\ProductVariant;
 use App\Services\Import\ImportContext;
 use App\Services\Import\Row;
 use App\Services\Import\RowRejected;
@@ -39,6 +40,20 @@ use App\Services\Import\RowRejected;
  */
 final class OrderItemImporter extends EntityImporter
 {
+    /**
+     * variant id => its attribute value names, for this run.
+     *
+     * ONE QUERY PER VARIANT AND NOT ONE PER LINE. A shop with 10,571 line items
+     * and a few hundred variants would otherwise pay a query and an eager load
+     * for every line of every variable product, on top of the 21,199 this
+     * bucket already costs at volume. The map is bounded by the number of
+     * variants, not by the number of orders, and an importer instance lives for
+     * exactly one run.
+     *
+     * @var array<int, ?list<string>>
+     */
+    private array $variantAttributes = [];
+
     public function name(): string
     {
         return 'order-items';
@@ -89,6 +104,69 @@ final class OrderItemImporter extends EntityImporter
                     'the line references a product that is not in this import; imported with a null product_id, '
                     .'which is what the nullable FK is for — the line itself is still real money'
                 );
+            }
+        }
+
+        /*
+         * ── WHICH SIZE WAS ACTUALLY SOLD ────────────────────────────────────
+         *
+         * `order_items.csv` carries `variation_id` beside `product_id` because
+         * Lane GE's exporter refused to throw the link away: "the variation id
+         * is carried in its own column so the link is not lost". It WAS lost,
+         * on this side, for as long as nothing here had variants to link to --
+         * and after Lane GH imported `variations.csv` into `product_variants`,
+         * the column went on being read by nothing while both the row it points
+         * at and the column it belongs in existed.
+         *
+         * What that costs is not abstract. `order_items.variant_attributes` is
+         * what InvoiceDocument, OrderEmailPresenter and the shopper's own order
+         * page print underneath the product name, so a line that came from a
+         * variable product reads "Rice Cleanser" on the invoice, the email and
+         * the order page, with nothing anywhere saying whether the customer was
+         * sent the 50ml or the 100ml. The money is right; the record of what
+         * was in the parcel is not.
+         *
+         * A MISSING VARIANT IS A NOTE, NEVER A REJECTION, for the same reason
+         * `product_id` is: the line is real money and a five-year-old order can
+         * name a size the shop has since deleted. Null is the honest answer and
+         * the FK is nullable for it.
+         *
+         * Row::id() reads an EMPTY cell and a literal 0 as null, which is what
+         * makes this safe on a simple product's line: WooCommerce writes 0
+         * there and the exporter writes an empty cell, and neither is a variant.
+         */
+        $variantId = null;
+        $variantAttributes = null;
+        $wcVariationId = $row->id('variation_id', 'variation_id', 'wc_variation_id', 'variant_id');
+
+        if ($wcVariationId !== null) {
+            $variantId = $context->localId('variations', $wcVariationId);
+
+            if ($variantId === null) {
+                $context->report->for($this->name())->note(
+                    'the line names a product variation that is not in this import; imported with a null '
+                    .'product_variant_id, so the order still holds the money and the product but not which '
+                    .'size or shade was sold -- import variations.csv before order_items.csv'
+                );
+            } else {
+                /*
+                 * The names, not the ids. `variant_attributes` is a snapshot
+                 * for exactly the reason `name` is one: it has to keep reading
+                 * "50ml" on a 2019 invoice after the attribute term is renamed
+                 * or deleted. An empty list stays NULL rather than becoming
+                 * `[]`, because every consumer tests `is_array(...)` and an
+                 * empty array would print a stray separator.
+                 */
+                if (! array_key_exists($variantId, $this->variantAttributes)) {
+                    $names = ProductVariant::query()
+                        ->with('attributeValues')
+                        ->find($variantId)
+                        ?->attributeValues->pluck('name')->all() ?? [];
+
+                    $this->variantAttributes[$variantId] = $names === [] ? null : $names;
+                }
+
+                $variantAttributes = $this->variantAttributes[$variantId];
             }
         }
 
@@ -174,6 +252,8 @@ final class OrderItemImporter extends EntityImporter
             'wc_item_id' => $itemId,
             'order_id' => $orderId,
             'product_id' => $productId,
+            'product_variant_id' => $variantId,
+            'variant_attributes' => $variantAttributes,
             'name' => $name,
             'brand' => $row->text('brand'),
             'sku' => $row->text('sku'),

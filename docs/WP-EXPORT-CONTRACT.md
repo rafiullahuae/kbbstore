@@ -24,13 +24,13 @@ names the existing importers already parse:
 | `reviews.csv` | `ReviewImporter` | exists |
 | `seo.csv` | `SeoImporter` | exists |
 | `permalinks.csv` | `kbb:import-redirects` | exists |
-| `variations.csv` | — | **gap** |
-| `refunds.csv` | — | **gap** |
-| `order_notes.csv` | — | **gap** |
-| `tags.csv` | — | **gap** |
-| `attributes.csv` | — | **gap** |
-| `posts.csv` | — | **gap** |
-| `media.csv` | — | **gap** |
+| `variations.csv` | `VariationImporter` | exists — Lane GH |
+| `refunds.csv` | `RefundImporter` | exists — Lane GI |
+| `order_notes.csv` | `OrderNoteImporter` | exists — Lane GI |
+| `tags.csv` | `TagImporter` | exists — Lane GH |
+| `attributes.csv` | `AttributeImporter` | exists — Lane GH |
+| `posts.csv` | `PostImporter` | exists — Lane GJ |
+| `media.csv` | — | **gap** — `kbb:import-media` re-derives its download list from the imported product URLs instead, so this file is opened by nothing and the unread-file channel names it every run. Its `exists` column is a `stat()` taken on the OLD server and cannot be re-taken after the cutover |
 
 That is deliberate and it is the whole risk-management strategy here. Ten of
 those files already have an importer with tests behind it, and 4,480 tests pass

@@ -1,7 +1,7 @@
 {
     "format": "kbb-export/1",
-    "export_id": "b2bd695c-dedd-494b-ac08-e6392f12606e",
-    "generated_at": "2026-09-18T18:39:28+04:00",
+    "export_id": "fecbd8c8-8939-461e-8f98-927860129089",
+    "generated_at": "2026-09-19T17:22:54+04:00",
     "source": {
         "site_url": "https://kbeautybliss.com",
         "home_url": "https://kbeautybliss.com",
@@ -106,8 +106,8 @@
         },
         "orders.csv": {
             "rows": 3,
-            "bytes": 1972,
-            "sha256": "be6e5fca8379d7bbb549d882363960e7b3bd293625d9601a1d2feb2021e2e0ce"
+            "bytes": 1993,
+            "sha256": "3c03e23a56b18b252b8979c4b410a655ca9e0cd2d30e77f92ca59d403144cb43"
         },
         "order_items.csv": {
             "rows": 4,

@@ -172,7 +172,7 @@ class KBB_Export_Stage_Orders extends KBB_Export_Stage {
 				'date_created', 'date_created_gmt', 'date_modified', 'date_paid', 'date_completed',
 				'subtotal', 'discount_total', 'shipping_total', 'fee_total', 'tax_total', 'total',
 				'payment_method', 'payment_method_title', 'transaction_id', 'shipping_method',
-				'coupon_code', 'customer_note', 'origin', 'invoice_number',
+				'coupon_code', 'customer_note', 'origin', 'invoice_number', 'order_key',
 			),
 			$this->address_columns( 'billing' ),
 			$this->address_columns( 'shipping' )

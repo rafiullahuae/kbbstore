@@ -119,12 +119,21 @@ is a bug in this section rather than a second opinion about the phase.
   written as middleware and is not registered as one, so the table is consulted
   only from the 404 handler — a row for an address the shop already answers can
   never fire
-- **Lane GQ — is everything there?** *"make sure everything is there in export and
-  competible to our app."* Not a feature: a census three columns wide — what a
-  real WooCommerce shop holds, what the export carries, what the import lands —
-  because the dangerous case is the column that appears in neither the export nor
-  any report channel. `coupons.csv` and `reviews.csv` were ignored in silence
-  until something finally listed the files nobody opened
+- **Lane GQ — is everything there? ANSWERED.** A census three columns wide, in
+  `tests/Feature/GqMigrationCensusTest.php`: **282 columns across 17 files — 208
+  land in a named table and column, 44 are named in the discard list, 9 are in a
+  file nothing opens, and not one is unaccounted for.** Asserted against the
+  plugin's own export and the real `ImportRunner`, so a column that stops
+  crossing fails by name rather than arriving empty. Three things that were being
+  lost in silence were found by building it and all three are fixed: the
+  **barcodes** (`products.gtin`, published to Google), **which size of a variable
+  product each order line sold**, and the **OpenGraph image and noindex flag** —
+  two Yoast keys with a hyphen in them that the CSV reader turns into an
+  underscore, so neither had ever matched on any import ever run. One thing is
+  still in no channel and is now named: `_order_key`, the token in every
+  order-view link WooCommerce emailed. `docs/FV-IMPORT-AT-VOLUME.md` §11 is
+  **stale** — six of its seven lines are closed by Lanes GH, GI and GJ. See
+  `docs/GQ-MIGRATION-COMPLETENESS.md`
 
 ### Waiting on the owner, not on us
 

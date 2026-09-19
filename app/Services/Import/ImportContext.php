@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -186,6 +187,14 @@ final class ImportContext
 
         $id = match ($entity) {
             'products' => Product::query()->where('wc_id', $externalId)->value('id'),
+            /*
+             * `variations` resolves from the database and not only from the
+             * in-memory map, because the map is per RUN and an order-items
+             * bucket can be imported on its own -- `--only=order-items`, or the
+             * Sales group's zip landing after the Catalogue group's did. Every
+             * other entity here is in this list for the same reason.
+             */
+            'variations' => ProductVariant::query()->where('wc_id', $externalId)->value('id'),
             'categories' => Category::query()->where('source_term_id', $externalId)->value('id'),
             'brands' => Brand::query()->where('source_term_id', $externalId)->value('id'),
             'customers' => Customer::query()->where('wp_user_id', $externalId)->value('id'),
