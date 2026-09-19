@@ -53,6 +53,13 @@ by luck:
   have the integrator wire them up.
 - **Do not edit `KBB-Master-Plan.md` or `KBB-Progress-Dashboard.html`.** Note
   what you did in the PR body; the integrator merges the plan.
+- **Commit as Claude, not as the owner.** A lane's first act in a new worktree
+  is `git config user.email noreply@anthropic.com && git config user.name Claude`.
+  Five lane commits reached the integrator authored `rite2rafi2@gmail.com`,
+  which GitHub shows as **Unverified** on every one of them, and the fix is
+  history rewriting — blocked here, and destructive once the branch is pushed.
+  Getting it right at `git worktree add` time costs nothing; getting it wrong
+  costs a rewrite of somebody else's merge commits.
 - Stay inside the directories your lane owns. If a change needs a file another
   lane owns, say so rather than editing it.
 
