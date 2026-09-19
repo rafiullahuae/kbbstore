@@ -153,6 +153,13 @@ final class ImportWorkspace
             'unique' => false,
             'help' => 'Your Yoast post-meta, matched to products by their WooCommerce id. Run it after products, and it never overwrites a title or description you have typed here.',
         ],
+        'posts' => [
+            'file' => 'posts.csv',
+            'label' => 'Journal articles',
+            'id' => ['id', 'post_id', 'ID'],
+            'unique' => false,
+            'help' => 'Your blog. The export writes every WordPress post type into this one file; only articles are imported, and a page or anything else in it is named in the report rather than written. An article is served from the site root, so one whose address this shop already owns -- /about/, /wishlist/, /feed/ -- is refused by name rather than written somewhere nothing can reach.',
+        ],
     ];
 
     /** @return list<string> */
