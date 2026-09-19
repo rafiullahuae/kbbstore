@@ -360,10 +360,141 @@ final class ImportWorkspace
     }
 
     /**
+     * Accept one upload, which may be one file or a whole group's zip.
+     *
+     * THE ONE DOOR. The controller calls this and nothing else, so that "a zip
+     * behaves exactly as if you had unzipped it and uploaded the files loose"
+     * is a property of one function rather than a coincidence between two.
+     *
+     * A zip reports per file, the way a multi-file upload already does, and for
+     * the same reason ImportApiController::upload() gives: having the fifth
+     * file refused must not discard the four that were fine.
+     *
+     * @param  string|null  $entity  what the owner said it is; null means work it out
+     * @return array{accepted: list<array{entity: string, rows: int, bytes: int, from?: string}>, refused: list<array{message: string}>}
+     */
+    public function acceptUpload(UploadedFile $file, ?string $entity = null): array
+    {
+        if ($file->isValid() && ImportArchive::looksLikeZip((string) $file->getRealPath())) {
+            return $this->acceptArchive($file);
+        }
+
+        try {
+            return ['accepted' => [$this->accept($file, $entity)], 'refused' => []];
+        } catch (ImportUploadRejected $e) {
+            return ['accepted' => [], 'refused' => [['message' => $e->getMessage()]]];
+        }
+    }
+
+    /**
+     * One group zip: unpack it somewhere private, then feed every file in it
+     * through accept() exactly as though the owner had chosen them himself.
+     *
+     * THE ENTITY HINT IS IGNORED HERE, deliberately. "This file is the orders
+     * export" is a statement about one file, and a zip is several by
+     * definition; honouring it would mean writing brands.csv over orders.csv
+     * because a dropdown was left on the wrong setting.
+     *
+     * A FAILURE TO UNPACK IS ONE REFUSAL FOR THE WHOLE ZIP, not one per file.
+     * Every reason ImportArchive refuses is a statement about the archive —
+     * it escapes, it is a bomb, it is a spreadsheet — and there are no files to
+     * report against, because nothing was written.
+     *
+     * @return array{accepted: list<array{entity: string, rows: int, bytes: int, from?: string}>, refused: list<array{message: string}>}
+     */
+    private function acceptArchive(UploadedFile $file): array
+    {
+        $size = (int) $file->getSize();
+
+        if ($size > self::MAX_BYTES) {
+            return ['accepted' => [], 'refused' => [['message' => 'That zip is '.self::humanBytes($size)
+                .'. The limit is '.self::humanBytes(self::MAX_BYTES).' per upload. Export the groups one at '
+                .'a time — the importer resumes, so several smaller zips reach the same result.']]];
+        }
+
+        try {
+            $unpacked = (new ImportArchive)->unpack((string) $file->getRealPath(), $this->incomingDirectory());
+        } catch (ImportUploadRejected $e) {
+            return ['accepted' => [], 'refused' => [['message' => $e->getMessage()]]];
+        }
+
+        $accepted = [];
+        $refused = [];
+
+        try {
+            /*
+             * THE MEMBERS ARE TAKEN IN THE ORDER THE ARCHIVE LISTS THEM, and
+             * there was a usort() here putting manifest.json last.
+             *
+             * It was removed after mutation testing: REVERSING it, so the
+             * manifest went first, left every test green. That is the correct
+             * result and not a gap in the suite — nothing in this loop is
+             * order-dependent. accept() does not read the manifest when it
+             * takes a CSV, acceptManifest() merges against what is on DISK
+             * rather than against anything in this batch, and one zip carries
+             * at most one manifest, so there is no pair of members whose order
+             * changes the outcome.
+             *
+             * The comment it carried said the manifest had to land after the
+             * files it describes. That reads well and was not true of this
+             * code, which is the most expensive kind of comment there is: the
+             * next reader would have preserved an ordering that guarantees
+             * nothing while believing it guaranteed something.
+             */
+            foreach ($unpacked['files'] as $member) {
+                /*
+                 * A real UploadedFile, marked `test` so Symfony skips the
+                 * is_uploaded_file() check — the bytes came out of a zip, not
+                 * out of a POST, and they are on a path this code chose. Doing
+                 * it this way rather than adding a second code path into
+                 * accept() is the whole invariant: the CSV parse, the id-column
+                 * check, the manifest reader and every refusal sentence are the
+                 * ones the loose upload gets, because they are literally the
+                 * same call.
+                 */
+                $inner = new UploadedFile($member['path'], $member['name'], null, null, true);
+
+                try {
+                    $accepted[] = $this->accept($inner) + ['from' => $member['name']];
+                } catch (ImportUploadRejected $e) {
+                    $refused[] = ['message' => $member['name'].' (inside the zip): '.$e->getMessage()];
+                }
+            }
+        } finally {
+            // Whatever happened, the scratch is gone. accept() MOVES the files
+            // it keeps, so what is left here is only what was refused.
+            ImportArchive::purge($unpacked['dir']);
+        }
+
+        return ['accepted' => $accepted, 'refused' => $refused];
+    }
+
+    /**
+     * Where a zip is unpacked before any of it is believed.
+     *
+     * A SIBLING of the import directory, never inside it. ImportRunner::
+     * reportUnreadFiles() globs the import directory and names everything no
+     * importer opens, in the discard list the owner is asked to approve — the
+     * same trap that moved the row-count sidecars out (see metaDirectory()).
+     * A half-unpacked zip appearing in that list would be this lane repeating
+     * a mistake this repository has already paid for.
+     */
+    public function incomingDirectory(): string
+    {
+        $dir = storage_path('app/import/incoming');
+
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        return $dir;
+    }
+
+    /**
      * Accept one uploaded file, or say exactly why not.
      *
      * @param  string|null  $entity  what the owner said it is; null means work it out
-     * @return array{entity: string, rows: int, bytes: int}
+     * @return array{entity: string, rows: int, bytes: int, merged?: bool}
      *
      * @throws ImportUploadRejected
      */
@@ -471,6 +602,67 @@ final class ImportWorkspace
         }
 
         $this->forgetStat($entity);
+
+        /*
+         * AND THE MANIFEST STOPS DESCRIBING IT.
+         *
+         * Removing a file means it is not part of the export on this shop any
+         * more, so a manifest that still lists it is describing work that will
+         * never happen. Before group zips this cost nothing — the owner
+         * re-uploaded a manifest built from what was left and it REPLACED the
+         * old one, so the entry went with it. Now that a manifest of the same
+         * export MERGES (ImportManifest::merge(), and the long argument for it
+         * there), an omission is silence rather than a deletion — which is the
+         * whole point, because the Catalogue zip's manifest omits orders.csv
+         * and must not delete the Sales zip's entry for it.
+         *
+         * That leaves exactly one case needing a statement rather than silence,
+         * and this is it. Lane GF's
+         * `it gives the catalogue stage no total when only some of its entities
+         * have one` is what found it: a stale entry gives an ABSENT file a
+         * denominator (denominator() reads `rows` from the manifest and there is
+         * no counted number to disagree with it), and MigrationProgress then
+         * sums a total over work that is not there — the bar running ahead of
+         * the import and settling at 100% with a whole file still to come, which
+         * is the thing that page was built to stop telling.
+         *
+         * So: pressing Remove says it out loud, and nothing else has to.
+         */
+        $this->forgetManifestEntry(self::ENTITIES[$entity]['file']);
+    }
+
+    /**
+     * Drop one file from the manifest on disk, leaving the rest of it alone.
+     *
+     * Rewritten rather than deleted: the export id, the source and every other
+     * file's counts are still true and are what the duplicate guard and the
+     * history are built from.
+     */
+    private function forgetManifestEntry(string $file): void
+    {
+        $path = $this->manifestPath();
+        $manifest = ImportManifest::read($path);
+
+        if (! $manifest->usable() || ! $manifest->lists($file)) {
+            return;
+        }
+
+        $raw = $manifest->raw();
+
+        if (is_array($raw['files'] ?? null)) {
+            unset($raw['files'][$file]);
+        }
+
+        if (is_array($raw['groups'] ?? null) && is_array($raw['groups']['files'] ?? null)) {
+            $raw['groups']['files'] = array_values(array_filter(
+                $raw['groups']['files'],
+                static fn (mixed $f): bool => $f !== $file,
+            ));
+        }
+
+        @file_put_contents($path, (string) json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        clearstatcache(true, $path);
     }
 
     /** What this PHP install will actually accept, which is often less than we allow. */
@@ -551,7 +743,7 @@ final class ImportWorkspace
      * land and refusing at Start instead would put the sentence four screens
      * away from the thing it is about.
      *
-     * @return array{entity: string, rows: int, bytes: int}
+     * @return array{entity: string, rows: int, bytes: int, merged: bool}
      *
      * @throws ImportUploadRejected
      */
@@ -565,20 +757,58 @@ final class ImportWorkspace
 
         $destination = $this->manifestPath();
 
+        /*
+         * A SECOND MANIFEST OF THE SAME EXPORT IS MERGED, NOT SUBSTITUTED.
+         *
+         * Lane GL gives the owner one zip per group, each with its own
+         * manifest.json and all of them carrying one `export_id`. Uploading
+         * Catalogue and then Orders therefore hands this method two manifests
+         * describing two halves of one export, and replacing is the wrong verb
+         * for that: ImportManifest::merge()'s comment is the full argument, and
+         * the short version is that after a replace products.csv is on the disk
+         * and absent from the manifest beside it, which the contract defines to
+         * mean "this export does not carry products".
+         *
+         * A manifest of a DIFFERENT export replaces, as it always did. So does
+         * one with no `export_id` at all — two anonymous manifests are two
+         * unknowns and merging them would join a January export to a September
+         * one because neither said which it was.
+         *
+         * This is on the loose-upload path as well as the zip one, and that is
+         * the point: a zip has to behave exactly as if its files had been
+         * uploaded by hand, and two manifests dragged into the box by hand are
+         * the same two manifests.
+         */
+        $existing = $this->manifest();
+        $merged = null;
+
+        if ($existing->usable() && ImportManifest::sameExport($existing, $manifest)) {
+            $merged = ImportManifest::merge($existing, $manifest);
+        }
+
         if (is_file($destination)) {
             @unlink($destination);
         }
 
-        $file->move($this->directory(), ImportManifest::FILE);
+        if ($merged !== null) {
+            // Written rather than moved: the file that lands is neither of the
+            // two that arrived.
+            @file_put_contents($destination, (string) json_encode($merged, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        } else {
+            $file->move($this->directory(), ImportManifest::FILE);
+        }
 
         @chmod($destination, 0664);
 
         clearstatcache(true, $destination);
 
+        $landed = ImportManifest::read($destination);
+
         return [
             'entity' => 'manifest',
-            'rows' => count($manifest->files()),
+            'rows' => count($landed->files()),
             'bytes' => (int) filesize($destination),
+            'merged' => $merged !== null,
         ];
     }
 

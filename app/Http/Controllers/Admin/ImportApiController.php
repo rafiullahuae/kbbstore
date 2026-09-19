@@ -7,7 +7,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\ImportConsole\ImportDriver;
 use App\Services\ImportConsole\ImportDriverRefused;
-use App\Services\ImportConsole\ImportUploadRejected;
 use App\Services\ImportConsole\ImportWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -86,12 +85,30 @@ class ImportApiController extends Controller
     }
 
     /**
-     * Accept one or more uploaded exports.
+     * Accept one or more uploaded exports — loose CSVs, a manifest, or a
+     * group's zip.
      *
      * Each file is judged on its own and reported on its own: uploading six at
      * once and having the fifth refused must not discard the four that were
      * fine, or the owner re-uploads a 200MB order export to fix a typo in a
      * brands file.
+     *
+     * ZIPS ARRIVE HERE AND NOWHERE ELSE, on purpose. The owner asked for the
+     * WordPress export to come down as one file per group — *"allow to download
+     * each group seperate files. so will have no any heavy file."* — and Lane
+     * GL builds that as one zip per group, each with its own manifest.json and
+     * all of them sharing one export_id. If accepting them needed a second
+     * endpoint it would need a second rule in AdminCapabilities, a second entry
+     * in routes/import-admin.php and a clear_caches_* migration to make the
+     * route reachable on a host with a compiled route cache; more to the point
+     * it would need the owner to know which box a zip goes in, and a zip in the
+     * wrong box is the unzip-by-hand this feature exists to remove.
+     *
+     * So this endpoint's contract is unchanged — `files[]` and `file`, any
+     * mixture — and what a zip IS is decided by ImportWorkspace from the bytes,
+     * never from the name or the Content-Type the browser volunteered. An
+     * upload of nine loose CSVs behaves today exactly as it did before this
+     * lane; there is no new route, no new capability rule and no migration.
      */
     public function upload(Request $request): JsonResponse
     {
@@ -138,14 +155,16 @@ class ImportApiController extends Controller
         $refused = [];
 
         foreach ($files as $file) {
-            try {
-                // When several files arrive at once the entity cannot be forced
-                // for all of them — they are different entities by definition —
-                // so the hint only applies to a single-file upload.
-                $accepted[] = $this->workspace->accept($file, count($files) === 1 ? $entity : null);
-            } catch (ImportUploadRejected $e) {
-                $refused[] = ['message' => $e->getMessage()];
-            }
+            // When several files arrive at once the entity cannot be forced
+            // for all of them — they are different entities by definition —
+            // so the hint only applies to a single-file upload. A zip ignores
+            // it too, and for the same reason: it is several files.
+            $result = $this->workspace->acceptUpload($file, count($files) === 1 ? $entity : null);
+
+            // A zip contributes several of each. Merged rather than nested, so
+            // the screen draws one list whatever the upload was made of.
+            $accepted = [...$accepted, ...$result['accepted']];
+            $refused = [...$refused, ...$result['refused']];
         }
 
         return response()->json([

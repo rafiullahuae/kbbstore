@@ -82,6 +82,14 @@ final class ImportManifest
      */
     public const MAX_BYTES = 1024 * 1024;
 
+    /**
+     * How many contributing manifests `merged_from` remembers.
+     *
+     * Lane GK's export has eight groups, so this is every one of them with room
+     * for corrections. See merge() for why it is bounded at all.
+     */
+    public const MAX_MERGED_FROM = 20;
+
     private function __construct(
         private readonly bool $present,
         private readonly ?string $refusal,
@@ -158,6 +166,314 @@ final class ImportManifest
     public function present(): bool
     {
         return $this->present;
+    }
+
+    /**
+     * The decoded manifest, exactly as it was read.
+     *
+     * For merge() and for nothing else. Everything a screen or an importer
+     * wants is reached through an accessor above, which is where the contract's
+     * rules about types and absent keys are applied; this returns the raw
+     * document because merging two of them has to preserve keys this shop does
+     * not read ("unknown keys are ignored, never fatal" — the contract).
+     *
+     * @return array<string, mixed>
+     */
+    public function raw(): array
+    {
+        return $this->data;
+    }
+
+    /**
+     * `groups`, as Lane GK's export screen writes it.
+     *
+     * Not in the contract's own example and not required by it — it arrives
+     * under the contract's "unknown keys are ignored, never fatal" clause, and
+     * docs/GK-EXPORT-GROUPS.md §5 is the account of it. Every field is
+     * defaulted, so a manifest with no `groups` at all reads as an export that
+     * ticked nothing, which is what a pre-groups plugin's export IS.
+     *
+     * `assumed_already_imported` is the one entry here that is not a fact about
+     * the export: it is the operator's claim, made on the WordPress screen,
+     * that a prerequisite group is already in THIS shop — a claim GK is
+     * explicit that the plugin did not and could not verify. It is carried
+     * through unchanged so the import screen can print it at the one moment
+     * somebody is looking at the shop the claim is about.
+     *
+     * @return array{selected: list<string>, skipped: list<string>, files: list<string>, assumed_already_imported: list<array<string, mixed>>}
+     */
+    public function groups(): array
+    {
+        $groups = $this->data['groups'] ?? null;
+        $groups = is_array($groups) ? $groups : [];
+
+        $strings = static function (mixed $v): array {
+            if (! is_array($v)) {
+                return [];
+            }
+
+            $out = [];
+
+            foreach ($v as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $out[] = self::clip(trim($item), 64);
+                }
+            }
+
+            return array_values(array_unique($out));
+        };
+
+        $claims = [];
+
+        foreach (is_array($groups['assumed_already_imported'] ?? null) ? $groups['assumed_already_imported'] : [] as $claim) {
+            if (! is_array($claim)) {
+                continue;
+            }
+
+            $group = $claim['group'] ?? null;
+            $needs = $claim['needs'] ?? null;
+
+            if (! is_string($group) || ! is_string($needs) || trim($group) === '' || trim($needs) === '') {
+                continue;
+            }
+
+            $severity = $claim['severity'] ?? null;
+            $text = $claim['claim'] ?? null;
+
+            $claims[] = [
+                'group' => self::clip(trim($group), 64),
+                'needs' => self::clip(trim($needs), 64),
+                /*
+                 * GK draws exactly one edge red and says why: a banner that
+                 * shows up eight times is a banner nobody reads. An unrecognised
+                 * severity is shown as the quieter one rather than guessed
+                 * upward, so a newer plugin's ordinary export cannot turn this
+                 * shop's one red warning into noise.
+                 */
+                'severity' => $severity === 'loses' ? 'loses' : 'reported',
+                'claim' => is_string($text) && trim($text) !== '' ? self::clip(trim($text), 400) : null,
+            ];
+        }
+
+        return [
+            'selected' => $strings($groups['selected'] ?? null),
+            'skipped' => $strings($groups['skipped'] ?? null),
+            'files' => $strings($groups['files'] ?? null),
+            'assumed_already_imported' => $claims,
+        ];
+    }
+
+    /**
+     * Do these two manifests describe the same export?
+     *
+     * `export_id` and nothing else. The contract makes it the export's
+     * identity, and the whole point of Lane GL's group zips is that every zip
+     * of one export carries the same one.
+     *
+     * A manifest with NO export id never shares: two anonymous manifests are
+     * two unknowns, and treating two unknowns as equal would merge a January
+     * export into a September one because neither said which it was.
+     */
+    public static function sameExport(self $a, self $b): bool
+    {
+        $left = $a->exportId();
+
+        return $left !== null && $left === $b->exportId();
+    }
+
+    /**
+     * Fold a second group's manifest into the one already here.
+     *
+     * ---------------------------------------------------------------------
+     * WHY THIS EXISTS AT ALL
+     * ---------------------------------------------------------------------
+     * Lane GL ships one zip per group, each carrying its own manifest.json and
+     * all of them sharing one `export_id`. Uploading Catalogue and then Orders
+     * therefore delivers two manifests describing two halves of one export.
+     *
+     * Letting the second REPLACE the first is the obvious thing and it is
+     * wrong, in a way quiet enough to survive a demo. The contract says, and
+     * docs/GK-EXPORT-GROUPS.md §5 turns into a load-bearing rule:
+     *
+     *   "Absent from `files` means the plugin did not write it at all ... 'this
+     *    shop has no coupons' and 'this export does not carry coupons' are not
+     *    the same fact."
+     *
+     * After a replace, products.csv is sitting on the disk and is ABSENT from
+     * the manifest beside it — so the shop now believes the export does not
+     * carry products. Nothing 500s. The bar still draws, because
+     * ImportDriver::denominator() falls back to the count it took off the file
+     * itself. What is lost is the only thing that count cannot do: notice that
+     * the file on this disk is half the file that was sent. The manifest's
+     * whole contribution, in this class's own words at the top of this file, is
+     * "a denominator that can be WRONG, and therefore one that can be checked"
+     * — and a replace silently gives that up for every group but the last one
+     * uploaded.
+     *
+     * ---------------------------------------------------------------------
+     * THE RULES
+     * ---------------------------------------------------------------------
+     * Top-level scalars: FIRST WINS. `export_id` is equal by precondition.
+     * `source` and `generated_at` describe the shop and the moment the export
+     * began, and the first zip is the one that began it. A later zip's
+     * `generated_at` is not discarded — it goes into `merged_from`, so the file
+     * can still answer "when did each part of this arrive".
+     *
+     * `files` and `counts`: union, and where the two overlap **THE INCOMING
+     * ENTRY WINS**. This is the opposite of the rule above and it is not an
+     * inconsistency: an entry in `files` describes ONE FILE'S BYTES, and the
+     * bytes on the disk are the ones that arrived with the manifest that
+     * describes them. Getting this backwards is not a small error — Lane GF's
+     * `it draws NO bar when the manifest and the file disagree` caught it
+     * immediately, and what it caught was this: the owner finds something wrong
+     * in WordPress, fixes it, and re-exports THAT GROUP under the same
+     * `export_id`. Under first-wins the shop would keep the old row count,
+     * compare it to the corrected file, and report the correction as a
+     * truncated upload — telling him to upload again the one file that is
+     * finally right. GF is explicit that a corrected re-export "is the import
+     * he most needs to be able to run".
+     *
+     * Everything else: UNION. `groups.selected`, `groups.files` and
+     * `groups.assumed_already_imported` all say "this export carries these as
+     * well".
+     *
+     * `groups.skipped`: UNION, MINUS everything now selected — and the second
+     * half is what makes the first half right.
+     *
+     * This was written as an INTERSECTION first, on the reasoning that the
+     * Catalogue zip lists Orders as skipped and the Orders zip lists Catalogue
+     * as skipped, so a union would claim an export carrying both carries
+     * neither. Mutation testing turned the intersection into a union and every
+     * test stayed green, which is how the reasoning turned out to be wrong in
+     * two ways at once:
+     *
+     *   - it is REDUNDANT against Lane GK's exporter, which writes `skipped` as
+     *     every group that was not selected. Union-minus-selected and
+     *     intersection-minus-selected are then the same set for every possible
+     *     input, because subtracting `selected` already removes exactly the
+     *     groups the two lists disagree about. The intersection was doing
+     *     nothing.
+     *
+     *   - and where they DO differ it is WRONG. A plugin that lists only the
+     *     skips relevant to the group it is exporting — Catalogue says it left
+     *     out Orders, Orders says it left out Reviews — has an intersection of
+     *     nothing, so an export that genuinely carries no reviews would claim
+     *     not to have skipped them. A group is missing from the whole export
+     *     when NOBODY carried it, and union-minus-selected is that set.
+     *
+     * Unknown keys the incoming manifest brings are kept, and ones already here
+     * are not overwritten, because the contract says a newer plugin's fields
+     * must not stop an import and quietly dropping them is a smaller version of
+     * stopping it.
+     *
+     * @return array<string, mixed>
+     */
+    public static function merge(self $existing, self $incoming): array
+    {
+        $a = $existing->raw();
+        $b = $incoming->raw();
+
+        // First wins for everything scalar, and every key the incoming manifest
+        // brings that is not already here survives.
+        $out = $a + $b;
+
+        // INCOMING FIRST. PHP's `+` keeps the LEFT operand's keys, so this is
+        // "the newest description of a file wins, and every file either of them
+        // describes survives".
+        $out['files'] = $incoming->files() + $existing->files();
+
+        $counts = is_array($a['counts'] ?? null) ? $a['counts'] : [];
+        $incomingCounts = is_array($b['counts'] ?? null) ? $b['counts'] : [];
+        $out['counts'] = $incomingCounts + $counts;
+
+        $left = $existing->groups();
+        $right = $incoming->groups();
+
+        $selected = array_values(array_unique([...$left['selected'], ...$right['selected']]));
+
+        $out['groups'] = [
+            'selected' => $selected,
+            // Union, then minus what is selected. A group is missing from the
+            // export as a whole when nobody carried it; the subtraction is what
+            // stops each zip's "I left this out" from outvoting the other zip
+            // that brought it.
+            'skipped' => array_values(array_diff(
+                array_unique([...$left['skipped'], ...$right['skipped']]),
+                $selected,
+            )),
+            'files' => array_values(array_unique([...$left['files'], ...$right['files']])),
+            'assumed_already_imported' => self::mergeClaims(
+                $left['assumed_already_imported'],
+                $right['assumed_already_imported'],
+            ),
+        ];
+
+        /*
+         * What this file is made of, so a manifest that is no longer any one
+         * zip's says so. Nothing branches on it; it is here because a merged
+         * file that looked like an original would be a file the owner could not
+         * reconcile against what he downloaded.
+         */
+        $from = is_array($a['merged_from'] ?? null) ? $a['merged_from'] : [];
+
+        if ($from === []) {
+            $from = [['generated_at' => $existing->generatedAt(), 'files' => array_keys($existing->files())]];
+        }
+
+        $from[] = ['generated_at' => $incoming->generatedAt(), 'files' => array_keys($incoming->files())];
+
+        /*
+         * BOUNDED, and this is not tidiness.
+         *
+         * A merge rewrites the manifest, so this list grows by one on every
+         * upload of a group belonging to this export — and read() refuses a
+         * manifest over MAX_BYTES with "this is not a manifest, remove it". An
+         * owner who re-uploaded one group often enough would eventually brick
+         * his own manifest with this shop's own bookkeeping, which is the worst
+         * shape a record-keeping field can have. Eight groups is the most an
+         * export has, so twenty is every group with room for corrections, and
+         * the OLDEST go first because the newest are the ones still being
+         * reconciled against a download.
+         */
+        $out['merged_from'] = array_values(array_slice($from, -self::MAX_MERGED_FROM));
+
+        return $out;
+    }
+
+    /**
+     * One claim per (group, needs) pair.
+     *
+     * Deduplicated because both zips of one export carry the whole claim list
+     * in GK's design rather than only their own; kept rather than dropped when
+     * the group it names has since been uploaded, because it is a record of
+     * what the operator clicked and that does not stop having been true.
+     *
+     * @param  list<array<string, mixed>>  $left
+     * @param  list<array<string, mixed>>  $right
+     * @return list<array<string, mixed>>
+     */
+    private static function mergeClaims(array $left, array $right): array
+    {
+        $out = [];
+
+        foreach ([...$left, ...$right] as $claim) {
+            $key = ($claim['group'] ?? '').'|'.($claim['needs'] ?? '');
+
+            if (! isset($out[$key])) {
+                $out[$key] = $claim;
+
+                continue;
+            }
+
+            // Same pair, two severities: the louder one stays. GK draws exactly
+            // one edge red and the point of it is that red means something, so
+            // a duplicate must not be able to quieten it down.
+            if (($claim['severity'] ?? '') === 'loses') {
+                $out[$key] = $claim;
+            }
+        }
+
+        return array_values($out);
     }
 
     /** The sentence to show instead of importing, or null when the manifest is usable. */
