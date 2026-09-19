@@ -666,6 +666,12 @@ it('cannot be shipped in a Core Updates package', function () {
 
     $paths[] = 'wordpress-plugin/harness/shop.php';
     $paths[] = 'wordpress-plugin/harness/run-export.php';
+    // Lane GK's own additions, named rather than left to the glob: the screen
+    // renderer and the browser driver are the two files somebody looking for
+    // "test tooling" might think belong in tests/ and move.
+    $paths[] = 'wordpress-plugin/harness/groups.php';
+    $paths[] = 'wordpress-plugin/harness/screen.php';
+    $paths[] = 'wordpress-plugin/harness/screen-drive.mjs';
 
     expect(count($paths))->toBeGreaterThan(10);
 
@@ -676,6 +682,17 @@ it('cannot be shipped in a Core Updates package', function () {
     $result = $guard->check($paths);
 
     expect($result['ok'])->toBeFalse();
+
+    /*
+     * AND THE SECOND LOCK, which is a different claim: UpdateGuard refusing a
+     * zip that should never have been built is a worse outcome than the zip not
+     * containing it. `kbb:package` keeps wordpress-plugin/ out in the first
+     * place, so this asserts the prefix is still in NEVER_SHIP rather than
+     * trusting the comment beside it.
+     */
+    $neverShip = new ReflectionClassConstant(App\Console\Commands\BuildPackage::class, 'NEVER_SHIP');
+
+    expect($neverShip->getValue())->toContain('wordpress-plugin/');
 });
 
 it('has a plugin header WordPress will accept', function () {
@@ -1074,4 +1091,742 @@ it('regenerates the fixture from the plugin and gets the same bytes, from either
     // runner instances, each reloading its checkpoint from the options table
     // exactly as a separate HTTP request would, producing the same bytes. That
     // is the resume guarantee, measured rather than designed.
+});
+
+/*
+ * ════════════════════════════════════════════════════════════════════════════
+ * LANE GK — THE GROUPS, AND THE DEPENDENCIES BETWEEN THEM
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ * The owner asked for the export to be sectioned the way the import already is,
+ * with a bar per section. Sectioning is a list; the dependencies are the job,
+ * because every file this plugin writes has an importer on the other side that
+ * resolves its foreign keys by external id — so a file that arrives before what
+ * it points at does not fail, it resolves to nothing.
+ *
+ * docs/GK-EXPORT-GROUPS.md is the account. The four questions these tests ask
+ * are the four the screen has to get right:
+ *
+ *   1. Does every file the plugin writes belong to exactly one group?
+ *   2. Does a group exported ALONE land correctly on the other side?
+ *   3. Does a dependency-violating selection say so, before the button works?
+ *   4. Does manifest.json record what was exported, in the way the contract's
+ *      absent-vs-zero distinction already makes readable?
+ *
+ * The first and third need no database and therefore run in CI, which is where
+ * the dependency guard most needs to run. See wordpress-plugin/harness/groups.php
+ * on why that is a second script rather than a flag on the first.
+ */
+
+/** The group declaration, read out of the plugin in its own process. */
+function gkGroups(string $flags = ''): array
+{
+    $lines = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg(base_path('wordpress-plugin/harness/groups.php'))
+            .($flags === '' ? '' : ' '.$flags).' 2>&1',
+        $lines,
+        $status
+    );
+
+    expect($status)->toBe(0, implode("\n", $lines));
+
+    return json_decode(implode("\n", $lines), true);
+}
+
+/**
+ * One export of one selection, into its own folder. Returns the folder.
+ *
+ * `--confirm` is the operator ticking "this is already in the new shop" against
+ * a dependency, which is the only way a partial selection starts at all.
+ */
+function gkExport(string $groups, string $confirm = '', string $extra = ''): string
+{
+    $script = base_path('wordpress-plugin/harness/groups.php');
+    $out = sys_get_temp_dir().'/kbb-gk-'.preg_replace('/[^a-z]+/', '-', $groups).'-'.bin2hex(random_bytes(4));
+
+    $lines = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg(base_path('wordpress-plugin/harness/run-export.php'))
+            .' --storage=posts --out='.escapeshellarg($out).' --db=kbb_ge_wp --batch=500'
+            .' --groups='.escapeshellarg($groups)
+            .($confirm === '' ? '' : ' --confirm='.escapeshellarg($confirm))
+            .($extra === '' ? '' : ' '.$extra)
+            .' 2>&1',
+        $lines,
+        $status
+    );
+
+    if (3 === $status) {
+        test()->markTestSkipped('no MySQL here: '.implode(' ', $lines));
+    }
+
+    expect($status)->toBe(0, 'exporting '.$groups.' failed: '.implode("\n", $lines));
+
+    return $out.'/export';
+}
+
+it('puts every file the plugin writes in exactly one group', function () {
+    /*
+     * THE TWO LISTS THAT HAVE TO AGREE, pinned against each other.
+     *
+     * KBB_Export_Runner::stages() is FILTERED through the group declaration, so
+     * a stage whose file no group claims is a file the plugin can no longer
+     * write at all — and it would go missing quietly, because a group that does
+     * not know about a file cannot notice it is absent.
+     *
+     * App\Services\ImportConsole\ImportWorkspace carries the same warning about
+     * the same hazard between its own list and ImportRunner::entities(), and it
+     * carries it because those two did drift: the SEO entity was registered on
+     * one and not the other and every upload 500'd. The next stage will be added
+     * by somebody who has not read this comment, which is what this is for.
+     *
+     * The authority on the other side is the FIXTURE — a real export of every
+     * group, written by the plugin's own stages. Not a hand-typed list, which
+     * would be a third list to keep in step.
+     */
+    $declared = gkGroups()['every_file'];
+
+    $written = array_map('basename', glob(geExportDir().'/*.csv'));
+
+    sort($written);
+
+    $sorted = $declared;
+    sort($sorted);
+
+    // array_diff both ways, NOT expect()->not->toContain(): `toContain` is
+    // variadic, so `->not->toContain($needle, $message)` reads the message as a
+    // second needle and passes vacuously.
+    $unclaimed = array_values(array_diff($written, $declared));
+    $phantom = array_values(array_diff($declared, $written));
+
+    expect($unclaimed)->toBe([], 'the plugin writes files no group claims, so they can never be exported: '
+        .implode(', ', $unclaimed));
+
+    expect($phantom)->toBe([], 'a group claims files the plugin does not write: '.implode(', ', $phantom));
+
+    // And exactly once each: a file in two groups would be opened twice, its
+    // rows counted twice, and un-ticking one group would not stop it.
+    expect(count($declared))->toBe(count(array_unique($declared)));
+    expect($sorted)->toBe($written);
+});
+
+it('names exactly one dependency whose damage the import report does not describe', function () {
+    /*
+     * THE SEVERITY IS NOT DECORATION. It is the whole basis of the screen's
+     * design: a red warning that appears eight times is a warning nobody reads,
+     * so `loses` means one thing only — damage the import report OF THE RUN
+     * THAT CAUSES IT does not describe.
+     *
+     * There is one of those and it is Orders without Customers
+     * (docs/FV-IMPORT-AT-VOLUME.md section 6: 14 of 80 customers lost). Every
+     * other crossed edge is refused or noted by name as it happens.
+     *
+     * If a second one is ever added this goes red, and whoever adds it has to
+     * say in docs/GK-EXPORT-GROUPS.md why the import report cannot name it.
+     */
+    $groups = gkGroups()['groups'];
+
+    $loses = [];
+    $edges = 0;
+
+    foreach ($groups as $key => $group) {
+        foreach ($group['needs'] as $needed => $edge) {
+            $edges++;
+
+            expect(isset($groups[$needed]))
+                ->toBeTrue("{$key} depends on a group that does not exist: {$needed}");
+
+            expect(trim($edge['consequence']))->not->toBe('',
+                "{$key} needs {$needed} with no consequence written, so the screen would print a blank warning");
+
+            if ($edge['severity'] === 'loses') {
+                $loses[] = $key.':'.$needed;
+            }
+        }
+    }
+
+    expect($edges)->toBeGreaterThan(4, 'the dependency graph has become too small to be describing the real one');
+    expect($loses)->toBe(['sales:customers']);
+
+    // and that one names the measurement, so the sentence the owner reads is
+    // the one this repository actually paid for.
+    expect(str_contains($groups['sales']['needs']['customers']['consequence'], '14 of 80'))->toBeTrue();
+});
+
+it('will not start a selection whose dependencies are neither met nor confirmed', function () {
+    /*
+     * NOT A REFUSAL AND NOT AN AUTO-TICK — see docs/GK-EXPORT-GROUPS.md.
+     *
+     * Exporting Orders alone is often exactly right: the catalogue and the
+     * customers may already be in the new shop from a previous export, and
+     * re-exporting 671 products to get this week's orders is the waste the
+     * screen exists to remove. So the answer is not "no". It is "not until you
+     * have read what this does", and the confirmation is per dependency rather
+     * than one blanket tick, so confirming that the customers are already there
+     * does not also wave through the catalogue.
+     */
+    $alone = gkGroups('--selection=sales');
+
+    expect(array_column($alone['unmet'], 'id'))->toBe(['sales:customers', 'sales:catalogue']);
+    expect(array_column($alone['outstanding'], 'id'))->toBe(['sales:customers', 'sales:catalogue']);
+
+    // The sentence names the GROUPS, because the operator ticked groups and has
+    // never seen a dependency id.
+    expect($alone['refusal'])->toContain('Orders needs Customers');
+    expect($alone['refusal'])->toContain('Orders needs Catalogue');
+
+    // One confirmation clears one edge and not the other.
+    $half = gkGroups('--selection=sales --confirm=sales:customers');
+
+    expect(array_column($half['unmet'], 'id'))->toBe(['sales:customers', 'sales:catalogue']);
+    expect(array_column($half['outstanding'], 'id'))->toBe(['sales:catalogue']);
+
+    $both = gkGroups('--selection=sales --confirm=sales:customers,sales:catalogue');
+
+    expect($both['outstanding'])->toBe([]);
+    expect($both['refusal'])->toBe('');
+
+    // Adding the missing group clears it too, and leaves nothing to confirm.
+    $added = gkGroups('--selection=sales,customers,catalogue');
+
+    expect($added['outstanding'])->toBe([]);
+    expect($added['unmet'])->toBe([]);
+
+    // A selection is a SUBSET of the export's own order, never a resequencing
+    // of it: the catalogue is written first so an export that dies at 60% has
+    // the products and not just the tags.
+    expect(gkGroups('--selection=sales,catalogue,customers')['selection'])
+        ->toBe(['catalogue', 'customers', 'sales']);
+
+    /*
+     * AND THE SERVER REFUSES IT, not only the screen. The admin page disables
+     * the button, which is a statement about one browser with JavaScript in it;
+     * this is the statement about the export. The harness posts the selection
+     * with no confirmation at all, exactly as a crafted request would.
+     */
+    $lines = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg(base_path('wordpress-plugin/harness/run-export.php'))
+            .' --storage=posts --out='.escapeshellarg(sys_get_temp_dir().'/kbb-gk-refused-'.bin2hex(random_bytes(4)))
+            .' --db=kbb_ge_wp --batch=500 --groups=sales 2>&1',
+        $lines,
+        $status
+    );
+
+    if (3 === $status) {
+        $this->markTestSkipped('no MySQL here: '.implode(' ', $lines));
+    }
+
+    expect($status)->toBe(4, 'the runner started an export whose dependencies were never answered');
+    expect(implode("\n", $lines))->toContain('Orders needs Customers');
+});
+
+it('exports one group at a time, and the pieces land what the whole export lands', function () {
+    /*
+     * THE ROUND TRIP, GROUP BY GROUP. Eight separate exports, each of one group,
+     * imported one after another into ONE database in the order the owner would
+     * press them — and the shop ends up holding exactly what the all-at-once
+     * export puts there.
+     *
+     * This is the claim the screen makes and it is not provable from the
+     * exporter alone: a group that writes the right CSV and lands nothing is
+     * the failure this is for.
+     */
+    $order = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses'];
+
+    $confirmations = [
+        'seo' => 'seo:catalogue',
+        'coupons' => 'coupons:catalogue',
+        'sales' => 'sales:customers,sales:catalogue',
+        'reviews' => 'reviews:catalogue,reviews:customers',
+        'addresses' => 'addresses:catalogue,addresses:content',
+    ];
+
+    $directories = [];
+
+    foreach ($order as $group) {
+        $directories[$group] = gkExport($group, $confirmations[$group] ?? '');
+    }
+
+    /*
+     * EACH GROUP'S FILES ARE BYTE-IDENTICAL TO THE WHOLE EXPORT'S.
+     *
+     * Ticking a box changes WHICH files are written and nothing about WHAT is
+     * in them. If a selection could change a file's contents, every claim the
+     * fixture makes about columns, money and the coupon's last second would
+     * hold for the full export and for nothing else.
+     */
+    foreach ($order as $group) {
+        foreach (glob($directories[$group].'/*.csv') as $file) {
+            expect(hash_file('sha256', $file))->toBe(
+                hash_file('sha256', geExportDir().'/'.basename($file)),
+                basename($file).' came out differently when only "'.$group.'" was ticked'
+            );
+        }
+    }
+
+    // Import them one folder at a time, in that order, into one shop.
+    $manifest = geManifest();
+
+    foreach ($order as $group) {
+        geImport(['directory' => $directories[$group]]);
+    }
+
+    /*
+     * AND THE SHOP HOLDS WHAT THE WHOLE EXPORT PUTS THERE, counted against the
+     * full manifest rather than against itself.
+     */
+    expect(Category::query()->whereNotNull('source_term_id')->count())->toBe($manifest['counts']['categories']);
+    expect(Brand::query()->whereNotNull('source_term_id')->count())->toBe($manifest['counts']['brands']);
+    expect(Product::query()->withTrashed()->whereNotNull('wc_id')->count())->toBe($manifest['counts']['products']);
+    expect(Coupon::query()->whereNotNull('wc_id')->count())->toBe($manifest['counts']['coupons']);
+    expect(Customer::query()->withTrashed()->whereNotNull('wp_user_id')->count())->toBe($manifest['counts']['customers']);
+    expect(Order::query()->withTrashed()->whereNotNull('wc_order_id')->count())->toBe($manifest['counts']['orders']);
+    expect(OrderItem::query()->whereNotNull('wc_item_id')->count())->toBe($manifest['counts']['order_items']);
+    expect(Refund::query()->count())->toBe($manifest['counts']['refunds']);
+    expect(OrderNote::query()->whereNotNull('source_comment_id')->count())->toBe($manifest['counts']['order_notes']);
+    expect(Review::query()->where('source', 'wp_comment')->count())->toBe($manifest['counts']['reviews']);
+    expect(App\Models\Post::query()->whereNotNull('source_post_id')->count())->toBe(1);
+
+    /*
+     * AND THE FOREIGN KEYS RESOLVED — which is the only thing separating "the
+     * rows are there" from "the shop works". An order line whose product_id is
+     * null is exactly what an out-of-order import produces, and it is the
+     * failure this whole lane is about.
+     */
+    expect(OrderItem::query()->whereNotNull('wc_item_id')->whereNull('product_id')->count())
+        ->toBe(0, 'an order line lost its product, which is what importing sales before the catalogue does');
+
+    expect(Order::query()->whereNotNull('wc_order_id')->whereNull('customer_id')->count())
+        ->toBe(0, 'an order lost its customer');
+
+    // Every customer in customers.csv is a REAL WordPress user. A guest row
+    // synthesised from an order's billing email is the 14-of-80 failure.
+    expect(Customer::query()->withTrashed()->whereNull('wp_user_id')->count())
+        ->toBe(1, 'the guest order should synthesise exactly one customer, and no more');
+
+    // And the SEO landed on the product it belongs to, which needs the
+    // catalogue import from a DIFFERENT folder to have been seen.
+    expect(Product::query()->where('wc_id', 4021)->value('seo'))->not->toBeNull();
+});
+
+it('records which groups it exported, and a group left out is absent rather than empty', function () {
+    /*
+     * THE CONTRACT'S OWN DISTINCTION, MADE LOAD-BEARING.
+     *
+     * docs/WP-EXPORT-CONTRACT.md: "A file with no rows is still listed, with
+     * rows: 0. Absent from `files` means the plugin did not write it at all,
+     * which is a different statement and the importer must be able to tell the
+     * two apart — 'this shop has no coupons' and 'this export does not carry
+     * coupons' are not the same fact."
+     *
+     * Until groups existed nothing produced the second case: every stage ran,
+     * so every file was listed, and the distinction was a rule with no example.
+     * A ticked-groups export is the example. The reader is this shop's own
+     * App\Services\ImportConsole\ImportManifest::lists(), unmodified.
+     */
+    $directory = gkExport('catalogue');
+
+    $manifest = json_decode((string) file_get_contents($directory.'/manifest.json'), true);
+
+    expect(array_keys($manifest['files']))->toBe([
+        'categories.csv', 'brands.csv', 'tags.csv', 'attributes.csv', 'products.csv', 'variations.csv',
+    ]);
+
+    // Not written, not listed, not on disk — all three, because any one of them
+    // alone would let the other two drift.
+    foreach (['orders.csv', 'customers.csv', 'coupons.csv', 'reviews.csv', 'posts.csv', 'media.csv'] as $absent) {
+        expect(isset($manifest['files'][$absent]))->toBeFalse($absent.' is listed in a manifest that did not write it');
+        expect(file_exists($directory.'/'.$absent))->toBeFalse($absent.' was written by a catalogue-only export');
+        expect(isset($manifest['counts'][str_replace('.csv', '', $absent)]))->toBeFalse();
+    }
+
+    $read = App\Services\ImportConsole\ImportManifest::read($directory.'/manifest.json');
+
+    expect($read->usable())->toBeTrue($read->refusal() ?? '');
+    expect($read->lists('products.csv'))->toBeTrue();
+    expect($read->lists('coupons.csv'))->toBeFalse('the shop cannot tell "no coupons here" from "no coupons at all"');
+
+    // And the same fact in the owner's vocabulary, which is what he ticked.
+    expect($manifest['groups']['selected'])->toBe(['catalogue']);
+    expect($manifest['groups']['skipped'])
+        ->toBe(['seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses']);
+    expect($manifest['groups']['assumed_already_imported'])->toBe([]);
+
+    // A skipped group is stated in words too, because `files` is structure and
+    // the notes are what the owner reads on the import screen.
+    $notes = implode(' | ', $manifest['notes']);
+
+    expect($notes)->toContain('This is a PARTIAL export');
+    expect($notes)->toContain('NOT in this export: Coupons');
+
+    /*
+     * AND A CONFIRMED DEPENDENCY TRAVELS WITH THE EXPORT.
+     *
+     * "The customers are already in the new shop" is a claim about the OTHER
+     * shop. The plugin cannot check it and does not pretend to; what it can do
+     * is write down that it was made, so the file says why it is missing a
+     * group it points at instead of that living in somebody's memory.
+     */
+    $sales = gkExport('sales', 'sales:customers,sales:catalogue');
+
+    $salesManifest = json_decode((string) file_get_contents($sales.'/manifest.json'), true);
+
+    expect(array_column($salesManifest['groups']['assumed_already_imported'], 'needs'))
+        ->toBe(['customers', 'catalogue']);
+
+    expect($salesManifest['groups']['assumed_already_imported'][0]['severity'])->toBe('loses');
+
+    expect(implode(' | ', $salesManifest['notes']))
+        ->toContain('Orders was exported without Customers because the operator confirmed');
+});
+
+it('pins the group selection to the export, so un-ticking one mid-run changes nothing', function () {
+    /*
+     * The admin screen posts the whole form with EVERY batch, because that is
+     * how a browser-driven resumable job works. `skip_trashed` is already pinned
+     * for that reason and the pin is measured; `groups` is worse if it is not.
+     *
+     * `stage` is an INDEX INTO THE FILTERED STAGE LIST. Shortening that list
+     * between two batches does not stop the export — it carries on at the same
+     * index, which now points at a different file. The result is one file half
+     * written, one never opened, and a manifest describing neither.
+     *
+     * --flip_groups_after=1 is the harness doing exactly what clicking a
+     * checkbox mid-run does.
+     */
+    $flipped = gkExport('catalogue,customers,sales', '', '--flip_groups_after=1');
+
+    foreach (['products.csv', 'customers.csv', 'orders.csv', 'order_items.csv', 'refunds.csv', 'order_notes.csv'] as $file) {
+        expect(file_exists($flipped.'/'.$file))->toBeTrue($file.' was never written: the selection changed mid-export');
+
+        expect(hash_file('sha256', $flipped.'/'.$file))->toBe(
+            hash_file('sha256', geExportDir().'/'.$file),
+            $file.' changed because a group was un-ticked mid-export'
+        );
+    }
+
+    $manifest = json_decode((string) file_get_contents($flipped.'/manifest.json'), true);
+
+    expect($manifest['groups']['selected'])->toBe(['catalogue', 'customers', 'sales']);
+
+    // and the manifest still describes what is actually in the files.
+    foreach ($manifest['files'] as $file => $facts) {
+        expect(count(file($flipped.'/'.$file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) - 1)
+            ->toBe($facts['rows'], $file.": the manifest's row count is not the file's row count");
+    }
+});
+
+it('never shows a finished bar on a group that has not finished', function () {
+    /*
+     * The same guard the whole-export bar already has, one bar down.
+     *
+     * docs/GE-WP-EXPORTER.md section 8.1: the media stage's total() counts
+     * referencing objects and the stage writes one row per (url, referrer,
+     * field), so its denominator under-estimates by about five to one. On the
+     * whole-export bar that is invisible — media's handful does not move a sum
+     * of fifty — but a PER-GROUP bar divides by that stage's own estimate, so
+     * the "Addresses and pictures" bar is precisely where the fake 100%
+     * docs/GD-MEDIA-SIDELOADER.md removed once would come back.
+     *
+     * The harness records the highest percentage each group's bar showed while
+     * that group was not yet done. Anything at 100 there is a bar lying.
+     */
+    $lines = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg(base_path('wordpress-plugin/harness/run-export.php'))
+            .' --storage=posts --out='.escapeshellarg(sys_get_temp_dir().'/kbb-gk-peaks-'.bin2hex(random_bytes(4)))
+            .' --db=kbb_ge_wp --batch=1 2>&1',
+        $lines,
+        $status
+    );
+
+    if (3 === $status) {
+        $this->markTestSkipped('no MySQL here: '.implode(' ', $lines));
+    }
+
+    expect($status)->toBe(0, implode("\n", $lines));
+
+    $result = json_decode(implode("\n", $lines), true);
+
+    $lying = array_keys(array_filter($result['group_peaks'], static fn (int $p): bool => $p >= 100));
+
+    expect($lying)->toBe([], 'these group bars reached 100% before their group had finished: '.implode(', ', $lying));
+
+    // The guard has to be able to fire: at --batch=1 every group is seen part
+    // way through, so these peaks are real observations and not an empty list.
+    expect(count($result['group_peaks']))->toBeGreaterThan(4);
+    expect(max($result['group_peaks']))->toBeGreaterThan(0);
+
+    // And a finished export reports every ticked group at 100 and `done`.
+    foreach ($result['group_progress'] as $group) {
+        expect($group['state'])->toBe('done', $group['key'].' was not done when the export was');
+        expect($group['percent'])->toBe(100);
+    }
+});
+
+it('still carries the picture links inside the CSVs, so nothing new has to fetch them', function () {
+    /*
+     * The owner named this as already true and asked for it not to be rebuilt:
+     * the media LINKS travel in the CSVs (`products.image`, `products.images`,
+     * and the URLs inside descriptions) and App\Services\Import\MediaSideloader
+     * — shipped in 2.60.220 — downloads the files itself in batches with its own
+     * progress page. Nothing in this lane touches that, and this is the check
+     * that grouping did not quietly break it.
+     *
+     * The hazard grouping introduces is specific: media.csv sits in "Addresses
+     * and pictures", so a catalogue-only export does not write it. If the image
+     * links lived in media.csv rather than in products.csv, that export would
+     * silently carry a catalogue with no pictures.
+     */
+    $directory = gkExport('catalogue');
+
+    expect(file_exists($directory.'/media.csv'))->toBeFalse();
+
+    $rows = array_map('str_getcsv', file($directory.'/products.csv', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES));
+    $header = array_shift($rows);
+
+    $image = array_search('image', $header, true);
+    $images = array_search('images', $header, true);
+
+    expect($image)->not->toBeFalse('products.csv no longer carries the featured image link');
+    expect($images)->not->toBeFalse('products.csv no longer carries the gallery links');
+
+    $withPictures = array_values(array_filter($rows, static fn (array $r): bool => trim((string) $r[$image]) !== ''));
+
+    expect($withPictures)->not->toBe([], 'a catalogue-only export carries no picture links at all');
+    expect($withPictures[0][$image])->toContain('/uploads/');
+
+    // and the sideloader reads them from the product rows, not from media.csv:
+    // importing the catalogue alone leaves products with image paths to fetch.
+    geImport(['directory' => $directory]);
+
+    expect(Product::query()->where('wc_id', 4021)->value('image'))->not->toBeNull();
+});
+
+it('draws the groups, the warning and the bars in a real browser, and sends what was ticked', function () {
+    /*
+     * ════════════════════════════════════════════════════════════════════════
+     * THE MUTATION THAT SURVIVED, AND WHAT CLOSING IT TOOK
+     * ════════════════════════════════════════════════════════════════════════
+     *
+     * Deleting `body.set('groups', ticked().join(','))` from the admin screen —
+     * so that every export is a whole export whatever the owner ticked — left
+     * the whole PHP suite GREEN. Everything this lane added to the screen is
+     * JavaScript and no PHP test can see a line of it. The same hole hides the
+     * rest of it: a dependency warning that never appears, a Start button that
+     * is pressable while a warning is unanswered, a per-group bar that draws
+     * every group at 100%.
+     *
+     * A grep for that one line would close that one mutation and nothing else.
+     * So the screen is RENDERED by KBB_Export_Admin::screen() (harness/screen.php,
+     * with the same WordPress stubs the export harness uses) and DRIVEN in
+     * Chromium (harness/screen-drive.mjs). Nothing about the page is
+     * reconstructed: the markup and the script are the plugin's own.
+     *
+     * `fetch` is intercepted rather than served, because there is no WordPress
+     * here to answer admin-ajax.php — and because it is the only way to hold the
+     * page mid-run. A real run of this fixture finishes in under a second and
+     * there is no moving bar to photograph.
+     *
+     * The screenshots in docs/gk-export-shots/ are taken by the same run.
+     */
+    if (! is_dir(base_path('node_modules/playwright'))) {
+        $this->markTestSkipped('playwright is not installed here');
+    }
+
+    $chrome = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+
+    if (! is_file($chrome)) {
+        $this->markTestSkipped('no Chromium at '.$chrome);
+    }
+
+    $out = sys_get_temp_dir().'/kbb-gk-screen-'.bin2hex(random_bytes(4));
+
+    mkdir($out, 0755, true);
+
+    $render = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg(base_path('wordpress-plugin/harness/screen.php'))
+            .' --db=kbb_ge_wp > '.escapeshellarg($out.'/screen.html').' 2>&1',
+        $render,
+        $renderStatus
+    );
+
+    if (3 === $renderStatus) {
+        $this->markTestSkipped('no MySQL here: '.implode(' ', $render));
+    }
+
+    expect($renderStatus)->toBe(0, implode("\n", $render));
+
+    $lines = [];
+
+    // cwd is the repository root so node resolves `playwright` by walking up
+    // from the script, which is how ESM resolution works — NODE_PATH does not
+    // apply to it.
+    exec(
+        'cd '.escapeshellarg(base_path()).' && node '
+            .escapeshellarg(base_path('wordpress-plugin/harness/screen-drive.mjs'))
+            .' --page='.escapeshellarg($out.'/screen.html')
+            .' --out='.escapeshellarg($out.'/findings.json')
+            .' --chrome='.escapeshellarg($chrome)
+            .' > /dev/null 2>&1',
+        $lines,
+        $status
+    );
+
+    if (127 === $status) {
+        $this->markTestSkipped('no node here');
+    }
+
+    expect($status)->toBe(0, 'the browser run failed: '.implode("\n", $lines));
+
+    $found = json_decode((string) file_get_contents($out.'/findings.json'), true);
+
+    expect($found['errors'])->toBe([], 'the screen threw in the browser: '.implode(' | ', $found['errors']));
+
+    // ── The groups are on the page, in the export's order, all ticked ────────
+    expect($found['at_rest']['groups'])
+        ->toBe(['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses']);
+    expect($found['at_rest']['all_ticked'])->toBeTrue('the screen no longer offers the whole export by default');
+    expect($found['at_rest']['warnings'])->toBe([]);
+    expect($found['at_rest']['start_disabled'])->toBeFalse();
+
+    // ── A partial selection with nothing unmet is NOT obstructed ─────────────
+    // This is half the design: exporting the catalogue alone is a normal thing
+    // to do and the screen must not argue about it.
+    expect($found['catalogue_only']['warnings'])->toBe([]);
+    expect($found['catalogue_only']['start_disabled'])->toBeFalse();
+
+    // ── The dependency warning, and the two severities drawn differently ─────
+    expect(array_column($found['sales_alone']['warnings'], 'severity'))->toBe(['loses', 'reported']);
+    expect($found['sales_alone']['warnings'][0]['heading'])
+        ->toBe('This can lose rows without saying so: Orders without Customers');
+    expect($found['sales_alone']['warnings'][1]['heading'])
+        ->toBe('Exported without what it points at: Orders without Catalogue');
+
+    // ── And Start is not pressable until both are answered ──────────────────
+    expect($found['sales_alone']['start_disabled'])->toBeTrue('the export could be started with two warnings unanswered');
+    expect($found['sales_alone']['blocked'])->toBe('2 dependencies above are unanswered.');
+
+    // One confirmation answers one warning and not the other.
+    expect($found['one_confirmed']['start_disabled'])->toBeTrue();
+    expect($found['one_confirmed']['blocked'])->toBe('One dependency above is unanswered.');
+
+    // And the other way out — adding the group — ticks it and clears it.
+    expect($found['after_add']['catalogue_ticked'])->toBeTrue();
+    expect($found['after_add']['warnings'])->toHaveCount(1);
+    expect($found['after_add']['start_disabled'])->toBeFalse();
+
+    // ── One bar per group, in three distinguishable states ──────────────────
+    $bars = $found['mid_run']['bars'];
+
+    expect(array_column($bars, 'label'))->toBe([
+        'Catalogue', 'SEO (Yoast)', 'Coupons', 'Customers', 'Orders', 'Reviews', 'Journal articles',
+        'Addresses and pictures',
+    ]);
+
+    expect(array_column($bars, 'state'))
+        ->toBe(['done', 'done', 'done', 'done', 'running', 'pending', 'pending', 'pending']);
+
+    expect(array_column($bars, 'width'))->toBe(['100%', '100%', '100%', '100%', '55%', '0%', '0%', '0%']);
+
+    expect($found['mid_run']['overall_width'])->toBe('52%');
+
+    /*
+     * ── AND WHAT THE PAGE ACTUALLY SENT ─────────────────────────────────────
+     *
+     * This is the assertion the surviving mutation needed. Every request the
+     * page made carries the selection and the confirmations — including the
+     * step requests, because the form is posted with every batch and the server
+     * pins what it was given at start().
+     */
+    expect($found['posts'])->not->toBe([]);
+
+    foreach ($found['posts'] as $index => $post) {
+        expect(isset($post['groups']))->toBeTrue("request {$index} carried no selection at all");
+        expect(isset($post['confirmed']))->toBeTrue("request {$index} carried no confirmations");
+        expect($post['groups'])
+            ->toBe('catalogue,seo,coupons,customers,sales,reviews,content,addresses',
+                "request {$index} sent a selection that is not what was ticked");
+    }
+
+    expect($found['posts'][0]['action'])->toBe('kbb_export_start');
+    expect($found['posts'][1]['action'])->toBe('kbb_export_step');
+});
+
+it('reads a request with no selection in it as the whole export, and an empty one as nothing', function () {
+    /*
+     * BOTH OF THESE WERE FOUND BY MUTATION AND BOTH SURVIVED FIRST TIME.
+     *
+     * 1. Defaulting a MISSING `groups` field to nothing instead of everything
+     *    left the suite green, because the harness and the browser both always
+     *    send the field. The case that does not is the one that matters: a tab
+     *    left open across the plugin update, anything that predates this screen.
+     *    That has to keep producing the whole export the plugin has always
+     *    produced — silently exporting an empty folder instead is the worst
+     *    possible reading of an ambiguous request.
+     *
+     * 2. Allowing an EMPTY selection to start left the suite green too. It
+     *    writes no files and then writes a manifest — and a manifest is this
+     *    export's proof that it finished (the contract: written last, so its
+     *    presence means the export completed). An empty folder with a manifest
+     *    in it is an export that says it succeeded and carries nothing.
+     *
+     * "Missing" and "empty" therefore have to stay tellable apart, which is why
+     * the harness reads --groups= (empty) as an empty selection rather than
+     * falling back to everything.
+     */
+    $lines = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg(base_path('wordpress-plugin/harness/screen.php'))
+            .' --db=kbb_ge_wp --probe=settings 2>&1',
+        $lines,
+        $status
+    );
+
+    if (3 === $status) {
+        $this->markTestSkipped('no MySQL here: '.implode(' ', $lines));
+    }
+
+    expect($status)->toBe(0, implode("\n", $lines));
+
+    $probe = json_decode(implode("\n", $lines), true);
+
+    $everything = ['catalogue', 'seo', 'coupons', 'customers', 'sales', 'reviews', 'content', 'addresses'];
+
+    expect($probe['no_groups_field']['groups'])->toBe($everything);
+    expect($probe['no_groups_field']['runner_groups'])->toBe($everything);
+
+    expect($probe['empty_groups']['groups'])->toBe([]);
+    expect($probe['empty_groups']['runner_groups'])->toBe([]);
+
+    // A key no group answers to is dropped before a file is opened, and the
+    // surviving ones are put back into the export's own order.
+    expect($probe['junk_groups']['runner_groups'])->toBe(['catalogue', 'sales']);
+
+    /*
+     * AND AN EMPTY SELECTION DOES NOT START. Refused with a sentence, so the
+     * owner is told he ticked nothing rather than handed a folder with a
+     * manifest and no data in it.
+     */
+    $refused = [];
+
+    exec(
+        escapeshellcmd(PHP_BINARY).' '.escapeshellarg(base_path('wordpress-plugin/harness/run-export.php'))
+            .' --storage=posts --out='.escapeshellarg(sys_get_temp_dir().'/kbb-gk-empty-'.bin2hex(random_bytes(4)))
+            .' --db=kbb_ge_wp --batch=500 --groups= 2>&1',
+        $refused,
+        $refusedStatus
+    );
+
+    expect($refusedStatus)->toBe(4, 'an export with nothing ticked was allowed to start');
+    expect(implode("\n", $refused))->toContain('Nothing is ticked');
 });

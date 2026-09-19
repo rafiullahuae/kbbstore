@@ -164,8 +164,42 @@
         "permalinks": 15,
         "media": 8
     },
+    "groups": {
+        "selected": [
+            "catalogue",
+            "seo",
+            "coupons",
+            "customers",
+            "sales",
+            "reviews",
+            "content",
+            "addresses"
+        ],
+        "skipped": [],
+        "files": [
+            "categories.csv",
+            "brands.csv",
+            "tags.csv",
+            "attributes.csv",
+            "products.csv",
+            "variations.csv",
+            "seo.csv",
+            "coupons.csv",
+            "customers.csv",
+            "orders.csv",
+            "order_items.csv",
+            "refunds.csv",
+            "order_notes.csv",
+            "reviews.csv",
+            "posts.csv",
+            "permalinks.csv",
+            "media.csv"
+        ],
+        "assumed_already_imported": []
+    },
     "notes": [
         "Orders were read from legacy (wp_posts): orders are shop_order posts and their fields are wp_postmeta keys.",
+        "Every group was exported: Catalogue, SEO (Yoast), Coupons, Customers, Orders, Reviews, Journal articles, Addresses and pictures.",
         "brands.csv was read from the `pa_brands` taxonomy. BrandImporter promotes these terms to their own table with source_term_id carrying this term id.",
         "attributes.csv excludes `pa_brands`, which brands.csv carries instead -- exporting it in both would make every brand an attribute value as well as a brand.",
         "1 product is in the WordPress trash and NOT in products.csv. ProductImporter refuses a trashed product outright -- importing it would make it a live row -- so this export does what that refusal asks. Empty the trash or turn off \"skip trashed\" and re-export if you want them.",

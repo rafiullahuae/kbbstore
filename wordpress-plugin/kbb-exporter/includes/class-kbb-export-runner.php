@@ -66,9 +66,21 @@ class KBB_Export_Runner {
 				// the notes; CustomerImporter makes each a customer row and the
 				// owner filters afterwards if he wants to.
 				'include_posts'  => true,
+				/*
+				 * WHICH GROUPS, and what the operator said about the ones he
+				 * left out. Defaulting to every group keeps the old behaviour
+				 * exactly: a caller that knows nothing about groups -- the
+				 * harness before this lane, a future WP-CLI command -- gets the
+				 * whole export and no dependency is ever unmet.
+				 */
+				'groups'         => KBB_Export_Groups::keys(),
+				'confirmed'      => array(),
 			),
 			$settings
 		);
+
+		$this->settings['groups']    = KBB_Export_Groups::normalise( (array) $this->settings['groups'] );
+		$this->settings['confirmed'] = array_values( (array) $this->settings['confirmed'] );
 
 		$this->state = $this->load_state();
 	}
@@ -88,6 +100,34 @@ class KBB_Export_Runner {
 	 * @return array{ok: bool, error: string}
 	 */
 	public function start() {
+		/*
+		 * THE DEPENDENCY GUARD, AND IT IS HERE AND NOT ONLY IN THE BROWSER.
+		 *
+		 * The admin screen disables the button, which is a statement about one
+		 * browser with JavaScript running in it. This is the statement about the
+		 * export. A selection whose dependencies are neither satisfied nor
+		 * confirmed does not start, and the sentence it refuses with is the same
+		 * one the screen prints, so the two cannot describe the hazard
+		 * differently.
+		 *
+		 * It refuses rather than auto-ticking the missing group on purpose: the
+		 * missing group may well already be in the new shop, and re-exporting
+		 * 671 products to get 40 coupons is the waste this screen exists to
+		 * remove. Only the owner knows which, so only the owner can say.
+		 */
+		$outstanding = KBB_Export_Groups::outstanding(
+			(array) $this->settings['groups'],
+			(array) $this->settings['confirmed']
+		);
+
+		if ( ! empty( $outstanding ) ) {
+			return array( 'ok' => false, 'error' => KBB_Export_Groups::refusal( $outstanding ) );
+		}
+
+		if ( empty( $this->settings['groups'] ) ) {
+			return array( 'ok' => false, 'error' => 'Nothing is ticked. Choose at least one group to export.' );
+		}
+
 		$detected = KBB_Export_Orders_Source::detect();
 
 		if ( null === $detected['source'] ) {
@@ -130,6 +170,20 @@ class KBB_Export_Runner {
 		}
 
 		$this->state['notes'][] = 'Orders were read from ' . $this->orders->describe();
+
+		/*
+		 * WHAT THIS EXPORT DOES NOT CARRY, in words, in the file the shop reads.
+		 *
+		 * A row silently absent from an export is worse than a row the importer
+		 * refuses -- the refusal is in a report the owner reads and the absence
+		 * is in no report at all. A whole GROUP silently absent is that same
+		 * defect multiplied by four files, so every skipped group gets a
+		 * sentence, and so does every dependency the operator waved through on
+		 * the grounds that it is already in the new shop.
+		 */
+		foreach ( KBB_Export_Groups::notes( $this->settings['groups'], $this->settings['confirmed'] ) as $note ) {
+			$this->state['notes'][] = $note;
+		}
 
 		/*
 		 * THE SETTINGS ARE PINNED TO THE EXPORT, NOT TO THE REQUEST.
@@ -214,7 +268,8 @@ class KBB_Export_Runner {
 	 * @return array<string,mixed> the manifest, as written
 	 */
 	public function finish() {
-		$files = array();
+		$pinned = $this->pinned_settings();
+		$files  = array();
 		$counts = array();
 
 		foreach ( $this->stages() as $stage ) {
@@ -274,6 +329,23 @@ class KBB_Export_Runner {
 			),
 			'files'        => $files,
 			'counts'       => $counts,
+			/*
+			 * WHICH GROUPS THIS EXPORT CARRIES, said out loud.
+			 *
+			 * `files` above already says it structurally -- a skipped group's
+			 * files are absent from it rather than present with "rows": 0, and
+			 * docs/WP-EXPORT-CONTRACT.md is explicit that those are different
+			 * facts, App\Services\ImportConsole\ImportManifest::lists() is the
+			 * reader, and the import screen prints the difference per entity.
+			 * This block is the same fact in the owner's vocabulary plus the one
+			 * thing a file list cannot carry: what he confirmed was ALREADY in
+			 * the new shop, which is a claim about the other shop that only he
+			 * can make.
+			 */
+			'groups'       => KBB_Export_Groups::manifest_block(
+				(array) $pinned['groups'],
+				(array) $pinned['confirmed']
+			),
 			'notes'        => array_values( (array) $this->state['notes'] ),
 		);
 
@@ -302,6 +374,7 @@ class KBB_Export_Runner {
 		}
 
 		return array(
+			'groups'    => $this->group_progress( $stages, $index ),
 			'ok'        => true,
 			'error'     => '',
 			'export_id' => isset( $this->state['export_id'] ) ? $this->state['export_id'] : '',
@@ -352,6 +425,81 @@ class KBB_Export_Runner {
 	}
 
 	/**
+	 * One bar per ticked group, which is what the owner asked for.
+	 *
+	 * ── THE SAME HONESTY RULE AS THE WHOLE-EXPORT BAR ───────────────────────
+	 *
+	 * Per group, not only overall, because "Writing media.csv, file 14 of 17" is
+	 * a sentence about a file and the owner ticked GROUPS. It uses exactly the
+	 * arithmetic progress() uses for the whole export, for the same reason and
+	 * with the same two corrections: the denominator is max(total, written), so
+	 * a stage that writes more rows than its total() predicted -- the media
+	 * stage really does, about five to one -- cannot push a bar past its own
+	 * end; and the percentage is capped at 99 until the group's last file is
+	 * finished, so a full bar means the group is done and nothing else.
+	 *
+	 * `state` is the same three the whole screen uses and
+	 * docs/GD-MEDIA-SIDELOADER.md insisted on: a group that has not started, the
+	 * one being written, and the ones finished. A bar sitting still because its
+	 * group has not begun and a bar sitting still because the request died must
+	 * not look the same.
+	 *
+	 * @param array<int,KBB_Export_Stage> $stages
+	 * @param int                         $index
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function group_progress( array $stages, $index ) {
+		$all      = KBB_Export_Groups::all();
+		$selected = KBB_Export_Groups::normalise( (array) $this->pinned_settings()['groups'] );
+		$out      = array();
+
+		foreach ( $selected as $key ) {
+			$total    = 0;
+			$written  = 0;
+			$files    = array();
+			$first    = null;
+			$last     = null;
+
+			foreach ( $stages as $position => $stage ) {
+				$file = $stage->file();
+
+				if ( ! in_array( $file, $all[ $key ]['files'], true ) ) {
+					continue;
+				}
+
+				$files[] = $file;
+				$first   = null === $first ? $position : $first;
+				$last    = $position;
+
+				$total   += isset( $this->state['totals'][ $file ] ) ? (int) $this->state['totals'][ $file ] : 0;
+				$written += isset( $this->state['written'][ $file ] ) ? (int) $this->state['written'][ $file ] : 0;
+			}
+
+			if ( null === $first ) {
+				continue;
+			}
+
+			$done = ! empty( $this->state['done'] ) || $index > $last;
+
+			$out[] = array(
+				'key'        => $key,
+				'label'      => $all[ $key ]['label'],
+				'files'      => $files,
+				'rows_done'  => $written,
+				'rows_total' => max( $total, $written ),
+				'percent'    => $done
+					? 100
+					: ( max( $total, $written ) > 0
+						? min( 99, (int) floor( $written * 100 / max( $total, $written ) ) )
+						: 0 ),
+				'state'      => $done ? 'done' : ( $index >= $first ? 'running' : 'pending' ),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
 	 * The stages, in the order the shop's importer needs them read.
 	 *
 	 * The ORDER of the files in the folder does not matter to the importer --
@@ -391,7 +539,7 @@ class KBB_Export_Runner {
 
 		$s = $this->pinned_settings();
 
-		$this->stages = array(
+		$all = array(
 			new KBB_Export_Stage_Categories( $s ),
 			new KBB_Export_Stage_Brands( $s ),
 			new KBB_Export_Stage_Tags( $s ),
@@ -411,6 +559,42 @@ class KBB_Export_Runner {
 			new KBB_Export_Stage_Media( $s ),
 		);
 
+		/*
+		 * ── THE SELECTION FILTERS THE STAGE LIST, IT DOES NOT REORDER IT ────
+		 *
+		 * The order above is the export's own failure mode: the catalogue comes
+		 * out first, so an export that dies at 60% has the products and the
+		 * orders and not just the tags. A selection is therefore a SUBSET of
+		 * this sequence, never a resequencing of it -- KBB_Export_Groups::
+		 * normalise() puts the operator's ticks back into declared order for
+		 * the same reason.
+		 *
+		 * Filtering here rather than at every call site is what makes Pause and
+		 * Resume work per group with no extra state: `stage` is an index into
+		 * THIS list, `total()` is asked only of the stages in it, and every file
+		 * a skipped group would have written is never opened, so it is absent
+		 * from the folder and absent from the manifest -- which is the fact
+		 * docs/WP-EXPORT-CONTRACT.md distinguishes from "rows": 0.
+		 *
+		 * The settings are pinned to the export (see pinned_settings), so
+		 * `groups` cannot change between batches. Un-ticking a group mid-run
+		 * would shorten this list under a cursor that is an index into it, and
+		 * the export would carry on inside a different file.
+		 */
+		$wanted = KBB_Export_Groups::files_for( (array) $s['groups'] );
+
+		$this->stages = array();
+
+		foreach ( $all as $stage ) {
+			if ( in_array( $stage->file(), $wanted, true ) ) {
+				$this->stages[] = $stage;
+			}
+		}
+
+		// array_values, because the runner indexes this list by position and a
+		// filtered array keeps its original keys.
+		$this->stages = array_values( $this->stages );
+
 		return $this->stages;
 	}
 
@@ -427,6 +611,16 @@ class KBB_Export_Runner {
 
 		$pinned          = $this->state['settings'];
 		$pinned['batch'] = $this->settings['batch'];
+
+		// An export started before groups existed has no `groups` key in its
+		// state. It was a whole export, so that is what it resumes as.
+		if ( ! isset( $pinned['groups'] ) ) {
+			$pinned['groups'] = KBB_Export_Groups::keys();
+		}
+
+		if ( ! isset( $pinned['confirmed'] ) ) {
+			$pinned['confirmed'] = array();
+		}
 
 		return $pinned;
 	}
