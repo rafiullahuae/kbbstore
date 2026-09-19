@@ -1,0 +1,4 @@
+note_id,order_id,date_created,author,author_email,content,is_customer_note
+8201,10233,2019-03-06 09:05:00,WooCommerce,woocommerce@example.test,Order status changed from Processing to Completed.,no
+8202,10233,2019-03-07 08:00:00,Layla,layla@example.test,Your parcel is on its way.,yes
+8203,99999,2019-03-07 08:00:00,WooCommerce,,A note on an order that is not in this export,no

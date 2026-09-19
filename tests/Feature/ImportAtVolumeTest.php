@@ -484,8 +484,22 @@ it('names every file in the export folder that no importer opens, with its row c
         }
     }
 
-    foreach (['refunds.csv', 'order_notes.csv', 'variations.csv', 'tags.csv'] as $file) {
+    /*
+     * refunds.csv AND order_notes.csv USED TO BE ON THIS LIST and are not any
+     * more: they are entities now (RefundImporter, OrderNoteImporter), and a
+     * channel that still named them would be telling the owner his refunds were
+     * dropped on a run that imported them. The generator still counts them under
+     * `unread.*` because that is the key it has always written; what matters is
+     * which files the REPORT names, which is what is asserted here.
+     */
+    foreach (['variations.csv', 'tags.csv'] as $file) {
         expect(array_key_exists($file, $named))->toBeTrue($file.' was in the folder and nothing said it was ignored');
         expect($named[$file])->toContain((string) $manifest['unread.'.$file]);
+    }
+
+    foreach (['refunds.csv', 'order_notes.csv'] as $imported) {
+        expect(array_key_exists($imported, $named))->toBeFalse(
+            $imported.' was named as a file no importer opens, and one does'
+        );
     }
 });
