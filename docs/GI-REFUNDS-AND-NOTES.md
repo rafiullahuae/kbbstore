@@ -449,6 +449,9 @@ and documented as such rather than sold as a data-integrity check.
 
 | | |
 |---|---|
+| SQLite, whole suite | **4,565 passed, 0 failed, 21 skipped** (32,995 assertions), `vendor/bin/pest` |
+| MySQL parity, whole suite | **4,571 passed, 0 failed, 15 skipped** (33,321 assertions), `KBB_TEST_DB=kbb_gi vendor/bin/pest -c phpunit-mysql.xml` |
+| `php -l` | clean across `app database routes` |
 | new | `tests/Feature/GiRefundsAndNotesTest.php` — 22 tests |
 | extended | `tests/Feature/GeWpExporterTest.php` — the round trip now closes on the refund and the note |
 | new fixtures | `tests/Fixtures/woo/refunds.csv`, `tests/Fixtures/woo/order_notes.csv` (defect-bearing, in the style of the rest of that folder) |
@@ -511,3 +514,23 @@ which is what `ImportAtVolumeTest` now asserts in both directions.
    here, that string could be resolved to a name. It is not, this round, because
    an importer that silently resolved it would produce a different value
    depending on whether users had been imported yet.
+
+---
+
+## 12. One thing the integrator should know, which is not this lane's code
+
+`tests/Feature/GeWpExporterTest.php` drives the WordPress plugin harness
+against a MySQL database with a **fixed name**, `kbb_ge_wp`. Every lane's
+worktree uses the same name, so two lanes running that file at the same time
+race each other: the symptoms are `Table 'wp_options' already exists` and
+`Table 'kbb_ge_wp.wp_options' doesn't exist`, and they land on
+*it regenerates the fixture from the plugin*, *it pins its settings to the
+export* and *it never shows a finished bar on an unfinished export*.
+
+It cost three spurious failures in this lane's runs (two on MySQL, one on
+SQLite) while lanes GH and GJ were running their own suites; all three pass in
+isolation, and the final full runs recorded above are clean. It is not a defect
+in the plugin or in this lane — but with three lanes a round it will happen
+again, and the fix is one line: suffix the harness database name with something
+per-worktree, the way `KBB_TEST_DB` already does for the application database.
+That file belongs to Lane GE, so it is named here rather than changed.
