@@ -104,6 +104,21 @@ landed is deleted from here and written into its phase below, so a stale entry
 is a bug in this section rather than a second opinion about the phase.
 
 
+- **Lane GH — variations, attributes and tags.** The plugin exports them and
+  nothing imports them. A variable product still lands as its parent only, which
+  `docs/FV-IMPORT-AT-VOLUME.md` §9 measured as the largest missing entity by
+  revenue — and `Seo`'s AggregateOffer has never once seen a real variant
+- **Lane GI — refunds and order notes.** The sharpest of the three: a partial
+  refund imports as an order at its FULL total, so the order history does not
+  merely omit money given back, it overstates revenue, silently, in the table the
+  owner reads to judge how the shop is doing
+- **Lane GJ — posts, and a verdict the owner has never seen.** The Journal's
+  permalinks are finished and serving nothing because `posts` is empty and
+  nothing could fill it. And Phase 13's count verification — the check Lane FV
+  built because every other figure was the importer describing its own work —
+  reaches a verdict on the command line and never through the admin screen, which
+  is the only route the owner has
+
 ### Waiting on the owner, not on us
 
 - **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
@@ -1381,14 +1396,18 @@ pin that looks applied and is not is worse than none.**
       articles now live at the site root and `RESERVED_SLUGS` refuses a reserved
       first segment, so a live article slugged `about`, `wishlist` or `feed` is an
       indexed URL this app can never serve
-- [ ] ▲ **The Journal's own chrome links itself with a bare `href="/blog"`**, five
-      times across `store/post.blade.php` and `store/blog.blade.php`. Measured
-      under `KBB_BASE_PATH=/kbb-upgrade` — which is the live mount — those emit
-      `/blog` with no prefix while their `Url::to()` siblings carry
-      `/kbb-upgrade/…`, so the "Journal" link in every article's header leaves
-      the application. Both pages are byte-pinned by
-      `StorefrontEnglishUnchangedTest`, so the fix moves `BASE_COMMIT`; the exact
-      replacement is in `docs/GA-SKINCARE-GUIDE.md`
+- [x] ▲ **The Journal's own chrome no longer leaves the application** —
+      *2.60.217*. Twenty-six bare links across `store/post.blade.php` and
+      `store/blog.blade.php` — not the five first counted: `/`, `/shop` and
+      `/skin-quiz` were bare too, so under the live `/kbb-upgrade` mount the
+      WHOLE Journal nav pointed outside the shop, and on an Arabic page every
+      one of them dropped the language. They also pointed at `/blog`, a redirect
+      since 2.60.93, while line 168 of the same file already linked the index
+      correctly. `StorefrontEnglishUnchangedTest` went red by design, its diff
+      was exactly the three intended substitutions and nothing else, and
+      `BASE_COMMIT` moved to the commit that made them — then mutation-proved,
+      because a pin moved past a real change and a pin quietly silenced look
+      identical in a green run
 - [x] **Blog — was a complete, silent outage.** Checked directly rather than assuming
   from the plan's own listing: both `/blog` and every `/post/{slug}` returned a real
   500, not a placeholder — `PageController::blog()` and `::post()` were called by the
