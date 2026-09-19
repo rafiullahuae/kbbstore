@@ -69,6 +69,7 @@ its product and its reviewer.
 | `orders` | `orders.csv` | `wc_order_id` | Plus the order's own address snapshot and its `addresses` rows. |
 | `order-items` | `order_items.csv` | `wc_item_id` | Matched on the WooCommerce `order_item_id`. |
 | `reviews` | `reviews.csv` | `source` + `source_id` | WordPress comments with `comment_type = 'review'`. After products (each names its product by post id) and after customers (a review carries the reviewer's WP user id). Recomputes `products.rating` and `products.review_count` at the end of the entity. |
+| `posts` | `posts.csv` | `source_post_id` | The Journal. **Last, and that is not a dependency** — an article references nothing else this import writes. Only `type = post` is imported: the export carries every WordPress post type in this one file, and a page or anything else is refused by name and listed in the discard list. **An article whose slug is a first path segment the storefront already owns — `about`, `wishlist`, `feed` — is refused**, because `/{slug}/` is the shop's page and never the article; the row would be unreachable. A slug of the wrong shape (capitals, underscores, a percent-encoded non-Latin title) is normalised instead, and reported as an adjustment. Lane GJ. |
 
 A file that is not there is skipped without complaint — a delta pass that only
 carries new orders is a normal thing to run.

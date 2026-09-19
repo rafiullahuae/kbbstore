@@ -11,6 +11,7 @@ use App\Services\Import\Entities\CustomerImporter;
 use App\Services\Import\Entities\EntityImporter;
 use App\Services\Import\Entities\OrderImporter;
 use App\Services\Import\Entities\OrderItemImporter;
+use App\Services\Import\Entities\PostImporter;
 use App\Services\Import\Entities\ReviewImporter;
 use App\Services\Import\Entities\SeoImporter;
 use App\Services\Import\Entities\ProductImporter;
@@ -118,6 +119,21 @@ final class ImportRunner
              * The order of this array is the order the runner walks it.
              */
             new SeoImporter,
+            /*
+             * LAST, AND THAT IS NOT A DEPENDENCY -- it is the opposite, and it
+             * is worth saying which. An article references nothing this import
+             * writes: no category, no brand, no product, no customer. It could
+             * run first. It runs last because the order of this array is the
+             * order the owner's browser walks it, and the catalogue and the
+             * orders are what the shop cannot open without.
+             *
+             * `posts.csv` is one of the seven files docs/WP-EXPORT-CONTRACT.md
+             * marks as a **gap**: written by the export plugin and opened by
+             * nothing. Lane GA measured what that costs -- /skincare-guide/
+             * renders an empty index and every article address 404s -- and
+             * PostImporter's own header carries the rest.
+             */
+            new PostImporter,
         ];
     }
 
@@ -298,6 +314,23 @@ final class ImportRunner
             $report->read($alreadyDone);
             $report->accounted($alreadyDone);
             $report->resumedRows += $alreadyDone;
+
+            /*
+             * AND HOW MANY OF THEM WERE REFUSED, which is the one thing this
+             * process could not know and the reason the verification used to
+             * stop short of a verdict whenever a run resumed. It comes off the
+             * same checkpoint row the offset came from, committed in the same
+             * transaction as the rows it counts.
+             *
+             * `+=` rather than `=`, to match resumedRows above: an entity can
+             * legitimately be run twice inside one ImportReport (--only twice,
+             * or a driver step and a finalising pass), and a second open() of
+             * the same checkpoint must add to the file's totals rather than
+             * replace them.
+             */
+            $report->resumedRejected += $checkpoint->resumedRejected;
+            $report->resumedCountsTrusted = $report->resumedCountsTrusted
+                && $checkpoint->resumedCountsTrusted;
         }
 
         try {

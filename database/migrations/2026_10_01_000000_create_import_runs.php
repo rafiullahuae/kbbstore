@@ -28,10 +28,19 @@ use Illuminate\Support\Facades\Schema;
  *     completed it", and the difference decides whether the screen moves on or
  *     re-presents the file. Held here, so the driver never has to guess.
  *
- *   - THE COUNTER BASELINE. `created_rows` and friends are not zeroed when a
- *     finished entity is re-run, so a second pass would show the first pass's
- *     numbers added to its own. The value each counter held when this run first
- *     touched the entity is recorded here and subtracted on the way out.
+ *   - THE COUNTER BASELINE. `created_rows` and friends used NOT to be zeroed
+ *     when a finished entity was re-run, so a second pass would show the first
+ *     pass's numbers added to its own. The value each counter held when this
+ *     run first touched the entity is recorded here and subtracted on the way
+ *     out.
+ *
+ *     THEY ARE ZEROED AT THE SOURCE NOW (App\Services\Import\Checkpoint::open,
+ *     Lane GJ), because EntityReport::verification() reads `rejected_rows` to
+ *     reach a verdict on a resumed run and a stale refusal in it turns a
+ *     shortfall into "verified". So the baseline for a finished entity is zero
+ *     and this column is no longer doing that job for it. It is kept, and is
+ *     still taken, for a checkpoint written by the code that shipped before
+ *     that change -- one of which is in the owner's database right now.
  *
  *   - THE CLAIM. Two tabs stepping at once would both read the same offset, both
  *     import the same rows and both advance the checkpoint — leaving a gap no

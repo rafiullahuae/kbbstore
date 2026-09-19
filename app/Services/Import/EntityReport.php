@@ -123,17 +123,56 @@ final class EntityReport
      *
      * THEY ARE COUNTED AS READ AND AS ACCOUNTED FOR, because they are rows of
      * this file whose outcome is recorded in `import_checkpoints` -- the batch
-     * that wrote them advanced the offset in the same transaction. What this
-     * run cannot know is how many of THOSE were refusals, and a refused row is
-     * one that was read and is NOT in the database. So while this is non-zero
-     * the arithmetic check still runs and the DATABASE COUNT IS REPORTED
-     * WITHOUT A VERDICT: `read - refused` is not the number of rows the table
-     * should hold when some of the refusals happened in a process that has
-     * exited. Claiming a shortfall on that arithmetic would raise an alarm on
-     * every resumed import that refused anything, which on shared hosting is
-     * most of them, and an alarm that cries wolf is one nobody reads.
+     * that wrote them advanced the offset in the same transaction.
+     *
+     * WHAT THIS RUN CANNOT KNOW FROM ITS OWN TALLIES is how many of THOSE were
+     * refusals, and a refused row is one that was read and is NOT in the
+     * database. So `read - refused` counted in this process is not the number
+     * of rows the table should hold, and Lane FV withheld the verdict rather
+     * than compare the wrong two numbers.
+     *
+     * IT DOES NOT HAVE TO GUESS ANY MORE: $resumedRejected carries the
+     * refusals among exactly these rows, out of the same checkpoint row the
+     * offset came from, written inside the same transaction as the rows it
+     * counts. See the note on that property for the one case where it still
+     * cannot be believed and the verdict is still withheld.
      */
     public int $resumedRows = 0;
+
+    /**
+     * How many of $resumedRows an earlier process REFUSED.
+     *
+     * This is the number that closes the hole. `import_checkpoints` has
+     * carried `rejected_rows` cumulatively since the checkpoint existed;
+     * nothing read it. Lane GF found the consequence and measured it: on the
+     * admin screen every browser step after the first resumes, so every entity
+     * that takes more than one step ended on `counted` -- two numbers side by
+     * side and no verdict -- which at the owner's real volume is every entity,
+     * on the only route the owner has. The check that catches silently
+     * vanishing rows existed in name only from the browser.
+     *
+     * NOT SELF-REPORTED, which is the property the whole verification rests
+     * on. It is not this process describing its own work: it is a column
+     * committed in the same transaction as the rows it counts, by a process
+     * that has since exited, read back off the database.
+     */
+    public int $resumedRejected = 0;
+
+    /**
+     * Whether $resumedRejected describes exactly the $resumedRows rows.
+     *
+     * Checkpoint::open() answers it, by an invariant it can check on the row
+     * it is reading -- see Checkpoint::$resumedCountsTrusted. False means a
+     * checkpoint whose counters belong to an earlier, completed pass over the
+     * same entity, which the previous version of Checkpoint left behind when
+     * it reset the offset. On such a row `processed - rejected_rows` comes out
+     * too small and a shortfall would read as "verified".
+     *
+     * SO IT FALLS BACK TO EXACTLY WHAT FV BUILT: the count is reported without
+     * a verdict, and the sentence says why. A verdict that is wrong is worse
+     * than a verdict that is absent.
+     */
+    public bool $resumedCountsTrusted = true;
 
     /** Rows in the table this entity writes to that carry an external id, or null when it has no such table. */
     public ?int $inDatabase = null;
@@ -331,15 +370,41 @@ final class EntityReport
     /**
      * What the bucket's own arithmetic says, in one line the owner can read.
      *
-     * @return array{verdict: 'verified'|'discrepancy'|'partial'|'counted'|'unverifiable', read: int, accounted: int, rejected: int, unaccounted: int, in_database: int|null, expected_in_database: int|null, sentence: string}
+     * `rejected` is what THIS invocation refused and `refused_in_file` is what
+     * the whole file has had refused across every invocation of it. They differ
+     * only on a resumed run, and each answers a different question:
+     * `accounted + rejected = read` is the identity that catches a vanished
+     * row, and `read - refused_in_file = in_database` is the one that catches a
+     * missing one.
+     *
+     * @return array{verdict: 'verified'|'discrepancy'|'partial'|'counted'|'unverifiable', read: int, accounted: int, rejected: int, refused_in_file: int, unaccounted: int, in_database: int|null, expected_in_database: int|null, sentence: string}
      */
     public function verification(): array
     {
         $read = $this->rowsRead;
         $rejected = $this->rejectedCount();
         $unaccounted = $this->unaccountedCount();
-        $expected = $this->verificationComplete && $this->resumedRows === 0
-            ? max(0, $read - $rejected)
+
+        /*
+         * EVERY REFUSAL AGAINST THIS FILE, not every refusal this process made.
+         *
+         * $rejected is what this invocation refused, over the rows it actually
+         * re-read. $resumedRejected is what earlier invocations refused, over
+         * the rows they committed and this one skipped. Their sum is the whole
+         * file's refusals, and `read - that` is the number of rows the table
+         * should hold -- which is the number FV's fifth bullet says a resumed
+         * run cannot compute. It can; the checkpoint has been carrying it all
+         * along.
+         *
+         * The verdict is still withheld when the checkpoint's own counters
+         * cannot be believed. That case is narrow and named, and it fails
+         * SAFE -- back to the count with no verdict, which is what this
+         * reported on every resumed run before.
+         */
+        $trusted = $this->resumedRows === 0 || $this->resumedCountsTrusted;
+        $refusedInFile = $rejected + ($this->resumedRows === 0 ? 0 : $this->resumedRejected);
+        $expected = $this->verificationComplete && $trusted
+            ? max(0, $read - $refusedInFile)
             : null;
 
         $short = $this->inDatabase !== null && $expected !== null && $this->inDatabase < $expected;
@@ -351,10 +416,26 @@ final class EntityReport
             default => 'verified',
         };
 
+        /*
+         * EVERY NUMBER IN THIS SENTENCE ADDS UP, and that is not decoration.
+         * `accounted + refused = read` is the identity the whole check rests
+         * on, and a resumed row is counted as read AND as accounted for -- so
+         * a row an EARLIER process refused is inside `accounted` here and must
+         * not also be added to the refused figure, or the line would not
+         * balance and the owner would be doing arithmetic to find out which of
+         * the two numbers to believe. The earlier refusals are stated
+         * separately, with the total spelled out.
+         */
         $counted = number_format($read).' read, '.number_format($this->rowsAccounted).' accounted for, '
             .number_format($rejected).' refused'
             .($this->resumedRows > 0
-                ? ' ('.number_format($this->resumedRows).' of them committed by an earlier run and not re-read)'
+                ? ' ('.number_format($this->resumedRows).' of them committed by an earlier run and not '
+                    .'re-read'
+                    .($this->resumedCountsTrusted
+                        ? '; '.number_format($this->resumedRejected).' of those '
+                            .($this->resumedRejected === 1 ? 'was' : 'were').' refused then, so '
+                            .number_format($refusedInFile).' refused against this file in all'
+                        : '').')'
                 : '');
 
         $sentence = match ($verdict) {
@@ -369,9 +450,11 @@ final class EntityReport
                     .' missing from the database. DO NOT TREAT THIS IMPORT AS COMPLETE.',
             'partial' => $counted.' so far — this bucket is part-way through, so these are a slice and not the file.',
             'counted' => $counted.', and '.$this->name.' holds '.number_format((int) $this->inDatabase)
-                .' rows carrying an external id. This run resumed, so it cannot say how many of the rows it '
-                .'did not re-read were refusals, and the two numbers are reported side by side rather than '
-                .'compared. Re-run this entity from the first row for a verdict.',
+                .' rows carrying an external id. This run resumed, and the progress record for it carries '
+                .'outcome counts from an earlier, completed pass over the same entity, so it cannot say how '
+                .'many of the rows it did not re-read were refusals. The two numbers are reported side by '
+                .'side rather than compared. Re-run this entity with "forget progress and start over" for a '
+                .'verdict.',
             'unverifiable' => $counted.' — this entity writes onto rows another entity owns, so there is no table '
                 .'of its own to count. The arithmetic above is the whole check.',
             default => $counted.', '.number_format((int) $this->inDatabase).' in the database'
@@ -385,6 +468,7 @@ final class EntityReport
             'read' => $read,
             'accounted' => $this->rowsAccounted,
             'rejected' => $rejected,
+            'refused_in_file' => $refusedInFile,
             'unaccounted' => $unaccounted,
             'in_database' => $this->inDatabase,
             'expected_in_database' => $expected,

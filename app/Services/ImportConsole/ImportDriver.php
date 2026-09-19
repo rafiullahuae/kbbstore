@@ -95,12 +95,22 @@ use Illuminate\Support\Facades\Schema;
  * to a CSV at the end of each step. A step killed before it finishes loses the
  * reasons for that slice but not the rows, which is why the step is small.
  *
- * `created_rows` and friends are not zeroed when a FINISHED entity is re-run
- * (only `--restart` zeroes them), so a second pass would otherwise show the
- * first pass's numbers added to its own. Each entity's counters are therefore
- * baselined the first time this run touches them — except when the entity is
- * mid-resume, where the earlier numbers belong to the same interrupted import
- * and are kept.
+ * `created_rows` and friends used not to be zeroed when a FINISHED entity was
+ * re-run (only `--restart` zeroed them), so a second pass would otherwise show
+ * the first pass's numbers added to its own. Each entity's counters are
+ * therefore baselined the first time this run touches them — except when the
+ * entity is mid-resume, where the earlier numbers belong to the same
+ * interrupted import and are kept.
+ *
+ * SINCE LANE GJ THEY ARE ZEROED AT THE SOURCE. Checkpoint::open() zeroes the
+ * four counters wherever it zeroes `processed`, because
+ * EntityReport::verification() reads `rejected_rows` to reach a verdict on a
+ * resumed run and a stale refusal in it understates the rows the table should
+ * hold — turning a shortfall into "verified" on the delta import. So
+ * baselineFor() returns zero for a finished entity, and the baseline is no
+ * longer what undoes the carry-over there; it is kept for a checkpoint written
+ * by the code that came before, which is what the owner's database holds
+ * today.
  *
  * -----------------------------------------------------------------------------
  * ONE RUNNER AT A TIME
@@ -1096,6 +1106,30 @@ final class ImportDriver
             return $zero;
         }
 
+        /*
+         * A FINISHED ENTITY IS ALSO ZERO NOW, and this is the half of a
+         * two-sided change: App\Services\Import\Checkpoint::open() zeroes the
+         * four counters wherever it zeroes `processed`, so a re-run of a
+         * finished entity starts them from nothing and there is no earlier
+         * pass's total left in them to subtract. Subtracting the pre-zero
+         * values here as well would take the new pass's numbers off their own
+         * baseline and show the owner nothing but noughts.
+         *
+         * The reason the counters are zeroed at all is
+         * EntityReport::verification(): `processed - rejected_rows` is the
+         * expected row count a RESUMED run needs, and a stale refusal in it
+         * understates that count -- which turns a shortfall into "verified" on
+         * the delta import. See Checkpoint::$resumedCountsTrusted.
+         */
+        if ($cp->finished_at !== null) {
+            return $zero;
+        }
+
+        /*
+         * What is left is a checkpoint at offset zero that is not finished --
+         * in practice a row written by the code that came before the change
+         * above. Baselined, so its stale counters do not land on this run.
+         */
         return [
             'created' => (int) $cp->created_rows,
             'updated' => (int) $cp->updated_rows,
