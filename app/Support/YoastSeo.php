@@ -434,9 +434,31 @@ final class YoastSeo
      */
     private static function pick(array $cells, string $meta): ?string
     {
-        $bare = preg_replace('/^_?yoast_wpseo_/', '', $meta) ?? $meta;
-
-        foreach ([$meta, ltrim($meta, '_'), $bare] as $candidate) {
+        /*
+         * ── THE HYPHEN, WHICH COST THE OG IMAGE AND THE NOINDEX FLAG ────────
+         *
+         * Two of the five keys this class maps carry a HYPHEN --
+         * `_yoast_wpseo_opengraph-image` and `_yoast_wpseo_meta-robots-noindex`
+         * -- and CsvRowSource::normaliseHeader() rewrites every run of
+         * non-alphanumerics in a header to a single underscore. So the column
+         * this class was handed is `yoast_wpseo_opengraph_image` and the three
+         * candidates it compared against all still had the hyphen in them. None
+         * matched, on every row of every export, and the failure was invisible
+         * from both ends: the fragment simply came back without those keys, and
+         * the runner's ignored-column line named them among a dozen others.
+         *
+         * Measured on Lane GE's real export: `products.seo` came out as
+         * {"title": …, "desc": …} with the og image in the file and nowhere
+         * else. The noindex one is the expensive half -- a product the owner
+         * had deliberately hidden from Google in Yoast would be published by
+         * this shop, and nothing would have said so.
+         *
+         * The underscored spellings are ADDED to the candidate list rather than
+         * replacing it, so every spelling that matched before still matches --
+         * and the list moved into spellings() below because YoastTiers had the
+         * identical blind spot in its own copy of it.
+         */
+        foreach (self::spellings($meta) as $candidate) {
             foreach ($cells as $column => $value) {
                 if (strcasecmp(trim((string) $column), $candidate) !== 0) {
                     continue;
@@ -449,5 +471,69 @@ final class YoastSeo
         }
 
         return null;
+    }
+
+    /**
+     * Every column spelling a meta key may have arrived under.
+     *
+     * @return list<string>
+     */
+    private static function spellings(string $meta): array
+    {
+        $bare = preg_replace('/^_?yoast_wpseo_/', '', $meta) ?? $meta;
+        $underscored = str_replace('-', '_', $meta);
+
+        return array_values(array_unique([
+            $meta,
+            ltrim($meta, '_'),
+            $bare,
+            $underscored,
+            ltrim($underscored, '_'),
+            str_replace('-', '_', $bare),
+        ]));
+    }
+
+    /**
+     * The COLUMNS of this row that one of $metaKeys resolves to.
+     *
+     * ── WHY AN IMPORTER NEEDS THIS AND WHAT IT COST NOT TO HAVE IT ──────────
+     *
+     * SeoImporter reads its row with Row::all() rather than field by field,
+     * because the keys are discovered from the file and not listed in advance.
+     * Row only counts a column as read when something ASKS for it by name, so
+     * every Yoast column looked unread to the runner — and the runner's
+     * consolidated discard line therefore told the owner, in the one list
+     * Phase 13 says he APPROVES, that his meta descriptions, his SEO titles and
+     * his barcodes were "in the file and will not be in the database" while all
+     * three were being written to `products`.
+     *
+     * A discard list with false entries in it is worse than a shorter one: the
+     * owner cannot tell which of the seven names is the one that matters, so he
+     * stops reading all seven. This hands the importer the columns a known key
+     * actually resolved to, so it can say it read them.
+     *
+     * NOT "every column that looks like Yoast". A wpseo-looking column no table
+     * in this application has ever heard of is genuinely unread, and it stays
+     * in the consolidated line, which is the only place it is named at all.
+     *
+     * @param  array<string, string|null>  $cells
+     * @param  list<string>  $metaKeys
+     * @return list<string>
+     */
+    public static function recognisedColumns(array $cells, array $metaKeys): array
+    {
+        $out = [];
+
+        foreach ($metaKeys as $meta) {
+            foreach (self::spellings($meta) as $candidate) {
+                foreach (array_keys($cells) as $column) {
+                    if (strcasecmp(trim((string) $column), $candidate) === 0 && ! in_array($column, $out, true)) {
+                        $out[] = (string) $column;
+                    }
+                }
+            }
+        }
+
+        return $out;
     }
 }

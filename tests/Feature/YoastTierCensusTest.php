@@ -106,6 +106,11 @@ it('finds the WooCommerce add-on by a key that does not look like Yoast', functi
     expect($verdict['gtin_source'])->toBeTrue();
     expect($verdict['summary'])->toContain('AND IT CARRIES BARCODES');
 
+    // And it says which way: the product map lands in products.gtin since Lane
+    // GQ. A summary that still read "nothing imports them yet" would be the
+    // false alarm this class exists to avoid.
+    expect($verdict['summary'])->toContain('imported into products.gtin');
+
     // What the importer sees today, and does not see.
     expect(YoastSeo::skipped($cells))->not->toContain('wpseo_global_identifier_values');
 
@@ -255,7 +260,19 @@ it('gives every key a line naming its tier and what happens to it', function () 
         ->toContain('Yoast SEO PREMIUM')
         ->toContain('no home for it');
 
+    /*
+     * The third disposition -- "somewhere to go and nothing reads it" -- was
+     * true of this key until Lane GQ's census wired SeoImporter to
+     * gtinFrom(). It is now the per-VARIATION map that has somewhere to go and
+     * nothing to carry it, so that is the key asserted on: the distinction is
+     * the point of the three dispositions and it has to be asserted wherever it
+     * is currently true, not wherever it used to be.
+     */
     expect(YoastTiers::line('wpseo_global_identifier_values'))
+        ->toContain('Yoast WooCommerce SEO ADD-ON')
+        ->toContain('imported');
+
+    expect(YoastTiers::line('wpseo_variation_global_identifiers_values'))
         ->toContain('Yoast WooCommerce SEO ADD-ON')
         ->toContain('THERE IS SOMEWHERE FOR IT TO GO');
 });
