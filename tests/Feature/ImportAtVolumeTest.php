@@ -109,6 +109,16 @@ function volSnapshot(): array
         'coupons' => DB::table('coupons')->count(),
         'categories' => DB::table('categories')->count(),
         'category_product' => DB::table('category_product')->count(),
+        // Lane GH's three, so a resumed run has to land the same variants and
+        // the same pivots as an uninterrupted one -- not merely the same
+        // number of them: the digests below cover the values.
+        'product_variants' => DB::table('product_variants')->count(),
+        'product_variant_attribute_value' => DB::table('product_variant_attribute_value')->count(),
+        'attributes' => DB::table('attributes')->count(),
+        'attribute_values' => DB::table('attribute_values')->count(),
+        'product_attribute_value' => DB::table('product_attribute_value')->count(),
+        'tags' => DB::table('tags')->count(),
+        'product_tag' => DB::table('product_tag')->count(),
         'orders_total_fils' => (int) Order::query()->sum('total'),
         'items_total_fils' => (int) OrderItem::query()->sum('total'),
     ];
@@ -137,6 +147,9 @@ function volSnapshot(): array
         ['products', 'wc_id', ['sku', 'slug', 'price', 'sale_price', 'status']],
         ['customers', 'id', ['wp_user_id', 'email', 'name']],
         ['coupons', 'wc_id', ['code', 'type', 'amount', 'expires_at']],
+        ['product_variants', 'wc_id', ['sku', 'price', 'sale_price', 'stock_status', 'position']],
+        ['attribute_values', 'source_term_id', ['slug', 'name']],
+        ['tags', 'source_term_id', ['slug', 'name']],
     ] as [$table, $key, $columns]) {
         $snapshot['digest.'.$table] = md5((string) json_encode(
             DB::table($table)->orderBy($key)->get(array_merge([$key], $columns))
@@ -199,7 +212,10 @@ it('imports the whole export and then changes nothing at all on the second pass'
      * a `created` means a duplicate went in, an `updated` means something is
      * rewritten on every pass and the idempotency claim is a guess.
      */
-    foreach (['categories', 'brands', 'products', 'coupons', 'customers', 'orders', 'order-items', 'reviews', 'seo'] as $entity) {
+    foreach ([
+        'categories', 'brands', 'products', 'tags', 'attributes', 'variations',
+        'coupons', 'customers', 'orders', 'order-items', 'reviews', 'seo',
+    ] as $entity) {
         $e = $second->for($entity);
 
         expect($e->created)->toBe(0, $entity.' created rows on a second pass over an unchanged export')
@@ -241,6 +257,18 @@ it('resumes onto exactly the rows it had not done when it is stopped mid-entity'
     $key = 'vol-killed-'.bin2hex(random_bytes(4));
     $steps = 0;
 
+    /*
+     * DERIVED FROM THE ENTITY LIST, not a round number.
+     *
+     * It was a flat 200, and three entities registered in one round pushed a
+     * run that finished perfectly well to 207 steps -- so the test failed
+     * saying "the stop-and-resume loop never finished" about a loop that had.
+     * The cap is a runaway guard and nothing else; it has to grow when the
+     * importer does, or the next lane to add an entity spends an afternoon on
+     * it.
+     */
+    $cap = 40 * count(ImportRunner::entityNames());
+
     foreach (ImportRunner::entityNames() as $entity) {
         do {
             $report = volImport(['runKey' => $key, 'only' => [$entity], 'limit' => 23]);
@@ -251,10 +279,10 @@ it('resumes onto exactly the rows it had not done when it is stopped mid-entity'
                 ->where('entity', $entity)
                 ->whereNotNull('finished_at')
                 ->exists();
-        } while (! $done && $steps < 200);
+        } while (! $done && $steps < $cap);
     }
 
-    expect($steps)->toBeLessThan(200, 'the stop-and-resume loop never finished');
+    expect($steps)->toBeLessThan($cap, 'the stop-and-resume loop never finished');
     expect($steps)->toBeGreaterThan(count(ImportRunner::entityNames()), 'nothing was actually interrupted');
 
     $resumed = volSnapshot();
@@ -264,6 +292,14 @@ it('resumes onto exactly the rows it had not done when it is stopped mid-entity'
      * produces a different database from an uninterrupted one is an import
      * whose answer depends on when the host happened to kill it.
      */
+    expect($resumed['product_variants'])->toBe($reference['product_variants'])
+        ->and($resumed['digest.product_variants'])->toBe($reference['digest.product_variants'])
+        ->and($resumed['product_variant_attribute_value'])->toBe($reference['product_variant_attribute_value'])
+        ->and($resumed['product_attribute_value'])->toBe($reference['product_attribute_value'])
+        ->and($resumed['product_tag'])->toBe($reference['product_tag'])
+        ->and($resumed['digest.attribute_values'])->toBe($reference['digest.attribute_values'])
+        ->and($resumed['digest.tags'])->toBe($reference['digest.tags']);
+
     expect($resumed['orders'])->toBe($reference['orders'])
         ->and($resumed['order_items'])->toBe($reference['order_items'])
         ->and($resumed['customers_from_file'])->toBe($reference['customers_from_file'])
@@ -484,7 +520,19 @@ it('names every file in the export folder that no importer opens, with its row c
         }
     }
 
-    foreach (['refunds.csv', 'order_notes.csv', 'variations.csv', 'tags.csv'] as $file) {
+    /*
+     * `variations.csv` and `tags.csv` USED TO BE IN THIS LIST and are not any
+     * more: Lane GH registered importers for them, and `attributes.csv` beside
+     * them. Naming a file the import really does open would train the owner to
+     * skim the one list that is only worth anything if every line in it is
+     * true. refunds.csv and order_notes.csv are still genuinely unread.
+     */
+    foreach (['variations.csv', 'tags.csv', 'attributes.csv'] as $file) {
+        expect(array_key_exists($file, $named))
+            ->toBeFalse($file.' is imported now and was still reported as a file nothing opens');
+    }
+
+    foreach (['refunds.csv', 'order_notes.csv'] as $file) {
         expect(array_key_exists($file, $named))->toBeTrue($file.' was in the folder and nothing said it was ignored');
         expect($named[$file])->toContain((string) $manifest['unread.'.$file]);
     }

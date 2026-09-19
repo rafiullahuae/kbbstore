@@ -673,6 +673,10 @@ it('walks the entities in the importer\'s own dependency order, never its own co
     expect(ImportWorkspace::runnerOrder())
         ->toBe([
             'categories', 'brands', 'products',
+            // Tags, attributes and variations after the products they hang
+            // off, and variations after the attributes whose terms define
+            // them.
+            'tags', 'attributes', 'variations',
             // Coupons after the products their restriction lists name and
             // before the orders that name their code; reviews after both the
             // products they are of and the customers who wrote them.
