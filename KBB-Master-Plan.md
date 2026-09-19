@@ -105,6 +105,16 @@ is a bug in this section rather than a second opinion about the phase.
 
 
 
+- **Lane GL — one downloadable file per group.** The groups pick what to export;
+  the output is still one folder fetched over FTP. Each group becomes its own
+  zip, downloaded from the browser, each independently importable and all
+  sharing one `export_id`
+- **Lane GM — Store → Import accepts those zips.** `upload()` takes loose files
+  only today, so the owner would unzip by hand, which defeats the point. The
+  lane's real work is the unpacking: zip slip, symlink entries, bombs, and a
+  `.php` that must never land anywhere — and several group zips having to add up
+  to one import without the duplicate guard mistaking the second for a repeat
+
 ### Waiting on the owner, not on us
 
 - **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
