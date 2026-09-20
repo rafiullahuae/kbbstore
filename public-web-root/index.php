@@ -34,6 +34,19 @@ $candidates = [
     __DIR__.'/../../kbb-app',
     __DIR__.'/../kbb-app',
     __DIR__.'/../../../kbb-app',
+    /*
+     * Cloudways, and any host that gives you a `private_html` beside the web
+     * root. It is the ONLY writable folder there that is not served -- the
+     * application directory itself is owned by root, so the app physically
+     * cannot live beside public_html the way it does on cPanel. Found by
+     * installing on one: git refused with "could not create work tree dir:
+     * Permission denied", and `private_html` was the answer sitting next to it.
+     *
+     * Both spellings, because the repo can be cloned into private_html itself
+     * or into a kbb-app folder inside it.
+     */
+    __DIR__.'/../private_html',
+    __DIR__.'/../private_html/kbb-app',
     __DIR__.'/../laravel-app',
     __DIR__.'/../../laravel-app',
 ];
