@@ -22,15 +22,53 @@ $candidates = [
     __DIR__.'/../../kbb-upgrade-app',           // app beside public_html
     __DIR__.'/../kbb-upgrade-app',              // app inside public_html
     __DIR__.'/../../../kbb-upgrade-app',        // one level deeper
+    /*
+     * `kbb-app` as well as `kbb-upgrade-app`. install.php offers this shorter
+     * name and the setup guide uses it, and a list that knew one name and not
+     * the other produced the worst failure this file can have: the installer
+     * found the application, migrated 355 tables, created the owner account and
+     * said "your shop is ready" -- and then every page was this error, because
+     * the front controller was looking somewhere else. Found by installing into
+     * a folder called kbb-app and then opening the site.
+     */
+    __DIR__.'/../../kbb-app',
+    __DIR__.'/../kbb-app',
+    __DIR__.'/../../../kbb-app',
     __DIR__.'/../laravel-app',
     __DIR__.'/../../laravel-app',
 ];
 
 $base = null;
-foreach ($candidates as $candidate) {
-    if (is_file($candidate.'/bootstrap/app.php') && is_file($candidate.'/vendor/autoload.php')) {
-        $base = $candidate;
-        break;
+
+/*
+ * WHAT THE INSTALLER RECORDED, BEFORE ANY GUESSING.
+ *
+ * Guessing from a candidate list is a fallback, not a design: it works for the
+ * folder names somebody thought of, and it is silent and total when the owner
+ * picks a different one. install.php knows exactly where the application is --
+ * it just finished installing into it -- so it writes that path here and this
+ * file trusts it ahead of the list.
+ *
+ * Still verified rather than believed: a path whose bootstrap/app.php or
+ * vendor/ has since moved falls through to the candidates below, so a stale
+ * file degrades to today's behaviour instead of breaking the site.
+ */
+if (is_file(__DIR__.'/kbb-app-path.php')) {
+    $recorded = @include __DIR__.'/kbb-app-path.php';
+
+    if (is_string($recorded) && $recorded !== ''
+        && is_file($recorded.'/bootstrap/app.php')
+        && is_file($recorded.'/vendor/autoload.php')) {
+        $base = $recorded;
+    }
+}
+
+if ($base === null) {
+    foreach ($candidates as $candidate) {
+        if (is_file($candidate.'/bootstrap/app.php') && is_file($candidate.'/vendor/autoload.php')) {
+            $base = $candidate;
+            break;
+        }
     }
 }
 

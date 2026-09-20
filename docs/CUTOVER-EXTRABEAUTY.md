@@ -25,8 +25,11 @@ key does not "log you out" — it makes those rows permanently unreadable, and t
 symptom is payments and email silently failing on a shop that otherwise looks
 fine.
 
-So: **copy the old `.env` across and edit five lines in it.** Never write a
-fresh one, and never let anything run `php artisan key:generate`.
+`install.php` handles this correctly on its own: when it sees a database that
+already holds a shop it **refuses to continue** until you paste the original
+`APP_KEY` in, and it never generates a new one in that case. So the rule is
+really just: have the old key to hand when you run it, and never let anything
+run `php artisan key:generate`.
 
 ### The five things
 
@@ -34,7 +37,7 @@ fresh one, and never let anything run `php artisan key:generate`.
 |---|---|---|---|
 | 1 | **database** | phpMyAdmin export → phpMyAdmin import | tens of MB |
 | 2 | **application code** | download the repo as a zip from GitHub | ~30 MB |
-| 3 | **`.env`** | copy the old one, change 5 lines | one file |
+| 3 | **`.env`** | **written for you by `install.php`** | — |
 | 4 | **`vendor/`** | **rebuilt on the new server** — not transferred | — |
 | 5 | **web root** | copy from the old account | small, unless you have uploads |
 
@@ -70,7 +73,7 @@ If it is very large, choose **Custom** and set compression to **gzip**.
 
 **3 · Create the database on the new account.** hPanel → Databases → create a
 new MySQL database and user. **Write down the database name, user and password** —
-they will be different from the old ones, and they go into `.env` in step 7.
+they will be different from the old ones, and you type them into the installer at step 9.
 
 **4 · Import.** New account → phpMyAdmin → select the new database → **Import** →
 choose your file → Go. If the file is too big for the import limit, re-export it
@@ -106,47 +109,53 @@ php /home/<your-new-user>/domains/extrabeauty.ae/kbb-app/run-composer.php
      `kbb-app/storage/logs/composer-run.log` — it ends with `DONE: vendor/ created`.
   d. **Delete the cron job** once `vendor/` exists. It is a one-time task.
 
-**7 · The `.env` file.** In the OLD account, open
-`kbb-upgrade-app/.env`, copy the whole contents, and paste it into a new `.env`
-in `kbb-app/` on the new account. Then change exactly these:
-
-```ini
-APP_URL=https://extrabeauty.ae
-KBB_BASE_PATH=
-DB_DATABASE=<new database name>
-DB_USERNAME=<new database user>
-DB_PASSWORD=<new password>
-```
-
-Leave **everything else untouched — above all `APP_KEY`.**
-
-`KBB_BASE_PATH` must be **empty**. It is `/kbb-upgrade` today and it prefixes
-every route; at a domain root there is no prefix.
-
-**8 · The web root.** Copy the contents of the old
+**7 · The web root.** Copy the contents of the old
 `public_html/kbb-upgrade/` into the new account's
-`domains/extrabeauty.ae/public_html/` — `index.php`, `build/`, `favicon.ico`,
-`kbb-recover.php`, `kbb-doctor.php`, and `wp-content/` if it is there.
+`domains/extrabeauty.ae/public_html/` — `index.php`, `install.php`,
+`build/`, `favicon.ico`, `kbb-recover.php`, `kbb-doctor.php`, and `wp-content/`
+if it is there.
+
+`install.php` is in the repo zip you just extracted, at
+`kbb-app/public-web-root/install.php`. Copy it into the web root too — it is the
+next step.
 
 If `public_html/kbb-upgrade/wp-content/uploads` exists and is large, that is your
 product photographs — see §3, and do not delete the old site until you have dealt
 with them.
 
-**9 · Point the app at the new web root.** §0.1 — one line in
-`kbb-app/bootstrap/app.php`.
+**8 · Install the SSL certificate** for `extrabeauty.ae` and `www.extrabeauty.ae`.
+Before the next step, because the installer asks for your address with `https://`
+in it.
 
-**10 · SSL, then load it.** Install the certificate for `extrabeauty.ae` and
-`www.extrabeauty.ae` first, then open the site, then the admin. Your admin
-address and your password are unchanged — they came across in the database.
+**9 · Open `https://extrabeauty.ae/install.php`** and answer five screens.
 
-**11 · Walk §2.**
+That is the rest of the job. It writes `.env` for you, points the application at
+the right folders, runs every migration with a progress bar, and — because you
+imported a database that already holds your shop — **skips the starter content
+and keeps your orders**.
 
-You do not need to run any migrations. The database you imported is already
-migrated; that is what made it a copy.
+Two things it will ask that are worth knowing in advance:
+
+- **The setup key.** It writes a random key into
+  `kbb-app/storage/INSTALL-TOKEN.txt` and asks you to paste it back. That proves
+  you are the person with File Manager access and not somebody who happened to
+  find the page first. Open the file, copy the first line.
+- **Your original `APP_KEY`.** Because your database already holds a shop, the
+  installer will ask for it and will not continue without it. Copy it from the
+  OLD account's `kbb-upgrade-app/.env`, exactly, starting with `base64:`. §0
+  explains why this one matters more than anything else on this page.
+
+When it finishes it deletes itself and shows you the address to sign in at. Your
+admin URL and password are unchanged — they came across in the database.
+
+**10 · Walk §2.**
+
+You do not need to run migrations by hand, and you do not need to edit
+`bootstrap/app.php` — the installer wrote both paths for you (§0.1).
 
 ---
 
-Read §0 next — it is the one line that can stop the site booting.
+Read §0 if you want to know what the installer wrote, or if something looks wrong.
 
 ---
 
@@ -154,6 +163,10 @@ Read §0 next — it is the one line that can stop the site booting.
 
 Everything else here you can do from a screen. These two you cannot, and one of
 them can stop the site booting, so do them deliberately.
+
+> **Both of these are now done for you by `install.php` (step 9).** They are kept
+> here because they are what it writes, and because if anything ever looks wrong
+> these two are the first places to check.
 
 ### 0.1 `bootstrap/app.php` — the web root
 
@@ -181,8 +194,8 @@ updater will not boot either. `kbb-recover.php` is then the way back.
 
 ### 0.2 `.env`
 
-Copied from the old account — never written fresh — with the five lines from
-step 7 changed and **`APP_KEY` left exactly as it was**:
+Written by the installer at step 9. What it puts in, and what matters:
+(`APP_KEY` is the original one you pasted in, never a new one.)
 
 ```ini
 APP_URL=https://extrabeauty.ae
