@@ -6,62 +6,147 @@ runbook assumes.
 
 ---
 
-## What you actually upload: **nothing**
+## What moves, and what does not
 
-This is the part worth reading twice, because the obvious assumption is wrong.
+`extrabeauty.ae` is a **different Hostinger account — a different server.** So
+this is a real migration: files and database both.
 
-Your shop lives in **two folders** on Hostinger, not one:
+**It is a copy, not a move.** Nothing here touches the old site. It keeps
+serving customers the whole time, and you can test the new one fully before you
+send anyone to it. If the new one is wrong, you have lost nothing.
 
-| | where it is now | size |
-|---|---|---|
-| **the application** | `domains/easywebsol.com/kbb-upgrade-app/` | large — `vendor/` alone is ~560 MB |
-| **the web root** | `domains/easywebsol.com/public_html/kbb-upgrade/` | small — `index.php`, `build/`, the recovery scripts |
+### ⚠ The one thing that cannot be undone
 
-Only the **web root** has to be reachable at the new address. The application
-folder can stay exactly where it is, forever. And the database does not move at
-all — same hosting account, same MySQL.
+> **Keep `APP_KEY` in `.env` exactly as it is. Do not generate a new one.**
 
-So there is no upload. `vendor/` never moves, which matters more than it sounds:
-you have no shell, so you cannot run `composer install` to rebuild it. Moving it
-by FTP and having one file arrive truncated is a broken site with no obvious
-cause.
+Your Stripe keys and your SMTP password are stored **encrypted** in the database
+(`PaymentProvider`, `MailCredential`), and `APP_KEY` is what decrypts them. A new
+key does not "log you out" — it makes those rows permanently unreadable, and the
+symptom is payments and email silently failing on a shop that otherwise looks
+fine.
 
-**Two ways to do it. Try A first — it moves no files whatsoever.**
+So: **copy the old `.env` across and edit five lines in it.** Never write a
+fresh one, and never let anything run `php artisan key:generate`.
 
-### A · Point the new domain at the folder that already works  ← try this
+### The five things
 
-In hPanel, add `extrabeauty.ae` and, when it asks for the folder / document
-root, give it the **existing** one:
+| # | what | how it gets there | size |
+|---|---|---|---|
+| 1 | **database** | phpMyAdmin export → phpMyAdmin import | tens of MB |
+| 2 | **application code** | download the repo as a zip from GitHub | ~30 MB |
+| 3 | **`.env`** | copy the old one, change 5 lines | one file |
+| 4 | **`vendor/`** | **rebuilt on the new server** — not transferred | — |
+| 5 | **web root** | copy from the old account | small, unless you have uploads |
 
-```
-domains/easywebsol.com/public_html/kbb-upgrade
-```
+**`vendor/` is the one that would otherwise ruin your day.** It is ~560 MB and
+about 15,000 small files. Downloading and re-uploading that over FTP between two
+accounts is slow, and a single file arriving truncated gives you a broken site
+with no obvious cause and no shell to diagnose it with.
 
-That is the whole move. Nothing is copied, `bootstrap/app.php` does not change,
-and if it goes wrong you point the domain back.
+You do not have to. `run-composer.php` in the app folder exists precisely for a
+host with no shell — it runs Composer from a **cron job** and builds `vendor/`
+from `composer.lock`, so you get byte-correct dependencies for the exact versions
+this app is pinned to. It is how this site was first installed.
 
-### B · If hPanel will not let you choose that folder
+### ⛔ Do not run `kbb-finish.php`
 
-Then copy just the **web root** — still not the application:
-
-1. Add `extrabeauty.ae` in hPanel. It creates
-   `domains/extrabeauty.ae/public_html/`.
-2. In File Manager, copy **everything inside**
-   `domains/easywebsol.com/public_html/kbb-upgrade/` into
-   `domains/extrabeauty.ae/public_html/`.
-   That is `index.php`, `build/`, `favicon.ico`, `kbb-recover.php`,
-   `kbb-doctor.php`, and `wp-content/` if it is there.
-3. Then, and only in this option, edit `bootstrap/app.php` — §0.1.
-
-⚠ If `wp-content/uploads` is in there it can be large. It is your product
-photographs. Copying inside File Manager is fine; do not pull it down and push
-it back up over FTP.
-
-Which option you used decides whether you do §0.1. **Option A skips it.**
+It is the **fresh-install** script. It runs `db:seed` and creates a new owner
+account, and one of its steps is `key:generate`. On a migration that is the
+opposite of what you want — you are bringing a real database with real orders.
+It is in the folder; leave it alone.
 
 ---
 
-Read §0 next. It is thirty seconds and it is the only part that is hard to undo.
+## The move, in order
+
+**1 · Apply 2.60.224 on your CURRENT site first.** Store → Core Updates. This
+keeps the code and the database in step — the repo zip you are about to download
+is at 2.60.224, and applying it now writes the matching row in `update_releases`.
+It also gives you the Site address screen you were looking for (§4.0).
+
+**2 · Export the database.** Old account → hPanel → Databases → phpMyAdmin →
+select the shop's database → **Export** → Quick → SQL → Go. Save the `.sql` file.
+If it is very large, choose **Custom** and set compression to **gzip**.
+
+**3 · Create the database on the new account.** hPanel → Databases → create a
+new MySQL database and user. **Write down the database name, user and password** —
+they will be different from the old ones, and they go into `.env` in step 7.
+
+**4 · Import.** New account → phpMyAdmin → select the new database → **Import** →
+choose your file → Go. If the file is too big for the import limit, re-export it
+gzipped.
+
+**5 · Upload the application code.** On GitHub open the branch
+`claude/kind-mayer-rpqesv` → **Code ▾ → Download ZIP**. In the new account's File
+Manager, create the app folder — e.g.
+
+```
+domains/extrabeauty.ae/kbb-app/
+```
+
+— upload the zip **into it** and use File Manager's **Extract**. Make sure the
+files land directly in `kbb-app/` (`kbb-app/app`, `kbb-app/config`, …) and not
+inside an extra `kbbstore-claude-.../` folder; GitHub zips add one, so move the
+contents up a level if so.
+
+⚠ **Put this folder OUTSIDE `public_html`.** It holds `.env`. If it sits inside
+the web root, anyone can fetch your database password.
+
+**6 · Build `vendor/`.**
+
+  a. Download `composer.phar` from <https://getcomposer.org/download/> and upload
+     it into `kbb-app/` beside `composer.json`.
+  b. hPanel → Advanced → **Cron Jobs** → add a job that runs **every minute**:
+
+```
+php /home/<your-new-user>/domains/extrabeauty.ae/kbb-app/run-composer.php
+```
+
+  c. Wait. It takes a few minutes and works in two passes. Watch progress in
+     `kbb-app/storage/logs/composer-run.log` — it ends with `DONE: vendor/ created`.
+  d. **Delete the cron job** once `vendor/` exists. It is a one-time task.
+
+**7 · The `.env` file.** In the OLD account, open
+`kbb-upgrade-app/.env`, copy the whole contents, and paste it into a new `.env`
+in `kbb-app/` on the new account. Then change exactly these:
+
+```ini
+APP_URL=https://extrabeauty.ae
+KBB_BASE_PATH=
+DB_DATABASE=<new database name>
+DB_USERNAME=<new database user>
+DB_PASSWORD=<new password>
+```
+
+Leave **everything else untouched — above all `APP_KEY`.**
+
+`KBB_BASE_PATH` must be **empty**. It is `/kbb-upgrade` today and it prefixes
+every route; at a domain root there is no prefix.
+
+**8 · The web root.** Copy the contents of the old
+`public_html/kbb-upgrade/` into the new account's
+`domains/extrabeauty.ae/public_html/` — `index.php`, `build/`, `favicon.ico`,
+`kbb-recover.php`, `kbb-doctor.php`, and `wp-content/` if it is there.
+
+If `public_html/kbb-upgrade/wp-content/uploads` exists and is large, that is your
+product photographs — see §3, and do not delete the old site until you have dealt
+with them.
+
+**9 · Point the app at the new web root.** §0.1 — one line in
+`kbb-app/bootstrap/app.php`.
+
+**10 · SSL, then load it.** Install the certificate for `extrabeauty.ae` and
+`www.extrabeauty.ae` first, then open the site, then the admin. Your admin
+address and your password are unchanged — they came across in the database.
+
+**11 · Walk §2.**
+
+You do not need to run any migrations. The database you imported is already
+migrated; that is what made it a copy.
+
+---
+
+Read §0 next — it is the one line that can stop the site booting.
 
 ---
 
@@ -70,43 +155,46 @@ Read §0 next. It is thirty seconds and it is the only part that is hard to undo
 Everything else here you can do from a screen. These two you cannot, and one of
 them can stop the site booting, so do them deliberately.
 
-### 0.1 `bootstrap/app.php` — the web root  *(OPTION B ONLY — skip on Option A)*
+### 0.1 `bootstrap/app.php` — the web root
 
-Line 149 of `kbb-upgrade-app/bootstrap/app.php` reads:
+Line 149 of `kbb-app/bootstrap/app.php` on the **new** account reads, as it came
+from the repo:
 
 ```php
 ->usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/u815237650/domains/easywebsol.com/public_html/kbb-upgrade');
 ```
 
-On **Option A you do not touch this** — the folder it names is still the folder
-being served, which is exactly why Option A is the easy one.
-
-On **Option B** change the path to the new web root:
+That is the OLD server's path. Change it to the new one:
 
 ```php
-->usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/u815237650/domains/extrabeauty.ae/public_html');
+->usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/<your-new-user>/domains/extrabeauty.ae/public_html');
 ```
 
-Check your real username in hPanel's File Manager address bar — `u815237650` is
-what the file says today, but confirm rather than trust it.
+Find `<your-new-user>` in the new account's File Manager — it is in the path bar
+at the top, and it is **not** `u815237650`; that is the old account.
 
 ⚠ **No update package can ever change this line.** `bootstrap/` is on
 `BuildPackage::NEVER_SHIP` and `UpdateGuard`'s forbidden list, deliberately, so
-this is a hand edit through File Manager. Copy the file to `app.php.bak` before
-you touch it. If you get it wrong the site will not boot, and because the
-updater lives inside the site, the updater will not boot either — `kbb-recover.php`
-is then the way back.
+this is a File Manager edit. Copy the file to `app.php.bak` first. Get it wrong
+and the site will not boot — and because the updater lives inside the site, the
+updater will not boot either. `kbb-recover.php` is then the way back.
 
 ### 0.2 `.env`
+
+Copied from the old account — never written fresh — with the five lines from
+step 7 changed and **`APP_KEY` left exactly as it was**:
 
 ```ini
 APP_URL=https://extrabeauty.ae
 KBB_BASE_PATH=
+DB_DATABASE=<new>
+DB_USERNAME=<new>
+DB_PASSWORD=<new>
 ```
 
-`APP_URL` is the one that matters most. **Every redirect this shop writes is
-built from it** — that changed in 2.60.223 — along with password-reset links and
-payment webhooks. It must carry `https://` and no trailing slash.
+`APP_URL` is the one that matters most after the key. **Every redirect this shop
+writes is built from it** — that changed in 2.60.223 — along with password-reset
+links and payment webhooks. It must carry `https://` and no trailing slash.
 
 `KBB_BASE_PATH` must be **empty**. It is `/kbb-upgrade` today and it prefixes
 every single route. At a domain root there is no prefix. Leaving it set is the
@@ -114,23 +202,14 @@ single most likely cause of "every link is wrong".
 
 ---
 
-## 1. The order to do it in
+## 1. Clearing the compiled caches
 
-**1 · Point the domain.** hPanel → Domains → add `extrabeauty.ae`, folder as per
-Option A or B above. Wait for it to resolve before going further — opening
-`http://extrabeauty.ae` on your phone's mobile data is enough of a check.
+The ordered steps are above, under **The move, in order**. This section is the
+one step you will come back to, because it is the fix for most of what goes
+wrong afterwards — and it is safe to repeat at any time.
 
-**2 · Issue the SSL certificate.** hPanel → Security → SSL → install for
-`extrabeauty.ae`. Make sure it covers **both** `extrabeauty.ae` and
-`www.extrabeauty.ae`. Do this *before* step 3: `APP_URL` says `https://`, and a
-site pointed at a certificate that does not exist yet shows every visitor a
-security warning.
-
-**3 · Make the edits in §0.** `.env` always; `bootstrap/app.php` only on
-Option B.
-
-**4 · Delete the compiled caches.** In File Manager, inside
-`kbb-upgrade-app/bootstrap/cache/`, delete everything except `.gitignore`:
+In File Manager, inside `kbb-app/bootstrap/cache/` on the new account, delete
+everything except `.gitignore`:
 
 ```
 bootstrap/cache/config.php
@@ -154,8 +233,8 @@ loads, you are past the part that can go badly.
 
 | # | check | if it is wrong |
 |---|---|---|
-| 1 | home page loads over https | §0.1 web root, or AutoSSL not finished |
-| 2 | a product page loads | route cache — §1 step 4 |
+| 1 | home page loads over https | §0.1 web root, or the SSL certificate is not issued yet |
+| 2 | a product page loads | route cache — §1 |
 | 3 | links in the header have **no** `/kbb-upgrade/` | `KBB_BASE_PATH` is not empty |
 | 4 | product images appear | see §3 |
 | 5 | admin login works | if not: `kbb-recover.php` |
@@ -204,8 +283,8 @@ To get it:
    Platform, below Settings.
 
 If it is still missing after step 5, the compiled view cache did not clear —
-delete everything inside `kbb-upgrade-app/bootstrap/cache/` except `.gitignore`
-and reload. That is the same step as §1.4 and is safe to repeat at any time.
+delete everything inside `kbb-app/bootstrap/cache/` except `.gitignore`
+and reload. That is §1, and it is safe to repeat at any time.
 
 ### 4.1 Forwarding kbeautybliss.com
 
