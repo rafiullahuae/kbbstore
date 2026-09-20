@@ -351,6 +351,45 @@ function kbb_requirements(string $base): array
         ];
     }
 
+    /*
+     * RECOMMENDED, NOT REQUIRED — and that distinction is the whole reason this
+     * row exists rather than joining the loop above.
+     *
+     * ImageVariants::available() is `extension_loaded('gd') &&
+     * function_exists('imagecreatetruecolor')`, and every caller of it already
+     * degrades on its own: generate() returns `reason: 'no image library'`,
+     * srcsetFor() falls back to the original file, and the Media Library screen
+     * says so in as many words. Without gd the shop sells exactly as it does
+     * with it — it just sends a 2MB photograph to a phone that needed a 187px
+     * one. Slower pages, not a broken shop.
+     *
+     * So it must never block an install, and it does not: `ok` is true whatever
+     * the answer, because `passed` is computed from that column. A host without
+     * gd is a host that still sells, and refusing to install there would turn a
+     * page-weight regression into "you cannot use this software" — the wrong
+     * trade, and the one an over-eager requirements list makes by reflex.
+     *
+     * It is still SHOWN, because the failure it causes is invisible. Nothing
+     * errors, nothing is logged, no page breaks; the copies are simply never
+     * made and the owner is left wondering why the catalogue is heavy on
+     * mobile. This is the one moment in the whole life of the shop when the
+     * PHP settings are already open in another tab, so it is the one moment
+     * worth spending on it.
+     */
+    $gd = extension_loaded('gd') && function_exists('imagecreatetruecolor');
+    $out[] = [
+        'label' => 'PHP extension: gd (recommended)',
+        'ok' => true,
+        'warn' => ! $gd,
+        'detail' => $gd
+            ? 'present — product photographs get phone-sized copies'
+            : 'missing — the shop works, but every photograph is sent at full size',
+        'fix' => 'Turn gd on in your hosting panel’s PHP settings and press Check again. '
+            .'Nothing has to be reinstalled if you do it later: copies are made when an image '
+            .'is uploaded, and Content → Media Library → “Make phone-sized copies” builds them '
+            .'for photographs already in the shop.',
+    ];
+
     foreach ([
         'storage' => $base.'/storage',
         'bootstrap/cache' => $base.'/bootstrap/cache',
@@ -918,7 +957,7 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
 .chk{display:flex;gap:9px;padding:7px 0;font-size:13px;align-items:flex-start;border-bottom:1px solid var(--line)}
 .chk:last-child{border-bottom:0}
 .dot{flex:0 0 auto;width:16px;height:16px;border-radius:50%;margin-top:2px}
-.dot.y{background:var(--good)} .dot.n{background:var(--bad)}
+.dot.y{background:var(--good)} .dot.n{background:var(--bad)} .dot.w{background:var(--warn)}
 .err{color:var(--bad);font-size:12px;margin-top:4px}
 .note{background:var(--brand-soft);border-radius:8px;padding:12px;font-size:13px;margin-top:12px}
 .note.warn{background:#fdf3e4;color:#7a4b07}
@@ -986,9 +1025,12 @@ function paneToken(msg){
 /* ── 2 · the server ────────────────────────────────────────────────────── */
 function paneReq(r){
   steps(2);
+  /* Three states, not two. A `warn` row is amber, carries its advice the way a
+     red one does, and does NOT disable Continue -- `r.passed` never counted it.
+     A warning that blocked would just be a red line with a softer colour. */
   const rows=r.checks.map(c=>
-    '<div class="chk"><span class="dot '+(c.ok?'y':'n')+'"></span><div><b>'+esc(c.label)+'</b> — '+esc(c.detail)
-    +(c.ok?'':'<div class="hint">'+esc(c.fix)+'</div>')+'</div></div>').join('');
+    '<div class="chk"><span class="dot '+(c.ok?(c.warn?'w':'y'):'n')+'"></span><div><b>'+esc(c.label)+'</b> — '+esc(c.detail)
+    +((!c.ok||c.warn)?'<div class="hint">'+esc(c.fix)+'</div>':'')+'</div></div>').join('');
   $('#pane').innerHTML='<b>What this server can do</b><div style="margin-top:10px">'+rows+'</div>'
     +(r.passed?'':'<div class="note warn">Fix the red lines above, then press Check again. '
       +'Everything else waits until they pass.</div>')
