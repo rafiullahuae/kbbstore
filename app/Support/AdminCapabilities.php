@@ -285,6 +285,20 @@ final class AdminCapabilities
         ['*', 'admin-api/updates/**', 'updates.manage'],
 
         // -------------------------------------------------------- site configuration
+        /*
+         * Which address is the shop's real one, which old ones forward to it,
+         * and whether this install is in Google at all. `store.settings` is
+         * already owner-only and this is site configuration in the plainest
+         * sense, so it needs no capability of its own.
+         *
+         * Mapped rather than left to the closed-by-default fallback, because
+         * AdminCapabilityMapTest requires every admin route to be named here --
+         * "owner-only because nothing maps it" and "owner-only because somebody
+         * decided so" are the same 403 and a very different piece of evidence.
+         */
+        ['*', 'admin-api/site-address', 'store.settings'],
+        ['*', 'admin-api/site-address/**', 'store.settings'],
+
         ['*', 'admin-api/settings', 'store.settings'],
         ['*', 'admin-api/ecommerce', 'store.settings'],
         ['*', 'admin-api/modules', 'store.settings'],

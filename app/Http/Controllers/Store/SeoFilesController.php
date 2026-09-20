@@ -616,6 +616,52 @@ class SeoFilesController extends Controller
 
     public function robots()
     {
+        /*
+         * ── A PRIVATE INSTALL, AND THE TRAP THAT MAKES `Disallow: /` WRONG ──
+         *
+         * The obvious robots.txt for a staging site is:
+         *
+         *     User-agent: *
+         *     Disallow: /
+         *
+         * and it is the wrong answer. Disallow forbids CRAWLING, not indexing.
+         * A URL that Google may not crawl is a URL whose noindex it can never
+         * read -- this file's own comment below says exactly that about the
+         * locale paths -- so a staging address someone links to gets listed
+         * from the link alone, title-less and permanent, and the noindex that
+         * would have removed it is behind the door we just shut.
+         *
+         * So a private install does the opposite and it is deliberate: invite
+         * the crawl, and let every page, image and XML file it reaches answer
+         * with `X-Robots-Tag: noindex, nofollow, noarchive` from CanonicalHost.
+         * Read, understood, dropped -- and dropped from the index it is already
+         * in, which `Disallow` cannot do either.
+         *
+         * ▲ THIS IS THE SECOND-BEST ANSWER. The best one is HTTP Basic Auth on
+         * the staging host, which no crawler gets past at all and which also
+         * stops a competitor reading next month's prices. It is a hosting
+         * control, not an application one -- cPanel calls it Directory Privacy
+         * -- so this application cannot set it for you and says so on the
+         * Settings screen instead. With auth on, this file is never fetched and
+         * none of the above matters.
+         *
+         * The custom override below is checked AFTER this, so a private install
+         * cannot be given an indexable robots.txt by a value copied from
+         * production's settings table.
+         */
+        if (\App\Support\SiteHost::isPrivate()) {
+            $body = "# This install is private. Every response here carries\n"
+                ."# X-Robots-Tag: noindex, nofollow, noarchive.\n"
+                ."#\n"
+                ."# Crawling is deliberately ALLOWED so that header can be read:\n"
+                ."# a blocked URL is one whose noindex a crawler never sees, and\n"
+                ."# it stays in the index on the strength of a single link.\n"
+                ."User-agent: *\n"
+                ."Disallow:\n";
+
+            return response($body, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+        }
+
         $s = SeoSettings::map();
         $custom = SeoSettings::from($s, 'robots_txt', '');
         if ($custom !== '') {

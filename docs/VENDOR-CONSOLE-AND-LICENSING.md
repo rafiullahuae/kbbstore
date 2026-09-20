@@ -14,23 +14,50 @@ can and cannot actually guarantee, and it changes where you should spend effort.
 
 Two applications, not one.
 
+**Settled, and in two stages.** Stage one is now; stage two waits until the app
+is finished.
+
 ```
-extrabeauty.ae             THE SHOP — this repo, live. Licence #1.
-staging.extrabeauty.ae     THE SAME CODE, one step ahead. is_staging.
-console.extrabeauty.ae     THE CONSOLE — yours alone. Separate app.
+NOW
+  extrabeauty.ae           THE SHOP — this repo, live. A client copy and
+                           nothing else. Update packages go straight here
+                           and are tested here. No staging yet, by choice.
+
+LATER, on a separate vendor domain
+  <vendor>.com             MARKETING — presents the app, Purchase button
+  console.<vendor>.com     THE CONSOLE — yours alone. Separate app.
                            Ed25519 PRIVATE key, licences, releases,
                            customers, invoices, upgrade approvals.
-                           No customer ever receives this code.
-<landing-domain>           MARKETING — presents the app, sells it. §10.5
+  staging.<vendor>.com     where a release is checked before customers see it
 
-customer-a.com             Customer installs. Same code as extrabeauty.ae.
-customer-b.ae              Ed25519 PUBLIC key compiled in. Nothing else.
+  customer-a.com           Customer installs. Same code as extrabeauty.ae.
+  customer-b.ae            Ed25519 PUBLIC key compiled in. Nothing else.
 ```
 
-Three of those four are DNS records on one domain, which keeps renewals and
-certificates simple. The landing site is deliberately elsewhere: it sells the
-product, `extrabeauty.ae` *is* the product running, and mixing the two means
-your shop's SEO and your marketing site's SEO compete.
+**The vendor side is on a different registrable domain from the shop, and that
+is a security decision rather than a tidiness one.** Subdomains of one domain
+share a cookie scope: a cookie on `.extrabeauty.ae` is sent to every subdomain,
+and `SESSION_DOMAIN=.extrabeauty.ae` is among the most common Laravel
+misconfigurations there is — set it once by accident and the shop's session
+cookie travels to the licensing console. Add shared DNS, a shared registrar
+account and usually shared hosting, and the blast radius of the *most attacked
+surface you own* (a public shop with checkout and uploads) reaches the one place
+the private key and every customer's licence row live. Separate registrable
+domains delete that class of problem outright.
+
+It has a commercial edge too: `extrabeauty.ae` is then just a shop that runs the
+product. If it is ever sold, the product infrastructure does not go with it.
+
+**And `extrabeauty.ae` gets no special status** — it is licence #1 and takes the
+same activation path a customer takes. That was a recommendation; making the
+vendor side a separate domain makes it structural. Licensing bugs reach you
+before they reach anyone paying.
+
+⚠ **"Staging" means two different things** and only one of them is above. The
+*product* staging site (`staging.<vendor>`) is where a release is verified before
+publishing — that is the one the update pipeline needs. A *shop* staging copy, on
+the `extrabeauty.ae` side, for rehearsing against your own data, is a separate
+and optional thing you can add whenever.
 
 The console is a **new, small Laravel app** — perhaps fifteen tables and ten
 screens. It is not this repo with a flag. You chose that, and it is right: with a

@@ -76,8 +76,29 @@ class IndexNow
         return (bool) preg_match('/^[a-zA-Z0-9\-]{8,128}$/', $key);
     }
 
+    /**
+     * NEVER ON A PRIVATE INSTALL, whatever the setting says.
+     *
+     * This is the hole a noindex header does not close, and it is the worst
+     * one, because it is not passive. Every other protection waits for a
+     * crawler to arrive and then tells it to go away. IndexNow is an outbound
+     * POST that hands Bing a list of URLs and asks it to come and look.
+     *
+     * A staging site cloned from production arrives with `indexnow_on` already
+     * '1' and a key already minted, because it is a copy of a live shop's
+     * settings table. The first product saved on it would announce the staging
+     * URL to a search engine -- from the one site that is meant to be invisible,
+     * by the one mechanism that reaches out rather than waiting.
+     *
+     * So the check is here, in the single place both submit() and submitOne()
+     * pass through, rather than at either call site.
+     */
     public static function enabled(): bool
     {
+        if (\App\Support\SiteHost::isPrivate()) {
+            return false;
+        }
+
         return (Setting::map()['indexnow_on'] ?? '') === '1';
     }
 

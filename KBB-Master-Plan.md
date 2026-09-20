@@ -2197,8 +2197,62 @@ a fake success toast and saves nothing).
 
 ## Phase 14 — Licensing console  *(separate application)*
 
+**The shape is settled — `docs/VENDOR-CONSOLE-AND-LICENSING.md`.** Two apps, not
+one: a vendor console on its own domain holding the Ed25519 private key, the
+licences and the releases, and this repo as the product every customer installs.
+The owner chose the separate-app form over a `KBB_VENDOR_MODE` flag, so no
+customer ever receives licence-issuing or signing code. `extrabeauty.ae` becomes
+licence #1 with no special case, which is what keeps the customer path tested.
+
+- [x] **The site address and the search-visibility switch** — *2.60.224*, and it
+  is Phase 0 of the move rather than licensing work. `Settings → Site address`:
+  which address is the shop's real one, which old ones forward to it, and one
+  switch that keeps a whole install out of every search index.
+
+  ▲ **The staging protection that already existed has never once worked.**
+  `NoIndexStaging` reads `env('KBB_NOINDEX')` at request time, and Laravel does
+  not load `.env` **at all** when the config cache exists — `LoadEnvironment-
+  Variables` returns early on `configurationIsCached()`. On this host the config
+  cache always exists, because there is no shell and every package ships a
+  `clear_caches` migration that rebuilds it. So it has read `false` on the live
+  server for its entire life. It could not be repaired in place either: its
+  registration is in `bootstrap/app.php`, which is on `BuildPackage::NEVER_SHIP`.
+  The replacement is settings-driven and registered from `AppServiceProvider`,
+  which can ship.
+
+  ▲ **Forwarding is an allow-list of aliases, not "redirect anything that is not
+  canonical"** — and that inversion is the whole design. There is no shell here,
+  so a redirect rule that swallows the admin panel cannot be undone from inside
+  the admin panel. One typo in the canonical host, under the usual design, sends
+  the storefront, the admin and the login form to a domain that does not exist.
+  Under this one a typo misdirects the aliases and the real host keeps serving,
+  because it is not on the list.
+
+  ▲ **`Disallow: /` is the wrong answer for a staging site** and a private
+  install deliberately invites the crawl instead. Disallow forbids *crawling*,
+  not indexing — a URL a crawler may not fetch is a URL whose `noindex` it can
+  never read, so one inbound link lists it permanently and the instruction that
+  would have removed it sits behind the door robots.txt just shut. Also gated:
+  **IndexNow**, which is the hole a header cannot close, because it is an
+  outbound POST that *asks* Bing to come and look — and a staging copy of a live
+  shop arrives with `indexnow_on` already `1`.
+- [ ] **Ed25519 signing — the next thing to do, and it is inside this repo.**
+  `BuildPackage.php:199` writes `'signature' => ''` unconditionally, so no
+  package has ever been signed, and `UpdatePackage`'s scheme is a **symmetric**
+  HMAC against `KBB_UPDATE_SECRET` — which every customer install would need in
+  its own `.env` to verify, where they can read it and forge both packages and
+  licences. PHP 8.4 carries Ed25519 in core, so a shared host needs nothing
+  installed. Do it while there is one install, not across fifty
+- [ ] Two plans: **Standard $50** and **Pro $79**. Standard withholds
+  import/export, quiz, multiple taxes, translation, UGC video and re-order.
+  ▲ Three of those six reach the **storefront**, not just the admin —
+  `/skin-quiz`, the whole `/ar` layer, and re-order — so plan gating cannot live
+  in `AdminCapabilities` alone
 - [ ] 22 items · offline token verification · plan-gated modules
-- [ ] **A licence must never take a shop offline**
+- [ ] **A licence must never take a shop offline** — expiry is automatic and
+  leaves the storefront trading; **suspension is a manual lever** the owner
+  pulls, with a typed reason and an audit row. A lapsed card must never take a
+  paying shop down on its own
 
 ## Phase 15 — Page builder
 

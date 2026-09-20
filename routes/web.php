@@ -663,6 +663,16 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * group they would be public writes to the leads table.
          */
         require __DIR__ . '/quiz-leads-admin.php';
+
+        /*
+         * Settings → Site address: which address is the shop's real one, which
+         * old ones forward to it, and whether this install is public at all.
+         * Inside this group for the same reason the line above is: the routes
+         * carry no middleware of their own, and outside it a POST would be an
+         * unauthenticated write that could point the shop at another domain.
+         */
+        require __DIR__.'/site-address-admin.php';
+
         Route::get('/orders',                [AdminController::class, 'orders']);
         Route::get('/orders/{id}',           [AdminController::class, 'order']);
         Route::get('/orders/{id}/detail',    [\App\Http\Controllers\Admin\AdminOrderController::class, 'show']);

@@ -13,6 +13,7 @@ use App\Services\SettingsService;
 use App\Services\Translation\TranslationStore;
 use App\Services\Update\InstalledVersion;
 use App\Support\Facets;
+use App\Support\SiteHost;
 use App\Support\Money;
 use App\Support\Shortcodes;
 use App\Support\Url;
@@ -80,6 +81,20 @@ final class StaticMemos
              * and one of them would fail in a full run, depending on order.
              */
             TranslationStore::class => static fn () => TranslationStore::flush(),
+            /*
+             * SiteHost memoises its verdict for the host it last answered
+             * about, so Seo::render() and the middleware do not each pay for
+             * the settings map on one page load.
+             *
+             * Without this reset it is the classic ordering bug and it bites in
+             * the worst direction: a test that switches an install to private
+             * leaves the memo saying "private", and the next test in the same
+             * process that happens to run on the same host renders every page
+             * noindex. That is how it was found -- TaxonomySeoOverridesTest
+             * started asserting 'index, follow' against 'noindex, nofollow'
+             * from a file it has nothing to do with.
+             */
+            SiteHost::class => static fn () => SiteHost::forget(),
             // Public and written from the transport itself; there is no forget()
             // to call, so this is the assignment.
             ServerMailTransport::class => static function (): void {

@@ -239,6 +239,34 @@ it('has an authorization layer reading the role column', function () {
          * by hand. Until then the class exists and nothing calls it.
          */
         'CacheHeaders',
+        /*
+         * Site address, and I have come and read this file as instructed.
+         *
+         * CanonicalHost authorises nothing and reads no role. It takes two
+         * decisions, both on the request HOST and neither on who is asking:
+         * forward a host that is on an explicit alias list, and set
+         * X-Robots-Tag on an install marked private. Every admin route this
+         * file is about is reached on the canonical host, where it does
+         * nothing at all.
+         *
+         * ▲ IT IS ALSO WHY 'NoIndexStaging' BELOW IS NOW DEAD WEIGHT, and the
+         * reason is worth leaving here rather than in a doc, because the next
+         * person to wonder why there are two of these will look at this list.
+         *
+         * NoIndexStaging reads env('KBB_NOINDEX') at request time. Laravel does
+         * not load .env AT ALL when the config cache exists -- LoadEnvironment-
+         * Variables returns early on configurationIsCached() -- and on this host
+         * the config cache always exists, because there is no shell and every
+         * package ships a clear_caches migration to rebuild it. So that
+         * middleware has read `false` on the live server for its whole life,
+         * and the staging protection it advertises has never once fired.
+         *
+         * It could not be fixed in place either: its registration lives in
+         * bootstrap/app.php, which is on BuildPackage::NEVER_SHIP, so no package
+         * can reach it. Hence a settings-driven replacement registered from
+         * AppServiceProvider, which can ship.
+         */
+        'CanonicalHost',
         'CheckRedirects',
         'EnforceAdminCapability',
         'NoIndexStaging',
