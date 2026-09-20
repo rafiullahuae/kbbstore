@@ -15,15 +15,22 @@ can and cannot actually guarantee, and it changes where you should spend effort.
 Two applications, not one.
 
 ```
-console.<your-vendor-domain>       THE CONSOLE — yours alone
-                                   Ed25519 PRIVATE key, licences, releases,
-                                   customers, invoices, upgrade approvals.
-                                   No customer ever receives this code.
+extrabeauty.ae             THE SHOP — this repo, live. Licence #1.
+staging.extrabeauty.ae     THE SAME CODE, one step ahead. is_staging.
+console.extrabeauty.ae     THE CONSOLE — yours alone. Separate app.
+                           Ed25519 PRIVATE key, licences, releases,
+                           customers, invoices, upgrade approvals.
+                           No customer ever receives this code.
+<landing-domain>           MARKETING — presents the app, sells it. §10.5
 
-kbeautybliss.com                   THE PRODUCT — this repo
-customer-a.com                     Every install is the same code.
-customer-b.ae                      Ed25519 PUBLIC key compiled in.
+customer-a.com             Customer installs. Same code as extrabeauty.ae.
+customer-b.ae              Ed25519 PUBLIC key compiled in. Nothing else.
 ```
+
+Three of those four are DNS records on one domain, which keeps renewals and
+certificates simple. The landing site is deliberately elsewhere: it sells the
+product, `extrabeauty.ae` *is* the product running, and mixing the two means
+your shop's SEO and your marketing site's SEO compete.
 
 The console is a **new, small Laravel app** — perhaps fifteen tables and ten
 screens. It is not this repo with a flag. You chose that, and it is right: with a
@@ -431,8 +438,15 @@ that does not produce a chargeback.
 Your first ask, and it is independent of everything above — do it first, on its
 own, before any licensing work lands.
 
-**You have not told me the domain yet.** Everything below is correct whatever it
-is; fill it in at step 1.
+### 10.0 The map
+
+| domain | what runs there | `APP_URL` | notes |
+|---|---|---|---|
+| `extrabeauty.ae` | the shop, this repo | `https://extrabeauty.ae` | licence #1, canonical host |
+| `staging.extrabeauty.ae` | same code, one release ahead | `https://staging.extrabeauty.ae` | `is_staging`, **must be noindex** |
+| `console.extrabeauty.ae` | the console, separate app | — | never this repo's code |
+| *landing domain* | marketing + Purchase | — | §10.5 |
+| `kbeautybliss.com` | → see §10.4 | — | the old shop |
 
 ### 10.1 What the code already does right
 
@@ -472,11 +486,101 @@ fix needed no path surgery.
    why: the map resolves against rows this shop carries, and a published article
    at a root slug silently disables a category redirect.
 
-### 10.3 Order of operations
+### 10.3 The canonical host — a gap, and it is new work
+
+There is **no host enforcement anywhere in this application today**. I looked:
+no middleware, no provider, nothing. Every check is on the path.
+
+That was harmless while the app lived at one address. With four it is not:
+
+- `staging.extrabeauty.ae` serves the identical shop. Google will index it,
+  and then you have two of every product page competing with each other.
+- If `kbeautybliss.com` is pointed at this app (§10.4), it serves the shop too.
+- `www.extrabeauty.ae` and `extrabeauty.ae` both answer.
+
+So build a small `CanonicalHost` middleware:
+
+- 301 any request whose host is not the canonical one to the same path on the
+  canonical host.
+- Read the canonical host from config, **never hard-code it** — every customer
+  install needs its own, and the licence already knows the bound domain.
+- Keep an **exempt list**, because `staging.extrabeauty.ae` must not be
+  redirected to production or it is unusable. Staging gets
+  `X-Robots-Tag: noindex` and a `Disallow: /` robots.txt instead.
+
+Register it the way `SetLocaleFromPath` is registered — `prependMiddleware()`
+in `AppServiceProvider` (`:131`). That pattern exists precisely because
+`bootstrap/app.php` cannot ship in a package, and it is already proven: it is
+how `/ar` was fixed in 2.60.223.
+
+⚠ **Order matters.** Put `CanonicalHost` *after* the redirect lookup, or an old
+address arriving on the old domain costs two hops — host first, then path.
+Better: when the host is non-canonical, look the path up in `redirects` first
+and emit **one** 301 carrying both corrections. Two hops works and Google
+follows it; one is cleaner and costs you nothing to get right the first time.
+
+### 10.4 What happens to kbeautybliss.com
+
+This is the decision I still need from you, and it has real consequences either
+way. The good news is that the machinery is already correct for the harder
+option:
+
+`CheckRedirects::findMatch()` (`:107`) matches on `$request->getPathInfo()`
+alone — **the host is not part of the match** — and `Url::redirect()`
+(`Url.php:245`) builds an **absolute** URL on `APP_URL`. So the 54 addresses
+Lane GP landed work cross-domain with no code change at all. Point
+`kbeautybliss.com` at this app and `kbeautybliss.com/toners/` 301s to
+`https://extrabeauty.ae/product-category/skincare/toners/` on its own.
+
+**If you are retiring kbeautybliss.com and trading as ExtraBeauty:**
+
+1. Point `kbeautybliss.com` DNS at the same server.
+2. `CanonicalHost` sends everything not otherwise mapped to `extrabeauty.ae`.
+3. File a **Change of Address** in Google Search Console. Without it you
+   restart your domain authority from zero and lose the rankings the redirect
+   map exists to protect.
+4. Keep the old domain and its redirects **permanently**. Renew it forever —
+   dropping it hands your backlinks to whoever buys it next.
+5. Re-issue the SSL certificate to cover both, and both `www` forms.
+
+**If kbeautybliss.com stays a live WooCommerce shop**, then this is not a
+migration at all — it is a second shop, the redirect map is dormant until you
+do move, and you should know that now rather than after cutover.
+
+### 10.5 The landing site and the Purchase button
+
+A separate domain, and it should be the simplest thing you own — a static site
+or a small WordPress. It must not be this repo, and it must not be the console.
+
+The purchase flow:
+
+```
+landing page: Buy Standard $50 / Pro $79
+  -> Stripe Checkout  (hosted by Stripe; no card fields of yours anywhere)
+  -> Stripe webhook   -> console.extrabeauty.ae
+  -> console creates customer + licence, plan from the price id
+  -> emails the licence key and the download link
+  -> customer installs, runs the setup wizard (§6.1), activates
+```
+
+Note what this does **not** need: no approval step. A purchase on the landing
+page is a completed sale, so issue the licence automatically — the approval
+queue in §9 is for *upgrades from inside a running install*, where the customer
+is already yours and you are changing their plan. Do not put a manual gate in
+front of new money.
+
+The download link should be **signed and expiring**, and ideally bound to the
+licence, so the zip does not end up on a forum as a permanent URL.
+
+### 10.6 Order of operations
 
 Move the domain first and let it settle for a week. Licensing is a large change
 and you do not want to be debugging a signature failure and a base-path failure
 at the same time.
+
+`staging.extrabeauty.ae` should exist **before** the cutover, not after — it is
+where you rehearse the cutover itself, and from §8 onward it is the target that
+every release passes through before your customers see it.
 
 ---
 
@@ -556,20 +660,25 @@ needs both.
 
 ## 13. Open questions
 
-1. **The domain.** Still unnamed. Both of them, in fact: the shop's final
-   domain, and the vendor domain the console will live on.
-2. **"Re-order products" — which one?** There are two readings and they are
+1. **What happens to `kbeautybliss.com`?** §10.4. Retired and 301'd across to
+   `extrabeauty.ae`, or staying live as a separate WooCommerce shop? This
+   decides whether the cutover is a migration or the launch of a second store,
+   and it decides whether the 54 redirects Lane GP landed matter on day one or
+   sit dormant.
+2. **The landing domain** is still unnamed. Nothing blocks on it until §10.5.
+3. **"Re-order products" — which one?** There are two readings and they are
    different features. The admin one is `admin-api/catalog/reorder/*`, which
    reorders products within a category or brand. The storefront one would be a
    shopper's *buy again* from a past order. The rest of your withheld list is
    mixed admin and storefront, so the list does not settle it.
-3. **Renewal.** $50 and $79 — per month, per year, or one-off with a support
+4. **Renewal.** $50 and $79 — per month, per year, or one-off with a support
    window? The whole expiry design assumes a recurring term; a perpetual licence
    with optional renewals is a different ladder.
-4. **Staging installs.** Should every customer get a free staging licence
-   automatically, or is it something you grant? Free-and-automatic is friendlier
-   and is one more domain per licence to track.
-5. **Existing account.** Your own shop's current admin is an `owner`. When it
+5. **Staging installs for customers.** You have your own at
+   `staging.extrabeauty.ae`. Does every customer get one free automatically, or
+   is it something you grant? Free-and-automatic is friendlier and is one more
+   domain per licence to track.
+6. **Existing account.** Your own shop's current admin is an `owner`. When it
    becomes licence #1, does anything change for it, or does it simply activate
    like any other install? (Recommend: like any other install — no special case
    is exactly what keeps the path tested.)
