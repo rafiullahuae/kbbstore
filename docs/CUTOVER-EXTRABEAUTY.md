@@ -4,8 +4,64 @@ The whole move, in order, with nothing in it that can be skipped. No staging
 site — you are testing on the live address, which is fine and is what this
 runbook assumes.
 
-Read §0 first. It is thirty seconds and it is the only part that is hard to
-undo.
+---
+
+## What you actually upload: **nothing**
+
+This is the part worth reading twice, because the obvious assumption is wrong.
+
+Your shop lives in **two folders** on Hostinger, not one:
+
+| | where it is now | size |
+|---|---|---|
+| **the application** | `domains/easywebsol.com/kbb-upgrade-app/` | large — `vendor/` alone is ~560 MB |
+| **the web root** | `domains/easywebsol.com/public_html/kbb-upgrade/` | small — `index.php`, `build/`, the recovery scripts |
+
+Only the **web root** has to be reachable at the new address. The application
+folder can stay exactly where it is, forever. And the database does not move at
+all — same hosting account, same MySQL.
+
+So there is no upload. `vendor/` never moves, which matters more than it sounds:
+you have no shell, so you cannot run `composer install` to rebuild it. Moving it
+by FTP and having one file arrive truncated is a broken site with no obvious
+cause.
+
+**Two ways to do it. Try A first — it moves no files whatsoever.**
+
+### A · Point the new domain at the folder that already works  ← try this
+
+In hPanel, add `extrabeauty.ae` and, when it asks for the folder / document
+root, give it the **existing** one:
+
+```
+domains/easywebsol.com/public_html/kbb-upgrade
+```
+
+That is the whole move. Nothing is copied, `bootstrap/app.php` does not change,
+and if it goes wrong you point the domain back.
+
+### B · If hPanel will not let you choose that folder
+
+Then copy just the **web root** — still not the application:
+
+1. Add `extrabeauty.ae` in hPanel. It creates
+   `domains/extrabeauty.ae/public_html/`.
+2. In File Manager, copy **everything inside**
+   `domains/easywebsol.com/public_html/kbb-upgrade/` into
+   `domains/extrabeauty.ae/public_html/`.
+   That is `index.php`, `build/`, `favicon.ico`, `kbb-recover.php`,
+   `kbb-doctor.php`, and `wp-content/` if it is there.
+3. Then, and only in this option, edit `bootstrap/app.php` — §0.1.
+
+⚠ If `wp-content/uploads` is in there it can be large. It is your product
+photographs. Copying inside File Manager is fine; do not pull it down and push
+it back up over FTP.
+
+Which option you used decides whether you do §0.1. **Option A skips it.**
+
+---
+
+Read §0 next. It is thirty seconds and it is the only part that is hard to undo.
 
 ---
 
@@ -14,18 +70,25 @@ undo.
 Everything else here you can do from a screen. These two you cannot, and one of
 them can stop the site booting, so do them deliberately.
 
-### 0.1 `bootstrap/app.php` — the web root
+### 0.1 `bootstrap/app.php` — the web root  *(OPTION B ONLY — skip on Option A)*
 
-The last line of that file is:
+Line 149 of `kbb-upgrade-app/bootstrap/app.php` reads:
 
 ```php
-->usePublicPath('/home/.../public_html/kbb-upgrade')
+->usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/u815237650/domains/easywebsol.com/public_html/kbb-upgrade');
 ```
 
-It must point at whatever folder the new domain actually serves. On cPanel that
-is usually `/home/<user>/public_html` for a main domain, or
-`/home/<user>/extrabeauty.ae` if you added it as an addon domain — the **Document
-Root** column in cPanel's Domains screen tells you exactly.
+On **Option A you do not touch this** — the folder it names is still the folder
+being served, which is exactly why Option A is the easy one.
+
+On **Option B** change the path to the new web root:
+
+```php
+->usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/u815237650/domains/extrabeauty.ae/public_html');
+```
+
+Check your real username in hPanel's File Manager address bar — `u815237650` is
+what the file says today, but confirm rather than trust it.
 
 ⚠ **No update package can ever change this line.** `bootstrap/` is on
 `BuildPackage::NEVER_SHIP` and `UpdateGuard`'s forbidden list, deliberately, so
@@ -53,19 +116,21 @@ single most likely cause of "every link is wrong".
 
 ## 1. The order to do it in
 
-**1 · Point the domain.** In cPanel, add `extrabeauty.ae` and set its document
-root. Wait for it to resolve before going further — `ping extrabeauty.ae` from
-your phone is enough.
+**1 · Point the domain.** hPanel → Domains → add `extrabeauty.ae`, folder as per
+Option A or B above. Wait for it to resolve before going further — opening
+`http://extrabeauty.ae` on your phone's mobile data is enough of a check.
 
-**2 · Issue the SSL certificate.** cPanel → SSL/TLS Status → Run AutoSSL. Make
-sure it covers **both** `extrabeauty.ae` and `www.extrabeauty.ae`. Do this
-*before* step 3: `APP_URL` says `https://`, and a site that redirects to a
-certificate that does not exist yet shows every visitor a security warning.
+**2 · Issue the SSL certificate.** hPanel → Security → SSL → install for
+`extrabeauty.ae`. Make sure it covers **both** `extrabeauty.ae` and
+`www.extrabeauty.ae`. Do this *before* step 3: `APP_URL` says `https://`, and a
+site pointed at a certificate that does not exist yet shows every visitor a
+security warning.
 
-**3 · Make the two edits in §0.** Web root first, then `.env`.
+**3 · Make the edits in §0.** `.env` always; `bootstrap/app.php` only on
+Option B.
 
-**4 · Delete the compiled caches.** In File Manager, delete everything inside
-`bootstrap/cache/` except `.gitignore`:
+**4 · Delete the compiled caches.** In File Manager, inside
+`kbb-upgrade-app/bootstrap/cache/`, delete everything except `.gitignore`:
 
 ```
 bootstrap/cache/config.php
@@ -122,8 +187,29 @@ open item and it has not changed.
 
 ## 4. The old address
 
-Package 2.60.224 adds **Settings → Site address**. You do not need it to go live,
-and on day one you should leave it alone.
+### 4.0 "I cannot see Platform → Site address"
+
+Correct — **it does not exist on your site yet.** The screen ships *inside*
+package 2.60.224. Until that package is applied there is nothing to see, and no
+amount of looking or refreshing will produce it.
+
+To get it:
+
+1. Store → **Core Updates**.
+2. Upload `kbb-update-2.60.224.zip`.
+3. **Check** → it lists 13 files → **Apply**.
+4. Wait for it to finish and report the migrations as run. Two of them ship with
+   this package: one adds the four settings, one clears the compiled caches.
+5. Reload the admin. **Platform → Site address** is now the fourth row under
+   Platform, below Settings.
+
+If it is still missing after step 5, the compiled view cache did not clear —
+delete everything inside `kbb-upgrade-app/bootstrap/cache/` except `.gitignore`
+and reload. That is the same step as §1.4 and is safe to repeat at any time.
+
+### 4.1 Forwarding kbeautybliss.com
+
+You do not need this to go live, and on day one you should leave it alone.
 
 When you are ready to retire `kbeautybliss.com`:
 
