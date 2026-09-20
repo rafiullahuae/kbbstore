@@ -130,6 +130,26 @@ class AppServiceProvider extends ServiceProvider
 
         if (method_exists($kernel, 'prependMiddleware')) {
             $kernel->prependMiddleware(\App\Http\Middleware\SetLocaleFromPath::class);
+
+            /*
+             * CanonicalHost — forwards a listed alias to the real address and
+             * marks anything private noindex. Registered HERE, and not in
+             * bootstrap/app.php, for the reason the block above exists:
+             * bootstrap/ is on BuildPackage::NEVER_SHIP and UpdateGuard's
+             * forbidden list, so a registration there can never reach the
+             * server in a package. This one can.
+             *
+             * BEFORE SetLocaleFromPath in execution order -- prependMiddleware
+             * puts each new entry at the front, so the last one prepended runs
+             * first -- which is what we want: there is no sense translating a
+             * request that is about to be sent to another host.
+             *
+             * INERT UNTIL CONFIGURED. SiteHost::classify() answers CANONICAL
+             * for every host while `canonical_host` is empty, which is how it
+             * ships. Applying this package changes nothing until somebody fills
+             * the field in on Settings -> Site address.
+             */
+            $kernel->prependMiddleware(\App\Http\Middleware\CanonicalHost::class);
         }
 
         /*
@@ -196,7 +216,21 @@ class AppServiceProvider extends ServiceProvider
                 if ($redirect !== null) {
                     \App\Http\Middleware\CheckRedirects::recordHit($redirect);
 
-                    return redirect($redirect->target, $redirect->code);
+                    /*
+                     * Url::redirect(), not the bare target. See
+                     * CheckRedirects::handle() for the whole argument; the
+                     * short version is that redirect() hands a relative target
+                     * to Laravel's UrlGenerator, which strips the trailing
+                     * slash and knows nothing about the reader's language.
+                     * Measured both ways on a running server: 15 of 15 rows
+                     * landed on a non-canonical address, and an Arabic reader
+                     * following one was dropped onto the English page. The
+                     * BASE PATH was already right — UrlGenerator takes it from
+                     * the request root — which is a correction to
+                     * docs/GB-MEDIA-AND-REDIRECTS.md §6.4; the other two were
+                     * not. This is the copy that actually runs.
+                     */
+                    return redirect(\App\Support\Url::redirect($redirect->target), $redirect->code);
                 }
 
                 if ($request->isMethod('GET') && !$request->is('admin*', 'admin-api*', 'api*')) {

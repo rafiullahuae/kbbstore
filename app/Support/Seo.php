@@ -133,7 +133,14 @@ class Seo
 
         $url    = self::canonical($ctx['url'] ?? null, $base);
         $image  = self::absolute($ctx['image'] ?? ($s['og_default_image'] ?? null), $base);
-        $robots = !empty($ctx['noindex'])
+        /*
+         * A private install overrides the page's own answer, and overrides the
+         * shop's robots_index setting, because on a staging copy that setting
+         * is whatever production's was. The header CanonicalHost sets is the
+         * instruction that covers images and XML too; this is the same
+         * instruction where a human reading View Source will find it.
+         */
+        $robots = (!empty($ctx['noindex']) || \App\Support\SiteHost::isPrivate())
             ? 'noindex, nofollow'
             : (SeoSettings::from($s, 'robots_index') . ', ' . SeoSettings::from($s, 'robots_follow'));
 

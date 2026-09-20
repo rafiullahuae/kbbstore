@@ -75,6 +75,8 @@ kbb_harness_build( $pdo, $prefix, $storage );
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-csv.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-wp.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-media-index.php';
+require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-groups.php';
+require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-zip.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-stage.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-orders-source.php';
 require __DIR__ . '/../kbb-exporter/includes/class-kbb-export-runner.php';
@@ -83,9 +85,31 @@ foreach ( glob( __DIR__ . '/../kbb-exporter/includes/stages/*.php' ) as $file ) 
 	require $file;
 }
 
+/*
+ * --groups=catalogue,customers  exports only those groups, exactly as ticking
+ * their boxes on the admin screen does. Omitted means every group, which is
+ * what the screen offers by default and what every test written before this
+ * lane expects.
+ *
+ * --confirm=sales:customers     is the operator ticking "Customers is already
+ * imported into the new shop" against that dependency. Without it a selection
+ * with an unmet dependency is REFUSED by start(), which is the guard this
+ * harness exists to exercise from outside the browser: the admin screen only
+ * disables a button, and a disabled button is a statement about one browser.
+ */
 $settings = array(
 	'batch'        => $batch,
 	'skip_trashed' => ! isset( $args['include_trashed'] ) || '1' !== $args['include_trashed'],
+	// --groups absent means every group, which is what the screen offers by
+	// default. --groups= (empty) is an EMPTY selection and has to stay tellable
+	// from absent, because "export nothing" is a thing the runner refuses and a
+	// refusal that cannot be reached is not a refusal.
+	'groups'       => isset( $args['groups'] )
+		? explode( ',', $args['groups'] )
+		: KBB_Export_Groups::keys(),
+	'confirmed'    => isset( $args['confirm'] ) && '' !== $args['confirm']
+		? explode( ',', $args['confirm'] )
+		: array(),
 );
 
 $runner = new KBB_Export_Runner( $settings );
@@ -115,6 +139,13 @@ $flip_after = isset( $args['flip_after'] ) ? max( 1, (int) $args['flip_after'] )
 
 $peak_while_running = 0;
 
+/*
+ * The highest percentage EACH GROUP's own bar showed while the export was still
+ * running. 100 on a group that was not finished is the same fake 100% the
+ * whole-export bar already had removed once, reintroduced one bar down.
+ */
+$group_peaks = array();
+
 do {
 	// A FRESH RUNNER PER BATCH. This is the whole point of the harness being
 	// a loop rather than a method: each iteration reloads the checkpoint from
@@ -123,6 +154,22 @@ do {
 	// owner's server at row 3,000.
 	if ( $flip_after > 0 && $steps >= $flip_after ) {
 		$settings['skip_trashed'] = ! $settings['skip_trashed'];
+	}
+
+	/*
+	 * --flip_groups_after=N un-ticks a group mid-export, which is what an
+	 * operator does by clicking a checkbox while it runs: the form is posted
+	 * with EVERY batch, so the change lands on the next one.
+	 *
+	 * `stage` is an INDEX INTO THE FILTERED STAGE LIST. Shortening that list
+	 * between two batches does not stop the export -- it carries on at the same
+	 * index, which now points at a different file, and finishes early with one
+	 * file half written and another never opened, while the manifest describes
+	 * neither. Pinning `groups` at start() is what makes this a no-op, and this
+	 * flag is how that is measured rather than asserted.
+	 */
+	if ( isset( $args['flip_groups_after'] ) && $steps >= max( 1, (int) $args['flip_groups_after'] ) ) {
+		$settings['groups'] = array( 'catalogue' );
 	}
 
 	$runner   = new KBB_Export_Runner( $settings );
@@ -139,6 +186,18 @@ do {
 	// once already and which this export reintroduced through its denominator.
 	if ( empty( $progress['done'] ) ) {
 		$peak_while_running = max( $peak_while_running, (int) $progress['percent'] );
+
+		foreach ( isset( $progress['groups'] ) ? $progress['groups'] : array() as $group ) {
+			if ( 'done' === $group['state'] ) {
+				continue;
+			}
+
+			$key = $group['key'];
+
+			$group_peaks[ $key ] = isset( $group_peaks[ $key ] )
+				? max( $group_peaks[ $key ], (int) $group['percent'] )
+				: (int) $group['percent'];
+		}
 	}
 
 	$steps++;
@@ -147,6 +206,38 @@ do {
 if ( empty( $progress['done'] ) ) {
 	fwrite( STDERR, "FAILED: the export did not finish in 20,000 batches.\n" );
 	exit( 6 );
+}
+
+/*
+ * ── THE ZIP PHASE, DRIVEN THE SAME WAY THE EXPORT IS ────────────────────────
+ *
+ * One file into one archive per call, each call through a FRESH runner that
+ * reloads the cursor from the options table, exactly as a separate HTTP request
+ * would. Same reason as the batch loop above: anything a step kept in a property
+ * between calls is caught here rather than on the owner's server.
+ *
+ * --no_zip skips it, which is how a test reaches the state the screen is in
+ * between "the export finished" and "the archives are packed".
+ */
+$zip_steps = 0;
+$zip_progress = array( 'done' => true, 'units' => 0, 'units_done' => 0, 'available' => false, 'groups' => array() );
+
+if ( ! isset( $args['no_zip'] ) ) {
+	do {
+		$zip_progress = ( new KBB_Export_Runner( $settings ) )->zip_step();
+
+		if ( empty( $zip_progress['ok'] ) ) {
+			fwrite( STDERR, 'ZIP FAILED: ' . $zip_progress['error'] . "\n" );
+			exit( 7 );
+		}
+
+		$zip_steps++;
+	} while ( empty( $zip_progress['done'] ) && $zip_steps < 5000 );
+
+	if ( empty( $zip_progress['done'] ) ) {
+		fwrite( STDERR, "ZIP FAILED: the zip phase did not finish in 5,000 units.\n" );
+		exit( 8 );
+	}
 }
 
 // The runner writes into uploads/kbb-export/<export id>/; move it to a stable
@@ -216,6 +307,27 @@ echo json_encode(
 		'export_id' => $progress['export_id'],
 		'rows'      => $progress['rows_done'],
 		'peak_while_running' => $peak_while_running,
+		'group_progress' => isset( $progress['groups'] ) ? $progress['groups'] : array(),
+		'group_peaks'    => $group_peaks,
+		'zip_steps'      => $zip_steps,
+		'zip'            => $zip_progress,
+		/*
+		 * The guard files, read back AFTER the archives were written into the
+		 * same folder. A zip added beside customers.csv must not be the thing
+		 * that undoes the folder's protection, and "it did not" is a
+		 * measurement, not an assumption -- so the three facts travel out of the
+		 * harness and the test asserts on them.
+		 */
+		'guards'         => array(
+			'dir_index'       => file_exists( $progress['dir'] . '/index.php' ),
+			'parent_index'    => file_exists( dirname( $progress['dir'] ) . '/index.php' ),
+			'parent_htaccess' => file_exists( dirname( $progress['dir'] ) . '/.htaccess' ),
+			'htaccess_body'   => file_exists( dirname( $progress['dir'] ) . '/.htaccess' )
+				? file_get_contents( dirname( $progress['dir'] ) . '/.htaccess' )
+				: '',
+			'archives_inside' => count( glob( $progress['dir'] . '/*.zip' ) ),
+			'archives_outside'=> count( glob( dirname( $progress['dir'] ) . '/*.zip' ) ),
+		),
 		'notes'     => $progress['notes'],
 	),
 	JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES

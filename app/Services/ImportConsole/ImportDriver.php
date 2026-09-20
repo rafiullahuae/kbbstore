@@ -593,6 +593,36 @@ final class ImportDriver
                 'label' => $onDisk->label(),
                 'files' => $onDisk->files(),
                 /*
+                 * WHICH GROUPS THIS EXPORT CARRIES, and the one claim in it
+                 * that nothing verified.
+                 *
+                 * Lane GK's export screen lets the owner tick named groups, and
+                 * Lane GL downloads each as its own zip. `groups.selected` and
+                 * `groups.skipped` are facts about the export. `assumed_already_imported`
+                 * is not: it is what the operator ASSERTED on the WordPress
+                 * screen — that a prerequisite group is already in this shop —
+                 * and GK is explicit that the plugin cannot see this shop and
+                 * did not check it.
+                 *
+                 * It goes out with the status because the person pressing
+                 * Import is standing in front of the only shop that can answer
+                 * it. GK's one `loses` edge — orders exported without customers,
+                 * 14 of 80 customers lost on the measured rehearsal — is damage
+                 * whose REPORT appears weeks later at a different button press,
+                 * with nothing in it naming the export that caused it. Printing
+                 * the claim here is the last moment the connection costs
+                 * nothing to make.
+                 *
+                 * It is a NOTICE AND NOT A REFUSAL. GK refuses to let the
+                 * export start with a warning unanswered, which is the right
+                 * place for a refusal; refusing again here would refuse the
+                 * partial import this whole console exists to make possible,
+                 * and would be this shop overruling a decision it has strictly
+                 * less information about than the person who made it.
+                 */
+                'groups' => $onDisk->usable() ? $onDisk->groups() : null,
+                'merged_from' => $onDisk->usable() ? ($onDisk->raw()['merged_from'] ?? null) : null,
+                /*
                  * Said on the screen, not only in a doc: an export with no
                  * manifest is not a broken export. Ten of the eleven files this
                  * importer reads existed before the plugin did.
@@ -705,7 +735,8 @@ final class ImportDriver
             ] + ImportLedger::fromReport($entityReport));
         }
 
-        DB::table(self::TABLE)->where('id', $run->id)->update([
+        // Same guard as liveStep()'s: a preview step must not resurrect a stopped run.
+        DB::table(self::TABLE)->where('id', $run->id)->where('status', 'running')->update([
             'preview_limit' => min($limit, max($deepest, 1)),
             'report' => (string) json_encode($this->serialise($report)),
             'status' => $final ? 'complete' : 'running',
@@ -734,7 +765,8 @@ final class ImportDriver
         $entity = $this->currentEntity($done);
 
         if ($entity === null) {
-            DB::table(self::TABLE)->where('id', $run->id)->update([
+            // Same guard, same reason: see the note further down this method.
+            DB::table(self::TABLE)->where('id', $run->id)->where('status', 'running')->update([
                 'status' => 'complete',
                 'finished_at' => now(),
                 'message' => null,
@@ -806,7 +838,31 @@ final class ImportDriver
             'started_at' => $run->started_at,
         ] + ImportLedger::fromReport($entityReport));
 
-        DB::table(self::TABLE)->where('id', $run->id)->update([
+        /*
+         * `where('status', 'running')` — A STEP MUST NOT RESURRECT A RUN
+         * SOMEBODY STOPPED WHILE IT WAS WORKING. (Lane GO.)
+         *
+         * This row is written at the END of a slice that began seconds ago, and
+         * `status => 'running'` used to be unconditional. Stop pressed during
+         * that slice sets `stopped`, and then this line set it straight back to
+         * `running` — so the run the owner had just stopped was, on the screen
+         * and in the database, going again. The rows are not the problem: they
+         * committed with their checkpoint and are correctly accounted for. The
+         * STATUS was.
+         *
+         * Caught in Lane GO's rehearsal rather than reasoned about: Stop was
+         * pressed during a real background run, everything stopped, and the run
+         * row read `status = running` seven seconds later. It is a pre-existing
+         * race in the browser-driven run too — it was survivable there only
+         * because the console's loop also stops in the tab — and it is not
+         * survivable in a run with no tab attached, which is why it is fixed
+         * here rather than noted.
+         *
+         * The bookkeeping in this update goes with it, and that is correct: a
+         * stopped run is continued by pressing Import again, which is
+         * start(), which writes all of it fresh.
+         */
+        DB::table(self::TABLE)->where('id', $run->id)->where('status', 'running')->update([
             'done_entities' => (string) json_encode(array_values(array_unique($done))),
             'started_entities' => (string) json_encode(array_values(array_unique($started))),
             'baselines' => (string) json_encode($baselines),

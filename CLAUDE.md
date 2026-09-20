@@ -30,6 +30,13 @@ composer install
 vendor/bin/pest                  # test suite
 vendor/bin/pest --compact
 find app database routes -name '*.php' -print0 | xargs -0 -n1 php -l
+
+# The WordPress-exporter harness builds its own MySQL database and DROPS every
+# table it uses. Two lanes running the suite at once tore it down under each
+# other -- three tests failed with "Table 'kbb_ge_wp.wp_options' doesn't exist"
+# and passed alone immediately before and after, which reads exactly like flake.
+# Name it per lane, the way KBB_TEST_DB already is:
+KBB_WP_DB=kbb_wp_<lane> KBB_TEST_DB=kbb_<lane> vendor/bin/pest -c phpunit-mysql.xml
 ```
 
 Tests run on file-based SQLite. **Do not switch them to `:memory:`** — the
@@ -53,6 +60,11 @@ by luck:
   have the integrator wire them up.
 - **Do not edit `KBB-Master-Plan.md` or `KBB-Progress-Dashboard.html`.** Note
   what you did in the PR body; the integrator merges the plan.
+- **Never `pkill` by pattern on this machine.** Three lanes run at once and
+  `pkill -f 'php vendor/bin/pest'` kills the other two mid-suite. It happened:
+  one lane cleared its own run and cost another lane a full re-run, and the
+  failures it produced in a third looked exactly like flake. Match on your own
+  worktree path, or kill the PID you started.
 - **Commit as Claude, not as the owner.** A lane's first act in a new worktree
   is `git config user.email noreply@anthropic.com && git config user.name Claude`.
   Five lane commits reached the integrator authored `rite2rafi2@gmail.com`,

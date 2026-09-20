@@ -105,6 +105,36 @@ is a bug in this section rather than a second opinion about the phase.
 
 
 
+- **Lane GO — the import runs in the background.** The owner's own requirement:
+  *"i want this job must be running in background, even i close the tab."*
+  Batch-by-batch, real progress and stop already exist; what does not is a run
+  that survives the browser. No shell, no queue worker and no cron that can be
+  assumed, so it is a self-chaining run — and the hazards are the whole job: two
+  chains racing import every row twice, a lock a crash leaves held is a shop that
+  can never import again, and a runaway is worse than a stall
+- **Lane GP — the addresses group lands, and every old URL with it.** *"will have
+  all new urls as per our app."* Today that group downloads, unpacks and is
+  refused twice, because `permalinks.csv` and `media.csv` are read by a different
+  screen. ▲ And Lane GB measured the trap to re-check: `CheckRedirects` is
+  written as middleware and is not registered as one, so the table is consulted
+  only from the 404 handler — a row for an address the shop already answers can
+  never fire
+- **Lane GQ — is everything there? ANSWERED.** A census three columns wide, in
+  `tests/Feature/GqMigrationCensusTest.php`: **282 columns across 17 files — 208
+  land in a named table and column, 44 are named in the discard list, 9 are in a
+  file nothing opens, and not one is unaccounted for.** Asserted against the
+  plugin's own export and the real `ImportRunner`, so a column that stops
+  crossing fails by name rather than arriving empty. Three things that were being
+  lost in silence were found by building it and all three are fixed: the
+  **barcodes** (`products.gtin`, published to Google), **which size of a variable
+  product each order line sold**, and the **OpenGraph image and noindex flag** —
+  two Yoast keys with a hyphen in them that the CSV reader turns into an
+  underscore, so neither had ever matched on any import ever run. One thing is
+  still in no channel and is now named: `_order_key`, the token in every
+  order-view link WooCommerce emailed. `docs/FV-IMPORT-AT-VOLUME.md` §11 is
+  **stale** — six of its seven lines are closed by Lanes GH, GI and GJ. See
+  `docs/GQ-MIGRATION-COMPLETENESS.md`
+
 ### Waiting on the owner, not on us
 
 - **Reconnect Stripe** — Store → Payments → Set up Stripe. Until then the
@@ -1926,13 +1956,183 @@ a fake success toast and saves nothing).
   the discard list with its title and the URL it wanted. **Run a preview** — it
   writes nothing — and it produces the list Lane GA asked the owner for. Each
   one is rename-and-redirect in WordPress, or a routing change here
+- [x] **The export runs section by section, like the import does** — the owner's
+  own observation: *"in our app you section by section made the import process,
+  why you didn't in export… please group the related stuff and give options to
+  choose any with live export progress bar."* Eight ticked groups on the plugin's
+  screen, labelled with `ImportWorkspace::ENTITIES`' own words so the two screens
+  read as one system, with a live bar per group.
+
+  ▲ **The dependency between groups was the whole job, not the grouping.** Every
+  edge was derived by reading the IMPORTER rather than the exporter — which is
+  how `seo` turned out not to depend on `content`, even though `seo.csv` carries
+  blog Yoast meta, because `SeoImporter` matches on `products.wc_id` and refuses
+  everything else by name.
+
+  The screen neither refuses a crossed edge nor silently auto-ticks it: both
+  take the decision away from the only person who knows what is already in the
+  new shop. It prints the consequence in words, disables Start until each edge is
+  answered, and `start()` re-checks server-side with the same sentence, because a
+  disabled button is a statement about one browser. Exactly **one** edge is red —
+  orders without customers, the 14-of-80 loss FV measured — and a test fails if a
+  second red edge ever appears, because a red banner shown eight times is one
+  nobody reads.
+
+  A skipped group's files are **absent** from `manifest.json` rather than present
+  with `rows: 0`. The contract has said those are different facts since it was
+  written; nothing had ever produced the second case until now
+- [x] **One downloadable file per group, and no FTP** — the owner's correction of
+  the round before it: *"you didn't group… allow to download each group seperate
+  files. so will have no any heavy file."* Grouping the selection did not help
+  while the output was still one folder fetched over FTP. Each group now packs
+  into its own zip with a Download button on the screen, each a complete import
+  on its own — that group's CSVs at the archive root plus a `manifest.json`
+  narrowed to them, every archive of one export carrying the same `export_id`.
+
+  ▲ **The size question was answered by measuring, not by guessing.** A harness
+  builds all 17 CSVs at the real shop's volume and zips each group through the
+  shipped class: whole folder 15.85 MB, largest single download **2.16 MB**
+  (Orders), slowest bounded unit 293 ms. **Nothing needs splitting** — and
+  Orders stays the largest across a product-description sensitivity sweep, so it
+  is the one that would go first and it does not. A splitter exists behind a
+  25 MiB raw cap anyway, derived from the worst measured compression ratio
+  (Customers, 35.6% — bcrypt hashes do not deflate), and is reached by a test
+  rather than left unexercised.
+
+  The archives stay inside the already-guarded folder and are served through
+  WordPress with the capability checked and a nonce, never a URL under uploads;
+  the request names a group and a part and no path, so a traversal and a bogus
+  key return the same sentence and the same 404. Streaming is measured rather
+  than asserted: a 96 MB archive served from a 64 MB process, and the streamed
+  bytes re-opened as a valid zip
+- [x] **Store → Import takes a group's zip.** Recognised from its bytes, never
+  from its name or content type, at the existing endpoint — so no new route, no
+  capability rule and no cache migration. The invariant that makes it safe is
+  that a zip behaves *identically* to its files uploaded loose: every member goes
+  through the same `ImportWorkspace::accept()`, so the parse, the id-column check
+  and every refusal sentence are the ones the loose path already had.
+
+  ▲ **Zip slip was tested twice on purpose**, and the second fixture is the
+  point: `../../../.env` is caught by two guards, so a test on that alone stays
+  green with the traversal check deleted — the dead-filter shape this repo has
+  already paid for in `Api\ProductController`. `../../../../products.csv` has a
+  basename the allowlist is happy with, so only the traversal check can refuse it.
+
+  ▲ **And a claimed-redundant guard was measured and was not redundant.** The
+  lane wrote that the non-text check would catch a symlink entry anyway, then
+  measured it: with the symlink guard removed the upload returns 200 and the file
+  lands. A claim that a guard is redundant is exactly what gets a guard deleted,
+  so it is corrected at length in the doc rather than quietly fixed.
+
+  Several group zips add up to one import: the manifests **merge** rather than
+  the second replacing the first, because a replace leaves a file on disk and
+  absent from the manifest beside it — which the contract defines as "this export
+  does not carry it", discarding the one thing a manifest count does that a file
+  count cannot, notice a truncated upload. Two of the lane's own merge rules were
+  wrong and **Lane GF's existing suite caught both**, not its own mutations: one
+  reported a corrected re-export as a truncated upload, telling the owner to
+  re-upload the one file that was finally right
+- [x] **The "Addresses and pictures" group lands, and every old URL is checked by
+  fetching it** — *2.60.223*. `permalinks.csv` and `media.csv` are **companions**,
+  a second table beside `ImportWorkspace::ENTITIES`: accepted into the export
+  folder under their own names and read by the machinery that already reads them,
+  loose or inside a group zip. Not entities, for three separate reasons — they
+  have no importer, they are statements about the *old* site rather than rows
+  this shop stores, and two do-nothing steps in the drive loop is drift on
+  purpose. `ImportDriver` is untouched.
+
+  **Measured against a running server rather than counted out of a table: 54 of
+  the old site's 54 published addresses resolve after the import, up from 39.**
+  The fifteen that did not were every category archive on the shop. The eight
+  remaining rows in `permalinks.csv` carry no address at all — `pa_brands` never
+  had a public archive, so there is nothing to land.
+
+  ▲ **The refusal was the smaller of two bugs, and nobody had the other one.**
+  `RedirectMap::fromPermalinks()` has read this exact file shape since the day it
+  was written and **nothing with a screen had ever handed it a file** — its only
+  caller was `kbb:import-redirects`, a command the owner cannot run because there
+  is no shell, which is the same gap `UrlsMediaApiController` exists to close,
+  left open one level down inside it. Fixing only the refusal would have produced
+  the quieter failure: the file lands, the screen says "Uploaded", and the map is
+  exactly what it was.
+
+  ▲ **And 15 of 15 redirects were landing on a non-canonical address** — a 301 to
+  a URL whose own `<link rel="canonical">` pointed somewhere else. That is now
+  0 of 15. See `docs/GP-ADDRESSES-LAND.md`
+- [x] **The import keeps running with the tab closed** — *2.60.223*, the owner's
+  own requirement: *"i want this job must be running in background, even i close
+  the tab."* A run holds a single-use **256-bit baton**, stored only as a
+  SHA-256, and the server calls itself back at `POST /import-chain/continue` to
+  take the next slice. There is no browser, no cookie and no session — which is
+  the feature, and is why that one route sits outside `auth:admin`.
+
+  Four properties make it safe to mount unauthenticated, and they are the whole
+  argument: the baton travels in a **header**, never a path segment or query
+  parameter, so it is not written into this host's access log or any proxy's; it
+  exists only while a run does, and only because a signed-in admin pressed a
+  button; **the request decides nothing** — entity, row count, options and mode
+  are all read from the run row an authenticated admin wrote, and the body is
+  never looked at; and **it answers nothing** — 204 or an empty 404, no status,
+  no counts, no filenames, which is what the `/api/*` landmine is about.
+
+  ▲ **`import-chain` had to join `RESERVED_SLUGS`.** Articles live at the site
+  root, so an article published at that slug would shadow the one endpoint that
+  carries no `auth:admin`. `RootSlugCollisionTest` caught it within a minute of
+  the route being mounted. Pause, Stop and Resume are real states, a killed
+  slice is picked back up, and a host that refuses loopback says so rather than
+  reporting a run that is not moving. See `docs/GO-BACKGROUND-IMPORT.md`
+- [x] **A census of the migration, column by column, and three things it found**
+  — *2.60.223*. Every file the exporter writes, every column of every file, and
+  for each one a named table and column it lands in or the report channel it is
+  dropped through — asserted against **what the report says**, not against a
+  second copy of the importer's logic. A column that stops crossing does not
+  disappear; it moves from one side of the comparison to the other and fails
+  with its own name in the message.
+
+  ▲ **Read and landed are different claims**, which is why the census checks
+  both: deleting `sku` from `ProductImporter::apply()` leaves the read check
+  green, because `ProductImporter` asks for `sku` in a second place — the
+  duplicate-SKU guard — so the column is still *read* while the SKU has stopped
+  *arriving*. The three it caught are the GTIN the WooCommerce SEO add-on
+  carried, the variation actually sold on a variable product, and an OpenGraph
+  image a hyphen had been eating
+- [x] **The export screen stopped asking the owner a question he could not
+  answer.** He asked *"why you mentioned number of rows to select? what's the
+  purpose?"* — fairly. `Rows per batch` exists so one request cannot outlive a
+  shared host's time limit, but Lane GL had already measured the real shop and
+  the slowest bounded unit was **293 ms** against a typical 30-second limit, so
+  there was no value he could sensibly pick. Moved behind a disclosure whose
+  summary names the symptom rather than the jargon — *"Only if the export keeps
+  stopping before it finishes"* — and which says **leave this alone**, then names
+  **Resume** as the thing to press after lowering it, which is the half that is
+  easy to omit and is the whole procedure
+
+  ▲ **The lane corrected my brief, and it was right.** I asked for `batch` to be
+  pinned at `start()` the way `skip_trashed` and `groups` are. It is deliberately
+  the one exception: those two change the `WHERE` and the stage list, so they
+  split a file under two rules, while `batch` is only the bite size on an ordered
+  cursor scan. Pinning it would have broken the escape hatch the same change
+  documents, whose only procedure is *lower it and press Resume* — on the one
+  host where finishing is already the problem. Verified in the code before
+  accepting the correction
+- [ ] ▲ **The export screen tells the owner to delete a folder he cannot reach,
+  and it holds every shopper's password hash.** The instruction is correct —
+  `customers.csv` carries addresses and password hashes, `reviews.csv` carries
+  emails and IPs — but he has no shell and no FTP, which the paragraph two lines
+  above says itself. There is no control that does it. `wp_ajax_kbb_export_reset`
+  **is registered and reachable**, and `KBB_Export_Runner::reset()` only
+  `delete_option()`s the state: wiring the existing endpoint to a button would
+  report success while the hashes stayed on disk, now unreferenced and
+  un-downloadable. Wants a real delete, which is a new destructive path and not
+  plumbing
 - [ ] Three-bucket classification: migrate / discard / ask — **Rafi approves any discard list**
 - [x] **Media and image paths · URL redirect map — *this package*.** Not blocked
   by Phase 9, and never was: `/brands/` was settled in 2.60.109 and
   `/skincare-guide/` is a blog-permalink question that sits downstream of
   neither categories nor images. ▲ **The map that existed could not fire.**
-  `CheckRedirects` is not registered as middleware, so the redirects table is
-  consulted only from the 404 handler — and every row the shipped rule proposed
+  `CheckRedirects` was not registered as middleware, so the redirects table was
+  consulted only from the 404 handler — **registered in 2.60.223** — and every
+  row the shipped rule proposed
   was for `/product-category/{leaf}/`, which the archive controller already 301s
   itself. Proved against a running server with a deliberately wrong row in
   place: the row changed nothing. ▲ **And the addresses Google really holds had
@@ -1997,8 +2197,62 @@ a fake success toast and saves nothing).
 
 ## Phase 14 — Licensing console  *(separate application)*
 
+**The shape is settled — `docs/VENDOR-CONSOLE-AND-LICENSING.md`.** Two apps, not
+one: a vendor console on its own domain holding the Ed25519 private key, the
+licences and the releases, and this repo as the product every customer installs.
+The owner chose the separate-app form over a `KBB_VENDOR_MODE` flag, so no
+customer ever receives licence-issuing or signing code. `extrabeauty.ae` becomes
+licence #1 with no special case, which is what keeps the customer path tested.
+
+- [x] **The site address and the search-visibility switch** — *2.60.224*, and it
+  is Phase 0 of the move rather than licensing work. `Settings → Site address`:
+  which address is the shop's real one, which old ones forward to it, and one
+  switch that keeps a whole install out of every search index.
+
+  ▲ **The staging protection that already existed has never once worked.**
+  `NoIndexStaging` reads `env('KBB_NOINDEX')` at request time, and Laravel does
+  not load `.env` **at all** when the config cache exists — `LoadEnvironment-
+  Variables` returns early on `configurationIsCached()`. On this host the config
+  cache always exists, because there is no shell and every package ships a
+  `clear_caches` migration that rebuilds it. So it has read `false` on the live
+  server for its entire life. It could not be repaired in place either: its
+  registration is in `bootstrap/app.php`, which is on `BuildPackage::NEVER_SHIP`.
+  The replacement is settings-driven and registered from `AppServiceProvider`,
+  which can ship.
+
+  ▲ **Forwarding is an allow-list of aliases, not "redirect anything that is not
+  canonical"** — and that inversion is the whole design. There is no shell here,
+  so a redirect rule that swallows the admin panel cannot be undone from inside
+  the admin panel. One typo in the canonical host, under the usual design, sends
+  the storefront, the admin and the login form to a domain that does not exist.
+  Under this one a typo misdirects the aliases and the real host keeps serving,
+  because it is not on the list.
+
+  ▲ **`Disallow: /` is the wrong answer for a staging site** and a private
+  install deliberately invites the crawl instead. Disallow forbids *crawling*,
+  not indexing — a URL a crawler may not fetch is a URL whose `noindex` it can
+  never read, so one inbound link lists it permanently and the instruction that
+  would have removed it sits behind the door robots.txt just shut. Also gated:
+  **IndexNow**, which is the hole a header cannot close, because it is an
+  outbound POST that *asks* Bing to come and look — and a staging copy of a live
+  shop arrives with `indexnow_on` already `1`.
+- [ ] **Ed25519 signing — the next thing to do, and it is inside this repo.**
+  `BuildPackage.php:199` writes `'signature' => ''` unconditionally, so no
+  package has ever been signed, and `UpdatePackage`'s scheme is a **symmetric**
+  HMAC against `KBB_UPDATE_SECRET` — which every customer install would need in
+  its own `.env` to verify, where they can read it and forge both packages and
+  licences. PHP 8.4 carries Ed25519 in core, so a shared host needs nothing
+  installed. Do it while there is one install, not across fifty
+- [ ] Two plans: **Standard $50** and **Pro $79**. Standard withholds
+  import/export, quiz, multiple taxes, translation, UGC video and re-order.
+  ▲ Three of those six reach the **storefront**, not just the admin —
+  `/skin-quiz`, the whole `/ar` layer, and re-order — so plan gating cannot live
+  in `AdminCapabilities` alone
 - [ ] 22 items · offline token verification · plan-gated modules
-- [ ] **A licence must never take a shop offline**
+- [ ] **A licence must never take a shop offline** — expiry is automatic and
+  leaves the storefront trading; **suspension is a manual lever** the owner
+  pulls, with a typed reason and an audit row. A lapsed card must never take a
+  paying shop down on its own
 
 ## Phase 15 — Page builder
 

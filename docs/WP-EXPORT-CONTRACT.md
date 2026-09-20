@@ -24,13 +24,13 @@ names the existing importers already parse:
 | `reviews.csv` | `ReviewImporter` | exists |
 | `seo.csv` | `SeoImporter` | exists |
 | `permalinks.csv` | `kbb:import-redirects` | exists |
-| `variations.csv` | — | **gap** |
-| `refunds.csv` | — | **gap** |
-| `order_notes.csv` | — | **gap** |
-| `tags.csv` | — | **gap** |
-| `attributes.csv` | — | **gap** |
-| `posts.csv` | — | **gap** |
-| `media.csv` | — | **gap** |
+| `variations.csv` | `VariationImporter` | exists — Lane GH |
+| `refunds.csv` | `RefundImporter` | exists — Lane GI |
+| `order_notes.csv` | `OrderNoteImporter` | exists — Lane GI |
+| `tags.csv` | `TagImporter` | exists — Lane GH |
+| `attributes.csv` | `AttributeImporter` | exists — Lane GH |
+| `posts.csv` | `PostImporter` | exists — Lane GJ |
+| `media.csv` | — | **gap** — `kbb:import-media` re-derives its download list from the imported product URLs instead, so this file is opened by nothing and the unread-file channel names it every run. Its `exists` column is a `stat()` taken on the OLD server and cannot be re-taken after the cutover |
 
 That is deliberate and it is the whole risk-management strategy here. Ten of
 those files already have an importer with tests behind it, and 4,480 tests pass
@@ -98,6 +98,25 @@ taken" months later.
   means the plugin did not write it at all, which is a different statement and
   the importer must be able to tell the two apart — "this shop has no coupons"
   and "this export does not carry coupons" are not the same fact.
+- **`groups` says which sections the export carries.** The plugin's screen lets
+  the owner tick named groups — catalogue, coupons, customers, orders, reviews,
+  articles, SEO, addresses and pictures — so an export need not be the whole
+  shop. `groups.selected`, `groups.skipped` and `groups.files` name what was
+  exported; `groups.assumed_already_imported` records a dependency the operator
+  stated was already in this shop, which the plugin cannot check. This is what
+  makes the rule above load-bearing: a skipped group's files are ABSENT from
+  `files`, never listed with `"rows": 0`. `docs/GK-EXPORT-GROUPS.md` is the
+  account.
+- **An export may also arrive as one zip per group.** The plugin packs each
+  exported group into `kbb-export-<group>-<short id>.zip` beside the CSVs. Each
+  archive holds that group's CSV files AT THE ARCHIVE ROOT — no wrapping
+  directory — plus a `manifest.json` of its own whose `files` and `counts` are
+  narrowed to the files in that archive, so the absent-versus-`"rows": 0` rule
+  above holds inside an archive exactly as it holds in a folder. Every archive of
+  one export carries the SAME `export_id`, which is how this shop tells parts of
+  one export from several exports. A `zip` key records `group`, `part`, `parts`
+  and `of_export`; nothing reads it yet and, per the rule below, it is ignorable.
+  `docs/GL-GROUP-DOWNLOADS.md` is the account.
 - **Unknown keys are ignored, never fatal.** A newer plugin writing a field this
   shop does not read must not stop an import.
 - **`format` is checked.** Anything other than `kbb-export/1` is refused with a

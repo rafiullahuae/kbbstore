@@ -70,7 +70,7 @@
 
   <header>
     <h1>K-Beauty Bliss — build progress</h1>
-    <p class="sub">Version 2.60.221 &middot; generated 19 September 2026, 03:02</p>
+    <p class="sub">Version 2.60.223 &middot; generated 20 September 2026, 07:52</p>
   </header>
 
   <section class="total">
@@ -81,7 +81,7 @@
     <div class="track"><div class="fill most" style="width:91%"></div></div>
   </section>
 
-<section class="panel waiting"><h2>Waiting on you, not on us</h2><ul><li><b>Reconnect Stripe</b> — Store → Payments → Set up Stripe. Until then the webhook is subscribed to the hosted-checkout events a card payment no longer produces: the shop takes the money and never hears about it</li><li><b>One real test-mode payment</b> , which is the only thing a sandbox cannot stand in for</li><li><b>Did the old site have brand archive pages, and at what base?</b> 93 redirect rows hang on it, and inventing a base writes 93 redirects from an address that may never have existed</li><li><b>Three bulk-printing questions</b> — the cap of 100, whether a bulk invoice run should skip cancelled orders, and whether the &quot;Sheet 3 of 12&quot; line should print</li></ul></section>
+<section class="panel flight"><h2>In flight right now</h2><ul><li><b>Lane GO — the import runs in the background.</b> The owner&#039;s own requirement: *&quot;i want this job must be running in background, even i close the tab.&quot;* Batch-by-batch, real progress and stop already exist; what does not is a run that survives the browser. No shell, no queue worker and no cron that can be assumed, so it is a self-chaining run — and the hazards are the whole job: two chains racing import every row twice, a lock a crash leaves held is a shop that can never import again, and a runaway is worse than a stall</li><li><b>Lane GP — the addresses group lands, and every old URL with it.</b> *&quot;will have all new urls as per our app.&quot;* Today that group downloads, unpacks and is refused twice, because <code>permalinks.csv</code> and <code>media.csv</code> are read by a different screen. ▲ And Lane GB measured the trap to re-check: <code>CheckRedirects</code> is written as middleware and is not registered as one, so the table is consulted only from the 404 handler — a row for an address the shop already answers can never fire</li><li><b>Lane GQ — is everything there? ANSWERED.</b> A census three columns wide, in <code>tests/Feature/GqMigrationCensusTest.php</code>: <strong>282 columns across 17 files — 208 land in a named table and column, 44 are named in the discard list, 9 are in a file nothing opens, and not one is unaccounted for.</strong> Asserted against the plugin&#039;s own export and the real <code>ImportRunner</code>, so a column that stops crossing fails by name rather than arriving empty. Three things that were being lost in silence were found by building it and all three are fixed: the <strong>barcodes</strong> (<code>products.gtin</code>, published to Google), <strong>which size of a variable product each order line sold</strong>, and the <strong>OpenGraph image and noindex flag</strong> — two Yoast keys with a hyphen in them that the CSV reader turns into an underscore, so neither had ever matched on any import ever run. One thing is still in no channel and is now named: <code>_order_key</code>, the token in every order-view link WooCommerce emailed. <code>docs/FV-IMPORT-AT-VOLUME.md</code> §11 is <strong>stale</strong> — six of its seven lines are closed by Lanes GH, GI and GJ. See <code>docs/GQ-MIGRATION-COMPLETENESS.md</code></li></ul></section><section class="panel waiting"><h2>Waiting on you, not on us</h2><ul><li><b>Reconnect Stripe</b> — Store → Payments → Set up Stripe. Until then the webhook is subscribed to the hosted-checkout events a card payment no longer produces: the shop takes the money and never hears about it</li><li><b>One real test-mode payment</b> , which is the only thing a sandbox cannot stand in for</li><li><b>Did the old site have brand archive pages, and at what base?</b> 93 redirect rows hang on it, and inventing a base writes 93 redirects from an address that may never have existed</li><li><b>Three bulk-printing questions</b> — the cap of 100, whether a bulk invoice run should skip cancelled orders, and whether the &quot;Sheet 3 of 12&quot; line should print</li></ul></section>
   <div class="rows">
     <article class="row">
       <div class="rowhead">
@@ -262,23 +262,23 @@
     <article class="row">
       <div class="rowhead">
         <h3>Phase 13 — Data migration</h3>
-        <span class="pct">75%</span>
+        <span class="pct">79%</span>
       </div>
-      <div class="track"><div class="fill most" style="width:75%"></div></div>
+      <div class="track"><div class="fill most" style="width:79%"></div></div>
       <div class="chips">
-        <span class="chip done">12 done</span><span class="chip open">4 open</span>
-        <span class="chip of">of 16</span>
+        <span class="chip done">19 done</span><span class="chip open">5 open</span>
+        <span class="chip of">of 24</span>
       </div>
     </article>
     <article class="row">
       <div class="rowhead">
         <h3>Phase 14 — Licensing console</h3>
-        <span class="pct">0%</span>
+        <span class="pct">20%</span>
       </div>
-      <div class="track"><div class="fill none" style="width:0%"></div></div>
+      <div class="track"><div class="fill some" style="width:20%"></div></div>
       <div class="chips">
-        <span class="chip done">0 done</span><span class="chip open">2 open</span>
-        <span class="chip of">of 2</span>
+        <span class="chip done">1 done</span><span class="chip open">4 open</span>
+        <span class="chip of">of 5</span>
       </div>
     </article>
     <article class="row">

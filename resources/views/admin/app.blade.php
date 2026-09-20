@@ -2414,7 +2414,7 @@ const ADMIN_BASE = window.location.pathname.replace(/\/+$/, '');
 /* ---------- nav ---------- */
 const NAV=[
   {sec:'Overview',items:[['dash','Dashboard',I.dash]]},
-  {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings]]},
+  {sec:'Platform',items:[['theme','K-Beauty Bliss Theme',I.theme],['users','Users & Roles',I.users],['settings','Settings',I.settings],['siteaddr','Site address','<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>']]},
   {sec:'Safety',items:[['debug','Debug & Monitor',I.debug],['sandbox','Sandbox & Deploy',I.sandbox],['democontent','Demo Content','<path d=\"M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L3 11V3h8l9.59 9.59a2 2 0 0 1 0 2.82z\"/><circle cx=\"7.5\" cy=\"7.5\" r=\"1.3\"/>']]},
   /* Catalog is its own group, and `group:true` keeps it one even while it holds
      a single built-in entry.
@@ -2641,7 +2641,7 @@ window.kbbAddNavEntry = kbbAddNavEntry;
    `modules` used to be declared twice in this object: once as ['Platform',…]
    and again, later, as ['Store',…]. The second silently won, so anyone editing
    the first saw nothing change. One declaration now. */
-const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
+const TITLES={dash:['Overview','Dashboard'],updates:['Platform','Core Updates'],theme:['Platform','K-Beauty Bliss Theme'],users:['Platform','Users & Roles'],settings:['Platform','Settings'],siteaddr:['Platform','Site address'],debug:['Safety','Debug & Monitor'],sandbox:['Safety','Sandbox & Deploy'],democontent:['Safety','Demo Content'],console:['Console','Console settings'],catalog:['Catalog','Catalog'],import:['Store','Store Import / Export'],newsletter:['Growth & Marketing','Newsletter'],labels:['Growth & Marketing','Product Labels'],pixels:['Growth & Marketing','Marketing Pixels'],meta:['Growth & Marketing','Meta & Facebook'],shopfilters:['Storefront','Shop Filters'],'tr-settings':['Translation','Language settings'],'tr-progress':['Translation','Progress'],'tr-strings':['Translation','Strings'],'tr-machine':['Translation','Machine translation'],'rev-all':['Reviews','All Reviews'],'rev-add':['Reviews','Bulk Tools'],'rev-likes':['Reviews','Bulk Tools'],'rev-assign':['Reviews','Assign / Duplicate'],'rev-io':['Reviews','Review Import / Export'],/* 'rev-capsule' has no sidebar row of its own any more — it and 'rev-badge'
    open the same screen, whose two tabs are the two questions those screens used
    to ask of one set of seven settings. The id stays routable for #rev-capsule
    and ?go=rev-capsule, and it names the screen it actually opens rather than a
@@ -2664,7 +2664,7 @@ function go(id,sub){
   $$('.side .nav-item').forEach(b=>b.classList.toggle('on',b.dataset.go===id));syncNavOpen(id);
   const t=TITLES[id]||['Platform',id];$('#crumb').textContent=t[0];$('#ptitle').textContent=t[1];
   $('#content').innerHTML='';
-  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,mail:renderMail,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
+  ({dash:renderDash,updates:renderUpdates,layout:renderLayout,bundles:renderBundles,homepage:renderHomepage,productpage:renderProductPage,mobilemenu:renderMobileMenu,header:renderHeader,search:renderSiteSearch,acctpanel:renderAcctPanel,cartpanel:renderCartPanel,dividers:renderDividers,mobilehdr:renderMobileHdr,prodstyles:renderProdStyles,newsletter:renderNewsletter,ecommerce:renderEcommerce,modules:renderModules,megamenu:renderMegaMenu,payship:renderPayShip,mail:renderMail,shipping:renderShipping,'pages-store':renderStorePages,'pages-user':renderUserPages,theme:renderTheme,users:renderUsers,settings:renderSettings,siteaddr:renderSiteAddress,debug:renderDebug,sandbox:renderSandbox,console:renderConsole,catalog:renderCatalog,import:renderImport,labels:renderLabels,pixels:renderPixels,meta:renderMeta,shopfilters:renderShopFilters,democontent:renderDemoContent}[id]||renderDash)();
   $('#content').scrollTop=0;$('#side').classList.remove('open');
 }
 
@@ -7728,6 +7728,7 @@ function impPaint(){
     +'Upload the exports, look at what <b>would</b> happen, fix anything it refuses, then import for real. '
     +'Nothing is written until you press Import.</p></div>'
     +impBanner(run)
+    +impAssumedCard(s)
     +impFilesCard(s)
     +(anyFile?impChoicesCard(s):'')
     +(anyFile?impPreviewCard(s):'')
@@ -7790,6 +7791,34 @@ function impCss(){
   +'</style>';
 }
 
+/*
+ * What the operator SAID was already in this shop, which the export plugin
+ * could not check. docs/GK-EXPORT-GROUPS.md §5: the claim travels in the
+ * manifest so it does not have to live in his memory, and this is the one
+ * moment somebody is looking at the shop the claim is about.
+ *
+ * A notice, never a refusal. The export screen already refused to start with
+ * an unanswered warning, which is where a refusal belongs; refusing here
+ * would refuse the partial import this console exists to make possible.
+ */
+function impAssumedCard(s){
+  const claims=((s.manifest&&s.manifest.groups&&s.manifest.groups.assumed_already_imported)||[]);
+  if(!claims.length) return '';
+
+  return '<div class="card pad" style="margin-bottom:16px;border-left:3px solid '
+    +(claims.some(c=>c.severity==='loses')?'#96271F':'var(--ink-soft)')+'">'
+    +'<b style="font-size:14px">Before you import — something this export assumes</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 10px">When this export was taken you '
+    +'confirmed on the WordPress screen that these were already in this shop. The export plugin cannot '
+    +'see this shop and did not check. If any of them is not true, read the note before importing.</p>'
+    +claims.map(c=>'<div class="impmeta" style="margin-top:8px"><b>'+impEsc(c.needs)+'</b> was assumed to be '
+      +'already imported when <b>'+impEsc(c.group)+'</b> was exported.'
+      +(c.severity==='loses'?' <b style="color:#96271F">If it was not, rows will be lost and the report of '
+        +'this run will not say so.</b>':'')
+      +(c.claim?'<div style="margin-top:4px">'+impEsc(c.claim)+'</div>':'')+'</div>').join('')
+    +'</div>';
+}
+
 function impBanner(run){
   if(impMsg){
     return '<div class="impbanner '+(impMsgKind||'warn')+'"><div>'+impEsc(impMsg)+'</div>'
@@ -7830,15 +7859,16 @@ function impFilesCard(s){
     +'<div class="between" style="margin-bottom:12px;flex-wrap:wrap;gap:10px"><div><b style="font-size:14px">1 · Your exports</b>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0">Upload as many as you have. You do not need all six — a file you leave out is simply not touched, '
     +'so a top-up of new orders on its own is a perfectly normal thing to run.</p></div></div>'
-    +'<div class="impdrop" id="impDrop"><b>Drop your CSV files here, or click to choose</b>'
+    +'<div class="impdrop" id="impDrop"><b>Drop your CSV files or a group\'s .zip here, or click to choose</b>'
     +'<span>Name them <code style="font-family:var(--mono)">categories.csv</code>, <code style="font-family:var(--mono)">brands.csv</code>, '
     +'<code style="font-family:var(--mono)">products.csv</code>, <code style="font-family:var(--mono)">customers.csv</code>, '
     +'<code style="font-family:var(--mono)">orders.csv</code>, <code style="font-family:var(--mono)">order_items.csv</code> and they sort themselves out.</span>'
-    +'<input type="file" id="impFileInput" accept=".csv,text/csv" multiple hidden></div>'
+    +'<input type="file" id="impFileInput" accept=".csv,text/csv,.zip,application/zip" multiple hidden></div>'
     +'<div class="impnote">This server accepts uploads up to <b>'+impEsc(lim.upload_max_filesize)+'</b> each ('
     +'form limit '+impEsc(lim.post_max_size)+'). Files are stored outside the website folder and are never reachable from the web. '
     +'If an order export is larger than that, split it — the importer carries on across files.</div>'
     +'<div class="impgrid" style="margin-top:14px">'+cards+'</div>'
+    +gpCompanionsStrip(s)
     +'<div id="impUploadMsg"></div>'
     +'</div>';
 }
@@ -7953,10 +7983,12 @@ function impRunCard(s){
     +'<div class="row" style="gap:8px">'
     +(busy?'<button class="btn ghost" id="impPause">Pause</button>'
           :'<button class="btn" id="impRun">'+(isLive&&run.status==='running'?'Continue import':'Import')+'</button>')
+    +(isLive&&run&&run.status==='running'?'<button class="btn ghost" id="impBackground">Keep importing in the background</button>':'')
     +'</div></div>'
     +'<div style="margin-top:14px">'+rows+'</div>'
     +'<div class="impnote">Your browser does this in small pieces, a few seconds at a time, so this shared server never has to hold one long request open. '
-    +'You can close this tab: whatever had finished stays finished, and coming back here offers to carry on. It will not start over and it will not import anything twice.'
+    +'Closing this tab stops it here — whatever had finished stays finished, and coming back offers to carry on from the row after the last one. '
+    +'To have the server keep going with the tab closed, press “Keep importing in the background”.'
     +(busy?' <b>Working — about '+impNum(impRows)+' rows per piece.</b>':'')+'</div>'
     +(isLive?impResultTable(s,'Created','Updated','Unchanged','Refused'):'')
     +'<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="impReset" style="color:#c0392b">Forget progress and start over</button></div>'
@@ -8068,6 +8100,50 @@ function gdLiveProgressCard(){
     +'<button class="btn" style="margin-top:10px">Open the live progress page</button></a></div>';
 }
 
+/* -------------------------------------- the addresses group (Lane GP) */
+/*
+ * permalinks.csv and media.csv: the two files of the export that no importer
+ * steps. Store → Import used to refuse both BY NAME, so the owner downloaded
+ * the "Addresses and pictures" group and was told twice it had not imported.
+ * They are accepted now — but a file that lands silently is not much better
+ * than one that is turned away, so these two blocks are where he sees them.
+ */
+function gpCompanionsStrip(s){
+  const rows=(s.companions||[]);
+  if(!rows.length) return '';
+
+  return '<div class="impgrid" style="margin-top:10px">'+rows.map(c=>
+    '<div class="impfile'+(c.present?' on':'')+'">'
+    +'<div class="between" style="align-items:flex-start"><b>'+impEsc(c.label)+'</b>'
+    +(c.present
+      ?'<span class="pill green">ready</span>'
+      :'<span style="font-size:11px;color:#94A3B8;font-weight:600">not uploaded</span>')+'</div>'
+    +'<p>'+impEsc(c.help)+'</p>'
+    +(c.present
+      ?'<div class="impmeta"><span>'+impNum(c.rows)+' rows</span><span>'+impBytes(c.bytes)+'</span>'
+        +'<button class="btn ghost sm impforget" data-e="'+impEsc(c.key)+'" style="margin-left:auto;padding:3px 9px;font-size:11px">Remove</button></div>'
+      :'<div class="impmeta">expects <code style="font-family:var(--mono);font-size:11px">'+impEsc(c.file)+'</code></div>')
+    +'<p style="font-size:11px;color:var(--ink-soft);margin:6px 0 0">Read by '+impEsc(c.read_by)+'. Not imported as rows.</p>'
+    +'</div>').join('')+'</div>';
+}
+
+/*
+ * Which of the two files this answer was built from, said on the screen for
+ * the reason UrlsMediaApiController::sources() gives: without permalinks.csv
+ * the map still draws a perfectly confident list — of addresses derived from
+ * this shop's own rows — and nothing distinguishes it from one built on the
+ * addresses the old site really published.
+ */
+function gpSourceLine(src){
+  if(!src) return '';
+
+  return ['permalinks','media'].map(k=>{
+    const x=src[k]; if(!x) return '';
+    return '<p style="font-size:12px;margin:6px 0 0;color:'+(x.present?'var(--ink-soft)':'#b45309')+'">'
+      +'<code style="font-family:var(--mono);font-size:11px">'+impEsc(x.file)+'</code> — '+impEsc(x.note)+'</p>';
+  }).join('');
+}
+
 function gbUrlsMediaCard(){
   if(!gbUM) return '<div class="card pad">'
     +'<b style="font-size:14px">Addresses &amp; pictures</b>'
@@ -8085,6 +8161,7 @@ function gbUrlsMediaCard(){
 
     +'<div style="margin-top:12px"><b>Old addresses</b></div>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:3px 0 0;max-width:680px">'+u.note+'</p>'
+    +gpSourceLine(gbUM.sources)
     +'<div class="impgrid" style="margin-top:8px">'
     +'<div class="impfile"><b>'+u.buckets.migrate.count+'</b><span>redirects to write</span></div>'
     +'<div class="impfile"><b>'+u.buckets.ask.count+'</b><span>need your decision</span></div>'
@@ -8212,7 +8289,23 @@ function impWire(){
 
   const cont=$('#impContinue'); if(cont) cont.onclick=()=>{ impMsg=''; impDrive(); };
   const pause=$('#impPause'); if(pause) pause.onclick=()=>{ impRunning=false; impPaint(); };
-  const stop=$('#impStop'); if(stop) stop.onclick=async()=>{ impRunning=false; await impApi('/import/stop',{method:'POST'}); await impRefresh(); impPaint(); };
+
+  /* Lane GO. Hands the run to the server and opens the live page, which is
+     where Pause, Stop and the real bars then live. The browser loop is stopped
+     first: leaving it going would be a second driver, and the chain's baton
+     exists precisely so there is only ever one. A refusal is shown here rather
+     than on the page, because a host that will not call itself means the owner
+     stays on THIS screen and keeps pressing Continue. */
+  const bg=$('#impBackground');
+  if(bg) bg.onclick=async()=>{
+    impRunning=false;
+    const r=await impApi('/import/background',{method:'POST',body:'{}'});
+    if(!r.data||r.data.ok===false){
+      impMsg=(r.data&&r.data.message)||'Could not hand this over to the server.'; impMsgKind='bad'; impPaint(); return;
+    }
+    window.open(impBase()+'/import/background-page','_blank');
+    impMsg='The server is carrying this on by itself. You can close this tab.'; impMsgKind=''; impPaint();
+  };
 
   gbUMWire();
 
@@ -9758,6 +9851,148 @@ window.lblSync=lblSync;
    are dead now, but the stylesheet is the most contended block in this file and
    a purely cosmetic edit there is not worth the merge.
    ========================================================================= */
+/* ══════════════════════════════════════════ Settings → Site address (Phase 0)
+ *
+ * Four controls, and the screen's job is to make the safe thing obvious.
+ *
+ * The main address is what every link, every redirect and every canonical tag
+ * is built from. The old addresses are forwarded to it. And "keep this install
+ * out of Google" is a switch, not something inferred from the domain, because a
+ * staging site on a domain of its own IS canonical for that domain -- the
+ * inference would be wrong for exactly the sites that need it.
+ *
+ * A wrong main address cannot lock the owner out: only hosts on the forward
+ * list are ever redirected. See App\Support\SiteHost.
+ */
+let saState=null, saBusy=false, saMsg='', saCheck=null, saLoading=false;
+
+/*
+ * saLoading is not a nicety. renderSiteAddress() calls saLoad() when saState is
+ * null, and saLoad() calls go() which calls renderSiteAddress() again -- so a
+ * failed fetch leaves saState null and that pair spins forever, hammering the
+ * endpoint. The flag makes the second entry a no-op, and a failure puts a
+ * readable message on the screen instead of nothing.
+ */
+async function saLoad(){
+  if(saLoading) return;
+  saLoading=true;
+  const r=await impApi('/site-address');
+  saLoading=false;
+
+  if(r.data&&r.data.ok){ saState=r.data; }
+  else {
+    saState={ok:false,canonical_host:'',aliases:'',redirect_enabled:false,visibility:'public',
+      current_host:location.hostname,derived_aliases:[],verdict:'canonical'};
+    saMsg='Could not load this screen. Status '+(r.status||'unknown')+'. Reload the page to try again.';
+  }
+  go('siteaddr');
+}
+
+function renderSiteAddress(){
+  if(!saState){ $('#content').innerHTML='<div class="wrap"><div class="card pad">Loading…</div></div>'; saLoad(); return; }
+
+  const s=saState;
+  const priv=s.visibility==='private';
+
+  $('#content').innerHTML='<div class="wrap"><div class="card pad" style="margin-bottom:16px">'
+    +'<b style="font-size:14px">Which address is this shop\'s real one</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0;max-width:720px">'
+    +'Every link, every redirect and the canonical tag search engines read are built from this. '
+    +'You are viewing the shop right now on <code style="font-family:var(--mono)">'+impEsc(s.current_host)+'</code>.</p>'
+    +(saMsg?'<div class="impbanner" style="margin-top:10px">'+impEsc(saMsg)+'</div>':'')
+
+    +'<div style="margin-top:14px;max-width:520px">'
+    +'<label style="font-size:12px;font-weight:600">Main address</label>'
+    +'<input id="saHost" class="inp" value="'+impEsc(s.canonical_host)+'" placeholder="extrabeauty.ae" '
+    +'style="width:100%;margin-top:4px;font-family:var(--mono)">'
+    +'<p style="font-size:11px;color:var(--ink-soft);margin:4px 0 0">No https://, no trailing slash. '
+    +'Leave empty and nothing on this screen does anything.</p>'
+    +'<button class="btn ghost sm" id="saCheckBtn" style="margin-top:8px">Check this address answers</button>'
+    +(saCheck?'<p style="font-size:12px;margin:6px 0 0;color:'+(saCheck.reachable?'var(--ink-soft)':'#b45309')+'">'
+      +impEsc(saCheck.reason)+'</p>':'')
+    +'</div>'
+
+    +'<div style="margin-top:16px;max-width:520px">'
+    +'<label style="font-size:12px;font-weight:600">Old addresses to forward here</label>'
+    +'<textarea id="saAliases" class="inp" rows="3" placeholder="kbeautybliss.com" '
+    +'style="width:100%;margin-top:4px;font-family:var(--mono)">'+impEsc(s.aliases)+'</textarea>'
+    +'<p style="font-size:11px;color:var(--ink-soft);margin:4px 0 0">One per line. '
+    +'The www / non-www pair of your main address is handled automatically — you do not need to type it.'
+    +(s.derived_aliases&&s.derived_aliases.length
+      ?'<br>Forwarding now: <code style="font-family:var(--mono);font-size:11px">'
+        +s.derived_aliases.map(impEsc).join('</code>, <code style="font-family:var(--mono);font-size:11px">')+'</code>'
+      :'')
+    +'</p>'
+    +'<label class="row" style="margin-top:10px;gap:8px;align-items:flex-start">'
+    +'<input type="checkbox" id="saRedirect"'+(s.redirect_enabled?' checked':'')+'>'
+    +'<span style="font-size:12px"><b>Forward these, permanently</b><br>'
+    +'<span style="color:var(--ink-soft)">Off until you switch it on. Only the addresses listed above are '
+    +'ever forwarded, so a typo here can never make this shop unreachable.</span></span></label>'
+    +'</div>'
+
+    +'<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);max-width:640px">'
+    +'<label class="row" style="gap:8px;align-items:flex-start">'
+    +'<input type="checkbox" id="saPrivate"'+(priv?' checked':'')+'>'
+    +'<span style="font-size:12px"><b>Keep this install out of Google</b><br>'
+    +'<span style="color:var(--ink-soft)">For a staging copy or a console — not for the live shop. '
+    +'Every page, image and file answers <code style="font-family:var(--mono);font-size:11px">noindex</code>, '
+    +'and this install stops announcing its pages to search engines.</span></span></label>'
+    +(priv?'<div class="impbanner warn" style="margin-top:10px;font-size:12px">'
+      +'<b>This install is currently hidden from search engines.</b> If this is your live shop, switch it off.'
+      +'</div>':'')
+    +'<p style="font-size:11px;color:var(--ink-soft);margin:10px 0 0">'
+    +'▲ For a staging site the stronger answer is a password on the whole folder — in cPanel that is '
+    +'<b>Directory Privacy</b>. A crawler never gets past it. This switch is the second-best protection, '
+    +'for when you cannot do that.</p>'
+    +'</div>'
+
+    +'<div class="row" style="margin-top:16px;gap:8px">'
+    +'<button class="btn" id="saSave"'+(saBusy?' disabled':'')+'>'+(saBusy?'Saving…':'Save')+'</button>'
+    +'</div>'
+    +'</div></div>';
+
+  saWire();
+}
+
+function saWire(){
+  const btn=document.getElementById('saSave');
+  if(btn) btn.onclick=async()=>{
+    /*
+     * READ THE FIELDS FIRST, THEN REDRAW. go() replaces #content wholesale, so
+     * redrawing to show "Saving…" destroys these four inputs and rebuilds them
+     * from saState -- which is still the state from BEFORE the edit. Reading
+     * them afterwards therefore posts the old values back and the save is a
+     * silent no-op that answers 200 and says "Saved."
+     *
+     * That is exactly what it did, and it looked like a backend bug: the POST
+     * returned ok with an empty canonical_host. It was this line ordering.
+     */
+    const payload={
+      canonical_host:(document.getElementById('saHost')||{}).value||'',
+      aliases:(document.getElementById('saAliases')||{}).value||'',
+      redirect_enabled:!!(document.getElementById('saRedirect')||{}).checked,
+      visibility:(document.getElementById('saPrivate')||{}).checked?'private':'public',
+    };
+
+    saBusy=true; saMsg=''; go('siteaddr');
+    const r=await impApi('/site-address',{method:'POST',body:JSON.stringify(payload)});
+    saBusy=false;
+    if(r.data&&r.data.ok){ saState=r.data; saMsg='Saved.'; }
+    else { saMsg=(r.data&&r.data.errors)?Object.values(r.data.errors).join(' '):'That did not save.'; }
+    go('siteaddr');
+  };
+
+  const chk=document.getElementById('saCheckBtn');
+  if(chk) chk.onclick=async()=>{
+    // Same ordering trap as the save button above: read, then redraw.
+    const host=(document.getElementById('saHost')||{}).value||'';
+    saCheck={reachable:true,reason:'Checking…'}; go('siteaddr');
+    const r=await impApi('/site-address/check',{method:'POST',body:JSON.stringify({host:host})});
+    saCheck=r.data||{reachable:false,reason:'The check could not run.'};
+    go('siteaddr');
+  };
+}
+
 function renderShopFilters(){
   $('#content').innerHTML=`<div class="wrap">
     <div class="ph">

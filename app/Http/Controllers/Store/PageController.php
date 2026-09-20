@@ -48,6 +48,15 @@ class PageController extends Controller
     public const RESERVED_SLUGS = [
         // Routers and framework
         'api', 'admin', 'admin-api', 'up',
+        /*
+         * `import-chain` is the loopback endpoint the background import calls
+         * to continue itself (Lane GO). It carries no `auth:admin`, by
+         * necessity -- no browser is attached -- so it is the one new first
+         * segment that an article published at the site root could shadow.
+         * RootSlugCollisionTest caught it within a minute of the route being
+         * mounted, which is the guard doing exactly its job.
+         */
+        'import-chain',
         // Catalogue
         'shop', 'product', 'product-category', 'cart', 'checkout', 'quick-view',
         'new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed',

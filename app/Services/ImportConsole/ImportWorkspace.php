@@ -207,6 +207,183 @@ final class ImportWorkspace
         ],
     ];
 
+    /**
+     * The two files of the export that are NOT entities, and are not refuse.
+     *
+     * =========================================================================
+     * WHY THESE ARE A SECOND TABLE AND NOT SIX MORE ENTRIES IN THE ONE ABOVE
+     * =========================================================================
+     *
+     * Lane GK's export screen has a group called "Addresses and pictures", and
+     * it holds `permalinks.csv` and `media.csv`. The owner downloads it, drops
+     * it in the box on this screen, and before this table BOTH FILES WERE
+     * REFUSED BY NAME — *"Which export is this?"* — because neither is in
+     * ENTITIES. Not a regression, and pinned as a finding by Lane GM
+     * (`docs/GM-IMPORT-ACCEPTS-ZIP.md` §10.2), but the owner got a download
+     * that told him twice it had not imported.
+     *
+     * They are not entities, and making them entities would be wrong in three
+     * separate ways:
+     *
+     *   THEY HAVE NO IMPORTER. `ImportRunner::entities()` and ENTITIES above
+     *   are two hand-maintained lists that MUST agree — the class comment on
+     *   `seo` records what it cost the last time they did not. Adding a name
+     *   here with no `Importer` behind it is exactly that drift, deliberately.
+     *
+     *   THEY ARE NOT ROWS THIS SHOP STORES. `permalinks.csv` is a statement
+     *   about the OLD site's addresses; nothing in this schema holds it.
+     *   `media.csv` is a statement about the old site's uploads directory.
+     *   An entity writes rows; these two answer questions.
+     *
+     *   THE DRIVE LOOP WOULD HAVE TO STEP THEM. `ImportDriver` walks the
+     *   entity list one per request. Two entities that import nothing would be
+     *   two steps that do nothing, in the loop this shop's whole import is
+     *   built around.
+     *
+     * So they land in the export directory beside the CSVs, under their own
+     * literal names, and the machinery that ALREADY reads them picks them up:
+     * `RedirectMap::fromPermalinks()` (which has read this shape since the day
+     * it was written, and which nothing on a screen had ever handed a file to)
+     * and `MediaIndex`. `companionRows()` is the reader.
+     *
+     * `columns` is the same guard ENTITIES uses `id` for, and for the same
+     * reason: a file whose columns this cannot use produces an EMPTY map
+     * rather than an error, and a filter that matches no rows is the defect
+     * `Api\ProductController` already cost this repository once. At least one
+     * alias from each group must be present.
+     */
+    private const COMPANIONS = [
+        'permalinks' => [
+            'file' => 'permalinks.csv',
+            'label' => 'Old addresses',
+            'columns' => [
+                ['permalink', 'url', 'old_url'],
+                ['wc_id', 'id'],
+            ],
+            'read_by' => 'the redirect map on Store → Import → Addresses & pictures',
+            'help' => 'Every address the old site published, with what each one was. This is what turns "some categories probably moved" into a list of the URLs Google actually holds.',
+        ],
+        'media' => [
+            'file' => 'media.csv',
+            'label' => 'Picture index',
+            'columns' => [
+                ['url', 'path'],
+            ],
+            'read_by' => 'the picture audit on Store → Import → Addresses & pictures',
+            'help' => 'Every picture the old site referenced, with whether the file was still on that server when the export was taken. A picture already gone there is one no amount of copying will produce.',
+        ],
+    ];
+
+    /** @return list<string> */
+    public static function companionKeys(): array
+    {
+        return array_keys(self::COMPANIONS);
+    }
+
+    public static function isCompanion(string $key): bool
+    {
+        return isset(self::COMPANIONS[$key]);
+    }
+
+    /** @return array{file: string, label: string, columns: list<list<string>>, read_by: string, help: string} */
+    public static function companionMeta(string $key): array
+    {
+        return self::COMPANIONS[$key];
+    }
+
+    public function companionPath(string $key): string
+    {
+        return $this->directory().'/'.self::COMPANIONS[$key]['file'];
+    }
+
+    public function hasCompanion(string $key): bool
+    {
+        return is_file($this->companionPath($key));
+    }
+
+    /**
+     * The two companions, present or not, for the status payload.
+     *
+     * Deliberately NOT folded into files(): that list is what the drive loop,
+     * the progress bar and the duplicate guard are computed over, and a row in
+     * it that no importer can step is a row that would have to be special-cased
+     * in three places. A separate key is one place.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function companions(): array
+    {
+        $out = [];
+
+        foreach (self::COMPANIONS as $key => $meta) {
+            $path = $this->companionPath($key);
+            $present = is_file($path);
+
+            $row = [
+                'key' => $key,
+                'label' => $meta['label'],
+                'file' => $meta['file'],
+                'help' => $meta['help'],
+                'read_by' => $meta['read_by'],
+                'present' => $present,
+                'bytes' => 0,
+                'rows' => 0,
+                'uploaded_at' => null,
+            ];
+
+            if ($present) {
+                $stat = $this->statFile($path, $key);
+                $row['bytes'] = $stat['bytes'];
+                $row['rows'] = $stat['rows'];
+                $row['uploaded_at'] = $stat['uploaded_at'];
+            }
+
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    /**
+     * The rows of a companion file, read through the importer's own CSV reader
+     * so this and the import agree about what the file says.
+     *
+     * A generator: `media.csv` on the real catalogue is about 2,600 rows and
+     * the caller indexes them one at a time.
+     *
+     * @return iterable<int, array<string, string>>
+     */
+    public function companionRows(string $key): iterable
+    {
+        $path = $this->companionPath($key);
+
+        if (! is_file($path)) {
+            return;
+        }
+
+        foreach ((new CsvRowSource($path))->rows() as $cells) {
+            yield array_map(static fn ($cell): string => (string) $cell, $cells);
+        }
+    }
+
+    public function forgetCompanion(string $key): void
+    {
+        $path = $this->companionPath($key);
+
+        if (is_file($path)) {
+            @unlink($path);
+        }
+
+        $this->forgetStatFile($path, $key);
+
+        /*
+         * The same statement forget() makes for an entity, and for the same
+         * reason: an export that no longer carries this file on this shop is
+         * not described by a manifest that still lists it.
+         */
+        $this->forgetManifestEntry(self::COMPANIONS[$key]['file']);
+    }
+
     /** @return list<string> */
     public static function entities(): array
     {
@@ -360,10 +537,141 @@ final class ImportWorkspace
     }
 
     /**
+     * Accept one upload, which may be one file or a whole group's zip.
+     *
+     * THE ONE DOOR. The controller calls this and nothing else, so that "a zip
+     * behaves exactly as if you had unzipped it and uploaded the files loose"
+     * is a property of one function rather than a coincidence between two.
+     *
+     * A zip reports per file, the way a multi-file upload already does, and for
+     * the same reason ImportApiController::upload() gives: having the fifth
+     * file refused must not discard the four that were fine.
+     *
+     * @param  string|null  $entity  what the owner said it is; null means work it out
+     * @return array{accepted: list<array{entity: string, rows: int, bytes: int, from?: string}>, refused: list<array{message: string}>}
+     */
+    public function acceptUpload(UploadedFile $file, ?string $entity = null): array
+    {
+        if ($file->isValid() && ImportArchive::looksLikeZip((string) $file->getRealPath())) {
+            return $this->acceptArchive($file);
+        }
+
+        try {
+            return ['accepted' => [$this->accept($file, $entity)], 'refused' => []];
+        } catch (ImportUploadRejected $e) {
+            return ['accepted' => [], 'refused' => [['message' => $e->getMessage()]]];
+        }
+    }
+
+    /**
+     * One group zip: unpack it somewhere private, then feed every file in it
+     * through accept() exactly as though the owner had chosen them himself.
+     *
+     * THE ENTITY HINT IS IGNORED HERE, deliberately. "This file is the orders
+     * export" is a statement about one file, and a zip is several by
+     * definition; honouring it would mean writing brands.csv over orders.csv
+     * because a dropdown was left on the wrong setting.
+     *
+     * A FAILURE TO UNPACK IS ONE REFUSAL FOR THE WHOLE ZIP, not one per file.
+     * Every reason ImportArchive refuses is a statement about the archive —
+     * it escapes, it is a bomb, it is a spreadsheet — and there are no files to
+     * report against, because nothing was written.
+     *
+     * @return array{accepted: list<array{entity: string, rows: int, bytes: int, from?: string}>, refused: list<array{message: string}>}
+     */
+    private function acceptArchive(UploadedFile $file): array
+    {
+        $size = (int) $file->getSize();
+
+        if ($size > self::MAX_BYTES) {
+            return ['accepted' => [], 'refused' => [['message' => 'That zip is '.self::humanBytes($size)
+                .'. The limit is '.self::humanBytes(self::MAX_BYTES).' per upload. Export the groups one at '
+                .'a time — the importer resumes, so several smaller zips reach the same result.']]];
+        }
+
+        try {
+            $unpacked = (new ImportArchive)->unpack((string) $file->getRealPath(), $this->incomingDirectory());
+        } catch (ImportUploadRejected $e) {
+            return ['accepted' => [], 'refused' => [['message' => $e->getMessage()]]];
+        }
+
+        $accepted = [];
+        $refused = [];
+
+        try {
+            /*
+             * THE MEMBERS ARE TAKEN IN THE ORDER THE ARCHIVE LISTS THEM, and
+             * there was a usort() here putting manifest.json last.
+             *
+             * It was removed after mutation testing: REVERSING it, so the
+             * manifest went first, left every test green. That is the correct
+             * result and not a gap in the suite — nothing in this loop is
+             * order-dependent. accept() does not read the manifest when it
+             * takes a CSV, acceptManifest() merges against what is on DISK
+             * rather than against anything in this batch, and one zip carries
+             * at most one manifest, so there is no pair of members whose order
+             * changes the outcome.
+             *
+             * The comment it carried said the manifest had to land after the
+             * files it describes. That reads well and was not true of this
+             * code, which is the most expensive kind of comment there is: the
+             * next reader would have preserved an ordering that guarantees
+             * nothing while believing it guaranteed something.
+             */
+            foreach ($unpacked['files'] as $member) {
+                /*
+                 * A real UploadedFile, marked `test` so Symfony skips the
+                 * is_uploaded_file() check — the bytes came out of a zip, not
+                 * out of a POST, and they are on a path this code chose. Doing
+                 * it this way rather than adding a second code path into
+                 * accept() is the whole invariant: the CSV parse, the id-column
+                 * check, the manifest reader and every refusal sentence are the
+                 * ones the loose upload gets, because they are literally the
+                 * same call.
+                 */
+                $inner = new UploadedFile($member['path'], $member['name'], null, null, true);
+
+                try {
+                    $accepted[] = $this->accept($inner) + ['from' => $member['name']];
+                } catch (ImportUploadRejected $e) {
+                    $refused[] = ['message' => $member['name'].' (inside the zip): '.$e->getMessage()];
+                }
+            }
+        } finally {
+            // Whatever happened, the scratch is gone. accept() MOVES the files
+            // it keeps, so what is left here is only what was refused.
+            ImportArchive::purge($unpacked['dir']);
+        }
+
+        return ['accepted' => $accepted, 'refused' => $refused];
+    }
+
+    /**
+     * Where a zip is unpacked before any of it is believed.
+     *
+     * A SIBLING of the import directory, never inside it. ImportRunner::
+     * reportUnreadFiles() globs the import directory and names everything no
+     * importer opens, in the discard list the owner is asked to approve — the
+     * same trap that moved the row-count sidecars out (see metaDirectory()).
+     * A half-unpacked zip appearing in that list would be this lane repeating
+     * a mistake this repository has already paid for.
+     */
+    public function incomingDirectory(): string
+    {
+        $dir = storage_path('app/import/incoming');
+
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+
+        return $dir;
+    }
+
+    /**
      * Accept one uploaded file, or say exactly why not.
      *
      * @param  string|null  $entity  what the owner said it is; null means work it out
-     * @return array{entity: string, rows: int, bytes: int}
+     * @return array{entity: string, rows: int, bytes: int, merged?: bool}
      *
      * @throws ImportUploadRejected
      */
@@ -419,6 +727,23 @@ final class ImportWorkspace
             throw new ImportUploadRejected('That file is not readable as CSV: '.$e->getMessage());
         }
 
+        /*
+         * THE ADDRESSES GROUP, before resolveEntity() gets to refuse it.
+         *
+         * Placed HERE and not earlier on purpose: refuseNonText() and
+         * firstRow() have already run, so a companion goes through exactly the
+         * same "is this really a readable CSV" gate every entity does. And
+         * placed here rather than in front of the filename table, because
+         * companionFor() consults that table first and yields to it — an entity
+         * can never be stolen by this, so the only behaviour that changes is a
+         * refusal becoming an acceptance.
+         */
+        $companion = $this->companionFor($entity, (string) $file->getClientOriginalName());
+
+        if ($companion !== null) {
+            return $this->acceptCompanion($file, $companion, $first);
+        }
+
         $entity = $this->resolveEntity($entity, (string) $file->getClientOriginalName(), $first);
 
         if ($first !== null) {
@@ -471,6 +796,67 @@ final class ImportWorkspace
         }
 
         $this->forgetStat($entity);
+
+        /*
+         * AND THE MANIFEST STOPS DESCRIBING IT.
+         *
+         * Removing a file means it is not part of the export on this shop any
+         * more, so a manifest that still lists it is describing work that will
+         * never happen. Before group zips this cost nothing — the owner
+         * re-uploaded a manifest built from what was left and it REPLACED the
+         * old one, so the entry went with it. Now that a manifest of the same
+         * export MERGES (ImportManifest::merge(), and the long argument for it
+         * there), an omission is silence rather than a deletion — which is the
+         * whole point, because the Catalogue zip's manifest omits orders.csv
+         * and must not delete the Sales zip's entry for it.
+         *
+         * That leaves exactly one case needing a statement rather than silence,
+         * and this is it. Lane GF's
+         * `it gives the catalogue stage no total when only some of its entities
+         * have one` is what found it: a stale entry gives an ABSENT file a
+         * denominator (denominator() reads `rows` from the manifest and there is
+         * no counted number to disagree with it), and MigrationProgress then
+         * sums a total over work that is not there — the bar running ahead of
+         * the import and settling at 100% with a whole file still to come, which
+         * is the thing that page was built to stop telling.
+         *
+         * So: pressing Remove says it out loud, and nothing else has to.
+         */
+        $this->forgetManifestEntry(self::ENTITIES[$entity]['file']);
+    }
+
+    /**
+     * Drop one file from the manifest on disk, leaving the rest of it alone.
+     *
+     * Rewritten rather than deleted: the export id, the source and every other
+     * file's counts are still true and are what the duplicate guard and the
+     * history are built from.
+     */
+    private function forgetManifestEntry(string $file): void
+    {
+        $path = $this->manifestPath();
+        $manifest = ImportManifest::read($path);
+
+        if (! $manifest->usable() || ! $manifest->lists($file)) {
+            return;
+        }
+
+        $raw = $manifest->raw();
+
+        if (is_array($raw['files'] ?? null)) {
+            unset($raw['files'][$file]);
+        }
+
+        if (is_array($raw['groups'] ?? null) && is_array($raw['groups']['files'] ?? null)) {
+            $raw['groups']['files'] = array_values(array_filter(
+                $raw['groups']['files'],
+                static fn (mixed $f): bool => $f !== $file,
+            ));
+        }
+
+        @file_put_contents($path, (string) json_encode($raw, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        clearstatcache(true, $path);
     }
 
     /** What this PHP install will actually accept, which is often less than we allow. */
@@ -551,7 +937,7 @@ final class ImportWorkspace
      * land and refusing at Start instead would put the sentence four screens
      * away from the thing it is about.
      *
-     * @return array{entity: string, rows: int, bytes: int}
+     * @return array{entity: string, rows: int, bytes: int, merged: bool}
      *
      * @throws ImportUploadRejected
      */
@@ -565,20 +951,58 @@ final class ImportWorkspace
 
         $destination = $this->manifestPath();
 
+        /*
+         * A SECOND MANIFEST OF THE SAME EXPORT IS MERGED, NOT SUBSTITUTED.
+         *
+         * Lane GL gives the owner one zip per group, each with its own
+         * manifest.json and all of them carrying one `export_id`. Uploading
+         * Catalogue and then Orders therefore hands this method two manifests
+         * describing two halves of one export, and replacing is the wrong verb
+         * for that: ImportManifest::merge()'s comment is the full argument, and
+         * the short version is that after a replace products.csv is on the disk
+         * and absent from the manifest beside it, which the contract defines to
+         * mean "this export does not carry products".
+         *
+         * A manifest of a DIFFERENT export replaces, as it always did. So does
+         * one with no `export_id` at all — two anonymous manifests are two
+         * unknowns and merging them would join a January export to a September
+         * one because neither said which it was.
+         *
+         * This is on the loose-upload path as well as the zip one, and that is
+         * the point: a zip has to behave exactly as if its files had been
+         * uploaded by hand, and two manifests dragged into the box by hand are
+         * the same two manifests.
+         */
+        $existing = $this->manifest();
+        $merged = null;
+
+        if ($existing->usable() && ImportManifest::sameExport($existing, $manifest)) {
+            $merged = ImportManifest::merge($existing, $manifest);
+        }
+
         if (is_file($destination)) {
             @unlink($destination);
         }
 
-        $file->move($this->directory(), ImportManifest::FILE);
+        if ($merged !== null) {
+            // Written rather than moved: the file that lands is neither of the
+            // two that arrived.
+            @file_put_contents($destination, (string) json_encode($merged, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        } else {
+            $file->move($this->directory(), ImportManifest::FILE);
+        }
 
         @chmod($destination, 0664);
 
         clearstatcache(true, $destination);
 
+        $landed = ImportManifest::read($destination);
+
         return [
             'entity' => 'manifest',
-            'rows' => count($manifest->files()),
+            'rows' => count($landed->files()),
             'bytes' => (int) filesize($destination),
+            'merged' => $merged !== null,
         ];
     }
 
@@ -654,6 +1078,145 @@ final class ImportWorkspace
     }
 
     /**
+     * The entity a filename names, or null.
+     *
+     * Extracted out of resolveEntity() rather than copied, because
+     * companionFor() has to ask the SAME question and a second copy of this
+     * loop is a second copy that can drift — which is the drift the note on
+     * `seo` above records the cost of.
+     *
+     * The filename is used ONLY as a key into the fixed table. It is never
+     * joined to a path.
+     */
+    private function entityFromFilename(string $originalName): ?string
+    {
+        $base = self::normaliseName($originalName);
+
+        foreach (self::ENTITIES as $name => $meta) {
+            $stem = str_replace('.csv', '', $meta['file']);
+
+            if (str_contains($base, $stem) || str_contains($base, str_replace('_', '', $stem))) {
+                return $name;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Is this one of the export's two companion files?
+     *
+     * THREE THINGS HAVE TO BE TRUE, and each one is a rule rather than a
+     * convenience:
+     *
+     *  - THE OWNER DID NOT SAY WHAT IT IS. A dropdown choice is a statement
+     *    about this file and it wins, exactly as it does for an entity. The
+     *    dropdown lists entities only, so "I said products" can never be
+     *    quietly overruled into a permalink file.
+     *
+     *  - NO ENTITY CLAIMS THE NAME. Asked first, so this can only ever turn a
+     *    refusal into an acceptance and never turn one entity into another.
+     *    Nothing in ENTITIES contains the stems below today and this does not
+     *    rely on that staying true.
+     *
+     *  - THE NAME NAMES IT. Never the header. `media.csv` and `products.csv`
+     *    both carry a `url`-ish column, and sniffing between them is the guess
+     *    resolveEntity() refuses to make for the four ambiguous entities.
+     */
+    private function companionFor(?string $entity, string $originalName): ?string
+    {
+        if ($entity !== null && $entity !== '') {
+            return null;
+        }
+
+        if ($this->entityFromFilename($originalName) !== null) {
+            return null;
+        }
+
+        $base = self::normaliseName($originalName);
+
+        foreach (self::COMPANIONS as $key => $meta) {
+            $stem = str_replace('.csv', '', $meta['file']);
+
+            if (str_contains($base, $stem)) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * File a companion, with the same column guard an entity gets.
+     *
+     * WHY THE COLUMN CHECK IS NOT OPTIONAL HERE. Neither of these files is
+     * imported, so neither produces a report the owner would read. A
+     * `permalinks.csv` with no `permalink` column does not fail — it makes
+     * `RedirectMap::fromPermalinks()` skip every row and propose nothing, and
+     * the screen then shows a map that is missing precisely the addresses this
+     * file exists to supply, with no sign that anything went wrong. That is
+     * the shape CLAUDE.md names: a broken filter hiding a second bug.
+     *
+     * @param  array<string, string>|null  $first
+     * @return array{entity: string, rows: int, bytes: int, companion: true}
+     *
+     * @throws ImportUploadRejected
+     */
+    private function acceptCompanion(UploadedFile $file, string $key, ?array $first): array
+    {
+        $meta = self::COMPANIONS[$key];
+
+        if ($first !== null) {
+            foreach ($meta['columns'] as $group) {
+                $found = false;
+
+                foreach ($group as $alias) {
+                    if (array_key_exists($alias, $first)) {
+                        $found = true;
+                        break;
+                    }
+                }
+
+                if (! $found) {
+                    throw new ImportUploadRejected(
+                        'This does not look like the '.$meta['label'].' export: it has no '
+                        .implode(' or ', array_map(static fn (string $a): string => '"'.$a.'"', $group))
+                        .' column. Without it this file would be read by '.$meta['read_by']
+                        .' and produce nothing at all, which looks exactly like not having uploaded it. '
+                        .'Columns found: '.self::sample(array_keys($first))
+                    );
+                }
+            }
+        }
+
+        $destination = $this->companionPath($key);
+
+        if (is_file($destination)) {
+            @unlink($destination);
+        }
+
+        $this->forgetStatFile($destination, $key);
+
+        // The destination is a literal from the table above. The name the
+        // browser sent is not part of it and never touches the filesystem.
+        $file->move($this->directory(), $meta['file']);
+
+        @chmod($destination, 0664);
+
+        $stat = $this->statFile($destination, $key);
+
+        return ['entity' => $key, 'rows' => $stat['rows'], 'bytes' => $stat['bytes'], 'companion' => true];
+    }
+
+    /** Lower-cased basename with every run of non-alphanumerics folded to `_`. */
+    private static function normaliseName(string $originalName): string
+    {
+        $base = mb_strtolower(basename(str_replace('\\', '/', $originalName)));
+
+        return preg_replace('/[^a-z0-9]+/', '_', $base) ?? $base;
+    }
+
+    /**
      * Which of the six this is: what the owner said, else the filename, else
      * an unambiguous id column. Never a guess between two possibilities.
      *
@@ -671,17 +1234,10 @@ final class ImportWorkspace
             return $entity;
         }
 
-        // The filename is used ONLY as a key into the fixed table below. It is
-        // never joined to a path.
-        $base = mb_strtolower(basename(str_replace('\\', '/', $originalName)));
-        $base = preg_replace('/[^a-z0-9]+/', '_', $base) ?? $base;
+        $named = $this->entityFromFilename($originalName);
 
-        foreach (self::ENTITIES as $name => $meta) {
-            $stem = str_replace('.csv', '', $meta['file']);
-
-            if (str_contains($base, $stem) || str_contains($base, str_replace('_', '', $stem))) {
-                return $name;
-            }
+        if ($named !== null) {
+            return $named;
         }
 
         if ($first !== null) {
@@ -719,8 +1275,20 @@ final class ImportWorkspace
      */
     private function stat(string $entity): array
     {
-        $path = $this->path($entity);
-        $sidecar = $this->metaDirectory().'/'.$entity.'.json';
+        return $this->statFile($this->path($entity), $entity);
+    }
+
+    /**
+     * The same, for any file the workspace keeps, keyed by its own sidecar
+     * name. Entities and companions both go through here so a companion's row
+     * count is cached on exactly the same terms — size+mtime — as an entity's,
+     * and a file replaced out of band still recounts.
+     *
+     * @return array{bytes: int, rows: int, fingerprint: string, uploaded_at: string}
+     */
+    private function statFile(string $path, string $key): array
+    {
+        $sidecar = $this->metaDirectory().'/'.$key.'.json';
 
         /*
          * A sidecar from before they moved out of the export folder. Removed
@@ -771,7 +1339,12 @@ final class ImportWorkspace
 
     private function forgetStat(string $entity): void
     {
-        foreach ([$this->metaDirectory().'/'.$entity.'.json', $this->path($entity).'.meta.json'] as $sidecar) {
+        $this->forgetStatFile($this->path($entity), $entity);
+    }
+
+    private function forgetStatFile(string $path, string $key): void
+    {
+        foreach ([$this->metaDirectory().'/'.$key.'.json', $path.'.meta.json'] as $sidecar) {
             if (is_file($sidecar)) {
                 @unlink($sidecar);
             }

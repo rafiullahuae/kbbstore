@@ -521,6 +521,25 @@ over FTP and **delete it from the server**: `customers.csv` holds every
 shopper's address and password hash, and `reviews.csv` holds reviewers' email
 addresses and the IPs they posted from.
 
+The screen offers the export in eight ticked groups rather than all at once, so
+a second pass can carry only this month's orders. The order the new shop needs
+them in is the order they are listed on the screen, and it matters: importing
+orders before the customers they belong to costs customer rows. The screen will
+not let you start a selection that does that until you have either added the
+missing group or confirmed it is already imported here, and either way it writes
+what you chose into `manifest.json`. `docs/GK-EXPORT-GROUPS.md` has the reasoning
+and what each choice costs.
+
+You no longer need FTP to fetch it. When the export finishes, the screen packs
+one zip per exported group and offers a Download button for each — every archive
+is a complete import on its own, so unpack one into an empty folder and point
+`kbb:import` at that folder. Import them in the order the screen lists them: that
+order is not cosmetic, and importing orders before the customers they belong to
+costs customer rows. Every archive of one export carries the same `export_id`, so
+the shop can tell they are parts of one export. Delete the folder from the server
+once they are all downloaded — the archives hold the same password hashes and
+reviewer IPs the CSVs do. `docs/GL-GROUP-DOWNLOADS.md` §2 has the archive shape.
+
 `manifest.json` is written LAST, so a folder without one is an export that did
 not finish. Read `source.timezone` out of it and pass it as `--timezone`;
 `App\Services\Import\DateParser` refuses to default it and reading Dubai

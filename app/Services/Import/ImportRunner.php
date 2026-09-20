@@ -614,6 +614,16 @@ final class ImportRunner
         $claimed = [
             'permalinks.csv' => true,
             /*
+             * media.csv is the other half of Lane GK's "Addresses and
+             * pictures" group and is read by the picture audit on Store →
+             * Import → Addresses & pictures (App\Services\Import\MediaIndex).
+             * It reaches this directory because ImportWorkspace now accepts it
+             * instead of refusing it by name; naming it here as a file nothing
+             * opens would be false, and one false line is what teaches the
+             * owner to skim the whole list.
+             */
+            'media.csv' => true,
+            /*
              * manifest.json IS READ — App\Services\ImportConsole\ImportManifest
              * reads it for the progress denominator, the duplicate guard and the
              * record of which export this data came from. Before the export

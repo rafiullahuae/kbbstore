@@ -6,6 +6,8 @@ namespace App\Services\Import;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Page;
+use App\Models\Post;
 use App\Models\Product;
 use App\Models\Redirect;
 use App\Support\LegacyCategoryUrls;
@@ -568,6 +570,57 @@ final class RedirectMap
             $path = (string) ($category->path ?? '');
 
             return $this->categoryPath($path === '' ? (string) $category->slug : $path);
+        }
+
+        /*
+         * =====================================================================
+         * ARTICLES AND PAGES, WHICH THIS DID NOT ANSWER AND HAD TO
+         * =====================================================================
+         *
+         * Until permalinks.csv could reach this class there was nothing to
+         * notice: the only caller was `kbb:import-redirects --permalinks=…`,
+         * a command the owner cannot run. The first time a real permalink file
+         * was fed through the import screen, EVERY post and page row in it
+         * landed in the ASK bucket saying "nothing in this shop carries post id
+         * 501 — either it was never imported, or it is in the discard bucket".
+         * Measured: all thirteen of them, about addresses this shop was already
+         * answering 200 on.
+         *
+         * Two separate costs, and the second is the one that matters:
+         *
+         *   THE SENTENCE WAS FALSE. The post was imported and the address does
+         *   resolve. A row whose reason is wrong is worse than a row missing.
+         *
+         *   THE ASK BUCKET IS THE OWNER'S WORK LIST. Phase 13 has him approve
+         *   it by hand. On the real export permalinks.csv carries one row per
+         *   post and one per page — the blog is the largest post type after
+         *   products — so his list of decisions would have been mostly rows
+         *   needing no decision, which docs/FV-IMPORT-AT-VOLUME.md §10 is
+         *   explicit is a list nobody finishes.
+         *
+         * Both tables key on `source_post_id`, which is what PostImporter and
+         * the page import match on. The address is the SITE ROOT with no
+         * prefix, which is not an inference: 2026_09_14_160000_seed_phase9_post_
+         * url_redirects records the owner confirming it for articles, and the
+         * seven WordPress pages are literal routes at the root already.
+         *
+         * Nearly all of these then land in DISCARD — old address and new
+         * address identical — which is the correct answer and the one the shop
+         * could not previously give. The ones that do NOT are the rows worth
+         * his attention: a post whose slug changed on import (SlugGuard
+         * refusing a collision with a reserved slug is the real case), which is
+         * exactly a redirect that needs writing.
+         */
+        if (in_array($type, ['post', 'posts'], true)) {
+            $post = Post::query()->where('source_post_id', $wcId)->first(['slug']);
+
+            return $post === null ? null : '/'.$post->slug.'/';
+        }
+
+        if (in_array($type, ['page', 'pages'], true)) {
+            $page = Page::query()->where('source_post_id', $wcId)->first(['slug']);
+
+            return $page === null ? null : '/'.$page->slug.'/';
         }
 
         if (in_array($type, ['brand', 'brands', 'product_brand', 'pa_brands'], true)) {

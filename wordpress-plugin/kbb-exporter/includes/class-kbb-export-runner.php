@@ -66,9 +66,21 @@ class KBB_Export_Runner {
 				// the notes; CustomerImporter makes each a customer row and the
 				// owner filters afterwards if he wants to.
 				'include_posts'  => true,
+				/*
+				 * WHICH GROUPS, and what the operator said about the ones he
+				 * left out. Defaulting to every group keeps the old behaviour
+				 * exactly: a caller that knows nothing about groups -- the
+				 * harness before this lane, a future WP-CLI command -- gets the
+				 * whole export and no dependency is ever unmet.
+				 */
+				'groups'         => KBB_Export_Groups::keys(),
+				'confirmed'      => array(),
 			),
 			$settings
 		);
+
+		$this->settings['groups']    = KBB_Export_Groups::normalise( (array) $this->settings['groups'] );
+		$this->settings['confirmed'] = array_values( (array) $this->settings['confirmed'] );
 
 		$this->state = $this->load_state();
 	}
@@ -88,6 +100,34 @@ class KBB_Export_Runner {
 	 * @return array{ok: bool, error: string}
 	 */
 	public function start() {
+		/*
+		 * THE DEPENDENCY GUARD, AND IT IS HERE AND NOT ONLY IN THE BROWSER.
+		 *
+		 * The admin screen disables the button, which is a statement about one
+		 * browser with JavaScript running in it. This is the statement about the
+		 * export. A selection whose dependencies are neither satisfied nor
+		 * confirmed does not start, and the sentence it refuses with is the same
+		 * one the screen prints, so the two cannot describe the hazard
+		 * differently.
+		 *
+		 * It refuses rather than auto-ticking the missing group on purpose: the
+		 * missing group may well already be in the new shop, and re-exporting
+		 * 671 products to get 40 coupons is the waste this screen exists to
+		 * remove. Only the owner knows which, so only the owner can say.
+		 */
+		$outstanding = KBB_Export_Groups::outstanding(
+			(array) $this->settings['groups'],
+			(array) $this->settings['confirmed']
+		);
+
+		if ( ! empty( $outstanding ) ) {
+			return array( 'ok' => false, 'error' => KBB_Export_Groups::refusal( $outstanding ) );
+		}
+
+		if ( empty( $this->settings['groups'] ) ) {
+			return array( 'ok' => false, 'error' => 'Nothing is ticked. Choose at least one group to export.' );
+		}
+
 		$detected = KBB_Export_Orders_Source::detect();
 
 		if ( null === $detected['source'] ) {
@@ -130,6 +170,20 @@ class KBB_Export_Runner {
 		}
 
 		$this->state['notes'][] = 'Orders were read from ' . $this->orders->describe();
+
+		/*
+		 * WHAT THIS EXPORT DOES NOT CARRY, in words, in the file the shop reads.
+		 *
+		 * A row silently absent from an export is worse than a row the importer
+		 * refuses -- the refusal is in a report the owner reads and the absence
+		 * is in no report at all. A whole GROUP silently absent is that same
+		 * defect multiplied by four files, so every skipped group gets a
+		 * sentence, and so does every dependency the operator waved through on
+		 * the grounds that it is already in the new shop.
+		 */
+		foreach ( KBB_Export_Groups::notes( $this->settings['groups'], $this->settings['confirmed'] ) as $note ) {
+			$this->state['notes'][] = $note;
+		}
 
 		/*
 		 * THE SETTINGS ARE PINNED TO THE EXPORT, NOT TO THE REQUEST.
@@ -214,7 +268,8 @@ class KBB_Export_Runner {
 	 * @return array<string,mixed> the manifest, as written
 	 */
 	public function finish() {
-		$files = array();
+		$pinned = $this->pinned_settings();
+		$files  = array();
 		$counts = array();
 
 		foreach ( $this->stages() as $stage ) {
@@ -274,6 +329,23 @@ class KBB_Export_Runner {
 			),
 			'files'        => $files,
 			'counts'       => $counts,
+			/*
+			 * WHICH GROUPS THIS EXPORT CARRIES, said out loud.
+			 *
+			 * `files` above already says it structurally -- a skipped group's
+			 * files are absent from it rather than present with "rows": 0, and
+			 * docs/WP-EXPORT-CONTRACT.md is explicit that those are different
+			 * facts, App\Services\ImportConsole\ImportManifest::lists() is the
+			 * reader, and the import screen prints the difference per entity.
+			 * This block is the same fact in the owner's vocabulary plus the one
+			 * thing a file list cannot carry: what he confirmed was ALREADY in
+			 * the new shop, which is a claim about the other shop that only he
+			 * can make.
+			 */
+			'groups'       => KBB_Export_Groups::manifest_block(
+				(array) $pinned['groups'],
+				(array) $pinned['confirmed']
+			),
 			'notes'        => array_values( (array) $this->state['notes'] ),
 		);
 
@@ -281,10 +353,229 @@ class KBB_Export_Runner {
 
 		file_put_contents( $this->state['dir'] . '/manifest.json', $json . "\n" );
 
+		/*
+		 * ── AND NOW THE ZIPS, AS THEIR OWN PHASE ────────────────────────────
+		 *
+		 * The owner's words: "allow to download each group seperate files. so
+		 * will have no any heavy file." One archive per group, built HERE and
+		 * not during the export, because the manifest each archive carries is
+		 * derived from this one and this one is written last.
+		 *
+		 * The queue is seeded and NOT drained. Compressing 10,571 order lines in
+		 * the request that finished the export would put the timeout back
+		 * exactly where the per-batch loop took it from, so the browser drives
+		 * the zip phase the same way it drives the export: one file into one
+		 * archive per request. See KBB_Export_Zip::plan().
+		 *
+		 * `done` keeps its existing meaning -- every CSV written and the
+		 * manifest closed -- because the folder is a complete, importable export
+		 * at that moment whether or not anything is zipped, and every test and
+		 * every reader that already depends on that sentence is right. The zip
+		 * phase reports itself separately.
+		 */
+		$this->state['zip'] = array(
+			'cursor'    => 0,
+			'plan'      => KBB_Export_Zip::plan( $manifest ),
+			'error'     => KBB_Export_Zip::available() ? '' : KBB_Export_Zip::unavailable_reason(),
+			'available' => KBB_Export_Zip::available(),
+		);
+
 		$this->state['done'] = true;
 		$this->save_state();
 
 		return $manifest;
+	}
+
+	/**
+	 * The manifest this export wrote, read back off disk.
+	 *
+	 * Read back rather than kept in the state on purpose: it is what the ZIPS
+	 * are built from, and building them from the file that will actually be
+	 * shipped means a zip cannot describe a manifest that differs from the one
+	 * beside it in the folder.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function manifest() {
+		if ( empty( $this->state['dir'] ) ) {
+			return array();
+		}
+
+		$path = $this->state['dir'] . '/manifest.json';
+
+		if ( ! file_exists( $path ) ) {
+			return array();
+		}
+
+		$decoded = json_decode( (string) file_get_contents( $path ), true );
+
+		return is_array( $decoded ) ? $decoded : array();
+	}
+
+	/**
+	 * ONE BOUNDED UNIT OF THE ZIP PHASE: one file into one group's archive.
+	 *
+	 * Driven by the browser exactly as step() is, and for exactly the same
+	 * reason -- this host kills a request at 110 seconds and a group is not a
+	 * unit of work that respects that. A request that dies costs one file, and
+	 * the cursor in the option means pressing Resume picks up on the next one.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function zip_step() {
+		if ( empty( $this->state ) || empty( $this->state['done'] ) ) {
+			return array(
+				'ok'    => false,
+				'error' => 'There is no finished export to pack. Run the export first.',
+			);
+		}
+
+		if ( ! KBB_Export_Zip::available() ) {
+			/*
+			 * NOT FATAL, AND NOT SILENT. A host without ext-zip has a complete,
+			 * correct export sitting in the folder; what it does not have is the
+			 * convenience of downloading it from this screen. Saying so and
+			 * stopping is the honest answer, and the screen prints the sentence
+			 * beside the FTP path.
+			 */
+			$this->state['zip'] = array(
+				'cursor'    => 0,
+				'plan'      => array(),
+				'error'     => KBB_Export_Zip::unavailable_reason(),
+				'available' => false,
+			);
+
+			$this->save_state();
+
+			return $this->zip_progress();
+		}
+
+		if ( empty( $this->state['zip'] ) || ! isset( $this->state['zip']['plan'] ) ) {
+			// An export finished before this lane existed has no queue. Build
+			// one now rather than telling him to run the whole export again.
+			$this->state['zip'] = array(
+				'cursor'    => 0,
+				'plan'      => KBB_Export_Zip::plan( $this->manifest() ),
+				'error'     => '',
+				'available' => true,
+			);
+		}
+
+		$plan   = (array) $this->state['zip']['plan'];
+		$cursor = (int) $this->state['zip']['cursor'];
+
+		if ( $cursor >= count( $plan ) ) {
+			return $this->zip_progress();
+		}
+
+		$result = KBB_Export_Zip::add( $this->state['dir'], $this->manifest(), $plan[ $cursor ] );
+
+		if ( ! $result['ok'] ) {
+			$this->state['zip']['error'] = $result['error'];
+
+			$this->save_state();
+
+			return array( 'ok' => false, 'error' => $result['error'] );
+		}
+
+		// Written first, saved second, for the reason step() gives: a request
+		// killed between them repeats a unit, which is harmless because adding
+		// the same entry to the same archive again is the same archive.
+		$this->state['zip']['cursor'] = $cursor + 1;
+
+		$this->save_state();
+
+		return $this->zip_progress();
+	}
+
+	/**
+	 * What the screen prints beside each group's Download button.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function zip_progress() {
+		$manifest = $this->manifest();
+		$zip      = isset( $this->state['zip'] ) ? (array) $this->state['zip'] : array();
+		$plan     = isset( $zip['plan'] ) ? (array) $zip['plan'] : array();
+		$cursor   = isset( $zip['cursor'] ) ? (int) $zip['cursor'] : 0;
+		$ok       = ! isset( $zip['available'] ) || ! empty( $zip['available'] );
+
+		return array(
+			'ok'         => true,
+			'error'      => '',
+			'available'  => $ok,
+			'reason'     => isset( $zip['error'] ) ? (string) $zip['error'] : '',
+			'units_done' => min( $cursor, count( $plan ) ),
+			'units'      => count( $plan ),
+			'done'       => ! $ok || $cursor >= count( $plan ),
+			'percent'    => count( $plan ) > 0
+				? ( $cursor >= count( $plan ) ? 100 : (int) floor( $cursor * 100 / count( $plan ) ) )
+				: 100,
+			'groups'     => empty( $manifest ) ? array() : array_values( KBB_Export_Zip::status( $this->state['dir'], $manifest ) ),
+		);
+	}
+
+	/**
+	 * The archive a download request is asking for, resolved SERVER SIDE.
+	 *
+	 * ── NO PATH FROM THE REQUEST EVER REACHES THE FILESYSTEM ────────────────
+	 *
+	 * The request carries a group key and a part number and nothing else. The
+	 * folder comes from this runner's own state and the file name is computed by
+	 * KBB_Export_Zip::zip_name() from that state's export id. There is no
+	 * concatenation of anything the browser sent into a path, so there is no
+	 * traversal to defend against rather than a defence to get right -- which is
+	 * the difference between this and a sanitised `?file=` parameter.
+	 *
+	 * The group key is checked against the plugin's own declaration and the part
+	 * against the queue, so an id that was never issued and a group that was
+	 * never exported do the same work and give the same answer. That is the same
+	 * shape docs/CLAUDE notes require of QuizSubmission::findByPublicToken().
+	 *
+	 * @param string $group
+	 * @param int    $part
+	 * @return array{ok: bool, error: string, path: string, name: string}
+	 */
+	public function archive_path( $group, $part = 1 ) {
+		$miss = array( 'ok' => false, 'error' => 'There is no such download.', 'path' => '', 'name' => '' );
+
+		if ( empty( $this->state['dir'] ) || empty( $this->state['done'] ) ) {
+			return $miss;
+		}
+
+		if ( ! KBB_Export_Groups::exists( (string) $group ) ) {
+			return $miss;
+		}
+
+		$manifest = $this->manifest();
+
+		if ( empty( $manifest ) ) {
+			return $miss;
+		}
+
+		$part = max( 1, (int) $part );
+
+		foreach ( KBB_Export_Zip::plan( $manifest ) as $unit ) {
+			if ( $unit['group'] !== $group || (int) $unit['part'] !== $part ) {
+				continue;
+			}
+
+			$name = KBB_Export_Zip::zip_name( $group, $manifest['export_id'], $part, $unit['parts'] );
+			$path = $this->state['dir'] . '/' . $name;
+
+			if ( ! file_exists( $path ) ) {
+				return array(
+					'ok'    => false,
+					'error' => 'That archive has not been packed yet.',
+					'path'  => '',
+					'name'  => $name,
+				);
+			}
+
+			return array( 'ok' => true, 'error' => '', 'path' => $path, 'name' => $name );
+		}
+
+		return $miss;
 	}
 
 	/** @return array<string,mixed> */
@@ -302,6 +593,7 @@ class KBB_Export_Runner {
 		}
 
 		return array(
+			'groups'    => $this->group_progress( $stages, $index ),
 			'ok'        => true,
 			'error'     => '',
 			'export_id' => isset( $this->state['export_id'] ) ? $this->state['export_id'] : '',
@@ -348,7 +640,89 @@ class KBB_Export_Runner {
 			'done'      => ! empty( $this->state['done'] ),
 			'storage'   => isset( $this->state['storage_note'] ) ? $this->state['storage_note'] : '',
 			'notes'     => isset( $this->state['notes'] ) ? $this->state['notes'] : array(),
+			/*
+			 * The zip phase, on the same document the bar is drawn from, so the
+			 * screen does not have to ask twice to know whether a group can be
+			 * downloaded yet. Empty until the export finishes, because there is
+			 * nothing to pack before the manifest exists.
+			 */
+			'zip'       => ! empty( $this->state['done'] ) ? $this->zip_progress() : null,
 		);
+	}
+
+	/**
+	 * One bar per ticked group, which is what the owner asked for.
+	 *
+	 * ── THE SAME HONESTY RULE AS THE WHOLE-EXPORT BAR ───────────────────────
+	 *
+	 * Per group, not only overall, because "Writing media.csv, file 14 of 17" is
+	 * a sentence about a file and the owner ticked GROUPS. It uses exactly the
+	 * arithmetic progress() uses for the whole export, for the same reason and
+	 * with the same two corrections: the denominator is max(total, written), so
+	 * a stage that writes more rows than its total() predicted -- the media
+	 * stage really does, about five to one -- cannot push a bar past its own
+	 * end; and the percentage is capped at 99 until the group's last file is
+	 * finished, so a full bar means the group is done and nothing else.
+	 *
+	 * `state` is the same three the whole screen uses and
+	 * docs/GD-MEDIA-SIDELOADER.md insisted on: a group that has not started, the
+	 * one being written, and the ones finished. A bar sitting still because its
+	 * group has not begun and a bar sitting still because the request died must
+	 * not look the same.
+	 *
+	 * @param array<int,KBB_Export_Stage> $stages
+	 * @param int                         $index
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function group_progress( array $stages, $index ) {
+		$all      = KBB_Export_Groups::all();
+		$selected = KBB_Export_Groups::normalise( (array) $this->pinned_settings()['groups'] );
+		$out      = array();
+
+		foreach ( $selected as $key ) {
+			$total    = 0;
+			$written  = 0;
+			$files    = array();
+			$first    = null;
+			$last     = null;
+
+			foreach ( $stages as $position => $stage ) {
+				$file = $stage->file();
+
+				if ( ! in_array( $file, $all[ $key ]['files'], true ) ) {
+					continue;
+				}
+
+				$files[] = $file;
+				$first   = null === $first ? $position : $first;
+				$last    = $position;
+
+				$total   += isset( $this->state['totals'][ $file ] ) ? (int) $this->state['totals'][ $file ] : 0;
+				$written += isset( $this->state['written'][ $file ] ) ? (int) $this->state['written'][ $file ] : 0;
+			}
+
+			if ( null === $first ) {
+				continue;
+			}
+
+			$done = ! empty( $this->state['done'] ) || $index > $last;
+
+			$out[] = array(
+				'key'        => $key,
+				'label'      => $all[ $key ]['label'],
+				'files'      => $files,
+				'rows_done'  => $written,
+				'rows_total' => max( $total, $written ),
+				'percent'    => $done
+					? 100
+					: ( max( $total, $written ) > 0
+						? min( 99, (int) floor( $written * 100 / max( $total, $written ) ) )
+						: 0 ),
+				'state'      => $done ? 'done' : ( $index >= $first ? 'running' : 'pending' ),
+			);
+		}
+
+		return $out;
 	}
 
 	/**
@@ -391,7 +765,7 @@ class KBB_Export_Runner {
 
 		$s = $this->pinned_settings();
 
-		$this->stages = array(
+		$all = array(
 			new KBB_Export_Stage_Categories( $s ),
 			new KBB_Export_Stage_Brands( $s ),
 			new KBB_Export_Stage_Tags( $s ),
@@ -411,6 +785,42 @@ class KBB_Export_Runner {
 			new KBB_Export_Stage_Media( $s ),
 		);
 
+		/*
+		 * ── THE SELECTION FILTERS THE STAGE LIST, IT DOES NOT REORDER IT ────
+		 *
+		 * The order above is the export's own failure mode: the catalogue comes
+		 * out first, so an export that dies at 60% has the products and the
+		 * orders and not just the tags. A selection is therefore a SUBSET of
+		 * this sequence, never a resequencing of it -- KBB_Export_Groups::
+		 * normalise() puts the operator's ticks back into declared order for
+		 * the same reason.
+		 *
+		 * Filtering here rather than at every call site is what makes Pause and
+		 * Resume work per group with no extra state: `stage` is an index into
+		 * THIS list, `total()` is asked only of the stages in it, and every file
+		 * a skipped group would have written is never opened, so it is absent
+		 * from the folder and absent from the manifest -- which is the fact
+		 * docs/WP-EXPORT-CONTRACT.md distinguishes from "rows": 0.
+		 *
+		 * The settings are pinned to the export (see pinned_settings), so
+		 * `groups` cannot change between batches. Un-ticking a group mid-run
+		 * would shorten this list under a cursor that is an index into it, and
+		 * the export would carry on inside a different file.
+		 */
+		$wanted = KBB_Export_Groups::files_for( (array) $s['groups'] );
+
+		$this->stages = array();
+
+		foreach ( $all as $stage ) {
+			if ( in_array( $stage->file(), $wanted, true ) ) {
+				$this->stages[] = $stage;
+			}
+		}
+
+		// array_values, because the runner indexes this list by position and a
+		// filtered array keeps its original keys.
+		$this->stages = array_values( $this->stages );
+
 		return $this->stages;
 	}
 
@@ -427,6 +837,16 @@ class KBB_Export_Runner {
 
 		$pinned          = $this->state['settings'];
 		$pinned['batch'] = $this->settings['batch'];
+
+		// An export started before groups existed has no `groups` key in its
+		// state. It was a whole export, so that is what it resumes as.
+		if ( ! isset( $pinned['groups'] ) ) {
+			$pinned['groups'] = KBB_Export_Groups::keys();
+		}
+
+		if ( ! isset( $pinned['confirmed'] ) ) {
+			$pinned['confirmed'] = array();
+		}
 
 		return $pinned;
 	}

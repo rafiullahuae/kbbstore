@@ -282,9 +282,17 @@ final class YoastTiers
         ],
 
         /* ── Yoast WooCommerce SEO add-on ───────────────────────────────── */
+        /*
+         * IMPORTED SINCE LANE GQ. Every piece of this existed separately for
+         * months -- the export carried the column, gtinFrom() below unpicked
+         * it, `products.gtin` was there and App\Support\Seo published it -- and
+         * nothing joined them, which is what the migration census was for.
+         * SeoImporter now writes it, never over a barcode the owner typed.
+         */
         'wpseo_global_identifier_values' => [
-            'tier' => self::WOO, 'use' => self::USE_UNREAD,
-            'note' => 'GTIN-8/12/13/14, ISBN and MPN in one map — products.gtin exists and nothing imports this',
+            'tier' => self::WOO, 'use' => self::USE_IMPORTED,
+            'note' => 'GTIN-8/12/13/14, ISBN and MPN in one map — the first valid GTIN goes into products.gtin, '
+                .'which App\Support\Seo publishes in the Product node; an MPN or a failed check digit is left out',
         ],
         'wpseo_variation_global_identifiers_values' => [
             'tier' => self::WOO, 'use' => self::USE_UNREAD,
@@ -474,8 +482,22 @@ final class YoastTiers
                 .'which is an answer and not a failure';
         }
 
-        if ($gtinSource) {
-            $parts[] = 'AND IT CARRIES BARCODES: products.gtin exists and nothing imports them yet';
+        /*
+         * TWO SENTENCES, BECAUSE THE TWO KEYS NO LONGER SHARE AN ANSWER. The
+         * product map is imported; the per-variation map is not, because
+         * `product_variants` has no gtin column to put it in. One line covering
+         * both would have to be wrong about one of them, and "it carries
+         * barcodes and nothing imports them" is exactly the false alarm that
+         * teaches an owner to skim this report.
+         */
+        if (in_array('wpseo_global_identifier_values', $keysSeen, true)) {
+            $parts[] = 'AND IT CARRIES BARCODES: the product identifier map is imported into products.gtin '
+                .'and published in the Product schema';
+        }
+
+        if (in_array('wpseo_variation_global_identifiers_values', $keysSeen, true)) {
+            $parts[] = 'AND IT CARRIES PER-VARIATION BARCODES, which are NOT imported: product_variants has '
+                .'no gtin column for them yet';
         }
 
         return [
@@ -582,7 +604,26 @@ final class YoastTiers
             return [$meta];
         }
 
-        return [$meta, ltrim($meta, '_'), (string) preg_replace('/^_?yoast_wpseo_/', '', $meta)];
+        $bare = (string) preg_replace('/^_?yoast_wpseo_/', '', $meta);
+
+        /*
+         * The hyphen spellings too, for the reason written out in full on
+         * YoastSeo::pick(): CsvRowSource rewrites `opengraph-image` to
+         * `opengraph_image` in the header, so a candidate list that only ever
+         * carries the hyphen matches nothing on a real export. This class's
+         * census would otherwise report the two hyphenated free-tier keys as
+         * absent from a shop that has them.
+         */
+        $underscored = str_replace('-', '_', $meta);
+
+        return array_values(array_unique([
+            $meta,
+            ltrim($meta, '_'),
+            $bare,
+            $underscored,
+            ltrim($underscored, '_'),
+            str_replace('-', '_', $bare),
+        ]));
     }
 
     /**

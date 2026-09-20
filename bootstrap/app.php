@@ -146,4 +146,27 @@ return Application::configure(basePath: dirname(__DIR__))
      * from the real process environment, which is what a preview or a CI job
      * can set and what production simply leaves unset.
      */
-    ->usePublicPath(getenv('KBB_PUBLIC_PATH') ?: '/home/u815237650/domains/easywebsol.com/public_html/kbb-upgrade');
+    /*
+     * THE THIRD SOURCE, AND IT IS THE ONE A NEW INSTALL USES.
+     *
+     * `bootstrap/public-path.php` does not exist in this repository and is not
+     * shipped by anything. install.php writes it, once, when a customer sets the
+     * shop up on their own hosting -- because the fallback below names a folder
+     * on exactly one server in the world and there is no shell for them to fix
+     * it with.
+     *
+     * It is consulted BETWEEN the two existing sources, so nothing changes for
+     * anyone: a preview or a CI job still wins with the real environment
+     * variable, and a server that has neither still gets the literal below,
+     * byte for byte. On the live shop this include simply does not exist and the
+     * expression is what it has always been.
+     *
+     * @ on the include deliberately: an unreadable or half-written file must
+     * degrade to the fallback rather than take the site down, and this line runs
+     * before any error handler exists to make sense of a warning.
+     */
+    ->usePublicPath(
+        getenv('KBB_PUBLIC_PATH')
+        ?: (is_file(__DIR__.'/public-path.php') ? (@include __DIR__.'/public-path.php') : null)
+        ?: '/home/u815237650/domains/easywebsol.com/public_html/kbb-upgrade'
+    );

@@ -432,7 +432,12 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // from, when it was taken and what each run did. Same group, because it
         // names the owner's own site, the digests of his export files and the
         // note text lifted out of his catalogue.
-        require __DIR__.'/import-history-admin.php';
+
+        // Store → Import → the run that keeps going with the tab closed (Lane
+        // GO). Same group and the same reason as the two files above: pressing
+        // this makes the shop rewrite its own catalogue, customer list and
+        // order history, unattended, for as long as it takes.
+        require __DIR__.'/import-background-admin.php';
 
         // Store → Import → "Addresses & pictures" (Lane GB). Same group and the
         // same reason: one of these endpoints writes the redirect rows that
@@ -658,6 +663,16 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          * group they would be public writes to the leads table.
          */
         require __DIR__ . '/quiz-leads-admin.php';
+
+        /*
+         * Settings → Site address: which address is the shop's real one, which
+         * old ones forward to it, and whether this install is public at all.
+         * Inside this group for the same reason the line above is: the routes
+         * carry no middleware of their own, and outside it a POST would be an
+         * unauthenticated write that could point the shop at another domain.
+         */
+        require __DIR__.'/site-address-admin.php';
+
         Route::get('/orders',                [AdminController::class, 'orders']);
         Route::get('/orders/{id}',           [AdminController::class, 'order']);
         Route::get('/orders/{id}/detail',    [\App\Http\Controllers\Admin\AdminOrderController::class, 'show']);
@@ -880,7 +895,17 @@ require __DIR__.'/checkout-line.php';
  * request whose session does not name the order being asked about, so a group
  * without session middleware would refuse every one of them.
  */
-require __DIR__.'/checkout-card.php';
+
+/*
+ * The loopback call that keeps a background import going (Lane GO). Top level
+ * in the web group, NOT inside admin-api and NOT in routes/api.php: it is made
+ * by this server with no session, because the owner has closed the tab, and its
+ * own file's header is the argument for every part of that. It excludes CSRF at
+ * the route because the caller has no token to carry. Two path segments, so the
+ * Phase 9 root-segment catch-all below cannot reach it — but registered before
+ * it all the same.
+ */
+require __DIR__.'/import-chain.php';
 
 /*
  * Required last, and that placement is load-bearing. The final route in this

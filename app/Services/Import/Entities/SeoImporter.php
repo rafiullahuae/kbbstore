@@ -98,6 +98,32 @@ final class SeoImporter extends EntityImporter
         $cells = $row->all();
 
         /*
+         * ── SAY WHICH COLUMNS THIS ENTITY READ ──────────────────────────────
+         *
+         * all() hands back every cell without asking Row for any of them by
+         * name, so without this line the runner sees an entity that read
+         * nothing but `id` and names every Yoast column of the file in its
+         * consolidated "columns nothing reads" discard -- including
+         * `_yoast_wpseo_metadesc`, `_yoast_wpseo_title` and
+         * `wpseo_global_identifier_values`, all three of which this method
+         * writes to `products`. Measured on Lane GE's export: seven columns
+         * named as lost, four of them imported.
+         *
+         * The three vocabularies are the three things this method does with a
+         * column: MAPPED is imported, UNMAPPED is discarded BY NAME with its
+         * value a few lines below, and YoastTiers::KEYS is noted with its tier.
+         * A wpseo column in none of them is genuinely unread and stays in the
+         * consolidated line, which is where it belongs.
+         */
+        foreach (YoastSeo::recognisedColumns($cells, [
+            ...array_keys(YoastSeo::MAPPED),
+            ...YoastSeo::UNMAPPED,
+            ...array_keys(YoastTiers::KEYS),
+        ]) as $column) {
+            $row->has($column);
+        }
+
+        /*
          * A row with no Yoast column at all is a file problem, not a row
          * problem — most likely the products export handed to --files=seo by
          * mistake. Rejecting it row by row turns one wrong path into 671
@@ -239,6 +265,39 @@ final class SeoImporter extends EntityImporter
             );
         }
 
+        /*
+         * ── THE BARCODES, WHICH HAD EVERY PIECE BUT THE WIRE ────────────────
+         *
+         * `wpseo_global_identifier_values` is the Yoast WooCommerce SEO add-on's
+         * identifier map. Until now this shop had all four parts of importing it
+         * and none of the joins: the export carries the column (Lane GE made the
+         * SELECT `LIKE 'wpseo_%'` as well as `LIKE '_yoast_wpseo_%'` precisely
+         * so it would be there), `YoastTiers::gtinFrom()` unpicks both the JSON
+         * and the PHP-serialised shape and validates the check digit,
+         * `products.gtin` exists, and `App\Support\Seo` publishes it into the
+         * Product node the moment it is not null. YoastTiers said so in its own
+         * report line -- "NOT imported, AND THERE IS SOMEWHERE FOR IT TO GO".
+         *
+         * WHY IT IS WORTH THE THREE LINES. Google matches a product listing on
+         * its GTIN. Without one, 671 products publish as anonymous offers; with
+         * one they are the same product Google already knows, which is the
+         * difference between appearing in a shopping result and not.
+         *
+         * NEVER OVERWRITES. Same rule as the `seo` merge below and for the same
+         * reason: the product editor writes this column too, and a barcode the
+         * owner typed in this shop beats one carried over from a five-year-old
+         * Yoast field. A row whose map holds only an MPN, or a number that fails
+         * its own check digit, comes back null from gtinFrom() and leaves the
+         * column alone -- "somebody else's barcode" is the failure being avoided,
+         * not "no barcode".
+         */
+        $gtin = YoastTiers::gtinFrom($cells);
+        $gtinOutcome = 'unchanged';
+
+        if ($gtin !== null && ($product->gtin === null || $product->gtin === '')) {
+            $gtinOutcome = $context->apply($product, ['gtin' => $gtin]);
+        }
+
         if ($fragment === []) {
             /*
              * Every Yoast column on this row was blank — which is the COMMON
@@ -246,7 +305,16 @@ final class SeoImporter extends EntityImporter
              * have never had their SEO tab opened. Recorded as unchanged so the
              * tallies are honest about how much of the file carried anything.
              */
-            $context->record($this->name(), 'unchanged');
+            /*
+             * 'unchanged' UNLESS THE BARCODE WAS WRITTEN. A product whose Yoast
+             * tab was never opened but which carries an identifier map is a
+             * real and common row -- the add-on writes that field from the
+             * product's own Inventory tab -- and recording it as unchanged
+             * after writing to it would make the entity's tallies disagree with
+             * what is in the table, which is the one thing the count check
+             * after each bucket exists to catch.
+             */
+            $context->record($this->name(), $gtinOutcome);
 
             return;
         }
@@ -255,6 +323,8 @@ final class SeoImporter extends EntityImporter
         // one-field change on ImportOptions, which this lane does not own.
         $merged = YoastSeo::merge($product->seo, $fragment, overwrite: false);
 
-        $context->record($this->name(), $context->apply($product, ['seo' => $merged]));
+        $seoOutcome = $context->apply($product, ['seo' => $merged]);
+
+        $context->record($this->name(), $seoOutcome === 'unchanged' ? $gtinOutcome : $seoOutcome);
     }
 }
