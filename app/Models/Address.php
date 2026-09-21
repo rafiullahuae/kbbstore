@@ -35,6 +35,12 @@ class Address extends Model
         // null, which is what an address with no WordPress origin should say.
         'source_key',
         'type',
+        // Home | Office, the pill on the cart page's address sheet. Fillable
+        // because CartAddressController writes it through
+        // $customer->addresses()->create(), which is the guarded path; the
+        // value is validated against CartAddressController::TAGS before it
+        // gets here, so nothing arbitrary reaches the column.
+        'label',
         'is_default',
         'first_name',
         'last_name',

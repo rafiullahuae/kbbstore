@@ -1,0 +1,863 @@
+{{--
+    The squeezed cart page — its stylesheet and the one script on it.
+
+    INCLUDED ONLY WHEN `layout = squeeze`, from store/cart.blade.php. On the
+    classic layout the @if around that include never runs, so this file
+    contributes zero bytes to the rendered page. That is what makes "applying
+    the package changes nothing visible" true on the markup side.
+
+    ── WHY THE CSS IS HERE AND NOT IN resources/css/kbb/kbb-cart.css ──────────
+
+    Because of how this shop ships. package.json defines no `build` script, CI
+    does not build assets, and the stylesheet the server actually serves is the
+    committed public/build/*.css that @vite resolves through the manifest. A
+    rule added to the source file and not rebuilt is a rule that is real in the
+    repository and absent on the live site — which is this project's signature
+    failure, and the exact reason CartPageLayoutTest asserts against the BUILT
+    file rather than the source one.
+
+    Inline, the rules ship with the Blade that needs them and cannot be stale.
+    The cost is about 4KB on one page of the shop, and only when the owner has
+    switched this layout on. If an asset build is ever part of the release, this
+    block moves into kbb-cart.css unchanged — every selector is already scoped
+    under `.kbb-cartpage.cpg-squeeze`, which exists nowhere else.
+
+    ── SIZING IS CSS ──────────────────────────────────────────────────────────
+
+    Every size below derives from --cpg-row-h, --cpg-addr-h, --cpg-co-h or
+    --cpg-sheet-d through calc(). Nothing measures anything and there is no
+    resize observer: a JS sizer runs after first paint, so every shopper sees
+    one frame of the wrong layout, and it runs again on every scroll-driven
+    viewport resize on iOS. The ONLY script on this page is the address sheet,
+    and it is a fetch and some class toggles.
+--}}
+@php
+    use App\Support\Url;
+    $cpgJs = $kbbCartPage->jsConfig() + [
+        'list' => Url::to('/cart/address'),
+        'store' => Url::to('/cart/address'),
+        'choose' => Url::to('/cart/address'),
+    ];
+@endphp
+@push('styles')
+<style>
+/* ── the knobs, with the values the service emits as fallbacks ───────────── */
+.kbb-cartpage.cpg-squeeze{
+  --cpg-row-h:96px; --cpg-fscale:1; --cpg-row-bold:600;
+  --cpg-per:4.5; --cpg-rec-bold:400; --cpg-drift:1;
+  --cpg-addr-h:40px; --cpg-co-h:62px; --cpg-bar-f:1;
+  --cpg-sheet-max:50%; --cpg-sheet-d:1; --cpg-sheet-f:1;
+
+  /* derived, in CSS, once */
+  --cpg-pad:calc(var(--cpg-row-h) * .13);
+  --cpg-thumb:calc(var(--cpg-row-h) - (var(--cpg-pad) * 2));
+  --cpg-f-name:calc((11.5px + var(--cpg-row-h) * .042) * var(--cpg-fscale));
+  --cpg-f-brand:calc((7.5px + var(--cpg-row-h) * .022) * var(--cpg-fscale));
+  --cpg-f-price:calc((11px + var(--cpg-row-h) * .040) * var(--cpg-fscale));
+  --cpg-qty-h:calc(var(--cpg-row-h) * .30);
+  --cpg-qty-f:calc(var(--cpg-row-h) * .135 * var(--cpg-fscale));
+  --cpg-bars:calc(var(--cpg-addr-h) + var(--cpg-co-h));
+
+  /* The full-bleed rail is the one thing here wider than the column it sits
+     in. `clip` and not `hidden`: `hidden` on one axis forces the other to
+     `auto`, which would turn this page into its own scroller. */
+  overflow-x:clip;
+}
+/* Room under the last thing on the page for the two bars that float over it.
+   A shopper who cannot see the row they are about to pay for is the whole
+   argument for this rule existing. */
+.kbb-cartpage.cpg-squeeze .wrap{padding-bottom:calc(var(--cpg-bars) + 24px)}
+.kbb-cartpage.cpg-squeeze .grid{grid-template-columns:minmax(0,1fr);gap:0}
+
+/* ── product rows ───────────────────────────────────────────────────────── */
+.kbb-cartpage.cpg-squeeze .ci{
+  height:var(--cpg-row-h);padding:var(--cpg-pad);gap:var(--cpg-pad);overflow:hidden}
+.kbb-cartpage.cpg-squeeze .cth{
+  width:var(--cpg-thumb);height:var(--cpg-thumb);font-size:calc(var(--cpg-thumb) * .22)}
+.kbb-cartpage.cpg-squeeze .cmid{display:flex;flex-direction:column;justify-content:center;
+  gap:calc(var(--cpg-row-h) * .018);min-width:0}
+.kbb-cartpage.cpg-squeeze .cbrand{font-size:var(--cpg-f-brand);font-weight:var(--cpg-row-bold);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Two lines and then an ellipsis, so a long name cannot make one row taller
+   than its neighbours and undo the whole point of a fixed row height. */
+.kbb-cartpage.cpg-squeeze .cn{font-size:var(--cpg-f-name);font-weight:var(--cpg-row-bold);
+  line-height:1.25;margin:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical}
+.kbb-cartpage.cpg-squeeze .cn a{display:inline;padding:0}
+.kbb-cartpage.cpg-squeeze .cvar{font-size:var(--cpg-f-brand);margin:0}
+.kbb-cartpage.cpg-squeeze .qty{align-self:flex-start;height:var(--cpg-qty-h);
+  margin-top:calc(var(--cpg-row-h) * .022);border-radius:calc(var(--cpg-qty-h) * .28)}
+.kbb-cartpage.cpg-squeeze .qty button{width:calc(var(--cpg-qty-h) * 1.5);height:100%;
+  font-size:var(--cpg-qty-f);line-height:1}
+.kbb-cartpage.cpg-squeeze .qty span{min-width:calc(var(--cpg-qty-h) * 1.1);
+  font-size:var(--cpg-qty-f);font-weight:var(--cpg-row-bold)}
+.kbb-cartpage.cpg-squeeze .cright{gap:calc(var(--cpg-row-h) * .03)}
+.kbb-cartpage.cpg-squeeze .cpr{font-size:var(--cpg-f-price);font-weight:var(--cpg-row-bold)}
+.kbb-cartpage.cpg-squeeze .cwas{font-size:var(--cpg-f-brand)}
+.kbb-cartpage.cpg-squeeze .crm{font-size:var(--cpg-f-brand);min-height:0;padding:0}
+/* "no bold text at all" — the off position of the Bold rows switch. Stated as
+   a class rather than by flipping --cpg-row-bold so the `b`/`strong` inside a
+   line is covered too. */
+.kbb-cartpage.cpg-squeeze.cpg-rowthin .ci b,
+.kbb-cartpage.cpg-squeeze.cpg-rowthin .ci strong{font-weight:400}
+
+/* ── recommended: FULL BLEED, no radius, no padding box ─────────────────── */
+.kbb-cartpage.cpg-squeeze .cpg-rec{
+  position:relative;margin:14px calc(50% - 50vw) 0;width:100vw;max-width:100vw;
+  padding:13px 0 15px;border-radius:0;overflow:hidden}
+/* The colour wash, on a layer of its own so the cards above it stay opaque and
+   the animation never repaints them. */
+.kbb-cartpage.cpg-squeeze .cpg-rec::before{
+  content:"";position:absolute;inset:0;z-index:0;
+  background:linear-gradient(115deg,#FFEDF3,#FFF6EC,#EFF9F3,#F4EFFC,#FFEDF3);
+  background-size:280% 280%;
+  animation:cpgdrift calc(26s / var(--cpg-drift)) ease-in-out infinite;
+  opacity:calc(.45 + .55 * var(--cpg-drift))}
+@keyframes cpgdrift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+/* Movement set to 0 on the screen, and anyone whose phone has asked for less
+   of it. The wash stays; only the drift stops. */
+.kbb-cartpage.cpg-squeeze.cpg-still .cpg-rec::before{animation:none}
+@media (prefers-reduced-motion:reduce){
+  .kbb-cartpage.cpg-squeeze .cpg-rec::before{animation:none}}
+.kbb-cartpage.cpg-squeeze .cpg-rec > *{position:relative;z-index:1}
+.kbb-cartpage.cpg-squeeze .cpg-rec h2{font-size:14px;font-weight:600;margin:0 0 10px;padding:0 14px}
+.kbb-cartpage.cpg-squeeze .cpg-rail{display:flex;gap:7px;overflow-x:auto;
+  padding:2px 14px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.kbb-cartpage.cpg-squeeze .cpg-rail::-webkit-scrollbar{display:none}
+/* 4.5 cards across whatever the screen is, because the card is a FRACTION of
+   the screen and not a pixel width. The half card is the point: a card cut off
+   by the edge is what tells a thumb there is more to the right. */
+.kbb-cartpage.cpg-squeeze .cpg-card{
+  flex:0 0 calc((100% - 14px - (7px * (var(--cpg-per) - 1))) / var(--cpg-per));
+  background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:5px;min-width:0}
+.kbb-cartpage.cpg-squeeze .cpg-card .im{position:relative;aspect-ratio:1;border-radius:6px;
+  display:grid;place-items:center;color:#fff;font-weight:500;background-size:cover;
+  background-position:center;font-size:clamp(11px,3.6vw,17px);margin-bottom:5px}
+/* "the font size of the product names should be small and auto adjust to the
+   screen" — clamp() against vw, so it is the SCREEN it adjusts to and not a
+   measurement somebody took. */
+.kbb-cartpage.cpg-squeeze .cpg-card .nm{font-size:clamp(8px,2.45vw,10.5px);
+  font-weight:var(--cpg-rec-bold);line-height:1.25;height:2.5em;overflow:hidden;
+  margin-bottom:2px;color:var(--ink-2)}
+.kbb-cartpage.cpg-squeeze .cpg-card .pr{font-size:clamp(8.5px,2.6vw,11px);
+  font-weight:var(--cpg-rec-bold)}
+.kbb-cartpage.cpg-squeeze .cpg-card .pr .cwas{display:inline;margin:0 0 0 3px}
+.kbb-cartpage.cpg-squeeze .cpg-card .lk{display:block;color:inherit}
+/* The one-tap add, sitting on the corner of the picture. Sized from vw like
+   everything else in the card, so it stays in proportion to a card whose width
+   is a fraction of the screen. */
+.kbb-cartpage.cpg-squeeze .cpg-card .kc-badd{position:absolute;inset-inline-end:-3px;bottom:-3px;
+  width:clamp(17px,5.4vw,22px);height:clamp(17px,5.4vw,22px);border-radius:50%;
+  background:var(--green);color:#fff;border:1.5px solid #fff;display:grid;place-items:center;
+  font-size:clamp(11px,3.4vw,14px);line-height:1;cursor:pointer;padding:0;min-height:0;
+  font-family:inherit}
+.kbb-cartpage.cpg-squeeze .cpg-card .kc-badd:active{transform:scale(.9)}
+
+/* ── coupon: minimal, directly under the rail ───────────────────────────── */
+.kbb-cartpage.cpg-squeeze .coupon{display:flex;align-items:center;gap:8px;margin:0;
+  padding:11px 0;background:none;border:0;border-bottom:1px solid var(--line-2);border-radius:0}
+.kbb-cartpage.cpg-squeeze .coupon input{border:0;border-radius:0;background:none;
+  border-bottom:1px solid var(--line-2);padding:5px 1px;font-size:13px;min-height:0}
+.kbb-cartpage.cpg-squeeze .coupon input:focus{box-shadow:none;border-color:var(--green)}
+.kbb-cartpage.cpg-squeeze .coupon button{background:var(--line-2);color:var(--ink-2);
+  border-radius:7px;font-size:12px;font-weight:500;letter-spacing:.06em;
+  text-transform:uppercase;padding:9px 15px;min-height:0}
+
+/* ── summary ────────────────────────────────────────────────────────────── */
+.kbb-cartpage.cpg-squeeze .sum{position:static;margin:14px 0 0;padding:14px}
+.kbb-cartpage.cpg-squeeze .srow{padding:3px 0}
+.kbb-cartpage.cpg-squeeze .srow .cpg-n{color:var(--muted);font-size:12px}
+.kbb-cartpage.cpg-squeeze .srow .cpg-was{color:var(--muted);font-size:11.5px;
+  text-decoration:line-through;margin-inline-end:4px}
+/* The little (i). A real control and not decoration: each of these charges is
+   a rule the shop can change, and a shopper who cannot ask why assumes the
+   worst. The note is a title, so it needs no script. */
+.kbb-cartpage.cpg-squeeze .cpg-i{display:inline-grid;place-items:center;width:13px;height:13px;
+  border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:8.5px;
+  font-weight:600;font-style:normal;vertical-align:1px;cursor:help}
+/* "Delivery & VAT are calculated at checkout".
+
+   Deliberately NOT styled as small print. The classic layout's own
+   `.srow.note` is 11.5px and muted, which is right for a caption and wrong
+   here: this line is the answer to "what will this cost me", and a shopper who
+   cannot find that answer stays on the cart page hunting for it instead of
+   pressing Checkout. Same size as the charge rows it replaces, with the tick
+   colour, so it reads as information and not as a disclaimer. */
+.kbb-cartpage.cpg-squeeze .srow.cpg-later{justify-content:flex-start;gap:6px;
+  color:var(--green);font-weight:500;padding:6px 0 2px}
+.kbb-cartpage.cpg-squeeze .cpg-totband{display:flex;justify-content:space-between;
+  align-items:center;gap:12px;background:#EEF8F1;border-radius:9px;padding:10px 12px;
+  margin-top:10px;font-size:15px;font-weight:600}
+.kbb-cartpage.cpg-squeeze .cpg-totband .tr{text-align:end}
+.kbb-cartpage.cpg-squeeze .cpg-totband b{display:block;font-weight:700}
+.kbb-cartpage.cpg-squeeze .cpg-totband em{display:block;font-style:normal;font-weight:400;
+  font-size:9.5px;color:var(--muted);margin-top:1px}
+
+/* ── trust row: tick, a rule, and the marks. One row, tiny. ─────────────── */
+.kbb-cartpage.cpg-squeeze .cpg-trust{display:flex;align-items:center;justify-content:center;
+  gap:7px;flex-wrap:wrap;padding:10px 0 0;font-size:10.5px;color:var(--muted)}
+.kbb-cartpage.cpg-squeeze .cpg-trust .sec{display:inline-flex;align-items:center;gap:4px;
+  white-space:nowrap}
+.kbb-cartpage.cpg-squeeze .cpg-trust .sec svg{width:13px;height:13px;color:var(--green);flex:none}
+.kbb-cartpage.cpg-squeeze .cpg-trust .sep{color:var(--line-2)}
+.kbb-cartpage.cpg-squeeze .paylogos{margin:0;gap:4px;flex-wrap:nowrap}
+.kbb-cartpage.cpg-squeeze .paylogos span{height:16px;padding:0 4px;font-size:6.5px;
+  display:grid;place-items:center;letter-spacing:.03em;border-radius:3px;background:#fff}
+
+/* ── the two floating rows ──────────────────────────────────────────────── */
+/* FIXED, not sticky. "it must be floating at the bottom of the screen" — and
+   sticky only floats while the element's own containing block is still under
+   the viewport, so a short basket would leave the checkout button halfway up
+   the page. The padding-bottom on .wrap above is what keeps the last row out
+   from under them. */
+.kbb-cartpage.cpg-squeeze .cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:40;
+  box-shadow:0 -2px 14px -6px rgba(42,34,40,.35)}
+.kbb-cartpage.cpg-squeeze .cpg-addrbar{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;min-height:var(--cpg-addr-h);padding:0 14px;background:var(--cream);
+  border-top:1px solid var(--line-2);font-size:calc(11.5px * var(--cpg-bar-f))}
+.kbb-cartpage.cpg-squeeze .cpg-addrbar .who{min-width:0;overflow:hidden}
+/* ONE LINE, FADED OFF AT THE RIGHT — "the shown address should be blured cut
+   from the right side, if the address is going too long. i want in one line
+   only."
+
+   A mask and not an ellipsis, and the difference is what each one says. A hard
+   "…" reads as truncation and invites a tap to see the rest, which there is
+   nothing here to show. A fade reads as "there is more of this" and leaves the
+   last legible characters doing their job.
+
+   -webkit-mask-image FIRST and the unprefixed one after, so a browser that
+   understands both takes the standard property. A browser that understands
+   NEITHER gets the text hard-cut by overflow:hidden, which is what this row
+   does today and is not a broken state — which is why there is no script here
+   propping it up. */
+.kbb-cartpage.cpg-squeeze .cpg-addrbar .who b,
+.kbb-cartpage.cpg-squeeze .cpg-addrbar .who span{
+  display:block;white-space:nowrap;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent)}
+.kbb-cartpage.cpg-squeeze .cpg-addrbar .who b{font-weight:500;color:var(--ink-2)}
+.kbb-cartpage.cpg-squeeze .cpg-addrbar .who span{color:var(--muted);
+  font-size:calc(10px * var(--cpg-bar-f))}
+.kbb-cartpage.cpg-squeeze .cpg-addrbtn{flex:none;background:none;border:0;color:var(--green);
+  font-size:calc(12px * var(--cpg-bar-f));font-weight:600;cursor:pointer;padding:4px 0;
+  font-family:inherit}
+.kbb-cartpage.cpg-squeeze .cpg-cobar{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;min-height:var(--cpg-co-h);padding:0 14px;background:#fff;
+  border-top:1px solid var(--line-2)}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally{min-width:0}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally span{display:block;color:var(--muted);
+  font-size:calc(11px * var(--cpg-bar-f))}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally b{display:block;font-weight:700;
+  font-size:calc(17px * var(--cpg-bar-f))}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn{display:inline-block;width:auto;flex:none;
+  background:var(--green);border-radius:10px;box-shadow:none;
+  padding:calc(11px * var(--cpg-bar-f)) calc(26px * var(--cpg-bar-f));
+  font-size:calc(15px * var(--cpg-bar-f))}
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn:hover{background:#177F47;transform:none}
+/* The classic column's own checkout button and "continue shopping" link are
+   redundant once the bar is on screen, and a second Checkout is a shopper
+   wondering which one is real. */
+.kbb-cartpage.cpg-squeeze .sum > .cobtn,
+.kbb-cartpage.cpg-squeeze .sum > .conti{display:none}
+
+/* ── waiting on the server, anywhere on this page ───────────────────────
+   Grey blocks in the SHAPE of what is coming, so a wait reads as "loading"
+   and not as "empty".
+
+   THE SHIMMER IS A MOVING background-position ON A GRADIENT, and that is the
+   whole reason it is worth having. background-position is composited off the
+   main thread, so it keeps moving while the main thread is busy doing the very
+   fetch it is covering for. An opacity pulse on a transform, or a JS loop,
+   stutters exactly when the shopper is looking at it.
+
+   It is only ever shown while a REAL request is in flight: cart.js puts
+   `busy` on #cartPage for the length of every cart write and takes it off in a
+   finally block, and the sheet's script does the same thing by hand for its own
+   fetch. A placeholder that flashes for a fortieth of a second on a warm cache
+   reads as a glitch, which is worse than no placeholder. */
+.cpg-sk{border-radius:7px;
+  background:linear-gradient(100deg,#EFF1F4 30%,#F8F9FB 48%,#EFF1F4 66%);
+  background-size:220% 100%;animation:cpgshim 1.15s linear infinite}
+@keyframes cpgshim{from{background-position:180% 0}to{background-position:-40% 0}}
+@media (prefers-reduced-motion:reduce){.cpg-sk{animation:none}}
+.cpg-skcard{border:1px solid #E4E7EC;border-radius:10px;padding:11px;display:grid;gap:7px;
+  margin-bottom:8px}
+.cpg-skline{height:11px}
+.cpg-skline.w40{width:40%}
+.cpg-skline.w90{width:90%}
+.cpg-skline.w65{width:65%}
+/* A screen reader gets nothing at all from a grey rectangle. */
+.cpg-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
+  clip-path:inset(50%);white-space:nowrap}
+
+/* The same treatment for every OTHER wait on this page — applying a coupon,
+   changing a quantity, removing a line, adding from the rail. cart.js already
+   puts `busy` on #cartPage for the length of each of those and removes it in a
+   finally block, so this needs no script of its own: one rule, reused, driven
+   by a class the shop already sets.
+
+   The old `.kbb-cartpage.busy #kbbCartInner` rule further up kbb-cart.css never
+   matched anything — the element's id is `cartInner`, with no kbb prefix — so
+   this is also the first time that class has done anything on this page. That
+   rule is left alone rather than corrected: it belongs to the classic layout,
+   and correcting it would change a page this package promises not to change. */
+.kbb-cartpage.cpg-squeeze.busy #cartInner{pointer-events:none}
+.kbb-cartpage.cpg-squeeze.busy #cartInner .cpr,
+.kbb-cartpage.cpg-squeeze.busy #cartInner .srow span:last-child,
+.kbb-cartpage.cpg-squeeze.busy #cartInner .cpg-totband b,
+.kbb-cartpage.cpg-squeeze.busy #cartInner .cpg-cobar .tally b{
+  color:transparent;border-radius:6px;
+  background:linear-gradient(100deg,#EFF1F4 30%,#F8F9FB 48%,#EFF1F4 66%);
+  background-size:220% 100%;animation:cpgshim 1.15s linear infinite}
+@media (prefers-reduced-motion:reduce){
+  .kbb-cartpage.cpg-squeeze.busy #cartInner .cpr,
+  .kbb-cartpage.cpg-squeeze.busy #cartInner .srow span:last-child,
+  .kbb-cartpage.cpg-squeeze.busy #cartInner .cpg-totband b,
+  .kbb-cartpage.cpg-squeeze.busy #cartInner .cpg-cobar .tally b{animation:none}}
+/* The owner's switch. Off, a wait is simply a wait. */
+.kbb-cartpage.cpg-squeeze.cpg-nosk.busy #cartInner .cpr,
+.kbb-cartpage.cpg-squeeze.cpg-nosk.busy #cartInner .srow span:last-child,
+.kbb-cartpage.cpg-squeeze.cpg-nosk.busy #cartInner .cpg-totband b,
+.kbb-cartpage.cpg-squeeze.cpg-nosk.busy #cartInner .cpg-cobar .tally b{
+  color:inherit;background:none;animation:none}
+
+/* ── the address sheet ──────────────────────────────────────────────────── */
+/* The page behind is DIMMED AND BLURRED. */
+.cpg-scrim{position:fixed;inset:0;background:rgba(23,24,28,.34);z-index:50;opacity:0;
+  pointer-events:none;transition:opacity .2s;
+  -webkit-backdrop-filter:blur(var(--cpg-sheet-blur,3px));
+  backdrop-filter:blur(var(--cpg-sheet-blur,3px))}
+.cpg-scrim.on{opacity:1;pointer-events:auto}
+/* And FROZEN, which is a separate thing and the one that matters. Without it a
+   finger that misses the sheet scrolls the cart underneath it, and the address
+   you were about to tap has moved by the time you tap again. Both elements
+   carry the class because which one scrolls the document differs by browser,
+   and `position:fixed` goes on <body> as well, because iOS Safari ignores
+   overflow:hidden there. */
+html.cpg-frozen,body.cpg-frozen{overflow:hidden}
+/* Deliberately NOT `position:fixed` on <body>, which is the usual next step
+   and is wrong here: it takes the body out of flow, the page jumps to the top,
+   and the shopper who closes the sheet is somewhere else in their basket. The
+   scrim absorbing the touch is enough for the case that actually bites — a
+   finger that misses the sheet — and it costs nobody their scroll position. */
+.cpg-scrim.on{touch-action:none}
+
+/* PURE WHITE IN BOTH THEMES, and deliberately. The sheet sits over a dimmed
+   page as its own surface; a panel that followed the page's colours would read
+   as part of what is behind it rather than as a thing on top of it. */
+.cpg-sheet{position:fixed;inset-inline:0;bottom:0;z-index:52;background:#fff;color:#17181C;
+  border-radius:16px 16px 0 0;
+  padding:14px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  transform:translateY(102%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  max-height:var(--cpg-sheet-max,50%);
+  /* HIDDEN, NOT auto. The sheet itself never scrolls: Home / Office / Deliver
+     here has to stay where a thumb expects it, and a sheet that scrolls is a
+     sheet whose commit button walks off the bottom. When there are more
+     addresses than fit, .cpg-list scrolls inside its own box instead. */
+  overflow:hidden;overscroll-behavior:contain;
+  display:flex;flex-direction:column}
+.cpg-sheet.on{transform:translateY(0)}
+/* CLOSED MEANS GONE, not merely slid below the edge. A sheet that is only
+   translated away still paints, still holds focus and is still reachable by
+   Tab — a shopper tabbing through the cart lands inside an invisible dialog.
+   [hidden] is applied once the slide has finished; the script also empties it,
+   so a saved address is not left sitting in the document. */
+.cpg-sheet[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.cpg-sheet{transition:none}}
+/* "give option on backend to make the city and the country in same row."
+
+   One class, one rule, and it relies on the markup already being right: Area
+   and Apartment / building carry `.full` and so keep the whole width, City and
+   Country do not and so pair up.
+
+   PORTRAIT ONLY. Held sideways the popup already puts every field two across
+   — the rule immediately below — and a second declaration doing the same job
+   there would fight it for the same property; whichever won, one of the two
+   would be putting Area beside Apartment, which is not what this switch says
+   it does. */
+@media (orientation:portrait){
+  .cpg-portal.cpg-twoup .cpg-fields{grid-template-columns:1fr 1fr;align-items:end}
+  .cpg-portal.cpg-twoup .cpg-fields > .full{grid-column:1 / -1}
+}
+/* A phone on its side has roughly half the height and twice the width, so the
+   fields go two across, the address list goes two across, and the cap rises.
+   SAME MARKUP, SAME CLASSES — only the grid changes, which is why rotating the
+   phone measures nothing and runs no script. */
+@media (orientation:landscape){
+  .cpg-sheet{max-height:var(--cpg-sheet-max-l,82%);padding-top:11px}
+  .cpg-fields{grid-template-columns:1fr 1fr;align-items:end}
+  .cpg-fields > .full{grid-column:1 / -1}
+  .cpg-list{grid-template-columns:1fr 1fr}
+}
+/* The close button is ABOVE the sheet, not inside it: its own round white
+   target clear of the content, so a thumb reaching for it never lands on an
+   address by accident. */
+.cpg-x{position:fixed;inset-inline-end:14px;z-index:53;width:38px;height:38px;border-radius:50%;
+  background:#fff;border:0;box-shadow:0 2px 10px -2px rgba(23,24,28,.3);cursor:pointer;
+  display:grid;place-items:center;color:#17181C;opacity:0;pointer-events:none;bottom:0;
+  transition:opacity .18s,transform .26s cubic-bezier(.32,.72,0,1);transform:translateY(12px)}
+.cpg-x.on{opacity:1;pointer-events:auto;transform:translateY(0)}
+.cpg-x svg{width:17px;height:17px}
+.cpg-sheet h2{font-size:calc(17px * var(--cpg-sheet-f,1));font-weight:700;margin:0 0 12px;
+  color:#17181C;flex:none}
+/* The one thing in the sheet allowed to scroll, and only when it has to. */
+.cpg-list{display:grid;gap:8px;margin-bottom:10px;min-height:0;overflow-y:auto;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.cpg-al{position:relative;display:flex;gap:10px;align-items:flex-start;border:1px solid #E4E7EC;
+  border-radius:10px;padding:calc(11px * var(--cpg-sheet-d,1));cursor:pointer;background:#fff;
+  overflow:hidden;text-align:start;width:100%;font-family:inherit;color:#17181C}
+.cpg-al[aria-selected="true"]{border-color:#1E9E5A}
+.cpg-al[aria-selected="true"]::after{content:"";position:absolute;top:0;inset-inline-end:0;
+  width:36px;height:30px;border-radius:0 9px 0 10px;background:#1E9E5A;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m4.5 12.5 5 5 10-11'/></svg>");
+  background-size:15px;background-repeat:no-repeat;background-position:center}
+.cpg-al .ad{min-width:0;flex:1}
+.cpg-al .ad b{display:block;font-weight:700;font-size:calc(14px * var(--cpg-sheet-f,1));
+  margin-bottom:3px;padding-inline-end:40px}
+.cpg-al .ad span{display:block;color:#6B7280;font-size:calc(12.5px * var(--cpg-sheet-f,1));
+  line-height:1.45}
+.cpg-tag{flex:none;align-self:center;background:#E8F6EE;color:#177F47;
+  font-size:calc(11px * var(--cpg-sheet-f,1));font-weight:500;padding:3px 9px;border-radius:5px}
+.cpg-addnew{display:flex;align-items:center;gap:7px;background:none;border:0;color:#1E9E5A;
+  font-size:calc(14px * var(--cpg-sheet-f,1));font-weight:600;cursor:pointer;font-family:inherit;
+  padding:calc(9px * var(--cpg-sheet-d,1)) 0;flex:none}
+.cpg-fields{display:grid;gap:calc(9px * var(--cpg-sheet-d,1));margin-bottom:11px;
+  min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.cpg-fields label{font-size:calc(11.5px * var(--cpg-sheet-f,1));font-weight:600;display:block;
+  margin-bottom:3px;color:#3C3A40}
+.cpg-fields .fi{width:100%;border:1px solid #E4E7EC;border-radius:8px;background:#fff;
+  color:#17181C;font-family:inherit;font-size:calc(13px * var(--cpg-sheet-f,1));
+  padding:calc(8px * var(--cpg-sheet-d,1)) 10px}
+.cpg-fields .geo{font-size:calc(10.5px * var(--cpg-sheet-f,1));color:#1E9E5A;font-weight:500;margin:0}
+/* Home · Office · Deliver here, ONE row, and the split is the point: two of
+   them are choices and wear the light green of a selection, one ends the task
+   and is solid dark green with a tick. Which button finishes is readable
+   without reading the labels. 1fr on the last column so the commit takes
+   whatever the two marks leave, at any text size. */
+.cpg-actrow{display:grid;grid-template-columns:auto auto 1fr;gap:7px;align-items:stretch;
+  margin-top:2px;flex:none}
+.cpg-mark{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border:1px solid #E4E7EC;background:#fff;color:#3C3A40;border-radius:9px;
+  padding:calc(9px * var(--cpg-sheet-d,1)) calc(12px * var(--cpg-sheet-d,1));
+  font-family:inherit;font-size:calc(12.5px * var(--cpg-sheet-f,1));font-weight:600;
+  cursor:pointer;white-space:nowrap}
+.cpg-mark svg{width:calc(15px * var(--cpg-sheet-f,1));height:calc(15px * var(--cpg-sheet-f,1));
+  flex:none}
+.cpg-mark[aria-pressed="true"]{border-color:#1E9E5A;background:#E8F6EE;color:#177F47}
+.cpg-deliver{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:#1E9E5A;color:#fff;border:0;border-radius:9px;
+  padding:calc(9px * var(--cpg-sheet-d,1)) calc(10px * var(--cpg-sheet-d,1));
+  font-family:inherit;font-weight:700;font-size:calc(13.5px * var(--cpg-sheet-f,1));
+  cursor:pointer;white-space:nowrap}
+.cpg-deliver:hover{background:#177F47}
+.cpg-deliver svg{width:calc(15px * var(--cpg-sheet-f,1));height:calc(15px * var(--cpg-sheet-f,1));
+  flex:none}
+.cpg-err{color:#B4443C;font-size:calc(12px * var(--cpg-sheet-f,1));margin:0 0 8px;flex:none}
+
+/* ── the country picker ─────────────────────────────────────────────────
+   IT OPENS UPWARD. A list dropping downward out of a field this near the
+   bottom of the screen either lands underneath the two docked bars or pushes
+   them off it.
+
+   WHICH IS WHY IT IS NOT A NATIVE <select>. A select gives the page no say at
+   all in which direction it opens — Android in particular opens it wherever
+   the platform feels like. The cost of the decision is that the keyboard
+   contract is now ours to honour: arrows move, Enter chooses, Escape closes
+   and puts focus back on the button, which the script below does. */
+.cpg-cpick{position:relative}
+.cpg-cpick .fi{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  text-align:start;cursor:pointer;width:100%}
+.cpg-cpick .fi .car{flex:none;width:9px;height:9px;border-inline-end:1.6px solid #9AA0AA;
+  border-bottom:1.6px solid #9AA0AA;transform:rotate(-135deg) translate(-2px,-2px)}
+.cpg-cmenu{position:absolute;inset-inline:0;bottom:calc(100% + 5px);z-index:5;background:#fff;
+  border:1px solid #E4E7EC;border-radius:9px;box-shadow:0 -6px 22px -8px rgba(23,24,28,.28);
+  max-height:190px;overflow-y:auto;overscroll-behavior:contain;padding:4px;display:none}
+.cpg-cmenu.on{display:block}
+.cpg-cmenu button{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:100%;border:0;background:none;color:#17181C;font-family:inherit;
+  font-size:calc(12.5px * var(--cpg-sheet-f,1));text-align:start;padding:8px 9px;
+  border-radius:6px;cursor:pointer}
+.cpg-cmenu button:hover,.cpg-cmenu button:focus-visible{background:#F4F6F8}
+.cpg-cmenu button[aria-selected="true"]{color:#177F47;font-weight:600}
+.cpg-cmenu button .gx{font-size:9.5px;color:#1E9E5A;font-weight:600;flex:none}
+</style>
+@endpush
+
+@push('scripts')
+<script>
+/*
+ * The address sheet. The ONLY script the squeezed cart page adds.
+ *
+ * One fetch when it opens, one POST when something is chosen, and class
+ * toggles in between. Nothing here measures or sizes anything — every
+ * dimension on this page comes out of calc() in the block above, and the
+ * landscape layout is a media query, so rotating the phone runs none of this.
+ *
+ * The docked row is rendered by the server with whatever the session already
+ * holds, so a shopper who reloads, or who changes a quantity and gets the cart
+ * re-rendered under them, keeps their chosen address without this script
+ * running at all. It only has to update the row for the tap that just happened.
+ */
+(function () {
+  'use strict';
+
+  var root = document.getElementById('cartPage');
+  var sheet = document.getElementById('cpgSheet');
+  if (!root || !sheet) return;
+
+  var CFG = @json($cpgJs);
+  var scrim = document.getElementById('cpgScrim');
+  var closeBtn = document.getElementById('cpgX');
+
+  var state = null;      // the last payload from the server
+  var tag = 'home';
+  var country = null;    // null until the geo default arrives
+  var busy = false;
+  var hideTimer = null;  // the one that takes the sheet off the screen
+
+  /* Inline, and stroked from `currentColor`, so each icon takes its button's
+     colour in both of its states without a second copy of the path. */
+  var I_HOME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9.7V20h13V9.7"/><path d="M10 20v-5.2h4V20"/></svg>';
+  var I_WORK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/></svg>';
+  var I_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg>';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  async function call(url, body) {
+    var opts = { headers: { Accept: 'application/json' }, credentials: 'same-origin' };
+    if (body !== undefined) {
+      opts.method = 'POST';
+      opts.headers['Content-Type'] = 'application/json';
+      opts.headers['X-CSRF-TOKEN'] = (window.KBB && window.KBB.csrf) || '';
+      opts.body = JSON.stringify(body);
+    }
+    var r = await fetch(url, opts);
+    var payload = null;
+    try { payload = await r.json(); } catch (e) { payload = null; }
+    if (!r.ok) {
+      var err = new Error('cart address ' + r.status);
+      err.status = r.status;
+      err.body = payload;
+      throw err;
+    }
+    return payload;
+  }
+
+  /* ---------------------------------------------------------------- draw */
+
+  /* Grey blocks in the SHAPE of the thing that is coming. Drawn only while a
+     real request is in flight — never for content already in hand. */
+  function skeletonHTML(rows) {
+    if (root.classList.contains('cpg-nosk')) return '<h2>' + esc(CFG.listTitle) + '</h2>';
+
+    var cards = '';
+    for (var i = 0; i < rows; i++) {
+      cards += '<div class="cpg-skcard" aria-hidden="true">'
+        + '<div class="cpg-sk cpg-skline w40"></div>'
+        + '<div class="cpg-sk cpg-skline w90"></div>'
+        + '<div class="cpg-sk cpg-skline w65"></div></div>';
+    }
+
+    return '<h2>' + esc(CFG.listTitle) + '</h2>' + cards
+      + '<span class="cpg-vh" role="status">' + esc(CFG.loading) + '</span>';
+  }
+
+  function listHTML() {
+    var rows = (state && state.addresses) || [];
+    var chosenId = state && state.chosen ? state.chosen.id : null;
+
+    var items = rows.map(function (a) {
+      return '<button type="button" class="cpg-al" data-cpg-pick="' + a.id + '"'
+        + ' aria-selected="' + (a.id === chosenId ? 'true' : 'false') + '">'
+        + '<span class="ad"><b>' + esc(a.name || CFG[a.tag] || a.tag) + '</b>'
+        + '<span>' + esc(a.line) + '</span></span>'
+        + '<span class="cpg-tag">' + esc(CFG[a.tag] || a.tag) + '</span>'
+        + '</button>';
+    }).join('');
+
+    return '<h2>' + esc(CFG.listTitle) + '</h2>'
+      + '<div class="cpg-list">' + items + '</div>'
+      + '<button type="button" class="cpg-addnew" data-cpg-new>'
+      + '<span aria-hidden="true">+</span> ' + esc(CFG.addNew.replace(/^\+\s*/, '')) + '</button>';
+  }
+
+  function formHTML() {
+    var geo = (state && state.geo) || { country: '', countryName: '' };
+    var list = (state && state.countries) || [];
+
+    if (country === null) country = geo.country || '';
+
+    var label = '';
+    var opts = list.map(function (c) {
+      if (c.code === country) label = c.name;
+      return '<button type="button" role="option" data-cpg-country="' + esc(c.code) + '"'
+        + ' aria-selected="' + (c.code === country ? 'true' : 'false') + '">'
+        + '<span>' + esc(c.name) + '</span>'
+        + (c.code === geo.country ? '<span class="gx">' + esc(CFG.geoMark) + '</span>' : '')
+        + '</button>';
+    }).join('');
+
+    return '<h2>' + esc(CFG.formTitle) + '</h2>'
+      + '<p class="cpg-err" id="cpgErr" hidden></p>'
+      + '<div class="cpg-fields">'
+      + '<div class="full"><label for="cpgArea">' + esc(CFG.area) + '</label>'
+      + '<input class="fi" id="cpgArea" placeholder="' + esc(CFG.areaHint)
+      + '" autocomplete="address-level2"></div>'
+      + '<div class="full"><label for="cpgApt">' + esc(CFG.apt) + '</label>'
+      + '<input class="fi" id="cpgApt" placeholder="' + esc(CFG.aptHint)
+      + '" autocomplete="address-line1"></div>'
+      /* City is EMPTY, with a grey placeholder. Only the country is filled in
+         from where the shopper is, which is why the green line below says so in
+         the singular — a note claiming to have filled a field it left blank is
+         a note nobody believes twice. */
+      + '<div><label for="cpgCity">' + esc(CFG.city) + '</label>'
+      + '<input class="fi" id="cpgCity" placeholder="' + esc(CFG.cityHint)
+      + '" autocomplete="address-level1"></div>'
+      + '<div class="cpg-cpick"><label for="cpgCountry">' + esc(CFG.country) + '</label>'
+      + '<button class="fi" id="cpgCountry" type="button" aria-haspopup="listbox" aria-expanded="false">'
+      + '<span id="cpgCountryName">' + esc(label || geo.countryName) + '</span>'
+      + '<span class="car" aria-hidden="true"></span></button>'
+      + '<div class="cpg-cmenu" id="cpgCmenu" role="listbox" aria-label="' + esc(CFG.country) + '">'
+      + opts + '</div></div>'
+      + '<p class="geo full">&#10003; ' + esc(CFG.geoNote) + '</p>'
+      + '</div>'
+      /* Home · Office · Deliver here, one row. Two choices and a commit. */
+      + '<div class="cpg-actrow">'
+      + '<button class="cpg-mark" type="button" data-cpg-tag="home" aria-pressed="'
+      + (tag === 'home') + '">' + I_HOME + ' ' + esc(CFG.home) + '</button>'
+      + '<button class="cpg-mark" type="button" data-cpg-tag="office" aria-pressed="'
+      + (tag === 'office') + '">' + I_WORK + ' ' + esc(CFG.office) + '</button>'
+      + '<button class="cpg-deliver" type="button" data-cpg-save>' + I_TICK + ' '
+      + esc(CFG.save) + '</button>'
+      + '</div>';
+  }
+
+  function paint(html) {
+    sheet.innerHTML = html;
+    // The close button rides just above whatever height the sheet settled at.
+    requestAnimationFrame(function () {
+      closeBtn.style.bottom = (sheet.offsetHeight + 12) + 'px';
+    });
+  }
+
+  /* The docked row, after a choice. The server renders it on every page load
+     and every cart re-render; this is only the tap that has just happened. */
+  function paintRow() {
+    var head = document.getElementById('cpgAddrHead');
+    var sub = document.getElementById('cpgAddrSub');
+    var btn = document.getElementById('cpgAddrBtn');
+    if (!head || !btn) return;
+
+    var a = state && state.chosen;
+
+    if (a) {
+      head.textContent = CFG.chosen.replace('{tag}', CFG[a.tag] || a.tag);
+      if (sub) { sub.textContent = a.line; sub.hidden = false; }
+      btn.textContent = CFG.btnChange;
+    } else {
+      head.textContent = CFG.heading;
+      if (sub) { sub.textContent = ''; sub.hidden = true; }
+      btn.textContent = state && state.signedIn ? CFG.btnChange : CFG.btnAdd;
+    }
+  }
+
+  /* -------------------------------------------------------------- open */
+
+  function freeze(on) {
+    document.documentElement.classList.toggle('cpg-frozen', on);
+    document.body.classList.toggle('cpg-frozen', on);
+  }
+
+  function closeCountry() {
+    var menu = document.getElementById('cpgCmenu');
+    var btn = document.getElementById('cpgCountry');
+    if (menu) menu.classList.remove('on');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function close() {
+    if (sheet.hidden) return;
+
+    sheet.classList.remove('on');
+    scrim.classList.remove('on');
+    closeBtn.classList.remove('on');
+    closeCountry();
+    freeze(false);
+
+    /* GONE FROM THE SCREEN once the slide has finished — not merely pushed
+       below the edge, where it goes on painting and goes on taking Tab. The
+       timer is cancelled on reopen: without that, a fast close-then-open hides
+       the sheet that was just opened. */
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function () {
+      sheet.hidden = true;
+      sheet.innerHTML = '';
+    }, 280);
+  }
+
+  async function launch() {
+    clearTimeout(hideTimer);
+    sheet.hidden = false;
+    /* ONE FRAME with the sheet laid out but still translated down, so the
+       slide has somewhere to come from. Without it the browser has no start
+       value to animate between and the sheet simply appears. */
+    requestAnimationFrame(function () { sheet.classList.add('on'); });
+    scrim.classList.add('on');
+    closeBtn.classList.add('on');
+    freeze(true);
+
+    /* A REAL request is about to happen, so the placeholder earns its place.
+       On the second opening the list is already in hand, so the content goes
+       straight in and no placeholder is drawn at all — a skeleton that flashes
+       for a fortieth of a second reads as a glitch. */
+    if (state === null) {
+      paint(skeletonHTML(2));
+
+      try {
+        state = await call(CFG.list);
+      } catch (e) {
+        state = { addresses: [], chosen: null, signedIn: false, geo: {} };
+      }
+    }
+
+    paint((state.addresses && state.addresses.length) ? listHTML() : formHTML());
+  }
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#cpgAddrBtn')) { e.preventDefault(); launch(); return; }
+    if (e.target === scrim || e.target.closest('#cpgX')) { close(); return; }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || sheet.hidden) return;
+
+    // Escape closes the country list first, and only then the sheet. Closing
+    // both at once loses a shopper's half-finished address to one keystroke.
+    var menu = document.getElementById('cpgCmenu');
+    if (menu && menu.classList.contains('on')) {
+      closeCountry();
+      var btn = document.getElementById('cpgCountry');
+      if (btn) btn.focus();
+      return;
+    }
+
+    close();
+  });
+
+  /* The keyboard contract a native <select> would have given for free, and
+     which this owes because it is not one: arrows move, Enter and Space
+     choose, Escape closes and hands focus back. */
+  sheet.addEventListener('keydown', function (e) {
+    var opts = Array.prototype.slice.call(sheet.querySelectorAll('[data-cpg-country]'));
+    if (opts.length === 0) return;
+
+    var here = opts.indexOf(document.activeElement);
+
+    if (e.target.closest('#cpgCountry') && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault();
+      openCountry(true);
+      (opts[e.key === 'ArrowUp' ? opts.length - 1 : 0] || opts[0]).focus();
+      return;
+    }
+
+    if (here === -1) return;
+
+    if (e.key === 'ArrowDown') { e.preventDefault(); (opts[here + 1] || opts[0]).focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); (opts[here - 1] || opts[opts.length - 1]).focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); opts[0].focus(); }
+    else if (e.key === 'End') { e.preventDefault(); opts[opts.length - 1].focus(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.activeElement.click(); }
+  });
+
+  function openCountry(on) {
+    var menu = document.getElementById('cpgCmenu');
+    var btn = document.getElementById('cpgCountry');
+    if (!menu || !btn) return;
+    menu.classList.toggle('on', on);
+    btn.setAttribute('aria-expanded', String(on));
+  }
+
+  sheet.addEventListener('click', async function (e) {
+    if (busy) return;
+
+    var mark = e.target.closest('[data-cpg-tag]');
+    if (mark) {
+      tag = mark.getAttribute('data-cpg-tag');
+      sheet.querySelectorAll('[data-cpg-tag]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b === mark));
+      });
+      return;
+    }
+
+    // The country list: the button toggles it, an option chooses and closes it,
+    // and a tap anywhere else inside the sheet dismisses it.
+    if (e.target.closest('#cpgCountry')) {
+      var menu = document.getElementById('cpgCmenu');
+      openCountry(!(menu && menu.classList.contains('on')));
+      return;
+    }
+
+    var opt = e.target.closest('[data-cpg-country]');
+    if (opt) {
+      country = opt.getAttribute('data-cpg-country');
+      var name = opt.querySelector('span');
+      var out = document.getElementById('cpgCountryName');
+      if (out && name) out.textContent = name.textContent;
+      sheet.querySelectorAll('[data-cpg-country]').forEach(function (b) {
+        b.setAttribute('aria-selected', String(b === opt));
+      });
+      closeCountry();
+      var back = document.getElementById('cpgCountry');
+      if (back) back.focus();
+      return;
+    }
+
+    if (!e.target.closest('.cpg-cpick')) closeCountry();
+
+    if (e.target.closest('[data-cpg-new]')) { paint(formHTML()); return; }
+
+    /* Tapping an address IS the choice: it selects, it closes, and it lands in
+       the docked row. There is no confirm step, because the row is the
+       confirmation. */
+    var pick = e.target.closest('[data-cpg-pick]');
+    if (pick) {
+      busy = true;
+      try {
+        state = await call(CFG.choose + '/' + pick.getAttribute('data-cpg-pick') + '/choose', {});
+        paintRow();
+        close();
+      } catch (err) { /* the sheet stays open on a failure, still showing the list */ }
+      busy = false;
+      return;
+    }
+
+    if (e.target.closest('[data-cpg-save]')) {
+      busy = true;
+      var val = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
+      try {
+        state = await call(CFG.store, {
+          area: val('cpgArea'),
+          apartment: val('cpgApt'),
+          city: val('cpgCity'),
+          country: country || (state && state.geo && state.geo.country) || '',
+          tag: tag,
+        });
+        paintRow();
+        close();
+      } catch (err) {
+        var box = document.getElementById('cpgErr');
+        if (box) {
+          box.textContent = (err.body && err.body.error) || CFG.saveFailed;
+          box.hidden = false;
+        }
+      }
+      busy = false;
+    }
+  });
+})();
+</script>
+@endpush

@@ -20849,6 +20849,21 @@ buildNav();
      owner turns it on here. --}}
 @include('admin.partials.cache-screen')
 
+{{-- Appearance → Cart page (Lane: cart-page). Every knob on the squeezed cart
+     page: the row height everything in a basket line is derived from, the
+     recommended rail and which products fill it, the summary wording, the two
+     docked rows and the address popup.
+
+     It registers its own sidebar entry inside the Appearance group and wraps
+     window.go, exactly as the screens above do, so this include is the whole of
+     the change to this file.
+
+     Applying it changes nothing on the live shop. The first control on the
+     screen is the layout switch and it ships as `classic`, which is the cart
+     page this shop renders today; every other control is inert until that one
+     is moved, and the screen says so above the tabs. --}}
+@include('admin.partials.cart-page-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------

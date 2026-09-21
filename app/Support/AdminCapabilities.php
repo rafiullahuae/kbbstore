@@ -137,6 +137,13 @@ final class AdminCapabilities
         'catalog.export' => ['owner', 'manager', 'editor'],
         'content.manage' => ['owner', 'manager', 'editor'],
 
+        // The cart page's own appearance — row density, the recommended rail
+        // and which products fill it, the summary wording and the two docked
+        // bars. Storefront appearance, so the same three roles as
+        // content.manage; its own capability so it can be moved on its own.
+        // The RULES entry below carries the full argument.
+        'cartpage.manage' => ['owner', 'manager', 'editor'],
+
         // Reviews. The export is separated from the rest of the screen because
         // the review rows carry author_email and the reviewer's IP.
         'reviews.view' => ['owner', 'manager', 'support', 'editor'],
@@ -518,6 +525,30 @@ final class AdminCapabilities
         ['*', 'admin-api/product-styles', 'content.manage'],
         ['*', 'admin-api/product-page', 'content.manage'],
         ['*', 'admin-api/cart-panel', 'content.manage'],
+
+        /*
+         * Appearance -> Cart page. A capability of its own, and NOT the
+         * content.manage the line above it uses, although the three roles that
+         * hold them are the same three as this ships.
+         *
+         * The reason is the one cache.manage gives a few screens up: mapping a
+         * new surface onto an existing capability means that the day somebody
+         * narrows THAT capability -- and content.manage is a reasonable thing
+         * to narrow to the people who write blog posts -- this narrows with it,
+         * silently, in a different file, with nothing to notice. The cart page
+         * is the page a shopper checks out from; who may rearrange it is a
+         * decision worth being able to make on its own.
+         *
+         * Not store.settings either. Nothing on this screen can take the
+         * storefront down or redirect its mail, and making an editor an owner
+         * to move a slider is how a capability system stops being used.
+         *
+         * The '/**' line is a SIBLING of the exact one above it and neither can
+         * shadow the other, but both are needed: 'admin-api/cart-page' does not
+         * match 'admin-api/cart-page/products'.
+         */
+        ['*', 'admin-api/cart-page', 'cartpage.manage'],
+        ['*', 'admin-api/cart-page/**', 'cartpage.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.
