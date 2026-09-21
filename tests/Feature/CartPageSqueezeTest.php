@@ -1037,3 +1037,324 @@ it('still writes nothing for a guest, on the same endpoint, on a later request',
 // firstOrCreate() customer. RED — 2 failed, 42 passed: this test and the older
 // "keeps a signed-out shopper out of the database" beside it, which is the
 // right pair to go red together.
+
+/* ------------------------------------------------------------------------
+ | 10. Cart polish — the five defects reported off the live Squeezed page
+ |------------------------------------------------------------------------*/
+
+it('lists the guest\'s own address, so "Change address" opens the list and not the form', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    /*
+     * THE DEFECT, AND WHERE IT ACTUALLY WAS.
+     *
+     * The docked row calls itself "Change address" the moment there is a chosen
+     * address, and a signed-out shopper's chosen address lives in the session.
+     * The sheet decides between the saved list and the empty form on
+     * `addresses.length` — and `addresses` was built from $customer->addresses()
+     * and from nothing else, so for that shopper it came back EMPTY. The button
+     * that says "change" opened a blank form.
+     *
+     * Not the script's branch: "one saved address still opens the list" was
+     * settled by an earlier lane and is still exactly as it was. It was the
+     * payload the branch reads.
+     */
+    test()->postJson('/cart/address', [
+        'area' => 'Jumeirah Village Circle',
+        'apartment' => 'Flat 802',
+        'city' => 'Dubai',
+        'country' => 'AE',
+        'tag' => 'home',
+    ])->assertOk();
+
+    $body = test()->getJson('/cart/address')->assertOk()->json();
+
+    expect($body['chosen'])->not->toBeNull()
+        ->and($body['addresses'])->toHaveCount(1)
+        ->and($body['addresses'][0]['line'])->toContain('Jumeirah Village Circle');
+
+    // It is the SESSION copy and not a row: no customer was invented to hang it
+    // off, which is the rule this payload has always kept.
+    expect($body['addresses'][0]['id'])->toBeNull()
+        ->and($body['signedIn'])->toBeFalse()
+        ->and(Customer::count())->toBe(0)
+        ->and(Address::query()->count())->toBe(0);
+});
+// MUTATION: drop the `$saved[] = $chosen;` line from CartAddressState::all().
+
+it('draws the id-less address as the current choice, never as something to re-select', function () {
+    /*
+     * There is nothing to re-select it BY. /cart/address/{id}/choose takes an
+     * id, the guest copy has none, and "null" in that URL is a 404 that leaves
+     * the sheet open looking broken. It is already the chosen one — that is the
+     * only way it reaches the list — so tapping it confirms and closes.
+     */
+    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    $start = (int) strpos($src, 'function listHTML()');
+    $fn = substr($src, $start, (int) strpos($src, 'function formHTML(', $start) - $start);
+
+    expect($fn)->toContain('a.id === null || a.id === undefined')
+        ->and($fn)->toContain('data-cpg-keep')
+        ->and($fn)->toContain('data-cpg-pick=');
+
+    // And the handler for it exists, closes, and asks the server nothing.
+    expect($src)->toContain("if (e.target.closest('[data-cpg-keep]')) { close(); return; }");
+
+    /*
+     * THE ORDER MATTERS. data-cpg-keep has to be read before data-cpg-pick, or
+     * a row carrying neither attribute falls through to the pick branch and
+     * posts `/cart/address/null/choose`.
+     */
+    expect((int) strpos($src, "closest('[data-cpg-keep]')"))
+        ->toBeLessThan((int) strpos($src, "var pick = e.target.closest('[data-cpg-pick]')"));
+});
+// MUTATION: render the guest row with data-cpg-pick="null" like any other.
+
+it('keeps + Add New Address inside the list popup, leading to the form', function () {
+    // The list is a choice, and "none of these" has to be one of the things it
+    // can be answered with.
+    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    $start = (int) strpos($src, 'function listHTML()');
+    $fn = substr($src, $start, (int) strpos($src, 'function formHTML(', $start) - $start);
+
+    expect($fn)->toContain('cpg-addnew')
+        ->and($fn)->toContain('data-cpg-new')
+        ->and($fn)->toContain('CFG.addNew');
+
+    // And the tap on it swaps the list for the form, in the same sheet.
+    expect($src)->toContain("if (e.target.closest('[data-cpg-new]')) { paint(formHTML(), false); return; }");
+});
+
+it('keeps AED and the amount on one line in the docked checkout row', function () {
+    /*
+     * THE DEFECT WAS A DESCENDANT SELECTOR. `.tally span` also matched the two
+     * spans INSIDE the price — Money::format() renders the amount in a span
+     * with the currency symbol in a span of its own — so display:block landed
+     * on the symbol and "AED" became a block with the digits on the line below.
+     *
+     * white-space:nowrap could never have prevented it: those were two block
+     * boxes, not a wrapped line.
+     */
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    expect($css)->toContain('.cpg-cobar .tally > span{display:block')
+        ->and($css)->not->toContain('.cpg-cobar .tally span{display:block');
+
+    // Said again from the other side, because the rule above is one careless
+    // edit away from being a descendant selector once more.
+    expect($css)->toContain('.tally b .woocommerce-Price-currencySymbol{')
+        ->and($css)->toContain('display:inline;color:inherit;font-size:inherit;white-space:nowrap}');
+
+    /*
+     * AND THE FIGURE IS NEVER CLIPPED EITHER. At `flex:0 1 auto` the tally was
+     * free to shrink under the button on a narrow row; the button is the one
+     * that gives way, and it still says so two rules further down.
+     */
+    expect($css)->toContain('.cpg-cobar .tally{flex:0 0 auto;white-space:nowrap;overflow:hidden}');
+});
+// MUTATION: put the descendant selector back (`.tally span{display:block`).
+
+it('renders the price with its symbol nested, which is what the rule has to survive', function () {
+    // The markup the CSS above is about, taken from the page rather than
+    // assumed — the fix is only correct against the shape Money::format()
+    // actually emits.
+    squeezeOn();
+
+    $html = squeezeGet(squeezeCart())->assertOk()->getContent();
+
+    $bar = strpos($html, 'class="cpg-cobar"');
+    expect($bar)->not->toBeFalse();
+
+    $slice = substr($html, (int) $bar, 700);
+
+    expect($slice)->toContain('woocommerce-Price-currencySymbol')
+        ->and($slice)->toContain('woocommerce-Price-amount');
+});
+
+it('takes the mobile tab bar off the page that has docked rows of its own', function () {
+    /*
+     * Two floating bars stacked at the foot of a phone: the tab bar is
+     * position:fixed;bottom:0 and so are these rows, so the shopper got a menu
+     * where the checkout button should be.
+     *
+     * DONE FROM THIS SIDE. partials/mobile-chrome.blade.php belongs to another
+     * lane and serves every other page of the shop, where the tab bar is
+     * wanted. The scope here is the STYLESHEET: this block is pushed only by
+     * cart-squeeze.blade.php, which cart.blade.php includes only while the
+     * layout is `squeeze`.
+     */
+    squeezeOn();
+
+    $html = squeezeGet(squeezeCart())->assertOk()->getContent();
+
+    expect($html)->toContain('.tabbar{display:none}');
+});
+// MUTATION: delete the `.tabbar{display:none}` rule.
+
+it('leaves the tab bar alone on every other page, and on the classic cart', function () {
+    /*
+     * The other half, and the one that says the rule is scoped by the
+     * stylesheet rather than by luck. Switching the layout back takes it away
+     * with everything else; nothing has to remember to put the tab bar back.
+     */
+    $html = squeezeGet(squeezeCart())->assertOk()->getContent();
+
+    expect($html)->not->toContain('.tabbar{display:none}');
+
+    // And the shop's own pages never saw it.
+    expect(test()->get('/')->getContent())->not->toContain('.tabbar{display:none}');
+
+    // The file another lane owns is untouched by all of this.
+    $chrome = (string) file_get_contents(resource_path('views/partials/mobile-chrome.blade.php'));
+    expect($chrome)->toContain("moduleEnabled('mobile_tabbar', false)");
+});
+
+it('paints the docked rows full white, to the bottom edge', function () {
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    // The address row was var(--cream): a cream strip above a white one reads
+    // as two bars rather than as the foot of the screen.
+    expect($css)->toContain('padding:0 14px;background:#fff;')
+        ->and($css)->not->toContain('padding:0 14px;background:var(--cream);');
+
+    // And the block itself is white, so the space underneath it is white too
+    // rather than showing the page through.
+    expect($css)->toContain('.cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:40;')
+        ->and($css)->toContain('background:#fff;
+  padding-bottom:calc(var(--cpg-bar-pad)');
+});
+// MUTATION: put background:var(--cream) back on .cpg-addrbar.
+
+it('fades the address line only once there is an address to fade', function () {
+    /*
+     * The mask says "there is more of this line than fits". On the prompt there
+     * is no more of it: the fade just dissolves the last word of a sentence
+     * that fits, which is what was reported as the placeholder looking broken.
+     */
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    expect($css)->toContain('.cpg-addrbar.cpg-has .who b,')
+        ->and($css)->toContain('.cpg-addrbar.cpg-has .who span{');
+
+    // The unconditional pair keeps the one-line clipping and gives up only the
+    // mask, so a browser with no mask support is where it always was.
+    $start = (int) strpos($css, '.cpg-squeeze .cpg-addrbar .who b,');
+    $unconditional = substr($css, $start, 190);
+
+    expect($unconditional)->toContain('display:block;white-space:nowrap;overflow:hidden}')
+        ->and($unconditional)->not->toContain('mask-image');
+});
+// MUTATION: move the mask back onto the unconditional rule.
+
+it('puts cpg-has on the row from the session, not only after a tap', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    // Nothing chosen: the prompt, and no fade.
+    $html = squeezeGet(squeezeCart())->assertOk()->getContent();
+
+    expect($html)->toContain('<div class="cpg-addrbar">')
+        ->and($html)->not->toContain('cpg-addrbar cpg-has');
+
+    /*
+     * A SHOPPER WHO RELOADS MUST NOT SEE THE ROW BRIEFLY WRONG. The class is
+     * rendered by the server as well as toggled by paintRow(), so the first
+     * paint is already right — there is no frame in which a chosen address is
+     * unfaded or the prompt is faded.
+     */
+    test()->postJson('/cart/address', [
+        'area' => 'Al Quoz', 'city' => 'Dubai', 'country' => 'AE', 'tag' => 'home',
+    ])->assertOk();
+
+    $html = squeezeGet(squeezeCart())->assertOk()->getContent();
+
+    expect($html)->toContain('cpg-addrbar cpg-has');
+
+    // And the script keeps it in step for the tap that has just happened.
+    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    expect($src)->toContain("bar.classList.toggle('cpg-has', !!a)");
+});
+// MUTATION: render the class unconditionally in cart-inner.blade.php.
+
+/* ------------------------------------------------------------------------
+ | 11. The three new size controls
+ |------------------------------------------------------------------------*/
+
+it('ships all three new sizes at the value that reproduces today\'s page', function () {
+    $c = app(CartPage::class)->all();
+
+    // Zero space under the rows, and both multipliers at 1 — so applying this
+    // moves nothing until somebody drags something.
+    expect($c['bar_pad'])->toBe(0)
+        ->and($c['addr_btn_font'])->toBe(100)
+        ->and($c['trust_size'])->toBe(100);
+
+    squeezeOn();
+
+    $vars = app(CartPage::class)->cssVariables();
+
+    expect($vars)->toContain('--cpg-bar-pad:0px')
+        ->and($vars)->toContain('--cpg-addrbtn-f:1.00')
+        ->and($vars)->toContain('--cpg-trust-s:1.00');
+});
+// MUTATION: change bar_pad's default from 0 to 12.
+
+it('carries the three new sizes onto the page and derives the sizes from them', function () {
+    squeezeOn(['bar_pad' => 20, 'addr_btn_font' => 130, 'trust_size' => 140]);
+
+    $html = squeezeGet(squeezeCart())->assertOk()->getContent();
+
+    expect($html)->toContain('--cpg-bar-pad:20px')
+        ->and($html)->toContain('--cpg-addrbtn-f:1.30')
+        ->and($html)->toContain('--cpg-trust-s:1.40');
+
+    /*
+     * SIZING IS CSS, NOT JAVASCRIPT — so what the page carries is the number,
+     * and every size is a calc() off it. Nothing here measures anything.
+     */
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    // The address button: its own multiplier ON TOP of the shared bar scale,
+    // never instead of it, so the two sliders cannot fight.
+    expect($css)->toContain('font-size:calc(12px * var(--cpg-bar-f) * var(--cpg-addrbtn-f));');
+
+    // The trust row scales as a row: the tick, the wording and the chips.
+    expect($css)->toContain('font-size:calc(10.5px * var(--cpg-trust-s))')
+        ->and($css)->toContain('width:calc(13px * var(--cpg-trust-s));')
+        ->and($css)->toContain('font-size:calc(6.5px * var(--cpg-trust-s));');
+});
+// MUTATION: emit --cpg-addrbtn-f but leave .cpg-addrbtn's font-size at
+// calc(12px * var(--cpg-bar-f)) — the slider that saves and moves nothing.
+
+it('counts the space under the rows as part of what the page has to clear', function () {
+    /*
+     * Otherwise asking for space slides the bars DOWN over the last basket
+     * line instead of moving the end of the page up away from them — which is
+     * the opposite of what the control is for.
+     */
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    expect($css)->toContain('--cpg-bars:calc(var(--cpg-addr-h) + var(--cpg-co-h) + var(--cpg-bar-pad));');
+});
+// MUTATION: drop var(--cpg-bar-pad) from --cpg-bars.
+
+it('puts each new control on the tab that owns what it changes', function () {
+    $tabs = CartPage::TABS;
+
+    expect($tabs['bars'][2])->toContain('bar_pad')
+        ->and($tabs['bars'][2])->toContain('addr_btn_font')
+        ->and($tabs['summary'][2])->toContain('trust_size');
+
+    // And nothing in the schema is unreachable: a setting on no tab is a
+    // setting the owner cannot find, which is the same as not having it.
+    $onTabs = collect($tabs)->flatMap(fn ($t) => $t[2])->all();
+
+    foreach (['bar_pad', 'addr_btn_font', 'trust_size'] as $key) {
+        expect(CartPage::SCHEMA)->toHaveKey($key)
+            ->and($onTabs)->toContain($key);
+    }
+});
+// MUTATION: take 'trust_size' off the summary tab but leave it in SCHEMA.

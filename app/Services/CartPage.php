@@ -169,6 +169,16 @@ class CartPage
         // ── Trust row ──
         'trust_on'    => ['bool', 'Secure badge and payment marks', true, ''],
         'trust_text'  => ['text', 'Secure badge wording', 'Secure checkout', ''],
+        /*
+         * ONE NUMBER FOR THE WHOLE ROW. The tick, its wording, the gaps and the
+         * payment chips are each a calc() off this, so the row scales as a row.
+         * A slider that grew the marks and left the tick and the text where
+         * they were would take a line that reads as one thing and pull it into
+         * three.
+         */
+        'trust_size'  => ['range', 'Size of the trust row', 100,
+                          'The tick, the wording and the payment marks together — they are one line, so one number moves all of it.',
+                          ['min' => 70, 'max' => 150, 'step' => 5, 'unit' => '%']],
         'pay_visa'    => ['bool', 'Visa', true, ''],
         'pay_mc'      => ['bool', 'Mastercard', true, ''],
         'pay_apple'   => ['bool', 'Apple Pay', true, ''],
@@ -183,6 +193,31 @@ class CartPage
         'bar_font'        => ['range', 'Text in both rows', 100,
                               'Everything in both docked rows is a multiple of this, so no wording can outgrow the bar it sits in.',
                               ['min' => 85, 'max' => 125, 'step' => 5, 'unit' => '%']],
+        /*
+         * ZERO IS TODAY'S PAGE, EXACTLY. The rows sit on the bottom edge as
+         * they do now until somebody asks for space, which is what "defaults
+         * reproduce today's rendering" means for a control that adds room.
+         *
+         * It is padding on the docked block and NOT a margin under it: the
+         * block is white to its bottom edge, so the space it adds is white
+         * too. A margin would show the page through underneath and read as the
+         * bar failing to reach the bottom of the screen.
+         *
+         * It is also added into --cpg-bars, so asking for more space moves the
+         * end of the page down with the bars instead of sliding them over the
+         * last basket line.
+         */
+        'bar_pad'         => ['range', 'Space under the checkout row', 0,
+                              'Extra white space below the docked rows. Zero is where they sit today, on the bottom edge. On a phone with a home indicator this is added to the space the hardware already reserves, not used instead of it.',
+                              ['min' => 0, 'max' => 40, 'step' => 2, 'unit' => 'px']],
+        /*
+         * A MULTIPLIER ON TOP OF bar_font, never an override — the same rule
+         * row_font follows against row_h. The two sliders cannot fight, and
+         * neither can silently win.
+         */
+        'addr_btn_font'   => ['range', 'Address button text size', 100,
+                              'The "+ Address" / "Change address" button only. Multiplied into the size "Text in both rows" already produced, so the two sliders stack rather than overrule one another.',
+                              ['min' => 80, 'max' => 140, 'step' => 5, 'unit' => '%']],
         'co_label'        => ['text', 'Checkout button wording', 'Proceed to Checkout',
                               'It shares the docked row with the item count and the total, so a longer word here is a narrower tally beside it. The button gives way first and ends in an ellipsis rather than pushing the figures off a 360px screen.'],
         'addr_heading'    => ['text', 'Address row heading', 'Please choose your delivery address', ''],
@@ -293,9 +328,10 @@ class CartPage
                        'sum_service_on', 'sum_service_mode', 'sum_service', 'sum_service_pct',
                        'sum_service_label', 'sum_service_help',
                        'sum_total_label',
-                       'trust_on', 'trust_text', 'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara']],
+                       'trust_on', 'trust_text', 'trust_size',
+                       'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara']],
         'bars'    => ['Docked rows', 'The two rows that stay at the foot of the screen.',
-                      ['addr_on', 'addr_h', 'co_h', 'bar_font', 'co_label',
+                      ['addr_on', 'addr_h', 'co_h', 'bar_font', 'bar_pad', 'addr_btn_font', 'co_label',
                        'addr_heading', 'addr_btn_add', 'addr_btn_change', 'addr_chosen']],
         'popup'   => ['Address popup', 'Its two heights — one for the list, a taller one for the form — its density and every word in it.',
                       ['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
@@ -461,6 +497,9 @@ class CartPage
             '--cpg-addr-h:' . $c['addr_h'] . 'px',
             '--cpg-co-h:' . $c['co_h'] . 'px',
             '--cpg-bar-f:' . $this->ratio($c['bar_font']),
+            '--cpg-bar-pad:' . $c['bar_pad'] . 'px',
+            '--cpg-addrbtn-f:' . $this->ratio($c['addr_btn_font']),
+            '--cpg-trust-s:' . $this->ratio($c['trust_size']),
         ]);
     }
 

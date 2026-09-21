@@ -22,8 +22,16 @@ use Illuminate\Http\Request;
  * A SIGNED-OUT SHOPPER'S ADDRESS IS IN THE SESSION AND NOWHERE ELSE. Writing an
  * `addresses` row for a guest would mean inventing a customer to hang it off,
  * and a shop that manufactures customer records for everybody who taps a button
- * has a customer table that cannot be counted. The session copy carries no id,
- * is listed to nobody, and dies with the session.
+ * has a customer table that cannot be counted. The session copy carries no id
+ * and dies with the session.
+ *
+ * IT IS STILL IN THE PAYLOAD'S `addresses`, THOUGH — for the one shopper whose
+ * session it is, and in the one response they can already read. "In the session
+ * and nowhere else" is about STORAGE, not about what the sheet may draw: the
+ * sheet decides between the saved list and the empty form on `addresses`, so
+ * leaving the guest's own address out of it made "Change address" open a blank
+ * form. It is listed to nobody else because nobody else's request can reach
+ * another session. See the note in all().
  *
  * OWNERSHIP IS THE RELATION. Every saved address is reached through
  * `$customer->addresses()`, so an id belonging to somebody else is not found
@@ -82,6 +90,32 @@ final class CartAddressState
         if ($chosen === null) {
             $guest = $request->session()->get(self::SESSION_KEY);
             $chosen = is_array($guest) ? self::shape(new Address($guest)) : null;
+
+            /*
+             * AND IT IS LISTED TOO — to the one shopper it belongs to, in the
+             * one payload they can already see.
+             *
+             * This is the plumbing behind "Change address opens the ADD form".
+             * The docked row calls itself "Change address" the moment there is
+             * a chosen address, and a guest's chosen address lives in the
+             * session. `addresses` was built from $customer->addresses() and
+             * from nothing else, so for that shopper it came back EMPTY, the
+             * sheet's `hasSaved` was false, and the button that says "change"
+             * opened an empty form — which reads as "mine is gone", and is how
+             * a shop ends up holding the same address twice.
+             *
+             * NOTHING IS WRITTEN AND NO CUSTOMER IS INVENTED. This is the
+             * session copy the class note describes, shaped for the list it is
+             * already shaped for elsewhere in this payload. It carries no id —
+             * shape() returns null for a row that does not exist — and the
+             * sheet draws an id-less row as the current choice rather than as
+             * something to re-select, which is exactly what shape()'s own note
+             * says the null is for. `Customer::count()` and `Address::count()`
+             * are unchanged, which is what the signed-out test asserts.
+             */
+            if ($chosen !== null) {
+                $saved[] = $chosen;
+            }
         }
 
         $country = ShopperCountry::for($request);

@@ -46,6 +46,7 @@
   --cpg-row-h:96px; --cpg-fscale:1; --cpg-row-bold:600;
   --cpg-per:4.5; --cpg-rec-bold:400; --cpg-drift:1;
   --cpg-addr-h:40px; --cpg-co-h:62px; --cpg-bar-f:1;
+  --cpg-bar-pad:0px; --cpg-addrbtn-f:1; --cpg-trust-s:1;
   --cpg-sheet-max:50%; --cpg-sheet-d:1; --cpg-sheet-f:1;
 
   /* derived, in CSS, once */
@@ -56,7 +57,10 @@
   --cpg-f-price:calc((11px + var(--cpg-row-h) * .040) * var(--cpg-fscale));
   --cpg-qty-h:calc(var(--cpg-row-h) * .30);
   --cpg-qty-f:calc(var(--cpg-row-h) * .135 * var(--cpg-fscale));
-  --cpg-bars:calc(var(--cpg-addr-h) + var(--cpg-co-h));
+  /* The space the last row has to clear. The padding under the docked rows is
+     part of the bars' height, so asking for more of it moves the end of the
+     page down with it rather than sliding the bars over the last basket line. */
+  --cpg-bars:calc(var(--cpg-addr-h) + var(--cpg-co-h) + var(--cpg-bar-pad));
 
   /* The full-bleed rail is the one thing here wider than the column it sits
      in. `clip` and not `hidden`: `hidden` on one axis forces the other to
@@ -254,14 +258,22 @@
   font-size:9.5px;color:var(--muted);margin-top:1px}
 
 /* ── trust row: tick, a rule, and the marks. One row, tiny. ─────────────── */
+/* ONE MULTIPLIER FOR THE WHOLE ROW, --cpg-trust-s. The tick, its wording, the
+   gaps and the payment chips are all a calc() off it, so the row scales as a
+   row: a slider that grew the marks and left the tick and the text where they
+   were would take a row that reads as one line and pull it apart. Same rule as
+   the row height on the basket lines. */
 .kbb-cartpage.cpg-squeeze .cpg-trust{display:flex;align-items:center;justify-content:center;
-  gap:7px;flex-wrap:wrap;padding:10px 0 0;font-size:10.5px;color:var(--muted)}
-.kbb-cartpage.cpg-squeeze .cpg-trust .sec{display:inline-flex;align-items:center;gap:4px;
-  white-space:nowrap}
-.kbb-cartpage.cpg-squeeze .cpg-trust .sec svg{width:13px;height:13px;color:var(--green);flex:none}
+  gap:calc(7px * var(--cpg-trust-s));flex-wrap:wrap;padding:calc(10px * var(--cpg-trust-s)) 0 0;
+  font-size:calc(10.5px * var(--cpg-trust-s));color:var(--muted)}
+.kbb-cartpage.cpg-squeeze .cpg-trust .sec{display:inline-flex;align-items:center;
+  gap:calc(4px * var(--cpg-trust-s));white-space:nowrap}
+.kbb-cartpage.cpg-squeeze .cpg-trust .sec svg{width:calc(13px * var(--cpg-trust-s));
+  height:calc(13px * var(--cpg-trust-s));color:var(--green);flex:none}
 .kbb-cartpage.cpg-squeeze .cpg-trust .sep{color:var(--line-2)}
-.kbb-cartpage.cpg-squeeze .paylogos{margin:0;gap:4px;flex-wrap:nowrap}
-.kbb-cartpage.cpg-squeeze .paylogos span{height:16px;padding:0 4px;font-size:6.5px;
+.kbb-cartpage.cpg-squeeze .paylogos{margin:0;gap:calc(4px * var(--cpg-trust-s));flex-wrap:nowrap}
+.kbb-cartpage.cpg-squeeze .paylogos span{height:calc(16px * var(--cpg-trust-s));
+  padding:0 calc(4px * var(--cpg-trust-s));font-size:calc(6.5px * var(--cpg-trust-s));
   display:grid;place-items:center;letter-spacing:.03em;border-radius:3px;background:#fff}
 
 /* ── the two floating rows ──────────────────────────────────────────────── */
@@ -270,10 +282,57 @@
    the viewport, so a short basket would leave the checkout button halfway up
    the page. The padding-bottom on .wrap above is what keeps the last row out
    from under them. */
+/* ── the mobile tab bar goes, and it goes from HERE ─────────────────────────
+
+   TWO FLOATING BARS STACKED AT THE FOOT OF A PHONE. The tab bar — Home, Shop,
+   Quiz, Saved, Bag — is `position:fixed;bottom:0` and so are these rows, so on
+   the squeezed cart page they sit on top of one another and the shopper gets a
+   menu where the checkout button should be.
+
+   NOT A SELECTOR SCOPED UNDER .cpg-squeeze, because .tabbar is not inside
+   .kbb-cartpage — it is a sibling in the page chrome, and nothing in this
+   layer can reach up to it. And deliberately NOT AN EDIT TO
+   partials/mobile-chrome.blade.php, which another lane owns and which serves
+   every other page of the shop, where the tab bar is wanted.
+
+   THE STYLESHEET IS THE SCOPE. This whole <style> block is pushed only from
+   store/cart-squeeze.blade.php, which store/cart.blade.php includes only while
+   `layout = squeeze` — so this rule exists on exactly the page that has docked
+   rows of its own, and on no other. Switching the layout back to `classic`
+   takes the rule away with everything else here; the tab bar returns by itself
+   and nothing has to remember to put it back.
+
+   No !important, and it does not need one: the layout renders the styles stack
+   AFTER the built stylesheet link, so this is simply the later rule at equal
+   specificity. The owner can still switch the tab bar off shop-wide from its
+   own module toggle — this is so the cart page does not depend on his
+   remembering to.
+
+   (No Blade directive names in this comment, incidentally. The pushed <style>
+   is still Blade: a bare stack or vite directive written here compiles and
+   runs, which took a suite of 16 failures to notice.) */
+.tabbar{display:none}
+
+/* FULL WHITE, AND THE PADDING IS WHITE TOO.
+
+   `--cpg-bar-pad` is the space the shop asks for under the checkout row, and it
+   belongs to .cpg-docked rather than to the row inside it so that the white
+   runs to the bottom edge of the screen instead of stopping where the row
+   stops. A tinted strip under a white bar is what a shopper sees as the bar
+   "not reaching the bottom".
+
+   env(safe-area-inset-bottom) is ADDED to it, not substituted for it: on a
+   phone with a home indicator the shop's setting is space it asked for on top
+   of the space the hardware already takes. It resolves to 0px everywhere else. */
 .kbb-cartpage.cpg-squeeze .cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:40;
+  background:#fff;
+  padding-bottom:calc(var(--cpg-bar-pad) + env(safe-area-inset-bottom, 0px));
   box-shadow:0 -2px 14px -6px rgba(42,34,40,.35)}
+/* #fff and not var(--cream): "the background must be full white". The address
+   row and the checkout row are one surface, and a cream strip above a white one
+   reads as two bars rather than as the foot of the screen. */
 .kbb-cartpage.cpg-squeeze .cpg-addrbar{display:flex;align-items:center;justify-content:space-between;
-  gap:10px;min-height:var(--cpg-addr-h);padding:0 14px;background:var(--cream);
+  gap:10px;min-height:var(--cpg-addr-h);padding:0 14px;background:#fff;
   border-top:1px solid var(--line-2);font-size:calc(11.5px * var(--cpg-bar-f))}
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who{min-width:0;overflow:hidden}
 /* ONE LINE, FADED OFF AT THE RIGHT — "the shown address should be blured cut
@@ -292,23 +351,60 @@
    propping it up. */
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who b,
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who span{
-  display:block;white-space:nowrap;overflow:hidden;
+  display:block;white-space:nowrap;overflow:hidden}
+/* ONLY ONCE THERE IS AN ADDRESS TO FADE.
+
+   The mask says "there is more of this line than fits". On the prompt —
+   "Please choose your delivery address" — there is no more of it: the fade just
+   dissolves the last word of a sentence that fits, and a half-dissolved
+   instruction reads as a rendering fault, which is what it was reported as.
+   The class is put on by the server from the session and by paintRow() after a
+   tap, so the row is never briefly wrong in either direction. */
+.kbb-cartpage.cpg-squeeze .cpg-addrbar.cpg-has .who b,
+.kbb-cartpage.cpg-squeeze .cpg-addrbar.cpg-has .who span{
   -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent);
   mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent)}
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who b{font-weight:500;color:var(--ink-2)}
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who span{color:var(--muted);
   font-size:calc(10px * var(--cpg-bar-f))}
+/* Its own multiplier ON TOP of the shared bar scale, never instead of it, so
+   this slider and "Text in both rows" cannot fight and neither can silently
+   win — the same rule the row-text slider follows. */
 .kbb-cartpage.cpg-squeeze .cpg-addrbtn{flex:none;background:none;border:0;color:var(--green);
-  font-size:calc(12px * var(--cpg-bar-f));font-weight:600;cursor:pointer;padding:4px 0;
+  font-size:calc(12px * var(--cpg-bar-f) * var(--cpg-addrbtn-f));
+  font-weight:600;cursor:pointer;padding:4px 0;
   font-family:inherit}
 .kbb-cartpage.cpg-squeeze .cpg-cobar{display:flex;align-items:center;justify-content:space-between;
   gap:12px;min-height:var(--cpg-co-h);padding:0 14px;background:#fff;
   border-top:1px solid var(--line-2)}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .tally{min-width:0}
-.kbb-cartpage.cpg-squeeze .cpg-cobar .tally span{display:block;color:var(--muted);
+/* `> span`, AND THE CHILD COMBINATOR IS THE WHOLE FIX.
+
+   As a descendant selector this also matched the two spans INSIDE the price.
+   Money::format() renders
+
+     <span class="woocommerce-Price-amount" dir="ltr">
+       <span class="woocommerce-Price-currencySymbol">AED</span>1,234</span>
+
+   so `display:block` landed on the symbol and on the amount that wraps it, and
+   "AED" became a block of its own with the digits pushed onto the line below —
+   the two-line total. white-space:nowrap could never have prevented it: those
+   were two block boxes, not a wrapped line, and nowrap only governs wrapping.
+   The item count is the only direct span child, so the child combinator says
+   what this rule always meant. */
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally > span{display:block;color:var(--muted);
   font-size:calc(11px * var(--cpg-bar-f))}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .tally b{display:block;font-weight:700;
   font-size:calc(17px * var(--cpg-bar-f))}
+/* And said again from the other side, because the rule above is one careless
+   edit away from being a descendant selector once more, and the failure it
+   produces is silent. The symbol and its digits are one inline run at the
+   tally's own size, and they do not break apart: the nowrap in kbb.css that
+   would otherwise cover this is inside a max-width media query, so it is not a
+   thing this bar can rely on. */
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally b .woocommerce-Price-amount,
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally b .woocommerce-Price-currencySymbol{
+  display:inline;color:inherit;font-size:inherit;white-space:nowrap}
 /* "Proceed to Checkout" is nearly three times the width of "Checkout", and it
    shares a 360px row with an item count and a four-digit total. So the button
    GIVES WAY FIRST: `flex:0 1 auto` lets it shrink, `min-width:0` lets it
@@ -323,9 +419,15 @@
   background:var(--green);border-radius:10px;box-shadow:none;
   padding:calc(11px * var(--cpg-bar-f)) calc(16px * var(--cpg-bar-f));
   font-size:calc(15px * var(--cpg-bar-f))}
-/* And the tally does not grow past what it needs, so the button keeps whatever
-   is left rather than being squeezed by an empty column. */
-.kbb-cartpage.cpg-squeeze .cpg-cobar .tally{flex:0 1 auto;white-space:nowrap;overflow:hidden}
+/* The tally neither grows nor shrinks: `0 0 auto`.
+
+   It does not grow, so the button keeps whatever is left rather than being
+   squeezed by an empty column. It does not SHRINK either, and that is the half
+   that was missing — at `0 1 auto` the figure the shopper is about to pay was
+   free to be clipped by the overflow below it once the button asked for more
+   room than a 360px row has. The button is the one that gives way; it says so
+   itself, two rules up. Checked at 360px with a four-digit total at 125%. */
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally{flex:0 0 auto;white-space:nowrap;overflow:hidden}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn:hover{background:#177F47;transform:none}
 /* The classic column's own checkout button and "continue shopping" link are
    redundant once the bar is on screen, and a second Checkout is a shopper
@@ -664,8 +766,18 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     var chosenId = state && state.chosen ? state.chosen.id : null;
 
     var items = rows.map(function (a) {
-      return '<button type="button" class="cpg-al" data-cpg-pick="' + a.id + '"'
-        + ' aria-selected="' + (a.id === chosenId ? 'true' : 'false') + '">'
+      /* A ROW WITH NO id IS THE GUEST'S OWN ADDRESS, and it is drawn as the
+         current choice rather than as something to re-select. There is nothing
+         to re-select it BY: /cart/address/{id}/choose takes an id, this row has
+         none, and "null" in that URL is a 404 that leaves the sheet sitting
+         open looking broken. It is already the chosen one — that is the only
+         way it reaches this list — so tapping it confirms and closes, which is
+         what tapping the chosen row does everywhere else on this sheet. */
+      var mine = a.id === null || a.id === undefined;
+
+      return '<button type="button" class="cpg-al"'
+        + (mine ? ' data-cpg-keep' : ' data-cpg-pick="' + a.id + '"')
+        + ' aria-selected="' + (mine || a.id === chosenId ? 'true' : 'false') + '">'
         + '<span class="ad"><b>' + esc(a.name || CFG[a.tag] || a.tag) + '</b>'
         + '<span>' + esc(a.line) + '</span></span>'
         + '<span class="cpg-tag">' + esc(CFG[a.tag] || a.tag) + '</span>'
@@ -751,6 +863,13 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     if (!head || !btn) return;
 
     var a = state && state.chosen;
+
+    /* The fade off the right belongs to an address, not to the prompt that
+       stands in for one — see the rule in the stylesheet. Toggled here as well
+       as rendered by the server, so the row is right in the first paint AND
+       after a tap. */
+    var bar = head.closest('.cpg-addrbar');
+    if (bar) bar.classList.toggle('cpg-has', !!a);
 
     if (a) {
       head.textContent = CFG.chosen.replace('{tag}', CFG[a.tag] || a.tag);
@@ -932,6 +1051,11 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
 
     // + Add New Address: the form, and with it the form's taller cap.
     if (e.target.closest('[data-cpg-new]')) { paint(formHTML(), false); return; }
+
+    /* The guest's own address — already chosen, and not re-selectable by id.
+       Tapping it confirms and closes, with no request: choosing what is already
+       chosen has nothing to tell the server. */
+    if (e.target.closest('[data-cpg-keep]')) { close(); return; }
 
     /* Tapping an address IS the choice: it selects, it closes, and it lands in
        the docked row. There is no confirm step, because the row is the

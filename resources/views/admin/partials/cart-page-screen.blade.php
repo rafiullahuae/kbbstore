@@ -150,25 +150,47 @@
 @keyframes cpvbloom{0%,100%{opacity:.75;transform:translate(50%,-50%) scale(.85)}
   50%{opacity:1;transform:translate(50%,-50%) scale(1.15)}}
 @media (prefers-reduced-motion:reduce){.cpv-ship .fill,.cpv-ship .fill::after{animation:none}}
-.cpv-trust{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;
-  padding:8px 0 2px;font-size:9px;color:#6b7280}
+/* The whole trust row off --ts, exactly as the shop derives it from
+   --cpg-trust-s: one number, so the row scales as a row. */
+.cpv-trust{display:flex;align-items:center;justify-content:center;gap:calc(5px * var(--ts));
+  flex-wrap:wrap;padding:calc(8px * var(--ts)) 0 2px;font-size:calc(9px * var(--ts));color:#6b7280}
 .cpv-trust .tick{color:#1e9e5a;font-weight:700}
-.cpv-pay{height:13px;padding:0 3px;border:1px solid #ebe3e6;border-radius:2px;background:#fff;
-  display:grid;place-items:center;font-size:5.5px;font-weight:600;color:#3c3a40}
+.cpv-pay{height:calc(13px * var(--ts));padding:0 calc(3px * var(--ts));border:1px solid #ebe3e6;
+  border-radius:2px;background:#fff;
+  display:grid;place-items:center;font-size:calc(5.5px * var(--ts));font-weight:600;color:#3c3a40}
 
 /* docked */
-.cpv-dock{border-top:1px solid #ebe3e6;box-shadow:0 -2px 10px -6px rgba(0,0,0,.25)}
-.cpv-ab{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f6efef;
+/* White to the bottom edge, and --bp is the shop's own space under the rows.
+   Drawn on the block and not on the row inside it, for the same reason the
+   shop does it that way: the space it adds has to be white too. */
+.cpv-dock{border-top:1px solid #ebe3e6;background:#fff;padding-bottom:var(--bp);
+  box-shadow:0 -2px 10px -6px rgba(0,0,0,.25)}
+/* #fff, matching "the background must be full white" — the preview showed the
+   cream the shop no longer uses. */
+.cpv-ab{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;
   min-height:var(--ah);padding:0 10px;font-size:calc(11px * var(--bf))}
-.cpv-ab b{font-weight:500;color:#3c3a40;white-space:nowrap;overflow:hidden;
+.cpv-ab .who{min-width:0;overflow:hidden}
+.cpv-ab .who b,.cpv-ab .who i{display:block;font-style:normal;white-space:nowrap;overflow:hidden}
+.cpv-ab .who b{font-weight:500;color:#3c3a40}
+.cpv-ab .who i{color:#6b7280;font-size:calc(10px * var(--bf))}
+/* THE FADE ONLY ON THE ROW THAT HAS AN ADDRESS. Both states are drawn below, so
+   the difference this makes is visible here rather than only on a phone. */
+.cpv-ab.has .who b,.cpv-ab.has .who i{
   -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
   mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
-.cpv-ab span{flex:0 0 auto;color:#1e9e5a;font-weight:600;font-size:calc(11.5px * var(--bf))}
+.cpv-ab .bt{flex:0 0 auto;color:#1e9e5a;font-weight:600;
+  font-size:calc(11.5px * var(--bf) * var(--abf))}
 .cpv-cb{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;
   min-height:var(--ch);padding:0 10px}
-.cpv-cb .ta{min-width:0}
+/* 0 0 auto: the tally never shrinks, so the figure cannot be clipped — the
+   button gives way, exactly as it does on the page. */
+.cpv-cb .ta{flex:0 0 auto;min-width:0;white-space:nowrap}
 .cpv-cb .ta i{display:block;font-style:normal;font-size:calc(10px * var(--bf));color:#6b7280}
 .cpv-cb .ta b{display:block;font-size:calc(15px * var(--bf));font-weight:700}
+/* "AED" and the digits are ONE inline run. The shop's own defect was a
+   descendant selector turning the currency span into a block; the preview
+   states the intended result so a future edit has something to disagree with. */
+.cpv-cb .ta b span{display:inline;font-size:inherit;color:inherit;white-space:nowrap}
 .cpv-cb button{flex:0 1 auto;min-width:0;background:#1e9e5a;color:#fff;border:0;border-radius:8px;
   padding:calc(9px * var(--bf)) calc(13px * var(--bf));font-size:calc(12.5px * var(--bf));
   font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -619,6 +641,9 @@
       + '--ah:' + pvNum('addr_h', 40) + 'px;'
       + '--ch:' + pvNum('co_h', 62) + 'px;'
       + '--bf:' + (pvNum('bar_font', 100) / 100) + ';'
+      + '--bp:' + pvNum('bar_pad', 0) + 'px;'
+      + '--abf:' + (pvNum('addr_btn_font', 100) / 100) + ';'
+      + '--ts:' + (pvNum('trust_size', 100) / 100) + ';'
       + '--sd:' + (pvNum('sheet_dense', 100) / 100) + ';'
       + '--sf:' + (pvNum('sheet_font', 100) / 100) + ';'
       + '--bl:' + pvNum('sheet_blur', 3) + ';'
@@ -706,14 +731,38 @@
     return out;
   }
 
+  /* BOTH STATES OF THE ADDRESS ROW, one above the other.
+     The row looks different before and after a shopper picks an address, and
+     the difference is a setting on this very tab: the prompt carries no fade,
+     the chosen address does. Drawing only the prompt — which is what this did —
+     left the fade invisible in the admin and discoverable only on a phone,
+     which is where it was reported from. `+ Address` and `Change address` are
+     each on their own row too, so the button's size slider is judged against
+     the longer of the two words. */
   function pvBars() {
-    return '<div class="cpv-dock">'
+    var rows = '';
+
+    if (pvOn('addr_on')) {
+      rows += '<div class="cpv-ab"><span class="who"><b>'
+        + esc(pvText('addr_heading', 'Please choose your delivery address'))
+        + '</b></span><span class="bt">' + esc(pvText('addr_btn_add', '+ Address')) + '</span></div>'
+        + '<div class="cpv-ab has"><span class="who"><b>'
+        + esc(pvText('addr_chosen', 'Delivering to {tag}').replace('{tag}', pvText('sheet_home', 'Home')))
+        + '</b><i>Building 1-10, G-04 apartment, Al jhail gate phase 2 - Al Quoz - Dubai</i>'
+        + '</span><span class="bt">' + esc(pvText('addr_btn_change', 'Change address')) + '</span></div>';
+    }
+
+    /* AED and the amount in one inline run, wrapped the way Money::format()
+       wraps them, so the preview would show the two-line total if it ever came
+       back. */
+    return '<div class="cpv-dock">' + rows
+      + '<div class="cpv-cb"><div class="ta"><i>3 items</i>'
+      + '<b><span><span>AED</span> 1,443</span></b></div>'
+      + '<button type="button">' + esc(pvText('co_label', 'Proceed to Checkout')) + '</button></div></div>'
       + (pvOn('addr_on')
-          ? '<div class="cpv-ab"><b>' + esc(pvText('addr_heading', 'Please choose your delivery address'))
-            + '</b><span>' + esc(pvText('addr_btn_add', '+ Address')) + '</span></div>'
-          : '')
-      + '<div class="cpv-cb"><div class="ta"><i>3 items</i><b>AED 443</b></div>'
-      + '<button type="button">' + esc(pvText('co_label', 'Proceed to Checkout')) + '</button></div></div>';
+          ? '<p class="cpv-note">The address row before and after a delivery address is chosen. '
+            + 'The fade off the right belongs to a real address — the prompt is never faded.</p>'
+          : '');
   }
 
   /* The popup, drawn at whichever of its two caps applies. `which` is 'list'

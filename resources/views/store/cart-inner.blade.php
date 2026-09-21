@@ -444,7 +444,12 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
              heights are sliders. --}}
         <div class="cpg-docked">
         @if ($kbbCpg['addr_on'])
-            <div class="cpg-addrbar">
+            {{-- cpg-has is what turns the fade-off-the-right on, and it is
+                 rendered by the server so the row is never briefly wrong: a
+                 shopper who reloads with an address already chosen gets the
+                 fade in the first paint, and one who has not chosen never sees
+                 the prompt dissolve. paintRow() keeps it in step after a tap. --}}
+            <div class="cpg-addrbar{{ $kbbAddr ? ' cpg-has' : '' }}">
                 <div class="who">
                     <b id="cpgAddrHead">{{ $kbbAddr ? str_replace('{tag}', $kbbCpg['sheet_' . $kbbAddr['tag']], $kbbCpg['addr_chosen']) : $kbbCpg['addr_heading'] }}</b>
                     <span id="cpgAddrSub" @if (! $kbbAddr) hidden @endif>{{ $kbbAddr['line'] ?? '' }}</span>
