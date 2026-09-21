@@ -179,6 +179,10 @@ svg{display:block}
 .envtog button .d{width:7px;height:7px;border-radius:50%;background:currentColor}
 .envtog button.on[data-e="live"]{background:var(--surface);color:var(--accent-ink);box-shadow:var(--sh-s)}
 .envtog button.on[data-e="sandbox"]{background:var(--surface);color:var(--amber);box-shadow:var(--sh-s)}
+.iconbtn.spin svg{animation:kbbspin .7s linear infinite}
+.iconbtn[disabled]{opacity:.55;cursor:default}
+@keyframes kbbspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.iconbtn.spin svg{animation:none}}
 .iconbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;color:var(--ink-soft);transition:.15s;position:relative}
 .iconbtn:hover{color:var(--ink);border-color:#d6dbe7}
 .iconbtn svg{width:18px;height:18px}
@@ -2359,6 +2363,23 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
            one signal the top bar has for "something needs you" has never once
            meant it. Nothing in this application raises an alert, so the bell
            keeps its route to Debug & Monitor and loses the claim. -->
+      <!--
+        PURGE, ON EVERY SCREEN.
+
+        This host has no shell. When a package adds a route, the compiled route
+        cache still holds the old table and the new screen answers "not found";
+        when a setting is saved, a stale compiled config can keep serving the
+        old value. The only cure is `artisan optimize:clear`, and the owner
+        cannot run it.
+
+        Platform -> Cache has buttons for it, but a purge you have to NAVIGATE
+        to is a purge you reach only once you already suspect caching -- and the
+        symptom (a screen that 404s, a setting that will not stick) does not
+        look like caching. So it lives here, on every screen, one tap, no
+        confirm: it deletes derived files only and the worst case is one slow
+        page while they rebuild.
+      -->
+      <button class="iconbtn" id="purgeBtn" title="Clear all caches" onclick="kbbPurge(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.2v4.6h-4.6"/></svg></button>
       <button class="iconbtn" onclick="go('debug')" title="Debug & Monitor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
       <div class="userchip"><div class="avatar">R</div><div><b>Rafi</b><small>Owner</small></div></div>
     </div>
@@ -10113,6 +10134,36 @@ function openModal(html){$('#modal').innerHTML=html;$('#modalBg').classList.add(
 function closeModal(){$('#modalBg').classList.remove('on');}
 $('#modalBg').onclick=e=>{if(e.target===$('#modalBg'))closeModal();};
 $('#drawerBg').onclick=closeDrawer;
+/*
+ * Clear every cache this shop keeps, from the top bar of any screen.
+ *
+ * POSTs target=all to the endpoint Platform -> Cache already uses, so there is
+ * one implementation and not two that can drift. The button disables itself
+ * while the request is in flight -- a double tap is harmless but the second
+ * purge rebuilds what the first one just rebuilt, which is a slow page for no
+ * reason -- and its icon spins so the wait reads as work.
+ */
+let kbbPurging = false;
+async function kbbPurge(btn){
+  if (kbbPurging) return;
+  kbbPurging = true;
+  btn.disabled = true;
+  btn.classList.add('spin');
+  try {
+    const r = await api('/cache/clear', {method:'POST', body: JSON.stringify({target:'all'})});
+    // The endpoint answers {ok, target, ran:[…], compiled:{…}} -- `ran` names
+    // what it actually did, which is worth saying: "Caches cleared" on a run
+    // that silently did nothing looks identical to one that worked.
+    const n = (r && Array.isArray(r.ran)) ? r.ran.length : 0;
+    toast(n ? 'Cleared ' + n + ' cache' + (n === 1 ? '' : 's') + '.' : 'Caches cleared.');
+  } catch (e) {
+    toast(e && e.message ? e.message : 'Could not clear the caches.');
+  } finally {
+    kbbPurging = false;
+    btn.disabled = false;
+    btn.classList.remove('spin');
+  }
+}
 let toastT;function toast(m){const t=$('#toast');t.innerHTML=ic(I.check)+'<span>'+m+'</span>';t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
 $$('#envtog button').forEach(b=>b.onclick=()=>{
   $$('#envtog button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
