@@ -24,6 +24,21 @@ class MobileHeader
         'pad_right'  => ['range', 'Right', 12, '', ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
 
         // ── Rows ──
+        /*
+         * THE DRIVER. The top row's height, and the scale everything standing
+         * in that row is sized from — see --mh-fit at the foot of kbb.css.
+         *
+         * 44 is the number the row is built out of today: `.ib{width:44px;
+         * height:44px}` and `.logo{min-height:44px}` from the mobile-polish
+         * tap-target pass. The row MEASURES 46 because the burger is 46
+         * (--mi-size), and that stays true here — the burger scales from the
+         * same factor, so at 44 it is still exactly 46.
+         */
+        'row_h'      => ['range', 'Top row height', 44,
+                         'The burger, the icons and their little counts are all sized from this, so a taller row makes them bigger instead of leaving them adrift in it. Below about 39px the three icons become small enough to fit beside the shop name instead of sitting on a line of their own, and the whole header shortens by about 50px at once — measured on a 360px screen; a wider phone crosses over lower.',
+                         ['min' => 36, 'max' => 64, 'step' => 1, 'unit' => 'px']],
+        'fit_text'   => ['bool', 'Scale the wordmark with it', false,
+                         'Off, because the wordmark is the one thing on the row that cannot give way: it is a single unbroken line sharing the screen with a burger and three icons, and growing it is what makes the row wrap. Its own size is under Text size.'],
         'pad_top'    => ['range', 'Above the first row', 8, '', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
         'pad_bottom' => ['range', 'Below the first row', 0, 'The gap above the search field. This is now the only thing that sets it — the bar height no longer leaks space in here.', ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
         'row_gap'    => ['range', 'Between the rows', 6, 'Room for the divider to sit in.', ['min' => 0, 'max' => 20, 'step' => 1, 'unit' => 'px']],
@@ -46,6 +61,48 @@ class MobileHeader
         'search_icon'   => ['colour', 'Magnifier colour', '#E0567B', ''],
         'search_text'   => ['colour', 'Typed text colour', '#E0567B', ''],
         'search_ph'     => ['colour', 'Placeholder colour', '#8A7F86', ''],
+        // 44 is where the field renders today, and no setting put it there:
+        // `.sbox input{min-height:44px}` is a tap-target floor from the mobile
+        // polish pass, and it outranks `header .sbox .search-in` carrying
+        // Appearance → Header's own "Search field · phone". That setting tops
+        // out at 44, so it could never move this field — see the rules this
+        // variable feeds at the foot of kbb.css.
+        'search_h'      => ['range', 'Field height', 44,
+                            'The height of the box itself. 44px is what it measures today; a target much under that is hard to hit with a thumb.',
+                            ['min' => 32, 'max' => 72, 'step' => 1, 'unit' => 'px']],
+
+        // ── Text size ──
+        // Zero means "leave it alone": cssVariables() emits nothing for a zero,
+        // so the stylesheet keeps the fallback it already resolved to. That is
+        // the only way a default can reproduce today's rendering for a shop
+        // that has moved the wordmark size on the Header screen — a fixed
+        // number here would drag it back to this file's idea of the default.
+        'size_logo'     => ['range', 'Wordmark', 0,
+                            'The shop name. Unchanged keeps the size set under Appearance → Header.',
+                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px', 'zero' => 'Unchanged']],
+        'size_accent'   => ['range', 'Accent word', 0,
+                            'The second half of the wordmark. Unchanged keeps it the same size as the first half.',
+                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px', 'zero' => 'Unchanged']],
+        'size_search'   => ['range', 'Typed text', 0,
+                            'What a shopper types into the search field. Unchanged is 16px — and 16px is a floor, not a preference: iOS Safari zooms the whole page in when a field under it takes focus, and does not zoom back out.',
+                            ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px', 'zero' => 'Unchanged']],
+        'size_ph'       => ['range', 'Placeholder', 0,
+                            'The prompt shown before anyone types. Unchanged keeps it the same size as the typed text.',
+                            ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px', 'zero' => 'Unchanged']],
+        'size_badge'    => ['range', 'Cart and wishlist count', 0,
+                            'The small number on the two icons. Unchanged is 10px.',
+                            ['min' => 0, 'max' => 18, 'step' => 1, 'unit' => 'px', 'zero' => 'Unchanged']],
+        'size_trend'    => ['range', 'Trending words', 0,
+                            'The chips under the search field, when Appearance → Header switches them on. Unchanged is 12px.',
+                            ['min' => 0, 'max' => 20, 'step' => 1, 'unit' => 'px', 'zero' => 'Unchanged']],
+
+        // ── Icons ──
+        // #2A2228 is --ink, which is what the marks inherit today through
+        // body → a{color:inherit}; the signed-in green is the colour the
+        // signed-in dot beside them has always used (HeaderSettings'
+        // account_dot_col / --hd-dot). Neither is a new colour for this shop.
+        'acct_out'      => ['colour', 'Account icon · signed out', '#2A2228', 'What the mark renders as today.'],
+        'acct_in'       => ['colour', 'Account icon · signed in', '#1F9D55', 'The green the signed-in dot already uses.'],
 
         // ── Divider ──
         'divider'    => ['select', 'Divider above the search field', 'full', '', [
@@ -64,10 +121,14 @@ class MobileHeader
 
     public const TABS = [
         'spacing' => ['Spacing', 'How far in the header sits, and how tall its rows are. Phones only.',
-                      ['match_page', 'pad_left', 'pad_right', 'pad_top', 'item_gap', 'pad_bottom', 'row_gap', 'search_gap']],
-        'search'  => ['Search field', 'The shape and colours of the field itself.',
-                      ['search_full', 'search_align', 'search_pad', 'search_radius', 'search_border', 'search_bg',
+                      ['row_h', 'fit_text', 'match_page', 'pad_left', 'pad_right', 'pad_top', 'item_gap', 'pad_bottom', 'row_gap', 'search_gap']],
+        'type'    => ['Text size', 'Every piece of text the phone header draws. Each one starts at Unchanged, which is exactly what it renders now.',
+                      ['size_logo', 'size_accent', 'size_search', 'size_ph', 'size_badge', 'size_trend']],
+        'search'  => ['Search field', 'The shape, height and colours of the field itself.',
+                      ['search_full', 'search_align', 'search_h', 'search_pad', 'search_radius', 'search_border', 'search_bg',
                        'search_icon', 'search_text', 'search_ph']],
+        'icons'   => ['Icons', 'The account, wishlist and cart marks on the right of the top row.',
+                      ['acct_out', 'acct_in']],
         'divider' => ['Divider', 'The mark between the logo row and the search field.',
                       ['divider', 'dv_colour', 'dv_alpha', 'dv_width', 'dv_inset', 'dv_length']],
     ];
@@ -87,12 +148,44 @@ class MobileHeader
             $out[$key] = $saved === null ? $def[2] : $this->cast($key, $saved);
         }
 
+        /*
+         * THE SIDES REPORT WHAT IS IN FORCE, not what is stored under them.
+         *
+         * "Match the page" used to be applied in cssVariables() and nowhere
+         * else, so `all()` — which is what the admin screen is drawn from —
+         * handed back a Left and a Right that the header then threw away. The
+         * screen dims those two rows while the toggle is on (opacity .45) but
+         * leaves the sliders live, so they moved, they saved, and the phone
+         * did not budge. That is the "left right spacing don't work" report.
+         *
+         * Reconciling here rather than at render time means there is one
+         * answer to "how far in is the header", and the screen, the preview
+         * and the storefront all read it. The values stored underneath are
+         * left untouched; save() is what brings them back into line.
+         */
+        if ($out['match_page']) {
+            $out['pad_left'] = self::PAGE_INSET;
+            $out['pad_right'] = self::PAGE_INSET;
+        }
+
         return $out;
     }
 
     /** @param array<string, mixed> $values */
     public function save(array $values): void
     {
+        /*
+         * The toggle and the two numbers are one decision, so they are written
+         * together. Without this a shop can sit on match_page = true with a
+         * Left of 28 underneath it — which is exactly the state the screen
+         * could put it in before, and exactly the state that looks like a bug
+         * the next time somebody turns the toggle off.
+         */
+        if (array_key_exists('match_page', $values) && (bool) $values['match_page']) {
+            $values['pad_left'] = self::PAGE_INSET;
+            $values['pad_right'] = self::PAGE_INSET;
+        }
+
         foreach ($values as $key => $value) {
             if (isset(self::SCHEMA[$key])) {
                 $this->settings->set('mhd_' . $key, $this->cast($key, $value));
@@ -113,14 +206,35 @@ class MobileHeader
         };
     }
 
+    /**
+     * Which size control feeds which custom property.
+     *
+     * Kept as a map rather than written out below because every one of them is
+     * emitted on the same condition — see the loop at the foot of this method.
+     */
+    private const SIZE_VARS = [
+        'size_logo' => '--mh-logo',
+        'size_accent' => '--mh-logoacc',
+        'size_search' => '--mh-stsize',
+        'size_ph' => '--mh-phsize',
+        'size_badge' => '--mh-badge',
+        'size_trend' => '--mh-trendsize',
+    ];
+
     public function cssVariables(): string
     {
         $c = $this->all();
 
-        $left = $c['match_page'] ? self::PAGE_INSET : (int) $c['pad_left'];
-        $right = $c['match_page'] ? self::PAGE_INSET : (int) $c['pad_right'];
+        /*
+         * Straight out of all(), which has already applied "Match the page".
+         * Deciding it here as well was the whole of the bug: two places
+         * answered "how far in", the screen read one and the header read the
+         * other.
+         */
+        $left = (int) $c['pad_left'];
+        $right = (int) $c['pad_right'];
 
-        return implode(';', [
+        $out = [
             '--mh-l:' . $left . 'px',
             '--mh-r:' . $right . 'px',
             '--mh-t:' . $c['pad_top'] . 'px',
@@ -138,7 +252,45 @@ class MobileHeader
             '--mh-sicon:' . $c['search_icon'],
             '--mh-stext:' . $c['search_text'],
             '--mh-sph:' . $c['search_ph'],
-        ]);
+            '--mh-sh:' . (int) $c['search_h'] . 'px',
+            /*
+             * The same two heights again, as BARE NUMBERS.
+             *
+             * They are what the two scale factors are built from, and CSS
+             * cannot divide by a length: `calc(var(--mh-rowh) / 44px)` is
+             * invalid and the whole declaration is dropped. `calc(var(
+             * --mh-rown) / 44)` is a number over a number, which is legal and
+             * is 1 at the default — so every rule multiplied by it renders
+             * exactly what it renders today.
+             */
+            '--mh-rowh:' . (int) $c['row_h'] . 'px',
+            '--mh-rown:' . (int) $c['row_h'],
+            '--mh-shn:' . (int) $c['search_h'],
+            '--mh-acct:' . $c['acct_out'],
+            '--mh-accti:' . $c['acct_in'],
+        ];
+
+        /*
+         * A size left at Unchanged emits NOTHING.
+         *
+         * That is the whole reason these defaults can be honest. The rules in
+         * kbb.css are written `font-size:var(--mh-logo,var(--hd-logo))` and
+         * `font-size:var(--mh-logoacc,inherit)`, so an absent property leaves
+         * the declaration resolving to exactly what it resolved to before this
+         * control existed — including on a shop that has already moved the
+         * wordmark size on the Header screen. Emitting a number here instead
+         * would drag that shop's phone header back to this file's default the
+         * moment the package landed.
+         */
+        foreach (self::SIZE_VARS as $key => $var) {
+            $px = (int) $c[$key];
+
+            if ($px > 0) {
+                $out[] = $var . ':' . $px . 'px';
+            }
+        }
+
+        return implode(';', $out);
     }
 
     /** The divider style, as a class on the header. */
@@ -153,6 +305,7 @@ class MobileHeader
             $c['search_full'] ? 'mhs-full' : '',
             $c['search_full'] && $c['search_align'] === 'field' ? 'mhs-keep' : '',
             $c['search_border'] ? '' : 'mhs-noborder',
+            $c['fit_text'] ? 'mhs-fittext' : '',
         ])));
     }
 

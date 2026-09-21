@@ -3077,3 +3077,151 @@ header .nav .wrap{padding:var(--hd-nav-pad,0) 0}
    asked about and they are not repeated thirteen times down a list.
    ========================================================================== */
 
+
+
+/* ==========================================================================
+   MOBILE HEADER · text size, the account mark's colour, the field's height
+   Appearance → Mobile Header.  Phones only — every rule is inside the 900px
+   query, so >=901px is byte-for-byte what it was.
+
+   LAST IN THE FILE ON PURPOSE. Each of these corrects a declaration written
+   earlier at the SAME specificity (`header .logo` at the header-variables
+   block, `header .sbox .search-in input` in the iOS-zoom block), and source
+   order is what settles an equal-specificity tie. Raising the specificity
+   instead would have put these above rules that are meant to be able to win.
+
+   EVERY FALLBACK IS THE VALUE THE PROPERTY ALREADY RESOLVED TO, measured
+   against the tip rather than assumed:
+
+     wordmark      var(--hd-logo)   Appearance → Header's "Wordmark size" (22px
+                                    out of the box). `header .logo` beats the
+                                    `.logo{font-size:18px}` in the phone block,
+                                    so 18px has never been what a phone drew.
+     accent word   inherit          `header .logo span` sets a colour and no
+                                    size.
+     typed text    16px             the iOS-zoom rule. Under 16px Safari zooms
+                                    the page in on focus and does not come back
+                                    out, which is why the floor is documented
+                                    on the control as well as here.
+     placeholder   inherit          it has never had a size of its own.
+     the counters  10px             from `.ib i{font:700 10px Poppins}` — the
+                                    shorthand also carries the weight and the
+                                    family, so only the size is overridden.
+     trending      12px             `.trend a` in the phone block.
+
+   MobileHeader::cssVariables() emits NOTHING for a control left at Unchanged,
+   so those fallbacks are what an untouched shop keeps.
+   ========================================================================== */
+@media (max-width: 900px){
+
+  header .logo{font-size:var(--mh-logo,var(--hd-logo))}
+  header .logo span{font-size:var(--mh-logoacc,inherit)}
+
+  header .sbox .search-in input{font-size:var(--mh-stsize,16px)}
+  header .sbox .search-in input::placeholder{font-size:var(--mh-phsize,inherit)}
+
+  header .ib i{font-size:var(--mh-badge,10px)}
+  header .trend a{font-size:var(--mh-trendsize,12px)}
+
+  /* ── The field's height ──────────────────────────────────────────────────
+     It is set on the INPUT as well as on the wrapper, and that is the point.
+     `.sbox input{min-height:44px}` from the mobile-polish pass is what has
+     actually decided this height: it outranks nothing on the wrapper, but the
+     input is the wrapper's content, so a 44px input holds a 30px wrapper open
+     at 44. Appearance → Header's "Search field · phone" tops out at 44 and
+     feeds the wrapper only, so it could never make the field taller and never
+     made it shorter either — it has been an inert control.
+
+     44px is therefore the height today and the default here, to the pixel.
+     Both selectors carry `header .sbox`, which beats the polish rules. */
+  header .sbox .search-in{min-height:var(--mh-sh,44px)}
+  header .sbox .search-in input{min-height:var(--mh-sh,44px)}
+
+  /* ── The account mark ────────────────────────────────────────────────────
+     #2A2228 is --ink, which is what the mark inherits today through
+     body → a{color:inherit}; the icon carries no colour of its own. The
+     signed-in colour is the green the dot beside it already uses.
+
+     `.mh-signedin` is put on by @auth in partials/header.blade.php, so a
+     cached page never shows one visitor's state to another — the header is
+     not cached separately from the page it sits on. */
+  header .ib-acct > .ib svg{color:var(--mh-acct,#2A2228)}
+  header .ib-acct > .ib.mh-signedin svg{color:var(--mh-accti,#1F9D55)}
+}
+
+
+/* ==========================================================================
+   MOBILE HEADER · the row height drives what stands in the row
+   Appearance → Mobile Header → Spacing → "Top row height".
+
+   THE SHAPE, and why it is this one rather than an auto-fit switch.
+
+   The height is the driver and every size derived from it is a MULTIPLICATION,
+   not a replacement. `--mh-fit` is the row height over the 44 the row is built
+   out of today, so it is 1 out of the box and every product of it renders the
+   pixel it rendered before. The per-element controls under "Text size" are the
+   other factor in the same product: raising the row scales the whole row,
+   nudging one control moves one thing relative to it.
+
+   That leaves NO MODE. The alternative — an "auto-fit" toggle that takes the
+   per-element sliders over — hands the owner a screen where a slider he can
+   still drag does nothing, which is the bug he already reported once on Left
+   and Right. A product cannot do that: both factors always move the result.
+
+   CSS DOES ALL OF IT. No observer, no measurement, no script: a unitless
+   custom property and calc(). It survives a cached page, a resize and a
+   stylesheet served from the CDN.
+
+   WHY `zoom` FOR THE TWO BUTTONS. The burger is one box with four possible
+   glyphs inside it — bars, three dots, nine dots, tiles — drawn by about
+   twenty rules of absolute offsets, transforms, keyframes and open-state
+   variants. `zoom` scales the box AND all of that from one declaration, and
+   `zoom:1` is exactly no change. The same goes for `.ib`, where it scales the
+   44px circle, the glyph inside it and the little count stuck to its corner
+   together, keeping them in proportion instead of needing three rules that
+   could drift apart. A browser too old for `zoom` drops the declaration and
+   renders today's header — which is the right thing for it to do.
+
+   THE WORDMARK IS DELIBERATELY NOT IN THIS. It is one nowrap line sharing a
+   360px screen with a burger and three icon buttons, and it cannot shrink to
+   make room, so scaling it up is the one change that makes the row wrap. It
+   has its own control, and `mhs-fittext` opts into it for a shop whose
+   wordmark is short enough to afford it.
+   ========================================================================== */
+@media (max-width: 900px){
+
+  header{
+    /* 44 twice over: the tap-target size the row is built from, and the height
+       the search field measures. Both fall back to it, so a header rendered by
+       an older MobileHeader that emits neither still scales by 1. */
+    --mh-fit:calc(var(--mh-rown,44) / 44);
+    --mh-sfit:calc(var(--mh-shn,44) / 44);
+  }
+
+  /* The two buttons, whole. */
+  header .kbbmi{zoom:var(--mh-fit,1)}
+  header .ib{zoom:var(--mh-fit,1)}
+
+  /* The wordmark's tap target is the row, so it follows the row. Its TEXT does
+     not, unless the shop has asked for it. */
+  header .logo{min-height:calc(44px * var(--mh-fit,1))}
+  header.mhs-fittext .logo{font-size:calc(var(--mh-logo,var(--hd-logo)) * var(--mh-fit,1))}
+
+  /* ── The search row ───────────────────────────────────────────────────────
+     Its own height, its own factor: the field is a separate row with a
+     separate control, and tying its contents to the top row's height would
+     make one slider move two rows.
+
+     The magnifier follows the field in both directions. The TYPED TEXT only
+     grows — `max(1, …)`. Shrinking it is the one scaling that can do damage:
+     under 16px iOS Safari zooms the page in on focus and does not come back
+     out, so a shorter field must not drag the text under the floor. Anyone who
+     actually wants smaller text can set it outright under Text size. */
+  header .sbox .search-in svg{
+    width:calc(17px * var(--mh-sfit,1));
+    height:calc(17px * var(--mh-sfit,1));
+  }
+  header .sbox .search-in input{
+    font-size:calc(var(--mh-stsize,16px) * max(1, var(--mh-sfit,1)));
+  }
+}

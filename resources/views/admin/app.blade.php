@@ -1102,7 +1102,20 @@ tr.invdirty{background:var(--accent-soft)}
 .mhp-logo{flex:1;text-align:center;font-size:13px;font-weight:800;letter-spacing:-.02em;color:#2A2228}
 .mhp-logo b{color:#C13E63}
 .mhp-act{display:flex;gap:4px;flex:none}
-.mhp-act i{width:22px;height:22px;border-radius:50%;background:#EFE6EA;display:block}
+/* The three marks the storefront draws, at the storefront's own paths — see
+   MHICONS and App\Support\HeaderIcons. They used to be two blank discs, which
+   is why "use the same icons as the preview" had nothing to point at. */
+.mhp-act i{width:var(--mhp-ib,26px);height:var(--mhp-ib,26px);border-radius:50%;
+  display:grid;place-items:center;flex:none}
+.mhp-act i svg{width:var(--mhp-icon,13px);height:var(--mhp-icon,13px);color:var(--mhp-mark,#2A2228)}
+.mhp-act .mhp-acct svg{color:var(--mhp-acctc,#2A2228)}
+.mhp-logo{font-size:var(--mhp-logo,13px)}
+.mhp-logo b{font-size:var(--mhp-acc,inherit)}
+.mhp-sbox em{min-height:var(--mhp-sh,26px);padding-top:0;padding-bottom:0;
+  font-size:var(--mhp-st,10.5px)}
+.mhp-sbox em::before{width:var(--mhp-mag,11px);height:var(--mhp-mag,11px)}
+/* Which state the account mark is being shown in. */
+.mmpv-note b{font-weight:700;color:#2A2228}
 .mhp-sbox{order:99;flex:0 0 100%;position:relative;margin:var(--mh-gap,0) 0 var(--mh-sgap,10px)}
 .mhp-sbox em{display:flex;align-items:center;gap:7px;border:1px solid #E6DADF;
              background:var(--mh-sbg,#fff);border-radius:var(--mh-srad,9px);
@@ -1439,7 +1452,9 @@ a.mdlink.go:hover{background:#2F7D51;border-color:#2F7D51;color:#fff}
 .hdpv-logo{font-size:var(--hd-logo,22px);font-weight:700;color:var(--hd-logo-c,#2A2228);flex:1;letter-spacing:-.02em}
 .hdpv-logo em{font-style:normal;color:var(--hd-logo-a,#E0567B)}
 .hdpv-icons{display:flex;gap:8px}
-.hdpv-icons i{font-style:normal;font-size:calc(var(--hd-icon,21px) * .8);position:relative}
+.hdpv-icons i{font-style:normal;font-size:calc(var(--hd-icon,21px) * .8);position:relative;
+  display:inline-grid;place-items:center}
+.hdpv-icons i svg{width:calc(var(--hd-icon,21px) * .8);height:calc(var(--hd-icon,21px) * .8);color:#2A2228}
 .hdpv-icons i.bg::after{content:"2";position:absolute;top:-4px;right:-6px;background:var(--hd-badge,#E0567B);
   color:#fff;font-size:8px;border-radius:99px;padding:1px 4px}
 .hdpv-srch{padding:8px 12px}
@@ -4469,6 +4484,28 @@ function bindModules(){
    header stays under Appearance → Header. */
 let MH=null, MHTAB='spacing';
 
+/* What the homepage sections are inset by, and so what "Match the page"
+   means. MobileHeader::PAGE_INSET is the same number on the server. */
+const MH_PAGE_INSET=12;
+
+/* The storefront's own three marks come from KBB_HEADER_ICONS, which is
+   declared further down this same script block, next to KBB_COUNTRY_NAMES.
+
+   TWO REASONS IT IS NOT ALIASED TO A `const` HERE, both found by rendering the
+   screen rather than by reading it.
+
+   Everything from the top of this file to about line 8890 is inside
+   @verbatim, where Blade compiles nothing: an @json() written here is emitted
+   as the literal characters `@json(...)`, which is not a wrong value but a
+   syntax error, and it takes the whole admin script down rather than this one
+   screen. So the data has to be declared in one of the gaps between
+   @endverbatim and @verbatim, the way KBB_COUNTRY_NAMES and KBB_PRESETS are.
+
+   And a `const MHICONS = KBB_HEADER_ICONS` at this point in the file would
+   read it before the line that assigns it has run — `var` hoists the name, not
+   the value, so both previews would have drawn `undefined`. Read inside the
+   two functions instead, which run long after the script has. */
+
 function mhBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/mobile-header'; }
 
 async function renderMobileHdr(){
@@ -4501,22 +4538,37 @@ function mhField(f){
   const only=(f.key==='dv_length'&&mhGet('divider')!=='ticks')
           || (f.key==='dv_inset'&&['full','soft'].includes(mhGet('divider')))
           || (['dv_colour','dv_alpha','dv_width','dv_inset','dv_length'].includes(f.key)&&mhGet('divider')==='off');
-  const cls=(dim||only)?' class="dim"':'';
+  /* ONE class attribute, not two. This built ` class="dim"` and dropped it
+     into a tag that already had `class="mmrow"`; an HTML parser keeps the
+     first and discards the second, so .mmrow.dim has never matched anything
+     and no row on this screen has ever actually dimmed. Which is half of the
+     reported bug: Left and Right were meant to LOOK inert while "Match the
+     page" was on, and instead looked exactly like every other live control
+     while everything downstream threw their value away. */
+  const cls=(dim||only)?' dim':'';
   if(f.type==='bool')
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <span class="ectog${v?' on':''}" data-mh="${f.key}" role="switch" aria-checked="${v}" tabindex="0"></span></div>`;
   if(f.type==='select'){ const o=f.options||{};
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <select data-mh="${f.key}">${Object.keys(o).map(k=>`<option value="${escAttr(k)}"${k===v?' selected':''}>${escHtml(o[k])}</option>`).join('')}</select></div>`; }
   if(f.type==='range'){ const o=f.options||{};
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <span class="mmrange"><input type="range" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${v}" data-mh="${f.key}">
-        <i id="mhv-${f.key}">${v}${o.unit||''}</i></span></div>`; }
+        <i id="mhv-${f.key}">${mhReadout(f,v)}</i></span></div>`; }
   if(f.type==='colour')
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
       <span class="mmcol"><input type="color" value="${v}" data-mh="${f.key}"><code>${v}</code></span></div>`;
-  return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
+  return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
     <input type="text" value="${escAttr(String(v))}" data-mh="${f.key}"></div>`;
+}
+
+/* A zero on the text-size controls is not "0px", it is "leave it alone" —
+   the service emits no custom property at all for it, so the stylesheet keeps
+   the size it already had. Printing 0px would read as invisible text. */
+function mhReadout(f,v){
+  const o=f.options||{};
+  return (o.zero && Number(v)===0) ? escHtml(o.zero) : (v+(o.unit||''));
 }
 
 function mhRgba(){
@@ -4529,13 +4581,29 @@ function mhRgba(){
 /* A phone at the chosen numbers, using the header's own class names so the
    screen and the storefront cannot drift. */
 function mhPreview(){
-  const l=mhGet('match_page')?12:mhGet('pad_left');
-  const r=mhGet('match_page')?12:mhGet('pad_right');
+  /* Straight from the values, with no second opinion about "Match the page".
+     The screen used to decide it here as well as in the service, which is how
+     Left and Right came to move a slider and nothing else. MobileHeader::all()
+     reports what is actually in force and this draws that. */
+  const l=mhGet('pad_left');
+  const r=mhGet('pad_right');
+  /* The two scale factors the stylesheet derives, over the same 44. Applied to
+     preview-scale numbers so the mock moves the way the phone does. */
+  const fit=mhGet('row_h')/44, sfit=mhGet('search_h')/44;
+  const S=0.6, px=(n)=>(Math.round(n*S*10)/10)+'px';
+  const logo=mhGet('size_logo')||22;
+  const stext=(mhGet('size_search')||16)*Math.max(1,sfit);
+  const marks=`--mhp-ib:${px(mhGet('row_h'))};--mhp-icon:${px(21*fit)};
+    --mhp-logo:${px(logo*(mhGet('fit_text')?fit:1))};
+    --mhp-acc:${mhGet('size_accent')?px(mhGet('size_accent')*(mhGet('fit_text')?fit:1)):'inherit'};
+    --mhp-sh:${px(mhGet('search_h'))};--mhp-st:${px(stext)};
+    --mhp-mag:${px(17*sfit)};--mhp-mark:${escAttr(mhGet('acct_out'))};
+    --mhp-acctc:${escAttr(MHTAB==='icons'?mhGet('acct_in'):mhGet('acct_out'))};`;
   const vars=`--mh-l:${l}px;--mh-r:${r}px;--mh-t:${mhGet('pad_top')}px;--mh-b:${mhGet('pad_bottom')}px;
     --mh-gap:${mhGet('row_gap')}px;--mh-sgap:${mhGet('search_gap')}px;--mh-igap:${mhGet('item_gap')}px;
     --mh-dv:${mhRgba()};--mh-dvw:${mhGet('dv_width')}px;--mh-dvin:${mhGet('dv_inset')}px;--mh-dvlen:${mhGet('dv_length')}px;
     --mh-srad:${mhGet('search_full')?0:mhGet('search_radius')+'px'};--mh-spad:${mhGet('search_pad')}px;--mh-sbg:${escAttr(mhGet('search_bg'))};
-    --mh-sicon:${escAttr(mhGet('search_icon'))};--mh-stext:${escAttr(mhGet('search_text'))};--mh-sph:${escAttr(mhGet('search_ph'))}`;
+    --mh-sicon:${escAttr(mhGet('search_icon'))};--mh-stext:${escAttr(mhGet('search_text'))};--mh-sph:${escAttr(mhGet('search_ph'))};${marks}`;
   const dv=mhGet('divider');
   const sf=(mhGet('search_full')?' mhp-sfull':'')+(mhGet('search_border')?'':' mhp-snb')
     +((mhGet('search_full')&&mhGet('search_align')==='field')?' mhp-skeep':'');
@@ -4545,7 +4613,7 @@ function mhPreview(){
         <div class="mhp-in">
           <span class="mhp-bg"></span>
           <span class="mhp-logo">K-Beauty<b>Bliss</b></span>
-          <span class="mhp-act"><i></i><i></i></span>
+          <span class="mhp-act"><i class="mhp-acct">${KBB_HEADER_ICONS.account}</i><i>${KBB_HEADER_ICONS.wishlist}</i><i>${KBB_HEADER_ICONS.cart}</i></span>
           <span class="mhp-sbox"><i class="mhp-mg"></i><em>Search 671 products…</em></span>
         </div>
       </div>
@@ -4564,7 +4632,7 @@ function paintMobileHdr(){
       <div class="mmcols"><div class="card mmcard">
         <div class="mmhd"><b>${escHtml(tab.label)}</b><span>${escHtml(tab.description)}</span></div>
         <div class="mmbody">${tab.fields.map(mhField).join('')}</div></div></div>
-      <div class="mmpv"><div class="mmpv-in">${mhPreview()}</div><p class="mmpv-note">Live preview · phone width</p></div>
+      <div class="mmpv"><div class="mmpv-in">${mhPreview()}</div><p class="mmpv-note">Live preview · phone width · account mark shown <b>${MHTAB==='icons'?'signed in':'signed out'}</b></p></div>
     </div>
     <div class="ecsave">
       <span class="ecdirty" id="mhDirty" style="visibility:hidden">Unsaved changes</span>
@@ -4582,14 +4650,33 @@ function bindMobileHdr(){
     const k=el.dataset.mh;
     if(el.classList.contains('ectog')){
       el.onclick=()=>{ const v=!el.classList.contains('on'); el.classList.toggle('on',v);
-        el.setAttribute('aria-checked',String(v)); mhSet(k,v); dirty(); paintMobileHdr(); };
+        el.setAttribute('aria-checked',String(v)); mhSet(k,v);
+        /* The other half of the same coupling, and the same reason: switching
+           "Match the page" on is a decision about the two numbers, so they
+           take the page's inset there and then instead of sitting underneath
+           it disagreeing. MobileHeader::save() writes exactly this. */
+        if(k==='match_page' && v){ mhSet('pad_left',MH_PAGE_INSET); mhSet('pad_right',MH_PAGE_INSET); }
+        dirty(); paintMobileHdr(); };
       return;
     }
     if(el.tagName==='SELECT'){ el.onchange=()=>{ mhSet(k,el.value); dirty(); paintMobileHdr(); }; return; }
     if(el.type==='range'){
       el.oninput=()=>{ mhSet(k,Number(el.value)); dirty();
+        /* Left and Right are the two the owner reported as dead. Dimming them
+           while "Match the page" is on left them draggable, and everything
+           downstream then discarded the number. Moving one now turns the
+           toggle off, so the drag does what a drag looks like it does. The
+           screen is patched in place rather than repainted because a repaint
+           mid-drag destroys the slider under the finger. */
+        if((k==='pad_left'||k==='pad_right') && mhGet('match_page')){
+          mhSet('match_page',false);
+          const t=$('[data-mh="match_page"]');
+          if(t){ t.classList.remove('on'); t.setAttribute('aria-checked','false'); }
+          $$('[data-mh="pad_left"],[data-mh="pad_right"]').forEach(x=>{
+            const row=x.closest('.mmrow'); if(row) row.classList.remove('dim'); });
+        }
         const b=$('#mhv-'+k); if(b){ const f=MH.tabs.flatMap(t=>t.fields).find(x=>x.key===k);
-          b.textContent=el.value+((f.options||{}).unit||''); }
+          b.textContent=mhReadout(f,el.value); }
         $('.mmpv-in').innerHTML=mhPreview(); };
       return;
     }
@@ -5931,7 +6018,7 @@ function hdPreview(){
     <div class="hdpv-bar${g('bar_border')?' bd':''}">
       <span class="kbbmi kbbmi-${icon}">${inner}</span>
       <span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>
-      <span class="hdpv-icons">${g('icon_account')?'<i>&#128100;</i>':''}${g('icon_wishlist')?'<i>&#9825;</i>':''}${g('icon_cart')?'<i class="bg">&#128722;</i>':''}</span>
+      <span class="hdpv-icons">${g('icon_account')?`<i>${KBB_HEADER_ICONS.account}</i>`:''}${g('icon_wishlist')?`<i>${KBB_HEADER_ICONS.wishlist}</i>`:''}${g('icon_cart')?`<i class="bg">${KBB_HEADER_ICONS.cart}</i>`:''}</span>
     </div>
     ${g('search_show')?`<div class="hdpv-srch"><span>${escHtml(String(g('search_text')).replace('{n}','671'))}</span></div>`:''}
     ${g('trending_show')?`<div class="hdpv-trend">${['Madeca','PDRN','Retinol'].slice(0,Math.max(1,Math.min(3,g('trending_limit')))).map(t=>`<span>${t}</span>`).join('')}</div>`:''}
@@ -8822,6 +8909,12 @@ function dlBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\
    this screen exists to write a line for. */
 @endverbatim
 var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
+
+/* The account, wishlist and cart marks the storefront draws, from
+   App\Support\HeaderIcons. Read by MHICONS above (Appearance → Mobile Header)
+   and by hdPreview() (Appearance → Header), so neither preview can drift from
+   the shop. */
+var KBB_HEADER_ICONS = @json(\App\Support\HeaderIcons::forPreview());
 
 /* The registered preset groups, from App\Support\CountryPresets. One key per
    per-country table in this console; only 'delivery' exists today. The Tax tab
