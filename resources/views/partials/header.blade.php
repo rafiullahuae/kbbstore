@@ -68,12 +68,23 @@
                *
                * ON THE `customer` GUARD, which is the one a shopper signs in
                * on — see config/auth.php and the note at the top of
-               * tests/Feature/AccountAreaTest.php. The bare `auth()` on the
-               * line above is the DEFAULT guard, `web`, which is the staff
-               * table: it is true for nobody who ever buys anything, which is
-               * why the signed-in dot has never lit on this shop. That is the
-               * Header screen's setting (`account_dot`) and its own lane's to
-               * correct; this lane reports it rather than changing it.
+               * tests/Feature/AccountAreaTest.php.
+               *
+               * ▲ AND SO IS `account_dot` NOW, WHICH IT WAS NOT. The dot on
+               * this same icon read the DEFAULT guard, `web` — the staff
+               * table — so it was true for nobody who had ever bought
+               * anything, and the signed-in dot had never once lit on this
+               * shop for a shopper. Nothing errored and nothing logged; the
+               * icon simply always looked signed out. Found while adding the
+               * green beside it, which is the tell: two indicators of the same
+               * state, one on each guard, three characters apart.
+               *
+               * $acctPanel on line 61 STILL READS THE DEFAULT GUARD and is
+               * left alone deliberately. It decides whether the account panel
+               * opens or the icon is a plain link to /my-account/, so
+               * correcting it changes what a signed-in shopper's tap DOES, not
+               * how it looks. That is a behaviour change nobody asked for; it
+               * is flagged rather than smuggled in beside a colour fix.
                *
                * Not driven off `account_dot` either way: the dot is a switch a
                * shop can turn off while still being signed in.
@@ -86,7 +97,7 @@
                */
           @endphp
           <span class="ib-acct" @if ($acctPanel) data-acct data-acct-open="{{ app(\App\Services\AccountPanel::class)->get('panel_open') }}" @endif>
-            <a class="ib{{ auth()->guard()->check() && $h['account_dot'] ? ' in' : '' }}@auth('customer') mh-signedin @endauth"
+            <a class="ib{{ auth('customer')->check() && $h['account_dot'] ? ' in' : '' }}@auth('customer') mh-signedin @endauth"
                href="{{ Url::to('/my-account/') }}" aria-label="{{ __('store.header.account_label') }}"
                @if ($acctPanel) aria-haspopup="true" aria-expanded="false" @endif>
               {!! \App\Support\HeaderIcons::account() !!}
