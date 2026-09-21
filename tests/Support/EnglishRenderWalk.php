@@ -258,8 +258,31 @@ final class EnglishRenderWalk
      * badge was measured painting identically in English with and without it;
      * what it buys is the Arabic page, where -30% otherwise paints 30%- and
      * inside Arabic text %30-.
+     *
+     * MOVED FORWARD AGAIN FOR THE MOBILE-HEADER LANE, and this diff is three
+     * tags. The account, wishlist and cart marks in partials/header.blade.php
+     * are now drawn from App\Support\HeaderIcons instead of being pasted into
+     * the template, so the shop and the two admin previews cannot go on
+     * disagreeing about what the header looks like:
+     *
+     *     -<svg … stroke-width="1.8"><circle cx="12" cy="8" r="4"/>…
+     *     +<svg … fill="currentColor" aria-hidden="true"><path d="M12 12.4…
+     *
+     * plus `mh-signedin` on the account link for a signed-in shopper, which is
+     * what turns that mark green. The owner asked for both in as many words.
+     * Read on every rendered page in the walk: the first difference is the
+     * account mark and there is no other kind of difference — no text, no
+     * attribute order, no whitespace. The Blade comment that would have moved
+     * whitespace on thirty pages was deliberately written inside the template's
+     * @php block instead, and the note there says why.
+     *
+     * AND A WORD FOR WHOEVER MERGES THIS. The value below has to be a commit
+     * that CARRIES the change, so a rebase or a squash of that lane invalidates
+     * it — `git show <sha>:resources/views` then resurrects the old marks and
+     * this walk goes red on every page again. Repoint it at whatever commit the
+     * merge produces; it is this one line and nothing else.
      */
-    public const BASE_COMMIT = '17b83304413896a6df6cec1888fd48656bd7128c';
+    public const BASE_COMMIT = '81db58527541e409b4d8a11adb71dede3aca543f';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
