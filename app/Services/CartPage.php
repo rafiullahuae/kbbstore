@@ -115,18 +115,17 @@ class CartPage
         'sum_express_help'  => ['text', 'Express (i) note', 'Delivered the next working day where available. Chosen at checkout.', ''],
 
         /*
-         * ONE SWITCH FOR BOTH, deliberately. The delivery line and the
-         * "(All prices include VAT)" note answer the same question — what will
-         * this actually cost me — and a page showing one without the other is
-         * worse than a page showing neither: it looks like an answer and is
-         * half of one.
+         * NO VAT NOTE ANYWHERE ON THIS PAGE, and no setting for one. Prices
+         * here are inclusive and the checkout already says so; a second place
+         * saying it is a second place that has to stay true. The switch that
+         * used to control it is gone rather than left behind controlling
+         * nothing, which is how this kind of deletion half-happens.
          */
-        'sum_delivery_on'   => ['bool', 'Delivery row and the VAT note', false,
-                                'Off, so the cart page does not try to answer a question the checkout answers properly. While it is off, the single line below takes their place.'],
+        'sum_delivery_on'   => ['bool', 'Standard Delivery row', false,
+                                'Off, so the cart page does not try to answer a question the checkout answers properly. While it is off, the shop\'s own free-delivery bar takes its place in the summary — the green congratulations once an order qualifies, and how much more would qualify it before that.'],
         'sum_std_label'     => ['text', 'Standard row', 'Standard Delivery Charge', ''],
         'sum_std_help'      => ['text', 'Standard (i) note', 'Free on every order. Two to four working days.', ''],
         'sum_std_free'      => ['text', 'Standard row value', 'Free', ''],
-        'sum_vat_note'      => ['text', 'Line under the total', '(All prices include VAT)', 'Printed only while the switch above is on. Blank prints nothing.'],
         /*
          * NOT SMALL PRINT. It is the answer to "what will this cost me", and a
          * shopper who cannot find that answer goes looking for it instead of
@@ -134,8 +133,15 @@ class CartPage
          * to end. Shown only while delivery and VAT are off, because with those
          * rows on it would be contradicting them.
          */
-        'sum_fallback'      => ['text', 'Line shown instead of delivery and VAT',
-                                'Delivery & VAT are calculated at checkout', ''],
+        /*
+         * The fallback to the fallback. With the delivery row off, the summary
+         * draws this shop's own free-delivery bar in its place — but a shop
+         * that has not set a free-delivery threshold has no bar to draw, and a
+         * summary silent about delivery is the thing all of this exists to
+         * avoid. Shown only in that case.
+         */
+        'sum_fallback'      => ['text', 'Line shown when there is no free-delivery threshold',
+                                'Delivery is calculated at checkout', ''],
 
         'sum_service_on'    => ['bool', 'Service Fee row', false,
                                 'Off, and while it is off no fee is charged either — the row and the money are one switch, not two.'],
@@ -159,7 +165,6 @@ class CartPage
         'sum_service_help'  => ['text', 'Service fee (i) note', 'Covers card processing and packing.', ''],
 
         'sum_total_label' => ['text', 'Order total row', 'Order Total', ''],
-        'sum_vat_note'    => ['text', 'Line under the total', '(All prices include VAT)', 'Blank prints nothing.'],
 
         // ── Trust row ──
         'trust_on'    => ['bool', 'Secure badge and payment marks', true, ''],
@@ -178,7 +183,8 @@ class CartPage
         'bar_font'        => ['range', 'Text in both rows', 100,
                               'Everything in both docked rows is a multiple of this, so no wording can outgrow the bar it sits in.',
                               ['min' => 85, 'max' => 125, 'step' => 5, 'unit' => '%']],
-        'co_label'        => ['text', 'Checkout button wording', 'Checkout', ''],
+        'co_label'        => ['text', 'Checkout button wording', 'Proceed to Checkout',
+                              'It shares the docked row with the item count and the total, so a longer word here is a narrower tally beside it. The button gives way first and ends in an ellipsis rather than pushing the figures off a 360px screen.'],
         'addr_heading'    => ['text', 'Address row heading', 'Please choose your delivery address', ''],
         'addr_btn_add'    => ['text', 'Address button · nothing chosen', '+ Address', ''],
         'addr_btn_change' => ['text', 'Address button · address chosen', 'Change address', ''],
@@ -260,7 +266,7 @@ class CartPage
                       ['sum_value_label',
                        'sum_express_on', 'sum_express', 'sum_express_label', 'sum_express_help',
                        'sum_delivery_on', 'sum_std_label', 'sum_std_free', 'sum_std_help',
-                       'sum_vat_note', 'sum_fallback',
+                       'sum_fallback',
                        'sum_service_on', 'sum_service_mode', 'sum_service', 'sum_service_pct',
                        'sum_service_label', 'sum_service_help',
                        'sum_total_label',

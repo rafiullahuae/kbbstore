@@ -44,9 +44,46 @@
          */
         $leftDp = \App\Support\Money::decimalsToDistinguish($left, 0);
     @endphp
+@php
+/*
+ * Appearance → Cart page (Lane: cart-page).
+ *
+ * EVERY DIRECTIVE THIS LANE ADDS TO THIS FILE STARTS AT COLUMN 0, and that is
+ * load-bearing rather than untidy. Blade compiles @php/@if/@endif to a bare
+ * <?php ?> and PHP swallows the single newline after it, so a directive on a
+ * line of its own contributes zero bytes — but the INDENTATION in front of it
+ * is ordinary text and is emitted whatever the condition says. An @if indented
+ * to line up with the markup around it would add its own indent and a newline
+ * to every classic cart page in the shop, and StorefrontEnglishUnchangedTest
+ * compares this page against the base commit byte for byte. The $kbbCartDp
+ * block below is at column 0 for exactly the same reason and says so.
+ *
+ * $kbbCartPage comes from store/cart.blade.php, which resolves it once so the
+ * two halves of this page cannot disagree about which layout they are drawing.
+ * On the classic layout — which is how this ships — squeezed() is false, every
+ * branch below is skipped, and this file renders the bytes it renders today.
+ */
+$kbbSq = $kbbCartPage->squeezed();
+$kbbCpg = $kbbCartPage->all();
+/*
+ * The address the docked row names, read from the session on the server.
+ *
+ * Rendered rather than fetched, so a shopper who reloads the page — or who
+ * changes a quantity and gets this whole file re-rendered under them by
+ * cart.js — keeps the address they chose with no script running at all. The
+ * sheet's script only has to update the row for the tap that just happened.
+ *
+ * Only on the squeezed layout: App\Support\CartAddressState::all() touches the
+ * session and the address book, and the classic page has nothing to show for
+ * it.
+ */
+$kbbAddrState = $kbbSq ? \App\Support\CartAddressState::all(request()) : null;
+$kbbAddr = $kbbAddrState['chosen'] ?? null;
+$kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
+@endphp
     <div class="grid">
         <div>
-            @if ($free)
+            @if ($free && ! $kbbSq)
             <div class="ship">
                 <div class="t">
                     @if ($left > 0)
@@ -100,43 +137,6 @@
                 @endforeach
             </div>
         </div>
-@php
-/*
- * Appearance → Cart page (Lane: cart-page).
- *
- * EVERY DIRECTIVE THIS LANE ADDS TO THIS FILE STARTS AT COLUMN 0, and that is
- * load-bearing rather than untidy. Blade compiles @php/@if/@endif to a bare
- * <?php ?> and PHP swallows the single newline after it, so a directive on a
- * line of its own contributes zero bytes — but the INDENTATION in front of it
- * is ordinary text and is emitted whatever the condition says. An @if indented
- * to line up with the markup around it would add its own indent and a newline
- * to every classic cart page in the shop, and StorefrontEnglishUnchangedTest
- * compares this page against the base commit byte for byte. The $kbbCartDp
- * block below is at column 0 for exactly the same reason and says so.
- *
- * $kbbCartPage comes from store/cart.blade.php, which resolves it once so the
- * two halves of this page cannot disagree about which layout they are drawing.
- * On the classic layout — which is how this ships — squeezed() is false, every
- * branch below is skipped, and this file renders the bytes it renders today.
- */
-$kbbSq = $kbbCartPage->squeezed();
-$kbbCpg = $kbbCartPage->all();
-/*
- * The address the docked row names, read from the session on the server.
- *
- * Rendered rather than fetched, so a shopper who reloads the page — or who
- * changes a quantity and gets this whole file re-rendered under them by
- * cart.js — keeps the address they chose with no script running at all. The
- * sheet's script only has to update the row for the tap that just happened.
- *
- * Only on the squeezed layout: App\Support\CartAddressState::all() touches the
- * session and the address book, and the classic page has nothing to show for
- * it.
- */
-$kbbAddrState = $kbbSq ? \App\Support\CartAddressState::all(request()) : null;
-$kbbAddr = $kbbAddrState['chosen'] ?? null;
-$kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
-@endphp
 @if ($kbbSq)
         {{-- Recommended for you.
 
@@ -321,20 +321,60 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
             @if ($kbbCpg['sum_service_on'])
                 <div class="srow"><span>{{ $kbbCpg['sum_service_label'] }} <i class="cpg-i" title="{{ $kbbCpg['sum_service_help'] }}">i</i></span><span>{!! \App\Support\Money::format($kbbFee, $kbbCartDp) !!}</span></div>
             @endif
-            {{-- The one line that replaces the delivery row and the VAT note.
+            {{-- WHAT TAKES THE DELIVERY ROW'S PLACE: the free-delivery bar this
+                 shop already has, moved here rather than rebuilt.
 
-                 NOT SMALL PRINT, and not tucked under the total. It is the
-                 answer to "what will this cost me", and a shopper who cannot
-                 find that answer stays on this page looking for it instead of
-                 going to the next one — which is the whole reason those rows
-                 were switched off. Shown only while they are off, because with
-                 them on it would be contradicting them. --}}
-            @if (! $kbbCpg['sum_delivery_on'] && $kbbCpg['sum_fallback'] !== '')
+                 THE SAME CLASSES AND THE SAME TRANSLATION KEYS as the block at
+                 the top of this file — `.ship > .t` and `.bar > .fill`,
+                 store.cart.free_delivery_away and
+                 store.cart.free_delivery_unlocked — so it inherits kbb-cart.css
+                 and needs no new strings for words that are already translated
+                 into Arabic. It is the same markup twice rather than a shared
+                 partial for one reason: the block above is compared BYTE FOR
+                 BYTE against the base commit by StorefrontEnglishUnchangedTest,
+                 and extracting it would move its indentation. The copy up there
+                 is switched off on this layout, so only one renders.
+
+                 BOTH STATES, not only the happy one. "You're AED 40 away from
+                 free delivery" is the more useful half: it answers the delivery
+                 question AND gives a reason to add another item, which a
+                 sentence about the checkout page does neither of.
+
+                 The threshold is the shop's existing one — CartService::totals()
+                 already resolves it into $totals['free_shipping_threshold'] —
+                 so this lane adds no second setting for it.
+
+                 $kbbCpg['sum_fallback'] is the fallback to the fallback: a shop
+                 with no threshold configured has no bar to draw, and a summary
+                 that says nothing at all about delivery is the thing all of
+                 this exists to avoid. --}}
+            @if (! $kbbCpg['sum_delivery_on'])
+                @if ($free)
+                <div class="ship">
+                    <div class="t">
+                        @if ($left > 0)
+                            {!! __('store.cart.free_delivery_away', ['amount' => '<b>' . \App\Support\Money::format($left, $leftDp) . '</b>', 'free_delivery' => '<b>' . e(__('store.cart.free_delivery_phrase')) . '</b>']) !!}
+                        @else
+                            🎉 <b>{!! \App\Support\Phrase::inline(__('store.cart.free_delivery_unlocked')) !!}</b>
+                        @endif
+                    </div>
+                    {{-- `cpg-flat` at zero, and only there. The fill carries a
+                         flowing gradient and a glowing bloom on its leading
+                         edge; at 0% there is no edge to ride and the bloom
+                         would sit outside the track looking like a stray mark.
+                         Decided here, where the number is, rather than by the
+                         stylesheet guessing at the inline width. --}}
+                    <div class="bar"><div class="fill{{ $pct > 0 ? '' : ' cpg-flat' }}" style="width:{{ $pct }}%"></div></div>
+                </div>
+                @elseif ($kbbCpg['sum_fallback'] !== '')
                 <div class="srow cpg-later"><span>{{ $kbbCpg['sum_fallback'] }}</span></div>
+                @endif
             @endif
+                {{-- No VAT note. It is inclusive, the checkout says so, and a
+                     second place saying it is a second place to keep true. --}}
                 <div class="cpg-totband">
                     <span>{{ $kbbCpg['sum_total_label'] }}</span>
-                    <span class="tr"><b>{!! \App\Support\Money::format($kbbGrand, $kbbCartDp) !!}</b>@if ($kbbCpg['sum_delivery_on'] && $kbbCpg['sum_vat_note'] !== '')<em>{{ $kbbCpg['sum_vat_note'] }}</em>@endif</span>
+                    <span class="tr"><b>{!! \App\Support\Money::format($kbbGrand, $kbbCartDp) !!}</b></span>
                 </div>
             {{-- The secure badge, a rule, and the marks. One row, tiny, as
                  asked. The marks are the shop's own existing text chips and NOT

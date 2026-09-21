@@ -18,6 +18,9 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Services\CartPage;
 use App\Services\CartService;
+use App\Models\ShippingMethod;
+use App\Models\ShippingZone;
+use App\Models\ShippingZoneLocation;
 use App\Services\SettingsService;
 use App\Support\CartAddressState;
 use App\Support\Countries;
@@ -45,6 +48,30 @@ function squeezeRoutes(): void
 
     Route::middleware('web')->group(base_path('routes/cart-address.php'));
     app('router')->getRoutes()->refreshNameLookups();
+}
+
+/**
+ * A free-delivery threshold, set the way this shop actually sets one.
+ *
+ * THROUGH A ZONE AND A free_shipping METHOD, not through a setting key. There
+ * is no `free_shipping_threshold` setting in this application — nothing reads
+ * one — and this lane deliberately did not add a second place to configure it:
+ * ShippingService::freeShippingThreshold() resolves it from the shipping zone
+ * that serves the shopper's country, and that is the figure the rest of the
+ * storefront already advertises.
+ */
+function squeezeFreeOver(int $fils): void
+{
+    $zone = ShippingZone::create(['name' => 'UAE', 'position' => 0]);
+    ShippingZoneLocation::create(['shipping_zone_id' => $zone->id, 'type' => 'country', 'code' => 'AE']);
+    ShippingMethod::create([
+        'shipping_zone_id' => $zone->id,
+        'type' => 'free_shipping',
+        'title' => 'Free delivery',
+        'min_amount' => $fils,
+        'enabled' => true,
+        'position' => 0,
+    ]);
 }
 
 /** Turn the squeezed layout on, and anything else this test wants. */
@@ -176,15 +203,13 @@ it('renders the docked rows, the summary and the trust row once switched on', fu
         ->and($html)->toContain('cpg-cobar')
         ->and($html)->toContain('Please choose your delivery address')
         ->and($html)->toContain('+ Address')
-        // "Proceed to checkout" is now just "Checkout".
-        ->and($html)->toContain('>Checkout</a>')
+        ->and($html)->toContain('>Proceed to Checkout</a>')
         // The summary, as the reference reads.
         ->and($html)->toContain('Order Value')
         ->and($html)->toContain('Express Delivery Charge')
         ->and($html)->toContain('Standard Delivery Charge')
         ->and($html)->toContain('Service Fee')
         ->and($html)->toContain('Order Total')
-        ->and($html)->toContain('(All prices include VAT)')
         // The trust row: a tick, a rule, and the marks.
         ->and($html)->toContain('cpg-trust')
         ->and($html)->toContain('Secure checkout')
@@ -259,30 +284,109 @@ it('takes a percentage fee off the order value AFTER the coupon', function () {
 // above, which is why the fee is a method taking the after-coupon figure and
 // not a lump of arithmetic in the view.
 
-it('replaces delivery and VAT with one line that says where they are worked out', function () {
-    // Both off, as they ship.
+it('puts the shop\'s own free-delivery bar where the delivery row was', function () {
+    // The delivery row ships off, so this is the default state of the page.
     squeezeOn();
+
+    $cart = squeezeCart(2);                       // AED 240
+
+    // A threshold this basket has NOT reached: the useful half — it answers the
+    // delivery question and gives a reason to add another item.
+    squeezeFreeOver(50000);
+
+    $away = squeezeGet($cart)->assertOk()->getContent();
+
+    // The shop's own element, its own classes, its own translated strings. No
+    // new markup and no new keys for words already translated.
+    expect($away)->toContain('<div class="ship">')
+        ->and($away)->toContain('<div class="bar"><div class="fill"')
+        // It is in the SUMMARY now, not at the top of the page.
+        ->and(strpos($away, '<div class="ship">'))->toBeGreaterThan(strpos($away, 'Order Value'))
+        // and there is exactly one of it: the copy at the top of the file is
+        // switched off on this layout.
+        ->and(substr_count($away, '<div class="ship">'))->toBe(1);
+
+    /*
+     * READ OUT OF THE BAR ITSELF, not out of the page.
+     *
+     * The first version of this asserted toContain('away from') against the
+     * whole document and stayed GREEN when the not-yet branch was removed
+     * altogether — the mini-cart drawer is rendered on every page of this shop
+     * and carries the same sentence. An assertion that a second, unrelated
+     * element can satisfy is an assertion that tests nothing.
+     */
+    $bar = substr($away, (int) strpos($away, '<div class="ship">'), 600);
+
+    expect($bar)->toContain('away from')
+        ->and($bar)->not->toContain('🎉');
+
+});
+
+it('shows the green congratulations once the order qualifies', function () {
+    // A test of its own rather than a second render in the one above:
+    // ShippingService memoises its zones for the life of the process, so
+    // moving the threshold mid-test moves the database and not the answer —
+    // and a test that passes for that reason is a test that proves nothing.
+    squeezeOn();
+    squeezeFreeOver(10000);
+
+    $won = squeezeGet(squeezeCart(2))->assertOk()->getContent();
+
+    expect($won)->toContain('<div class="ship">');
+
+    $bar = substr($won, (int) strpos($won, '<div class="ship">'), 600);
+
+    expect($bar)->toContain('🎉')
+        ->and($bar)->not->toContain('away from');
+});
+// MUTATION: render only the @else (unlocked) branch of the bar. GREEN here and
+// RED in the test above, whose basket has not reached the threshold — which is
+// why both halves are tested and not just the happy one.
+// MUTATION: drop the `&& ! $kbbSq` from the @if around the bar at the top of
+// cart-inner.blade.php. RED — substr_count becomes 2, which is the defect
+// worth catching: two progress bars on one page, both correct, one of them
+// nowhere near the figures it is about. Run and confirmed.
+//
+// MUTATION TRIED AND GREEN: replacing the summary bar's `@if ($left > 0)` with
+// `@if (false)`, so only the congratulations branch can ever render. Green,
+// because the original assertion looked for "away from" anywhere in the
+// document and the mini-cart drawer — present on every page — says the same
+// thing. The assertions now read the bar's own markup, and the same mutation
+// is RED.
+
+it('says nothing about VAT on the cart page at all', function () {
+    squeezeOn(['sum_delivery_on' => true]);
 
     $html = squeezeGet(squeezeCart())->assertOk()->getContent();
 
-    expect($html)->not->toContain('Standard Delivery Charge')
-        // The VAT note goes with it: one without the other looks like an answer
-        // and is half of one.
-        ->and($html)->not->toContain('(All prices include VAT)')
-        ->and($html)->toContain('Delivery &amp; VAT are calculated at checkout');
+    // Inclusive, and the checkout already says so. A second place saying it is
+    // a second place that has to stay true.
+    expect($html)->not->toContain('include VAT')
+        ->and($html)->not->toContain('All prices include');
 
-    squeezeOn(['sum_delivery_on' => true]);
+    // And the switch that used to control it is gone rather than left behind
+    // controlling nothing.
+    expect(CartPage::SCHEMA)->not->toHaveKey('sum_vat_note');
 
-    $on = squeezeGet(squeezeCart())->assertOk()->getContent();
-
-    expect($on)->toContain('Standard Delivery Charge')
-        ->and($on)->toContain('(All prices include VAT)')
-        // and the replacement line is gone, because with those rows on it would
-        // be contradicting them.
-        ->and($on)->not->toContain('Delivery &amp; VAT are calculated at checkout');
+    $onTabs = collect(CartPage::TABS)->flatMap(fn ($t) => $t[2])->all();
+    expect($onTabs)->not->toContain('sum_vat_note');
 });
-// MUTATION: render the VAT note on its own condition (vat_note !== '') rather
-// than under sum_delivery_on. RED on the second assertion.
+// MUTATION: put 'sum_vat_note' back in SCHEMA and on the summary tab. RED on
+// the last two assertions — which is the half that catches a deletion that
+// half-happened.
+
+it('keeps the long checkout label from pushing the total off a narrow bar', function () {
+    expect(app(CartPage::class)->get('co_label'))->toBe('Proceed to Checkout');
+
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    // The button gives way first. min-width:0 is the load-bearing half: a flex
+    // item's default min-width is auto, which is what makes "it should shrink"
+    // quietly not work.
+    expect($css)->toContain('flex:0 1 auto;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;')
+        ->and($css)->toContain('text-overflow:ellipsis;text-align:center;');
+});
+// MUTATION: drop `min-width:0` from the button rule. RED.
 
 it('ships every charge row switched off', function () {
     $c = app(CartPage::class)->all();
@@ -640,3 +744,76 @@ it('fades a long chosen address off the right rather than cutting it with an ell
 });
 // MUTATION: swap the mask rules back for text-overflow:ellipsis. RED on the
 // first mask assertion.
+
+it('animates the free-delivery bar and lets its bloom out of the track', function () {
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    /*
+     * THE ONE THAT SILENTLY KILLS IT. kbb-cart.css gives `.bar` overflow:hidden,
+     * which is right for a flat fill and flattens this entirely — the bloom's
+     * whole job is to spill past the track. Pinned from BOTH ends: the rule
+     * that ships in the stylesheet, and the override here, so that if either
+     * moves the other is known to be stale rather than quietly wrong.
+     */
+    $base = (string) preg_replace('#/\*.*?\*/#s', '',
+        (string) file_get_contents(base_path('resources/css/kbb/kbb-cart.css')));
+
+    expect($base)->toContain('.kbb-cartpage .bar{height:7px;border-radius:6px;background:var(--pink-soft);overflow:hidden}');
+
+    expect($css)->toContain('.sum .ship .bar{overflow:visible}')
+        // and the rounding moves onto the fill, which is what it was for.
+        ->and($css)->toContain('.sum .ship .fill{position:relative;border-radius:6px;')
+        // Three animations: the flow, the breathing bloom, the turning petals.
+        ->and($css)->toContain('animation:cpgflow 2.6s linear infinite')
+        ->and($css)->toContain('animation:cpgbloom 1.9s ease-in-out infinite')
+        ->and($css)->toContain('animation:cpgpetal 4.2s linear infinite')
+        // Both ride the leading edge, and every keyframe keeps the translate —
+        // a transform that dropped it would snap the bloom back to the corner
+        // the moment its animation took over.
+        ->and($css)->toContain('position:absolute;top:50%;right:0;pointer-events:none')
+        ->and($css)->toContain('0%,100%{transform:translate(50%,-50%) scale(.85)}')
+        ->and($css)->toContain('from{transform:translate(50%,-50%) rotate(0deg)}')
+        // No image and no extra request: four petals out of one clip-path.
+        ->and($css)->toContain('clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%)')
+        /*
+         * Stopped, not slowed, and all three of them.
+         *
+         * MATCHED AS ONE STRING — the media query together with the selector
+         * list it opens. An earlier version asserted the two separately and
+         * stayed GREEN when the query was widened to `@media all`: this file
+         * carries several reduced-motion blocks and the bare query went on
+         * matching one of the others. Written out in full, the widening is red.
+         */
+        ->and($css)->toContain(
+            "@media (prefers-reduced-motion:reduce){\n"
+            .'  .kbb-cartpage.cpg-squeeze .sum .ship .fill,'
+        )
+        ->and($css)->toContain('.sum .ship .fill::after{animation:none}')
+        ->and($css)->toContain('.sum .ship .fill{background-position:0 0}}');
+});
+// MUTATION: change the override to `.sum .ship .bar{overflow:hidden}`. RED —
+// and it is the mutation worth having, because the page still renders, the bar
+// still fills, and the effect is simply gone.
+
+it('does not bloom a bar that has not started', function () {
+    squeezeOn();
+    squeezeFreeOver(50000);
+
+    // Nothing to bloom from at zero, and the shape would land outside the
+    // track looking like a stray mark.
+    $cart = Cart::create([
+        'token' => (string) Str::uuid(), 'currency' => 'AED', 'status' => 'active',
+        'shipping_country' => 'AE', 'last_activity_at' => now(),
+    ]);
+    $tiny = Product::create(['slug' => 'tiny-'.Str::random(6), 'name' => 'Sample',
+        'status' => 'publish', 'is_visible' => true, 'price' => 0, 'stock_status' => 'instock']);
+    $cart->items()->create(['product_id' => $tiny->id, 'quantity' => 1, 'unit_price' => 0]);
+
+    $html = squeezeGet($cart)->assertOk()->getContent();
+
+    expect($html)->toContain('class="fill cpg-flat" style="width:0%"');
+
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    expect($css)->toContain('.fill.cpg-flat::after{display:none}');
+});
+// MUTATION: emit `class="fill"` unconditionally. RED on the first assertion.

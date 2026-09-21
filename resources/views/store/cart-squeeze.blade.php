@@ -185,6 +185,66 @@
    colour, so it reads as information and not as a disclaimer. */
 .kbb-cartpage.cpg-squeeze .srow.cpg-later{justify-content:flex-start;gap:6px;
   color:var(--green);font-weight:500;padding:6px 0 2px}
+/* The shop's own free-delivery bar, standing where the delivery row was. Same
+   element and the same stylesheet as the one at the top of the page — this
+   only unpicks the card treatment kbb-cart.css gives it, because inside the
+   summary it is a row of the summary and not a card sitting on the page. */
+.kbb-cartpage.cpg-squeeze .sum .ship{background:none;border:0;border-radius:0;
+  box-shadow:none;padding:8px 0 4px;margin:0}
+.kbb-cartpage.cpg-squeeze .sum .ship .t{margin-bottom:6px}
+
+/* ── the bar flows, and a bloom rides its leading edge ───────────────────
+   THE TRACK HAS TO STOP CLIPPING. kbb-cart.css gives `.ship .bar`
+   `overflow:hidden`, which is correct for a flat fill and flattens this
+   entirely — the bloom's whole job is to spill past the track. Overridden
+   here only, inside the summary, so the classic page's bar is untouched; the
+   rounded ends move onto the fill, which is what the radius was doing for. */
+.kbb-cartpage.cpg-squeeze .sum .ship .bar{overflow:visible}
+.kbb-cartpage.cpg-squeeze .sum .ship .fill{position:relative;border-radius:6px;
+  /* A 220%-wide gradient sliding leftward: the bar reads as flowing rather
+     than painted. background-position is composited, so this costs nothing
+     and cannot stutter behind a busy main thread. */
+  background:linear-gradient(90deg,var(--green,#1E9E5A),#54C98A,var(--green,#1E9E5A));
+  background-size:220% 100%;
+  animation:cpgflow 2.6s linear infinite}
+@keyframes cpgflow{from{background-position:100% 0}to{background-position:-120% 0}}
+/* Both pseudo-elements are anchored to the RIGHT of the fill, so they ride the
+   leading edge and travel with it as the order value grows. The translate is
+   part of every transform below, because a transform that omitted it would
+   snap the bloom back to the corner the moment its animation took over. */
+.kbb-cartpage.cpg-squeeze .sum .ship .fill::before,
+.kbb-cartpage.cpg-squeeze .sum .ship .fill::after{
+  content:"";position:absolute;top:50%;right:0;pointer-events:none}
+.kbb-cartpage.cpg-squeeze .sum .ship .fill::before{
+  width:26px;height:26px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(170,240,205,.55) 42%,rgba(170,240,205,0) 72%);
+  transform:translate(50%,-50%);
+  animation:cpgbloom 1.9s ease-in-out infinite}
+@keyframes cpgbloom{
+  0%,100%{transform:translate(50%,-50%) scale(.85)}
+  50%{transform:translate(50%,-50%) scale(1.15)}}
+/* Four petals out of one element, no image and no extra request. */
+.kbb-cartpage.cpg-squeeze .sum .ship .fill::after{
+  width:11px;height:11px;background:#fff;
+  clip-path:polygon(50% 0%,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0% 50%,38% 38%);
+  transform:translate(50%,-50%) rotate(0deg);
+  animation:cpgpetal 4.2s linear infinite}
+@keyframes cpgpetal{
+  from{transform:translate(50%,-50%) rotate(0deg)}
+  to{transform:translate(50%,-50%) rotate(360deg)}}
+/* AT ZERO THERE IS NOTHING TO BLOOM FROM, and the shape would sit outside the
+   track looking like a stray mark. The Blade puts this class on a fill of
+   width 0 rather than the stylesheet guessing from the inline width. */
+.kbb-cartpage.cpg-squeeze .sum .ship .fill.cpg-flat::before,
+.kbb-cartpage.cpg-squeeze .sum .ship .fill.cpg-flat::after{display:none}
+/* STOPPED, not slowed — all three of them. The bar keeps its colour and the
+   bloom keeps its glow; nothing moves. It sits a few pixels above the button
+   we want tapped, so it is quiet by design and silent by request. */
+@media (prefers-reduced-motion:reduce){
+  .kbb-cartpage.cpg-squeeze .sum .ship .fill,
+  .kbb-cartpage.cpg-squeeze .sum .ship .fill::before,
+  .kbb-cartpage.cpg-squeeze .sum .ship .fill::after{animation:none}
+  .kbb-cartpage.cpg-squeeze .sum .ship .fill{background-position:0 0}}
 .kbb-cartpage.cpg-squeeze .cpg-totband{display:flex;justify-content:space-between;
   align-items:center;gap:12px;background:#EEF8F1;border-radius:9px;padding:10px 12px;
   margin-top:10px;font-size:15px;font-weight:600}
@@ -249,10 +309,23 @@
   font-size:calc(11px * var(--cpg-bar-f))}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .tally b{display:block;font-weight:700;
   font-size:calc(17px * var(--cpg-bar-f))}
-.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn{display:inline-block;width:auto;flex:none;
+/* "Proceed to Checkout" is nearly three times the width of "Checkout", and it
+   shares a 360px row with an item count and a four-digit total. So the button
+   GIVES WAY FIRST: `flex:0 1 auto` lets it shrink, `min-width:0` lets it
+   actually do so — a flex item's default min-width is auto and that is what
+   makes "it should shrink" quietly not work — and the label ends in an ellipsis
+   rather than pushing the figures the shopper is about to pay off the screen.
+   Horizontal padding is narrower than the short label needed, for the same
+   reason. Checked at 360px with a four-digit total and the bar font at 125%. */
+.kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn{display:inline-block;width:auto;
+  flex:0 1 auto;min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;text-align:center;
   background:var(--green);border-radius:10px;box-shadow:none;
-  padding:calc(11px * var(--cpg-bar-f)) calc(26px * var(--cpg-bar-f));
+  padding:calc(11px * var(--cpg-bar-f)) calc(16px * var(--cpg-bar-f));
   font-size:calc(15px * var(--cpg-bar-f))}
+/* And the tally does not grow past what it needs, so the button keeps whatever
+   is left rather than being squeezed by an empty column. */
+.kbb-cartpage.cpg-squeeze .cpg-cobar .tally{flex:0 1 auto;white-space:nowrap;overflow:hidden}
 .kbb-cartpage.cpg-squeeze .cpg-cobar .cobtn:hover{background:#177F47;transform:none}
 /* The classic column's own checkout button and "continue shopping" link are
    redundant once the bar is on screen, and a second Checkout is a shopper
