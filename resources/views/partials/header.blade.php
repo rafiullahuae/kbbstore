@@ -111,7 +111,7 @@
         @endif
 
         @if ($h['icon_cart'])
-          <a class="ib" href="{{ Url::to('/cart/') }}" data-kbb-open="cart" data-kbb-cart aria-label="{{ __('store.header.cart_label') }}">{!! \App\Support\HeaderIcons::cart() !!}@if (($kbbCartCount ?? 0) > 0)<i id="cartCt">{{ $kbbCartCount }}</i>@endif</a>
+          <a class="ib" href="{{ Url::to('/cart/') }}" data-kbb-open="cart" data-kbb-cart aria-label="{{ __('store.header.cart_label') }}">{!! \App\Support\HeaderIcons::cart() !!}<i id="cartCt" style="display:{{ ($kbbCartCount ?? 0) > 0 ? 'grid' : 'none' }}">{{ $kbbCartCount ?? 0 }}</i></a>
         @endif
       </div>
 

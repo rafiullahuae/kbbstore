@@ -282,7 +282,7 @@ final class EnglishRenderWalk
      * this walk goes red on every page again. Repoint it at whatever commit the
      * merge produces; it is this one line and nothing else.
      */
-    public const BASE_COMMIT = '81db58527541e409b4d8a11adb71dede3aca543f';
+    public const BASE_COMMIT = 'b9f40bbbb28cb0a63b2a694c0d8fcf37907bda7c';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
