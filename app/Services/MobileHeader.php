@@ -35,7 +35,7 @@ class MobileHeader
          * same factor, so at 44 it is still exactly 46.
          */
         'row_h'      => ['range', 'Top row height', 44,
-                         'The burger, the icons and their little counts are all sized from this, so a taller row makes them bigger instead of leaving them adrift in it.',
+                         'The burger, the icons and their little counts are all sized from this, so a taller row makes them bigger instead of leaving them adrift in it. Below about 39px the three icons become small enough to fit beside the shop name instead of sitting on a line of their own, and the whole header shortens by about 50px at once — measured on a 360px screen; a wider phone crosses over lower.',
                          ['min' => 36, 'max' => 64, 'step' => 1, 'unit' => 'px']],
         'fit_text'   => ['bool', 'Scale the wordmark with it', false,
                          'Off, because the wordmark is the one thing on the row that cannot give way: it is a single unbroken line sharing the screen with a burger and three icons, and growing it is what makes the row wrap. Its own size is under Text size.'],
