@@ -108,6 +108,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg><span>{{ __('store.tabbar.saved') }}</span></a>
     <a href="{{ Url::to('/cart/') }}" data-kbb-open="cart">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg><span>{{ __('store.tabbar.bag') }}</span>
-        @if (($kbbCartCount ?? 0) > 0)<i id="tabCartCt">{{ $kbbCartCount }}</i>@endif</a>
+        <i id="tabCartCt" style="display:{{ ($kbbCartCount ?? 0) > 0 ? '' : 'none' }}">{{ $kbbCartCount ?? 0 }}</i></a>
 </nav>
 @endif

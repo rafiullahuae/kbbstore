@@ -85,7 +85,34 @@ class CartDrawerComposer
         $cart = $this->carts->resolved();
 
         if ($cart === null && ! $this->request->hasCookie(CartService::COOKIE)) {
-            $view->with(['items' => collect(), 'totals' => $empty, 'promo' => '', 'browsed' => collect()]);
+            /*
+             * RULE 27 IS ABOUT THE CART, AND THIS LINE USED TO READ `collect()`.
+             *
+             * Reported from the live shop: "the browsed tab is not giving real
+             * browsed pages result, it's stucks and dead." It was neither stale
+             * nor cached. The Browsed tab is fed from the `kbb_viewed` cookie,
+             * which ProductController::rememberViewed() writes on every product
+             * page and which has nothing to do with the cart — but this early
+             * return is reached whenever there is no CART, and it threw that
+             * history away and handed the panel an empty list.
+             *
+             * So the tab was permanently empty for exactly the people it is for:
+             * anyone browsing who has not yet added anything. Add one product
+             * and the cart cookie appears, this branch stops being taken, and
+             * the whole history shows up at once — which is why it read as
+             * something stuck rather than something switched off.
+             *
+             * Rule 27 still holds. browsed() returns without touching the
+             * database when the cookie is absent or empty, so a first visit and
+             * a crawler — which carry no cookies at all — still run no query.
+             * The cart path below is untouched: nothing here resolves a cart.
+             */
+            $view->with([
+                'items' => collect(),
+                'totals' => $empty,
+                'promo' => '',
+                'browsed' => $this->browsed(null),
+            ]);
 
             return;
         }

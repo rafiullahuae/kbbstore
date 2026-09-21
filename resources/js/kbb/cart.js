@@ -74,8 +74,14 @@ const send = async (path, body) => {
  * after every add, on every page. Exported because the checkout's one-tap add
  * needs the same two elements and must not grow its own copy of this.
  *
- * Each is rendered only when the count is above zero (`@if` in the Blade), so a
- * missing element is normal and not an error.
+ * Both are ALWAYS in the document, hidden with an inline `display:none` when
+ * the count is zero — never dropped by an `@if` in the Blade. They used to be
+ * dropped, and that was the whole of "the cart icon remains dead until i visit
+ * any other page": on a page loaded with an empty cart getElementById() found
+ * nothing and this returned, so the first add never moved the number. The
+ * `if (!badge) return;` below stays as a guard for the partials that render no
+ * header at all, not as a licence to make the badge conditional again.
+ * tests/Feature/CartBadgeAlwaysRenderedTest.php pins it.
  */
 export const setCartCount = (count) => {
     const n = Number(count) || 0;
