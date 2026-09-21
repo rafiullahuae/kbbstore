@@ -602,6 +602,8 @@ final class EnglishRenderWalk
             'my-wishlist' => ['render' => true],
             'wishlist' => $redirect,
             'wishlist/ids' => $json,
+            // JSON, not a rendered page -- there is no English in it to hold.
+            'cart/address' => $json,
 
             // --- account -------------------------------------------------------
             'my-account' => ['render' => true],

@@ -414,6 +414,19 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/cache-admin.php';
 
+        /*
+         * Appearance → Cart page: the 69 settings behind the squeezed layout,
+         * and the product picker that fills the Recommended rail. Same group as
+         * its siblings -- it writes settings and reads the catalogue, so it
+         * needs web, auth:admin and NoStoreAdminApi.
+         *
+         * Its capability is `cartpage.manage`, not a reuse of content.manage:
+         * narrowing one must not silently narrow the other from a different
+         * file. The picker returns an allowlisted shape, never the model --
+         * `products` carries wc_id, sku and total_sales.
+         */
+        require __DIR__.'/cart-page-admin.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';
@@ -869,6 +882,23 @@ require __DIR__.'/order-received.php';
  * in a catch-all root-segment route.
  */
 require __DIR__.'/auth-customer.php';
+
+/*
+ * The cart page's delivery address: read the shopper's saved list, save a new
+ * one, choose which to deliver to.
+ *
+ * NOT in routes/api.php, and that is the whole point. Everything under /api/*
+ * on this shop is unauthenticated -- an address endpoint there would hand any
+ * visitor somebody's home address for the cost of guessing an id. These carry
+ * the customer guard and check ownership on every row, and a row that is not
+ * yours answers 404 rather than 403, because a 403 confirms the row exists and
+ * turns sequential ids into a customer list.
+ *
+ * A signed-out shopper's chosen address lives in the session
+ * (App\Support\CartAddressState) and touches no table: a guest who has not
+ * bought anything is not a customer record waiting to happen.
+ */
+require __DIR__ . '/cart-address.php';
 
 /*
  * Newsletter confirmation and unsubscribe. Same group and the same reasoning as

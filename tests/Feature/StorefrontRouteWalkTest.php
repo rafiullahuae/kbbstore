@@ -251,6 +251,21 @@ function walkExpectations(array $seed): array
         'checkout/success'         => ['status' => 200],
         'checkout/pending'         => ['status' => 302],
 
+        /*
+         * 404, and deliberately so: CartAddressController aborts unless the
+         * squeezed cart layout is switched on, and `cartpage_layout` ships
+         * `classic`. The endpoint does not exist on a shop that is not using
+         * the page it belongs to -- writes included, which is the point of the
+         * gate rather than a side effect of it.
+         *
+         * This walk runs on default settings, so 404 is the honest expectation
+         * here. The 200 path, ownership, and the 404-not-403 on a stranger's id
+         * are covered with the layout on, in CartPageSqueezeTest.
+         *
+         * MUTATION: drop the abort_unless from the controller. Red here.
+         */
+        'cart/address'             => ['status' => 404],
+
         // --- Wishlist ---------------------------------------------------
         'my-wishlist'              => ['status' => 200],
         'wishlist'                 => ['status' => 302],
