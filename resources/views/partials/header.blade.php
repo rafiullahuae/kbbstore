@@ -59,23 +59,48 @@
               // answer rather than two settings that could disagree.
               $apGuest = 'panel' === app(\App\Services\AccountPanel::class)->get('guest_mode');
               $acctPanel = $h['account_menu'] && (auth()->guard()->check() || $apGuest);
+
+              /*
+               * `mh-signedin` below is the whole of how the green is decided:
+               * the class is on or it is not, and both colours come from
+               * Appearance → Mobile Header rather than from a hex in a
+               * stylesheet.
+               *
+               * ON THE `customer` GUARD, which is the one a shopper signs in
+               * on — see config/auth.php and the note at the top of
+               * tests/Feature/AccountAreaTest.php. The bare `auth()` on the
+               * line above is the DEFAULT guard, `web`, which is the staff
+               * table: it is true for nobody who ever buys anything, which is
+               * why the signed-in dot has never lit on this shop. That is the
+               * Header screen's setting (`account_dot`) and its own lane's to
+               * correct; this lane reports it rather than changing it.
+               *
+               * Not driven off `account_dot` either way: the dot is a switch a
+               * shop can turn off while still being signed in.
+               *
+               * Written here, inside the @php block, rather than as a Blade
+               * comment between the tags. A `{{-- --}}` on its own lines
+               * leaves its newlines in the output, and every storefront page
+               * is compared byte for byte by StorefrontEnglishUnchangedTest —
+               * a note is not worth a diff on thirty pages.
+               */
           @endphp
           <span class="ib-acct" @if ($acctPanel) data-acct data-acct-open="{{ app(\App\Services\AccountPanel::class)->get('panel_open') }}" @endif>
-            <a class="ib{{ auth()->guard()->check() && $h['account_dot'] ? ' in' : '' }}"
+            <a class="ib{{ auth()->guard()->check() && $h['account_dot'] ? ' in' : '' }}@auth('customer') mh-signedin @endauth"
                href="{{ Url::to('/my-account/') }}" aria-label="{{ __('store.header.account_label') }}"
                @if ($acctPanel) aria-haspopup="true" aria-expanded="false" @endif>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+              {!! \App\Support\HeaderIcons::account() !!}
             </a>
             @if ($acctPanel)@include('partials.account-panel')@endif
           </span>
         @endif
 
         @if ($h['icon_wishlist'])
-          <a class="ib" href="{{ Url::to('/my-wishlist/') }}" aria-label="{{ __('store.header.wishlist_label') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 14c1.5-1.5 3-3.4 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 12 5 14.5 12 21c7-6.5 7-7 7-7z"/></svg><i id="kbbWishCt" style="display:{{ ($kbbWishlistCount ?? 0) > 0 ? '' : 'none' }}">{{ $kbbWishlistCount ?? 0 }}</i></a>
+          <a class="ib" href="{{ Url::to('/my-wishlist/') }}" aria-label="{{ __('store.header.wishlist_label') }}">{!! \App\Support\HeaderIcons::wishlist() !!}<i id="kbbWishCt" style="display:{{ ($kbbWishlistCount ?? 0) > 0 ? '' : 'none' }}">{{ $kbbWishlistCount ?? 0 }}</i></a>
         @endif
 
         @if ($h['icon_cart'])
-          <a class="ib" href="{{ Url::to('/cart/') }}" data-kbb-open="cart" data-kbb-cart aria-label="{{ __('store.header.cart_label') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>@if (($kbbCartCount ?? 0) > 0)<i id="cartCt">{{ $kbbCartCount }}</i>@endif</a>
+          <a class="ib" href="{{ Url::to('/cart/') }}" data-kbb-open="cart" data-kbb-cart aria-label="{{ __('store.header.cart_label') }}">{!! \App\Support\HeaderIcons::cart() !!}@if (($kbbCartCount ?? 0) > 0)<i id="cartCt">{{ $kbbCartCount }}</i>@endif</a>
         @endif
       </div>
 
