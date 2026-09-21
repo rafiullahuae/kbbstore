@@ -319,10 +319,10 @@ it('draws one set of icons, in the shop and in both previews', function () {
         expect($blade)->toContain("\\App\\Support\\HeaderIcons::{$mark}()");
     }
 
-    expect($admin)->toContain('const MHICONS=@json(\App\Support\HeaderIcons::forPreview());');
-    expect($admin)->toContain('${MHICONS.account}');
-    expect($admin)->toContain('${MHICONS.wishlist}');
-    expect($admin)->toContain('${MHICONS.cart}');
+    expect($admin)->toContain('var KBB_HEADER_ICONS = @json(\App\Support\HeaderIcons::forPreview());');
+    expect($admin)->toContain('${KBB_HEADER_ICONS.account}');
+    expect($admin)->toContain('${KBB_HEADER_ICONS.wishlist}');
+    expect($admin)->toContain('${KBB_HEADER_ICONS.cart}');
 
     foreach (['&#128100;', '&#9825;', '&#128722;'] as $emoji) {
         expect($admin)->not->toContain($emoji);
@@ -443,4 +443,79 @@ it('says Unchanged rather than 0px on a size control nobody has set', function (
         expect(MobileHeader::SCHEMA[$key][4])->toHaveKey('zero');
         expect(MobileHeader::SCHEMA[$key][2])->toBe(0);
     }
+});
+
+it('compiles the icon payload instead of shipping the literal characters @json', function () {
+    /*
+     * THIS IS A BUG THAT WAS WRITTEN AND CAUGHT, and the guard is worth more
+     * than the fix.
+     *
+     * Everything from the top of resources/views/admin/app.blade.php to about
+     * line 8890 is inside @verbatim, where Blade compiles nothing. The icon
+     * payload was first written there, so the screen shipped the literal text
+     * `const MHICONS=@json(\App\Support\HeaderIcons::forPreview());` — not a
+     * wrong value but a SyntaxError, in the script block that defines half the
+     * console, which would have taken the whole admin panel down on a live
+     * shop. Reading the file says nothing about it; rendering it does.
+     *
+     * The second half of the same mistake: `var` hoists the name and not the
+     * value, so an alias declared above the assignment read `undefined` and
+     * both previews drew nothing. Hence the assertion that the only mentions
+     * left are inside the two template literals, which run when a screen is
+     * painted rather than when the script loads.
+     *
+     * MUTATION (run, red): move the `var KBB_HEADER_ICONS = @json(...)` line
+     * back above the @endverbatim on the line before it. The rendered page
+     * carries `@json(` and this fails.
+     *
+     * SECOND MUTATION (run, red): render the shell and assert nothing — the
+     * point is that `view()->render()` is the only thing that can see either
+     * of these, so the test has to render.
+     */
+    $html = view('admin.app', ['adminPath' => 'admin'])->render();
+
+    expect($html)->toContain('var KBB_HEADER_ICONS = {"account":');
+    // Scoped to this payload, not to the characters. The @verbatim region
+    // carries a comment about this very trap, and it renders literally —
+    // which is itself a demonstration of the thing being guarded against.
+    expect($html)->not->toContain('@json(\App\Support\HeaderIcons');
+
+    expect(preg_match('/var KBB_HEADER_ICONS = (\{[^\n]*?\});/', $html, $m))
+        ->toBe(1, 'the icon payload is not on the page in a shape this can read');
+
+    $icons = json_decode($m[1], true);
+
+    expect($icons)->toBeArray();
+
+    foreach (['account', 'wishlist', 'cart'] as $mark) {
+        expect($icons[$mark] ?? '')->toStartWith('<svg')->toEndWith('</svg>');
+    }
+});
+
+it('dims a row with one class attribute rather than a second one the parser throws away', function () {
+    /*
+     * The other half of the reported bug, and it had been there all along.
+     *
+     * mhField() built ` class="dim"` and dropped it into a tag already written
+     * `<div class="mmrow"`, so every dimmed row rendered with TWO class
+     * attributes. An HTML parser keeps the first and discards the second, so
+     * `.mmrow.dim` has never matched anything on this screen and no control
+     * has ever actually dimmed.
+     *
+     * Which means Left and Right did not merely fail to take effect — they did
+     * not even LOOK inert while "Match the page" was on. They rendered exactly
+     * like every live control on the screen, moved when dragged, and were
+     * thrown away on render. Measured in Chromium against the real screen:
+     * before, both rows report classList.contains('dim') === false with the
+     * toggle on; after, both report true, and dragging either one turns the
+     * toggle off and un-dims them.
+     *
+     * MUTATION (run, red): put `' class="dim"'` back. The second expectation
+     * finds the duplicate attribute and fails.
+     */
+    $admin = file_get_contents(base_path('resources/views/admin/app.blade.php'));
+
+    expect($admin)->toContain("const cls=(dim||only)?' dim':'';");
+    expect($admin)->not->toContain('class="mmrow"${cls}');
+    expect(substr_count($admin, 'class="mmrow${cls}"'))->toBe(5);
 });

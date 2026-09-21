@@ -4488,10 +4488,23 @@ let MH=null, MHTAB='spacing';
    means. MobileHeader::PAGE_INSET is the same number on the server. */
 const MH_PAGE_INSET=12;
 
-/* The storefront's own three marks, handed over as data rather than copied.
-   hdPreview() below draws them too — it used to draw emoji, which is what the
-   owner screenshotted when he asked for "the icons in the preview". */
-const MHICONS=@json(\App\Support\HeaderIcons::forPreview());
+/* The storefront's own three marks come from KBB_HEADER_ICONS, which is
+   declared further down this same script block, next to KBB_COUNTRY_NAMES.
+
+   TWO REASONS IT IS NOT ALIASED TO A `const` HERE, both found by rendering the
+   screen rather than by reading it.
+
+   Everything from the top of this file to about line 8890 is inside
+   @verbatim, where Blade compiles nothing: an @json() written here is emitted
+   as the literal characters `@json(...)`, which is not a wrong value but a
+   syntax error, and it takes the whole admin script down rather than this one
+   screen. So the data has to be declared in one of the gaps between
+   @endverbatim and @verbatim, the way KBB_COUNTRY_NAMES and KBB_PRESETS are.
+
+   And a `const MHICONS = KBB_HEADER_ICONS` at this point in the file would
+   read it before the line that assigns it has run — `var` hoists the name, not
+   the value, so both previews would have drawn `undefined`. Read inside the
+   two functions instead, which run long after the script has. */
 
 function mhBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\/[^\/]*$/,'') + '/admin-api/mobile-header'; }
 
@@ -4525,21 +4538,28 @@ function mhField(f){
   const only=(f.key==='dv_length'&&mhGet('divider')!=='ticks')
           || (f.key==='dv_inset'&&['full','soft'].includes(mhGet('divider')))
           || (['dv_colour','dv_alpha','dv_width','dv_inset','dv_length'].includes(f.key)&&mhGet('divider')==='off');
-  const cls=(dim||only)?' class="dim"':'';
+  /* ONE class attribute, not two. This built ` class="dim"` and dropped it
+     into a tag that already had `class="mmrow"`; an HTML parser keeps the
+     first and discards the second, so .mmrow.dim has never matched anything
+     and no row on this screen has ever actually dimmed. Which is half of the
+     reported bug: Left and Right were meant to LOOK inert while "Match the
+     page" was on, and instead looked exactly like every other live control
+     while everything downstream threw their value away. */
+  const cls=(dim||only)?' dim':'';
   if(f.type==='bool')
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <span class="ectog${v?' on':''}" data-mh="${f.key}" role="switch" aria-checked="${v}" tabindex="0"></span></div>`;
   if(f.type==='select'){ const o=f.options||{};
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <select data-mh="${f.key}">${Object.keys(o).map(k=>`<option value="${escAttr(k)}"${k===v?' selected':''}>${escHtml(o[k])}</option>`).join('')}</select></div>`; }
   if(f.type==='range'){ const o=f.options||{};
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b>${f.help?`<span>${escHtml(f.help)}</span>`:''}</div>
       <span class="mmrange"><input type="range" min="${o.min}" max="${o.max}" step="${o.step||1}" value="${v}" data-mh="${f.key}">
         <i id="mhv-${f.key}">${mhReadout(f,v)}</i></span></div>`; }
   if(f.type==='colour')
-    return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
+    return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
       <span class="mmcol"><input type="color" value="${v}" data-mh="${f.key}"><code>${v}</code></span></div>`;
-  return `<div class="mmrow"${cls}><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
+  return `<div class="mmrow${cls}"><div class="mmlbl"><b>${escHtml(f.label)}</b></div>
     <input type="text" value="${escAttr(String(v))}" data-mh="${f.key}"></div>`;
 }
 
@@ -4593,7 +4613,7 @@ function mhPreview(){
         <div class="mhp-in">
           <span class="mhp-bg"></span>
           <span class="mhp-logo">K-Beauty<b>Bliss</b></span>
-          <span class="mhp-act"><i class="mhp-acct">${MHICONS.account}</i><i>${MHICONS.wishlist}</i><i>${MHICONS.cart}</i></span>
+          <span class="mhp-act"><i class="mhp-acct">${KBB_HEADER_ICONS.account}</i><i>${KBB_HEADER_ICONS.wishlist}</i><i>${KBB_HEADER_ICONS.cart}</i></span>
           <span class="mhp-sbox"><i class="mhp-mg"></i><em>Search 671 products…</em></span>
         </div>
       </div>
@@ -5998,7 +6018,7 @@ function hdPreview(){
     <div class="hdpv-bar${g('bar_border')?' bd':''}">
       <span class="kbbmi kbbmi-${icon}">${inner}</span>
       <span class="hdpv-logo">${escHtml(g('logo_text'))}<em>${escHtml(g('logo_accent'))}</em></span>
-      <span class="hdpv-icons">${g('icon_account')?`<i>${MHICONS.account}</i>`:''}${g('icon_wishlist')?`<i>${MHICONS.wishlist}</i>`:''}${g('icon_cart')?`<i class="bg">${MHICONS.cart}</i>`:''}</span>
+      <span class="hdpv-icons">${g('icon_account')?`<i>${KBB_HEADER_ICONS.account}</i>`:''}${g('icon_wishlist')?`<i>${KBB_HEADER_ICONS.wishlist}</i>`:''}${g('icon_cart')?`<i class="bg">${KBB_HEADER_ICONS.cart}</i>`:''}</span>
     </div>
     ${g('search_show')?`<div class="hdpv-srch"><span>${escHtml(String(g('search_text')).replace('{n}','671'))}</span></div>`:''}
     ${g('trending_show')?`<div class="hdpv-trend">${['Madeca','PDRN','Retinol'].slice(0,Math.max(1,Math.min(3,g('trending_limit')))).map(t=>`<span>${t}</span>`).join('')}</div>`:''}
@@ -8889,6 +8909,12 @@ function dlBase(){ return window.location.pathname.replace(/\/+$/,'').replace(/\
    this screen exists to write a line for. */
 @endverbatim
 var KBB_COUNTRY_NAMES = @json(\App\Support\Countries::NAMES);
+
+/* The account, wishlist and cart marks the storefront draws, from
+   App\Support\HeaderIcons. Read by MHICONS above (Appearance → Mobile Header)
+   and by hdPreview() (Appearance → Header), so neither preview can drift from
+   the shop. */
+var KBB_HEADER_ICONS = @json(\App\Support\HeaderIcons::forPreview());
 
 /* The registered preset groups, from App\Support\CountryPresets. One key per
    per-country table in this console; only 'delivery' exists today. The Tax tab
