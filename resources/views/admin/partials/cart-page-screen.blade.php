@@ -66,8 +66,148 @@
 --}}
 @verbatim
 <style>
-.cps-wrap{display:grid;gap:14px;min-width:0}
+/* Controls left, a phone that redraws as you drag on the right. Below 1100px
+   the preview goes under the controls rather than squeezing both: a 300px
+   control column and a 300px phone are two things nobody can use. */
+.cps-wrap{display:grid;gap:14px;min-width:0;grid-template-columns:minmax(0,1fr) 336px;align-items:start}
 .cps-wrap > *{min-width:0}
+.cps-wrap > .cps-col{display:grid;gap:14px;min-width:0}
+@media (max-width:1100px){.cps-wrap{grid-template-columns:minmax(0,1fr)}}
+
+/* ── the preview ────────────────────────────────────────────────────────── */
+.cpv{position:sticky;top:16px;min-width:0}
+@media (max-width:1100px){.cpv{position:static}}
+.cpv-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 8px}
+.cpv-h b{font-size:12px;font-weight:650}
+.cpv-h span{font-size:11px;color:var(--ink-soft,#6b7280)}
+.cpv-phone{border:1px solid var(--border,#e6e6e6);border-radius:20px;overflow:hidden;
+  background:#fff;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
+.cpv-bar{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#f6f7f9;
+  border-bottom:1px solid var(--border,#e6e6e6);font-size:10px;color:#6b7280}
+.cpv-bar i{width:6px;height:6px;border-radius:50%;background:#d8dbe0;display:block}
+.cpv-body{position:relative;background:#fbf5f4;padding:10px;min-height:150px;color:#17181c}
+.cpv-note{font-size:10.5px;color:#6b7280;padding:14px 10px;text-align:center}
+
+/* rows — every size derives from --h, exactly as the shop does */
+.cpv-ci{display:flex;align-items:center;gap:calc(var(--h) * .13);height:var(--h);
+  padding:calc(var(--h) * .13);background:#fff;border-bottom:1px solid #ebe3e6;overflow:hidden}
+.cpv-ci:first-child{border-radius:10px 10px 0 0}
+.cpv-ci:last-child{border-bottom:0;border-radius:0 0 10px 10px}
+.cpv-th{flex:0 0 auto;width:calc(var(--h) - var(--h) * .26);height:calc(var(--h) - var(--h) * .26);
+  border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:600;
+  font-size:calc((var(--h) - var(--h) * .26) * .32)}
+.cpv-mid{flex:1 1 auto;min-width:0}
+.cpv-br{font-size:calc((7.5px + var(--h) * .022) * var(--f));font-weight:var(--w);
+  letter-spacing:.09em;text-transform:uppercase;color:#c13a5e;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.cpv-nm{font-size:calc((11.5px + var(--h) * .042) * var(--f));font-weight:var(--w);line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cpv-qty{display:inline-flex;align-items:center;border:1px solid #ebe3e6;border-radius:99px;
+  height:calc(var(--h) * .30);margin-top:calc(var(--h) * .04);
+  font-size:calc(var(--h) * .135 * var(--f))}
+.cpv-qty b{padding:0 calc(var(--h) * .10);font-weight:var(--w)}
+.cpv-qty i{padding:0 calc(var(--h) * .08);font-style:normal;color:#6b7280}
+.cpv-pr{flex:0 0 auto;font-size:calc((11px + var(--h) * .040) * var(--f));font-weight:var(--w);
+  white-space:nowrap}
+
+/* rail */
+.cpv-rec{margin:0 -10px;padding:9px 0;position:relative;overflow:hidden}
+.cpv-rec::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(115deg,#FFEDF3,#FFF6EC,#EFF9F3,#F4EFFC,#FFEDF3);background-size:280% 280%;
+  animation:cpvdrift calc(26s / var(--mo,1)) ease-in-out infinite;opacity:calc(.45 + .55 * var(--mo,1))}
+@keyframes cpvdrift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){.cpv-rec::before{animation:none}}
+.cpv-rec > *{position:relative}
+.cpv-rec h6{margin:0 0 7px;padding:0 10px;font-size:11.5px;font-weight:600}
+.cpv-rail{display:flex;gap:5px;padding:0 10px 2px;overflow:hidden}
+.cpv-rc{flex:0 0 calc((100% - (5px * (var(--per) - 1))) / var(--per));background:#fff;
+  border:1px solid #ebe3e6;border-radius:7px;padding:4px}
+.cpv-rc .im{position:relative;aspect-ratio:1;border-radius:5px;margin-bottom:4px}
+.cpv-rc .pl{position:absolute;right:-2px;bottom:-2px;width:15px;height:15px;border-radius:50%;
+  background:#1e9e5a;color:#fff;border:1.5px solid #fff;display:grid;place-items:center;
+  font-size:10px;line-height:1}
+.cpv-rc .t{font-size:8px;font-weight:var(--rw);line-height:1.25;height:2.5em;overflow:hidden;color:#3c3a40}
+.cpv-rc .p{font-size:8.5px;font-weight:var(--rw)}
+
+/* summary */
+.cpv-sum{background:#fff;border:1px solid #ebe3e6;border-radius:10px;padding:10px;font-size:11px}
+.cpv-sr{display:flex;justify-content:space-between;gap:8px;padding:2px 0;color:#3c3a40}
+.cpv-sr s{color:#9aa0aa;margin-right:3px}
+.cpv-tot{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#e6f5ed;
+  border-radius:7px;padding:7px 9px;margin-top:7px;font-weight:700;font-size:12px}
+.cpv-ship{margin:6px 0 2px}
+.cpv-ship .t{font-size:10px;color:#6b7280;margin-bottom:4px}
+.cpv-ship .t.won{color:#1e9e5a;font-weight:600}
+.cpv-ship .bar{position:relative;height:7px;border-radius:99px;background:#f0eaec}
+.cpv-ship .fill{position:relative;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,#1e9e5a,#3fd089 45%,#1e9e5a);background-size:220% 100%;
+  animation:cpvflow 2.6s linear infinite}
+@keyframes cpvflow{to{background-position:-220% 0}}
+.cpv-ship .fill::after{content:"";position:absolute;right:0;top:50%;width:20px;height:20px;
+  transform:translate(50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0%,rgba(150,245,196,.7) 28%,rgba(63,208,137,0) 68%);
+  animation:cpvbloom 1.9s ease-in-out infinite}
+@keyframes cpvbloom{0%,100%{opacity:.75;transform:translate(50%,-50%) scale(.85)}
+  50%{opacity:1;transform:translate(50%,-50%) scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.cpv-ship .fill,.cpv-ship .fill::after{animation:none}}
+.cpv-trust{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;
+  padding:8px 0 2px;font-size:9px;color:#6b7280}
+.cpv-trust .tick{color:#1e9e5a;font-weight:700}
+.cpv-pay{height:13px;padding:0 3px;border:1px solid #ebe3e6;border-radius:2px;background:#fff;
+  display:grid;place-items:center;font-size:5.5px;font-weight:600;color:#3c3a40}
+
+/* docked */
+.cpv-dock{border-top:1px solid #ebe3e6;box-shadow:0 -2px 10px -6px rgba(0,0,0,.25)}
+.cpv-ab{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f6efef;
+  min-height:var(--ah);padding:0 10px;font-size:calc(11px * var(--bf))}
+.cpv-ab b{font-weight:500;color:#3c3a40;white-space:nowrap;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
+.cpv-ab span{flex:0 0 auto;color:#1e9e5a;font-weight:600;font-size:calc(11.5px * var(--bf))}
+.cpv-cb{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;
+  min-height:var(--ch);padding:0 10px}
+.cpv-cb .ta{min-width:0}
+.cpv-cb .ta i{display:block;font-style:normal;font-size:calc(10px * var(--bf));color:#6b7280}
+.cpv-cb .ta b{display:block;font-size:calc(15px * var(--bf));font-weight:700}
+.cpv-cb button{flex:0 1 auto;min-width:0;background:#1e9e5a;color:#fff;border:0;border-radius:8px;
+  padding:calc(9px * var(--bf)) calc(13px * var(--bf));font-size:calc(12.5px * var(--bf));
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* popup */
+.cpv-stage{position:relative;height:290px;background:#fbf5f4;overflow:hidden}
+.cpv-scrim{position:absolute;inset:0;background:rgba(23,24,28,.34);
+  -webkit-backdrop-filter:blur(calc(var(--bl,3) * 1px));backdrop-filter:blur(calc(var(--bl,3) * 1px))}
+.cpv-sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:13px 13px 0 0;
+  padding:calc(11px * var(--sd));overflow:hidden;max-height:var(--cap)}
+.cpv-sheet h6{margin:0 0 8px;font-size:calc(13px * var(--sf));font-weight:700}
+.cpv-al{display:flex;gap:7px;align-items:flex-start;border:1px solid #e4e7ec;border-radius:8px;
+  padding:calc(8px * var(--sd));margin-bottom:6px;position:relative;overflow:hidden}
+.cpv-al.on{border-color:#1e9e5a}
+.cpv-al.on::after{content:"✓";position:absolute;top:0;right:0;width:26px;height:21px;
+  border-radius:0 7px 0 8px;background:#1e9e5a;color:#fff;display:grid;place-items:center;font-size:11px}
+.cpv-al .ad{min-width:0;flex:1}
+.cpv-al .ad b{display:block;font-size:calc(11.5px * var(--sf));padding-right:28px}
+.cpv-al .ad i{display:block;font-style:normal;font-size:calc(10px * var(--sf));color:#6b7280;
+  line-height:1.4;max-height:2.8em;overflow:hidden}
+.cpv-tag{flex:0 0 auto;align-self:center;background:#e8f6ee;color:#177f47;border-radius:4px;
+  padding:2px 6px;font-size:calc(9.5px * var(--sf));font-weight:500}
+.cpv-add{background:none;border:0;color:#1e9e5a;font-size:calc(11.5px * var(--sf));font-weight:600;
+  padding:calc(6px * var(--sd)) 0}
+.cpv-fg{display:grid;gap:calc(7px * var(--sd));margin-bottom:8px}
+.cpv-fg.two{grid-template-columns:1fr 1fr}
+.cpv-fg.two .full{grid-column:1 / -1}
+.cpv-fg label{display:block;font-size:calc(9.5px * var(--sf));font-weight:600;margin-bottom:2px;color:#3c3a40}
+.cpv-fi{border:1px solid #e4e7ec;border-radius:6px;padding:calc(6px * var(--sd)) 7px;
+  font-size:calc(11px * var(--sf));color:#9aa0aa;background:#fff;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.cpv-geo{font-size:calc(9px * var(--sf));color:#1e9e5a;margin:0}
+.cpv-act{display:grid;grid-template-columns:auto auto 1fr;gap:5px;margin-top:2px}
+.cpv-mk{display:inline-flex;align-items:center;gap:4px;border:1px solid #e4e7ec;border-radius:7px;
+  padding:calc(7px * var(--sd)) calc(8px * var(--sd));font-size:calc(10.5px * var(--sf));
+  font-weight:600;color:#3c3a40;white-space:nowrap}
+.cpv-mk.on{border-color:#1e9e5a;background:#e8f6ee;color:#177f47}
+.cpv-dl{display:grid;place-items:center;background:#1e9e5a;color:#fff;border-radius:7px;
+  padding:calc(7px * var(--sd)) 6px;font-size:calc(11px * var(--sf));font-weight:700;white-space:nowrap}
 .cps-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
           border-radius:var(--r,12px);padding:16px;min-width:0}
 .cps-title{font-weight:650;font-size:15px}
@@ -412,7 +552,7 @@
         + 'brought this screen changed the shop by nothing.</div>'
       : '';
 
-    host.innerHTML = '<div class="cps-wrap">'
+    host.innerHTML = '<div class="cps-wrap"><div class="cps-col">'
       + (banner ? '<div class="cps-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
           + esc(banner) + '</div>' : '')
       + warn
@@ -426,10 +566,227 @@
       + '<button class="cps-btn is-primary" data-cps-save' + (busy ? ' disabled' : '') + '>'
       + (busy ? 'Saving…' : 'Save') + '</button>'
       + '<button class="cps-btn" data-cps-reload' + (busy ? ' disabled' : '') + '>Reload</button>'
-      + '</div></div>';
+      + '</div></div>'
+      + previewHTML()
+      + '</div>';
 
     var q = document.querySelector('#cps-q');
     if (q) q.focus();
+  }
+
+  /* -------------------------------------------------------------- preview */
+  /*
+   * A LIVE DRAWING OF THE TAB YOU ARE ON.
+   *
+   * Only the region the open tab controls, not the whole cart. A phone frame
+   * showing the top of the basket while you drag the docked-bar height is a
+   * preview of nothing, and scrolling one to the right place is a second thing
+   * that can be wrong.
+   *
+   * Every size is a calc() off the same custom properties the shop itself
+   * reads -- --h for row height, --per for cards across, --ah/--ch for the two
+   * bars -- so the drawing cannot disagree with the page by arithmetic. It is
+   * still a DRAWING and not the real cart: rendering the storefront in here
+   * would mean an authenticated fetch per keystroke.
+   */
+  var PV_ROWS = [
+    {b:'COSRX', n:'Rice Probiotics Toner', q:1, p:'AED 115', c:'#f6a98a,#ef8a72'},
+    {b:'SKIN1004', n:'Ceramide Daily Moisturiser', q:2, p:'AED 328', c:'#bfa6f2,#a387e8'}
+  ];
+  var PV_CARDS = ['#f5b8c8,#e99bb0', '#9fd8c4,#77c2a9', '#f2c08a,#e5a566', '#8fc9ee,#68afe0',
+                  '#a8d5b8,#81bf96', '#e7a7b8,#d78598', '#f0ce8e,#e0b564'];
+
+  function pvNum(key, fallback) {
+    var v = Number(values[key]);
+    return isFinite(v) ? v : fallback;
+  }
+  function pvOn(key) { return values[key] === true || values[key] === 1 || values[key] === '1'; }
+  function pvText(key, fallback) {
+    var v = values[key];
+    return (v === undefined || v === null || v === '') ? fallback : String(v);
+  }
+
+  /* The custom properties, built once and handed to whichever region draws. */
+  function pvVars() {
+    var per = pvNum('rec_per', 45) / 10;
+    return 'style="'
+      + '--h:' + pvNum('row_h', 96) + 'px;'
+      + '--f:' + (pvNum('row_font', 100) / 100) + ';'
+      + '--w:' + (pvOn('row_bold') ? 600 : 400) + ';'
+      + '--per:' + (per > 0 ? per : 4.5) + ';'
+      + '--rw:' + (pvOn('rec_bold') ? 600 : 400) + ';'
+      + '--mo:' + (pvNum('rec_motion', 1) || 0.0001) + ';'
+      + '--ah:' + pvNum('addr_h', 40) + 'px;'
+      + '--ch:' + pvNum('co_h', 62) + 'px;'
+      + '--bf:' + (pvNum('bar_font', 100) / 100) + ';'
+      + '--sd:' + (pvNum('sheet_dense', 100) / 100) + ';'
+      + '--sf:' + (pvNum('sheet_font', 100) / 100) + ';'
+      + '--bl:' + pvNum('sheet_blur', 3) + ';'
+      + '"';
+  }
+
+  function pvRows() {
+    return PV_ROWS.map(function (r) {
+      return '<div class="cpv-ci">'
+        + '<div class="cpv-th" style="background:linear-gradient(140deg,' + r.c + ')">' + esc(r.b.charAt(0)) + '</div>'
+        + '<div class="cpv-mid"><div class="cpv-br">' + esc(r.b) + '</div>'
+        + '<div class="cpv-nm">' + esc(r.n) + '</div>'
+        + '<div class="cpv-qty"><i>−</i><b>' + r.q + '</b><i>+</i></div></div>'
+        + '<div class="cpv-pr">' + esc(r.p) + '</div></div>';
+    }).join('');
+  }
+
+  function pvRail() {
+    if (!pvOn('rec_on')) {
+      return '<p class="cpv-note">The rail is switched off, so the shop draws nothing here.</p>';
+    }
+    var names = chosen.length
+      ? chosen.map(function (p) { return p.name; })
+      : ['PDRN Pink Peptide Serum', 'CER-100 Collagen Treatment', 'Collagen Night Mask',
+         'PDRN Hyaluronic Mist', 'Gel Cleanser 150ml', 'Fino Shampoo Set', 'Relief Sun SPF50'];
+    return '<section class="cpv-rec"><h6>' + esc(pvText('rec_heading', 'Recommended for you')) + '</h6>'
+      + '<div class="cpv-rail">'
+      + names.slice(0, 7).map(function (n, i) {
+          return '<div class="cpv-rc"><div class="im" style="background:linear-gradient(140deg,'
+            + PV_CARDS[i % PV_CARDS.length] + ')"><span class="pl">+</span></div>'
+            + '<div class="t">' + esc(n) + '</div><div class="p">AED 88</div></div>';
+        }).join('')
+      + '</div></section>'
+      + (chosen.length ? '' : '<p class="cpv-note">Example products — pick real ones below.</p>');
+  }
+
+  function pvSummary() {
+    var money = function (f) { return 'AED ' + (Number(values[f] || 0) / 100).toFixed(2); };
+    var out = '<div class="cpv-sum">'
+      + '<div class="cpv-sr"><span>' + esc(pvText('sum_value_label', 'Order Value')) + '</span>'
+      + '<span><s>AED 492</s><b>AED 443</b></span></div>';
+
+    if (pvOn('sum_express_on')) {
+      out += '<div class="cpv-sr"><span>' + esc(pvText('sum_express_label', 'Express Delivery Charge'))
+        + ' ⓘ</span><span>' + money('sum_express') + '</span></div>';
+    }
+    if (pvOn('sum_delivery_on')) {
+      out += '<div class="cpv-sr"><span>' + esc(pvText('sum_std_label', 'Standard Delivery Charge'))
+        + ' ⓘ</span><span>' + esc(pvText('sum_std_free', 'Free')) + '</span></div>';
+    } else {
+      /* The free-delivery bar stands in for the delivery lines -- it answers
+         the same question AND says what would make delivery free.
+         ▲ MARKED AS AN EXAMPLE, deliberately. The threshold is not a cart-page
+         setting: it comes from the shipping zone, and "no threshold" is a real
+         answer, in which case the shop prints sum_fallback instead. Drawing a
+         confident bar here would advertise free delivery in the admin that the
+         shop may not offer. */
+      out += '<div class="cpv-ship"><div class="t won">🎉 <b>You have unlocked free delivery!</b></div>'
+        + '<div class="bar"><div class="fill" style="width:100%"></div></div></div>'
+        + '<p class="cpv-note" style="padding:4px 0 0;text-align:left">Example — the threshold comes '
+        + 'from your delivery zone. With none set, the shop prints “'
+        + esc(pvText('sum_fallback', 'Delivery is calculated at checkout')) + '” here instead.</p>';
+    }
+
+    var fee = 0;
+    if (pvOn('sum_service_on')) {
+      fee = String(values.sum_service_mode) === 'pct'
+        ? 443 * pvNum('sum_service_pct', 2) / 100
+        : pvNum('sum_service', 300) / 100;
+      out += '<div class="cpv-sr"><span>' + esc(pvText('sum_service_label', 'Service Fee'))
+        + ' ⓘ</span><span>AED ' + fee.toFixed(2) + '</span></div>';
+    }
+
+    out += '<div class="cpv-tot"><span>' + esc(pvText('sum_total_label', 'Order Total')) + '</span>'
+      + '<span>AED ' + (443 + fee).toFixed(2) + '</span></div></div>';
+
+    if (pvOn('trust_on')) {
+      var marks = [['pay_visa','VISA'],['pay_mc','MC'],['pay_apple','Pay'],['pay_google','GPay'],
+                   ['pay_tabby','tabby'],['pay_tamara','tamara']]
+        .filter(function (m) { return pvOn(m[0]); })
+        .map(function (m) { return '<span class="cpv-pay">' + esc(m[1]) + '</span>'; }).join('');
+      out += '<div class="cpv-trust"><span class="tick">✓</span> '
+        + esc(pvText('trust_text', 'Secure checkout')) + ' <span>|</span> ' + marks + '</div>';
+    }
+    return out;
+  }
+
+  function pvBars() {
+    return '<div class="cpv-dock">'
+      + (pvOn('addr_on')
+          ? '<div class="cpv-ab"><b>' + esc(pvText('addr_heading', 'Please choose your delivery address'))
+            + '</b><span>' + esc(pvText('addr_btn_add', '+ Address')) + '</span></div>'
+          : '')
+      + '<div class="cpv-cb"><div class="ta"><i>3 items</i><b>AED 443</b></div>'
+      + '<button type="button">' + esc(pvText('co_label', 'Proceed to Checkout')) + '</button></div></div>';
+  }
+
+  /* The popup, drawn at whichever of its two caps applies. `which` is 'list'
+     or 'form' -- those caps are otherwise invisible until you open the sheet on
+     a real phone, which is the worst place to find out you set them wrong. */
+  function pvSheet(which) {
+    var cap = which === 'list' ? pvNum('sheet_max_list', 38) : pvNum('sheet_max', 50);
+    var inner;
+    if (which === 'list') {
+      inner = '<h6>' + esc(pvText('sheet_list_title', 'Choose location')) + '</h6>'
+        + '<div class="cpv-al on"><span class="ad"><b>Zulfiqar Sha</b>'
+        + '<i>Building 1-10, G-04 apartment, Al jhail gate phase 2 - Al Quoz - Dubai</i></span>'
+        + '<span class="cpv-tag">' + esc(pvText('sheet_home', 'Home')) + '</span></div>'
+        + '<div class="cpv-al"><span class="ad"><b>Zulfiqar Sha</b>'
+        + '<i>Office 402, Boutique Tower 2 - Business Bay - Dubai</i></span>'
+        + '<span class="cpv-tag">' + esc(pvText('sheet_office', 'Office')) + '</span></div>'
+        + '<button class="cpv-add" type="button">' + esc(pvText('sheet_add_new', '+ Add New Address')) + '</button>';
+    } else {
+      var two = pvOn('sheet_two_up') ? ' two' : '';
+      inner = '<h6>' + esc(pvText('sheet_form_title', 'Add New Address')) + '</h6>'
+        + '<div class="cpv-fg' + two + '">'
+        + '<div class="full"><label>' + esc(pvText('sheet_area', 'Area')) + '</label>'
+        + '<div class="cpv-fi">' + esc(pvText('sheet_area_hint', 'e.g. Jumeirah Village Circle')) + '</div></div>'
+        + '<div class="full"><label>' + esc(pvText('sheet_apt', 'Apartment / building')) + '</label>'
+        + '<div class="cpv-fi">' + esc(pvText('sheet_apt_hint', 'e.g. Flat 802, Sunrise Residence')) + '</div></div>'
+        + '<div><label>' + esc(pvText('sheet_city', 'City')) + '</label>'
+        + '<div class="cpv-fi">' + esc(pvText('sheet_city_hint', 'e.g. Sharjah')) + '</div></div>'
+        + '<div><label>' + esc(pvText('sheet_country', 'Country')) + '</label>'
+        + '<div class="cpv-fi" style="color:#17181c">United Arab Emirates</div></div>'
+        + '<p class="cpv-geo full">✓ ' + esc(pvText('sheet_geo_note', 'Country set from where you are.')) + '</p>'
+        + '</div>'
+        + '<div class="cpv-act"><span class="cpv-mk on">⌂ ' + esc(pvText('sheet_home', 'Home')) + '</span>'
+        + '<span class="cpv-mk">▤ ' + esc(pvText('sheet_office', 'Office')) + '</span>'
+        + '<span class="cpv-dl">✓ ' + esc(pvText('sheet_save', 'Deliver here')) + '</span></div>';
+    }
+    return '<div class="cpv-stage"><div class="cpv-scrim"></div>'
+      + '<div class="cpv-sheet" style="--cap:' + cap + '%">' + inner + '</div></div>';
+  }
+
+  /** What the open tab is responsible for, and nothing else. */
+  function previewHTML() {
+    var region, label;
+    if (open === 'rows')        { region = pvRows(); label = 'Product rows'; }
+    else if (open === 'rec')    { region = pvRail(); label = 'Recommended'; }
+    else if (open === 'summary'){ region = pvSummary(); label = 'Summary & trust'; }
+    else if (open === 'bars')   { region = pvBars(); label = 'Docked rows'; }
+    else if (open === 'popup')  { region = pvSheet('list') + pvSheet('form'); label = 'Address popup · list, then form'; }
+    else                        { region = pvRows() + pvRail() + pvSummary() + pvBars(); label = 'The whole page'; }
+
+    var classic = String(values.layout) === 'classic';
+
+    return '<div class="cpv" id="cps-preview">'
+      + '<div class="cpv-h"><b>Live preview</b><span>' + esc(label) + '</span></div>'
+      + '<div class="cpv-phone" ' + pvVars() + '>'
+      + '<div class="cpv-bar"><i></i>extrabeauty.ae/cart/</div>'
+      + '<div class="cpv-body"' + (open === 'popup' ? ' style="padding:0"' : '') + '>' + region + '</div>'
+      + '</div>'
+      + (classic
+          ? '<p class="cpv-note" style="text-align:left;padding:8px 0 0">This is what <b>Squeezed</b> '
+            + 'would draw. The shop is still on <b>Classic</b>, so nothing here is live yet.</p>'
+          : '')
+      + '</div>';
+  }
+
+  /* Redraw the preview WITHOUT touching the controls: re-rendering the whole
+     screen mid-drag destroys the range input under the finger and the drag
+     stops dead. */
+  function paintPreview() {
+    var node = document.querySelector('#cps-preview');
+    if (!node) return;
+    var holder = document.createElement('div');
+    holder.innerHTML = previewHTML();
+    node.replaceWith(holder.firstChild);
   }
 
   /* --------------------------------------------------------------- events */
@@ -454,6 +811,7 @@
         });
         if (f) out.textContent = shown(f);
       }
+      paintPreview();
       return;
     }
 
