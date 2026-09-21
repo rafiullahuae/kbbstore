@@ -10150,7 +10150,21 @@ async function kbbPurge(btn){
   btn.disabled = true;
   btn.classList.add('spin');
   try {
-    const r = await api('/cache/clear', {method:'POST', body: JSON.stringify({target:'all'})});
+    /*
+     * THE FULL /admin-api/ PATH, and it is not optional.
+     *
+     * fixAdminApiUrl() rewrites a URL only when it STARTS WITH '/admin-api/' --
+     * it prefixes the console's own directory, because the admin lives at a
+     * path the owner chooses. Anything else is passed through untouched, so
+     * '/cache/clear' was fetched from the site root and answered 404: the
+     * button reported "api not found" while the endpoint it wanted was sitting
+     * there working.
+     *
+     * The cache SCREEN does not hit this because it carries its own api()
+     * helper that prepends '/admin-api' itself. Two helpers with the same name
+     * and different contracts, one file apart.
+     */
+    const r = await api('/admin-api/cache/clear', {method:'POST', body: JSON.stringify({target:'all'})});
     // The endpoint answers {ok, target, ran:[…], compiled:{…}} -- `ran` names
     // what it actually did, which is worth saying: "Caches cleared" on a run
     // that silently did nothing looks identical to one that worked.

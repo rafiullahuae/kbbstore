@@ -53,9 +53,39 @@ it('clears everything in one press, through the endpoint the cache screen alread
     $fn = substr($src, (int) strpos($src, 'async function kbbPurge('));
     $fn = substr($fn, 0, (int) strpos($fn, 'let toastT;'));
 
-    expect(preg_match("/api\(\s*'\/cache\/clear'/", $fn))->toBe(
-        1,
-        'the purge button no longer calls the shared endpoint'
+    /*
+     * THE PATH MUST START WITH /admin-api/, AND THIS TEST USED TO PIN THE BUG.
+     *
+     * It asserted `api('/cache/clear'` and went green on a button that answered
+     * "api not found" every time it was pressed. fixAdminApiUrl() rewrites a
+     * URL only when it starts with '/admin-api/' -- that is where it splices in
+     * the console's own directory, because the admin path is chosen by the
+     * owner -- and passes anything else through untouched, straight to the site
+     * root and a 404.
+     *
+     * So the assertion is now tied to that function's contract rather than to
+     * the string I happened to write. Matching a literal I chose is not a test;
+     * it is a copy of the mistake.
+     *
+     * MUTATION: drop the '/admin-api' prefix. Red.
+     */
+    preg_match("/api\(\s*'([^']+)'/", $fn, $call);
+
+    expect($call)->not->toBe([], 'the purge button no longer calls api() at all');
+
+    expect(str_starts_with($call[1], '/admin-api/'))->toBeTrue(
+        "the purge button fetches '{$call[1]}', which fixAdminApiUrl() leaves untouched -- it is "
+        .'requested from the site root and answers 404'
+    );
+
+    expect(str_contains($call[1], '/cache/clear'))->toBeTrue(
+        'the purge button no longer calls the shared clear endpoint'
+    );
+
+    // And the contract it depends on has to still be the contract.
+    expect(str_contains($src, "if(url.indexOf('/admin-api/')===0){"))->toBeTrue(
+        'fixAdminApiUrl() no longer keys on the /admin-api/ prefix, so the assertion above is '
+        .'pinning a rule that has stopped being true'
     );
 
     expect(preg_match("/target\s*:\s*'all'/", $fn))->toBe(
