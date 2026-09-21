@@ -289,7 +289,38 @@ function kbb_token(string $file): string
         ."Paste it into the installer page, then this file is deleted automatically.\n",
         LOCK_EX
     );
-    @chmod($file, 0600);
+
+    /*
+     * 0640, NOT 0600 — and the difference is the whole installer.
+     *
+     * This file is written by the PHP process and READ BY A HUMAN over SSH or
+     * in a file manager. Those are two different users on most hosting: PHP
+     * runs as www-data (or nobody, or the pool user) and the owner logs in as
+     * the account that owns the files. 0600 means "the creating user only", so
+     * the owner ran the `cat` command this very page prints and got:
+     *
+     *     cat: .../storage/INSTALL-TOKEN.txt: Permission denied
+     *
+     * And that is a TOTAL lockout, not an inconvenience. The key gates screen
+     * one of five, nothing past it runs, there is no recovery flow, and the
+     * installer itself has just told him to read a file it made unreadable.
+     * Found on Cloudways on a real install, at the point where every other
+     * requirement had already passed.
+     *
+     * 0640 gives the group read, and the group is the one the web server and
+     * the login account share on every host where this matters — it is how the
+     * owner's own files already look there (`-rw-rw-r-- master www-data`).
+     *
+     * Not a loosening of anything real. `.env` twenty lines further down has
+     * been 0640 since it was written, and it carries the database password and
+     * the APP_KEY that every stored payment credential is encrypted with. A
+     * single-use setup key, in a folder that is not web-served, being *stricter*
+     * than that was an inconsistency, not a policy.
+     *
+     * The state file keeps 0600 deliberately: PHP writes it and PHP reads it,
+     * and no human ever needs to open it.
+     */
+    @chmod($file, 0640);
 
     return $token;
 }
@@ -966,6 +997,9 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
 .note.warn{background:#fdf3e4;color:#7a4b07}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .note.warn{background:#3a2c14;color:#f0c27a}}
 code{font-family:var(--mono);font-size:12px;background:rgba(127,127,127,.14);padding:1px 5px;border-radius:4px;word-break:break-all}
+/* Multi-line commands: a block, wrapping at the line breaks it was written
+   with, so a copied paste runs as two commands and not one mangled one. */
+code.cmd{display:block;padding:8px 9px;margin-top:5px;white-space:pre-wrap;line-height:1.5}
 .bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0 6px}
 .bar>i{display:block;height:100%;background:var(--brand);width:0;transition:width .25s ease}
 .steps{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
@@ -1029,7 +1063,58 @@ function paneToken(msg){
     +'<p class="hint"><b>If you have SSH or a terminal:</b> run this and copy what it prints —<br>'
     +'<code>cat <?= htmlspecialchars($tokenPathForHumans, ENT_QUOTES) ?></code></p>'
     +'<p class="hint">Either way, you want the <b>long line at the top</b>. Everything under it is just an '
-    +'explanation of what the file is for.</p></div>'
+    +'explanation of what the file is for.</p>'
+    /*
+     * THE LOCKOUT, AND THE WAY OUT OF IT.
+     *
+     * The file is created by PHP and read by a person, and on most hosting
+     * those are different users. It is written 0640 so the shared group can
+     * read it, which covers the hosts where the web server and the login
+     * account share one -- but not a host where PHP runs as `nobody`, or where
+     * the login account sits in a group of its own. There the owner gets
+     * "Permission denied" from the very command this page just gave him, on
+     * screen one of five, with no recovery flow and nothing past it.
+     *
+     * So the way out is printed rather than left to support. kbb_token() takes
+     * the first line of this file if it matches ^[a-f0-9]{64}$ and only mints a
+     * new one otherwise, which means an owner-written key is a first-class key
+     * -- this is not a workaround bolted on, it is the function's existing
+     * contract, said out loud.
+     *
+     * `rm` works where `cat` did not, and that surprises people: deleting a
+     * file is governed by write permission on its DIRECTORY, not on the file.
+     * storage/ belongs to the owner, so the unlink succeeds even though the
+     * read failed.
+     *
+     * Nothing is weakened by saying it. Anyone who can write into storage/
+     * already has the application -- they do not need a setup key, they can
+     * read .env. The only thing this changes is whether a locked-out owner has
+     * a way back in.
+     */
+    +'<p class="hint">If that says <b>Permission denied</b>, the web server made the file and your '
+    +'login cannot read it. Make your own key instead — it is accepted exactly the same way:'
+    /*
+     * ONE LINE, AND THE `;` AFTER THE ASSIGNMENT IS LOAD-BEARING.
+     *
+     * This was two lines -- `T=<path>` then `rm -f "$T" && ...` -- and a
+     * terminal that joins a pasted block turns that into
+     *
+     *     T=<path> rm -f "$T"
+     *
+     * which is not an assignment at all. It is an environment prefix scoped to
+     * the `rm` process, so $T expands to EMPTY in the shell that is running the
+     * line, and the owner sees `bash: : No such file or directory`. Reported
+     * from a real paste, on the recovery route, by someone already locked out
+     * of the normal one -- the second dead end on the same screen.
+     *
+     * A single line with `;` separators cannot break that way however it is
+     * pasted, so the whole class of failure goes rather than being explained.
+     * `;` and not `&&`: if the file does not exist yet the `rm` is still a
+     * success (-f), but chaining on truth is a promise about a shape this line
+     * does not need to make.
+     */
+    +'<code class="cmd">T=<?= htmlspecialchars($tokenPathForHumans, ENT_QUOTES) ?>; '
+    +'rm -f "$T"; openssl rand -hex 32 &gt; "$T"; cat "$T"</code></p></div>'
     +'<label for="tk">Setup key</label>'
     +'<input id="tk" autocomplete="off" spellcheck="false" placeholder="paste the long line from that file">'
     +(msg?'<div class="err">'+esc(msg)+'</div>':'')
