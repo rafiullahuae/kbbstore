@@ -21,15 +21,27 @@ declare(strict_types=1);
  *      applies it (docs/cache-headers.htaccess) is a text file that would
  *      otherwise drift away from the constant beside it.
  *
- * ── WHY THE MIDDLEWARE IS PUSHED ONTO THE GROUP HERE ──────────────────────
+ * ── WHY THESE CASES STILL SWITCH IT ON THEMSELVES ─────────────────────────
  *
- * bootstrap/app.php is owned by the integrator and no lane may edit it, and
- * `bootstrap/` is on BuildPackage::NEVER_SHIP as well -- so the registration
- * reaches the server by hand and not by package. docs/FQ-CACHE-HEADERS.md
- * carries the exact anchor and replacement. Until it is applied the middleware
- * is inert, so these cases register it themselves and then drive real requests
- * through the kernel: the alternative is calling handle() with a hand-built
- * request, which proves the method and not the site.
+ * THIS PARAGRAPH USED TO SAY THE MIDDLEWARE WAS REGISTERED NOWHERE, and it was
+ * right: bootstrap/app.php is on BuildPackage::NEVER_SHIP, docs/FQ-CACHE-
+ * HEADERS.md wrote the registration out as a hand-edit, and the hand-edit was
+ * never made. AppServiceProvider::boot() now appends it to the `web` group from
+ * a file that ships, so the group registration below is a no-op that is kept
+ * deliberately -- appendMiddlewareToGroup() guards against duplicates, and a
+ * case that states its own precondition survives the day somebody moves the
+ * registration again.
+ *
+ * WHAT IS NOT A NO-OP is the switch. Registering a middleware that changes the
+ * Cache-Control of every page on a shop taking orders, as a side effect of
+ * applying a package, is not something anybody asked for -- so
+ * CacheSettings::ENABLED ships FALSE and the middleware returns the response
+ * untouched until an owner turns it on from Platform -> Cache. Every case below
+ * is about what the policy IS, so every case turns it on first.
+ *
+ * tests/Feature/CacheControlScreenTest.php holds the other side: that with the
+ * switch off these same pages answer exactly what they answered before this
+ * middleware was registered at all.
  *
  * ── MUTATIONS THESE CATCH, EACH ONE RUN ──────────────────────────────────
  *
@@ -61,6 +73,21 @@ use Illuminate\Contracts\Http\Kernel;
 function chpRegister(): void
 {
     app(Kernel::class)->appendMiddlewareToGroup('web', CacheHeaders::class);
+
+    /*
+     * And switch it on. All three clears, for the reason CLAUDE.md gives:
+     * Setting::map() memoises in a process-level static as well as in the cache
+     * store and SettingsService keeps a snapshot of its own, so a row written
+     * here is invisible to the request two lines below without them.
+     */
+    Setting::query()->updateOrCreate(
+        ['key' => \App\Support\CacheSettings::ENABLED],
+        ['value' => '1', 'autoload' => true]
+    );
+
+    Setting::flushMap();
+    SettingsService::forgetMemo();
+    app(SettingsService::class)->flush();
 }
 
 function chpArabicOn(): void

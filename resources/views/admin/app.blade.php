@@ -20744,6 +20744,18 @@ buildNav();
      and with it off /routines is a 404 and no other page differs by a byte. --}}
 @include('admin.partials.routines-screen')
 
+{{-- Platform → Cache (Lane: cache-control). What the shop's caching is
+     actually doing, the switches behind it, and the buttons that drop the
+     compiled caches on a host with no command line. It registers its own
+     sidebar entry inside the Platform group and wraps window.go, exactly as the
+     screens above do, so this include is the whole of the change to this file.
+
+     It changes nothing on the live shop by being applied: the browser-cache
+     switch ships off, App\Http\Middleware\CacheHeaders returns every response
+     untouched while it is off, and no page's headers differ by a byte until the
+     owner turns it on here. --}}
+@include('admin.partials.cache-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------

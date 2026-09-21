@@ -167,7 +167,11 @@ final class AdminCapabilities
         //                       and the site-wide cart debug view.
         //   data.import         rewrites customers, orders and products from an
         //                       uploaded CSV.
+        //   cache.manage        clears the compiled config, routes and views
+        //                       of a running shop, and decides what every
+        //                       visitor's browser is allowed to keep.
         'store.settings' => ['owner'],
+        'cache.manage' => ['owner'],
         'payments.manage' => ['owner'],
         'users.manage' => ['owner'],
         'updates.manage' => ['owner'],
@@ -298,6 +302,28 @@ final class AdminCapabilities
          */
         ['*', 'admin-api/site-address', 'store.settings'],
         ['*', 'admin-api/site-address/**', 'store.settings'],
+
+        /*
+         * Platform -> Cache. A capability of its own, and NOT store.settings
+         * although both are owner-only as this ships.
+         *
+         * What these do is not what a settings screen does: /cache/clear drops
+         * the compiled config, routes and views out from under a shop that is
+         * serving requests, and the switch under /cache changes the
+         * Cache-Control header on every page a visitor is sent. Mapping them
+         * onto store.settings would mean the day somebody widens that
+         * capability to a manager -- which is a reasonable thing to want, it is
+         * currency and mail transport -- this widens with it, silently, in a
+         * different file, with nothing to notice.
+         *
+         * A '*' rule and not a GET/POST pair: three of the four routes write,
+         * and there is no reading half here that a narrower role should reach
+         * without the writing half. The '/**' line is a SIBLING of the exact
+         * one above it and neither can shadow the other, but both are needed --
+         * 'admin-api/cache' does not match 'admin-api/cache/clear'.
+         */
+        ['*', 'admin-api/cache', 'cache.manage'],
+        ['*', 'admin-api/cache/**', 'cache.manage'],
 
         ['*', 'admin-api/settings', 'store.settings'],
         ['*', 'admin-api/ecommerce', 'store.settings'],

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Services\SettingsService;
+use App\Support\CacheSettings;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -65,6 +67,34 @@ use Symfony\Component\HttpFoundation\Response;
 class CacheHeaders
 {
     /**
+     * Registered on every install, and doing nothing on most of them.
+     *
+     * ── HOW THIS CLASS FINALLY GOT REGISTERED, AND WHY IT ARRIVES ASLEEP ──
+     *
+     * The registration was written out in docs/FQ-CACHE-HEADERS.md as a
+     * hand-edit to bootstrap/app.php, because bootstrap/ is on
+     * BuildPackage::NEVER_SHIP and UpdateGuard::FORBIDDEN_PREFIXES and no
+     * package can carry it. It was never applied. For its whole life this
+     * class has been complete, tested, and called by nothing -- the same
+     * failure, in the same file, for the same reason, as the SetLocaleFromPath
+     * line that made the owner report "/ar gives everywhere 404".
+     *
+     * AppServiceProvider::boot() now appends it to the `web` group, and app/
+     * ships. But appending it is not free on a shop that is already taking
+     * orders: it changes the Cache-Control header on every storefront page in
+     * one package application, with nobody having asked. So the switch below
+     * is read on every request, it ships FALSE, and until the owner turns it on
+     * from Platform -> Cache this method returns the response exactly as it
+     * found it. App\Support\CacheSettings carries the full argument.
+     *
+     * WHEN IT IS OFF, WHAT A PAGE LEAVES WITH IS WHAT IT LEFT WITH BEFORE THIS
+     * CLASS WAS REGISTERED: Symfony's ResponseHeaderBag computes `no-cache,
+     * private` for any response with no Cache-Control of its own. That is not
+     * a claim about this file -- CacheControlScreenTest fetches storefront and
+     * account pages with the switch off and asserts the header, so "off means
+     * unchanged" is measured rather than reasoned about.
+     */
+    /**
      * Far-future immutable, for content-addressed files.
      *
      * One year, which is the ceiling every major browser honours, plus
@@ -123,9 +153,27 @@ class CacheHeaders
         'track-my-order',
     ];
 
+    public function __construct(private SettingsService $settings) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+
+        /*
+         * THE SWITCH, AND IT IS READ HERE RATHER THAN AT REGISTRATION TIME.
+         *
+         * A provider that asked the settings table whether to register would
+         * ask it during `migrate` too, on an install whose settings table does
+         * not exist yet -- an application that cannot boot far enough to run
+         * the migration that would fix it, on a host with no shell. So the
+         * registration is unconditional and the decision is taken here, where
+         * there is certainly a database and certainly a request. Same shape as
+         * CanonicalHost, which is registered always and inert until an address
+         * is configured.
+         */
+        if (! CacheSettings::enabled($this->settings)) {
+            return $response;
+        }
 
         if (! $request->isMethodCacheable()) {
             return $response;
@@ -169,7 +217,25 @@ class CacheHeaders
             return $response;
         }
 
-        $response->headers->set('Cache-Control', self::REVALIDATE);
+        /*
+         * The one knob on this half, and it cannot reach `public`.
+         *
+         * CacheSettings::storefrontHeader() returns exactly self::REVALIDATE at
+         * the shipped value of 0, so switching the feature on with the defaults
+         * untouched publishes the policy this file has always described and
+         * nothing else. Above 0 it drops `no-cache` for a `max-age` and keeps
+         * `private` -- the directive that keeps a page carrying a cart badge
+         * and a CSRF token out of every cache but the one browser's.
+         */
+        $response->headers->set(
+            'Cache-Control',
+            CacheSettings::storefrontHeader(
+                (int) CacheSettings::normalise(
+                    CacheSettings::HTML_MAX_AGE,
+                    $this->settings->get(CacheSettings::HTML_MAX_AGE, 0)
+                )
+            )
+        );
 
         return $response;
     }

@@ -233,10 +233,20 @@ it('has an authorization layer reading the role column', function () {
          * /admin-api group. tests/Feature/CacheHeaderPolicyTest.php asserts that
          * non-interference on the console itself rather than on this source.
          *
-         * It is also NOT REGISTERED YET. bootstrap/app.php is the integrator's
-         * and is on BuildPackage::NEVER_SHIP, so the one line that appends it to
-         * the web group is written out in docs/FQ-CACHE-HEADERS.md and applied
-         * by hand. Until then the class exists and nothing calls it.
+         * ▲ THIS PARAGRAPH USED TO SAY IT WAS NOT REGISTERED, and it was right
+         * for as long as it stood: bootstrap/app.php is the integrator's and is
+         * on BuildPackage::NEVER_SHIP, the one line that appends it to the web
+         * group was written out in docs/FQ-CACHE-HEADERS.md, and nobody ever
+         * applied it. AppServiceProvider::boot() now appends it from a file
+         * that a package CAN carry, which is the same move the /ar middleware
+         * above it had to make and for the same reason.
+         *
+         * It changes nothing about this file. It is in the `web` group and
+         * every route here is in `admin-api`, whose responses already carry a
+         * Cache-Control of their own from NoStoreAdminApi -- and it ships with
+         * its switch off besides, returning the response untouched until an
+         * owner turns it on from Platform -> Cache. See App\Support\
+         * CacheSettings and tests/Feature/CacheControlScreenTest.php.
          */
         'CacheHeaders',
         /*

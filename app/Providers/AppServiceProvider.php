@@ -153,6 +153,43 @@ class AppServiceProvider extends ServiceProvider
         }
 
         /*
+         * CacheHeaders -- APPENDED TO THE `web` GROUP, not prepended globally,
+         * and for the opposite reason to the two above. Those two have to run
+         * BEFORE the router: one rewrites the path so /ar matches an existing
+         * route, the other may send the request to another host entirely. This
+         * one sets a header on a finished response, so it wants to run LAST,
+         * after every other middleware has stopped touching it.
+         *
+         * ▲ AND IT IS THE THIRD REGISTRATION IN THIS METHOD THAT EXISTS
+         * BECAUSE bootstrap/app.php CANNOT SHIP. docs/FQ-CACHE-HEADERS.md
+         * wrote out the one line to add to $middleware->web(append: [...]) by
+         * hand; it was never applied, so App\Http\Middleware\CacheHeaders has
+         * been complete, tested and called by nothing since Lane FQ. That is
+         * the same story as the /ar block above, one file over.
+         *
+         * SAFE ALONGSIDE THE HAND-APPLIED LINE. appendMiddlewareToGroup() does
+         * an array_search before it appends, so a server whose bootstrap/app.php
+         * does carry it gets one registration and not two -- and a doubled
+         * Cache-Control middleware is exactly the "two middlewares setting the
+         * same header" the class's own docblock warns about.
+         *
+         * INERT UNTIL SWITCHED ON, which is the part that matters on a shop
+         * that is already taking orders. CacheSettings::ENABLED ships false and
+         * the middleware returns the response untouched until the owner turns
+         * it on from Platform -> Cache. Applying this package changes no
+         * response header anywhere.
+         *
+         * The isset() guard is not defensive padding: appendMiddlewareToGroup()
+         * THROWS InvalidArgumentException for a group it does not know, and a
+         * provider that throws is a shop that does not boot.
+         */
+        if (method_exists($kernel, 'appendMiddlewareToGroup')
+            && method_exists($kernel, 'getMiddlewareGroups')
+            && isset($kernel->getMiddlewareGroups()['web'])) {
+            $kernel->appendMiddlewareToGroup('web', \App\Http\Middleware\CacheHeaders::class);
+        }
+
+        /*
          * `media_usages` — which image belongs to which product, brand or
          * category. One call, because the hooks themselves live with the
          * writer rather than being spelled out here: this file is shared by

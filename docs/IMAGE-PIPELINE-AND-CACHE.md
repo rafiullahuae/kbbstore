@@ -240,6 +240,27 @@ The year is written once, as `CacheHeaders::IMMUTABLE`, and
 `tests/Feature/CacheHeaderPolicyTest.php` holds the two to each other, so the
 file and the application cannot state different numbers.
 
+> **The middleware rows above are what the shop sends WITH THE SWITCH ON.**
+> `CacheHeaders` was registered nowhere for the whole life of this section: the
+> registration was written out as a hand-edit to `bootstrap/app.php`
+> (`docs/FQ-CACHE-HEADERS.md`) and never applied.
+> `AppServiceProvider::boot()` now appends it to the `web` group from a file a
+> package can ship — but turning a header policy on across a shop that is taking
+> orders is the owner's decision, not a side effect of applying an update. So
+> `cache.headers_enabled` ships **false**, the middleware returns every response
+> untouched while it is, and **Platform → Cache** is where it is switched on. It
+> is also the screen that shows what the storefront is answering with right now,
+> fetched rather than described. `App\Support\CacheSettings` carries the
+> argument; `tests/Feature/CacheControlScreenTest.php` pins both sides of it.
+>
+> The two `no-store` rows are **not** switchable. There is no setting for them
+> and the screen draws them as a statement.
+>
+> One knob was added to the storefront HTML row: `cache.html_max_age`, 0 to
+> 3600 seconds, 0 as shipped and identical to the policy above. It can never
+> produce `public` — `storefrontHeader()` keeps `private` at every value, and a
+> case asserts that across the whole range.
+
 ### 9.2 Why a year is safe on those two paths and nowhere else
 
 Both are content-addressed, and neither property is assumed — the test asserts
