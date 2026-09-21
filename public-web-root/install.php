@@ -960,6 +960,9 @@ input:focus{outline:2px solid var(--brand);outline-offset:1px}
 .dot.y{background:var(--good)} .dot.n{background:var(--bad)} .dot.w{background:var(--warn)}
 .err{color:var(--bad);font-size:12px;margin-top:4px}
 .note{background:var(--brand-soft);border-radius:8px;padding:12px;font-size:13px;margin-top:12px}
+/* A note that lists alternatives needs its labels legible and its paragraphs
+   apart; .hint's default 4px top margin runs three of them together. */
+.note .hint{margin-top:9px} .note .hint b{color:var(--ink)}
 .note.warn{background:#fdf3e4;color:#7a4b07}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .note.warn{background:#3a2c14;color:#f0c27a}}
 code{font-family:var(--mono);font-size:12px;background:rgba(127,127,127,.14);padding:1px 5px;border-radius:4px;word-break:break-all}
@@ -1005,9 +1008,28 @@ function paneToken(msg){
   steps(1);
   $('#pane').innerHTML=
     '<b>First, prove this server is yours</b>'
-    +'<p class="hint">A file has been placed on your server. Open it in your hosting panel’s File Manager and paste what is inside. '
+    +'<p class="hint">A file has been placed on your server. Open it and paste what is inside. '
     +'This stops anyone who finds this page before you do from setting up your shop for themselves.</p>'
-    +'<div class="note"><b>Open this file:</b><br><code><?= htmlspecialchars($tokenPathForHumans, ENT_QUOTES) ?></code></div>'
+    /*
+     * TWO WAYS TO READ IT, BECAUSE THE FIRST ONE IS NOT ALWAYS THERE.
+     *
+     * This used to say "open it in your hosting panel's File Manager" and
+     * nothing else, which is a complete instruction on cPanel and a dead end
+     * everywhere else. It was found on Cloudways, which gives you SSH and no
+     * file manager at all: the owner reached this screen, read the only route
+     * offered, went looking for a feature his panel does not have, and was
+     * stuck on the first of five steps with the shop one paste away.
+     *
+     * A VPS, a DigitalOcean or Vultr box, anything behind SFTP-only, and every
+     * panel that calls its file manager something else are all the same case.
+     * So both routes are named, and neither is described as the normal one.
+     */
+    +'<div class="note"><b>The file is here:</b><br><code><?= htmlspecialchars($tokenPathForHumans, ENT_QUOTES) ?></code>'
+    +'<p class="hint"><b>If your host has a File Manager:</b> browse to that path and open the file.</p>'
+    +'<p class="hint"><b>If you have SSH or a terminal:</b> run this and copy what it prints —<br>'
+    +'<code>cat <?= htmlspecialchars($tokenPathForHumans, ENT_QUOTES) ?></code></p>'
+    +'<p class="hint">Either way, you want the <b>long line at the top</b>. Everything under it is just an '
+    +'explanation of what the file is for.</p></div>'
     +'<label for="tk">Setup key</label>'
     +'<input id="tk" autocomplete="off" spellcheck="false" placeholder="paste the long line from that file">'
     +(msg?'<div class="err">'+esc(msg)+'</div>':'')
