@@ -104,6 +104,19 @@ by luck:
   (`git worktree remove --force`, which keeps the branch) freed 19 GB and the
   test went six for six. **So: check `df -h /` before debugging any intermittent
   database error, and remove a lane's worktree when its branch is merged.**
+- **A lane running composer can rewrite `origin` for everybody.** Worktrees
+  share `.git/config` with the main checkout, so a composer operation inside
+  one is not isolated from it. After a lane finished, `git remote -v` in the
+  main checkout read `origin fetch https://github.com/sebastianbergmann/diff`
+  and `origin push git@github.com:mockery/mockery`, plus a stray `composer`
+  remote. The push failed with *"mockery/mockery is not in this session's
+  authorized repository set"*, which reads like a permissions problem and is
+  not one. Nothing leaked — the egress proxy refused the unauthorised host,
+  which is the only reason this was a nuisance and not an incident. Check
+  `git remote -v` before blaming a push failure on credentials, and restore
+  with `git remote set-url origin https://github.com/rafiullahuae/kbbstore`
+  (and `git config --unset remote.origin.pushurl`).
+
 - **`Setting::map()` memoises in a process-level static** as well as the cache.
   Within one long-lived process it will not see writes made after the first
   call. Fine under PHP-FPM, a trap in tests and queue workers.
