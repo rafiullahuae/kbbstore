@@ -394,6 +394,26 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
         // caller run the check.
         require __DIR__.'/health-admin.php';
 
+        /*
+         * Platform → Cache. Same group, and it has to be: three of its four
+         * routes WRITE -- they save the policy and drop the compiled route,
+         * config and view caches of a running shop -- so they need `web`,
+         * `auth:admin` and NoStoreAdminApi exactly as the siblings around them
+         * do. Its own capability is `cache.manage`, owner-only, rather than a
+         * reuse of store.settings: the day store.settings is reasonably widened
+         * to a manager, the ability to drop a live shop's route table must not
+         * widen with it from a different file.
+         *
+         * Registering the MIDDLEWARE is a separate matter and is not done here.
+         * CacheHeaders is appended to the `web` group from
+         * AppServiceProvider::boot(), because bootstrap/ is on
+         * BuildPackage::NEVER_SHIP and no package could ever edit it -- the
+         * same reason SetLocaleFromPath is registered there. Its predecessor
+         * was documented as a hand-edit to bootstrap/app.php, never applied,
+         * and sat inert for months.
+         */
+        require __DIR__.'/cache-admin.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';
