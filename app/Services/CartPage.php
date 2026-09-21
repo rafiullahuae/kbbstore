@@ -192,9 +192,29 @@ class CartPage
                               'Use {tag} where Home or Office should appear.'],
 
         // ── The popup ──
-        'sheet_max'        => ['range', 'Popup height limit · upright', 50,
-                               'It grows from the bottom to fit what is in it and stops here. THE POPUP ITSELF NEVER SCROLLS — if a long address list would not fit, the list scrolls inside its own box and the Home / Office / Deliver here row stays put at the bottom where a thumb can reach it.',
+        'sheet_max'        => ['range', 'New-address popup height · upright', 50,
+                               'The popup that holds the FORM — the one with the fields in it. It grows from the bottom to fit what is in it and stops here. THE POPUP ITSELF NEVER SCROLLS — if a long address list would not fit, the list scrolls inside its own box and the Home / Office / Deliver here row stays put at the bottom where a thumb can reach it.',
                                ['min' => 35, 'max' => 75, 'step' => 5, 'unit' => '%']],
+        /*
+         * A SECOND CAP, FOR THE LIST, AND THE REASON IS NOT TIDINESS.
+         *
+         * Choosing is a smaller job than typing. The list popup holds a few
+         * rows and one link; the form popup holds six fields, a country picker
+         * and a commit row. Sized off the form's cap the list came up as a
+         * half-empty white slab with a lot of nothing under the last address —
+         * which reads as "something failed to load", not as "pick one". So the
+         * sheet takes a `cpg-pick` class while it is showing the list, and that
+         * class selects these two values instead.
+         *
+         * The list still SIZES TO ITS CONTENTS and only stops here. With two
+         * addresses in it the popup is two addresses tall, not 38% of the
+         * screen tall. Past the cap, .cpg-list scrolls inside its own box —
+         * never the sheet, which is the rule the entry above states and the one
+         * thing here that must not regress.
+         */
+        'sheet_max_list'   => ['range', 'Address-list popup height · upright', 38,
+                               'The popup that holds the SAVED LIST — the one that opens first for a signed-in shopper who already has an address. Shorter than the form above it, because choosing needs less room than typing. Past this the list scrolls inside its own box; the popup itself still never does, so + Add New Address stays where a thumb can reach it.',
+                               ['min' => 25, 'max' => 60, 'step' => 1, 'unit' => '%']],
         /*
          * A phone on its side has roughly half the height and twice the width,
          * so the same sheet needs a much larger share of the screen to hold the
@@ -202,9 +222,12 @@ class CartPage
          * markup, same classes, only the grid and this cap change, which is why
          * nothing has to be observed and no script runs on rotation.
          */
-        'sheet_max_land'   => ['range', 'Popup height limit · on its side', 82,
+        'sheet_max_land'   => ['range', 'New-address popup height · on its side', 82,
                                'Used when the phone is held horizontally. The fields go two across and the address list goes two across at the same time.',
                                ['min' => 50, 'max' => 95, 'step' => 5, 'unit' => '%']],
+        'sheet_max_list_land' => ['range', 'Address-list popup height · on its side', 76,
+                               'The list popup, held sideways. It keeps a cap of its own there too — the landscape rule that widens the form to two columns widens the list to two columns as well, so the list needs LESS height on its side, not the same as the form.',
+                               ['min' => 40, 'max' => 95, 'step' => 1, 'unit' => '%']],
         'sheet_blur'       => ['range', 'Blur behind the popup', 3,
                                'The page behind is frozen as well as dimmed while the popup is open, and that is not decoration: without the freeze a finger that misses the sheet scrolls the cart underneath it, and the address you were about to tap has moved by the time you tap again. Zero leaves the dimming and drops the blur.',
                                ['min' => 0, 'max' => 8, 'step' => 1, 'unit' => 'px']],
@@ -274,8 +297,8 @@ class CartPage
         'bars'    => ['Docked rows', 'The two rows that stay at the foot of the screen.',
                       ['addr_on', 'addr_h', 'co_h', 'bar_font', 'co_label',
                        'addr_heading', 'addr_btn_add', 'addr_btn_change', 'addr_chosen']],
-        'popup'   => ['Address popup', 'Its height, its density and every word in it.',
-                      ['sheet_max', 'sheet_max_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
+        'popup'   => ['Address popup', 'Its two heights — one for the list, a taller one for the form — its density and every word in it.',
+                      ['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
                        'sheet_add_new', 'sheet_save', 'sheet_area', 'sheet_apt', 'sheet_city',
                        'sheet_area_hint', 'sheet_apt_hint', 'sheet_city_hint',
                        'sheet_country', 'sheet_geo_mark', 'sheet_geo_note', 'sheet_mark', 'sheet_home', 'sheet_office',
@@ -464,6 +487,10 @@ class CartPage
         $vars = implode(';', [
             '--cpg-sheet-max:' . $c['sheet_max'] . '%',
             '--cpg-sheet-max-l:' . $c['sheet_max_land'] . '%',
+            // The list's own pair. Read only under .cpg-pick, which the script
+            // puts on the sheet while it is showing the saved addresses.
+            '--cpg-sheet-max-list:' . $c['sheet_max_list'] . '%',
+            '--cpg-sheet-max-list-l:' . $c['sheet_max_list_land'] . '%',
             '--cpg-sheet-blur:' . $c['sheet_blur'] . 'px',
             '--cpg-sheet-d:' . $this->ratio($c['sheet_dense']),
             '--cpg-sheet-f:' . $this->ratio($c['sheet_font']),

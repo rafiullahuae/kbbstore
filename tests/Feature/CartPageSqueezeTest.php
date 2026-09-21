@@ -817,3 +817,223 @@ it('does not bloom a bar that has not started', function () {
     expect($css)->toContain('.fill.cpg-flat::after{display:none}');
 });
 // MUTATION: emit `class="fill"` unconditionally. RED on the first assertion.
+
+/* ------------------------------------------------------------------------
+ | 9. The list is its own, shorter popup
+ |------------------------------------------------------------------------*/
+
+it('gives the address list a shorter cap than the form, and both are in the payload', function () {
+    // Defaults first, because "38 against 50" is the whole claim and a list cap
+    // that shipped equal to the form's would leave nothing here to notice.
+    $page = app(CartPage::class);
+
+    expect($page->get('sheet_max_list'))->toBe(38)
+        ->and($page->get('sheet_max'))->toBe(50)
+        ->and($page->get('sheet_max_list'))->toBeLessThan($page->get('sheet_max'))
+        ->and($page->get('sheet_max_list_land'))->toBe(76)
+        ->and($page->get('sheet_max_land'))->toBe(82)
+        ->and($page->get('sheet_max_list_land'))->toBeLessThan($page->get('sheet_max_land'));
+
+    squeezeOn(['sheet_max' => 65, 'sheet_max_list' => 42, 'sheet_max_list_land' => 58]);
+
+    $html = squeezeGet(squeezeCart())->assertOk()->getContent();
+
+    $portal = strpos($html, 'class="cpg-portal');
+    expect($portal)->not->toBeFalse();
+
+    /*
+     * ON THE PORTAL, like the other four. The sheet lives outside
+     * .kbb-cartpage and inherits nothing from it, so a variable emitted there
+     * would resolve to its fallback and this slider would save, report success
+     * and move nothing — the exact failure the sheetAttrs() split exists to
+     * prevent.
+     */
+    $attrs = substr($html, (int) $portal, 460);
+
+    expect($attrs)->toContain('--cpg-sheet-max-list:42%')
+        ->and($attrs)->toContain('--cpg-sheet-max-list-l:58%')
+        ->and($attrs)->toContain('--cpg-sheet-max:65%')
+        ->and(app(CartPage::class)->cssVariables())->not->toContain('--cpg-sheet-max-list');
+});
+// MUTATION: drop the two list variables from sheetAttrs(). RED — 1 failed, 43
+// passed. Moving them to cssVariables() instead is red on the same assertion
+// AND on the last one, which is the half that says where they have to be.
+// MUTATION: default sheet_max_list to 50. RED — 1 failed, 43 passed.
+
+it('selects the shorter cap with a class, in CSS, and in both orientations', function () {
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    expect($css)->toContain('.cpg-sheet.cpg-pick{max-height:var(--cpg-sheet-max-list,38%)}')
+        // And restated INSIDE the landscape query. `.cpg-sheet.cpg-pick` outbids
+        // the bare `.cpg-sheet{max-height:var(--cpg-sheet-max-l,...)}` on
+        // specificity, so without this line a phone on its side keeps the
+        // upright list cap — a bug no amount of staring at the portrait rule
+        // finds.
+        ->and($css)->toContain(
+            "  .cpg-sheet{max-height:var(--cpg-sheet-max-l,82%);padding-top:11px}\n"
+        )
+        ->and($css)->toContain('.cpg-sheet.cpg-pick{max-height:var(--cpg-sheet-max-list-l,76%)}')
+        // Source order decides between two rules of equal specificity, so the
+        // landscape one has to come second.
+        ->and(strpos($css, '.cpg-sheet.cpg-pick{max-height:var(--cpg-sheet-max-list,38%)}'))
+        ->toBeLessThan((int) strpos($css, '.cpg-sheet.cpg-pick{max-height:var(--cpg-sheet-max-list-l,76%)}'));
+
+    // The class is a class and nothing more: no height is computed in script.
+    expect($css)->toContain("sheet.classList.toggle('cpg-pick', pick === true);")
+        ->and($css)->not->toContain('style.maxHeight');
+});
+// MUTATION: move the portrait rule below the landscape one, so the shorter
+// upright cap wins in landscape. RED on the ordering assertion — 1 failed, 43
+// passed. Nothing else in the suite notices, which is why it is here.
+
+it('scrolls the list inside its own box and never the sheet', function () {
+    // THE RULE THAT MUST NOT REGRESS. It was an explicit requirement before the
+    // list had a cap of its own, and a second cap is exactly the change that
+    // could quietly turn the sheet into a scroller.
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    // The sheet clips and lays its children out in a column, so the list is the
+    // only child that can shrink...
+    expect($css)->toContain("overflow:hidden;overscroll-behavior:contain;\n  display:flex;flex-direction:column}")
+        // ...and it is the one that scrolls when it has to.
+        ->and($css)->toContain('.cpg-list{display:grid;gap:8px;margin-bottom:10px;min-height:0;overflow-y:auto;')
+        // The heading and + Add New Address do not shrink with it, so the link
+        // out of the list stays where a thumb can reach it however long the
+        // list gets.
+        ->and($css)->toContain("color:#17181C;flex:none}")
+        ->and($css)->toMatch('/\.cpg-addnew\{[^}]*flex:none\}/')
+        // Nothing gives the sheet itself a scrollbar.
+        ->and($css)->not->toContain('.cpg-sheet{overflow-y:auto')
+        ->and($css)->not->toContain('.cpg-sheet.cpg-pick{overflow-y:auto');
+});
+// MUTATION: change the sheet's `overflow:hidden` to `overflow-y:auto`. RED on
+// the first assertion — 1 failed, 43 passed.
+// MUTATION: drop `flex:none` from .cpg-addnew. RED on the toMatch — 1 failed,
+// 43 passed.
+
+it('opens the list for a shopper with exactly one saved address', function () {
+    /*
+     * THE DECISION, WRITTEN DOWN. One saved address opens the LIST, not the
+     * form: one row plus + Add New Address is still a choice, and a shopper who
+     * has an address on file and lands in an empty form reads it as "mine is
+     * gone" — then types it again, and the shop holds the same address twice.
+     * The only case with nothing to choose from is none at all.
+     *
+     * Pinned at the source, because the branch is in the sheet's script: the
+     * test that would exercise it needs a browser, and `length > 1` is a
+     * one-character edit away from being the rule this rejects.
+     */
+    $js = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    expect($js)->toContain('var hasSaved = !!(state.addresses && state.addresses.length);')
+        ->and($js)->toContain('paint(hasSaved ? listHTML() : formHTML(), hasSaved);')
+        ->and($js)->not->toContain('state.addresses.length > 1');
+
+    // And the server hands one address over as a list of one rather than
+    // folding it into `chosen` and sending an empty list, which would make the
+    // decision above unreachable however the script branched.
+    squeezeOn();
+    squeezeRoutes();
+
+    $solo = Customer::create(['email' => 'solo-'.Str::random(6).'@example.com', 'password' => bcrypt('x')]);
+    $solo->addresses()->create([
+        'type' => 'shipping', 'label' => 'home', 'line1' => 'Flat 802',
+        'line2' => 'Jumeirah Village Circle', 'city' => 'Dubai', 'country' => 'AE',
+    ]);
+
+    $body = test()->actingAs($solo, 'customer')->getJson('/cart/address')->assertOk()->json();
+
+    expect($body['addresses'])->toHaveCount(1)
+        ->and($body['signedIn'])->toBeTrue();
+});
+// MUTATION: `state.addresses.length > 1` in launch(). RED on the third
+// assertion — 1 failed, 43 passed. That is the whole of the decision: one
+// character.
+
+/* ------------------------------------------------------------------------
+ | 10. "saved permanently for loggedin users"
+ |------------------------------------------------------------------------*/
+
+it('keeps a signed-in shopper\'s new address after the request that made it ends', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    $customer = Customer::create([
+        'email' => 'perm-'.Str::random(6).'@example.com', 'password' => bcrypt('x'),
+    ]);
+
+    test()->actingAs($customer, 'customer')->postJson('/cart/address', [
+        'area' => 'Jumeirah Village Circle',
+        'apartment' => 'Flat 802',
+        'city' => 'Dubai',
+        'country' => 'AE',
+        'tag' => 'office',
+    ])->assertOk()->assertJsonPath('chosen.tag', 'office');
+
+    /*
+     * A SECOND REQUEST, AND THAT IS THE POINT OF THIS TEST.
+     *
+     * Inside the one request that wrote it, "it was in the session all along"
+     * and "it went to the addresses table" are indistinguishable — the payload
+     * looks the same either way, and a guest's address takes the session path
+     * through this very controller. Only a later request tells them apart,
+     * because the session copy the guest branch writes is listed to nobody:
+     * CartAddressState::all() builds `addresses` from $customer->addresses()
+     * and from nothing else.
+     */
+    $rows = Customer::findOrFail($customer->id)->addresses()->get();
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]->label)->toBe('office')
+        ->and($rows[0]->line1)->toBe('Flat 802')
+        ->and($rows[0]->line2)->toBe('Jumeirah Village Circle')
+        ->and($rows[0]->city)->toBe('Dubai')
+        ->and($rows[0]->country)->toBe('AE');
+
+    $body = test()->actingAs($customer, 'customer')
+        ->getJson('/cart/address')->assertOk()->json();
+
+    expect($body['addresses'])->toHaveCount(1)
+        ->and($body['addresses'][0]['id'])->toBe($rows[0]->id)
+        ->and($body['addresses'][0]['line'])->toContain('Jumeirah Village Circle');
+
+    // The address book at /my-account is the same table, so it is there too —
+    // "permanently" means the shop's one address book and not a second copy
+    // only the cart page can see.
+    expect(Address::query()->count())->toBe(1);
+});
+// MUTATION: in CartAddressController::store(), take the session branch for a
+// signed-in customer too. RED — 1 failed, 43 passed.
+//
+// AND THE FAILURE IS AT LINE 983, not before it: under that mutation the POST's
+// own 200 and its `chosen.tag` of "office" are both still green. Checked, not
+// assumed. The request that writes the address cannot tell the two storages
+// apart — only the read that comes after it can, which is the entire reason
+// this test makes a second one.
+
+it('still writes nothing for a guest, on the same endpoint, on a later request', function () {
+    // The other half of the same claim: permanence is for signed-in shoppers
+    // and for nobody else. A guest's address dies with the session.
+    squeezeOn();
+    squeezeRoutes();
+
+    test()->postJson('/cart/address', [
+        'area' => 'Al Quoz', 'city' => 'Dubai', 'country' => 'AE', 'tag' => 'home',
+    ])->assertOk();
+
+    expect(Customer::count())->toBe(0)
+        ->and(Address::query()->count())->toBe(0);
+
+    // A fresh session — a different browser, or the same one tomorrow — knows
+    // nothing about it.
+    test()->flushSession();
+
+    $body = test()->getJson('/cart/address')->assertOk()->json();
+
+    expect($body['addresses'])->toBe([])
+        ->and($body['chosen'])->toBeNull();
+});
+// MUTATION: write the guest branch to an addresses row hung off a
+// firstOrCreate() customer. RED — 2 failed, 42 passed: this test and the older
+// "keeps a signed-out shopper out of the database" beside it, which is the
+// right pair to go red together.

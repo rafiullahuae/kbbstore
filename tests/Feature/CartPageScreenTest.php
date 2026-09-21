@@ -236,3 +236,37 @@ it('keeps a support account out of it', function () {
 ) && ! app('router')->getRoutes()->hasNamedRoute('admin.cart-page'),
     'The capability middleware is applied by the admin-api group in routes/web.php, which '
     .'this lane may not edit; the map itself is pinned by the test above.');
+
+it('puts both popup heights on the Address popup tab, named so they cannot be confused', function () {
+    cartScreenRoutes();
+
+    $body = test()->actingAs(cartScreenOwner(), 'admin')
+        ->getJson('/admin-api/cart-page')->assertOk()->json();
+
+    $popup = collect($body['tabs'])->firstWhere('key', 'popup');
+
+    expect($popup)->not->toBeNull();
+
+    $fields = collect($popup['fields'])->keyBy('key');
+
+    expect($fields)->toHaveKeys(['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land']);
+
+    /*
+     * THE LABELS ARE THE POINT OF THIS TEST. Two sliders a few pixels apart, both
+     * called "Popup height limit", is a screen where the owner drags one and
+     * watches the other one's popup not move. Each says WHICH popup it governs.
+     */
+    expect($fields['sheet_max']['label'])->toContain('New-address popup height')
+        ->and($fields['sheet_max_list']['label'])->toContain('Address-list popup height')
+        ->and($fields['sheet_max_land']['label'])->toContain('New-address popup height')
+        ->and($fields['sheet_max_list_land']['label'])->toContain('Address-list popup height')
+        // And no two controls on this tab share a label.
+        ->and(collect($popup['fields'])->pluck('label')->duplicates())->toBeEmpty();
+
+    // Sliders, with the list's cap starting below the form's.
+    expect($fields['sheet_max_list']['type'])->toBe('range')
+        ->and($fields['sheet_max_list']['value'])->toBe(38)
+        ->and($fields['sheet_max']['value'])->toBe(50);
+});
+// MUTATION: give sheet_max_list the label 'New-address popup height · upright',
+// which is exactly the collision this exists to stop. RED — 1 failed, 44 passed.

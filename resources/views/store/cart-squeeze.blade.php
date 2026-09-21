@@ -430,6 +430,20 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   overflow:hidden;overscroll-behavior:contain;
   display:flex;flex-direction:column}
 .cpg-sheet.on{transform:translateY(0)}
+/* CHOOSING IS A SMALLER JOB THAN TYPING, so it gets a smaller popup. The sheet
+   wears .cpg-pick while it is showing the saved list and that class swaps the
+   cap for the list's own, which ships shorter than the form's (38% against
+   50%). Nothing else about the sheet changes: same element, same markup, same
+   slide — one declaration.
+
+   IT IS STILL A CAP AND NOT A HEIGHT. Two addresses make a popup two addresses
+   tall; the cap only decides where it stops growing. And when it does stop,
+   .cpg-list is the one thing allowed to scroll — the sheet keeps overflow:hidden
+   above and is a flex column, so the list is the only child that can shrink and
+   + Add New Address stays on screen where a thumb can reach it. A sheet that
+   scrolled would walk that link off the bottom, which is the requirement this
+   must not regress. */
+.cpg-sheet.cpg-pick{max-height:var(--cpg-sheet-max-list,38%)}
 /* CLOSED MEANS GONE, not merely slid below the edge. A sheet that is only
    translated away still paints, still holds focus and is still reachable by
    Tab — a shopper tabbing through the cart lands inside an invisible dialog.
@@ -458,6 +472,12 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
    phone measures nothing and runs no script. */
 @media (orientation:landscape){
   .cpg-sheet{max-height:var(--cpg-sheet-max-l,82%);padding-top:11px}
+  /* Restated inside the query, and it has to be: `.cpg-sheet.cpg-pick` outbids
+     the bare `.cpg-sheet` above on specificity, so without this line a phone on
+     its side would keep the upright list cap and ignore the landscape one. Same
+     specificity as the portrait rule, so source order decides and this block is
+     below it. */
+  .cpg-sheet.cpg-pick{max-height:var(--cpg-sheet-max-list-l,76%)}
   .cpg-fields{grid-template-columns:1fr 1fr;align-items:end}
   .cpg-fields > .full{grid-column:1 / -1}
   .cpg-list{grid-template-columns:1fr 1fr}
@@ -709,7 +729,12 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
       + '</div>';
   }
 
-  function paint(html) {
+  /* `pick` is true for the two screens that show the SAVED LIST — the list
+     itself and the placeholder in its shape — and false for the form. It puts
+     .cpg-pick on the sheet, which is the whole of how the shorter cap is
+     selected; the sizing itself stays in CSS. Nothing here measures anything. */
+  function paint(html, pick) {
+    sheet.classList.toggle('cpg-pick', pick === true);
     sheet.innerHTML = html;
     // The close button rides just above whatever height the sheet settled at.
     requestAnimationFrame(function () {
@@ -769,6 +794,8 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     hideTimer = setTimeout(function () {
       sheet.hidden = true;
       sheet.innerHTML = '';
+      // Emptied of content, it is neither screen, so it claims to be neither.
+      sheet.classList.remove('cpg-pick');
     }, 280);
   }
 
@@ -788,7 +815,10 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
        straight in and no placeholder is drawn at all — a skeleton that flashes
        for a fortieth of a second reads as a glitch. */
     if (state === null) {
-      paint(skeletonHTML(2));
+      // The placeholder is list-shaped, so it takes the list's cap too — a
+      // skeleton in a taller box than the thing it stands in for is a sheet
+      // that visibly shrinks the moment the real list lands.
+      paint(skeletonHTML(2), true);
 
       try {
         state = await call(CFG.list);
@@ -797,7 +827,16 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
       }
     }
 
-    paint((state.addresses && state.addresses.length) ? listHTML() : formHTML());
+    /* ONE SAVED ADDRESS STILL OPENS THE LIST. `length` and not `length > 1`,
+       and that is a decision rather than what fell out of the code: one row
+       plus + Add New Address is still a choice, and a shopper who has an
+       address on file and is dropped straight into an empty form reads it as
+       "mine is gone" — then types it again, and the shop holds it twice. The
+       only case with nothing to choose from is none at all, and that opens the
+       form. */
+    var hasSaved = !!(state.addresses && state.addresses.length);
+
+    paint(hasSaved ? listHTML() : formHTML(), hasSaved);
   }
 
   document.addEventListener('click', function (e) {
@@ -891,7 +930,8 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
 
     if (!e.target.closest('.cpg-cpick')) closeCountry();
 
-    if (e.target.closest('[data-cpg-new]')) { paint(formHTML()); return; }
+    // + Add New Address: the form, and with it the form's taller cap.
+    if (e.target.closest('[data-cpg-new]')) { paint(formHTML(), false); return; }
 
     /* Tapping an address IS the choice: it selects, it closes, and it lands in
        the docked row. There is no confirm step, because the row is the
