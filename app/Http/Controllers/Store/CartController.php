@@ -256,6 +256,40 @@ class CartController extends Controller
         ];
 
         return [
+            /*
+             * THE PARTIAL'S OWN SETTINGS, SUPPLIED HERE RATHER THAN INHERITED.
+             *
+             * store/cart-inner.blade.php opens with `$kbbCartPage->squeezed()`
+             * and reads it four more times. It used to arrive only as inherited
+             * view data: store/cart.blade.php resolves it in an @php block and
+             * @include hands it down. That works for the full page and ONLY for
+             * the full page.
+             *
+             * fragments() renders this partial STANDALONE on every cart write,
+             * so `$kbbCartPage` was simply not there, and every one of them
+             * answered 500 while rendering its own reply:
+             *
+             *     Undefined variable $kbbCartPage (View: store/cart-inner.blade.php)
+             *
+             * Measured across both layouts before the fix: add, update and
+             * coupon 500 on classic AND squeeze; remove 500 on squeeze. The
+             * drawer path was untouched, because it renders a different view —
+             * which is exactly why the mini-cart kept working and hid this.
+             *
+             * THE SYMPTOM DID NOT LOOK LIKE AN ERROR. The write is committed
+             * before fragments() is reached, so the basket really did change;
+             * only the HTML describing it never arrived. cart.js catches the
+             * failure and the page sits there unchanged — and the shopper sees
+             * their new item the moment they reload. Reported as "it only
+             * updates on page refresh", which is precisely what a 500 on the
+             * render half of a successful write looks like from outside.
+             *
+             * It belongs in payload() and not at the one call site, because
+             * payload() IS the contract for this view. A caller that renders
+             * the partial tomorrow gets the variable without having to know it
+             * was ever missing.
+             */
+            'kbbCartPage' => app(\App\Services\CartPage::class),
             'cart' => $cart,
             'items' => $cart?->items ?? collect(),
             'totals' => $cart ? $this->carts->totals($cart, $country) : $empty,
