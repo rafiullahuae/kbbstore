@@ -151,39 +151,7 @@
                     <!-- 2 · Shipping address -->
                     <div class="sec">
                         <h2><span class="n">2</span> {{ __('store.checkout.step_shipping') }}</h2>
-                        <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_address')" required
-                            validate="validate-required" priority="50"
-                            :placeholder="__('store.checkout.field_address_placeholder')"
-                            autocomplete="section-billing billing address-line1"
-                            :value="old('billing_address_1', $prefill['line1'] ?? '')" />
-
-                        <div class="row2">
-                            {{-- A text input, exactly as the live site. It was a select whose
-                                 change handler reloaded the page, which made the field unusable. --}}
-                            <x-checkout.field name="billing_state" :label="__('store.checkout.field_state')" required
-                                validate="validate-required validate-state" priority="80"
-                                autocomplete="section-billing billing address-level1"
-                                :value="old('billing_state', $prefill['state'] ?? '')" />
-
-                            <x-checkout.field name="billing_city" :label="__('store.checkout.field_city')" required
-                                validate="validate-required" priority="70"
-                                :placeholder="__('store.checkout.field_city_placeholder')"
-                                autocomplete="section-billing billing address-level2"
-                                :value="old('billing_city', $prefill['city'] ?? '')" />
-                        </div>
-{{-- The country selector is always shown now: delivery always covers at
-                             least the zone countries (the Gulf set, in production), and the
-                             charge always depends on which one is picked. It carries the
-                             checkout's own .input-text class, the same wrapper as Emirate and
-                             City, so it matches rather than being a new look bolted in. --}}
-                        <x-checkout.field name="billing_country" :label="__('store.checkout.field_country')" type="select" required
-                            validate="validate-required" priority="40"
-                            autocomplete="section-billing billing country">
-                            @if ($countryDetected ?? false)
-                                <x-slot:badge><span class="xd-detected">{{ __('store.checkout.country_detected') }}</span></x-slot:badge>
-                            @endif
-                            @foreach ($countries as $code => $name)<option value="{{ $code }}" @selected(old('billing_country', $prefill['country'] ?? $defaultCountry) === $code)>{{ $name }}</option>@endforeach
-                        </x-checkout.field>
+@include('partials.checkout-address')
                     </div>
 
                     <!-- 3 · Delivery -->
@@ -495,4 +463,8 @@ window.KBB.routes.checkoutCoupon = @json(Url::to('/checkout/coupon'));
 })();
 </script>
 @endpush
+{{-- The delivery-address sheet, the same one the cart page opens. It sits at
+     the very foot of the page and outside every box that scrolls or clips, for
+     the reasons its own header sets out. --}}
+@include('partials.address-sheet')
 @endsection

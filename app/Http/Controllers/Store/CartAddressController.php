@@ -68,11 +68,29 @@ class CartAddressController extends Controller
 
     public function __construct(private CartPage $page)
     {
-        // Applied in the constructor so every action is covered. A gate on the
-        // listing alone would leave the writes reachable with the squeezed
-        // layout switched off, which is the shape of bug this app keeps
-        // finding — see AddressController's own note.
-        abort_unless($this->page->squeezed(), 404);
+        /*
+         * Applied in the constructor so every action is covered. A gate on the
+         * listing alone would leave the writes reachable with the feature
+         * switched off, which is the shape of bug this app keeps finding — see
+         * AddressController's own note.
+         *
+         * WHAT IT GATES ON WIDENED WHEN THE CHECKOUT GOT THE SAME SHEET.
+         *
+         * It used to be `squeezed()` alone, because the squeezed cart page was
+         * the only thing that opened this sheet. The checkout's Shipping
+         * address section opens it now, and the checkout does not care which
+         * layout the CART page is set to — so on a shop running the classic
+         * cart, every one of these endpoints answered 404 and the checkout's
+         * picker did nothing at all.
+         *
+         * The gate is still a gate: it is open when either page that can open
+         * the sheet is drawing it, and `addressPickerOn()` is the one place
+         * that decides. What it is NOT is a security boundary — that is the
+         * per-route middleware below, where /{id}/choose sits behind
+         * auth:customer and resolves every id through $customer->addresses().
+         * This only keeps dead endpoints shut.
+         */
+        abort_unless($this->page->addressPickerOn(), 404);
     }
 
     /** Everything the sheet needs to draw itself, in one call. */

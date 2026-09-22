@@ -242,12 +242,25 @@ it('renders every checkout field through the shared component, with its hooks in
     $expected = [
         // id                    label                autocomplete                              inputmode  required
         ['billing_email',        'Email address',     'section-billing billing email',          'email',   true],
+        /*
+         * THE FOUR ADDRESS FIELDS ARE NOT TYPED ANY MORE, so they are not in
+         * this list.
+         *
+         * Shipping address is a picker: the shopper chooses a saved address
+         * and four HIDDEN inputs carry `billing_address_1`, `billing_city`,
+         * `billing_state` and `billing_country` into the order exactly as
+         * before. Everything this list asserts is about a box somebody types
+         * in — .input-text so an iPhone does not zoom on focus, a 44px touch
+         * target, a `required` attribute for the browser to stop an empty
+         * submission on. None of it means anything on an input with no box.
+         *
+         * THE GUARANTEE DID NOT GO, IT MOVED: that an order cannot be placed
+         * without an address is CheckoutAddressPickerTest's "refuses to place
+         * an order with no address chosen", which posts the empty state and
+         * requires place()'s own errors back — and no order written.
+         */
         ['billing_phone',        'Phone',             'section-billing billing tel',            'tel',     true],
         ['billing_first_name',   'Full name',         'section-billing billing name',           null,      true],
-        ['billing_address_1',    'Address',           'section-billing billing address-line1',  null,      true],
-        ['billing_state',        'Emirate',           'section-billing billing address-level1', null,      true],
-        ['billing_city',         'City / area',       'section-billing billing address-level2', null,      true],
-        ['billing_country',      'Country',           'section-billing billing country',        null,      true],
         ['customer_note',        'Delivery notes',    null,                                     null,      false],
     ];
 

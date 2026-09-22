@@ -365,6 +365,36 @@ final class CartAddressState
             'tag' => in_array($tag, self::TAGS, true) ? $tag : 'home',
             'name' => trim(((string) $address->first_name) . ' ' . ((string) $address->last_name)),
             'line' => implode(' - ', $parts),
+            /*
+             * THE SAME ADDRESS AS THE CHECKOUT POSTS IT.
+             *
+             * `line` above is for reading — one string with the country spelt
+             * out. These are the four values the order actually carries, and
+             * they are here so the checkout's Shipping address section can fill
+             * its hidden inputs from a chosen address without taking the joined
+             * string apart again. One shape, two readers.
+             *
+             * CITY IS ALSO THE EMIRATE, at the owner's instruction: "City =
+             * Emirates, so whatever user fill in the city, it will come in the
+             * emirate field auto." The popup's own placeholder has always said
+             * "e.g. Sharjah", so the box has been collecting an emirate all
+             * along and nothing on the sheet has to change.
+             *
+             * It degrades safely if it is not one: ShippingService::zoneFor()
+             * looks for a zone matching `COUNTRY:state` first and falls back to
+             * the country's own zone when there is no match, so a city that
+             * names no emirate is priced at the country rate rather than
+             * failing to price at all.
+             */
+            'form' => [
+                'line1' => trim(implode(' - ', array_filter([
+                    trim((string) $address->line1),
+                    trim((string) $address->line2),
+                ], static fn (string $p) => $p !== ''))),
+                'city' => trim((string) $address->city),
+                'state' => trim((string) $address->city),
+                'country' => strtoupper((string) $address->country),
+            ],
         ];
     }
 

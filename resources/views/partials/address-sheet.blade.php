@@ -601,6 +601,81 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
 
   /* The docked row, after a choice. The server renders it on every page load
      and every cart re-render; this is only the tap that has just happened. */
+  /* THE CHECKOUT'S SHIPPING ADDRESS SECTION, and the four hidden inputs the
+     order is actually posted with.
+
+     paintRow() above draws the cart page's docked row and returns early when
+     that row is not on the page, which it is not here. This draws the other
+     one. Both are called from paintChosen(), so a tap keeps them in step
+     without either knowing the other exists.
+
+     THE COUNTRY DISPATCHES `change`. checkout.js listens for it on
+     #billing_country and re-fetches the delivery rates, the free-shipping bar
+     and the totals. Reusing that rather than posting somewhere new is what
+     keeps the price a shopper is shown and the price they are charged on one
+     code path. It fires only when the country actually changed: the handler
+     does a round trip, and choosing between two addresses in the same country
+     does not need one. */
+  function paintCheckout() {
+    var box = document.getElementById('cka');
+    if (!box) return;
+
+    var a = (state && state.chosen) || null;
+    var f = (a && a.form) || {};
+
+    var tag = document.getElementById('ckaTag');
+    var line = document.getElementById('ckaLine');
+    var prompt = document.getElementById('ckaPrompt');
+    var btn = document.getElementById('cpgAddrBtn');
+
+    if (a) {
+      /* The prompt row and the chosen row are different shapes, and the server
+         rendered whichever was right at load. Going from none to one has to
+         build the row this page has never had. */
+      if (!tag) {
+        box.insertAdjacentHTML('afterbegin',
+          '<div class="cka-list"><div class="cka-row on"><span class="cka-ic"></span>'
+          + '<span class="cka-ad"><b id="ckaTag"></b><i id="ckaLine"></i></span></div></div>');
+        var empty = box.querySelector('.cka-empty');
+        var moved = box.querySelector('.cka-row');
+        if (btn && moved) moved.appendChild(btn);
+        if (empty) empty.remove();
+        tag = document.getElementById('ckaTag');
+        line = document.getElementById('ckaLine');
+      }
+      if (tag) tag.textContent = CFG[a.tag] || a.tag;
+      if (line) line.textContent = a.line;
+      if (btn) btn.textContent = CFG.btnChange;
+    } else if (prompt) {
+      prompt.textContent = CFG.heading;
+      if (btn) btn.textContent = state && state.signedIn ? CFG.btnChange : CFG.btnAdd;
+    }
+
+    var set = function (id, value) {
+      var el = document.getElementById(id);
+      if (!el) return false;
+      var was = el.value;
+      el.value = value == null ? '' : String(value);
+      return was !== el.value;
+    };
+
+    set('billing_address_1', f.line1);
+    set('billing_city', f.city);
+    set('billing_state', f.state);
+
+    if (set('billing_country', f.country)) {
+      document.getElementById('billing_country')
+        .dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  /* One call for both rows, so a tap can never update one and forget the
+     other. */
+  function paintChosen() {
+    paintRow();
+    paintCheckout();
+  }
+
   function paintRow() {
     var head = document.getElementById('cpgAddrHead');
     var sub = document.getElementById('cpgAddrSub');
@@ -843,7 +918,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
       busy = true;
       try {
         state = await call(CFG.chooseGuest + '/' + encodeURIComponent(gpick.getAttribute('data-cpg-gpick')) + '/choose', {});
-        paintRow();
+        paintChosen();
         close();
       } catch (err) { /* the sheet stays open on a failure, still showing the list */ }
       busy = false;
@@ -863,7 +938,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
       busy = true;
       try {
         state = await call(CFG.choose + '/' + pick.getAttribute('data-cpg-pick') + '/choose', {});
-        paintRow();
+        paintChosen();
         close();
       } catch (err) { /* the sheet stays open on a failure, still showing the list */ }
       busy = false;
@@ -881,7 +956,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
           country: country || (state && state.geo && state.geo.country) || '',
           tag: tag,
         });
-        paintRow();
+        paintChosen();
         close();
       } catch (err) {
         var box = document.getElementById('cpgErr');

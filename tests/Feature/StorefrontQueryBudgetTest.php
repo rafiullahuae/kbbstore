@@ -337,7 +337,7 @@ function budgetGrow(int $count, Brand $brand, Category $category): void
  *   collection (each)     10      6       8
  *   cart, empty           10      4       6
  *   cart, six lines       15      8      10
- *   checkout              25     14      16
+ *   checkout              25     14      17
  *   cart drawer            3      1       3
  *   checkout success       7      3       5
  *   wishlist               7      3       5
@@ -444,7 +444,23 @@ function budgetPages(array $seed): array
          * below checks that it is actually arriving.
          */
         'cart with lines'   => ['/cart', null, 10, $seed['cart']->token],
-        'checkout'          => ['/checkout', null, 16, $seed['cart']->token],
+        /*
+         * 16 -> 17 when the Shipping address section became a picker.
+         *
+         * The one extra query loads the shopper's address book, and only for a
+         * signed-in shopper: a guest's three live in the session and cost
+         * nothing. The section cannot know WHICH address is chosen without it,
+         * and the five typed fields it replaced cost nothing precisely because
+         * they knew nothing.
+         *
+         * It is not a duplicate of the controller's own address read. That one
+         * is `defaultAddress()` — the customer's default, which is a different
+         * question from "the one they picked".
+         *
+         * Raised deliberately rather than quietly: a budget moved without a
+         * reason beside it is a budget that stops being one.
+         */
+        'checkout'          => ['/checkout', null, 17, $seed['cart']->token],
         'cart drawer'       => ['/api/cart/drawer', null, 3],
         'checkout success'  => ['/checkout/success', null, 5],
         'journal'           => ['/skincare-guide', null, 3],

@@ -593,13 +593,53 @@ it('opens the country list upward, and does not use a native select', function (
  | 7. The address endpoints
  |------------------------------------------------------------------------*/
 
-it('answers 404 on every address endpoint while the classic layout is on', function () {
-    squeezeRoutes();
+it('gates every address endpoint in one place, writes included', function () {
+    /*
+     * THIS USED TO ASSERT 404 WITH THE CLASSIC CART LAYOUT ON, and it was
+     * right until the checkout got the same sheet.
+     *
+     * The squeezed cart page was once the only thing that opened it, so
+     * `squeezed()` was a fair reading of "is this feature on". The checkout's
+     * Shipping address section opens it now and does not care which layout the
+     * CART is set to — so that gate would have answered 404 to the checkout's
+     * own picker on every shop running the classic cart page, which is a
+     * feature that silently does nothing.
+     *
+     * What the test is actually for survives, and it is the half that matters:
+     * ONE gate, in the constructor, covering the writes and not only the
+     * listing. A gate on the listing alone is the shape of bug this app keeps
+     * finding. So it now asserts the gate is single and central, rather than
+     * asserting the particular answer it gave when only one page could ask.
+     *
+     * It is not the security boundary either way. That is the per-route
+     * middleware: /{id}/choose sits behind auth:customer and resolves every id
+     * through $customer->addresses(), which the three tests below pin.
+     */
+    $src = (string) file_get_contents(base_path('app/Http/Controllers/Store/CartAddressController.php'));
 
-    // The controller gates in its constructor, so the writes are covered too —
-    // a gate on the listing alone is the shape of bug this app keeps finding.
-    test()->getJson('/cart/address')->assertNotFound();
-    test()->postJson('/cart/address', ['area' => 'Al Quoz'])->assertNotFound();
+    $gate = strpos($src, 'abort_unless($this->page->');
+    $first = strpos($src, 'public function index');
+
+    expect($gate)->not->toBeFalse('the address endpoints no longer gate on the page service at all');
+
+    // BEFORE the first action, which is what "in the constructor" amounts to
+    // and is the property that covers the writes rather than only the listing.
+    expect($gate)->toBeLessThan(
+        (int) $first,
+        'the gate has moved out of the constructor and into an action, so the writes are reachable '
+        .'without it'
+    );
+
+    /*
+     * And no ACTION gates the feature for itself, which is how two gates come
+     * to disagree. Counted narrowly: the other abort_unless() in this file
+     * answers 404 for a guest handle that names no address, which is a
+     * not-found and not a feature gate.
+     */
+    expect(preg_match_all('/abort_unless\(\$this->page->/', $src))->toBe(
+        1,
+        'the feature is gated in more than one place, so the two can disagree about whether it is on'
+    );
 });
 
 it('keeps a signed-out shopper out of the database', function () {

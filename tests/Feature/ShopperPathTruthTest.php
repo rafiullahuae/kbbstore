@@ -500,7 +500,19 @@ it('marks its required fields required, so the browser can catch them', function
         (string) cfShopper(cfCart())->get('/checkout')->getContent()
     );
 
-    foreach (['billing_email', 'billing_first_name', 'billing_address_1', 'billing_state', 'billing_city'] as $id) {
+    /*
+     * THE THREE THE SHOPPER STILL TYPES. billing_address_1, billing_state and
+     * billing_city left this list when Shipping address became a picker: they
+     * are hidden inputs filled from the chosen address now, and `required` on
+     * an input with no box stops nothing, because there is nothing to leave
+     * empty. Phone joined it in the same round, at the owner's instruction
+     * that all three contact fields be mandatory.
+     *
+     * That an order cannot be placed without an address is still pinned, one
+     * layer down where it now lives: CheckoutAddressPickerTest posts the empty
+     * state and requires place()'s own errors back, with no order written.
+     */
+    foreach (['billing_email', 'billing_first_name', 'billing_phone'] as $id) {
         $field = [];
         preg_match('/<input\b[^>]*\bid="' . $id . '"[^>]*>/', $html, $field);
 

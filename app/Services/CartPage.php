@@ -1052,6 +1052,28 @@ class CartPage
         return $out;
     }
 
+    /**
+     * Whether anything on this shop can open the delivery-address sheet.
+     *
+     * TWO PAGES CAN NOW, which is the whole reason this is a method rather
+     * than a reading of `squeezed()` at each call site. The squeezed cart page
+     * opens it, and so does the checkout's Shipping address section — and the
+     * checkout does not care which layout the cart page is set to.
+     *
+     * CartAddressController gates every one of its endpoints on this. Before
+     * the checkout had the sheet that gate was `squeezed()`, and a shop on the
+     * classic cart layout would have had a checkout picker whose every call
+     * answered 404.
+     *
+     * The checkout's section is not switchable yet, so this is true whenever
+     * the shop has a checkout — which is always. When Appearance → Checkout
+     * page gains its own switch, it belongs in the `||` here and nowhere else.
+     */
+    public function addressPickerOn(): bool
+    {
+        return true;
+    }
+
     /** The handful of strings the address sheet's script needs. */
     public function jsConfig(): array
     {

@@ -259,12 +259,29 @@ function walkExpectations(array $seed): array
          * gate rather than a side effect of it.
          *
          * This walk runs on default settings, so 404 is the honest expectation
-         * here. The 200 path, ownership, and the 404-not-403 on a stranger's id
-         * are covered with the layout on, in CartPageSqueezeTest.
+         * here. Ownership, and the 404-not-403 on a stranger's id, are covered
+         * in CartPageSqueezeTest.
          *
-         * MUTATION: drop the abort_unless from the controller. Red here.
+         * IT ANSWERS 200 NOW, WITH THE CLASSIC CART LAYOUT ON, and that is the
+         * change rather than a hole. The gate used to read `squeezed()`,
+         * because the squeezed cart page was the only thing that opened the
+         * address sheet. The CHECKOUT opens it now — its Shipping address
+         * section is a picker over the same addresses — and the checkout does
+         * not care which layout the cart page is set to. Left as it was, every
+         * one of these endpoints answered 404 to the checkout's own picker on
+         * any shop running the classic cart.
+         *
+         * The listing is still safe to reach: a signed-out shopper is answered
+         * from the session with no query at all, and a signed-in one is
+         * answered only their own rows. Reading it tells a stranger nothing,
+         * which is why the gate was never the security boundary — the
+         * per-route auth:customer middleware is.
+         *
+         * MUTATION: drop the abort_unless from the controller entirely. Still
+         * red in CartPageSqueezeTest, which pins that the gate exists and sits
+         * in the constructor where it covers the writes.
          */
-        'cart/address'             => ['status' => 404],
+        'cart/address'             => ['status' => 200],
 
         // --- Wishlist ---------------------------------------------------
         'my-wishlist'              => ['status' => 200],
