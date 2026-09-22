@@ -483,6 +483,19 @@ class CartPage
                            'A round button at each end of the Recommended rail. Desktop only; a phone swipes instead, and the half card already tells it there is more.'],
         'd_arrow_size' => ['range', 'Arrow size', 34, '',
                            ['min' => 24, 'max' => 56, 'step' => 2, 'unit' => 'px']],
+        'd_dock_pad'   => ['range', 'Padding inside the checkout box', 14,
+                           'The box holding the delivery address and Proceed to Checkout. It has its own number because it is the only section that is mostly a button.',
+                           ['min' => 0, 'max' => 32, 'step' => 2, 'unit' => 'px']],
+        /*
+         * A MULTIPLIER ON TOP OF `qty_size`, never an override -- the same rule
+         * `addr_font` follows against `bar_font`. The phone's stepper is sized
+         * against a 96px row read at arm's length; the same control under a
+         * mouse pointer on a 27-inch monitor wants a different number, and the
+         * two sliders stack rather than one silently winning.
+         */
+        'd_qty_size'   => ['range', 'Quantity buttons on desktop', 100,
+                           'Multiplied into the size "Product rows" already produced, so the phone keeps its own number and this adjusts it for desktop.',
+                           ['min' => 60, 'max' => 180, 'step' => 5, 'unit' => '%']],
         'd_sticky'     => ['bool', 'Right column follows the scroll', true,
                            'The summary and Proceed to Checkout stay on screen while a long basket scrolls past. Off, they sit at the top and scroll away with the page.'],
         'd_sticky_top' => ['range', 'Gap above it when it sticks', 20, '',
@@ -635,8 +648,8 @@ class CartPage
                        'addr_heading', 'addr_btn_add', 'addr_btn_change', 'addr_chosen']],
         'desktop' => ['Desktop', 'The two-column cart page, from 1024px up. Everything here is read only on desktop — none of it can reach a phone.',
                       ['d_on', 'd_min', 'd_aside', 'd_gap', 'd_max',
-                       'd_rec_per', 'd_arrows', 'd_arrow_size',
-                       'd_pad_x', 'd_pad_y', 'd_sec_gap', 'd_sec_pad',
+                       'd_rec_per', 'd_arrows', 'd_arrow_size', 'd_qty_size',
+                       'd_pad_x', 'd_pad_y', 'd_sec_gap', 'd_sec_pad', 'd_dock_pad',
                        'd_sticky', 'd_sticky_top', 'd_modal_w', 'd_modal_blur']],
         'popup'   => ['Address popup', 'Its two heights — one for the list, a taller one for the form — its density and every word in it.',
                       ['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
@@ -897,6 +910,8 @@ class CartPage
             '--cpg-d-secgap:' . $c['d_sec_gap'] . 'px',
             '--cpg-d-secpad:' . $c['d_sec_pad'] . 'px',
             '--cpg-d-arrow:' . $c['d_arrow_size'] . 'px',
+            '--cpg-d-dockpad:' . $c['d_dock_pad'] . 'px',
+            '--cpg-d-qty:' . $this->ratio($c['d_qty_size']),
             '--cpg-d-aside:' . $c['d_aside'] . 'px',
             '--cpg-d-gap:' . $c['d_gap'] . 'px',
             '--cpg-d-max:' . $c['d_max'] . 'px',
@@ -1047,6 +1062,15 @@ class CartPage
             'formTitle' => $c['sheet_form_title'],
             'addNew' => $c['sheet_add_new'],
             'back' => $c['sheet_back'],
+            /*
+             * The breakpoint, and whether the desktop layout is on at all.
+             * The close button is placed against the panel's own box, which
+             * only the script can know -- the panel is centred and its height
+             * depends on what is in it. A media query cannot be asked from
+             * CSS here, so the number travels to the script instead.
+             */
+            'bp' => (int) $c['d_min'],
+            'desktop' => (bool) $c['d_on'],
             'save' => $c['sheet_save'],
             'area' => $c['sheet_area'],
             'apt' => $c['sheet_apt'],

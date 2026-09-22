@@ -127,7 +127,7 @@
 /* The carousel arrows on the mock. Same placement as the page: outside the
    scroller, half in and half out of the section's edge, centred on the picture
    rather than on the section, because the cards carry text under the image. */
-.cpv-arrwrap{position:relative}
+.cpv-arrwrap{position:relative;overflow:visible}
 .cpv-arr{position:absolute;top:42%;transform:translateY(-50%);z-index:2;
   width:var(--cpv-d-arrow,2.8%);aspect-ratio:1;border-radius:50%;background:#fff;
   border:1px solid #e4e7ec;box-shadow:0 4px 14px -6px rgba(23,24,28,.4);
@@ -136,6 +136,7 @@
 .cpv-arr.r{right:calc(var(--cpv-d-arrow,2.8%) / -2.2)}
 .cpv-cols > div{min-width:0}
 .cpv-side{display:flex;flex-direction:column;gap:var(--cpv-d-secgap,1.3%)}
+.cpv-cols .cpv-ab{padding:var(--cpv-d-dockpad,1.2%)}
 .cpv-stick{border:1px dashed #cbd5e1;border-radius:8px;padding:4px;position:relative}
 .cpv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;
   background:#fff;padding:0 4px;font-size:7.5px;color:#94a3b8;letter-spacing:.02em}
@@ -801,7 +802,7 @@
       + '--h:' + pvNum('row_h', 96) + 'px;'
       + '--f:' + (pvNum('row_font', 100) / 100) + ';'
       + '--w:' + (pvOn('row_bold') ? 600 : 400) + ';'
-      + '--qs:' + (pvNum('qty_size', 100) / 100) + ';'
+      + (open === 'desktop' ? '' : '--qs:' + (pvNum('qty_size', 100) / 100) + ';')
       + '--per:' + (per > 0 ? per : 4.5) + ';'
       + '--rw:' + (pvOn('rec_bold') ? 600 : 400) + ';'
       + '--rpw:' + (pvOn('rec_price_bold') ? 600 : 400) + ';'
@@ -840,6 +841,9 @@
          a ratio at any width: 380 of 1200 is 31.7% of the page, and that is
          what the shop draws, so that is what the mock draws. */
       + '--cpv-d-arrow:' + pvPct('d_arrow_size', 34) + ';'
+      + '--cpv-d-dockpad:' + pvPct('d_dock_pad', 14) + ';'
+      /* The stepper's two multipliers, stacked the way the page stacks them. */
+      + '--qs:' + ((pvNum('qty_size', 100) / 100) * (pvNum('d_qty_size', 100) / 100)) + ';'
       + '--cpv-d-secgap:' + pvPct('d_sec_gap', 16) + ';'
       + '--cpv-d-secpad:' + pvPct('d_sec_pad', 16) + ';'
       + '--cpv-d-padx:' + pvPct('d_pad_x', 24) + ';'

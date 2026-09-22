@@ -1004,7 +1004,15 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   .kbb-cartpage.cpg-squeeze.cpg-d .cpg-docked{
     position:static;z-index:auto;width:auto;
     border:1px solid var(--line-2);border-radius:14px;overflow:hidden;
-    padding-bottom:0}
+    padding:var(--cpg-d-dockpad,14px)}
+
+  /* The stepper's desktop multiplier, on both of the phone's calc()s so the
+     box and the glyph keep scaling as one shape -- the same rule `qty_size`
+     itself follows. It MULTIPLIES that number rather than replacing it, so the
+     two sliders stack and neither silently wins. */
+  .kbb-cartpage.cpg-squeeze.cpg-d{
+    --cpg-qty-h:calc(var(--cpg-row-h) * .30 * var(--cpg-qty-s) * var(--cpg-d-qty,1));
+    --cpg-qty-f:calc(var(--cpg-row-h) * .135 * var(--cpg-fscale) * var(--cpg-qty-s) * var(--cpg-d-qty,1))}
   .kbb-cartpage.cpg-squeeze.cpg-d .cpg-addrbar{border-top:0}
 
   /* The rail is full-bleed on a phone because a phone's column IS the page:
@@ -1013,9 +1021,24 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
      came out 1280 wide starting at x=62, so it ran 124px past its own column
      and straight under the summary. All three declarations have to come off,
      not just the margins; overriding the margin alone leaves the width. */
+  /* overflow:VISIBLE, and this is what stops the arrows being cut.
+     
+     The base rule clips this section -- `border-radius:0;overflow:hidden` --
+     which is right on a phone, where the section runs the full width of the
+     screen and the clip is what keeps the colour wash inside its corners. Here
+     the arrows deliberately hang half outside the section's edge, and a
+     clipping parent slices them in half lengthwise: exactly the sliver in the
+     owner's screenshot.
+     
+     The wash keeps its rounded corners because the ::before layer takes the
+     radius itself now, rather than borrowing the parent's clip. */
   .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec{
     margin-inline:0;width:auto;max-width:none;
-    border-radius:14px;overflow:hidden}
+    border-radius:14px;overflow:visible}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec::before{border-radius:inherit}
+  /* The rail still clips its own overflow -- that is the scroller -- and it is
+     inside the section, so the arrows outside are unaffected by it. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rail{border-radius:inherit}
 
   /* The rail's count, desktop's own. The phone's number is a fraction of the
      SCREEN — 4.5 cards across 390px is a readable card, 4.5 across a 748px
@@ -1079,13 +1102,11 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     transform:translate(-50%,-46%) scale(.98)}
   .cpg-sheet.on{transform:translate(-50%,-50%) scale(1)}
 
-  /* The floating round close button is the PHONE's: it sits above a sheet that
-     rises from the bottom edge, where a thumb is. There is no bottom edge here
-     and no thumb, and an inline `bottom` that the script sets from the sheet's
-     height left it stranded in the corner of the screen, nowhere near the
-     panel it closes. The panel carries its own X in its header instead. */
-  .cpg-x{display:none}
-  .cpg-xin{display:inline-flex;align-items:center}
+  /* THE SAME ROUND BUTTON AS THE PHONE'S, at the panel's top-right corner
+     rather than above it. placeClose() in the script puts it there, because
+     the panel is centred and only the script knows how tall it ended up. The
+     in-panel X is gone: one close button, one shape, both layouts. */
+  .cpg-xin{display:none}
 }
 </style>
 @endpush
@@ -1121,6 +1142,44 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   var country = null;    // null until the geo default arrives
   var busy = false;
   var hideTimer = null;  // the one that takes the sheet off the screen
+
+  /* WHERE THE CLOSE BUTTON GOES, and it is two different places.
+     
+     On a phone the sheet rises from the bottom edge and the button rides just
+     above whatever height it settled at — its own round white target, clear of
+     the content, so a thumb reaching for it never lands on an address.
+     
+     On desktop the panel is centred, so "just above the sheet" is the middle of
+     the screen and the button would sit on top of the page. It goes to the
+     panel's own top-right corner instead, just outside it, in the same circle.
+     The panel is centred at 50%/50%, so its edges are 50% ± half its box —
+     which is why this is in the script: the panel's height depends on what is
+     in it, and the arithmetic needs both numbers.
+     
+     THE SHEET'S OWN offsetHeight IS ALREADY WHAT THE PHONE PATH USES, so this
+     measures nothing the page did not already measure. Nothing here sizes
+     anything: it positions one button that CSS cannot reach, after the paint
+     that decided the panel's box. */
+  function placeClose() {
+    var desk = CFG.desktop && window.matchMedia('(min-width:' + (CFG.bp || 1024) + 'px)').matches;
+
+    if (desk) {
+      closeBtn.style.bottom = 'auto';
+      closeBtn.style.top = 'calc(50% - ' + (sheet.offsetHeight / 2) + 'px - 46px)';
+      closeBtn.style.insetInlineEnd = 'calc(50% - ' + (sheet.offsetWidth / 2) + 'px)';
+      return;
+    }
+
+    closeBtn.style.top = '';
+    closeBtn.style.insetInlineEnd = '';
+    closeBtn.style.bottom = (sheet.offsetHeight + 12) + 'px';
+  }
+
+  /* The panel moves when the window does — a narrower window makes it taller,
+     and the button has to follow the corner it is pinned to. */
+  window.addEventListener('resize', function () {
+    if (sheet.classList.contains('on')) placeClose();
+  });
 
   /* Grey out an arrow with nothing to scroll to. Rounded before comparing:
      a scroller at its end reports a fractional scrollLeft on a zoomed page or
@@ -1324,10 +1383,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   function paint(html, pick) {
     sheet.classList.toggle('cpg-pick', pick === true);
     sheet.innerHTML = html;
-    // The close button rides just above whatever height the sheet settled at.
-    requestAnimationFrame(function () {
-      closeBtn.style.bottom = (sheet.offsetHeight + 12) + 'px';
-    });
+    requestAnimationFrame(placeClose);
   }
 
   /* The docked row, after a choice. The server renders it on every page load
