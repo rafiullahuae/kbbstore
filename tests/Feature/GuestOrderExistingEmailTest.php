@@ -167,6 +167,29 @@ it('does not open a second account when the stored email differs only by case', 
         ->and(Order::latest('id')->first()->customer_id)->toBe($customer->id);
 });
 
+it('files the order under the older row when the table already holds a duplicate pair', function () {
+    // The tie-break in customerForGuestOrder(). It only has work to do where
+    // two rows can fold to the same address, which is the state SQLite was
+    // left in by the case bug above — MySQL's case-insensitive unique index
+    // will not hold such a pair, so the pair cannot be built there to test.
+    if (Illuminate\Support\Facades\DB::connection()->getDriverName() !== 'sqlite') {
+        test()->markTestSkipped('Only SQLite will hold two rows whose emails differ by case.');
+    }
+
+    $older = Customer::create(['email' => 'split@example.com', 'name' => 'First Row']);
+    $newer = Customer::create(['email' => 'Split@Example.com', 'name' => 'Second Row']);
+
+    guestEmailPlace(guestEmailCart(), guestEmailForm(['billing_email' => 'SPLIT@example.com']))
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    // Deterministic, and deterministically the same one every time: a shop
+    // whose history is already split in two must not go on alternating
+    // between the halves with each new order.
+    expect(Order::latest('id')->first()->customer_id)->toBe($older->id)
+        ->and($newer->orders()->count())->toBe(0);
+});
+
 it('files the order under the winner when two checkouts race for a new address', function () {
     // Two guests type the same never-seen address at the same moment: both
     // lookups miss, both INSERT, and the loser used to take the unique index
