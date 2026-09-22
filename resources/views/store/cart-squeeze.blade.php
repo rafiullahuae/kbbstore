@@ -37,6 +37,10 @@
         'list' => Url::to('/cart/address'),
         'store' => Url::to('/cart/address'),
         'choose' => Url::to('/cart/address'),
+        // The signed-out shopper's three, chosen by handle on their own path.
+        // A separate base and not a separate suffix on `choose`, so no string
+        // the script builds can put a handle where an id goes.
+        'chooseGuest' => Url::to('/cart/address/guest'),
     ];
 @endphp
 @push('styles')
@@ -720,6 +724,14 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   line-height:1.45}
 .cpg-tag{flex:none;align-self:center;background:#E8F6EE;color:#177F47;
   font-size:calc(11px * var(--cpg-sheet-f,1));font-weight:500;padding:3px 9px;border-radius:5px}
+/* "We keep your 3 most recent" — a fact, under the list, for a shopper who is
+   not signed in and has three. flex:none like + Add New Address below it: the
+   sheet is overflow:hidden and .cpg-list is the one thing allowed to scroll,
+   so a note that could shrink would be squeezed out of existence by a full
+   list instead of pushing the list's own scrollbox in. Sized from the popup's
+   own font knob, like everything else in here. */
+.cpg-note{flex:none;margin:calc(4px * var(--cpg-sheet-d,1)) 0 0;color:#6B7280;
+  font-size:calc(11.5px * var(--cpg-sheet-f,1));line-height:1.35}
 .cpg-addnew{display:flex;align-items:center;gap:7px;background:none;border:0;color:#1E9E5A;
   font-size:calc(14px * var(--cpg-sheet-f,1));font-weight:600;cursor:pointer;font-family:inherit;
   padding:calc(9px * var(--cpg-sheet-d,1)) 0;flex:none}
@@ -871,28 +883,48 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   function listHTML() {
     var rows = (state && state.addresses) || [];
     var chosenId = state && state.chosen ? state.chosen.id : null;
+    var chosenKey = state && state.chosen ? state.chosen.key : null;
 
     var items = rows.map(function (a) {
-      /* A ROW WITH NO id IS THE GUEST'S OWN ADDRESS, and it is drawn as the
-         current choice rather than as something to re-select. There is nothing
-         to re-select it BY: /cart/address/{id}/choose takes an id, this row has
-         none, and "null" in that URL is a 404 that leaves the sheet sitting
-         open looking broken. It is already the chosen one — that is the only
-         way it reaches this list — so tapping it confirms and closes, which is
-         what tapping the chosen row does everywhere else on this sheet. */
+      /* A ROW WITH NO id IS ONE OF THE GUEST'S OWN, held in the session. It is
+         re-selected by its HANDLE and not by an id, on its own endpoint: a
+         handle names a slot in one session and must never arrive at
+         /cart/address/{id}/choose, which ends in a lookup in `addresses`.
+
+         A row with neither an id nor a handle is the old case and still
+         behaves the old way — drawn as the current choice, tapped to confirm,
+         never posted anywhere. There is nothing to re-select it BY, and "null"
+         in either URL is a 404 that leaves the sheet sitting open looking
+         broken. */
       var mine = a.id === null || a.id === undefined;
+      var gkey = mine && a.key ? a.key : null;
+
+      var on = gkey ? gkey === chosenKey : (!mine && a.id === chosenId);
 
       return '<button type="button" class="cpg-al"'
-        + (mine ? ' data-cpg-keep' : ' data-cpg-pick="' + a.id + '"')
-        + ' aria-selected="' + (mine || a.id === chosenId ? 'true' : 'false') + '">'
+        + (gkey ? ' data-cpg-gpick="' + esc(gkey) + '"'
+                : (mine ? ' data-cpg-keep' : ' data-cpg-pick="' + a.id + '"'))
+        + ' aria-selected="' + (on || (mine && !gkey) ? 'true' : 'false') + '">'
         + '<span class="ad"><b>' + esc(a.name || CFG[a.tag] || a.tag) + '</b>'
         + '<span>' + esc(a.line) + '</span></span>'
         + '<span class="cpg-tag">' + esc(CFG[a.tag] || a.tag) + '</span>'
         + '</button>';
     }).join('');
 
+    /* Said out loud, and only when it is about to be true. The cap belongs to
+       a shopper who is not signed in, and the fourth address replaces the
+       oldest rather than being refused — so the sheet says which, at the point
+       where the next save will actually replace something. `guestMax` comes
+       from the server so the number here and the number the server enforces
+       cannot drift apart. */
+    var cap = (state && state.guestMax) || 0;
+    var note = (state && !state.signedIn && cap > 0 && rows.length >= cap)
+      ? '<p class="cpg-note">' + esc(CFG.guestNote) + '</p>'
+      : '';
+
     return '<h2>' + esc(CFG.listTitle) + '</h2>'
       + '<div class="cpg-list">' + items + '</div>'
+      + note
       + '<button type="button" class="cpg-addnew" data-cpg-new>'
       + '<span aria-hidden="true">+</span> ' + esc(CFG.addNew.replace(/^\+\s*/, '')) + '</button>';
   }
@@ -1159,9 +1191,25 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     // + Add New Address: the form, and with it the form's taller cap.
     if (e.target.closest('[data-cpg-new]')) { paint(formHTML(), false); return; }
 
-    /* The guest's own address — already chosen, and not re-selectable by id.
-       Tapping it confirms and closes, with no request: choosing what is already
-       chosen has nothing to tell the server. */
+    /* One of the guest's session addresses. Its own endpoint, taking its own
+       handle: the server resolves it against this session's list and opens no
+       table, and the handle never goes near the route that takes an id. Read
+       FIRST, so a guest row can never fall through to either branch below. */
+    var gpick = e.target.closest('[data-cpg-gpick]');
+    if (gpick) {
+      busy = true;
+      try {
+        state = await call(CFG.chooseGuest + '/' + encodeURIComponent(gpick.getAttribute('data-cpg-gpick')) + '/choose', {});
+        paintRow();
+        close();
+      } catch (err) { /* the sheet stays open on a failure, still showing the list */ }
+      busy = false;
+      return;
+    }
+
+    /* An address with neither an id nor a handle — already chosen, and not
+       re-selectable by either. Tapping it confirms and closes, with no request:
+       choosing what is already chosen has nothing to tell the server. */
     if (e.target.closest('[data-cpg-keep]')) { close(); return; }
 
     /* Tapping an address IS the choice: it selects, it closes, and it lands in

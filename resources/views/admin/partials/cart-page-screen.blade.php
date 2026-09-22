@@ -221,6 +221,10 @@
   padding:2px 6px;font-size:calc(9.5px * var(--sf));font-weight:500}
 .cpv-add{background:none;border:0;color:#1e9e5a;font-size:calc(11.5px * var(--sf));font-weight:600;
   padding:calc(6px * var(--sd)) 0}
+/* The guest-cap line, at the preview's own scale — the live sheet's .cpg-note
+   in the same place and the same grey. */
+.cpv-note{margin:calc(3px * var(--sd)) 0 0;color:#6b7280;
+  font-size:calc(9.5px * var(--sf));line-height:1.35}
 .cpv-fg{display:grid;gap:calc(7px * var(--sd));margin-bottom:8px}
 .cpv-fg.two{grid-template-columns:1fr 1fr}
 .cpv-fg.two .full{grid-column:1 / -1}
@@ -863,6 +867,19 @@
         + '<div class="cpv-al"><span class="ad"><b>Zulfiqar Sha</b>'
         + '<i>Office 402, Boutique Tower 2 - Business Bay - Dubai</i></span>'
         + '<span class="cpv-tag">' + esc(pvText('sheet_office', 'Office')) + '</span></div>'
+        /* THREE, because three is what the list can hold. A shopper who is not
+           signed in keeps three addresses in their session, and a preview that
+           draws two is a preview whose height caps were set against a list
+           shorter than the real one — which is exactly the thing this preview
+           exists to stop happening on somebody's phone. */
+        + '<div class="cpv-al"><span class="ad"><b>Zulfiqar Sha</b>'
+        + '<i>Villa 6, Street 14 - Al Barsha South - Dubai</i></span>'
+        + '<span class="cpv-tag">' + esc(pvText('sheet_home', 'Home')) + '</span></div>'
+        /* And the line that goes with a full list. Same condition as the live
+           sheet: shown when a signed-out shopper already has three, because
+           the next one replaces the oldest. */
+        + '<p class="cpv-note">' + esc(pvText('sheet_guest_note',
+            'We keep your 3 most recent addresses on this device. Adding another replaces the oldest.')) + '</p>'
         + '<button class="cpv-add" type="button">' + esc(pvText('sheet_add_new', '+ Add New Address')) + '</button>';
     } else {
       var two = pvOn('sheet_two_up') ? ' two' : '';

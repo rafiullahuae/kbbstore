@@ -84,3 +84,35 @@ Route::post('/cart/address/{id}/choose', [CartAddressController::class, 'choose'
     ->whereNumber('id')
     ->middleware(['auth:customer', 'throttle:60,1'])
     ->name('cart.address.choose');
+
+/*
+| A SEPARATE PATH FOR THE SIGNED-OUT SHOPPER'S THREE, and the separation is
+| the security property rather than a tidiness one.
+|
+| A guest's addresses live in the session and have no database id, so they are
+| named by a handle CartAddressState mints — `g` then twelve hex characters.
+| Two things follow, and both are load-bearing:
+|
+|   * A HANDLE CANNOT REACH THE ROUTE ABOVE. That one is whereNumber, and a
+|     handle begins with a letter, so the router declines it before any
+|     controller runs and long before anything is looked up in `addresses`.
+|
+|   * AN ID CANNOT REACH THIS ONE, or rather it can and means nothing when it
+|     does: the action resolves only against this session's own list, checks
+|     the handle's shape first, and opens no table at all. `5` is not a handle
+|     and names no entry, so it is a 404 — the same 404 an unknown handle gets,
+|     and the same one the route above gives a stranger's id.
+|
+| NO `auth:customer`, because the whole point is a shopper who has not signed
+| in; and no database middleware either, because there is no query to protect.
+| The action refuses a signed-in caller outright — their addresses are rows,
+| and rows are chosen by the route above.
+|
+| The `{handle}` constraint is alphanumerics only, so nothing with a dot, a
+| slash or an encoded separator in it is ever a parameter; the exact shape is
+| checked again in CartAddressState::guestChoose().
+*/
+Route::post('/cart/address/guest/{handle}/choose', [CartAddressController::class, 'chooseGuest'])
+    ->where('handle', '[A-Za-z0-9]{1,64}')
+    ->middleware('throttle:60,1')
+    ->name('cart.address.choose.guest');

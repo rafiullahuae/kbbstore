@@ -24,6 +24,7 @@ use App\Models\ShippingZoneLocation;
 use App\Services\SettingsService;
 use App\Support\CartAddressState;
 use App\Support\Countries;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -1544,3 +1545,483 @@ it('puts all seven new rail controls on the Recommended tab', function () {
         ->and($keys)->toContain('rec_bold');
 });
 // MUTATION: take 'rec_add_y' off the rec tab but leave it in SCHEMA.
+
+/* ------------------------------------------------------------------------
+ | 11. "the system is replacing the old one. and storing only one."
+ |
+ | Three addresses for a shopper who is not signed in, held in the session,
+ | listed in the sheet, any of them selectable -- and none of them reachable
+ | by anything that looks an id up in `addresses`.
+ |------------------------------------------------------------------------*/
+
+/** Save one guest address through the endpoint the sheet actually posts to. */
+function guestAddress(string $area, string $apt = '', string $tag = 'home'): array
+{
+    return test()->postJson('/cart/address', [
+        'area' => $area,
+        'apartment' => $apt,
+        'city' => 'Dubai',
+        'country' => 'AE',
+        'tag' => $tag,
+    ])->assertOk()->json();
+}
+
+it('keeps a signed-out shopper\'s second address instead of replacing the first', function () {
+    // THE REPORTED BUG, in the words it was reported in: "i have added two
+    // addresses without login, the system is replacing the old one. and
+    // storing only one."
+    squeezeOn();
+    squeezeRoutes();
+
+    guestAddress('Al Quoz');
+    $body = guestAddress('Jumeirah Village Circle');
+
+    expect($body['addresses'])->toHaveCount(2)
+        ->and($body['addresses'][0]['line'])->toContain('Al Quoz')
+        ->and($body['addresses'][1]['line'])->toContain('Jumeirah Village Circle')
+        // The one just typed is the one the docked row names.
+        ->and($body['chosen']['line'])->toContain('Jumeirah Village Circle');
+
+    // And it survives the request that wrote it, which is the half a single
+    // response cannot tell you.
+    $later = test()->getJson('/cart/address')->assertOk()->json();
+
+    expect($later['addresses'])->toHaveCount(2)
+        ->and(json_encode($later['addresses']))->toContain('Al Quoz');
+
+    // Still no customer and still no row. The rule the package has always kept.
+    expect(Customer::count())->toBe(0)
+        ->and(Address::query()->count())->toBe(0);
+});
+// MUTATION: CartAddressState::guestAdd() -> replace the list with [$entry]
+// instead of appending.
+
+it('keeps the three most recent and drops the oldest on the fourth', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    guestAddress('One');
+    guestAddress('Two');
+    guestAddress('Three');
+
+    $three = test()->getJson('/cart/address')->assertOk()->json();
+    expect($three['addresses'])->toHaveCount(3);
+
+    // THE FOURTH IS ACCEPTED. It is not refused with a message: a shopper
+    // part-way through a checkout who is told "you have too many addresses"
+    // has been handed a chore and no way to do it -- the sheet has no delete
+    // button. See CartAddressState::GUEST_MAX.
+    $body = guestAddress('Four');
+
+    expect($body['addresses'])->toHaveCount(CartAddressState::GUEST_MAX)
+        ->and(json_encode($body['addresses']))->not->toContain('One')
+        ->and(json_encode($body['addresses']))->toContain('Two')
+        ->and(json_encode($body['addresses']))->toContain('Three')
+        ->and(json_encode($body['addresses']))->toContain('Four')
+        ->and($body['chosen']['line'])->toContain('Four');
+
+    // A sixth does not grow it either, and the cap the payload advertises is
+    // the cap the server applied.
+    guestAddress('Five');
+    guestAddress('Six');
+
+    $body = test()->getJson('/cart/address')->assertOk()->json();
+
+    expect($body['addresses'])->toHaveCount(3)
+        ->and($body['guestMax'])->toBe(CartAddressState::GUEST_MAX)
+        ->and(Address::query()->count())->toBe(0);
+});
+// MUTATION: CartAddressState::cap() -> `count($list) > self::GUEST_MAX + 1`.
+
+it('caps the stored bytes as well as the stored count', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    /*
+     * THE VALIDATOR IS THE REAL BOUND and this checks that it is, rather than
+     * inventing a second set of lengths beside it. area max:120 and apartment
+     * max:180 are CartAddressController::store()'s own numbers, so the longest
+     * address a shopper can post is bounded before it reaches the session --
+     * and three of them have to fit inside GUEST_MAX_BYTES with room to spare,
+     * or the ceiling would be silently eating entries in ordinary use.
+     */
+    test()->postJson('/cart/address', [
+        'area' => str_repeat('a', 121), 'city' => 'Dubai', 'country' => 'AE',
+    ])->assertStatus(422);
+
+    for ($i = 0; $i < 3; $i++) {
+        test()->postJson('/cart/address', [
+            'area' => str_repeat('a', 120),
+            'apartment' => str_repeat('b', 180),
+            'city' => str_repeat('c', 80),
+            'country' => 'AE',
+            'tag' => 'home',
+        ])->assertOk();
+    }
+
+    $body = test()->getJson('/cart/address')->assertOk()->json();
+
+    // Three maximal addresses still fit: the ceiling is slack in honest use
+    // and only bites a session that grew some other way.
+    expect($body['addresses'])->toHaveCount(3)
+        ->and(strlen(serialize(session(CartAddressState::SESSION_KEY))))
+        ->toBeLessThanOrEqual(CartAddressState::GUEST_MAX_BYTES);
+});
+// MUTATION: GUEST_MAX_BYTES = 512.
+
+it('lets a signed-out shopper choose any of the three, by handle', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    guestAddress('Al Quoz');
+    guestAddress('Business Bay');
+    $body = guestAddress('Al Barsha');
+
+    // The most recent is chosen, and each row carries a handle of its own.
+    expect($body['chosen']['line'])->toContain('Al Barsha');
+
+    $first = $body['addresses'][0];
+    expect($first['line'])->toContain('Al Quoz')
+        ->and($first['id'])->toBeNull()
+        ->and($first['key'])->toMatch(CartAddressState::GUEST_HANDLE);
+
+    $body = test()->postJson('/cart/address/guest/'.$first['key'].'/choose')
+        ->assertOk()->json();
+
+    expect($body['chosen']['line'])->toContain('Al Quoz')
+        ->and($body['chosen']['key'])->toBe($first['key'])
+        ->and($body['addresses'])->toHaveCount(3);
+
+    // It stuck: the docked row the server renders on the next page load names
+    // the one that was tapped, not the one typed last.
+    $later = test()->getJson('/cart/address')->assertOk()->json();
+    expect($later['chosen']['line'])->toContain('Al Quoz');
+
+    expect(Customer::count())->toBe(0)->and(Address::query()->count())->toBe(0);
+});
+// MUTATION: guestChoose() -> return true without putting SESSION_GUEST_ID.
+
+it('gives every guest row a handle and never an id, and every saved row an id and never a handle', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    guestAddress('Al Quoz');
+    $guest = test()->getJson('/cart/address')->assertOk()->json();
+
+    foreach ($guest['addresses'] as $row) {
+        expect($row['id'])->toBeNull()
+            ->and($row['key'])->toMatch(CartAddressState::GUEST_HANDLE);
+    }
+
+    test()->flushSession();
+
+    $customer = Customer::create(['email' => 'k-'.Str::random(6).'@example.com', 'password' => bcrypt('x')]);
+    $customer->addresses()->create(['type' => 'shipping', 'line1' => 'Saved', 'city' => 'Dubai', 'country' => 'AE']);
+
+    $saved = test()->actingAs($customer, 'customer')->getJson('/cart/address')->assertOk()->json();
+
+    expect($saved['addresses'])->toHaveCount(1);
+
+    foreach ($saved['addresses'] as $row) {
+        expect($row['id'])->toBeInt()
+            ->and($row['key'])->toBeNull();
+    }
+});
+// MUTATION: CartAddressState::shape() -> return the $key whether or not the
+// row exists. GREEN -- and for a reason worth writing down: all() never hands
+// shape() a key for a saved row, so the guard it removes was never the thing
+// keeping the two apart. Replaced with the mutation that is actually
+// dangerous: shape() -> `'id' => (int) $address->id` unconditionally, which
+// gives every SESSION row an id of 0 -- and 0 is a number, so listHTML draws
+// it with data-cpg-pick and the sheet posts /cart/address/0/choose. RED.
+
+it('never lets a guest handle reach the route that looks an id up in the database', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    guestAddress('Al Quoz');
+    $key = test()->getJson('/cart/address')->assertOk()->json()['addresses'][0]['key'];
+
+    /*
+     * DIRECTION ONE. The handle, posted at the customer route.
+     *
+     * whereNumber declines it AT THE ROUTER, so CartAddressController never
+     * runs, nothing is cast to an integer and no query is made. 405 and not
+     * 404 because this application's Route::fallback is GET-only, so every
+     * POST to a path with no POST route answers that way -- which is the
+     * point: a guest handle gets exactly what any other string that is not a
+     * route gets, and learns nothing that "choose" did not already tell it.
+     *
+     * The 404-not-403 rule is about a STRANGER'S ID, and that pair is pinned
+     * unchanged in "404s, never 403s, on an address belonging to somebody
+     * else" above. This is the other claim: a handle is not an id at all.
+     */
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+
+    test()->postJson('/cart/address/'.$key.'/choose')->assertStatus(405);
+
+    // Indistinguishable from junk that was never a handle -- same router, same
+    // refusal, same nothing.
+    test()->postJson('/cart/address/not-a-handle/choose')->assertStatus(405);
+
+    $sql = implode(' | ', array_column(DB::getQueryLog(), 'query'));
+    DB::disableQueryLog();
+
+    expect($sql)->not->toContain('addresses');
+
+    $customer = Customer::create(['email' => 'd1-'.Str::random(6).'@example.com', 'password' => bcrypt('x')]);
+    test()->actingAs($customer, 'customer')
+        ->postJson('/cart/address/'.$key.'/choose')->assertStatus(405);
+
+    // And the handle never becomes the id the docked row reads back.
+    expect(session(CartAddressState::SESSION_ID))->toBeNull();
+});
+// MUTATION: drop ->whereNumber('id') from the choose route in
+// routes/cart-address.php.
+
+it('never lets a customer-address id be spent as a guest handle, and opens no table trying', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    $customer = Customer::create(['email' => 'd2-'.Str::random(6).'@example.com', 'password' => bcrypt('x')]);
+    $row = $customer->addresses()->create([
+        'type' => 'shipping', 'line1' => 'Theirs', 'city' => 'Dubai', 'country' => 'AE',
+    ]);
+
+    /*
+     * DIRECTION TWO, and as a GUEST, which is the shopper this route is for.
+     * A real address id is not a handle, names no entry in this session, and
+     * -- the part worth pinning -- causes no query at all. The route exists so
+     * that a value which names a session slot never reaches a lookup; a route
+     * that 404s only AFTER asking the database would have given that away.
+     */
+    guestAddress('Al Quoz');
+
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+
+    test()->postJson('/cart/address/guest/'.$row->id.'/choose')->assertNotFound();
+
+    $sql = implode(' | ', array_column(DB::getQueryLog(), 'query'));
+    DB::disableQueryLog();
+
+    expect($sql)->not->toContain('addresses');
+
+    // Nothing was chosen, nothing was written, and the row is untouched.
+    expect(session(CartAddressState::SESSION_ID))->toBeNull()
+        ->and(Address::query()->count())->toBe(1)
+        ->and(Address::query()->find($row->id)->line1)->toBe('Theirs');
+
+    // A handle-shaped value that was never issued answers identically -- the
+    // same 404, so there is nothing to tell the two apart by.
+    test()->postJson('/cart/address/guest/g000000000000/choose')->assertNotFound();
+
+    // And a signed-in shopper gets it too: their addresses are rows, and rows
+    // are chosen on the other route.
+    test()->actingAs($customer, 'customer')
+        ->postJson('/cart/address/guest/g000000000000/choose')->assertNotFound();
+});
+// MUTATION: guestChoose() -> resolve a miss through Address::find((int) $key)
+// at the END of the method. GREEN, and the reason is the point: "5" never gets
+// that far, because the validHandle() guard turns it away first. Replaced with
+// the mutation that removes the guard itself -- validHandle() failing resolves
+// through Address::find((int) $key) instead of returning false. RED on the
+// query-log assertion AND on the 404, which is the pair that states the rule.
+
+it('moves a shopper\'s session addresses into their account when they sign in, once', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    guestAddress('Al Quoz', 'Warehouse 4');
+    guestAddress('Business Bay', 'Office 402', 'office');
+
+    expect(Address::query()->count())->toBe(0);
+
+    /*
+     * THE DECISION. They move. Somebody who typed an address into the sheet
+     * and then signed in to pay has typed it; an address book that does not
+     * contain the address they are looking at reads as "mine is gone", and
+     * this shop's own notes record where that leads -- they type it again and
+     * the shop holds it twice.
+     */
+    $customer = Customer::create(['email' => 'mv-'.Str::random(6).'@example.com', 'password' => bcrypt('x')]);
+
+    $body = test()->actingAs($customer, 'customer')->getJson('/cart/address')->assertOk()->json();
+
+    expect($body['addresses'])->toHaveCount(2)
+        ->and($body['signedIn'])->toBeTrue()
+        // Now rows, so now ids and no handles.
+        ->and($body['addresses'][0]['id'])->toBeInt()
+        ->and($body['addresses'][0]['key'])->toBeNull()
+        // The one they had chosen is still the one chosen, by its new id.
+        ->and($body['chosen']['line'])->toContain('Business Bay')
+        ->and($body['chosen']['id'])->toBeInt();
+
+    $rows = Customer::findOrFail($customer->id)->addresses()->orderBy('id')->get();
+
+    expect($rows)->toHaveCount(2)
+        ->and($rows[0]->line2)->toBe('Al Quoz')
+        ->and($rows[0]->label)->toBe('home')
+        ->and($rows[1]->line1)->toBe('Office 402')
+        ->and($rows[1]->label)->toBe('office');
+
+    // IDEMPOTENT, and by construction: the session list is emptied before a
+    // single row is written, so there is nothing left to adopt a second time.
+    expect(session(CartAddressState::SESSION_KEY))->toBeNull()
+        ->and(session(CartAddressState::SESSION_GUEST_ID))->toBeNull();
+
+    test()->actingAs($customer, 'customer')->getJson('/cart/address')->assertOk();
+    test()->actingAs($customer, 'customer')->getJson('/cart/address')->assertOk();
+
+    expect(Address::query()->count())->toBe(2);
+});
+// MUTATION: adopt() -> do not forget SESSION_KEY at all.
+
+it('does not file a second copy of an address the account already holds', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    $customer = Customer::create(['email' => 'dup-'.Str::random(6).'@example.com', 'password' => bcrypt('x')]);
+    $already = $customer->addresses()->create([
+        'type' => 'shipping', 'label' => 'home', 'line1' => 'Flat 802',
+        'line2' => 'Jumeirah Village Circle', 'city' => 'Dubai', 'country' => 'AE',
+    ]);
+
+    // The same address, typed again as a guest, with different spacing and a
+    // different tag. It is one address.
+    guestAddress('Jumeirah   Village Circle', 'flat 802', 'office');
+    guestAddress('Al Quoz', 'Warehouse 4');
+
+    $body = test()->actingAs($customer, 'customer')->getJson('/cart/address')->assertOk()->json();
+
+    expect(Address::query()->count())->toBe(2)
+        ->and($body['addresses'])->toHaveCount(2);
+
+    // The row that was already there is the row that was already there -- not
+    // rewritten, not re-tagged.
+    $already->refresh();
+    expect($already->label)->toBe('home')
+        ->and($already->line1)->toBe('Flat 802');
+});
+// MUTATION: adopt() -> drop the $seen fingerprint check and create every entry.
+
+it('writes nothing for a shopper who signs in with no session addresses', function () {
+    squeezeOn();
+    squeezeRoutes();
+
+    $customer = Customer::create(['email' => 'nil-'.Str::random(6).'@example.com', 'password' => bcrypt('x')]);
+
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+
+    test()->actingAs($customer, 'customer')->getJson('/cart/address')->assertOk()
+        ->assertJsonPath('addresses', [])
+        ->assertJsonPath('chosen', null);
+
+    $sql = array_column(DB::getQueryLog(), 'query');
+    DB::disableQueryLog();
+
+    expect(Address::query()->count())->toBe(0);
+
+    /*
+     * AND IT COSTS NOTHING, which is the part worth pinning.
+     *
+     * all() calls adopt() on every cart page render and every /cart/address
+     * for every signed-in shopper, and almost none of them have anything to
+     * adopt. adopt() therefore returns before it reads the address book when
+     * the session list is empty -- so the ONE query against `addresses` here
+     * is all()'s own listing and not a second one adoption paid for.
+     */
+    $touches = count(array_filter($sql, fn (string $q) => str_contains($q, '"addresses"')));
+
+    expect($touches)->toBe(1);
+});
+// MUTATION: adopt() -> drop the `if ($list === []) return;` guard. The first
+// form of this test only asserted that no ROW was written, and that mutation
+// came back GREEN -- rightly, because an empty list writes nothing either way.
+// What the guard actually buys is the query, on every render, for every
+// signed-in shopper. Asserted, and RED.
+
+it('reads the single-address session the live site is holding right now', function () {
+    /*
+     * BACKWARD COMPATIBILITY, and it is not theoretical: the key held one flat
+     * fields array before this change, and there are sessions open on the shop
+     * holding one at the moment the package is applied. A shopper whose
+     * session predates it should find their address where they left it, not
+     * discover that the fix for "it only keeps one" threw away the one it was
+     * keeping.
+     */
+    squeezeOn();
+    squeezeRoutes();
+
+    session()->put(CartAddressState::SESSION_KEY, [
+        'type' => 'shipping', 'label' => 'office', 'line1' => 'Office 402',
+        'line2' => 'Business Bay', 'city' => 'Dubai', 'country' => 'AE',
+    ]);
+
+    $body = test()->getJson('/cart/address')->assertOk()->json();
+
+    expect($body['addresses'])->toHaveCount(1)
+        ->and($body['addresses'][0]['line'])->toContain('Business Bay')
+        ->and($body['addresses'][0]['tag'])->toBe('office')
+        // Given a handle on the spot, so it is selectable like the rest.
+        ->and($body['addresses'][0]['key'])->toMatch(CartAddressState::GUEST_HANDLE)
+        ->and($body['chosen']['line'])->toContain('Business Bay');
+
+    expect(Customer::count())->toBe(0)->and(Address::query()->count())->toBe(0);
+});
+// MUTATION: normalise() -> return [] for anything that is not already a list.
+
+it('draws all three in the sheet, each on its own endpoint, and says what the fourth will do', function () {
+    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    $start = (int) strpos($src, 'function listHTML()');
+    $fn = substr($src, $start, (int) strpos($src, 'function formHTML(', $start) - $start);
+
+    // A guest row goes out on its own attribute, which its own handler posts
+    // to its own path. An id row is untouched.
+    expect($fn)->toContain('data-cpg-gpick=')
+        ->and($fn)->toContain('data-cpg-pick=')
+        ->and($src)->toContain("var gpick = e.target.closest('[data-cpg-gpick]')")
+        ->and($src)->toContain('CFG.chooseGuest')
+        // The guest branch is read FIRST, so a handle can never fall through
+        // to the branch that posts an id.
+        ->and((int) strpos($src, "closest('[data-cpg-gpick]')"))
+        ->toBeLessThan((int) strpos($src, "var pick = e.target.closest('[data-cpg-pick]')"));
+
+    // The two URLs are built from two different bases, so no string the script
+    // assembles can put a handle where an id goes.
+    expect($src)->toContain("'chooseGuest' => Url::to('/cart/address/guest')");
+
+    // The cap is said out loud, at the point where the next save replaces
+    // something, and only to a shopper who is not signed in.
+    expect($fn)->toContain('CFG.guestNote')
+        ->and($fn)->toContain('!state.signedIn')
+        ->and($fn)->toContain('rows.length >= cap');
+
+    // Sizing in CSS: the note has a rule, and the list draws no inline style.
+    expect($src)->toContain('.cpg-note{')
+        ->and($fn)->not->toContain('.style.');
+});
+// MUTATION: render a guest row with data-cpg-pick="' + a.key + '" like any
+// other.
+
+it('offers the guest note in the admin screen and draws three in the live preview', function () {
+    // A preview showing two addresses when a guest can have three is a preview
+    // whose height caps were set against a list shorter than the real one.
+    expect(CartPage::SCHEMA)->toHaveKey('sheet_guest_note')
+        ->and(CartPage::TABS['popup'][2])->toContain('sheet_guest_note')
+        ->and(app(CartPage::class)->get('sheet_guest_note'))->toContain('3 most recent');
+
+    $src = (string) file_get_contents(resource_path('views/admin/partials/cart-page-screen.blade.php'));
+
+    $start = (int) strpos($src, 'function pvSheet(which)');
+    $fn = substr($src, $start, (int) strpos($src, 'function previewHTML(', $start) - $start);
+
+    expect(substr_count($fn, 'class="cpv-al"'))->toBe(2)
+        ->and(substr_count($fn, 'cpv-al'))->toBe(3)
+        ->and($fn)->toContain("pvText('sheet_guest_note'")
+        ->and($src)->toContain('.cpv-note{');
+});
+// MUTATION: take the third cpv-al row back out of pvSheet('list').

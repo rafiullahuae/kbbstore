@@ -389,6 +389,24 @@ class CartPage
          */
         'sheet_loading'    => ['text', 'Read out while the popup is loading', 'Loading your addresses', ''],
         'sheet_failed'     => ['text', 'If the address cannot be saved', 'That could not be saved. Please try again.', ''],
+        /*
+         * Shown under the list, and ONLY to a shopper who is not signed in and
+         * has filled all three session slots.
+         *
+         * The rule it states is CartAddressState::GUEST_MAX's: the fourth
+         * address drops the oldest. Saying so is the whole reason the cap is a
+         * drop rather than a refusal — a shopper part-way through a checkout
+         * who is refused has been given a chore, and one who is told what
+         * happens has been given a fact they can act on. A note that appears
+         * before the cap is reached is noise, so it waits until the next save
+         * will actually replace something.
+         *
+         * A signed-in shopper never sees it, because none of it is true for
+         * them: their addresses are rows in their address book and there is no
+         * cap on those.
+         */
+        'sheet_guest_note' => ['text', 'Under the list · not signed in', 'We keep your 3 most recent addresses on this device. Adding another replaces the oldest.',
+                               'Only shown to a shopper who has not signed in and already has three. Signed-in addresses are saved to the account and are not capped.'],
     ];
 
     public const TABS = [
@@ -417,7 +435,7 @@ class CartPage
                        'sheet_add_new', 'sheet_save', 'sheet_area', 'sheet_apt', 'sheet_city',
                        'sheet_area_hint', 'sheet_apt_hint', 'sheet_city_hint',
                        'sheet_country', 'sheet_geo_mark', 'sheet_geo_note', 'sheet_mark', 'sheet_home', 'sheet_office',
-                       'sheet_loading', 'sheet_failed']],
+                       'sheet_loading', 'sheet_failed', 'sheet_guest_note']],
     ];
 
     /** How many products the rail will hold. A cap, not a paging window. */
@@ -791,6 +809,7 @@ class CartPage
             'office' => $c['sheet_office'],
             'loading' => $c['sheet_loading'],
             'saveFailed' => $c['sheet_failed'],
+            'guestNote' => $c['sheet_guest_note'],
             'chosen' => $c['addr_chosen'],
             'heading' => $c['addr_heading'],
             'btnAdd' => $c['addr_btn_add'],
