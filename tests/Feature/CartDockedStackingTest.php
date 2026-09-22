@@ -40,7 +40,7 @@ declare(strict_types=1);
  * MUTATION: put .cpg-docked back to z-index:40. Red.
  */
 it('ranks the docked rows above every fixed bottom bar in the storefront', function () {
-    $squeeze = (string) file_get_contents(base_path('resources/views/store/cart-squeeze.blade.php'));
+    $squeeze = (string) \Tests\Support\CartPageStyles::all();
     $shop = (string) file_get_contents(base_path('resources/css/kbb/kbb.css'));
 
     preg_match('/\.cpg-docked\{[^}]*z-index:(\d+)/', $squeeze, $m);
@@ -101,7 +101,7 @@ it('keeps the address sheet and its close button above the rows they open from',
      * bar that opens it — which is the same bug, one layer up, and would have
      * been the obvious way to get this wrong.
      */
-    $css = (string) file_get_contents(base_path('resources/views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     $z = function (string $selector) use ($css): int {
         preg_match('/'.preg_quote($selector, '/').'\{[^}]*z-index:(\d+)/', $css, $m);
@@ -123,7 +123,7 @@ it('still hides the tab bar outright, because ordering is the second line and no
      * floating bar at the bottom of a phone, which is what the owner asked to
      * be rid of in the first place.
      */
-    $css = (string) file_get_contents(base_path('resources/views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect(preg_match('/\.tabbar\{display:none\}/', $css))->toBe(
         1,

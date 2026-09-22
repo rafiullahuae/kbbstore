@@ -156,7 +156,7 @@ it('emits every size as a custom property and none of them from JavaScript', fun
         ->and($vars)->toContain('--cpg-addr-h:34px')
         ->and($vars)->toContain('--cpg-co-h:54px');
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // The derived sizes are calc() off the knob, in the stylesheet.
     expect($css)->toContain('--cpg-thumb:calc(var(--cpg-row-h) - (var(--cpg-pad) * 2))')
@@ -177,7 +177,7 @@ it('emits every size as a custom property and none of them from JavaScript', fun
 // toContain on it is what catches it, and it is red. Kept for that reason.
 
 it('keeps 4.5 cards a fraction of the screen rather than a pixel width', function () {
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // The card width divides the SCREEN by the count, so it holds on any phone.
     expect($css)->toContain('/ var(--cpg-per))')
@@ -383,7 +383,7 @@ it('says nothing about VAT on the cart page at all', function () {
 it('keeps the long checkout label from pushing the total off a narrow bar', function () {
     expect(app(CartPage::class)->get('co_label'))->toBe('Proceed to Checkout');
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // The button gives way first. min-width:0 is the load-bearing half: a flex
     // item's default min-width is auto, which is what makes "it should shrink"
@@ -536,7 +536,7 @@ it('puts the address sheet outside the cart page wrapper, and fixes it to the sc
         );
     }
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect($css)->toContain('.cpg-sheet{position:fixed')
         ->and($css)->toContain('.cpg-scrim{position:fixed')
@@ -560,7 +560,7 @@ it('closes the sheet off the screen entirely rather than sliding it out of sight
     // document.
     expect($html)->toMatch('/id="cpgSheet"[^>]*\shidden/');
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect($css)->toContain('.cpg-sheet[hidden]{display:none}')
         ->and($css)->toContain('sheet.hidden = true;')
@@ -575,7 +575,7 @@ it('closes the sheet off the screen entirely rather than sliding it out of sight
 // MUTATION: drop the `hidden` attribute from the markup. RED on the toMatch.
 
 it('opens the country list upward, and does not use a native select', function () {
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // Upward, because a list dropping down from a field this near the bottom
     // lands under the docked bars.
@@ -722,7 +722,7 @@ it('pairs City and Country only when the shop asks, and only upright', function 
     squeezeOn(['sheet_two_up' => true]);
     expect(squeezeGet(squeezeCart())->getContent())->toContain('cpg-portal cpg-twoup');
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // Scoped to portrait. Landscape already pairs every field, and a second
     // rule there would put Area beside Apartment.
@@ -733,7 +733,7 @@ it('pairs City and Country only when the shop asks, and only upright', function 
 // MUTATION: drop the @media (orientation:portrait) wrapper. RED.
 
 it('fades a long chosen address off the right rather than cutting it with an ellipsis', function () {
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // Both lines of the docked row, one line each, masked.
     expect($css)->toContain('.kbb-cartpage.cpg-squeeze .cpg-addrbar .who b,')
@@ -751,7 +751,7 @@ it('fades a long chosen address off the right rather than cutting it with an ell
 // first mask assertion.
 
 it('animates the free-delivery bar and lets its bloom out of the track', function () {
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     /*
      * THE ONE THAT SILENTLY KILLS IT. kbb-cart.css gives `.bar` overflow:hidden,
@@ -818,7 +818,7 @@ it('does not bloom a bar that has not started', function () {
 
     expect($html)->toContain('class="fill cpg-flat" style="width:0%"');
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
     expect($css)->toContain('.fill.cpg-flat::after{display:none}');
 });
 // MUTATION: emit `class="fill"` unconditionally. RED on the first assertion.
@@ -866,7 +866,7 @@ it('gives the address list a shorter cap than the form, and both are in the payl
 // MUTATION: default sheet_max_list to 50. RED — 1 failed, 43 passed.
 
 it('selects the shorter cap with a class, in CSS, and in both orientations', function () {
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect($css)->toContain('.cpg-sheet.cpg-pick{max-height:var(--cpg-sheet-max-list,38%)}')
         // And restated INSIDE the landscape query. `.cpg-sheet.cpg-pick` outbids
@@ -895,7 +895,7 @@ it('scrolls the list inside its own box and never the sheet', function () {
     // THE RULE THAT MUST NOT REGRESS. It was an explicit requirement before the
     // list had a cap of its own, and a second cap is exactly the change that
     // could quietly turn the sheet into a scroller.
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // The sheet clips and lays its children out in a column, so the list is the
     // only child that can shrink...
@@ -935,7 +935,7 @@ it('opens the list for a shopper with exactly one saved address', function () {
      * test that would exercise it needs a browser, and `length > 1` is a
      * one-character edit away from being the rule this rejects.
      */
-    $js = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $js = (string) \Tests\Support\CartPageStyles::all();
 
     expect($js)->toContain('var hasSaved = !!(state.addresses && state.addresses.length);')
         ->and($js)->toContain('paint(hasSaved ? listHTML() : formHTML(), hasSaved);')
@@ -1102,7 +1102,7 @@ it('draws the id-less address as the current choice, never as something to re-se
      * the sheet open looking broken. It is already the chosen one — that is the
      * only way it reaches the list — so tapping it confirms and closes.
      */
-    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $src = (string) \Tests\Support\CartPageStyles::all();
 
     $start = (int) strpos($src, 'function listHTML()');
     $fn = substr($src, $start, (int) strpos($src, 'function formHTML(', $start) - $start);
@@ -1127,7 +1127,7 @@ it('draws the id-less address as the current choice, never as something to re-se
 it('keeps + Add New Address inside the list popup, leading to the form', function () {
     // The list is a choice, and "none of these" has to be one of the things it
     // can be answered with.
-    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $src = (string) \Tests\Support\CartPageStyles::all();
 
     $start = (int) strpos($src, 'function listHTML()');
     $fn = substr($src, $start, (int) strpos($src, 'function formHTML(', $start) - $start);
@@ -1150,7 +1150,7 @@ it('keeps AED and the amount on one line in the docked checkout row', function (
      * white-space:nowrap could never have prevented it: those were two block
      * boxes, not a wrapped line.
      */
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect($css)->toContain('.cpg-cobar .tally > span{display:block')
         ->and($css)->not->toContain('.cpg-cobar .tally span{display:block');
@@ -1225,7 +1225,7 @@ it('leaves the tab bar alone on every other page, and on the classic cart', func
 });
 
 it('paints the docked rows full white, to the bottom edge', function () {
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // The address row was var(--cream): a cream strip above a white one reads
     // as two bars rather than as the foot of the screen.
@@ -1257,7 +1257,7 @@ it('fades the address line only once there is an address to fade', function () {
      * is no more of it: the fade just dissolves the last word of a sentence
      * that fits, which is what was reported as the placeholder looking broken.
      */
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect($css)->toContain('.cpg-addrbar.cpg-has .who b,')
         ->and($css)->toContain('.cpg-addrbar.cpg-has .who span{');
@@ -1297,7 +1297,7 @@ it('puts cpg-has on the row from the session, not only after a tap', function ()
     expect($html)->toContain('cpg-addrbar cpg-has');
 
     // And the script keeps it in step for the tap that has just happened.
-    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $src = (string) \Tests\Support\CartPageStyles::all();
     expect($src)->toContain("bar.classList.toggle('cpg-has', !!a)");
 });
 // MUTATION: render the class unconditionally in cart-inner.blade.php.
@@ -1338,7 +1338,7 @@ it('carries the three new sizes onto the page and derives the sizes from them', 
      * SIZING IS CSS, NOT JAVASCRIPT — so what the page carries is the number,
      * and every size is a calc() off it. Nothing here measures anything.
      */
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     /*
      * The address button: its own multiplier ON TOP of the shared bar scale,
@@ -1374,7 +1374,7 @@ it('counts the space under the rows as part of what the page has to clear', func
      * line instead of moving the end of the page up away from them — which is
      * the opposite of what the control is for.
      */
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect($css)->toContain('--cpg-bars:calc(var(--cpg-addr-h) + var(--cpg-co-h) + var(--cpg-bar-pad));');
 });
@@ -1443,7 +1443,7 @@ it('drives the name and the price from two different weights', function () {
     expect($vars)->toContain('--cpg-rec-bold:400')
         ->and($vars)->toContain('--cpg-rec-price-bold:600');
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     // And the two rules read the two properties, not one of them twice.
     expect($css)->toContain('font-weight:var(--cpg-rec-price-bold)}')
@@ -1497,7 +1497,7 @@ it('derives the card height from the line height instead of a fixed em', functio
      * The old assertion pinned `height:calc(...)` and so would have failed on
      * that improvement — it pinned the fix rather than the thing being fixed.
      */
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     expect(preg_match('/min-height:calc\(var\(--cpg-rec-lh\) \* 2em\)/', $css))->toBe(1)
         ->and($css)->not->toContain('line-height:1.25;height:2.5em')
@@ -1518,7 +1518,7 @@ it('sizes and nudges the + without ever leaving the screen out of it', function 
         ->and($vars)->toContain('--cpg-rec-add-x:-6px')
         ->and($vars)->toContain('--cpg-rec-add-y:9px');
 
-    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $css = (string) \Tests\Support\CartPageStyles::all();
 
     /*
      * The size knob multiplies the clamp rather than replacing it. A pixel
@@ -2007,7 +2007,7 @@ it('reads the single-address session the live site is holding right now', functi
 // MUTATION: normalise() -> return [] for anything that is not already a list.
 
 it('draws all three in the sheet, each on its own endpoint, and says what the fourth will do', function () {
-    $src = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    $src = (string) \Tests\Support\CartPageStyles::all();
 
     $start = (int) strpos($src, 'function listHTML()');
     $fn = substr($src, $start, (int) strpos($src, 'function formHTML(', $start) - $start);

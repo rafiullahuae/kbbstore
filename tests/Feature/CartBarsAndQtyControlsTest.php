@@ -164,7 +164,7 @@ function barsQtyVisualKeys(): array
 
 function barsQtySqueezeCss(): string
 {
-    return (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+    return (string) \Tests\Support\CartPageStyles::all();
 }
 
 function barsQtyScreenSrc(): string

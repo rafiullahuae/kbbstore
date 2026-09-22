@@ -40,7 +40,7 @@ declare(strict_types=1);
  */
 function dvCss(): string
 {
-    return (string) file_get_contents(base_path('resources/views/store/cart-squeeze.blade.php'));
+    return (string) \Tests\Support\CartPageStyles::all();
 }
 
 /** The declarations, with this file's long explanations stripped out. */

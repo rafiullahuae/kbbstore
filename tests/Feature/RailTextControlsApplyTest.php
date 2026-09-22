@@ -32,7 +32,7 @@ function rtcRules(): string
     return (string) preg_replace(
         '#/\*.*?\*/#s',
         '',
-        (string) file_get_contents(base_path('resources/views/store/cart-squeeze.blade.php'))
+        (string) \Tests\Support\CartPageStyles::all()
     );
 }
 
