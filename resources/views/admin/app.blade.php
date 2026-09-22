@@ -1113,19 +1113,59 @@ tr.invdirty{background:var(--accent-soft)}
   display:grid;place-items:center;flex:none}
 .mhp-act i svg{width:var(--mhp-icon,13px);height:var(--mhp-icon,13px);color:var(--mhp-mark,#2A2228)}
 .mhp-act .mhp-acct svg{color:var(--mhp-acctc,#2A2228)}
+/* ── The counters and the trending row ────────────────────────────────────
+   Both were controls with nothing on screen to move: "Cart and wishlist count"
+   and "Trending words" each fed a CSS variable the storefront reads and this
+   preview never drew. A slider you cannot see the effect of is the same bug as
+   a slider that does nothing, from where the owner is sitting.
+
+   Class names follow the storefront: the counter is `.ib i` on a phone
+   (`header .ib i{font-size:var(--mh-badge,10px)}`) and the row is `.trend`
+   with a `<b>` heading (`header .trend a{font-size:var(--mh-trendsize,12px)}`),
+   so the two cannot drift apart without somebody noticing here first. */
+/* The counter is the storefront's own rule at preview scale, declaration for
+   declaration -- `.ib i{position:absolute;top:1px;inset-inline-end:1px;
+   background:var(--pink);font:700 10px Poppins;border-radius:99px;padding:0 5px}`
+   with the 5px of padding taken to 3px, which is 0.6 of it, the same factor the
+   script applies to every other number here. Given a shape of its own it would
+   crop differently from the phone at the top of the slider, and the owner would
+   be sizing it against a mock that disagrees with the thing it is a mock of. */
+.mhp-act i{position:relative}
+.mhp-act i b{position:absolute;top:1px;inset-inline-end:1px;
+  background:#E24B72;color:#fff;font-weight:700;font-size:var(--mhp-badge,6px);
+  border-radius:99px;padding:0 3px;font-style:normal;line-height:1.35}
+.mhp-trend{order:100;flex:0 0 100%;display:flex;align-items:center;flex-wrap:wrap;
+  gap:0 6px;margin:0 0 var(--mh-sgap,10px);font-size:var(--mhp-trend,7.2px);
+  color:var(--mh-sph,#9aa3b0)}
+.mhp-trend b{font-weight:700;color:#2A2228}
+.mhp-trend a{color:inherit;font-size:var(--mhp-trend,7.2px)}
 .mhp-logo{font-size:var(--mhp-logo,13px)}
 .mhp-logo b{font-size:var(--mhp-acc,inherit)}
-.mhp-sbox em{min-height:var(--mhp-sh,26px);padding-top:0;padding-bottom:0;
-  font-size:var(--mhp-st,10.5px)}
-.mhp-sbox em::before{width:var(--mhp-mag,11px);height:var(--mhp-mag,11px)}
+/* The search box's size controls used to live here, ABOVE the rule that draws
+   the box, at the same specificity -- so the hardcoded font-size and the 7px of
+   vertical padding further down simply won, and Field height, Typed text and
+   the magnifier moved nothing on this screen. They are folded into the one rule
+   that draws the box now; see it below. */
 /* Which state the account mark is being shown in. */
 .mmpv-note b{font-weight:700;color:#2A2228}
 .mhp-sbox{order:99;flex:0 0 100%;position:relative;margin:var(--mh-gap,0) 0 var(--mh-sgap,10px)}
+/* ONE rule, because two of them at the same specificity is how three controls
+   went quiet. Vertical padding is ZERO on purpose: the height is min-height and
+   nothing else, so Field height owns it across its whole range instead of being
+   held open at ~27px by 7px of padding it could not beat.
+
+   The placeholder size falls back to the typed size, which is exactly what the
+   storefront does -- `input::placeholder{font-size:var(--mh-phsize,inherit)}`
+   inherits from `input{font-size:var(--mh-stsize)}`. The <em> IS the
+   placeholder, so Placeholder leads and Typed text is what it falls back to. */
 .mhp-sbox em{display:flex;align-items:center;gap:7px;border:1px solid #E6DADF;
              background:var(--mh-sbg,#fff);border-radius:var(--mh-srad,9px);
-             padding:7px var(--mh-spad,10px);font-size:10.5px;font-style:normal;
+             min-height:var(--mhp-sh,26px);
+             padding:0 var(--mh-spad,10px);
+             font-size:var(--mhp-ph,var(--mhp-st,10.5px));font-style:normal;
              color:var(--mh-sph,#9aa3b0)}
-.mhp-sbox em::before{content:'';width:11px;height:11px;border:1.6px solid var(--mh-sicon,#9aa3b0);
+.mhp-sbox em::before{content:'';width:var(--mhp-mag,11px);height:var(--mhp-mag,11px);
+                     border:1.6px solid var(--mh-sicon,#9aa3b0);
                      border-radius:50%;flex:none}
 .mhp-mg{display:none}
 .mhp-snb .mhp-sbox em{border-color:transparent}
@@ -4614,12 +4654,26 @@ function mhPreview(){
   const S=0.6, px=(n)=>(Math.round(n*S*10)/10)+'px';
   const logo=mhGet('size_logo')||22;
   const stext=(mhGet('size_search')||16)*Math.max(1,sfit);
+  /* Zero is "Unchanged" for every size control, and MobileHeader::cssVariables()
+     emits NOTHING for one left there -- the storefront keeps its own fallback.
+     So the preview emits nothing either, and the CSS above carries the same
+     fallback numbers the stylesheet does. A control at Unchanged that still
+     wrote a value here would move the mock and not the phone. */
+  const keep=(v,val)=>v?`--mhp-${val}:${px(v)};`:'';
   const marks=`--mhp-ib:${px(mhGet('row_h'))};--mhp-icon:${px(21*fit)};
     --mhp-logo:${px(logo*(mhGet('fit_text')?fit:1))};
     --mhp-acc:${mhGet('size_accent')?px(mhGet('size_accent')*(mhGet('fit_text')?fit:1)):'inherit'};
     --mhp-sh:${px(mhGet('search_h'))};--mhp-st:${px(stext)};
+    ${keep(mhGet('size_ph'),'ph')}
+    ${keep(mhGet('size_badge'),'badge')}${keep(mhGet('size_trend'),'trend')}
     --mhp-mag:${px(17*sfit)};--mhp-mark:${escAttr(mhGet('acct_out'))};
     --mhp-acctc:${escAttr(MHTAB==='icons'?mhGet('acct_in'):mhGet('acct_out'))};`;
+  /* Drawn only when the storefront draws one. HeaderSettings' `trending_show`
+     is off by default and lives on another screen, so the payload carries it;
+     see MobileHeaderApiController::show(). */
+  const trend=MH.context&&MH.context.trending
+    ? `<div class="mhp-trend"><b>Trending</b><a>serum</a><a>sunscreen</a><a>cleanser</a></div>`
+    : '';
   const vars=`--mh-l:${l}px;--mh-r:${r}px;--mh-t:${mhGet('pad_top')}px;--mh-b:${mhGet('pad_bottom')}px;
     --mh-gap:${mhGet('row_gap')}px;--mh-sgap:${mhGet('search_gap')}px;--mh-igap:${mhGet('item_gap')}px;
     --mh-dv:${mhRgba()};--mh-dvw:${mhGet('dv_width')}px;--mh-dvin:${mhGet('dv_inset')}px;--mh-dvlen:${mhGet('dv_length')}px;
@@ -4634,8 +4688,8 @@ function mhPreview(){
         <div class="mhp-in">
           <span class="mhp-bg"></span>
           <span class="mhp-logo">K-Beauty<b>Bliss</b></span>
-          <span class="mhp-act"><i class="mhp-acct">${KBB_HEADER_ICONS.account}</i><i>${KBB_HEADER_ICONS.wishlist}</i><i>${KBB_HEADER_ICONS.cart}</i></span>
-          <span class="mhp-sbox"><i class="mhp-mg"></i><em>Search 671 products…</em></span>
+          <span class="mhp-act"><i class="mhp-acct">${KBB_HEADER_ICONS.account}</i><i>${KBB_HEADER_ICONS.wishlist}<b>2</b></i><i>${KBB_HEADER_ICONS.cart}<b>3</b></i></span>
+          <span class="mhp-sbox"><i class="mhp-mg"></i><em>Search 671 products…</em></span>${trend}
         </div>
       </div>
     </div>
