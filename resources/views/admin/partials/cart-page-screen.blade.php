@@ -102,11 +102,16 @@
   text-overflow:ellipsis}
 .cpv-nm{font-size:calc((11.5px + var(--h) * .042) * var(--f));font-weight:var(--w);line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* --qs on the height, the glyph AND the paddings, which is what the shop does:
+   there the box is a calc() off --cpg-qty-h and the glyph off --cpg-qty-f, and
+   both carry the multiplier. Scaling only the height here would draw a stepper
+   that grew taller and not wider — a preview disagreeing with the page about
+   the control it is drawing, which is the one thing it must never do. */
 .cpv-qty{display:inline-flex;align-items:center;border:1px solid #ebe3e6;border-radius:99px;
-  height:calc(var(--h) * .30);margin-top:calc(var(--h) * .04);
-  font-size:calc(var(--h) * .135 * var(--f))}
-.cpv-qty b{padding:0 calc(var(--h) * .10);font-weight:var(--w)}
-.cpv-qty i{padding:0 calc(var(--h) * .08);font-style:normal;color:#6b7280}
+  height:calc(var(--h) * .30 * var(--qs));margin-top:calc(var(--h) * .04);
+  font-size:calc(var(--h) * .135 * var(--f) * var(--qs))}
+.cpv-qty b{padding:0 calc(var(--h) * .10 * var(--qs));font-weight:var(--w)}
+.cpv-qty i{padding:0 calc(var(--h) * .08 * var(--qs));font-style:normal;color:#6b7280}
 .cpv-pr{flex:0 0 auto;font-size:calc((11px + var(--h) * .040) * var(--f));font-weight:var(--w);
   white-space:nowrap}
 
@@ -173,19 +178,22 @@
   box-shadow:0 -2px 10px -6px rgba(0,0,0,.25)}
 /* #fff, matching "the background must be full white" — the preview showed the
    cream the shop no longer uses. */
+/* --af multiplies INTO --bf and does not replace it, and --aw paints only the
+   heading — the same two rules the shop follows, so the drawing cannot say one
+   thing and the page another. */
 .cpv-ab{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;
-  min-height:var(--ah);padding:0 10px;font-size:calc(11px * var(--bf))}
+  min-height:var(--ah);padding:0 10px;font-size:calc(11px * var(--bf) * var(--af))}
 .cpv-ab .who{min-width:0;overflow:hidden}
 .cpv-ab .who b,.cpv-ab .who i{display:block;font-style:normal;white-space:nowrap;overflow:hidden}
-.cpv-ab .who b{font-weight:500;color:#3c3a40}
-.cpv-ab .who i{color:#6b7280;font-size:calc(10px * var(--bf))}
+.cpv-ab .who b{font-weight:var(--aw);color:#3c3a40}
+.cpv-ab .who i{color:#6b7280;font-size:calc(10px * var(--bf) * var(--af))}
 /* THE FADE ONLY ON THE ROW THAT HAS AN ADDRESS. Both states are drawn below, so
    the difference this makes is visible here rather than only on a phone. */
 .cpv-ab.has .who b,.cpv-ab.has .who i{
   -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
   mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent)}
-.cpv-ab .bt{flex:0 0 auto;color:#1e9e5a;font-weight:600;
-  font-size:calc(11.5px * var(--bf) * var(--abf))}
+.cpv-ab .bt{flex:0 0 auto;color:#1e9e5a;font-weight:var(--abw);
+  font-size:calc(11.5px * var(--bf) * var(--af) * var(--abf))}
 .cpv-cb{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;
   min-height:var(--ch);padding:0 10px}
 /* 0 0 auto: the tally never shrinks, so the figure cannot be clipped — the
@@ -716,6 +724,7 @@
       + '--h:' + pvNum('row_h', 96) + 'px;'
       + '--f:' + (pvNum('row_font', 100) / 100) + ';'
       + '--w:' + (pvOn('row_bold') ? 600 : 400) + ';'
+      + '--qs:' + (pvNum('qty_size', 100) / 100) + ';'
       + '--per:' + (per > 0 ? per : 4.5) + ';'
       + '--rw:' + (pvOn('rec_bold') ? 600 : 400) + ';'
       + '--rpw:' + (pvOn('rec_price_bold') ? 600 : 400) + ';'
@@ -730,7 +739,13 @@
       + '--ch:' + pvNum('co_h', 62) + 'px;'
       + '--bf:' + (pvNum('bar_font', 100) / 100) + ';'
       + '--bp:' + pvNum('bar_pad', 0) + 'px;'
+      + '--af:' + (pvNum('addr_font', 100) / 100) + ';'
+      /* The two weights are STORED AS THE CSS VALUE — '500', '700' — so
+         pvNum reads them straight, and an unsaved one falls back to the
+         weight the shop paints by hand today. */
+      + '--aw:' + pvNum('addr_bold', 500) + ';'
       + '--abf:' + (pvNum('addr_btn_font', 100) / 100) + ';'
+      + '--abw:' + pvNum('addr_btn_bold', 600) + ';'
       + '--ts:' + (pvNum('trust_size', 100) / 100) + ';'
       + '--sd:' + (pvNum('sheet_dense', 100) / 100) + ';'
       + '--sf:' + (pvNum('sheet_font', 100) / 100) + ';'
