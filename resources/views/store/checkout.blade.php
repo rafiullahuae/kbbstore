@@ -59,34 +59,26 @@
                     <!-- 1 · Contact -->
                     <div class="sec">
                         <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}</h2>
-                        <div class="row2">
-                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required
-                                validate="validate-required validate-email" priority="1"
-                                :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
-                                autocomplete="section-billing billing email"
-                                :value="old('billing_email', $prefill['email'] ?? '')" />
+{{-- NAME FIRST, then email and phone side by side, and all three required.
 
-                            <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" optional
-                                validate="validate-phone" priority="100"
-                                :placeholder="__('store.checkout.field_phone_placeholder')" inputmode="tel"
-                                autocomplete="section-billing billing tel"
-                                :value="old('billing_phone', $prefill['phone'] ?? '')" />
-                        </div>
-{{-- THE NAME LIVES HERE, with the other contact details.
+     The three things this order needs to reach a human, in the order someone
+     says them.
 
-     It used to open the Shipping address section, which was the right place
-     while that section was a set of address fields the shopper typed. It is an
-     address PICKER now, and a saved address carries no name — the popup asks
-     for Area, Apartment, City and Country and nothing else — so a name field
-     sitting above a list of saved addresses would read as naming the address
-     rather than the person.
+     The name used to open the Shipping address section, which was right while
+     that section was fields the shopper typed. It is an address PICKER now,
+     and a saved address carries no name -- the popup asks for Area, Apartment,
+     City and Country and nothing else -- so a name field above a list of saved
+     addresses would read as naming the address rather than the person.
 
-     Email, phone and name are the three things this order needs to reach a
-     human, and they belong together. The field, its validation priority and
-     its autocomplete tokens are unchanged: this is a move, not a rewrite, and
-     `billing_first_name` is still exactly what the form posts. --}}
-@if ($singleName ?? true)
-                            {{-- autocomplete="name", not "given-name". This one box holds the
+     Phone is required on the server as well as here: see place()'s rules. A
+     field marked required in the markup and nullable in the controller is not
+     mandatory, it is a suggestion a script can skip, and the card door posts
+     to the same endpoint.
+
+     A MOVE, NOT A REWRITE. Both shapes of the name field, their validation
+     priorities and their autocomplete tokens are unchanged, and
+     `billing_first_name` is still what the form posts. --}}@if ($singleName ?? true)
+{{-- autocomplete="name", not "given-name". This one box holds the
                                  whole name -- splitName() in the controller cuts it up -- and a
                                  browser told "given-name" fills it with the first name alone,
                                  leaving the surname to be typed by hand on a phone. --}}
@@ -112,6 +104,19 @@
                                     :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
                             </div>
 @endif
+                        <div class="row2">
+                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required
+                                validate="validate-required validate-email" priority="1"
+                                :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
+                                autocomplete="section-billing billing email"
+                                :value="old('billing_email', $prefill['email'] ?? '')" />
+
+                            <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" required
+                                validate="validate-required validate-phone" priority="100"
+                                :placeholder="__('store.checkout.field_phone_placeholder')" inputmode="tel"
+                                autocomplete="section-billing billing tel"
+                                :value="old('billing_phone', $prefill['phone'] ?? '')" />
+                        </div>
                         </div>
 {{-- THE THREE COMPOUND ROWS ON THIS PAGE STAY HAND-WRITTEN, deliberately.
 

@@ -125,6 +125,7 @@ function fyFields(array $overrides = []): array
 {
     return array_merge([
         'billing_email' => 'buyer@example.com',
+        'billing_phone' => '+971500000000',
         'billing_first_name' => 'Aisha',
         'billing_last_name' => 'Khan',
         'billing_address_1' => '12 Marina Walk',
@@ -396,6 +397,7 @@ it('keeps the card for a guest who creates an account in the same checkout', fun
     fyShopper(fyCart())
         ->postJson('/checkout/place', fyFields([
             'billing_email' => 'newcomer@example.com',
+            'billing_phone' => '+971500000000',
             'create_account' => '1',
             'account_password' => 'a-good-password',
             'save_card' => '1',

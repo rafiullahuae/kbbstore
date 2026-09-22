@@ -236,9 +236,22 @@ class CheckoutController extends Controller
             'customer_note' => ['nullable', 'string', 'max:600'],
             'is_gift' => ['nullable', 'boolean'],
             'gift_note' => ['nullable', 'string', 'max:600'],
-            // Optional, matching the live checkout where Phone is marked
-            // (optional). Requiring it here would reject a valid order.
-            'billing_phone' => ['nullable', 'string', 'max:40'],
+            /*
+             * REQUIRED, at the owner's instruction: "make all mandatory
+             * fields" for the three contact fields.
+             *
+             * It was nullable, matching the live checkout where Phone carried
+             * an (optional) note, and the comment here warned that requiring
+             * it would reject a valid order. That is exactly what it does now,
+             * and deliberately: a courier with no phone number cannot deliver,
+             * and on this shop delivery is a phone call.
+             *
+             * SERVER-SIDE AND NOT ONLY IN THE FORM. A field marked required in
+             * the markup and nullable here is not mandatory -- it is a
+             * suggestion that a script can skip, and the card door at
+             * /checkout/place takes the same rules.
+             */
+            'billing_phone' => ['required', 'string', 'max:40'],
             'billing_first_name' => ['required', 'string', 'max:120'],
             'billing_last_name' => [$lastNameRule, 'string', 'max:120'],
             'billing_address_1' => ['required', 'string', 'max:255'],

@@ -81,6 +81,7 @@ function guestEmailForm(array $overrides = []): array
 {
     return array_merge([
         'billing_email' => 'guest@example.com',
+        'billing_phone' => '+971500000000',
         'billing_first_name' => 'Aisha',
         'billing_last_name' => 'Khan',
         'billing_address_1' => '12 Marina Walk',

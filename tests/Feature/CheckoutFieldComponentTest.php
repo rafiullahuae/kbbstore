@@ -242,7 +242,7 @@ it('renders every checkout field through the shared component, with its hooks in
     $expected = [
         // id                    label                autocomplete                              inputmode  required
         ['billing_email',        'Email address',     'section-billing billing email',          'email',   true],
-        ['billing_phone',        'Phone',             'section-billing billing tel',            'tel',     false],
+        ['billing_phone',        'Phone',             'section-billing billing tel',            'tel',     true],
         ['billing_first_name',   'Full name',         'section-billing billing name',           null,      true],
         ['billing_address_1',    'Address',           'section-billing billing address-line1',  null,      true],
         ['billing_state',        'Emirate',           'section-billing billing address-level1', null,      true],

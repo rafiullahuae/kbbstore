@@ -649,6 +649,7 @@ function chokeForm(array $overrides = []): array
 {
     return array_merge([
         'billing_email' => 'buyer@example.ae',
+        'billing_phone' => '+971500000000',
         'billing_first_name' => 'Choke',
         'billing_last_name' => 'Buyer',
         'billing_address_1' => '12 Marina Walk',

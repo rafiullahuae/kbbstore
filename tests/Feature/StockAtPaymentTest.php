@@ -90,6 +90,7 @@ function cmPlace(Cart $cart, array $overrides = [])
         ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
         ->post('/checkout/place', array_merge([
             'billing_email' => 'buyer@example.com',
+            'billing_phone' => '+971500000000',
             'billing_first_name' => 'Aisha',
             'billing_last_name' => 'Khan',
             'billing_address_1' => '12 Marina Walk',

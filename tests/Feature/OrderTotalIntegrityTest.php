@@ -104,6 +104,7 @@ function integrityPlace(Cart $cart)
         ->withUnencryptedCookie(CartService::COOKIE, $cart->token)
         ->post('/checkout/place', [
             'billing_email' => 'gulf.buyer@example.com',
+            'billing_phone' => '+971500000000',
             'billing_first_name' => 'Noura',
             'billing_last_name' => 'Al Otaibi',
             'billing_address_1' => '44 King Fahd Road',

@@ -211,6 +211,7 @@ function bypassPlace(string $email)
         ->withUnencryptedCookie(CartService::COOKIE, bypassCart()->token)
         ->post('/checkout/place', [
             'billing_email' => $email,
+            'billing_phone' => '+971500000000',
             'billing_first_name' => 'Bob', 'billing_last_name' => 'Stranger',
             'billing_address_1' => '12 Marina Walk', 'billing_city' => 'Dubai',
             'billing_state' => 'Dubai', 'billing_country' => 'AE',
@@ -322,6 +323,7 @@ function bypassOrderFor(string $email): Order
         ->withUnencryptedCookie(CartService::COOKIE, bypassCart()->token)
         ->post('/checkout/place', [
             'billing_email' => $email,
+            'billing_phone' => '+971500000000',
             'billing_first_name' => 'Bob', 'billing_last_name' => 'Stranger',
             'billing_address_1' => '12 Marina Walk', 'billing_city' => 'Dubai',
             'billing_state' => 'Dubai', 'billing_country' => 'AE',
