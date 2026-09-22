@@ -745,40 +745,37 @@ class CartPage
      * The payment marks the trust row prints, in the order the reference shows
      * them, filtered to the ones switched on.
      *
-     * IN PHP AND NOT IN THE BLADE, for two reasons. The first is that these are
-     * COMPANY NAMES: a translated one is a different company, and
+     * IN PHP AND NOT IN THE BLADE, for two reasons. The first is that these
+     * carry COMPANY NAMES: a translated one is a different company, and
      * StorefrontStringsAreKeyedTest exists to catch English prose sitting in a
      * storefront template — six brand names interleaved with six @ifs is
      * exactly what it is meant to flag, and silencing it with six allowlist
      * entries would spend that guard's credibility on something that should not
-     * be in a template at all. The second is that when the schemes' own artwork
-     * replaces these text chips, this is the one list that has to change.
+     * be in a template at all. The second is that this is the one list that has
+     * to change when what a mark looks like changes.
      *
-     * NBSP between the two words of Apple Pay and Google Pay: the row is a
-     * single line of very small type and "Google" on one line with "Pay" on the
-     * next is not a payment mark, it is two words.
+     * WHICH IT NOW HAS. These were text chips reading "Visa", "Mastercard" and
+     * so on; they are the schemes' drawn marks, and the drawings themselves
+     * live in App\Support\PaymentMarkArt, whose header explains why they are
+     * inline SVG on this host rather than files under public/. This method's
+     * job is unchanged and deliberately so: take the six `pay_*` booleans and
+     * return, in the reference's order, exactly the marks that are switched on.
      *
-     * @return list<string> HTML-safe, and deliberately so — the entities are
-     *   the point. Nothing user-supplied reaches this list.
+     * @return list<string> HTML-safe, and deliberately so — the markup is the
+     *   point, and the trust row prints it with {!! !!}. Nothing user-supplied
+     *   reaches this list: PaymentMarkArt::marks() is a hardcoded constant with
+     *   no setting, no database read and no interpolation in it, which is what
+     *   keeps an unescaped print on the cart page from being an XSS sink.
      */
     public function paymentMarks(): array
     {
         $c = $this->all();
 
-        $marks = [
-            'pay_visa' => 'Visa',
-            'pay_mc' => 'Mastercard',
-            'pay_apple' => 'Apple&nbsp;Pay',
-            'pay_google' => 'Google&nbsp;Pay',
-            'pay_tabby' => 'tabby',
-            'pay_tamara' => 'tamara',
-        ];
-
         $out = [];
 
-        foreach ($marks as $key => $label) {
+        foreach (\App\Support\PaymentMarkArt::marks() as $key => $art) {
             if ($c[$key]) {
-                $out[] = $label;
+                $out[] = $art;
             }
         }
 
