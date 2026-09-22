@@ -377,28 +377,56 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
                     <span class="tr"><b>{!! \App\Support\Money::format($kbbGrand, $kbbCartDp) !!}</b></span>
                 </div>
             {{-- The secure badge, a rule, and the marks. One row, tiny, as
-                 asked. The marks are the shop's own existing text chips and NOT
-                 the card schemes' artwork: Visa, Mastercard, Apple Pay, Google
-                 Pay, tabby and tamara are trademarks with brand rules about
-                 size and clear space, and drawing an approximation of one into
-                 a live shop is the kind of thing that gets a merchant account a
-                 letter. Their supplied assets drop in here when somebody has
-                 them. --}}
+                 asked.
+
+                 THE MARKS ARE DRAWN ARTWORK NOW, not the text chips that used
+                 to sit here. The owner asked for proper payment icons, and a
+                 brand name set in 6.5px type reads as a label rather than as a
+                 mark. They are simplified renderings in each scheme's own
+                 colours -- the kind a merchant acceptance row carries -- and
+                 NOT the schemes' licensed asset kits. That is a real
+                 distinction and the note that stood here before was right to
+                 raise it: Visa, Mastercard, Apple Pay, Google Pay, tabby and
+                 tamara are trademarks with brand rules about size and clear
+                 space. If the owner obtains their supplied kits, or a scheme
+                 asks for its own file, App\Support\PaymentMarkArt is the single
+                 place any of it is swapped -- nothing else in the application
+                 knows what a payment mark looks like. --}}
             @if ($kbbCpg['trust_on'])
                 <div class="cpg-trust">
                     <span class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg>{{ $kbbCpg['trust_text'] }}</span>
                     <span class="sep" aria-hidden="true">|</span>
                     {{-- The marks come from CartPage::paymentMarks(), not from
-                         six literals here. They are COMPANY NAMES — a
+                         six literals here. They carry COMPANY NAMES — a
                          translated one is a different company — and prose in a
                          storefront template is what
                          StorefrontStringsAreKeyedTest exists to catch;
                          silencing it with six allowlist entries would spend
                          that guard's credibility on something that should not
-                         be in a template at all. It is also the one list that
-                         changes when the schemes' own artwork replaces these
-                         text chips. --}}
-                    <span class="paylogos">@foreach ($kbbCartPage->paymentMarks() as $kbbMark)<span>{!! $kbbMark !!}</span>@endforeach</span>
+                         be in a template at all. The brand names now live in
+                         each drawing's aria-label and <title>, still in PHP,
+                         which is what keeps this row's meaning for a screen
+                         reader once the words became pictures.
+
+                         {!! !!} and not {{ }}: the markup IS the mark. It is
+                         safe to print unescaped for one reason only — the list
+                         is a hardcoded constant, so nothing user-supplied can
+                         reach it. Keep it that way. --}}
+                    {{-- flex-wrap INLINE, overriding the `nowrap` that
+                         cart-squeeze.blade.php sets on .cpg-squeeze .paylogos.
+                         That rule is fine for six short words and wrong for six
+                         drawings: six marks cannot fit one line of a 360px
+                         phone at trust_size 150%, and under `nowrap` the
+                         browser shrinks the chips instead, so turning the
+                         slider UP made the artwork smaller. Wrapping lets the
+                         marks keep the size the slider asked for and take a
+                         second line when they need one. Inline because the rule
+                         it overrides lives in a file this lane does not own;
+                         it belongs in that stylesheet when the two next meet.
+                         (The marks' own max-width:100% is still the floor: on a
+                         320px screen a single line that cannot fit scales down
+                         rather than overlapping.) --}}
+                    <span class="paylogos" style="flex-wrap:wrap">@foreach ($kbbCartPage->paymentMarks() as $kbbMark)<span>{!! $kbbMark !!}</span>@endforeach</span>
                 </div>
             @endif
 @else

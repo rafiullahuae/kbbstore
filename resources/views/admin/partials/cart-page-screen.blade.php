@@ -64,6 +64,15 @@
     name -- [data-open], [data-tg], [data-pp] -- and a click on any element
     carrying one is handled by that listener whichever screen it belongs to.
 --}}
+{{-- The shop's own payment artwork, handed to the preview script below.
+
+     UP HERE AND NOT DOWN THERE because the script is inside this file's raw
+     region, where interpolation ships as literal text rather than running --
+     the note above says so. The preview used to draw its own text chips
+     ("VISA", "MC", "GPay"); the cart page draws artwork now, and a preview
+     that disagrees with the page is worse than no preview, because
+     `trust_size` is set by looking at it. One source, App\Support\PaymentMarkArt. --}}
+<script>window.CPV_PAY_ART = @json(\App\Support\PaymentMarkArt::marks());</script>
 @verbatim
 <style>
 /* Controls left, a phone that redraws as you drag on the right. Below 1100px
@@ -824,10 +833,14 @@
       + '<span>AED ' + (443 + fee).toFixed(2) + '</span></div></div>';
 
     if (pvOn('trust_on')) {
-      var marks = [['pay_visa','VISA'],['pay_mc','MC'],['pay_apple','Pay'],['pay_google','GPay'],
-                   ['pay_tabby','tabby'],['pay_tamara','tamara']]
-        .filter(function (m) { return pvOn(m[0]); })
-        .map(function (m) { return '<span class="cpv-pay">' + esc(m[1]) + '</span>'; }).join('');
+      /* NOT esc()'d, and that is not an oversight: these are drawings, and the
+         values are a hardcoded PHP constant handed over above -- no form value,
+         no setting and nothing a user typed reaches them. The six `pay_*`
+         booleans still decide which ones appear. */
+      var art = window.CPV_PAY_ART || {};
+      var marks = Object.keys(art)
+        .filter(function (k) { return pvOn(k); })
+        .map(function (k) { return '<span class="cpv-pay">' + art[k] + '</span>'; }).join('');
       out += '<div class="cpv-trust"><span class="tick">✓</span> '
         + esc(pvText('trust_text', 'Secure checkout')) + ' <span>|</span> ' + marks + '</div>';
     }
