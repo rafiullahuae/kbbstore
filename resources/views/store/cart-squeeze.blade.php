@@ -150,12 +150,66 @@
    than a fixed 2.5em, so opening the lines out gives the second line room
    instead of cropping it. --cpg-rec-lh ships 1.25, which is 2.5em — the number
    that was written here before it was a knob. */
-.kbb-cartpage.cpg-squeeze .cpg-card .nm{font-size:clamp(8px,2.45vw,10.5px);
+/*
+ * ▲ display:block, AND IT IS WHAT MAKES FOUR OF THESE CONTROLS WORK AT ALL.
+ *
+ * The markup is `<span class="nm">` — an INLINE element. `height`, `overflow`
+ * and vertical `margin` do not apply to a non-replaced inline box, and its
+ * line boxes are governed by the parent block's strut, so a smaller
+ * `line-height` on the span alone changes nothing you can see.
+ *
+ * So all four of these were dead on the page while looking perfectly correct
+ * in the stylesheet:
+ *   height  -> the two-line clamp never applied; names ran to three lines
+ *   overflow-> nothing was ever clipped
+ *   margin  -> the name-to-price gap slider moved nothing
+ *   line-height -> the parent's strut still set the line box
+ *
+ * Reported as "the line height of the product names is still the same even i
+ * changed from the backend to minimum", with a screenshot of three-line names
+ * under a rule that clamps to two — which is the tell: if the clamp were
+ * applying, the third line would be cut.
+ *
+ * `.pr` is the same shape and gets the same treatment, so its own margin and
+ * the gap above it are real too.
+ */
+/*
+ * THREE LINES, AN ELLIPSIS, AND A FADE ON THE LAST ONE.
+ *
+ * `-webkit-line-clamp` gives the ellipsis, and it is the only thing that does:
+ * `text-overflow:ellipsis` is single-line only. It needs the whole trio --
+ * display:-webkit-box, -webkit-box-orient:vertical, overflow:hidden -- and it
+ * is not prefixed-legacy-only: every current engine implements it under these
+ * names, which is why the unprefixed `line-clamp` is not used alone.
+ *
+ * `display:-webkit-box` also gives the name a BLOCK-level box, which is what
+ * makes its height, margin and line-height apply at all. As a plain <span> it
+ * was an inline box: height and vertical margin are ignored on one, and its
+ * line boxes are set by the parent's strut, so the line-height slider moved
+ * nothing. That is the bug this started as.
+ *
+ * The fade is a mask over the last line's tail, so a name cut mid-word softens
+ * out instead of stopping dead next to an ellipsis. -webkit- first, and a
+ * browser with neither simply shows the ellipsis, which is today's behaviour
+ * and not a broken one.
+ *
+ * `min-height` and not `height`: a one-line name should not reserve three
+ * lines of empty card, but a three-line one must not push the price out of
+ * alignment with its neighbours either.
+ */
+.kbb-cartpage.cpg-squeeze .cpg-card .nm{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;
+  overflow:hidden;
+  font-size:clamp(8px,2.45vw,10.5px);
   font-weight:var(--cpg-rec-bold);line-height:var(--cpg-rec-lh);
-  height:calc(var(--cpg-rec-lh) * 2em);overflow:hidden;
-  margin-bottom:var(--cpg-rec-gap);color:var(--ink-2)}
-.kbb-cartpage.cpg-squeeze .cpg-card .pr{font-size:clamp(8.5px,2.6vw,11px);
-  font-weight:var(--cpg-rec-price-bold)}
+  min-height:calc(var(--cpg-rec-lh) * 2em);
+  margin:0 0 var(--cpg-rec-gap);color:var(--ink-2);
+  -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%);
+  mask-image:linear-gradient(to bottom,#000 calc(100% - 0.55em),rgba(0,0,0,.35) 100%)}
+/* The price on its OWN line, under the name. Both were <span> inside the same
+   <a>, so they sat side by side on one line whatever the gap was set to. */
+.kbb-cartpage.cpg-squeeze .cpg-card .pr{display:block;font-size:clamp(8.5px,2.6vw,11px);
+  line-height:var(--cpg-rec-lh);font-weight:var(--cpg-rec-price-bold)}
 .kbb-cartpage.cpg-squeeze .cpg-card .pr .cwas{display:inline;margin:0 0 0 3px}
 .kbb-cartpage.cpg-squeeze .cpg-card .lk{display:block;color:inherit}
 /* The one-tap add, sitting on the corner of the picture. Sized from vw like

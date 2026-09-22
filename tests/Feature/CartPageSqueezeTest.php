@@ -183,7 +183,11 @@ it('keeps 4.5 cards a fraction of the screen rather than a pixel width', functio
     expect($css)->toContain('/ var(--cpg-per))')
         // and the name size is a clamp against vw, which is what "auto adjust
         // to the screen" means.
-        ->and($css)->toContain('.cpg-card .nm{font-size:clamp(8px,2.45vw,10.5px)');
+        // The clamp, not the declaration ORDER. This read
+        // `.cpg-card .nm{font-size:clamp(...)` and broke the day `display:block`
+        // was added in front of it — a test about type size failing over a
+        // change to the box model.
+        ->and($css)->toContain('font-size:clamp(8px,2.45vw,10.5px)');
 });
 // MUTATION: replace the flex-basis with a fixed `flex:0 0 78px`. RED.
 
@@ -1458,18 +1462,24 @@ it('keeps a shop that saved the old single switch exactly as it renders today', 
 // MUTATION: delete the rec_price_bold fallback block from all(). RED on the
 // first --cpg-rec-price-bold:600 — the upgraded shop loses its bold price.
 
-it('derives the two-line clamp from the line height instead of a fixed height', function () {
+it('derives the card height from the line height instead of a fixed em', function () {
     /*
      * `height:2.5em` was 1.25 twice over. Left as a literal, opening the lines
-     * out would have cropped the second one — a line-height control that makes
+     * out would have cropped the last one — a line-height control that makes
      * the name harder to read is worse than no control.
+     *
+     * min-height, NOT height, and the change is deliberate. A fixed height on
+     * a three-line clamp reserves three lines for a one-word name; a min-height
+     * keeps the prices aligned across the row without padding short cards out.
+     * The old assertion pinned `height:calc(...)` and so would have failed on
+     * that improvement — it pinned the fix rather than the thing being fixed.
      */
     $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
 
-    expect($css)->toContain('height:calc(var(--cpg-rec-lh) * 2em)')
+    expect(preg_match('/min-height:calc\(var\(--cpg-rec-lh\) \* 2em\)/', $css))->toBe(1)
         ->and($css)->not->toContain('line-height:1.25;height:2.5em')
         // The two gaps the owner asked for, on the two rules that own them.
-        ->and($css)->toContain('margin-bottom:var(--cpg-rec-gap)')
+        ->and(preg_match('/margin:0 0 var\(--cpg-rec-gap\)/', $css))->toBe(1)
         ->and($css)->toContain('margin-bottom:var(--cpg-rec-img-gap)');
 });
 // MUTATION: put `height:2.5em` back on .cpg-card .nm. RED on the first

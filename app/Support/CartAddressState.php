@@ -271,12 +271,63 @@ final class CartAddressState
      *
      * @return list<array{code: string, name: string}>
      */
+    /**
+     * WHERE THE SHOP ACTUALLY DELIVERS, NOT EVERY COUNTRY THERE IS.
+     *
+     * This listed all of `Countries::NAMES`. A shopper could pick Argentina,
+     * save it, reach checkout and be told there is no delivery there — having
+     * typed their whole address first. An address form that accepts a country
+     * the shop cannot ship to is a form that collects a wasted five minutes.
+     *
+     * The list is the same one the CHECKOUT's country dropdown uses, and
+     * deliberately so: two places deciding where the shop delivers is two
+     * places that can disagree, and the one nobody looks at is the one that
+     * goes stale. `ShippingService::coveredCountries()` is the zones that have
+     * at least one enabled method; `ExtendedDelivery::served()` is the extra
+     * countries that feature adds on top, and it is the reason this takes the
+     * union rather than the zone list alone.
+     *
+     * FAILS OPEN, and that asymmetry is the point. If neither source can
+     * answer — a zone table mid-migration, a service that throws — the shopper
+     * gets the full list rather than an empty dropdown. A form offering one
+     * country too many costs a message at checkout; a form offering none at
+     * all cannot be completed, and there is no way for the shopper to tell
+     * that it is the shop that is broken.
+     */
     private static function countryList(): array
     {
+        $codes = [];
+
+        try {
+            $codes = array_keys(app(\App\Services\ShippingService::class)->coveredCountries());
+        } catch (\Throwable $e) {
+            $codes = [];
+        }
+
+        try {
+            $extended = app(\App\Services\ExtendedDelivery::class);
+
+            if ($extended->enabled()) {
+                $codes = array_merge($codes, array_keys($extended->served()));
+            }
+        } catch (\Throwable $e) {
+            // The zones alone are still a usable answer.
+        }
+
+        $codes = array_values(array_unique(array_map('strtoupper', $codes)));
+
         $out = [];
 
-        foreach (Countries::NAMES as $code => $name) {
-            $out[] = ['code' => (string) $code, 'name' => (string) $name];
+        foreach ($codes as $code) {
+            if (isset(Countries::NAMES[$code])) {
+                $out[] = ['code' => $code, 'name' => (string) Countries::NAMES[$code]];
+            }
+        }
+
+        if ($out === []) {
+            foreach (Countries::NAMES as $code => $name) {
+                $out[] = ['code' => (string) $code, 'name' => (string) $name];
+            }
         }
 
         usort($out, static fn (array $a, array $b) => strcmp($a['name'], $b['name']));
