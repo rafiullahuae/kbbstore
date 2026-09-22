@@ -324,7 +324,32 @@
    env(safe-area-inset-bottom) is ADDED to it, not substituted for it: on a
    phone with a home indicator the shop's setting is space it asked for on top
    of the space the hardware already takes. It resolves to 0px everywhere else. */
-.kbb-cartpage.cpg-squeeze .cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:40;
+/*
+ * z-index 96, AND THE NUMBER IS THE WHOLE FIX.
+ *
+ * It was 40. `.tabbar` in kbb.css:888 is `position:fixed; bottom:0;
+ * z-index:95` with `background:rgba(255,255,255,.97)` and
+ * `backdrop-filter:blur(14px)` -- a near-opaque WHITE BAR that outranked the
+ * checkout row by 55 and painted straight over it.
+ *
+ * That is the "weird white bar". It appeared while scrolling and settled when
+ * the scroll stopped because Chrome re-rasterises a backdrop-filter during
+ * scroll; the bar was there the whole time, and only its paint came and went.
+ * Nothing of ours animates on scroll -- the only scroll listeners in this
+ * codebase are in home.js and pdp.js, and neither runs on the cart page.
+ *
+ * The rule below hides .tabbar on this page, which is the first line of
+ * defence and the one that was already here. This is the second: the docked
+ * rows now outrank EVERYTHING that can sit at the bottom of a storefront page,
+ * so a bar that escapes the hide -- an unapplied package, a stale compiled
+ * view, a module switched on, something added later -- still cannot cover the
+ * Checkout button.
+ *
+ * 96 and not 999: `.toast` is 100 and the mobile menu is 120, and both of
+ * those SHOULD be able to cover these rows. The number is "above every bottom
+ * bar", not "above everything".
+ */
+.kbb-cartpage.cpg-squeeze .cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:96;
   background:#fff;
   padding-bottom:calc(var(--cpg-bar-pad) + env(safe-area-inset-bottom, 0px));
   box-shadow:0 -2px 14px -6px rgba(42,34,40,.35);
@@ -550,7 +575,7 @@
 
 /* ── the address sheet ──────────────────────────────────────────────────── */
 /* The page behind is DIMMED AND BLURRED. */
-.cpg-scrim{position:fixed;inset:0;background:rgba(23,24,28,.34);z-index:50;opacity:0;
+.cpg-scrim{position:fixed;inset:0;background:rgba(23,24,28,.34);z-index:97;opacity:0;
   pointer-events:none;transition:opacity .2s;
   -webkit-backdrop-filter:blur(var(--cpg-sheet-blur,3px));
   backdrop-filter:blur(var(--cpg-sheet-blur,3px))}
@@ -572,7 +597,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
 /* PURE WHITE IN BOTH THEMES, and deliberately. The sheet sits over a dimmed
    page as its own surface; a panel that followed the page's colours would read
    as part of what is behind it rather than as a thing on top of it. */
-.cpg-sheet{position:fixed;inset-inline:0;bottom:0;z-index:52;background:#fff;color:#17181C;
+.cpg-sheet{position:fixed;inset-inline:0;bottom:0;z-index:98;background:#fff;color:#17181C;
   /*
    * bottom:0, like .cpg-docked above, and for the same reason it ended up
    * there: a calc(100lvh - 100dvh) lift was tried on both and measured wrong
@@ -651,7 +676,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
 /* The close button is ABOVE the sheet, not inside it: its own round white
    target clear of the content, so a thumb reaching for it never lands on an
    address by accident. */
-.cpg-x{position:fixed;inset-inline-end:14px;z-index:53;width:38px;height:38px;border-radius:50%;
+.cpg-x{position:fixed;inset-inline-end:14px;z-index:99;width:38px;height:38px;border-radius:50%;
   background:#fff;border:0;box-shadow:0 2px 10px -2px rgba(23,24,28,.3);cursor:pointer;
   display:grid;place-items:center;color:#17181C;opacity:0;pointer-events:none;bottom:0;
   transition:opacity .18s,transform .26s cubic-bezier(.32,.72,0,1);transform:translateY(12px)}

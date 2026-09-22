@@ -1220,9 +1220,20 @@ it('paints the docked rows full white, to the bottom edge', function () {
     expect($css)->toContain('padding:0 14px;background:#fff;')
         ->and($css)->not->toContain('padding:0 14px;background:var(--cream);');
 
-    // And the block itself is white, so the space underneath it is white too
-    // rather than showing the page through.
-    expect($css)->toContain('.cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:40;')
+    /*
+     * And the block itself is white, so the space underneath it is white too
+     * rather than showing the page through.
+     *
+     * The rule's PREFIX is not pinned here any more. It used to read
+     * `.cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:40;` — which
+     * made a test about the BACKGROUND fail the day the z-index changed, for a
+     * reason with nothing to do with what it was checking. The z-index has its
+     * own test now (CartDockedStackingTest), and it changed because 40 lost to
+     * .tabbar's 95 and let a white bar paint over the Checkout button.
+     *
+     * So: the selector, and the two declarations this test is actually about.
+     */
+    expect($css)->toContain('.cpg-docked{position:fixed;inset-inline:0;bottom:0;')
         ->and($css)->toContain('background:#fff;
   padding-bottom:calc(var(--cpg-bar-pad)');
 });
