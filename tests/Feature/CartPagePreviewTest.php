@@ -139,3 +139,76 @@ it('says so when the shop is still on the classic layout', function () {
         'the preview no longer says it is drawing a layout the shop is not using'
     );
 });
+
+/* =============================================================================
+ * THE RAIL'S TYPOGRAPHY KNOBS ALL MOVE THE DRAWING
+ * =============================================================================
+ *
+ * Twice this week a slider shipped that saved, reported success and moved
+ * nothing on the preview, and both times the owner reported it as broken —
+ * correctly. Seven new controls landed on the Recommended tab; each one is
+ * pinned here to the custom property pvVars() emits AND to the preview rule
+ * that reads it, because either half alone is a slider that does nothing.
+ */
+it('moves the drawn rail with every new typography and + control', function () {
+    $src = cppSource();
+
+    $vars = substr($src, (int) strpos($src, 'function pvVars()'));
+    $vars = substr($vars, 0, (int) strpos($vars, 'function pvRows('));
+
+    // Half one: the property is emitted, from the saved value, with the shipped
+    // default as its fallback.
+    foreach ([
+        "'--rpw:' + (pvOn('rec_price_bold')",
+        "'--rlh:' + (pvNum('rec_lh', 125)",
+        "'--rg:' + pvNum('rec_gap', 2)",
+        "'--rig:' + pvNum('rec_img_gap', 5)",
+        "'--ras:' + (pvNum('rec_add_size', 100)",
+        "'--rax:' + pvNum('rec_add_x', 0)",
+        "'--ray:' + pvNum('rec_add_y', 0)",
+    ] as $emit) {
+        expect(str_contains($vars, $emit))->toBeTrue(
+            "pvVars() does not emit {$emit} — the control saves and the drawing does not move"
+        );
+    }
+
+    // Half two: a rule in the preview stylesheet actually reads each one.
+    foreach (['var(--rpw', 'var(--rlh', 'var(--rg', 'var(--rig', 'var(--ras', 'var(--rax', 'var(--ray'] as $read) {
+        expect(str_contains($src, $read))->toBeTrue(
+            "nothing in the preview stylesheet reads {$read}, so the property is emitted into a vacuum"
+        );
+    }
+});
+// MUTATION: delete the '--ras:' line from pvVars(). RED on the first loop.
+// MUTATION: change `.cpv-rc .p` back to font-weight:var(--rw). RED on the
+// second loop — nothing reads --rpw.
+
+it('draws the preview card with the same arithmetic the shop card uses', function () {
+    /*
+     * Not the same numbers — the drawing is smaller than a phone — but the same
+     * SHAPE, so a knob that behaves one way in the console cannot behave another
+     * way in the shop. The name's box is two line-heights in both. The + is a
+     * multiplier on its size and an offset added to the corner it is pinned to,
+     * in both.
+     */
+    $src = cppSource();
+
+    expect(str_contains($src, 'height:calc(var(--rlh,1.25) * 2em)'))->toBeTrue(
+        'the drawn name still has a fixed height, so opening the line height crops it here '
+        .'and not in the shop'
+    );
+
+    expect(str_contains($src, 'width:calc(15px * var(--ras,1))'))->toBeTrue(
+        'the drawn + is a fixed size, so the size control moves nothing on the preview'
+    );
+
+    expect(str_contains($src, 'inset-inline-end:calc(-2px + var(--rax,0px))'))->toBeTrue(
+        'the drawn + is pinned to a fixed corner, so the horizontal nudge moves nothing'
+    );
+
+    expect(str_contains($src, 'bottom:calc(-2px + var(--ray,0px))'))->toBeTrue(
+        'the drawn + has no vertical nudge'
+    );
+});
+// MUTATION: put `width:15px;height:15px` back on .cpv-rc .pl. RED on the
+// second assertion.

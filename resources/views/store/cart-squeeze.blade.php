@@ -44,7 +44,9 @@
 /* ── the knobs, with the values the service emits as fallbacks ───────────── */
 .kbb-cartpage.cpg-squeeze{
   --cpg-row-h:96px; --cpg-fscale:1; --cpg-row-bold:600;
-  --cpg-per:4.5; --cpg-rec-bold:400; --cpg-drift:1;
+  --cpg-per:4.5; --cpg-rec-bold:400; --cpg-rec-price-bold:400; --cpg-drift:1;
+  --cpg-rec-lh:1.25; --cpg-rec-gap:2px; --cpg-rec-img-gap:5px;
+  --cpg-rec-add-s:1; --cpg-rec-add-x:0px; --cpg-rec-add-y:0px;
   --cpg-addr-h:40px; --cpg-co-h:62px; --cpg-bar-f:1;
   --cpg-bar-pad:0px; --cpg-addrbtn-f:1; --cpg-trust-s:1;
   --cpg-sheet-max:50%; --cpg-sheet-d:1; --cpg-sheet-f:1;
@@ -136,25 +138,41 @@
   background:#fff;border:1px solid var(--line-2);border-radius:9px;padding:5px;min-width:0}
 .kbb-cartpage.cpg-squeeze .cpg-card .im{position:relative;aspect-ratio:1;border-radius:6px;
   display:grid;place-items:center;color:#fff;font-weight:500;background-size:cover;
-  background-position:center;font-size:clamp(11px,3.6vw,17px);margin-bottom:5px}
+  background-position:center;font-size:clamp(11px,3.6vw,17px);margin-bottom:var(--cpg-rec-img-gap)}
 /* "the font size of the product names should be small and auto adjust to the
    screen" — clamp() against vw, so it is the SCREEN it adjusts to and not a
    measurement somebody took. */
+/* The name is clamped to TWO lines, and the box is two line-heights rather
+   than a fixed 2.5em, so opening the lines out gives the second line room
+   instead of cropping it. --cpg-rec-lh ships 1.25, which is 2.5em — the number
+   that was written here before it was a knob. */
 .kbb-cartpage.cpg-squeeze .cpg-card .nm{font-size:clamp(8px,2.45vw,10.5px);
-  font-weight:var(--cpg-rec-bold);line-height:1.25;height:2.5em;overflow:hidden;
-  margin-bottom:2px;color:var(--ink-2)}
+  font-weight:var(--cpg-rec-bold);line-height:var(--cpg-rec-lh);
+  height:calc(var(--cpg-rec-lh) * 2em);overflow:hidden;
+  margin-bottom:var(--cpg-rec-gap);color:var(--ink-2)}
 .kbb-cartpage.cpg-squeeze .cpg-card .pr{font-size:clamp(8.5px,2.6vw,11px);
-  font-weight:var(--cpg-rec-bold)}
+  font-weight:var(--cpg-rec-price-bold)}
 .kbb-cartpage.cpg-squeeze .cpg-card .pr .cwas{display:inline;margin:0 0 0 3px}
 .kbb-cartpage.cpg-squeeze .cpg-card .lk{display:block;color:inherit}
 /* The one-tap add, sitting on the corner of the picture. Sized from vw like
    everything else in the card, so it stays in proportion to a card whose width
    is a fraction of the screen. */
-.kbb-cartpage.cpg-squeeze .cpg-card .kc-badd{position:absolute;inset-inline-end:-3px;bottom:-3px;
-  width:clamp(17px,5.4vw,22px);height:clamp(17px,5.4vw,22px);border-radius:50%;
+/* The size knob is a MULTIPLIER on the clamp, never a replacement for it: the
+   button has to stay in proportion to a card that is a fraction of the screen,
+   so what the screen works out is still what is being nudged.
+
+   The two offsets are added to the corner it is pinned to -- inline-end and
+   bottom -- rather than applied as a translate, so "further out" means the same
+   thing in a right-to-left shop as in this one, and so the :active scale below
+   still has `transform` to itself. */
+.kbb-cartpage.cpg-squeeze .cpg-card .kc-badd{position:absolute;
+  inset-inline-end:calc(-3px + var(--cpg-rec-add-x));
+  bottom:calc(-3px + var(--cpg-rec-add-y));
+  width:calc(clamp(17px,5.4vw,22px) * var(--cpg-rec-add-s));
+  height:calc(clamp(17px,5.4vw,22px) * var(--cpg-rec-add-s));border-radius:50%;
   background:var(--green);color:#fff;border:1.5px solid #fff;display:grid;place-items:center;
-  font-size:clamp(11px,3.4vw,14px);line-height:1;cursor:pointer;padding:0;min-height:0;
-  font-family:inherit}
+  font-size:calc(clamp(11px,3.4vw,14px) * var(--cpg-rec-add-s));line-height:1;cursor:pointer;
+  padding:0;min-height:0;font-family:inherit}
 .kbb-cartpage.cpg-squeeze .cpg-card .kc-badd:active{transform:scale(.9)}
 
 /* ── coupon: minimal, directly under the rail ───────────────────────────── */
