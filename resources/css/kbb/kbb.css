@@ -1792,7 +1792,39 @@ header{border-bottom:1px solid var(--line-2)}
     --mm-parent-fg:#C13E63; --mm-pad:9px; --mm-pad-sub:8px; --mm-size:13px; --mm-cols:1fr 1fr;
     position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;top:var(--mm-top);width:100%;max-width:none;z-index:120;background:#fff;
     border-radius:var(--mm-radius) var(--mm-radius) 0 0;display:none;flex-direction:column;
-    transform:translateY(100%);transition:transform var(--mm-speed) cubic-bezier(.32,.72,0,1);
+    transform:translateY(100%);
+    /*
+     * ▲ visibility:hidden WHEN PARKED, AND IT IS NOT BELT-AND-BRACES.
+     *
+     * This sheet is position:fixed, bottom:0, top:20%, background #fff,
+     * z-index 120, and on a phone `.mmenu{display:block}` (line ~1670) puts it
+     * in the layer tree on every page. It is kept off screen by
+     * translateY(100%) alone -- and 100% is 100% OF ITS OWN HEIGHT, which is
+     * derived from the viewport.
+     *
+     * So when a phone's URL bar slides in or out, the sheet's height changes,
+     * its parked offset changes with it, and for the duration of that
+     * animation the top edge of a white rounded panel is exposed at the bottom
+     * of the screen. z-index 120 puts it over everything, including the cart's
+     * docked checkout rows.
+     *
+     * Reported three times as "a weird white bar that appears when you scroll
+     * back up and hides when you stop", on EVERY page, which is what finally
+     * ruled out the cart-only suspects. Found by rendering the pages and
+     * cross-referencing what is actually in the markup against every rule in
+     * this file that is fixed and anchored to the bottom: .tabbar was not in
+     * the HTML at all; this was, on all three.
+     *
+     * A hidden element cannot paint wherever the transform leaves it. The
+     * visibility transition is delayed by the slide on the way out so the sheet
+     * is still visible while it animates away, and instant on the way in.
+     *
+     * Its own sibling .msub has carried `visibility:hidden` while parked since
+     * it was written. This rule was the inconsistent one.
+     */
+    visibility:hidden;
+    transition:transform var(--mm-speed) cubic-bezier(.32,.72,0,1),
+               visibility 0s linear var(--mm-speed);
     box-shadow:0 -18px 44px -18px rgba(42,34,40,.42)
 }
 
@@ -1906,7 +1938,8 @@ header{border-bottom:1px solid var(--line-2)}
 
 /* The open state. Without this the sheet stays at translateY(100%) — it opens,
    but entirely below the screen, so nothing is ever visible. */
-.mmenu.on{transform:none}
+.mmenu.on{transform:none;visibility:visible;
+    transition:transform var(--mm-speed) cubic-bezier(.32,.72,0,1),visibility 0s}
 
 /* ═══ Menu icon ═══
    One definition, no overrides. Every property the bars need is stated here,
