@@ -431,10 +431,22 @@
     }
   }
 
-  async function search(term) {
+  /*
+   * WHAT THE OWNER TYPED, kept outside render().
+   *
+   * search() finishes by calling render(), which rebuilds the whole screen --
+   * including the search box. The box was drawn with no `value`, so 220ms after
+   * every keystroke it emptied itself and the caret jumped back to an empty
+   * field. Reported as "it's not letting me write anything", which is exactly
+   * what it looked like: you could type, and then you could not.
+   */
+  var term = '';
+
+  async function search(t) {
+    term = t;
     var mine = ++seq;
     try {
-      var body = await api('/cart-page/products?q=' + encodeURIComponent(term));
+      var body = await api('/cart-page/products?q=' + encodeURIComponent(t));
       if (mine !== seq) return;
       results = body.products || [];
     } catch (e) {
@@ -536,7 +548,7 @@
       + '<p class="cps-sub">Type to search by product name, SKU, slug or brand. '
       + 'The order below is the order they appear in, and up to ' + maxRec + ' fit.</p>'
       + '<div class="cps-fields">'
-      + '<input class="cps-search" type="search" id="cps-q" placeholder="Search products…" autocomplete="off">'
+      + '<input class="cps-search" type="search" id="cps-q" placeholder="Search products…" autocomplete="off" value="' + esc(term) + '">'
       + '<div class="cps-list">' + rows + '</div>'
       + '<div class="cps-chosen">' + chips + '</div>'
       + '</div></div>';
@@ -593,7 +605,12 @@
       + '</div>';
 
     var q = document.querySelector('#cps-q');
-    if (q) q.focus();
+    if (q) {
+      q.focus();
+      // focus() alone lands the caret at position 0 on a freshly created input,
+      // so the next character types itself in front of the word.
+      try { q.setSelectionRange(q.value.length, q.value.length); } catch (e) {}
+    }
   }
 
   /* -------------------------------------------------------------- preview */
@@ -868,8 +885,9 @@
       // Debounced: the endpoint is throttled as well, because a debounce is a
       // promise the browser makes and the throttle is the one the server makes.
       clearTimeout(timer);
-      var term = e.target.value;
-      timer = setTimeout(function () { search(term); }, 220);
+      var typed = e.target.value;
+      term = typed;          // so a render() before the timer fires keeps it
+      timer = setTimeout(function () { search(typed); }, 220);
     }
   });
 
