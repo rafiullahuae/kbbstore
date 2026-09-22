@@ -99,6 +99,35 @@ class CartPage
                          ['min' => 80, 'max' => 125, 'step' => 5, 'unit' => '%']],
         'row_bold'   => ['bool', 'Bold text in rows', true,
                          'On is what the rows do today. Off gives every line regular weight.'],
+        /*
+         * THE STEPPER, SIZED APART FROM THE ROW AND STILL DERIVED FROM IT.
+         *
+         * "also give option to control the size of the - + quanity icon etc."
+         *
+         * A MULTIPLIER, NOT A PIXEL SIZE, and that is the whole of the design.
+         * The owner asked earlier, in as many words, that "if i adjust the
+         * height of rows then inner content must adjust automatically" — so an
+         * absolute size here would be a direct contradiction of a requirement
+         * already met: the stepper would stay 34px while the row it sits in
+         * went from 132 down to 52 and swallowed it.
+         *
+         * So the stylesheet keeps `calc(var(--cpg-row-h) * .30)` and this is a
+         * third term on it. Both of the stepper's numbers take it — the box
+         * height AND the glyph size — so the two scale together and the shape
+         * of the control is invariant. That is what makes the digit safe at
+         * either end of the slider: at any value the stepper is today's
+         * stepper, scaled, so the digit cannot outgrow a box that grew with it
+         * and cannot rattle around in one that did not shrink.
+         *
+         * NO WEIGHT CONTROL FOR THE DIGIT, deliberately. The stylesheet already
+         * paints `.qty span` at `font-weight:var(--cpg-row-bold)`, so "Bold
+         * text in rows" three lines up governs it. A second switch beside this
+         * one would be two controls fighting over one declaration, and the
+         * loser is a switch that does nothing.
+         */
+        'qty_size'   => ['range', 'Size of the − / + quantity stepper', 100,
+                         'The minus, the plus and the number between them. A multiplier and not a fixed size: the stepper is worked out from the row height like everything else in the line, so it still shrinks when you shorten the row — this nudges that result up or down. The digit scales with the box, so it stays centred at every setting.',
+                         ['min' => 60, 'max' => 180, 'step' => 5, 'unit' => '%']],
 
         // ── Recommended rail ──
         'rec_on'      => ['bool', 'Show the recommended rail', true,
@@ -292,9 +321,80 @@ class CartPage
          * row_font follows against row_h. The two sliders cannot fight, and
          * neither can silently win.
          */
+        /*
+         * THE DELIVERY ROW ON ITS OWN — "give also option to control the font
+         * size, bold etc for delivery sticky row."
+         *
+         * Until now `bar_font` was the only size on either docked row, and it
+         * moved BOTH of them: there was no way to enlarge the delivery line
+         * without enlarging the Proceed to Checkout row underneath it.
+         *
+         * A MULTIPLIER ON TOP OF bar_font, never an override — the rule
+         * addr_btn_font states three lines up and row_font states against
+         * row_h. That gives the two docked rows three honest levels rather
+         * than three sliders arguing:
+         *
+         *     bar_font       both rows
+         *     addr_font      everything in the DELIVERY row, button included
+         *     addr_btn_font  the button on its own
+         *
+         * So the button reads 12px x bar_font x addr_font x addr_btn_font.
+         * Leaving addr_font off the button would make "the delivery row" mean
+         * "the delivery row except the only thing on the right of it", which
+         * is the kind of almost-true control this project keeps paying for.
+         *
+         * The row is `min-height`, so a larger setting grows the bar rather
+         * than clipping the words inside it.
+         */
+        'addr_font'       => ['range', 'Text in the delivery row', 100,
+                              'The delivery row only — its wording, the address under it and the button on the right. Multiplied into the size "Text in both rows" already produced, so this and that slider stack rather than overrule one another, and the checkout row below is left where it is.',
+                              ['min' => 80, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        /*
+         * A SELECT AND NOT A BOOL, AND THE DEFAULT IS WHY.
+         *
+         * row_bold and rec_bold are bools because the only two weights their
+         * text has ever had are the two a bool can carry — 600 on, 400 off.
+         * This row is not like that: `.cpg-addrbar .who b` is painted at 500
+         * today and `.cpg-addrbtn` at 600, both by hand, and a bool has no
+         * third position to put 500 in. Shipping a bool would mean choosing
+         * between "default true" (the row silently thickens to 600 on every
+         * shop already using this layout) and "default false" (it thins to
+         * 400). Either one breaks the promise every other default in this
+         * schema keeps, to buy a control the owner asked for — and it would
+         * still not reach 700, which is what "bold" means when somebody asks
+         * for it.
+         *
+         * So: the weights themselves, with today's as the default. Storing the
+         * CSS value rather than an index means cssVariables() prints what it
+         * was given and `cast` refuses anything not on this list.
+         */
+        'addr_bold'       => ['select', 'Weight of the delivery row text', '500',
+                              'The heading — "Please choose your delivery address", and "Delivering to Home" once one is picked. Medium is what the row is today. The address line under it stays regular; the button has its own setting below.', [
+                                  '400' => 'Regular',
+                                  '500' => 'Medium — as today',
+                                  '600' => 'Semi-bold',
+                                  '700' => 'Bold',
+                              ]],
         'addr_btn_font'   => ['range', 'Address button text size', 100,
                               'The "+ Address" / "Change address" button only. Multiplied into the size "Text in both rows" already produced, so the two sliders stack rather than overrule one another.',
                               ['min' => 80, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        /*
+         * The button carries its own text node and its own `font-weight:600`
+         * declaration — it is a `<button class="cpg-addrbtn">` beside the
+         * `.who` block, not a run inside it — so this is a real control and
+         * not a second name for the one above. Checked in the markup
+         * (store/cart-inner.blade.php) before it was added, because a switch
+         * that moves nothing is a bug this repo has shipped before.
+         *
+         * Same list as addr_bold, defaulting to the 600 the button is today.
+         */
+        'addr_btn_bold'   => ['select', 'Weight of the address button', '600',
+                              'The "+ Address" / "Change address" button only. Semi-bold is what it is today.', [
+                                  '400' => 'Regular',
+                                  '500' => 'Medium',
+                                  '600' => 'Semi-bold — as today',
+                                  '700' => 'Bold',
+                              ]],
         'co_label'        => ['text', 'Checkout button wording', 'Proceed to Checkout',
                               'It shares the docked row with the item count and the total, so a longer word here is a narrower tally beside it. The button gives way first and ends in an ellipsis rather than pushing the figures off a 360px screen.'],
         'addr_heading'    => ['text', 'Address row heading', 'Please choose your delivery address', ''],
@@ -412,7 +512,7 @@ class CartPage
     public const TABS = [
         'layout'  => ['Layout', 'Which cart page this shop serves, and whether it carries the site footer.', ['layout', 'footer_on']],
         'rows'    => ['Product rows', 'One height drives the whole line. Everything in it is worked out from that number.',
-                      ['row_h', 'row_font', 'row_bold']],
+                      ['row_h', 'row_font', 'row_bold', 'qty_size']],
         'rec'     => ['Recommended', 'Full width, no rounded corners, no padding box around it.',
                       ['rec_on', 'rec_heading', 'rec_per', 'rec_bold', 'rec_price_bold',
                        'rec_lh', 'rec_gap', 'rec_img_gap',
@@ -428,7 +528,8 @@ class CartPage
                        'trust_on', 'trust_text', 'trust_size',
                        'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara']],
         'bars'    => ['Docked rows', 'The two rows that stay at the foot of the screen.',
-                      ['addr_on', 'addr_h', 'co_h', 'bar_font', 'bar_pad', 'addr_btn_font', 'co_label',
+                      ['addr_on', 'addr_h', 'co_h', 'bar_font', 'bar_pad',
+                       'addr_font', 'addr_bold', 'addr_btn_font', 'addr_btn_bold', 'co_label',
                        'addr_heading', 'addr_btn_add', 'addr_btn_change', 'addr_chosen']],
         'popup'   => ['Address popup', 'Its two heights — one for the list, a taller one for the form — its density and every word in it.',
                       ['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
@@ -605,6 +706,10 @@ class CartPage
             '--cpg-row-h:' . $c['row_h'] . 'px',
             '--cpg-fscale:' . $this->ratio($c['row_font']),
             '--cpg-row-bold:' . ($c['row_bold'] ? 600 : 400),
+            // A third term on the stepper's `calc(var(--cpg-row-h) * .30)`,
+            // and on its glyph size with it, so the control grows and shrinks
+            // as one shape and still follows the row height.
+            '--cpg-qty-s:' . $this->ratio($c['qty_size']),
             '--cpg-per:' . $this->ratio($c['rec_per'], 10),
             '--cpg-rec-bold:' . ($c['rec_bold'] ? 600 : 400),
             '--cpg-rec-price-bold:' . ($c['rec_price_bold'] ? 600 : 400),
@@ -627,7 +732,14 @@ class CartPage
             '--cpg-co-h:' . $c['co_h'] . 'px',
             '--cpg-bar-f:' . $this->ratio($c['bar_font']),
             '--cpg-bar-pad:' . $c['bar_pad'] . 'px',
+            // The delivery row's own size, ON TOP of --cpg-bar-f and never in
+            // place of it, and its two weights. The weights are printed as
+            // given: `cast` only ever stores one of the four values the
+            // schema's option list names, so nothing else can reach here.
+            '--cpg-addr-f:' . $this->ratio($c['addr_font']),
+            '--cpg-addr-bold:' . $c['addr_bold'],
             '--cpg-addrbtn-f:' . $this->ratio($c['addr_btn_font']),
+            '--cpg-addrbtn-bold:' . $c['addr_btn_bold'],
             '--cpg-trust-s:' . $this->ratio($c['trust_size']),
         ]);
     }

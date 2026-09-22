@@ -51,8 +51,14 @@
   --cpg-per:4.5; --cpg-rec-bold:400; --cpg-rec-price-bold:400; --cpg-drift:1;
   --cpg-rec-lh:1.25; --cpg-rec-gap:2px; --cpg-rec-img-gap:5px;
   --cpg-rec-add-s:1; --cpg-rec-add-x:0px; --cpg-rec-add-y:0px;
+  --cpg-qty-s:1;
   --cpg-addr-h:40px; --cpg-co-h:62px; --cpg-bar-f:1;
   --cpg-bar-pad:0px; --cpg-addrbtn-f:1; --cpg-trust-s:1;
+  /* The delivery row's own size and the two weights it paints by hand today:
+     500 on the heading, 600 on the button. They are fallbacks here and
+     settings in the service, so this block still renders today's row if the
+     style attribute never arrives. */
+  --cpg-addr-f:1; --cpg-addr-bold:500; --cpg-addrbtn-bold:600;
   --cpg-sheet-max:50%; --cpg-sheet-d:1; --cpg-sheet-f:1;
 
   /* derived, in CSS, once */
@@ -61,8 +67,14 @@
   --cpg-f-name:calc((11.5px + var(--cpg-row-h) * .042) * var(--cpg-fscale));
   --cpg-f-brand:calc((7.5px + var(--cpg-row-h) * .022) * var(--cpg-fscale));
   --cpg-f-price:calc((11px + var(--cpg-row-h) * .040) * var(--cpg-fscale));
-  --cpg-qty-h:calc(var(--cpg-row-h) * .30);
-  --cpg-qty-f:calc(var(--cpg-row-h) * .135 * var(--cpg-fscale));
+  /* THE STEPPER, AND --cpg-qty-s IS ON BOTH LINES ON PURPOSE.
+     Still off --cpg-row-h, so shortening the row still shrinks the control
+     inside it — the shop's own requirement, and the reason this knob is a
+     multiplier rather than a pixel size. Putting it on the glyph as well as
+     on the box keeps the two in the ratio they have today, which is what
+     stops the digit overflowing at 180% or floating in a box at 60%. */
+  --cpg-qty-h:calc(var(--cpg-row-h) * .30 * var(--cpg-qty-s));
+  --cpg-qty-f:calc(var(--cpg-row-h) * .135 * var(--cpg-fscale) * var(--cpg-qty-s));
   /* The space the last row has to clear. The padding under the docked rows is
      part of the bars' height, so asking for more of it moves the end of the
      page down with it rather than sliding the bars over the last basket line. */
@@ -484,9 +496,13 @@
 /* #fff and not var(--cream): "the background must be full white". The address
    row and the checkout row are one surface, and a cream strip above a white one
    reads as two bars rather than as the foot of the screen. */
+/* --cpg-addr-f is this row's own scale, multiplied INTO the shared bar scale
+   rather than replacing it, so "Text in both rows" still moves this row and
+   this slider still leaves the checkout row alone. `min-height` below means a
+   larger setting grows the bar; it cannot crop the wording. */
 .kbb-cartpage.cpg-squeeze .cpg-addrbar{display:flex;align-items:center;justify-content:space-between;
   gap:10px;min-height:var(--cpg-addr-h);padding:0 14px;background:#fff;
-  border-top:1px solid var(--line-2);font-size:calc(11.5px * var(--cpg-bar-f))}
+  border-top:1px solid var(--line-2);font-size:calc(11.5px * var(--cpg-bar-f) * var(--cpg-addr-f))}
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who{min-width:0;overflow:hidden}
 /* ONE LINE, FADED OFF AT THE RIGHT — "the shown address should be blured cut
    from the right side, if the address is going too long. i want in one line
@@ -517,15 +533,25 @@
 .kbb-cartpage.cpg-squeeze .cpg-addrbar.cpg-has .who span{
   -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent);
   mask-image:linear-gradient(to right,#000 calc(100% - 34px),transparent)}
-.kbb-cartpage.cpg-squeeze .cpg-addrbar .who b{font-weight:500;color:var(--ink-2)}
+/* THE HEADING'S WEIGHT, AND ONLY THE HEADING'S.
+   This `b` holds "Please choose your delivery address" before an address is
+   picked and "Delivering to Home" after it — the line the owner asked to be
+   able to embolden. The address itself, in the span below, is deliberately
+   left at the regular weight it inherits: it is the long line that gets faded
+   off the right, and thickening it is what makes that fade read as a smear. */
+.kbb-cartpage.cpg-squeeze .cpg-addrbar .who b{font-weight:var(--cpg-addr-bold);color:var(--ink-2)}
 .kbb-cartpage.cpg-squeeze .cpg-addrbar .who span{color:var(--muted);
-  font-size:calc(10px * var(--cpg-bar-f))}
+  font-size:calc(10px * var(--cpg-bar-f) * var(--cpg-addr-f))}
 /* Its own multiplier ON TOP of the shared bar scale, never instead of it, so
    this slider and "Text in both rows" cannot fight and neither can silently
    win — the same rule the row-text slider follows. */
 .kbb-cartpage.cpg-squeeze .cpg-addrbtn{flex:none;background:none;border:0;color:var(--green);
-  font-size:calc(12px * var(--cpg-bar-f) * var(--cpg-addrbtn-f));
-  font-weight:600;cursor:pointer;padding:4px 0;
+  /* Three terms, outermost first: both rows, this row, this button. The
+     button is part of the delivery row, so the row's own scale reaches it —
+     a size control for "the delivery row" that stopped at the button would
+     be telling half the truth. */
+  font-size:calc(12px * var(--cpg-bar-f) * var(--cpg-addr-f) * var(--cpg-addrbtn-f));
+  font-weight:var(--cpg-addrbtn-bold);cursor:pointer;padding:4px 0;
   font-family:inherit}
 .kbb-cartpage.cpg-squeeze .cpg-cobar{display:flex;align-items:center;justify-content:space-between;
   gap:12px;min-height:var(--cpg-co-h);padding:0 14px;background:#fff;

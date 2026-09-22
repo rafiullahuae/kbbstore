@@ -1333,9 +1333,25 @@ it('carries the three new sizes onto the page and derives the sizes from them', 
      */
     $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
 
-    // The address button: its own multiplier ON TOP of the shared bar scale,
-    // never instead of it, so the two sliders cannot fight.
-    expect($css)->toContain('font-size:calc(12px * var(--cpg-bar-f) * var(--cpg-addrbtn-f));');
+    /*
+     * The address button: its own multiplier ON TOP of the shared bar scale,
+     * never instead of it, so the two sliders cannot fight.
+     *
+     * STATED AS THE RULE AND NOT AS THE STRING. This assertion used to pin the
+     * whole declaration — `calc(12px * var(--cpg-bar-f) * var(--cpg-addrbtn-f))`
+     * — and a later lane adding a THIRD honest term to it (--cpg-addr-f, the
+     * delivery row's own scale, which multiplies into both of these rather
+     * than replacing either) turned it red without breaking anything it
+     * describes. A test that goes red on work it is not about is a test people
+     * learn to edit rather than read, which this repo has already paid for
+     * twice. So: pull the button's font-size out and require that both scales
+     * are still in it. The mutation below is still caught.
+     */
+    preg_match('/\.cpg-addrbtn\{[^}]*font-size:([^;]+);/', $css, $btn);
+
+    expect($btn)->not->toBeEmpty('.cpg-addrbtn no longer sets a font-size');
+    expect($btn[1])->toContain('var(--cpg-bar-f)')
+        ->and($btn[1])->toContain('var(--cpg-addrbtn-f)');
 
     // The trust row scales as a row: the tick, the wording and the chips.
     expect($css)->toContain('font-size:calc(10.5px * var(--cpg-trust-s))')
