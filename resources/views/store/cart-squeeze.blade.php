@@ -327,7 +327,43 @@
 .kbb-cartpage.cpg-squeeze .cpg-docked{position:fixed;inset-inline:0;bottom:0;z-index:40;
   background:#fff;
   padding-bottom:calc(var(--cpg-bar-pad) + env(safe-area-inset-bottom, 0px));
-  box-shadow:0 -2px 14px -6px rgba(42,34,40,.35)}
+  box-shadow:0 -2px 14px -6px rgba(42,34,40,.35);
+  /* THE SECOND `bottom`, AND IT IS THE WHOLE BUG FIX.
+     "when i scroll back to up on the cart page, the screen gives weired white
+     bar type ... and it hides the checkouts row."
+
+     `position:fixed` resolves `bottom` against the LAYOUT viewport, and on a
+     phone the layout viewport is the tall one -- the height the page has when
+     the browser's URL bar is retracted. Scrolling back upward brings that URL
+     bar out again. The layout viewport does not change; the VISIBLE part of it
+     shrinks, from the top, and its bottom edge is now that much below the
+     bottom of the screen. So is this block, which is pinned to it: the address
+     row is still on screen, the checkout row has slid off the bottom, and what
+     is left between them is the empty top of the checkout row -- a bar of this
+     block's own white with nothing in it. That is the band in the screenshot,
+     and the Proceed to Checkout button is underneath the screen edge.
+
+     Item count is not part of the cause. Two items do not fill the screen, so
+     there is nothing to scroll and the URL bar never leaves; ten items are
+     simply what makes the page scrollable enough to see it.
+
+     `100lvh` is that tall layout viewport, `100dvh` is however much of it is
+     visible right now, so their difference is exactly the strip hanging off the
+     bottom -- and lifting the block by it puts it back on the bottom edge of
+     what the shopper can actually see. With the URL bar retracted the two are
+     equal, the term is 0px, and this renders precisely as it does today; on a
+     desktop browser they are always equal.
+
+     It is a second `bottom` and not an @supports block on purpose: a browser
+     that does not parse `lvh`/`dvh` drops this declaration as invalid and keeps
+     the `bottom:0` above, which is where it already was.
+
+     `--cpg-bars` deliberately does NOT get the same term. It is padding at the
+     end of the document, so putting a `dvh` in it would make the page's height
+     change every time the URL bar moved -- and a document that grows and shrinks
+     under a scrolling finger drives the URL bar itself, which is a worse bug
+     than the one above. The bars float; the room left for them stays still. */
+  bottom:calc(100lvh - 100dvh)}
 /* #fff and not var(--cream): "the background must be full white". The address
    row and the checkout row are one surface, and a cream strip above a white one
    reads as two bars rather than as the foot of the screen. */
