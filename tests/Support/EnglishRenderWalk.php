@@ -309,8 +309,9 @@ final class EnglishRenderWalk
      * byte would have landed on all thirty pages.
      */
     /*
-     * MOVED FORWARD for the checkout's Full name field, which now sits in
-     * section 1 with the email and the phone instead of opening section 2.
+     * MOVED FORWARD for the checkout's contact row: Full name first, then
+     * email and phone beside each other, all three required. The name used to
+     * open section 2.
      *
      * The owner asked for it before the work started: section 2 is becoming an
      * address picker, and a saved address carries no name, so a name field
@@ -322,7 +323,7 @@ final class EnglishRenderWalk
      * is the half worth checking before advancing the pin rather than assuming:
      * a base commit moved forward over an unread diff is a guard switched off.
      */
-    public const BASE_COMMIT = 'fa3a47be7c2369cf0713c4330161915051f61bac';
+    public const BASE_COMMIT = '3eb0e370586ae2d14ec25fabd61f7f15af9e4fda';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
