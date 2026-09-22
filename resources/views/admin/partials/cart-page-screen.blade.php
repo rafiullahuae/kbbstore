@@ -116,10 +116,26 @@
    drawn at the real ratio between --cpv-d-aside and what is left. */
 .cpv-desk{border:1px solid var(--border,#e6e6e6);border-radius:12px;overflow:hidden;
   background:#fff;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
-.cpv-cols{display:grid;grid-template-columns:minmax(0,1fr) var(--cpv-d-aside,120px);
-  gap:var(--cpv-d-gap,10px);align-items:start}
+.cpv-cols{display:grid;grid-template-columns:minmax(0,1fr) var(--cpv-d-aside,31%);
+  column-gap:var(--cpv-d-gap,2%);row-gap:var(--cpv-d-secgap,1.3%);align-items:start;
+  padding:var(--cpv-d-pady,2%) var(--cpv-d-padx,2%)}
+/* The four spacing sliders, on the mock. Each reaches the same kind of box it
+   reaches on the page -- the gap between sections, the padding inside one --
+   so dragging one moves the preview the way it moves the shop. */
+.cpv-cols .cpv-ci{padding:var(--cpv-d-secpad,1.3%)}
+.cpv-cols .cpv-rail{padding:var(--cpv-d-secpad,1.3%)}
+/* The carousel arrows on the mock. Same placement as the page: outside the
+   scroller, half in and half out of the section's edge, centred on the picture
+   rather than on the section, because the cards carry text under the image. */
+.cpv-arrwrap{position:relative}
+.cpv-arr{position:absolute;top:42%;transform:translateY(-50%);z-index:2;
+  width:var(--cpv-d-arrow,2.8%);aspect-ratio:1;border-radius:50%;background:#fff;
+  border:1px solid #e4e7ec;box-shadow:0 4px 14px -6px rgba(23,24,28,.4);
+  display:grid;place-items:center;color:#5b6472;font-size:9px;line-height:1}
+.cpv-arr.l{left:calc(var(--cpv-d-arrow,2.8%) / -2.2)}
+.cpv-arr.r{right:calc(var(--cpv-d-arrow,2.8%) / -2.2)}
 .cpv-cols > div{min-width:0}
-.cpv-side{display:flex;flex-direction:column;gap:6px}
+.cpv-side{display:flex;flex-direction:column;gap:var(--cpv-d-secgap,1.3%)}
 .cpv-stick{border:1px dashed #cbd5e1;border-radius:8px;padding:4px;position:relative}
 .cpv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;
   background:#fff;padding:0 4px;font-size:7.5px;color:#94a3b8;letter-spacing:.02em}
@@ -823,6 +839,11 @@
          336px wide on most tabs and full-screen on the Desktop one. A ratio is
          a ratio at any width: 380 of 1200 is 31.7% of the page, and that is
          what the shop draws, so that is what the mock draws. */
+      + '--cpv-d-arrow:' + pvPct('d_arrow_size', 34) + ';'
+      + '--cpv-d-secgap:' + pvPct('d_sec_gap', 16) + ';'
+      + '--cpv-d-secpad:' + pvPct('d_sec_pad', 16) + ';'
+      + '--cpv-d-padx:' + pvPct('d_pad_x', 24) + ';'
+      + '--cpv-d-pady:' + pvPct('d_pad_y', 24) + ';'
       + '--cpv-d-aside:' + pvPct('d_aside', 380) + ';'
       + '--cpv-d-gap:' + pvPct('d_gap', 28) + ';'
       + '--cpv-d-modal:' + pvPct('d_modal_w', 460) + ';'
@@ -847,7 +868,12 @@
     var side = '<div class="cpv-side">' + pvSummary() + pvBars() + '</div>';
 
     return '<div class="cpv-cols" style="--per:var(--cpv-d-per,5.5)">'
-      + '<div>' + pvRows() + pvRail() + '</div>'
+      + '<div>' + pvRows()
+          + (pvOn('d_arrows')
+              ? '<div class="cpv-arrwrap">' + pvRail()
+                + '<span class="cpv-arr l">\u2039</span><span class="cpv-arr r">\u203a</span></div>'
+              : pvRail())
+          + '</div>'
       + '<div>' + (pvOn('d_sticky') ? '<div class="cpv-stick">' + side + '</div>' : side) + '</div>'
       + '</div>'
       + '<div class="cpv-modal">' + pvSheet('form') + '</div>';

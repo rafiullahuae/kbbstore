@@ -153,6 +153,16 @@ $kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
         @if ($kbbRec->isNotEmpty())
         <section class="cpg-rec">
             <h2>{{ $kbbCpg['rec_heading'] }}</h2>
+            {{-- The carousel arrows. Rendered only when the desktop layout AND
+                 the arrows are both switched on, and hidden by CSS below the
+                 breakpoint on top of that — a phone swipes, and a button a
+                 thumb can press by accident while scrolling is worse than no
+                 button. They are OUTSIDE .cpg-rail: inside a scroller they
+                 would scroll away with the cards they move. --}}
+            @if ($kbbCpg['d_on'] && $kbbCpg['d_arrows'])
+            <button class="cpg-arr cpg-arr-l" type="button" data-cpg-rail="-1" aria-label="{{ __('store.cart.recommended_prev') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
+            <button class="cpg-arr cpg-arr-r" type="button" data-cpg-rail="1" aria-label="{{ __('store.cart.recommended_next') }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
+            @endif
             <div class="cpg-rail">
                 @foreach ($kbbRec as $recProduct)
                     @php

@@ -146,6 +146,10 @@
 .kbb-cartpage.cpg-squeeze .cpg-rail{display:flex;gap:7px;overflow-x:auto;
   padding:2px 14px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .kbb-cartpage.cpg-squeeze .cpg-rail::-webkit-scrollbar{display:none}
+/* The carousel arrows are DESKTOP ONLY, and hidden here rather than only shown
+   in the query, so the phone's answer is the one this rule gives by default and
+   there is exactly one place that decides it. */
+.kbb-cartpage.cpg-squeeze .cpg-arr{display:none}
 /* 4.5 cards across whatever the screen is, because the card is a FRACTION of
    the screen and not a pixel width. The half card is the point: a card cut off
    by the edge is what tells a thumb there is more to the right. */
@@ -791,8 +795,34 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   transition:opacity .18s,transform .26s cubic-bezier(.32,.72,0,1);transform:translateY(12px)}
 .cpg-x.on{opacity:1;pointer-events:auto;transform:translateY(0)}
 .cpg-x svg{width:17px;height:17px}
-.cpg-sheet h2{font-size:calc(17px * var(--cpg-sheet-f,1));font-weight:700;margin:0 0 12px;
-  color:#17181C;flex:none}
+.cpg-sheet h2{font-size:calc(17px * var(--cpg-sheet-f,1));font-weight:700;margin:0;
+  color:#17181C;flex:none;min-width:0}
+/* TITLE LEFT, ACTIONS RIGHT, in one row inside the panel.
+
+   The close button used to be the only way out of the form, and it closed the
+   whole sheet: a shopper who tapped "Add New Address" to look at the form had
+   no way back to the addresses they already had, which reads as having lost
+   them. `Back to address` goes straight back to the list.
+
+   The X in this row is DESKTOP ONLY -- see the min-width block at the foot of
+   this stylesheet. On a phone the close button is the floating round one above
+   the sheet, which is a bigger target than anything that would fit in here and
+   is not moving. */
+.cpg-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:0 0 12px;flex:none}
+.cpg-acts{display:flex;align-items:center;gap:6px;flex:none}
+.cpg-back{display:inline-flex;align-items:center;gap:5px;border:0;background:none;
+  cursor:pointer;padding:5px 7px;border-radius:8px;color:var(--green,#1f7a4d);
+  font:600 calc(12px * var(--cpg-sheet-f,1))/1.1 inherit}
+.cpg-back:hover{background:rgba(31,122,77,.08)}
+.cpg-back svg{width:calc(14px * var(--cpg-sheet-f,1));height:calc(14px * var(--cpg-sheet-f,1));flex:none}
+/* Hidden on a phone, shown on desktop. Declared here rather than only in the
+   query so there is ONE rule deciding it, and the phone's answer is the one it
+   gives by default. */
+.cpg-xin{display:none;border:0;background:none;cursor:pointer;padding:5px;
+  border-radius:8px;color:#17181C;line-height:0}
+.cpg-xin:hover{background:rgba(23,24,28,.07)}
+.cpg-xin svg{width:calc(17px * var(--cpg-sheet-f,1));height:calc(17px * var(--cpg-sheet-f,1))}
 /* The one thing in the sheet allowed to scroll, and only when it has to. */
 .cpg-list{display:grid;gap:8px;margin-bottom:10px;min-height:0;overflow-y:auto;
   overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
@@ -926,9 +956,12 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   .kbb-cartpage.cpg-squeeze.cpg-d .wrap{
     max-width:var(--cpg-d-max,1200px);
     margin-inline:auto;
+    padding-inline:var(--cpg-d-padx,24px);
     /* The phone reserves room at the foot of the document for the two bars to
-       float over. Nothing floats here, so that reservation is just a hole. */
-    padding-bottom:24px}
+       float over. Nothing floats here, so that reservation is a hole, and this
+       is the owner's own number in its place. */
+    padding-top:var(--cpg-d-pady,24px);
+    padding-bottom:var(--cpg-d-pady,24px)}
 
   .kbb-cartpage.cpg-squeeze.cpg-d .grid{
     grid-template-columns:minmax(0,1fr) var(--cpg-d-aside,380px);
@@ -944,9 +977,19 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
      so one long unbroken product name would push the column wider than the
      page instead of wrapping inside it. */
   .kbb-cartpage.cpg-squeeze.cpg-d .grid > *{grid-column:1}
+  .kbb-cartpage.cpg-squeeze.cpg-d .grid{row-gap:var(--cpg-d-secgap,16px)}
   .kbb-cartpage.cpg-squeeze.cpg-d .grid > .cpg-side{
-    display:flex;flex-direction:column;gap:16px;
+    display:flex;flex-direction:column;gap:var(--cpg-d-secgap,16px);
     grid-column:2;grid-row:1 / span 99}
+
+  /* ── Padding inside a section ───────────────────────────────────────────
+     ONE number, applied to the three boxes that hold something: the basket
+     card, the rail and the summary. The phone's padding is the page's gutter,
+     because the phone's column IS the page; here the page has a gutter of its
+     own and a section's padding is a separate decision. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .items,
+  .kbb-cartpage.cpg-squeeze.cpg-d .sum{padding:var(--cpg-d-secpad,16px)}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec{padding:var(--cpg-d-secpad,16px)}
 
   /* The right column travels with the page once it reaches the top. This is
      NOT the phone's fixed bar and the difference is the point: the owner asked
@@ -972,7 +1015,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
      not just the margins; overriding the margin alone leaves the width. */
   .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec{
     margin-inline:0;width:auto;max-width:none;
-    padding-inline:14px;border-radius:14px;overflow:hidden}
+    border-radius:14px;overflow:hidden}
 
   /* The rail's count, desktop's own. The phone's number is a fraction of the
      SCREEN — 4.5 cards across 390px is a readable card, 4.5 across a 748px
@@ -982,6 +1025,42 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
      desktop there is no thumb to swipe, so that cue does MORE work here. */
   .kbb-cartpage.cpg-squeeze.cpg-d .cpg-card{
     flex:0 0 calc((100% - 14px - (7px * (var(--cpg-d-per,5.5) - 1))) / var(--cpg-d-per,5.5))}
+
+  /* ── The carousel arrows ────────────────────────────────────────────────
+     A phone swipes and needs no buttons. A desktop has no swipe: the rail
+     moves with a trackpad or a shift-wheel, neither of which anybody
+     discovers, so the half card announces more products and offers no way to
+     reach them. These are that way.
+
+     They sit OUTSIDE .cpg-rail — inside a scroller they would scroll away with
+     the cards they move — and are positioned against .cpg-rec, which is
+     already `position:relative` for the colour wash behind the cards.
+
+     Centred on the IMAGE, not on the section: the cards carry a name and a
+     price under the picture, so the middle of the section is somewhere near
+     the text and the arrows would sit low. 42% is the middle of the square. */
+  .kbb-cartpage.cpg-squeeze.cpg-d.cpg-darr .cpg-arr{
+    display:grid;place-items:center;position:absolute;top:42%;z-index:2;
+    width:var(--cpg-d-arrow,34px);height:var(--cpg-d-arrow,34px);
+    transform:translateY(-50%);
+    border:1px solid var(--line-2);border-radius:50%;background:#fff;
+    color:var(--ink-2);cursor:pointer;padding:0;
+    box-shadow:0 4px 14px -6px rgba(23,24,28,.4);
+    transition:background .15s,color .15s,box-shadow .15s}
+  .kbb-cartpage.cpg-squeeze.cpg-d.cpg-darr .cpg-arr:hover{
+    background:var(--green,#1f7a4d);color:#fff;box-shadow:0 6px 18px -6px rgba(23,24,28,.5)}
+  .kbb-cartpage.cpg-squeeze.cpg-d.cpg-darr .cpg-arr svg{
+    width:calc(var(--cpg-d-arrow,34px) * .46);height:calc(var(--cpg-d-arrow,34px) * .46)}
+  /* Half in, half out of the section's padding, so they read as belonging to
+     the rail without covering the first or last card. */
+  .kbb-cartpage.cpg-squeeze.cpg-d.cpg-darr .cpg-arr-l{
+    inset-inline-start:calc(var(--cpg-d-arrow,34px) / -2.2)}
+  .kbb-cartpage.cpg-squeeze.cpg-d.cpg-darr .cpg-arr-r{
+    inset-inline-end:calc(var(--cpg-d-arrow,34px) / -2.2)}
+  /* Nothing to scroll to in that direction. Dimmed rather than removed: a
+     control that disappears moves everything beside it. */
+  .kbb-cartpage.cpg-squeeze.cpg-d.cpg-darr .cpg-arr[disabled]{
+    opacity:.35;pointer-events:none}
 
   /* ── The address popup ──────────────────────────────────────────────────
      A phone's sheet rises from the bottom edge because that is where a thumb
@@ -1000,7 +1079,13 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     transform:translate(-50%,-46%) scale(.98)}
   .cpg-sheet.on{transform:translate(-50%,-50%) scale(1)}
 
-  .cpg-x{top:14px;right:14px}
+  /* The floating round close button is the PHONE's: it sits above a sheet that
+     rises from the bottom edge, where a thumb is. There is no bottom edge here
+     and no thumb, and an inline `bottom` that the script sets from the sheet's
+     height left it stranded in the corner of the screen, nowhere near the
+     panel it closes. The panel carries its own X in its header instead. */
+  .cpg-x{display:none}
+  .cpg-xin{display:inline-flex;align-items:center}
 }
 </style>
 @endpush
@@ -1037,11 +1122,55 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   var busy = false;
   var hideTimer = null;  // the one that takes the sheet off the screen
 
+  /* Grey out an arrow with nothing to scroll to. Rounded before comparing:
+     a scroller at its end reports a fractional scrollLeft on a zoomed page or
+     a high-DPI screen, so `>=` against the exact maximum is false by half a
+     pixel and the arrow never dims. */
+  function railArrows(railEl) {
+    var box = railEl.parentNode;
+    var l = box.querySelector('.cpg-arr-l');
+    var r = box.querySelector('.cpg-arr-r');
+    var max = railEl.scrollWidth - railEl.clientWidth;
+    if (l) l.disabled = Math.round(railEl.scrollLeft) <= 0;
+    if (r) r.disabled = Math.round(railEl.scrollLeft) >= Math.round(max) - 1;
+  }
+
+  /* Bound on the document for the same reason the clicks are: the rail itself
+     is replaced on every cart write. `true` is the capture phase, because
+     scroll does not bubble. */
+  document.addEventListener('scroll', function (e) {
+    var el = e.target;
+    if (el && el.classList && el.classList.contains('cpg-rail')) railArrows(el);
+  }, true);
+
+  /* And once at load, so an arrow with nothing behind it starts dimmed rather
+     than waiting for the first scroll to find out. */
+  function railArrowsAll() {
+    Array.prototype.forEach.call(document.querySelectorAll('.cpg-rail'), railArrows);
+  }
+  railArrowsAll();
+  document.addEventListener('kbb:cart-updated', railArrowsAll);
+
   /* Inline, and stroked from `currentColor`, so each icon takes its button's
      colour in both of its states without a second copy of the path. */
   var I_HOME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7"/><path d="M5.5 9.7V20h13V9.7"/><path d="M10 20v-5.2h4V20"/></svg>';
   var I_WORK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/></svg>';
   var I_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg>';
+  var I_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>';
+  var I_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+
+  /* The panel's own header. The X in it is desktop-only (CSS decides), and the
+     back link appears only when there is a list to go back to -- on a first
+     address the form IS the sheet, and a link to an empty list is a link to
+     nothing. */
+  function headHTML(title, withBack) {
+    return '<div class="cpg-head"><h2>' + esc(title) + '</h2><div class="cpg-acts">'
+      + (withBack
+          ? '<button type="button" class="cpg-back" data-cpg-back>' + I_BACK + '<span>' + esc(CFG.back || 'Back to address') + '</span></button>'
+          : '')
+      + '<button type="button" class="cpg-xin" data-cpg-xin aria-label="Close">' + I_CLOSE + '</button>'
+      + '</div></div>';
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -1074,7 +1203,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   /* Grey blocks in the SHAPE of the thing that is coming. Drawn only while a
      real request is in flight — never for content already in hand. */
   function skeletonHTML(rows) {
-    if (root.classList.contains('cpg-nosk')) return '<h2>' + esc(CFG.listTitle) + '</h2>';
+    if (root.classList.contains('cpg-nosk')) return headHTML(CFG.listTitle, false);
 
     var cards = '';
     for (var i = 0; i < rows; i++) {
@@ -1084,7 +1213,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
         + '<div class="cpg-sk cpg-skline w65"></div></div>';
     }
 
-    return '<h2>' + esc(CFG.listTitle) + '</h2>' + cards
+    return headHTML(CFG.listTitle, false) + cards
       + '<span class="cpg-vh" role="status">' + esc(CFG.loading) + '</span>';
   }
 
@@ -1130,7 +1259,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
       ? '<p class="cpg-note">' + esc(CFG.guestNote) + '</p>'
       : '';
 
-    return '<h2>' + esc(CFG.listTitle) + '</h2>'
+    return headHTML(CFG.listTitle, false)
       + '<div class="cpg-list">' + items + '</div>'
       + note
       + '<button type="button" class="cpg-addnew" data-cpg-new>'
@@ -1153,7 +1282,7 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
         + '</button>';
     }).join('');
 
-    return '<h2>' + esc(CFG.formTitle) + '</h2>'
+    return headHTML(CFG.formTitle, ((state && state.addresses) || []).length > 0)
       + '<p class="cpg-err" id="cpgErr" hidden></p>'
       + '<div class="cpg-fields">'
       + '<div class="full"><label for="cpgArea">' + esc(CFG.area) + '</label>'
@@ -1306,6 +1435,37 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   }
 
   document.addEventListener('click', function (e) {
+    /* The rail's arrows. Delegated on document, like everything else here,
+       because cart.js replaces the whole of #cartInner on every quantity
+       change and a handler bound to the button would go with it.
+
+       One card plus its gap times the whole cards on screen, so a press moves
+       a predictable number of products rather than an arbitrary number of
+       pixels, and the half card stays a half card at the far edge. */
+    var arrow = e.target.closest('[data-cpg-rail]');
+    if (arrow) {
+      var railEl = arrow.parentNode.querySelector('.cpg-rail');
+      if (railEl) {
+        /* A SCREENFUL LESS A SLIVER, computed from the rail's own visible
+           width. It deliberately does NOT measure a card: this page's whole
+           sizing rule is that nothing in JavaScript decides how big anything
+           is -- see this file's header, and the two tests that forbid the
+           element-measuring APIs in here by name -- because a script that
+           sizes the layout makes the first paint wrong on every phone.
+
+           Nothing is being sized here; this is how far to scroll when someone
+           presses a button, which cannot affect a paint that has already
+           happened. Keeping it off card geometry means it is also right while
+           the rail is mid-animation, when a card's measured width is whatever
+           the transition is part-way through. The sliver of overlap leaves the
+           card you were looking at just in view, so the eye keeps its place. */
+        railEl.scrollBy({
+          left: railEl.clientWidth * 0.86 * Number(arrow.dataset.cpgRail),
+          behavior: 'smooth'
+        });
+      }
+      return;
+    }
     if (e.target.closest('#cpgAddrBtn')) { e.preventDefault(); launch(); return; }
     if (e.target === scrim || e.target.closest('#cpgX')) { close(); return; }
   });
@@ -1398,6 +1558,12 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
 
     // + Add New Address: the form, and with it the form's taller cap.
     if (e.target.closest('[data-cpg-new]')) { paint(formHTML(), false); return; }
+    /* Straight back to the saved list, with no round trip: `state` already
+       holds the addresses the sheet was opened with, which is what listHTML()
+       draws from. Re-fetching would put a skeleton on screen to show a list
+       that never left memory. */
+    if (e.target.closest('[data-cpg-back]')) { paint(listHTML(), true); return; }
+    if (e.target.closest('[data-cpg-xin]')) { close(); return; }
 
     /* One of the guest's session addresses. Its own endpoint, taking its own
        handle: the server resolves it against this session's list and opens no

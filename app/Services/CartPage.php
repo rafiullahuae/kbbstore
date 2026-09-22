@@ -451,6 +451,38 @@ class CartPage
         'd_rec_per'    => ['range', 'Products across the rail', 55,
                            'In tenths: 55 is five and a half cards. The half card is deliberate — it is what tells someone the rail carries on past the edge. Desktop only; the phone keeps its own count under Recommended.',
                            ['min' => 30, 'max' => 90, 'step' => 5, 'unit' => '/10']],
+        /*
+         * ── Desktop spacing ──────────────────────────────────────────────
+         *
+         * The phone's spacing is the phone's: one column the width of the
+         * screen, where a card's padding IS the page's gutter. Desktop has two
+         * columns, a gap between them and room around everything, so the same
+         * numbers read as cramped there. These four are the ones that matter,
+         * and like everything else on this tab they are read only inside the
+         * min-width query.
+         */
+        'd_pad_x'      => ['range', 'Page side padding', 24,
+                           'Space between the edge of the page and the columns.',
+                           ['min' => 0, 'max' => 80, 'step' => 4, 'unit' => 'px']],
+        'd_pad_y'      => ['range', 'Page top and bottom padding', 24, '',
+                           ['min' => 0, 'max' => 80, 'step' => 4, 'unit' => 'px']],
+        'd_sec_gap'    => ['range', 'Space between sections', 16,
+                           'Between the basket and the Recommended rail on the left, and between the summary and the checkout block on the right.',
+                           ['min' => 0, 'max' => 48, 'step' => 2, 'unit' => 'px']],
+        'd_sec_pad'    => ['range', 'Padding inside a section', 16,
+                           'Inside the basket card, the rail and the summary — the space between a section\'s border and what it holds.',
+                           ['min' => 4, 'max' => 40, 'step' => 2, 'unit' => 'px']],
+        /*
+         * THE RAIL'S ARROWS, and they are a desktop thing specifically. A
+         * phone swipes; the half card is all the cue a thumb needs. A desktop
+         * has no swipe — the rail scrolls with a trackpad or a shift-wheel,
+         * neither of which anybody discovers — so the half card says "there is
+         * more" without offering any way to get at it. The arrows are that way.
+         */
+        'd_arrows'     => ['bool', 'Carousel arrows on the rail', true,
+                           'A round button at each end of the Recommended rail. Desktop only; a phone swipes instead, and the half card already tells it there is more.'],
+        'd_arrow_size' => ['range', 'Arrow size', 34, '',
+                           ['min' => 24, 'max' => 56, 'step' => 2, 'unit' => 'px']],
         'd_sticky'     => ['bool', 'Right column follows the scroll', true,
                            'The summary and Proceed to Checkout stay on screen while a long basket scrolls past. Off, they sit at the top and scroll away with the page.'],
         'd_sticky_top' => ['range', 'Gap above it when it sticks', 20, '',
@@ -517,6 +549,18 @@ class CartPage
         'sheet_font'       => ['range', 'Text in the popup', 100, '', ['min' => 80, 'max' => 120, 'step' => 5, 'unit' => '%']],
         'sheet_list_title' => ['text', 'Popup heading · choosing', 'Choose location', ''],
         'sheet_form_title' => ['text', 'Popup heading · adding', 'Add New Address', ''],
+        /*
+         * THE WAY BACK, and it needed one. Tapping "Add New Address" replaced
+         * the saved list with the form, and the only way back to the list was
+         * to close the sheet and open it again — which a shopper reads as
+         * having lost the addresses they had.
+         *
+         * It appears in the FORM view only, and only when there are saved
+         * addresses to go back to: on a first-ever address the form IS the
+         * sheet, and a link back to an empty list is a link to nothing.
+         */
+        'sheet_back'       => ['text', 'Back-to-the-list link', 'Back to address',
+                               'Top right of the address form, beside the close button. Shown only when there are saved addresses to go back to.'],
         'sheet_add_new'    => ['text', 'Add-another link', '+ Add New Address', ''],
         'sheet_save'       => ['text', 'Save button', 'Deliver here', ''],
         'sheet_area'       => ['text', 'Field · area', 'Area', ''],
@@ -591,10 +635,12 @@ class CartPage
                        'addr_heading', 'addr_btn_add', 'addr_btn_change', 'addr_chosen']],
         'desktop' => ['Desktop', 'The two-column cart page, from 1024px up. Everything here is read only on desktop — none of it can reach a phone.',
                       ['d_on', 'd_min', 'd_aside', 'd_gap', 'd_max',
-                       'd_rec_per', 'd_sticky', 'd_sticky_top', 'd_modal_w', 'd_modal_blur']],
+                       'd_rec_per', 'd_arrows', 'd_arrow_size',
+                       'd_pad_x', 'd_pad_y', 'd_sec_gap', 'd_sec_pad',
+                       'd_sticky', 'd_sticky_top', 'd_modal_w', 'd_modal_blur']],
         'popup'   => ['Address popup', 'Its two heights — one for the list, a taller one for the form — its density and every word in it.',
                       ['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
-                       'sheet_add_new', 'sheet_save', 'sheet_area', 'sheet_apt', 'sheet_city',
+                       'sheet_add_new', 'sheet_back', 'sheet_save', 'sheet_area', 'sheet_apt', 'sheet_city',
                        'sheet_area_hint', 'sheet_apt_hint', 'sheet_city_hint',
                        'sheet_country', 'sheet_geo_mark', 'sheet_geo_note', 'sheet_mark', 'sheet_home', 'sheet_office',
                        'sheet_loading', 'sheet_failed', 'sheet_guest_note']],
@@ -846,6 +892,11 @@ class CartPage
              * itself by cart-squeeze.blade.php, which is a Blade file.
              */
             '--cpg-d-per:' . $this->ratio($c['d_rec_per'], 10),
+            '--cpg-d-padx:' . $c['d_pad_x'] . 'px',
+            '--cpg-d-pady:' . $c['d_pad_y'] . 'px',
+            '--cpg-d-secgap:' . $c['d_sec_gap'] . 'px',
+            '--cpg-d-secpad:' . $c['d_sec_pad'] . 'px',
+            '--cpg-d-arrow:' . $c['d_arrow_size'] . 'px',
             '--cpg-d-aside:' . $c['d_aside'] . 'px',
             '--cpg-d-gap:' . $c['d_gap'] . 'px',
             '--cpg-d-max:' . $c['d_max'] . 'px',
@@ -902,6 +953,7 @@ class CartPage
              */
             $c['d_on'] ? 'cpg-d' : '',
             ($c['d_on'] && $c['d_sticky']) ? 'cpg-dstick' : '',
+            ($c['d_on'] && $c['d_arrows']) ? 'cpg-darr' : '',
         ]);
 
         return ' ' . implode(' ', $classes);
@@ -994,6 +1046,7 @@ class CartPage
             'listTitle' => $c['sheet_list_title'],
             'formTitle' => $c['sheet_form_title'],
             'addNew' => $c['sheet_add_new'],
+            'back' => $c['sheet_back'],
             'save' => $c['sheet_save'],
             'area' => $c['sheet_area'],
             'apt' => $c['sheet_apt'],

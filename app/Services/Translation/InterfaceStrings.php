@@ -528,6 +528,11 @@ final class InterfaceStrings
             'cart.free_delivery_phrase' => 'free delivery',
             'cart.free_delivery_unlocked' => 'You\'ve unlocked free delivery!',
             'cart.decrease_quantity' => 'Decrease quantity',
+            // The Recommended rail's carousel arrows, desktop only. Names, not
+            // labels: nothing on screen prints these -- they are what a screen
+            // reader announces for a button whose whole content is an icon.
+            'cart.recommended_prev' => 'Previous recommended products',
+            'cart.recommended_next' => 'More recommended products',
             'cart.increase_quantity' => 'Increase quantity',
             'cart.remove_item' => 'Remove',
             'cart.summary_heading' => 'Order Summary',

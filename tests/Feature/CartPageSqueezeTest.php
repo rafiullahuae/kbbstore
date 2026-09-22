@@ -905,7 +905,14 @@ it('scrolls the list inside its own box and never the sheet', function () {
         // The heading and + Add New Address do not shrink with it, so the link
         // out of the list stays where a thumb can reach it however long the
         // list gets.
-        ->and($css)->toContain("color:#17181C;flex:none}")
+        //
+        // ASSERTED AS THE RULE AND NOT AS A LITERAL. This used to pin the tail
+        // of the h2's declaration, `color:#17181C;flex:none}`, and it went red
+        // when the title gained a row to sit in beside "Back to address" and
+        // the close button — a change that does not touch what this test is
+        // about. What matters is that the header row is the flex child that
+        // will NOT shrink, so the list below it is the only one that can.
+        ->and($css)->toMatch('/\.cpg-head\{[^}]*flex:none\}/')
         ->and($css)->toMatch('/\.cpg-addnew\{[^}]*flex:none\}/')
         // Nothing gives the sheet itself a scrollbar.
         ->and($css)->not->toContain('.cpg-sheet{overflow-y:auto')
