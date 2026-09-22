@@ -122,12 +122,18 @@
 .cpv-rail{display:flex;gap:5px;padding:0 10px 2px;overflow:hidden}
 .cpv-rc{flex:0 0 calc((100% - (5px * (var(--per) - 1))) / var(--per));background:#fff;
   border:1px solid #ebe3e6;border-radius:7px;padding:4px}
-.cpv-rc .im{position:relative;aspect-ratio:1;border-radius:5px;margin-bottom:4px}
-.cpv-rc .pl{position:absolute;right:-2px;bottom:-2px;width:15px;height:15px;border-radius:50%;
+.cpv-rc .im{position:relative;aspect-ratio:1;border-radius:5px;margin-bottom:var(--rig,5px)}
+/* The + on the corner of the picture. Same three knobs the shop reads -- the
+   size is a multiplier and the two offsets are added to the corner it is
+   pinned to -- so the drawing cannot disagree with the card by arithmetic. */
+.cpv-rc .pl{position:absolute;inset-inline-end:calc(-2px + var(--rax,0px));
+  bottom:calc(-2px + var(--ray,0px));
+  width:calc(15px * var(--ras,1));height:calc(15px * var(--ras,1));border-radius:50%;
   background:#1e9e5a;color:#fff;border:1.5px solid #fff;display:grid;place-items:center;
-  font-size:10px;line-height:1}
-.cpv-rc .t{font-size:8px;font-weight:var(--rw);line-height:1.25;height:2.5em;overflow:hidden;color:#3c3a40}
-.cpv-rc .p{font-size:8.5px;font-weight:var(--rw)}
+  font-size:calc(10px * var(--ras,1));line-height:1}
+.cpv-rc .t{font-size:8px;font-weight:var(--rw);line-height:var(--rlh,1.25);
+  height:calc(var(--rlh,1.25) * 2em);overflow:hidden;color:#3c3a40;margin-bottom:var(--rg,2px)}
+.cpv-rc .p{font-size:8.5px;font-weight:var(--rpw,400)}
 
 /* summary */
 .cpv-sum{background:#fff;border:1px solid #ebe3e6;border-radius:10px;padding:10px;font-size:11px}
@@ -708,6 +714,13 @@
       + '--w:' + (pvOn('row_bold') ? 600 : 400) + ';'
       + '--per:' + (per > 0 ? per : 4.5) + ';'
       + '--rw:' + (pvOn('rec_bold') ? 600 : 400) + ';'
+      + '--rpw:' + (pvOn('rec_price_bold') ? 600 : 400) + ';'
+      + '--rlh:' + (pvNum('rec_lh', 125) / 100) + ';'
+      + '--rg:' + pvNum('rec_gap', 2) + 'px;'
+      + '--rig:' + pvNum('rec_img_gap', 5) + 'px;'
+      + '--ras:' + (pvNum('rec_add_size', 100) / 100) + ';'
+      + '--rax:' + pvNum('rec_add_x', 0) + 'px;'
+      + '--ray:' + pvNum('rec_add_y', 0) + 'px;'
       + '--mo:' + (pvNum('rec_motion', 1) || 0.0001) + ';'
       + '--ah:' + pvNum('addr_h', 40) + 'px;'
       + '--ch:' + pvNum('co_h', 62) + 'px;'

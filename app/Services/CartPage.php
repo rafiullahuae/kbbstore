@@ -107,8 +107,62 @@ class CartPage
         'rec_per'     => ['range', 'Products across the screen', 45,
                           'In tenths: 45 is four and a half cards. The half card is the point — a card cut off by the screen edge is what tells a thumb there is more to the right. Card width is a fraction of the screen, so the count holds on every phone.',
                           ['min' => 25, 'max' => 65, 'step' => 5, 'unit' => '/10']],
-        'rec_bold'    => ['bool', 'Bold text in the rail', false,
-                          'Off, as asked. The control is here so that can be changed without a code change.'],
+        /*
+         * ONE SWITCH BECAME TWO, AND THE OLD KEY KEPT ITS NAME.
+         *
+         * `rec_bold` drove the product name AND the price together. The owner
+         * asked for them apart. Renaming it to `rec_name_bold` and adding
+         * `rec_price_bold` would have been tidier to read and wrong to ship: a
+         * shop that has already saved `cartpage_rec_bold` would find the key
+         * nobody reads any more, both halves fall back to their defaults, and
+         * a rail that was bold this morning is not bold this afternoon.
+         *
+         * So the old key stays, meaning what its label now says — the NAME —
+         * and the price gets a new one that INHERITS IT until it is saved in
+         * its own right. See all(). A shop that saved `rec_bold = true` renders
+         * exactly what it rendered before this change, both halves bold, and
+         * the first time the owner touches the price switch it stops inheriting
+         * and starts being a setting of its own.
+         */
+        'rec_bold'    => ['bool', 'Bold product names in the rail', false,
+                          'Off, as asked. The price below the name has its own switch — until you move that one it follows this.'],
+        'rec_price_bold' => ['bool', 'Bold prices in the rail', false,
+                             'Follows the product-name switch above until you move it. From then on it is its own setting and the two are independent.'],
+        /*
+         * IN HUNDREDTHS, for the same reason rec_per is in tenths: `range`
+         * casts to an integer and 1.25 is not one. 125 is what the card does
+         * today, and the two-line clamp below the name is derived from it —
+         * height is 2 x line-height — so opening the lines out makes room for
+         * them instead of cropping the second one.
+         */
+        'rec_lh'      => ['range', 'Line height of product names', 125,
+                          'How far apart the two lines of a product name sit. The name is clamped to two lines and the box is worked out from this, so a looser setting gives the second line room rather than cutting it off.',
+                          ['min' => 100, 'max' => 190, 'step' => 5, 'unit' => '%']],
+        'rec_gap'     => ['range', 'Space under the product name', 2,
+                          'The gap between the name and the price under it.',
+                          ['min' => 0, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'rec_img_gap' => ['range', 'Space under the picture', 5,
+                          'The gap between the product picture and the name under it.',
+                          ['min' => 0, 'max' => 18, 'step' => 1, 'unit' => 'px']],
+        'rec_add_size' => ['range', 'Size of the + button', 100,
+                           'A multiplier on the one-tap add button, not a pixel size: the button is worked out from the screen width like the rest of the card, so it stays in proportion on every phone and this nudges that result.',
+                           ['min' => 60, 'max' => 180, 'step' => 5, 'unit' => '%']],
+        /*
+         * TWO SLIDERS, NOT FOUR. Left and right are one axis and a slider that
+         * crosses zero covers both of it; a pair of them would let a shop set
+         * left 6 and right 4 and then work out what that means. Zero is where
+         * the button sits today.
+         *
+         * Measured from the corner the button is pinned to, so they mirror with
+         * the page rather than against it: positive across is OUT past the
+         * corner of the picture, positive up is up.
+         */
+        'rec_add_x'   => ['range', 'Move the + left or right', 0,
+                          'Zero leaves it on the corner of the picture. Positive pushes it further out past that corner, negative tucks it back inside. It is measured from the corner it sits on, so it mirrors in a right-to-left shop.',
+                          ['min' => -16, 'max' => 16, 'step' => 1, 'unit' => 'px']],
+        'rec_add_y'   => ['range', 'Move the + up or down', 0,
+                          'Zero leaves it on the corner of the picture. Positive lifts it, negative drops it.',
+                          ['min' => -16, 'max' => 16, 'step' => 1, 'unit' => 'px']],
         'rec_motion'  => ['range', 'Background movement', 1,
                           'The rail sits on a slow wash of colour. 0 holds it still. It is directly above the checkout button, so it is deliberately quiet — and it stops entirely for anyone whose phone asks for reduced motion.',
                           ['min' => 0, 'max' => 3, 'step' => 1, 'unit' => '']],
@@ -342,7 +396,9 @@ class CartPage
         'rows'    => ['Product rows', 'One height drives the whole line. Everything in it is worked out from that number.',
                       ['row_h', 'row_font', 'row_bold']],
         'rec'     => ['Recommended', 'Full width, no rounded corners, no padding box around it.',
-                      ['rec_on', 'rec_heading', 'rec_per', 'rec_bold', 'rec_motion']],
+                      ['rec_on', 'rec_heading', 'rec_per', 'rec_bold', 'rec_price_bold',
+                       'rec_lh', 'rec_gap', 'rec_img_gap',
+                       'rec_add_size', 'rec_add_x', 'rec_add_y', 'rec_motion']],
         'summary' => ['Summary & trust', 'The figures under the coupon box, and the row of marks below them.',
                       ['sum_value_label',
                        'sum_express_on', 'sum_express', 'sum_express_label', 'sum_express_help',
@@ -371,7 +427,23 @@ class CartPage
 
     public function __construct(private SettingsService $settings) {}
 
-    /** @return array<string, mixed> */
+    /**
+     * Every value, saved or default.
+     *
+     * ── THE ONE KEY THAT DOES NOT SIMPLY FALL BACK TO ITS DEFAULT ───────────
+     *
+     * `rec_price_bold` falls back to `rec_bold` instead, and only while it has
+     * never been saved. The pair used to be one switch; see the note on the
+     * schema entry. A static default cannot be right for both of the shops that
+     * exist today — one that saved `rec_bold = true` needs a bold price and one
+     * that saved false needs a regular one — so the fallback is the old key
+     * rather than a constant, and every shop keeps the rail it already has.
+     *
+     * Done AFTER the loop and not inside it so it does not depend on the two
+     * keys' order in the schema.
+     *
+     * @return array<string, mixed>
+     */
     public function all(): array
     {
         $out = [];
@@ -379,6 +451,10 @@ class CartPage
         foreach (self::SCHEMA as $key => $def) {
             $saved = $this->settings->get(self::PREFIX . $key, null);
             $out[$key] = $saved === null ? $def[2] : $this->cast($key, $saved);
+        }
+
+        if ($this->settings->get(self::PREFIX . 'rec_price_bold', null) === null) {
+            $out['rec_price_bold'] = $out['rec_bold'];
         }
 
         return $out;
@@ -513,6 +589,18 @@ class CartPage
             '--cpg-row-bold:' . ($c['row_bold'] ? 600 : 400),
             '--cpg-per:' . $this->ratio($c['rec_per'], 10),
             '--cpg-rec-bold:' . ($c['rec_bold'] ? 600 : 400),
+            '--cpg-rec-price-bold:' . ($c['rec_price_bold'] ? 600 : 400),
+            // Unitless: the name's box is TWO of these, so the clamp opens out
+            // with the lines instead of cropping the second one.
+            '--cpg-rec-lh:' . $this->ratio($c['rec_lh']),
+            '--cpg-rec-gap:' . $c['rec_gap'] . 'px',
+            '--cpg-rec-img-gap:' . $c['rec_img_gap'] . 'px',
+            '--cpg-rec-add-s:' . $this->ratio($c['rec_add_size']),
+            // Signed, and printed with its unit, because the stylesheet adds
+            // them to the corner the button already sits on. A bare integer
+            // would need a `* 1px` in every calc() that reads it.
+            '--cpg-rec-add-x:' . $c['rec_add_x'] . 'px',
+            '--cpg-rec-add-y:' . $c['rec_add_y'] . 'px',
             // 0 would divide by zero in the animation-duration calc(). The
             // keyframes are switched off by the class instead; this keeps the
             // opacity term honest without a second branch in the stylesheet.

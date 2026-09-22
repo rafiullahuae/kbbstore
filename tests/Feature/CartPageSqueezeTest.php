@@ -1358,3 +1358,178 @@ it('puts each new control on the tab that owns what it changes', function () {
     }
 });
 // MUTATION: take 'trust_size' off the summary tab but leave it in SCHEMA.
+
+/* ------------------------------------------------------------------------
+ | 12. The rail's typography, and the + on the corner of the card
+ |------------------------------------------------------------------------*/
+
+/*
+ * "ALso give control to make the products title in rail bold and also same for
+ * pricing. and also the product heading line height control and spacing etc.
+ * and control for + add to cart icon, and positioning to adjust with left right
+ * up down etc."
+ *
+ * Seven knobs, and every one of them ships at the number that was hard-coded in
+ * the stylesheet before it was a knob. That is the first test below and it is
+ * the one that matters on a live shop.
+ */
+
+it('ships every new rail control at the value the card already rendered', function () {
+    squeezeOn();
+
+    $vars = app(CartPage::class)->cssVariables();
+
+    expect($vars)->toContain('--cpg-rec-bold:400')
+        ->and($vars)->toContain('--cpg-rec-price-bold:400')
+        // 1.25 and 2.5em were written into .cpg-card .nm as literals.
+        ->and($vars)->toContain('--cpg-rec-lh:1.25')
+        ->and($vars)->toContain('--cpg-rec-gap:2px')
+        ->and($vars)->toContain('--cpg-rec-img-gap:5px')
+        // A multiplier of one on the clamp, and no nudge at all.
+        ->and($vars)->toContain('--cpg-rec-add-s:1.00')
+        ->and($vars)->toContain('--cpg-rec-add-x:0px')
+        ->and($vars)->toContain('--cpg-rec-add-y:0px');
+});
+// MUTATION: change 'rec_lh' default from 125 to 150. RED on --cpg-rec-lh:1.25.
+
+it('drives the name and the price from two different weights', function () {
+    /*
+     * They shared --cpg-rec-bold. A shop that wanted a bold price and a regular
+     * name could not have one, which is what the owner asked for.
+     */
+    squeezeOn(['rec_bold' => false, 'rec_price_bold' => true]);
+
+    $vars = app(CartPage::class)->cssVariables();
+
+    expect($vars)->toContain('--cpg-rec-bold:400')
+        ->and($vars)->toContain('--cpg-rec-price-bold:600');
+
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    // And the two rules read the two properties, not one of them twice.
+    expect($css)->toContain('font-weight:var(--cpg-rec-price-bold)}')
+        ->and($css)->toContain('font-weight:var(--cpg-rec-bold);line-height:var(--cpg-rec-lh);');
+});
+// MUTATION: point .cpg-card .pr back at var(--cpg-rec-bold). RED on the
+// toContain for the price rule.
+
+it('keeps a shop that saved the old single switch exactly as it renders today', function () {
+    /*
+     * THE UPGRADE CASE, and the only reason `rec_bold` still has its old name.
+     *
+     * The key was one switch over both halves. A shop that turned it on has a
+     * bold name AND a bold price on its cart page right now. `rec_price_bold`
+     * has never been written in that shop, so it INHERITS rec_bold rather than
+     * falling back to its own default — and the rail renders after the package
+     * exactly as it did before it.
+     */
+    squeezeOn(['rec_bold' => true]);
+
+    $vars = app(CartPage::class)->cssVariables();
+
+    expect($vars)->toContain('--cpg-rec-bold:600')
+        ->and($vars)->toContain('--cpg-rec-price-bold:600')
+        ->and(app(CartPage::class)->get('rec_price_bold'))->toBeTrue();
+
+    /*
+     * And the inheritance ENDS the moment the price switch is saved in its own
+     * right — otherwise it is not a control, it is a mirror. Saving it false
+     * against a true rec_bold is the case a static default can never express.
+     */
+    app(CartPage::class)->save(['rec_price_bold' => false]);
+
+    $vars = app(CartPage::class)->cssVariables();
+
+    expect($vars)->toContain('--cpg-rec-bold:600')
+        ->and($vars)->toContain('--cpg-rec-price-bold:400');
+});
+// MUTATION: delete the rec_price_bold fallback block from all(). RED on the
+// first --cpg-rec-price-bold:600 — the upgraded shop loses its bold price.
+
+it('derives the two-line clamp from the line height instead of a fixed height', function () {
+    /*
+     * `height:2.5em` was 1.25 twice over. Left as a literal, opening the lines
+     * out would have cropped the second one — a line-height control that makes
+     * the name harder to read is worse than no control.
+     */
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    expect($css)->toContain('height:calc(var(--cpg-rec-lh) * 2em)')
+        ->and($css)->not->toContain('line-height:1.25;height:2.5em')
+        // The two gaps the owner asked for, on the two rules that own them.
+        ->and($css)->toContain('margin-bottom:var(--cpg-rec-gap)')
+        ->and($css)->toContain('margin-bottom:var(--cpg-rec-img-gap)');
+});
+// MUTATION: put `height:2.5em` back on .cpg-card .nm. RED on the first
+// toContain.
+
+it('sizes and nudges the + without ever leaving the screen out of it', function () {
+    squeezeOn(['rec_add_size' => 140, 'rec_add_x' => -6, 'rec_add_y' => 9]);
+
+    $vars = app(CartPage::class)->cssVariables();
+
+    expect($vars)->toContain('--cpg-rec-add-s:1.40')
+        // Signed, with its unit, because the stylesheet ADDS it to the corner.
+        ->and($vars)->toContain('--cpg-rec-add-x:-6px')
+        ->and($vars)->toContain('--cpg-rec-add-y:9px');
+
+    $css = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    /*
+     * The size knob multiplies the clamp rather than replacing it. A pixel
+     * size here would be the one thing in the card that does not scale with a
+     * screen the card's own width is a fraction of.
+     */
+    expect($css)->toContain('width:calc(clamp(17px,5.4vw,22px) * var(--cpg-rec-add-s))')
+        ->and($css)->toContain('font-size:calc(clamp(11px,3.4vw,14px) * var(--cpg-rec-add-s))')
+        /*
+         * And the offsets are added to inset-inline-end and bottom, not applied
+         * as a translate: the button is pinned to a LOGICAL corner, so "further
+         * out" has to mean the same thing in an Arabic shop, and `transform` is
+         * already spoken for by the :active press.
+         */
+        ->and($css)->toContain('inset-inline-end:calc(-3px + var(--cpg-rec-add-x))')
+        ->and($css)->toContain('bottom:calc(-3px + var(--cpg-rec-add-y))')
+        ->and($css)->toContain('.cpg-card .kc-badd:active{transform:scale(.9)}');
+});
+// MUTATION: replace the two calc()s with a `translate:var(--cpg-rec-add-x)
+// var(--cpg-rec-add-y)`. RED on the inset-inline-end assertion.
+
+it('clamps the + offsets to a range that crosses zero in both directions', function () {
+    /*
+     * ONE SLIDER PER AXIS, not four. Left and right are the same axis and a
+     * range that crosses zero covers both ends of it; a separate control for
+     * each direction lets a shop set left 6 AND right 4 and then work out what
+     * that means.
+     */
+    foreach (['rec_add_x', 'rec_add_y'] as $key) {
+        $o = CartPage::SCHEMA[$key][4];
+
+        expect($o['min'])->toBeLessThan(0)
+            ->and($o['max'])->toBeGreaterThan(0)
+            ->and(CartPage::SCHEMA[$key][2])->toBe(0);
+    }
+
+    // And the clamp holds at both ends, which a one-sided max() would not.
+    squeezeOn(['rec_add_x' => -900, 'rec_add_y' => 900]);
+
+    expect(app(CartPage::class)->get('rec_add_x'))->toBe(-16)
+        ->and(app(CartPage::class)->get('rec_add_y'))->toBe(16);
+});
+// MUTATION: set 'rec_add_x' min to 0. RED on toBeLessThan(0) and on the -16.
+
+it('puts all seven new rail controls on the Recommended tab', function () {
+    $keys = CartPage::TABS['rec'][2];
+
+    foreach (['rec_price_bold', 'rec_lh', 'rec_gap', 'rec_img_gap',
+        'rec_add_size', 'rec_add_x', 'rec_add_y'] as $key) {
+        expect(CartPage::SCHEMA)->toHaveKey($key)
+            ->and($keys)->toContain($key);
+    }
+
+    // The old key is still there, still first of the pair, still named what it
+    // was named — see the note in the schema.
+    expect(CartPage::SCHEMA)->toHaveKey('rec_bold')
+        ->and($keys)->toContain('rec_bold');
+});
+// MUTATION: take 'rec_add_y' off the rec tab but leave it in SCHEMA.
