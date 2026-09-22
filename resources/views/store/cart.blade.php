@@ -22,6 +22,37 @@
      */
     $kbbCartPage = app(\App\Services\CartPage::class);
 @endphp
+@php
+/*
+ * NO FOOTER ON THE CART PAGE — Appearance → Cart page → "Show the site footer
+ * on the cart page", which ships OFF because the owner asked for it off.
+ *
+ * This is the one control on this screen whose default does NOT reproduce
+ * today's rendering. Every other default on the cart page screen was chosen so
+ * that applying the package changes the shop by zero bytes; this one changes
+ * the cart page on purpose, and only the cart page.
+ *
+ * DECLARED HERE, OUTSIDE the `squeezed()` branch further down, so it governs
+ * the classic page and the squeezed page alike. `layout` ships `classic`, so a
+ * switch wired into the squeezed markup would reach almost no shop.
+ *
+ * The mechanism is a SECTION rather than a variable or a view composer.
+ * layouts/store.blade.php is rendered after this file and does not share its
+ * local scope — @php variables here never reach it — while a composer on the
+ * layout would run for every page in the shop to answer a question only this
+ * one asks. A section is recorded by this template and read by that one, and
+ * no other template declares it, so no other page can lose its footer. It is
+ * the same mechanism the layout already uses for 'bare'.
+ *
+ * Two-argument @section, so there is nothing to @endsection and nothing is
+ * emitted. At column 0 with no blank line inside, per the block above: this
+ * costs the page zero bytes either way, and what removes the footer is the
+ * layout not including it.
+ */
+@endphp
+@unless ($kbbCartPage->get('footer_on'))
+@section('no-footer', '1')
+@endunless
 
 @section('title', __('store.cart.page_title'))
 

@@ -325,7 +325,31 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
     @yield('content')
 </main>
 
-@unless (View::hasSection('bare'))
+@php
+/*
+ * THE FOOTER, on every page that has not said otherwise.
+ *
+ * This note is a PHP comment inside an @php block and not a Blade comment, and
+ * that is load-bearing. Blade strips `{{-- --}}` and leaves the newline after
+ * it, so a comment written here would add one byte to EVERY page in the shop —
+ * this template is what every page extends. Written this way it compiles to a
+ * bare <?php ?>, PHP swallows the newline that follows, and the rendered page
+ * is unchanged. The header block below has the same shape for the same reason.
+ *
+ * TWO SECTIONS, NOT A SETTING LOOKUP. 'bare' is the long-standing one.
+ * 'no-footer' is declared by store/cart.blade.php when Appearance → Cart page →
+ * "Show the site footer on the cart page" is off — which is how it ships,
+ * because the owner asked for a cart page with no footer.
+ *
+ * The check has to be phrased this way round. Reading a cart setting here would
+ * put the cart page's switch on the homepage's critical path and leave "no
+ * footer anywhere" one mistaken truthy value away. hasSection() is true only
+ * for a page that deliberately declared the section, and store/cart.blade.php
+ * is the only template in this repo that declares this one. A page that never
+ * mentions it cannot lose its footer however that setting is saved.
+ */
+@endphp
+@unless (View::hasSection('bare') || View::hasSection('no-footer'))
     @include('partials.footer')
 @endunless
 

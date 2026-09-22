@@ -61,6 +61,29 @@ class CartPage
                          'squeeze' => 'Squeezed — docked bars, dense rows',
                      ]],
 
+        /*
+         * THE ONE DEFAULT IN THIS SCHEMA THAT DOES NOT REPRODUCE TODAY'S PAGE,
+         * and it is off on purpose because the owner asked for it in as many
+         * words: "on cart there will be no footer ... by default keep the
+         * footer turned off on the cart page completely."
+         *
+         * CART PAGE ONLY. The footer is included by layouts/store.blade.php,
+         * which every page in the shop extends, so the switch must not live
+         * there as a condition every page evaluates against a cart setting.
+         * Instead store.blade.php asks `View::hasSection('no-footer')` — the
+         * same question it already asks about 'bare' — and store/cart.blade.php
+         * is the only template in the repo that declares that section. A page
+         * that does not declare it cannot lose its footer, whatever this value
+         * is, because nothing else reads this key.
+         *
+         * It is declared OUTSIDE the squeezed branch in cart.blade.php, so it
+         * governs the classic page and the squeezed one alike. `layout` ships
+         * `classic`, so a switch that only reached `squeeze` would reach almost
+         * nobody.
+         */
+        'footer_on' => ['bool', 'Show the site footer on the cart page', false,
+                        'Off, as asked: the cart page ships with no footer at all. THE CART PAGE ONLY — the footer still appears on the homepage, on product pages, on /shop/ and on every other page of the shop, and this switch cannot affect them. Turn it on to bring the footer back to the cart page; it applies to both the classic and the squeezed cart layouts.'],
+
         // ── Product rows ──
         /*
          * THE DRIVER. Everything inside a basket line — the thumbnail, the
@@ -315,7 +338,7 @@ class CartPage
     ];
 
     public const TABS = [
-        'layout'  => ['Layout', 'Which cart page this shop serves.', ['layout']],
+        'layout'  => ['Layout', 'Which cart page this shop serves, and whether it carries the site footer.', ['layout', 'footer_on']],
         'rows'    => ['Product rows', 'One height drives the whole line. Everything in it is worked out from that number.',
                       ['row_h', 'row_font', 'row_bold']],
         'rec'     => ['Recommended', 'Full width, no rounded corners, no padding box around it.',
