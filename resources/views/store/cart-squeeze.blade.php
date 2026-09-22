@@ -974,6 +974,15 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     margin-inline:0;width:auto;max-width:none;
     padding-inline:14px;border-radius:14px;overflow:hidden}
 
+  /* The rail's count, desktop's own. The phone's number is a fraction of the
+     SCREEN — 4.5 cards across 390px is a readable card, 4.5 across a 748px
+     column is a card with acres of nothing in it. Same arithmetic as the
+     phone's rule, a different number in it, so the half card survives: a card
+     cut off by the column edge is what says the rail carries on, and on a
+     desktop there is no thumb to swipe, so that cue does MORE work here. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-card{
+    flex:0 0 calc((100% - 14px - (7px * (var(--cpg-d-per,5.5) - 1))) / var(--cpg-d-per,5.5))}
+
   /* ── The address popup ──────────────────────────────────────────────────
      A phone's sheet rises from the bottom edge because that is where a thumb
      is. A desktop has no bottom edge worth rising from, so it is a panel

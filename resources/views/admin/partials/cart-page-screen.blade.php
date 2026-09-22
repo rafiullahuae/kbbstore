@@ -786,6 +786,7 @@
          which is the thing being adjusted — would be invisible. The DIVISOR
          is the same for both tracks, so the proportion the owner sees is the
          proportion the page renders. */
+      + '--cpv-d-per:' + ((pvNum('d_rec_per', 55) / 10) || 5.5) + ';'
       + '--cpv-d-aside:' + Math.round(pvNum('d_aside', 380) / 3.1) + 'px;'
       + '--cpv-d-gap:' + Math.round(pvNum('d_gap', 28) / 3.1) + 'px;'
       + '--cpv-d-modal:' + Math.round(pvNum('d_modal_w', 460) / 3.1) + 'px;'
@@ -809,7 +810,7 @@
 
     var side = '<div class="cpv-side">' + pvSummary() + pvBars() + '</div>';
 
-    return '<div class="cpv-cols">'
+    return '<div class="cpv-cols" style="--per:var(--cpv-d-per,5.5)">'
       + '<div>' + pvRows() + pvRail() + '</div>'
       + '<div>' + (pvOn('d_sticky') ? '<div class="cpv-stick">' + side + '</div>' : side) + '</div>'
       + '</div>'

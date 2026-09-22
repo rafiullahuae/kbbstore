@@ -437,6 +437,20 @@ class CartPage
          * when they said the sticky rows "will not be sticky in desktop, it
          * will go in the right column".
          */
+        /*
+         * THE RAIL'S OWN COUNT ON DESKTOP, and it needs one because the phone's
+         * number is a fraction OF THE SCREEN. 4.5 cards across a 390px phone is
+         * a readable card; 4.5 across a 748px column is a card with acres of
+         * nothing in it. Same setting, different width, wrong answer.
+         *
+         * In tenths like `rec_per`, and for the same reason the owner gave for
+         * that one: the half card is the point. A card cut off by the column
+         * edge is what says "there is more to the right" — on a desktop there
+         * is no thumb to swipe, so that cue is doing more work here, not less.
+         */
+        'd_rec_per'    => ['range', 'Products across the rail', 55,
+                           'In tenths: 55 is five and a half cards. The half card is deliberate — it is what tells someone the rail carries on past the edge. Desktop only; the phone keeps its own count under Recommended.',
+                           ['min' => 30, 'max' => 90, 'step' => 5, 'unit' => '/10']],
         'd_sticky'     => ['bool', 'Right column follows the scroll', true,
                            'The summary and Proceed to Checkout stay on screen while a long basket scrolls past. Off, they sit at the top and scroll away with the page.'],
         'd_sticky_top' => ['range', 'Gap above it when it sticks', 20, '',
@@ -577,7 +591,7 @@ class CartPage
                        'addr_heading', 'addr_btn_add', 'addr_btn_change', 'addr_chosen']],
         'desktop' => ['Desktop', 'The two-column cart page, from 1024px up. Everything here is read only on desktop — none of it can reach a phone.',
                       ['d_on', 'd_min', 'd_aside', 'd_gap', 'd_max',
-                       'd_sticky', 'd_sticky_top', 'd_modal_w', 'd_modal_blur']],
+                       'd_rec_per', 'd_sticky', 'd_sticky_top', 'd_modal_w', 'd_modal_blur']],
         'popup'   => ['Address popup', 'Its two heights — one for the list, a taller one for the form — its density and every word in it.',
                       ['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
                        'sheet_add_new', 'sheet_save', 'sheet_area', 'sheet_apt', 'sheet_city',
@@ -831,6 +845,7 @@ class CartPage
              * is not a thing. The breakpoint is interpolated into the query
              * itself by cart-squeeze.blade.php, which is a Blade file.
              */
+            '--cpg-d-per:' . $this->ratio($c['d_rec_per'], 10),
             '--cpg-d-aside:' . $c['d_aside'] . 'px',
             '--cpg-d-gap:' . $c['d_gap'] . 'px',
             '--cpg-d-max:' . $c['d_max'] . 'px',
