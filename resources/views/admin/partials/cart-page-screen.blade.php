@@ -83,6 +83,19 @@
 .cps-wrap > .cps-col{display:grid;gap:14px;min-width:0}
 @media (max-width:1100px){.cps-wrap{grid-template-columns:minmax(0,1fr)}}
 
+/* THE DESKTOP TAB STACKS, and it has to. Every other tab previews a phone,
+   which is 336px wide and sits happily in a side column. This one previews a
+   1024px-plus window with two columns in it, and a two-column layout drawn
+   336px wide shows the owner nothing they can judge — the tracks are a few
+   dozen pixels each and the rail's half-card cue disappears entirely.
+   So on this tab the preview drops below the controls and takes the full
+   width of the screen. It also stops being sticky: a full-width block that
+   followed the scroll would cover the controls it belongs to. */
+.cps-wrap.cps-stack{grid-template-columns:minmax(0,1fr)}
+.cps-wrap.cps-stack .cpv{position:static}
+.cps-wrap.cps-stack .cpv-h{margin:4px 0 10px}
+.cps-wrap.cps-stack .cpv-h b{font-size:15px;font-weight:700}
+
 /* ── the preview ────────────────────────────────────────────────────────── */
 .cpv{position:sticky;top:16px;min-width:0}
 @media (max-width:1100px){.cpv{position:static}}
@@ -110,13 +123,21 @@
 .cpv-stick{border:1px dashed #cbd5e1;border-radius:8px;padding:4px;position:relative}
 .cpv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;
   background:#fff;padding:0 4px;font-size:7.5px;color:#94a3b8;letter-spacing:.02em}
-.cpv-modal{position:relative;background:#eef1f5;border-radius:8px;padding:14px 10px;
-  display:grid;place-items:center;min-height:96px}
-.cpv-modal .sheetwrap{width:var(--cpv-d-modal,150px);max-width:100%;
-  box-shadow:0 10px 30px -14px rgba(0,0,0,.45);border-radius:10px;overflow:hidden}
-.cpv-modal::before{content:'';position:absolute;inset:0;border-radius:8px;
-  backdrop-filter:blur(var(--cpv-d-blur,2px));-webkit-backdrop-filter:blur(var(--cpv-d-blur,2px))}
-.cpv-modal .sheetwrap{position:relative;z-index:1}
+/* The address popup, CENTRED, because that is what desktop draws.
+   pvSheet() mocks a BOTTOM SHEET -- a dimmed page with the panel pinned to the
+   foot of it -- which is right for a phone and wrong here: wrapped as-is it
+   rendered a grey slab with the panel sitting under it. The three declarations
+   below unpin it. Width is the owner's own `d_modal_w` as a share of the page,
+   and the blur is theirs too, so both sliders move this. */
+.cpv-modal{margin-top:10px}
+.cpv-modal .cpv-scrim{
+  -webkit-backdrop-filter:blur(var(--cpv-d-blur,4px));backdrop-filter:blur(var(--cpv-d-blur,4px))}
+.cpv-modal .cpv-sheet{
+  top:50%;left:50%;right:auto;bottom:auto;
+  transform:translate(-50%,-50%);
+  width:var(--cpv-d-modal,38%);max-width:calc(100% - 28px);
+  max-height:calc(100% - 28px);
+  border-radius:12px;box-shadow:0 18px 40px -18px rgba(0,0,0,.5)}
 
 /* rows — every size derives from --h, exactly as the shop does */
 .cpv-ci{display:flex;align-items:center;gap:calc(var(--h) * .13);height:var(--h);
@@ -688,7 +709,7 @@
         + 'brought this screen changed the shop by nothing.</div>'
       : '';
 
-    host.innerHTML = '<div class="cps-wrap"><div class="cps-col">'
+    host.innerHTML = '<div class="cps-wrap' + (open === 'desktop' ? ' cps-stack' : '') + '"><div class="cps-col">'
       + (banner ? '<div class="cps-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
           + esc(banner) + '</div>' : '')
       + warn
@@ -747,6 +768,16 @@
     return (v === undefined || v === null || v === '') ? fallback : String(v);
   }
 
+  /* A desktop measurement as a percentage of the page's own maximum width, so
+     the preview holds the shop's proportions whatever size the mock is drawn
+     at. Clamped: `d_max` cannot be zero from the schema, but a settings row
+     hand-edited to 0 would divide by it, and a preview that throws is a blank
+     screen where the controls used to be. */
+  function pvPct(key, fallback) {
+    var max = pvNum('d_max', 1200) || 1200;
+    return ((pvNum(key, fallback) / max) * 100).toFixed(2) + '%';
+  }
+
   /* The custom properties, built once and handed to whichever region draws. */
   function pvVars() {
     var per = pvNum('rec_per', 45) / 10;
@@ -787,9 +818,14 @@
          is the same for both tracks, so the proportion the owner sees is the
          proportion the page renders. */
       + '--cpv-d-per:' + ((pvNum('d_rec_per', 55) / 10) || 5.5) + ';'
-      + '--cpv-d-aside:' + Math.round(pvNum('d_aside', 380) / 3.1) + 'px;'
-      + '--cpv-d-gap:' + Math.round(pvNum('d_gap', 28) / 3.1) + 'px;'
-      + '--cpv-d-modal:' + Math.round(pvNum('d_modal_w', 460) / 3.1) + 'px;'
+      /* AS PERCENTAGES OF THE PAGE WIDTH, not as scaled pixels. A fixed
+         divisor only looks right at one frame size, and this preview is now
+         336px wide on most tabs and full-screen on the Desktop one. A ratio is
+         a ratio at any width: 380 of 1200 is 31.7% of the page, and that is
+         what the shop draws, so that is what the mock draws. */
+      + '--cpv-d-aside:' + pvPct('d_aside', 380) + ';'
+      + '--cpv-d-gap:' + pvPct('d_gap', 28) + ';'
+      + '--cpv-d-modal:' + pvPct('d_modal_w', 460) + ';'
       + '--cpv-d-blur:' + pvNum('d_modal_blur', 4) + 'px;'
       + '"';
   }
@@ -814,7 +850,7 @@
       + '<div>' + pvRows() + pvRail() + '</div>'
       + '<div>' + (pvOn('d_sticky') ? '<div class="cpv-stick">' + side + '</div>' : side) + '</div>'
       + '</div>'
-      + '<div class="cpv-modal"><div class="sheetwrap">' + pvSheet('form') + '</div></div>';
+      + '<div class="cpv-modal">' + pvSheet('form') + '</div>';
   }
 
   function pvRows() {
@@ -1000,7 +1036,7 @@
     var classic = String(values.layout) === 'classic';
 
     return '<div class="cpv" id="cps-preview">'
-      + '<div class="cpv-h"><b>Live preview</b><span>' + esc(label) + '</span></div>'
+      + '<div class="cpv-h"><b>' + (open === 'desktop' ? 'Preview' : 'Live preview') + '</b><span>' + esc(label) + '</span></div>'
       /* A DESKTOP-SHAPED FRAME for the desktop tab. Drawing a two-column
          layout inside a phone outline would be a preview that contradicts
          itself, and this screen has already been through one round of
