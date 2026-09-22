@@ -557,6 +557,28 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
    page as its own surface; a panel that followed the page's colours would read
    as part of what is behind it rather than as a thing on top of it. */
 .cpg-sheet{position:fixed;inset-inline:0;bottom:0;z-index:52;background:#fff;color:#17181C;
+  /*
+   * THE SAME LIFT AS .cpg-docked, AND FOR THE SAME REASON.
+   *
+   * `position:fixed` resolves `bottom` against the LAYOUT viewport -- the tall
+   * one, the height the page has while the phone's URL bar is retracted.
+   * Scrolling upward brings the bar back: the layout viewport does not change,
+   * but the visible part of it shrinks, so its bottom edge now sits below the
+   * bottom of the screen and anything pinned to it goes down with it.
+   *
+   * On the docked rows that hid the Checkout button. Here it hides the bottom
+   * of the sheet -- which is "+ Add New Address" on the list, and "Deliver
+   * here" on the form. Both are on the path to checkout, and the rule's own
+   * note below promises the sheet never scrolls, so there is no way to reach
+   * what has gone under the edge.
+   *
+   * 100lvh is the tall viewport, 100dvh is how much of it is visible now, and
+   * the difference is exactly the strip hanging off the bottom. With the bar
+   * retracted the two are equal and this is 0px, so nothing moves. A browser
+   * that cannot parse the units drops the declaration and keeps the bottom:0
+   * above it, which is where it already was.
+   */
+  bottom:calc(100lvh - 100dvh);
   border-radius:16px 16px 0 0;
   padding:14px 16px calc(12px + env(safe-area-inset-bottom,0px));
   transform:translateY(102%);transition:transform .26s cubic-bezier(.32,.72,0,1);

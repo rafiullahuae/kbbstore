@@ -312,13 +312,40 @@ it('never lifts the block on a browser that has no browser chrome to hide', func
     expect($css)->toContain('bottom:calc(100lvh - 100dvh)')
         ->and($css)->not->toContain('bottom:calc(100dvh - 100lvh)');
 
-    // And nothing else on this page learned to move with the viewport. Counted
-    // with the comments stripped, because this file explains itself at length
-    // and the prose says `100dvh` more often than the stylesheet does.
+    /*
+     * And nothing else on this page learned to move with the viewport.
+     *
+     * TWO rules carry it, not one: `.cpg-docked` and `.cpg-sheet`. Both are
+     * `position:fixed; bottom:0`, both hang off the bottom the same way, and
+     * both hide something on the path to checkout when they do -- the Checkout
+     * button on one, "+ Add New Address" and "Deliver here" on the other.
+     *
+     * The census is the point of this assertion, so it is written as "every
+     * viewport unit in this file is one of those two lifts" rather than as a
+     * number. A third rule that starts moving with the viewport still trips it,
+     * and bumping a count would not have made anyone look.
+     *
+     * Comments stripped first: this file explains itself at length and the
+     * prose says `dvh` more often than the stylesheet does.
+     */
     $declarations = (string) preg_replace('#/\\*.*?\\*/#s', '', $css);
 
-    expect(substr_count($declarations, 'dvh'))->toBe(1)
-        ->and(substr_count($declarations, 'lvh'))->toBe(1);
+    expect(substr_count($declarations, 'dvh'))->toBe(
+        substr_count($declarations, 'bottom:calc(100lvh - 100dvh)'),
+        'something in this stylesheet uses a viewport-relative unit that is not one of the two '
+        .'known lifts; a rule that moves with the URL bar needs its own reason'
+    );
+
+    expect(substr_count($declarations, 'lvh'))->toBe(substr_count($declarations, 'dvh'));
+
+    foreach (['.cpg-docked{', '.cpg-sheet{'] as $selector) {
+        $rule = substr($declarations, (int) strpos($declarations, $selector));
+        $rule = substr($rule, 0, (int) strpos($rule, '}'));
+
+        expect(str_contains($rule, 'bottom:calc(100lvh - 100dvh)'))->toBeTrue(
+            "{$selector} is fixed to the bottom and has lost its lift"
+        );
+    }
 });
 // MUTATION: reverse the subtraction to calc(100dvh - 100lvh). RED, all three
 // cases. Run and confirmed.
@@ -397,4 +424,43 @@ it('keeps Proceed to Checkout on the screen once the URL bar is back', function 
     expect($after['computedBottom'])->toBe('56px')
         ->and((float) $natural['docked']['bottom'] - (float) $after['docked']['bottom'])
         ->toEqualWithDelta(56.0, 0.5);
+});
+
+it('lifts the address sheet by the same strip, because its buttons are on the path to checkout', function () {
+    /*
+     * `.cpg-sheet` is `position:fixed; bottom:0` exactly as `.cpg-docked` was,
+     * so it hangs off the bottom in exactly the same way when the URL bar comes
+     * back. What goes under the edge there is "+ Add New Address" on the list
+     * and "Deliver here" on the form.
+     *
+     * That is worse than it sounds, because the sheet is deliberately
+     * `overflow:hidden` -- its own comment promises it never scrolls -- so
+     * there is no way to reach a control that has gone below the screen. The
+     * shopper cannot give an address, and cannot check out.
+     *
+     * Found by the lane that fixed the docked rows, and left alone there as out
+     * of scope. It is the same one-line fix and the same mechanism, so it is
+     * here rather than in a queue.
+     *
+     * MUTATION: delete the lift from .cpg-sheet. Red.
+     */
+    $src = (string) file_get_contents(base_path('resources/views/store/cart-squeeze.blade.php'));
+
+    $rule = substr($src, (int) strpos($src, '.cpg-sheet{position:fixed'));
+    $rule = substr($rule, 0, (int) strpos($rule, '}'));
+
+    expect(str_contains($rule, 'bottom:calc(100lvh - 100dvh)'))->toBeTrue(
+        'the address sheet is still pinned to the layout viewport, so "+ Add New Address" and '
+        .'"Deliver here" drop under the screen edge when the URL bar returns'
+    );
+
+    /*
+     * And the lift must come AFTER the bottom:0 it is overriding. A fallback
+     * declared last silently wins, which would leave the rule looking fixed
+     * while behaving exactly as before.
+     */
+    expect(strpos($rule, 'bottom:0'))->toBeLessThan(
+        (int) strpos($rule, 'bottom:calc(100lvh - 100dvh)'),
+        'the fallback bottom:0 is declared after the lift, so it wins and the lift does nothing'
+    );
 });
