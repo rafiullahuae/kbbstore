@@ -2398,6 +2398,146 @@ licence #1 with no special case, which is what keeps the customer path tested.
 
 ---
 
+## Phase 18 — Security module  *(owner-requested 2.60.239; to be built later)*
+
+**What the owner asked for, in their words:** "a full fledge security module at
+the top of the whole app, to protect the whole app from any injecting code etc,
+no any bot or system can inject the code anywhere, the system will auto detect
+and reverse it and block that incoming traffic, ip or bot etc immediately and
+provide report to me on backend. i will add other options too in this security
+module."
+
+Prompted by a Cloudways scan flagging
+`tests/Feature/GdMediaSideloaderTest.php` as `php.bkdr.eval.oneliner`. That was
+a **false positive** — the string is an attack sample in a test that proves the
+media sideloader *rejects* it, and the server's copy hashed identical to the
+repo's. But it is the right question at the right time, and the answer the shop
+deserves is its own layer rather than another scattered check.
+
+### The honest frame, written down before anything is built
+
+"No bot or system can inject code anywhere" is not a promise any software can
+keep, and a module sold on that promise is worse than none: it is believed. The
+deliverable is **defence in depth plus fast detection and reversal**, which is
+what the request actually amounts to in practice. Stated plainly so nobody
+builds to the slogan:
+
+- **Prevented outright:** writing PHP into the web root through the shop's own
+  upload and sideload paths; SQL injection (Eloquent parameterises, and the one
+  `whereRaw` in checkout is bound); template injection; package installs that
+  reach outside the permitted prefixes.
+- **Detected and reversed, not prevented:** a file changed by anything *other*
+  than the shop — a compromised FTP credential, a hosting-panel breach, another
+  application on the same account. The shop cannot stop a writer it never saw;
+  it can notice within minutes and put the file back.
+- **Slowed and reported, not stopped:** a determined attacker with a valid admin
+  password. Rate limits, blocks and alerting buy time and leave a trail.
+- **Out of scope for PHP entirely:** anything answered before the request
+  reaches the application. Volumetric floods and most bot traffic belong at
+  Cloudflare or the Cloudways edge, and the module should say so on its own
+  screen rather than let the owner believe otherwise.
+
+### What already exists, so the module extends rather than duplicates
+
+Real code today, all of it verified in place:
+
+| Guard | Where | Covers |
+|---|---|---|
+| `SecurityHeaders` | `app/Http/Middleware/` | nosniff, `X-Frame-Options`, referrer, permissions policy — **no CSP and no HSTS yet** |
+| `EnforceAdminCapability` | `app/Http/Middleware/` | `admin_users.role` on every `auth:admin` route, registered globally so a new route file cannot miss it |
+| `NoStoreAdminApi` | `app/Http/Middleware/` | keeps admin API responses out of caches |
+| `UpdateGuard` | `app/Services/Update/` | `FORBIDDEN_PREFIXES` — a package cannot write outside the permitted areas |
+| `BuildPackage::NEVER_SHIP` | `app/Console/Commands/` | tests, docs, `.env`, vendor and the WordPress plugin can never enter a zip |
+| `MediaSideloader` | `app/Services/` | sniffs fetched bytes and refuses PHP source served as an image; leaves no temp file behind |
+| `RateLimiter` | six controllers | admin login 5/min, review posting and votes, password reset, verification resend, `/api` products |
+| `CustomerLinkSigner` | `app/Support/` | signed links that do not depend on the URL, avoiding this install's base-path confusion |
+| `Product::toApi()`, `SettingController::PUBLIC_KEYS` | | explicit allowlists on the unauthenticated `/api/*` surface |
+| `NotFoundLog` / `NotFoundLogger` | | already records 404s — the nearest thing to a probe log the shop has |
+
+The gap is not that there are no guards. It is that **they are scattered, none
+of them is visible from the backend, and none of them can act**: a rate limiter
+returns 429 to one request and forgets. Nothing counts, nothing blocks, nothing
+reports.
+
+### What the module adds
+
+**1. One request gate, at the top of the stack.** A single middleware prepended
+ahead of everything, so it sees a request before routing, session or CSRF. It
+scores each request against rules and can pass, challenge, throttle or block. It
+must stay cheap on the hot path — the shop has a measured query budget and this
+runs on every hit, cached lookups only, no database read for the common case.
+
+**2. A block list that persists and expires.** `security_blocks`: address or
+range, reason, evidence, who or what added it, expiry. Manual entries from the
+screen, automatic entries from the gate. **Every automatic block carries the
+evidence that caused it**, because a block nobody can explain is one nobody
+dares keep. Admin addresses are never auto-blocked — locking the owner out of
+their own shop is the failure mode this kind of module actually ships with.
+
+**3. File integrity, and this is the part that answers "auto reverse it".** The
+shop already has a cryptographic manifest of every file it installs: each
+`update.json` carries a SHA-256 per path, and `update_releases` records which
+release is live. So the app can hash what is on disk, compare against the
+manifest of the installed release, and report — or restore — any file that
+differs, from the package it came from. That is genuine reversal of an
+injection, not a claim of one, and it is available precisely because packages
+ship signed manifests. Two honest limits to record now: it can only speak about
+files a package installed, so `storage/`, uploads and anything hand-edited on
+the server are outside it; and restoring is a write, so it ships **report-only
+by default** with restore as an explicit opt-in per the owner's choice.
+
+**4. Upload and write hardening.** Extend the sideloader's sniff to every path
+that accepts bytes — media library uploads, import archives, the package
+installer — and assert, as a test, that nothing under the web root can be
+written with an executable extension.
+
+**5. Content-Security-Policy and HSTS.** Missing today. CSP is the single most
+effective control against injected script actually executing, and it is also the
+one most likely to break a working page, so it wants a report-only phase first
+with violations collected to the same report screen.
+
+**6. An admin audit trail.** There is no model for it today. Who changed which
+setting, who installed which package, who signed in from where. The shop keeps
+`NotFoundLog` and `PaymentEvent` but nothing about administrative action, which
+is the record an incident is actually reconstructed from.
+
+**7. The report the owner asked for.** Store → Security, with: what was blocked
+and why, with the evidence; integrity findings, with a diff and a restore
+button; failed sign-ins; rate-limit trips, which today vanish silently;
+CSP violations; and a plain verdict line at the top rather than a dashboard
+that has to be interpreted.
+
+Built so the owner can add to it: rules, thresholds and switches come from a
+settings schema in the module's own service, the way `CartPage` and
+`MobileHeader` already work, so a new option is a schema row and not a new
+screen.
+
+### Sequencing
+
+Report before enforce, in every part. A module that starts blocking on day one
+blocks the owner, the payment provider's webhooks and Google's crawler, and
+gets switched off — after which the shop is worse off than before, because
+everyone now believes it is protected. Order: audit trail and reporting screen →
+integrity checking in report-only mode → CSP report-only → the request gate in
+observe mode → then, with real traffic observed, turn enforcement on one rule at
+a time.
+
+### Open, for the owner
+
+- **Restore automatically, or alert and wait?** Automatic restore closes the
+  window fastest and can also undo a legitimate hand-edit on the server. The
+  recommendation is alert-by-default with restore one click away, and automatic
+  restore as a switch for those who want it.
+- **Where does the alert go?** The backend report is the ask; email or WhatsApp
+  on a high-severity finding is the difference between minutes and days.
+- **Is Cloudflare in front of this shop?** If so, blocking belongs at the edge
+  and the module's job becomes deciding and reporting rather than enforcing.
+- **How long is evidence kept?** Blocks and findings carry request data, which
+  is personal data, and it should expire on a schedule rather than accumulate.
+
+**Not started. No code, no schema, no routes.** This entry exists so the shape
+is agreed before anyone writes the first middleware.
+
 ## Translation Module — Arabic  *(owner-approved 2.60.199; foundation in flight)*
 
 The whole **storefront** in Arabic as well as English, translated by the owner
