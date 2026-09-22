@@ -412,21 +412,7 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
                          safe to print unescaped for one reason only — the list
                          is a hardcoded constant, so nothing user-supplied can
                          reach it. Keep it that way. --}}
-                    {{-- flex-wrap INLINE, overriding the `nowrap` that
-                         cart-squeeze.blade.php sets on .cpg-squeeze .paylogos.
-                         That rule is fine for six short words and wrong for six
-                         drawings: six marks cannot fit one line of a 360px
-                         phone at trust_size 150%, and under `nowrap` the
-                         browser shrinks the chips instead, so turning the
-                         slider UP made the artwork smaller. Wrapping lets the
-                         marks keep the size the slider asked for and take a
-                         second line when they need one. Inline because the rule
-                         it overrides lives in a file this lane does not own;
-                         it belongs in that stylesheet when the two next meet.
-                         (The marks' own max-width:100% is still the floor: on a
-                         320px screen a single line that cannot fit scales down
-                         rather than overlapping.) --}}
-                    <span class="paylogos" style="flex-wrap:wrap">@foreach ($kbbCartPage->paymentMarks() as $kbbMark)<span>{!! $kbbMark !!}</span>@endforeach</span>
+                    <span class="paylogos">@foreach ($kbbCartPage->paymentMarks() as $kbbMark)<span>{!! $kbbMark !!}</span>@endforeach</span>
                 </div>
             @endif
 @else

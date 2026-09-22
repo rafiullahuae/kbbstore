@@ -441,7 +441,14 @@ class CheckoutController extends Controller
                 if (! $request->user('customer')
                     && $request->boolean('create_account')
                     && ($data['account_password'] ?? '') !== ''
-                    && self::canSetInitialPassword($customer)
+                    && self::canSetInitialPassword(
+                        $customer,
+                        // First order for this row: either this request made
+                        // the row, or it was sitting there with no history on
+                        // it. Read BEFORE the order is written, which is why it
+                        // is evaluated here and not from the finished order.
+                        $customer->wasRecentlyCreated || ! $customer->orders()->exists(),
+                    )
                 ) {
                     $customer->forceFill(['password' => $data['account_password']])->save();
                     $accountCreated = true;
@@ -1136,7 +1143,12 @@ class CheckoutController extends Controller
 
         $customer = Customer::find($order->customer_id);
 
-        if ($customer !== null && self::canSetInitialPassword($customer)) {
+        // No order older than the one being claimed means this row has no
+        // history that could be handed to a stranger along with it.
+        $firstOrder = $customer !== null
+            && ! $customer->orders()->where('id', '<', $order->id)->exists();
+
+        if ($customer !== null && self::canSetInitialPassword($customer, $firstOrder)) {
             // `password` is cast `hashed`, so assigning the plain value hashes it.
             $customer->forceFill(['password' => $data['account_password']])->save();
         }
@@ -1291,6 +1303,25 @@ class CheckoutController extends Controller
      * Without the rule, typing a stranger's email at checkout would overwrite
      * their password and hand over their account.
      *
+     * THE SWITCH. A row with no password is not always the shopper standing at
+     * the till. Guest checkout itself creates such rows, so: Alice orders as a
+     * guest; Bob later checks out with Alice's address and "create an account"
+     * ticked; Bob's password lands on Alice's row and login gates on the
+     * password alone. Bob is then Alice, with her whole order history.
+     *
+     * Store → Ecommerce → Checkout → "Take a guest's word for their email
+     * address" decides what happens. ON, the default and what this shop has
+     * always done, is the behaviour above. OFF, a password is written only
+     * when the order is the FIRST this customer row has ever had — a genuinely
+     * new shopper still gets their account at the till, and someone who
+     * ordered as a guest before uses Forgot Password, which proves the address
+     * the way this path cannot.
+     *
+     * Either way the shopper is told NOTHING about which happened. A refusal
+     * that announced itself would answer "does this address have an account
+     * here", which is the question the rest of this controller spends three
+     * tests refusing to answer.
+     *
      * A SOFT-DELETED ROW IS NEVER GIVEN ONE. Since customerForGuestOrder()
      * above can now hand back a trashed customer — it has to, or the address
      * cannot check out at all — a deleted account with a blank password would
@@ -1298,11 +1329,32 @@ class CheckoutController extends Controller
      * lives here and not at the call site so that claimAccount(), which asks
      * this same method, is covered by the same sentence.
      */
-    public static function canSetInitialPassword(Customer $customer): bool
+    public static function canSetInitialPassword(Customer $customer, bool $firstOrder): bool
     {
-        return ! $customer->trashed()
-            && $customer->password === null
-            && $customer->legacy_password === null;
+        if ($customer->trashed() || $customer->password !== null || $customer->legacy_password !== null) {
+            return false;
+        }
+
+        // With the bypass on — which is the default, and today's behaviour —
+        // any blank row may be claimed. See the note on this method.
+        return self::guestClaimBypassesEmail() || $firstOrder;
+    }
+
+    /**
+     * Whether a guest claiming an account is taken at their word about the
+     * email address, without any proof that they can read mail sent to it.
+     *
+     * ON by default, because that is what this shop has always done and
+     * turning it off silently would strand the returning guests it is for.
+     *
+     * The owner's decision, recorded so it is not rediscovered as a surprise:
+     * this shop has few customers, the addresses are not public, and the risk
+     * was judged small enough to carry for now with a switch to hand. See
+     * KBB-Master-Plan.md — it is to be looked at properly later.
+     */
+    public static function guestClaimBypassesEmail(): bool
+    {
+        return (bool) app(SettingsService::class)->get('guest_claim_bypass_email', true);
     }
 
     /* ------------------------------------------------------------ helpers */

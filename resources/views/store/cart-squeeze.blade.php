@@ -359,7 +359,14 @@
 .kbb-cartpage.cpg-squeeze .cpg-trust .sec svg{width:calc(13px * var(--cpg-trust-s));
   height:calc(13px * var(--cpg-trust-s));color:var(--green);flex:none}
 .kbb-cartpage.cpg-squeeze .cpg-trust .sep{color:var(--line-2)}
-.kbb-cartpage.cpg-squeeze .paylogos{margin:0;gap:calc(4px * var(--cpg-trust-s));flex-wrap:nowrap}
+/* WRAP, not nowrap. `nowrap` was right for six short words and is wrong for
+   six drawings: six marks cannot fit one line of a 360px phone at trust_size
+   150%, and under nowrap the browser shrank the chips to make them fit — so
+   turning the slider UP made the artwork SMALLER. Wrapping lets each mark keep
+   the size the slider asked for and take a second line when it needs one. The
+   marks' own max-width:100% is still the floor, so a single mark too wide for a
+   320px screen scales down rather than overlapping its neighbour. */
+.kbb-cartpage.cpg-squeeze .paylogos{margin:0;gap:calc(4px * var(--cpg-trust-s));flex-wrap:wrap}
 .kbb-cartpage.cpg-squeeze .paylogos span{height:calc(16px * var(--cpg-trust-s));
   padding:0 calc(4px * var(--cpg-trust-s));font-size:calc(6.5px * var(--cpg-trust-s));
   display:grid;place-items:center;letter-spacing:.03em;border-radius:3px;background:#fff}

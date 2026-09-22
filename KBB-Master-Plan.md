@@ -2736,6 +2736,43 @@ and remain binding meanwhile.
 
 ## Risk register
 
+**▲ A guest checkout can take over another shopper's account — carried
+deliberately, with a switch, to be looked at properly later.** Guest checkout
+creates customer rows with no password. `CheckoutController::place()` and
+`/checkout/claim-account` both write the password a guest types into "create an
+account" onto whatever row matches that email address, and
+`CustomerAuthController::login()` gates on the password alone — there is no
+`email_verified_at` check anywhere in the sign-in path. So: Alice orders as a
+guest; Bob later checks out with Alice's address and ticks the box; Bob's
+password lands on Alice's row; Bob signs in as Alice and reads her order
+history. It costs Bob one placed order and knowledge of Alice's email address.
+
+This is not new. It is the documented "claim your account after guest checkout"
+feature working as designed, and it predates the 2.60.239 work that found it.
+
+**The owner's decision, 2.60.239:** the shop has few customers, the addresses
+are not public, and nobody is expected to know another customer's email — so
+the risk is carried for now rather than paid for with a change to a shipped
+flow. What ships instead is the switch: **Store → Ecommerce → Checkout → "Take
+a guest's word for their email address"**, `guest_claim_bypass_email`, **ON by
+default**, which is today's behaviour exactly. Turned OFF, a password is written
+only when the order is the first that customer row has ever had — a first-time
+shopper still gets their account at the till, and anyone else is sent to Forgot
+Password, which proves the address the way this path cannot. Both doors into the
+rule are covered, and the shopper is told nothing either way in either position,
+because a refusal that announced itself would answer "does this address have an
+account here".
+
+**What a proper fix looks like, when it is looked at.** `customers.
+email_verified_at` has been on the table since the baseline schema and
+`EmailVerificationController` already mints and checks links that survive this
+install's base-path prefix. The honest version is that a password claimed at
+the till does not grant a session until the address is confirmed, which keeps
+the feature whole for returning guests instead of sending them to Forgot
+Password. That is a change to the sign-in path and to the mail a shopper gets,
+which is why it is a decision and not a patch.
+
+
 **A correction, not a new risk — ▲14 below was wrong when first written, and
 staying wrong would have been worse than the original mistake.** It claimed
 Orders and Payments had real, working code sitting unreachable behind a

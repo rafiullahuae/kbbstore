@@ -108,6 +108,7 @@ class EcommerceApiController extends Controller
                 'label' => 'Checkout',
                 'sections' => [
                     'fields' => ['Form fields', 'What the shopper is asked for.', 'card', ['checkout_single_name']],
+                    'guestacct' => ['Guest accounts', 'What happens when a guest ticks "create an account" at the till.', 'card', ['guest_claim_bypass_email']],
                     'coupon' => ['Coupon hint', 'The suggested code above the contact section.', 'pct', ['checkout_coupon', 'checkout_coupon_text', 'checkout_coupon_color']],
                     'mobile' => ['Mobile layout', 'The place-order box shoppers see on a phone.', 'phone', ['checkout_thumbs_style', 'mobile_sticky_bar', 'backtocart_style']],
                     'fees' => ['Fees', 'Charges added at checkout.', 'pct', ['cod_enabled', 'cod_fee']],
@@ -151,6 +152,16 @@ class EcommerceApiController extends Controller
                 ],
                 'fields' => [
                     'checkout_single_name'  => ['bool', 'Single full-name field', true, 'Off splits it into first and last name.'],
+                    /*
+                     * ON is what this shop has always done, so ON is the
+                     * default: turning it off silently would strand the
+                     * returning guests the claim path exists for.
+                     *
+                     * The rule itself, and why the shopper is told nothing
+                     * either way, is CheckoutController::canSetInitialPassword().
+                     */
+                    'guest_claim_bypass_email' => ['bool', 'Take a guest\'s word for their email address', true,
+                        'On, a guest who ticks "create an account" gets the password they typed, even if that address already had an account here — which means anyone who knows a customer\'s email can place one order and take over their account. Off, the password is only set when it is that shopper\'s first order; anyone else is sent to Forgot Password instead. Either way nothing on screen changes, so the checkout never reveals whether an address is already known.'],
                     /*
                      * Read by App\Support\InlineValidation, which is read by
                      * partials/checkout/inline-validation.blade.php. Both halves,
