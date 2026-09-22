@@ -84,3 +84,72 @@ it('searches for what was typed, not for whatever the box holds now', function (
         'search() sends something other than the term it was called with'
     );
 });
+
+it('shows the chosen products as a list, above the search, in rail order', function () {
+    /*
+     * The owner: "currently just check boxes green showing, which i can't find
+     * in 1000s of products, the selected ones."
+     *
+     * He was right. A tick inside a search result is only visible while that
+     * exact search is on screen — type a new term and the evidence that
+     * anything is chosen disappears. The panel's job is to answer "what is in
+     * the rail", and it could not.
+     *
+     * Drawn FIRST, so the answer is above the question.
+     *
+     * MUTATION: move the picked block below the search fields. Red.
+     */
+    $src = cppkSource();
+
+    $fn = substr($src, (int) strpos($src, 'function pickerHTML('));
+    $fn = substr($fn, 0, (int) strpos($fn, "\n  }\n", (int) strpos($fn, 'cps-card')));
+
+    expect(str_contains($fn, 'cps-picked-wrap'))->toBeTrue('the chosen products are not drawn as their own block');
+
+    expect(strpos($fn, 'cps-picked-wrap'))->toBeLessThan(
+        (int) strpos($fn, 'id="cps-q"'),
+        'the chosen list is drawn below the search box, so it is off screen exactly when a long '
+        .'result list pushes it there'
+    );
+
+    // The count, because "is anything chosen" should not require counting rows.
+    expect(str_contains($fn, "In the rail <b>' + chosen.length"))->toBeTrue(
+        'the panel no longer says how many products are in the rail'
+    );
+});
+
+it('lets the owner order the rail, and disables the arrows that would do nothing', function () {
+    /*
+     * "give products sorting function there to control which product should
+     * display on which place in the rail."
+     *
+     * `chosen` IS the order — CartPage::recommended() reorders the queried rows
+     * against the stored list — so moving a row here is the whole feature and
+     * there is no second sort field that could fall out of step.
+     *
+     * MUTATION: delete the data-cps-up branch from the click handler. Red.
+     */
+    $src = cppkSource();
+
+    expect(str_contains($src, 'data-cps-up='))->toBeTrue('there is no way to move a product earlier');
+    expect(str_contains($src, 'data-cps-down='))->toBeTrue('there is no way to move a product later');
+
+    $handler = substr($src, (int) strpos($src, "var up = e.target.closest('[data-cps-up]')"));
+    $handler = substr($handler, 0, 700);
+
+    expect(str_contains($handler, 'chosen.splice(from, 1)'))->toBeTrue('the move does not reorder chosen');
+
+    /*
+     * Bounds, not wrap-around. Moving the first product "earlier" must do
+     * nothing rather than send it to the end, which is what an unguarded
+     * splice(-1) would do — silently, and only for the row a careless finger
+     * hits first.
+     */
+    expect(str_contains($handler, 'to >= 0 && to < chosen.length'))->toBeTrue(
+        'the move is unbounded: moving the first product up would wrap it to the end'
+    );
+
+    expect(str_contains($src, "(first ? ' disabled' : '')"))->toBeTrue(
+        'the arrow that cannot move anything is still live'
+    );
+});

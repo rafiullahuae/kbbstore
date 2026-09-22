@@ -274,6 +274,31 @@
 .cps-row .cps-nm span{display:block;font-size:11px;color:var(--ink-soft,#6b7280)}
 .cps-empty{padding:22px 10px;text-align:center;color:var(--ink-soft,#6b7280);font-size:13px}
 .cps-chosen{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-width:0}
+/* The chosen rail, drawn above the search because it is the answer the panel
+   exists to give. Tinted, so it reads as a held list rather than as more
+   results. */
+.cps-picked-wrap{border:1px solid var(--border,#e6e6e6);border-radius:10px;
+  background:var(--sunk,#f6f7f9);padding:10px 11px;margin-bottom:12px}
+.cps-picked-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+  color:var(--ink-soft,#6b7280);margin-bottom:8px}
+.cps-picked-h b{font-size:13px;color:var(--ink,#16181d)}
+.cps-picked-h em{font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;background:var(--accent,#15a85a);color:#fff;padding:2px 7px;border-radius:99px}
+.cps-picked{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.cps-pk{display:flex;align-items:center;gap:9px;background:var(--surface,#fff);
+  border:1px solid var(--border,#e6e6e6);border-radius:8px;padding:7px 9px;min-width:0}
+.cps-pos{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--accent,#15a85a);
+  color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;
+  font-variant-numeric:tabular-nums}
+.cps-pk .cps-nm{flex:1;min-width:0}
+.cps-mv{flex:0 0 auto;display:flex;gap:3px}
+.cps-mv button{width:26px;height:26px;border:1px solid var(--border,#e6e6e6);border-radius:6px;
+  background:var(--surface,#fff);color:var(--ink-soft,#6b7280);cursor:pointer;font-size:12px;
+  line-height:1;display:grid;place-items:center}
+.cps-mv button:hover:not([disabled]){border-color:var(--accent,#15a85a);color:var(--accent,#15a85a)}
+/* Disabled, not hidden: the first and last rows keep their buttons in place so
+   the row does not reflow under the pointer as you move things. */
+.cps-mv button[disabled]{opacity:.35;cursor:default}
 .cps-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border,#e6e6e6);
           border-radius:999px;padding:4px 6px 4px 11px;font-size:11.5px;max-width:100%}
 .cps-chip b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:22ch}
@@ -538,19 +563,48 @@
         + '</button>';
     }).join('') : '<p class="cps-empty">Nothing matches that.</p>';
 
-    var chips = chosen.length ? chosen.map(function (p) {
-      return '<span class="cps-chip"><b>' + esc(p.name) + '</b>'
-        + '<button type="button" data-cps-drop="' + p.id + '" aria-label="Remove">&times;</button></span>';
-    }).join('') : '<p class="cps-help">Nothing chosen. The rail hides itself on the shop until something is.</p>';
+    /*
+     * THE CHOSEN LIST IS THE POINT OF THIS PANEL, so it is drawn FIRST and as a
+     * list, not as chips under the results.
+     *
+     * The owner: "currently just check boxes green showing, which i can't find
+     * in 1000s of products, the selected ones." He was right -- a tick inside a
+     * search result you can only see while that exact search is on screen is
+     * not an answer to "what is in the rail". Type a new term and the evidence
+     * is gone.
+     *
+     * Each row carries its POSITION, because the rail draws them in this order
+     * and that was previously only findable by reading the help text. Up and
+     * down move a product; the first and last have theirs disabled rather than
+     * hidden, so the buttons do not reflow as you use them.
+     */
+    var picked = chosen.length ? '<ol class="cps-picked">' + chosen.map(function (p, i) {
+      var first = i === 0, last = i === chosen.length - 1;
+      return '<li class="cps-pk">'
+        + '<span class="cps-pos">' + (i + 1) + '</span>'
+        + '<span class="cps-nm"><b>' + esc(p.name) + '</b><span>' + esc(p.brand) + '</span></span>'
+        + '<span class="cps-mv">'
+        + '<button type="button" data-cps-up="' + p.id + '"' + (first ? ' disabled' : '')
+        + ' aria-label="Move ' + esc(p.name) + ' earlier">&uarr;</button>'
+        + '<button type="button" data-cps-down="' + p.id + '"' + (last ? ' disabled' : '')
+        + ' aria-label="Move ' + esc(p.name) + ' later">&darr;</button>'
+        + '<button type="button" data-cps-drop="' + p.id + '" aria-label="Remove ' + esc(p.name) + '">&times;</button>'
+        + '</span></li>';
+    }).join('') + '</ol>'
+      : '<p class="cps-help">Nothing chosen yet. The rail hides itself on the shop until something is.</p>';
 
     return '<div class="cps-card">'
       + '<div class="cps-title">Which products fill the rail</div>'
-      + '<p class="cps-sub">Type to search by product name, SKU, slug or brand. '
-      + 'The order below is the order they appear in, and up to ' + maxRec + ' fit.</p>'
+      + '<p class="cps-sub">Search below to add. The list here is the rail, left to right — '
+      + 'use the arrows to reorder. Up to ' + maxRec + ' fit.</p>'
+      + '<div class="cps-picked-wrap">'
+      + '<div class="cps-picked-h">In the rail <b>' + chosen.length + '</b>'
+      + (chosen.length >= maxRec ? '<em>full</em>' : '') + '</div>'
+      + picked
+      + '</div>'
       + '<div class="cps-fields">'
-      + '<input class="cps-search" type="search" id="cps-q" placeholder="Search products…" autocomplete="off" value="' + esc(term) + '">'
+      + '<input class="cps-search" type="search" id="cps-q" placeholder="Search products to add…" autocomplete="off" value="' + esc(term) + '">'
       + '<div class="cps-list">' + rows + '</div>'
-      + '<div class="cps-chosen">' + chips + '</div>'
       + '</div></div>';
   }
 
@@ -913,6 +967,22 @@
         say('That is as many as the rail holds.');
       }
       render();
+      return;
+    }
+
+    /* Reorder. The rail renders `chosen` in order, so moving a row here is the
+       whole of it -- there is no separate sort field to keep in step. */
+    var up = e.target.closest('[data-cps-up]');
+    var down = e.target.closest('[data-cps-down]');
+    if (up || down) {
+      var moveId = Number((up || down).getAttribute(up ? 'data-cps-up' : 'data-cps-down'));
+      var from = chosen.map(function (p) { return p.id; }).indexOf(moveId);
+      var to = from + (up ? -1 : 1);
+      if (from !== -1 && to >= 0 && to < chosen.length) {
+        var moved = chosen.splice(from, 1)[0];
+        chosen.splice(to, 0, moved);
+        render();
+      }
       return;
     }
 

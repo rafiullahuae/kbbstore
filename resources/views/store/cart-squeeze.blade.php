@@ -363,7 +363,23 @@
      change every time the URL bar moved -- and a document that grows and shrinks
      under a scrolling finger drives the URL bar itself, which is a worse bug
      than the one above. The bars float; the room left for them stays still. */
-  bottom:calc(100lvh - 100dvh)}
+  /*
+   * ▲ THE lvh/dvh LIFT WAS HERE AND IS GONE. MEASURED ON THE OWNER'S PHONE.
+   *
+   * The reasoning was sound and the result was wrong. Chrome on Android
+   * ALREADY resolves a fixed element's `bottom` against the visual viewport
+   * while the URL bar is out -- so subtracting (100lvh - 100dvh) on top of
+   * that counted the browser chrome twice and pushed the bar UP by its height,
+   * leaving the page showing through underneath it. The owner's screenshot has
+   * the free-delivery bar visible BELOW the checkout row, which is the page,
+   * not a gap.
+   *
+   * So: plain bottom:0, which is correct at rest and correct once the URL bar
+   * has finished moving. What remains is a transient during the bar's own
+   * animation, and it is not fixed by arithmetic on viewport units -- doing
+   * that traded an intermittent artifact for a permanent one.
+   */
+  bottom:0}
 /* #fff and not var(--cream): "the background must be full white". The address
    row and the checkout row are one surface, and a cream strip above a white one
    reads as two bars rather than as the foot of the screen. */
@@ -558,27 +574,17 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
    as part of what is behind it rather than as a thing on top of it. */
 .cpg-sheet{position:fixed;inset-inline:0;bottom:0;z-index:52;background:#fff;color:#17181C;
   /*
-   * THE SAME LIFT AS .cpg-docked, AND FOR THE SAME REASON.
+   * bottom:0, like .cpg-docked above, and for the same reason it ended up
+   * there: a calc(100lvh - 100dvh) lift was tried on both and measured wrong
+   * on a real phone. Chrome on Android already resolves a fixed bottom against
+   * the visual viewport while the URL bar is out, so the subtraction counted
+   * the chrome twice and floated the sheet above the screen edge.
    *
-   * `position:fixed` resolves `bottom` against the LAYOUT viewport -- the tall
-   * one, the height the page has while the phone's URL bar is retracted.
-   * Scrolling upward brings the bar back: the layout viewport does not change,
-   * but the visible part of it shrinks, so its bottom edge now sits below the
-   * bottom of the screen and anything pinned to it goes down with it.
-   *
-   * On the docked rows that hid the Checkout button. Here it hides the bottom
-   * of the sheet -- which is "+ Add New Address" on the list, and "Deliver
-   * here" on the form. Both are on the path to checkout, and the rule's own
-   * note below promises the sheet never scrolls, so there is no way to reach
-   * what has gone under the edge.
-   *
-   * 100lvh is the tall viewport, 100dvh is how much of it is visible now, and
-   * the difference is exactly the strip hanging off the bottom. With the bar
-   * retracted the two are equal and this is 0px, so nothing moves. A browser
-   * that cannot parse the units drops the declaration and keeps the bottom:0
-   * above it, which is where it already was.
+   * The sheet is overflow:hidden by design -- see the note below -- so if it
+   * ever does hang off the bottom, "+ Add New Address" and "Deliver here"
+   * cannot be scrolled back into reach. That makes it worth watching, but not
+   * worth a second wrong fix.
    */
-  bottom:calc(100lvh - 100dvh);
   border-radius:16px 16px 0 0;
   padding:14px 16px calc(12px + env(safe-area-inset-bottom,0px));
   transform:translateY(102%);transition:transform .26s cubic-bezier(.32,.72,0,1);

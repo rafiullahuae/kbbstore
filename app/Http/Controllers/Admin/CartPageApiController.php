@@ -32,7 +32,26 @@ class CartPageApiController extends Controller
     private const PER_PAGE = 30;
 
     /** The escape character the LIKE clauses below declare. */
-    private const LIKE_ESCAPE = '\\';
+    /*
+     * `!`, AND NOT A BACKSLASH, WHICH IS WHY THE SEARCH RETURNED NOTHING ON
+     * THE LIVE SHOP WHILE EVERY TEST PASSED.
+     *
+     * This was '\\' -- one backslash -- so the SQL read `LIKE ? ESCAPE '\'`.
+     * MySQL reads the backslash inside that literal as escaping the closing
+     * quote, keeps consuming, and throws a syntax error. SQLite does not treat
+     * backslash as an escape inside string literals, so the same SQL is a valid
+     * one-character string there and works.
+     *
+     * The suite runs on SQLite. Production runs on MySQL. So the picker
+     * answered 500 on the shop and green in CI, and the owner saw only
+     * "Nothing matches that."
+     *
+     * `!` needs no quoting in either dialect, so there is no escaping of the
+     * escape character to get wrong a second time. It is escaped in the needle
+     * below along with % and _, so a shopper searching for a literal ! still
+     * gets what they asked for.
+     */
+    private const LIKE_ESCAPE = '!';
 
     public function __construct(private CartPage $page) {}
 
@@ -128,7 +147,13 @@ class CartPageApiController extends Controller
         $term = trim((string) ($data['q'] ?? ''));
 
         if ($term !== '') {
-            $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term) . '%';
+            // The escape character first, or escaping % would then be escaped
+            // again by the pass that escapes the escape.
+            $like = '%' . str_replace(
+                [self::LIKE_ESCAPE, '%', '_'],
+                [self::LIKE_ESCAPE . self::LIKE_ESCAPE, self::LIKE_ESCAPE . '%', self::LIKE_ESCAPE . '_'],
+                $term
+            ) . '%';
 
             $query->where(function ($q) use ($like) {
                 $q->orWhereRaw("name LIKE ? ESCAPE '" . self::LIKE_ESCAPE . "'", [$like])
