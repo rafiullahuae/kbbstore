@@ -72,6 +72,47 @@
                                 autocomplete="section-billing billing tel"
                                 :value="old('billing_phone', $prefill['phone'] ?? '')" />
                         </div>
+{{-- THE NAME LIVES HERE, with the other contact details.
+
+     It used to open the Shipping address section, which was the right place
+     while that section was a set of address fields the shopper typed. It is an
+     address PICKER now, and a saved address carries no name — the popup asks
+     for Area, Apartment, City and Country and nothing else — so a name field
+     sitting above a list of saved addresses would read as naming the address
+     rather than the person.
+
+     Email, phone and name are the three things this order needs to reach a
+     human, and they belong together. The field, its validation priority and
+     its autocomplete tokens are unchanged: this is a move, not a rewrite, and
+     `billing_first_name` is still exactly what the form posts. --}}
+@if ($singleName ?? true)
+                            {{-- autocomplete="name", not "given-name". This one box holds the
+                                 whole name -- splitName() in the controller cuts it up -- and a
+                                 browser told "given-name" fills it with the first name alone,
+                                 leaving the surname to be typed by hand on a phone. --}}
+                            <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_full_name')" required
+                                validate="validate-required" priority="10"
+                                :placeholder="__('store.checkout.field_full_name_placeholder')"
+                                autocomplete="section-billing billing name"
+                                :value="old('billing_first_name', $prefill['name'] ?? '')" />
+@else
+                            {{-- Store → Ecommerce → Checkout → Form fields, off. The single field
+                                 above is still what the backend sees when this is on — splitName()
+                                 in the controller has accepted this shape all along; only the form
+                                 itself never offered it. --}}
+                            <div class="row2">
+                                <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_first_name')" required
+                                    rowClass="form-row-first" validate="validate-required" priority="10"
+                                    autocomplete="section-billing billing given-name"
+                                    :value="old('billing_first_name', $prefill['first_name'] ?? '')" />
+
+                                <x-checkout.field name="billing_last_name" :label="__('store.checkout.field_last_name')" required
+                                    rowClass="form-row-last" validate="validate-required" priority="20"
+                                    autocomplete="section-billing billing family-name"
+                                    :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
+                            </div>
+@endif
+                        </div>
 {{-- THE THREE COMPOUND ROWS ON THIS PAGE STAY HAND-WRITTEN, deliberately.
 
      This one, the gift row below and the WhatsApp opt-in are not fields with a
@@ -105,33 +146,6 @@
                     <!-- 2 · Shipping address -->
                     <div class="sec">
                         <h2><span class="n">2</span> {{ __('store.checkout.step_shipping') }}</h2>
-@if ($singleName ?? true)
-                            {{-- autocomplete="name", not "given-name". This one box holds the
-                                 whole name -- splitName() in the controller cuts it up -- and a
-                                 browser told "given-name" fills it with the first name alone,
-                                 leaving the surname to be typed by hand on a phone. --}}
-                            <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_full_name')" required
-                                validate="validate-required" priority="10"
-                                :placeholder="__('store.checkout.field_full_name_placeholder')"
-                                autocomplete="section-billing billing name"
-                                :value="old('billing_first_name', $prefill['name'] ?? '')" />
-@else
-                            {{-- Store → Ecommerce → Checkout → Form fields, off. The single field
-                                 above is still what the backend sees when this is on — splitName()
-                                 in the controller has accepted this shape all along; only the form
-                                 itself never offered it. --}}
-                            <div class="row2">
-                                <x-checkout.field name="billing_first_name" :label="__('store.checkout.field_first_name')" required
-                                    rowClass="form-row-first" validate="validate-required" priority="10"
-                                    autocomplete="section-billing billing given-name"
-                                    :value="old('billing_first_name', $prefill['first_name'] ?? '')" />
-
-                                <x-checkout.field name="billing_last_name" :label="__('store.checkout.field_last_name')" required
-                                    rowClass="form-row-last" validate="validate-required" priority="20"
-                                    autocomplete="section-billing billing family-name"
-                                    :value="old('billing_last_name', $prefill['last_name'] ?? '')" />
-                            </div>
-@endif
                         <x-checkout.field name="billing_address_1" :label="__('store.checkout.field_address')" required
                             validate="validate-required" priority="50"
                             :placeholder="__('store.checkout.field_address_placeholder')"
