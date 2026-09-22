@@ -281,8 +281,34 @@ final class EnglishRenderWalk
      * it — `git show <sha>:resources/views` then resurrects the old marks and
      * this walk goes red on every page again. Repoint it at whatever commit the
      * merge produces; it is this one line and nothing else.
+     *
+     * MOVED FORWARD AGAIN FOR THE CART-FOOTER LANE, and this diff is one
+     * element on one page. The owner asked for a cart page with no footer --
+     * "on cart there will be no footer! ... by default keep the footer turned
+     * off on the cart page completely" -- so `cartpage_footer_on` ships false
+     * and store/cart.blade.php declares the `no-footer` section that
+     * layouts/store.blade.php reads.
+     *
+     * READ BEFORE IT WAS APPROVED, and worth stating precisely, because this
+     * is the one control on the cart page screen that was ALLOWED to move
+     * bytes. Exactly two entries in the walk moved -- `cart` and `(with a
+     * basket) /cart` -- and in both the first difference is at the close of
+     * <main>:
+     *
+     *     -</main><nl><nl>    <footer><div class="wrap">...</footer><nl><nl><div class="mscrim"...
+     *     +</main><nl><nl><nl><div class="mscrim"...
+     *
+     * The whole of partials/footer.blade.php and nothing else. The newline
+     * that remains is the blank line that has always sat after the @endunless.
+     *
+     * NO OTHER PAGE IN THE WALK MOVED A BYTE, which is the half worth checking
+     * rather than assuming: the switch belongs to the cart page, and
+     * layouts/store.blade.php is extended by every page in the shop. The note
+     * added to that layout is a PHP comment inside an @php block for the same
+     * reason -- a Blade comment there leaves its newline behind, and that one
+     * byte would have landed on all thirty pages.
      */
-    public const BASE_COMMIT = 'b9f40bbbb28cb0a63b2a694c0d8fcf37907bda7c';
+    public const BASE_COMMIT = 'c91652c74c6274af8c83b4348b761a56b31c9d2b';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

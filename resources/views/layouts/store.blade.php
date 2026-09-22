@@ -334,7 +334,8 @@ html[lang="ar"] .q-next,html[lang="ar"] .ib i,html[lang="ar"] .tabbar i{font-fam
  * it, so a comment written here would add one byte to EVERY page in the shop —
  * this template is what every page extends. Written this way it compiles to a
  * bare <?php ?>, PHP swallows the newline that follows, and the rendered page
- * is unchanged. The header block below has the same shape for the same reason.
+ * is unchanged. The Blade comment above the header predates this and is part
+ * of the baseline; adding a second one here is what would have moved bytes.
  *
  * TWO SECTIONS, NOT A SETTING LOOKUP. 'bare' is the long-standing one.
  * 'no-footer' is declared by store/cart.blade.php when Appearance → Cart page →
