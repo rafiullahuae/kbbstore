@@ -419,9 +419,11 @@ class CheckoutController extends Controller
 
         try {
             $order = DB::transaction(function () use ($cart, $data, $first, $last, $rate, $totals, $fee, $giftFee, $request, $paymentTitle, $orderNumber, &$accountCreated) {
-                $customer = $request->user('customer') ?? Customer::firstOrCreate(
-                    ['email' => mb_strtolower($data['billing_email'])],
-                    ['name' => trim($first . ' ' . $last), 'first_name' => $first, 'last_name' => $last, 'phone' => $data['billing_phone'] ?? null]
+                $customer = $request->user('customer') ?? self::customerForGuestOrder(
+                    $data['billing_email'],
+                    $first,
+                    $last,
+                    $data['billing_phone'] ?? null,
                 );
 
                 // A guest who asked for an account gets a usable password on the
@@ -1195,6 +1197,91 @@ class CheckoutController extends Controller
     }
 
     /**
+     * The customer row a GUEST order is filed under, found by email address.
+     *
+     * The order belongs in that person's history — that is the whole point,
+     * and `customers.email` is the only handle a guest checkout has. What this
+     * does NOT do is let the guest anywhere near the account: nobody is signed
+     * in, nothing on the row is rewritten, and the order-received page is
+     * gated by mayView() exactly as before. Attaching an order and being an
+     * account are two different things, and the note beside $saveCard in
+     * place() turns on the same distinction.
+     *
+     * It replaces Customer::firstOrCreate(['email' => mb_strtolower(...)]),
+     * which got the common case right and then had three ways to fail — every
+     * one of them a 500 at Place Order, with the basket paid for by nobody:
+     *
+     *   - SOFT-DELETED ROWS. Customer uses SoftDeletes, so the global scope
+     *     hid a trashed row from the lookup while `customers.email` — a plain
+     *     UNIQUE index that knows nothing about deleted_at — still refused the
+     *     INSERT. An admin deleting a customer made that address permanently
+     *     un-checkout-able. Reproduced: HTTP 500, zero orders written.
+     *
+     *   - STORED CASE. The lookup was lowercased but the stored value never
+     *     was, and the 3,712 imported WooCommerce customers carry whatever
+     *     case they typed. On MySQL's case-insensitive collation the SELECT
+     *     missed and the INSERT then collided with the very row it had missed
+     *     — another 500. On SQLite, where `=` is case-sensitive, it quietly
+     *     wrote a SECOND row for the same person, which is the owner's
+     *     complaint in its purest form: the order went under a duplicate
+     *     account and their history stayed split in two.
+     *
+     *   - THE RACE. Two checkouts by the same new address at once both miss,
+     *     both INSERT, and the loser 500s. Same shape as the order-number race
+     *     that moved nextOrderNumber() out of the transaction.
+     *
+     * ONE QUERY, WHETHER OR NOT THE ADDRESS EXISTS, and deliberately the same
+     * query either way. A cheap indexed probe with an unindexed fallback only
+     * when it missed would make "this address is new" the measurably slower
+     * answer, and an account-enumeration oracle is not less of one for being
+     * made of microseconds rather than words. LOWER() costs a scan of a table
+     * with a few thousand rows in it, on a request that is about to talk to a
+     * payment provider over the network.
+     *
+     * A TRASHED ROW IS RETURNED TRASHED. It is not restored: an admin deleted
+     * that customer, and undoing an admin's decision from an unauthenticated
+     * form is not this endpoint's business. The row still exists, so
+     * `orders.customer_id` points at something real, the order is filed, and
+     * the checkout completes — which is all the shopper needed.
+     */
+    private static function customerForGuestOrder(
+        string $email,
+        string $first,
+        string $last,
+        ?string $phone,
+    ): Customer {
+        $email = mb_strtolower(trim($email));
+
+        $find = static fn (): ?Customer => Customer::withTrashed()
+            ->whereRaw('LOWER(email) = ?', [$email])
+            // Oldest wins, so a table that already contains a duplicate pair
+            // from before this fix keeps filing new orders under the same one
+            // rather than alternating between them.
+            ->orderBy('id')
+            ->first();
+
+        if ($existing = $find()) {
+            return $existing;
+        }
+
+        try {
+            return Customer::create([
+                'email' => $email,
+                'name' => trim($first . ' ' . $last),
+                'first_name' => $first,
+                'last_name' => $last,
+                'phone' => $phone,
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Somebody inserted this address between the SELECT and the
+            // INSERT. Their row is as good as the one this request wanted;
+            // anything else the database refused is a real fault and is
+            // rethrown rather than turned into a mystery.
+            return $find() ?? throw $e;
+        }
+    }
+
+    /**
      * Whether a password may be written onto this customer row. The single
      * expression of the rule; place() and claimAccount() both ask it.
      *
@@ -1203,10 +1290,19 @@ class CheckoutController extends Controller
      * password waiting to be upgraded on first login and must not be trampled.
      * Without the rule, typing a stranger's email at checkout would overwrite
      * their password and hand over their account.
+     *
+     * A SOFT-DELETED ROW IS NEVER GIVEN ONE. Since customerForGuestOrder()
+     * above can now hand back a trashed customer — it has to, or the address
+     * cannot check out at all — a deleted account with a blank password would
+     * otherwise be the one row a stranger could put a password on. The guard
+     * lives here and not at the call site so that claimAccount(), which asks
+     * this same method, is covered by the same sentence.
      */
     public static function canSetInitialPassword(Customer $customer): bool
     {
-        return $customer->password === null && $customer->legacy_password === null;
+        return ! $customer->trashed()
+            && $customer->password === null
+            && $customer->legacy_password === null;
     }
 
     /* ------------------------------------------------------------ helpers */
