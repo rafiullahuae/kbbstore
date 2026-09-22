@@ -96,6 +96,27 @@
 .cpv-bar i{width:6px;height:6px;border-radius:50%;background:#d8dbe0;display:block}
 .cpv-body{position:relative;background:#fbf5f4;padding:10px;min-height:150px;color:#17181c}
 .cpv-note{font-size:10.5px;color:#6b7280;padding:14px 10px;text-align:center}
+/* The DESKTOP preview is a different shape, and it has to be: a two-column
+   layout drawn inside a phone-shaped frame would tell the owner nothing about
+   the thing they are adjusting. The proportions are what matter here, not the
+   pixels -- the frame stands for a 1024px-plus window, and the two tracks are
+   drawn at the real ratio between --cpv-d-aside and what is left. */
+.cpv-desk{border:1px solid var(--border,#e6e6e6);border-radius:12px;overflow:hidden;
+  background:#fff;box-shadow:0 8px 26px -18px rgba(0,0,0,.4)}
+.cpv-cols{display:grid;grid-template-columns:minmax(0,1fr) var(--cpv-d-aside,120px);
+  gap:var(--cpv-d-gap,10px);align-items:start}
+.cpv-cols > div{min-width:0}
+.cpv-side{display:flex;flex-direction:column;gap:6px}
+.cpv-stick{border:1px dashed #cbd5e1;border-radius:8px;padding:4px;position:relative}
+.cpv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;
+  background:#fff;padding:0 4px;font-size:7.5px;color:#94a3b8;letter-spacing:.02em}
+.cpv-modal{position:relative;background:#eef1f5;border-radius:8px;padding:14px 10px;
+  display:grid;place-items:center;min-height:96px}
+.cpv-modal .sheetwrap{width:var(--cpv-d-modal,150px);max-width:100%;
+  box-shadow:0 10px 30px -14px rgba(0,0,0,.45);border-radius:10px;overflow:hidden}
+.cpv-modal::before{content:'';position:absolute;inset:0;border-radius:8px;
+  backdrop-filter:blur(var(--cpv-d-blur,2px));-webkit-backdrop-filter:blur(var(--cpv-d-blur,2px))}
+.cpv-modal .sheetwrap{position:relative;z-index:1}
 
 /* rows — every size derives from --h, exactly as the shop does */
 .cpv-ci{display:flex;align-items:center;gap:calc(var(--h) * .13);height:var(--h);
@@ -759,7 +780,40 @@
       + '--sd:' + (pvNum('sheet_dense', 100) / 100) + ';'
       + '--sf:' + (pvNum('sheet_font', 100) / 100) + ';'
       + '--bl:' + pvNum('sheet_blur', 3) + ';'
+      /* Desktop. Scaled to the preview frame rather than printed raw: the
+         mock is about a third of a real window, so a 380px column drawn at
+         380px would fill it entirely and the ratio between the two tracks —
+         which is the thing being adjusted — would be invisible. The DIVISOR
+         is the same for both tracks, so the proportion the owner sees is the
+         proportion the page renders. */
+      + '--cpv-d-aside:' + Math.round(pvNum('d_aside', 380) / 3.1) + 'px;'
+      + '--cpv-d-gap:' + Math.round(pvNum('d_gap', 28) / 3.1) + 'px;'
+      + '--cpv-d-modal:' + Math.round(pvNum('d_modal_w', 460) / 3.1) + 'px;'
+      + '--cpv-d-blur:' + pvNum('d_modal_blur', 4) + 'px;'
       + '"';
+  }
+
+  /* The desktop tab's own region: the two columns, at the ratio the sliders
+     set, with the docked rows sitting IN the right column rather than pinned
+     to the foot of the screen -- which is the whole difference between the
+     two layouts and the thing the owner is adjusting.
+
+     It reuses pvRows/pvRail/pvSummary/pvBars rather than drawing its own
+     furniture. A desktop preview with its own idea of what a product row
+     looks like is a second place for the mock to drift from the shop. */
+  function pvDesktop() {
+    if (!pvOn('d_on')) {
+      return '<p class="cpv-note">The two-column desktop layout is switched off, so a desktop '
+        + 'gets the phone layout stretched across the screen.</p>';
+    }
+
+    var side = '<div class="cpv-side">' + pvSummary() + pvBars() + '</div>';
+
+    return '<div class="cpv-cols">'
+      + '<div>' + pvRows() + pvRail() + '</div>'
+      + '<div>' + (pvOn('d_sticky') ? '<div class="cpv-stick">' + side + '</div>' : side) + '</div>'
+      + '</div>'
+      + '<div class="cpv-modal"><div class="sheetwrap">' + pvSheet('form') + '</div></div>';
   }
 
   function pvRows() {
@@ -939,13 +993,18 @@
     else if (open === 'summary'){ region = pvSummary(); label = 'Summary & trust'; }
     else if (open === 'bars')   { region = pvBars(); label = 'Docked rows'; }
     else if (open === 'popup')  { region = pvSheet('list') + pvSheet('form'); label = 'Address popup · list, then form'; }
+    else if (open === 'desktop'){ region = pvDesktop(); label = 'Desktop · ' + pvNum('d_min', 1024) + 'px and up'; }
     else                        { region = pvRows() + pvRail() + pvSummary() + pvBars(); label = 'The whole page'; }
 
     var classic = String(values.layout) === 'classic';
 
     return '<div class="cpv" id="cps-preview">'
       + '<div class="cpv-h"><b>Live preview</b><span>' + esc(label) + '</span></div>'
-      + '<div class="cpv-phone" ' + pvVars() + '>'
+      /* A DESKTOP-SHAPED FRAME for the desktop tab. Drawing a two-column
+         layout inside a phone outline would be a preview that contradicts
+         itself, and this screen has already been through one round of
+         previews that did not match the page they claimed to show. */
+      + '<div class="' + (open === 'desktop' ? 'cpv-desk' : 'cpv-phone') + '" ' + pvVars() + '>'
       + '<div class="cpv-bar"><i></i>extrabeauty.ae/cart/</div>'
       + '<div class="cpv-body"' + (open === 'popup' ? ' style="padding:0"' : '') + '>' + region + '</div>'
       + '</div>'

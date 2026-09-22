@@ -403,6 +403,50 @@ class CartPage
         'addr_chosen'     => ['text', 'Address row · once chosen', 'Delivering to {tag}',
                               'Use {tag} where Home or Office should appear.'],
 
+        /*
+         * ── Desktop ──────────────────────────────────────────────────────
+         *
+         * EVERY ONE OF THESE IS READ ONLY INSIDE `@media (min-width: …)`.
+         * That is not tidiness, it is the guarantee: the owner asked four
+         * times in one message not to touch the phone, and a rule a phone
+         * cannot match is a rule that cannot touch it. Nothing here has any
+         * effect below the breakpoint, by construction rather than by care.
+         *
+         * They are EXTRAS, not a second copy of the schema. The owner chose
+         * shared values: row height, type sizes, weights, wording and the rail
+         * are the same settings on both, so there is one place to tune them
+         * and no way for the two to disagree about what a word says.
+         */
+        'd_on'         => ['bool', 'Two-column layout on desktop', true,
+                           'From the width below, the basket and the Recommended rail take the left column and everything else moves to the right. Off, a desktop gets the phone layout stretched across the screen, which is what it did before this existed.'],
+        'd_min'        => ['range', 'Desktop starts at', 1024,
+                           'Screens narrower than this keep the phone layout exactly as it is. 1024 leaves an iPad in portrait (768px) on the phone layout, which is the right call: two columns need room.',
+                           ['min' => 768, 'max' => 1440, 'step' => 32, 'unit' => 'px']],
+        'd_aside'      => ['range', 'Right column width', 380, '',
+                           ['min' => 300, 'max' => 520, 'step' => 10, 'unit' => 'px']],
+        'd_gap'        => ['range', 'Space between the columns', 28, '',
+                           ['min' => 12, 'max' => 64, 'step' => 4, 'unit' => 'px']],
+        'd_max'        => ['range', 'Widest the page will go', 1200,
+                           'The two columns stop growing here and centre themselves. A basket row stretched across a 27-inch monitor is unreadable.',
+                           ['min' => 960, 'max' => 1600, 'step' => 40, 'unit' => 'px']],
+        /*
+         * NOT the phone's fixed bar, and the difference matters. On a phone the
+         * checkout row is pinned to the bottom of the SCREEN. Here the whole
+         * right column simply stops when it reaches the top of the viewport and
+         * travels with the page after that — which is what the owner asked for
+         * when they said the sticky rows "will not be sticky in desktop, it
+         * will go in the right column".
+         */
+        'd_sticky'     => ['bool', 'Right column follows the scroll', true,
+                           'The summary and Proceed to Checkout stay on screen while a long basket scrolls past. Off, they sit at the top and scroll away with the page.'],
+        'd_sticky_top' => ['range', 'Gap above it when it sticks', 20, '',
+                           ['min' => 0, 'max' => 80, 'step' => 4, 'unit' => 'px']],
+        'd_modal_w'    => ['range', 'Address popup width', 460,
+                           'On a phone the address popup rises from the bottom edge. On desktop there is no bottom edge worth rising from, so it is a panel centred over the page.',
+                           ['min' => 360, 'max' => 720, 'step' => 20, 'unit' => 'px']],
+        'd_modal_blur' => ['range', 'Blur behind the popup', 4, '',
+                           ['min' => 0, 'max' => 14, 'step' => 1, 'unit' => 'px']],
+
         // ── The popup ──
         'sheet_max'        => ['range', 'New-address popup height · upright', 50,
                                'The popup that holds the FORM — the one with the fields in it. It grows from the bottom to fit what is in it and stops here. THE POPUP ITSELF NEVER SCROLLS — if a long address list would not fit, the list scrolls inside its own box and the Home / Office / Deliver here row stays put at the bottom where a thumb can reach it.',
@@ -531,6 +575,9 @@ class CartPage
                       ['addr_on', 'addr_h', 'co_h', 'bar_font', 'bar_pad',
                        'addr_font', 'addr_bold', 'addr_btn_font', 'addr_btn_bold', 'co_label',
                        'addr_heading', 'addr_btn_add', 'addr_btn_change', 'addr_chosen']],
+        'desktop' => ['Desktop', 'The two-column cart page, from 1024px up. Everything here is read only on desktop — none of it can reach a phone.',
+                      ['d_on', 'd_min', 'd_aside', 'd_gap', 'd_max',
+                       'd_sticky', 'd_sticky_top', 'd_modal_w', 'd_modal_blur']],
         'popup'   => ['Address popup', 'Its two heights — one for the list, a taller one for the form — its density and every word in it.',
                       ['sheet_max', 'sheet_max_list', 'sheet_max_land', 'sheet_max_list_land', 'sheet_blur', 'sk_on', 'sheet_two_up', 'sheet_dense', 'sheet_font', 'sheet_list_title', 'sheet_form_title',
                        'sheet_add_new', 'sheet_save', 'sheet_area', 'sheet_apt', 'sheet_city',
@@ -774,6 +821,22 @@ class CartPage
             '--cpg-sheet-blur:' . $c['sheet_blur'] . 'px',
             '--cpg-sheet-d:' . $this->ratio($c['sheet_dense']),
             '--cpg-sheet-f:' . $this->ratio($c['sheet_font']),
+            /*
+             * Desktop. Every one of these is read ONLY inside the stylesheet's
+             * min-width block, so emitting them costs a phone nothing but the
+             * bytes — they can never be matched by a rule a phone applies.
+             *
+             * `d_min` is NOT here, and cannot be: a media query is resolved
+             * before custom properties exist, so `@media (min-width: var(--x))`
+             * is not a thing. The breakpoint is interpolated into the query
+             * itself by cart-squeeze.blade.php, which is a Blade file.
+             */
+            '--cpg-d-aside:' . $c['d_aside'] . 'px',
+            '--cpg-d-gap:' . $c['d_gap'] . 'px',
+            '--cpg-d-max:' . $c['d_max'] . 'px',
+            '--cpg-d-top:' . $c['d_sticky_top'] . 'px',
+            '--cpg-d-modal:' . $c['d_modal_w'] . 'px',
+            '--cpg-d-blur:' . $c['d_modal_blur'] . 'px',
         ]);
 
         return [
@@ -811,6 +874,19 @@ class CartPage
             $c['row_bold'] ? '' : 'cpg-rowthin',
             $c['rec_bold'] ? 'cpg-recbold' : '',
             $c['sk_on'] ? '' : 'cpg-nosk',
+            /*
+             * Desktop, as CLASSES rather than as custom properties, because a
+             * custom property cannot switch a rule on and off — only change a
+             * number inside one. `cpg-d` gates the whole two-column block and
+             * `cpg-dstick` the column that follows the scroll.
+             *
+             * Both are harmless on a phone whatever they say: every rule that
+             * reads them sits inside the stylesheet's min-width query, which a
+             * phone never matches. The class is on the element from the first
+             * byte either way, so nothing flashes at the breakpoint.
+             */
+            $c['d_on'] ? 'cpg-d' : '',
+            ($c['d_on'] && $c['d_sticky']) ? 'cpg-dstick' : '',
         ]);
 
         return ' ' . implode(' ', $classes);

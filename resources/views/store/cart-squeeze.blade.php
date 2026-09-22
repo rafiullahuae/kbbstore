@@ -881,6 +881,118 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
 .cpg-cmenu button:hover,.cpg-cmenu button:focus-visible{background:#F4F6F8}
 .cpg-cmenu button[aria-selected="true"]{color:#177F47;font-weight:600}
 .cpg-cmenu button .gx{font-size:9.5px;color:#1E9E5A;font-weight:600;flex:none}
+
+/* ==========================================================================
+   DESKTOP — TWO COLUMNS, FROM {{ (int) $kbbCartPage->get('d_min') }}px UP
+   ==========================================================================
+
+   EVERY RULE IN THIS BLOCK IS INSIDE THE min-width QUERY, and that is the
+   whole design. The owner asked four times in one message not to touch the
+   phone. A rule a phone cannot match is a rule that cannot touch it, so the
+   guarantee is structural rather than a matter of care, and
+   CartDesktopLeavesMobileAloneTest asserts it: no selector added here may sit
+   outside the query.
+
+   WHAT WAS ACTUALLY WRONG. `.kbb-cartpage .grid` is already a two-column grid
+   in kbb-cart.css — `1fr 372px`, which is what the classic cart page uses. The
+   squeezed layout collapses it to one column, at EVERY width:
+
+       .kbb-cartpage.cpg-squeeze .grid{grid-template-columns:minmax(0,1fr)}
+
+   There was no breakpoint anywhere on this page, so a 27-inch monitor got the
+   phone layout stretched across it. That rule is right below 1024px and wrong
+   above it, so this block puts the second column back — it does not invent a
+   layout, it stops suppressing one.
+
+   ONE ELEMENT WAS ADDED to the markup, `.cpg-side`, wrapping the summary and
+   the docked rows so the right-hand column is a single grid item that can hold
+   both. Below the breakpoint it is `display:contents` — it generates no box, so
+   a phone lays those two out precisely as it did before it existed. That
+   declaration sits OUTSIDE the query on purpose: "generate no box" is exactly
+   what a phone needs it to do.
+
+   The breakpoint is interpolated by Blade rather than read from a custom
+   property, because it cannot be: a media query is resolved before custom
+   properties exist, so `@media (min-width: var(--x))` is not a thing. Every
+   other number here IS a custom property, so the sliders move the page without
+   re-rendering it.
+   ========================================================================== */
+.kbb-cartpage.cpg-squeeze .cpg-side{display:contents}
+
+@media (min-width: {{ (int) $kbbCartPage->get('d_min') }}px){
+
+  /* The page stops growing and centres. A basket row drawn the full width of a
+     wide monitor is a line of text nobody can track back to its own price. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .wrap{
+    max-width:var(--cpg-d-max,1200px);
+    margin-inline:auto;
+    /* The phone reserves room at the foot of the document for the two bars to
+       float over. Nothing floats here, so that reservation is just a hole. */
+    padding-bottom:24px}
+
+  .kbb-cartpage.cpg-squeeze.cpg-d .grid{
+    grid-template-columns:minmax(0,1fr) var(--cpg-d-aside,380px);
+    column-gap:var(--cpg-d-gap,28px);
+    align-items:start}
+
+  /* EVERYTHING goes left except the side block, selected by position rather
+     than by name: the column that holds the basket rows carries no class of
+     its own, and the coupon box and the rail are siblings beside it. Naming
+     them would mean naming each one and missing the next one added.
+
+     minmax(0,1fr) and not 1fr: a grid track's default minimum is min-content,
+     so one long unbroken product name would push the column wider than the
+     page instead of wrapping inside it. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .grid > *{grid-column:1}
+  .kbb-cartpage.cpg-squeeze.cpg-d .grid > .cpg-side{
+    display:flex;flex-direction:column;gap:16px;
+    grid-column:2;grid-row:1 / span 99}
+
+  /* The right column travels with the page once it reaches the top. This is
+     NOT the phone's fixed bar and the difference is the point: the owner asked
+     for the docked rows to stop being stuck to the screen and to move into
+     this column, and a sticky column does that while still keeping Proceed to
+     Checkout reachable down a long basket. */
+  .kbb-cartpage.cpg-squeeze.cpg-d.cpg-dstick .grid > .cpg-side{
+    position:sticky;top:var(--cpg-d-top,20px)}
+
+  /* The docked rows, undocked: position:static drops them back into the
+     column, and everything that made them a floating bar goes with it. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-docked{
+    position:static;z-index:auto;width:auto;
+    border:1px solid var(--line-2);border-radius:14px;overflow:hidden;
+    padding-bottom:0}
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-addrbar{border-top:0}
+
+  /* The rail is full-bleed on a phone because a phone's column IS the page:
+     `margin:14px calc(50% - 50vw) 0; width:100vw; max-width:100vw`. Here it is
+     one column of two, and 100vw is the whole WINDOW — measured at 1280px it
+     came out 1280 wide starting at x=62, so it ran 124px past its own column
+     and straight under the summary. All three declarations have to come off,
+     not just the margins; overriding the margin alone leaves the width. */
+  .kbb-cartpage.cpg-squeeze.cpg-d .cpg-rec{
+    margin-inline:0;width:auto;max-width:none;
+    padding-inline:14px;border-radius:14px;overflow:hidden}
+
+  /* ── The address popup ──────────────────────────────────────────────────
+     A phone's sheet rises from the bottom edge because that is where a thumb
+     is. A desktop has no bottom edge worth rising from, so it is a panel
+     centred over the page with the page blurred behind it. Everything inside
+     is untouched: the skeleton, the country list that opens upward, the
+     Home / Office / Deliver here row and both height caps. */
+  .cpg-scrim{backdrop-filter:blur(var(--cpg-d-blur,4px));
+    -webkit-backdrop-filter:blur(var(--cpg-d-blur,4px))}
+
+  .cpg-sheet{
+    top:50%;left:50%;right:auto;bottom:auto;
+    width:min(var(--cpg-d-modal,460px), calc(100vw - 48px));
+    max-height:min(78vh, 720px);
+    border-radius:16px;
+    transform:translate(-50%,-46%) scale(.98)}
+  .cpg-sheet.on{transform:translate(-50%,-50%) scale(1)}
+
+  .cpg-x{top:14px;right:14px}
+}
 </style>
 @endpush
 

@@ -204,7 +204,7 @@ $kbbSignedIn = (bool) ($kbbAddrState['signedIn'] ?? false);
         @endif
 @endif
 
-        <aside class="sum">
+@if ($kbbSq)<div class="cpg-side">{{-- the right-hand column on desktop; display:contents below the breakpoint, so a phone lays these two out exactly as before. See cart-squeeze.blade.php --}}@endif        <aside class="sum">
 @php
     /*
      * THE WIDTH EVERY ROW OF THIS SUMMARY PRINTS AT — Lane FA.
@@ -480,5 +480,6 @@ $kbbGrand = (int) $totals['total'] + $kbbFee;
             </div>
         </div>
 @endif
+@if ($kbbSq)</div>@endif
     </div>
 @endif
