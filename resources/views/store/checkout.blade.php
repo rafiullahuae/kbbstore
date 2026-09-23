@@ -302,13 +302,61 @@
             <div class="kbb-thumbs-slot">@include('partials.checkout.thumbs')</div><div class="kbb-order-slot">@include('partials.checkout.order-block', ['withActions' => true])</div>        </div>
     </form>
 
-    @if ($settings->get('mobile_sticky_bar', false))
-    {{-- Optional, off by default. The on-page box above is the design; this is
-         an extra for stores that want the total always visible while scrolling. --}}
+    @php $kbbFloat = $kbbCoPage->floatBar(); @endphp
+    @if ($kbbFloat !== 'off')
+    {{-- The phone-only Place order bar. Appearance -> Checkout page -> Mobile
+         chooses between never, "only once the in-page button scrolls away"
+         (the default) and always; floatBar() resolves that against the older
+         `mobile_sticky_bar` switch under Store -> Ecommerce, so a shop that
+         asked for an always-there bar before this control existed keeps one.
+
+         `hidden` is NOT used and must not be: the bar has to be in the layout
+         for its transform to animate, and an element that is `hidden` cannot
+         transition into view. The resting state is CSS -- see .mpbar in
+         kbb-checkout.css -- so a page whose script never runs shows no bar
+         rather than one stuck across the bottom. --}}
     <div class="mpbar">
         <div><div class="ml">{{ __('store.checkout.total') }}</div><div class="mt js-total">{!! Money::format($totals['total']) !!}</div></div>
         <button type="button" class="mb" data-place="1">{{ __('store.checkout.place_order') }}</button>
     </div>
+    @if ($kbbFloat === 'smart')
+    @push('scripts')
+    <script>
+    /*
+     * The floating bar waits for the in-page Place order button to leave.
+     *
+     * IntersectionObserver AND NOT A SCROLL HANDLER. A scroll handler would
+     * have to ask the button where it is on every frame, which is the
+     * layout-measuring JavaScript this project does not write -- and it would
+     * be wrong as well as expensive, because the button MOVES: choosing an
+     * address, opening the gift box or applying a coupon all change the height
+     * of the page above it, so a remembered position is stale the moment the
+     * shopper does anything. The observer is told the element, not a number,
+     * and the browser answers from layout it has already done.
+     *
+     * The target is the button inside .kbb-mobile-order, not `.place` -- there
+     * are two of those, and the other one is in the desktop summary, which is
+     * display:none on a phone. An observer on a display:none element never
+     * reports as intersecting, so watching the wrong one would leave the bar
+     * showing for the whole page.
+     *
+     * No threshold and no rootMargin: the owner asked for the bar to go "as
+     * soon as the on page place order button appears", and the default
+     * threshold of 0 is exactly that -- the first pixel in, or out.
+     */
+    (function () {
+        var bar = document.querySelector('.kbb-checkout .mpbar');
+        var target = document.querySelector('.kbb-checkout .kbb-mobile-order .place');
+
+        if (!bar || !target || !('IntersectionObserver' in window)) { return; }
+
+        new IntersectionObserver(function (entries) {
+            bar.classList.toggle('is-on', !entries[entries.length - 1].isIntersecting);
+        }).observe(target);
+    })();
+    </script>
+    @endpush
+    @endif
     @endif
 {{-- THE SLIM FOOTER, if this shop draws one. It is NOT the site footer: the
      checkout declares `bare`, so that has never rendered here and still does

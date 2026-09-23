@@ -96,6 +96,58 @@ class CheckoutPage
                            'How far below the top of the window the summary parks itself once it has caught up. Only read while the switch above is on.',
                            ['min' => 0, 'max' => 96, 'step' => 2, 'unit' => 'px']],
 
+        /*
+         * ── THE SPACE ABOVE THE HEADER, AND WHERE IT CAME FROM ───────────
+         *
+         * `kbb.css:240` carries a bare `section{padding:52px 0}`. The checkout
+         * IS a <section>, so it inherited 52px of padding at the top and 52px
+         * at the bottom — measured in Chromium at 1280 and at 390, the
+         * .co-head's own top was 52 on both, with the page background showing
+         * through above a header that is supposed to be the first thing on the
+         * page. That is the band the owner photographed, and no slider on this
+         * screen could reach it, because it was never this screen's number.
+         *
+         * Exactly the shape of the `footer{padding:52px 0 26px}` landmine the
+         * slim footer hit, and found the same way: by measuring the rendered
+         * element rather than reading the stylesheet that was supposed to own
+         * it.
+         *
+         * THESE TWO DEFAULT TO 0 AND THAT IS A DELIBERATE CHANGE TO THE PAGE,
+         * not the usual "ships at the value the page already has". The owner
+         * asked for the space removed in as many words, so the fix is the
+         * default and the control is how it comes back.
+         */
+        'd_shell_pt'  => ['range', 'Space above the header', 0,
+                          'Between the top of the window and the secure-checkout bar. It was 52px and nobody chose it — a site-wide `section` rule reached in. Zero is the page with the band gone.',
+                          ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+        'd_shell_pb'  => ['range', 'Space below the page', 0,
+                          'The other half of the same inherited rule, under the last block on the page. The page already carries its own bottom padding, so this was 52px of nothing.',
+                          ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+
+        /*
+         * ── "GO BACK TO CART" ─────────────────────────────────────
+         *
+         * ONE SIZE SLIDER AND NOT FOUR. The link's five looks each carry their
+         * own padding pair, chosen against their own border and fill — a ghost
+         * rect is 9/14, a solid pill 10/17. Four separate sliders would let the
+         * owner set a padding the look was never drawn for and would have to be
+         * re-set every time the look changed. A single share multiplies
+         * whichever pair the chosen look uses, so 80% is that look, smaller.
+         *
+         * The icon is its own control because it is the one part a share of the
+         * text does not size correctly: the glyph reads as too big long before
+         * the text does.
+         */
+        'd_tocart_size' => ['range', 'Back-to-cart button size', 100,
+                            'Scales the text and the padding of the "Go back to cart" link together, whichever of the five looks is chosen on Store → Ecommerce. 100% is the size it is today.',
+                            ['min' => 60, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        'd_tocart_icon' => ['range', 'Back-to-cart arrow size', 100,
+                            'The chevron alone. Separate from the slider above because a smaller button usually wants a proportionally smaller glyph, not the same one.',
+                            ['min' => 50, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'd_tocart_r'    => ['range', 'Back-to-cart corner radius', 10,
+                            'Read only by the rounded-rectangle look. The pill looks are round by definition and the icon-only look is a circle.',
+                            ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+
         // ── Mobile ──
         'm_pad_x'     => ['range', 'Page padding — sides', 20,
                           'The gap between the screen edge and every block on the page. The checkout is one column on a phone, so this is the page margin.',
@@ -115,6 +167,62 @@ class CheckoutPage
         'm_aside_pad' => ['range', 'Padding inside the summary', 14,
                           'The order-summary card at the top of the phone page.',
                           ['min' => 6, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+        'm_shell_pt'  => ['range', 'Space above the header', 0,
+                          'The phone half of the inherited `section{padding:52px 0}` — measured at 390px, the header sat 52px down the page for the same reason it did on a desktop. Zero is the band gone.',
+                          ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+        'm_shell_pb'  => ['range', 'Space below the page', 0,
+                          'And the bottom half of it, under the Place order box.',
+                          ['min' => 0, 'max' => 80, 'step' => 2, 'unit' => 'px']],
+        'm_tocart_size' => ['range', 'Back-to-cart button size', 100,
+                            'The same link on a phone, its own value. 100% is today.',
+                            ['min' => 60, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        'm_tocart_icon' => ['range', 'Back-to-cart arrow size', 100,
+                            'The chevron alone, on a phone.',
+                            ['min' => 50, 'max' => 160, 'step' => 5, 'unit' => '%']],
+        'm_tocart_r'    => ['range', 'Back-to-cart corner radius', 10,
+                            'The rounded-rectangle look only.',
+                            ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        /*
+         * 44 IS A FLOOR SOMEBODY PUT THERE ON PURPOSE, which is why it is a
+         * slider that starts there rather than a number in the stylesheet.
+         * Lane BM measured "Go back to cart" at 38.8px tall on a phone and
+         * raised it to 44 to clear the touch-target minimum. Shrinking the
+         * button with the slider above will not take it back under 44 unless
+         * this one is lowered too, and lowering it is the owner's call to make
+         * with that sentence in front of him.
+         */
+        'm_tocart_min'  => ['range', 'Back-to-cart tap height', 44,
+                            'The smallest the link may be on a phone, whatever the size slider says. 44px is the touch-target minimum; below it the link is harder to hit than it should be.',
+                            ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
+
+        /*
+         * ── THE FLOATING PLACE ORDER BUTTON ─────────────────────────
+         *
+         * The owner's words: "the Place order should float only when on page
+         * place order disappear by scroll... and the floating place order
+         * button will hid immidiately as soon as the on page place order
+         * button appears."
+         *
+         * That is an INTERSECTION QUESTION, not a scroll position, and it is
+         * answered by IntersectionObserver rather than by a scroll handler
+         * reading offsets. Two reasons, and both are house rules: a scroll
+         * handler that calls getBoundingClientRect on every frame is the
+         * layout-measuring JavaScript this project does not write, and it would
+         * also be WRONG — the on-page button's position moves as sections
+         * expand, so a remembered pixel would be stale the moment an address is
+         * chosen.
+         *
+         * "always" is kept because it is what `mobile_sticky_bar` has always
+         * done on Store → Ecommerce, and a shop that turned that on chose a bar
+         * that is always there. Turning it into a disappearing one under them
+         * would be this screen quietly overruling that one.
+         */
+        'm_float'     => ['select', 'Floating Place order button', 'smart',
+                          'A phone-only bar across the bottom carrying the total and a Place order button. Nothing on this row reaches a desktop.', [
+                              'off'    => 'Never — only the button in the page',
+                              'smart'  => 'Only once the in-page button scrolls away',
+                              'always' => 'Always, from the moment the page loads',
+                          ]],
 
         /*
          * ── THE ORDER-SUMMARY PRODUCT ROWS ─────────────────────────────────
@@ -595,9 +703,11 @@ class CheckoutPage
      */
     public const TABS = [
         'desktop'      => ['Desktop · Layout', 'The two-column checkout, from 901px up. Nothing on this tab can reach a phone.',
-                           ['d_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y',
+                           ['d_shell_pt', 'd_shell_pb',
+                            'd_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y',
                             'd_block_gap', 'd_sec_pad', 'd_aside_pad',
-                            'd_sticky', 'd_sticky_top']],
+                            'd_sticky', 'd_sticky_top',
+                            'd_tocart_size', 'd_tocart_icon', 'd_tocart_r']],
         'desktop_head' => ['Desktop · Header', 'The secure-checkout bar across the top. Its height is its padding plus the taller of the logo and the badge, so those are the controls rather than a "height" that would fight them.',
                            ['d_head_pad_y', 'd_head_pad_x', 'd_head_max', 'd_head_logo', 'd_head_badge', 'd_head_sticky']],
         'desktop_type' => ['Desktop · Text sizes', 'Every size is a share of the size that role already uses, so 100% is the page exactly as it is and the roles keep their relationship to each other.',
@@ -607,7 +717,10 @@ class CheckoutPage
                             'd_row_gap', 'd_row_font', 'd_row_bold', 'd_qty_size', 'd_rm_size',
                             'd_tab_min', 'd_tab_pad', 'd_tab_font', 'd_tab_gap']],
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
-                           ['m_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad']],
+                           ['m_shell_pt', 'm_shell_pb',
+                            'm_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
+                            'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min',
+                            'm_float']],
         'mobile_head'  => ['Mobile · Header', 'The same bar on a phone. Worth a look at 360px: the badge is the first thing that crowds the logo.',
                            ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
         'mobile_type'  => ['Mobile · Text sizes', 'Same six roles, their own values. The field-text floor is the one control here that will not go below where it is, and it says why.',
@@ -715,6 +828,13 @@ class CheckoutPage
         'd_sec_pad'    => '--cop-d-secpad',
         'd_aside_pad'  => '--cop-d-asidepad',
         'd_sticky_top' => '--cop-d-sticktop',
+        'd_shell_pt'   => '--cop-d-shellpt',
+        'd_shell_pb'   => '--cop-d-shellpb',
+        'd_tocart_r'   => '--cop-d-tocartr',
+        'm_shell_pt'   => '--cop-m-shellpt',
+        'm_shell_pb'   => '--cop-m-shellpb',
+        'm_tocart_r'   => '--cop-m-tocartr',
+        'm_tocart_min' => '--cop-m-tocartmin',
         'm_pad_x'      => '--cop-m-padx',
         'm_pad_y'      => '--cop-m-pady',
         'm_gap'        => '--cop-m-gap',
@@ -789,6 +909,10 @@ class CheckoutPage
         'm_t_input'  => '--cop-m-tinput',
         'm_t_ph'     => '--cop-m-tph',
         'm_t_trust'  => '--cop-m-ttrust',
+        'd_tocart_size' => '--cop-d-tocarts',
+        'd_tocart_icon' => '--cop-d-tocartic',
+        'm_tocart_size' => '--cop-m-tocarts',
+        'm_tocart_icon' => '--cop-m-tocartic',
         'addr_cue_size' => '--cop-cue-s',
         /*
          * SPEED IS EMITTED AS ITS RECIPROCAL, because what the stylesheet
@@ -827,6 +951,29 @@ class CheckoutPage
         /* The one switch here whose ON state is the class, because upright is
            the default and italic is the departure. */
         'ph_italic'      => ['', 'cop-phit'],
+    ];
+
+    /**
+     * The RESOLVED floating-bar mode as a class.
+     *
+     * `m_float` cannot be a custom property: what it chooses is whether a whole
+     * block of declarations applies, not a number inside one. And it cannot be
+     * a CLASS_VARS row, because that map has exactly two states and this has
+     * three.
+     *
+     * Read through floatBar() rather than off the stored value, so the class on
+     * the element and the decision the view made about whether to RENDER the
+     * bar are the same answer from the same method. Two reads of the same
+     * setting is how a bar ends up in the markup with the rule that shows it
+     * switched off.
+     *
+     * 'smart' maps to no class at all: it is the default, and the default has
+     * to leave `class="kbb-checkout"` alone.
+     */
+    private const FLOAT_CLASSES = [
+        'off'    => 'cop-nofloat',
+        'smart'  => '',
+        'always' => 'cop-floatalways',
     ];
 
     /**
@@ -1016,12 +1163,49 @@ class CheckoutPage
             }
         }
 
+        $float = self::FLOAT_CLASSES[$this->floatBar()] ?? '';
+
+        if ($float !== '') {
+            $classes[] = $float;
+        }
+
         /*
-         * Every class here is an OFF switch, so the default — everything on —
-         * produces an empty string and the element renders exactly as it did
-         * before this screen existed. Naming them that way round is what makes
-         * that true without a second code path.
+         * Every class here is an OFF switch — `cop-floatalways` included, in
+         * the sense that matters: the DEFAULT of every row above maps to the
+         * empty string, so a shop that has never opened this screen renders
+         * `class="kbb-checkout"` and nothing else, exactly as it did before the
+         * screen existed. Naming them that way round is what makes that true
+         * without a second code path.
          */
         return $classes === [] ? '' : ' '.implode(' ', $classes);
+    }
+
+    /**
+     * Does this shop draw the phone-only Place order bar at all, and how?
+     *
+     * 'off' | 'smart' | 'always'. The view asks this rather than reading the
+     * setting, because the answer is also the legacy switch: a shop that turned
+     * `mobile_sticky_bar` on under Store → Ecommerce asked for an always-there
+     * bar before this screen existed, and must keep it.
+     *
+     * THIS SCREEN WINS, and the legacy switch is consulted in exactly one
+     * case: when this one is still at its shipped default. "Never" means never
+     * and "Always" means always, whatever the other screen says — an owner who
+     * sets a switch and then has to go and find a second one to make it stick
+     * has been lied to. But a shop that turned `mobile_sticky_bar` on before
+     * this screen existed asked for an always-there bar, and the default here
+     * is not an instruction to take it away from them.
+     */
+    public function floatBar(): string
+    {
+        $mode = (string) $this->all()['m_float'];
+
+        if ($mode !== self::SCHEMA['m_float'][2]) {
+            return $mode;
+        }
+
+        return app(\App\Services\SettingsService::class)->get('mobile_sticky_bar', false)
+            ? 'always'
+            : $mode;
     }
 }

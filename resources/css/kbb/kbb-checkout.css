@@ -31,7 +31,11 @@
 /* bring the checkout header flush to the very top — kill inherited/empty spacing */
 body.woocommerce-checkout,body.woocommerce-checkout main,body.woocommerce-checkout main#content{margin-top:0!important;padding-top:0!important}
 body.woocommerce-checkout main#content>p:empty{display:none}
-.kbb-checkout{margin-top:0}
+/* THE BAND ABOVE THE HEADER. `section{padding:52px 0}` in kbb.css reached in
+   here and put 52px of page background above .co-head and 52px of nothing under
+   the last block, on every checkout, on both surfaces. A class beats an element
+   selector, so this wins without !important. Both tokens default to 0. */
+.kbb-checkout{margin-top:0;padding:var(--cop-shellpt) 0 var(--cop-shellpb)}
 .kbb-checkout .co-notices:empty{padding:0!important}
 .kbb-checkout a{color:inherit;text-decoration:none}
 .kbb-checkout button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
@@ -58,6 +62,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    so each query carries its own and neither has to undo the other. */
 @media(min-width:901px){.kbb-checkout.cop-dhead-static .co-head{position:static}}
 @media(max-width:900px){.kbb-checkout.cop-mhead-static .co-head{position:static}}
+/* A shopper who has asked for less motion still gets the bar; it just arrives
+   rather than slides. The rule has to name visibility too, or the delayed
+   visibility transition would leave it a frame behind with no slide to cover. */
+@media(prefers-reduced-motion:reduce){
+  .kbb-checkout .mpbar,.kbb-checkout .mpbar.is-on{transition:none}
+}
 
 .kbb-checkout .co-grid{max-width:var(--cop-d-max,1040px);margin:0 auto;padding:var(--cop-pady) var(--cop-padx) 70px;display:grid;grid-template-columns:minmax(0,1fr) var(--cop-d-aside,380px);gap:var(--cop-d-gap,26px);align-items:start}
 
@@ -68,8 +78,11 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* title row: heading left, "Go back to cart" right */
 .kbb-checkout .co-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .kbb-checkout .co-titlebar-main .co-lead{margin-bottom:var(--cop-block)}
-.kbb-checkout .co-tocart{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;margin-top:6px;font-size:13px;font-weight:600;white-space:nowrap;text-decoration:none;transition:.15s;color:var(--ink-2)}
-.kbb-checkout .co-tocart svg{width:15px;height:15px;flex-shrink:0}
+/* Sized from two shares rather than five sets of numbers: each look below
+   carries the padding pair it was drawn with, multiplied by --cop-tocarts, so
+   80% is THAT look smaller rather than a padding it was never drawn for. */
+.kbb-checkout .co-tocart{display:inline-flex;align-items:center;gap:calc(7px * var(--cop-tocarts));flex-shrink:0;margin-top:6px;font-size:calc(13px * var(--cop-tocarts));font-weight:600;white-space:nowrap;text-decoration:none;transition:.15s;color:var(--ink-2);min-height:var(--cop-tocartmin)}
+.kbb-checkout .co-tocart svg{width:calc(15px * var(--cop-tocartic));height:calc(15px * var(--cop-tocartic));flex-shrink:0}
 /* "Back to cart" points back, and back is the other way in Arabic. The glyph is
    an <svg> path (`M15 18l-6-6 6-6`), not a character, so the bidi algorithm
    never reaches it -- §9.2's open item. The link itself already moves with its
@@ -78,21 +91,22 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 /* text / text_chevron */
 .kbb-checkout .co-tocart--text:hover,.kbb-checkout .co-tocart--text_chevron:hover{color:var(--pink-deep)}
 /* ghost pill */
-.kbb-checkout .co-tocart--ghost{border:1.5px solid var(--line);border-radius:99px;padding:9px 15px;gap:8px}
+.kbb-checkout .co-tocart--ghost{border:1.5px solid var(--line);border-radius:99px;padding:calc(9px * var(--cop-tocarts)) calc(15px * var(--cop-tocarts));gap:calc(8px * var(--cop-tocarts))}
 .kbb-checkout .co-tocart--ghost:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
 /* ghost rounded-rect (default) */
-.kbb-checkout .co-tocart--ghost_rect{border:1.5px solid var(--line);border-radius:10px;padding:9px 14px;gap:8px}
-.kbb-checkout .co-tocart--ghost_rect svg{width:16px;height:16px}
+.kbb-checkout .co-tocart--ghost_rect{border:1.5px solid var(--line);border-radius:var(--cop-tocartr);padding:calc(9px * var(--cop-tocarts)) calc(14px * var(--cop-tocarts));gap:calc(8px * var(--cop-tocarts))}
+.kbb-checkout .co-tocart--ghost_rect svg{width:calc(16px * var(--cop-tocartic));height:calc(16px * var(--cop-tocartic))}
 .kbb-checkout .co-tocart--ghost_rect:hover{border-color:var(--pink);color:var(--pink-deep)}
 /* soft filled */
-.kbb-checkout .co-tocart--soft{background:var(--pink-soft);color:var(--pink-deep);border-radius:99px;padding:10px 16px;font-weight:700;gap:8px}
+.kbb-checkout .co-tocart--soft{background:var(--pink-soft);color:var(--pink-deep);border-radius:99px;padding:calc(10px * var(--cop-tocarts)) calc(16px * var(--cop-tocarts));font-weight:700;gap:calc(8px * var(--cop-tocarts))}
 .kbb-checkout .co-tocart--soft:hover{background:var(--blush)}
 /* solid */
-.kbb-checkout .co-tocart--solid{background:var(--pink);color:#fff;border-radius:99px;padding:10px 17px;font-weight:700;gap:8px;box-shadow:0 10px 20px -10px rgba(193,62,99,.6)}
+.kbb-checkout .co-tocart--solid{background:var(--pink);color:#fff;border-radius:99px;padding:calc(10px * var(--cop-tocarts)) calc(17px * var(--cop-tocarts));font-weight:700;gap:calc(8px * var(--cop-tocarts));box-shadow:0 10px 20px -10px rgba(193,62,99,.6)}
 .kbb-checkout .co-tocart--solid:hover{background:var(--pink-deep)}
 /* icon-only round */
-.kbb-checkout .co-tocart--icon_round{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--line);justify-content:center;padding:0;gap:0}
-.kbb-checkout .co-tocart--icon_round svg{width:18px;height:18px}
+/* The only look with no padding to scale, so the share drives the circle. */
+.kbb-checkout .co-tocart--icon_round{width:calc(42px * var(--cop-tocarts));height:calc(42px * var(--cop-tocarts));border-radius:50%;border:1.5px solid var(--line);justify-content:center;padding:0;gap:0}
+.kbb-checkout .co-tocart--icon_round svg{width:calc(18px * var(--cop-tocartic));height:calc(18px * var(--cop-tocartic))}
 .kbb-checkout .co-tocart--icon_round:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
 
 /* coupon — standalone card, champagne/green scheme */
@@ -376,6 +390,22 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   --cop-qtys:var(--cop-d-qtys,1);
   --cop-rowb:var(--cop-d-rowb,600);
   --cop-rowpb:var(--cop-d-rowpb,700);
+  /* The shell's own padding, and the reason it has any: kbb.css carries a bare
+     `section{padding:52px 0}`, and .kbb-checkout IS a <section>. Measured in
+     Chromium: .co-head's top was 52 at 1280 AND at 390 -- a band of page
+     background above a header that is meant to be the first thing on the page.
+     Declared here so the class beats the element selector, and defaulted to 0
+     because the owner asked for the band gone. */
+  --cop-shellpt:var(--cop-d-shellpt,0px);
+  --cop-shellpb:var(--cop-d-shellpb,0px);
+  /* "Go back to cart". One share scales text and padding together; the glyph
+     has its own, because it reads as oversized long before the text does. */
+  --cop-tocarts:var(--cop-d-tocarts,1);
+  --cop-tocartic:var(--cop-d-tocartic,1);
+  --cop-tocartr:var(--cop-d-tocartr,10px);
+  /* No tap floor on a desktop -- a pointer does not need one. The phone block
+     reassigns this to 44px, which is where Lane BM put it. */
+  --cop-tocartmin:0px;
   /* The secure-checkout bar. Its height is these two plus whichever of the
      logo and the badge is taller -- there is no height property to set. */
   --cop-headpady:var(--cop-d-headpady,14px);
@@ -790,6 +820,15 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-qtys:var(--cop-m-qtys,1);
     --cop-rowb:var(--cop-m-rowb,600);
     --cop-rowpb:var(--cop-m-rowpb,700);
+    --cop-shellpt:var(--cop-m-shellpt,0px);
+    --cop-shellpb:var(--cop-m-shellpb,0px);
+    --cop-tocarts:var(--cop-m-tocarts,1);
+    --cop-tocartic:var(--cop-m-tocartic,1);
+    --cop-tocartr:var(--cop-m-tocartr,10px);
+    /* 44px, and a slider that starts there rather than a number nobody can
+       reach: Lane BM measured this link at 38.8px on a phone and raised it to
+       clear the touch-target minimum. */
+    --cop-tocartmin:var(--cop-m-tocartmin,44px);
     --cop-headpady:var(--cop-m-headpady,14px);
     --cop-headpadx:var(--cop-m-headpadx,20px);
     --cop-headmax:var(--cop-m-headmax,1040px);
@@ -820,6 +859,36 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .mpbar .mt{font-weight:800;font-size:16px}
   .kbb-checkout .mpbar .ml{font-size:10.5px;color:var(--muted)}
   .kbb-checkout .mpbar .mb{margin-inline-start:auto;background:var(--pink);color:#fff;border-radius:99px;padding:13px 28px;font-weight:700;font-size:14.5px;border:none;font-family:inherit}
+
+  /*
+   * THE BAR THAT WAITS FOR THE IN-PAGE BUTTON TO LEAVE.
+   *
+   * "the Place order should float only when on page place order disappear by
+   * scroll... and the floating place order button will hid immidiately as soon
+   * as the on page place order button appears."
+   *
+   * Default mode, so it is the bare .mpbar that hides and `.is-on` that shows
+   * it -- the class the observer adds, never one it has to remove to get back
+   * to the resting state. If the script never runs, the bar stays hidden and
+   * the in-page button is untouched, which is the safe half of the two.
+   *
+   * visibility, not display: a display change cannot transition, and the bar
+   * sliding in from under the fold is the difference between "appeared" and
+   * "was always there and you missed it". visibility is delayed out and
+   * immediate in, so the bar is not a focus target while it is off screen.
+   *
+   * translateY and not `bottom`: the bar is position:fixed, and animating
+   * `bottom` moves a fixed element by relayout on every frame. A transform is
+   * composited and costs nothing.
+   */
+  .kbb-checkout .mpbar{transform:translateY(calc(100% + 18px));opacity:0;pointer-events:none;visibility:hidden;transition:transform .24s var(--ease),opacity .18s linear,visibility 0s linear .24s}
+  .kbb-checkout .mpbar.is-on{transform:none;opacity:1;pointer-events:auto;visibility:visible;transition:transform .24s var(--ease),opacity .18s linear}
+  /* "Always" is the old `mobile_sticky_bar` behaviour, kept whole: no wait, no
+     slide, there from the moment the page paints. */
+  .kbb-checkout.cop-floatalways .mpbar{transform:none;opacity:1;pointer-events:auto;visibility:visible;transition:none}
+  /* "Never". The view renders no bar in this mode, so this is belt and braces
+     for a cached page that still carries one. */
+  .kbb-checkout.cop-nofloat .mpbar{display:none}
   body.woocommerce-checkout{padding-bottom:78px}
 }
 
@@ -943,9 +1012,11 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* Mobile polish, second pass - Lane BM. Still <=900px only. */
 @media (max-width: 900px) {
-  /* "Back to shop" was 17.4px; "Go back to cart" 38.8px. */
+  /* "Back to shop" was 17.4px; "Go back to cart" 38.8px. The second of these
+     moved to --cop-tocartmin on the base rule, so the owner's size slider and
+     this floor are one number rather than two rules fighting; the token still
+     defaults to the 44 that was written here. */
   .kbb-checkout .backlink{min-height:44px}
-  .kbb-checkout .co-tocart{min-height:44px}
 }
 
 /* Mobile polish, third pass - Lane BM. Still <=900px only. */
