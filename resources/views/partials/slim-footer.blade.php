@@ -33,6 +33,8 @@
     $sfMailUrl = $sfC['email'] !== '' ? $sf->url('mailto:'.$sfC['email']) : null;
     $sfL1 = $sfC['l1_text'] !== '' ? $sf->url($sfC['l1_url']) : null;
     $sfL2 = $sfC['l2_text'] !== '' ? $sf->url($sfC['l2_url']) : null;
+    $sfL3 = $sfC['l3_text'] !== '' ? $sf->url($sfC['l3_url']) : null;
+    $sfMarks = $sf->paymentMarks();
 @endphp
 <footer class="kbb-slimfoot{{ $sf->bodyClass() }}"{!! $sf->styleAttr() !!}>
     <div class="sf-in">
@@ -67,11 +69,29 @@
 @endif
         </div>
 @endif
-@if ($sfC['l1_text'] !== '' || $sfC['l2_text'] !== '')
+@if ($sfC['l1_text'] !== '' || $sfC['l2_text'] !== '' || $sfC['l3_text'] !== '')
         <div class="sf-links">
 @if ($sfC['l1_text'] !== '' && $sfL1 !== null)<a href="{{ $sfL1 }}">{{ $sfC['l1_text'] }}</a>@elseif ($sfC['l1_text'] !== '')<span>{{ $sfC['l1_text'] }}</span>@endif
 @if ($sfC['l2_text'] !== '' && $sfL2 !== null)<a href="{{ $sfL2 }}">{{ $sfC['l2_text'] }}</a>@elseif ($sfC['l2_text'] !== '')<span>{{ $sfC['l2_text'] }}</span>@endif
+@if ($sfC['l3_text'] !== '' && $sfL3 !== null)<a href="{{ $sfL3 }}">{{ $sfC['l3_text'] }}</a>@elseif ($sfC['l3_text'] !== '')<span>{{ $sfC['l3_text'] }}</span>@endif
         </div>
+@endif
+@if ($sfMarks !== [])
+        {{-- UNESCAPED, AND SAFE BECAUSE OF WHAT IS ON THE OTHER SIDE.
+             App\Support\PaymentMarkArt holds six drawings as a hardcoded
+             constant with no setting, no database read and no interpolation in
+             it -- its own header explains that an SVG assembled from a setting
+             would be a stored-XSS sink on the page orders are placed from. The
+             switches on Appearance -> Footer -> Payment marks choose WHICH of
+             those constants is printed and can do nothing else. --}}
+        <div class="sf-pay" aria-hidden="true">
+@foreach ($sfMarks as $sfMark)
+            <span class="sf-mk">{!! $sfMark !!}</span>
+@endforeach
+        </div>
+@endif
+@if ($sfC['copy'] !== '')
+        <div class="sf-copy">{{ $sfC['copy'] }}</div>
 @endif
 @if ($sfC['top_on'])
         <button type="button" class="sf-top" data-sf-top
@@ -94,9 +114,11 @@
    correctness on either. */
 .kbb-slimfoot{
   --sf-pady:12px; --sf-padx:20px; --sf-gap:18px; --sf-f:1; --sf-bf:1;
+  --sf-max:1040px; --sf-r:0px; --sf-lw:1px;
   --sf-ink:#17181C; --sf-ink-2:#5E545A; --sf-line:#EBE3E6; --sf-bg:#FBF5F4;
   background:var(--sf-bg);color:var(--sf-ink-2);
-  border-top:1px solid var(--sf-line);
+  border-top:var(--sf-lw) solid var(--sf-line);
+  border-radius:var(--sf-r) var(--sf-r) 0 0;
   font-family:inherit;font-size:calc(12px * var(--sf-f));line-height:1.45;
   /* kbb.css carries a BARE ELEMENT rule -- `footer{background:#241C20;
      color:#CDBFC6;padding:52px 0 26px}` -- for the site footer. A class beats
@@ -109,9 +131,17 @@
 .kbb-slimfoot.sf-noline{border-top:0}
 .kbb-slimfoot.sf-t-white{--sf-bg:#FFFFFF}
 .kbb-slimfoot.sf-t-ink{--sf-bg:#17181C;--sf-ink:#FFFFFF;--sf-ink-2:#C9C1C5;--sf-line:#2C2A2E}
+.kbb-slimfoot.sf-t-pink{--sf-bg:#FFF1F5;--sf-line:#F3DCE4}
+/* The page's own ground shows through. The rule stays, because with no
+   background of its own that line is the only thing separating the bar from
+   what is above it. */
+.kbb-slimfoot.sf-t-clear{--sf-bg:transparent}
+/* Above the bar, not below it: it is the foot of the page, so the only edge
+   that has anything to cast onto is the top one. */
+.kbb-slimfoot.sf-lift{box-shadow:0 -8px 24px -16px rgba(23,24,28,.45)}
 
 .kbb-slimfoot .sf-in{
-  max-width:1040px;margin:0 auto;
+  max-width:var(--sf-max);margin:0 auto;
   padding:var(--sf-pady) var(--sf-padx);
   display:flex;align-items:center;flex-wrap:wrap;
   gap:calc(var(--sf-gap) * .55) var(--sf-gap);
@@ -124,6 +154,21 @@
   display:block;font-size:calc(14px * var(--sf-bf));font-weight:800;
   letter-spacing:.02em;text-transform:uppercase;line-height:1.15;
 }
+.kbb-slimfoot.sf-nocaps .sf-brand b{text-transform:none;letter-spacing:0}
+.kbb-slimfoot.sf-noic .sf-c svg{display:none}
+.kbb-slimfoot .sf-copy{flex-basis:100%;font-size:calc(10.5px * var(--sf-f));opacity:.8}
+/* The marks are a row of their own drawings; the height comes from the em of
+   the block they sit in, which is how PaymentMarkArt sizes every one of them. */
+.kbb-slimfoot .sf-pay{display:flex;align-items:center;flex-wrap:wrap;
+  gap:calc(var(--sf-gap) * .4);font-size:calc(6.5px * var(--sf-f))}
+/* A WHITE CHIP UNDER EVERY MARK, ON EVERY TONE.
+   The drawings are scheme artwork in scheme colours, made for a light ground:
+   Apple Pay's wordmark is currentColor and Google Pay's is #5F6368, so on the
+   dark tone both went nearly invisible -- checked in Chromium. A chip is also
+   how a real acceptance row is drawn, so this is the conventional answer
+   rather than a patch for one tone. */
+.kbb-slimfoot .sf-mk{display:block;line-height:0;background:#fff;border-radius:3px;
+  padding:0.45em 0.5em;box-shadow:0 0 0 1px rgba(23,24,28,.08) inset}
 .kbb-slimfoot .sf-brand i{display:block;font-style:normal;font-size:calc(10.5px * var(--sf-f));opacity:.85}
 .kbb-slimfoot .sf-help{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 .kbb-slimfoot .sf-con{display:flex;align-items:center;flex-wrap:wrap;gap:calc(var(--sf-gap) * .5) var(--sf-gap)}
@@ -146,9 +191,42 @@
 .kbb-slimfoot .sf-top:hover{background:var(--sf-line)}
 .kbb-slimfoot .sf-top svg{width:calc(15px * var(--sf-f));height:calc(15px * var(--sf-f))}
 
-/* ── THE THREE SHAPES ──────────────────────────────────────────────────────
+/* ── ALIGNMENT ─────────────────────────────────────────────────────────────
+   A separate axis from shape, so four structures and four alignments give
+   sixteen looks out of two controls rather than sixteen entries in one list.
+   `start` is the base rule and has no class of its own. */
+.kbb-slimfoot.sf-a-center .sf-in{justify-content:center;text-align:center}
+.kbb-slimfoot.sf-a-end .sf-in{justify-content:flex-end}
+.kbb-slimfoot.sf-a-between .sf-in{justify-content:space-between}
+/* The arrow's auto margin is what pushes it to the far end under `start`, and
+   it is exactly what breaks the other three -- it would eat the whole gap
+   before justify-content ever got to distribute it. */
+.kbb-slimfoot:is(.sf-a-center,.sf-a-end,.sf-a-between) .sf-top{margin-inline-start:0}
+.kbb-slimfoot.sf-a-center .sf-con,
+.kbb-slimfoot.sf-a-center .sf-links,
+.kbb-slimfoot.sf-a-center .sf-pay{justify-content:center}
+
+/* ── THE SEPARATOR ─────────────────────────────────────────────────────────
+   Drawn as an ::after on each block but the last, so it lands in the space
+   between two blocks. ONLY on the one-line shapes: in `stack` and `rows` the
+   blocks are on separate lines and a separator would hang off the end of each
+   one. */
+.kbb-slimfoot:is(.sf-bar,.sf-split) .sf-in > *:not(:last-child):not(.sf-top)::after{
+  margin-inline-start:calc(var(--sf-gap) * .5);opacity:.45;font-weight:400}
+.kbb-slimfoot:is(.sf-bar,.sf-split).sf-sep-dot .sf-in > *:not(:last-child):not(.sf-top)::after{content:"·"}
+.kbb-slimfoot:is(.sf-bar,.sf-split).sf-sep-pipe .sf-in > *:not(:last-child):not(.sf-top)::after{content:"|"}
+.kbb-slimfoot:is(.sf-bar,.sf-split).sf-sep-slash .sf-in > *:not(:last-child):not(.sf-top)::after{content:"/"}
+
+/* ── THE ARROW'S THREE TREATMENTS ──────────────────────────────────────────
+   `ring` is the base rule above. */
+.kbb-slimfoot.sf-top-solid .sf-top{background:var(--sf-ink);border-color:var(--sf-ink);color:var(--sf-bg)}
+.kbb-slimfoot.sf-top-solid .sf-top:hover{opacity:.85;background:var(--sf-ink)}
+.kbb-slimfoot.sf-top-plain .sf-top{border-color:transparent;width:auto;height:auto}
+.kbb-slimfoot.sf-top-plain .sf-top:hover{background:transparent;opacity:.6}
+
+/* ── THE FOUR SHAPES ───────────────────────────────────────────────────────
    `bar` is the default and the shortest: everything on one row, wrapping only
-   when it has to. The other two group the content instead. */
+   when it has to. The other three group the content instead. */
 .kbb-slimfoot.sf-bar .sf-brand b{display:inline}
 .kbb-slimfoot.sf-bar .sf-brand i{display:inline;margin-inline-start:6px}
 .kbb-slimfoot.sf-bar .sf-help b{margin-inline-end:2px}
@@ -162,6 +240,18 @@
 .kbb-slimfoot.sf-stack .sf-in{flex-direction:column;align-items:flex-start}
 .kbb-slimfoot.sf-stack .sf-top{margin-inline-start:0;margin-top:calc(var(--sf-gap) * -.35);align-self:flex-end}
 .kbb-slimfoot.sf-stack .sf-help{flex-direction:column;align-items:flex-start;gap:1px}
+
+/* `rows`: one block per line with a hairline between, which is the shape that
+   reads as a footer rather than as a bar. The rule is on the CHILD and not on
+   a divider element, so a block that draws nothing takes its line with it. */
+.kbb-slimfoot.sf-rows .sf-in{flex-direction:column;align-items:stretch;gap:0}
+.kbb-slimfoot.sf-rows .sf-in > * + *{
+  border-top:1px solid var(--sf-line);
+  padding-top:calc(var(--sf-gap) * .5);margin-top:calc(var(--sf-gap) * .5);
+}
+.kbb-slimfoot.sf-rows .sf-top{margin-inline-start:0;align-self:flex-end}
+.kbb-slimfoot.sf-rows.sf-a-center .sf-in{align-items:center}
+.kbb-slimfoot.sf-rows.sf-a-end .sf-in{align-items:flex-end}
 
 /* A phone is 390px and the bar has five blocks in it. Wrapping is the point;
    what must not happen is a bar that makes the page scroll sideways. */

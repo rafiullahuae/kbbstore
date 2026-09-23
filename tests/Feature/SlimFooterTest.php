@@ -111,7 +111,8 @@ it('draws no element at all for a setting left empty', function () {
         "@if (\$sfC['brand'] !== '' || \$sfC['byline'] !== '')",
         "@if (\$sfC['help_title'] !== '' || \$sfC['help_sub'] !== '')",
         "@if (\$sfC['phone'] !== '' || \$sfC['email'] !== '')",
-        "@if (\$sfC['l1_text'] !== '' || \$sfC['l2_text'] !== '')",
+        "@if (\$sfC['l1_text'] !== '' || \$sfC['l2_text'] !== '' || \$sfC['l3_text'] !== '')",
+        "@if (\$sfC['copy'] !== '')",
     ] as $guard) {
         expect($partial)->toContain($guard);
     }
@@ -148,7 +149,7 @@ it('hands the screen every field, grouped into the three tabs', function () {
     $body = test()->actingAs(sfOwner(), 'admin')
         ->getJson('/admin-api/slim-footer')->assertOk()->json();
 
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['pages', 'layout', 'content']);
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['pages', 'layout', 'content', 'marks']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -253,4 +254,111 @@ it('renders the screen as script, not as literal Blade', function () {
     expect($mine)->not->toContain('@json(')
         ->and($mine)->not->toContain('@php')
         ->and($mine)->not->toContain('@endif');
+});
+
+/* ------------------------------------------------------------------------
+ | 7. The second round of options
+ |------------------------------------------------------------------------*/
+
+it('keeps shape and alignment as two controls rather than one list of sixteen', function () {
+    /*
+     * The obvious way to offer more looks is more entries in the shape list —
+     * "one line centred", "one line justified", and so on. That is the same
+     * two decisions written out four times, and every option added later
+     * doubles it again. Four structures times four alignments is sixteen looks
+     * from eight words.
+     */
+    $shapes = array_keys(SlimFooter::SCHEMA['variant'][4]);
+    $aligns = array_keys(SlimFooter::SCHEMA['align'][4]);
+
+    expect($shapes)->toBe(['bar', 'split', 'stack', 'rows'])
+        ->and($aligns)->toBe(['start', 'center', 'end', 'between']);
+
+    // No shape may name an alignment, or the two controls would fight over the
+    // same property and whichever lost would be a control that does nothing.
+    foreach ($shapes as $shape) {
+        expect($shape)->not->toContain('center')->and($shape)->not->toContain('right');
+    }
+});
+
+it('names a state class only where the stylesheet has a rule for it', function () {
+    // `sf-a-start`, `sf-sep-none` and `sf-top-ring` are the base rules, so a
+    // class for them would be one a future reader has to look up before they
+    // can be sure it does nothing.
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-cream');
+
+    sf()->save(['align' => 'between', 'sep' => 'dot', 'top_style' => 'solid',
+        'shadow' => true, 'upper' => false, 'icons_on' => false, 'divider' => false]);
+
+    expect(sf()->bodyClass())
+        ->toBe(' sf-bar sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-noic');
+});
+
+it('draws a separator only where two blocks sit side by side', function () {
+    /*
+     * In `stack` and `rows` each block is on its own line, so an ::after would
+     * hang off the end of every one of them rather than landing between two.
+     */
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    expect($partial)->toContain('.kbb-slimfoot:is(.sf-bar,.sf-split).sf-sep-dot')
+        ->and($partial)->not->toContain('.sf-stack.sf-sep-dot')
+        ->and($partial)->not->toContain('.sf-rows.sf-sep-dot');
+
+    // And the arrow's auto margin is dropped for every alignment but `start`,
+    // or it would eat the whole gap before justify-content could distribute it.
+    expect($partial)->toContain('.kbb-slimfoot:is(.sf-a-center,.sf-a-end,.sf-a-between) .sf-top{margin-inline-start:0}');
+});
+
+it('prints the payment marks from the constant and never from a setting', function () {
+    /*
+     * App\Support\PaymentMarkArt is a hardcoded constant with no setting, no
+     * database read and no interpolation in it, and its own header says why:
+     * the marks are printed unescaped, so artwork assembled from a setting
+     * would be a stored-XSS sink on the page orders are placed from. These
+     * switches choose WHICH constant is printed and can do nothing else.
+     */
+    expect(sf()->paymentMarks())->toBe([], 'the marks row is not off by default');
+
+    sf()->save(['pay_on' => true]);
+
+    $marks = sf()->paymentMarks();
+
+    // Visa, Mastercard, Apple Pay and Google Pay ship on; Tabby and Tamara off.
+    expect($marks)->toHaveCount(4);
+
+    foreach ($marks as $art) {
+        expect($art)->toBeIn(array_values(\App\Support\PaymentMarkArt::marks()));
+    }
+
+    sf()->save(['pay_visa' => false, 'pay_apple' => false, 'pay_google' => false]);
+    expect(sf()->paymentMarks())->toHaveCount(1);
+});
+// MUTATION: build a mark from a setting. RED — and on the shop, unescaped
+// markup from a settings row on the checkout.
+
+it('ships every new option at the value the bar already had', function () {
+    /*
+     * Nineteen controls were added in this round. A default that differs from
+     * what the bar was already doing is a package that redesigns a live
+     * footer on the way in, which is not what "give some more options" asked
+     * for.
+     */
+    $c = sf()->all();
+
+    expect($c['align'])->toBe('start')
+        ->and($c['sep'])->toBe('none')
+        ->and($c['top_style'])->toBe('ring')
+        ->and($c['radius'])->toBe(0)
+        ->and($c['line_w'])->toBe(1)
+        ->and($c['max_w'])->toBe(1040)
+        ->and($c['shadow'])->toBeFalse()
+        ->and($c['pay_on'])->toBeFalse()
+        ->and($c['upper'])->toBeTrue()
+        ->and($c['icons_on'])->toBeTrue()
+        ->and($c['l3_text'])->toBe('')
+        ->and($c['copy'])->toBe('')
+        // And with all of them untouched the element still carries no style
+        // attribute at all.
+        ->and(sf()->cssVariables())->toBe('');
 });

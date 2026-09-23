@@ -253,7 +253,10 @@ it('offers spacing and nothing structural', function () {
      */
     $types = array_map(fn ($def) => $def[0], CheckoutPage::SCHEMA);
 
-    expect(array_values(array_unique($types)))->toEqualCanonicalizing(['range', 'bool'])
+    // `select` joins them: three of the placeholder's four controls are a
+    // choice from a fixed list, not a number. None of them adds or removes a
+    // section, which is what this test is actually about.
+    expect(array_values(array_unique($types)))->toEqualCanonicalizing(['range', 'bool', 'select'])
         // Three switches, and every one of them is a look: whether the summary
         // follows the scroll, and whether the summary rows are bold on each
         // surface. None of them adds or removes anything.
@@ -264,7 +267,7 @@ it('offers spacing and nothing structural', function () {
         ->and(array_keys($types, 'bool', true))->toBe([
             'd_sticky', 'd_row_bold', 'm_row_bold', 'd_head_sticky', 'm_head_sticky',
             'm_t_input_floor',
-            'optin_on', 'optin_checked', 'notes_on',
+            'optin_on', 'optin_checked', 'notes_on', 'ph_italic',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
         ]);
 });
@@ -644,7 +647,7 @@ it('sizes the placeholder against the field rather than in pixels of its own', f
      * safely go small: iOS decides whether to zoom from the INPUT's font-size,
      * never the placeholder's.
      */
-    expect(copCss())->toContain('::placeholder{font-size:calc(1em * var(--cop-tph))}')
+    expect(copCss())->toContain('font-size:calc(1em * var(--cop-tph))')
         ->and(CheckoutPage::SCHEMA['m_t_ph'][4]['min'])->toBeLessThan(100);
 });
 
@@ -716,4 +719,51 @@ it('keeps every key in the schema reachable from a tab, and the reverse', functi
 
     expect(array_diff($onTabs, array_keys(CheckoutPage::SCHEMA)))->toBe([])
         ->and(array_diff(array_keys(CheckoutPage::SCHEMA), $onTabs))->toBe([]);
+});
+
+it('gives the placeholder a weight, a colour and a slant as well as a size', function () {
+    /*
+     * "the placeholder text of the fields option is still not working, give
+     * proper control to adjust the font size etc."
+     *
+     * The SIZE control does work, and this pins that it keeps working:
+     * measured in Chromium at 60%, an 8.4px hint inside a 14px desktop field
+     * and 9.6px inside the phone's 16px one, painted rather than merely
+     * computed. It is PER SURFACE, which is the likeliest reason a shop sees
+     * no change — the Desktop slider cannot move a phone.
+     *
+     * The other three are the "etc", and they are SHARED: a hint that is grey
+     * on a desktop and italic on a phone is two designs.
+     */
+    $css = copCss();
+
+    expect($css)->toContain('font-size:calc(1em * var(--cop-tph))')
+        ->and($css)->toContain('font-weight:var(--cop-phw)')
+        ->and($css)->toContain('color:var(--cop-phc)')
+        // Firefox paints ::placeholder at opacity .54, so a colour set without
+        // this renders lighter there than anywhere else.
+        ->and($css)->toMatch('/color:var\(--cop-phc\);\s*opacity:1/')
+        ->and($css)->toContain('.kbb-checkout.cop-phit .form-row input::placeholder');
+
+    // The defaults are what the browser paints today — measured on the page,
+    // rgb(117,117,117) at weight 400, upright.
+    expect($css)->toContain('--cop-phw:400')
+        ->and($css)->toContain('--cop-phc:#757575')
+        ->and(cop()->cssVariables())->toBe('')
+        ->and(cop()->bodyClass())->toBe('');
+
+    cop()->save(['ph_weight' => '300', 'ph_tone' => 'faint', 'ph_italic' => true]);
+
+    expect(cop()->cssVariables())->toBe('--cop-phw:300;--cop-phc:#A9A2A6')
+        ->and(cop()->bodyClass())->toBe(' cop-phit');
+
+    /*
+     * A colour is printed into a declaration, so the stored value is a KEY
+     * into a list this class controls rather than the string itself. cast()
+     * refuses anything that is not one of the select's own options, so the
+     * lookup cannot be reached with a value it does not have.
+     */
+    cop()->save(['ph_tone' => 'rgb(0,0,0);}html{display:none']);
+
+    expect(cop()->get('ph_tone'))->toBe('muted');
 });

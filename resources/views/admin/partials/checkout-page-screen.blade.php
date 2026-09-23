@@ -72,6 +72,31 @@
 .chp-wrap{display:grid;gap:14px;min-width:0}
 .chp-wrap > *{min-width:0}
 
+/* ── THE MOBILE TABS PUT THE PREVIEW BESIDE THE CONTROLS ──────────────────
+   "in all mobile tabs for checkout page, i want the preview on the right
+   side, only in the mobile tabs."
+
+   ONLY THE MOBILE ONES, and that is not a preference. The phone mock is a
+   320px frame, which sits happily in a side column; the desktop mock stands
+   for a 1040px page with two columns in it, and drawn 380px wide its tracks
+   are a few dozen pixels each and show the owner nothing they can judge. So
+   the desktop tabs -- and Fields & attention, which previews the desktop page
+   -- keep the full-width preview below the controls.
+
+   Below 1180px it folds back to one column: a 300px control column beside a
+   320px phone is two things nobody can use, which is the same reason the cart
+   page's screen folds at 1100. */
+.chp-wrap.chp-side{grid-template-columns:minmax(0,1fr) 372px;align-items:start}
+.chp-wrap.chp-side > .chp-col{display:grid;gap:14px;min-width:0}
+/* The controls are the long column, so the preview follows the scroll rather
+   than scrolling off the top while a slider is still being dragged. */
+.chp-wrap.chp-side [data-chp-preview]{position:sticky;top:16px}
+.chp-wrap.chp-side .chv-h{margin-top:0}
+@media (max-width:1180px){
+  .chp-wrap.chp-side{grid-template-columns:minmax(0,1fr)}
+  .chp-wrap.chp-side [data-chp-preview]{position:static}
+}
+
 .chp-card{background:var(--surface,#fff);border:1px solid var(--border,#e6e6e6);
           border-radius:var(--r,12px);padding:16px;min-width:0}
 .chp-title{font-weight:650;font-size:15px}
@@ -167,7 +192,8 @@
 /* The mock's field text is a placeholder, so it takes BOTH factors -- the
    field size and the placeholder share of it -- exactly as the page does. */
 .chv-fi{border:1px solid #ebe3e6;border-radius:6px;padding:5px 6px;
-  font-size:calc(9px * var(--chv-tinput,1) * var(--chv-tph,1));color:#9aa0aa;
+  font-size:calc(9px * var(--chv-tinput,1) * var(--chv-tph,1));
+  font-weight:var(--chv-phw,400);font-style:var(--chv-phi,normal);color:var(--chv-phc,#9aa0aa);
   background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chv-lb{display:block;font-size:calc(7.5px * var(--chv-tlabel,1));font-weight:600;
   color:#6b7280;margin-bottom:2px}
@@ -507,7 +533,13 @@
 
     var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
 
-    host.innerHTML = '<div class="chp-wrap">'
+    /* Two columns on the mobile tabs, one everywhere else. The controls and
+       the notes go in a column of their own so grid auto-placement cannot put
+       a note beside the preview and the card under it. */
+    var side = /^mobile/.test(String(open));
+
+    host.innerHTML = '<div class="chp-wrap' + (side ? ' chp-side' : '') + '">'
+      + (side ? '<div class="chp-col">' : '')
       + (banner ? '<div class="chp-note" style="border-style:solid;border-color:#b4443c;color:#b4443c">'
           + esc(banner) + '</div>' : '')
       + '<div class="chp-note">Spacing only. Nothing on this screen adds, removes or reorders a '
@@ -532,6 +564,7 @@
       + '<b>every tab</b>, on desktop and mobile. Nothing is stored until you press Save, and Reload puts '
       + 'them back.</p>'
       + '</div>'
+      + (side ? '</div>' : '')
       + previewHTML()
       + '</div>';
   }
@@ -713,6 +746,12 @@
       + ';--chv-tlabel:' + (pvNum(p + 't_label', 100) / 100)
       + ';--chv-tinput:' + (pvNum(p + 't_input', 100) / 100)
       + ';--chv-tph:' + (pvNum(p + 't_ph', 100) / 100)
+      /* The placeholder's look is SHARED, so it is read without the surface
+         prefix -- the same one value on both mocks, which is what the page
+         does. */
+      + ';--chv-phw:' + esc(String(values.ph_weight || 400))
+      + ';--chv-phc:' + ({muted:'#9aa0aa',faint:'#bdb6ba',ink:'#6b6469',pink:'#d4789a'}[String(values.ph_tone || 'muted')] || '#9aa0aa')
+      + ';--chv-phi:' + (pvOn('ph_italic') ? 'italic' : 'normal')
       + ';--chv-ttrust:' + (pvNum(p + 't_trust', 100) / 100)
       + ';--chv-cues:' + (pvNum('addr_cue_size', 100) / 100)
       /* Speed inverted into a duration, exactly as CheckoutPage::inverse()

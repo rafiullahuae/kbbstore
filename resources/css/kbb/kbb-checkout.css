@@ -149,7 +149,18 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .form-row input::placeholder,
 .kbb-checkout .form-row textarea::placeholder,
 .kbb-checkout .input-text::placeholder,
-.kbb-checkout .coupon input::placeholder{font-size:calc(1em * var(--cop-tph))}
+.kbb-checkout .coupon input::placeholder{
+  font-size:calc(1em * var(--cop-tph));
+  font-weight:var(--cop-phw);
+  color:var(--cop-phc);
+  opacity:1;
+}
+/* Firefox paints ::placeholder at opacity .54 by default, so a colour set here
+   without the reset above renders lighter there than anywhere else. */
+.kbb-checkout.cop-phit .form-row input::placeholder,
+.kbb-checkout.cop-phit .form-row textarea::placeholder,
+.kbb-checkout.cop-phit .input-text::placeholder,
+.kbb-checkout.cop-phit .coupon input::placeholder{font-style:italic}
 .kbb-checkout .form-row input:focus,
 .kbb-checkout .form-row textarea:focus,
 .kbb-checkout .form-row select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
@@ -380,6 +391,11 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   --cop-tlabel:var(--cop-d-tlabel,1);
   --cop-tinput:var(--cop-d-tinput,1);
   --cop-tph:var(--cop-d-tph,1);
+  /* Not per surface: a hint that is grey on a desktop and italic on a phone is
+     two designs. The defaults are what the browser paints today -- measured,
+     rgb(117,117,117) at weight 400. */
+  --cop-phw:400;
+  --cop-phc:#757575;
   --cop-ttrust:var(--cop-d-ttrust,1);
 }
 

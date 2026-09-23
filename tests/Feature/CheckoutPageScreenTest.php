@@ -215,3 +215,38 @@ it('keeps a support account out of it', function () {
 
     expect(app(CheckoutPage::class)->get('d_gap'))->toBe(26);
 });
+
+it('puts the preview beside the controls on the mobile tabs only', function () {
+    /*
+     * "in all mobile tabs for checkout page, i want the preview on the right
+     * side, only in the mobile tabs."
+     *
+     * ONLY THE MOBILE ONES, and that is not a preference. The phone mock is a
+     * 320px frame and sits happily in a side column; the desktop mock stands
+     * for a 1040px page with two columns in it, and drawn 372px wide its
+     * tracks are a few dozen pixels each and show nothing anybody can judge.
+     * "Fields & attention" previews the desktop page, so it stays stacked too
+     * — which is why the test is on the PREFIX and not on a list of names.
+     */
+    $screen = (string) file_get_contents(
+        resource_path('views/admin/partials/checkout-page-screen.blade.php')
+    );
+
+    expect($screen)->toContain("var side = /^mobile/.test(String(open));")
+        ->and($screen)->toContain(".chp-wrap.chp-side{grid-template-columns:minmax(0,1fr) 372px")
+        // The controls and the notes go in a column of their own, or grid
+        // auto-placement puts a note beside the preview and the card under it.
+        ->and($screen)->toContain("(side ? '<div class=\"chp-col\">' : '')")
+        ->and($screen)->toContain(".chp-wrap.chp-side > .chp-col{display:grid")
+        // The controls are the long column, so the preview follows the scroll
+        // rather than leaving the screen while a slider is still being dragged.
+        ->and($screen)->toContain('.chp-wrap.chp-side [data-chp-preview]{position:sticky')
+        // And it folds back before the two columns are too narrow to use.
+        ->and($screen)->toContain('@media (max-width:1180px){');
+
+    // Every mobile tab is caught by that prefix, and no other tab is.
+    $mobile = array_filter(array_keys(\App\Services\CheckoutPage::TABS),
+        fn ($k) => str_starts_with($k, 'mobile'));
+
+    expect($mobile)->toHaveCount(4);
+});

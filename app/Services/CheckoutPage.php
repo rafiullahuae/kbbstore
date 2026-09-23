@@ -512,6 +512,44 @@ class CheckoutPage
         'notes_on'       => ['bool', 'Show the delivery-notes box', false,
                              'Off, as asked: the "Delivery instructions, a landmark, a preferred time" box under Delivery is not drawn. Turn it on to bring it back. Notes already saved on past orders are unaffected either way.'],
 
+        /*
+         * ── THE PLACEHOLDER'S LOOK, APART FROM ITS SIZE ────────────────────
+         *
+         * "the placeholder text of the fields option is still not working,
+         * give proper control to adjust the font size etc."
+         *
+         * The size control works -- verified in Chromium at 60%: an 8.4px hint
+         * inside a 14px desktop field and 9.6px inside the phone's 16px one,
+         * painted, not just computed. It is per surface, so it lives on
+         * Desktop -> Text sizes AND Mobile -> Text sizes, and moving one does
+         * nothing to the other; that is the likeliest reason a shop sees no
+         * change.
+         *
+         * These three are the "etc": weight, colour and slant. They are SHARED
+         * rather than per surface because they are not sizing -- a hint that
+         * is grey on a desktop and italic on a phone is two designs, and
+         * nobody asked for two.
+         *
+         * The defaults are what the browser paints today: weight 400, the
+         * shop's own muted grey (measured: rgb(117,117,117)), upright.
+         */
+        'ph_weight'      => ['select', 'Placeholder weight', '400',
+                             'How heavy the grey hint inside an empty field is. Lighter reads as a hint; heavier reads as a value somebody typed, which is the thing a placeholder must never look like.', [
+                                 '300' => 'Light',
+                                 '400' => 'Regular — what it is today',
+                                 '500' => 'Medium',
+                                 '600' => 'Semibold',
+                             ]],
+        'ph_tone'        => ['select', 'Placeholder colour', 'muted',
+                             'Against a white field. "Faint" is the quietest that still passes as readable text; anything quieter stops being a hint and starts being invisible, which is why there is no fainter option.', [
+                                 'muted' => 'Grey — what it is today',
+                                 'faint' => 'Faint grey',
+                                 'ink'   => 'Near-black',
+                                 'pink'  => 'The shop\'s pink',
+                             ]],
+        'ph_italic'      => ['bool', 'Placeholder in italics', false,
+                             'Slanted, which separates the hint from what the shopper types more strongly than colour alone. Off is how it reads today.'],
+
         'addr_cue'       => ['bool', 'Point the shopper at the address button', true,
                              'The icon pair, the moving arrow and the halo on the button, on the "choose your delivery address" row. Off leaves that row exactly as it was.'],
         'addr_cue_icons' => ['bool', 'Show the home and office icons', true,
@@ -581,6 +619,7 @@ class CheckoutPage
                             'm_tab_min', 'm_tab_pad', 'm_tab_font', 'm_tab_gap']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
                            ['optin_on', 'optin_checked', 'notes_on',
+                            'ph_weight', 'ph_tone', 'ph_italic',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
     ];
@@ -638,6 +677,34 @@ class CheckoutPage
      * chooses between; see the class note. `d_sticky` is absent because it is
      * a class, not a property.
      */
+    /**
+     * key => [property, value per option].
+     *
+     * A select whose values are a LOOKUP rather than the stored string: a
+     * colour is printed into a declaration, and the stored value is the key of
+     * a list this class controls. cast() already refuses anything that is not
+     * one of a select's own options, so this map cannot be reached with a
+     * value it does not have — but it is a map and not an interpolation for
+     * the same reason PaymentMarkArt is a constant.
+     */
+    private const OPTION_VARS = [
+        /*
+         * THE SHARED NAME DIRECTLY, and these two are the only properties in
+         * this class that do that. Every other token is emitted as a `-d-` or
+         * `-m-` source because the stylesheet's media query has to be able to
+         * choose between them, and an inline attribute would beat it. These
+         * two have nothing to choose between: one value, both surfaces. So the
+         * shared name is what is written, and no rule reassigns it.
+         */
+        'ph_weight' => ['--cop-phw', ['300' => '300', '400' => '400', '500' => '500', '600' => '600']],
+        'ph_tone' => ['--cop-phc', [
+            'muted' => '#757575',
+            'faint' => '#A9A2A6',
+            'ink' => '#4A4348',
+            'pink' => '#C13A5E',
+        ]],
+    ];
+
     private const VARS = [
         'd_max'        => '--cop-d-max',
         'd_aside'      => '--cop-d-aside',
@@ -757,6 +824,9 @@ class CheckoutPage
         'addr_cue_arrow' => ['cop-nocue-ar', ''],
         'addr_cue_pulse' => ['cop-nocue-pu', ''],
         'trust_tick'     => ['cop-notick', ''],
+        /* The one switch here whose ON state is the class, because upright is
+           the default and italic is the departure. */
+        'ph_italic'      => ['', 'cop-phit'],
     ];
 
     /**
@@ -828,6 +898,21 @@ class CheckoutPage
                 (int) $def[4]['min'],
                 min((int) $def[4]['max'], (int) $value),
             ),
+            /*
+             * A SELECT MAY ONLY EVER HOLD ONE OF ITS OWN OPTIONS.
+             *
+             * This arm was missing until `ph_tone` and `ph_weight` became the
+             * first selects in this schema, so they fell through to
+             * `default => $value` and stored whatever arrived. Both are read
+             * back through OPTION_VARS to build a CSS declaration: a stored
+             * value the map has no key for is a missing-index error at best,
+             * and the reason it must not be reachable at worst.
+             *
+             * Anything unrecognised falls back to the shipped default rather
+             * than being stored, which is the same rule SlimFooter::cast()
+             * states for the same reason.
+             */
+            'select' => isset($def[4][(string) $value]) ? (string) $value : (string) $def[2],
             default => $value,
         };
     }
@@ -855,6 +940,12 @@ class CheckoutPage
         foreach (self::RATIO_VARS as $key => $prop) {
             if ($c[$key] !== self::SCHEMA[$key][2]) {
                 $out[] = $prop.':'.$this->ratio((int) $c[$key]);
+            }
+        }
+
+        foreach (self::OPTION_VARS as $key => [$prop, $map]) {
+            if ($c[$key] !== self::SCHEMA[$key][2]) {
+                $out[] = $prop.':'.$map[(string) $c[$key]];
             }
         }
 

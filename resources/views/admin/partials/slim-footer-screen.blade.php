@@ -39,6 +39,13 @@
     attribute name, and a click on any element carrying one is handled by that
     listener whichever screen it belongs to.
 --}}
+{{-- The shop's own payment artwork, handed to the preview below.
+
+     UP HERE AND NOT DOWN THERE because the script is inside this file's raw
+     region, where interpolation ships as literal text rather than running. One
+     source, App\Support\PaymentMarkArt -- a preview that drew its own chips
+     would be a preview that disagrees with the bar. --}}
+<script>window.SFV_PAY = @json(\App\Support\PaymentMarkArt::marks());</script>
 @verbatim
 <style>
 .sfs-wrap{display:grid;gap:14px;min-width:0}
@@ -99,17 +106,52 @@
    stylesheet is not loaded in the console, and a preview that guessed at the
    shape would be the one thing a preview must never be -- different from the
    page. */
-.sfv-foot{--f:1;--bf:1;--pady:12px;--padx:20px;--gap:18px;
+.sfv-foot{--f:1;--bf:1;--pady:12px;--padx:20px;--gap:18px;--max:1040px;--r:0px;--lw:1px;
   --ink:#17181C;--ink2:#5E545A;--line:#EBE3E6;--bg:#FBF5F4;
-  background:var(--bg);color:var(--ink2);border-top:1px solid var(--line);
+  background:var(--bg);color:var(--ink2);border-top:var(--lw) solid var(--line);
+  border-radius:var(--r) var(--r) 0 0;
   font-size:calc(12px * var(--f));line-height:1.45}
 .sfv-foot.noline{border-top:0}
 .sfv-foot.t-white{--bg:#FFFFFF}
 .sfv-foot.t-ink{--bg:#17181C;--ink:#FFFFFF;--ink2:#C9C1C5;--line:#2C2A2E}
+.sfv-foot.t-pink{--bg:#FFF1F5;--line:#F3DCE4}
+.sfv-foot.t-clear{--bg:transparent}
+.sfv-foot.lift{box-shadow:0 -8px 24px -16px rgba(23,24,28,.45)}
+.sfv-foot.nocaps .sfv-brand b{text-transform:none;letter-spacing:0}
+.sfv-foot.noic .sfv-c svg{display:none}
+.sfv-copy{flex-basis:100%;font-size:calc(10.5px * var(--f));opacity:.8}
+.sfv-pay{display:flex;align-items:center;flex-wrap:wrap;gap:calc(var(--gap) * .4);
+  font-size:calc(6.5px * var(--f))}
+/* A WHITE CHIP UNDER EVERY MARK, ON EVERY TONE.
+   The drawings are scheme artwork in scheme colours, made for a light ground:
+   Apple Pay's wordmark is currentColor and Google Pay's is #5F6368, so on the
+   dark tone both went nearly invisible -- checked in Chromium. A chip is also
+   how a real acceptance row is drawn, so this is the conventional answer
+   rather than a patch for one tone. */
+.sfv-mk{display:block;line-height:0;background:#fff;border-radius:3px;
+  padding:0.45em 0.5em;box-shadow:0 0 0 1px rgba(23,24,28,.08) inset}
+.sfv-foot.a-center .sfv-in{justify-content:center;text-align:center}
+.sfv-foot.a-end .sfv-in{justify-content:flex-end}
+.sfv-foot.a-between .sfv-in{justify-content:space-between}
+.sfv-foot:is(.a-center,.a-end,.a-between) .sfv-top{margin-inline-start:0}
+.sfv-foot.a-center .sfv-con,.sfv-foot.a-center .sfv-links,.sfv-foot.a-center .sfv-pay{justify-content:center}
+.sfv-foot:is(.v-bar,.v-split) .sfv-in > *:not(:last-child):not(.sfv-top)::after{
+  margin-inline-start:calc(var(--gap) * .5);opacity:.45;font-weight:400}
+.sfv-foot:is(.v-bar,.v-split).sep-dot .sfv-in > *:not(:last-child):not(.sfv-top)::after{content:"·"}
+.sfv-foot:is(.v-bar,.v-split).sep-pipe .sfv-in > *:not(:last-child):not(.sfv-top)::after{content:"|"}
+.sfv-foot:is(.v-bar,.v-split).sep-slash .sfv-in > *:not(:last-child):not(.sfv-top)::after{content:"/"}
+.sfv-foot.top-solid .sfv-top{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.sfv-foot.top-plain .sfv-top{border-color:transparent;width:auto;height:auto}
+.sfv-foot.v-rows .sfv-in{flex-direction:column;align-items:stretch;gap:0}
+.sfv-foot.v-rows .sfv-in > * + *{border-top:1px solid var(--line);
+  padding-top:calc(var(--gap) * .5);margin-top:calc(var(--gap) * .5)}
+.sfv-foot.v-rows .sfv-top{margin-inline-start:0;align-self:flex-end}
+.sfv-foot.v-rows.a-center .sfv-in{align-items:center}
+.sfv-foot.v-rows.a-end .sfv-in{align-items:flex-end}
 /* The same 1040px cap the storefront bar has. Without it the mock keeps
    everything on one line at a width the real page never gives it, and the
    preview says "one line" where the shop wraps to two. */
-.sfv-in{max-width:1040px;margin:0 auto;padding:var(--pady) var(--padx);display:flex;align-items:center;flex-wrap:wrap;
+.sfv-in{max-width:var(--max);margin:0 auto;padding:var(--pady) var(--padx);display:flex;align-items:center;flex-wrap:wrap;
   gap:calc(var(--gap) * .55) var(--gap);min-width:0}
 .sfv-in > *{min-width:0}
 .sfv-foot b{color:var(--ink);font-weight:700}
@@ -367,16 +409,35 @@
      made short. */
   function barHTML() {
     var cls = 'sfv-foot v-' + esc(v('variant', 'bar')) + ' t-' + esc(v('tone', 'cream'))
-      + (on('divider') ? '' : ' noline');
+      + (String(v('align', 'start')) === 'start' ? '' : ' a-' + esc(v('align', 'start')))
+      + (String(v('sep', 'none')) === 'none' ? '' : ' sep-' + esc(v('sep', 'none')))
+      + (String(v('top_style', 'ring')) === 'ring' ? '' : ' top-' + esc(v('top_style', 'ring')))
+      + (on('divider') ? '' : ' noline')
+      + (on('shadow') ? ' lift' : '')
+      + (on('upper') ? '' : ' nocaps')
+      + (on('icons_on') ? '' : ' noic');
 
     var style = '--pady:' + num('pad_y', 12) + 'px;--padx:' + num('pad_x', 20) + 'px'
-      + ';--gap:' + num('gap', 18) + 'px'
+      + ';--gap:' + num('gap', 18) + 'px;--max:' + num('max_w', 1040) + 'px'
+      + ';--r:' + num('radius', 0) + 'px;--lw:' + num('line_w', 1) + 'px'
       + ';--f:' + (num('font', 100) / 100) + ';--bf:' + (num('brand_size', 100) / 100);
 
     var brand = String(v('brand', '')), byline = String(v('byline', ''));
     var ht = String(v('help_title', '')), hs = String(v('help_sub', ''));
     var ph = String(v('phone', '')), em = String(v('email', ''));
     var l1 = String(v('l1_text', '')), l2 = String(v('l2_text', ''));
+    var l3 = String(v('l3_text', '')), copy = String(v('copy', ''));
+
+    /* The six drawings, from App\Support\PaymentMarkArt by way of the one
+       line above this raw region. Printed as they come, exactly as the shop
+       prints them: they are a hardcoded constant and nothing typed on this
+       screen reaches their markup. */
+    var marks = '';
+    if (on('pay_on')) {
+      Object.keys(window.SFV_PAY || {}).forEach(function (k) {
+        if (on(k)) marks += '<span class="sfv-mk">' + window.SFV_PAY[k] + '</span>';
+      });
+    }
 
     var html = '<footer class="' + cls + '" style="' + style + '"><div class="sfv-in">';
 
@@ -394,10 +455,13 @@
         + (em ? '<span class="sfv-c">' + MAIL + '<span>' + esc(em) + '</span></span>' : '')
         + '</div>';
     }
-    if (l1 || l2) {
+    if (l1 || l2 || l3) {
       html += '<div class="sfv-links">' + (l1 ? '<span>' + esc(l1) + '</span>' : '')
-        + (l2 ? '<span>' + esc(l2) + '</span>' : '') + '</div>';
+        + (l2 ? '<span>' + esc(l2) + '</span>' : '')
+        + (l3 ? '<span>' + esc(l3) + '</span>' : '') + '</div>';
     }
+    if (marks) html += '<div class="sfv-pay">' + marks + '</div>';
+    if (copy) html += '<div class="sfv-copy">' + esc(copy) + '</div>';
     if (on('top_on')) html += '<span class="sfv-top">' + UP + '</span>';
 
     return html + '</div></footer>';
@@ -417,6 +481,7 @@
       + '<div class="sfv-win is-phone" style="margin-top:16px"><div class="sfv-bar"><i></i><i></i><i></i>'
       + '<span>Phone · 340px</span></div>' + ghosts + barHTML() + '</div>'
       + '<div class="sfv-rulers">Height is mostly <b>' + num('pad_y', 12) + 'px</b> top and bottom'
+      + '<span>·</span>content stops at <b>' + num('max_w', 1040) + 'px</b>'
       + '<span>·</span>shows on the checkout <b>' + (on('co_on') ? 'yes' : 'no') + '</b>'
       + '<span>·</span>on the cart page <b>' + (on('cart_on') ? 'yes' : 'no') + '</b></div>'
       + '</div>';

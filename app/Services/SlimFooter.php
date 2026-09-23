@@ -58,20 +58,62 @@ class SlimFooter
          * so `bar` ships and the other two are there for a shop that wants the
          * contact details to carry more weight.
          */
+        /*
+         * SHAPE AND ALIGNMENT ARE TWO CONTROLS, NOT ONE LIST OF SIX.
+         *
+         * The obvious way to offer more looks is more entries in this list --
+         * "one line centred", "one line justified", and so on. That is the
+         * same two decisions written out four times, and every future option
+         * doubles it again. Shape is the STRUCTURE (one row, two columns, a
+         * column, one block per row) and Align is where that structure sits on
+         * its axis, so four by four is sixteen looks from eight words.
+         */
         'variant'    => ['select', 'Shape', 'bar',
-                         'All three carry the same words. One line is the shortest; the other two give the contact details more room.', [
+                         'The structure. All four carry the same words; what changes is how they are grouped. Pair it with Alignment below.', [
                              'bar'   => 'One line — everything on a single row',
                              'split' => 'Two columns — brand on one side, contact on the other',
                              'stack' => 'Stacked — brand, then help, then the links',
+                             'rows'  => 'Ruled rows — each block on its own line, with a hairline between',
+                         ]],
+        'align'      => ['select', 'Alignment', 'start',
+                         'Where the content sits across the bar. "Spread to both edges" pushes the first block hard left and the last hard right, with the gap taken up in the middle — the classic footer look, and the one that reads worst when there are only two blocks left.', [
+                             'start'   => 'Left (right in Arabic)',
+                             'center'  => 'Centred',
+                             'end'     => 'Right (left in Arabic)',
+                             'between' => 'Spread to both edges',
                          ]],
         'tone'       => ['select', 'Background', 'cream',
-                         'Three tones from the shop\'s own palette rather than a colour box: a footer that can be set to anything is a footer that can be set to something unreadable.', [
+                         'Tones from the shop\'s own palette rather than a colour box: a footer that can be set to anything is a footer that can be set to something unreadable.', [
                              'cream' => 'Cream — the page\'s own ground',
                              'white' => 'White',
                              'ink'   => 'Dark',
+                             'pink'  => 'Blush — the shop\'s own soft pink',
+                             'clear' => 'None — the page shows through',
                          ]],
         'divider'    => ['bool', 'Line above the bar', true,
                          'A hairline between the page and the footer. Off on the dark tone usually reads better, because the colour already separates them.'],
+        'line_w'     => ['range', 'Line thickness', 1,
+                         'Only while the line above is on.',
+                         ['min' => 1, 'max' => 6, 'step' => 1, 'unit' => 'px']],
+        'radius'     => ['range', 'Rounded top corners', 0,
+                         'Rounds the two top corners, which lifts the bar off the page rather than sitting it flush. Works best with a tone that is not the page\'s own.',
+                         ['min' => 0, 'max' => 32, 'step' => 2, 'unit' => 'px']],
+        'shadow'     => ['bool', 'Lift it off the page', false,
+                         'A soft shadow above the bar. It reads as a separate surface rather than as the end of the page — worth it with a rounded or contrasting tone, and usually not otherwise.'],
+        'max_w'      => ['range', 'Content width', 1040,
+                         'The band the words are laid out in. The bar itself always runs the full width of the window; this is where its content stops.',
+                         ['min' => 600, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
+        'sep'        => ['select', 'Separator between blocks', 'none',
+                         'A mark in the space between the brand, the help line, the contacts and the links. Drawn only on the one-line shapes, where blocks sit side by side and a separator has somewhere to go.', [
+                             'none'  => 'None — the gap alone',
+                             'dot'   => 'Middle dot ·',
+                             'pipe'  => 'Vertical bar |',
+                             'slash' => 'Slash /',
+                         ]],
+        'upper'      => ['bool', 'Brand in capitals', true,
+                         'On is the wordmark as it reads today. Off leaves whatever capitalisation is typed into the brand field.'],
+        'icons_on'   => ['bool', 'Marks beside the phone and email', true,
+                         'The small WhatsApp and envelope glyphs. Off leaves the number and the address as plain text, which is shorter and quieter.'],
         'pad_y'      => ['range', 'Height', 12,
                          'Padding above and below. With "One line" this IS the height of the bar — 12 gives about 44px in total.',
                          ['min' => 2, 'max' => 40, 'step' => 1, 'unit' => 'px']],
@@ -89,6 +131,11 @@ class SlimFooter
                          ['min' => 70, 'max' => 190, 'step' => 5, 'unit' => '%']],
         'top_on'     => ['bool', 'Back-to-top arrow', true,
                          'A small arrow at the far end of the bar. It scrolls the page rather than jumping, and it is hidden from screen readers only if it has no label.'],
+        'top_style'  => ['select', 'Arrow style', 'ring', 'How the arrow is drawn.', [
+                             'ring'  => 'Outlined circle',
+                             'solid' => 'Filled circle',
+                             'plain' => 'Just the arrow',
+                         ]],
 
         // ── Content ──
         'brand'      => ['text', 'Brand name', 'K-BEAUTY BLISS',
@@ -112,27 +159,64 @@ class SlimFooter
         'l2_text'    => ['text', 'Second link', 'Terms of service', 'Empty removes the link.'],
         'l2_url'     => ['text', 'Second link goes to', '/terms-of-service',
                          'A path on this shop, or a full https:// address.'],
+        'l3_text'    => ['text', 'Third link', '', 'Empty, so no third link is drawn. Returns and refunds is the usual one.'],
+        'l3_url'     => ['text', 'Third link goes to', '',
+                         'A path on this shop, or a full https:// address.'],
+        'copy'       => ['text', 'Small print', '',
+                         'A last line under the rest — a copyright, a licence number, a registered address. Empty draws nothing at all.'],
         'top_label'  => ['text', 'Arrow label', 'Back to top',
                          'Read out by a screen reader; never shown. Empty hides the arrow from screen readers entirely, which is right only if the page has another way back up.'],
+
+        // ── Payment marks ──
+        /*
+         * THE ARTWORK IS A CONSTANT AND THESE ARE SWITCHES OVER IT.
+         *
+         * App\Support\PaymentMarkArt holds six drawings as a hardcoded
+         * constant with no setting, no database read and no interpolation
+         * anywhere in it, and its own header says why: they are printed
+         * unescaped, so an SVG assembled from a setting would be a stored-XSS
+         * sink on the page every order is placed from. Nothing here changes
+         * that -- these decide WHICH of the six constants is printed, and that
+         * is all they can do.
+         *
+         * Off by default: a row of marks is a claim about what the shop
+         * accepts, and a claim nobody asked for is one nobody has checked.
+         */
+        'pay_on'     => ['bool', 'Show the payment marks', false,
+                         'A row of scheme marks in the bar. Off by default — it is a claim about what this shop accepts, so it is worth turning on deliberately and switching off the ones that are not true.'],
+        'pay_visa'   => ['bool', 'Visa', true, 'Only drawn while the row above is on.'],
+        'pay_mc'     => ['bool', 'Mastercard', true, 'Only drawn while the row above is on.'],
+        'pay_apple'  => ['bool', 'Apple Pay', true, 'Only drawn while the row above is on.'],
+        'pay_google' => ['bool', 'Google Pay', true, 'Only drawn while the row above is on.'],
+        'pay_tabby'  => ['bool', 'Tabby', false, 'Only drawn while the row above is on.'],
+        'pay_tamara' => ['bool', 'Tamara', false, 'Only drawn while the row above is on.'],
     ];
 
     public const TABS = [
         'pages'   => ['Where it shows', 'One bar, two pages, two switches. The cart ships off so that page is untouched until you say otherwise.',
                       ['co_on', 'cart_on']],
-        'layout'  => ['Layout', 'Its shape, its tone and its height. "One line" is the shortest of the three.',
-                      ['variant', 'tone', 'divider', 'pad_y', 'pad_x', 'gap', 'font', 'brand_size', 'top_on']],
+        'layout'  => ['Shape & size', 'Four structures and four alignments, which is sixteen looks from two controls. "One line" left-aligned is the shortest, and is what ships.',
+                      ['variant', 'align', 'tone', 'divider', 'line_w', 'radius', 'shadow',
+                       'pad_y', 'pad_x', 'max_w', 'gap', 'font', 'brand_size', 'upper',
+                       'sep', 'icons_on', 'top_on', 'top_style']],
         'content' => ['Content', 'Every word in the bar. Anything left empty is not drawn at all, rather than drawn empty — so the bar can be as short as a brand and a phone number.',
                       ['brand', 'byline', 'help_title', 'help_sub', 'phone', 'phone_url', 'email',
-                       'l1_text', 'l1_url', 'l2_text', 'l2_url', 'top_label']],
+                       'l1_text', 'l1_url', 'l2_text', 'l2_url', 'l3_text', 'l3_url',
+                       'copy', 'top_label']],
+        'marks'   => ['Payment marks', 'Off by default. The drawings themselves are a hardcoded constant — these switches only decide which of the six is printed.',
+                      ['pay_on', 'pay_visa', 'pay_mc', 'pay_apple', 'pay_google', 'pay_tabby', 'pay_tamara']],
     ];
 
     private const PREFIX = 'slimfooter_';
 
     /** key => the custom property it is emitted as, in px. */
     private const VARS = [
-        'pad_y' => '--sf-pady',
-        'pad_x' => '--sf-padx',
-        'gap'   => '--sf-gap',
+        'pad_y'  => '--sf-pady',
+        'pad_x'  => '--sf-padx',
+        'gap'    => '--sf-gap',
+        'max_w'  => '--sf-max',
+        'radius' => '--sf-r',
+        'line_w' => '--sf-lw',
     ];
 
     /** key => the custom property it is emitted as, as a unitless factor. */
@@ -200,6 +284,34 @@ class SlimFooter
         };
     }
 
+    /**
+     * The scheme marks this shop says it takes, as ready-to-print drawings.
+     *
+     * Empty while the row is off, so the caller needs no second condition.
+     * The artwork is App\Support\PaymentMarkArt's hardcoded constant and
+     * nothing user-supplied reaches it — see the note on `pay_on`.
+     *
+     * @return list<string>
+     */
+    public function paymentMarks(): array
+    {
+        $c = $this->all();
+
+        if (! $c['pay_on']) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach (\App\Support\PaymentMarkArt::marks() as $key => $art) {
+            if (! empty($c[$key])) {
+                $out[] = $art;
+            }
+        }
+
+        return $out;
+    }
+
     /** True when this shop draws the bar on the page named. */
     public function onCheckout(): bool
     {
@@ -252,10 +364,26 @@ class SlimFooter
     {
         $c = $this->all();
 
+        /*
+         * ONLY WHAT IS NOT THE DEFAULT, for the three selects whose default
+         * the stylesheet's base rules already are. `sf-a-start`, `sf-sep-none`
+         * and `sf-top-ring` would be classes with no rules behind them, and a
+         * class with no rules is a thing a future reader has to look up before
+         * they can be sure it does nothing.
+         *
+         * `variant` and `tone` are different: every one of their values has
+         * rules, including the shipped one, so they are always named.
+         */
         $classes = array_filter([
             'sf-'.$c['variant'],
             'sf-t-'.$c['tone'],
+            $c['align'] === 'start' ? '' : 'sf-a-'.$c['align'],
+            $c['sep'] === 'none' ? '' : 'sf-sep-'.$c['sep'],
+            $c['top_style'] === 'ring' ? '' : 'sf-top-'.$c['top_style'],
             $c['divider'] ? '' : 'sf-noline',
+            $c['shadow'] ? 'sf-lift' : '',
+            $c['upper'] ? '' : 'sf-nocaps',
+            $c['icons_on'] ? '' : 'sf-noic',
         ]);
 
         return ' '.implode(' ', $classes);
