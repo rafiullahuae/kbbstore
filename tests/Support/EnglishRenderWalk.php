@@ -323,7 +323,7 @@ final class EnglishRenderWalk
      * is the half worth checking before advancing the pin rather than assuming:
      * a base commit moved forward over an unread diff is a guard switched off.
      */
-    public const BASE_COMMIT = 'cc11709663478d66a664fda76ab2f11ecbf0985b';
+    public const BASE_COMMIT = 'da28793eb18811216e5aa4f18ae6d02f2988be85';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
