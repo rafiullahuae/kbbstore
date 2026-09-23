@@ -108,9 +108,28 @@ function cfcShopper(Cart $cart)
         ->withUnencryptedCookie(CartService::COOKIE, $cart->token);
 }
 
+/**
+ * Turn the delivery-notes box on for a test that is about the FIELDS.
+ *
+ * It ships off — Appearance → Checkout page → Fields & attention, at the
+ * owner's instruction — and this file asserts the shape of every field the
+ * checkout can draw, `customer_note` among them. Asserting the shipped default
+ * here would be asserting the owner's preference twice and would leave the
+ * component itself unexercised; CheckoutPageSpacingTest owns the default, and
+ * the test at the foot of this file owns what happens when it is off.
+ */
+function cfcNotesOn(): void
+{
+    app(\App\Services\CheckoutPage::class)->save(['notes_on' => true]);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Models\Setting::flushMap();
+}
+
 /** The checkout page, with style and script stripped so only markup is left. */
 function cfcMarkup(Cart $cart): string
 {
+    cfcNotesOn();
+
     $response = cfcShopper($cart)->get('/checkout');
 
     expect($response->getStatusCode())->toBe(200, 'the checkout did not render');
@@ -459,9 +478,34 @@ it('places a real order from the rendered form and writes the row it wrote befor
     // What the page itself chose, and what the shopper never touches.
     expect($body['billing_country'] ?? null)->toBe('AE',
         'The country select no longer pre-selects a country, so a browser would post nothing.');
-    expect($body['billing_kbb_whatsapp'] ?? null)->toBe('1',
-        'The WhatsApp opt-in is no longer ticked by default, which changes what every order '.
-        'records without anyone asking for it.');
+    /*
+     * THE OPT-IN IS NOT TICKED, AND THAT IS THE POINT NOW.
+     *
+     * This used to assert the opposite — "which changes what every order
+     * records without anyone asking for it" — and someone has now asked for
+     * it, in as many words: "turn off by default the send order updates
+     * option and give control on backend."
+     *
+     * The guard is kept, pointing the other way: an unticked box posts
+     * nothing, so a shop that has not changed the setting records no consent
+     * it was not given. The setting can put it back, and the line below proves
+     * the switch actually reaches the markup rather than being a row nobody
+     * reads.
+     */
+    expect(array_key_exists('billing_kbb_whatsapp', $body))->toBeFalse(
+        'The order-updates opt-in is pre-ticked again, so every order would record a consent '.
+        'the shopper never actively gave.');
+
+    app(\App\Services\CheckoutPage::class)->save(['optin_checked' => true]);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Models\Setting::flushMap();
+
+    expect(cfcFormBody(cfcMarkup($cart))['billing_kbb_whatsapp'] ?? null)->toBe('1',
+        'Appearance -> Checkout page -> Start it ticked no longer reaches the checkbox.');
+
+    app(\App\Services\CheckoutPage::class)->save(['optin_checked' => false]);
+    \App\Services\SettingsService::forgetMemo();
+    \App\Models\Setting::flushMap();
     expect($body['shipping_method'] ?? null)->not->toBeNull(
         'No delivery rate is pre-selected, so a browser would post no shipping_method.');
 

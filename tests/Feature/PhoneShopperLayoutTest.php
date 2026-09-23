@@ -321,9 +321,19 @@ it('sizes every text field on the storefront so an iPhone does not zoom on focus
             "The {$where} no longer raises the header search box to 16px.");
     }
 
-    // Checkout, which loads after kbb.css and therefore has to repeat it.
+    /*
+     * Checkout, which loads after kbb.css and therefore has to repeat it.
+     *
+     * IT IS A max() NOW, NOT A LITERAL, and the guarantee is the stronger for
+     * it. Appearance -> Checkout page -> Mobile -> Text sizes can raise the
+     * field text; max(16px, ...) is what stops it ever lowering it past the
+     * point where iOS zooms the page and does not zoom back — which on a
+     * checkout leaves the shopper on a form wider than their screen, mid-order.
+     * A plain 16px would have been overwritten by the multiplier; this cannot
+     * be.
+     */
     foreach (phoneBothHalves('resources/css/kbb/kbb-checkout.css') as $where => $flat) {
-        expect(phoneHas($flat, '.kbb-checkout .form-row select{font-size:16px}'))->toBeTrue(
+        expect(phoneHas($flat, '.kbb-checkout .form-row select{font-size:max(16px,'))->toBeTrue(
             "The {$where} no longer raises the checkout fields to 16px. This is the form the ".
             'shop is paid through, and it was the worst case: thirteen fields at 14px.');
 
