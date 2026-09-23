@@ -441,6 +441,17 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/checkout-page-admin.php';
 
+        /*
+         * Appearance → Footer: the slim bar at the foot of the cart page and
+         * the checkout. Same group as its siblings -- it writes settings, so
+         * it needs web, auth:admin and NoStoreAdminApi.
+         *
+         * Its capability is `slimfooter.manage`. Nothing here reads a model;
+         * every value that crosses is a string, an integer or a boolean from a
+         * schema both sides know.
+         */
+        require __DIR__.'/slim-footer-admin.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';

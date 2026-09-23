@@ -310,6 +310,13 @@
         <button type="button" class="mb" data-place="1">{{ __('store.checkout.place_order') }}</button>
     </div>
     @endif
+{{-- THE SLIM FOOTER, if this shop draws one. It is NOT the site footer: the
+     checkout declares `bare`, so that has never rendered here and still does
+     not. See App\Services\SlimFooter for why a page asking for money gets a
+     bar rather than four columns of ways to leave. --}}
+@if (app(\App\Services\SlimFooter::class)->onCheckout())
+@include('partials.slim-footer')
+@endif
     </section>
 
 {{--

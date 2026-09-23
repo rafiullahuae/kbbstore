@@ -115,8 +115,20 @@
      the same /cart/address endpoints. An address added here is already at the
      checkout, and the other way round, with nothing syncing anything.
      partials/address-sheet.blade.php carries the rest of the reasoning,
-     including why it has to sit outside this page's scrolling box. --}}
+     including why it has to sit outside this page's scrolling box.
+
+     THE SLIM FOOTER IS ON ONE LINE BELOW, AND THAT IS NOT A STYLE CHOICE.
+     Appearance -> Footer -> Where it shows -> cart page ships OFF, so this
+     page has to render byte for byte as it did -- which
+     StorefrontEnglishUnchangedTest compares. Written across four lines the
+     block emitted a single stray newline before </main> even with the
+     condition false, because a Blade comment is removed and leaves its
+     newline behind while PHP only swallows the one directly after a `?>`.
+     One line, unindented, emits nothing at all. Its condition sits outside
+     the @if above so it reaches the classic cart as well as the squeezed
+     one. --}}
 @include('store.cart-squeeze')
 @include('partials.address-sheet')
 @endif
+@if (app(\App\Services\SlimFooter::class)->onCart())@include('partials.slim-footer')@endif
 @endsection

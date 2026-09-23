@@ -263,6 +263,7 @@ it('offers spacing and nothing structural', function () {
         // section, and none of them is a layout.
         ->and(array_keys($types, 'bool', true))->toBe([
             'd_sticky', 'd_row_bold', 'm_row_bold', 'd_head_sticky', 'm_head_sticky',
+            'm_t_input_floor',
             'optin_on', 'optin_checked', 'notes_on',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
         ]);
@@ -410,9 +411,29 @@ it('keeps the 16px field floor on a phone whatever the slider says', function ()
      */
     expect(copCss())->toContain('font-size:max(16px, calc(16px * var(--cop-tinput)))');
 
-    // And the control agrees with the stylesheet rather than offering a value
-    // the CSS would silently ignore.
-    expect(CheckoutPage::SCHEMA['m_t_input'][4]['min'])->toBe(100);
+    /*
+     * AND IT IS A CHOICE NOW, WHICH IS WHY THE SLIDER'S RANGE OPENED UP.
+     *
+     * The floor shipped as a hard clamp with a slider whose minimum was 100%,
+     * and the owner reported the obvious consequence: "the field text size in
+     * mobile checkout page is zero, but still it's showing large font size."
+     * It was not zero -- the slider read 100% because that WAS its minimum --
+     * and the clamp made anything under it impossible anyway. A control that
+     * cannot move is worse than no control, whatever its help text says.
+     *
+     * So the range opened and the clamp became a switch, ON by default. What
+     * it protects against is real and not a preference, which is why it is
+     * still the default and why turning it off says what it costs.
+     */
+    expect(CheckoutPage::SCHEMA['m_t_input'][4]['min'])->toBeLessThan(100)
+        ->and(CheckoutPage::SCHEMA['m_t_input_floor'][2])->toBeTrue();
+
+    // The CLASS is what removes the floor, so the protection is the default
+    // and losing it takes a deliberate act rather than an empty setting.
+    cop()->save(['m_t_input_floor' => false]);
+
+    expect(cop()->bodyClass())->toContain('cop-nofloor')
+        ->and(copCss())->toContain('.kbb-checkout.cop-nofloor .form-row select{font-size:calc(16px * var(--cop-tinput))}');
 });
 // MUTATION: drop the max(). RED — and on a phone, a zoomed checkout nobody can
 // zoom back out of.
@@ -625,4 +646,74 @@ it('sizes the placeholder against the field rather than in pixels of its own', f
      */
     expect(copCss())->toContain('::placeholder{font-size:calc(1em * var(--cop-tph))}')
         ->and(CheckoutPage::SCHEMA['m_t_ph'][4]['min'])->toBeLessThan(100);
+});
+
+/* ------------------------------------------------------------------------
+ | 9. The round that came from a screenshot of the summary
+ |------------------------------------------------------------------------*/
+
+it('gives the first line room for the badge that overhangs it', function () {
+    /*
+     * "also the first is cuting from top side little bit."
+     *
+     * The quantity badge is pinned at `top:-7px` on its thumbnail, so on the
+     * FIRST line it reaches above the list. Measured in Chromium at 390px, the
+     * badge's top edge was 7px above `.co-items` — and on a phone `.panels`
+     * has overflow:hidden and cut it. With 8px of room the badge sits inside
+     * the list: measured again, badge top 214 against list top 213.
+     */
+    expect(copCss())->toContain('.kbb-checkout .co-items{margin-bottom:2px;padding-top:var(--cop-itemspt)}')
+        // 8 clears the badge and its 2px ring. 0 is available and restores the
+        // flush — and clipped — edge this page shipped with.
+        ->and(CheckoutPage::SCHEMA['d_items_pt'][2])->toBe(8)
+        ->and(CheckoutPage::SCHEMA['m_items_pt'][2])->toBe(8)
+        ->and(CheckoutPage::SCHEMA['m_items_pt'][4]['min'])->toBe(0);
+});
+
+it('scales the remove button on both surfaces, box and glyph together', function () {
+    /*
+     * "give the rows cross icon icon size control too, currently it is i think
+     * 44 x 44". It is, on a phone — measured — and it is the single biggest
+     * reason a phone's summary line is 79px tall against the desktop's 65.
+     */
+    $css = copCss();
+
+    expect($css)->toContain('.kbb-checkout .co-rm{background:none;border:0;color:#c3b3bb;font-size:calc(12px * var(--cop-rms))')
+        ->and($css)->toContain('width:calc(44px * var(--cop-rms));height:calc(44px * var(--cop-rms))')
+        ->and($css)->toContain('font-size:calc(15px * var(--cop-rms))');
+});
+
+it('sizes the two summary tabs by a floor and a padding, not one number', function () {
+    /*
+     * The strip's height is the larger of the two, so one control can set a
+     * floor for a touch target and the other the breathing room, and neither
+     * has to know about the other. The phone's 44px used to be a hard-coded
+     * rule inside the media query; it is the mobile default of the token now,
+     * which is what makes the control able to move it.
+     */
+    $css = copCss();
+
+    expect($css)->toContain('padding:var(--cop-tabpad);min-height:var(--cop-tabmin)')
+        ->and($css)->toContain('font-size:calc(12.5px * var(--cop-tabf))')
+        // The count badge beside "Browsed" scales with the words, or the pill
+        // stops being a pill.
+        ->and($css)->toContain('min-width:calc(17px * var(--cop-tabf))')
+        ->and($css)->not->toContain('.kbb-checkout .stab{min-height:44px}')
+        ->and(CheckoutPage::SCHEMA['m_tab_min'][2])->toBe(44)
+        ->and(CheckoutPage::SCHEMA['d_tab_min'][2])->toBe(0);
+});
+
+it('keeps every key in the schema reachable from a tab, and the reverse', function () {
+    /*
+     * THE REVERSE IS THE ONE THAT BITES. A key named on a tab and missing from
+     * the schema is a control the screen silently does not draw — which is
+     * exactly what happened to `m_t_input_floor` on the commit that added it,
+     * because an editing script threw after rewriting TABS and before
+     * rewriting SCHEMA. The screen showed eight fields where nine were named
+     * and said nothing.
+     */
+    $onTabs = collect(CheckoutPage::TABS)->flatMap(fn ($t) => $t[2])->all();
+
+    expect(array_diff($onTabs, array_keys(CheckoutPage::SCHEMA)))->toBe([])
+        ->and(array_diff(array_keys(CheckoutPage::SCHEMA), $onTabs))->toBe([]);
 });

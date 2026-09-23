@@ -162,6 +162,45 @@ class CheckoutPage
          * copies whatever was saved in it into the top and bottom halves, so a
          * shop that had already set it keeps its spacing to the pixel.
          */
+
+        /*
+         * ── THE REMOVE BUTTON, THE LIST'S TOP EDGE, AND THE TAB STRIP ──────
+         *
+         * `rm_size` was asked for by measurement: "give the rows cross icon
+         * icon size control too, currently it is i think 44 x 44". It is, on a
+         * phone — a deliberate touch target, and the single biggest reason a
+         * phone's summary line is 79px tall against the desktop's 65. A
+         * multiplier rather than a pixel size, like every other control on
+         * this tab, so the box and the glyph scale as one shape. Taking it
+         * below 100% shrinks a touch target: 80% is still 35px, which is
+         * past the 24px minimum, and the slider says so.
+         *
+         * `items_pt` IS A BUG FIX WITH A CONTROL ON IT. The quantity badge on
+         * each thumbnail is pinned at `top:-7px`, so on the FIRST line it
+         * reaches above the list — measured in Chromium, the badge's top edge
+         * is 7px above `.co-items` — and on a phone `.panels` has
+         * `overflow:hidden`, which cuts it. That is the "first is cuting from
+         * top side little bit". 8px clears the badge and its 2px white ring;
+         * 0 restores exactly what shipped, clipping and all.
+         */
+        'd_rm_size'  => ['range', 'Remove button size', 100,
+                          'The × on each order-summary line. It is 44×44 on a phone -- a full touch target, and the biggest single reason a phone line is taller than a desktop one. A multiplier, so the box and the glyph stay one shape.',
+                          ['min' => 50, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        'd_items_pt' => ['range', 'Space above the first line', 8,
+                          'The quantity badge sits 7px above its picture, so on the first line it reaches above the list and gets cut. 8 clears it; 0 is the flush -- and clipped -- edge this page shipped with.',
+                          ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'd_tab_min'  => ['range', 'Tab height', 0,
+                          'The floor under "Order summary" and "Browsed". Zero on a desktop, where the strip is sized by its padding alone.',
+                          ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'd_tab_pad'  => ['range', 'Tab padding', 9,
+                          'Inside each of the two tabs, above and below the words. Together with the height above, this is how tall the strip is.',
+                          ['min' => 2, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'd_tab_font' => ['range', 'Tab text size', 100,
+                          'The words in both tabs, and the count badge beside "Browsed", which scales with them.',
+                          ['min' => 70, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        'd_tab_gap'  => ['range', 'Space below the tabs', 14,
+                          'Between the tab strip and the first line of the right-hand summary.',
+                          ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
         'd_row_pt'    => ['range', 'Row padding — top', 10,
                           'Above each order-summary line. The first line in the list keeps its flush top edge at every value, so the summary never opens with a gap.',
                           ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
@@ -189,6 +228,45 @@ class CheckoutPage
         'm_row_h'     => ['range', 'Picture size', 54,
                           'The square thumbnail on each order-summary line inside the collapsible summary card at the top of the phone page, and with it the height of the line.',
                           ['min' => 32, 'max' => 88, 'step' => 2, 'unit' => 'px']],
+
+        /*
+         * ── THE REMOVE BUTTON, THE LIST'S TOP EDGE, AND THE TAB STRIP ──────
+         *
+         * `rm_size` was asked for by measurement: "give the rows cross icon
+         * icon size control too, currently it is i think 44 x 44". It is, on a
+         * phone — a deliberate touch target, and the single biggest reason a
+         * phone's summary line is 79px tall against the desktop's 65. A
+         * multiplier rather than a pixel size, like every other control on
+         * this tab, so the box and the glyph scale as one shape. Taking it
+         * below 100% shrinks a touch target: 80% is still 35px, which is
+         * past the 24px minimum, and the slider says so.
+         *
+         * `items_pt` IS A BUG FIX WITH A CONTROL ON IT. The quantity badge on
+         * each thumbnail is pinned at `top:-7px`, so on the FIRST line it
+         * reaches above the list — measured in Chromium, the badge's top edge
+         * is 7px above `.co-items` — and on a phone `.panels` has
+         * `overflow:hidden`, which cuts it. That is the "first is cuting from
+         * top side little bit". 8px clears the badge and its 2px white ring;
+         * 0 restores exactly what shipped, clipping and all.
+         */
+        'm_rm_size'  => ['range', 'Remove button size', 100,
+                          'The × on each order-summary line. It is 44×44 on a phone -- a full touch target, and the biggest single reason a phone line is taller than a desktop one. A multiplier, so the box and the glyph stay one shape.',
+                          ['min' => 50, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        'm_items_pt' => ['range', 'Space above the first line', 8,
+                          'The quantity badge sits 7px above its picture, so on the first line it reaches above the list and gets cut. 8 clears it; 0 is the flush -- and clipped -- edge this page shipped with.',
+                          ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'm_tab_min'  => ['range', 'Tab height', 44,
+                          'The floor under "Order summary" and "Browsed". It ships at 44px -- a full touch target -- which is also what makes the strip 52px tall on a phone.',
+                          ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'm_tab_pad'  => ['range', 'Tab padding', 9,
+                          'Inside each of the two tabs, above and below the words. Together with the height above, this is how tall the strip is.',
+                          ['min' => 2, 'max' => 20, 'step' => 1, 'unit' => 'px']],
+        'm_tab_font' => ['range', 'Tab text size', 100,
+                          'The words in both tabs, and the count badge beside "Browsed", which scales with them.',
+                          ['min' => 70, 'max' => 140, 'step' => 5, 'unit' => '%']],
+        'm_tab_gap'  => ['range', 'Space below the tabs', 14,
+                          'Between the tab strip and the first line of the summary card at the top of the phone page.',
+                          ['min' => 0, 'max' => 32, 'step' => 1, 'unit' => 'px']],
         'm_row_pt'    => ['range', 'Row padding — top', 10,
                           'Above each line. The summary card shows about 148px before "View full summary", so squeezing this and the bottom fits more lines into that peek.',
                           ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
@@ -338,8 +416,31 @@ class CheckoutPage
                          'The small label above each field — 11px today — the "(optional)" note and the tick-box lines.',
                          ['min' => 70, 'max' => 170, 'step' => 5, 'unit' => '%']],
         'm_t_input'  => ['range', 'Field text size', 100,
-                         'What the shopper types — 16px on a phone today. RAISING THIS WORKS NORMALLY; LOWERING IT STOPS AT 16px, and the stylesheet enforces that floor whatever this says. iOS Safari zooms the page when a field smaller than 16px takes focus and does not zoom back out, which leaves the shopper on a checkout wider than their screen in the middle of paying.',
-                         ['min' => 100, 'max' => 150, 'step' => 5, 'unit' => '%']],
+                         'What the shopper types — 16px on a phone today. Below 100% this does nothing while the floor below is on, which is how it ships; turn the floor off and the whole range works.',
+                         ['min' => 70, 'max' => 150, 'step' => 5, 'unit' => '%']],
+        /*
+         * THE FLOOR IS A CHOICE NOW, BECAUSE IT WAS ASKED TO BE.
+         *
+         * "the field text size in mobile checkout page is zero, but still it's
+         * showing large font size, i need to control more to decrease." It
+         * was: the stylesheet clamped it with a max(16px, ...), so the slider
+         * went to its minimum and the field did not move. That is a control
+         * that lies, whatever its help text says, and the help text is not
+         * where a shop finds out.
+         *
+         * The clamp is not superstition. iOS Safari zooms the page in when a
+         * field smaller than 16px takes focus, and it does NOT zoom back out:
+         * the shopper is left on a checkout wider than their screen, part-way
+         * through paying, with no way back. So it ships ON, and turning it off
+         * says what it costs rather than being a silent slider.
+         *
+         * The other two ways to make a field look smaller cost nothing at all,
+         * and the help says so: the placeholder has its own size (60% up) and
+         * iOS never measures it, and the field's BOX is set by padding rather
+         * than by its text.
+         */
+        'm_t_input_floor' => ['bool', 'Keep the 16px floor that stops iOS zooming', true,
+                              'On, as it ships. Off lets the slider above go all the way down — and lets iPhone Safari zoom the checkout in the moment a field is tapped, with no way for the shopper to zoom back out. If the aim is a smaller-looking field, the placeholder size below and the field padding on the Layout tab both get there without that.'],
         'm_t_ph'     => ['range', 'Placeholder size', 100,
                          'The grey hint inside an empty field. SAFE TO TAKE BELOW 100% on a phone: iOS decides whether to zoom the page from the field\'s own size, never the placeholder\'s, so this can go small while the field itself stays at the 16px that keeps the page still.',
                          ['min' => 60, 'max' => 120, 'step' => 5, 'unit' => '%']],
@@ -464,17 +565,20 @@ class CheckoutPage
         'desktop_type' => ['Desktop · Text sizes', 'Every size is a share of the size that role already uses, so 100% is the page exactly as it is and the roles keep their relationship to each other.',
                            ['d_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust']],
         'desktop_rows' => ['Desktop · Product rows', 'The lines in the order summary on the right — picture, name, stepper and price. Nothing on this tab can reach a phone, and nothing on it can reach the cart page.',
-                           ['d_row_h', 'd_row_pt', 'd_row_pr', 'd_row_pb', 'd_row_pl',
-                            'd_row_gap', 'd_row_font', 'd_row_bold', 'd_qty_size']],
+                           ['d_items_pt', 'd_row_h', 'd_row_pt', 'd_row_pr', 'd_row_pb', 'd_row_pl',
+                            'd_row_gap', 'd_row_font', 'd_row_bold', 'd_qty_size', 'd_rm_size',
+                            'd_tab_min', 'd_tab_pad', 'd_tab_font', 'd_tab_gap']],
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
                            ['m_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad']],
         'mobile_head'  => ['Mobile · Header', 'The same bar on a phone. Worth a look at 360px: the badge is the first thing that crowds the logo.',
                            ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
         'mobile_type'  => ['Mobile · Text sizes', 'Same six roles, their own values. The field-text floor is the one control here that will not go below where it is, and it says why.',
-                           ['m_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label', 'm_t_input', 'm_t_ph', 'm_t_trust']],
+                           ['m_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label',
+                            'm_t_input', 'm_t_input_floor', 'm_t_ph', 'm_t_trust']],
         'mobile_rows'  => ['Mobile · Product rows', 'The lines inside the summary card at the top of the phone page. Nothing on this tab can reach a desktop, and nothing on it can reach the cart page.',
-                           ['m_row_h', 'm_row_pt', 'm_row_pr', 'm_row_pb', 'm_row_pl',
-                            'm_row_gap', 'm_row_font', 'm_row_bold', 'm_qty_size']],
+                           ['m_items_pt', 'm_row_h', 'm_row_pt', 'm_row_pr', 'm_row_pb', 'm_row_pl',
+                            'm_row_gap', 'm_row_font', 'm_row_bold', 'm_qty_size', 'm_rm_size',
+                            'm_tab_min', 'm_tab_pad', 'm_tab_font', 'm_tab_gap']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
                            ['optin_on', 'optin_checked', 'notes_on',
                             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
@@ -504,10 +608,12 @@ class CheckoutPage
     public const SQUEEZE = [
         'd_pad_x', 'd_pad_y', 'd_gap', 'd_block_gap', 'd_sec_pad', 'd_aside_pad',
         'd_row_h', 'd_row_pt', 'd_row_pb', 'd_row_gap', 'd_row_font', 'd_qty_size',
+        'd_rm_size', 'd_tab_min', 'd_tab_pad', 'd_tab_font', 'd_tab_gap',
         'd_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust',
         'd_head_pad_y', 'd_head_pad_x', 'd_head_logo', 'd_head_badge',
         'm_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
         'm_row_h', 'm_row_pt', 'm_row_pb', 'm_row_gap', 'm_row_font', 'm_qty_size',
+        'm_rm_size', 'm_tab_min', 'm_tab_pad', 'm_tab_font', 'm_tab_gap',
         'm_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label', 'm_t_input', 'm_t_ph', 'm_t_trust',
         'm_head_pad_y', 'm_head_pad_x', 'm_head_logo', 'm_head_badge',
     ];
@@ -554,6 +660,14 @@ class CheckoutPage
          * BOLD weight, and a padding that differed from it by one character
          * would be a collision waiting for somebody to mistype.
          */
+        'd_items_pt'   => '--cop-d-itemspt',
+        'd_tab_min'    => '--cop-d-tabmin',
+        'd_tab_pad'    => '--cop-d-tabpad',
+        'd_tab_gap'    => '--cop-d-tabgap',
+        'm_items_pt'   => '--cop-m-itemspt',
+        'm_tab_min'    => '--cop-m-tabmin',
+        'm_tab_pad'    => '--cop-m-tabpad',
+        'm_tab_gap'    => '--cop-m-tabgap',
         'd_row_pt'     => '--cop-d-rowp-t',
         'd_row_pr'     => '--cop-d-rowp-r',
         'd_row_pb'     => '--cop-d-rowp-b',
@@ -595,6 +709,10 @@ class CheckoutPage
         'd_t_h2'     => '--cop-d-th2',
         'd_t_label'  => '--cop-d-tlabel',
         'd_t_input'  => '--cop-d-tinput',
+        'd_rm_size'  => '--cop-d-rms',
+        'd_tab_font' => '--cop-d-tabf',
+        'm_rm_size'  => '--cop-m-rms',
+        'm_tab_font' => '--cop-m-tabf',
         'd_t_ph'     => '--cop-d-tph',
         'd_t_trust'  => '--cop-d-ttrust',
         'm_t_title'  => '--cop-m-ttitle',
@@ -631,6 +749,9 @@ class CheckoutPage
         'd_sticky'       => ['cop-nostick', ''],
         'd_head_sticky'  => ['cop-dhead-static', ''],
         'm_head_sticky'  => ['cop-mhead-static', ''],
+        /* The one class here that is NOT simply "this switch is off": the
+           stylesheet's floor is the default, so the class is what removes it. */
+        'm_t_input_floor' => ['cop-nofloor', ''],
         'addr_cue'       => ['cop-nocue', ''],
         'addr_cue_icons' => ['cop-nocue-ic', ''],
         'addr_cue_arrow' => ['cop-nocue-ar', ''],

@@ -349,6 +349,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
      --cop-qtys are unitless factors the rules below multiply a px size by;
      --cop-rowb and --cop-rowpb are font weights, which a custom property can
      carry as plainly as a length. */
+  --cop-itemspt:var(--cop-d-itemspt,8px);
+  --cop-rms:var(--cop-d-rms,1);
+  --cop-tabmin:var(--cop-d-tabmin,0px);
+  --cop-tabpad:var(--cop-d-tabpad,9px);
+  --cop-tabf:var(--cop-d-tabf,1);
+  --cop-tabgap:var(--cop-d-tabgap,14px);
   --cop-rowh:var(--cop-d-rowh,54px);
   --cop-rowp-t:var(--cop-d-rowp-t,10px);
   --cop-rowp-r:var(--cop-d-rowp-r,0px);
@@ -385,16 +391,25 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    below sets position:static regardless. */
 .kbb-checkout.cop-nostick .summary{position:static}
 /* pill tabs (design .sumtabs / .stab) */
-.kbb-checkout .sumtabs{display:flex;gap:6px;margin-bottom:14px;background:var(--cream);border-radius:10px;padding:4px}
-.kbb-checkout .stab{flex:1;border-radius:8px;padding:9px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink-2);transition:.15s}
+.kbb-checkout .sumtabs{display:flex;gap:6px;margin-bottom:var(--cop-tabgap);background:var(--cream);border-radius:10px;padding:4px}
+/* min-height rather than a second padding: the strip's height is the
+   larger of the two, so one control can set a floor for a touch target and
+   the other can set the breathing room, and neither has to know about the
+   other. 0 on a desktop means the padding alone decides. */
+.kbb-checkout .stab{flex:1;border-radius:8px;padding:var(--cop-tabpad);min-height:var(--cop-tabmin);font-family:inherit;font-size:calc(12.5px * var(--cop-tabf));font-weight:700;color:var(--ink-2);transition:.15s}
 .kbb-checkout .stab.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px -3px rgba(42,34,40,.2)}
-.kbb-checkout .stab .bcount{display:inline-grid;place-items:center;min-width:17px;height:17px;border-radius:99px;background:var(--pink);color:#fff;font-size:10px;margin-inline-start:4px;vertical-align:middle}
+.kbb-checkout .stab .bcount{display:inline-grid;place-items:center;min-width:calc(17px * var(--cop-tabf));height:calc(17px * var(--cop-tabf));border-radius:99px;background:var(--pink);color:#fff;font-size:calc(10px * var(--cop-tabf));margin-inline-start:4px;vertical-align:middle}
 .kbb-checkout .sum-h{font-size:15px;font-weight:800;margin-bottom:12px}
 .kbb-checkout .spanel{display:none}
 .kbb-checkout .spanel.on{display:block}
 
 /* summary line-items (design .ci) */
-.kbb-checkout .co-items{margin-bottom:2px}
+/* THE QUANTITY BADGE OVERHANGS THE FIRST LINE. It is pinned at top:-7px on
+   its thumbnail, so on the first row it reaches above the list -- measured
+   in Chromium, 7px above `.co-items` -- and on a phone `.panels` has
+   overflow:hidden and cuts it. This is the room it needs; 0 restores the
+   flush, clipped edge this page shipped with. */
+.kbb-checkout .co-items{margin-bottom:2px;padding-top:var(--cop-itemspt)}
 /* The order-summary line, under Appearance -> Checkout page -> Product
    rows. Every number below is the number this row already had, carried as
    a var() fallback, so a shop that has never opened that screen computes
@@ -421,7 +436,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .qty span{min-width:calc(22px * var(--cop-qtys));text-align:center;font-size:calc(12px * var(--cop-rowf));font-weight:var(--cop-rowb)}
 .kbb-checkout .cside{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-inline-start:auto}
 .kbb-checkout .cprice{font-size:calc(12.5px * var(--cop-rowf));font-weight:var(--cop-rowpb);white-space:nowrap}
-.kbb-checkout .co-rm{background:none;border:0;color:#c3b3bb;font-size:12px;line-height:1;padding:0;cursor:pointer}
+.kbb-checkout .co-rm{background:none;border:0;color:#c3b3bb;font-size:calc(12px * var(--cop-rms));line-height:1;padding:0;cursor:pointer}
 .kbb-checkout .co-rm:hover{color:var(--pink-deep)}
 
 /* ---------------- free-shipping progress bar (green + celebration) ---------------- */
@@ -741,6 +756,14 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-block:var(--cop-m-block,16px);
     --cop-secpad:var(--cop-m-secpad,16px);
     --cop-asidepad:var(--cop-m-asidepad,14px);
+    --cop-itemspt:var(--cop-m-itemspt,8px);
+    --cop-rms:var(--cop-m-rms,1);
+    /* 44px is the phone's touch target, and also what makes the strip 52px
+       tall against the desktop's 43. */
+    --cop-tabmin:var(--cop-m-tabmin,44px);
+    --cop-tabpad:var(--cop-m-tabpad,9px);
+    --cop-tabf:var(--cop-m-tabf,1);
+    --cop-tabgap:var(--cop-m-tabgap,14px);
     --cop-rowh:var(--cop-m-rowh,54px);
     --cop-rowp-t:var(--cop-m-rowp-t,10px);
     --cop-rowp-r:var(--cop-m-rowp-r,0px);
@@ -866,11 +889,16 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .qty{display:inline-flex;align-items:center;gap:0}
   .kbb-checkout .qty span{min-width:calc(22px * var(--cop-qtys));text-align:center}
 
-  /* The remove control was a bare 22px glyph button. */
+  /* The remove control was a bare 22px glyph button; 44px is a full touch
+     target, and it is the single biggest reason a phone's summary line is
+     79px tall against the desktop's 65. --cop-rms takes the box and the glyph
+     together, so the control is today's control, scaled. Below 100% this is a
+     smaller target -- 80% is 35px, still past the 24px minimum -- which the
+     slider says out loud. */
   .kbb-checkout .co-rm{
-    width:44px;height:44px;
+    width:calc(44px * var(--cop-rms));height:calc(44px * var(--cop-rms));
     display:inline-flex;align-items:center;justify-content:center;
-    font-size:15px;line-height:1;background:none;border:0;cursor:pointer;
+    font-size:calc(15px * var(--cop-rms));line-height:1;background:none;border:0;cursor:pointer;
   }
 
   /* Form controls: a 44px minimum so the touch target matches the field. */
@@ -944,7 +972,23 @@ body.woocommerce-checkout main#content>p:empty{display:none}
      floor -- the control says so, and this is what enforces it. */
   .kbb-checkout .form-row select{font-size:max(16px, calc(16px * var(--cop-tinput)))}
 
-  .kbb-checkout .stab{min-height:44px}
+  /* THE FLOOR REMOVED, ON PURPOSE AND ONLY ON PURPOSE.
+     Appearance -> Checkout page -> Mobile -> Text sizes -> "Keep the 16px
+     floor that stops iOS zooming", off. The class is what removes it, so the
+     protection is the default and losing it takes a deliberate act. What it
+     costs is in that control's own help: iPhone Safari zooms the checkout in
+     when a field under 16px takes focus, and does not zoom back out. */
+  .kbb-checkout.cop-nofloor .input-text,
+  .kbb-checkout.cop-nofloor .coupon input,
+  .kbb-checkout.cop-nofloor .form-row input[type="text"],
+  .kbb-checkout.cop-nofloor .form-row input[type="email"],
+  .kbb-checkout.cop-nofloor .form-row input[type="tel"],
+  .kbb-checkout.cop-nofloor .form-row input[type="password"],
+  .kbb-checkout.cop-nofloor .form-row input[type="number"],
+  .kbb-checkout.cop-nofloor .form-row input[type="search"],
+  .kbb-checkout.cop-nofloor .form-row textarea,
+  .kbb-checkout.cop-nofloor .form-row select{font-size:calc(16px * var(--cop-tinput))}
+
   .kbb-checkout .viewfull{min-height:44px}
 }
 

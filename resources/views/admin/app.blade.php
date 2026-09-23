@@ -20999,6 +20999,18 @@ buildNav();
      Nothing on the screen can add, remove or reorder a section. --}}
 @include('admin.partials.checkout-page-screen')
 
+{{-- Appearance → Footer (Lane: slim-footer). The slim bar at the foot of the
+     cart page and the checkout: three shapes, every word a setting, and a
+     switch per page. It is NOT the site footer -- neither of those two pages
+     has ever drawn that one, and neither does now.
+
+     It registers its own sidebar entry inside the Appearance group and wraps
+     window.go, so this include is the whole of the change to this file.
+
+     Applying it changes the CART page by nothing: `cart_on` ships off. The
+     CHECKOUT gains the bar, which is what was asked for. --}}
+@include('admin.partials.slim-footer-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------

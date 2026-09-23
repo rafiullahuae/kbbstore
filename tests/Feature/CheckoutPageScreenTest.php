@@ -106,8 +106,9 @@ it('hands the screen every field, grouped into the two tabs', function () {
         ->all();
 
     expect($rowFields('desktop_rows'))
-        ->toBe(['row_h', 'row_pt', 'row_pr', 'row_pb', 'row_pl',
-            'row_gap', 'row_font', 'row_bold', 'qty_size'])
+        ->toBe(['items_pt', 'row_h', 'row_pt', 'row_pr', 'row_pb', 'row_pl',
+            'row_gap', 'row_font', 'row_bold', 'qty_size', 'rm_size',
+            'tab_min', 'tab_pad', 'tab_font', 'tab_gap'])
         ->and($rowFields('mobile_rows'))->toBe($rowFields('desktop_rows'));
 
     /*
@@ -118,9 +119,15 @@ it('hands the screen every field, grouped into the two tabs', function () {
     expect($rowFields('desktop_head'))
         ->toBe(['head_pad_y', 'head_pad_x', 'head_max', 'head_logo', 'head_badge', 'head_sticky'])
         ->and($rowFields('mobile_head'))->toBe($rowFields('desktop_head'))
+        /*
+         * The type tabs are the one pair that is NOT identical, and the
+         * difference is named rather than left to be noticed: the phone
+         * carries the iOS zoom floor, and a desktop has nothing to floor.
+         */
         ->and($rowFields('desktop_type'))
         ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_ph', 't_trust'])
-        ->and($rowFields('mobile_type'))->toBe($rowFields('desktop_type'));
+        ->and($rowFields('mobile_type'))
+        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_input_floor', 't_ph', 't_trust']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 

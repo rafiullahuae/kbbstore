@@ -151,6 +151,12 @@ final class AdminCapabilities
         // narrowing one must not silently narrow the other.
         'checkoutpage.manage' => ['owner', 'manager', 'editor'],
 
+        // The slim bar at the foot of the cart page and the checkout: its
+        // words, its shape, and which of those two pages draws it. Storefront
+        // appearance again, and its own capability for the same reason as the
+        // two above.
+        'slimfooter.manage' => ['owner', 'manager', 'editor'],
+
         // Reviews. The export is separated from the rest of the screen because
         // the review rows carry author_email and the reviewer's IP.
         'reviews.view' => ['owner', 'manager', 'support', 'editor'],
@@ -558,6 +564,7 @@ final class AdminCapabilities
         ['*', 'admin-api/cart-page/**', 'cartpage.manage'],
         // One line and no '/**' sibling: this screen has no sub-endpoint.
         ['*', 'admin-api/checkout-page', 'checkoutpage.manage'],
+        ['*', 'admin-api/slim-footer', 'slimfooter.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.
