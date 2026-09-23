@@ -117,7 +117,6 @@
                                 autocomplete="section-billing billing tel"
                                 :value="old('billing_phone', $prefill['phone'] ?? '')" />
                         </div>
-                        </div>
 {{-- THE THREE COMPOUND ROWS ON THIS PAGE STAY HAND-WRITTEN, deliberately.
 
      This one, the gift row below and the WhatsApp opt-in are not fields with a
