@@ -638,6 +638,14 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
           + '<span class="cka-ad"><b id="ckaTag"></b><i id="ckaLine"></i></span></div></div>');
         var empty = box.querySelector('.cka-empty');
         var moved = box.querySelector('.cka-row');
+        /* THE CUE COMES OFF WITH THE ROW IT BELONGED TO.
+           The button is MOVED into the chosen row rather than rebuilt, so it
+           arrives still carrying .cka-cta and would go on pulsing its halo
+           next to an address that has already been chosen -- an animation
+           demanding attention for a job that is done. The icons and the arrow
+           leave with .cka-empty a line below; this is the one part of the cue
+           that survives the move. */
+        if (btn) btn.classList.remove('cka-cta');
         if (btn && moved) moved.appendChild(btn);
         if (empty) empty.remove();
         tag = document.getElementById('ckaTag');

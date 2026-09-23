@@ -42,7 +42,7 @@
         <div class="kr-line"><span class="kr-stars">@for ($i = 1; $i <= 5; $i++)<span class="kr-star{{ $i <= $rating['stars'] ? ' on' : '' }}">&#9733;</span>@endfor</span><span>{{ \App\Support\StoreRating::line() }}</span></div>
     @endif
     @if ($auth !== '')
-        <div class="kr-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path d="M9 12l2 2 4-4"/></svg><span>{{ $auth }}</span></div>
+        <div class="kr-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="kr-shield" d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path class="kr-tick" d="M9 12l2 2 4-4"/></svg><span>{{ $auth }}</span></div>
     @endif
 </div>
 @endif

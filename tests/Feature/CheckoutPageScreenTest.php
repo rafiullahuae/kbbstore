@@ -86,8 +86,11 @@ it('hands the screen every field, grouped into the two tabs', function () {
     $body = test()->actingAs(checkoutScreenOwner(), 'admin')
         ->getJson('/admin-api/checkout-page')->assertOk()->json();
 
-    expect(collect($body['tabs'])->pluck('key')->all())
-        ->toBe(['desktop', 'desktop_rows', 'mobile', 'mobile_rows'])
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe([
+        'desktop', 'desktop_head', 'desktop_type', 'desktop_rows',
+        'mobile', 'mobile_head', 'mobile_type', 'mobile_rows',
+        'cues',
+    ])
         ->and($body['mobileMax'])->toBe(CheckoutPage::MOBILE_MAX);
 
     /*
@@ -105,6 +108,18 @@ it('hands the screen every field, grouped into the two tabs', function () {
     expect($rowFields('desktop_rows'))
         ->toBe(['row_h', 'row_pad', 'row_gap', 'row_font', 'row_bold', 'qty_size'])
         ->and($rowFields('mobile_rows'))->toBe($rowFields('desktop_rows'));
+
+    /*
+     * AND SO DO THE OTHER TWO PAIRS. The header and the text sizes are the
+     * same jobs on two surfaces; a control on one tab and not its twin is the
+     * shape of the complaint that opened every one of these rounds.
+     */
+    expect($rowFields('desktop_head'))
+        ->toBe(['head_pad_y', 'head_pad_x', 'head_max', 'head_logo', 'head_badge', 'head_sticky'])
+        ->and($rowFields('mobile_head'))->toBe($rowFields('desktop_head'))
+        ->and($rowFields('desktop_type'))
+        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_trust'])
+        ->and($rowFields('mobile_type'))->toBe($rowFields('desktop_type'));
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 

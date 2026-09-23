@@ -46,19 +46,25 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    the label above the field. */
 .kbb-checkout .form-row input,
 .kbb-checkout .form-row select,
-.kbb-checkout .form-row textarea{scroll-margin-top:96px}
-.kbb-checkout .co-head .in{max-width:1040px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px}
-.kbb-checkout .co-head .logo{font-weight:800;font-size:20px;color:var(--pink-deep);letter-spacing:-.02em}
+.kbb-checkout .form-row textarea{scroll-margin-top:calc(var(--cop-headpady) * 2 + var(--cop-headlogo) + 48px)}
+.kbb-checkout .co-head .in{max-width:var(--cop-headmax);margin:0 auto;padding:var(--cop-headpady) var(--cop-headpadx);display:flex;align-items:center;gap:14px}
+.kbb-checkout .co-head .logo{font-weight:800;font-size:var(--cop-headlogo);color:var(--pink-deep);letter-spacing:-.02em}
 .kbb-checkout .co-head .logo span{color:var(--ink)}
-.kbb-checkout .co-head .secure{margin-inline-start:auto;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--green)}
-.kbb-checkout .co-head .secure svg{width:14px;height:14px}
+.kbb-checkout .co-head .secure{margin-inline-start:auto;display:flex;align-items:center;gap:7px;font-size:var(--cop-headbadge);font-weight:600;color:var(--green)}
+/* 14/12 of the words beside it, which is the ratio it has today, so the
+   lock and the label stay one object at every size. */
+.kbb-checkout .co-head .secure svg{width:calc(var(--cop-headbadge) * 1.16667);height:calc(var(--cop-headbadge) * 1.16667)}
+/* "Header stays at the top while scrolling", off -- one switch per surface,
+   so each query carries its own and neither has to undo the other. */
+@media(min-width:901px){.kbb-checkout.cop-dhead-static .co-head{position:static}}
+@media(max-width:900px){.kbb-checkout.cop-mhead-static .co-head{position:static}}
 
 .kbb-checkout .co-grid{max-width:var(--cop-d-max,1040px);margin:0 auto;padding:var(--cop-pady) var(--cop-padx) 70px;display:grid;grid-template-columns:minmax(0,1fr) var(--cop-d-aside,380px);gap:var(--cop-d-gap,26px);align-items:start}
 
 .kbb-checkout .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);margin-bottom:10px}
 .kbb-checkout .backlink:hover{color:var(--pink-deep)}
-.kbb-checkout h1.co-h{font-size:19px;font-weight:800;letter-spacing:-.01em;margin-bottom:2px}
-.kbb-checkout .co-lead{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+.kbb-checkout h1.co-h{font-size:calc(19px * var(--cop-ttitle));font-weight:800;letter-spacing:-.01em;margin-bottom:2px}
+.kbb-checkout .co-lead{font-size:calc(12.5px * var(--cop-tlead));color:var(--muted);margin-bottom:16px}
 /* title row: heading left, "Go back to cart" right */
 .kbb-checkout .co-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .kbb-checkout .co-titlebar-main .co-lead{margin-bottom:var(--cop-block)}
@@ -112,13 +118,15 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    edge. Hard-coded 16s here would come adrift the moment the slider moved,
    leaving a bar floating inside its own section. The inline-start side is
    3px short because the bar carries a 3px pink border there. */
-.kbb-checkout .sec > h2{font-size:13px;font-weight:700;margin:calc(var(--cop-secpad) * -1) calc(var(--cop-secpad) * -1) 13px;padding:10px var(--cop-secpad) 10px calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}
-.kbb-checkout .sec > h2 .n{width:21px;height:21px;border-radius:50%;background:var(--pink);color:#fff;font-size:11.5px;display:grid;place-items:center;font-weight:800;box-shadow:0 4px 10px -4px rgba(193,62,99,.5)}
+.kbb-checkout .sec > h2{font-size:calc(13px * var(--cop-th2));font-weight:700;margin:calc(var(--cop-secpad) * -1) calc(var(--cop-secpad) * -1) 13px;padding:10px var(--cop-secpad) 10px calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}
+/* The round number takes the heading's factor too, so the bar keeps its
+   shape instead of a bigger heading beside the same small disc. */
+.kbb-checkout .sec > h2 .n{width:calc(21px * var(--cop-th2));height:calc(21px * var(--cop-th2));border-radius:50%;background:var(--pink);color:#fff;font-size:calc(11.5px * var(--cop-th2));display:grid;place-items:center;font-weight:800;box-shadow:0 4px 10px -4px rgba(193,62,99,.5)}
 
 /* fields — BRIDGE: WooCommerce .form-row → design .fld */
 .kbb-checkout .form-row{margin-bottom:10px;display:block;padding:0}
 .kbb-checkout .form-row:last-child{margin-bottom:0}
-.kbb-checkout .form-row label{display:block;font-size:11px;font-weight:600;color:var(--ink-2);margin-bottom:4px}
+.kbb-checkout .form-row label{display:block;font-size:calc(11px * var(--cop-tlabel));font-weight:600;color:var(--ink-2);margin-bottom:4px}
 .kbb-checkout .form-row label .required{color:var(--pink);text-decoration:none;border:0}
 .kbb-checkout .form-row .optional{color:var(--muted);font-weight:400}
 .kbb-checkout .woocommerce-input-wrapper{width:100%;display:block}
@@ -128,7 +136,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .form-row input[type="tel"],
 .kbb-checkout .form-row input[type="password"],
 .kbb-checkout .form-row textarea,
-.kbb-checkout .form-row select{width:100%;font-family:inherit;font-size:14px;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--ink);background:#fff;transition:.15s;height:auto;line-height:1.3}
+.kbb-checkout .form-row select{width:100%;font-family:inherit;font-size:calc(14px * var(--cop-tinput));border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--ink);background:#fff;transition:.15s;height:auto;line-height:1.3}
 .kbb-checkout .form-row input:focus,
 .kbb-checkout .form-row textarea:focus,
 .kbb-checkout .form-row select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
@@ -335,6 +343,21 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   --cop-qtys:var(--cop-d-qtys,1);
   --cop-rowb:var(--cop-d-rowb,600);
   --cop-rowpb:var(--cop-d-rowpb,700);
+  /* The secure-checkout bar. Its height is these two plus whichever of the
+     logo and the badge is taller -- there is no height property to set. */
+  --cop-headpady:var(--cop-d-headpady,14px);
+  --cop-headpadx:var(--cop-d-headpadx,20px);
+  --cop-headmax:var(--cop-d-headmax,1040px);
+  --cop-headlogo:var(--cop-d-headlogo,20px);
+  --cop-headbadge:var(--cop-d-headbadge,12px);
+  /* Type. Every one is a FACTOR on the size that role already uses, so 1 is
+     this page exactly as it was and the six roles keep their relationship. */
+  --cop-ttitle:var(--cop-d-ttitle,1);
+  --cop-tlead:var(--cop-d-tlead,1);
+  --cop-th2:var(--cop-d-th2,1);
+  --cop-tlabel:var(--cop-d-tlabel,1);
+  --cop-tinput:var(--cop-d-tinput,1);
+  --cop-ttrust:var(--cop-d-ttrust,1);
 }
 
 /* ---------------------------- SUMMARY (right) ---------------------------- */
@@ -585,12 +608,42 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* ---------------- checkout reassurance block ---------------- */
 .kbb-checkout .kbb-reassure{background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:14px 16px;margin-top:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--sh)}
-.kbb-checkout .kr-line{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.kbb-checkout .kr-line{display:flex;align-items:center;gap:10px;font-size:calc(12px * var(--cop-ttrust));font-weight:600;color:var(--ink-2)}
 .kbb-checkout .kr-line svg{width:17px;height:17px;color:var(--green);flex-shrink:0}
 .kbb-checkout .kr-line a{color:var(--pink-deep);text-decoration:underline}
 .kbb-checkout .kr-stars{letter-spacing:1px;font-size:13px;flex-shrink:0;line-height:1}
 .kbb-checkout .kr-star{color:var(--line)}
 .kbb-checkout .kr-star.on{color:#F4B740}
+
+/* THE AUTHENTICITY TICK, DRAWN RATHER THAN FADED IN.
+   "this line icon i need continues animated like a box and inside tick should
+   becomre green and check." So the tick's own stroke runs from its full length
+   to zero -- it is drawn, the way a hand draws it -- and the shield fills green
+   behind it, holds, and clears. A fade would say "a tick appeared"; this says
+   "it was just checked", which is the thing that was asked for.
+
+   9 is the tick's path length rounded up: M9 12 l2 2 l4 -4 measures 2.83 + 5.66
+   = 8.49 user units. Over-long is safe (offset 0 still shows the whole stroke);
+   short would clip the end of it permanently.
+
+   --cop-tick-t is a DURATION factor, which is the owner's speed inverted --
+   see CheckoutPage::inverse(). The rest-and-repeat is inside the one keyframe
+   set rather than an animation-delay, so the pause scales with the speed
+   instead of a fast tick waiting the same 2.6s as a slow one. */
+.kbb-checkout .kr-tick{stroke-dasharray:9;stroke-dashoffset:0;
+  animation:krTick calc(3.2s * var(--cop-tick-t,1)) ease-in-out infinite}
+.kbb-checkout .kr-shield{animation:krShield calc(3.2s * var(--cop-tick-t,1)) ease-in-out infinite}
+@keyframes krTick{0%,6%{stroke-dashoffset:9}26%,80%{stroke-dashoffset:0}94%,100%{stroke-dashoffset:9}}
+@keyframes krShield{0%,6%{fill:rgba(30,158,90,0)}30%,80%{fill:rgba(30,158,90,.15)}96%,100%{fill:rgba(30,158,90,0)}}
+/* Off, and the reduced-motion case, are the SAME resting state and not a
+   blank icon: the tick is simply there, already drawn. */
+.kbb-checkout.cop-notick .kr-tick,
+.kbb-checkout.cop-notick .kr-shield{animation:none}
+.kbb-checkout.cop-notick .kr-tick{stroke-dashoffset:0}
+@media (prefers-reduced-motion:reduce){
+  .kbb-checkout .kr-tick,.kbb-checkout .kr-shield{animation:none}
+  .kbb-checkout .kr-tick{stroke-dashoffset:0}
+}
 
 /* ---------------- Google Places dropdown ---------------- */
 .pac-container{border-radius:10px;box-shadow:0 16px 34px -12px rgba(0,0,0,.28);border:1px solid var(--line);font-family:var(--sans);margin-top:4px;z-index:100000}
@@ -678,6 +731,17 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-qtys:var(--cop-m-qtys,1);
     --cop-rowb:var(--cop-m-rowb,600);
     --cop-rowpb:var(--cop-m-rowpb,700);
+    --cop-headpady:var(--cop-m-headpady,14px);
+    --cop-headpadx:var(--cop-m-headpadx,20px);
+    --cop-headmax:var(--cop-m-headmax,1040px);
+    --cop-headlogo:var(--cop-m-headlogo,20px);
+    --cop-headbadge:var(--cop-m-headbadge,12px);
+    --cop-ttitle:var(--cop-m-ttitle,1);
+    --cop-tlead:var(--cop-m-tlead,1);
+    --cop-th2:var(--cop-m-th2,1);
+    --cop-tlabel:var(--cop-m-tlabel,1);
+    --cop-tinput:var(--cop-m-tinput,1);
+    --cop-ttrust:var(--cop-m-ttrust,1);
   }
   .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:var(--cop-m-gap,14px);padding-bottom:24px}
   /* summary to the TOP, collapsible */
@@ -838,7 +902,12 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .form-row input[type="number"],
   .kbb-checkout .form-row input[type="search"],
   .kbb-checkout .form-row textarea,
-  .kbb-checkout .form-row select{font-size:16px}
+  /* 16px IS A FLOOR, NOT A SIZE. iOS Safari zooms the page when a field
+     smaller than 16px takes focus and never zooms back out, leaving the
+     shopper on a checkout wider than their screen mid-order. max() lets the
+     Mobile tab's slider raise this and makes it unable to lower it past the
+     floor -- the control says so, and this is what enforces it. */
+  .kbb-checkout .form-row select{font-size:max(16px, calc(16px * var(--cop-tinput)))}
 
   .kbb-checkout .stab{min-height:44px}
   .kbb-checkout .viewfull{min-height:44px}

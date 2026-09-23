@@ -71,10 +71,12 @@
                     <!-- 1 · Contact -->
                     <div class="sec">
                         <h2><span class="n">1</span> {{ __('store.checkout.step_contact') }}</h2>
-{{-- NAME FIRST, then email and phone side by side, and all three required.
+{{-- NAME FIRST, then PHONE and EMAIL side by side, and all three required.
 
      The three things this order needs to reach a human, in the order someone
-     says them.
+     says them. Phone leads the second row at the owner's instruction -- it is
+     the field a UAE courier actually calls, and the one a shopper types
+     fastest on a phone keyboard that is already numeric.
 
      The name used to open the Shipping address section, which was right while
      that section was fields the shopper typed. It is an address PICKER now,
@@ -117,17 +119,17 @@
                             </div>
 @endif
                         <div class="row2">
-                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required
-                                validate="validate-required validate-email" priority="1"
-                                :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
-                                autocomplete="section-billing billing email"
-                                :value="old('billing_email', $prefill['email'] ?? '')" />
-
                             <x-checkout.field name="billing_phone" :label="__('store.checkout.field_phone')" type="tel" required
                                 validate="validate-required validate-phone" priority="100"
                                 :placeholder="__('store.checkout.field_phone_placeholder')" inputmode="tel"
                                 autocomplete="section-billing billing tel"
                                 :value="old('billing_phone', $prefill['phone'] ?? '')" />
+
+                            <x-checkout.field name="billing_email" :label="__('store.checkout.field_email')" type="email" required
+                                validate="validate-required validate-email" priority="1"
+                                :placeholder="__('store.checkout.field_email_placeholder')" inputmode="email"
+                                autocomplete="section-billing billing email"
+                                :value="old('billing_email', $prefill['email'] ?? '')" />
                         </div>
 {{-- THE THREE COMPOUND ROWS ON THIS PAGE STAY HAND-WRITTEN, deliberately.
 

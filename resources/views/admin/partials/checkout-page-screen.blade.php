@@ -114,9 +114,18 @@
 .chv-bar{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#f6f7f9;
   border-bottom:1px solid var(--border,#e6e6e6);font-size:10px;color:#6b7280}
 .chv-bar i{width:6px;height:6px;border-radius:50%;background:#d8dbe0;display:block}
-.chv-page{background:#fff;border-bottom:1px solid #ebe3e6;padding:6px 3%;
-  display:flex;align-items:center;justify-content:space-between;font-size:9px;color:#6b7280}
-.chv-page b{font-size:11px;color:#c13a5e;font-weight:800}
+.chv-page{background:#fff;border-bottom:1px solid #ebe3e6;
+  padding:var(--chv-headpady,7px) var(--chv-headpadx,10px);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:var(--chv-headbadge,9px);color:#1f7a4d;font-weight:600}
+.chv-page b{font-size:var(--chv-headlogo,11px);color:#c13a5e;font-weight:800}
+/* The bar's width is its own control, so the mock draws the band rather than
+   letting it fill -- that is the whole of what the slider does. */
+.chv-page > span{display:flex;align-items:center;gap:5px}
+.chv-headband{max-width:var(--chv-headmax,100%);margin:0 auto;width:100%;
+  display:flex;align-items:center;justify-content:space-between}
+.chv-pin{font-size:7.5px;color:#94a3b8;font-weight:500;padding:2px 11px;background:#f6f7f9;
+  border-bottom:1px solid #ebe3e6}
 .chv-cols{display:grid;grid-template-columns:minmax(0,1fr) var(--chv-aside,31%);
   column-gap:var(--chv-gap,2%);align-items:start;
   padding:var(--chv-pady,2%) var(--chv-padx,2%) 4%}
@@ -132,8 +141,9 @@
 
 /* Shared pieces. Both mocks draw the same checkout; only the frame differs. */
 .chv-lead{margin:0 0 var(--chv-block,13px)}
-.chv-lead b{display:block;font-size:13px;font-weight:800;color:#17181c}
-.chv-lead i{display:block;font-style:normal;font-size:9px;color:#6b7280;margin-top:1px}
+.chv-lead b{display:block;font-size:calc(13px * var(--chv-ttitle,1));font-weight:800;color:#17181c}
+.chv-lead i{display:block;font-style:normal;font-size:calc(9px * var(--chv-tlead,1));
+  color:#6b7280;margin-top:1px}
 .chv-coupon{background:linear-gradient(135deg,#eef8f1,#fff);border:1.4px dashed #bfe0cd;
   border-radius:10px;padding:8px 9px;margin-bottom:var(--chv-block,13px);font-size:9px;
   font-weight:700;color:#1f7d52}
@@ -149,11 +159,16 @@
 .chv-sec > h6{margin:calc(var(--chv-secpad,16px) * -1) calc(var(--chv-secpad,16px) * -1) 9px;
   padding:6px var(--chv-secpad,16px) 6px calc(var(--chv-secpad,16px) - 3px);
   background:#fbf5f4;border-bottom:1px solid #f0eaec;border-inline-start:3px solid #c13a5e;
-  display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:700;color:#17181c}
-.chv-sec > h6 em{flex:0 0 auto;width:14px;height:14px;border-radius:50%;background:#c13a5e;color:#fff;
-  font-style:normal;font-size:8px;font-weight:800;display:grid;place-items:center}
-.chv-fi{border:1px solid #ebe3e6;border-radius:6px;padding:5px 6px;font-size:9px;color:#9aa0aa;
+  display:flex;align-items:center;gap:6px;font-size:calc(9.5px * var(--chv-th2,1));
+  font-weight:700;color:#17181c}
+.chv-sec > h6 em{flex:0 0 auto;width:calc(14px * var(--chv-th2,1));height:calc(14px * var(--chv-th2,1));
+  border-radius:50%;background:#c13a5e;color:#fff;
+  font-style:normal;font-size:calc(8px * var(--chv-th2,1));font-weight:800;display:grid;place-items:center}
+.chv-fi{border:1px solid #ebe3e6;border-radius:6px;padding:5px 6px;
+  font-size:calc(9px * var(--chv-tinput,1));color:#9aa0aa;
   background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chv-lb{display:block;font-size:calc(7.5px * var(--chv-tlabel,1));font-weight:600;
+  color:#6b7280;margin-bottom:2px}
 .chv-fg{display:grid;gap:5px}
 .chv-fg.two{grid-template-columns:1fr 1fr}
 .chv-ad{display:flex;align-items:center;gap:6px;border:1px solid #1e9e5a;background:#f4fbf7;
@@ -209,6 +224,65 @@
 .chv-ci .pr{flex:0 0 auto;margin-inline-start:auto;white-space:nowrap;
   font-size:calc(9.5px * var(--chv-rowf,1));font-weight:var(--chv-rowpb,700)}
 .chv-items{margin-bottom:6px}
+
+/* The trust block under Payment, and the tick that is the point of it. Same
+   keyframe shape as the shop's -- the stroke is DRAWN from its own length to
+   zero and the shield fills behind it -- so what the owner times here is what
+   they get. */
+.chv-trust{background:#fff;border:1px solid #ebe3e6;border-radius:10px;
+  padding:var(--chv-secpad,16px);margin-top:var(--chv-block,13px);
+  display:flex;flex-direction:column;gap:6px}
+.chv-tl{display:flex;align-items:center;gap:7px;font-size:calc(9px * var(--chv-ttrust,1));
+  font-weight:600;color:#5b6472}
+.chv-tl svg{flex:none;width:calc(12px * var(--chv-ttrust,1));height:calc(12px * var(--chv-ttrust,1));
+  color:#1e9e5a}
+.chv-tl .st{color:#f4b740;letter-spacing:.5px}
+.chv-tick{stroke-dasharray:9;stroke-dashoffset:0;
+  animation:chvTick calc(3.2s * var(--chv-tickt,1)) ease-in-out infinite}
+.chv-shield{animation:chvShield calc(3.2s * var(--chv-tickt,1)) ease-in-out infinite}
+@keyframes chvTick{0%,6%{stroke-dashoffset:9}26%,80%{stroke-dashoffset:0}94%,100%{stroke-dashoffset:9}}
+@keyframes chvShield{0%,6%{fill:rgba(30,158,90,0)}30%,80%{fill:rgba(30,158,90,.15)}96%,100%{fill:rgba(30,158,90,0)}}
+.chv-notick .chv-tick,.chv-notick .chv-shield{animation:none}
+
+/* The address cue, at the mock's scale and on the mock's own timings -- the
+   same three parts and the same two numbers driving them. */
+.chv-cue{display:flex;align-items:center;gap:7px;border:1px solid #ebe3e6;border-radius:8px;
+  padding:7px 8px;background:#fff}
+.chv-cueic{position:relative;flex:none;
+  width:calc(26px * var(--chv-cues,1));height:calc(22px * var(--chv-cues,1))}
+.chv-cueic i{position:absolute;display:grid;place-items:center;border-radius:50%;
+  width:calc(16px * var(--chv-cues,1));height:calc(16px * var(--chv-cues,1));
+  border:1.2px solid #fff;background:#edf1f5;color:#5b6472}
+.chv-cueic svg{width:calc(8px * var(--chv-cues,1));height:calc(8px * var(--chv-cues,1))}
+.chv-cueic .o{right:0;bottom:0}
+.chv-cueic .h{left:0;top:0;z-index:2;background:#dff1e7;color:#1f7a4d;
+  animation:chvBob calc(3.4s * var(--chv-cuet,1)) ease-in-out infinite}
+@keyframes chvBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.chv-cue .pr{flex:1;min-width:0;font-size:calc(9px * var(--chv-tinput,1));color:#6b7280;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chv-ar{flex:none;display:flex;align-items:center;gap:1px;color:#1f7a4d;
+  width:calc(22px * var(--chv-cues,1));
+  animation:chvNudge calc(1.5s * var(--chv-cuet,1)) ease-in-out infinite}
+.chv-ar em{flex:1;height:1.6px;border-radius:2px;
+  background:linear-gradient(90deg,rgba(31,122,77,0),currentColor)}
+.chv-ar svg{flex:none;width:calc(10px * var(--chv-cues,1));height:calc(10px * var(--chv-cues,1))}
+@keyframes chvNudge{0%,100%{transform:translateX(0);opacity:.5}50%{transform:translateX(4px);opacity:1}}
+.chv-cta{position:relative;flex:none;font-size:calc(8.5px * var(--chv-tinput,1));font-weight:700;
+  color:#1f7a4d;white-space:nowrap}
+.chv-cta::before{content:"";position:absolute;inset:-4px -7px;border-radius:99px;
+  border:1.3px solid #1f7a4d;opacity:0;
+  animation:chvPulse calc(3s * var(--chv-cuet,1)) ease-out infinite}
+@keyframes chvPulse{0%{transform:scale(.88);opacity:.5}60%{transform:scale(1.14);opacity:0}100%{opacity:0}}
+.chv-nocue .chv-cueic,.chv-nocue .chv-ar{display:none}
+.chv-nocue .chv-cta::before{content:none}
+.chv-nocue-ic .chv-cueic{display:none}
+.chv-nocue-ar .chv-ar{display:none}
+.chv-nocue-pu .chv-cta::before{content:none}
+@media (prefers-reduced-motion:reduce){
+  .chv-cueic .h,.chv-ar,.chv-tick,.chv-shield{animation:none}
+  .chv-ar{opacity:1}
+  .chv-cta::before{animation:none;opacity:0}
+}
 .chv-stick{border:1px dashed #cbd5e1;border-radius:10px;padding:4px;position:relative}
 .chv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;background:#fff;
   padding:0 4px;font-size:7.5px;color:#94a3b8}
@@ -478,18 +552,62 @@
   function pvSections() {
     return '<div class="chv-box">'
       + '<div class="chv-sec"><h6><em>1</em>Contact</h6>'
-      + '<div class="chv-fg"><span class="chv-fi">First and last name</span>'
+      + '<div class="chv-fg"><span><b class="chv-lb">Full name</b>'
+      + '<span class="chv-fi" style="display:block">First and last name</span></span>'
+      /* Phone then email, which is the order the page posts them in. */
       + '<span class="chv-fg two" style="display:grid">'
-      + '<span class="chv-fi">you@email.com</span><span class="chv-fi">+971 5x xxx xxxx</span>'
+      + '<span><b class="chv-lb">Phone</b><span class="chv-fi" style="display:block">+971 5x xxx xxxx</span></span>'
+      + '<span><b class="chv-lb">Email address</b><span class="chv-fi" style="display:block">you@email.com</span></span>'
       + '</span></div></div>'
-      + '<div class="chv-sec"><h6><em>2</em>Shipping address</h6>'
-      + '<div class="chv-ad"><span class="ic">&#9750;</span>'
-      + '<span class="tx"><b>Home</b><i>Al-Thumama - area 46, street 912 - Doha</i></span>'
-      + '<span class="go">Change</span></div></div>'
+      + '<div class="chv-sec"><h6><em>2</em>Shipping address</h6>' + pvAddress() + '</div>'
       + '<div class="chv-sec"><h6><em>3</em>Delivery</h6>'
       + '<div class="chv-pick"><span>Standard</span><span>AED 20</span></div></div>'
       + '<div class="chv-sec"><h6><em>4</em>Payment</h6>'
       + '<div class="chv-pick"><span>Cash on delivery</span><span>&#9673;</span></div></div>'
+      + '</div>'
+      + pvTrust();
+  }
+
+  /* THE ADDRESS SECTION HAS TWO STATES AND THE CUE LIVES ON ONLY ONE OF THEM.
+     The Attention & trust tab is the tab where that state is what is being
+     set, so it is the one that draws it. Every other tab draws the chosen row,
+     which is what a shopper sees for the rest of the page's life. */
+  function pvAddress() {
+    if (open !== 'cues') {
+      return '<div class="chv-ad"><span class="ic">&#9750;</span>'
+        + '<span class="tx"><b>Home</b><i>Al-Thumama - area 46, street 912 - Doha</i></span>'
+        + '<span class="go">Change</span></div>';
+    }
+
+    var home = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+      + ' stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5 12 3.5l8.5 7"/>'
+      + '<path d="M5.5 9.7V20h13V9.7"/><path d="M10 20v-5.2h4V20"/></svg>';
+    var office = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+      + ' stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2"/>'
+      + '<path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/></svg>';
+
+    return '<div class="chv-cue">'
+      + '<span class="chv-cueic"><i class="h">' + home + '</i><i class="o">' + office + '</i></span>'
+      + '<span class="pr">Please choose your delivery address</span>'
+      + '<span class="chv-ar"><em></em><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+      + ' stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>'
+      + '<span class="chv-cta">+ Address</span>'
+      + '</div>';
+  }
+
+  /* The block under Payment. Drawn on every tab, because the tick is the thing
+     the owner is timing and a preview that hides it on seven tabs out of nine
+     is a preview of the wrong page. */
+  function pvTrust() {
+    return '<div class="chv-trust">'
+      + '<div class="chv-tl"><span class="st">&#9733;&#9733;&#9733;&#9733;&#9733;</span>'
+      + '<span>4.8 · loved by UAE customers</span></div>'
+      + '<div class="chv-tl">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+      + ' stroke-linecap="round" stroke-linejoin="round">'
+      + '<path class="chv-shield" d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/>'
+      + '<path class="chv-tick" d="M9 12l2 2 4-4"/></svg>'
+      + '<span>100% authentic K-beauty</span></div>'
       + '</div>';
   }
 
@@ -528,6 +646,38 @@
       + '</div>';
   }
 
+  /* The header and the six type factors, for whichever surface is showing.
+     `px` is the scaler the surface uses -- 1:1 on the desktop mock, the phone
+     frame's 320/390 on the other -- so one function serves both. */
+  function pvChrome(p, px) {
+    return ';--chv-headpady:' + px(p + 'head_pad_y', 14)
+      + ';--chv-headpadx:' + px(p + 'head_pad_x', 20)
+      + ';--chv-headlogo:' + px(p + 'head_logo', 20)
+      + ';--chv-headbadge:' + px(p + 'head_badge', 12)
+      + ';--chv-ttitle:' + (pvNum(p + 't_title', 100) / 100)
+      + ';--chv-tlead:' + (pvNum(p + 't_lead', 100) / 100)
+      + ';--chv-th2:' + (pvNum(p + 't_h2', 100) / 100)
+      + ';--chv-tlabel:' + (pvNum(p + 't_label', 100) / 100)
+      + ';--chv-tinput:' + (pvNum(p + 't_input', 100) / 100)
+      + ';--chv-ttrust:' + (pvNum(p + 't_trust', 100) / 100)
+      + ';--chv-cues:' + (pvNum('addr_cue_size', 100) / 100)
+      /* Speed inverted into a duration, exactly as CheckoutPage::inverse()
+         does it, so the preview and the page cannot disagree about which way
+         the slider runs. */
+      + ';--chv-cuet:' + (100 / Math.max(1, pvNum('addr_cue_speed', 100))).toFixed(3)
+      + ';--chv-tickt:' + (100 / Math.max(1, pvNum('trust_tick_speed', 100))).toFixed(3);
+  }
+
+  /* The cue's off switches, as classes on the mock -- same names, same shape
+     as the storefront's, so one reads as the other. */
+  function pvCueClass() {
+    return (pvOn('addr_cue') ? '' : ' chv-nocue')
+      + (pvOn('addr_cue_icons') ? '' : ' chv-nocue-ic')
+      + (pvOn('addr_cue_arrow') ? '' : ' chv-nocue-ar')
+      + (pvOn('addr_cue_pulse') ? '' : ' chv-nocue-pu')
+      + (pvOn('trust_tick') ? '' : ' chv-notick');
+  }
+
   function previewDesktop() {
     var vars = '--chv-aside:' + pvPct('d_aside', 380)
       + ';--chv-gap:' + pvPct('d_gap', 26)
@@ -546,21 +696,25 @@
       + ';--chv-rowf:' + (pvNum('d_row_font', 100) / 100)
       + ';--chv-qtys:' + (pvNum('d_qty_size', 100) / 100)
       + ';--chv-rowb:' + (pvOn('d_row_bold') ? 600 : 400)
-      + ';--chv-rowpb:' + (pvOn('d_row_bold') ? 700 : 500);
+      + ';--chv-rowpb:' + (pvOn('d_row_bold') ? 700 : 500)
+      + ';--chv-headmax:' + pvPct('d_head_max', 1040)
+      + pvChrome('d_', function (k, d) { return pvNum(k, d) + 'px'; });
 
     var side = pvOn('d_sticky')
       ? '<div class="chv-stick">' + pvSummary() + '</div>'
       : pvSummary();
 
-    return '<div class="chv-desk" style="' + vars + '">'
+    return '<div class="chv-desk' + pvCueClass() + '" style="' + vars + '">'
       + '<div class="chv-bar"><i></i><i></i><i></i><span>Wider than ' + mobileMax + 'px</span></div>'
-      + '<div class="chv-page"><b>K-BeautyBliss</b><span>&#128274; Secure checkout</span></div>'
+      + '<div class="chv-page"><span class="chv-headband"><b>K-BeautyBliss</b>'
+      + '<span>&#128274; Secure checkout</span></span></div>'
+      + (pvOn('d_head_sticky') ? '<div class="chv-pin">stays at the top while scrolling</div>' : '')
       + '<div class="chv-cols"><div>' + pvLead() + pvSections() + '</div><div>' + side + '</div></div>'
       + '</div>'
       + '<div class="chv-ruler">Page width <b>' + pvNum('d_max', 1040) + 'px</b>'
       + '<span>·</span>summary column <b>' + pvNum('d_aside', 380) + 'px</b>'
       + '<span>·</span>the form takes what is left'
-      + '<span>·</span>summary rows drawn at <b>1:1</b></div>';
+      + '<span>·</span>header and summary rows drawn at <b>1:1</b></div>';
   }
 
   function previewMobile() {
@@ -576,15 +730,19 @@
       + ';--chv-rowf:' + (pvNum('m_row_font', 100) / 100)
       + ';--chv-qtys:' + (pvNum('m_qty_size', 100) / 100)
       + ';--chv-rowb:' + (pvOn('m_row_bold') ? 600 : 400)
-      + ';--chv-rowpb:' + (pvOn('m_row_bold') ? 700 : 500);
+      + ';--chv-rowpb:' + (pvOn('m_row_bold') ? 700 : 500)
+      + ';--chv-headmax:100%'
+      + pvChrome('m_', pvPx);
 
     /* The summary sits FIRST on a phone — it is `order:-1` in the stylesheet —
        and the Place order box is a block of its own at the foot. Drawn in that
        order here so the mock is the page and not a rearrangement of it. */
-    return '<div class="chv-phone">'
+    return '<div class="chv-phone' + pvCueClass() + '" style="' + vars + '">'
       + '<div class="chv-bar"><i></i><i></i><i></i><span>' + mobileMax + 'px and below</span></div>'
-      + '<div class="chv-page"><b>K-BeautyBliss</b><span>&#128274;</span></div>'
-      + '<div class="chv-stack" style="' + vars + '">'
+      + '<div class="chv-page"><span class="chv-headband"><b>K-BeautyBliss</b>'
+      + '<span>&#128274;</span></span></div>'
+      + (pvOn('m_head_sticky') ? '<div class="chv-pin">stays at the top while scrolling</div>' : '')
+      + '<div class="chv-stack">'
       + pvSummary()
       + '<div>' + pvLead() + pvSections()
       + '<div class="chv-mob-order"><div class="sr" style="display:flex;justify-content:space-between;'
@@ -597,7 +755,7 @@
       + '<div class="chv-ruler">Drawn at <b>' + PHONE + 'px</b> for a <b>' + PHONE_REAL + 'px</b> phone'
       + '<span>·</span>page padding <b>' + pvNum('m_pad_x', 20) + 'px</b> each side'
       + '<span>·</span>section padding <b>' + pvNum('m_sec_pad', 16) + 'px</b>'
-      + '<span>·</span>summary rows scaled to match the frame</div>';
+      + '<span>·</span>header and summary rows scaled to match the frame</div>';
   }
 
   function previewHTML() {

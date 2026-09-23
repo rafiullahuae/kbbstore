@@ -863,7 +863,22 @@ final class InterfaceStrings
             'checkout.validate_phone' => 'Please enter a phone number, or leave this empty.',
             'checkout.create_account' => 'Create an account for faster checkout next time',
             'checkout.password_placeholder' => 'Choose a password (8 characters or more)',
-            'checkout.whatsapp_optin' => 'Send order updates on WhatsApp — confirmation, dispatch & delivery alerts.',
+            /*
+             * THE BOX RECORDS `whatsapp_optin`, which is why this sentence
+             * names WhatsApp as well as email rather than email alone.
+             *
+             * The owner asked for "Send order updates & new offers via email".
+             * The checkbox is `billing_kbb_whatsapp` and CheckoutController
+             * writes it to the order's and the customer's `whatsapp_optin`
+             * column; promising email only, while storing consent for a
+             * channel the sentence never mentioned, is the kind of mismatch
+             * that is invisible until somebody asks what was agreed to. The
+             * wording covers both channels, which is what the box is actually
+             * for. Storing the two consents separately is a column and a
+             * migration, and is worth doing if the shop wants to mail offers
+             * to people who declined WhatsApp.
+             */
+            'checkout.whatsapp_optin' => 'Send me order updates and new offers — on WhatsApp and by email.',
             // One sentence with the country name inside it. It used to be three lines
             // of template with the name interpolated between them, which is the shape
             // no translator can reorder — and this is the one place on the checkout
