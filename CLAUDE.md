@@ -75,6 +75,53 @@ by luck:
 - Stay inside the directories your lane owns. If a change needs a file another
   lane owns, say so rather than editing it.
 
+## What every lane owes, every time
+
+Set by the owner and not negotiable. A lane that skips one of these has not
+finished, however green its suite is.
+
+**1. Nothing that already works may change.** A lane fixes or adds the thing it
+was given and leaves the rest of the shop byte-identical. `Storefront-
+EnglishUnchangedTest` is the instrument: if it goes red, read the diff and
+either revert the accident or advance the pin for the change you meant — never
+both at once, and never without looking. Any NEW setting ships at the value the
+page already has, so applying the package moves nothing until somebody moves a
+slider. The only exceptions are a default the owner asked for in as many words,
+and those get called out in the commit rather than buried.
+
+**2. Every patch arrives with a picture.** Not "it works" — a screenshot of the
+thing, taken in Chromium at 390px and at 1280px, plus the measured numbers that
+matter (heights, widths, font sizes, `document.documentElement.scrollWidth`).
+If it moves, show it moving; if it is a control, show the before and the after.
+A claim with no picture behind it is a claim nobody can check.
+
+**3. Say where it sits in the admin.** Every patch that adds or changes a
+control names its exact path — `Appearance → Checkout page → Mobile · Text
+sizes`, not "the checkout settings". The owner should never have to hunt for
+what a lane just built.
+
+**4. Fast, and measured rather than asserted.** No N+1s; `StorefrontQuery-
+BudgetTest` is a budget, not a suggestion, and a lane that needs one more query
+raises it deliberately or finds another way. No JavaScript that measures layout
+— this project sizes with `calc()` for a reason, and two tests forbid the
+element-measuring APIs by name. Prefer a rendered-once CSS answer to a scripted
+one.
+
+**5. Secure by construction, not by intention.** `/api/*` is unauthenticated:
+allowlist what a model returns, never the model. Anything printed unescaped is
+a constant, never a setting. A select stores one of its own options or the
+default. A URL from a setting is scheme-checked before it becomes an `href`.
+Every new admin endpoint gets its own capability and fails closed.
+
+**6. No bugs, and the proof is a test that would have caught it.** Every fix
+ships with the test that goes red without it, and the test says in its own
+comment what the defect looked like on the shop. A mutation note — "change X
+back and this is red" — is the shortest way to prove a test asserts anything.
+
+**7. Work at full capacity.** Take the whole task, not the easy half. If part
+of it is blocked, finish everything else and say exactly what is left and why.
+`docs/LANE-BRIEFS.md` carries the current assignments.
+
 ## Landmines, each one already paid for
 
 - **Packages 2.60.102–.106 were withdrawn** for being built against a stale
