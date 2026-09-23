@@ -53,7 +53,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-head .secure{margin-inline-start:auto;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--green)}
 .kbb-checkout .co-head .secure svg{width:14px;height:14px}
 
-.kbb-checkout .co-grid{max-width:1040px;margin:0 auto;padding:22px 20px 70px;display:grid;grid-template-columns:1fr 380px;gap:26px;align-items:start}
+.kbb-checkout .co-grid{max-width:1040px;margin:0 auto;padding:22px 20px 70px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:26px;align-items:start}
 
 .kbb-checkout .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);margin-bottom:10px}
 .kbb-checkout .backlink:hover{color:var(--pink-deep)}
@@ -605,7 +605,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* ------------------------------- MOBILE -------------------------------- */
 @media(max-width:900px){
-  .kbb-checkout .co-grid{grid-template-columns:1fr;gap:14px;padding-bottom:24px}
+  .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:14px;padding-bottom:24px}
   /* summary to the TOP, collapsible */
   .kbb-checkout .summary{order:-1;position:static;box-shadow:none;padding:14px;border:1px solid var(--line-2);background:#fff;border-radius:var(--r)}
   .kbb-checkout .panels{position:relative;max-height:148px;overflow:hidden;transition:max-height .35s var(--ease)}
