@@ -178,6 +178,37 @@
   border-radius:7px;padding:6px 8px;margin-top:6px;font-weight:800;font-size:11px}
 .chv-sum .go{display:grid;place-items:center;background:#c13a5e;color:#fff;border-radius:99px;
   padding:7px;margin-top:7px;font-size:10px;font-weight:700}
+/* The order-summary lines. Drawn at the SAME px the owner is choosing on the
+   Desktop tab, because that tab's frame stands for a 1040px-plus page and is
+   about that wide; scaled by the phone frame's 320/390 on the Mobile tab, for
+   the same reason everything else in that frame is. Both are stated on the
+   ruler under the mock so neither can be misread. */
+.chv-ci{display:flex;align-items:flex-start;gap:var(--chv-rowgap,11px);
+  padding:var(--chv-rowpad,10px) 0;border-bottom:1px solid #f0eaec}
+.chv-ci:first-child{padding-top:0}
+.chv-ci:last-child{border-bottom:0}
+.chv-ci .th{flex:0 0 auto;position:relative;width:var(--chv-rowh,54px);aspect-ratio:1;
+  border-radius:calc(var(--chv-rowh,54px) * .2)}
+.chv-ci .th i{position:absolute;top:-5px;inset-inline-end:-5px;min-width:14px;height:14px;
+  border-radius:50%;background:#17181c;color:#fff;font-style:normal;font-size:8px;font-weight:700;
+  display:grid;place-items:center;border:1.5px solid #fff}
+.chv-ci .info{flex:1;min-width:0}
+.chv-ci .info b{display:block;font-size:calc(10px * var(--chv-rowf,1));
+  font-weight:var(--chv-rowb,600);line-height:1.3;margin:1px 0 4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* The stepper takes the multiplier on its BOX AND ITS GLYPH together, which is
+   what the shop's own rule does. Scaling one of the two would draw a control
+   the page never renders. */
+.chv-ci .qty{display:inline-flex;align-items:center;border:1px solid #ebe3e6;border-radius:6px;
+  overflow:hidden}
+.chv-ci .qty u{text-decoration:none;display:grid;place-items:center;color:#6b7280;
+  width:calc(17px * var(--chv-qtys,1));height:calc(17px * var(--chv-qtys,1));
+  font-size:calc(10px * var(--chv-qtys,1));line-height:1}
+.chv-ci .qty em{font-style:normal;text-align:center;min-width:calc(16px * var(--chv-qtys,1));
+  font-size:calc(9px * var(--chv-rowf,1));font-weight:var(--chv-rowb,600)}
+.chv-ci .pr{flex:0 0 auto;margin-inline-start:auto;white-space:nowrap;
+  font-size:calc(9.5px * var(--chv-rowf,1));font-weight:var(--chv-rowpb,700)}
+.chv-items{margin-bottom:6px}
 .chv-stick{border:1px dashed #cbd5e1;border-radius:10px;padding:4px;position:relative}
 .chv-stick::after{content:'follows the scroll';position:absolute;top:-7px;right:6px;background:#fff;
   padding:0 4px;font-size:7.5px;color:#94a3b8}
@@ -467,8 +498,29 @@
       + '<div class="chv-coupon">&#127873; Have a discount code?<u>Enter promo code</u></div>';
   }
 
+  /* Three lines, because two hides what the row spacing does to a list and
+     four does not fit the phone frame's peek. The names are long enough to
+     reach the ellipsis, which is the state the owner has to be able to see. */
+  var PV_ITEMS = [
+    {n: 'Hyaluronic Acid Watery Sun Gel', q: 1, p: 'AED 221', c: '#f6c98a,#efab72'},
+    {n: 'Barrier Repair Cream', q: 2, p: 'AED 182', c: '#f5a8b8,#e98598'},
+    {n: 'Collagen Night Mask', q: 1, p: 'AED 40', c: '#bfa6f2,#a387e8'}
+  ];
+
+  function pvRows() {
+    return '<div class="chv-items">' + PV_ITEMS.map(function (it) {
+      return '<div class="chv-ci">'
+        + '<span class="th" style="background:linear-gradient(135deg,' + it.c + ')"><i>' + it.q + '</i></span>'
+        + '<span class="info"><b>' + esc(it.n) + '</b>'
+        + '<span class="qty"><u>&minus;</u><em>' + it.q + '</em><u>+</u></span></span>'
+        + '<span class="pr">' + esc(it.p) + '</span>'
+        + '</div>';
+    }).join('') + '</div>';
+  }
+
   function pvSummary() {
     return '<div class="chv-sum">'
+      + pvRows()
       + '<div class="sr"><span>Subtotal</span><span>AED 443</span></div>'
       + '<div class="sr"><span>Delivery</span><span>AED 20</span></div>'
       + '<div class="tot"><span>Total</span><span>AED 463</span></div>'
@@ -483,7 +535,18 @@
       + ';--chv-pady:' + pvPct('d_pad_y', 22)
       + ';--chv-block:' + pvPct('d_block_gap', 16)
       + ';--chv-secpad:' + pvPct('d_sec_pad', 16)
-      + ';--chv-asidepad:' + pvPct('d_aside_pad', 17);
+      + ';--chv-asidepad:' + pvPct('d_aside_pad', 17)
+      // The rows, at the size they are actually set to -- see the note by
+      // .chv-ci. A percentage would be wrong here whatever it said: these boxes
+      // sit inside the summary column, so a percentage resolves against THAT
+      // and not against the page the rest of the mock is proportioned to.
+      + ';--chv-rowh:' + pvNum('d_row_h', 54) + 'px'
+      + ';--chv-rowpad:' + pvNum('d_row_pad', 10) + 'px'
+      + ';--chv-rowgap:' + pvNum('d_row_gap', 11) + 'px'
+      + ';--chv-rowf:' + (pvNum('d_row_font', 100) / 100)
+      + ';--chv-qtys:' + (pvNum('d_qty_size', 100) / 100)
+      + ';--chv-rowb:' + (pvOn('d_row_bold') ? 600 : 400)
+      + ';--chv-rowpb:' + (pvOn('d_row_bold') ? 700 : 500);
 
     var side = pvOn('d_sticky')
       ? '<div class="chv-stick">' + pvSummary() + '</div>'
@@ -496,7 +559,8 @@
       + '</div>'
       + '<div class="chv-ruler">Page width <b>' + pvNum('d_max', 1040) + 'px</b>'
       + '<span>·</span>summary column <b>' + pvNum('d_aside', 380) + 'px</b>'
-      + '<span>·</span>the form takes what is left</div>';
+      + '<span>·</span>the form takes what is left'
+      + '<span>·</span>summary rows drawn at <b>1:1</b></div>';
   }
 
   function previewMobile() {
@@ -505,7 +569,14 @@
       + ';--chv-mgap:' + pvPx('m_gap', 14)
       + ';--chv-block:' + pvPx('m_block_gap', 16)
       + ';--chv-secpad:' + pvPx('m_sec_pad', 16)
-      + ';--chv-asidepad:' + pvPx('m_aside_pad', 14);
+      + ';--chv-asidepad:' + pvPx('m_aside_pad', 14)
+      + ';--chv-rowh:' + pvPx('m_row_h', 54)
+      + ';--chv-rowpad:' + pvPx('m_row_pad', 10)
+      + ';--chv-rowgap:' + pvPx('m_row_gap', 11)
+      + ';--chv-rowf:' + (pvNum('m_row_font', 100) / 100)
+      + ';--chv-qtys:' + (pvNum('m_qty_size', 100) / 100)
+      + ';--chv-rowb:' + (pvOn('m_row_bold') ? 600 : 400)
+      + ';--chv-rowpb:' + (pvOn('m_row_bold') ? 700 : 500);
 
     /* The summary sits FIRST on a phone — it is `order:-1` in the stylesheet —
        and the Place order box is a block of its own at the foot. Drawn in that
@@ -525,11 +596,15 @@
          ragged rows and read as a layout fault in the thing it is measuring. */
       + '<div class="chv-ruler">Drawn at <b>' + PHONE + 'px</b> for a <b>' + PHONE_REAL + 'px</b> phone'
       + '<span>·</span>page padding <b>' + pvNum('m_pad_x', 20) + 'px</b> each side'
-      + '<span>·</span>section padding <b>' + pvNum('m_sec_pad', 16) + 'px</b></div>';
+      + '<span>·</span>section padding <b>' + pvNum('m_sec_pad', 16) + 'px</b>'
+      + '<span>·</span>summary rows scaled to match the frame</div>';
   }
 
   function previewHTML() {
-    var body = open === 'mobile' ? previewMobile() : previewDesktop();
+    /* Two of the four tabs are the phone. Matched on the prefix rather than
+       listed, so a tab added later previews the surface its name claims
+       instead of silently falling through to the desktop mock. */
+    var body = /^mobile/.test(String(open)) ? previewMobile() : previewDesktop();
 
     return '<div class="chp-card" data-chp-preview>'
       + '<div class="chv-h"><b>Preview</b><span>Redraws as you drag. A drawing, not the live page.</span></div>'
@@ -555,8 +630,10 @@
     if (el.type === 'checkbox') values[key] = el.checked;
     else values[key] = Number(el.value);
 
-    // The sticky switch decides whether the slider under it belongs on the
-    // screen at all, so it redraws rather than only repainting.
+    /* A checkbox can decide whether another control belongs on the screen --
+       `d_sticky` does -- so a checkbox redraws rather than only repainting.
+       The two bold switches do not need it, but paying a full redraw on a
+       click nobody is dragging costs nothing and one rule is one rule. */
     if (el.type === 'checkbox') { render(); return; }
 
     var out = document.querySelector('[data-chp-val="' + key + '"]');

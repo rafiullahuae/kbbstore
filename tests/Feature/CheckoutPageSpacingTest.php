@@ -94,6 +94,12 @@ it('states each default a second time as the stylesheet fallback', function () {
         '--cop-m-block' => 'm_block_gap',
         '--cop-m-secpad' => 'm_sec_pad',
         '--cop-m-asidepad' => 'm_aside_pad',
+        '--cop-d-rowh' => 'd_row_h',
+        '--cop-d-rowpad' => 'd_row_pad',
+        '--cop-d-rowgap' => 'd_row_gap',
+        '--cop-m-rowh' => 'm_row_h',
+        '--cop-m-rowpad' => 'm_row_pad',
+        '--cop-m-rowgap' => 'm_row_gap',
     ] as $prop => $key) {
         expect($css)->toContain('var('.$prop.','.$c[$key].'px)');
     }
@@ -121,7 +127,11 @@ it('never hands the page a token the mobile query has to win back', function () 
 
     $vars = cop()->cssVariables();
 
-    foreach (['--cop-padx', '--cop-pady', '--cop-block', '--cop-secpad', '--cop-asidepad'] as $shared) {
+    foreach ([
+        '--cop-padx', '--cop-pady', '--cop-block', '--cop-secpad', '--cop-asidepad',
+        '--cop-rowh', '--cop-rowpad', '--cop-rowgap', '--cop-rowf', '--cop-qtys',
+        '--cop-rowb', '--cop-rowpb',
+    ] as $shared) {
         expect($vars)->not->toContain($shared.':');
     }
 
@@ -146,6 +156,13 @@ it('reassigns all five shared tokens inside the mobile query', function () {
         '--cop-block:var(--cop-m-block,',
         '--cop-secpad:var(--cop-m-secpad,',
         '--cop-asidepad:var(--cop-m-asidepad,',
+        '--cop-rowh:var(--cop-m-rowh,',
+        '--cop-rowpad:var(--cop-m-rowpad,',
+        '--cop-rowgap:var(--cop-m-rowgap,',
+        '--cop-rowf:var(--cop-m-rowf,',
+        '--cop-qtys:var(--cop-m-qtys,',
+        '--cop-rowb:var(--cop-m-rowb,',
+        '--cop-rowpb:var(--cop-m-rowpb,',
     ] as $line) {
         expect($mobile)->toContain($line);
     }
@@ -190,5 +207,87 @@ it('offers spacing and nothing structural', function () {
     $types = array_map(fn ($def) => $def[0], CheckoutPage::SCHEMA);
 
     expect(array_values(array_unique($types)))->toEqualCanonicalizing(['range', 'bool'])
-        ->and(array_keys($types, 'bool', true))->toBe(['d_sticky']);
+        // Three switches, and every one of them is a look: whether the summary
+        // follows the scroll, and whether the summary rows are bold on each
+        // surface. None of them adds or removes anything.
+        ->and(array_keys($types, 'bool', true))->toBe(['d_sticky', 'd_row_bold', 'm_row_bold']);
+});
+
+/* ------------------------------------------------------------------------
+ | 6. The order-summary product rows
+ |------------------------------------------------------------------------*/
+
+it('emits the two multipliers as unitless factors, not percentages', function () {
+    // The stylesheet multiplies them into a px size, and `calc(12px * 115%)`
+    // is not a length -- it computes to nothing and the rule is dropped.
+    cop()->save(['d_row_font' => 115, 'm_qty_size' => 70]);
+
+    expect(cop()->cssVariables())->toBe('--cop-d-rowf:1.15;--cop-m-qtys:0.7');
+});
+// MUTATION: emit the stored percentage. RED -- and on the shop, a summary whose
+// text size slider does nothing at all.
+
+it('turns one bold switch into the two weights the row actually uses', function () {
+    /*
+     * The name is 600 and the price is 700, and it has been since this page
+     * existed. One weight for both would flatten a distinction nobody asked to
+     * lose, so the switch carries a pair.
+     */
+    cop()->save(['d_row_bold' => false]);
+
+    expect(cop()->cssVariables())->toBe('--cop-d-rowb:400;--cop-d-rowpb:500');
+
+    // And back on emits nothing, because on IS the default.
+    cop()->save(['d_row_bold' => true]);
+    expect(cop()->cssVariables())->toBe('');
+});
+
+it('drives the summary line from the row tokens', function () {
+    $css = copCss();
+
+    expect($css)->toContain('.kbb-checkout .ci{display:flex;gap:var(--cop-rowgap);padding:var(--cop-rowpad) 0')
+        ->and($css)->toContain('.kbb-checkout .cth{width:var(--cop-rowh);height:var(--cop-rowh);')
+        ->and($css)->toContain('.kbb-checkout .cinfo .n{font-size:calc(12px * var(--cop-rowf));font-weight:var(--cop-rowb)')
+        ->and($css)->toContain('.kbb-checkout .cprice{font-size:calc(12.5px * var(--cop-rowf));font-weight:var(--cop-rowpb)')
+        // The stepper takes the multiplier on the box AND the glyph. One
+        // without the other draws a control the page never renders.
+        ->and($css)->toContain('.kbb-checkout .qty button{width:calc(23px * var(--cop-qtys));height:calc(23px * var(--cop-qtys));font-size:calc(13px * var(--cop-qtys))');
+});
+
+it('carries the multiplier into the mobile stepper override as well', function () {
+    /*
+     * THE TRAP THIS CATCHES. `.kbb-checkout .qty .co-q` inside the 900px query
+     * is more specific than the base `.qty button` rule AND later in the file,
+     * so on a phone it wins outright. Left as a hard-coded 23px it would mean
+     * the Mobile tab's stepper slider saves, reports success and moves nothing
+     * below 900px -- the same class of failure as an inline property beating a
+     * media query, arriving by a different route.
+     */
+    $css = copCss();
+
+    $at = strpos($css, '.kbb-checkout .qty .co-q{');
+    expect($at)->not->toBeFalse();
+
+    $rule = substr($css, (int) $at, 320);
+
+    expect($rule)->toContain('width:calc(23px * var(--cop-qtys))')
+        ->and($rule)->toContain('min-width:calc(23px * var(--cop-qtys))')
+        ->and($rule)->toContain('font-size:calc(13px * var(--cop-qtys))')
+        ->and($rule)->not->toMatch('/width:23px/');
+});
+// MUTATION: put 23px back in that block. RED.
+
+it('leaves the order-received page on the numbers it has today', function () {
+    /*
+     * partials/checkout/received-line uses the same .ci/.cth/.cinfo/.cprice
+     * classes, so the rules above reach it too. It renders inside
+     * store/checkout-success.blade.php, which is NOT handed the style
+     * attribute -- so every var() falls back and that page is unchanged at
+     * every setting. Deliberate, and pinned here because the way it holds is a
+     * file NOT being edited, which nothing else would notice.
+     */
+    $success = (string) file_get_contents(resource_path('views/store/checkout-success.blade.php'));
+
+    expect($success)->toContain('<section class="kbb-checkout">')
+        ->and($success)->not->toContain('CheckoutPage');
 });

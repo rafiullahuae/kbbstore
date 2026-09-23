@@ -86,15 +86,41 @@ it('hands the screen every field, grouped into the two tabs', function () {
     $body = test()->actingAs(checkoutScreenOwner(), 'admin')
         ->getJson('/admin-api/checkout-page')->assertOk()->json();
 
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['desktop', 'mobile'])
+    expect(collect($body['tabs'])->pluck('key')->all())
+        ->toBe(['desktop', 'desktop_rows', 'mobile', 'mobile_rows'])
         ->and($body['mobileMax'])->toBe(CheckoutPage::MOBILE_MAX);
+
+    /*
+     * THE TWO ROW TABS OFFER THE SAME SIX CONTROLS IN THE SAME ORDER. The
+     * owner compares them by looking at them, and a slider present on one
+     * surface and missing on the other is the complaint that started this:
+     * "on the checkout page (desktop and mobile both) i can not control the
+     * products rows".
+     */
+    $rowFields = fn (string $tab) => collect(collect($body['tabs'])->firstWhere('key', $tab)['fields'])
+        ->pluck('key')
+        ->map(fn ($k) => substr($k, 2))
+        ->all();
+
+    expect($rowFields('desktop_rows'))
+        ->toBe(['row_h', 'row_pad', 'row_gap', 'row_font', 'row_bold', 'qty_size'])
+        ->and($rowFields('mobile_rows'))->toBe($rowFields('desktop_rows'));
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
-    // Every schema key that belongs on a tab is on one. A value with no control
-    // is a setting nobody can reach; a control with no value saves nowhere.
+    /*
+     * Every schema key that belongs on a tab is on one, and nothing is on a tab
+     * twice. A value with no control is a setting nobody can reach; a control
+     * with no value saves nowhere.
+     *
+     * Compared as a SET, because the tabs are ordered for reading -- desktop
+     * layout, desktop rows, mobile layout, mobile rows -- and the schema is
+     * grouped by when each control was added. Neither order is wrong and
+     * pinning one to the other would only forbid ever reordering the tabs.
+     */
     expect($keys)->toBe(collect(CheckoutPage::TABS)->flatMap(fn ($t) => $t[2])->all())
-        ->and($keys)->toBe(array_keys(CheckoutPage::SCHEMA));
+        ->and($keys)->toEqualCanonicalizing(array_keys(CheckoutPage::SCHEMA))
+        ->and(count($keys))->toBe(count(array_unique($keys)));
 });
 // MUTATION: add a key to SCHEMA and not to TABS. RED.
 

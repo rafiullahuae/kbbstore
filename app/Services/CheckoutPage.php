@@ -115,15 +115,91 @@ class CheckoutPage
         'm_aside_pad' => ['range', 'Padding inside the summary', 14,
                           'The order-summary card at the top of the phone page.',
                           ['min' => 6, 'max' => 32, 'step' => 1, 'unit' => 'px']],
+
+        /*
+         * ── THE ORDER-SUMMARY PRODUCT ROWS ─────────────────────────────────
+         *
+         * "on the checkout page (desktop and mobile both) i can not control
+         * the products rows squeeze, font size, bold, spacing, quantity icons
+         * sizes etc. i want the same options which we built for mobile cart
+         * page."
+         *
+         * The same six knobs Appearance -> Cart page -> Product rows offers,
+         * pointed at the rows the CHECKOUT draws — `.ci` in
+         * partials/checkout/summary-items.blade.php. Nothing here reaches the
+         * cart page: these are `checkoutpage_*` settings and every rule that
+         * reads them is scoped under `.kbb-checkout`.
+         *
+         * WHY `row_h` IS THE PICTURE AND NOT A HEIGHT. The cart's squeezed row
+         * has an explicit height and derives its contents from it. A checkout
+         * summary line does not: `.ci` is a flex row with vertical padding, and
+         * its height is whichever is taller, the square picture or the text
+         * stack beside it. At every default the picture wins — 54px against
+         * about 46px of name, stepper and margins — so moving this moves the
+         * row, which is what "squeeze" means here. Below about 46px the text
+         * stack takes over, and the two multipliers below are what shrinks
+         * that. Stating it rather than inventing a height that the markup does
+         * not have: an invented driver is a slider that stops working part way
+         * along and cannot say why.
+         *
+         * THE TWO MULTIPLIERS ARE MULTIPLIERS, not pixel sizes, for the reason
+         * CartPage states at length: an absolute size cannot follow the row it
+         * sits in, so it stays put while everything around it moves.
+         */
+        'd_row_h'     => ['range', 'Picture size', 54,
+                          'The square thumbnail on each order-summary line, and with it the height of the line: the row is as tall as the picture until the picture is smaller than the name and stepper beside it. Drag this to squeeze the summary.',
+                          ['min' => 32, 'max' => 88, 'step' => 2, 'unit' => 'px']],
+        'd_row_pad'   => ['range', 'Space above and below each row', 10,
+                          'The gap between one order-summary line and the next. The first line keeps its flush top edge at every value.',
+                          ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'd_row_gap'   => ['range', 'Space between the picture and the text', 11,
+                          'Only inside the line. The price stays pinned to the far edge.',
+                          ['min' => 2, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'd_row_font'  => ['range', 'Text size in rows', 100,
+                          'A nudge multiplied INTO the sizes the rows already use — the product name, the quantity figure and the line price together — never an override, so this and the picture size cannot fight and neither can silently win.',
+                          ['min' => 80, 'max' => 130, 'step' => 5, 'unit' => '%']],
+        'd_row_bold'  => ['bool', 'Bold text in rows', true,
+                          'On is what the summary does today: a semibold name and a bold price. Off gives both a lighter weight without changing their sizes.'],
+        'd_qty_size'  => ['range', 'Quantity stepper size', 100,
+                          'The − and + buttons on each line, and the figure between them. A multiplier, so the control keeps its shape at every value instead of a bigger glyph rattling around in the same box.',
+                          ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
+
+        'm_row_h'     => ['range', 'Picture size', 54,
+                          'The square thumbnail on each order-summary line inside the collapsible summary card at the top of the phone page, and with it the height of the line.',
+                          ['min' => 32, 'max' => 88, 'step' => 2, 'unit' => 'px']],
+        'm_row_pad'   => ['range', 'Space above and below each row', 10,
+                          'The gap between one order-summary line and the next. The summary card shows about 148px before "View full summary", so squeezing this fits more lines in that peek.',
+                          ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'm_row_gap'   => ['range', 'Space between the picture and the text', 11,
+                          'Only inside the line. The price stays pinned to the far edge.',
+                          ['min' => 2, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'm_row_font'  => ['range', 'Text size in rows', 100,
+                          'A nudge multiplied INTO the sizes the rows already use — the product name, the quantity figure and the line price together — never an override.',
+                          ['min' => 80, 'max' => 130, 'step' => 5, 'unit' => '%']],
+        'm_row_bold'  => ['bool', 'Bold text in rows', true,
+                          'On is what the summary does today: a semibold name and a bold price. Off gives both a lighter weight without changing their sizes.'],
+        'm_qty_size'  => ['range', 'Quantity stepper size', 100,
+                          'The − and + buttons on each line, and the figure between them. Their 44px touch target is set separately and is not reduced by this, so a smaller stepper is still as easy to hit.',
+                          ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
     ];
 
+    /**
+     * Four tabs and not two, because layout and product rows are two jobs and
+     * one list of sixteen sliders is a list nobody reads to the end of. The
+     * `_rows` pair is deliberately the same six controls in the same order on
+     * both surfaces, so the two can be compared by looking at them.
+     */
     public const TABS = [
-        'desktop' => ['Desktop', 'The two-column checkout, from 901px up. Nothing on this tab can reach a phone.',
-                      ['d_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y',
-                       'd_block_gap', 'd_sec_pad', 'd_aside_pad',
-                       'd_sticky', 'd_sticky_top']],
-        'mobile'  => ['Mobile', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
-                      ['m_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad']],
+        'desktop'      => ['Desktop · Layout', 'The two-column checkout, from 901px up. Nothing on this tab can reach a phone.',
+                           ['d_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y',
+                            'd_block_gap', 'd_sec_pad', 'd_aside_pad',
+                            'd_sticky', 'd_sticky_top']],
+        'desktop_rows' => ['Desktop · Product rows', 'The lines in the order summary on the right — picture, name, stepper and price. Nothing on this tab can reach a phone, and nothing on it can reach the cart page.',
+                           ['d_row_h', 'd_row_pad', 'd_row_gap', 'd_row_font', 'd_row_bold', 'd_qty_size']],
+        'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
+                           ['m_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad']],
+        'mobile_rows'  => ['Mobile · Product rows', 'The lines inside the summary card at the top of the phone page. Nothing on this tab can reach a desktop, and nothing on it can reach the cart page.',
+                           ['m_row_h', 'm_row_pad', 'm_row_gap', 'm_row_font', 'm_row_bold', 'm_qty_size']],
     ];
 
     /**
@@ -162,7 +238,46 @@ class CheckoutPage
         'm_block_gap'  => '--cop-m-block',
         'm_sec_pad'    => '--cop-m-secpad',
         'm_aside_pad'  => '--cop-m-asidepad',
+        'd_row_h'      => '--cop-d-rowh',
+        'd_row_pad'    => '--cop-d-rowpad',
+        'd_row_gap'    => '--cop-d-rowgap',
+        'm_row_h'      => '--cop-m-rowh',
+        'm_row_pad'    => '--cop-m-rowpad',
+        'm_row_gap'    => '--cop-m-rowgap',
     ];
+
+    /**
+     * key => the custom property it is emitted as, as a UNITLESS RATIO.
+     *
+     * Stored as a percentage because that is what the slider shows and what a
+     * settings row can be read back as; emitted as `1.15` because the
+     * stylesheet multiplies it into a px size and `calc(12px * 115%)` is not a
+     * length.
+     */
+    private const RATIO_VARS = [
+        'd_row_font' => '--cop-d-rowf',
+        'd_qty_size' => '--cop-d-qtys',
+        'm_row_font' => '--cop-m-rowf',
+        'm_qty_size' => '--cop-m-qtys',
+    ];
+
+    /**
+     * key => [property for the name, property for the price], and the two
+     * weights each takes.
+     *
+     * One switch, two weights, because the summary line has always drawn the
+     * name semibold and the price bold and a single weight would flatten a
+     * distinction nobody asked to lose.
+     */
+    private const WEIGHT_VARS = [
+        'd_row_bold' => ['--cop-d-rowb', '--cop-d-rowpb'],
+        'm_row_bold' => ['--cop-m-rowb', '--cop-m-rowpb'],
+    ];
+
+    /** [name weight, price weight] for bold on, and for bold off. */
+    private const WEIGHTS_ON = [600, 700];
+
+    private const WEIGHTS_OFF = [400, 500];
 
     public function __construct(private SettingsService $settings) {}
 
@@ -239,7 +354,33 @@ class CheckoutPage
             }
         }
 
+        foreach (self::RATIO_VARS as $key => $prop) {
+            if ($c[$key] !== self::SCHEMA[$key][2]) {
+                $out[] = $prop.':'.$this->ratio((int) $c[$key]);
+            }
+        }
+
+        foreach (self::WEIGHT_VARS as $key => [$nameProp, $priceProp]) {
+            if ($c[$key] !== self::SCHEMA[$key][2]) {
+                [$name, $price] = $c[$key] ? self::WEIGHTS_ON : self::WEIGHTS_OFF;
+                $out[] = $nameProp.':'.$name;
+                $out[] = $priceProp.':'.$price;
+            }
+        }
+
         return implode(';', $out);
+    }
+
+    /**
+     * A stored percentage as the unitless factor the stylesheet multiplies by.
+     *
+     * Trailing zeroes trimmed, so 100 would print `1` rather than `1.00` — not
+     * that it ever reaches here, since a value equal to its default is left
+     * out entirely.
+     */
+    private function ratio(int $percent): string
+    {
+        return rtrim(rtrim(number_format($percent / 100, 2, '.', ''), '0'), '.');
     }
 
     /** `style="..."`, or nothing at all. */
