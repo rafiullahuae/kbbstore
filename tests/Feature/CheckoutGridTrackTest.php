@@ -77,6 +77,9 @@ it('serves that minimum from the built bundle, not only the source', function ()
 
     // Minifiers may drop the space after the comma; they may not drop the
     // minmax() itself, because it changes what the track resolves to.
-    expect($bundle)->toMatch('/\.co-grid\{[^}]*grid-template-columns:minmax\(0,\s*1fr\) 380px/')
+    // The desktop track's second column is the Appearance -> Checkout page
+    // slider, so it is matched as a var() with its 380px fallback rather than
+    // as a literal.
+    expect($bundle)->toMatch('/\.co-grid\{[^}]*grid-template-columns:minmax\(0,\s*1fr\) var\(--cop-d-aside,\s*380px\)/')
         ->and($bundle)->toMatch('/\.co-grid\{grid-template-columns:minmax\(0,\s*1fr\);/');
 });

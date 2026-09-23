@@ -20983,6 +20983,22 @@ buildNav();
      is moved, and the screen says so above the tabs. --}}
 @include('admin.partials.cart-page-screen')
 
+{{-- Appearance → Checkout page (Lane: checkout-page). The spacing behind the
+     two-column desktop checkout and the stacked mobile one: page width, the
+     summary column, the gutters, and the padding inside each of the four
+     numbered sections — stored separately for the two surfaces, because 16px
+     on a 594px column and 16px on a 350px one are not the same decision.
+
+     It registers its own sidebar entry inside the Appearance group and wraps
+     window.go, exactly as the screen above does, so this include is the whole
+     of the change to this file.
+
+     Applying it changes nothing on the live shop: every default in
+     App\Services\CheckoutPage::SCHEMA is the number the checkout already had,
+     and the page is handed no style attribute at all until one of them moves.
+     Nothing on the screen can add, remove or reorder a section. --}}
+@include('admin.partials.checkout-page-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------

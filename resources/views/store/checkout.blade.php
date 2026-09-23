@@ -17,7 +17,19 @@
 @endpush
 
 @section('content')
-<section class="kbb-checkout">
+@php
+    /*
+     * Appearance -> Checkout page. Resolved here rather than passed in, because
+     * this template is reached from more than one place and a controller that
+     * forgot the key would 500 the checkout rather than lose a slider.
+     *
+     * Both calls emit NOTHING while every control is at its default, so the
+     * rendered element is byte for byte `<section class="kbb-checkout">` on a
+     * shop that has never opened the screen.
+     */
+    $kbbCoPage = app(\App\Services\CheckoutPage::class);
+@endphp
+<section class="kbb-checkout{{ $kbbCoPage->bodyClass() }}"{!! $kbbCoPage->styleAttr() !!}>
 
     <!-- slim secure-checkout header (design .head) -->
     <header class="co-head"><div class="in">

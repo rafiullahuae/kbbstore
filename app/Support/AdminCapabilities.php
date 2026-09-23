@@ -144,6 +144,13 @@ final class AdminCapabilities
         // The RULES entry below carries the full argument.
         'cartpage.manage' => ['owner', 'manager', 'editor'],
 
+        // The checkout page's spacing — the two column widths, the page
+        // padding and the padding inside each of the four numbered sections,
+        // stored separately for desktop and for mobile. Storefront appearance
+        // again, and its own capability for the same reason as the line above:
+        // narrowing one must not silently narrow the other.
+        'checkoutpage.manage' => ['owner', 'manager', 'editor'],
+
         // Reviews. The export is separated from the rest of the screen because
         // the review rows carry author_email and the reviewer's IP.
         'reviews.view' => ['owner', 'manager', 'support', 'editor'],
@@ -549,6 +556,8 @@ final class AdminCapabilities
          */
         ['*', 'admin-api/cart-page', 'cartpage.manage'],
         ['*', 'admin-api/cart-page/**', 'cartpage.manage'],
+        // One line and no '/**' sibling: this screen has no sub-endpoint.
+        ['*', 'admin-api/checkout-page', 'checkoutpage.manage'],
         ['*', 'admin-api/account-panel', 'content.manage'],
         // Exact, so it cannot reach the /demo-content/ endpoints mapped to
         // data.import further up.

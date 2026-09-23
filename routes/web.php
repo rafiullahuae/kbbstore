@@ -427,6 +427,20 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
          */
         require __DIR__.'/cart-page-admin.php';
 
+        /*
+         * Appearance → Checkout page: the spacing behind the two-column
+         * desktop checkout and the stacked mobile one, stored separately.
+         * Same group as its siblings -- it writes settings, so it needs web,
+         * auth:admin and NoStoreAdminApi.
+         *
+         * Its capability is `checkoutpage.manage`, not a reuse of
+         * cartpage.manage: two storefront screens that can be delegated apart.
+         * Nothing here reads a model, so there is no allowlist to get wrong --
+         * every value that crosses is an integer or a boolean from a schema
+         * both sides know.
+         */
+        require __DIR__.'/checkout-page-admin.php';
+
         // Brand CRUD and the directory display mode. Same group: it writes
         // catalogue records and accepts an uploaded logo path.
         require __DIR__.'/brands-admin.php';

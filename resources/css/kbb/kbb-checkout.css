@@ -53,7 +53,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-head .secure{margin-inline-start:auto;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--green)}
 .kbb-checkout .co-head .secure svg{width:14px;height:14px}
 
-.kbb-checkout .co-grid{max-width:1040px;margin:0 auto;padding:22px 20px 70px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:26px;align-items:start}
+.kbb-checkout .co-grid{max-width:var(--cop-d-max,1040px);margin:0 auto;padding:var(--cop-pady) var(--cop-padx) 70px;display:grid;grid-template-columns:minmax(0,1fr) var(--cop-d-aside,380px);gap:var(--cop-d-gap,26px);align-items:start}
 
 .kbb-checkout .backlink{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);margin-bottom:10px}
 .kbb-checkout .backlink:hover{color:var(--pink-deep)}
@@ -61,7 +61,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-lead{font-size:12.5px;color:var(--muted);margin-bottom:16px}
 /* title row: heading left, "Go back to cart" right */
 .kbb-checkout .co-titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.kbb-checkout .co-titlebar-main .co-lead{margin-bottom:16px}
+.kbb-checkout .co-titlebar-main .co-lead{margin-bottom:var(--cop-block)}
 .kbb-checkout .co-tocart{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;margin-top:6px;font-size:13px;font-weight:600;white-space:nowrap;text-decoration:none;transition:.15s;color:var(--ink-2)}
 .kbb-checkout .co-tocart svg{width:15px;height:15px;flex-shrink:0}
 /* "Back to cart" points back, and back is the other way in Arabic. The glyph is
@@ -90,7 +90,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .co-tocart--icon_round:hover{border-color:var(--pink);color:var(--pink-deep);background:var(--pink-soft)}
 
 /* coupon — standalone card, champagne/green scheme */
-.kbb-checkout .coupon{background:linear-gradient(135deg,#EEF8F1,#fff);border:1.6px dashed #BFE0CD;border-radius:14px;padding:14px 15px;margin-bottom:16px;position:relative;overflow:hidden}
+.kbb-checkout .coupon{background:linear-gradient(135deg,#EEF8F1,#fff);border:1.6px dashed #BFE0CD;border-radius:14px;padding:14px 15px;margin-bottom:var(--cop-block);position:relative;overflow:hidden}
 .kbb-checkout .coupon::after{content:"";position:absolute;inset-inline-end:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:rgba(46,158,107,.07)}
 .kbb-checkout .coupon .ch{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-bottom:10px;color:#1F7D52}
 .kbb-checkout .coupon .ch .gift{font-size:17px}
@@ -105,9 +105,14 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* unified form box + numbered sections */
 .kbb-checkout .formbox{background:#fff;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden;box-shadow:0 12px 36px -24px rgba(42,34,40,.22)}
-.kbb-checkout .sec{padding:16px;border-bottom:1px solid var(--line-2)}
+.kbb-checkout .sec{padding:var(--cop-secpad);border-bottom:1px solid var(--line-2)}
 .kbb-checkout .sec:last-child{border-bottom:none}
-.kbb-checkout .sec > h2{font-size:13px;font-weight:700;margin:-16px -16px 13px;padding:10px 16px 10px 13px;background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}
+/* The negative margin and the right padding are the SAME number as the
+   section padding -- that is what pulls the heading bar out to the card
+   edge. Hard-coded 16s here would come adrift the moment the slider moved,
+   leaving a bar floating inside its own section. The inline-start side is
+   3px short because the bar carries a 3px pink border there. */
+.kbb-checkout .sec > h2{font-size:13px;font-weight:700;margin:calc(var(--cop-secpad) * -1) calc(var(--cop-secpad) * -1) 13px;padding:10px var(--cop-secpad) 10px calc(var(--cop-secpad) - 3px);background:var(--cream);border-bottom:1px solid var(--line);border-inline-start:3px solid var(--pink);display:flex;align-items:center;gap:9px;color:var(--ink)}
 .kbb-checkout .sec > h2 .n{width:21px;height:21px;border-radius:50%;background:var(--pink);color:#fff;font-size:11.5px;display:grid;place-items:center;font-weight:800;box-shadow:0 4px 10px -4px rgba(193,62,99,.5)}
 
 /* fields — BRIDGE: WooCommerce .form-row → design .fld */
@@ -298,8 +303,36 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .sumrow.vat{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:1px}
 .kbb-checkout .sumrow.vat span:last-child{color:var(--ink-2)}
 
+/* ==========================================================================
+   Appearance -> Checkout page: the spacing tokens.
+
+   Every number below is the number this page already had; the var() is what
+   Appearance -> Checkout page -> Desktop / Mobile writes over. A shop that has
+   never opened that screen sends no style attribute at all, every var() falls
+   back, and the page computes exactly what it computed before.
+
+   THE INDIRECTION IS NOT TIDINESS. An inline style attribute beats every
+   stylesheet rule, media query included, so the page cannot be handed
+   `--cop-secpad` directly: the mobile reassignment below could never win and
+   every control on the Mobile tab would save and move nothing. The attribute
+   carries only the `-d-` and `-m-` SOURCES; these two blocks do the choosing.
+   App\Services\CheckoutPage has the long version.
+   ========================================================================== */
+.kbb-checkout{
+  --cop-padx:var(--cop-d-padx,20px);
+  --cop-pady:var(--cop-d-pady,22px);
+  --cop-block:var(--cop-d-block,16px);
+  --cop-secpad:var(--cop-d-secpad,16px);
+  --cop-asidepad:var(--cop-d-asidepad,17px);
+}
+
 /* ---------------------------- SUMMARY (right) ---------------------------- */
-.kbb-checkout .summary{position:sticky;top:18px;background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:17px;box-shadow:var(--sh)}
+.kbb-checkout .summary{position:sticky;top:var(--cop-d-sticktop,18px);background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:var(--cop-asidepad);box-shadow:var(--sh)}
+/* "Summary follows the scroll", off. A custom property can change a number
+   inside a declaration; it cannot decide whether the declaration applies.
+   So this one is a class. Harmless on a phone, where the mobile block
+   below sets position:static regardless. */
+.kbb-checkout.cop-nostick .summary{position:static}
 /* pill tabs (design .sumtabs / .stab) */
 .kbb-checkout .sumtabs{display:flex;gap:6px;margin-bottom:14px;background:var(--cream);border-radius:10px;padding:4px}
 .kbb-checkout .stab{flex:1;border-radius:8px;padding:9px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink-2);transition:.15s}
@@ -605,9 +638,19 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 
 /* ------------------------------- MOBILE -------------------------------- */
 @media(max-width:900px){
-  .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:14px;padding-bottom:24px}
+  /* The mobile half of the token block near the top of this file. Same five
+     names, taken from the `-m-` sources instead of the `-d-` ones, so every
+     rule that reads them switches surface here and nowhere else. */
+  .kbb-checkout{
+    --cop-padx:var(--cop-m-padx,20px);
+    --cop-pady:var(--cop-m-pady,22px);
+    --cop-block:var(--cop-m-block,16px);
+    --cop-secpad:var(--cop-m-secpad,16px);
+    --cop-asidepad:var(--cop-m-asidepad,14px);
+  }
+  .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:var(--cop-m-gap,14px);padding-bottom:24px}
   /* summary to the TOP, collapsible */
-  .kbb-checkout .summary{order:-1;position:static;box-shadow:none;padding:14px;border:1px solid var(--line-2);background:#fff;border-radius:var(--r)}
+  .kbb-checkout .summary{order:-1;position:static;box-shadow:none;padding:var(--cop-asidepad);border:1px solid var(--line-2);background:#fff;border-radius:var(--r)}
   .kbb-checkout .panels{position:relative;max-height:148px;overflow:hidden;transition:max-height .35s var(--ease)}
   .kbb-checkout .summary.open .panels{max-height:1600px}
   .kbb-checkout .peekfade{display:block;position:absolute;inset-inline-start:0;inset-inline-end:0;bottom:0;height:64px;background:linear-gradient(rgba(255,255,255,0),#fff);pointer-events:none}
@@ -615,7 +658,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   .kbb-checkout .viewfull{display:block;width:100%;margin-top:10px;background:var(--cream);border-radius:99px;padding:11px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--pink-deep);cursor:pointer;text-align:center}
   .kbb-checkout .summary .place,.kbb-checkout .summary .trust,.kbb-checkout .summary .kbb-delivery-line{display:none}
   /* full on-page Place order box on mobile */
-  .kbb-checkout .kbb-mobile-order{display:block;background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:16px;margin-top:16px;box-shadow:var(--sh)}
+  .kbb-checkout .kbb-mobile-order{display:block;background:#fff;border:1px solid var(--line-2);border-radius:var(--r);padding:var(--cop-secpad);margin-top:var(--cop-block);box-shadow:var(--sh)}
   .kbb-checkout .kbb-mobile-order .place{margin-top:14px}
   /* fixed bottom pay bar (design .mpbar) */
   .kbb-checkout .mpbar{display:flex;position:fixed;inset-inline-start:0;inset-inline-end:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:11px 16px;z-index:80;align-items:center;gap:12px;box-shadow:0 -8px 24px -14px rgba(0,0,0,.25)}
