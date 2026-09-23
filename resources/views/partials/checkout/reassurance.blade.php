@@ -19,7 +19,14 @@
      rounded, so the picture and the figure cannot disagree. --}}
 @if ($settings->moduleEnabled('reassurance', true) && $settings->get('reassure_enabled', true))
 @php
-    $rating = \App\Support\StoreRating::summary();
+    /* THE WORDING IS THE OWNER'S AND THE FIGURES ARE NOT — Appearance →
+       Checkout page → Trust & reviews. CheckoutPage::ratingLine() substitutes
+       {rating} and {count} out of StoreRating and returns null for all three
+       "say nothing" cases at once: the switch off, too few approved reviews,
+       or none that are real. The stars still come from the summary, so the
+       picture and the figure cannot disagree. */
+    $ratingLine = app(\App\Services\CheckoutPage::class)->ratingLine();
+    $rating = $ratingLine === null ? null : \App\Support\StoreRating::summary();
     /* THE KEY WAS REAL AND THE OWNER COULD NOT REACH IT — Lane DR.
 
        `reassure_auth_text` looked settings-driven and was not: it appeared in
@@ -39,7 +46,7 @@
 @if ($rating !== null || $auth !== '')
 <div class="kbb-reassure">
     @if ($rating !== null)
-        <div class="kr-line"><span class="kr-stars">@for ($i = 1; $i <= 5; $i++)<span class="kr-star{{ $i <= $rating['stars'] ? ' on' : '' }}">&#9733;</span>@endfor</span><span>{{ \App\Support\StoreRating::line() }}</span></div>
+        <div class="kr-line"><span class="kr-stars">@for ($i = 1; $i <= 5; $i++)<span class="kr-star{{ $i <= $rating['stars'] ? ' on' : '' }}">&#9733;</span>@endfor</span><span>{{ $ratingLine }}</span></div>
     @endif
     @if ($auth !== '')
         <div class="kr-line"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="kr-shield" d="M12 3l7 3v6c0 4-3 7-7 8-4-1-7-4-7-8V6z"/><path class="kr-tick" d="M9 12l2 2 4-4"/></svg><span>{{ $auth }}</span></div>

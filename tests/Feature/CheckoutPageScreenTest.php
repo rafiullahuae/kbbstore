@@ -89,7 +89,10 @@ it('hands the screen every field, grouped into the two tabs', function () {
     expect(collect($body['tabs'])->pluck('key')->all())->toBe([
         'desktop', 'desktop_head', 'desktop_type', 'desktop_rows',
         'mobile', 'mobile_head', 'mobile_type', 'mobile_rows',
-        'cues',
+        // Its own tab because the owner reported he could not find these four
+        // under ten spacing sliders at the foot of the two Layout tabs.
+        'tocart',
+        'trust', 'cues',
     ])
         ->and($body['mobileMax'])->toBe(CheckoutPage::MOBILE_MAX);
 
@@ -117,7 +120,7 @@ it('hands the screen every field, grouped into the two tabs', function () {
      * shape of the complaint that opened every one of these rounds.
      */
     expect($rowFields('desktop_head'))
-        ->toBe(['head_pad_y', 'head_pad_x', 'head_max', 'head_logo', 'head_badge', 'head_sticky'])
+        ->toBe(['head_pad_y', 'head_pad_x', 'head_max', 'head_align', 'head_logo', 'head_badge', 'head_sticky'])
         ->and($rowFields('mobile_head'))->toBe($rowFields('desktop_head'))
         /*
          * The type tabs are the one pair that is NOT identical, and the

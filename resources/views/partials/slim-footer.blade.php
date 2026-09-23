@@ -114,7 +114,7 @@
    correctness on either. */
 .kbb-slimfoot{
   --sf-pady:12px; --sf-padx:20px; --sf-gap:18px; --sf-f:1; --sf-bf:1;
-  --sf-max:1040px; --sf-r:0px; --sf-lw:1px;
+  --sf-max:1240px; --sf-r:0px; --sf-lw:1px;
   --sf-ink:#17181C; --sf-ink-2:#5E545A; --sf-line:#EBE3E6; --sf-bg:#FBF5F4;
   background:var(--sf-bg);color:var(--sf-ink-2);
   border-top:var(--sf-lw) solid var(--sf-line);
@@ -252,6 +252,82 @@
 .kbb-slimfoot.sf-rows .sf-top{margin-inline-start:0;align-self:flex-end}
 .kbb-slimfoot.sf-rows.sf-a-center .sf-in{align-items:center}
 .kbb-slimfoot.sf-rows.sf-a-end .sf-in{align-items:flex-end}
+
+/* ── WHATSAPP GREEN ────────────────────────────────────────────────────────
+   The glyph was always WhatsApp's; drawn in currentColor at 15px it reads as a
+   generic contact mark, which is why "put whatsapp icon beside the phone" was
+   asked for a number that already had one. #25D366 is WhatsApp's own and is a
+   constant here, not a colour box — the same rule the payment marks follow.
+   FIRST CHILD ONLY: the second .sf-c is the email and stays in the bar's ink. */
+.kbb-slimfoot.sf-wa .sf-con .sf-c:first-child svg{color:#25D366}
+
+/* ── THE PHONE'S OWN SHAPE ─────────────────────────────────────────────────
+   900px and not this file's own 640: the bar is a checkout bar, and the page
+   above it calls a phone 900 and below (CheckoutPage::MOBILE_MAX). Two screens
+   disagreeing about where a phone stops is how an owner gets a footer in one
+   shape under a page in the other.
+
+   EVERY RULE IS GATED ON .sf-msplit, which the service emits only while the
+   switch is on. With it off there is no class here to match and the bar renders
+   from the desktop rules alone, exactly as it did before this block existed.
+
+   The shape rules are the four above restated under the mobile class rather
+   than shared, because sharing them would mean a selector list that reads
+   `.sf-rows, .sf-msplit.sf-m-rows` on every line — and the first half of that
+   would then apply at every width, which is the bug this whole block exists to
+   avoid. */
+@media (max-width:900px){
+  .kbb-slimfoot.sf-msplit{
+    --sf-pady:var(--sf-m-pady,10px);
+    --sf-padx:var(--sf-m-padx,20px);
+    --sf-gap:var(--sf-m-gap,14px);
+    --sf-f:var(--sf-m-f,1);
+  }
+
+  /* Alignment. `start` has no class, so these three are the departures. */
+  .kbb-slimfoot.sf-msplit .sf-in{justify-content:flex-start;text-align:start}
+  .kbb-slimfoot.sf-msplit .sf-top{margin-inline-start:auto}
+  .kbb-slimfoot.sf-msplit.sf-ma-center .sf-in{justify-content:center;text-align:center}
+  .kbb-slimfoot.sf-msplit.sf-ma-end .sf-in{justify-content:flex-end}
+  .kbb-slimfoot.sf-msplit.sf-ma-between .sf-in{justify-content:space-between}
+  .kbb-slimfoot.sf-msplit:is(.sf-ma-center,.sf-ma-end,.sf-ma-between) .sf-top{margin-inline-start:0}
+  .kbb-slimfoot.sf-msplit.sf-ma-center .sf-con,
+  .kbb-slimfoot.sf-msplit.sf-ma-center .sf-links,
+  .kbb-slimfoot.sf-msplit.sf-ma-center .sf-pay{justify-content:center}
+
+  /* Shape. Each one first undoes what the desktop shape did, then states its
+     own — a phone set to `bar` under a desktop set to `rows` must not keep the
+     hairlines. */
+  .kbb-slimfoot.sf-msplit .sf-in{flex-direction:row;align-items:center;gap:calc(var(--sf-gap) * .5) var(--sf-gap)}
+  .kbb-slimfoot.sf-msplit .sf-in > * + *{border-top:0;padding-top:0;margin-top:0}
+  .kbb-slimfoot.sf-msplit .sf-brand{margin-inline-end:0}
+
+  .kbb-slimfoot.sf-msplit.sf-m-bar .sf-brand b{display:inline}
+  .kbb-slimfoot.sf-msplit.sf-m-bar .sf-brand i{display:block;margin-inline-start:0}
+  .kbb-slimfoot.sf-msplit.sf-m-bar .sf-help b{margin-inline-end:2px}
+
+  .kbb-slimfoot.sf-msplit.sf-m-split .sf-in{align-items:flex-start}
+  .kbb-slimfoot.sf-msplit.sf-m-split .sf-brand{margin-inline-end:auto}
+  .kbb-slimfoot.sf-msplit.sf-m-split .sf-help,
+  .kbb-slimfoot.sf-msplit.sf-m-split .sf-con,
+  .kbb-slimfoot.sf-msplit.sf-m-split .sf-links{align-self:center}
+
+  .kbb-slimfoot.sf-msplit.sf-m-stack .sf-in{flex-direction:column;align-items:flex-start}
+  .kbb-slimfoot.sf-msplit.sf-m-stack .sf-top{margin-inline-start:0;margin-top:calc(var(--sf-gap) * -.35);align-self:flex-end}
+  .kbb-slimfoot.sf-msplit.sf-m-stack .sf-help{flex-direction:column;align-items:flex-start;gap:1px}
+
+  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in{flex-direction:column;align-items:stretch;gap:0}
+  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > * + *{
+    border-top:1px solid var(--sf-line);
+    padding-top:calc(var(--sf-gap) * .5);margin-top:calc(var(--sf-gap) * .5);
+  }
+  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-top{margin-inline-start:0;align-self:flex-end}
+  .kbb-slimfoot.sf-msplit.sf-m-rows.sf-ma-center .sf-in{align-items:center}
+  .kbb-slimfoot.sf-msplit.sf-m-rows.sf-ma-end .sf-in{align-items:flex-end}
+
+  /* The separator belongs to the one-line shapes only, here as above. */
+  .kbb-slimfoot.sf-msplit:not(.sf-m-bar):not(.sf-m-split) .sf-in > *::after{content:none}
+}
 
 /* A phone is 390px and the bar has five blocks in it. Wrapping is the point;
    what must not happen is a bar that makes the page scroll sideways. */

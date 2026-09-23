@@ -113,6 +113,19 @@
          font-variant-numeric:tabular-nums}
 .chp-help{font-size:11.5px;color:var(--ink-soft,#6b7280);line-height:1.5;margin:0;max-width:68ch}
 .chp-f input[type=range]{width:100%;accent-color:var(--accent,#15a85a);margin:0;min-width:0}
+/* A select and a text box on this screen, because until now there were none
+   and three selects had already shipped rendering as sliders. Sized off the
+   same 13px the rest of the card uses, and full width so a long option label
+   is not cut off at 372px in the side-by-side Mobile tabs. */
+.chp-f select.chp-sel,.chp-f input.chp-text{
+  width:100%;min-width:0;box-sizing:border-box;font:inherit;font-size:13px;
+  padding:7px 9px;border:1px solid var(--line,#e5e7eb);border-radius:7px;
+  background:var(--card,#fff);color:inherit
+}
+.chp-f select.chp-sel:focus-visible,.chp-f input.chp-text:focus-visible{
+  outline:2px solid var(--accent,#15a85a);outline-offset:1px;border-color:transparent
+}
+.chp-f input.chp-text::placeholder{color:var(--ink-soft,#6b7280);opacity:.7}
 .chp-check{display:flex;gap:10px;align-items:flex-start;min-width:0}
 .chp-check input{margin-top:3px;flex:none;width:16px;height:16px}
 .chp-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;min-width:0}
@@ -483,7 +496,22 @@
   /* `d_sticky_top` is read only while `d_sticky` is on, so it leaves the
      screen when the switch is off rather than sitting there doing nothing. */
   function hidden(f) {
-    return f.key === 'd_sticky_top' && !pvOn('d_sticky');
+    if (f.key === 'd_sticky_top') return !pvOn('d_sticky');
+    /* Both only mean anything while the line above them is drawn at all. */
+    if (f.key === 'rating_text' || f.key === 'rating_min') return !pvOn('rating_on');
+
+    return false;
+  }
+
+  /** The schema row for a key, across every tab. */
+  function fieldFor(key) {
+    var out = null;
+
+    (tabs || []).forEach(function (t) {
+      t.fields.forEach(function (f) { if (f.key === key) out = f; });
+    });
+
+    return out;
   }
 
   function fieldHTML(f) {
@@ -498,6 +526,41 @@
         + (values[f.key] ? ' checked' : '') + '>'
         + '<div><label for="' + id + '">' + esc(f.label) + '</label>' + help + '</div>'
         + '</div></div>';
+    }
+
+    /*
+     * SELECT AND TEXT, AND WHY THEY ARE HERE RATHER THAN NOT.
+     *
+     * Everything that was not a checkbox used to fall through to the range
+     * branch below. `ph_tone` and `ph_weight` shipped in 2.60.252 and `m_float`
+     * in 2.60.253, all three of them selects, and every one of them rendered as
+     * `<input type="range" min="undefined" max="undefined" value="muted">` — a
+     * slider with no scale showing a value it cannot represent — and then saved
+     * as NaN, because the input handler read `Number(el.value)`. A control that
+     * cannot be read and cannot be stored is worse than a missing one: the
+     * screen said the setting existed.
+     *
+     * The handler now branches on the field's own type rather than on the DOM
+     * element's, which is what made a select indistinguishable from a range in
+     * the first place.
+     */
+    if (f.type === 'select') {
+      var opts = Object.keys(f.options || {}).map(function (k) {
+        return '<option value="' + esc(k) + '"' + (String(values[f.key]) === k ? ' selected' : '') + '>'
+          + esc(f.options[k]) + '</option>';
+      }).join('');
+
+      return '<div class="chp-f"><div class="chp-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<select class="chp-sel" id="' + id + '" data-chp-key="' + esc(f.key) + '">' + opts + '</select>'
+        + help + '</div>';
+    }
+
+    if (f.type === 'text') {
+      return '<div class="chp-f"><div class="chp-fh"><label for="' + id + '">' + esc(f.label) + '</label></div>'
+        + '<input class="chp-text" type="text" id="' + id + '" data-chp-key="' + esc(f.key) + '"'
+        + ' value="' + esc(values[f.key] == null ? '' : values[f.key]) + '"'
+        + ' placeholder="' + esc(f['default'] == null ? '' : f['default']) + '">'
+        + help + '</div>';
     }
 
     var o = f.options || {};
@@ -884,14 +947,24 @@
     if (!el) return;
 
     var key = el.getAttribute('data-chp-key');
-    if (el.type === 'checkbox') values[key] = el.checked;
+    var fld = fieldFor(key);
+    var kind = fld ? fld.type : (el.type === 'checkbox' ? 'bool' : 'range');
+
+    /* BY THE FIELD'S TYPE, NOT THE ELEMENT'S. `Number(el.value)` on a select
+       stored NaN for every select on this screen — see fieldHTML. */
+    if (kind === 'bool') values[key] = el.checked;
+    else if (kind === 'select' || kind === 'text') values[key] = String(el.value);
     else values[key] = Number(el.value);
 
     /* A checkbox can decide whether another control belongs on the screen --
        `d_sticky` does -- so a checkbox redraws rather than only repainting.
        The two bold switches do not need it, but paying a full redraw on a
        click nobody is dragging costs nothing and one rule is one rule. */
-    if (el.type === 'checkbox') { render(); return; }
+    /* A checkbox or a select can decide whether another control belongs on the
+       screen, so both redraw rather than only repainting. A text field must
+       NOT: a redraw on every keystroke would take the caret to the end of the
+       line on the second character. */
+    if (el.type === 'checkbox' || el.tagName === 'SELECT') { render(); return; }
 
     var out = document.querySelector('[data-chp-val="' + key + '"]');
     if (out) {

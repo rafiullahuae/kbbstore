@@ -75,7 +75,7 @@ class SlimFooter
                              'stack' => 'Stacked — brand, then help, then the links',
                              'rows'  => 'Ruled rows — each block on its own line, with a hairline between',
                          ]],
-        'align'      => ['select', 'Alignment', 'start',
+        'align'      => ['select', 'Alignment', 'between',
                          'Where the content sits across the bar. "Spread to both edges" pushes the first block hard left and the last hard right, with the gap taken up in the middle — the classic footer look, and the one that reads worst when there are only two blocks left.', [
                              'start'   => 'Left (right in Arabic)',
                              'center'  => 'Centred',
@@ -100,7 +100,7 @@ class SlimFooter
                          ['min' => 0, 'max' => 32, 'step' => 2, 'unit' => 'px']],
         'shadow'     => ['bool', 'Lift it off the page', false,
                          'A soft shadow above the bar. It reads as a separate surface rather than as the end of the page — worth it with a rounded or contrasting tone, and usually not otherwise.'],
-        'max_w'      => ['range', 'Content width', 1040,
+        'max_w'      => ['range', 'Content width', 1240,
                          'The band the words are laid out in. The bar itself always runs the full width of the window; this is where its content stops.',
                          ['min' => 600, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
         'sep'        => ['select', 'Separator between blocks', 'none',
@@ -112,6 +112,23 @@ class SlimFooter
                          ]],
         'upper'      => ['bool', 'Brand in capitals', true,
                          'On is the wordmark as it reads today. Off leaves whatever capitalisation is typed into the brand field.'],
+        /*
+         * THE PHONE GLYPH IS ALREADY WHATSAPP'S, and always has been — the
+         * path in the partial is the speech bubble with the handset in it, not
+         * a telephone. What it was not is RECOGNISABLE: drawn in currentColor
+         * it reads as a generic contact icon at 15px, which is why the owner
+         * asked for "the whatsapp icon" beside a number that already had one.
+         *
+         * So this colours it rather than swapping it. `mono` is what it does
+         * today and is the default; `brand` is WhatsApp's own #25D366, which
+         * is a constant here and not a colour box for the same reason the
+         * payment marks are constants.
+         */
+        'phone_mark' => ['select', 'The mark beside the phone', 'brand',
+                         'The glyph is WhatsApp\'s either way. This is whether it is drawn in the bar\'s own ink or in WhatsApp green.', [
+                             'mono'  => 'The bar\'s own colour — what it does today',
+                             'brand' => 'WhatsApp green',
+                         ]],
         'icons_on'   => ['bool', 'Marks beside the phone and email', true,
                          'The small WhatsApp and envelope glyphs. Off leaves the number and the address as plain text, which is shorter and quieter.'],
         'pad_y'      => ['range', 'Height', 12,
@@ -136,6 +153,53 @@ class SlimFooter
                              'solid' => 'Filled circle',
                              'plain' => 'Just the arrow',
                          ]],
+
+        /*
+         * ── THE PHONE GETS ITS OWN SHAPE ──────────────────────────────────
+         *
+         * The owner's pick, in his words: "06 Ruled rows is final and for
+         * desktop 03" — ruled rows on a phone, spread-to-both-edges on a
+         * desktop. One `variant` cannot be both.
+         *
+         * ONE SWITCH AND THEN SIX OVERRIDES, rather than six "same as desktop"
+         * sentinels. A sentinel value in a select is a value the stylesheet has
+         * to know is not a value; a switch is a switch, and while it is off NOT
+         * ONE mobile class or property is emitted, so a shop that never touches
+         * it renders exactly the bar it rendered before.
+         *
+         * 900px AND NOT THIS FILE'S OWN 640. The bar is a checkout bar now, and
+         * `CheckoutPage::MOBILE_MAX` is 900: two screens disagreeing about
+         * where a phone stops is how an owner ends up with a footer in one
+         * shape and the page above it in the other. The 640 rules already in
+         * the partial are the bar's own wrapping and are left alone.
+         */
+        'mobile_on'  => ['bool', 'Give the phone its own shape', true,
+                         'On, because a bar that reads as one line on a desktop reads as a scramble at 390px. Everything below is read only while this is on; with it off the phone gets the desktop\'s settings exactly as it always did.'],
+        'm_variant'  => ['select', 'Shape on a phone', 'rows',
+                         'At 900px and below.', [
+                             'bar'   => 'One line — everything on a single row',
+                             'split' => 'Two columns — brand on one side, contact on the other',
+                             'stack' => 'Stacked — brand, then help, then the links',
+                             'rows'  => 'Ruled rows — each block on its own line, with a hairline between',
+                         ]],
+        'm_align'    => ['select', 'Alignment on a phone', 'start', 'At 900px and below.', [
+                             'start'   => 'Left (right in Arabic)',
+                             'center'  => 'Centred',
+                             'end'     => 'Right (left in Arabic)',
+                             'between' => 'Spread to both edges',
+                         ]],
+        'm_pad_y'    => ['range', 'Height on a phone', 10,
+                         'Padding above and below, at 900px and below.',
+                         ['min' => 2, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'm_pad_x'    => ['range', 'Side padding on a phone', 20,
+                         'Between the screen edge and the first word. 20 lines the bar up with the checkout\'s own page padding.',
+                         ['min' => 0, 'max' => 48, 'step' => 2, 'unit' => 'px']],
+        'm_gap'      => ['range', 'Space between blocks on a phone', 14,
+                         'Between the brand, the help line, the contacts and the links.',
+                         ['min' => 4, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'm_font'     => ['range', 'Text size on a phone', 100,
+                         'A multiplier on 12px, at 900px and below.',
+                         ['min' => 70, 'max' => 140, 'step' => 5, 'unit' => '%']],
 
         // ── Content ──
         'brand'      => ['text', 'Brand name', 'K-BEAUTY BLISS',
@@ -195,9 +259,11 @@ class SlimFooter
     public const TABS = [
         'pages'   => ['Where it shows', 'One bar, two pages, two switches. The cart ships off so that page is untouched until you say otherwise.',
                       ['co_on', 'cart_on']],
+        'phone'   => ['On a phone', 'The same bar at 900px and below, with its own shape. Ruled rows is what ships here and spread-to-both-edges is what ships on a desktop, which is the pair the owner chose; the switch at the top hands the phone back to the desktop\'s settings.',
+                      ['mobile_on', 'm_variant', 'm_align', 'm_pad_y', 'm_pad_x', 'm_gap', 'm_font']],
         'layout'  => ['Shape & size', 'Four structures and four alignments, which is sixteen looks from two controls. "One line" left-aligned is the shortest, and is what ships.',
                       ['variant', 'align', 'tone', 'divider', 'line_w', 'radius', 'shadow',
-                       'pad_y', 'pad_x', 'max_w', 'gap', 'font', 'brand_size', 'upper',
+                       'pad_y', 'pad_x', 'max_w', 'gap', 'font', 'brand_size', 'upper', 'phone_mark',
                        'sep', 'icons_on', 'top_on', 'top_style']],
         'content' => ['Content', 'Every word in the bar. Anything left empty is not drawn at all, rather than drawn empty — so the bar can be as short as a brand and a phone number.',
                       ['brand', 'byline', 'help_title', 'help_sub', 'phone', 'phone_url', 'email',
@@ -217,12 +283,16 @@ class SlimFooter
         'max_w'  => '--sf-max',
         'radius' => '--sf-r',
         'line_w' => '--sf-lw',
+        'm_pad_y' => '--sf-m-pady',
+        'm_pad_x' => '--sf-m-padx',
+        'm_gap'   => '--sf-m-gap',
     ];
 
     /** key => the custom property it is emitted as, as a unitless factor. */
     private const RATIO_VARS = [
         'font'       => '--sf-f',
         'brand_size' => '--sf-bf',
+        'm_font'     => '--sf-m-f',
     ];
 
     public function __construct(private SettingsService $settings) {}
@@ -384,6 +454,12 @@ class SlimFooter
             $c['shadow'] ? 'sf-lift' : '',
             $c['upper'] ? '' : 'sf-nocaps',
             $c['icons_on'] ? '' : 'sf-noic',
+            $c['phone_mark'] === 'brand' ? 'sf-wa' : '',
+            /* Every mobile class is gated on the switch, so "off" emits none of
+               them and the media query below has nothing to match. */
+            $c['mobile_on'] ? 'sf-msplit' : '',
+            $c['mobile_on'] ? 'sf-m-'.$c['m_variant'] : '',
+            $c['mobile_on'] && $c['m_align'] !== 'start' ? 'sf-ma-'.$c['m_align'] : '',
         ]);
 
         return ' '.implode(' ', $classes);

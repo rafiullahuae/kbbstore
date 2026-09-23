@@ -149,7 +149,7 @@ it('hands the screen every field, grouped into the three tabs', function () {
     $body = test()->actingAs(sfOwner(), 'admin')
         ->getJson('/admin-api/slim-footer')->assertOk()->json();
 
-    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['pages', 'layout', 'content', 'marks']);
+    expect(collect($body['tabs'])->pluck('key')->all())->toBe(['pages', 'phone', 'layout', 'content', 'marks']);
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();
 
@@ -188,7 +188,7 @@ it('stores only a value the select actually offers', function () {
         ->and(sf()->get('tone'))->toBe('ink')
         ->and(sf()->get('pad_y'))->toBe(40);
 
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-ink');
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-ink sf-a-between sf-wa sf-msplit sf-m-rows');
 });
 
 it('caps a pasted novel rather than printing it on every order', function () {
@@ -285,13 +285,18 @@ it('names a state class only where the stylesheet has a rule for it', function (
     // `sf-a-start`, `sf-sep-none` and `sf-top-ring` are the base rules, so a
     // class for them would be one a future reader has to look up before they
     // can be sure it does nothing.
-    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-cream');
+    /* The shipped pair the owner chose: spread-to-both-edges on a desktop,
+       ruled rows on a phone. Both are DEFAULTS and both therefore name a class,
+       which is the departure from "only what is not the default" this file
+       otherwise keeps -- `between` and `rows` have rules and `start`/`bar` are
+       the base, so a default that is not the base has to be said out loud. */
+    expect(sf()->bodyClass())->toBe(' sf-bar sf-t-cream sf-a-between sf-wa sf-msplit sf-m-rows');
 
     sf()->save(['align' => 'between', 'sep' => 'dot', 'top_style' => 'solid',
         'shadow' => true, 'upper' => false, 'icons_on' => false, 'divider' => false]);
 
     expect(sf()->bodyClass())
-        ->toBe(' sf-bar sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-noic');
+        ->toBe(' sf-bar sf-t-cream sf-a-between sf-sep-dot sf-top-solid sf-noline sf-lift sf-nocaps sf-noic sf-wa sf-msplit sf-m-rows');
 });
 
 it('draws a separator only where two blocks sit side by side', function () {
@@ -346,12 +351,12 @@ it('ships every new option at the value the bar already had', function () {
      */
     $c = sf()->all();
 
-    expect($c['align'])->toBe('start')
+    expect($c['align'])->toBe('between')
         ->and($c['sep'])->toBe('none')
         ->and($c['top_style'])->toBe('ring')
         ->and($c['radius'])->toBe(0)
         ->and($c['line_w'])->toBe(1)
-        ->and($c['max_w'])->toBe(1040)
+        ->and($c['max_w'])->toBe(1240)
         ->and($c['shadow'])->toBeFalse()
         ->and($c['pay_on'])->toBeFalse()
         ->and($c['upper'])->toBeTrue()
@@ -361,4 +366,80 @@ it('ships every new option at the value the bar already had', function () {
         // And with all of them untouched the element still carries no style
         // attribute at all.
         ->and(sf()->cssVariables())->toBe('');
+});
+
+/* ------------------------------------------------------------------------
+ | 5. The phone gets its own shape
+ |------------------------------------------------------------------------*/
+
+/**
+ * The owner's pick: "06 Ruled rows is final and for desktop 03" — ruled rows on
+ * a phone, spread-to-both-edges on a desktop. One `variant` cannot be both, so
+ * the phone gets a switch and six overrides of its own.
+ *
+ * MUTATION: turn `mobile_on` off in SCHEMA and the first test is red, because
+ * the bar would render the desktop shape at 390px.
+ */
+it('gives the phone its own shape, and emits nothing for it while the switch is off', function () {
+    expect(sf()->bodyClass())->toContain('sf-msplit')
+        ->and(sf()->bodyClass())->toContain('sf-m-rows');
+
+    sf()->save(['mobile_on' => false]);
+
+    /*
+     * NOT ONE mobile class while the switch is off. The media query in the
+     * partial is gated entirely on `.sf-msplit`, so with the class gone there
+     * is nothing at 900px to match and the bar renders from the desktop rules
+     * alone — which is what a shop that never opens this tab must keep getting.
+     */
+    $off = sf()->bodyClass();
+
+    expect($off)->not->toContain('sf-msplit')
+        ->and($off)->not->toContain('sf-m-')
+        ->and($off)->not->toContain('sf-ma-');
+});
+
+it('gates every phone rule on the switch class and on 900px, not on this file\'s 640', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    // 900 and not 640: the bar is a checkout bar, and CheckoutPage::MOBILE_MAX
+    // is where the page above it says a phone stops. Two screens disagreeing
+    // about that is a footer in one shape under a page in the other.
+    expect($partial)->toContain('@media (max-width:900px){')
+        ->and($partial)->toContain('.kbb-slimfoot.sf-msplit{')
+        ->and($partial)->toContain('.kbb-slimfoot.sf-msplit.sf-m-rows .sf-in{flex-direction:column;align-items:stretch;gap:0}')
+        // Each phone shape first undoes the desktop shape. A phone set to `bar`
+        // under a desktop set to `rows` must not keep the hairlines.
+        ->and($partial)->toContain('.kbb-slimfoot.sf-msplit .sf-in > * + *{border-top:0;padding-top:0;margin-top:0}');
+});
+
+it('draws the phone mark in WhatsApp green, from a constant and not a colour box', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * The glyph was always WhatsApp's — the path is the speech bubble with the
+     * handset in it. What it was not is recognisable: at 15px in currentColor
+     * it reads as a generic contact mark, which is why "put whatsapp icon
+     * beside the phone" was asked for a number that already had one.
+     *
+     * #25D366 is WhatsApp's own and is written here, not stored: a colour that
+     * came from a setting would be a declaration assembled from user input on
+     * the page orders are placed from, which is the rule PaymentMarkArt states.
+     */
+    expect($partial)->toContain('.kbb-slimfoot.sf-wa .sf-con .sf-c:first-child svg{color:#25D366}')
+        ->and($partial)->not->toContain('var(--sf-wa')
+        // FIRST CHILD ONLY. The second .sf-c is the email and stays in the ink.
+        ->and($partial)->toContain(':first-child svg');
+
+    sf()->save(['phone_mark' => 'mono']);
+    expect(sf()->bodyClass())->not->toContain('sf-wa');
+});
+
+it('keeps the bar off the cart page, which is where it has always been', function () {
+    // "this footer is only for checkout page footer." It already was: co_on
+    // ships on and cart_on ships off. The switch stays rather than being
+    // removed, because removing a working control is not the same as leaving
+    // the cart page alone.
+    expect(\App\Services\SlimFooter::SCHEMA['co_on'][2])->toBeTrue()
+        ->and(\App\Services\SlimFooter::SCHEMA['cart_on'][2])->toBeFalse();
 });

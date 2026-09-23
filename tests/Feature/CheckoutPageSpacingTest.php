@@ -256,7 +256,10 @@ it('offers spacing and nothing structural', function () {
     // `select` joins them: three of the placeholder's four controls are a
     // choice from a fixed list, not a number. None of them adds or removes a
     // section, which is what this test is actually about.
-    expect(array_values(array_unique($types)))->toEqualCanonicalizing(['range', 'bool', 'select'])
+    // `text` joins them for the reviews line's wording -- and ONLY its
+    // wording: cast() refuses a template carrying any digit of its own, so the
+    // figures in it are still the reviews table's and cannot be typed.
+    expect(array_values(array_unique($types)))->toEqualCanonicalizing(['range', 'bool', 'select', 'text'])
         // Three switches, and every one of them is a look: whether the summary
         // follows the scroll, and whether the summary rows are bold on each
         // surface. None of them adds or removes anything.
@@ -265,8 +268,8 @@ it('offers spacing and nothing structural', function () {
         // and which parts of the two animations run. None adds or removes a
         // section, and none of them is a layout.
         ->and(array_keys($types, 'bool', true))->toBe([
-            'd_sticky', 'd_row_bold', 'm_row_bold', 'd_head_sticky', 'm_head_sticky',
-            'm_t_input_floor',
+            'd_sticky', 'rating_on', 'd_row_bold', 'm_row_bold',
+            'd_head_sticky', 'm_head_sticky', 'm_t_input_floor',
             'optin_on', 'optin_checked', 'notes_on', 'ph_italic',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
         ]);

@@ -148,6 +148,32 @@ class CheckoutPage
                             'Read only by the rounded-rectangle look. The pill looks are round by definition and the icon-only look is a circle.',
                             ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
 
+        /*
+         * ── WHERE THE HEADER BAND SITS ───────────────────────────────
+         *
+         * `.co-head .in` is `max-width:<the width control>; margin:0 auto`, so
+         * a band narrower than the window is CENTRED. On a desktop that is
+         * right and is what everyone means by a content width.
+         *
+         * On a phone it is the bug the owner photographed. Measured at 390px
+         * with the mobile header width at 280: the band ran 55…335, the logo
+         * started at 75, and the page's own "Back to shop" started at 20 — a
+         * 55px notch on the left of the logo and nothing matching it anywhere
+         * else on the page. Worse, the badge inside it overflowed to 370, so
+         * the right-hand side looked flush while the left did not, which is
+         * exactly what the photograph shows.
+         *
+         * So the phone's default is now "line it up with the page" and
+         * `center` is the option — see the CSS, where the class REMOVES the
+         * centring on a desktop and RESTORES it on a phone. That way the
+         * default of both keys emits no class at all.
+         */
+        'd_head_align' => ['select', 'Where the header band sits', 'center',
+                           'Only matters once the width above is narrower than the window.', [
+                               'center' => 'Centred — what it does today',
+                               'page'   => 'Lined up with the page below it',
+                           ]],
+
         // ── Mobile ──
         'm_pad_x'     => ['range', 'Page padding — sides', 20,
                           'The gap between the screen edge and every block on the page. The checkout is one column on a phone, so this is the page margin.',
@@ -217,6 +243,38 @@ class CheckoutPage
          * that is always there. Turning it into a disappearing one under them
          * would be this screen quietly overruling that one.
          */
+        'm_head_align' => ['select', 'Where the header band sits', 'page',
+                           'Lined up is the default on a phone: a narrowed band used to centre itself, which put a notch to the left of the logo that nothing else on the page matched.', [
+                               'page'   => 'Lined up with the page below it',
+                               'center' => 'Centred in the window',
+                           ]],
+
+        /*
+         * ── THE REVIEWS LINE ABOVE THE ORDER SUMMARY ──────────────────
+         *
+         * THE WORDING IS HIS. THE NUMBERS ARE NOT, AND CANNOT BE.
+         *
+         * This line used to be `reassure_rating_text`, a free-text setting
+         * whose shipped default read "4.8 · loved by 2,300+ UAE customers" on
+         * a shop with no reviews at all — an invented figure printed at the
+         * moment of payment. It was removed for that reason and the line has
+         * been computed from approved reviews ever since.
+         *
+         * Giving the wording back without giving the figure back is the whole
+         * design here: `{rating}` and `{count}` are substituted from the
+         * reviews table, and a stored template containing ANY OTHER DIGIT is
+         * refused and falls back to the default — see cast(). So an owner can
+         * write "loved by UAE shoppers" around the number and cannot write the
+         * number. RatingsTellTheTruthTest is still the reason.
+         */
+        'rating_on'   => ['bool', 'Show the reviews line', true,
+                          'The stars and the score above the order summary. It already draws nothing until there are enough approved reviews to mean anything, so this is for a shop that never wants it.'],
+        'rating_text' => ['text', 'Reviews line wording', '{rating} from {count} reviews',
+                          'Use {rating} for the score and {count} for how many. Both are read from your approved reviews. Any OTHER digit is refused and the shipped wording is used instead — a number typed here would be a claim nobody earned, printed beside the pay button.'],
+        'rating_min'  => ['range', 'Hide it below this many reviews', 5,
+                          'Five is the shipped floor. One five-star review is true and is not a rating, which is why there is a floor at all.',
+                          ['min' => 1, 'max' => 50, 'step' => 1, 'unit' => ' reviews']],
+
         'm_float'     => ['select', 'Floating Place order button', 'smart',
                           'A phone-only bar across the bottom carrying the total and a Place order button. Nothing on this row reaches a desktop.', [
                               'off'    => 'Never — only the button in the page',
@@ -706,10 +764,9 @@ class CheckoutPage
                            ['d_shell_pt', 'd_shell_pb',
                             'd_max', 'd_aside', 'd_gap', 'd_pad_x', 'd_pad_y',
                             'd_block_gap', 'd_sec_pad', 'd_aside_pad',
-                            'd_sticky', 'd_sticky_top',
-                            'd_tocart_size', 'd_tocart_icon', 'd_tocart_r']],
+                            'd_sticky', 'd_sticky_top']],
         'desktop_head' => ['Desktop · Header', 'The secure-checkout bar across the top. Its height is its padding plus the taller of the logo and the badge, so those are the controls rather than a "height" that would fight them.',
-                           ['d_head_pad_y', 'd_head_pad_x', 'd_head_max', 'd_head_logo', 'd_head_badge', 'd_head_sticky']],
+                           ['d_head_pad_y', 'd_head_pad_x', 'd_head_max', 'd_head_align', 'd_head_logo', 'd_head_badge', 'd_head_sticky']],
         'desktop_type' => ['Desktop · Text sizes', 'Every size is a share of the size that role already uses, so 100% is the page exactly as it is and the roles keep their relationship to each other.',
                            ['d_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust']],
         'desktop_rows' => ['Desktop · Product rows', 'The lines in the order summary on the right — picture, name, stepper and price. Nothing on this tab can reach a phone, and nothing on it can reach the cart page.',
@@ -719,10 +776,9 @@ class CheckoutPage
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
                            ['m_shell_pt', 'm_shell_pb',
                             'm_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
-                            'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min',
                             'm_float']],
         'mobile_head'  => ['Mobile · Header', 'The same bar on a phone. Worth a look at 360px: the badge is the first thing that crowds the logo.',
-                           ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
+                           ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_align', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
         'mobile_type'  => ['Mobile · Text sizes', 'Same six roles, their own values. The field-text floor is the one control here that will not go below where it is, and it says why.',
                            ['m_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label',
                             'm_t_input', 'm_t_input_floor', 'm_t_ph', 'm_t_trust']],
@@ -730,6 +786,15 @@ class CheckoutPage
                            ['m_items_pt', 'm_row_h', 'm_row_pt', 'm_row_pr', 'm_row_pb', 'm_row_pl',
                             'm_row_gap', 'm_row_font', 'm_row_bold', 'm_qty_size', 'm_rm_size',
                             'm_tab_min', 'm_tab_pad', 'm_tab_font', 'm_tab_gap']],
+        /* ITS OWN TAB BECAUSE THE OWNER COULD NOT FIND IT. These four shipped
+           at the foot of the two Layout tabs, under ten spacing sliders, and
+           the report was "Back to Cart button controls i couldn't found".
+           A control nobody can find is a control that does not exist. */
+        'tocart'       => ['Back to cart', 'The "Go back to cart" link at the top of the page — both surfaces on one tab. Which of the five LOOKS it wears is chosen on Store → Ecommerce → Checkout → Mobile layout; everything about its SIZE is here.',
+                           ['d_tocart_size', 'd_tocart_icon', 'd_tocart_r',
+                            'm_tocart_size', 'm_tocart_icon', 'm_tocart_r', 'm_tocart_min']],
+        'trust'        => ['Trust & reviews', 'The stars and score above the order summary. The wording is yours; the figures are read from your approved reviews and cannot be typed. The authenticity lines — "100% authentic" beside the pay button and "100% authentic K-beauty" above the summary — are words about the business rather than about this page, so they live together with the rest of them on Store → Business Details → Claims.',
+                           ['rating_on', 'rating_text', 'rating_min']],
         'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
                            ['optin_on', 'optin_checked', 'notes_on',
                             'ph_weight', 'ph_tone', 'ph_italic',
@@ -977,6 +1042,22 @@ class CheckoutPage
     ];
 
     /**
+     * key => [stored value => class], for the selects whose answer is
+     * structural and whose DEFAULT is the empty string.
+     *
+     * The two header alignments point opposite ways on purpose. A desktop band
+     * is centred by default and `cop-dhead-page` is what un-centres it; a phone
+     * band is lined up with the page by default and `cop-mhead-center` is what
+     * centres it. Written that way round, both defaults emit nothing and the
+     * element on a shop that has never opened this screen is still
+     * `class="kbb-checkout"`.
+     */
+    private const ALIGN_CLASSES = [
+        'd_head_align' => ['center' => '', 'page' => 'cop-dhead-page'],
+        'm_head_align' => ['page' => '', 'center' => 'cop-mhead-center'],
+    ];
+
+    /**
      * key => [property for the name, property for the price], and the two
      * weights each takes.
      *
@@ -1060,8 +1141,72 @@ class CheckoutPage
              * states for the same reason.
              */
             'select' => isset($def[4][(string) $value]) ? (string) $value : (string) $def[2],
+            /*
+             * A TEMPLATE MAY CARRY NO DIGIT OF ITS OWN.
+             *
+             * `rating_text` is the only text key on this screen and it sits
+             * beside the pay button. Its two tokens are replaced with figures
+             * read from the reviews table; a digit anywhere else in it is a
+             * figure the owner typed, which is precisely the invented number
+             * `reassure_rating_text` was removed for. Refused rather than
+             * stripped: silently deleting the "4.8" somebody typed leaves them
+             * reading a line they did not write and did not agree to.
+             *
+             * Length is bounded too. This is stored, read on every checkout
+             * render and printed; there is no wording for it that needs 200
+             * characters.
+             */
+            'text' => self::cleanTemplate((string) $value, (string) $def[2]),
             default => $value,
         };
+    }
+
+    /**
+     * A wording template, or the shipped one.
+     *
+     * Digits are counted AFTER the two tokens are taken out, so `{rating}` and
+     * `{count}` cost nothing and `4.8` is refused. Trimmed and length-bounded
+     * first, so a 10,000-character value cannot be stored and then measured.
+     */
+    private static function cleanTemplate(string $value, string $default): string
+    {
+        $value = trim($value);
+
+        if ($value === '' || mb_strlen($value) > 120) {
+            return $default;
+        }
+
+        $withoutTokens = str_replace(['{rating}', '{count}'], '', $value);
+
+        return preg_match('/\d/', $withoutTokens) === 1 ? $default : $value;
+    }
+
+    /**
+     * The reviews line as the checkout should print it, or null.
+     *
+     * Null covers three cases that are all "say nothing" and must not be told
+     * apart by the caller: the switch is off, there are not enough approved
+     * reviews, or the reviews table has nothing real in it at all.
+     */
+    public function ratingLine(): ?string
+    {
+        $c = $this->all();
+
+        if (! $c['rating_on']) {
+            return null;
+        }
+
+        $summary = \App\Support\StoreRating::summary();
+
+        if ($summary === null || $summary['total'] < (int) $c['rating_min']) {
+            return null;
+        }
+
+        return str_replace(
+            ['{rating}', '{count}'],
+            [number_format($summary['average'], 1), number_format($summary['total'])],
+            (string) $c['rating_text'],
+        );
     }
 
     /**
@@ -1167,6 +1312,14 @@ class CheckoutPage
 
         if ($float !== '') {
             $classes[] = $float;
+        }
+
+        foreach (self::ALIGN_CLASSES as $key => $map) {
+            $class = $map[(string) $c[$key]] ?? '';
+
+            if ($class !== '') {
+                $classes[] = $class;
+            }
         }
 
         /*

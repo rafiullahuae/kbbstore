@@ -3,6 +3,34 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.254
+Three selects that were rendering as sliders, the notch beside the phone logo,
+the reviews line's wording, and the footer's own shape on a phone.
+
+`checkout-page-screen.blade.php` handled `bool` and returned an
+`<input type="range">` for everything else, so `ph_tone` and `ph_weight`
+(2.60.252) and `m_float` (2.60.253) each drew as a slider with no scale showing
+a value it could not represent, and saved as `NaN`. The screen now draws
+`select` and `text`, and the handler branches on the schema's type rather than
+on the DOM element's.
+
+`.co-head .in` centres a band narrower than the window. Measured at 390px with
+the mobile header width at 280: the band ran 55…335, the logo started at 75 and
+the page's own "Back to shop" started at 20, while the badge overflowed to 370
+— the right edge flush, the left notched. The phone now takes the page's own
+edges by default; the class restores the centring.
+
+"Go back to cart" gets its own tab, because the controls shipped under ten
+spacing sliders and could not be found. The reviews line gets its wording back
+without getting its figures back: `{rating}` and `{count}` are substituted from
+approved reviews and a template carrying any other digit is refused. And the
+footer gets a phone shape of its own — ruled rows on a phone, spread-to-both-
+edges on a desktop — with the WhatsApp mark in WhatsApp green.
+`Services/CheckoutPage.php`, `Services/SlimFooter.php`,
+`css/kbb/kbb-checkout.css`, `partials/checkout/reassurance.blade.php`,
+`partials/slim-footer.blade.php`, `admin/partials/checkout-page-screen.blade.php`,
+`2026_12_08_000000_clear_caches_checkout_selects_and_footer_phone.php`
+
 ## 2.60.253
 The band above the checkout header, and two controls under it. `kbb.css` carries
 a bare `section{padding:52px 0}` and `.kbb-checkout` IS a `<section>`, so every
