@@ -323,7 +323,23 @@ final class EnglishRenderWalk
      * is the half worth checking before advancing the pin rather than assuming:
      * a base commit moved forward over an unread diff is a guard switched off.
      */
-    public const BASE_COMMIT = 'da28793eb18811216e5aa4f18ae6d02f2988be85';
+    /*
+     * MOVED FORWARD for the phone-only floating Place order bar, which the
+     * checkout now renders where it did not before.
+     *
+     * The owner asked for it in as many words: "the Place order should float
+     * only when on page place order disappear by scroll". A bar that only ever
+     * appeared for a shop that had found `mobile_sticky_bar` on a different
+     * screen would not be that, so the default draws it and the new control on
+     * Appearance -> Checkout page -> Mobile - Layout turns it off.
+     *
+     * The diff this test printed was that and nothing else -- ONE page,
+     * (with a basket) /checkout, at byte 57313, `<div class="mpbar">` where
+     * the slim footer used to follow the form directly, and no other page in
+     * the walk moved a byte. Read before advancing, because a base commit
+     * moved forward over an unread diff is a guard switched off.
+     */
+    public const BASE_COMMIT = '1ed4cee638e45b4d674d4485f80782762399ea3a';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
