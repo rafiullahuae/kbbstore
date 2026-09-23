@@ -3,6 +3,22 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.253
+The band above the checkout header, and two controls under it. `kbb.css` carries
+a bare `section{padding:52px 0}` and `.kbb-checkout` IS a `<section>`, so every
+checkout inherited 52px of page background above the secure-checkout bar and
+52px of nothing below the last block — measured in Chromium, `.co-head`'s own
+top read 52 at 1280 AND at 390. The section now declares its own padding, from
+two controls that ship at 0. "Go back to cart" gains a size, an arrow size and a
+corner radius per surface, plus a tap height on mobile that starts at the 44px
+Lane BM measured and raised it to. And the phone-only Place order bar now waits
+for the in-page button to leave the viewport and goes the moment it returns —
+IntersectionObserver, not a scroll handler, because the button moves as an
+address is chosen. Two defaults change the page on purpose, both asked for: the
+band is removed, and the floating bar is drawn where it was not.
+`Services/CheckoutPage.php`, `css/kbb/kbb-checkout.css`,
+`store/checkout.blade.php`, `2026_12_07_000000_clear_caches_checkout_shell_and_float.php`
+
 ## 2.60.107
 Corrects 2.60.102–.106. Three files had been edited against a stale base — my
 working copy of the server was the 2.60.71 snapshot with the 2.60.98 package
