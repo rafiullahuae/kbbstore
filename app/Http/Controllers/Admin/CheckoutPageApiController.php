@@ -55,6 +55,11 @@ class CheckoutPageApiController extends Controller
             // changes surface, so it is told rather than left to hard-code 900
             // a third time.
             'mobileMax' => CheckoutPage::MOBILE_MAX,
+            // The keys "Squeeze everything" drives to their minimum. Sent
+            // rather than repeated in the screen's script: the list belongs
+            // beside the schema it names, and a second copy would be a second
+            // thing to forget when a control is added.
+            'squeeze' => CheckoutPage::SQUEEZE,
         ]);
     }
 

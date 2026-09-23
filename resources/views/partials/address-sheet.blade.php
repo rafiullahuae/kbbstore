@@ -53,6 +53,30 @@
         'choose'      => Url::to('/cart/address'),
         'chooseGuest' => Url::to('/cart/address/guest'),
     ];
+
+    /*
+     * ── THE FIRST OPEN COSTS NO REQUEST ────────────────────────────────────
+     *
+     * "i want that popup should open directly ... everything should
+     * immediately load in real time with no delays."
+     *
+     * The sheet used to open, draw a placeholder and then GET /cart/address
+     * before it could show anything. That request answers with exactly
+     * CartAddressState::all() -- see CartAddressController::index(), which is
+     * one line and returns precisely this -- so rendering it here makes the
+     * first open instant and the fetch unnecessary.
+     *
+     * NOT A NEW EXPOSURE. It is the same shopper's own addresses, in their own
+     * page, from the same session the endpoint answers from. What is not here
+     * is anything the endpoint would not have sent: this is the endpoint's own
+     * payload, not the models behind it.
+     *
+     * The placeholder stays for the cases this cannot cover -- a page that has
+     * been open long enough for the state to have moved, and every fetch after
+     * the first (choose, save, delete), which still round-trip because they
+     * are writes and the server's answer is the truth.
+     */
+    $kbbSheetSeed = \App\Support\CartAddressState::all(request());
 @endphp
 <div class="cpg-portal{{ $kbbSheetClass }}"{!! $kbbSheetStyle !!}>
     <div class="cpg-scrim" id="cpgScrim"></div>
@@ -313,6 +337,39 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
      in-panel X is gone: one close button, one shape, both layouts. */
   .cpg-xin{display:none}
 }
+
+/* ── THE PLACEHOLDER ──────────────────────────────────────────────────────
+   Moved here from store/cart-squeeze.blade.php, where it was the cart page's
+   business and therefore missing everywhere else this sheet is used. The
+   sheet's markup lives in this file, so its rules do too.
+
+   Shaped like the row it stands in for -- a round mark, two lines, a tag chip
+   -- because a placeholder that does not match what replaces it makes the
+   sheet jump, and a jump reads worse than a wait. */
+.cpg-sk{border-radius:7px;
+  background:linear-gradient(100deg,#EFF1F4 30%,#F8F9FB 48%,#EFF1F4 66%);
+  background-size:220% 100%;animation:cpgshim 1.15s linear infinite}
+@keyframes cpgshim{from{background-position:180% 0}to{background-position:-40% 0}}
+.cpg-skcard{border:1px solid #E4E7EC;border-radius:10px;
+  padding:calc(11px * var(--cpg-sheet-d,1));margin-bottom:8px;
+  display:flex;align-items:center;gap:9px}
+.cpg-skdisc{flex:none;width:26px;height:26px;border-radius:50%}
+.cpg-skcol{flex:1;min-width:0;display:grid;gap:7px}
+.cpg-skline{height:11px}
+.cpg-skchip{flex:none;width:44px;height:17px;border-radius:5px}
+.cpg-skline.w40{width:40%}
+.cpg-skline.w45{width:45%}
+.cpg-skline.w55{width:55%}
+.cpg-skline.w65{width:65%}
+.cpg-skline.w70{width:70%}
+.cpg-skline.w85{width:85%}
+.cpg-skline.w90{width:90%}
+/* A screen reader gets nothing at all from a grey rectangle, so the wait is
+   announced -- and only to a screen reader. Without this rule the announcement
+   is a line of visible text, which is the defect this block fixes. */
+.cpg-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
+  clip-path:inset(50%);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.cpg-sk{animation:none}}
 </style>
 @endpush
 @push('scripts')
@@ -344,10 +401,15 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
   var root = document.getElementById('cartPage');
 
   var CFG = @json($kbbSheetJs);
+
+  /* Rendered with the page, so the first open draws the real list in the same
+     frame the sheet slides up in. Every write after this replaces it with what
+     the server actually did. */
+  var SEED = @json($kbbSheetSeed);
   var scrim = document.getElementById('cpgScrim');
   var closeBtn = document.getElementById('cpgX');
 
-  var state = null;      // the last payload from the server
+  var state = SEED || null;   // the server's list: rendered with the page, then refreshed by every write
   var tag = 'home';
   var country = null;    // null until the geo default arrives
   var busy = false;
@@ -477,12 +539,23 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
        stays on, which is the shipped default either way. */
     if (root && root.classList.contains('cpg-nosk')) return headHTML(CFG.listTitle, false);
 
+    /* SHAPED LIKE THE ROW IT STANDS IN FOR -- the tag chip on the right, two
+       lines of address on the left, and the whole card the height of a real
+       one. A placeholder of three equal bars is a grey box that then jumps
+       into a different layout, which reads worse than no placeholder at all.
+
+       The widths alternate so three of them do not look like one repeated
+       thing, which is the tell that gives a loading state away. */
+    var widths = [['w40','w90'],['w55','w70'],['w45','w85']];
     var cards = '';
     for (var i = 0; i < rows; i++) {
+      var wd = widths[i % widths.length];
       cards += '<div class="cpg-skcard" aria-hidden="true">'
-        + '<div class="cpg-sk cpg-skline w40"></div>'
-        + '<div class="cpg-sk cpg-skline w90"></div>'
-        + '<div class="cpg-sk cpg-skline w65"></div></div>';
+        + '<div class="cpg-sk cpg-skdisc"></div>'
+        + '<div class="cpg-skcol">'
+        + '<div class="cpg-sk cpg-skline ' + wd[0] + '"></div>'
+        + '<div class="cpg-sk cpg-skline ' + wd[1] + '"></div></div>'
+        + '<div class="cpg-sk cpg-skchip"></div></div>';
     }
 
     return headHTML(CFG.listTitle, false) + cards
@@ -757,15 +830,17 @@ html.cpg-frozen,body.cpg-frozen{overflow:hidden}
     closeBtn.classList.add('on');
     freeze(true);
 
-    /* A REAL request is about to happen, so the placeholder earns its place.
-       On the second opening the list is already in hand, so the content goes
-       straight in and no placeholder is drawn at all — a skeleton that flashes
-       for a fortieth of a second reads as a glitch. */
+    /* THE PLACEHOLDER IS NOW THE RARE CASE, not the usual one: the list came
+       down with the page, so `state` is already here and the sheet goes
+       straight to its content in the frame it slides up in.
+
+       It still exists for the one case the seed cannot cover -- a page open
+       long enough for the server to have been sent something from somewhere
+       else -- and it is list-shaped, so it takes the list's cap too. A
+       skeleton in a taller box than the thing it stands in for is a sheet that
+       visibly shrinks the moment the real list lands. */
     if (state === null) {
-      // The placeholder is list-shaped, so it takes the list's cap too — a
-      // skeleton in a taller box than the thing it stands in for is a sheet
-      // that visibly shrinks the moment the real list lands.
-      paint(skeletonHTML(2), true);
+      paint(skeletonHTML(3), true);
 
       try {
         state = await call(CFG.list);

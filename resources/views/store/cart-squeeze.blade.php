@@ -631,20 +631,18 @@
    finally block, and the sheet's script does the same thing by hand for its own
    fetch. A placeholder that flashes for a fortieth of a second on a warm cache
    reads as a glitch, which is worse than no placeholder. */
-.cpg-sk{border-radius:7px;
-  background:linear-gradient(100deg,#EFF1F4 30%,#F8F9FB 48%,#EFF1F4 66%);
-  background-size:220% 100%;animation:cpgshim 1.15s linear infinite}
-@keyframes cpgshim{from{background-position:180% 0}to{background-position:-40% 0}}
-@media (prefers-reduced-motion:reduce){.cpg-sk{animation:none}}
-.cpg-skcard{border:1px solid #E4E7EC;border-radius:10px;padding:11px;display:grid;gap:7px;
-  margin-bottom:8px}
-.cpg-skline{height:11px}
-.cpg-skline.w40{width:40%}
-.cpg-skline.w90{width:90%}
-.cpg-skline.w65{width:65%}
-/* A screen reader gets nothing at all from a grey rectangle. */
-.cpg-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
-  clip-path:inset(50%);white-space:nowrap}
+/* THE SHEET'S OWN PLACEHOLDER RULES HAVE MOVED to
+   resources/views/partials/address-sheet.blade.php, which is where the markup
+   that needs them is.
+
+   They were here, and only here, so the sheet had them on the SQUEEZED cart
+   page and nowhere else -- not on the classic cart page, which does not
+   include this file, and not on the checkout, which never did. The visible
+   result was the one the owner photographed: the placeholder's grey bars had
+   no rules and drew nothing, and `.cpg-vh`, the class that hides a status
+   message from the screen while leaving it for a screen reader, did not exist
+   either, so "Loading your addresses" rendered as a line of body text in an
+   otherwise empty sheet. */
 
 /* The same treatment for every OTHER wait on this page — applying a coupon,
    changing a quantity, removing a line, adding from the rail. cart.js already

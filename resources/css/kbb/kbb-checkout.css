@@ -137,6 +137,19 @@ body.woocommerce-checkout main#content>p:empty{display:none}
 .kbb-checkout .form-row input[type="password"],
 .kbb-checkout .form-row textarea,
 .kbb-checkout .form-row select{width:100%;font-family:inherit;font-size:calc(14px * var(--cop-tinput));border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--ink);background:#fff;transition:.15s;height:auto;line-height:1.3}
+/* THE PLACEHOLDER, SIZED APART FROM THE FIELD. `em` and not `px`, so it is a
+   share of whatever the field ended up at -- the two sliders compound instead
+   of fighting, and there is no third number to keep in step.
+
+   Safe to take small on a phone: iOS decides whether to zoom the page from the
+   INPUT's font-size, never the placeholder's, so a 70% hint inside a 16px
+   field zooms nothing. Every prefix is listed because ::placeholder is one of
+   the selectors where one browser failing to parse the list drops the whole
+   rule. */
+.kbb-checkout .form-row input::placeholder,
+.kbb-checkout .form-row textarea::placeholder,
+.kbb-checkout .input-text::placeholder,
+.kbb-checkout .coupon input::placeholder{font-size:calc(1em * var(--cop-tph))}
 .kbb-checkout .form-row input:focus,
 .kbb-checkout .form-row textarea:focus,
 .kbb-checkout .form-row select:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px var(--pink-soft)}
@@ -337,7 +350,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
      --cop-rowb and --cop-rowpb are font weights, which a custom property can
      carry as plainly as a length. */
   --cop-rowh:var(--cop-d-rowh,54px);
-  --cop-rowpad:var(--cop-d-rowpad,10px);
+  --cop-rowp-t:var(--cop-d-rowp-t,10px);
+  --cop-rowp-r:var(--cop-d-rowp-r,0px);
+  --cop-rowp-b:var(--cop-d-rowp-b,10px);
+  --cop-rowp-l:var(--cop-d-rowp-l,0px);
   --cop-rowgap:var(--cop-d-rowgap,11px);
   --cop-rowf:var(--cop-d-rowf,1);
   --cop-qtys:var(--cop-d-qtys,1);
@@ -357,6 +373,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   --cop-th2:var(--cop-d-th2,1);
   --cop-tlabel:var(--cop-d-tlabel,1);
   --cop-tinput:var(--cop-d-tinput,1);
+  --cop-tph:var(--cop-d-tph,1);
   --cop-ttrust:var(--cop-d-ttrust,1);
 }
 
@@ -387,7 +404,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    the order-received page. That page is a different template and is NOT
    handed the style attribute, so every var() here falls back and it keeps
    today's row at every setting. Deliberate: the brief was the checkout. */
-.kbb-checkout .ci{display:flex;gap:var(--cop-rowgap);padding:var(--cop-rowpad) 0;border-bottom:1px solid var(--line-2)}
+.kbb-checkout .ci{display:flex;gap:var(--cop-rowgap);padding:var(--cop-rowp-t) var(--cop-rowp-r) var(--cop-rowp-b) var(--cop-rowp-l);border-bottom:1px solid var(--line-2)}
 .kbb-checkout .ci:first-child{padding-top:0}
 .kbb-checkout .cth{width:var(--cop-rowh);height:var(--cop-rowh);border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:10px;text-align:center;flex-shrink:0;position:relative;background-size:cover;background-position:center;line-height:1.1}
 .kbb-checkout .cth .qb{position:absolute;top:-7px;inset-inline-end:-7px;min-width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;border:2px solid #fff}
@@ -725,7 +742,10 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-secpad:var(--cop-m-secpad,16px);
     --cop-asidepad:var(--cop-m-asidepad,14px);
     --cop-rowh:var(--cop-m-rowh,54px);
-    --cop-rowpad:var(--cop-m-rowpad,10px);
+    --cop-rowp-t:var(--cop-m-rowp-t,10px);
+    --cop-rowp-r:var(--cop-m-rowp-r,0px);
+    --cop-rowp-b:var(--cop-m-rowp-b,10px);
+    --cop-rowp-l:var(--cop-m-rowp-l,0px);
     --cop-rowgap:var(--cop-m-rowgap,11px);
     --cop-rowf:var(--cop-m-rowf,1);
     --cop-qtys:var(--cop-m-qtys,1);
@@ -741,6 +761,7 @@ body.woocommerce-checkout main#content>p:empty{display:none}
     --cop-th2:var(--cop-m-th2,1);
     --cop-tlabel:var(--cop-m-tlabel,1);
     --cop-tinput:var(--cop-m-tinput,1);
+    --cop-tph:var(--cop-m-tph,1);
     --cop-ttrust:var(--cop-m-ttrust,1);
   }
   .kbb-checkout .co-grid{grid-template-columns:minmax(0,1fr);gap:var(--cop-m-gap,14px);padding-bottom:24px}
@@ -860,6 +881,20 @@ body.woocommerce-checkout main#content>p:empty{display:none}
   /* Labels sat 4px above their field; give the pair a little more room so the
      label is not mistaken for the one below it. */
   .kbb-checkout label{margin-bottom:6px}
+
+  /* THE 15px OF EMPTY BAR ON EVERY PHONE, AND WHERE IT CAME FROM.
+     kbb.css gives `.logo` a 44px minimum touch target below 900px -- written
+     for the STOREFRONT header, where the logo is a primary tap. It also
+     catches this bar, whose logo is 29px of text, so the checkout header
+     measured 73px on a phone against 58 on a desktop: 14 + 44 + 14. That is
+     the "empty spaces on top and bottom" the owner reported, and no amount of
+     dragging the padding control could reach it, because the space was inside
+     the logo.
+     Opted out here and nowhere else: the storefront header keeps its 44px.
+     The link is still 29px tall and over 100px wide -- comfortably past the
+     24px minimum -- and a fat "leave the checkout" target is not something a
+     checkout wants anyway. */
+  .kbb-checkout .co-head .logo{min-height:0}
 }
 
 /* Mobile polish, second pass - Lane BM. Still <=900px only. */

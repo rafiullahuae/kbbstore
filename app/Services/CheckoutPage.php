@@ -149,9 +149,31 @@ class CheckoutPage
         'd_row_h'     => ['range', 'Picture size', 54,
                           'The square thumbnail on each order-summary line, and with it the height of the line: the row is as tall as the picture until the picture is smaller than the name and stepper beside it. Drag this to squeeze the summary.',
                           ['min' => 32, 'max' => 88, 'step' => 2, 'unit' => 'px']],
-        'd_row_pad'   => ['range', 'Space above and below each row', 10,
-                          'The gap between one order-summary line and the next. The first line keeps its flush top edge at every value.',
-                          ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        /*
+         * FOUR SIDES, because the owner asked for four: "Space above and below
+         * each row, options i need from all sides, top left, right bottom."
+         *
+         * The line was `padding: <one value> 0` — top and bottom together, and
+         * nothing at the sides. The left and right defaults are 0 for that
+         * reason: 0 is what the row has today, so a shop that never opens this
+         * tab keeps the row it already has.
+         *
+         * The old single key is gone, and the migration beside this package
+         * copies whatever was saved in it into the top and bottom halves, so a
+         * shop that had already set it keeps its spacing to the pixel.
+         */
+        'd_row_pt'    => ['range', 'Row padding — top', 10,
+                          'Above each order-summary line. The first line in the list keeps its flush top edge at every value, so the summary never opens with a gap.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'd_row_pr'    => ['range', 'Row padding — right', 0,
+                          'Between the line price and the edge of the summary card. 0 is what the row has today.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'd_row_pb'    => ['range', 'Row padding — bottom', 10,
+                          'Below each line, above the divider.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'd_row_pl'    => ['range', 'Row padding — left', 0,
+                          'Between the edge of the card and the picture. 0 is what the row has today.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
         'd_row_gap'   => ['range', 'Space between the picture and the text', 11,
                           'Only inside the line. The price stays pinned to the far edge.',
                           ['min' => 2, 'max' => 28, 'step' => 1, 'unit' => 'px']],
@@ -167,9 +189,18 @@ class CheckoutPage
         'm_row_h'     => ['range', 'Picture size', 54,
                           'The square thumbnail on each order-summary line inside the collapsible summary card at the top of the phone page, and with it the height of the line.',
                           ['min' => 32, 'max' => 88, 'step' => 2, 'unit' => 'px']],
-        'm_row_pad'   => ['range', 'Space above and below each row', 10,
-                          'The gap between one order-summary line and the next. The summary card shows about 148px before "View full summary", so squeezing this fits more lines in that peek.',
-                          ['min' => 0, 'max' => 24, 'step' => 1, 'unit' => 'px']],
+        'm_row_pt'    => ['range', 'Row padding — top', 10,
+                          'Above each line. The summary card shows about 148px before "View full summary", so squeezing this and the bottom fits more lines into that peek.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'm_row_pr'    => ['range', 'Row padding — right', 0,
+                          'Between the line price and the edge of the card. 0 is what the row has today.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'm_row_pb'    => ['range', 'Row padding — bottom', 10,
+                          'Below each line, above the divider.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
+        'm_row_pl'    => ['range', 'Row padding — left', 0,
+                          'Between the edge of the card and the picture. 0 is what the row has today.',
+                          ['min' => 0, 'max' => 28, 'step' => 1, 'unit' => 'px']],
         'm_row_gap'   => ['range', 'Space between the picture and the text', 11,
                           'Only inside the line. The price stays pinned to the far edge.',
                           ['min' => 2, 'max' => 28, 'step' => 1, 'unit' => 'px']],
@@ -205,8 +236,8 @@ class CheckoutPage
                            'How far the logo sits from the left edge of the header block, and the badge from the right.',
                            ['min' => 0, 'max' => 64, 'step' => 2, 'unit' => 'px']],
         'd_head_max'   => ['range', 'Header width', 1040,
-                           'The band the logo and badge are laid out in. It is set apart from the page width below it on purpose — a header that runs wider than the form is a common and deliberate look.',
-                           ['min' => 880, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
+                           'The band the logo and badge are laid out in — NOT the white bar, which always runs the full width of the window. Below the window width it pulls the logo and badge towards the middle; above it, it stops having anything left to give.',
+                           ['min' => 600, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
         'd_head_logo'  => ['range', 'Logo size', 20,
                            'The "K-BeautyBliss" wordmark. The scroll offset that stops a focused field hiding under the bar is worked out from this and the padding above, so it follows them instead of staying at the number it was written with.',
                            ['min' => 12, 'max' => 40, 'step' => 1, 'unit' => 'px']],
@@ -222,9 +253,18 @@ class CheckoutPage
         'm_head_pad_x' => ['range', 'Header padding — sides', 20,
                            'How far the logo sits from the screen edge, and the badge from the other one.',
                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        /*
+         * THE MINIMUM IS 280 AND NOT 880, and that is the whole fix.
+         *
+         * It shipped at 880-1600, which is wider than every phone ever made,
+         * so the slider moved and the header did not — reported, correctly, as
+         * "the width of header on checkout page not working properly". A band
+         * narrower than the screen is the only thing this control can do on a
+         * phone, so that is the range it now offers.
+         */
         'm_head_max'   => ['range', 'Header width', 1040,
-                           'Wider than any phone at every value, so on a phone this changes nothing — it is here so the two tabs carry the same controls and neither has a gap where the other has a slider.',
-                           ['min' => 880, 'max' => 1600, 'step' => 20, 'unit' => 'px']],
+                           'The band the logo and badge sit in. Anything at or above the phone\'s own width leaves them against the screen edges, which is what 1040 does — bring it down below about 360 to pull them in towards the middle.',
+                           ['min' => 280, 'max' => 1040, 'step' => 10, 'unit' => 'px']],
         'm_head_logo'  => ['range', 'Logo size', 20,
                            'The "K-BeautyBliss" wordmark.',
                            ['min' => 12, 'max' => 34, 'step' => 1, 'unit' => 'px']],
@@ -268,6 +308,19 @@ class CheckoutPage
         'd_t_input'  => ['range', 'Field text size', 100,
                          'What the shopper types, and the placeholder before they do — 14px today.',
                          ['min' => 80, 'max' => 150, 'step' => 5, 'unit' => '%']],
+        /*
+         * THE PLACEHOLDER, APART FROM THE FIELD, because the owner asked for
+         * "the font size of placeholder of fields i need more small option".
+         *
+         * It multiplies INTO the field size rather than replacing it, so the
+         * two sliders can never fight. And it is the one text on a phone that
+         * can go small safely: iOS decides whether to zoom from the INPUT's
+         * font-size, never the placeholder's, so a 70% placeholder inside a
+         * 16px field zooms nothing.
+         */
+        'd_t_ph'     => ['range', 'Placeholder size', 100,
+                         'The grey hint inside an empty field — "First and last name", "you@email.com". A share of the field text above, so it follows that slider as well as this one.',
+                         ['min' => 60, 'max' => 120, 'step' => 5, 'unit' => '%']],
         'd_t_trust'  => ['range', 'Trust line size', 100,
                          'The rating line and the authenticity line in the block under Payment — 12px today.',
                          ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
@@ -287,6 +340,9 @@ class CheckoutPage
         'm_t_input'  => ['range', 'Field text size', 100,
                          'What the shopper types — 16px on a phone today. RAISING THIS WORKS NORMALLY; LOWERING IT STOPS AT 16px, and the stylesheet enforces that floor whatever this says. iOS Safari zooms the page when a field smaller than 16px takes focus and does not zoom back out, which leaves the shopper on a checkout wider than their screen in the middle of paying.',
                          ['min' => 100, 'max' => 150, 'step' => 5, 'unit' => '%']],
+        'm_t_ph'     => ['range', 'Placeholder size', 100,
+                         'The grey hint inside an empty field. SAFE TO TAKE BELOW 100% on a phone: iOS decides whether to zoom the page from the field\'s own size, never the placeholder\'s, so this can go small while the field itself stays at the 16px that keeps the page still.',
+                         ['min' => 60, 'max' => 120, 'step' => 5, 'unit' => '%']],
         'm_t_trust'  => ['range', 'Trust line size', 100,
                          'The rating line and the authenticity line in the block under Payment — 12px today.',
                          ['min' => 70, 'max' => 160, 'step' => 5, 'unit' => '%']],
@@ -313,6 +369,48 @@ class CheckoutPage
          * asked their device for less movement gets the icons, the arrow and
          * the colour, and none of the movement.
          */
+        /*
+         * DELIVERY NOTES, OFF. The owner's instruction, in as many words:
+         * "turn off the delivery notes by detault on checkout page."
+         *
+         * THE ONE DEFAULT IN THIS SCHEMA THAT DOES NOT REPRODUCE TODAY'S PAGE,
+         * and it is off on purpose because it was asked for. Everything else
+         * here ships as the number the page already had; this one removes a
+         * field, so it is called out rather than buried.
+         *
+         * The field is not rendered at all rather than hidden, so nothing
+         * posts `customer_note` while it is off. place() has always treated it
+         * as nullable and writes null when it is absent, so an order placed
+         * with the field off is the same order it would have been with the box
+         * left empty — no validation branch, no second code path.
+         *
+         * Orders already carrying a note are untouched: this decides what the
+         * checkout draws, not what the table holds.
+         */
+        /*
+         * THE ORDER-UPDATES OPT-IN, AND WHY UNTICKED IS BOTH WHAT WAS ASKED
+         * FOR AND THE RIGHT DEFAULT.
+         *
+         * "turn off by default the send order updates option and give control
+         * on backend." It shipped pre-ticked -- `old('billing_kbb_whatsapp',
+         * true)` -- so every order carried a marketing consent the shopper had
+         * not actually given, only failed to withdraw. Unticked is the honest
+         * shape of a consent box, and it is now a setting rather than a
+         * literal, so a shop that wants it pre-ticked can have it back without
+         * a release.
+         *
+         * SECOND DEFAULT THAT CHANGES TODAY'S PAGE, with `notes_on`. Both were
+         * asked for in as many words; everything else in this schema still
+         * reproduces the page exactly.
+         */
+        'optin_on'       => ['bool', 'Show the order-updates opt-in', true,
+                             'The tick under Contact — "Send me order updates and new offers". Off removes the row entirely, and nothing is recorded either way.'],
+        'optin_checked'  => ['bool', 'Start it ticked', false,
+                             'Off, as asked: the shopper ticks it themselves. On restores the old behaviour, where the box arrived already ticked — which records a consent nobody actively gave, so it is worth being deliberate about.'],
+
+        'notes_on'       => ['bool', 'Show the delivery-notes box', false,
+                             'Off, as asked: the "Delivery instructions, a landmark, a preferred time" box under Delivery is not drawn. Turn it on to bring it back. Notes already saved on past orders are unaffected either way.'],
+
         'addr_cue'       => ['bool', 'Point the shopper at the address button', true,
                              'The icon pair, the moving arrow and the halo on the button, on the "choose your delivery address" row. Off leaves that row exactly as it was.'],
         'addr_cue_icons' => ['bool', 'Show the home and office icons', true,
@@ -364,20 +462,54 @@ class CheckoutPage
         'desktop_head' => ['Desktop · Header', 'The secure-checkout bar across the top. Its height is its padding plus the taller of the logo and the badge, so those are the controls rather than a "height" that would fight them.',
                            ['d_head_pad_y', 'd_head_pad_x', 'd_head_max', 'd_head_logo', 'd_head_badge', 'd_head_sticky']],
         'desktop_type' => ['Desktop · Text sizes', 'Every size is a share of the size that role already uses, so 100% is the page exactly as it is and the roles keep their relationship to each other.',
-                           ['d_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_trust']],
+                           ['d_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust']],
         'desktop_rows' => ['Desktop · Product rows', 'The lines in the order summary on the right — picture, name, stepper and price. Nothing on this tab can reach a phone, and nothing on it can reach the cart page.',
-                           ['d_row_h', 'd_row_pad', 'd_row_gap', 'd_row_font', 'd_row_bold', 'd_qty_size']],
+                           ['d_row_h', 'd_row_pt', 'd_row_pr', 'd_row_pb', 'd_row_pl',
+                            'd_row_gap', 'd_row_font', 'd_row_bold', 'd_qty_size']],
         'mobile'       => ['Mobile · Layout', 'The single-column checkout, at 900px and below. Nothing on this tab can reach a desktop.',
                            ['m_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad']],
         'mobile_head'  => ['Mobile · Header', 'The same bar on a phone. Worth a look at 360px: the badge is the first thing that crowds the logo.',
                            ['m_head_pad_y', 'm_head_pad_x', 'm_head_max', 'm_head_logo', 'm_head_badge', 'm_head_sticky']],
         'mobile_type'  => ['Mobile · Text sizes', 'Same six roles, their own values. The field-text floor is the one control here that will not go below where it is, and it says why.',
-                           ['m_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label', 'm_t_input', 'm_t_trust']],
+                           ['m_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label', 'm_t_input', 'm_t_ph', 'm_t_trust']],
         'mobile_rows'  => ['Mobile · Product rows', 'The lines inside the summary card at the top of the phone page. Nothing on this tab can reach a desktop, and nothing on it can reach the cart page.',
-                           ['m_row_h', 'm_row_pad', 'm_row_gap', 'm_row_font', 'm_row_bold', 'm_qty_size']],
-        'cues'         => ['Attention & trust', 'The two moving things on this page: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces — one cue doing one job.',
-                           ['addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
+                           ['m_row_h', 'm_row_pt', 'm_row_pr', 'm_row_pb', 'm_row_pl',
+                            'm_row_gap', 'm_row_font', 'm_row_bold', 'm_qty_size']],
+        'cues'         => ['Fields & attention', 'Which optional fields the page draws, and the two moving things on it: the cue that points at the address button while no address is chosen, and the authenticity tick under Payment. One set of values for both surfaces.',
+                           ['optin_on', 'optin_checked', 'notes_on',
+                            'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'addr_cue_speed', 'addr_cue_size',
                             'trust_tick', 'trust_tick_speed']],
+    ];
+
+    /**
+     * The keys "Squeeze everything" drives to their minimum.
+     *
+     * "make overal option Squeeze and upon selection all rows squeezed and
+     * font sizes etc to minimum set."
+     *
+     * A LIST, NOT A MODE. A stored "squeezed" flag that overrode the sliders
+     * would leave every slider on the screen showing a number the page was not
+     * using — the screen would lie, and the owner would drag one and watch
+     * nothing move. So the preset WRITES THE SLIDERS: press it, every value
+     * below moves to its own minimum in front of you, and Save stores exactly
+     * what is on the screen. Nudging one afterwards works normally, and
+     * "Back to defaults" is its twin rather than a second mode to be in.
+     *
+     * Both surfaces at once, because the owner asked for an overall one. What
+     * is NOT here is as deliberate: page width, header width, the animation
+     * speeds and the switches. Squeezing a layout does not mean narrowing the
+     * page it sits on, and a preset that silently turned animations off would
+     * be a second thing happening under one button.
+     */
+    public const SQUEEZE = [
+        'd_pad_x', 'd_pad_y', 'd_gap', 'd_block_gap', 'd_sec_pad', 'd_aside_pad',
+        'd_row_h', 'd_row_pt', 'd_row_pb', 'd_row_gap', 'd_row_font', 'd_qty_size',
+        'd_t_title', 'd_t_lead', 'd_t_h2', 'd_t_label', 'd_t_input', 'd_t_ph', 'd_t_trust',
+        'd_head_pad_y', 'd_head_pad_x', 'd_head_logo', 'd_head_badge',
+        'm_pad_x', 'm_pad_y', 'm_gap', 'm_block_gap', 'm_sec_pad', 'm_aside_pad',
+        'm_row_h', 'm_row_pt', 'm_row_pb', 'm_row_gap', 'm_row_font', 'm_qty_size',
+        'm_t_title', 'm_t_lead', 'm_t_h2', 'm_t_label', 'm_t_input', 'm_t_ph', 'm_t_trust',
+        'm_head_pad_y', 'm_head_pad_x', 'm_head_logo', 'm_head_badge',
     ];
 
     /**
@@ -417,10 +549,21 @@ class CheckoutPage
         'm_sec_pad'    => '--cop-m-secpad',
         'm_aside_pad'  => '--cop-m-asidepad',
         'd_row_h'      => '--cop-d-rowh',
-        'd_row_pad'    => '--cop-d-rowpad',
+        /*
+         * `rowp-t` and not `rowpt`: `--cop-d-rowpb` is already the row's PRICE
+         * BOLD weight, and a padding that differed from it by one character
+         * would be a collision waiting for somebody to mistype.
+         */
+        'd_row_pt'     => '--cop-d-rowp-t',
+        'd_row_pr'     => '--cop-d-rowp-r',
+        'd_row_pb'     => '--cop-d-rowp-b',
+        'd_row_pl'     => '--cop-d-rowp-l',
         'd_row_gap'    => '--cop-d-rowgap',
         'm_row_h'      => '--cop-m-rowh',
-        'm_row_pad'    => '--cop-m-rowpad',
+        'm_row_pt'     => '--cop-m-rowp-t',
+        'm_row_pr'     => '--cop-m-rowp-r',
+        'm_row_pb'     => '--cop-m-rowp-b',
+        'm_row_pl'     => '--cop-m-rowp-l',
         'm_row_gap'    => '--cop-m-rowgap',
         'd_head_pad_y' => '--cop-d-headpady',
         'd_head_pad_x' => '--cop-d-headpadx',
@@ -452,12 +595,14 @@ class CheckoutPage
         'd_t_h2'     => '--cop-d-th2',
         'd_t_label'  => '--cop-d-tlabel',
         'd_t_input'  => '--cop-d-tinput',
+        'd_t_ph'     => '--cop-d-tph',
         'd_t_trust'  => '--cop-d-ttrust',
         'm_t_title'  => '--cop-m-ttitle',
         'm_t_lead'   => '--cop-m-tlead',
         'm_t_h2'     => '--cop-m-th2',
         'm_t_label'  => '--cop-m-tlabel',
         'm_t_input'  => '--cop-m-tinput',
+        'm_t_ph'     => '--cop-m-tph',
         'm_t_trust'  => '--cop-m-ttrust',
         'addr_cue_size' => '--cop-cue-s',
         /*

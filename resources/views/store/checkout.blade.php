@@ -39,9 +39,18 @@
             {{ __('store.checkout.secure_badge') }}        </span>
     </div></header>
 
+    {{-- ONLY WHEN THERE IS SOMETHING TO SAY.
+         This band rendered on every load, errors or not, and its 16px of top
+         padding sat between the header and the page as permanently empty space
+         -- half of the "empty spaces on top and bottom" the owner reported,
+         and the half no slider could reach, because an empty div is not a
+         margin anybody thinks to look at. With it gone, the gap under the
+         header is Page padding - top on the Layout tab, which is a control. --}}
+    @if ($errors->any())
     <div class="co-notices" style="max-width:1040px;margin:0 auto;padding:16px 20px 0">
-        @if ($errors->any())<div class="co-note err">{{ $errors->first() }}</div>@endif
+        <div class="co-note err">{{ $errors->first() }}</div>
     </div>
+    @endif
 
     <form name="checkout" method="post" class="checkout woocommerce-checkout" action="{{ Url::to('/checkout/place') }}" enctype="multipart/form-data" id="kbbCheckoutForm">
         @csrf
@@ -158,7 +167,13 @@
 
 
                         <div class="co-note ok" id="kbbReturning" style="display:none"></div>
-                            <div class="kbb-wa"><p class="form-row form-row-wide" id="billing_kbb_whatsapp_field" data-priority="25"><span class="woocommerce-input-wrapper"><label class="checkbox " ><input type="checkbox" name="billing_kbb_whatsapp" id="billing_kbb_whatsapp" value="1" class="input-checkbox " @checked(old('billing_kbb_whatsapp', true)) /> {{ __('store.checkout.whatsapp_optin') }}&nbsp;<span class="optional">{{ __('store.checkout.optional_note') }}</span></label></span></p></div>
+@if ($kbbCoPage->get('optin_on'))
+                            {{-- UNTICKED unless the owner says otherwise. It shipped
+                                 pre-ticked, so every order carried a consent nobody
+                                 actively gave. old() still wins on a rejected submission,
+                                 so a shopper who ticked it does not lose the tick. --}}
+                            <div class="kbb-wa"><p class="form-row form-row-wide" id="billing_kbb_whatsapp_field" data-priority="25"><span class="woocommerce-input-wrapper"><label class="checkbox " ><input type="checkbox" name="billing_kbb_whatsapp" id="billing_kbb_whatsapp" value="1" class="input-checkbox " @checked(old('billing_kbb_whatsapp', $kbbCoPage->get('optin_checked'))) /> {{ __('store.checkout.whatsapp_optin') }}&nbsp;<span class="optional">{{ __('store.checkout.optional_note') }}</span></label></span></p></div>
+@endif
                     </div>
 
                     <!-- 2 · Shipping address -->
@@ -176,10 +191,15 @@
                         <div id="kbbDeliverySlot" class="kbb-delivery">
                             @include('partials.checkout.delivery-options')
                         </div>
+                            @if ($kbbCoPage->get('notes_on'))
+                            {{-- Not rendered rather than hidden, so nothing posts
+                                 customer_note while it is off. place() has always
+                                 treated it as nullable, so this needs no branch there. --}}
                             <x-checkout.field name="customer_note" :label="__('store.checkout.field_notes')" type="textarea" optional
                                 rowClass="form-row-wide kbb-note" rows="2" maxlength="600"
                                 :placeholder="__('store.checkout.field_notes_placeholder')"
                                 :value="old('customer_note')" />
+                            @endif
                             @if (app(\App\Services\SettingsService::class)->get('gift_enabled', '1'))
                             <p class="form-row form-row-wide kbb-gift" id="gift_field">
                                 @php

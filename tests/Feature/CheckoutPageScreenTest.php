@@ -106,7 +106,8 @@ it('hands the screen every field, grouped into the two tabs', function () {
         ->all();
 
     expect($rowFields('desktop_rows'))
-        ->toBe(['row_h', 'row_pad', 'row_gap', 'row_font', 'row_bold', 'qty_size'])
+        ->toBe(['row_h', 'row_pt', 'row_pr', 'row_pb', 'row_pl',
+            'row_gap', 'row_font', 'row_bold', 'qty_size'])
         ->and($rowFields('mobile_rows'))->toBe($rowFields('desktop_rows'));
 
     /*
@@ -118,7 +119,7 @@ it('hands the screen every field, grouped into the two tabs', function () {
         ->toBe(['head_pad_y', 'head_pad_x', 'head_max', 'head_logo', 'head_badge', 'head_sticky'])
         ->and($rowFields('mobile_head'))->toBe($rowFields('desktop_head'))
         ->and($rowFields('desktop_type'))
-        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_trust'])
+        ->toBe(['t_title', 't_lead', 't_h2', 't_label', 't_input', 't_ph', 't_trust'])
         ->and($rowFields('mobile_type'))->toBe($rowFields('desktop_type'));
 
     $keys = collect($body['tabs'])->flatMap(fn ($t) => collect($t['fields'])->pluck('key'))->all();

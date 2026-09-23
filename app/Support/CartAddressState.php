@@ -136,7 +136,47 @@ final class CartAddressState
      * current choice and the geo defaults the moment it opens, and three
      * fetches on a tap is three chances to show a half-drawn sheet.
      */
+    /**
+     * Where a GET's answer is kept, so one page render asks once.
+     *
+     * The checkout builds this payload TWICE — once for the address row in
+     * section 2, once for the sheet's seed — and it is not cheap: it reads the
+     * customer's rows and asks ShippingService which countries the shop
+     * actually covers. Measured, the second call put /checkout at 18 queries
+     * against a budget of 17, which StorefrontQueryBudgetTest caught on the
+     * commit that introduced it.
+     *
+     * ── WHY THIS IS SAFE, WHICH A MEMO IN THIS CLASS OTHERWISE WOULD NOT BE ──
+     *
+     * It lives on the REQUEST, so it cannot outlive one, and it is written and
+     * read only when the request method is SAFE. Every path that changes an
+     * address is a POST — the four endpoints on CartAddressController — and on
+     * a POST nothing is memoised and nothing is read, so the answer after a
+     * write is always freshly computed. A process-level static here would have
+     * the defect Setting::map() is documented for: correct under PHP-FPM,
+     * wrong in a queue worker and wrong in a test that writes then reads.
+     */
+    private const MEMO = 'kbb.cart_address_state';
+
     public static function all(Request $request): array
+    {
+        $safe = $request->isMethodSafe();
+
+        if ($safe && $request->attributes->has(self::MEMO)) {
+            return $request->attributes->get(self::MEMO);
+        }
+
+        $out = self::build($request);
+
+        if ($safe) {
+            $request->attributes->set(self::MEMO, $out);
+        }
+
+        return $out;
+    }
+
+    /** @return array<string, mixed> The payload itself; all() decides whether to keep it. */
+    private static function build(Request $request): array
     {
         /*
          * ADOPTION HAPPENS HERE, IN THE ONE READER, and that is the same

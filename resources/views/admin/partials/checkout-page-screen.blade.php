@@ -164,8 +164,10 @@
 .chv-sec > h6 em{flex:0 0 auto;width:calc(14px * var(--chv-th2,1));height:calc(14px * var(--chv-th2,1));
   border-radius:50%;background:#c13a5e;color:#fff;
   font-style:normal;font-size:calc(8px * var(--chv-th2,1));font-weight:800;display:grid;place-items:center}
+/* The mock's field text is a placeholder, so it takes BOTH factors -- the
+   field size and the placeholder share of it -- exactly as the page does. */
 .chv-fi{border:1px solid #ebe3e6;border-radius:6px;padding:5px 6px;
-  font-size:calc(9px * var(--chv-tinput,1));color:#9aa0aa;
+  font-size:calc(9px * var(--chv-tinput,1) * var(--chv-tph,1));color:#9aa0aa;
   background:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chv-lb{display:block;font-size:calc(7.5px * var(--chv-tlabel,1));font-weight:600;
   color:#6b7280;margin-bottom:2px}
@@ -199,7 +201,8 @@
    the same reason everything else in that frame is. Both are stated on the
    ruler under the mock so neither can be misread. */
 .chv-ci{display:flex;align-items:flex-start;gap:var(--chv-rowgap,11px);
-  padding:var(--chv-rowpad,10px) 0;border-bottom:1px solid #f0eaec}
+  padding:var(--chv-rowp-t,10px) var(--chv-rowp-r,0px) var(--chv-rowp-b,10px) var(--chv-rowp-l,0px);
+  border-bottom:1px solid #f0eaec}
 .chv-ci:first-child{padding-top:0}
 .chv-ci:last-child{border-bottom:0}
 .chv-ci .th{flex:0 0 auto;position:relative;width:var(--chv-rowh,54px);aspect-ratio:1;
@@ -309,6 +312,7 @@
   var tabs = null;        // GET /admin-api/checkout-page -> tabs
   var values = {};        // key -> current value, edited in place
   var mobileMax = 900;
+  var squeezeKeys = [];  // which controls "Squeeze everything" drives to their minimum
   var open = null;        // which tab is showing
   var banner = null;
   var busy = false;
@@ -409,6 +413,7 @@
 
       tabs = body.tabs || [];
       mobileMax = body.mobileMax || 900;
+      squeezeKeys = body.squeeze || [];
       values = {};
       tabs.forEach(function (t) {
         t.fields.forEach(function (f) { values[f.key] = f.value; });
@@ -516,9 +521,45 @@
       + '<button class="chp-btn is-primary" data-chp-save' + (busy ? ' disabled' : '') + '>'
       + (busy ? 'Saving…' : 'Save') + '</button>'
       + '<button class="chp-btn" data-chp-reload' + (busy ? ' disabled' : '') + '>Reload</button>'
-      + '</div></div>'
+      /* THE PRESETS WRITE THE SLIDERS AND NOTHING ELSE. They move the values
+         on screen; nothing is stored until Save, so both are undone by
+         Reload and either can be nudged afterwards. A stored "squeezed" mode
+         would leave every slider showing a number the page was not using. */
+      + '<button class="chp-btn" data-chp-squeeze' + (busy ? ' disabled' : '') + '>Squeeze everything</button>'
+      + '<button class="chp-btn" data-chp-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
+      + '</div>'
+      + '<p class="chp-help" style="margin-top:9px">Both presets move the sliders in front of you across '
+      + '<b>every tab</b>, on desktop and mobile. Nothing is stored until you press Save, and Reload puts '
+      + 'them back.</p>'
+      + '</div>'
       + previewHTML()
       + '</div>';
+  }
+
+  /* --------------------------------------------------------------- presets */
+  /*
+   * `min` drives the keys the server named to the bottom of their own range;
+   * `default` puts EVERY key back to the value the schema ships. The two are
+   * deliberately not symmetrical: squeezing is a look, applied to the controls
+   * that make a page denser, while "back to defaults" has to be able to undo
+   * anything at all or it is not a way out.
+   */
+  function preset(which) {
+    if (!tabs) return;
+
+    tabs.forEach(function (t) {
+      t.fields.forEach(function (f) {
+        if (which === 'default') { values[f.key] = f['default']; return; }
+        if (f.type !== 'range') return;
+        if (squeezeKeys.indexOf(f.key) === -1) return;
+        values[f.key] = Number((f.options || {}).min);
+      });
+    });
+
+    render();
+    say(which === 'min'
+      ? 'Squeezed. Nothing is saved until you press Save.'
+      : 'Back to the shipped values. Nothing is saved until you press Save.');
   }
 
   /* -------------------------------------------------------------- preview */
@@ -558,10 +599,22 @@
       + '<span class="chv-fg two" style="display:grid">'
       + '<span><b class="chv-lb">Phone</b><span class="chv-fi" style="display:block">+971 5x xxx xxxx</span></span>'
       + '<span><b class="chv-lb">Email address</b><span class="chv-fi" style="display:block">you@email.com</span></span>'
-      + '</span></div></div>'
+      + '</span>'
+      + (pvOn('optin_on')
+          ? '<span style="display:flex;gap:6px;align-items:center;margin-top:2px">'
+            + '<span style="flex:none;width:11px;height:11px;border-radius:3px;border:1.4px solid '
+            + (pvOn('optin_checked') ? '#c13a5e;background:#c13a5e' : '#cbd5e1') + '"></span>'
+            + '<span class="chv-lb" style="margin:0">Send me order updates and new offers</span></span>'
+          : '')
+      + '</div></div>'
       + '<div class="chv-sec"><h6><em>2</em>Shipping address</h6>' + pvAddress() + '</div>'
       + '<div class="chv-sec"><h6><em>3</em>Delivery</h6>'
-      + '<div class="chv-pick"><span>Standard</span><span>AED 20</span></div></div>'
+      + '<div class="chv-pick"><span>Standard</span><span>AED 20</span></div>'
+      + (pvOn('notes_on')
+          ? '<div style="margin-top:6px"><b class="chv-lb">Delivery notes</b>'
+            + '<span class="chv-fi" style="display:block">Delivery instructions, a landmark</span></div>'
+          : '')
+      + '</div>'
       + '<div class="chv-sec"><h6><em>4</em>Payment</h6>'
       + '<div class="chv-pick"><span>Cash on delivery</span><span>&#9673;</span></div></div>'
       + '</div>'
@@ -659,6 +712,7 @@
       + ';--chv-th2:' + (pvNum(p + 't_h2', 100) / 100)
       + ';--chv-tlabel:' + (pvNum(p + 't_label', 100) / 100)
       + ';--chv-tinput:' + (pvNum(p + 't_input', 100) / 100)
+      + ';--chv-tph:' + (pvNum(p + 't_ph', 100) / 100)
       + ';--chv-ttrust:' + (pvNum(p + 't_trust', 100) / 100)
       + ';--chv-cues:' + (pvNum('addr_cue_size', 100) / 100)
       /* Speed inverted into a duration, exactly as CheckoutPage::inverse()
@@ -691,7 +745,10 @@
       // sit inside the summary column, so a percentage resolves against THAT
       // and not against the page the rest of the mock is proportioned to.
       + ';--chv-rowh:' + pvNum('d_row_h', 54) + 'px'
-      + ';--chv-rowpad:' + pvNum('d_row_pad', 10) + 'px'
+      + ';--chv-rowp-t:' + pvNum('d_row_pt', 10) + 'px'
+      + ';--chv-rowp-r:' + pvNum('d_row_pr', 0) + 'px'
+      + ';--chv-rowp-b:' + pvNum('d_row_pb', 10) + 'px'
+      + ';--chv-rowp-l:' + pvNum('d_row_pl', 0) + 'px'
       + ';--chv-rowgap:' + pvNum('d_row_gap', 11) + 'px'
       + ';--chv-rowf:' + (pvNum('d_row_font', 100) / 100)
       + ';--chv-qtys:' + (pvNum('d_qty_size', 100) / 100)
@@ -725,7 +782,10 @@
       + ';--chv-secpad:' + pvPx('m_sec_pad', 16)
       + ';--chv-asidepad:' + pvPx('m_aside_pad', 14)
       + ';--chv-rowh:' + pvPx('m_row_h', 54)
-      + ';--chv-rowpad:' + pvPx('m_row_pad', 10)
+      + ';--chv-rowp-t:' + pvPx('m_row_pt', 10)
+      + ';--chv-rowp-r:' + pvPx('m_row_pr', 0)
+      + ';--chv-rowp-b:' + pvPx('m_row_pb', 10)
+      + ';--chv-rowp-l:' + pvPx('m_row_pl', 0)
       + ';--chv-rowgap:' + pvPx('m_row_gap', 11)
       + ';--chv-rowf:' + (pvNum('m_row_font', 100) / 100)
       + ';--chv-qtys:' + (pvNum('m_qty_size', 100) / 100)
@@ -809,6 +869,8 @@
     var tab = e.target.closest('[data-chp-tab]');
     if (tab) { open = tab.getAttribute('data-chp-tab'); render(); return; }
 
+    if (e.target.closest('[data-chp-squeeze]')) { preset('min'); return; }
+    if (e.target.closest('[data-chp-defaults]')) { preset('default'); return; }
     if (e.target.closest('[data-chp-save]')) { save(); return; }
     if (e.target.closest('[data-chp-reload]')) { load(); return; }
   });

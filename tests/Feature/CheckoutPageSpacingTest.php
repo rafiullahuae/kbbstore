@@ -95,10 +95,16 @@ it('states each default a second time as the stylesheet fallback', function () {
         '--cop-m-secpad' => 'm_sec_pad',
         '--cop-m-asidepad' => 'm_aside_pad',
         '--cop-d-rowh' => 'd_row_h',
-        '--cop-d-rowpad' => 'd_row_pad',
+        '--cop-d-rowp-t' => 'd_row_pt',
+        '--cop-d-rowp-r' => 'd_row_pr',
+        '--cop-d-rowp-b' => 'd_row_pb',
+        '--cop-d-rowp-l' => 'd_row_pl',
         '--cop-d-rowgap' => 'd_row_gap',
         '--cop-m-rowh' => 'm_row_h',
-        '--cop-m-rowpad' => 'm_row_pad',
+        '--cop-m-rowp-t' => 'm_row_pt',
+        '--cop-m-rowp-r' => 'm_row_pr',
+        '--cop-m-rowp-b' => 'm_row_pb',
+        '--cop-m-rowp-l' => 'm_row_pl',
         '--cop-m-rowgap' => 'm_row_gap',
         '--cop-d-headpady' => 'd_head_pad_y',
         '--cop-d-headpadx' => 'd_head_pad_x',
@@ -139,10 +145,10 @@ it('never hands the page a token the mobile query has to win back', function () 
 
     foreach ([
         '--cop-padx', '--cop-pady', '--cop-block', '--cop-secpad', '--cop-asidepad',
-        '--cop-rowh', '--cop-rowpad', '--cop-rowgap', '--cop-rowf', '--cop-qtys',
+        '--cop-rowh', '--cop-rowp-t', '--cop-rowp-r', '--cop-rowp-b', '--cop-rowp-l', '--cop-rowgap', '--cop-rowf', '--cop-qtys',
         '--cop-rowb', '--cop-rowpb',
         '--cop-headpady', '--cop-headpadx', '--cop-headmax', '--cop-headlogo', '--cop-headbadge',
-        '--cop-ttitle', '--cop-tlead', '--cop-th2', '--cop-tlabel', '--cop-tinput', '--cop-ttrust',
+        '--cop-ttitle', '--cop-tlead', '--cop-th2', '--cop-tlabel', '--cop-tinput', '--cop-tph', '--cop-ttrust',
     ] as $shared) {
         expect($vars)->not->toContain($shared.':');
     }
@@ -183,7 +189,10 @@ it('reassigns every shared token inside the mobile query', function () {
         '--cop-secpad:var(--cop-m-secpad,',
         '--cop-asidepad:var(--cop-m-asidepad,',
         '--cop-rowh:var(--cop-m-rowh,',
-        '--cop-rowpad:var(--cop-m-rowpad,',
+        '--cop-rowp-t:var(--cop-m-rowp-t,',
+        '--cop-rowp-r:var(--cop-m-rowp-r,',
+        '--cop-rowp-b:var(--cop-m-rowp-b,',
+        '--cop-rowp-l:var(--cop-m-rowp-l,',
         '--cop-rowgap:var(--cop-m-rowgap,',
         '--cop-rowf:var(--cop-m-rowf,',
         '--cop-qtys:var(--cop-m-qtys,',
@@ -199,6 +208,7 @@ it('reassigns every shared token inside the mobile query', function () {
         '--cop-th2:var(--cop-m-th2,',
         '--cop-tlabel:var(--cop-m-tlabel,',
         '--cop-tinput:var(--cop-m-tinput,',
+        '--cop-tph:var(--cop-m-tph,',
         '--cop-ttrust:var(--cop-m-ttrust,',
     ] as $line) {
         expect($mobile)->toContain($line);
@@ -253,6 +263,7 @@ it('offers spacing and nothing structural', function () {
         // section, and none of them is a layout.
         ->and(array_keys($types, 'bool', true))->toBe([
             'd_sticky', 'd_row_bold', 'm_row_bold', 'd_head_sticky', 'm_head_sticky',
+            'optin_on', 'optin_checked', 'notes_on',
             'addr_cue', 'addr_cue_icons', 'addr_cue_arrow', 'addr_cue_pulse', 'trust_tick',
         ]);
 });
@@ -289,7 +300,7 @@ it('turns one bold switch into the two weights the row actually uses', function 
 it('drives the summary line from the row tokens', function () {
     $css = copCss();
 
-    expect($css)->toContain('.kbb-checkout .ci{display:flex;gap:var(--cop-rowgap);padding:var(--cop-rowpad) 0')
+    expect($css)->toContain('.kbb-checkout .ci{display:flex;gap:var(--cop-rowgap);padding:var(--cop-rowp-t) var(--cop-rowp-r) var(--cop-rowp-b) var(--cop-rowp-l)')
         ->and($css)->toContain('.kbb-checkout .cth{width:var(--cop-rowh);height:var(--cop-rowh);')
         ->and($css)->toContain('.kbb-checkout .cinfo .n{font-size:calc(12px * var(--cop-rowf));font-weight:var(--cop-rowb)')
         ->and($css)->toContain('.kbb-checkout .cprice{font-size:calc(12.5px * var(--cop-rowf));font-weight:var(--cop-rowpb)')
@@ -469,4 +480,149 @@ it('hides the cue from a screen reader, which the row already tells in words', f
     // Three decorations between the prompt and the button are three
     // interruptions carrying nothing the sentence does not already say.
     expect(substr_count($partial, 'aria-hidden="true"'))->toBeGreaterThanOrEqual(4);
+});
+
+/* ------------------------------------------------------------------------
+ | 8. The round that came from a photograph of the sheet
+ |------------------------------------------------------------------------*/
+
+it('keeps the placeholder rules in the file whose markup needs them', function () {
+    /*
+     * THE DEFECT THIS PINS, reported with a screenshot: the address sheet
+     * opened and showed the line "Loading your addresses" as plain body text
+     * with no placeholder under it.
+     *
+     * The sheet's markup lives in partials/address-sheet.blade.php and is
+     * included by BOTH the cart page and the checkout. Its placeholder rules
+     * lived in store/cart-squeeze.blade.php — the squeezed cart page's own
+     * stylesheet — so `.cpg-sk`, `.cpg-skcard` and `.cpg-skline` had no rules
+     * anywhere else, and `.cpg-vh`, which is what hides a status message from
+     * the screen while leaving it for a screen reader, did not exist either.
+     * Hence a visible sentence and no bars.
+     */
+    $sheet = (string) file_get_contents(resource_path('views/partials/address-sheet.blade.php'));
+    $cart = (string) file_get_contents(resource_path('views/store/cart-squeeze.blade.php'));
+
+    foreach (['.cpg-sk{', '.cpg-skcard{', '.cpg-skline{', '.cpg-vh{'] as $rule) {
+        expect($sheet)->toContain($rule);
+        // And not in two places, which is how they would drift apart again.
+        expect($cart)->not->toContain($rule);
+    }
+
+    // Every width class the skeleton emits has a rule, or a bar renders at
+    // full width and the placeholder stops looking like a list.
+    foreach (['w40', 'w45', 'w55', 'w65', 'w70', 'w85', 'w90'] as $w) {
+        expect($sheet)->toContain('.cpg-skline.'.$w.'{');
+    }
+});
+// MUTATION: move any of those rules back to cart-squeeze. RED.
+
+it('hands the sheet its list with the page, so the first open needs no request', function () {
+    /*
+     * "i want that popup should open directly ... everything should
+     * immediately load in real time with no delays."
+     *
+     * GET /cart/address answers with exactly CartAddressState::all() — see
+     * CartAddressController::index(), which is one line — so rendering that
+     * into the page makes the first open instant and the request unnecessary.
+     * It is the same shopper's own addresses, in their own page, from the
+     * session the endpoint would have answered from.
+     */
+    $sheet = (string) file_get_contents(resource_path('views/partials/address-sheet.blade.php'));
+
+    expect($sheet)->toContain('$kbbSheetSeed = \App\Support\CartAddressState::all(request());')
+        ->and($sheet)->toContain('var SEED = @json($kbbSheetSeed);')
+        ->and($sheet)->toContain('var state = SEED || null;')
+        // The placeholder is kept for the case the seed cannot cover, so a
+        // stale page still has something to show rather than an empty sheet.
+        ->and($sheet)->toContain('if (state === null) {');
+});
+
+it('stops the site-wide 44px logo target inflating the checkout bar', function () {
+    /*
+     * kbb.css gives every `.logo` a 44px minimum touch target below 900px, for
+     * the storefront header. It also caught this bar: measured in Chromium at
+     * 390px the checkout header was 73px tall against 58 on a desktop —
+     * 14 + 44 + 14 — and no padding control could reach it, because the space
+     * was inside the logo. That is the "empty spaces on top and bottom".
+     */
+    expect(copCss())->toContain('.kbb-checkout .co-head .logo{min-height:0}');
+});
+
+it('draws the notices band only when there is a notice', function () {
+    // It rendered on every load, errors or not, and its 16px of top padding
+    // was permanently empty space between the header and the page.
+    $blade = (string) file_get_contents(resource_path('views/store/checkout.blade.php'));
+
+    $at = strpos($blade, 'class="co-notices"');
+    expect($at)->not->toBeFalse();
+
+    expect(substr($blade, max(0, (int) $at - 400), 400))->toContain('@if ($errors->any())');
+});
+
+it('gives the mobile header-width control a range a phone can use', function () {
+    /*
+     * It shipped at 880–1600px, which is wider than every phone, so the slider
+     * moved and the header did not — reported as "the width of header on
+     * checkout page not working properly". A band narrower than the screen is
+     * the only thing the control can do there.
+     */
+    expect(CheckoutPage::SCHEMA['m_head_max'][4]['min'])->toBeLessThan(360);
+});
+
+it('turns the two fields the owner asked to turn off, off', function () {
+    $c = cop()->all();
+
+    // The only two defaults in this schema that do not reproduce today's page,
+    // and both were asked for in as many words.
+    expect($c['notes_on'])->toBeFalse()
+        ->and($c['optin_checked'])->toBeFalse()
+        // The opt-in ROW still shows; it is the tick that is off.
+        ->and($c['optin_on'])->toBeTrue();
+
+    $blade = (string) file_get_contents(resource_path('views/store/checkout.blade.php'));
+
+    // Not rendered rather than hidden: nothing posts customer_note while the
+    // box is off, so place() needs no branch for it.
+    expect($blade)->toContain("@if (\$kbbCoPage->get('notes_on'))")
+        ->and($blade)->toContain("old('billing_kbb_whatsapp', \$kbbCoPage->get('optin_checked'))")
+        ->and($blade)->not->toContain("old('billing_kbb_whatsapp', true)");
+});
+
+it('names a squeeze preset that is a list of sliders, not a mode', function () {
+    /*
+     * A stored "squeezed" flag overriding the sliders would leave every slider
+     * showing a number the page was not using — the screen would lie, and the
+     * owner would drag one and watch nothing move. The preset writes the
+     * sliders instead, and Save stores what is on the screen.
+     */
+    expect(CheckoutPage::SQUEEZE)->not->toBeEmpty();
+
+    // Every key it names exists, and every one of them is a slider — a preset
+    // that flipped a switch would be a second thing happening under one button.
+    foreach (CheckoutPage::SQUEEZE as $key) {
+        expect(CheckoutPage::SCHEMA)->toHaveKey($key);
+        expect(CheckoutPage::SCHEMA[$key][0])->toBe('range');
+    }
+
+    // Both surfaces, because the owner asked for an overall one.
+    $sides = array_values(array_unique(array_map(fn ($k) => substr($k, 0, 2), CheckoutPage::SQUEEZE)));
+    expect($sides)->toEqualCanonicalizing(['d_', 'm_']);
+
+    // And NOT the page or header width: squeezing a layout does not mean
+    // narrowing the page it sits on.
+    expect(CheckoutPage::SQUEEZE)->not->toContain('d_max')
+        ->and(CheckoutPage::SQUEEZE)->not->toContain('d_head_max')
+        ->and(CheckoutPage::SQUEEZE)->not->toContain('m_head_max');
+});
+
+it('sizes the placeholder against the field rather than in pixels of its own', function () {
+    /*
+     * `em`, so the two sliders compound instead of fighting and there is no
+     * third number to keep in step. And it is the one text on a phone that can
+     * safely go small: iOS decides whether to zoom from the INPUT's font-size,
+     * never the placeholder's.
+     */
+    expect(copCss())->toContain('::placeholder{font-size:calc(1em * var(--cop-tph))}')
+        ->and(CheckoutPage::SCHEMA['m_t_ph'][4]['min'])->toBeLessThan(100);
 });
