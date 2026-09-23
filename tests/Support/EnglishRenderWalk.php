@@ -339,7 +339,20 @@ final class EnglishRenderWalk
      * the walk moved a byte. Read before advancing, because a base commit
      * moved forward over an unread diff is a guard switched off.
      */
-    public const BASE_COMMIT = '1ed4cee638e45b4d674d4485f80782762399ea3a';
+    /*
+     * MOVED FORWARD for the slim footer's content width, 1040 -> 1240.
+     *
+     * Not a tidy-up: the owner chose "Spread to both edges" for the desktop
+     * bar, and at 1040 the content did not fit on one line -- measured, the
+     * bar was 82.3px tall with the links and the arrow wrapped onto a second
+     * row. At 1240 it is 55px and one line, which is the shape he picked.
+     *
+     * The diff this test printed was that and nothing else -- ONE page,
+     * (with a basket) /checkout, at byte 8759, inside the footer's own
+     * `--sf-max` fallback. The cart page does not carry this footer (cart_on
+     * ships off), and no other page in the walk moved a byte.
+     */
+    public const BASE_COMMIT = '1e8cf902813bd9f22f64dc09c7da14cf22e4f954';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
