@@ -43,7 +43,10 @@ class UpdateApiController extends Controller
 
         return response()->json([
             'version' => \App\Services\Update\InstalledVersion::get(),
+            /* Kept exactly as it was: the panel's JS reads it and this patch
+             * changes no existing field. `signing` is the new, fuller answer. */
             'signed' => (string) config('kbb.update_secret', '') !== '',
+            'signing' => \App\Services\Update\SigningMode::describe(),
             'admin_path' => AdminPathService::current(),
             'admin_path_locked' => AdminPathService::isLockedByEnv(),
             'pending' => $pending,

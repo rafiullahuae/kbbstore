@@ -39,6 +39,7 @@ class UpdateController extends Controller
             'releases' => UpdateRelease::latest()->limit(20)->get(),
             'currentVersion' => \App\Services\Update\InstalledVersion::get(),
             'signedMode' => (string) config('kbb.update_secret', '') !== '',
+            'signing' => \App\Services\Update\SigningMode::describe(),
             'pending' => $this->currentPending($request),
         ]);
     }

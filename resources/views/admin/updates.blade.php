@@ -57,11 +57,24 @@ code{background:#0f1720;padding:1px 5px;border-radius:4px;font-size:12px}
     <h1>Updates</h1>
     <p class="muted">Current version <b>{{ $currentVersion }}</b></p>
 
-    @if (! $signedMode)
+    <p class="muted">Package signing: <b>{{ $signing['label'] }}</b>@if ($signing['keys']) · trusted key {{ implode(', ', $signing['fingerprints']) }}@endif</p>
+
+    @if ($signing['emergency'])
         <div class="warn">
-            <b>Signed updates are off.</b> Any zip that passes the file checks will install.
-            Set <code>KBB_UPDATE_SECRET</code> in <code>.env</code> so only packages built for
-            this site can be applied.
+            <b>Emergency mode.</b> <code>storage/app/{{ \App\Services\Update\SigningMode::HATCH_FILE }}</code>
+            exists, so unsigned packages are accepted whatever this site is configured to require.
+            Delete that file as soon as the package that needed it has been applied.
+        </div>
+    @elseif ($signing['mode'] !== 'required' && ! $signedMode)
+        <div class="warn">
+            <b>Unsigned packages are accepted.</b> Any zip that passes the file checks will install.
+            @if ($signing['keys'])
+                A package that <em>is</em> signed is verified against this site's trusted key and refused if it
+                does not match; a package with no signature is still accepted. Set
+                <code>KBB_UPDATE_SIGNING=required</code> once a signed package has applied successfully.
+            @else
+                This site holds no signing key yet. See <code>docs/PACKAGE-SIGNING.md</code>.
+            @endif
         </div>
     @endif
 

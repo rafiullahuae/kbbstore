@@ -3024,7 +3024,12 @@ function paintUpdates(msg, err){
 
   $('#content').innerHTML = `<div class="wrap">
     <div class="page-head"><h2>Core Updates</h2>
-      <p>Version <b>${d.version}</b>${d.signed?' · signed packages only':' · <span style="color:#b45309">unsigned packages accepted</span>'}</p></div>
+      <p>Version <b>${d.version}</b> · ${d.signing?.emergency
+          ? `<span style="color:#b91c1c;font-weight:700">${escHtml(d.signing.label)}</span>`
+          : (d.signing?.mode === 'required' || d.signed)
+            ? escHtml(d.signing?.label || 'signed packages only')
+            : `<span style="color:#b45309">${escHtml(d.signing?.label || 'unsigned packages accepted')}</span>`}${
+        d.signing?.keys ? ` <span class="muted" style="font-size:12px">· trusted key ${escHtml((d.signing.fingerprints||[]).join(', '))}</span>` : ''}</p></div>
     ${banner}${errors}${upload}${history}${restore}${path}
   </div>`;
 }

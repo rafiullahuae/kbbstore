@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Services\Update\PackageSignature;
+use App\Services\Update\SigningKeyFile;
 use App\Services\Update\UpdateGuard;
 use Illuminate\Console\Command;
 use ZipArchive;
@@ -33,7 +35,9 @@ class BuildPackage extends Command
         {--file=* : Include this path explicitly; repeatable}
         {--ref=HEAD : The git ref to take file contents from}
         {--notes= : Release notes stored in update.json}
-        {--out=storage/app/packages : Directory to write the zip into}';
+        {--out=storage/app/packages : Directory to write the zip into}
+        {--key= : Ed25519 private key file to sign with (default: $KBB_UPDATE_SIGNING_KEY, then ~/.config/kbb/package-signing.key)}
+        {--unsigned : Build without a signature. The escape hatch, not a convenience — see docs/PACKAGE-SIGNING.md §6}';
 
     protected $description = 'Build a Core Updates zip from committed git history';
 
@@ -145,11 +149,11 @@ class BuildPackage extends Command
         }
 
         /* Shape fixed by UpdatePackage: `files` is a path => sha256 map, not a
-         * list, and `signature` must be present even when empty -- an unsigned
-         * package is accepted only while KBB_UPDATE_SECRET is unset. Keys are
-         * kept to exactly these six because the HMAC, when signing is turned
-         * back on, is computed over this payload with `signature` removed; an
-         * extra key here would change the digest and reject every package. */
+         * list, and `signature` must be present even when empty. Every OTHER
+         * key is inside the signed payload -- the signature is computed over
+         * this manifest with `signature` removed -- so a key added here is a
+         * key that is signed and verified, and a key added on the server side
+         * only is a key an attacker can set freely. Add to both or to neither. */
         $hasMigrations = false;
         foreach (array_keys($manifest) as $path) {
             if (str_starts_with($path, 'database/migrations/')) {
@@ -177,7 +181,14 @@ class BuildPackage extends Command
          */
         $this->warnIfNoFreshMigration($manifest, $outDir, $version);
 
-        $zip->addFromString('update.json', (string) json_encode([
+        /* Assembled first, signed second, written third. The signature covers
+         * the other five keys and cannot cover itself, so the manifest has to
+         * exist in full before there is anything to sign — and `signature` is
+         * added to it afterwards rather than being present-but-empty while the
+         * payload is computed, because an empty-string key IN the payload and a
+         * missing key are different bytes and only one of them is what the
+         * server will canonicalise. */
+        $manifestDocument = [
             'name' => 'KBB Storefront',
             'version' => $version,
             'requires_php' => '8.2',
@@ -194,14 +205,34 @@ class BuildPackage extends Command
              * that adds it shipped in 2.60.85, arrived on the server, and was
              * never executed -- and why two migration-only packages sent to
              * fix it changed nothing at all.
+             *
+             * It is inside the signed payload, which is not incidental: a flag
+             * that decides whether migrations run at all must not be editable
+             * in a package without invalidating its signature.
              */
             'migrations' => $hasMigrations,
-            'signature' => '',
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        ];
+
+        $signature = $this->signature($manifestDocument);
+
+        if ($signature === false) {
+            $zip->close();
+            @unlink($zipPath);
+
+            return self::FAILURE;
+        }
+
+        $manifestDocument['signature'] = $signature;
+
+        $zip->addFromString('update.json', (string) json_encode(
+            $manifestDocument,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+        ));
 
         $zip->close();
 
         $this->verify($zipPath, $manifest);
+        $this->verifySignature($zipPath);
 
         $this->newLine();
         $this->info("Built {$zipPath}");
@@ -211,6 +242,121 @@ class BuildPackage extends Command
         }
 
         return self::SUCCESS;
+    }
+
+
+    /**
+     * Sign the manifest, or return the empty string when this build is
+     * deliberately unsigned. False means stop: the operator asked for a signed
+     * build and it could not be produced, and a package that quietly ships
+     * unsigned in that case is the exact outcome this work exists to end.
+     *
+     * NOT SIGNING IS LOUD. For the whole life of this project
+     * `'signature' => ''` was written unconditionally, with no output saying
+     * so, which is why nobody noticed that no package had ever been signed. An
+     * unsigned build now says it is unsigned, every time, on its own line.
+     *
+     * @return string|false
+     */
+    private function signature(array $manifest)
+    {
+        if ($this->option('unsigned')) {
+            $this->newLine();
+            $this->warn('UNSIGNED BUILD. This package carries no signature.');
+            $this->line('  A shop set to `required` will refuse it. That is the point of --unsigned: it is');
+            $this->line('  the way back in for a shop whose trusted key is wrong or whose key is lost, and it');
+            $this->line('  needs storage/app/'.\App\Services\Update\SigningMode::HATCH_FILE.' on that shop first.');
+
+            return '';
+        }
+
+        $keyPath = SigningKeyFile::resolve((string) $this->option('key') ?: null);
+
+        if ($keyPath === null) {
+            /* Not an error. This is the state every build was in before today,
+             * and a lane with no key must still be able to produce a package --
+             * `permissive` on the server accepts it. But it says so. */
+            $this->newLine();
+            $this->warn('No signing key found, so this package is UNSIGNED.');
+            $this->line('  Looked at: --key, $KBB_UPDATE_SIGNING_KEY, '.SigningKeyFile::defaultPath());
+            $this->line('  Make one with `php artisan kbb:signing-key` — on the build machine only.');
+
+            return '';
+        }
+
+        try {
+            $secret = SigningKeyFile::read($keyPath);
+            $signature = PackageSignature::sign($manifest, $secret);
+            $public = sodium_crypto_sign_publickey_from_secretkey($secret);
+            sodium_memzero($secret);
+        } catch (\Throwable $e) {
+            $this->error('Could not sign this package: '.$e->getMessage());
+
+            return false;
+        }
+
+        $this->line('  signed with '.$keyPath);
+        $this->line('  public key  '.base64_encode($public));
+        $this->line('  fingerprint '.PackageSignature::fingerprint($public)
+            .'  — this must be one of the keys the shop lists on Store → Core Updates');
+
+        return $signature;
+    }
+
+    /**
+     * Read update.json back out of the finished zip and verify its signature
+     * the way the SERVER will, from the decoded JSON rather than from the array
+     * in memory.
+     *
+     * THIS IS THE MOST VALUABLE CHECK IN THE FILE and it is three lines of
+     * work. The failure mode of a signing scheme is almost never cryptographic;
+     * it is the builder and the verifier canonicalising differently, and the
+     * symptom is a fleet of shops refusing every package — discovered on the
+     * shop, during an incident, by the one person who cannot get a fix in. A
+     * round trip through json_encode/json_decode here catches that on the build
+     * machine, before the zip exists for anyone to apply.
+     *
+     * It verifies with the public key DERIVED FROM THE SIGNING KEY, not with
+     * config: this asks "is this signature valid over these bytes", which is
+     * the builder's question. Whether the shop trusts that key is the shop's
+     * question, and the fingerprint printed above is how the two are compared.
+     */
+    private function verifySignature(string $zipPath): void
+    {
+        $zip = new ZipArchive();
+
+        if ($zip->open($zipPath) !== true) {
+            return;
+        }
+
+        $manifest = json_decode((string) $zip->getFromName('update.json'), true);
+        $zip->close();
+
+        if (! is_array($manifest)) {
+            throw new \RuntimeException('update.json is not readable back out of the package just built.');
+        }
+
+        $signature = (string) ($manifest['signature'] ?? '');
+
+        if ($signature === '') {
+            $this->line('  unsigned — nothing to verify');
+
+            return;
+        }
+
+        $keyPath = SigningKeyFile::resolve((string) $this->option('key') ?: null);
+        $public = sodium_crypto_sign_publickey_from_secretkey(SigningKeyFile::read((string) $keyPath));
+
+        if (! PackageSignature::verify($manifest, $signature, [$public])) {
+            throw new \RuntimeException(
+                'The signature this build just wrote does not verify against the manifest as the server will read '
+                .'it. Do not ship this package: every shop would refuse it. The two sides are canonicalising '
+                .'differently — PackageSignature::canonical() is the only place that decides, and both sides must '
+                .'call it.'
+            );
+        }
+
+        $this->line('  signature verified against the manifest as the server reads it');
     }
 
     /** @return list<string> */

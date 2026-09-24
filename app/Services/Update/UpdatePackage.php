@@ -267,37 +267,108 @@ final class UpdatePackage
     }
 
     /**
-     * Optional HMAC signature.
+     * The package must have come from the build machine.
      *
-     * When KBB_UPDATE_SECRET is set, only packages signed with that secret are
-     * accepted. This matters more than it might seem: it means that even if
-     * someone gets hold of an admin password, they still cannot push arbitrary
-     * PHP onto the server through this screen.
+     * ED25519 IS THE SCHEME. A `signature` beginning `ed25519:` is verified
+     * against the public keys this shop ships, and only a signature this shop
+     * can check is a signature it accepts. The private half that made it lives
+     * on the build machine and has never been in this repository, in a package
+     * or in a .env file — which is the whole point of replacing the HMAC, and
+     * is set out in docs/PACKAGE-SIGNING.md §3.
+     *
+     * THE HMAC IT REPLACES was symmetric: verifying a package needed the same
+     * KBB_UPDATE_SECRET that signs one, so every customer install would hold,
+     * in a file its owner can read, the key to forge a package this updater
+     * accepts as genuine. It is kept below for one thing only — a shop that
+     * already has the secret set keeps behaving exactly as it did today, rather
+     * than silently loosening the day this lands — and it is on its way out.
+     * Its branch is unreachable on every install that never set the secret,
+     * which is all of them.
+     *
+     * WHAT THIS DOES NOT DO. It proves ORIGIN, not CORRECTNESS. Every package
+     * involved in the 24 September 2026 outage would have been signed by this
+     * key and applied; checkMigrationsAreDeclared() and checkClassDependencies()
+     * are what stand between the shop and that. A signature only means nobody
+     * but the build machine could have produced the bytes.
+     *
+     * THE CHAIN TO THE FILE BYTES runs through checkChecksums(), which must stay
+     * in verify() below this: the signature binds the manifest, the manifest
+     * binds each file by SHA-256, and checkChecksums() binds the bytes on disk
+     * to that map in both directions. See PackageSignature's docblock, and
+     * `PackageSigningTest` which pins every link.
      */
     private function checkSignature(): bool
     {
-        $secret = (string) config('kbb.update_secret', '');
+        $signature = trim((string) ($this->manifest['signature'] ?? ''));
+        $legacySecret = SigningMode::legacySecret();
 
-        if ($secret === '') {
-            return true;   // unsigned mode; the UI warns about this
+        if (PackageSignature::looksEd25519($signature)) {
+            $keys = SigningMode::trustedKeys();
+
+            if ($keys === []) {
+                $this->errors[] = 'This package is signed, but this site holds no public key to check it with. '
+                    .'Add the build machine\'s public key to config/kbb.php (update_public_keys) and apply that '
+                    .'package first.';
+
+                return false;
+            }
+
+            if (! PackageSignature::verify($this->manifest, $signature, $keys)) {
+                $this->errors[] = 'Signature does not match. This package was not produced by the build machine '
+                    .'this site trusts, or it has been altered since it was built. Nothing has been changed.';
+
+                return false;
+            }
+
+            return true;
         }
 
-        $signature = (string) ($this->manifest['signature'] ?? '');
+        if ($legacySecret !== '') {
+            /* Deprecated, and unchanged on purpose: a shop with the shared
+             * secret set behaves today exactly as it did before this patch. */
+            if ($signature === '') {
+                $this->errors[] = 'This package is unsigned, but this site only accepts signed updates.';
 
-        if ($signature === '') {
-            $this->errors[] = 'This package is unsigned, but this site only accepts signed updates.';
+                return false;
+            }
+
+            /* The ORIGINAL canonicalisation, character for character, and not
+             * PackageSignature::canonical() — which sorts recursively and would
+             * therefore compute a different digest over the same manifest. A
+             * retiring scheme must verify exactly what it verified yesterday or
+             * it is not a compatibility path, it is a second outage. */
+            $payload = $this->manifest;
+            unset($payload['signature']);
+            ksort($payload);
+
+            $expected = hash_hmac('sha256', (string) json_encode($payload, JSON_UNESCAPED_SLASHES), $legacySecret);
+
+            if (! hash_equals($expected, $signature)) {
+                $this->errors[] = 'Signature does not match. This package was not produced for this site.';
+
+                return false;
+            }
+
+            return true;
+        }
+
+        if ($signature !== '') {
+            /* A signature in a form this server cannot check is refused, never
+             * ignored. Accepting one would let a package carry a field that
+             * looks like proof to anybody reading update.json and means
+             * nothing to the code — which is the precise shape of security
+             * theatre this patch exists to remove. */
+            $this->errors[] = 'This package carries a signature in a form this site does not recognise. '
+                .'Rebuild it with `php artisan kbb:package`.';
 
             return false;
         }
 
-        $payload = $this->manifest;
-        unset($payload['signature']);
-        ksort($payload);
-
-        $expected = hash_hmac('sha256', json_encode($payload, JSON_UNESCAPED_SLASHES), $secret);
-
-        if (! hash_equals($expected, $signature)) {
-            $this->errors[] = 'Signature does not match. This package was not produced for this site.';
+        if (SigningMode::current() === SigningMode::REQUIRED) {
+            $this->errors[] = 'This package is unsigned and this site is set to accept signed packages only. '
+                .'Rebuild it on the build machine so it is signed. If you cannot — the signing key is lost, or '
+                .'the key this site trusts is wrong — create an empty file at storage/app/'
+                .SigningMode::HATCH_FILE.' over SFTP or SSH and this site will accept an unsigned package again.';
 
             return false;
         }
