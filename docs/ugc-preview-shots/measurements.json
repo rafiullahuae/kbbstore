@@ -1,0 +1,37 @@
+[
+  {
+    "at": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "390 RTL",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "1280 RTL",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "invariant": "fast full-page scroll at 390px",
+    "samples": 69,
+    "maxDecoding": 1,
+    "maxMountedVideoElements": 1,
+    "pageHeight": 15160
+  }
+]
