@@ -27,10 +27,18 @@ final class UpdatePackage
 
     public array $errors = [];
 
+    /**
+     * $appRoot is where the check for "is this class already on the server?"
+     * looks. Optional and last so every existing construction site is
+     * unchanged; it defaults to this application's own root, which is what the
+     * updater always wants, and exists at all so a test can point the check at
+     * a directory it controls.
+     */
     public function __construct(
         private string $zipPath,
         private string $scratchDir,
         private UpdateGuard $guard,
+        private ?string $appRoot = null,
     ) {}
 
     /** The uploaded package's own path, needed to archive it after a
@@ -49,7 +57,52 @@ final class UpdatePackage
             && $this->collectFiles()
             && $this->checkPaths()
             && $this->checkChecksums()
-            && $this->checkMigrationsAreDeclared();
+            && $this->checkMigrationsAreDeclared()
+            && $this->checkClassDependencies();
+    }
+
+    /**
+     * A package must not install code whose classes it does not carry.
+     *
+     * THE FAILURE THIS EXISTS FOR, 24 September 2026. 2.60.260 shipped three
+     * Blade templates that resolve `App\Services\VariantPricing`. The class
+     * shipped in 2.60.259, which had not been applied. The callers landed
+     * without the callee and every page rendering one of those templates fatal
+     * errored, while the package reported "applied" -- because until now
+     * nothing in the updater had ever read a packaged file's contents.
+     *
+     * The scan behind this is deliberately narrow and says so at length in its
+     * own docblock: `use` statements and fully qualified `App\...` names, no
+     * execution, no dynamic resolution, no check that a method exists. It
+     * proves only that every `App\` class a packaged file NAMES will be
+     * present when that file runs. That is a smaller claim than "this package
+     * works" and it is the exact claim 2.60.260 violated.
+     *
+     * REFUSED RATHER THAN WARNED, for the same reason a package with
+     * undeclared migrations is refused: the alternative is a warning on a
+     * screen during an incident, which is a warning nobody reads. The cost of
+     * a false refusal is one rebuild against the right tree; the cost of a
+     * false acceptance is the storefront.
+     */
+    private function checkClassDependencies(): bool
+    {
+        $result = (new ClassDependencyScan($this->appRoot ?? base_path()))->run($this->files);
+
+        if ($result['missing'] === []) {
+            return true;
+        }
+
+        foreach ($result['missing'] as $gap) {
+            $this->errors[] = sprintf(
+                '%s references %s, which is neither in this package nor installed on this server. '
+                .'It was probably built in an earlier package that has not been applied. Rebuild with '
+                .'`php artisan kbb:package <version> --since=<the last APPLIED release>`.',
+                $gap['referenced_by'],
+                $gap['class'],
+            );
+        }
+
+        return false;
     }
 
     /**

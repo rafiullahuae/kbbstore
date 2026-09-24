@@ -1,11 +1,60 @@
-UNZIP THIS INTO:  public_html/kbb-upgrade/
+THE FILES IN THIS FOLDER GO IN THE LIVE WEB ROOT.
 
-One file. Nothing to edit — the security token is already set.
+On the live shop (extrabeauty.ae, Cloudways) that is  public_html/ .
+They CANNOT travel in an update package — BuildPackage excludes this whole
+folder and UpdateGuard refuses to write kbb-recover.php at all, on purpose:
+a bad update must not be able to damage its own escape route. Upload them
+over SSH/SFTP, or not at all.
 
-EMERGENCY RECOVERY URL (save this somewhere safe):
 
-https://easywebsol.com/kbb-upgrade/kbb-recover.php?token=b2708bbeb964a31445b33634e3916b3875eba7a792094c23
+kbb-recover.php  — restores the files from an update backup. Does not boot
+                   Laravel, so it still works when the application will not.
 
-Use it if an update ever breaks the site. It does not need Laravel to
-work, so it still runs when nothing else does. It lists every backup;
-add &restore=<id> to undo one.
+    From the shell (Cloudways: Servers -> Launch SSH Terminal):
+
+        cd <web root>
+        php kbb-recover.php              # list the backups
+        php kbb-recover.php <backup-id>  # roll that update back
+        php kbb-recover.php --status     # is the web door open?
+
+    Nothing to edit and no token needed. Holding the SSH session already
+    means holding the server's credentials.
+
+    OVER THE WEB it is closed until you open it. Put a long random string in
+    the application's .env:
+
+        KBB_RECOVER_TOKEN=<at least 24 characters>
+
+    then  https://extrabeauty.ae/kbb-recover.php?token=THAT  works. Leave it
+    unset and that URL answers 404 — no message, no hint. Worth setting in
+    advance: the point of this file is to be armed BEFORE you need it.
+
+
+kbb-doctor.php   — a diagnostic report: environment, recently changed files,
+                   database state, log tails, the errors Laravel recorded,
+                   this folder, and the update backups.
+
+        php kbb-doctor.php
+        php kbb-doctor.php --caches      # clear compiled config/routes/views
+        php kbb-doctor.php --up          # lift maintenance mode
+
+    COMMAND LINE ONLY. Over the web it answers 404, always.
+
+    !! THE COPY CURRENTLY ON THE LIVE SERVER IS THE OLD ONE AND IT IS OPEN.
+       Its token was the placeholder string, that placeholder was committed
+       to the repository, and the file's own docblock published the full URL
+       with the token in it. Anyone who has seen that file can read the live
+       shop's log tails and stack traces, enumerate its tables, list this
+       folder and clear its caches.
+
+       Fix it over SSH, now, one of these two:
+
+           rm public_html/kbb-doctor.php          # recommended
+           # or upload this version over the top of it
+
+       No package can do it for you.
+
+
+The old READ-ME named  easywebsol.com/kbb-upgrade/  and a recovery token in
+plain text. That was the previous Hostinger box and the token is dead. The
+live layout is in docs/CUTOVER-EXTRABEAUTY.md.
