@@ -85,8 +85,7 @@
       return '<li style="margin-top:5px">' + esc(m.what) + ' · ' + tail + '</li>';
     }).join('');
 
-    return '<div class="card pad" id="suBanner" style="margin-bottom:16px;border-color:#f0d9a2;background:#fffaf0">'
-      + '<b style="font-size:14px;color:#7a4b07">This shop is being served from a different address</b>'
+    return '<b style="font-size:14px;color:#7a4b07">This shop is being served from a different address</b>'
       + '<p style="font-size:12.5px;color:#7a4b07;margin:6px 0 0;max-width:720px;line-height:1.6">'
       + 'You are looking at it on <code style="font-family:var(--mono)">' + esc(s.current) + '</code>, '
       + 'but it is configured as <code style="font-family:var(--mono)">' + esc(s.configured) + '</code>.<br>'
@@ -103,8 +102,7 @@
       + '<p style="font-size:11px;color:#7a4b07;margin:8px 0 0;max-width:720px">'
       + 'This writes <code style="font-family:var(--mono)">APP_URL</code> into '
       + '<code style="font-family:var(--mono)">.env</code> and clears the compiled caches so it is actually read. '
-      + 'Nothing else is changed, and the shop does not restart.</p>'
-      + '</div>';
+      + 'Nothing else is changed, and the shop does not restart.</p>';
   }
 
   /*
@@ -116,13 +114,33 @@
    * added. A confirmation that disappears with the thing it is confirming is
    * indistinguishable from a button that did nothing.
    */
-  function doneHtml(s){
-    return '<div class="card pad" id="suBanner" style="margin-bottom:16px;border-color:#cfe9db;background:#f0f9f4">'
-      + '<b style="font-size:14px;color:#1f7d52">' + esc(msg) + '</b>'
+  function doneHtml(){
+    return '<b style="font-size:14px;color:#1f7d52">' + esc(msg) + '</b>'
       + '<p style="font-size:12px;color:#1f7d52;margin:6px 0 0;max-width:720px;line-height:1.6">'
       + 'The compiled configuration has been cleared, so this is live now &mdash; no restart. '
       + 'The list above still applies: the webhook addresses at your payment providers are set in '
-      + 'their dashboards, not here.</p></div>';
+      + 'their dashboards, not here.</p>';
+  }
+
+  /*
+   * ONE ELEMENT CARRIES THE ID, AND THE TWO STATES ARE ONLY ITS CONTENTS.
+   *
+   * The warning and the confirmation began as two functions, each emitting its
+   * own card with the same id on it. They can never both be on the page --
+   * draw() picks one -- and AdminNavAndIdsTest failed anyway, because it reads
+   * the SOURCE and counts literal ids. It was right to. A second copy of that
+   * attribute in this file is one careless edit away from being a real
+   * duplicate, and then getElementById hands the wrong element to the button
+   * handler. So the card is written once, here, and the two states supply only
+   * what goes inside it.
+   */
+  function shell(kind, s){
+    var warn = kind === 'warn';
+
+    return '<div class="card pad" id="suBanner" style="margin-bottom:16px;border-color:'
+      + (warn ? '#f0d9a2;background:#fffaf0' : '#cfe9db;background:#f0f9f4') + '">'
+      + (warn ? html(s) : doneHtml())
+      + '</div>';
   }
 
   function draw(){
@@ -130,7 +148,11 @@
     if (!wrap) return;
 
     var existing = document.getElementById('suBanner');
-    var markup = (state && state.mismatch) ? html(state) : (msg ? doneHtml(state) : null);
+    var mismatch = !!(state && state.mismatch);
+    var markup = null;
+
+    if (mismatch) { markup = shell('warn', state); }
+    else if (msg) { markup = shell('done', state); }
 
     if (markup === null) { if (existing) existing.remove(); return; }
 
