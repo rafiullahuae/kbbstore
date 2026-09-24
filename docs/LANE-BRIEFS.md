@@ -324,3 +324,77 @@ One PR body each, carrying: the picture at 390 and 1280, the measured numbers,
 the admin path in words, the test that goes red without the fix and the mutation
 that proves it asserts something, and one plain line on anything the lane found
 and did **not** fix. That last line is the one the owner reads first.
+
+---
+
+# Round 2 — what landed, and what it left the owner
+
+Six lanes merged into `claude/kind-mayer-rpqesv` with zero conflicts. Recorded
+here rather than in `KBB-Master-Plan.md` because the plan is merged separately;
+this is the integrator's working note.
+
+| Lane | Landed | The admin path |
+|---|---|---|
+| **A** | Address decisions the owner can actually answer; article `<a href>` files migrated like `<img src>`; the two settings-held images that were still hot-linked to the old host | `Store → Import → Addresses & pictures → Old addresses` |
+| **D** | The category archive's own 301 now names the canonical nested path; a redirect row may no longer point at itself, refused at all three writers | `Store → SEO & Meta → Redirects & 404s` |
+| **E** | Brand, category and article SEO titles stopped deleting `%%title%%`; the three crawl files became publicly cacheable; a variable product's tile prints its price range instead of AED 0 | `Catalog → Brands → SEO`, `Store → Catalog → Categories → SEO`, `Content → Journal → (article) → SEO` |
+| **F** | The RTL cart badge (an inline `style` attribute was beating the stylesheet in both directions); order lines snapshot the customer's language beside the operator's | `Orders → (an order) → Invoice` / `→ Packing slip` |
+| **S** | `LocalBusiness` address and opening hours merged into the existing Organization node; an audit card for products whose photographs carry no alt text; concern-led collections | `Store → Business Details → Business`, `Store → SEO & Meta → SEO Audit` |
+| **S²** | Research only — and it corrected three claims from its own round 1 | — |
+
+## Two route changes, which are the integrator's and were made in one commit
+
+1. The three crawl files moved into
+   `Route::withoutMiddleware(SeoFilesController::STATELESS)`. Measured before:
+   `Cache-Control: no-cache, private` and two `Set-Cookie` headers on each.
+   Measured after: `public, max-age=3600, s-maxage=3600`, no cookie,
+   `X-Content-Type-Options` still arriving. Deliberately not
+   `withoutMiddleware(['web'])`, which would take `NoIndexStaging` with it.
+2. `routes/concern-collections.php` mounted, with its `EnglishRenderWalk`
+   entry in the same commit — that walk checks the route table in **both**
+   directions, so a require with no entry and an entry with no require are
+   equally red.
+
+## What round 2 handed back that only the owner can answer
+
+Ranked by what it blocks.
+
+1. **A shopper can add a variable product to the basket for AED 0.** Found by
+   Lane E, being fixed by Lane E in round 3. The half that is the owner's:
+   fixing the tile **removes an Add-to-cart button that is on the shop today**,
+   which rule 1 says must be called out rather than buried.
+2. **Tag roughly 30–45 products** under `Catalog → Build my routine`, using the
+   search terms in `docs/SEO-CONCERN-MAPPING.md` §3. Not 671, and not a
+   spreadsheet — Lane S² withdrew that estimate after finding the taxonomy
+   already exists. `/concern/{slug}/` 404s until a concern has copy and three
+   live tagged products.
+3. **A human Arabic writer**, for three intros of about 200 words
+   (`docs/SEO-CONCERN-COPY.md`). Both SEO lanes refused to generate them.
+4. **The postal address, opening hours and phone** for the `LocalBusiness`
+   node. The boxes are built and empty; half an address is never published.
+5. **Operator-authored HTML**: allowlist it, leave it, or clean only the two
+   things an admin can actually write. Three options with costs in
+   `docs/f2-operator-authored-html.md` §6–7. Measured cost of the middle one on
+   today's data: eight HTML entities become the characters they already
+   rendered as, and nothing else changes.
+6. **Egress is still blocked.** Both SEO lanes re-tested it as their first act
+   and got `CONNECT tunnel failed, response 403`. The 15-question competitor
+   checklist stays a checklist until that opens.
+
+## Found and not fixed, carried into round 3
+
+- The product page headline renders **AED 0** server-side for a variable parent
+  until pdp.js overwrites it (`store/product.blade.php:47`). Lane E, round 3.
+- `Product::effectivePrice()` still answers 0 for those rows, so the price sort
+  and the price facet file them cheapest-first. Reserved: the fix is a backfill
+  or a change to `ProductImporter`.
+- The delivery note goes in the parcel but renders in the operator's language.
+  Moving it needs `OrderLocale::render()` in `Admin\InvoiceController` **and**
+  `sheet-delivery-note.blade.php` pointed at `nameForCustomer`, both halves
+  together.
+- The site header overflows to `scrollWidth 1347` at 1280 on five pages —
+  eleven seeded nav entries that do not fit. Pre-existing, measured by Lane S
+  on four pages it did not touch.
+- `srcset` is not parsed by the media rewrite. A comma-separated list of
+  address plus descriptor is a different edit from replacing an attribute's
+  whole value, and needs its own idempotency argument.
