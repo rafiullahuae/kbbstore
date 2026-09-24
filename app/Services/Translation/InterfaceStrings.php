@@ -498,6 +498,19 @@ final class InterfaceStrings
             'product_card.view_product' => 'View product',
             // '1.2k' — the abbreviation is a word, and it is not 'k' in Arabic.
             'product_card.count_thousands' => ':countk',
+            /*
+             * A variable product's price span, e.g. "AED 35 – AED 60".
+             *
+             * KEYED RATHER THAN CONCATENATED for the ordinary reason — an
+             * Arabic tile lays the two amounts out right to left and only a
+             * whole string can say so — and because the DASH IS PART OF THE
+             * WORDING. It is an en dash with hairline spaces around it, which
+             * is the typographic convention for a range and is not a hyphen;
+             * built by concatenation it would become whatever the next person
+             * typed. Both amounts arrive already wrapped by Money::format(),
+             * so this is rendered with {!! !!}.
+             */
+            'product_card.price_range' => ':low – :high',
             'product_grid.view_all' => 'View all',
             'quick_view.dialog_label' => 'Quick view',
             'quick_view.close_label' => 'Close',
