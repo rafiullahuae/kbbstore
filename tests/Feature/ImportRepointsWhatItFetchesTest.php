@@ -102,8 +102,14 @@ function rpRowsNaming(string $host): array
         ['categories', 'image'],
         ['posts', 'cover'],
         ['posts', 'body'],
+        // Round 2: a share image held in `settings` was in none of the five
+        // columns above, so the finish line could be crossed with the shop's
+        // own og:image still hot-linked. See MediaUsage::SITE_KEYS.
+        ['settings', 'value'],
     ] as [$table, $column]) {
-        foreach (DB::table($table)->where($column, 'like', $needle)->pluck('id') as $ignored) {
+        $key = $table === 'settings' ? 'key' : 'id';
+
+        foreach (DB::table($table)->where($column, 'like', $needle)->pluck($key) as $ignored) {
             // The COLUMN and not the row id: this checkout's migration set
             // seeds rows, so an id is a number that moves when somebody else's
             // seeder changes and an assertion written against one is a flake.
@@ -308,7 +314,7 @@ it('sees the pictures inside an article body, which the audit used to be blind t
         ->toBe(['present' => 0, 'missing' => 0, 'remote' => 3]);
 });
 
-it('changes the src and nothing else in the document', function () {
+it('changes the src and the href and nothing else in the document', function () {
     /*
      * WHY THIS IS NOT DOMDocument. `saveHTML()` re-serialises: it closes tags,
      * re-quotes attributes, infers paragraphs and turns non-ASCII into
@@ -327,7 +333,8 @@ it('changes the src and nothing else in the document', function () {
     $body = "<p>الترطيب &amp; اللمعان</p>\n"
         ."<img src='".$a."' alt='الترطيب'>\n"
         .'<img src='.RP_OLD."/wp-content/uploads/2021/missing.jpg>\n"
-        .'<p>A <a href="'.RP_OLD.'/wp-content/uploads/2021/a.jpg">link to the same file</a></p>';
+        .'<p>A <a href="'.RP_OLD.'/wp-content/uploads/2021/a.jpg">link to the same file</a></p>'."\n"
+        .'<p>And <a href="'.RP_OLD.'/skincare-basics/">an article on the old site</a></p>';
 
     $post = Post::query()->create([
         'slug' => 'arabic', 'title' => 'Arabic', 'status' => 'published', 'body' => $body,
@@ -340,16 +347,42 @@ it('changes the src and nothing else in the document', function () {
 
     $post->refresh();
 
-    expect($post->body)->toBe(str_replace("src='".$a."'", "src='/wp-content/uploads/2021/a.jpg'", $body));
+    /*
+     * ── THE PIN MOVED HERE, DELIBERATELY ─────────────────────────────────
+     *
+     * This assertion used to read `str_replace("src='".$a."'", …)` — one
+     * substitution — and two lines below it asserted that the `<a href>` to the
+     * SAME FILE was still pointing at the old host, on the grounds that "this
+     * class does not claim anchors".
+     *
+     * That was the defect, not the contract. WordPress writes that anchor every
+     * time a thumbnail links to its full-size image, and leaving it alone meant
+     * the migration could report "remote → 0" with the picture a reader gets by
+     * CLICKING still served by a host about to be switched off. Both addresses
+     * move now, in one pass, and the rest of the document is still asserted
+     * byte for byte — the entity, the Arabic, the single quotes, the unquoted
+     * attribute and the `<a href>` to a PAGE, which is not this class's
+     * business and is still there untouched.
+     */
+    expect($post->body)->toBe(str_replace(
+        ["src='".$a."'", 'href="'.$a.'"'],
+        ["src='/wp-content/uploads/2021/a.jpg'", 'href="/wp-content/uploads/2021/a.jpg"'],
+        $body,
+    ));
 
     /*
      * AND WHAT IT LEFT ALONE, said out loud. The second `<img>` names a file
      * that is not on disk, so re-pointing it would turn a picture that loads
-     * into one that does not; the `<a href>` is not an `<img>` and this class
-     * does not claim anchors.
+     * into one that does not; the anchor to `/skincare-basics/` is a PAGE
+     * address, which is `RedirectMap`'s decision and not a media rewrite.
+     *
+     * MUTATION: make `DocumentMediaRewrite::carried()` return true for every
+     * `<a>` and the page link is rewritten to `/skincare-basics/` — a link the
+     * owner never approved, silently re-routed, with no row in `redirects` to
+     * show for it. This assertion is what catches that.
      */
     expect(str_contains($post->body, 'missing.jpg') && str_contains($post->body, RP_OLD.'/wp-content/uploads/2021/missing.jpg'))->toBeTrue()
-        ->and(str_contains($post->body, '<a href="'.RP_OLD.'/wp-content/uploads/2021/a.jpg">'))->toBeTrue()
+        ->and(str_contains($post->body, '<a href="'.RP_OLD.'/skincare-basics/">'))->toBeTrue()
         ->and(str_contains($post->body, 'الترطيب &amp; اللمعان'))->toBeTrue();
 });
 
@@ -547,4 +580,278 @@ it('quotes an unquoted src when the path it writes back contains a space', funct
     $second->refresh();
 
     expect($second->body)->toBe("<img src='/wp-content/uploads/2021/a b.jpg'>");
+});
+
+/* ========================================================================== */
+/*  ROUND 2, ITEM 1 — THE `<a href>` WORDPRESS WRITES BESIDE EVERY THUMBNAIL   */
+/* ========================================================================== */
+
+it('re-points the full-size link WordPress writes beside a thumbnail', function () {
+    /*
+     * WHAT THE SHOP LOOKED LIKE WITH THIS DEFECT IN IT.
+     *
+     * WordPress's "link to media file" wraps the thumbnail in an anchor to the
+     * FULL-SIZE image — two different files, `a-300x200.jpg` and `a.jpg`. Only
+     * the `<img>` was read, so:
+     *
+     *   - the full-size file was never AUDITED (it was not in `remote`),
+     *   - so the sideloader never FETCHED it,
+     *   - so nothing ever RE-POINTED it,
+     *
+     * and the migration reached "remote → 0" with the picture a reader gets by
+     * clicking still served by a host about to go dark. The article looked
+     * perfect; the click broke.
+     *
+     * MUTATION: drop 'a' from DocumentMediaRewrite::TAGS and the audit counts
+     * one remote picture instead of two, the anchor keeps the old host, and
+     * this is red three times over.
+     */
+    $thumb = RP_OLD.'/wp-content/uploads/2021/a-300x200.jpg';
+    $full = RP_OLD.'/wp-content/uploads/2021/a.jpg';
+
+    $post = Post::query()->create([
+        'slug' => 'thumb', 'title' => 'Thumb', 'status' => 'published',
+        'body' => '<p><a href="'.$full.'"><img src="'.$thumb.'" alt="x"></a></p>',
+    ]);
+
+    // THE AUDIT SEES BOTH FILES, which is what puts the full-size one on the
+    // sideloader's work list at all: MediaSideloader::references() is every
+    // MediaAudit row whose verdict is REMOTE.
+    expect((new MediaAudit)->summarise((new MediaAudit)->audit()))
+        ->toBe(['present' => 0, 'missing' => 0, 'remote' => 2]);
+
+    rpLand($thumb);
+    rpLand($full);
+
+    $rewrite = new DocumentMediaRewrite;
+
+    expect($rewrite->apply($rewrite->propose(['old-shop.test'])))->toBe(1);
+
+    $post->refresh();
+
+    expect($post->body)->toBe(
+        '<p><a href="/wp-content/uploads/2021/a.jpg"><img src="/wp-content/uploads/2021/a-300x200.jpg" alt="x"></a></p>'
+    )->and(rpRowsNaming('old-shop.test'))->toBe([]);
+});
+
+it('counts a file that is both a picture and a link once, and calls it a picture', function () {
+    /*
+     * `<a href="x.jpg"><img src="x.jpg"></a>` — the same file, named twice in
+     * one article. `sources()` used to dedupe for free because it only read
+     * `<img>`; reading both without folding them would put a `remote` count on
+     * the screen that no amount of copying could bring to zero, because there
+     * is only one file to copy.
+     *
+     * And it is reported as a PICTURE, not a link: that is the one the owner
+     * can see on the article.
+     *
+     * MUTATION: yield straight out of DocumentMediaRewrite::addresses() in
+     * MediaAudit::references() without the $carried fold and this reads 2.
+     */
+    $url = RP_OLD.'/wp-content/uploads/2021/both.jpg';
+
+    Post::query()->create([
+        'slug' => 'both', 'title' => 'Both', 'status' => 'published',
+        'body' => '<a href="'.$url.'"><img src="'.$url.'"></a>',
+    ]);
+
+    $rows = (new MediaAudit)->audit();
+
+    expect((new MediaAudit)->summarise($rows))->toBe(['present' => 0, 'missing' => 0, 'remote' => 1])
+        ->and(array_column($rows, 'field'))->toBe(['posts.body']);
+
+    // And the rewrite is one proposal that moves both tags in one pass.
+    rpLand($url);
+
+    $rewrite = new DocumentMediaRewrite;
+    $proposals = $rewrite->propose(['old-shop.test']);
+
+    expect($proposals)->toHaveCount(1)
+        ->and($proposals[0]['occurrences'])->toBe(2)
+        ->and($proposals[0]['carried_by'])->toBe('picture and the link to it')
+        ->and($rewrite->apply($proposals))->toBe(1)
+        ->and(rpRowsNaming('old-shop.test'))->toBe([]);
+});
+
+it('leaves an anchor to a page on the old site for RedirectMap to answer', function () {
+    /*
+     * THE CARVE-OUT, ASSERTED. An `<a href>` to a PAGE — an article, a
+     * category, the home page — is a redirect question, and the owner answers
+     * it on Store → Import → Addresses & pictures with a row in `redirects` he
+     * can see and take back. Rewriting it here would make that decision for him
+     * silently, inside an article body, with nothing anywhere to say it
+     * happened.
+     *
+     * Two shapes: a page address, and an uploads DIRECTORY, which is not a file
+     * this shop can serve however the uploads root matches.
+     *
+     * MUTATION: delete the extension check in DocumentMediaRewrite::carried()
+     * and the directory anchor becomes a proposal; delete the
+     * uploadsRelativeTo() check and the page anchor does.
+     */
+    $post = Post::query()->create([
+        'slug' => 'links', 'title' => 'Links', 'status' => 'published',
+        'body' => '<a href="'.RP_OLD.'/skincare-basics/">an article</a>'
+            .'<a href="'.RP_OLD.'/wp-content/uploads/2021/">the uploads folder</a>'
+            .'<a href="mailto:hi@kbb.test">mail</a>',
+    ]);
+
+    $before = (string) $post->body;
+
+    expect(DocumentMediaRewrite::sources($before))->toBe([])
+        ->and((new DocumentMediaRewrite)->propose(['old-shop.test']))->toBe([])
+        // Not audited either: an outbound link counted as a picture would put
+        // page addresses into the one number the migration is judged by.
+        ->and((new MediaAudit)->summarise((new MediaAudit)->audit()))
+        ->toBe(['present' => 0, 'missing' => 0, 'remote' => 0]);
+
+    $post->refresh();
+
+    expect($post->body)->toBe($before);
+});
+
+it('will not re-point a link whose file is not on disk yet, and puts one back', function () {
+    // The two guards the `<img>` already had, asserted for the anchor: nothing
+    // moves before the file is here, and the move is exactly invertible.
+    $url = RP_OLD.'/wp-content/uploads/2021/guide.pdf';
+
+    $post = Post::query()->create([
+        'slug' => 'pdf', 'title' => 'PDF', 'status' => 'published',
+        'body' => '<a href="'.$url.'">the guide</a>',
+    ]);
+
+    $rewrite = new DocumentMediaRewrite;
+    $proposals = $rewrite->propose(['old-shop.test']);
+
+    expect($proposals)->toHaveCount(1)
+        ->and($proposals[0]['decision'])->toBe(DocumentMediaRewrite::ABSENT)
+        ->and($proposals[0]['carried_by'])->toBe('link to this file')
+        ->and($rewrite->apply($proposals))->toBe(0)
+        ->and($post->fresh()->body)->toBe('<a href="'.$url.'">the guide</a>');
+
+    rpLand($url);
+
+    expect($rewrite->apply($rewrite->propose(['old-shop.test'])))->toBe(1)
+        ->and($post->fresh()->body)->toBe('<a href="/wp-content/uploads/2021/guide.pdf">the guide</a>');
+
+    $restored = $rewrite->restore('old-shop.test');
+
+    expect($restored['restored'])->toBe(1)
+        ->and($post->fresh()->body)->toBe('<a href="'.$url.'">the guide</a>');
+});
+
+/* ========================================================================== */
+/*  ROUND 2, ITEM 2 — THE PICTURES HELD IN SETTINGS                            */
+/* ========================================================================== */
+
+it('counts the share image and the organisation logo as still on the old site', function () {
+    /*
+     * WHAT THE DEFECT LOOKED LIKE. `og_default_image` and `org_logo` are URLs
+     * the storefront publishes on EVERY page — Seo.php reads both — and
+     * MediaAudit walked products, brands, categories and the Journal and never
+     * opened `settings`. So a share image left on the old host was:
+     *
+     *   - not counted in `remote`, so "remote → 0" was not the truth;
+     *   - not on MediaSideloader's work list, so it was never fetched;
+     *   - in no column MediaRewrite knew, so nothing could re-point it.
+     *
+     * The failure is invisible until the old site goes dark, and then it is
+     * invisible AGAIN: it breaks in Facebook, WhatsApp and Google's card,
+     * nowhere a person on the shop would ever see.
+     *
+     * MUTATION: delete the SITE_KEYS loop at the end of
+     * MediaAudit::references() and this reads `remote => 0` with both settings
+     * still naming old-shop.test.
+     */
+    Setting::query()->updateOrCreate(['key' => 'og_default_image'], ['value' => RP_OLD.'/wp-content/uploads/2021/share.jpg']);
+    Setting::query()->updateOrCreate(['key' => 'org_logo'], ['value' => RP_OLD.'/wp-content/uploads/2021/logo.png']);
+    Setting::flushMap();
+
+    $rows = (new MediaAudit)->audit();
+
+    expect((new MediaAudit)->summarise($rows))->toBe(['present' => 0, 'missing' => 0, 'remote' => 2]);
+
+    // Named, not just counted: the owner has to know which setting to go and
+    // look at, and "site settings" with no key is not an instruction.
+    $fields = array_column($rows, 'field');
+    sort($fields);
+
+    expect($fields)->toBe(['settings.og_default_image', 'settings.org_logo']);
+});
+
+it('brings the share image across and can put it back', function () {
+    /*
+     * The other half. An audit that can see a picture nothing can re-point is a
+     * number that never reaches zero however many times the owner presses the
+     * button — which is worse than not counting it, because now the screen says
+     * the migration is unfinished and offers no way to finish it.
+     *
+     * MUTATION: delete the Setting::class branch in MediaRewrite::replace() and
+     * `rewritten` is 0 with the proposal still saying REWRITE — the rewrite
+     * silently does nothing and the count on the screen never moves.
+     */
+    $share = RP_OLD.'/wp-content/uploads/2021/share.jpg';
+    rpLand($share);
+
+    Setting::query()->updateOrCreate(['key' => 'og_default_image'], ['value' => $share]);
+    Setting::flushMap();
+
+    $rewrite = new MediaRewrite;
+
+    // The host is offered on the screen, so it has to be counted as a host the
+    // catalogue points at — hostsSeen() reads the same references().
+    expect(array_column($rewrite->hostsSeen(), 'host'))->toContain('old-shop.test');
+
+    $proposals = $rewrite->propose(['old-shop.test']);
+
+    expect($rewrite->summarise($proposals))->toBe(['rewrite' => 1, 'same' => 0, 'absent' => 0])
+        ->and($rewrite->apply($proposals))->toBe(1);
+
+    Setting::flushMap();
+
+    expect(Setting::map()['og_default_image'])->toBe('/wp-content/uploads/2021/share.jpg')
+        ->and(rpRowsNaming('old-shop.test'))->toBe([]);
+
+    $restored = $rewrite->restore('old-shop.test');
+    Setting::flushMap();
+
+    expect($restored['restored'])->toBe(1)
+        ->and(Setting::map()['og_default_image'])->toBe($share);
+});
+
+it('leaves no row anywhere naming the old host, settings and links included', function () {
+    /*
+     * ROUND 2'S FINISH LINE, asked of the database in SQL across every place a
+     * picture address can live on this schema — now including `settings.value`
+     * and the `<a href>` inside an article.
+     *
+     * MUTATION: revert either of round 2's two changes and this is red with the
+     * table that still names the host printed in the diff.
+     */
+    $img = RP_OLD.'/wp-content/uploads/2021/in-body.jpg';
+    $full = RP_OLD.'/wp-content/uploads/2021/full.jpg';
+    $share = RP_OLD.'/wp-content/uploads/2021/og.jpg';
+
+    foreach ([$img, $full, $share] as $url) {
+        rpLand($url);
+    }
+
+    Post::query()->create([
+        'slug' => 'everything', 'title' => 'Everything', 'status' => 'published',
+        'body' => '<a href="'.$full.'"><img src="'.$img.'"></a>',
+    ]);
+
+    Setting::query()->updateOrCreate(['key' => 'og_default_image'], ['value' => $share]);
+    Setting::flushMap();
+
+    expect(rpRowsNaming('old-shop.test'))->toBe(['posts.body', 'settings.value']);
+
+    (new MediaRewrite)->apply((new MediaRewrite)->propose(['old-shop.test']));
+    (new DocumentMediaRewrite)->apply((new DocumentMediaRewrite)->propose(['old-shop.test']));
+
+    Setting::flushMap();
+
+    expect(rpRowsNaming('old-shop.test'))->toBe([])
+        ->and((new MediaAudit)->summarise((new MediaAudit)->audit()))
+        ->toBe(['present' => 3, 'missing' => 0, 'remote' => 0]);
 });

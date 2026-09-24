@@ -93,8 +93,27 @@ final class MediaUsage
      * Media Library offered to delete a file every share preview on the site
      * depends on. Seo.php publishes the first at line 139 and 326 and the
      * second at 369.
+     *
+     * PUBLIC, because it is no longer only the Media Library's list. The
+     * MIGRATION asks the same question from the other end — "is any picture on
+     * this shop still served by the old host" — and a share image held in a
+     * setting was invisible to it: `MediaAudit` walked products, brands,
+     * categories and the Journal and never opened `settings`, so
+     * `og_default_image` could point at the old host while the audit reported
+     * `remote => 0`. The verdict the whole migration is judged by said "nothing
+     * is left" with the shop's own share preview still hot-linked, and it would
+     * have broken on the day the old site was switched off — in every share
+     * card, where nobody is looking.
+     *
+     * `App\Services\Import\MediaAudit` and `App\Services\Import\MediaRewrite`
+     * read THIS constant rather than each keeping a copy. A key added here is
+     * audited, fetched and re-pointed by the same edit that makes the Media
+     * Library refuse to delete it — three answers about one setting, from one
+     * list.
+     *
+     * @var array<string, string>
      */
-    private const SITE_KEYS = [
+    public const SITE_KEYS = [
         'og_default_image' => 'Default share image',
         'org_logo' => 'Organisation logo',
     ];

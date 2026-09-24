@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Services\Seo\SeoSettings;
 use App\Support\MediaUsage;
 
 /**
@@ -126,7 +127,23 @@ final class MediaAudit
      * `DocumentMediaRewrite::sources()` — the same parser that re-points them.
      * One implementation: an address the audit cannot see is a file the
      * sideloader never fetches, so the rewrite that depends on it would report
-     * ABSENT for ever.
+     * ABSENT for ever. That parser now reads `<a href>` to an uploads FILE as
+     * well as `<img src>`, which is how the full-size image behind every
+     * WordPress thumbnail link finally became visible here.
+     *
+     * AND THE SETTINGS, which have no owning row at all. `og_default_image` and
+     * `org_logo` are URLs the storefront publishes on every page — Seo.php
+     * reads both — and NOTHING IN THIS CLASS OPENED `settings`. A share image
+     * left on the old host was not counted as remote, not fetched by the
+     * sideloader and not re-pointed by anything, so `remote => 0` could be
+     * reached with the shop's own share preview still served by a site about to
+     * be switched off. It breaks in Facebook, WhatsApp and Google's card and
+     * nowhere a person looks.
+     *
+     * The list is `App\Support\MediaUsage::SITE_KEYS` and not a copy of it.
+     * That class is where "which settings hold a picture" is decided for the
+     * Media Library's delete guard, and two lists would mean the migration and
+     * the delete guard disagreeing about the same setting.
      *
      * @return iterable<int, array{0: string, 1: string, 2: string}>
      */
@@ -170,8 +187,45 @@ final class MediaAudit
                 yield [$owner, 'posts.cover', $post->cover];
             }
 
-            foreach (DocumentMediaRewrite::sources($post->body) as $source) {
-                yield [$owner, 'posts.body', $source];
+            /*
+             * ONE ROW PER ADDRESS PER ARTICLE, which is what `sources()` used
+             * to give for free and has to be done here now that the same file
+             * can be named twice — `<a href="x.jpg"><img src="x.jpg">` is one
+             * picture, and counting it twice would put a number on the screen
+             * that no amount of copying could ever bring to zero.
+             *
+             * The TAG goes in the field, because the owner acts differently on
+             * the two: a picture that stops loading is visible on the article,
+             * and a link that stops working is not visible at all until
+             * somebody clicks it. A file that is both is a picture — that is
+             * the one he can see.
+             */
+            $carried = [];
+
+            foreach (DocumentMediaRewrite::addresses($post->body) as $address) {
+                $carried[$address['url']] ??= [];
+                $carried[$address['url']][$address['tag']] = true;
+            }
+
+            foreach ($carried as $url => $tags) {
+                yield [$owner, isset($tags['img']) ? 'posts.body' : 'posts.body (link)', (string) $url];
+            }
+        }
+
+        /*
+         * ONE settings read for both keys, and `SeoSettings::map()` rather than
+         * `Setting::map()` — that is what `Seo.php` itself reads, and the two
+         * are different stores. `MediaUsage` records the same correction: using
+         * the wrong one made the site images look unused while the storefront
+         * was publishing them.
+         */
+        $settings = SeoSettings::map();
+
+        foreach (MediaUsage::SITE_KEYS as $key => $label) {
+            $value = $settings[$key] ?? null;
+
+            if (is_string($value)) {
+                yield ['site settings ('.$label.')', 'settings.'.$key, $value];
             }
         }
     }
