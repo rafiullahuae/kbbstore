@@ -789,6 +789,36 @@ it('adds no route, so it needs no capability rule and no clear_caches migration'
     expect(AdminCapabilities::forPath('GET', 'admin-api/urls-media/status'))->toBe('data.import');
     expect(AdminCapabilities::forPath('GET', 'admin-api/urls-media/map.csv'))->toBe('data.import');
 
+    /*
+     * ── ADVANCED BY LANE A, ROUND 2, AND ONLY FOR ITS OWN ROUTE ──────────
+     *
+     * This lane DID add one: POST /admin-api/urls-media/decisions, which
+     * records the owner's answer to a question from the redirect map. The guard
+     * is advanced rather than relaxed — it now asserts, for that route, the two
+     * things this test's title says a new route needs, so the list below is
+     * still a list nothing can be added to silently.
+     *
+     *   1. A CAPABILITY. Covered by the existing wildcard rule
+     *      ['*', 'admin-api/urls-media/**', 'data.import'], checked through the
+     *      resolver exactly as the four above are.
+     *   2. A clear_caches MIGRATION. The route file was already required from
+     *      routes/web.php, which is the trap: `route:cache` compiled the routes
+     *      it found AT THE TIME, so a route added to an already-wired file is a
+     *      route the server answers 404 for, with nothing in any log to say so.
+     *
+     * MUTATION: take '/urls-media/decisions' out of the list below and this is
+     * red, which is what says the list is still a guard and not a record.
+     */
+    expect(AdminCapabilities::forPath('POST', 'admin-api/urls-media/decisions'))->toBe('data.import');
+
+    $clears = glob(database_path('migrations/*clear_caches_redirect_decisions*.php')) ?: [];
+
+    expect($clears)->toHaveCount(
+        1,
+        'POST /admin-api/urls-media/decisions is in routes/urls-media-admin.php with no clear_caches '
+            .'migration beside it, so it does not exist on a host with a compiled route cache'
+    );
+
     $registered = [];
 
     foreach (['import-admin.php', 'urls-media-admin.php'] as $file) {
@@ -808,6 +838,9 @@ it('adds no route, so it needs no capability rule and no clear_caches migration'
         '/import/step',
         '/import/stop',
         '/import/upload',
+        // Lane A, round 2 — the ask bucket becomes answerable. Asserted above
+        // to carry both a capability and a clear_caches migration.
+        '/urls-media/decisions',
         '/urls-media/map.csv',
         '/urls-media/media',
         '/urls-media/redirects',
