@@ -799,22 +799,19 @@ body{margin:0;background:#fff;color:var(--ink);font:400 14px/1.6 Poppins,system-
 .kbb-home .pay span{background:rgba(255,255,255,.1);border-radius:5px;padding:3px 9px;font-size:11px}
 .kbb-home .slider{position:relative;border-radius:18px;overflow:hidden}
 .kbb-home .slides{display:flex;transition:transform .55s cubic-bezier(.4,0,.2,1)}
-/* THE TRACK KEEPS ITS OWN COORDINATE SYSTEM, THE WAY .ftrack DOES (rtl-audit §11.2).
-   The slider is advanced from JavaScript with an INLINE
-   `style.transform = translateX(-n*100%)` (resources/js/kbb/home.js:29), which
-   has no logical form and which no stylesheet can override. In an RTL flex row
-   the slides are laid out leading-edge-right, so slide 2 sits to the LEFT of
-   slide 1 and that same negative translation carries it further away: measured
-   at 390px, clicking ▸ on /ar/ left 0% of every slide inside the frame — the
-   hero simply went blank — against 100% of slide 2 in English.
-   `direction:ltr` on the track alone puts the slides back in the order the
-   arithmetic assumes; each slide gets `direction:rtl` back, so headline,
-   paragraph and button still lay out right-to-left. Safe here and not on
-   .freebar, because the text lives one level down.
-   Travel still runs left-to-right in Arabic; reversing it is a sign flip in
-   home.js, which is not this lane's file. */
-[dir="rtl"] .kbb-home .slides{direction:ltr}
-[dir="rtl"] .kbb-home .sl{direction:rtl}
+/* THE TRACK KEEPS ITS OWN DIRECTION, AND THE TRANSFORM PICKS ITS SIGN FROM IT.
+   This is where `[dir="rtl"] .kbb-home .slides{direction:ltr}` and its
+   `[dir="rtl"] .kbb-home .sl{direction:rtl}` twin used to be. They handed the
+   track a left-to-right coordinate system so that the hard-coded negative
+   translateX in resources/js/kbb/home.js still found the slides — which made
+   the carousel work and left it travelling the wrong way, ▸ pushing the next
+   slide in from the left in a document being read from the right.
+   home.js now picks the sign from `document.documentElement.dir`, so the track
+   is laid out right-to-left in Arabic like everything else on the page and the
+   two rules are deleted rather than kept beside the fix. Unlike .ftrack
+   (rtl-audit §11.2), which mirrors a picture of a bar, this track carries text
+   in every slide and has no business being forced into the other direction.
+   RtlMirrorTest fails if either rule comes back while home.js still chooses. */
 .kbb-home .sl{flex:0 0 100%;display:grid;grid-template-columns:1.15fr .85fr;align-items:center;gap:20px;
     padding:clamp(24px,3.4vw,52px);color:#fff;min-height:clamp(230px,26vw,330px)}
 .kbb-home .sl .k{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.92}

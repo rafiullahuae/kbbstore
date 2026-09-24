@@ -40,3 +40,54 @@ Playwright, `browser.newContext({viewport})` — not `page.setViewportSize` —
 `deviceScaleFactor: 1`, `reducedMotion: 'reduce'`, animations and transitions
 frozen by an injected stylesheet. Panels are opened by adding the class the
 site's own JS adds; the closed shots add nothing at all, which is the point.
+
+---
+
+# Round two — the three §13.5 left open
+
+`docs/rtl-audit.md` §14 is the write-up. `r2-` is this round.
+
+## The change an owner can see
+
+A still cannot show motion, so these are caught **mid-transition** — the next
+arrow clicked, then photographed a quarter of the way through the 0.55s ease,
+with the slide half in frame and the edge it is entering from plainly visible.
+
+| file | what it shows |
+|---|---|
+| `r2-travel-BEFORE-rtl-390.jpg` | Arabic, the hero advancing with round one's CSS fix: slide 2 at 339.4..705.4 of a frame at 12..378 — **entering from the RIGHT**, the English direction, in a document read from the right |
+| `r2-travel-rtl-390.jpg` | the same moment after the sign flip: slide 2 at -297..69 — **entering from the LEFT**, the side an Arabic reader is reading towards |
+| `r2-travel-BEFORE-rtl-1280.jpg`, `r2-travel-rtl-1280.jpg` | the same pair at 1280: 1160.1..2362.9 becomes -1082.9..119.9 |
+| `r2-travel-ltr-390.jpg`, `r2-travel-ltr-1280.jpg` | English, unchanged — slide 2 at 339.4..705.4, entering from the right, exactly as before |
+
+## The shot this lane owes every round
+
+`r2-rtl-390-drawers-closed-<page>.jpg` — every off-canvas panel **closed**, in
+Arabic with the mirrored layout on, at 390×844, on this round's tree. Nothing is
+clicked and no class is added; that is the point. The numbers are in §14.5 and
+they are the trunk's exactly: `.drawer` -300.3..0 on all four pages, `.mnav`
+403.3..668.4 or 390..690, `.filtercol` 390..690 on the shop, and
+`documentElement.scrollWidth` 390 against a `clientWidth` of 390 everywhere.
+Round one's `ltr-390-drawers-closed-*.jpg` are the English pages beside them and
+are unchanged, so they are not duplicated here.
+
+## How they were produced
+
+As round one, with three differences that mattered more than they sound:
+
+- **The trunk, this branch and a SECOND copy of the trunk** are served on three
+  ports, so a difference between two processes can be told from a difference
+  between two trees. Without the third server the home page's rails looked like
+  a regression and were a `Cache::remember` warmed from each tree's own seed.
+- **One seeded database, copied to all three.** The demo catalogue randomises
+  prices, so independently seeded databases disagree about `-30%` and `-31%`.
+- **Everything off `127.0.0.1` is refused** and `html{overflow-y:scroll}` is
+  injected before measuring. The webfonts failing at their own pace moved when
+  `networkidle` fired, and the scrollbar gutter flipped `.wrap`'s `margin:0
+  auto` between 0px and 50px — six differing rows between two runs of the same
+  tree, before either was taken away.
+
+`php -S` gets a router script that returns false for files that exist;
+without it every request, including `/build/assets/*.css`, goes to the front
+controller and the browser refuses the stylesheet for its MIME type — which
+looks like a broken layout and is a broken harness.

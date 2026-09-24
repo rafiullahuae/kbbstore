@@ -409,10 +409,34 @@ it('answers every inline physical inset in a storefront view with an !important 
         'resources/views/partials/drawers.blade.php' => ['resources/css/kbb/kbb.css', '[dir="rtl"] .mnav-h .x', ['margin-inline-start' => 'auto!important', 'margin-inline-end' => '0!important']],
     ];
 
-    // Views that hard-code <html lang="en"> with no dir attribute: a
-    // [dir="rtl"] rule can never match inside them, so an inline physical
-    // declaration there is not answerable from CSS. docs/rtl-audit.md §9.5.
-    $notBilingual = ['resources/views/store/app.blade.php'];
+    /*
+     * EMPTY, AND THAT IS THE NEWS.
+     *
+     * This list held resources/views/store/app.blade.php through two rounds.
+     * The original reason was that the view hard-coded <html lang="en"> with no
+     * dir, so a [dir="rtl"] rule could never match inside it; that expired when
+     * commit e2ce533 gave the five standalone documents a real lang and dir.
+     * The reason it stayed after that was narrower: the badge, the stylesheet
+     * that should reach it and the physical declaration were all three INSIDE
+     * that one view, so no lane but its owner could answer it.
+     *
+     * Its owner has. Line ~1313 now writes
+     * `inset-inline-end:50%;margin-inline-end:-24px` where it wrote
+     * `right:50%;margin-right:-24px`, which is the logical spelling of the same
+     * idea and needs no !important at all.
+     *
+     * Measured before that landed, at 390px, against a tab spanning 290.5..386
+     * in English and 4..99.5 in Arabic: English 345.3..362.3 with either
+     * spelling, not one pixel; Arabic 29.8..75.8 (+1.0 from the tab's centre,
+     * and 46px wide rather than 17, because `right:50%` against an element laid
+     * out right-to-left stretches it) becomes 27.8..44.8, i.e. -15.5, the exact
+     * mirror of English's +15.5. docs/rtl-audit.md §14.3.
+     *
+     * So the sweep below now sees every storefront view, with nothing carved
+     * out. Keep it that way: an entry here is a declaration that no stylesheet
+     * can answer, and the honest response to one is to fix the view.
+     */
+    $notBilingual = [];
 
     // Only declarations that carry a READING DIRECTION. `text-align:center`,
     // `margin:0 auto` and `border-radius` do not, and a sweep that flags them
@@ -454,40 +478,91 @@ it('answers every inline physical inset in a storefront view with an !important 
     expect($unanswered)->toBe([], implode("\n", $unanswered));
 });
 
-it('keeps the home slider advancing in Arabic, because its transform is written by JavaScript', function () {
+it('advances the home slider the way the document is read, and keeps only one fix for it', function () {
     /*
-     * THE DEFECT: resources/js/kbb/home.js advances the hero with
+     * THE DEFECT, IN TWO INSTALMENTS.
+     *
+     * First: resources/js/kbb/home.js advanced the hero with a hard-coded
      * `track.style.transform = translateX(-index*100%)`. In an RTL flex row the
      * slides queue to the LEFT of the first one, so that same negative
-     * translation carries them further away instead of into the frame.
+     * translation carried them further away instead of into the frame.
      * Measured at 390px on /ar/: after one click of ▸, 0% of every slide was
      * inside the frame — the hero went blank — against 100% of slide 2 in
-     * English. After the rule below: 100%, at the same coordinates as English.
+     * English.
      *
-     * The track keeps the coordinate system the arithmetic assumes and each
-     * slide gets its own direction back, which is the same trick §11.2 used on
-     * the free-shipping track. Both halves are required: `direction:ltr` alone
-     * would lay the slide's own headline, paragraph and button out
-     * left-to-right.
+     * Round one answered that from CSS, because home.js belonged to another
+     * lane: `[dir="rtl"] .kbb-home .slides{direction:ltr}` plus a
+     * `[dir="rtl"] .kbb-home .sl{direction:rtl}` twin handed the track back the
+     * coordinate system the hard-coded sign assumed. That made the carousel
+     * WORK and left the second instalment standing: the hero still TRAVELLED
+     * left to right in Arabic. ▸ pushed the next slide in from the left of a
+     * document being read from the right — measured at 390px on /ar/, slide 2
+     * entered from x=-390..0 where an Arabic reader's eye was leaving the frame
+     * at x=0. Both arrows, both dots and the swipe were all reversed with it.
      *
-     * MUTATION: delete either declaration and this goes red. Change home.js to
-     * flip the sign itself and the first assertion goes red instead, which is
-     * the signal to delete the CSS rather than keep both.
+     * NOW home.js picks the sign from `document.documentElement.dir`, which is
+     * what the server printed from Locale::direction(), and the two CSS rules
+     * are DELETED rather than kept beside it. Unlike .ftrack (§11.2), which
+     * mirrors a picture of a bar with no text in it, every slide on this track
+     * carries a headline, a paragraph and a button, so forcing the track into
+     * the other direction was always the weaker half of the trade.
+     *
+     * So this pins BOTH halves and, above all, that there is only ONE of them —
+     * the sign flip and `direction:ltr` on the track cancel each other out, and
+     * a shop that shipped both would be back to a blank Arabic hero.
+     *
+     * MUTATION 1: put `translateX(-${index * 100}%)` back in home.js and the
+     * first two assertions go red.
+     * MUTATION 2: add `[dir="rtl"] .kbb-home .slides{direction:ltr}` back to
+     * kbb.css and the third goes red naming the blank hero it causes.
+     * MUTATION 3: drop the `rtl()` call out of the pointerup handler and the
+     * fourth goes red — a swipe that advances in English would step backwards
+     * in Arabic.
      */
-    $js = (string) file_get_contents(base_path('resources/js/kbb/home.js'));
+    /*
+     * THE CODE, NOT THE PROSE. This file's own comments explain the defect and
+     * quote `translateX(-0%)` while doing it, so a plain str_contains over the
+     * source fires on the explanation of the fix -- which is the same mistake
+     * §1 of docs/rtl-audit.md records for CSS ("read with a declaration reader,
+     * not grep: `margin-left` occurs both as a declaration and inside comments
+     * that explain why a rule keeps `margin-left`"). Block comments and
+     * whole-line // comments come out first; nothing mid-line is touched, so no
+     * string or regular expression in the file is disturbed.
+     */
+    $js = preg_replace(
+        ['#/\*.*?\*/#s', '#^\s*//.*$#m'],
+        '',
+        (string) file_get_contents(base_path('resources/js/kbb/home.js'))
+    );
 
     $wrong = [];
 
-    if (! str_contains($js, 'translateX(-')) {
-        $wrong[] = 'resources/js/kbb/home.js no longer positions the slider with a negative inline translateX. If it now picks the sign from the direction, remove [dir="rtl"] .kbb-home .slides — two fixes for one defect is worse than either.';
+    // The slider's transform is written from JavaScript, so no stylesheet can
+    // reach it. The sign therefore has to be chosen HERE or nowhere.
+    if (! str_contains($js, "document.documentElement.dir === 'rtl'")) {
+        $wrong[] = 'resources/js/kbb/home.js no longer reads document.documentElement.dir. The hero track is positioned by an inline style.transform, which no [dir="rtl"] rule can override, so the direction has to be read in the JavaScript that writes it.';
     }
 
-    if (! in_array('ltr', rtlMirrorLookup('resources/css/kbb/kbb.css', '[dir="rtl"] .kbb-home .slides', 'direction'), true)) {
-        $wrong[] = 'Without direction:ltr on the track, the Arabic hero goes blank on the first ▸: the slides queue on the other side and the inline translateX walks away from them.';
+    if (str_contains($js, 'translateX(-')) {
+        $wrong[] = 'resources/js/kbb/home.js positions the slider with a hard-coded negative translateX again. In an RTL flex row the slides queue to the LEFT, so a fixed negative sign walks away from them and the Arabic hero goes blank on the first ▸.';
     }
 
-    if (! in_array('rtl', rtlMirrorLookup('resources/css/kbb/kbb.css', '[dir="rtl"] .kbb-home .sl', 'direction'), true)) {
-        $wrong[] = 'The track is forced to ltr, so each slide has to be given rtl back or the Arabic headline, paragraph and button lay out left-to-right inside it.';
+    // And with the sign chosen there, the CSS half must be GONE. Both at once
+    // is not belt and braces: direction:ltr on the track puts the slides back
+    // on the other side, the now-positive translation walks away from them, and
+    // the Arabic hero is blank again — the exact defect this started as.
+    foreach ([
+        '[dir="rtl"] .kbb-home .slides' => 'the track',
+        '[dir="rtl"] .kbb-home .sl' => 'each slide',
+    ] as $selector => $what) {
+        if (rtlMirrorLookup('resources/css/kbb/kbb.css', $selector, 'direction') !== []) {
+            $wrong[] = "kbb.css sets `direction` on $selector again. home.js already picks the sign of the slider's transform from the document's direction, and the two fixes CANCEL: with $what forced into the other direction the positive translation walks away from the slides and the Arabic hero goes blank on the first ▸, which is the defect both of them exist to prevent.";
+        }
+    }
+
+    // The swipe travels with the track, so it is the same sign question.
+    if (! preg_match('/rtl\(\)\s*\?\s*dx\s*>\s*0\s*:\s*dx\s*<\s*0/', $js)) {
+        $wrong[] = 'The pointerup handler in resources/js/kbb/home.js no longer chooses the advancing drag by direction. The track follows the finger, so in Arabic the drag that advances it is the rightward one; keeping `dx < 0` there makes a swipe step backwards on every Arabic phone.';
     }
 
     expect($wrong)->toBe([], implode("\n", $wrong));
@@ -521,6 +596,112 @@ it('does not let the centring idiom leak onto a rail that centres itself with in
 
     if (! in_array('none', rtlMirrorLookup($file, '.kbb-home .sdots', 'transform'), true)) {
         $wrong[] = '.kbb-home .sdots centres itself with inset-inline-start:0 + inset-inline-end:0 + justify-content:center, so it must neutralise the translateX(-50%) it inherits from the shorter .sdots selector — otherwise the rail is displaced by half its width in BOTH directions.';
+    }
+
+    expect($wrong)->toBe([], implode("\n", $wrong));
+});
+
+it('keeps every physical declaration in the checkout stylesheet inside the one box that is mirrored whole', function () {
+    /*
+     * WHY THIS FILE IS ALLOWED 16 PHYSICAL DECLARATIONS WHEN EVERY OTHER
+     * STOREFRONT STYLESHEET IS ALLOWED ALMOST NONE.
+     *
+     * docs/rtl-audit.md §11.2 mirrors the free-delivery progress bar as ONE
+     * unit rather than declaration by declaration:
+     *
+     *     [dir="rtl"] .kbb-checkout .ftrack{direction:ltr;transform:scaleX(-1)}
+     *
+     * `direction:ltr` puts the inside of the track back into the left-to-right
+     * coordinate system its rules were written for, and `scaleX(-1)` mirrors
+     * the finished picture. The fill is a 90deg gradient on a width transition,
+     * the shine and the comet rider ride on translateX, the eight burst
+     * particles fly along --tx offsets — none of which has a logical form — so
+     * respelling the insets alone would desynchronise the sprites from the fill
+     * they are measured against. Measured before it: a 45% fill in a track at
+     * [556,876] sat at [732,876] with the comet rider at [866.8,883], flying
+     * backwards off the anchored end. After: rider at [725,741.2], on the
+     * leading edge, as in English.
+     *
+     * THAT BARGAIN HOLDS FOR EXACTLY AS LONG AS EVERY PHYSICAL DECLARATION IS
+     * INSIDE THE BOX THE RULE MIRRORS. A `right:` added anywhere else in this
+     * file is not covered by it and is a plain unconverted declaration — and it
+     * would look exactly like the sixteen that are fine, three screens below a
+     * comment that says they are.
+     *
+     * So this reads the file with the declaration reader and requires every
+     * physical declaration in it to be on the `.ftrack` subtree — `.ffill`,
+     * `.fs-rider`, `.fs-cheer` and its `i` children, which is the whole of that
+     * subtree per partials/checkout/freeship-bar.blade.php — or to be the one
+     * documented off-screen park, WooCommerce's hidden `#place_order`
+     * (§11.4), which is not a reading direction at all.
+     *
+     * Round two re-read all sixteen against the merged file, after the checkout
+     * lane's logo override, back-to-top arrow and scroll-aware bar landed in
+     * it. All sixteen are unchanged, all sixteen are still inside `.ftrack`,
+     * and the new work added no physical declaration at all — it spells its own
+     * alignment `text-align:start`.
+     *
+     * MUTATION 1: delete `direction:ltr` from the `[dir="rtl"] … .ftrack` rule
+     * and the first assertion goes red — without it the sixteen are describing
+     * a coordinate system nothing establishes.
+     * MUTATION 2: delete `transform:scaleX(-1)` from it and the second goes
+     * red; the bar then fills the right way and every sprite pinned to it stays
+     * on the English side.
+     * MUTATION 3: add `.kbb-checkout .co-head .logo{margin-left:8px}` to the
+     * file and the third goes red naming it, because it is outside the track.
+     */
+    $file = 'resources/css/kbb/kbb-checkout.css';
+
+    $wrong = [];
+
+    if (! in_array('ltr', rtlMirrorLookup($file, '[dir="rtl"] .kbb-checkout .ftrack', 'direction'), true)) {
+        $wrong[] = 'The free-delivery track no longer gets direction:ltr in RTL. That declaration is the ONLY thing that makes the 16 physical declarations inside it correct: without it they describe a left-to-right box in a right-to-left document and the sprites desynchronise from the fill (rtl-audit §11.2).';
+    }
+
+    if (! in_array('scaleX(-1)', rtlMirrorLookup($file, '[dir="rtl"] .kbb-checkout .ftrack', 'transform'), true)) {
+        $wrong[] = 'The free-delivery track no longer gets transform:scaleX(-1) in RTL. direction:ltr alone pins the inside of the track to English and never mirrors it, so an Arabic shopper gets a bar that fills away from the side they read from.';
+    }
+
+    /*
+     * The whole of .ftrack's subtree, from
+     * resources/views/partials/checkout/freeship-bar.blade.php:17-19, plus the
+     * one documented exception.
+     */
+    $inTrack = ['.ffill', '.fs-rider', '.fs-cheer'];
+    $offScreen = '.kbb-checkout #payment #place_order';
+
+    $outside = [];
+
+    // The ROW, not the key. physicalIn() keys each row with a ` | `-joined
+    // string and carries the same four fields in the value; splitting the key
+    // would misread any selector that ever contains a pipe, which `[a|=b]` does.
+    foreach (\Tests\Support\CssDirection::physicalIn(base_path(), $file) as $row) {
+        ['selector' => $selector, 'property' => $property, 'value' => $value] = $row;
+
+        if ($selector === $offScreen) {
+            continue;
+        }
+
+        $covered = false;
+
+        foreach ($inTrack as $part) {
+            // Every comma-separated branch has to be in the track, not just one.
+            $branches = array_map('trim', explode(',', $selector));
+
+            if (array_reduce($branches, fn (bool $all, string $b): bool => $all && str_contains($b, $part), true)) {
+                $covered = true;
+
+                break;
+            }
+        }
+
+        if (! $covered) {
+            $outside[] = "$selector { $property: $value }";
+        }
+    }
+
+    if ($outside !== []) {
+        $wrong[] = "These physical direction declarations in $file are NOT inside .ftrack, so `[dir=\"rtl\"] … .ftrack{direction:ltr;transform:scaleX(-1)}` does not mirror them and nothing else does either. Convert them to logical properties, or mirror them where they are:\n  ".implode("\n  ", $outside);
     }
 
     expect($wrong)->toBe([], implode("\n", $wrong));

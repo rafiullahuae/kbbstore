@@ -24,9 +24,42 @@ export function initHome() {
     dots.innerHTML = Array.from({ length: slides }, (_, i) =>
         `<i data-go="${i}"${i ? '' : ' class="on"'}></i>`).join('');
 
+    /*
+     * WHICH WAY THE TRACK TRAVELS IS THE DOCUMENT'S DIRECTION, NOT A CONSTANT.
+     *
+     * `.slides` is a flex row, so in a `dir="rtl"` document the slides queue
+     * leading-edge-right: slide 1 sits to the LEFT of slide 0, at -100% of the
+     * frame, slide 2 at -200%, and so on. Pulling slide i into view is
+     * therefore a POSITIVE translation in Arabic and a negative one in English
+     * — the same arithmetic with the sign the direction chooses.
+     *
+     * Before this, the sign was hard-coded negative and `kbb.css` handed the
+     * track a left-to-right coordinate system with
+     * `[dir="rtl"] .kbb-home .slides{direction:ltr}` so that the hard-coded
+     * sign still found the slides. That made the carousel WORK and left it
+     * travelling the wrong way: ▸ pushed the next slide in from the left in a
+     * document being read from the right. Both of those CSS rules are deleted
+     * with this change (rtl-audit §13.5) — two fixes for one defect is worse
+     * than either, and RtlMirrorTest fails if they come back.
+     *
+     * THE SIGN IS A STRING, NOT ARITHMETIC, and deliberately so: `-index*100`
+     * at index 0 is negative zero, which a template literal prints as "0", so
+     * the English page's very first inline transform would have gone from
+     * `translateX(-0%)` to `translateX(0%)`. Identical to the pixel and to
+     * getComputedStyle, and still a byte this lane has no business moving.
+     *
+     * Read per call rather than once at boot, so that flipping
+     * `document.documentElement.dir` on a live page — which is how every RTL
+     * measurement in docs/rtl-audit.md was taken — reorients the slider without
+     * a reload. It is one attribute read per click, and it measures nothing:
+     * `dir` is what the server printed from Locale::direction(), not a layout
+     * query.
+     */
+    const rtl = () => document.documentElement.dir === 'rtl';
+
     const go = (i) => {
         index = (i + slides) % slides;
-        track.style.transform = `translateX(-${index * 100}%)`;
+        track.style.transform = `translateX(${rtl() ? '' : '-'}${index * 100}%)`;
         dots.querySelectorAll('i').forEach((d, j) => d.classList.toggle('on', j === index));
     };
 
@@ -47,13 +80,17 @@ export function initHome() {
     slider.addEventListener('mouseleave', play);
     document.addEventListener('visibilitychange', () => document.hidden ? stop() : restart());
 
-    // Swipe on touch.
+    // Swipe on touch. The track follows the finger, so the drag that advances
+    // it is the one that moves it the way `go()` moves it — leftward in
+    // English, rightward in Arabic. In an LTR document this is `dx < 0`, to the
+    // character, which is what it has always been.
     let startX = null;
     slider.addEventListener('pointerdown', (e) => { startX = e.clientX; });
     slider.addEventListener('pointerup', (e) => {
         if (startX === null) return;
         const dx = e.clientX - startX;
-        if (Math.abs(dx) > 50) { go(dx < 0 ? index + 1 : index - 1); restart(); }
+        const forward = rtl() ? dx > 0 : dx < 0;
+        if (Math.abs(dx) > 50) { go(forward ? index + 1 : index - 1); restart(); }
         startX = null;
     });
 
