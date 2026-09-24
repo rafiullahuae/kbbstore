@@ -6,8 +6,10 @@ namespace App\Services\Update;
 
 use App\Models\UpdateRelease;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Applies a verified package, and undoes it if anything goes wrong.
@@ -72,7 +74,7 @@ final class UpdateRunner
             // 2. Back up before touching anything.
             $snapshot = $this->backups->snapshotFiles($paths);
             $this->activeBackupId = $snapshot['id'];
-            $release->update(['backup_id' => $snapshot['id']]);
+            $this->writeRelease($release, ['backup_id' => $snapshot['id']]);
 
             // 3. Database dump, only when migrations will run. Migrations are the
             //    one part that cannot be undone by copying files back.
@@ -88,8 +90,31 @@ final class UpdateRunner
 
             // 6. Migrations.
             if ($package->hasMigrations()) {
-                Artisan::call('migrate', ['--force' => true]);
-                $release->update(['migration_output' => Artisan::output()]);
+                /*
+                 * ▲ THE EXIT CODE IS READ. It was ignored until 2.60.264, and
+                 * that is how the defect above stayed invisible: 2.60.260
+                 * shipped the migration that adds `manifest`, the migrate step
+                 * did not actually add it, and the update reported "applied"
+                 * anyway. The server then had the code that writes the column
+                 * and not the column -- which is the state that bricked the
+                 * updater.
+                 *
+                 * A migration that fails now fails the update, which rolls the
+                 * files back and puts the migrator's own output in the error on
+                 * the Core Updates screen. Louder than a silent half-apply, and
+                 * recoverable: the files go back, so the site is unchanged.
+                 */
+                $exit = Artisan::call('migrate', ['--force' => true]);
+                $output = Artisan::output();
+
+                $this->writeRelease($release, ['migration_output' => $output]);
+
+                if ($exit !== 0) {
+                    throw new \RuntimeException(
+                        'A migration failed, so the update was not kept. The migrator said: '
+                        . trim($output)
+                    );
+                }
             }
 
             /*
@@ -111,7 +136,7 @@ final class UpdateRunner
                 return $release->fresh();
             }
 
-            $release->update(['status' => 'applied', 'completed_at' => now()]);
+            $this->writeRelease($release, ['status' => 'applied', 'completed_at' => now()]);
             $this->completed = true;
 
             // InstalledVersion memoises within the request. This row is what it
@@ -169,7 +194,42 @@ final class UpdateRunner
                 return;
             }
 
-            $release->update(['manifest' => json_encode($declared, JSON_UNESCAPED_SLASHES)]);
+            /*
+             * ▲ WRITTEN THROUGH THE QUERY BUILDER, NOT $release->update(), AND
+             *   THIS IS THE WHOLE POINT OF THE METHOD REST.
+             *
+             * The docblock above used to claim a try/catch made this incapable
+             * of failing an update. It does not, and on 24 Sep 2026 it took the
+             * live shop's updater down completely -- every package, including
+             * an 18 KB two-file one, answered "Server Error" and nothing could
+             * be applied at all.
+             *
+             * Eloquent's update() is fill() then save(). fill() puts `manifest`
+             * into the model's attributes FIRST; only then does the save throw.
+             * The catch below swallows that throw -- and leaves the attribute
+             * sitting on the model, dirty. Every later save() on the same
+             * instance therefore re-sends it: the ['backup_id' => ...] write two
+             * steps down, the ['status' => 'applied'] at the end, and -- the one
+             * that turns a handled failure into a 500 -- rollback()'s own status
+             * write, and then the ['status' => 'failed'] inside rollback()'s
+             * catch, which is the third throw and the one nothing catches.
+             *
+             * So the guard did not contain the failure, it seeded it. A query
+             * builder update carries no model state, cannot dirty anything, and
+             * a throw from it reaches the catch below and stops there.
+             *
+             * The column check in front of it means the ordinary case -- a
+             * server whose migrations have not added `manifest` yet, which is
+             * exactly the window this project was in -- writes nothing and logs
+             * nothing, rather than throwing on every single update.
+             */
+            if (! Schema::hasColumn($release->getTable(), 'manifest')) {
+                return;
+            }
+
+            DB::table($release->getTable())
+                ->where('id', $release->getKey())
+                ->update(['manifest' => json_encode($declared, JSON_UNESCAPED_SLASHES)]);
         } catch (\Throwable $e) {
             Log::warning('kbb-update: could not record the package manifest', [
                 'version' => $release->version,
@@ -220,7 +280,7 @@ final class UpdateRunner
                 }
             }
 
-            $release->update(['archive_path' => $filename]);
+            $this->writeRelease($release, ['archive_path' => $filename]);
         } catch (\Throwable $e) {
             Log::warning('kbb-update: could not archive applied package', [
                 'version' => $release->version,
@@ -305,7 +365,7 @@ final class UpdateRunner
                 $this->clearCaches();
             }
 
-            $release->update([
+            $this->writeRelease($release, [
                 'status' => 'rolled_back',
                 'error' => $reason,
                 'completed_at' => now(),
@@ -313,7 +373,14 @@ final class UpdateRunner
         } catch (\Throwable $e) {
             // Restoring failed too. Say so loudly and point at the standalone
             // recovery script, which does not need Laravel to boot.
-            $release->update([
+            //
+            // ▲ AND THIS WRITE CANNOT THROW OUT OF HERE. It used to, and that
+            // is what turned a handled failure into a 500 with no explanation:
+            // by the time this line runs the files are already restored, so the
+            // site is fine and the only thing at stake is a status row. Losing
+            // the row is a bad outcome; losing it AND showing the owner
+            // "Server Error" with no way to find out why is a far worse one.
+            $this->writeRelease($release, [
                 'status' => 'failed',
                 'error' => $reason . ' — AND the automatic rollback failed: ' . $e->getMessage()
                     . ' Use public/kbb-recover.php to restore manually.',
@@ -322,6 +389,44 @@ final class UpdateRunner
         } finally {
             $this->completed = true;
             $this->up();
+        }
+    }
+
+    /**
+     * The one way this class writes to its own release row.
+     *
+     * Two properties, and the outage of 24 Sep 2026 is the case for both.
+     *
+     *   1. IT CANNOT DIRTY THE MODEL. A query builder update carries no model
+     *      state, so a column this server has not got yet cannot attach itself
+     *      to $release and come back on every later write. That is precisely
+     *      how one swallowed failure in recordManifest() spread to the
+     *      backup_id write, the status write and rollback()'s own two writes.
+     *   2. IT CANNOT THROW. Every caller is either mid-update or mid-rollback,
+     *      where the files are the thing that matters and the row is a record
+     *      of it. A row that will not save must never be the reason an update
+     *      dies, and must never be the reason the owner sees a bare 500.
+     */
+    private function writeRelease(UpdateRelease $release, array $values): void
+    {
+        try {
+            DB::table($release->getTable())
+                ->where('id', $release->getKey())
+                ->update($values + ['updated_at' => now()]);
+
+            // Keep the in-memory model in step for the caller that reads
+            // $release->status back, without ever routing the write through it.
+            foreach ($values as $key => $value) {
+                $release->setAttribute($key, $value);
+            }
+
+            $release->syncOriginal();
+        } catch (\Throwable $e) {
+            Log::warning('kbb-update: could not write the release row', [
+                'release' => $release->getKey(),
+                'values' => array_keys($values),
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -335,7 +440,7 @@ final class UpdateRunner
 
             @unlink($this->appRoot . '/storage/framework/down');
 
-            $release->update(['status' => 'rolled_back', 'error' => $reason, 'completed_at' => now()]);
+            $this->writeRelease($release, ['status' => 'rolled_back', 'error' => $reason, 'completed_at' => now()]);
         } catch (\Throwable) {
             // Nothing further can be done from inside a dying request. The
             // recovery script exists for exactly this case.
