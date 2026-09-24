@@ -436,6 +436,16 @@ final class MediaSideloader
             $remaining++;
         }
 
+        /*
+         * THE BYTES COME WITH THE COUNT, and they have to. A re-pointed row
+         * leaves `references()`, so the file it named stopped being added to
+         * `bytes_on_disk` at the same moment it stopped being counted — and the
+         * screen read "4 of 10 fetched … on disk 0 B" with four photographs
+         * plainly on the disk. Same walk, same is_file() check, one filesize()
+         * more.
+         */
+        $repointed = $this->repointed($hosts, $references);
+
         $free = $this->freeBytes();
         $estimate = $remaining * self::ESTIMATED_BYTES_PER_FILE;
 
@@ -462,8 +472,8 @@ final class MediaSideloader
              * ON DISK. So it is "fetched, landed, and the catalogue has stopped
              * mentioning the old host" — which is exactly what it claims.
              */
-            'repointed' => $this->repointedCount($hosts, $references),
-            'bytes_on_disk' => $bytesOnDisk,
+            'repointed' => $repointed['files'],
+            'bytes_on_disk' => $bytesOnDisk + $repointed['bytes'],
             'bytes_fetched' => (int) DB::table(self::ITEMS)->where('state', self::FETCHED)->sum('bytes'),
             'estimated_bytes' => $estimate,
             'free_bytes' => $free,
@@ -489,8 +499,9 @@ final class MediaSideloader
      *
      * @param  list<string>  $hosts
      * @param  list<array{url: string, host: string, path: string|null, refusal: string|null, owners: list<string>}>  $references
+     * @return array{files: int, bytes: int}
      */
-    private function repointedCount(array $hosts, array $references): int
+    private function repointed(array $hosts, array $references): array
     {
         $stillReferenced = [];
 
@@ -498,7 +509,8 @@ final class MediaSideloader
             $stillReferenced[self::hash($reference['url'])] = true;
         }
 
-        $n = 0;
+        $files = 0;
+        $bytes = 0;
 
         foreach (DB::table(self::ITEMS)->where('state', self::FETCHED)
             ->select(['url_hash', 'host', 'target_path'])->cursor() as $row) {
@@ -513,11 +525,12 @@ final class MediaSideloader
             $full = $this->absolute((string) $row->target_path);
 
             if ($full !== null && is_file($full)) {
-                $n++;
+                $files++;
+                $bytes += (int) (@filesize($full) ?: 0);
             }
         }
 
-        return $n;
+        return ['files' => $files, 'bytes' => $bytes];
     }
 
     /**

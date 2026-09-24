@@ -264,7 +264,17 @@ it('keeps the progress bar honest once finished work leaves the catalogue', func
     // Half way: one done, one to go, and the denominator has not shrunk.
     expect($pictures()['done'])->toBe(1)
         ->and($pictures()['total'])->toBe(2)
-        ->and($pictures()['remaining'])->toBe(1);
+        ->and($pictures()['remaining'])->toBe(1)
+        /*
+         * AND THE BYTES COME WITH THE COUNT. The re-pointed file left
+         * `references()`, so it stopped being added to `bytes_on_disk` at the
+         * same moment it stopped being counted — and the card read "1 of 2
+         * fetched … on disk 0 B" with the photograph plainly on the disk.
+         *
+         * MUTATION: drop `+ $repointed['bytes']` from plan()'s `bytes_on_disk`
+         * and this is 0.
+         */
+        ->and($pictures()['bytes'])->toBeGreaterThan(0);
 
     (new MediaSideloader)->batch(['files' => 1]);
 
