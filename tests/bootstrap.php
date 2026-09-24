@@ -423,6 +423,50 @@ require_once __DIR__.'/../vendor/autoload.php';
     $root = $roots.'/roots-'.getmypid().'-'.bin2hex(random_bytes(4));
 
     /*
+     * ── AND THE TEMP DIRECTORY, WHICH WAS THE ONE SHARED THING LEFT ────────
+     *
+     * Everything above gives this process its own copy of what every process
+     * in this checkout otherwise shares. `sys_get_temp_dir()` was the exception
+     * and it is where `UploadedFile::fake()` writes.
+     *
+     * Two lanes hit it independently in one round, and a third run of mine
+     * caught it too: `GmImportAcceptsZipTest` and `GpAddressesLandTest` failing
+     * with `ValueError: Path must not be empty` from `fopen()` on an uploaded
+     * temp file, then passing in isolation. It reads exactly like flake, and it
+     * is the same class of incident as the shared ports that PreviewPort exists
+     * for and the shared MySQL database name that KBB_TEST_DB exists for.
+     *
+     * AND THE MECHANISM IS WORSE THAN A NAME CLASH. GmImportAcceptsZipTest
+     * opens with `glob(sys_get_temp_dir().'/kbb-gm-*')` and unlinks what it
+     * finds -- housekeeping after a killed run, and correct when the directory
+     * belongs to one suite. With /tmp shared it means one lane DELETING
+     * another lane's in-flight fixture, which is why the symptom was
+     * `fopen(): Path must not be empty` rather than a permissions error.
+     *
+     * `sys_temp_dir` ONLY. `upload_tmp_dir` is PHP_INI_SYSTEM and cannot be set
+     * at runtime -- ini_set() returns false and it reads back empty -- so a
+     * line setting it would be a line that does nothing, which is worse than no
+     * line at all. It does not matter here: nothing in this suite receives a
+     * real multipart upload, and `UploadedFile::fake()` and every fixture above
+     * go through sys_get_temp_dir().
+     *
+     * Set here rather than exported by the caller so that a lane which simply
+     * runs `vendor/bin/pest` is isolated without having to know any of this.
+     */
+    $temp = $root.'/tmp';
+
+    if (! is_dir($temp)) {
+        @mkdir($temp, 0o755, true);
+    }
+
+    if (is_dir($temp) && is_writable($temp)) {
+        ini_set('sys_temp_dir', $temp);
+        putenv('TMPDIR='.$temp);
+        $_ENV['TMPDIR'] = $temp;
+        $_SERVER['TMPDIR'] = $temp;
+    }
+
+    /*
      * The subdirectories Laravel expects to find rather than create. A missing
      * storage/framework/sessions or storage/logs is not a clear error when it
      * arrives, it is a write failure inside whatever was being rendered.
