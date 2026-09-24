@@ -495,7 +495,21 @@ it('advances the home slider the way the document is read, and keeps only one fi
      * fourth goes red — a swipe that advances in English would step backwards
      * in Arabic.
      */
-    $js = (string) file_get_contents(base_path('resources/js/kbb/home.js'));
+    /*
+     * THE CODE, NOT THE PROSE. This file's own comments explain the defect and
+     * quote `translateX(-0%)` while doing it, so a plain str_contains over the
+     * source fires on the explanation of the fix -- which is the same mistake
+     * §1 of docs/rtl-audit.md records for CSS ("read with a declaration reader,
+     * not grep: `margin-left` occurs both as a declaration and inside comments
+     * that explain why a rule keeps `margin-left`"). Block comments and
+     * whole-line // comments come out first; nothing mid-line is touched, so no
+     * string or regular expression in the file is disturbed.
+     */
+    $js = preg_replace(
+        ['#/\*.*?\*/#s', '#^\s*//.*$#m'],
+        '',
+        (string) file_get_contents(base_path('resources/js/kbb/home.js'))
+    );
 
     $wrong = [];
 
