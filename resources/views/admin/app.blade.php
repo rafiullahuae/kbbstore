@@ -8306,6 +8306,104 @@ function gpSourceLine(src){
   }).join('');
 }
 
+/* ------------------------------------------ the ask bucket, answerable (Lane A) */
+/*
+ * WHAT THIS REPLACED. A tile reading "312 need your decision" and nothing to
+ * press. The map re-derived the same 312 on every load, for ever, and the only
+ * way to act on one was to retype the address on Store -> Redirects. Phase 13's
+ * "Rafi approves any discard list" had been open since the map was written, not
+ * for want of a screen but for want of anywhere to PUT an approval —
+ * redirect_decisions is that place.
+ *
+ * GROUPED BY THE QUESTION, NOT LISTED BY THE ROW, and that is the whole design.
+ * Those 312 rows are not 312 questions; they are about eight questions asked a
+ * few hundred times each, and the answer to "this shop answers this address
+ * today — should the old one win?" is one answer for every category in the
+ * list. So each question gets a heading, a count, and two buttons that answer
+ * all of it — with the rows underneath, folded away, for when he wants to check
+ * one before saying yes to four hundred.
+ *
+ * A QUESTION THAT CANNOT BE ANSWERED YES DOES NOT DRAW A YES BUTTON. Three of
+ * them have no destination at all — a category stranded in a parent cycle, a
+ * permalink for a row that was never imported, an address whose identity is in
+ * its query string — and a loop has one that leads back to itself. The server
+ * refuses those too (RedirectMap::decidable); this is what stops him finding
+ * out by pressing.
+ *
+ * NOTHING HERE IS FINAL. "Undo" clears the answers and the rows go back to
+ * being questions, which is why an approval is stored rather than written
+ * straight into `redirects` and forgotten.
+ */
+function gpQuestions(u){
+  const qs=(u.questions||[]).filter(q=>q.asking||q.accepted||q.rejected);
+  if(!qs.length) return '';
+
+  return '<div style="margin-top:14px"><b style="font-size:13px">What this needs you to decide</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:3px 0 0;max-width:680px">'
+    +'Each block is one question, asked about every address under it. Answer the block, or open it and '
+    +'answer a single address. Nothing is written to the shop until you press '
+    +'&ldquo;Write&nbsp;redirect(s)&rdquo; above.</p>'
+    +qs.map(gpQuestionBlock).join('')
+    +'</div>';
+}
+
+function gpQuestionBlock(q){
+  const answered=q.accepted+q.rejected;
+
+  return '<div class="impfile" style="margin-top:10px">'
+    +'<div class="between" style="align-items:flex-start;gap:10px">'
+      +'<b style="font-size:12.5px">'+impEsc(q.heading)+'</b>'
+      +'<span style="font-size:11.5px;color:var(--ink-soft);white-space:nowrap">'+impNum(q.asking)+' address(es)</span>'
+    +'</div>'
+    +(q.stale
+      ?'<p style="font-size:11.5px;color:#b45309;margin:0">'+impNum(q.stale)+' of these you had already answered — '
+        +'what they point at has changed since, so they are being asked again.</p>'
+      :'')
+    +(q.decidable
+      ?''
+      :'<p style="font-size:11.5px;color:var(--ink-soft);margin:0">There is nothing to say yes to here: these '
+        +'addresses have nowhere on this shop to go. Say no to stop being asked, and fix the cause '
+        +'(re-import, or correct the category tree) if you want them redirected.</p>')
+    +'<div class="impmeta" style="margin-top:2px">'
+      +(q.asking&&q.decidable
+        ?'<button class="btn primary sm gpQAll" data-q="'+impEsc(q.question)+'" data-a="accept" '
+          +'style="padding:3px 9px;font-size:11.5px">Yes to all '+impNum(q.asking)+'</button>':'')
+      // Ghost, not the same green pill as Yes. Two buttons that look identical
+      // beside a question is how somebody says no to four hundred addresses
+      // meaning to say yes.
+      +(q.asking
+        ?'<button class="btn ghost sm gpQAll" data-q="'+impEsc(q.question)+'" data-a="reject" '
+          +'style="padding:3px 9px;font-size:11.5px">No to all '+impNum(q.asking)+'</button>':'')
+      +(answered
+        ?'<span style="margin-left:auto">answered '+impNum(answered)+' ('+impNum(q.accepted)+' yes, '
+          +impNum(q.rejected)+' no) <button class="btn ghost sm gpQClear" data-q="'+impEsc(q.question)+'" '
+          +'style="padding:3px 9px;font-size:11px">Undo</button></span>':'')
+    +'</div>'
+    +(q.rows.length?gpQuestionRows(q):'')
+    // The closing tag is not optional and its absence is not a typo you get
+    // away with: the browser nests the next block inside this one, so eight
+    // questions render as eight levels of indentation on a phone.
+    +'</div>';
+}
+
+function gpQuestionRows(q){
+  return '<details style="margin-top:6px"><summary style="cursor:pointer;font-size:11.5px;color:#2563eb">'
+    +'Show '+(q.asking>q.rows.length?('the first '+impNum(q.rows.length)+' of '+impNum(q.asking)):impNum(q.rows.length))
+    +'</summary>'
+    +'<div class="impscroll" style="margin-top:8px"><table class="imptbl impstack">'
+    +'<thead><tr><th>What</th><th>Old address</th><th>Would go to</th><th>Why it is asking</th><th></th></tr></thead><tbody>'
+    +q.rows.map(r=>'<tr>'
+      +'<td data-l="What">'+impEsc(r.subject)+'</td>'
+      +'<td data-l="Old" style="font-family:var(--mono);font-size:11px">'+impEsc(r.source)+'</td>'
+      +'<td data-l="New" style="font-family:var(--mono);font-size:11px">'+(r.target?impEsc(r.target):'<span style="color:var(--ink-soft);font-family:inherit">nowhere</span>')+'</td>'
+      +'<td data-l="Why">'+impEsc(r.reason)+'</td>'
+      +'<td data-l="" style="white-space:nowrap">'
+        +(q.decidable&&r.target?'<button class="btn primary sm gpQOne" data-s="'+impEsc(r.source)+'" data-a="accept" style="padding:2px 8px;font-size:11px">Yes</button> ':'')
+        +'<button class="btn ghost sm gpQOne" data-s="'+impEsc(r.source)+'" data-a="reject" style="padding:2px 8px;font-size:11px">No</button>'
+      +'</td></tr>').join('')
+    +'</tbody></table></div></details>';
+}
+
 function gbUrlsMediaCard(){
   if(!gbUM) return '<div class="card pad">'
     +'<b style="font-size:14px">Addresses &amp; pictures</b>'
@@ -8326,9 +8424,14 @@ function gbUrlsMediaCard(){
     +gpSourceLine(gbUM.sources)
     +'<div class="impgrid" style="margin-top:8px">'
     +'<div class="impfile"><b>'+u.buckets.migrate.count+'</b><span>redirects to write</span></div>'
-    +'<div class="impfile"><b>'+u.buckets.ask.count+'</b><span>need your decision</span></div>'
+    +'<div class="impfile"><b>'+u.buckets.ask.count+'</b><span>still asking</span>'
+      +((u.answers&&(u.answers.accepted||u.answers.rejected))
+        ?'<span style="font-size:11px">you have answered '+impNum(u.answers.accepted+u.answers.rejected)
+          +' — '+impNum(u.answers.accepted)+' yes, '+impNum(u.answers.rejected)+' no</span>':'')
+      +'</div>'
     +'<div class="impfile"><b>'+u.buckets.discard.count+'</b><span>nothing to do</span></div>'
     +'</div>'
+    +gpQuestions(u)
     +'<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 0">'
     +u.diff.create+' new, '+u.diff.update+' corrected, '+u.diff.unchanged+' already right'
     +(u.diff.conflict?', <b>'+u.diff.conflict+' refused</b> — you pointed those somewhere yourself and this will not overrule you':'')
@@ -8403,6 +8506,40 @@ function gbUMWire(){
     if(!hosts.length){ gbUMMsg='Tick the site to put the pictures back on.'; impPaint(); return; }
     gbUMPost('/urls-media/media',{action:'restore',hosts:hosts},d=>d.restored+' picture(s) put back.');
   };
+
+  /*
+   * The question buttons. Delegated over the rendered nodes rather than bound
+   * by id, because there is one per question and one per row and impPaint()
+   * rebuilds all of them on every answer.
+   *
+   * THE REQUEST NAMES ADDRESSES, NEVER DESTINATIONS. The server re-derives the
+   * map and refuses an address it is not asking about, so the worst this can do
+   * is approve something the shop was already proposing — see
+   * UrlsMediaApiController::decisions().
+   */
+  document.querySelectorAll('.gpQAll').forEach(b=>{
+    b.onclick=()=>{
+      const yes=b.dataset.a==='accept';
+      if(!confirm(yes
+        ?'Say yes to every address under this question?\n\nNothing is written yet — they move into "redirects to write", and you press Write when you are ready.'
+        :'Say no to every address under this question?\n\nThey stop being asked about. Undo puts them back.')) return;
+      gbUMPost('/urls-media/decisions',{action:b.dataset.a,question:b.dataset.q},
+        d=>d.recorded+' address(es) answered'+(d.refused.length?', '+d.refused.length+' could not be':'')+'.');
+    };
+  });
+
+  document.querySelectorAll('.gpQOne').forEach(b=>{
+    b.onclick=()=>gbUMPost('/urls-media/decisions',{action:b.dataset.a,sources:[b.dataset.s]},
+      d=>d.recorded?('Answered '+b.dataset.s+'.'):('That could not be answered.'+(d.refused[0]?' '+d.refused[0]:'')));
+  });
+
+  document.querySelectorAll('.gpQClear').forEach(b=>{
+    b.onclick=()=>{
+      if(!confirm('Undo your answers to this question?\n\nThe addresses go back to being asked about. Redirects already written stay until you press Undo on the redirects themselves.')) return;
+      gbUMPost('/urls-media/decisions',{action:'clear',question:b.dataset.q},
+        d=>d.cleared+' answer(s) undone.');
+    };
+  });
 
   const rebase=$('#gbUMRebase');
   if(rebase) rebase.onclick=()=>gbUMPost('/urls-media/media',{action:'rebase-apply'},
