@@ -1037,18 +1037,13 @@ where the answer went rather than to find the question missing.*
   keep their DOM order. They differ only in animation phase, so the colour wave
   runs the same way physically in both directions. Visually indistinguishable at
   rest; recorded so the next sweep does not re-derive it.
-- **`store/app.blade.php` carries an inline `right:50%;margin-right:-24px`** on
-  the cart-count badge, written by that document's own JavaScript. Round one
-  excluded it because the view hard-coded `<html lang="en">` with no `dir`, so
-  no `[dir="rtl"]` rule could match in it. **That half is now done** — commit
-  e2ce533 gave the five standalone documents `lang="{{ Locale::htmlLang() }}"
-  and `dir="{{ Locale::direction() }}"`, so the exclusion's stated reason has
-  expired. **The other half cannot be done from any file this lane owns**: that
-  document's stylesheet is an inline `<style>` block inside the same view, and
-  the physical declaration is inside a JavaScript template literal in the same
-  view again, so both the defect and every possible answer to it live in
-  `store/app.blade.php`. §14.3 has the exact patch and the measurement, for
-  whoever holds that file.
+- ~~**`store/app.blade.php` carries an inline `right:50%;margin-right:-24px`**
+  on the cart-count badge.~~ **Done — §14.3.** Both halves landed: e2ce533 gave
+  the five standalone documents a real `lang` and `dir`, and the view's own
+  owner then spelled the badge's two declarations logically. This lane measured
+  the patch and handed it over; it could not apply it, because that document's
+  `<html>`, its stylesheet and the declaration are all three inside the one
+  file.
 - ~~**16 `fill-bar` declarations in `kbb-checkout.css` were read and not
   touched.**~~ **Done — §14.2.** All 16 read on the merged file and confirmed
   correct as kept, with a guard that says what makes them correct.
@@ -1232,14 +1227,22 @@ there. The Arabic "as shipped" row shows the badge is not merely on the wrong
 side — `right:50%` against an element laid out right-to-left stretches it to
 46px, so it reads as a smear rather than a count.
 
-**This lane cannot make it.** That document carries its own `<html>`, its own
+**DONE, BY THE LANE THAT OWNS THE VIEW, WHILE THIS WAS BEING WRITTEN.** This
+lane could not make the change — that document carries its own `<html>`, its own
 inline `<style>` block and its own inline script, so the badge, the stylesheet
-that should reach it and the physical declaration itself are all three inside
-`resources/views/store/app.blade.php` — which belongs to the layouts lane this
-round. There is no file this lane owns from which the CSS half could be written.
-Handed over with the patch above; when it lands, drop the file from
-`$notBilingual` in `RtlMirrorTest` and correct the comment at line 397, and the
-existing sweep will hold it from then on.
+that should reach it and the physical declaration were all three inside
+`resources/views/store/app.blade.php`. It was handed over with the patch above,
+and the patch that landed is that patch: line ~1313 now writes
+`inset-inline-end:50%;margin-inline-end:-24px`. That lane's
+`InlineStyleAttributesCarryNoUnmirroredDirectionTest` is the guard from here on,
+and it is stricter than the sweep in `RtlMirrorTest` — it requires every
+remaining inline physical declaration to NAME the rule that defends it, rather
+than to be listed as fine.
+
+`$notBilingual` in `RtlMirrorTest` is now **empty**, which is the news: no
+storefront view is carved out of that sweep any more. The measurement below
+stands as the corroboration that the one-liner was the right one, taken
+independently and before it landed.
 
 ### 14.4 The bundle that renamed itself for nothing
 

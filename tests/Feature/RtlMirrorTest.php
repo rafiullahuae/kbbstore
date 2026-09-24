@@ -410,35 +410,33 @@ it('answers every inline physical inset in a storefront view with an !important 
     ];
 
     /*
-     * STILL EXCLUDED, BUT NOT FOR THE REASON THIS USED TO GIVE.
+     * EMPTY, AND THAT IS THE NEWS.
      *
+     * This list held resources/views/store/app.blade.php through two rounds.
      * The original reason was that the view hard-coded <html lang="en"> with no
-     * dir, so a [dir="rtl"] rule could never match inside it. THAT HAS EXPIRED:
-     * commit e2ce533 gave the five standalone documents
-     * lang="{{ Locale::htmlLang() }}" and dir="{{ Locale::direction() }}", and a
-     * [dir="rtl"] rule matches in this one now.
+     * dir, so a [dir="rtl"] rule could never match inside it; that expired when
+     * commit e2ce533 gave the five standalone documents a real lang and dir.
+     * The reason it stayed after that was narrower: the badge, the stylesheet
+     * that should reach it and the physical declaration were all three INSIDE
+     * that one view, so no lane but its owner could answer it.
      *
-     * It stays on the list because the defect is not answerable from any file
-     * outside it. The view carries its own <html>, its own inline <style> block
-     * and its own inline script, so the badge, the stylesheet that should reach
-     * it and the physical declaration are all three inside
-     * store/app.blade.php -- there is nowhere else to write the answer.
+     * Its owner has. Line ~1313 now writes
+     * `inset-inline-end:50%;margin-inline-end:-24px` where it wrote
+     * `right:50%;margin-right:-24px`, which is the logical spelling of the same
+     * idea and needs no !important at all.
      *
-     * THE FIX IS ONE LINE AND IT IS MEASURED. Line 1301 writes
-     * `style="position:absolute;top:2px;right:50%;margin-right:-24px"` on the
-     * tab bar's cart badge; spelling those two logically --
-     * `inset-inline-end:50%;margin-inline-end:-24px` -- needs no !important and
-     * no new rule. At 390px against a tab spanning 290.5..386 in English and
-     * 4..99.5 in Arabic: English 345.3..362.3 both before and after, not one
-     * pixel; Arabic 29.8..75.8 (+1.0 from the tab's centre, and 46px wide
-     * rather than 17) becomes 27.8..44.8, i.e. -15.5, the exact mirror of
-     * English's +15.5. docs/rtl-audit.md §14.3.
+     * Measured before that landed, at 390px, against a tab spanning 290.5..386
+     * in English and 4..99.5 in Arabic: English 345.3..362.3 with either
+     * spelling, not one pixel; Arabic 29.8..75.8 (+1.0 from the tab's centre,
+     * and 46px wide rather than 17, because `right:50%` against an element laid
+     * out right-to-left stretches it) becomes 27.8..44.8, i.e. -15.5, the exact
+     * mirror of English's +15.5. docs/rtl-audit.md §14.3.
      *
-     * WHEN THAT LANDS, take the file off this list and the sweep below holds it
-     * from then on -- and correct the comment at store/app.blade.php:397, which
-     * still says the document has no dir.
+     * So the sweep below now sees every storefront view, with nothing carved
+     * out. Keep it that way: an entry here is a declaration that no stylesheet
+     * can answer, and the honest response to one is to fix the view.
      */
-    $notBilingual = ['resources/views/store/app.blade.php'];
+    $notBilingual = [];
 
     // Only declarations that carry a READING DIRECTION. `text-align:center`,
     // `margin:0 auto` and `border-radius` do not, and a sweep that flags them
