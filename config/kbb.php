@@ -51,4 +51,24 @@ return [
     // main trigger.
     'health_token' => env('KBB_HEALTH_TOKEN', ''),
 
+    /*
+     * Whether that check RENDERS the storefront or only pings the database.
+     *
+     * On, and on deliberately -- this is the one setting in this patch that
+     * does not ship at the value the server already behaves at. Until
+     * 2.60.266 the check ran `SELECT 1` and nothing else, which is why
+     * 2.60.260 was kept while it was 500ing every product page. Leaving the
+     * new behaviour off by default would have shipped the fix and not the
+     * protection.
+     *
+     * The switch exists because the check now decides whether an update is
+     * kept, and there is one situation where that is the wrong trade: a shop
+     * already broken for an unrelated reason cannot install the package that
+     * repairs it, because the health check fails on damage the package was
+     * never responsible for. Set KBB_HEALTH_DEEP=false in .env over SSH, apply
+     * the package, set it back. It is an escape hatch for an emergency, not a
+     * setting to leave off.
+     */
+    'health_deep' => (bool) env('KBB_HEALTH_DEEP', true),
+
 ];

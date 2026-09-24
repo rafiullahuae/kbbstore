@@ -330,6 +330,19 @@ final class UpdateRunner
      * This is deliberately a real request rather than an internal call: it boots
      * the application from scratch in a separate process, which is the only way
      * to find out whether the newly written files actually parse and run.
+     *
+     * ▲ THE REASON IS READ OUT OF THE BODY, AND NOT ONLY OUT OF THE STATUS
+     *   LINE. The endpoint answers 503 when the shop is not serving, and the
+     *   sentence saying WHICH page failed and how is in the JSON underneath
+     *   it. Reading the status alone -- which is what `! $response->successful()`
+     *   did, returning before the body was looked at -- turned every one of
+     *   those into the string "HTTP 503", so the Core Updates screen said an
+     *   update had been rolled back and could not say what for. That reason is
+     *   the only diagnosis the owner gets, and it now survives the trip.
+     *
+     *   A body with no `reason` in it still falls back to the status, so an
+     *   endpoint from before 2.60.266, a 404 from a mismatched token and a web
+     *   server error page all still report something true.
      */
     private function healthCheck(): array
     {
@@ -341,15 +354,24 @@ final class UpdateRunner
         }
 
         try {
-            $response = Http::timeout(20)->get($url, ['token' => $token]);
+            // Longer than the 20s it was: the check now renders two storefront
+            // pages rather than running SELECT 1, and a cold OPcache on a
+            // shared host makes the first render of a just-replaced file the
+            // slowest one it will ever do.
+            $response = Http::timeout(45)->get($url, ['token' => $token]);
 
-            if (! $response->successful()) {
-                return ['ok' => false, 'reason' => 'HTTP ' . $response->status()];
+            if ($response->json('ok') === true) {
+                return ['ok' => true, 'reason' => 'ok'];
             }
 
-            return ($response->json('ok') === true)
-                ? ['ok' => true, 'reason' => 'ok']
-                : ['ok' => false, 'reason' => 'unexpected response body'];
+            $reason = $response->json('reason');
+
+            return [
+                'ok' => false,
+                'reason' => (is_string($reason) && $reason !== '')
+                    ? $reason . ' (HTTP ' . $response->status() . ')'
+                    : 'HTTP ' . $response->status(),
+            ];
         } catch (\Throwable $e) {
             return ['ok' => false, 'reason' => $e->getMessage()];
         }
