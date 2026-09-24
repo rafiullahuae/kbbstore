@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\Import\ReservedArticleReport;
 use App\Services\ImportConsole\ImportDriver;
 use App\Services\ImportConsole\ImportDriverRefused;
 use App\Services\ImportConsole\ImportWorkspace;
@@ -367,6 +368,52 @@ class ImportApiController extends Controller
         return response($body, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="kbb-import-rejects-'.$mode.'.csv"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'no-store',
+        ]);
+    }
+
+    /**
+     * What the import will decide about every article's ADDRESS, before it
+     * decides it — Store → Import → "Articles at addresses the shop owns".
+     *
+     * =========================================================================
+     * WHY THIS IS A READ AND NOT A MODE OF THE PREVIEW RUN
+     * =========================================================================
+     *
+     * The preview run is the right answer to "what will this import do", and it
+     * is the wrong answer to this question for one reason: it is a run. It
+     * takes a slice at a time, it writes checkpoints, and it cannot be asked
+     * while a live import is part-way through without disturbing it. This
+     * reads `posts.csv` and answers; nothing is opened, nothing is written, and
+     * a run in flight does not notice.
+     *
+     * The answer comes from `PostImporter::address()` — the importer's own
+     * rule, not a second copy of it. See `ReservedArticleReport`.
+     *
+     * A GET, because it writes nothing. `routes/import-articles-admin.php`
+     * mounts it under the same `/import/` prefix everything else on this screen
+     * uses, so `AdminCapabilities`' existing `['*', 'admin-api/import/**',
+     * 'data.import']` rule covers it — a prefix of its own would have fallen
+     * through to the closed owner-only default.
+     */
+    public function articleAddresses(ReservedArticleReport $report): JsonResponse
+    {
+        return response()->json($report->run());
+    }
+
+    /**
+     * The same list as the spreadsheet he approves from.
+     *
+     * `attachment` and `text/csv`, like /import/rejects: the rows quote an
+     * article's title straight out of the owner's WordPress database, and a
+     * body a browser renders is a body a browser can be made to execute.
+     */
+    public function articleAddressesCsv(ReservedArticleReport $report): Response
+    {
+        return response($report->csv(), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="kbb-article-addresses.csv"',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'no-store',
         ]);
