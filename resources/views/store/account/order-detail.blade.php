@@ -233,7 +233,15 @@
             <div class="kbbod-thumb" style="{{ $thumb }}"><span class="kbbod-qty">{{ (int) $item->quantity }}</span></div>
             <div class="kbbod-name">
               @if ($item->brand)<div class="kbbod-brand">{{ $item->brand }}</div>@endif
-              <b>{{ $item->name }}</b>
+              {{-- The customer's own order page, so the customer's own language:
+                   the snapshot OrderLocale::listen() took at checkout, falling
+                   back to the English one, which is what every row holds while
+                   this shop serves one language. The Gradient seed above stays
+                   $item->name deliberately -- the tile colour is a hash of the
+                   string it is given, so translating the seed would repaint a
+                   shopper's order history between languages for a value nobody
+                   reads. --}}
+              <b>{{ $item->name_localised ?: $item->name }}</b>
               <span class="kbbod-meta">{{ (int) $item->quantity }} × {!! $receiptMoney((int) $item->unit_price) !!}@if ($variant !== '') · {{ $variant }}@endif</span>
             </div>
             <div class="kbbod-linetotal">{!! $receiptMoney((int) $item->total) !!}</div>

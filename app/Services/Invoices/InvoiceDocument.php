@@ -360,8 +360,32 @@ class InvoiceDocument
                 static fn (string $v) => $v !== '',
             );
 
+            $name = trim((string) $item->name) !== '' ? trim((string) $item->name) : 'Item';
+
+            /*
+             * TWO NAMES, BECAUSE TWO PEOPLE READ THESE FOUR DOCUMENTS.
+             *
+             * `name` is the operator's: the English snapshot, which is what the
+             * packing slip and the delivery note print and what the admin order
+             * screen shows. `nameForCustomer` is the language the order was
+             * placed in, snapshotted at checkout by OrderLocale::listen(), and
+             * it is what the invoice prints -- the one document of the four that
+             * Admin\InvoiceController renders inside OrderLocale::render(), so
+             * every other word on it is already the customer's language.
+             *
+             * Still the snapshot, never the live product: this reads a column
+             * that was written on the day, exactly like the line above it, so
+             * the rule in this class's header is untouched and nothing here
+             * gains a query.
+             *
+             * With one language live, `name_localised` is NULL on every row and
+             * the two are the same string.
+             */
+            $localised = trim((string) ($item->name_localised ?? ''));
+
             $out[] = [
-                'name' => trim((string) $item->name) !== '' ? trim((string) $item->name) : 'Item',
+                'name' => $name,
+                'nameForCustomer' => $localised !== '' ? $localised : $name,
                 'brand' => trim((string) $item->brand),
                 'sku' => trim((string) $item->sku),
                 'variant' => implode(', ', $variant),
