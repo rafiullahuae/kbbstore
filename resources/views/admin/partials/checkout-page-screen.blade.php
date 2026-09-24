@@ -499,10 +499,12 @@
     if (f.key === 'd_sticky_top') return !pvOn('d_sticky');
     /* Both only mean anything while the line above them is drawn at all. */
     if (f.key === 'rating_text' || f.key === 'rating_min') return !pvOn('rating_on');
-    /* Read only while the band is centred. In "lined up with the page" mode the
-       header takes the PAGE's side padding, so this slider would move nothing
-       -- and a slider that moves nothing is worse than no slider. */
-    if (f.key === 'm_head_pad_x') return String(values.m_head_align) !== 'center';
+    /* NOT HIDDEN ANY MORE. It was, on the grounds that "lined up with the page"
+       mode read the page's side padding and this slider would move nothing. The
+       reasoning was fine and the outcome was not: it left no way to set the
+       header's side padding at all in the mode that ships. The stylesheet now
+       reads `var(--cop-m-headpadx, var(--cop-padx))`, so leaving this where it
+       is follows the page and moving it wins. */
 
     return false;
   }

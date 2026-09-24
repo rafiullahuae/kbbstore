@@ -144,6 +144,10 @@
    correctness on either. */
 .kbb-slimfoot{
   --sf-pady:12px; --sf-padx:20px; --sf-gap:18px; --sf-f:1; --sf-bf:1;
+  /* Top and bottom separately, each falling back to --sf-pady. The service
+     emits --sf-padt / --sf-padb only once the owner moves one of them, so a
+     bar nobody has touched is symmetric exactly as it was. */
+  --sf-padt:var(--sf-pady); --sf-padb:var(--sf-pady);
   /* The gap above the bar is a MARGIN and not padding: padding would be inside
      the bar and would carry the tone with it, so a white bar on a cream page
      would grow a white stripe above itself. A margin leaves the page's own
@@ -192,7 +196,7 @@
 
 .kbb-slimfoot .sf-in{
   max-width:var(--sf-max);margin:0 auto;
-  padding:var(--sf-pady) var(--sf-padx);
+  padding:var(--sf-padt) var(--sf-padx) var(--sf-padb);
   display:flex;align-items:center;flex-wrap:wrap;
   gap:calc(var(--sf-gap) * .55) var(--sf-gap);
   min-width:0;
@@ -415,6 +419,8 @@
 @media (max-width:900px){
   .kbb-slimfoot.sf-msplit{
     --sf-pady:var(--sf-m-pady,10px);
+    --sf-padt:var(--sf-m-padt,var(--sf-pady));
+    --sf-padb:var(--sf-m-padb,var(--sf-pady));
     --sf-padx:var(--sf-m-padx,20px);
     --sf-gap:var(--sf-m-gap,14px);
     --sf-f:var(--sf-m-f,1);

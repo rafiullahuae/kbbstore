@@ -196,9 +196,30 @@ class SlimFooter
         'row_h'      => ['range', 'Smallest row height', 0,
                          'A floor under each ruled row, whatever the padding says. Zero is the row taking exactly the height of its words; 44 is a comfortable tap target on a phone.',
                          ['min' => 0, 'max' => 60, 'step' => 2, 'unit' => 'px']],
+        /*
+         * ── TOP AND BOTTOM, SEPARATELY ────────────────────────────────────
+         *
+         * This was one symmetric `pad_y`, and the owner's report was that
+         * there is "no control for inside footer block top padding". He is
+         * right: a bar that wants to sit close to the page above it and still
+         * breathe underneath had no way to say so.
+         *
+         * `pad_y` is KEPT rather than deleted, and is the FALLBACK for both.
+         * An owner who had already moved it keeps exactly the bar he had,
+         * because each of the two reads it whenever its own row is absent --
+         * see all(). Deleting it would have silently reset a saved value to
+         * the shipped default on the next render, which is the kind of quiet
+         * loss this project has a rule about.
+         */
         'pad_y'      => ['range', 'Height', 12,
-                         'Padding above and below. With "One line" this IS the height of the bar — 12 gives about 44px in total.',
+                         'Padding above and below together. The two controls under it override this one at a time; leave them alone and the bar is symmetric, as it was.',
                          ['min' => 2, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'pad_top'    => ['range', 'Padding inside the top', 12,
+                         'Between the top edge of the bar and its first line. Left where it is, it follows "Height" above.',
+                         ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'pad_bottom' => ['range', 'Padding inside the bottom', 12,
+                         'And under the last line. Left where it is, it follows "Height" above.',
+                         ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
         'pad_x'      => ['range', 'Side padding', 20,
                          'Between the screen edge and the first word.',
                          ['min' => 0, 'max' => 48, 'step' => 2, 'unit' => 'px']],
@@ -254,8 +275,14 @@ class SlimFooter
                              'between' => 'Spread to both edges',
                          ]],
         'm_pad_y'    => ['range', 'Height on a phone', 10,
-                         'Padding above and below, at 900px and below.',
+                         'Padding above and below together, at 900px and below. The two under it override it one at a time.',
                          ['min' => 2, 'max' => 40, 'step' => 1, 'unit' => 'px']],
+        'm_pad_top'  => ['range', 'Padding inside the top, on a phone', 10,
+                         'Between the top edge of the bar and its first row. This is the one to reach for when the bar sits too close to the Place order box above it.',
+                         ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
+        'm_pad_bottom' => ['range', 'Padding inside the bottom, on a phone', 10,
+                           'And under the last row.',
+                           ['min' => 0, 'max' => 60, 'step' => 1, 'unit' => 'px']],
         'm_pad_x'    => ['range', 'Side padding on a phone', 20,
                          'Between the screen edge and the first word. 20 lines the bar up with the checkout\'s own page padding.',
                          ['min' => 0, 'max' => 48, 'step' => 2, 'unit' => 'px']],
@@ -359,10 +386,11 @@ class SlimFooter
                       ['co_on', 'cart_on']],
         'phone'   => ['On a phone', 'The same bar at 900px and below, with its own shape. Ruled rows is what ships here and spread-to-both-edges is what ships on a desktop, which is the pair the owner chose; the switch at the top hands the phone back to the desktop\'s settings.',
                       ['mobile_on', 'm_variant', 'm_align', 'm_space_above', 'm_pad_y',
+                       'm_pad_top', 'm_pad_bottom',
                        'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap', 'm_font']],
         'layout'  => ['Shape & size', 'Four structures and four alignments, which is sixteen looks from two controls. "One line" left-aligned is the shortest, and is what ships.',
                       ['variant', 'align', 'tone', 'divider', 'line_w', 'radius', 'shadow',
-                       'space_above', 'pad_y', 'row_pad', 'row_h', 'pad_x',
+                       'space_above', 'pad_y', 'pad_top', 'pad_bottom', 'row_pad', 'row_h', 'pad_x',
                        'width_mode', 'max_w', 'links_pos', 'gap',
                        'font', 'brand_style', 'brand_size', 'upper', 'phone_mark',
                        'sep', 'icons_on', 'top_on', 'top_style']],
@@ -384,6 +412,10 @@ class SlimFooter
         'max_w'  => '--sf-max',
         'radius' => '--sf-r',
         'line_w' => '--sf-lw',
+        'pad_top'     => '--sf-padt',
+        'pad_bottom'  => '--sf-padb',
+        'm_pad_top'   => '--sf-m-padt',
+        'm_pad_bottom' => '--sf-m-padb',
         'space_above' => '--sf-above',
         'row_pad'     => '--sf-rowp',
         'row_h'       => '--sf-rowh',
@@ -412,8 +444,9 @@ class SlimFooter
      * @var list<string>
      */
     public const SQUEEZE = [
-        'space_above', 'pad_y', 'row_pad', 'row_h', 'pad_x', 'gap',
-        'm_space_above', 'm_pad_y', 'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap',
+        'space_above', 'pad_y', 'pad_top', 'pad_bottom', 'row_pad', 'row_h', 'pad_x', 'gap',
+        'm_space_above', 'm_pad_y', 'm_pad_top', 'm_pad_bottom',
+        'm_row_pad', 'm_row_h', 'm_pad_x', 'm_gap',
     ];
 
     /** key => the custom property it is emitted as, as a unitless factor. */
@@ -459,6 +492,29 @@ class SlimFooter
         foreach (self::SCHEMA as $key => $def) {
             $saved = $this->settings->get(self::PREFIX.$key, null);
             $out[$key] = $saved === null ? $def[2] : $this->cast($key, $saved);
+        }
+
+        /*
+         * THE SPLIT PADDING FALLS BACK TO THE SYMMETRIC ONE IT REPLACED.
+         *
+         * `pad_top`/`pad_bottom` were added after `pad_y`, and their defaults
+         * equal its default -- so on a shop that has never touched any of them
+         * all three agree and nothing moves. The case this exists for is the
+         * shop that HAD moved `pad_y`: without this, its saved value would go
+         * on being stored while the bar silently rendered from the new keys'
+         * shipped defaults instead.
+         *
+         * Keyed on the ROW being absent, not on the value equalling the
+         * default, because those are different facts: an owner who
+         * deliberately sets the top padding to the same number as the height
+         * has a row, and must keep winning if he later changes the height.
+         */
+        foreach ([['pad_top', 'pad_bottom', 'pad_y'], ['m_pad_top', 'm_pad_bottom', 'm_pad_y']] as [$top, $bottom, $both]) {
+            foreach ([$top, $bottom] as $side) {
+                if ($this->settings->get(self::PREFIX.$side, null) === null) {
+                    $out[$side] = $out[$both];
+                }
+            }
         }
 
         return $out;
@@ -637,6 +693,19 @@ class SlimFooter
                that nothing consults -- and would be the first thing a future
                reader chased when the width looked wrong. */
             if ($key === 'max_w' && $c['width_mode'] !== 'fixed') {
+                continue;
+            }
+
+            /*
+             * A split padding that is only MIRRORING the symmetric one is not
+             * a value the owner set, and the stylesheet already falls back to
+             * `--sf-pady` on its own. Emitting it anyway would turn one moved
+             * slider into three properties, which is exactly the noise this
+             * method's own header says it exists to avoid -- and would leave a
+             * reader wondering which of the three was the real instruction.
+             */
+            if (in_array($key, ['pad_top', 'pad_bottom', 'm_pad_top', 'm_pad_bottom'], true)
+                && $this->settings->get(self::PREFIX.$key, null) === null) {
                 continue;
             }
 

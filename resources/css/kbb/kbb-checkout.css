@@ -95,7 +95,22 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    * hidden on the screen while this is on, because a slider that moves
    * nothing is worse than no slider.
    */
-  .kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-padx)}
+  /*
+   * THE PAGE'S PADDING AS THE DEFAULT, NOT AS THE ONLY ANSWER.
+   *
+   * The first version of this rule hard-coded `var(--cop-padx)` and the screen
+   * HID the header's own side-padding slider, on the grounds that a slider
+   * which moves nothing is worse than no slider. That reasoning was fine and
+   * the outcome was not: it left the owner with no way to set the header's
+   * side padding at all in the mode that ships, which is what he reported.
+   *
+   * `--cop-m-headpadx` is the RAW source property, emitted by cssVariables()
+   * only when it differs from its default -- so an owner who has not touched
+   * that slider has no such property and the header falls back to the page's
+   * own padding, which is the alignment fix. Move it and it wins. One
+   * declaration gives both.
+   */
+  .kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-m-headpadx,var(--cop-padx))}
   /*
    * THE THIRD CAUSE, AND THE ONE THE OWNER FOUND IN DEVTOOLS.
    *
