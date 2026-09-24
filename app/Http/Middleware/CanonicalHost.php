@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Models\Redirect;
 use App\Support\SiteHost;
 use App\Support\Url;
 use Closure;
@@ -74,8 +73,9 @@ use Symfony\Component\HttpFoundation\Response;
  * Google follows chains, but every hop is latency for a real shopper and one
  * more thing to break.
  *
- * So this consults the same `redirects` table CheckRedirects reads, on the same
- * column, before building the target. Both corrections travel in one response.
+ * So this consults the same `redirects` table CheckRedirects reads, through
+ * CheckRedirects' own lookup(), before building the target. Both corrections
+ * travel in one response.
  */
 final class CanonicalHost
 {
@@ -169,11 +169,23 @@ final class CanonicalHost
          * comment. getPathInfo() and not path(), matching CheckRedirects
          * exactly: path() strips the trailing slash and `redirects.source` is
          * stored with it.
+         *
+         * ▲ AND IT IS CheckRedirects' OWN LOOKUP, not a second copy of its
+         * query. It used to be a copy, and a copy was survivable only while
+         * that class was dead code: now that it is registered as middleware,
+         * the two run on the same paths on every request and any difference
+         * between them is a redirect that fires on the canonical host and not
+         * on an alias -- or, worse, a loop guarded on one host and not the
+         * other. lookup() carries the enabled check, the loop refusal and the
+         * cached source index, so this host pays no query for an address no
+         * row claims either. tests/Feature/RedirectMiddlewareTest.php asserts
+         * the two against EACH OTHER rather than against a literal.
+         *
+         * Not findMatch(): that gates on isMethod('GET'), and this middleware
+         * forwards HEAD as well as GET. Going through it would silently stop
+         * folding the path correction into a HEAD request's one hop.
          */
-        $mapped = Redirect::query()
-            ->where('source', $path)
-            ->where('enabled', true)
-            ->first();
+        $mapped = CheckRedirects::lookup($path);
 
         if ($mapped !== null) {
             // Url::redirect() returns an absolute URL on APP_URL, already
