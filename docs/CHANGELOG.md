@@ -3,6 +3,38 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.262
+NO CODE CHANGE. This is 2.60.259, .260 and .261 rebuilt as ONE cumulative
+package against 2.60.258, because the three were applied out of order on the
+live host and a file ships whole.
+
+WHY IT WAS NEEDED. .260 was applied before .259, and .259 never recorded a
+completion. Three files that landed then referenced things only .259 ships:
+
+  - `App\Services\VariantPricing` is NEW in .259 and does not exist on a server
+    that skipped it. `product-card.blade.php`, `product-grid.blade.php` and
+    `store/product.blade.php` -- all three shipped by .260 -- resolve it out of
+    the container to print a variable product's price range. Every page that
+    draws a product tile, and every product page, throws
+    `Class "App\Services\VariantPricing" not found`.
+  - `nameForCustomer` is the array key `InvoiceDocument::items()` gained in
+    .259. `sheet-invoice.blade.php` and `sheet-delivery-note.blade.php`, both
+    shipped by .261, read it. Against .258's InvoiceDocument the key is absent,
+    so every invoice and delivery note throws.
+
+THE HEALTH CHECK DID NOT CATCH EITHER, and that is the defect underneath the
+mistake rather than the mistake itself. `/_kbb-health` runs `SELECT 1` and
+returns JSON. It never renders a storefront page, so a package that breaks the
+home page, the shop, every category, every brand and every product page answers
+`{"ok":true}` and is kept. An update that takes the shop down is exactly what
+that check exists to refuse, and it cannot see it.
+
+WHAT THIS PACKAGE DOES. Every file changed between 2.60.258 and 2.60.261,
+written whole. It does not matter which of the three landed, which landed
+partly, or in what order: applying this produces the 2.60.261 tree exactly.
+Laravel's migrator skips the migrations that already ran, so the eight
+migrations here are safe whatever state the table is in.
+
 ## 2.60.261
 Two changes, both visible on the shop, both fixing something rather than
 preferring something.
