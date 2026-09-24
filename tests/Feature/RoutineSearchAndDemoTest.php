@@ -236,7 +236,8 @@ it('distinguishes nothing-matched from nothing-loaded', function () {
     $src = rsdScreen();
 
     expect($src)->toContain("status = 'Searching…';")
-        ->and($src)->toContain("' match “' + esc(query) + '”'")
+        ->and($src)->toContain("' products match “'")
+        ->and($src)->toContain("' product matches “'")
         ->and($src)->toContain('Nothing loaded.')
         ->and($src)->toContain("'No product matches “' + esc(query) + '”.'");
 });

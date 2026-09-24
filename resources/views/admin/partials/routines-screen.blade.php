@@ -724,8 +724,10 @@
     } else if (!products) {
       status = '';
     } else if (query) {
-      status = products.total + ' product' + (products.total === 1 ? '' : 's')
-             + ' match “' + esc(query) + '”';
+      // "1 product matches", "2 products match" — the verb agrees too, which
+      // the first draft got wrong and a screenshot caught.
+      status = products.total + (products.total === 1 ? ' product matches “' : ' products match “')
+             + esc(query) + '”';
     } else {
       status = products.total + ' product' + (products.total === 1 ? '' : 's');
     }
