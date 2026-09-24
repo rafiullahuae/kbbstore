@@ -6,9 +6,12 @@ The manual half, §11 onward, is the part that decides whether the Arabic shop c
 be shown to a customer: it turns RTL on, looks at every surface in a browser, and
 fixes the things a property rename cannot reach. 21 of the 57 declarations this
 document recorded as deliberately physical turned out to be convertible once
-their `transform` was flipped alongside them, one row was added, and two are
-deliberately deferred (§11.1), so the kept-physical list is now **37** and the
-tables below are the current ones.
+their `transform` was flipped alongside them, and one row was added. Two more —
+the `.mnav` in the two standalone blog layouts — were deferred at the time and
+have since been converted by Lane FK (§11.1), so **23 of the 57 are converted,
+34 are kept**, and with §11.6's added twin the kept-physical table below has
+**35** rows. §13 is the declaration-by-declaration re-reading of those 34, and
+of the three defects it found in surfaces no declaration reader can see.
 
 **RTL is still shipped OFF.** `language_ar_enabled` and `language_rtl_enabled`
 are both absent by default and nothing here seeds them.
@@ -36,11 +39,13 @@ Scope of the audit: every stylesheet under `resources/css/`, plus every
 | — in the storefront files this lane owns | **425** |
 | — converted to logical, mechanical half | **368** |
 | — converted to logical, manual half (§11) | **21** |
-| — left physical on purpose, after both halves | **37** |
+| — converted to logical, deferred pair taken later by Lane FK (§11.1) | **2** |
+| — left physical on purpose, re-read declaration by declaration in §13 | **34** |
 | — added on purpose: one `[dir="rtl"]` twin of a physical rule (§11.6) | **1** |
 | — out of this lane's scope (admin, invoice, dead Laravel welcome page) | **253** |
 
-368 + 21 + 37 = 426, one more than 425, because of the added twin. The floors
+368 + 21 + 2 + 34 = 425, and the table below has 35 rows — one more, because of
+the twin §11.6 added. The floors
 table above and the kept-physical table below are regenerated from the
 stylesheets, so those are the numbers to trust if this paragraph ever drifts.
 
@@ -89,9 +94,10 @@ declaration added to it later fails the guard.
 
 ## 2. What stays physical, and why
 
-These 37 declarations are inside the converted files and are **deliberately not
-converted**. (It was 57; §11 explains which 21 moved and why, which one was
-added, and which two are deferred rather than kept.) Each one is either an idiom that is not about reading direction, or
+These 35 declarations are inside the converted files and are **deliberately not
+converted** — 34 of the original 57, plus the one §11.6 added. (It was 57; §11
+explains which 21 moved and why and which one was added, §11.1 the two Lane FK
+took afterwards, and §13 re-reads what is left one declaration at a time.) Each one is either an idiom that is not about reading direction, or
 one half of a pair whose other half has no logical form — and converting half of
 a coordinated pair is worse than converting neither, because it breaks the layout
 in RTL in a way nobody sees until RTL is switched on.
@@ -189,14 +195,14 @@ reserves room for it is now logical and the image moves to match. §11.7.
 
 **`toggle` (0)**, **`masked` (0)** — both converted. §11.5.
 
-**`off-canvas` (2)** — 14 of the 16 converted (§11.1). The two that remain are
-`.mnav` in `store/blog.blade.php` and `store/post.blade.php`, and they are
-**deferred, not kept**: those views hard-code `<html lang="en">` with no `dir`,
-so a `[dir="rtl"]` rule could never match in them, while converting them does
-change the English bytes of a shipped page and trips
-`StorefrontEnglishUnchangedTest` — whose `BASE_COMMIT` repin a rebase then
-invalidates. §11.1 and §9.5. They belong with whoever gives those views a real
-`<html lang>`/`<html dir>`, in one change that repins that guard once.
+**`off-canvas` (0)** — 14 of the 16 converted by §11.1 and the last two by Lane
+FK, so this group is empty and no row of it survives in the table. What the two
+stragglers were, and why they waited: `.mnav` in `store/blog.blade.php` and
+`store/post.blade.php` — the same panel in two standalone layouts that hard-coded
+`<html lang="en">` with no `dir`, so a `[dir="rtl"]` rule could not match in them
+while converting them did change the English bytes of a shipped page. Lane FK
+gave those views a real `<html lang>`/`<html dir>` and converted both in the same
+change, inset and `translateX` together. §11.1 and §9.5.
 
 ## 3. Properties with no logical equivalent at all
 
@@ -896,3 +902,179 @@ and this lane did not run `npx vite build`. Verified rather than assumed: the ne
 `public/build/assets/kbb-*.css` zero times. The mobile-menu chevron, the
 back-to-cart chevron and the two arrows need the rebuild that `cb3c745` did for
 the manual half; everything else in Lane FS ships with the views.
+
+---
+
+## 13. Lane G — the 34 re-read one declaration at a time, and what that turned up
+
+The brief was the 57: confirm each one, convert what can be converted, re-mark
+what cannot. 23 were already converted by the time this lane ran (§11's 21 and
+Lane FK's 2), so the work was the remaining **34**, and the finding is that all
+34 are correctly physical **as declarations** — while three surfaces that no
+declaration reader can see were wrong anyway. Those three are the change.
+
+### 13.1 The verdict on each group
+
+| group | kept | verdict, and how it was reached |
+|---|---|---|
+| `fill-bar` | 16 | Unchanged, and **not touched at all**: they are in `kbb-checkout.css`, which is live under the checkout lane this round. §11.2 already mirrors the whole track with one rule, so nothing here needs a second opinion. |
+| `centre` | 13 | Re-read declaration by declaration. Every one is `left:50%` paired with `translateX(-50%)` **in the same block**, which is the centring idiom and not a direction. Confirmed in the browser as well: the home rail measures 12..378 in a 390px viewport in **both** directions, dots centred on 195. Settled, not converted. **But see 13.3** — one of them leaks onto a component that never asked for it. |
+| `off-screen` | 3 | Unchanged. §11.4's `[dir="rtl"]` twins park them on the discarded edge; `document.documentElement.scrollWidth` is 390 on every RTL page shot in `docs/rtl-shots/lane-g/`, so the ten-thousand-pixel scroll that defect used to open is gone and has not come back. |
+| `rotated` | 1 | Unchanged. `.acct::before` is two adjacent borders on a square rotated 45°, symmetric about the vertical axis. |
+| `transition` | 2 | Unchanged — one of them is the row §11.6 added, which is why the table has 35 rows and the original 57 gave up only 34. |
+
+**16 of the 34 are in a file this lane must not edit.** `kbb-checkout.css` is
+the checkout/cart lane's this round, so every `fill-bar` row above was read and
+left alone. None of them needs a change; if that ever stops being true it is a
+change to coordinate, not to make.
+
+### 13.2 What a declaration reader cannot see, and why it matters here
+
+An `RTL-PHYSICAL:` comment describes a stylesheet. Three things outrank a
+stylesheet, and each one hid a real defect:
+
+1. **An inline `style` attribute in a Blade view.** It beats every rule,
+   including one inside a media query; only `!important` gets past it.
+2. **An inline `style.transform` written by JavaScript**, rewritten on every
+   click, which no stylesheet can override at all.
+3. **A shorter selector in the same file** that still matches, carrying a
+   `transform` the longer rule never asked for.
+
+All three were found by the same instrument: load a page, dump the geometry of
+every block box, set `document.documentElement.dir = 'rtl'`, dump it again, and
+flag every box whose mirror is not where the mirror should be. Same page, same
+text, same fonts — only the direction changes, so a mismatch is a mirroring
+defect and not a translation-length artefact. Six pages × two viewports,
+**2,881 block boxes**; before the fixes, five roots failed; after, one, and that
+one is dismissed below.
+
+### 13.3 The three defects, measured before and after
+
+**A · The product page's discount badge did not mirror, and landed on the
+wishlist heart.** `partials/product-gallery.blade.php` places it with
+`style="top:14px;left:14px"` in three branches. Everything around it is logical
+— `.gwish` next to it is `inset-inline-end:14px` — but an inline declaration
+outranks the stylesheet, so T6 could not reach this one.
+
+| /ar/product/… at 390px | `.gwish` | the badge |
+|---|---|---|
+| English | 311..355 | 35..85.9 |
+| Arabic, before | 35..79 | 35..85.9 — **printed on top of the heart** |
+| Arabic, after | 35..79 | 304.1..355 — the exact mirror of English |
+
+Fixed in `kbb-product.css` with `[dir="rtl"] .gmain .lbl{inset-inline-start:14px
+!important;inset-inline-end:auto!important}`. Logical spelling, so it adds no
+physical declaration and no table row; `!important` only because of the inline
+style. Pictures: `fix-badge-BEFORE-rtl-390.jpg`, `fix-badge-rtl-390.jpg`,
+`fix-badge-ltr-390.jpg`.
+
+**B · The home hero went blank in Arabic on the first ▸.**
+`resources/js/kbb/home.js:29` advances the track with
+`style.transform = translateX(-index*100%)`. In an RTL flex row the slides queue
+to the LEFT of the first one, so that negative translation carries them further
+away instead of into the frame. Measured at 390px, percentage of each slide
+inside the frame after one click of ▸:
+
+| | slide 1 | slide 2 | slide 3 |
+|---|---|---|---|
+| English | 0 | **100** | 0 |
+| Arabic, before | 0 | **0** | 0 — the hero is empty |
+| Arabic, after | 0 | **100** | 0 |
+
+Fixed by giving the track back the coordinate system its arithmetic assumes —
+the same move §11.2 made on `.ftrack` — and handing each slide its own
+direction: `[dir="rtl"] .kbb-home .slides{direction:ltr}` +
+`[dir="rtl"] .kbb-home .sl{direction:rtl}`. Safe here and not on `.freebar`
+because the text lives one level down, inside `.sl`. **Travel still runs
+left-to-right in Arabic**; reversing it is a sign flip in `home.js`, which is
+not this lane's file — see 13.5. Pictures: `fix-slider-BEFORE-rtl-390.jpg`,
+`fix-slider-rtl-390.jpg`, `fix-slider-rtl-1280.jpg` and the two English ones.
+
+**C · The home slider's dots were displaced by half their own width — in
+English too.** This one is the centring idiom's only genuine casualty and it
+predates T6. `.sdots` (the theme's rail, dots are `<button>`) centres with
+`left:50%` + `translateX(-50%)`. `.kbb-home .sdots` is a different component
+(dots are `<i>`) which centres with both insets 0 and `justify-content:center`
+and declares no transform — so the shorter selector's `translateX(-50%)` still
+matched.
+
+| English home page | the rail | first dot |
+|---|---|---|
+| 390px, before | -171..195 | -14..8 — **half of it off the phone's left edge** |
+| 390px, after | 12..378 | 169..191 |
+| 1280px, before | -562.8..640 | dots at x ≈ 12, 41, 56 |
+| 1280px, after | 38.6..1241.4 | dots at x ≈ 614, 643, 658 — centred on 640 |
+
+One declaration: `transform:none` on `.kbb-home .sdots`. It is wrong in both
+directions, so the fix is not scoped to one — **this is the single deliberate
+change to the English page in this lane**, and it is called out in the commit
+rather than buried. Pictures: `fix-dots-BEFORE-ltr-390.jpg`,
+`fix-dots-BEFORE-ltr-1280.jpg` and their `-after` counterparts.
+
+### 13.4 A fourth, fixed because the mechanism is the same
+
+`partials/drawers.blade.php` writes `style="margin-left:auto"` on the mobile
+nav's ✕. `margin-left` is physical, so in RTL it absorbs the free space on the
+wrong side. Nothing looks wrong at 390px **because there is no free space to
+absorb** — 191.2 (wordmark) + 10 (gap) + 32 (button) + 32 (padding) = 265.2,
+which is the panel — but at 1280 the same button measured 94.44px away from its
+mirror position. One shortened wordmark and the phone inherits that. Fixed with
+`[dir="rtl"] .mnav-h .x{margin-inline-start:auto!important;margin-inline-end:0
+!important}`: after it, 996..1028 at 1280, the exact mirror of English's
+252..284. Picture: `fix-mnav-x-rtl-1280.jpg`.
+
+### 13.5 Found and NOT fixed
+
+- **The Arabic hero still travels left-to-right.** 13.3 B makes the carousel
+  work; making ▸ pull the next slide in from the reading direction's side is a
+  sign flip in `resources/js/kbb/home.js`, gated on `Locale::isRtl()`. That file
+  is not this lane's. When it is done, delete
+  `[dir="rtl"] .kbb-home .slides` with it — `RtlMirrorTest` fails the moment
+  both exist, which is deliberate.
+- **The burger icon's four tiles do not reverse.** `.kbbmi-tiles .s` are four
+  identical 9×9 squares at `translate(±6px,±6px)`; the group mirrors, the tiles
+  keep their DOM order. They differ only in animation phase, so the colour wave
+  runs the same way physically in both directions. Visually indistinguishable at
+  rest; recorded so the next sweep does not re-derive it.
+- **`store/app.blade.php` carries an inline `right:50%;margin-right:-24px`** on
+  the cart-count badge and is excluded from the sweep on purpose: that view
+  hard-codes `<html lang="en">` with no `dir`, so no `[dir="rtl"]` rule can
+  match in it. It belongs with §9.5's hand-off, not here.
+- **16 `fill-bar` declarations in `kbb-checkout.css` were read and not touched**
+  — that file is another lane's this round (13.1).
+
+### 13.6 Proof that English did not move, except where it meant to
+
+Same method as §11.9, run against the built bundles rather than the sources:
+the pre-change bundle from `HEAD` served on one port, this branch's on another,
+same application, same database, same seeded catalogue.
+
+**Computed geometry, which cannot flake.** Every element and every
+`::before`/`::after` on 9 pages × 2 viewports, with every off-canvas panel
+force-opened, comparing position and size to three decimals plus all four
+margins, paddings, border widths, both insets, `text-align`, `float`, all four
+corner radii, `transform`, `background-position`, `direction`, `display` and
+`position`. **7,770 nodes, 8 differing rows**, and all 8 are the home page's dot
+rail and its three dots at the two viewports — the one change 13.3 C meant to
+make. Every other node on every other page is identical, including the four
+panels this lane's rules touch.
+
+**The mirror sweep, after.** The five failing roots are down to one (13.5's
+burger tiles) plus the slider's two off-screen slides, which now queue on the
+same side in both directions — that is what `direction:ltr` on the track means,
+and it is the point of the fix rather than a side effect.
+
+**Every drawer photographed CLOSED in RTL at 390px**, which is the specific way
+this change breaks: `docs/rtl-shots/lane-g/rtl-390-drawers-closed-*.jpg`, with
+the English shot of the same page beside it. The numbers under each:
+
+| page | `.drawer` | `.mnav` | `.filtercol` | `scrollWidth` |
+|---|---|---|---|---|
+| `/ar/` | -300.3..0 | 403.3..668.4 | — | 390 |
+| `/ar/shop/` | -300.3..0 | 390..690 | 390..690 | 390 |
+| `/ar/product/…` | -300.3..0 | 390..690 | — | 390 |
+| `/ar/cart/` | -300.3..0 | 403.3..668.4 | — | 390 |
+
+Every one of them entirely outside the viewport, on the mirror of the side it
+parks on in English, and `scrollWidth` equal to `clientWidth` on all four — a
+panel parked off the wrong edge in RTL would show up as both.
