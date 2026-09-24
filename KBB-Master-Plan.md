@@ -1495,8 +1495,49 @@ pin that looks applied and is not is worse than none.**
 - [ ] **The owner has to add the menu row himself.** This lane adds no link anywhere,
   because the header, mega menu and footer are `menu_items` the owner edits rather than
   templates a lane may touch. The row to add is in `docs/FM-ADMIN-APP-BLOCKS.md`
-- [ ] **The quiz → routine hand-off.** `RoutineConcerns` carries the quiz's own eight
-  concerns character for character so it is a one-line lookup; it belongs to the quiz lane
+- [x] **The quiz → routine hand-off** — built by Lane FT (`895ff93`,
+  `app/Support/QuizRoutineLink.php`), and this line was stale for longer than
+  anyone noticed. Lane Q verified it before building on it.
+- [x] **And the hand-off could never fire on a shipped shop**, which is what the
+  tick above hid — *24 September 2026, Lane Q*. Every URL `QuizRoutineLink` can
+  produce is a `/routines/{concern}` page, and those sit behind
+  `build_my_routine`, which ships OFF. Measured on a default shop: `/skin-quiz`
+  answers 200 in 46,136 bytes, `window.KBB_ROUTINES` is ABSENT from it,
+  `map()` returns null, `/routines` is 404, and the results screen offers
+  exactly ONE distinct URL — `/shop/`. A shopper names up to three concerns and
+  the shop answers with three chips, three routine shapes holding no products,
+  and four buttons to the whole catalogue. The concern reached a chip and a row
+  in `quiz_leads` and nothing else.
+- [x] **The rung that was missing: `/concern/{slug}/`** — the OTHER page per
+  concern, and the one NOT behind the module switch. It publishes itself the day
+  a concern has copy and `MIN_PRODUCTS` live tagged products, which is the
+  tagging job `docs/SEO-FEATURE-MATRIX.md` ranks first. The quiz now emits
+  `window.KBB_CONCERN_PAGES` as a SEPARATE table and falls back to it, and the
+  plan email gets the same middle rung rather than dropping straight from a
+  routine to `/shop/`. Separate and not merged, because "Build my acne routine"
+  over a collection URL describes a page the shopper is not about to see.
+- [x] **The tagging job made smaller.** `RoutinesApiController::products()`
+  searched `name` and `sku` only, while `products.ingredients` has existed since
+  `2026_10_05_000000_add_product_editor_columns.php:84` — so most of the
+  sensitivity signal (`fragrance-free`, `centella`) was unreachable from the
+  screen the owner is meant to tag from. Added as one more OR inside the WHERE
+  already being built, same declared `ESCAPE '!'`, and the endpoint still costs
+  2 queries with or without a term.
+- [x] **A countdown, so the job is visible** — `Catalog → Build my routine →
+  "Concern landing pages — N of 8 live"`. Per concern: live tagged products
+  against the floor, how many more are needed, whether copy exists, and the
+  address once live. It counts what the PAGE counts, not what a ROUTINE counts:
+  an untagged product suits every routine and no concern page, so tallying it
+  the routine way would have told the owner he had 400 products for acne over a
+  page that still 404s.
+- [~] **Seven of the eight concerns have no copy**, and that is the remaining
+  blocker on this phase. Only `acne` has it; the rest need a string in
+  `InterfaceStrings` and a slug in `ConcernCollections::ENABLED`. The countdown
+  now says so on the row rather than leaving a concern sitting at 5/3 and dark
+  for no stated reason. Both SEO lanes refused to generate that copy and were
+  right to — see `docs/SEO-CONCERN-COPY.md`.
+- [ ] **No bulk-tag endpoint**, so tagging is one product at a time. Friction,
+  not a defect; worth knowing before starting a 30–45 product session.
 
 ## Phase 11 — Payments
 
