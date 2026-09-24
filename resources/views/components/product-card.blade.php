@@ -105,6 +105,59 @@
 
     $canAdd = $product->stock_status === 'instock' && $product->type !== 'variable';
 
+    /*
+     * A VARIABLE PRODUCT'S PRICE IS ON ITS VARIATIONS, AND THIS TILE PRINTED
+     * AED 0 FOR IT.
+     *
+     * `products.price` is NULL on a variable parent — WooCommerce keeps the
+     * figures on the variations, which is the same fact $canAdd above is about
+     * — and Product::effectivePrice() ends `return (int) $this->price`, which
+     * makes that 0. So every tile for a variable product advertised AED 0,
+     * while the product page beside it published a correct AggregateOffer
+     * built from those same variations.
+     *
+     * App\Services\VariantPricing reads the range where this tile reads: ONE
+     * grouped query per request, taken only when a tile like this is actually
+     * on the page, and null for every other product — so a catalogue of simple
+     * products renders byte for byte what it rendered before, at no extra
+     * query.
+     *
+     * THE ZERO IS NOT FIXED, ONLY THE LIE. effectivePrice() still answers 0 for
+     * these rows, so the price SORT and the price FACET still file them first
+     * and cheapest. Correcting that means backfilling the column or changing
+     * the importer, and both are somebody else's file; this is the half that
+     * could be done without deciding it.
+     *
+     * COMPUTED HERE, IN THE BLOCK THAT EMITS NOTHING, AND NOT BESIDE THE MARKUP
+     * THAT USES IT. A `@php` line of its own down in the body adds its own
+     * indentation and newline to the rendered page, and
+     * StorefrontEnglishUnchangedTest compares BYTES: it caught exactly that,
+     * on /shop, on a category archive and on the product page's related rail,
+     * for a tile whose visible content had not changed at all.
+     */
+    $kbbRange = app(\App\Services\VariantPricing::class)->range($product);
+
+    /*
+     * THE WHOLE PRICE STRING, BUILT HERE. Both ends at ONE precision, and the
+     * precision that separates them -- the same rule as the sale pair below,
+     * and for the same reason: two figures the reader is invited to compare
+     * must not round into the same string. Every option at the same money is a
+     * single price, not a range of one; Seo::aggregateOffer() declines to
+     * publish a lowPrice equal to its highPrice for that reason.
+     */
+    $kbbRangeHtml = null;
+
+    if ($kbbRange !== null) {
+        $kbbRangeDp = \App\Support\Money::decimalsToDistinguish($kbbRange[0], $kbbRange[1]);
+
+        $kbbRangeHtml = \App\Services\VariantPricing::isSpread($kbbRange)
+            ? __('store.product_card.price_range', [
+                'low' => \App\Support\Money::format($kbbRange[0], $kbbRangeDp),
+                'high' => \App\Support\Money::format($kbbRange[1], $kbbRangeDp),
+            ])
+            : \App\Support\Money::format($kbbRange[0]);
+    }
+
     // A 1000x1000 photograph painted into a frame that is never wider than 399
     // CSS pixels. What the tile can offer instead is whatever phone-sized copy
     // of that photograph is on disk right now -- see App\Support\ImageVariants
@@ -170,7 +223,9 @@
              Both calls take the SAME width, or the two numbers would be quoted
              on different scales, which is the same lie in a new shape. --}}
         <div class="cprice">
-            @if ($product->isOnSale())
+            @if ($kbbRangeHtml !== null)
+                {!! $kbbRangeHtml !!}
+            @elseif ($product->isOnSale())
                 @php $kbbSaleDp = \App\Support\Money::decimalsToDistinguish((int) $product->price, $product->effectivePrice()); @endphp
                 <del>{!! \App\Support\Money::format((int) $product->price, $kbbSaleDp) !!}</del> <ins>{!! \App\Support\Money::format($product->effectivePrice(), $kbbSaleDp) !!}</ins>
             @else
