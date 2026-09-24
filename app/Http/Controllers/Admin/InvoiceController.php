@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Invoices\InvoiceDocument;
 use App\Services\Invoices\InvoiceNumbers;
+use App\Services\Orders\SampleOrder;
 use App\Support\OrderLocale;
 use App\Support\Url;
 use Illuminate\Contracts\View\View;
@@ -147,7 +148,32 @@ class InvoiceController extends Controller
             return $this->missing();
         }
 
-        $this->numbers->allocate($order);
+        /*
+         * A SAMPLE ORDER IS NEVER GIVEN AN INVOICE NUMBER.
+         *
+         * This is the one endpoint of the four that WRITES, and what it writes
+         * is the next number out of the sequence an accountant reconciles.
+         * allocate() is idempotent by design, so the number it hands out is
+         * kept for good — which means a single look at a sample order's invoice
+         * would spend a real invoice number on an order that does not exist,
+         * and leave a permanent gap in the books with nothing behind it. The
+         * class header above argues at length that an invoice number may only
+         * be minted at the honest moment; there is no honest moment for this
+         * order, because nobody bought anything.
+         *
+         * Nothing else changes. `invoice_number` stays null,
+         * InvoiceDocument::present() already answers null for it and renders an
+         * empty `invoiceReference` — that is the path every order takes before
+         * its invoice is first opened — and the sheet prints with no invoice
+         * reference on it, which is the truth about a sample. The SAMPLE banner
+         * document.blade.php draws says the rest.
+         *
+         * OrderMailer::emailInvoice() refuses on its own first line for exactly
+         * this reason as well as for the email.
+         */
+        if (! SampleOrder::is($order)) {
+            $this->numbers->allocate($order);
+        }
 
         // Re-read, so the document prints the number and timestamp that are in
         // the database rather than the ones this process hoped to write. Under

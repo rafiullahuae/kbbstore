@@ -364,6 +364,80 @@
          Here the directive opens the attribute value, so it compiles, and
          @yield's second argument is what every document that defines no
          `sheet-class` section gets. The dispatch label defines "sheet lbl". --}}
+{{--
+    THE SAMPLE BANNER. On every document, and only on a sample order.
+
+    IT IS HERE, IN THE LAYOUT, AND NOT IN THE FOUR SHEETS. All four documents
+    extend this file, so one block puts the mark on the invoice, the packing
+    slip, the delivery note AND the dispatch label -- and on the fifth document
+    somebody adds next year without having read this comment. Four copies in
+    four partials is four chances for one of them to be forgotten, and the one
+    that gets forgotten is the one that ends up in somebody's hand.
+
+    NOT `.no-print`. The toolbar above is, because it is navigation. This is the
+    opposite: a sheet that is printed or saved as a PDF and then read on paper,
+    away from the screen that said what it was, is exactly the copy that most
+    needs to say so itself.
+
+    THE STYLES ARE INLINE, WHICH IS NOT THE HOUSE STYLE AND IS DELIBERATE. Every
+    other rule in this document lives in the one <style> block above. Putting
+    these there would change the bytes of EVERY document this shop prints,
+    including the five previews checked in under docs/invoice-previews/ that
+    InvoicePreviewsTest rewrites on each run -- a diff on five reviewed files to
+    add a rule that no real order can ever match. Inline, the markup and the
+    rule appear together or not at all. `print-color-adjust` and its -webkit-
+    twin are what stop a browser dropping the background when it prints, which
+    on this banner would drop the warning with it.
+
+    AND THE WHITESPACE AROUND THE DIRECTIVES IS LOAD-BEARING, for the same
+    reason the comment above closes onto its tag. `@if` compiles to a
+    `<?php ... ?>` tag and PHP SWALLOWS ONE NEWLINE immediately after `?>`, so
+    where these three lines begin and end decides whether a NON-sample document
+    still has the blank line that has always sat between the toolbar and the
+    sheet. It does not survive being tidied: written the obvious way, with this
+    comment indented like its neighbours and `@if` on a line of its own, the
+    four spaces move onto the `<div class="sheet">` line and all five tracked
+    previews under docs/invoice-previews/ are rewritten by a GREEN test run,
+    the exact failure tests/bootstrap.php's own header warns about. So this
+    comment OPENS at column 0, the directive below closes onto the line that
+    ends it, and the one that closes the block sits on the line the sheet's own
+    div opens. None of those three may be re-indented on its own.
+
+    (And no paragraph here may spell the comment terminator, for a reason this
+    one found out: written out, it ends the comment where it is written, the
+    prose after it becomes template text, and the closing directive inside that
+    prose compiles with nothing to close. The document 500s.)
+
+    WHICH IS ASSERTED, NOT REASONED ABOUT. The three paragraphs above were
+    worked out by rendering, not by reading the Blade compiler: run
+    InvoicePreviewsTest, which rewrites all five files from these templates, and
+    `git status docs/` is clean. That is the check to repeat after touching any
+    line between here and the sheet.
+
+    THE TEXT IS A LITERAL, NOT A TRANSLATION KEY, and that is the rule-5 answer
+    rather than a shortcut. It is a warning to the SHOP, not wording for a
+    customer: a sample order is never sent to one, because OrderMailer refuses
+    every send for it. So it is in the operator's language whatever language the
+    sheet below is in -- the same argument the toolbar carries -- and being a
+    literal it is a constant, which is what CLAUDE.md asks of anything printed.
+    The order number beside it is the only value here, and Blade escapes it.
+
+    WHICH IS WHY IT CARRIES dir="ltr". Being a literal English sentence, it is
+    the one element on this page whose direction does NOT follow the document.
+    Without it, inside an Arabic order's RTL invoice, the bidi algorithm moves
+    the sentence's trailing full stop to the LEFT-hand end and the banner reads
+    ".SAMPLE ORDER - NOT A REAL ORDER. NOTHING WAS BOUGHT, PAID FOR OR SHIPPED"
+    -- seen in the rendered sheet, not reasoned about. dir="auto" would not fix
+    it: auto takes its direction from the first strong character, which is
+    Latin, so it would answer ltr for the banner and rtl for nothing, and it
+    would stop working the day a word of Arabic is added to this sentence.
+    dir="ltr" states what this element is rather than guessing.
+--}}@if ($doc['isSample'] ?? false)
+    <div dir="ltr" style="background:#B91C1C;color:#fff;padding:10px 14px;margin:0 auto 10px;max-width:210mm;border-radius:6px;font:700 13px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.04em;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">
+        SAMPLE ORDER &mdash; NOT A REAL ORDER. NOTHING WAS BOUGHT, PAID FOR OR SHIPPED.
+        <span style="display:block;font-weight:500;letter-spacing:0;opacity:.92;margin-top:3px">{{ $doc['orderNumber'] }} &middot; created from Safety &rarr; Demo Content &rarr; Sample order, and removed from the same place.</span>
+    </div>
+    @endif
     <div class="@yield('sheet-class', 'sheet')">
         @yield('sheet')
     </div>

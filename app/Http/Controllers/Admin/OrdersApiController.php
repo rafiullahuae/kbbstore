@@ -180,7 +180,10 @@ class OrdersApiController extends Controller
 
         return response()->json([
             'orders' => $rows,
-            'summary' => $this->summaryFor($query),
+            // $total is passed in rather than counted again: it is already the
+            // row count for exactly this filtered view, and summaryFor()'s own
+            // note explains why that one figure is not demo-excluded.
+            'summary' => $this->summaryFor($query, $total),
             'total' => $total,
             'page' => $page,
             'last_page' => $lastPage,
@@ -190,6 +193,13 @@ class OrdersApiController extends Controller
             // instead of whatever order the database felt like returning.
             'statuses' => $counts['statuses'],
             'revenue_statuses' => Order::REAL_STATUSES,
+            /*
+             * How many invented rows the money above left out, so the screen
+             * can say so rather than leaving the owner to wonder why the tiles
+             * and the list disagree. The same block the Dashboard, Analytics
+             * and Customers endpoints already hand their screens.
+             */
+            'demo' => DemoSeed::disclosure(),
             'currency' => Money::currency(),
         ]);
     }
@@ -255,6 +265,26 @@ class OrdersApiController extends Controller
                 'units', 'lines', 'total_fils', 'total', 'refunded_fils', 'refunded',
                 'net_fils', 'net', 'payment', 'placed_at', 'paid_at', 'completed_at',
                 'trashed', 'currency',
+                /*
+                 * APPENDED, AND LAST, DELIBERATELY.
+                 *
+                 * rowToApi() has always computed `is_demo` and this file has
+                 * always thrown it away, so a seeded demo order — or a sample
+                 * order from Safety -> Demo Content — left this export looking
+                 * exactly like a real one. That matters more here than on the
+                 * screen: a CSV gets opened in a spreadsheet, summed, and
+                 * pasted into something, away from the badge that would have
+                 * said what it was.
+                 *
+                 * At the END of the row rather than beside `status` where it
+                 * reads better, because every existing column keeps its
+                 * position: anything already reading this file by index is
+                 * unaffected, and anything reading it by header name finds the
+                 * new one. Rule 1 says the shop does not change under somebody;
+                 * a column appended at the end is the smallest change that
+                 * tells the truth.
+                 */
+                'is_demo',
             ]);
 
             $currency = Money::currency();
@@ -297,6 +327,7 @@ class OrdersApiController extends Controller
                         $row['completed_at'] ?? '',
                         $row['trashed'] ? 'yes' : 'no',
                         $currency,
+                        $row['is_demo'] ? 'yes' : 'no',
                     ]));
                 }
             });
@@ -896,14 +927,43 @@ class OrdersApiController extends Controller
      * average of nothing, not a division by the wrong denominator. Integer
      * division throughout.
      */
-    private function summaryFor(Builder $query): array
+    private function summaryFor(Builder $query, int $rowsInView): array
     {
         $marks = implode(',', array_fill(0, count(Order::REAL_STATUSES), '?'));
+
+        /*
+         * ── THE MONEY EXCLUDES DEMO ROWS. THE ROW COUNT DOES NOT. ───────────
+         *
+         * This screen's four tiles sat on the same query as the list, and the
+         * list deliberately SHOWS demo rows and badges them. So a sample order
+         * or a seeded demo order was left out of the Dashboard's revenue and
+         * out of Analytics -- both of which go through App\Support\DemoSeed --
+         * and then counted, in full, in the tile on this screen that says
+         * REVENUE in capitals. Three screens agreed on what money is and the
+         * fourth quietly did not. Found by creating one sample order and
+         * reading the tile: "ORDERS IN THIS VIEW 1 / REVENUE AED 542", against
+         * a dashboard that had not moved.
+         *
+         * `orders` -- "orders in this view" -- is NOT excluded, and that is the
+         * distinction rather than an oversight. It is a count of the rows
+         * underneath it, which include the demo ones because that is this
+         * application's stated policy: figures exclude demo, lists show it and
+         * mark it. A row count that disagreed with the visible rows would be a
+         * second lie told to fix the first. Everything below it is money, and
+         * money is real money.
+         *
+         * The `demo` block beside `summary` in the response is the other half.
+         * Subtracting silently is its own kind of lie -- DemoSeed::disclosure()
+         * exists so a screen can say how many rows it left out, and the
+         * Dashboard, Analytics and Customers already carry it. This is the
+         * fourth.
+         */
+        $money = DemoSeed::exclude($this->withRefundTotals(clone $query), Order::class, 'orders');
 
         $row = $this->aggregate(
             // `ra` and nothing else: this reads refunded_fils and no column of
             // the order_items aggregate.
-            $this->withRefundTotals(clone $query),
+            $money,
             "COUNT(*) as orders,
              COALESCE(SUM(orders.total), 0) as gross,
              COALESCE(SUM(COALESCE(ra.refunded_fils, 0)), 0) as refunded,
@@ -913,7 +973,17 @@ class OrdersApiController extends Controller
             array_merge(Order::REAL_STATUSES, Order::REAL_STATUSES, Order::REAL_STATUSES)
         );
 
-        $orders = (int) ($row->orders ?? 0);
+        /*
+         * HANDED IN, NOT COUNTED AGAIN. This is how many rows the operator can
+         * see rather than how much money there is, so it comes from the
+         * unexcluded query -- and the caller has already run exactly that count
+         * for the pager. Counting it a second time here was the obvious way and
+         * it cost a ninth query on a page AdminOrdersTest budgets at eight;
+         * CLAUDE.md says to find another way before raising a budget, and the
+         * number was already in the caller's hand.
+         */
+        $orders = $rowsInView;
+
         $gross = (int) ($row->gross ?? 0);
         $refunded = (int) ($row->refunded ?? 0);
         $paidOrders = (int) ($row->paid_orders ?? 0);

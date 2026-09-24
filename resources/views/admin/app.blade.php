@@ -10461,6 +10461,13 @@ async function renderDemoContent(){
   $('#content').innerHTML='<div class="wrap"><p style="padding:40px;color:var(--ink-soft)">Loading…</p></div>';
   var counts={};
   try{ counts=(await dcApi('/demo-content')).counts||{}; }catch(e){}
+  /* Asked separately from the counts above, and a failure here must not take
+     the Demo Content screen down with it: on a build where the integrator has
+     not yet wired routes/sample-order-admin.php this 404s, and the seven cards
+     below have nothing to do with that. soCardHtml() renders its "create one"
+     state from null, so the screen degrades to exactly what it was. */
+  var sample=null;
+  try{ sample=await dcApi('/sample-order'); }catch(e){}
 
   $('#content').innerHTML=`<div class="wrap">
     <div class="page-head"><h2>Demo Content</h2><p>Sample data so you can try every part of the admin without needing real customer information yet. Import what you need, remove it whenever you are ready to go live.</p></div>
@@ -10487,10 +10494,116 @@ async function renderDemoContent(){
       </div>
     </div>
 
+    <div class="sec-title">Sample order</div>
+    <div id="soCard">${soCardHtml(sample)}</div>
+
+    <div class="sec-title">Demo content</div>
     <div class="dcgrid" id="dcGrid">${DEMO_CONTENT_TYPES.map(t=>dcCard(t,counts[t[0]]||0)).join('')}</div>
   </div>`;
 
   wireDemoContent();
+  wireSampleOrder();
+}
+
+/* ---------- Sample order (Safety -> Demo Content -> Sample order) ----------
+
+   ONE ORDER THE OWNER CAN LOOK AT, AND THROW AWAY.
+
+   Four documents in this shop can only be read by opening a real order -- the
+   invoice, the packing slip, the delivery note and the order emails -- so a
+   store that has not taken its first order has no way to see any of them, and
+   no way to check them again after the next change. This card makes one and
+   removes it.
+
+   IT IS A CARD ON THIS SCREEN AND NOT A SCREEN OF ITS OWN, because "sample data
+   I can add and remove" is what this screen already is, and the owner should
+   not have to learn a second place for the same idea.
+
+   THE LANGUAGE SELECT IS THE POINT OF IT, NOT A GARNISH. `orders.locale` is
+   what decides the language of the invoice, the order emails and the delivery
+   note, while the packing slip deliberately stays in the operator's. That split
+   is worth seeing rather than being told about, so the order can be made in
+   either language and the two printed side by side.
+
+   NOTHING HAPPENS UNTIL THE BUTTON IS PRESSED. This card renders, reads whether
+   a sample order exists, and otherwise changes nothing about the shop -- which
+   is what CLAUDE.md's rule 1 asks of a new control that ships switched off. */
+
+function soCardHtml(sample){
+  var langs=(sample&&sample.locales)||[{code:'en',name:'English',native:'English'}];
+  var order=(sample&&sample.order)||null;
+  var opts=langs.map(function(l){
+    return '<option value="'+escAttr(l.code)+'">'+escHtml(l.name)+(l.native&&l.native!==l.name?(' \u00b7 '+l.native):'')+'</option>';
+  }).join('');
+
+  var body=order
+    ? `<div class="card pad" style="background:#FFF8EC;border-color:#F5E1BC;margin-bottom:14px">
+         <div class="between" style="flex-wrap:wrap;gap:12px">
+           <div>
+             <b style="font-size:13.5px">${escHtml(order.order_number)}</b>
+             <p style="font-size:12px;color:var(--ink-soft);margin:4px 0 0">
+               ${order.lines} lines \u00b7 AED ${(order.total_fils/100).toFixed(2)} \u00b7 ${escHtml(order.status)} \u00b7 documents render in <b>${escHtml(order.locale_name)}</b>
+             </p>
+           </div>
+           <button class="btn ghost sm" id="soRemove" style="color:#c0392b;gap:6px">${ic('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>')} Delete sample order</button>
+         </div>
+         <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:12px">
+           <a class="btn ghost sm" target="_blank" rel="noopener" href="${escAttr(order.links.invoice)}">Invoice</a>
+           <a class="btn ghost sm" target="_blank" rel="noopener" href="${escAttr(order.links.packing_slip)}">Packing slip</a>
+           <a class="btn ghost sm" target="_blank" rel="noopener" href="${escAttr(order.links.delivery_note)}">Delivery note</a>
+           <a class="btn ghost sm" target="_blank" rel="noopener" href="${escAttr(order.links.shipping_label)}">Dispatch label</a>
+           <button class="btn ghost sm" id="soOpenOrders">Orders screen</button>
+         </div>
+       </div>`
+    : '';
+
+  return `<div class="card pad" style="display:flex;flex-direction:column;gap:14px">
+    ${body}
+    <div>
+      <b style="font-size:14px">${order?'Replace the sample order':'Create a sample order'}</b>
+      <p style="font-size:12px;color:var(--ink-soft);margin:6px 0 0;line-height:1.55">
+        One realistic order &mdash; three lines including a product with a chosen shade, a Dubai delivery address, a delivery method, a card payment and a coupon &mdash; so you can open its invoice, packing slip and delivery note and see what they actually look like.
+        It is marked <b>SAMPLE</b> on every screen and on every document, it is left out of every money figure in the back office, it never emails anybody and it never touches stock.
+        ${order?'Creating a new one replaces the one above.':''}
+      </p>
+    </div>
+    <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center">
+      <label style="font-size:12px;color:var(--ink-soft)" for="soLocale">Documents in</label>
+      <select id="soLocale" style="min-width:170px">${opts}</select>
+      <button class="btn sm" id="soCreate" style="gap:6px">${ic('<path d="M12 5v14M5 12h14"/>')} ${order?'Replace sample order':'Create sample order'}</button>
+    </div>
+  </div>`;
+}
+
+function wireSampleOrder(){
+  var create=document.getElementById('soCreate');
+  if(create) create.onclick=async function(){
+    var sel=document.getElementById('soLocale');
+    create.disabled=true;
+    try{
+      await dcApi('/sample-order',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({locale:sel?sel.value:'en'}),
+      });
+      toast('Sample order created');
+      renderDemoContent();
+    }catch(e){ toast('Could not create the sample order: '+e.message); create.disabled=false; }
+  };
+
+  var remove=document.getElementById('soRemove');
+  if(remove) remove.onclick=async function(){
+    if(!confirm('Delete the sample order? It is removed completely, not moved to the trash.'))return;
+    remove.disabled=true;
+    try{
+      await dcApi('/sample-order',{method:'DELETE'});
+      toast('Sample order deleted');
+      renderDemoContent();
+    }catch(e){ toast('Could not delete the sample order: '+e.message); remove.disabled=false; }
+  };
+
+  var open=document.getElementById('soOpenOrders');
+  if(open) open.onclick=function(){ go('orders'); };
 }
 function dcCard([key,title,desc,icon,color,tint],count){
   var imported=count>0;
