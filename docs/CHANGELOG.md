@@ -3,6 +3,76 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.271
+The routine search, actually fixed — and the previous diagnosis was wrong.
+
+▲ 2.60.270's note implied the search fix was the step-scope change. IT WAS NOT.
+Reproduced against the shipped 2.60.268 screen in a browser rather than reasoned
+about: typing "centella" fired NO REQUEST AT ALL and left the previous 25 rows
+on screen. The box was bound to `onchange`, which on a text input fires on blur
+or Enter and nothing else. The scope narrowing fixed in 2.60.270 did not exist
+on that screen, so it cannot have been the cause. Enter also fired the request
+TWICE, because two handlers both answered it.
+
+AND A SECOND, INDEPENDENT CAUSE, WHICH THIS PROJECT SHIPPED. 2.60.269 added
+`ingredients` to the search's WHERE clause. That column is created by a
+migration guarded with Schema::hasColumn — so on a server where the migration
+never ran, EVERY SEARCH IS A 500 while browsing without a term works perfectly.
+That is the exact shape of the report. It now probes for the column and falls
+back to the name-and-SKU search, saying so on screen rather than narrowing
+silently.
+
+QUICK AND REAL-TIME, measured on a 681-product catalogue: debounce 250ms, chosen
+because a fast typist's inter-keystroke gap is 120-180ms and a control stops
+feeling responsive past ~300ms. "centella" (8 keystrokes) is one request and
+65ms; "niacinamide" (11 keystrokes) is one request and 38ms. The stale-response
+race is proved in a browser, not argued: holding the reply to `q=cer` so it
+lands after `q=ceramide`, the guards paint 166 results; with both removed, 339
+stale results appear under a label reading "339 products match ceramide".
+
+DEMO DATA FOR ROUTINES at Catalog -> Build my routine -> Settings -> Demo data,
+and also at Store -> Demo Content. Five products, one per step, removable from
+either screen. THE DEMO ROWS CARRY NO CONCERNS AT ALL, and that one decision is
+what makes them safe: an empty concern list already means "suits any routine",
+and ConcernCollections selects explicit tags only — so a demo row can never
+reach the threshold that publishes /concern/acne/, never enters the sitemap and
+is never offered by the quiz, BY CONSTRUCTION rather than by an exclusion rule
+somebody has to remember in six places. Every row is named "Demo — …" and a
+banner appears on every tab while any exist, saying whether shoppers can see
+them.
+
+THE ON/OFF SWITCH is on the same screen, writing the same setting as Store ->
+Modules -> Build my routine. It deliberately does NOT post to the modules
+endpoint: that rebuilds `module_devices` from only the keys it is handed, so a
+one-module post from here would silently reset every other module's device
+setting. It carries `store.settings` rather than a catalogue capability, because
+everything else on the screen decides which product fills which step and this
+one puts two pages on the internet.
+
+WHAT IT DOES NOT TURN OFF is now on the card in the owner's words:
+/concern/{slug}/ is deliberately outside the switch and keeps answering either
+way, because those are ordinary shop pages people find in Google and a switch
+here should not take them down.
+
+▲ AND /_design-check IS DELETED — a URL that answered 200 now answers 404.
+Nothing linked to it. Its own comment read "Temporary: the Phase 1 design check.
+Delete when Phase 2 lands"; this shop is at Phase 20. Measured before removing
+it: 200 to anybody, `<meta name="robots" content="index, follow">`, a
+self-canonical, the theme directory named in its markup, eight real products
+rendered — and absent from both robots.txt and the sitemap. A developer page
+actively asking to be indexed, on a shop whose own research lists crawl hygiene
+as something it BEATS the competitor on.
+
+THE SITEMAP STOPPED KEEPING ITS OWN COPIES of the curated listings and the
+content pages; both now come from the router, the way the concern block beside
+them already did. A second bug fell out of it: the content-page URL was built as
+'/' . slug . '/', assuming the slug IS the address. It need not be — a page
+routed at /about-us with ->defaults('slug','about') would have been served while
+the sitemap advertised /about/, a 404. Proved inert: same database, old
+implementation against new, 10,586 bytes and 67 URLs both ways, diff identical.
+
+Five migrations, all cache clears.
+
 ## 2.60.270
 Catalog -> Build my routine is now eight tabs, and the import stopped asking
 eleven questions whose answer was always the same.
