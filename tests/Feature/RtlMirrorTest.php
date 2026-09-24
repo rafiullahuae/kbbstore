@@ -409,9 +409,35 @@ it('answers every inline physical inset in a storefront view with an !important 
         'resources/views/partials/drawers.blade.php' => ['resources/css/kbb/kbb.css', '[dir="rtl"] .mnav-h .x', ['margin-inline-start' => 'auto!important', 'margin-inline-end' => '0!important']],
     ];
 
-    // Views that hard-code <html lang="en"> with no dir attribute: a
-    // [dir="rtl"] rule can never match inside them, so an inline physical
-    // declaration there is not answerable from CSS. docs/rtl-audit.md §9.5.
+    /*
+     * STILL EXCLUDED, BUT NOT FOR THE REASON THIS USED TO GIVE.
+     *
+     * The original reason was that the view hard-coded <html lang="en"> with no
+     * dir, so a [dir="rtl"] rule could never match inside it. THAT HAS EXPIRED:
+     * commit e2ce533 gave the five standalone documents
+     * lang="{{ Locale::htmlLang() }}" and dir="{{ Locale::direction() }}", and a
+     * [dir="rtl"] rule matches in this one now.
+     *
+     * It stays on the list because the defect is not answerable from any file
+     * outside it. The view carries its own <html>, its own inline <style> block
+     * and its own inline script, so the badge, the stylesheet that should reach
+     * it and the physical declaration are all three inside
+     * store/app.blade.php -- there is nowhere else to write the answer.
+     *
+     * THE FIX IS ONE LINE AND IT IS MEASURED. Line 1301 writes
+     * `style="position:absolute;top:2px;right:50%;margin-right:-24px"` on the
+     * tab bar's cart badge; spelling those two logically --
+     * `inset-inline-end:50%;margin-inline-end:-24px` -- needs no !important and
+     * no new rule. At 390px against a tab spanning 290.5..386 in English and
+     * 4..99.5 in Arabic: English 345.3..362.3 both before and after, not one
+     * pixel; Arabic 29.8..75.8 (+1.0 from the tab's centre, and 46px wide
+     * rather than 17) becomes 27.8..44.8, i.e. -15.5, the exact mirror of
+     * English's +15.5. docs/rtl-audit.md §14.3.
+     *
+     * WHEN THAT LANDS, take the file off this list and the sweep below holds it
+     * from then on -- and correct the comment at store/app.blade.php:397, which
+     * still says the document has no dir.
+     */
     $notBilingual = ['resources/views/store/app.blade.php'];
 
     // Only declarations that carry a READING DIRECTION. `text-align:center`,
