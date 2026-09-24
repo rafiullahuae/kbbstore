@@ -1213,6 +1213,25 @@ centre, where its mirror is 24px to the LEFT.
 style="position:absolute;top:2px;inset-inline-end:50%;margin-inline-end:-24px"
 ```
 
+**Measured, at 390px, with one item in the preview's cart** (signed in as an
+admin, since `/app` 404s otherwise) — the patch applied live to the rendered
+element so the numbers are real rather than predicted. The tab the badge sits on
+spans 290.5..386 in English and 4..99.5 in Arabic, so the comparable figure is
+the badge's offset from that tab's own centre:
+
+| | badge box | offset from the tab's centre |
+|---|---|---|
+| English, as shipped | 345.3..362.3 | **+15.5** |
+| English, with the patch | 345.3..362.3 | **+15.5** — not one pixel moves |
+| Arabic, as shipped | 29.8..75.8 | **+1.0**, and 46px wide instead of 17 |
+| Arabic, with the patch | 27.8..44.8 | **−15.5**, the exact mirror of English |
+
+The English row is the one that matters for shipping it: logical properties
+resolve to the physical ones in an LTR document, so the patch is provably inert
+there. The Arabic "as shipped" row shows the badge is not merely on the wrong
+side — `right:50%` against an element laid out right-to-left stretches it to
+46px, so it reads as a smear rather than a count.
+
 **This lane cannot make it.** That document carries its own `<html>`, its own
 inline `<style>` block and its own inline script, so the badge, the stylesheet
 that should reach it and the physical declaration itself are all three inside
