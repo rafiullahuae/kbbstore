@@ -387,6 +387,18 @@ final class AdminCapabilities
         ['GET', 'admin-api/schema-inspect', 'system.diagnostics'],
         ['GET', 'admin-api/catalogue-audit', 'system.diagnostics'],
         /*
+         * The SEO audit — routes/seo-audit-admin.php.
+         *
+         * The same capability as catalogue-audit one row up, because it is the
+         * same screen's bigger sibling and it reveals strictly more: not just
+         * which products lack a description, but which titles collide across
+         * the whole catalogue and which pages carry a canonical pointing at
+         * another host. Read together that is an inventory of where this shop
+         * is weakest in search, which is exactly what a competitor would want
+         * and what an editor account has no need for.
+         */
+        ['GET', 'admin-api/seo-audit', 'system.diagnostics'],
+        /*
          * The storefront health check — routes/health-admin.php.
          *
          * Diagnostics and not dashboard.view, though the card that runs it
