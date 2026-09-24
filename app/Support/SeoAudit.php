@@ -105,7 +105,7 @@ final class SeoAudit
      * Findings that describe an opportunity rather than a fault, and so are
      * left out of the one-line verdict. See verdict() for the argument.
      */
-    private const ADVISORY = ['product_no_image_alt'];
+    private const ADVISORY = ['product_no_image_alt', 'legacy_url_no_redirect'];
 
     public static function run(): array
     {
@@ -122,6 +122,18 @@ final class SeoAudit
         self::scanTaxonomy('brands', 'Brand', $scanned, $titles, $descriptions, $findings);
         self::scanPosts($scanned, $titles, $descriptions, $findings);
         self::scanPages($scanned, $titles, $descriptions, $findings);
+
+        /*
+         * NO $scanned ENTRY, AND THAT IS THE POINT.
+         *
+         * $total is array_sum($scanned) and the verdict line prints it. These
+         * fifteen are addresses this shop does NOT serve -- they are not part
+         * of the indexable surface and counting them would inflate the one
+         * number on the screen an owner reads first. The finding is reported;
+         * the total stays byte-identical to what it was before this check
+         * existed.
+         */
+        self::scanLegacyAddresses($findings);
 
         self::collectDuplicates($titles, $findings, 'duplicate_title');
         self::collectDuplicates($descriptions, $findings, 'duplicate_description');
@@ -198,6 +210,17 @@ final class SeoAudit
             'product_no_category' => [
                 'Product sits in no category',
                 'Reachable only through /shop/ pagination, which is the deepest crawl path in the shop. Nothing links to it directly.',
+            ],
+            /*
+             * LAST IN THE LIST ON PURPOSE. The screen draws the cards in the
+             * order this array declares them, so a new key added anywhere but
+             * the end would push every existing card down the page — a visible
+             * change to a screen that already works, which is exactly what
+             * CLAUDE.md rule 1 forbids.
+             */
+            'legacy_url_no_redirect' => [
+                'Old shop address with no redirect',
+                'The WooCommerce site published its category pages at the site root (/skincare/, /skincare-sets/) and Google still holds those addresses. This application serves them at /product-category/… instead, so unless a redirect row sends the old address to the new one, the day this shop goes live every one of these returns 404 and whatever ranking and links it had are dropped rather than passed on. Fix them at Store → SEO & Meta → Redirects & 404s, or run the WordPress import and apply its redirect bucket, which writes all of them.',
             ],
         ];
 
@@ -680,6 +703,106 @@ final class SeoAudit
      * problem, and reporting it as one is how an audit makes a real problem
      * look small.
      */
+    /**
+     * The addresses the OLD shop published that this one does not answer.
+     *
+     * ── WHAT THIS CATCHES, AND WHY NOTHING ELSE DOES ────────────────────────
+     *
+     * Every other finding in this file is a property of a row this shop
+     * serves. This one is the opposite: it is about fifteen URLs that are in
+     * Google's index right now, that this application deliberately does not
+     * serve, and that therefore appear on no screen anywhere in the console.
+     * A scan of the indexable surface cannot see them by construction, which
+     * is precisely why they are the thing that goes wrong unnoticed.
+     *
+     * kbeautybliss.com served its category archives flat at the site root,
+     * because that is what its WooCommerce permalink settings produced. This
+     * application serves them at /product-category/{path}/ (URL Contract
+     * U-03). App\Support\LegacyCategoryUrls::PATHS is the exact, closed list
+     * of the fifteen, and its docblock explains why the flat roots that DO
+     * have routes here -- /new-arrivals/, /best-sellers/, /skincare-guide/ --
+     * are deliberately not in it.
+     *
+     * Two of the fifteen are confirmed indexed today, with their live titles:
+     * /skincare/ ("Glow Instantly with Korean Skincare Products Online") and
+     * /skincare-sets/ ("Best Korean Skin Care Sets for Women in 2024"). They
+     * are not hypothetical.
+     *
+     * ── WHAT "COVERED" MEANS, MATCHED TO THE ACTUAL MATCHER ─────────────────
+     *
+     * CheckRedirects::row() is
+     *
+     *     Redirect::query()->where('source', $path)->where('enabled', true)
+     *
+     * -- an EXACT string match on an ENABLED row, against
+     * $request->getPathInfo(), which keeps the trailing slash. So this check
+     * asks for exactly what that matcher needs and nothing looser: an enabled
+     * row whose source is the trailing-slash spelling, because the trailing-
+     * slash spelling is the one Google holds.
+     *
+     * A row that exists but is switched off, and a row stored only as
+     * "/toners" when the indexed address is "/toners/", both still 404 the
+     * visitor. They are reported as hits with their own `detail`, because
+     * "you have no row" and "your row is off" are one click apart and an
+     * operator has to be able to tell them apart.
+     *
+     * ── COST ────────────────────────────────────────────────────────────────
+     *
+     * ONE query, thirty bound values, two columns, however many legacy paths
+     * there are. Not one query per path -- this file is read on an admin
+     * screen that already scans the whole catalogue and it does not need a
+     * fifteen-query loop on top. Nothing here loads a model.
+     */
+    private static function scanLegacyAddresses(array &$findings): void
+    {
+        // Same guard as every other pass here: a half-migrated install must
+        // produce a short report, not a 500.
+        if (!Schema::hasTable('redirects')) {
+            return;
+        }
+
+        $wanted = [];
+
+        foreach (LegacyCategoryUrls::PATHS as $path) {
+            $wanted[] = $path;              // /toners/
+            $wanted[] = rtrim($path, '/');  // /toners
+        }
+
+        /** @var array<string, bool> $state  source => is it enabled */
+        $state = [];
+
+        foreach (DB::table('redirects')->select('source', 'enabled')->whereIn('source', $wanted)->get() as $row) {
+            $state[(string) $row->source] = (bool) $row->enabled;
+        }
+
+        foreach (LegacyCategoryUrls::PATHS as $path) {
+            $bare = rtrim($path, '/');
+
+            if (($state[$path] ?? false) === true) {
+                continue;
+            }
+
+            if (array_key_exists($path, $state)) {
+                // The row is there and switched off. One click at
+                // Store → SEO & Meta → Redirects & 404s.
+                $detail = 'redirect is switched off';
+            } elseif (array_key_exists($bare, $state)) {
+                // The slashless spelling alone never matches the indexed
+                // address, because getPathInfo() keeps the slash.
+                $detail = 'only "' . $bare . '" is set';
+            } else {
+                $detail = 'no redirect set';
+            }
+
+            self::hit($findings, 'legacy_url_no_redirect', [
+                'kind' => 'Old address',
+                'name' => $path,
+                'url' => LegacyCategoryUrls::toCategoryPath($path),
+                'detail' => $detail,
+            ]);
+        }
+    }
+
     private static function collectDuplicates(array $tally, array &$findings, string $key): void
     {
         foreach ($tally as $value => $entry) {
