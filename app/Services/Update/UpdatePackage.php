@@ -48,7 +48,62 @@ final class UpdatePackage
             && $this->checkSignature()
             && $this->collectFiles()
             && $this->checkPaths()
-            && $this->checkChecksums();
+            && $this->checkChecksums()
+            && $this->checkMigrationsAreDeclared();
+    }
+
+    /**
+     * A package carrying migrations MUST say so, or it is refused at the door.
+     *
+     * THE FAILURE THIS EXISTS FOR, 24 September 2026. UpdateRunner runs
+     * migrations only when `update.json` says `"migrations": true` --
+     * hasMigrations() reads that key and never looks at the files. Five
+     * packages were built by a hand-written script instead of
+     * `php artisan kbb:package`, and it omitted the key. Every migration in
+     * them was copied to the server and NONE ran, while each package reported
+     * "applied".
+     *
+     * 2.60.260 was one of them. It installed an UpdateRunner that writes
+     * `update_releases.manifest` and, because its own migration never ran, did
+     * not add the column. The next apply threw on that column, the swallowed
+     * throw left the attribute on the model, every later write re-sent it
+     * including the two inside rollback(), and the shop's updater stopped
+     * applying anything at all -- with the fix for a live storefront outage
+     * sitting in a zip that could not be installed.
+     *
+     * The same shape had already happened once: `orders.is_gift` shipped in
+     * 2.60.85, arrived, never ran, and two migration-only packages sent to
+     * repair it changed nothing. PackageMigrationFlagTest was written then and
+     * says so in its header. A test in the repository could not stop a builder
+     * outside it, so the check belongs HERE -- on the server, at the moment a
+     * package asks to be applied, whoever built it and however.
+     *
+     * REFUSED RATHER THAN CORRECTED, deliberately. Inferring the flag from the
+     * file list would make a mis-built package apply silently and quietly
+     * forgive the builder; the owner would never learn that the thing producing
+     * his packages is wrong. A refusal names the fault and costs one rebuild.
+     */
+    private function checkMigrationsAreDeclared(): bool
+    {
+        $carried = array_values(array_filter(
+            array_keys($this->files),
+            static fn (string $path): bool => str_starts_with($path, 'database/migrations/'),
+        ));
+
+        if ($carried === [] || $this->hasMigrations()) {
+            return true;
+        }
+
+        $this->errors[] = sprintf(
+            'This package contains %d migration%s but update.json does not declare "migrations": true, '
+            .'so they would be copied to the server and never run. Rebuild it with '
+            .'`php artisan kbb:package`. First one: %s',
+            count($carried),
+            count($carried) === 1 ? '' : 's',
+            $carried[0],
+        );
+
+        return false;
     }
 
     private function extract(): bool
