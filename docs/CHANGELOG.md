@@ -3,6 +3,41 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.258
+Seven lanes, merged. ONE package and not three, for a reason worth stating:
+`routes/web.php` mounts all three new route files and `AppServiceProvider.php`
+carries both the security listener and the redirect middleware registration. A
+file ships whole, so splitting by lane would mean hand-editing partial versions
+of those two -- which is exactly how 2.60.102-.106 were withdrawn.
+
+THE ONE BEHAVIOUR CHANGE TO WATCH: the redirects table now fires BEFORE the
+router. `CheckRedirects` was written as middleware and never registered, so a
+row for an address the shop already answered could never fire -- five years of
+old URLs silently serving the wrong page. Measured: /shop/ and /product/tx-serum/
+went 200 to 301. Existing rows were fetched before and after and diffed
+byte-identical. A row pointing a live page at itself is refused, not looped.
+
+FIXES THAT WERE LIVE DEFECTS: a stored-XSS hole on Content -> Translations
+(Arabic rich text published with no allowlist -- four script dialogs fired on
+/ar/product, now zero); every imported product would have published the SAME
+page title, because Yoast's default template is `%%title%% %%sep%% %%sitename%%`
+and the renderer deleted the token instead of resolving it; the homepage slider
+dot rail sat half off the screen at 390px, in ENGLISH; the discount badge printed
+on top of the wishlist heart in Arabic; the Arabic hero went blank after one
+click; a redirect destination was never scheme-checked though it goes straight
+into a Location header.
+
+NEW: Store -> Security (an administrative audit trail and a report that blocks
+nothing), Store -> SEO & Meta -> SEO Audit (which found 24 products sharing one
+meta description on its first run), an "Articles at addresses the shop owns"
+report, and a real delete for the export folder holding shopper password hashes.
+
+The Journal was uncounted by the media audit entirely -- a migration could have
+reported zero remote references with every article picture still hot-linked.
+
+The WordPress exporter changes are NOT in this zip: UpdateGuard refuses that
+prefix. The plugin ships through Plugins -> Add New as it always has.
+
 ## 2.60.257
 The third and last cause of the notch beside the phone logo, found by the owner
 in DevTools: `kbb.css:1612` carries a bare `.logo{flex:1;text-align:center}`
