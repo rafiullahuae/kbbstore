@@ -893,7 +893,16 @@ Route::middleware(['auth:admin'])->prefix($adminPath)->group(function () use ($a
     // is broken.
     Route::get('/updates', function (\Illuminate\Http\Request $request) {
         if ($request->query('fallback') === '1') {
-            return app(UpdateController::class)->index();
+            /*
+             * $request, not nothing. index() has been typed
+             * `index(Request $request)` since the baseline commit, and this
+             * call has passed no argument for just as long -- so the page that
+             * exists FOR the case where the admin bundle is broken has
+             * answered 500 (ArgumentCountError) its whole life. Found by Lane
+             * B while photographing the signing banner, which is the only
+             * reason anybody loaded it.
+             */
+            return app(UpdateController::class)->index($request);
         }
 
         return redirect(\App\Support\Url::redirect('/' . \App\Services\AdminPathService::current()) . '?go=updates');

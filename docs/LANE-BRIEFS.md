@@ -8,6 +8,17 @@ control names where it sits in the admin, no N+1s and no JavaScript that
 measures layout, secure by construction, and every fix ships with the test that
 goes red without it.
 
+**Lane B was un-parked on 24 September and its work is merged** — Ed25519
+signing ships in `permissive` mode in 2.60.267, enforcing nothing. The
+paragraph below is the reasoning for parking it and is kept as written; what
+changed is the last sentence of it. It said signing "becomes urgent the day a
+second install exists, and not before". Hours later five hand-built packages
+bricked this shop's updater, and while signing would not have caught that
+fault — it proves origin, never correctness — it made the argument for doing
+the key work with ONE install rather than fifty concrete rather than
+hypothetical. The six-step rollout is `docs/PACKAGE-SIGNING.md` §1 and the
+steps may not be merged.
+
 **Lane B is not assigned this round.** The Ed25519 signing work
 (`KBB-Master-Plan.md`, Phase 19 — `BuildPackage.php:199` writes
 `'signature' => ''` unconditionally) is parked at the owner's instruction to
