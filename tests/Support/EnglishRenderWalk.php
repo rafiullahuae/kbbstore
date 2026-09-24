@@ -352,7 +352,20 @@ final class EnglishRenderWalk
      * `--sf-max` fallback. The cart page does not carry this footer (cart_on
      * ships off), and no other page in the walk moved a byte.
      */
-    public const BASE_COMMIT = '1e8cf902813bd9f22f64dc09c7da14cf22e4f954';
+    /*
+     * MOVED FORWARD for the checkout footer wearing the site header's own
+     * wordmark, and for the spacing controls beside it.
+     *
+     * The owner asked twice for the header's logo in the footer: it was drawing
+     * a flat "K-BEAUTY BLISS" text box, and now reads Appearance -> Header's
+     * Wordmark, Accent word and colours live.
+     *
+     * The diff this test printed was that and nothing else -- ONE page,
+     * (with a basket) /checkout, at byte 8749, inside the footer's own inline
+     * stylesheet. The cart page does not carry this footer (cart_on ships off),
+     * and no other page in the walk moved a byte.
+     */
+    public const BASE_COMMIT = '9fd181baed267909470b9ab6867003f4935947fd';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string
