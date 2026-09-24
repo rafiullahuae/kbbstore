@@ -56,6 +56,23 @@ use Illuminate\Support\Facades\DB;
  *  3. Point the packing slip at nameForCustomer and "the operator's documents
  *     stay in the operator's language" goes red — which is the half that a fix
  *     aimed only at the customer would quietly break.
+ *
+ * ── ONE DOCUMENT CHANGED SIDES AFTER THIS FILE WAS WRITTEN ──────────────────
+ *
+ * The DELIVERY NOTE now reads `nameForCustomer` and renders inside
+ * OrderLocale::render(), so the assertion below that pinned it to `name` is
+ * inverted. The reason is the one this file's own split is made of, applied
+ * more carefully: the question is not whether a document leaves the building —
+ * the dispatch label leaves too — it is WHO READS IT. A packing slip is a
+ * picking list read at the bench by somebody who works here; a delivery note
+ * goes IN THE PARCEL and is opened and signed by the person who ordered.
+ *
+ * Nothing else in this file moved. `order_items.name` still keeps the
+ * operator's language and its exact value, `name_localised` still carries the
+ * customer's, and the packing slip still reads the first. See
+ * Admin\InvoiceController::deliveryNote() and
+ * tests/Feature/DeliveryNoteSpeaksToTheCustomerTest.php, which owns the
+ * delivery note's assertions now.
  *  4. Drop the `enabledCodes() < 2` guard and the last test goes red: the hook
  *     starts issuing lookups on a shop that serves one language.
  */
@@ -167,7 +184,7 @@ it('reads the customer language off the ORDER, not off the request', function ()
     expect($order->items->first()->name_localised)->toBe('أمبول سنتيلا');
 });
 
-it('gives the customer their language and the operator English, on the same order', function () {
+it('gives the customer their language and the warehouse English, on the same order', function () {
     olsArabicOn();
 
     $product = olsProduct('Rice Daily Moisturizing Toner 150ml', 'تونر الأرز المرطب اليومي');
@@ -179,18 +196,25 @@ it('gives the customer their language and the operator English, on the same orde
     // The invoice is the customer's copy.
     expect($line['nameForCustomer'])->toBe('تونر الأرز المرطب اليومي');
 
-    // The packing slip and the delivery note are the operator's.
+    // The packing slip is the warehouse's.
     expect($line['name'])->toBe('Rice Daily Moisturizing Toner 150ml');
 
-    // And the two templates really do read those two keys, rather than both
+    // And the templates really do read those two keys, rather than all of them
     // reading whichever one happens to be right.
     $invoice = file_get_contents(base_path('resources/views/invoices/partials/sheet-invoice.blade.php'));
     $slip = file_get_contents(base_path('resources/views/invoices/partials/sheet-packing-slip.blade.php'));
     $note = file_get_contents(base_path('resources/views/invoices/partials/sheet-delivery-note.blade.php'));
 
     expect($invoice)->toContain("\$item['nameForCustomer']");
+
+    /*
+     * THE PICKING LIST IS THE ONE THAT KEEPS `name`, and it is the whole of the
+     * operator's side now. This used to assert the same of the delivery note;
+     * that sheet goes in the parcel and is signed by the customer, so it moved
+     * — see this file's header and DeliveryNoteSpeaksToTheCustomerTest.
+     */
     expect($slip)->toContain("\$item['name']")->not->toContain("nameForCustomer");
-    expect($note)->toContain("\$item['name']")->not->toContain("nameForCustomer");
+    expect($note)->toContain("\$item['nameForCustomer']");
 });
 
 it('sends the customer an email that calls the product what they called it', function () {

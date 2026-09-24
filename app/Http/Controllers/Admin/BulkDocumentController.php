@@ -200,9 +200,14 @@ class BulkDocumentController extends Controller
      * English and look as though it had worked. Producing the string inside the
      * closure is what makes the locale real.
      *
-     * The three non-invoice documents go through the same path with no closure
-     * at all, so they render in the operator's language exactly as they do one
-     * at a time.
+     * WHICH SHEETS GET THE CLOSURE IS ASKED AS ITS OWN QUESTION.
+     * BulkDocumentSelection::readsInCustomerLanguage(), not
+     * allocatesInvoiceNumbers() — which is what this used to read, and which
+     * gave the right answer only while the invoice was the only customer-facing
+     * document of the four. The delivery note now follows the order's language
+     * and still mints nothing; the packing slip and the dispatch label go
+     * through the same path with no closure at all, so they render in the
+     * operator's language exactly as they do one at a time.
      *
      * @param  list<Order>  $orders
      * @return list<array{html: string, lang: string, dir: string, orderNumber: string}>
@@ -221,7 +226,7 @@ class BulkDocumentController extends Controller
                 'orderNumber' => (string) $order->order_number,
             ];
 
-            $sheets[] = $selection->allocatesInvoiceNumbers()
+            $sheets[] = $selection->readsInCustomerLanguage()
                 ? OrderLocale::render($order, $draw)
                 : $draw();
         }

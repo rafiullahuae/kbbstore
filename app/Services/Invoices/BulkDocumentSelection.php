@@ -138,6 +138,33 @@ final class BulkDocumentSelection
     }
 
     /**
+     * True for the types the CUSTOMER reads, which is not the same question.
+     *
+     * ── WHY THIS IS NOT allocatesInvoiceNumbers() ───────────────────────────
+     *
+     * BulkDocumentController::sheets() used that method to decide whether to
+     * wrap a sheet in OrderLocale::render(), and while the invoice was the only
+     * customer-facing document of the four, the two questions had the same
+     * answer. They are different questions and they have now come apart: the
+     * delivery note goes IN THE PARCEL and follows the order's language, and it
+     * still must not mint an invoice number.
+     *
+     * Leaving one method to answer both would have made the batch of twenty
+     * disagree with the single sheet — the drift
+     * resources/views/invoices/partials/sheet-delivery-note.blade.php exists to
+     * prevent, and the kind that fails nothing: the bulk run would have printed
+     * the customer's product names, because the partial is shared, inside
+     * English headings, because the wrapper is not.
+     *
+     * A picking list and an address on a box are read by this shop and by a
+     * courier. They stay in the operator's language.
+     */
+    public function readsInCustomerLanguage(): bool
+    {
+        return $this->type === 'invoice' || $this->type === 'delivery-note';
+    }
+
+    /**
      * Read a request's `type` and `ids`, or refuse.
      *
      * NOTHING IS LOADED HERE. Every one of the four refusals below is decided

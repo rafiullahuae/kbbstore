@@ -90,7 +90,7 @@ Nothing else is read.
             @foreach ($doc['items'] as $item)
                 <tr>
                     <td>
-                        <div class="it-name" dir="auto">{{ $item['name'] }}</div>
+                        <div class="it-name" dir="auto">{{ $item['nameForCustomer'] }}</div>{{-- nameForCustomer, and the second sheet of the four to read it. This one GOES IN THE PARCEL: it is opened and signed by the person who ordered, so it calls each line what they called it when they bought it. The packing slip keeps `name` -- it is a picking list read at the bench, and `order_items.name` is the operator's language and its exact value. Admin\InvoiceController::deliveryNote() renders this sheet inside OrderLocale::render(), so the furniture around it is the customer's language too. See InvoiceDocument::items(). At the END of this line, because Blade removes a comment and leaves the newline it sat on -- three of those added a blank line per item to every tracked preview. --}}
                         @php
                             $sub = array_values(array_filter([$item['brand'], $item['variant']], fn ($v) => $v !== ''));
                         @endphp

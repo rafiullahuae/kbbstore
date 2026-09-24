@@ -532,7 +532,7 @@ it('prints each invoice in its own order language inside one mixed batch', funct
     expect($html)->toContain('<html lang="' . Locale::htmlLang() . '"');
 });
 
-it('leaves the other three documents in the operator language', function () {
+it('leaves the picking list and the label in the operator language', function () {
     gcWire();
     test()->actingAs(gcAdmin(), 'admin');
 

@@ -70,12 +70,19 @@ final class OrderLocale
          * separate places, which is the same argument the hook above is made of.
          *
          * WHAT THIS SNAPSHOT IS FOR, AND WHO READS THE OTHER ONE. The customer's
-         * documents -- the invoice and every order email -- render inside
-         * render() below, so their furniture is already the customer's language;
-         * the operator's documents (packing slip, delivery note, bulk print) are
-         * deliberately not wrapped and stay English. `name` serves the operator
-         * and keeps its exact meaning and value. `name_localised` serves the
-         * customer, and is what they actually saw on the page they bought from.
+         * documents -- the invoice, the DELIVERY NOTE and every order email --
+         * render inside render() below, so their furniture is already the
+         * customer's language; the operator's (packing slip, dispatch label)
+         * are deliberately not wrapped and stay English. `name` serves the
+         * operator and keeps its exact meaning and value. `name_localised`
+         * serves the customer, and is what they actually saw on the page they
+         * bought from.
+         *
+         * The delivery note joined the first list after this comment was
+         * written, and it is the clearest case of the rule rather than an
+         * exception to it: it goes IN THE PARCEL, so the person who reads it is
+         * the person who ordered. Admin\InvoiceController::deliveryNote()
+         * carries that argument in full.
          *
          * IT COSTS NOTHING UNTIL THERE IS A SECOND LANGUAGE. With Arabic off --
          * how this ships -- enabledCodes() is ['en'], the guard returns, and no

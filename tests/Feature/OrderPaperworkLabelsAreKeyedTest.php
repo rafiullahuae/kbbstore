@@ -602,9 +602,18 @@ it('renders the same invoice in English for an order placed in English', functio
 
 it('leaves the warehouse documents in the operator\'s language', function () {
     /*
-     * The decision is about the ONE document that leaves the building addressed
-     * to the customer. A picking list in a language the person picking does not
-     * read is a worse document, not a better one, and a courier reads the label.
+     * The decision is about the documents that are ADDRESSED TO THE CUSTOMER,
+     * and the test used to include the delivery note in this loop on the
+     * grounds that there was only one of those. There are two: that sheet goes
+     * IN THE PARCEL and is opened and signed by the person who ordered, so it
+     * moved — the case below this one owns it now, and
+     * Admin\InvoiceController::deliveryNote() carries the argument.
+     *
+     * What is left here is the half that has not changed and must not. A
+     * picking list in a language the person picking does not read is a worse
+     * document, not a better one, and a courier reads the label. Note that the
+     * label LEAVES THE BUILDING too — so the rule this file pins is "who reads
+     * it", not "where does it go".
      */
     \Tests\Support\InvoiceAdminRoutes::wire(app());
 
@@ -615,7 +624,7 @@ it('leaves the warehouse documents in the operator\'s language', function () {
     $order = fbOrderIn('ar');
     $admin = fjPrintAdmin();
 
-    foreach (['packing-slip', 'delivery-note', 'shipping-label'] as $document) {
+    foreach (['packing-slip', 'shipping-label'] as $document) {
         $html = (string) test()->actingAs($admin, 'admin')
             ->get('/admin-api/orders/' . $order->id . '/' . $document)
             ->assertOk()
@@ -625,6 +634,26 @@ it('leaves the warehouse documents in the operator\'s language', function () {
             ->and(str_contains($html, 'الإجمالي'))->toBeFalse($document . ' followed the order into Arabic')
             ->and(str_contains($html, 'قائمة التعبئة'))->toBeFalse($document . ' followed the order into Arabic');
     }
+});
+
+it('takes the delivery note into the order\'s language, because it goes in the parcel', function () {
+    // The other side of the case above, on the same fixture and in the same
+    // file, so the two are read together rather than one being a gap in the
+    // other. tests/Feature/DeliveryNoteSpeaksToTheCustomerTest.php has the rest.
+    \Tests\Support\InvoiceAdminRoutes::wire(app());
+
+    ArabicShop::on();
+    ArabicShop::string('invoice.delivery_note.doctype', 'إشعار التسليم');
+
+    $order = fbOrderIn('ar');
+
+    $html = (string) test()->actingAs(fjPrintAdmin(), 'admin')
+        ->get('/admin-api/orders/' . $order->id . '/delivery-note')
+        ->assertOk()
+        ->getContent();
+
+    expect($html)->toContain('<html lang="ar" dir="ltr">')
+        ->and($html)->toContain('إشعار التسليم');
 });
 
 /*
