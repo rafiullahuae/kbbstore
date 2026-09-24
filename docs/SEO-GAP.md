@@ -187,3 +187,190 @@ taxonomy, copy and outreach.
 Two genuine code gaps remain: **`LocalBusiness` markup** and the **sitemap index
 split**. Everything else on the brief's wishlist either already exists or should
 not be built.
+
+---
+
+# Part II — the content gap, specified
+
+Lane S2, 2026-09-24. Part I established *that* the gap is content and taxonomy.
+This part establishes *what closing it actually requires*, because "write a blog"
+is not a specification anyone can build or budget.
+
+Sourcing rule is unchanged: **OBSERVED** with a URL, or **UNVERIFIED**.
+
+---
+
+## 9. Correction to Part I §4: hreflang is not a gap in our favour any more
+
+Part I's row reads: *"hreflang + `x-default` … **Theirs: Unverified — every URL I
+found is English. Possibly their biggest weakness.**"*
+
+`SEO-COMPETITIVE.md` §8 disproves it. They run `ar.kbeautyarabia.com` with
+Arabic products, collections and translated articles. **Replace that cell with:**
+
+| Capability | Ours | Theirs |
+|---|---|---|
+| Arabic layer exists | **Have**, `/ar/` | **Have**, `ar.` subdomain — OBSERVED |
+| Arabic URL shape | **`/ar/` subfolder**, shares domain authority | **`ar.` subdomain** — weaker on this point, per Shopify's own guidance ([help.shopify.com](https://help.shopify.com/en/manual/markets/seo)) |
+| hreflang automatic on that shape? | n/a — ours is hand-built and tested (`SeoBilingualTest`) | **Subdomains are the branch where Shopify does NOT emit hreflang automatically** ([help.shopify.com](https://help.shopify.com/en/manual/markets/customizations/domains-and-languages)) — so theirs is manual or an app. **UNVERIFIED whether it is correct.** |
+| Arabic slugs in the URL | **Possible for us** — our routing is ours | **Structurally impossible** — `/collections/`, `/blogs/` fixed; their live Arabic article URL carries the English handle — OBSERVED |
+| Arabic *editorial* | **Missing** — see §12 | **Have** — translated articles OBSERVED |
+
+**Net: parity on existence, ahead on URL shape, behind on Arabic content.**
+The last row is the one that matters and it is not a code gap either.
+
+---
+
+## 10. What a UAE K-beauty shopper actually searches for
+
+The brief asked for evidence rather than plausibility. Here is what is citable,
+and here is where the evidence stops.
+
+### OBSERVED — concerns and ingredients with named demand
+
+| Concern / theme | Evidence |
+|---|---|
+| **Glass skin / hydration** | "Korean-inspired *glass-skin* facials … rising demand across Dubai through 2026" ([globenewswire](https://www.globenewswire.com/news-release/2026/08/12/3343355/0/en/rising-demand-in-dubai-for-korean-glass-skin-treatment-and-korean-facials-as-diagnostic-led-skin-health-gains-ground-in-2026-with-treatments-from-aed-650-at-aire-md-by-casa-aire-we.html)); a UAE retailer's 2026 guide is built entirely around the term ([glamsecret.ae](https://glamsecret.ae/blogs/buy-korean-skincare-in-uae-the-ultimate-2026-guide-to-glass-skin/buy-korean-skincare-in-uae-the-ultimate-2026-guide-to-glass-skin)) |
+| **Acne + barrier repair** | COSRX named as among the most-searched K-beauty brands in the UAE, on "gentle acne care, snail mucin hydration, and skin barrier repair" ([dubaiwholesalestore.com](https://www.dubaiwholesalestore.com/blogs/news/korean-skincare-trends-to-watch-in-2026-insights-from-2025-sales)) |
+| **Sensitivity / redness** | Anua named a top brand for sensitive skin and calming redness; "Heartleaf collection extremely popular in Dubai and GCC" (same source) |
+| **Pores / anti-ageing / PDRN** | Medicube named as viral in the UAE for "pore care, collagen products, PDRN skincare, and anti-aging routines" (same source) |
+| **Cica / Centella / Heartleaf** | Named as the go-to calming ingredients, with "huge wholesale demand" for Anua Heartleaf 77 Toner (same source); the competitor's own 2024 trends article leads on Cica and Heartleaf ([kbeautyarabia](https://kbeautyarabia.com/blogs/k-beauty-blog/trending-now-the-hottest-korean-skincare-products-of-2024)) |
+| **Snail mucin** | Recurs across K-beauty ingredient coverage as a lead ingredient term ([ulta.com](https://www.ulta.com/discover/beauty-education/what-is-snail-mucin), [skinsider.co.uk](https://skinsider.co.uk/blog/everything-you-need-to-know-about-snail-mucin-the-kbeauty-skincare-wonder/)) |
+| **Market is growing** | UAE Korean-cosmetics market ~USD 190.5m (2020) → ~USD 350m by 2026, ~8% CAGR ([thinkpositive.ae](https://thinkpositive.ae/consumer-insights-for-skincare-brands-in-the-uae/)) |
+| **Regional trend context** | Beautyworld Middle East 2025 trend reporting ([beautymatter.com](https://beautymatter.com/articles/top-6-trends-spotted-at-bwme-2025)); Middle East beauty trend analysis ([greyb.com](https://greyb.com/blog/middle-east-beauty-trends)) |
+
+### The independent cross-check
+
+The competitor's taxonomy was built by people with their own analytics, and it
+lands on **acne, anti-ageing, hyperpigmentation**, plus a stated seven-concern
+nav set (`SEO-COMPETITIVE.md` §9.2). Two independent sources — trade/press
+coverage and a competitor's revealed merchandising — agree on acne,
+pigmentation, sensitivity/redness, pores and anti-ageing. **That agreement is
+the strongest evidence available without a keyword tool**, and it is what the
+concern list in the build plan is built from.
+
+### UNVERIFIED — and this is a real limit, not a hedge
+
+**I have no search-volume figures for any of these terms, in either language.**
+None. Search volume needs Keyword Planner, Ahrefs, Semrush or Search Console,
+and this project has none of them for any domain. Everything above is *evidence
+that a term has commercial attention in this market*; **none of it is evidence
+of how many people type it per month, or of how hard it is to rank for.**
+
+So: the concern list is well-founded for *choosing which pages to build*. It is
+**not** a basis for promising traffic numbers, and nobody should write a
+forecast off it. If the owner wants volumes, the cheapest honest route is
+**Google Search Console on kbeautybliss.com**, which he already owns and which
+gives real impressions for terms the site already surfaces on.
+
+---
+
+## 11. What a collection page needs in order to rank rather than be thin
+
+Part I ranked concern collections first and flagged "thin pages" as the risk.
+This is what the risk actually is.
+
+### The consensus, and its honest status
+
+- *"The most common reason category pages don't rank is that they contain no
+  rankable content. Google cannot determine buyer intent, keyword relevance, or
+  topical authority from a grid alone."*
+  ([aiadvantageagency.com](https://aiadvantageagency.com/ecommerce-category-page-seo/),
+  [wpconsults.com](https://www.wpconsults.com/category-page-seo-content/))
+- *"Do not leave the page as a basic price list; add value with helpful text,
+  buying tips, or FAQs."*
+  ([digitalapplied.com](https://www.digitalapplied.com/blog/ecommerce-seo-product-category-page-guide-2026))
+- Scrutiny of ecommerce category pages has increased since early 2023; thin,
+  duplicated or bulk-generated category copy is treated worse, structured and
+  genuinely informative copy better.
+  ([megantic.com.au](https://www.megantic.com.au/blog/google-algorithm-impacting-category-pages/))
+- Word-count thresholds circulate — "below 200 words is often classified as
+  thin", "150–300", "200–400" — and **the sources that quote them also say no
+  published measurement sits behind any of it.**
+  ([1digitalagency.com](https://www.1digitalagency.com/blog/how-to-optimize-e-commerce-category-pages-a-2026-playbook/),
+  [keytomic.com](https://keytomic.com/blog/ecommerce-category-page-seo-best-practices))
+
+**Status: OBSERVED as industry consensus; UNVERIFIED as Google's own
+documentation.** I did not find a Google Search Central page stating a word
+count for category pages, and I do not believe one exists. Treat the numbers as
+a working floor that practitioners agree on, not as a rule Google published.
+The defensible part of the consensus is the *qualitative* claim — a grid with no
+prose gives the ranking system nothing to read — and that part is uncontested.
+
+### The working specification
+
+For each concern collection, before it ships:
+
+1. **150–300 words of genuine intro copy** answering the concern, above or
+   beside the grid — what the concern is, what ingredient classes address it,
+   how to choose. Not a keyword paragraph.
+2. **A real product set.** Part I's warning stands: a concern collection with
+   four products is worse than no page. **Set a floor of 8–12 products and do
+   not publish a concern that cannot meet it.**
+3. **Outbound internal links** to the matching article and to the 2–3 brands
+   that lead on that concern.
+4. **`CollectionPage` + `ItemList`** — we already emit this
+   (`app/Support/Seo.php:1222`), so it is free.
+5. **A title that is not the template.** Ours is `{title}{sep}{sitename}`;
+   a concern page wants an intent-shaped title. Per-row SEO overrides already
+   exist (`ProductSeo::PUBLISHED_KEYS`) so this needs no code.
+6. **Arabic copy at the same time, or a deliberate decision not to.** Shipping a
+   concern page in English only puts an untranslated page into a cluster that
+   `Seo::alternateLinks()` will advertise as having an Arabic alternate.
+
+**Items 4 and 5 are already built. Items 1, 2, 3 and 6 are the owner's copy and
+merchandising.** That ratio is the whole finding of this document.
+
+---
+
+## 12. What a sustained ingredient blog looks like at the article level
+
+The brief asked for length, structure, internal linking and schema. Consensus
+across current guidance:
+
+| Dimension | What the sources say |
+|---|---|
+| **Architecture** | Pillar + cluster: a pillar page links to supporting posts, supporting posts link back, related posts link to each other. **8–15 cluster articles per pillar.** ([digitalapplied.com](https://www.digitalapplied.com/blog/seo-content-clusters-2026-topic-authority-guide), [w3era.com](https://www.w3era.com/blog/seo/pillar-page-strategy-guide/)) |
+| **Pillar length** | 3,000–5,000 words (some sources 3,000–10,000), with a 100–200 word summary of each subtopic and the cluster link near the top of that section ([whitehat-seo.co.uk](https://whitehat-seo.co.uk/blog/blog-posts-pillar-pages-landing-pages), [searchsavvy.in](https://searchsavvy.in/content-clusters-and-pillar-pages-the-ultimate-guide/)) |
+| **Internal links** | 2–5 contextual links per 1,000 words; total page links under ~150; important pages within 3 clicks of home; every cluster page links back to the pillar with anchor text containing the pillar's target term ([digitalapplied.com](https://www.digitalapplied.com/blog/internal-linking-strategy-2026-large-site-architecture-guide), [upwardengine.com](https://upwardengine.com/blog/internal-linking-best-practices-seo/)) |
+| **Anchor text** | Mirror the query — "best Korean serum for acne scars", not "click here" ([bizaigpt.com](https://bizaigpt.com/blog/seo-content-cluster-ecommerce-guide)) |
+| **Schema** | `Article` on every post — **we already emit it** (`app/Support/Seo.php:1145`) |
+| **Retrieval framing** | Current guidance emphasises writing in extractable, self-contained chunks with cited sources, for AI/answer surfaces as well as ranking ([typeflo.io](https://typeflo.io/blog/seo-best-practices-for-blogs)) |
+
+**Caveat, and it is the same one as §11:** these figures are practitioner
+consensus, repeated widely, not Google documentation. The *structural* claims
+(bidirectional linking, one topic per page, query-shaped anchors) are safe. The
+*numeric* ones (3,000–5,000 words, 8–15 clusters) are conventions. **Do not put
+them in a test.**
+
+### Mapped onto this shop
+
+Our pillar already exists: **`/skincare-guide/`** (`docs/GA-SKINCARE-GUIDE.md`)
+and the journal. What does not exist is the **mapping** — cluster articles tied
+to concern collections, linking both ways, in both languages. That is Part I §6
+restated with a shape.
+
+The competitor's programme, read against this table
+(`SEO-COMPETITIVE.md` §11): roughly 8–10 articles, ingredient- and concern-led,
+mapped onto their collection axes, **translated into Arabic**, with visible
+housekeeping slips (two articles on skin type). **They are executing a
+recognisable version of this and we are not.** They are also not executing it
+especially well, which is the encouraging half.
+
+---
+
+## 13. Additions to the scorecard
+
+| Area | Part I verdict | Part II revision |
+|---|---|---|
+| Arabic / hreflang | "Ahead; theirs possibly absent" | **Parity on existence. Ahead on URL shape (`/ar/` subfolder vs `ar.` subdomain). Behind on Arabic content.** |
+| Concern taxonomy | "Behind — they have `/collections/acne`" | **Further behind than stated.** They run a concern axis *and* a skin-type axis; three concern handles confirmed, seven claimed (`SEO-COMPETITIVE.md` §9) |
+| Crawl hygiene | not assessed | **Ahead.** Their `.atom` collection feeds are indexed (`SEO-COMPETITIVE.md` §10); we serve no second machine address per listing |
+| Competitive set | one competitor | **Wider.** Four UAE mass retailers run Arabic K-beauty landing pages; at least one specialist (`crescitebeauty.com`) is bilingual (`SEO-COMPETITIVE.md` §12) |
+| Off-site authority | "Behind, outside this module" | **Unchanged, now with named targets** (`SEO-COMPETITIVE.md` §12) |
+| Our own duplicates | "we lack Shopify's duplicate-path defect" | **True of this Laravel port; a duplicate pair is visible in the index on the legacy site** (`SEO-COMPETITIVE.md` §14). Needs one person to check, not a code change |
+
+**The headline of Part I survives intact: we are not losing on markup.** Part II
+tightens why — the gap is a concern/skin-type taxonomy, a translated ingredient
+blog, and local links, and all three are content the owner commissions rather
+than code a lane ships.
