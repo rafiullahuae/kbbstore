@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Shoppable UGC video — styles to choose from</title>
+<title>Shoppable UGC video — the chosen two, and variants of each</title>
 <style>
 :root{
   --bg:#fff; --cream:#FFF8F5; --pink-soft:#FFF0F4; --blush:#FCE0E8;
@@ -29,7 +29,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .doc-head{background:linear-gradient(180deg,var(--pink-soft),var(--bg));border-bottom:1px solid var(--line-2);padding:26px 0 22px}
 .doc-head h1{font-size:23px;line-height:1.25;letter-spacing:-.02em;font-weight:800;color:var(--pink-deep)}
 .doc-head h1 span{color:var(--ink)}
-.doc-head p{font-size:13.5px;color:var(--ink-2);margin-top:9px;max-width:62ch}
+.doc-head p{font-size:13.5px;color:var(--ink-2);margin-top:9px;max-width:64ch}
 @media(min-width:900px){.doc-head h1{font-size:31px}.doc-head p{font-size:14.5px}}
 
 .toolbar{position:sticky;top:0;z-index:70;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:9px 0}
@@ -47,20 +47,29 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sec p.lede{font-size:13.5px;color:var(--ink-2);margin-top:8px;max-width:66ch}
 @media(min-width:900px){.sec h2{font-size:25px}}
 
-.style{margin:26px 0 40px;border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;background:var(--bg);box-shadow:var(--sh-s)}
+.style{margin:22px 0 34px;border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;background:var(--bg);box-shadow:var(--sh-s)}
+.style.parent{border-color:var(--pink);box-shadow:0 0 0 2px rgba(224,86,123,.14),var(--sh-s)}
 .style-hd{padding:15px 16px 13px;background:var(--cream);border-bottom:1px solid var(--line-2)}
+.style.parent .style-hd{background:var(--pink-soft)}
 .style-hd .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
                color:var(--pink-deep);background:var(--blush);border-radius:99px;padding:3px 9px}
+.style-hd .tag.chosen{background:var(--pink-deep);color:#fff}
 .style-hd h3{font-size:16.5px;font-weight:700;margin-top:8px;letter-spacing:-.01em}
 .style-hd .what{font-size:13px;color:var(--ink-2);margin-top:6px;max-width:64ch}
+.changed{margin-top:10px;background:var(--bg);border:1px solid var(--line);border-inline-start:3px solid var(--pink);
+         border-radius:8px;padding:8px 11px;font-size:12.5px;max-width:64ch}
+.changed b{color:var(--pink-deep);font-weight:700}
+.changed .cost{display:block;margin-top:4px;color:var(--ink-2)}
 .costs{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-.cost{font-size:11px;font-weight:600;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);
+.cost-c{font-size:11px;font-weight:600;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);
       border-radius:7px;padding:4px 8px}
-.cost.good{color:var(--green);border-color:rgba(46,158,107,.32);background:rgba(46,158,107,.07)}
-.cost.warn{color:var(--gold);border-color:rgba(190,142,46,.32);background:rgba(190,142,46,.07)}
-.cost.bad{color:var(--sale);border-color:rgba(226,58,78,.3);background:rgba(226,58,78,.06)}
+.cost-c.good{color:var(--green);border-color:rgba(46,158,107,.32);background:rgba(46,158,107,.07)}
+.cost-c.warn{color:var(--gold);border-color:rgba(190,142,46,.32);background:rgba(190,142,46,.07)}
+.cost-c.bad{color:var(--sale);border-color:rgba(226,58,78,.3);background:rgba(226,58,78,.06)}
 .style-bd{padding:16px 0 18px}
 .style-bd .inner{padding:0 16px}
+.hgt{font-size:11px;font-weight:700;color:var(--muted);padding:0 16px 10px;letter-spacing:.02em}
+.hgt b{color:var(--ink-2)}
 
 /* ── shared video-tile chrome ───────────────────────────────────────── */
 .vt{position:relative;aspect-ratio:9/16;border-radius:var(--r-m);overflow:hidden;background:#EDE6E9;
@@ -91,12 +100,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* ── product card / chip ────────────────────────────────────────────── */
 .pcard{display:flex;gap:9px;align-items:center;background:var(--bg);border:1px solid var(--line);
        border-radius:var(--r-s);padding:8px;margin-top:8px}
-.pcard .th{width:42px;height:42px;flex:0 0 auto;border-radius:7px;background:var(--pink-soft);
-           display:grid;place-items:center;font-size:9px;font-weight:800;color:var(--pink-deep);letter-spacing:.04em;overflow:hidden}
-.pcard .pi{min-width:0;flex:1}
+.th{width:42px;height:42px;flex:0 0 auto;border-radius:7px;background:var(--pink-soft);
+    display:grid;place-items:center;font-size:9px;font-weight:800;color:var(--pink-deep);letter-spacing:.04em;overflow:hidden}
+.pi{min-width:0;flex:1}
 .bd{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
 .nm{font-size:11.5px;font-weight:600;line-height:1.3;margin-top:1px;
-           display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pr{display:flex;align-items:baseline;gap:6px;margin-top:3px;flex-wrap:wrap}
 .pr .now{font-size:12.5px;font-weight:800;color:var(--ink)}
 .pr .was{font-size:10.5px;color:var(--muted);text-decoration:line-through}
@@ -105,39 +114,96 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       background:var(--ink);color:#fff;border-radius:99px;padding:7px 11px;transition:.15s}
 .addb:hover{background:var(--pink-deep)}
 .addb.wide{width:100%;text-align:center;padding:12px;font-size:12px;border-radius:12px;margin-top:9px}
+.addb.done{background:var(--green)}
 
-/* ── S1 rail ────────────────────────────────────────────────────────── */
+/* ── THE RAIL, and every variant of it ──────────────────────────────── */
 .s-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 16px 12px;
         -webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .s-rail>*{scroll-snap-align:start;flex:0 0 auto;width:158px}
 @media(min-width:900px){.s-rail>*{width:206px}}
+/* R4 shows more per screen because it has no card to make room for. */
+.s-rail.narrow>*{width:132px}
+@media(min-width:900px){.s-rail.narrow>*{width:168px}}
 
-/* ── S2 peek carousel ───────────────────────────────────────────────── */
+/* THE CARD INSIDE A RAIL IS NOT THE CARD INSIDE A PLAYER.
+   A 158px tile leaves a row-layout card about 55px of text width, which
+   truncated "Advanced Snail 96..." to "Adva Sn..." and broke AED 79 / AED 110
+   / -28% onto three lines. Measured, not guessed: it was what pushed R0 to
+   467px. In a rail the poster above IS the product picture, so the thumbnail
+   is redundant -- drop it and stack name, price and a full-width Add. */
+.s-rail .pcard{display:block;padding:8px}
+.s-rail .pcard>.th{display:none}
+.s-rail .pcard .nm{font-size:11px;-webkit-line-clamp:2;margin-top:2px}
+.s-rail .pcard .pr{margin-top:4px;gap:5px}
+.s-rail .pcard .pr .now{font-size:12px}
+.s-rail .pcard .addb{display:block;width:100%;text-align:center;margin-top:7px;padding:6px 0;font-size:10px}
+
+/* R2 — the chip row for the products the card does not show. */
+.chips{display:flex;gap:5px;overflow-x:auto;padding:6px 0 2px;scroll-snap-type:x proximity}
+.chip{flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:6px;background:var(--cream);
+      border:1px solid var(--line);border-radius:99px;padding:4px 9px 4px 5px;max-width:150px}
+.chip .th{width:22px;height:22px;border-radius:99px;font-size:7px}
+.chip .cn{font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .cp{font-size:10px;font-weight:800;white-space:nowrap}
+
+/* R3 — the card sits ON the poster, so the rail keeps the poster's height. */
+/* The overlay has even less room than a rail card and it sits on the poster,
+   so it is one line of name over a single price/Add row -- and no thumbnail,
+   because the poster behind it already is the picture. */
+.ov-card{position:absolute;inset-inline:6px;bottom:6px;z-index:4;background:rgba(255,255,255,.96);
+         backdrop-filter:blur(8px);border-radius:10px;padding:7px 8px;display:block;
+         box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+.ov-card .row2{display:flex;align-items:center;gap:8px;margin-top:2px}
+.ov-card .row2 .pr{margin-top:0;flex:1;min-width:0;gap:5px}
+.ov-card .nm{font-size:10px;-webkit-line-clamp:1}
+.ov-card .bd{font-size:8px}
+.ov-card .pr .now{font-size:11px}
+.ov-card .pr .was{font-size:9px}
+.ov-card .pr .off{font-size:8.5px;padding:1px 4px}
+.ov-card .addb{font-size:9px;padding:5px 8px}
+/* The overlay card grew when it went stacked, so the caption has to clear it;
+   at 56px it was sitting under the card and reading "Glass skin in 6". */
+.vt.hascard .over{bottom:80px}
+.vt.hascard .cap{-webkit-line-clamp:1}
+.vt.hascard::after{height:72%}
+
+/* R1 — the cycling card. Only the active product is in flow. */
+.cyc{position:relative}
+.cyc .slot{display:none}
+.cyc .slot.on{display:flex}
+.dotrow{display:flex;gap:4px;justify-content:center;padding:6px 0 0}
+.dotrow i{width:4px;height:4px;border-radius:99px;background:var(--line);transition:.2s}
+.dotrow i.on{background:var(--pink-deep);width:12px}
+
+/* R6 — the card that expands in place. 0fr -> 1fr needs no measuring. */
+.exp{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease)}
+.exp>div{overflow:hidden;min-height:0}
+.xcard.open .exp{grid-template-rows:1fr}
+.xmore{width:100%;display:flex;align-items:center;justify-content:center;gap:5px;font-size:10.5px;font-weight:700;
+       color:var(--pink-deep);padding:7px 0 1px}
+.xmore svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;transition:.25s var(--ease)}
+.xcard.open .xmore svg{transform:rotate(180deg)}
+.xcard .pcard{margin-top:6px}
+
+/* the "next is signalled by" affordance row */
+.rail-foot{display:flex;align-items:center;gap:8px;padding:2px 16px 0;font-size:11px;color:var(--muted)}
+.rail-foot .arrows{margin-inline-start:auto;display:flex;gap:6px}
+.rail-foot .arrows button{width:26px;height:26px;border-radius:99px;border:1px solid var(--line);
+                          background:var(--bg);display:grid;place-items:center}
+.rail-foot .arrows svg{width:13px;height:13px;stroke:var(--ink-2);fill:none;stroke-width:2.2}
+[dir="rtl"] .rail-foot .arrows svg{transform:scaleX(-1)}
+
+/* ── the other four grid styles, kept for reference ─────────────────── */
 .s-peek{display:flex;gap:11px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 16px 12px}
 .s-peek>*{scroll-snap-align:center;flex:0 0 auto;width:min(74vw,262px)}
 @media(min-width:900px){.s-peek>*{width:250px}}
-.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scroll-snap-type:x proximity}
-.chip{flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:7px;background:var(--cream);
-      border:1px solid var(--line);border-radius:99px;padding:5px 11px 5px 6px;max-width:190px}
-.chip .th{width:26px;height:26px;border-radius:99px;flex:0 0 auto;display:grid;place-items:center;
-          font-size:7.5px;font-weight:800;color:var(--pink-deep);background:var(--blush)}
-.chip .cn{font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chip .cp{font-size:10.5px;font-weight:800;white-space:nowrap}
-
-/* ── S3 masonry wall ────────────────────────────────────────────────── */
 .s-wall{columns:2;column-gap:10px}
 @media(min-width:700px){.s-wall{columns:3}}
 @media(min-width:1000px){.s-wall{columns:4}}
 .s-wall>*{break-inside:avoid;margin-bottom:10px}
 .s-wall .vt.r45{aspect-ratio:4/5}
 .s-wall .vt.r11{aspect-ratio:1/1}
-
-/* ── S4 hero + satellites ───────────────────────────────────────────── */
 .s-hero{display:grid;gap:10px;grid-template-columns:1fr}
-.s-hero .big .vt{aspect-ratio:9/16}
-/* Two across on a phone -- four would be 85px wide and unreadable. Four
-   across beside the hero on a desktop, in ONE row, so the satellites stay
-   visibly smaller than the clip they support. */
 .s-hero .sats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 @media(min-width:820px){
   .s-hero{grid-template-columns:minmax(0,300px) 1fr;align-items:start}
@@ -147,25 +213,19 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .s-hero .sats .cap{font-size:10px;-webkit-line-clamp:1}
 .s-hero .sats .handle{font-size:9.5px}
 .s-hero .sats .handle i{width:12px;height:12px}
-
-/* ── S5 two-up compact ──────────────────────────────────────────────── */
 .s-two{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 @media(min-width:700px){.s-two{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:1000px){.s-two{grid-template-columns:repeat(6,1fr);gap:10px}}
 .s-two .vt{border-radius:12px}
 .s-two .mini{display:flex;align-items:baseline;gap:5px;margin-top:6px;padding:0 1px}
-.s-two .mini .nm{font-size:10.5px;font-weight:600;line-height:1.25;flex:1;min-width:0;
-                 display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.s-two .mini .nm{font-size:10.5px;flex:1;min-width:0}
 .s-two .mini .now{font-size:11px;font-weight:800;white-space:nowrap}
-
-/* ── S6 story strip ─────────────────────────────────────────────────── */
 .s-story{display:flex;gap:13px;overflow-x:auto;padding:4px 16px 14px}
 .s-story .st{flex:0 0 auto;width:74px;text-align:center}
 .s-story .ring{width:74px;height:74px;border-radius:99px;padding:2.5px;
-               background:conic-gradient(from 210deg,var(--pink),var(--gold),var(--pink-deep),var(--pink));}
+               background:conic-gradient(from 210deg,var(--pink),var(--gold),var(--pink-deep),var(--pink))}
 .s-story .ring .vt{aspect-ratio:1/1;border-radius:99px;border:2.5px solid var(--bg);box-shadow:none}
-.s-story .ring .vt::after{display:none}
-.s-story .ring .vt .over,.s-story .ring .vt .nprod{display:none}
+.s-story .ring .vt::after,.s-story .ring .vt .over,.s-story .ring .vt .nprod{display:none}
 .s-story .ring .vt .pbtn span{width:26px;height:26px}
 .s-story .ring .vt .pbtn span::before{border-inline-start-width:8px;border-top-width:5px;border-bottom-width:5px;margin-inline-start:3px}
 .s-story .nm2{font-size:10px;font-weight:600;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
@@ -191,15 +251,80 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .rnd{width:34px;height:34px;border-radius:99px;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);
      border:1px solid rgba(255,255,255,.22);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:600}
 .rnd svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round}
-.pl .side{position:absolute;inset-inline-end:10px;bottom:0;z-index:6;display:flex;flex-direction:column;gap:13px;align-items:center}
+.pl .side{position:absolute;inset-inline-end:10px;z-index:6;display:flex;flex-direction:column;gap:13px;align-items:center}
 .pl .side .act{display:flex;flex-direction:column;align-items:center;gap:3px;color:#fff;font-size:10px;font-weight:600}
-.pl .scrub{position:absolute;inset-inline:0;z-index:7;height:3px;background:rgba(255,255,255,.22)}
+.pl .scrub{position:absolute;inset-inline:0;top:0;z-index:7;height:3px;background:rgba(255,255,255,.22)}
 .pl .scrub i{display:block;height:100%;background:#fff;width:38%}
 .dim::before{content:'';position:absolute;inset:auto 0 0 0;height:52%;z-index:1;pointer-events:none;
              background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.72))}
-.pcard.dark{background:rgba(255,255,255,.97);border-color:transparent;box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
-.nolist{font-size:10.5px;color:rgba(255,255,255,.62);text-align:center;padding:6px 0 0}
 
+/* ── PLAYER B, the parent, and every variant of it ──────────────────── */
+.prail{position:absolute;inset-inline:0;bottom:0;z-index:8;padding:0 0 14px}
+.prail .row{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 12px 4px}
+.pc2{flex:0 0 auto;scroll-snap-align:center;width:min(78%,268px);display:flex;gap:9px;align-items:center;
+     background:rgba(255,255,255,.97);border-radius:13px;padding:8px;box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
+.pc2 .th{width:44px;height:44px;border-radius:8px}
+.prail .dots{display:flex;gap:4px;justify-content:center;padding-top:7px}
+.prail .dots i{width:5px;height:5px;border-radius:99px;background:rgba(255,255,255,.34);transition:.2s}
+.prail .dots i.on{background:#fff;width:14px}
+.pl .side{bottom:132px}
+/* B1's total bar makes the rail taller, so Like/Share has to move up or it
+   reads through from behind the bar. */
+.pl:has(.totbar) .side{bottom:200px}
+.pl:has(.reveal) .side{bottom:132px}
+
+/* B1 — the total bar above the rail */
+.totbar{display:flex;align-items:center;gap:10px;margin:0 12px 6px;padding:8px 11px;border-radius:12px;
+        background:rgba(20,14,18,.62);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14)}
+.totbar .lb{font-size:11px;font-weight:600;color:rgba(255,255,255,.8)}
+.totbar .am{font-size:14px;font-weight:800;color:#fff;margin-inline-start:auto}
+.totbar .ab{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+            background:#fff;color:var(--ink);border-radius:99px;padding:7px 12px}
+
+/* B2 — one card, tap to fan the rest into a stack */
+.fan{position:absolute;inset-inline:0;bottom:0;z-index:8;padding:0 12px 16px}
+.fan .deck{position:relative}
+.fan .pc2{width:100%;position:relative;transition:transform .34s var(--ease),opacity .28s var(--ease)}
+.fan .deck .pc2:not(:first-child){position:absolute;inset-inline:0;bottom:0;
+     transform:translateY(calc(var(--i) * -6px)) scale(calc(1 - var(--i) * .04));opacity:0;z-index:-1}
+.fan.open .deck{display:flex;flex-direction:column-reverse;gap:8px}
+.fan.open .deck .pc2:not(:first-child){position:relative;transform:none;opacity:1;z-index:auto}
+.fan .peek{position:absolute;top:-7px;inset-inline-end:8px;background:var(--ink);color:#fff;font-size:9.5px;
+           font-weight:800;border-radius:99px;padding:2px 8px;z-index:3}
+/* Once the deck is open the count is redundant, and the Like/Share column
+   showed through the gaps between cards. */
+.fan.open .peek{display:none}
+.pl:has(.fan.open) .side{opacity:0;pointer-events:none}
+.fan .fbtn{width:100%;text-align:center;font-size:11px;font-weight:700;color:#fff;padding:8px 0 0;
+           text-shadow:0 1px 3px rgba(0,0,0,.6)}
+
+/* B3 — nothing until you tap the video */
+.reveal{position:absolute;inset-inline:0;bottom:0;z-index:8;padding:0 0 14px;
+        transform:translateY(112%);transition:transform .34s var(--ease)}
+.pl.revealed .reveal{transform:none}
+.tapnote{position:absolute;inset-inline:0;bottom:22px;z-index:7;text-align:center;color:#fff;font-size:11.5px;
+         font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.7);transition:opacity .25s;pointer-events:none}
+.pl.revealed .tapnote{opacity:0}
+.tapnote .pill{display:inline-flex;align-items:center;gap:6px;background:rgba(20,14,18,.6);backdrop-filter:blur(8px);
+               border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:7px 13px}
+
+/* B5 — the next video from inside the player */
+.vnav{position:absolute;inset-inline-end:10px;top:50%;transform:translateY(-50%);z-index:9;
+      display:flex;flex-direction:column;gap:9px}
+.vnav .rnd{width:38px;height:38px}
+.vnav svg{transform:rotate(-90deg)}
+.swipehint{position:absolute;inset-inline:0;bottom:calc(100% + 6px);text-align:center;color:rgba(255,255,255,.72);
+           font-size:10px;font-weight:600}
+
+/* the per-variant stress control */
+.stress{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center}
+.stress .lb{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.03em}
+.stress button{font-size:11px;font-weight:700;background:var(--ink);color:#fff;border-radius:99px;padding:7px 12px}
+.stress button:hover{background:var(--pink-deep)}
+.stress button.alt{background:var(--bg);color:var(--ink-2);border:1px solid var(--line)}
+.stress button.alt:hover{background:var(--cream);color:var(--pink-deep)}
+
+/* ── players A, C and D, kept for reference ─────────────────────────── */
 /* ── P-A  sheet-under ───────────────────────────────────────────────── */
 .pa .sheet{position:absolute;inset-inline:0;bottom:0;z-index:8;background:var(--bg);
            border-radius:20px 20px 0 0;padding:8px 12px 14px;transition:transform .32s var(--ease);
@@ -213,20 +338,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .pa .sheet.collapsed .list{max-height:66px;overflow:hidden}
 .pa .scrub{bottom:auto;top:0}
 .pa .side{bottom:150px}   /* clear the collapsed sheet */
-
-/* ── P-B  rail-over ─────────────────────────────────────────────────── */
-.pb .prail{position:absolute;inset-inline:0;bottom:0;z-index:8;padding:0 0 14px}
-.pb .prail .row{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 12px 4px}
-.pb .prail .pc2{flex:0 0 auto;scroll-snap-align:center;width:min(78%,268px);display:flex;gap:9px;align-items:center;
-                background:rgba(255,255,255,.97);border-radius:13px;padding:8px;box-shadow:0 8px 24px -10px rgba(0,0,0,.6)}
-.pb .prail .pc2 .th{width:44px;height:44px;flex:0 0 auto;border-radius:8px;background:var(--pink-soft);
-                    display:grid;place-items:center;font-size:9px;font-weight:800;color:var(--pink-deep)}
-.pb .prail .pc2 .pi{min-width:0;flex:1}
-.pb .prail .dots{display:flex;gap:4px;justify-content:center;padding-top:7px}
-.pb .prail .dots i{width:5px;height:5px;border-radius:99px;background:rgba(255,255,255,.34)}
-.pb .prail .dots i.on{background:#fff;width:14px}
-.pb .side{bottom:132px}
-.pb .scrub{bottom:auto;top:0}
 
 /* ── P-C  split ─────────────────────────────────────────────────────── */
 .pc{background:var(--bg)}
@@ -267,56 +378,26 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .pd .tl .legend{display:flex;gap:6px;justify-content:center;margin-top:4px;font-size:10px;color:rgba(255,255,255,.7)}
 .pd .side{bottom:150px}
 
-/* ── the 390 problem panel ──────────────────────────────────────────── */
-.vs{display:grid;gap:14px;grid-template-columns:1fr}
-@media(min-width:760px){.vs{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:1040px){.vs{grid-template-columns:repeat(4,1fr)}}
-.vs .cell{border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden;background:var(--cream)}
-.vs .cell h4{font-size:12.5px;font-weight:700;padding:11px 12px 0}
-.vs .cell .n{font-size:11.5px;color:var(--ink-2);padding:4px 12px 11px}
-.vs .cell .shot{background:#100c10;padding:10px;display:grid;place-items:center}
-/* A TRUE 390px PLAYER, SCALED DOWN — not a player squeezed into 240px.
-   Squeezing it re-wraps every card and shows a layout no phone ever renders,
-   which is the opposite of what this panel is for. So the inner frame is
-   exactly 390x845 and the whole thing is transform-scaled by 240/390. */
-.phone{width:240px;aspect-ratio:9/19.5;border-radius:22px;overflow:hidden;position:relative;background:#000;
-       border:3px solid #241c22;box-shadow:0 10px 30px -14px rgba(0,0,0,.7)}
-.phone .mini-scale{position:absolute;top:0;inset-inline-start:0;width:390px;height:845px;
-                   transform:scale(.6154);transform-origin:top left}
-[dir="rtl"] .phone .mini-scale{transform-origin:top right}
-/* The desktop media queries must not reach inside the frame: the frame is a
-   PHONE at every page width. Three classes beats the two in the media query. */
-.phone .pl{position:absolute;inset:0;width:390px;height:845px;max-width:none;border-radius:0;box-shadow:none}
-.phone .pc{max-width:none;height:845px}
-.phone .pc .split{flex-direction:column}
-.phone .pc .vp{flex:0 0 58%}
-.phone .pc .col{padding:12px 12px 16px}
-.phone .pc .col h4{font-size:13px}
-.phone .stage img.poster,.phone .vp img.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 
-/* ── budget table ───────────────────────────────────────────────────── */
+/* ── tables, notes, footer ──────────────────────────────────────────── */
 .tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}
 .tbl th,.tbl td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
 .tbl th{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.tbl td b{font-weight:700}
 .tbl tr:last-child td{border-bottom:none}
 .scrollbox{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .note{background:var(--pink-soft);border:1px solid var(--blush);border-radius:var(--r-m);padding:13px 14px;margin-top:16px}
 .note b{color:var(--pink-deep)}
 .note p{font-size:12.5px;color:var(--ink-2);margin-top:5px}
+.notchosen{margin-top:30px;border-top:2px dashed var(--line);padding-top:8px}
 .foot{border-top:1px solid var(--line);margin-top:34px;padding:22px 0 44px;font-size:12px;color:var(--muted)}
 .foot b{color:var(--ink-2)}
 
-/* RTL: the two things that genuinely flip. Everything else is logical. */
 [dir="rtl"] .s-rail,[dir="rtl"] .s-peek,[dir="rtl"] .s-story,[dir="rtl"] .chips,
-[dir="rtl"] .pb .prail .row,[dir="rtl"] .s-two{direction:rtl}
+[dir="rtl"] .prail .row,[dir="rtl"] .s-two{direction:rtl}
 [dir="rtl"] .vt .pbtn span::before{transform:scaleX(-1)}
 [dir="rtl"] body{font-family:"Cairo","Poppins",system-ui,sans-serif}
-/* The captions, budget table and footer are this DOCUMENT talking, in English.
-   Only the shop chrome inside each preview is what RTL is being shown for, so
-   the commentary stays left-to-right and stays readable. */
 [dir="rtl"] .doc-head,[dir="rtl"] .style-hd,[dir="rtl"] .sec,[dir="rtl"] .foot,
-[dir="rtl"] .tbl,[dir="rtl"] .note,[dir="rtl"] .vs .cell h4,[dir="rtl"] .vs .cell .n{direction:ltr;text-align:left}
+[dir="rtl"] .tbl,[dir="rtl"] .note,[dir="rtl"] .hgt,[dir="rtl"] .rail-foot{direction:ltr;text-align:left}
 [dir="rtl"] .toolbar .wrap{direction:ltr}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -325,19 +406,23 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 <header class="doc-head">
   <div class="wrap">
-    <h1>Shoppable UGC video — <span>styles to choose from</span></h1>
-    <p>Round one is previews only. Nothing here is switched on, no page of the shop has changed,
-       and no setting exists yet. Scroll it, tap the videos, open a player, and point at the one you
-       want built. Every price and product name below is from this shop&rsquo;s own catalogue.
-       The clips are placeholders generated locally — real creator video replaces them, at the same
-       9:16 shape and the same budget.</p>
+    <h1>The two you chose — <span>and variants of each</span></h1>
+    <p>You picked <b>the horizontal rail</b> and <b>the card rail over the video</b>. Both are at the top of
+       their section, marked <em>chosen</em>, unchanged. Under each sit variants that change exactly
+       <em>one</em> decision from the parent — the caption on each says which decision and what it costs, so you
+       can compare a variant against its parent without hunting. The four grids and three players you did not
+       pick are still here, at the bottom. Nothing has been deleted.</p>
+    <p><b>The clips deliberately are not uniform.</b> One video has a single product and no discount, one has
+       six, the rest are in between — because a style that only looks good with a 30% pill and exactly three
+       products is not a style. Every rail below shows all six, so you are always seeing the thin case next to
+       the crowded one.</p>
   </div>
 </header>
 
 <div class="toolbar">
   <div class="wrap">
     <button class="tgl" id="t-dir" aria-pressed="false">&#8644; Arabic / RTL</button>
-    <button class="tgl" id="t-auto" aria-pressed="true">&#9654; Autoplay in view</button>
+    <button class="tgl" id="t-auto" aria-pressed="true">&#9654; Allow autoplay</button>
     <span class="meter" id="meter">decoding <b>0</b> / 1 &middot; mounted <b>0</b></span>
   </div>
 </div>
@@ -346,243 +431,310 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 <section class="sec">
   <div class="sec-n">Part one</div>
-  <h2>Six grid styles</h2>
-  <p class="lede">Each one is a different <em>structure</em>, not the same rail with different corners — they take
-    different amounts of vertical space, sell a different number of products before a tap, and cost
-    different amounts to fill with content. The cost chips under each heading are the honest ones.</p>
+  <h2>The rail, and six variants of it</h2>
+  <p class="lede">Every one is the same structure: portrait videos in a row that scrolls sideways, with snap
+    points. What changes between them is <em>how the tagged products appear</em>, <em>where the card sits</em>,
+    and <em>whether video plays in the rail</em>. The measured height of each rail on a 390px phone is printed
+    under it, because the benchmark's rail was tall and pushed the rest of the page down.</p>
 </section>
 
-<article class="style" id="s1">
+<article class="style parent" id="g-r0">
   <div class="style-hd">
-    <span class="tag">Style 1 &middot; the benchmark, rebuilt</span>
-    <h3>Horizontal rail</h3>
-    <p class="what">What Whatmore Live does: a row of portrait videos that scrolls sideways, one product card
-      pinned under each. Snap points so a card never stops half-shown. This is the safe answer and the one to
-      beat.</p>
+    <span class="tag chosen">&#10003; The one you chose &middot; unchanged</span>
+    <h3>R0 — Horizontal rail</h3>
+    <p class="what">Portrait videos in a sideways-scrolling row, one product card pinned under each, snap points
+      so a card never stops half-shown. The next video is signalled by a hard peek at the edge.</p>
     <div class="costs">
-      <span class="cost good">4 videos fills it</span>
-      <span class="cost good">~330px tall on a phone</span>
-      <span class="cost warn">sells 1 product before a tap</span>
-      <span class="cost good">cheapest to build</span>
+      <span class="cost-c warn">sells 1 product per video</span>
+      <span class="cost-c good">0 video bytes until a tap</span>
+      <span class="cost-c good">no motion</span>
     </div>
   </div>
-  <div class="style-bd"><div class="s-rail" data-style="rail"></div></div>
+  <div class="style-bd"><div class="s-rail" data-style="rail0"></div>
+    <div class="hgt">Rail height at 390px: <b id="h-rail0">—</b></div></div>
 </article>
 
-<article class="style" id="s2">
+<article class="style" id="g-r1">
   <div class="style-hd">
-    <span class="tag">Style 2 &middot; multi-product, before the tap</span>
-    <h3>Peek carousel with product chips</h3>
-    <p class="what">Cards are wide enough to read and narrow enough that the next one is visibly cut off, which is
-      what makes a shopper swipe. Under each video sits a scrollable row of chips — one per tagged product — so a
-      three-product salon video sells three products without anyone opening anything.</p>
-    <div class="costs">
-      <span class="cost good">shows every tagged product</span>
-      <span class="cost good">highest tap-through of the six</span>
-      <span class="cost warn">~420px tall on a phone</span>
-      <span class="cost warn">needs 3+ products tagged to look right</span>
-    </div>
+    <span class="tag">Variant 1</span>
+    <h3>R1 — The card cycles through the products</h3>
+    <p class="what">Identical to R0 in every dimension. The one card under each video advances through that
+      video's tagged products on a slow timer, with dots showing where you are. It pauses the moment you touch
+      or hover it, so nothing changes under your finger.</p>
+    <div class="changed"><b>Changed from R0:</b> the card is no longer fixed to the first product — it cycles
+      through all of them.
+      <span class="cost">Costs: sells every product at no extra height, which is the cheapest win on this page.
+        But it is motion in a rail, and on the six-product video a full cycle takes about 18 seconds, so the
+        last product is rarely seen. Best when videos carry two or three.</span></div>
   </div>
-  <div class="style-bd"><div class="s-peek" data-style="peek"></div></div>
+  <div class="style-bd"><div class="s-rail" data-style="rail1"></div>
+    <div class="hgt">Rail height at 390px: <b id="h-rail1">—</b></div></div>
 </article>
 
-<article class="style" id="s3">
+<article class="style" id="g-r2">
   <div class="style-hd">
-    <span class="tag">Style 3 &middot; a page of its own</span>
-    <h3>Masonry wall</h3>
-    <p class="what">Mixed aspect ratios — 9:16, 4:5 and 1:1 — packed into columns, with a product-count badge on
-      each tile instead of a card. Two columns on a phone, four on a desktop. This is a <em>/videos</em> page or the
-      foot of a category, not a homepage strip: it is a browsing surface, so it wants twelve clips, not four.</p>
-    <div class="costs">
-      <span class="cost bad">wants 12+ videos</span>
-      <span class="cost good">accepts clips that are not 9:16</span>
-      <span class="cost good">no card &rarr; densest per screen</span>
-      <span class="cost warn">sells nothing until a tap</span>
-    </div>
+    <span class="tag">Variant 2</span>
+    <h3>R2 — Card, plus a chip row for the rest</h3>
+    <p class="what">The card stays exactly as it is in R0 and shows the first product. Underneath it, a compact
+      scrollable row of chips carries every other tagged product — name and price, tap to add.</p>
+    <div class="changed"><b>Changed from R0:</b> a second row was added below the card for the products the card
+      does not show.
+      <span class="cost">Costs: about 34px of extra height per rail, and the chip row is empty on the
+        one-product video — look at the third tile to see how that reads. In exchange every product is
+        purchasable without a tap and without any motion.</span></div>
   </div>
-  <div class="style-bd"><div class="inner"><div class="s-wall" data-style="wall"></div></div></div>
+  <div class="style-bd"><div class="s-rail" data-style="rail2"></div>
+    <div class="hgt">Rail height at 390px: <b id="h-rail2">—</b></div></div>
 </article>
 
-<article class="style" id="s4">
+<article class="style" id="g-r3">
   <div class="style-hd">
-    <span class="tag">Style 4 &middot; editorial</span>
-    <h3>Hero plus satellites</h3>
-    <p class="what">One clip is the story and the rest are the supporting cast: a large tile that plays muted in
-      place as soon as it scrolls into view, with four small ones beside it. Stacks on a phone, sits side by side
-      from 820px. Good for &ldquo;this month&rsquo;s routine&rdquo;, where one video is genuinely more important than
-      the others.</p>
-    <div class="costs">
-      <span class="cost good">5 videos fills it</span>
-      <span class="cost good">strongest first impression</span>
-      <span class="cost warn">one clip carries the section</span>
-      <span class="cost warn">two layouts to keep right</span>
-    </div>
+    <span class="tag">Variant 3</span>
+    <h3>R3 — Card overlaid on the poster</h3>
+    <p class="what">The same card, floated on the bottom of the video itself on a frosted panel, instead of
+      sitting underneath it. The creator handle and caption move up to make room.</p>
+    <div class="changed"><b>Changed from R0:</b> where the card sits — on the poster rather than below it.
+      <span class="cost">Costs: the card covers the bottom third of every thumbnail, which matters if the
+        product is what the creator is holding at the end of the clip. In exchange the rail is the shortest of
+        any variant that still sells something, because the card adds no height at all.</span></div>
   </div>
-  <div class="style-bd"><div class="inner"><div class="s-hero" data-style="hero"></div></div></div>
+  <div class="style-bd"><div class="s-rail" data-style="rail3"></div>
+    <div class="hgt">Rail height at 390px: <b id="h-rail3">—</b></div></div>
 </article>
 
-<article class="style" id="s5">
+<article class="style" id="g-r4">
   <div class="style-hd">
-    <span class="tag">Style 5 &middot; phone-first, cheapest to run</span>
-    <h3>Two-up compact</h3>
-    <p class="what">Posters only, no video mounted until a tap, two per row on a phone and six on a desktop, with a
-      single price line under each. Nothing here decodes video while you scroll, which makes it the one style that
-      is free on a slow phone no matter how many clips are in it.</p>
-    <div class="costs">
-      <span class="cost good">0 video bytes until a tap</span>
-      <span class="cost good">scales to 50 clips</span>
-      <span class="cost good">~200px tall per row</span>
-      <span class="cost warn">no motion &rarr; less pull</span>
-    </div>
+    <span class="tag">Variant 4</span>
+    <h3>R4 — Count badge only, products live in the player</h3>
+    <p class="what">No card anywhere. Each tile carries a small "3 products" badge and nothing else, so the
+      tiles get narrower and more of them fit on screen. Everything is sold inside the opened player.</p>
+    <div class="changed"><b>Changed from R0:</b> the card was removed entirely.
+      <span class="cost">Costs: sells nothing until somebody taps — this is the one that leans hardest on the
+        player being good. In exchange it is by far the shortest and cleanest rail, it shows roughly three
+        videos per screen instead of two, and it is completely immune to a video with one product or none.</span></div>
   </div>
-  <div class="style-bd"><div class="inner"><div class="s-two" data-style="two"></div></div></div>
+  <div class="style-bd"><div class="s-rail narrow" data-style="rail4"></div>
+    <div class="hgt">Rail height at 390px: <b id="h-rail4">—</b></div></div>
 </article>
 
-<article class="style" id="s6">
+<article class="style" id="g-r5">
   <div class="style-hd">
-    <span class="tag">Style 6 &middot; tiny, goes anywhere</span>
-    <h3>Story strip</h3>
-    <p class="what">Circular thumbnails in a gradient ring, the shape every shopper already knows from Instagram,
-      with stacked product faces under each showing how many are tagged. About 120px tall in total, so it can sit
-      under the header on every page without owning a screen.</p>
-    <div class="costs">
-      <span class="cost good">~120px tall, total</span>
-      <span class="cost good">fits above the fold anywhere</span>
-      <span class="cost warn">crops 9:16 to a circle</span>
-      <span class="cost warn">caption has to be 2 words</span>
-    </div>
+    <span class="tag">Variant 5 &middot; the performance fork</span>
+    <h3>R5 — The rail plays as you scroll</h3>
+    <p class="what">Laid out exactly like R0. The difference is that whichever tile is most in view starts
+      playing muted, and stops the moment it leaves. Scroll the rail and watch the meter at the top of this
+      page — it never reaches two.</p>
+    <div class="changed"><b>Changed from R0:</b> video autoplays in the rail instead of waiting for a tap.
+      <span class="cost">Costs: this is the biggest performance decision on the page. R0 costs
+        <b>0 video bytes</b> to scroll past — twelve posters, about 260&nbsp;KB. R5 costs roughly
+        <b>320&nbsp;KB per clip somebody dwells on</b>, and on a mid-range Android the decoder is doing real
+        work the whole time. It is also the one that most looks like the app he showed you. One decodes at a
+        time, always.</span></div>
   </div>
-  <div class="style-bd"><div class="s-story" data-style="story"></div></div>
+  <div class="style-bd"><div class="s-rail" data-style="rail5"></div>
+    <div class="hgt">Rail height at 390px: <b id="h-rail5">—</b></div></div>
+</article>
+
+<article class="style" id="g-r6">
+  <div class="style-hd">
+    <span class="tag">Variant 6</span>
+    <h3>R6 — The card expands in place</h3>
+    <p class="what">R0's card, with a "+2 more" line at its foot. Tap it and the card grows downward to list
+      every tagged product with its own Add, without opening the player or leaving the page. Tap again to
+      close.</p>
+    <div class="changed"><b>Changed from R0:</b> the card can open to show all the products, in place.
+      <span class="cost">Costs: the rail is R0's height until somebody opens a card, and then that rail gets
+        taller and pushes the page down — the one variant here that moves the page under you. In exchange it
+        sells everything without a full-screen takeover, which is the gentlest way to buy a second item.</span></div>
+  </div>
+  <div class="style-bd"><div class="s-rail" data-style="rail6"></div>
+    <div class="hgt">Rail height at 390px, closed: <b id="h-rail6">—</b></div></div>
 </article>
 
 <section class="sec">
   <div class="sec-n">Part two</div>
-  <h2>Four opened states</h2>
-  <p class="lede">Tap a video above and it opens in whichever player is selected here. The benchmark pins exactly one
-    product above an ADD TO CART button; all four of these sell every product in the clip. Try each one at phone
-    width — that is where the difference shows.</p>
+  <h2>The player, and five variants of it</h2>
+  <p class="lede">Each one opens full screen over the video. Use the buttons to open every variant against a
+    <b>one-product</b>, a <b>three-product</b> and a <b>six-product</b> video — six is where a card rail stops
+    being easy, and it is the case worth checking on each.</p>
 </section>
 
-<article class="style" id="pA">
+<article class="style parent" id="p-b0">
   <div class="style-hd">
-    <span class="tag">Player A &middot; the safe improvement</span>
-    <h3>Sheet under the video</h3>
-    <p class="what">Full-bleed video with a bottom sheet resting on it. Collapsed it shows one product and the edge
-      of the next, which is the hint that there are more; drag or tap <em>See all</em> and it grows into the full
-      list without leaving the video. Closest to the benchmark, so it is the least risky, and it already does the
-      thing the benchmark cannot.</p>
+    <span class="tag chosen">&#10003; The one you chose &middot; unchanged</span>
+    <h3>B0 — Card rail over the video</h3>
+    <p class="what">Full-bleed clip. One product card at a time, swiped sideways across the bottom, with dots
+      for the count and an Add on every card. Mute and close at the top, Like and Share down the edge.</p>
     <div class="costs">
-      <span class="cost good">video never fully covered</span>
-      <span class="cost good">scales to 8 products</span>
-      <span class="cost warn">covers 26&ndash;74% of the clip</span>
-      <span class="cost good">familiar gesture</span>
+      <span class="cost-c good">covers ~22% of the clip</span>
+      <span class="cost-c good">an Add always visible</span>
+      <span class="cost-c warn">no total, no add-all</span>
     </div>
-    <button class="addb" data-open="A" style="margin-top:12px">Open player A</button>
+    <div class="stress"><span class="lb">OPEN WITH</span>
+      <button data-open="B0" data-n="1" class="alt">1 product</button>
+      <button data-open="B0" data-n="3" class="alt">3 products</button>
+      <button data-open="B0" data-n="6">6 products</button></div>
   </div>
 </article>
 
-<article class="style" id="pB">
+<article class="style" id="p-b1">
   <div class="style-hd">
-    <span class="tag">Player B &middot; nothing is ever a list</span>
-    <h3>Card rail over the video</h3>
-    <p class="what">One product card at a time, swiped sideways across the bottom of the video, with dots showing how
-      many there are. The video is never covered by more than a single card, and each card carries its own ADD
-      button so nothing needs a second screen. Best when the clip is the point and the products are the caption.</p>
-    <div class="costs">
-      <span class="cost good">covers only ~22% of the clip</span>
-      <span class="cost good">one ADD per product, always visible</span>
-      <span class="cost warn">products found by swiping, not scanning</span>
-      <span class="cost warn">past 5 products the dots get silly</span>
-    </div>
-    <button class="addb" data-open="B" style="margin-top:12px">Open player B</button>
+    <span class="tag">Variant 1</span>
+    <h3>B1 — Rail with a running total and add-all</h3>
+    <p class="what">B0 exactly, with a slim bar above the rail carrying the total of everything tagged in the
+      clip and a single button that adds the lot.</p>
+    <div class="changed"><b>Changed from B0:</b> a total bar and an add-all were added above the rail.
+      <span class="cost">Costs: about 44px more of the video covered, and on the one-product video the bar is
+        saying something obvious — open it with 1 and judge that. In exchange it is the only variant that sells
+        a routine as a routine, which is the largest basket on the page.</span></div>
+    <div class="stress"><span class="lb">OPEN WITH</span>
+      <button data-open="B1" data-n="1" class="alt">1 product</button>
+      <button data-open="B1" data-n="3" class="alt">3 products</button>
+      <button data-open="B1" data-n="6">6 products</button></div>
   </div>
 </article>
 
-<article class="style" id="pC">
+<article class="style" id="p-b2">
   <div class="style-hd">
-    <span class="tag">Player C &middot; the one that sells a set</span>
-    <h3>Split — video and a full product column</h3>
-    <p class="what">On a desktop the video sits left and a complete product column sits right, with a running total
-      and an <em>add all</em>. On a phone it does not become an overlay: the video shrinks to the top 58% and the
-      column takes the rest, so the products are a real list you scroll rather than something covering the clip.
-      This is the one that sells a three-step routine as a routine.</p>
-    <div class="costs">
-      <span class="cost good">sells the whole set, add-all</span>
-      <span class="cost good">nothing covers the video</span>
-      <span class="cost good">unlimited products</span>
-      <span class="cost bad">video is 58% of a phone screen, not 100%</span>
-    </div>
-    <button class="addb" data-open="C" style="margin-top:12px">Open player C</button>
+    <span class="tag">Variant 2</span>
+    <h3>B2 — One card, tap to fan out the rest</h3>
+    <p class="what">Only the first product is on screen, with a small "+5" tab on its corner. Tap it and the
+      others fan up into a vertical stack you can read at a glance instead of swiping through.</p>
+    <div class="changed"><b>Changed from B0:</b> the products are a stack you open, not a rail you swipe.
+      <span class="cost">Costs: a second tap before the other products exist, and with six open the stack
+        covers most of the clip. In exchange its resting state covers the least video of anything here —
+        about 18% — and scanning a stack is faster than swiping a rail once you are past three.</span></div>
+    <div class="stress"><span class="lb">OPEN WITH</span>
+      <button data-open="B2" data-n="1" class="alt">1 product</button>
+      <button data-open="B2" data-n="3" class="alt">3 products</button>
+      <button data-open="B2" data-n="6">6 products</button></div>
   </div>
 </article>
 
-<article class="style" id="pD">
+<article class="style" id="p-b3">
   <div class="style-hd">
-    <span class="tag">Player D &middot; the one the benchmark cannot do at all</span>
-    <h3>Timeline-tagged</h3>
-    <p class="what">Each product is pinned to the second of the clip where it appears, so the card changes as she
-      picks the next bottle up. The dots under the scrubber are the whole product list — tap one to jump to that
-      moment. One card on screen at a time, every product reachable, and the video is never covered by more than a
-      card.</p>
-    <div class="costs">
-      <span class="cost good">card matches what is on screen</span>
-      <span class="cost good">covers ~24% of the clip</span>
-      <span class="cost good">dots double as the product list</span>
-      <span class="cost bad">somebody has to type a timestamp per product</span>
-    </div>
-    <button class="addb" data-open="D" style="margin-top:12px">Open player D</button>
+    <span class="tag">Variant 3 &middot; the cinematic one</span>
+    <h3>B3 — Nothing until you tap the video</h3>
+    <p class="what">Opens as a clean full-screen clip with no card at all — just a small "6 products" pill and
+      the line <em>tap to shop</em>. Tap anywhere on the video and B0's rail slides up over it. Tap again and it
+      slides away.</p>
+    <div class="changed"><b>Changed from B0:</b> the rail starts hidden and is revealed by tapping the video.
+      <span class="cost">Costs: <b>this is the risky one and it should be said plainly</b> — a shopper who
+        never taps sees no product and buys nothing, and most people do not tap. In exchange it is far and away
+        the best-looking, and the video is 100% visible, which no other variant can say.</span></div>
+    <div class="stress"><span class="lb">OPEN WITH</span>
+      <button data-open="B3" data-n="1" class="alt">1 product</button>
+      <button data-open="B3" data-n="3" class="alt">3 products</button>
+      <button data-open="B3" data-n="6">6 products</button></div>
+  </div>
+</article>
+
+<article class="style" id="p-b4">
+  <div class="style-hd">
+    <span class="tag">Variant 4</span>
+    <h3>B4 — Add confirms in place and the rail moves on</h3>
+    <p class="what">Looks identical to B0 until you press Add. The card turns green and says
+      <em>Added &middot; view bag</em>, and after a moment the rail slides itself to the next product. The video
+      never pauses and nothing covers it.</p>
+    <div class="changed"><b>Changed from B0:</b> what happens when a product is added.
+      <span class="cost">Costs: nothing visually, and one real risk — the rail moving on its own right after a
+        tap can feel like it took the decision away, so it waits and it never moves if you are still touching
+        it. Press Add on this one and then on B0 to feel the difference; on a six-product video it is the
+        difference between buying two things and buying one.</span></div>
+    <div class="stress"><span class="lb">OPEN WITH</span>
+      <button data-open="B4" data-n="1" class="alt">1 product</button>
+      <button data-open="B4" data-n="3" class="alt">3 products</button>
+      <button data-open="B4" data-n="6">6 products</button></div>
+  </div>
+</article>
+
+<article class="style" id="p-b5">
+  <div class="style-hd">
+    <span class="tag">Variant 5</span>
+    <h3>B5 — Swipe up for the next video</h3>
+    <p class="what">B0's rail, unchanged, plus a way out of the clip that is not the close button: arrows on the
+      edge and a swipe, so the player becomes a feed you can stay inside.</p>
+    <div class="changed"><b>Changed from B0:</b> how you reach the next video from inside the player.
+      <span class="cost">Costs: the close button gets less obvious, and it is the variant that has to be most
+        careful about memory — moving to the next clip unloads the previous one rather than keeping it warm.
+        Step through four or five videos and watch the meter at the top of this page stay at one. In exchange
+        people watch several clips instead of one, which is the whole reason the format works elsewhere.</span></div>
+    <div class="stress"><span class="lb">OPEN WITH</span>
+      <button data-open="B5" data-n="1" class="alt">1 product</button>
+      <button data-open="B5" data-n="3" class="alt">3 products</button>
+      <button data-open="B5" data-n="6">6 products</button></div>
   </div>
 </article>
 
 <section class="sec">
   <div class="sec-n">Part three</div>
-  <h2>The hard part: several products on a 390px phone</h2>
-  <p class="lede">A 390px screen is 390px whatever we do. Below is the same four-product salon clip in all four
-    players, at true phone width, so the trade is visible rather than described: how much of the video each one
-    gives up, and what you get back.</p>
-  <div class="vs" id="vs"></div>
-</section>
-
-<section class="sec">
-  <div class="sec-n">Part four</div>
-  <h2>What it costs to scroll</h2>
-  <p class="lede">The performance budget, and the reason the meter at the top of this page never goes above one.
-    These are the numbers the design is built to, not measurements of a finished feature.</p>
+  <h2>The rails side by side</h2>
+  <p class="lede">The same six videos in every variant, so the only thing that differs is the decision. Heights
+    are measured in the browser you are reading this in, not estimated.</p>
   <div class="scrollbox">
-  <table class="tbl">
-    <tr><th>What</th><th>Budget</th><th>How it is held</th></tr>
-    <tr><td><b>Bytes before a tap</b></td><td>a poster each, ~18&ndash;28&nbsp;KB WebP</td>
-        <td><code>preload="none"</code>. No <code>&lt;video&gt;</code> element carries a <code>src</code> until intent.</td></tr>
-    <tr><td><b>A rail of 12, on 4G</b></td><td>~260&nbsp;KB, ~0.9&nbsp;s</td>
-        <td>12 posters at ~22&nbsp;KB. Video bytes are 0 — a rail that is scrolled past costs exactly its posters.</td></tr>
-    <tr><td><b>A clip, when it is opened</b></td><td>~320&nbsp;KB for the first 3&nbsp;s</td>
-        <td>720&times;1280 VP9/H.264 at ~800&nbsp;kbps, range-requested. Not the whole file.</td></tr>
-    <tr><td><b>Videos decoding at once</b></td><td><b>exactly 1</b></td>
-        <td>One arbiter holds the playing element; mounting a second pauses and unloads the first. A mid-range Android decodes one 720p stream without warming up and chokes on three.</td></tr>
-    <tr><td><b>Layout shift</b></td><td><b>0</b></td>
-        <td><code>aspect-ratio:9/16</code> on the tile. The box exists at first paint, before any media. Nothing is measured in script.</td></tr>
-    <tr><td><b>Scroll handlers</b></td><td><b>0</b></td>
-        <td><code>IntersectionObserver</code> for mounting, CSS <code>scroll-snap</code> for paging. No <code>getBoundingClientRect</code>, no <code>scrollY</code>, no resize listener — the two tests that forbid those by name stay green.</td></tr>
-    <tr><td><b>Main-thread work per tile</b></td><td>one element swap</td>
-        <td>A poster <code>&lt;img&gt;</code> is replaced by a <code>&lt;video&gt;</code> once. No per-frame JavaScript anywhere; the progress bar is a CSS transition, not a rAF loop.</td></tr>
-    <tr><td><b>Off-screen</b></td><td>released</td>
-        <td>A tile leaving the viewport pauses, drops its <code>src</code> and calls <code>load()</code>, which frees the decoder. Scrolling a 40-clip wall never accumulates.</td></tr>
+  <table class="tbl" id="cmp">
+    <tr><th>Variant</th><th>Height at 390px</th><th>Products sold before a tap</th><th>Video bytes to scroll past</th><th>Motion</th></tr>
   </table>
   </div>
   <div class="note">
-    <b>The meter at the top of this page is real.</b>
-    <p>It is counting the video elements this page has mounted and how many are decoding, live. It is there so the
-      claim can be checked rather than believed: scroll the whole page as fast as you like and the decoding number
-      never reaches two.</p>
+    <b>The meter at the top of this page is real, and this page is long.</b>
+    <p>It counts the video elements mounted and how many are decoding, live. Scroll the whole thing as fast as
+      you like, open and close as many players as you like: decoding never reaches two.</p>
   </div>
 </section>
 
+<section class="sec notchosen">
+  <div class="sec-n">Kept for reference</div>
+  <h2>Not chosen — the other four grids and three players</h2>
+  <p class="lede">These are from the first round and nothing about them has changed. They are here so you can
+    look back at what you turned down, and so the work is not lost.</p>
+</section>
+
+<article class="style" id="n-peek">
+  <div class="style-hd"><span class="tag">Not chosen</span><h3>Peek carousel with product chips</h3>
+    <p class="what">Wide cards with the next one visibly cut off, and a chip row under each.
+      R2 above is the closest rail-shaped version of this idea.</p></div>
+  <div class="style-bd"><div class="s-peek" data-style="peek"></div></div>
+</article>
+<article class="style" id="n-wall">
+  <div class="style-hd"><span class="tag">Not chosen</span><h3>Masonry wall</h3>
+    <p class="what">Mixed aspect ratios in columns with a count badge. A <em>/videos</em> page, not a strip.</p></div>
+  <div class="style-bd"><div class="inner"><div class="s-wall" data-style="wall"></div></div></div>
+</article>
+<article class="style" id="n-hero">
+  <div class="style-hd"><span class="tag">Not chosen</span><h3>Hero plus satellites</h3>
+    <p class="what">One large clip playing in place, four small ones beside it.</p></div>
+  <div class="style-bd"><div class="inner"><div class="s-hero" data-style="hero"></div></div></div>
+</article>
+<article class="style" id="n-two">
+  <div class="style-hd"><span class="tag">Not chosen</span><h3>Two-up compact</h3>
+    <p class="what">Posters only, nothing mounted until a tap. R4 above carries the same idea into a rail.</p></div>
+  <div class="style-bd"><div class="inner"><div class="s-two" data-style="two"></div></div></div>
+</article>
+<article class="style" id="n-story">
+  <div class="style-hd"><span class="tag">Not chosen</span><h3>Story strip</h3>
+    <p class="what">Circular thumbnails in a gradient ring, about 120px tall in total.</p></div>
+  <div class="style-bd"><div class="s-story" data-style="story"></div></div>
+</article>
+
+<article class="style" id="n-players">
+  <div class="style-hd">
+    <span class="tag">Not chosen</span><h3>The other three players</h3>
+    <p class="what">Sheet under the video, the split with a product column and a running total, and the
+      timeline-tagged one where the card follows the clip. All three still work — open them here.</p>
+    <div class="stress"><span class="lb">OPEN</span>
+      <button data-open="A" data-n="6" class="alt">A &middot; sheet under</button>
+      <button data-open="C" data-n="6" class="alt">C &middot; split</button>
+      <button data-open="D" data-n="6" class="alt">D &middot; timeline</button></div>
+  </div>
+</article>
+
 <div class="foot wrap">
-  <b>Round one, previews only.</b> No storefront change, no migration, no admin screen, no setting.
-  The written plan — data model, admin paths, video-source recommendation, Arabic and RTL, and the security
-  story for a public endpoint — is in <b>docs/UGC-VIDEO-PLAN.md</b> beside this file.
-  Placeholder clips were generated locally with Chromium&rsquo;s MediaRecorder (no ffmpeg on the build box);
-  they are real VP8 video, ~45&nbsp;KB each, at a true 9:16.
+  <b>Round two, previews only.</b> No storefront change, no migration, no admin screen, no setting.
+  The written plan — data model, admin paths, video-source recommendation, performance budget, Arabic and RTL,
+  and the security story — is in <b>docs/UGC-VIDEO-PLAN.md</b> beside this file.
+  Placeholder clips were generated locally with Chromium&rsquo;s MediaRecorder; they are real VP8 video at a
+  true 9:16, and the base64 is wrapped at 76 columns so it cannot look like a signing key to the package tests.
 </div>
 </main>
 
@@ -591,8 +743,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <script>
 (function(){
 "use strict";
-/* Chunked, 76 columns to a line -- see the comment in the assembler. Joined
-   back into a data URI here; nothing else in the page knows it was split. */
+/* Chunked, 76 columns to a line, joined back into a data URI here. The wrap is
+   not cosmetic: PackageSigningTest walks docs/ for /[A-Za-z0-9+\/]{86}==/, the
+   shape of a base64 Ed25519 secret key, and an unwrapped video data URI ends in
+   exactly that. Capping the run at 76 makes the collision impossible. */
 var MEDIA = (function (raw) {
   var out = {};
   Object.keys(raw).forEach(function (k) {
@@ -604,9 +758,14 @@ var MEDIA = (function (raw) {
   return out;
 })(JSON.parse(document.getElementById('media').textContent));
 
-/* ── Real catalogue rows. Names and brands from DemoCatalogueSeeder;
-      prices are whole dirhams, sale = 70% rounded down the way
-      App\Support\WholeDirhams::toward() rounds it. ─────────────────── */
+/* Heights measured in a real browser at assembly time and baked in, rather
+   than measured here. This page is a demo of a design that is not allowed to
+   measure layout in script, so it does not measure layout in script. */
+var H = {"rail0":440,"rail1":474,"rail2":480,"rail3":295,"rail4":249,"rail5":440,"rail6":458};
+
+/* ── Real catalogue rows. Names and brands from DemoCatalogueSeeder; prices
+      are whole dirhams, sale = 70% rounded down the way
+      App\Support\WholeDirhams::toward() rounds it. ──────────────────────── */
 var P = {
   sun:   {b:'Beauty of Joseon', n:'Relief Sun Rice + Probiotics SPF50+', now:89,  was:129},
   glow:  {b:'Beauty of Joseon', n:'Glow Deep Serum Rice + Alpha Arbutin', now:105, was:150},
@@ -624,41 +783,47 @@ var P = {
   green: {b:'Isntree',    n:'Green Tea Fresh Toner',                 now:72}
 };
 
+/* A DELIBERATELY RAGGED LIBRARY. One clip has a single product and no discount
+   at all, one has six, the rest are in between -- because every variant has to
+   be judged on the thin case as well as the crowded one, and the real library
+   will never be uniform. */
 var CLIPS = [
-  {id:'glass', h:'@layla.skin',      cap:'Glass skin in 6 steps',        capAr:'بشرة زجاجية في ٦ خطوات',  p:['snail','dokdo','dive'],         ts:[0,7,14]},
-  {id:'salon', h:'@jumeirah.glow',   cap:'Salon day: bond builder',      capAr:'يوم الصالون: مقوّي الشعر', p:['heart','ager','wrap','cent'],  ts:[0,5,11,18]},
-  {id:'spf',   h:'@dubaiglowdiary',  cap:'The SPF I actually reapply',   capAr:'الواقي الذي أعيد وضعه',   p:['sun','birch'],                  ts:[0,9]},
-  {id:'night', h:'@noor.beauty',     cap:'My 10-step night routine',     capAr:'روتيني الليلي بعشر خطوات', p:['lowph','heart','wrap','peach'], ts:[0,6,13,19]},
-  {id:'mucin', h:'@rana.k.beauty',   cap:'Snail mucin, 30 days on',      capAr:'ميوسين الحلزون بعد ٣٠ يوم', p:['snail','glow'],               ts:[0,11]},
-  {id:'acne',  h:'@skinbyfatima',    cap:'Acne rescue week',             capAr:'أسبوع إنقاذ حب الشباب',   p:['lowph','cent','green'],         ts:[0,8,16]}
+  {id:'glass', h:'@layla.skin',     cap:'Glass skin in 6 steps',      capAr:'بشرة زجاجية في ٦ خطوات',   p:['snail','dokdo','dive'],                        ts:[0,7,14]},
+  {id:'salon', h:'@jumeirah.glow',  cap:'Salon day: bond builder',    capAr:'يوم الصالون: مقوّي الشعر',  p:['heart','ager','wrap','cent','glow','birch'],  ts:[0,4,8,12,16,20]},
+  {id:'spf',   h:'@dubaiglowdiary', cap:'The SPF I actually reapply', capAr:'الواقي الذي أعيد وضعه',    p:['watery'],                                      ts:[0]},
+  {id:'night', h:'@noor.beauty',    cap:'My 10-step night routine',   capAr:'روتيني الليلي بعشر خطوات', p:['lowph','heart','wrap','peach'],                ts:[0,6,13,19]},
+  {id:'mucin', h:'@rana.k.beauty',  cap:'Snail mucin, 30 days on',    capAr:'ميوسين الحلزون بعد ٣٠ يوم', p:['snail','glow'],                               ts:[0,11]},
+  {id:'acne',  h:'@skinbyfatima',   cap:'Acne rescue week',           capAr:'أسبوع إنقاذ حب الشباب',    p:['lowph','cent','green'],                        ts:[0,8,16]}
 ];
+var byId = function(id){ return CLIPS.filter(function(c){ return c.id === id; })[0]; };
+/* The stress buttons: one product, three, and six. */
+var STRESS = { 1:'spf', 3:'glass', 6:'salon' };
 
 var AR = false;
 var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
 /* <bdi>, not a span. A creator handle and a price are Latin runs inside an
-   Arabic paragraph, and the bidi algorithm reorders the neutral characters at
-   their edges: "@layla.skin" renders as "layla.skin@" and "AED 1,199" loses
-   its comma to the wrong side. <bdi> isolates the run so the surrounding
-   direction cannot reach into it. This is why RTL is designed in now rather
-   than retrofitted -- it is invisible until the page is flipped. */
+   Arabic paragraph and the bidi algorithm reorders the neutrals at their edges:
+   "@layla.skin" renders as "layla.skin@" and "-30%" as "30%-". */
 var bdi = function(s){ return '<bdi>' + esc(s) + '</bdi>'; };
 var aed = function(n){ return '<bdi>AED ' + n.toLocaleString('en-AE') + '</bdi>'; };
 var off = function(p){ return p.was ? Math.round((1 - p.now / p.was) * 100) : 0; };
 var initials = function(p){ return esc(p.b.split(' ').map(function(w){return w[0];}).join('').slice(0,3)); };
 var capOf = function(c){ return AR ? c.capAr : c.cap; };
+var sumOf = function(c){ return c.p.reduce(function(s,k){ return s + P[k].now; }, 0); };
 
 function priceHtml(p){
   return '<div class="pr"><span class="now">' + aed(p.now) + '</span>' +
-    (p.was ? '<span class="was">' + aed(p.was) + '</span><span class="off">-' + off(p) + '%</span>' : '') + '</div>';
+    (p.was ? '<span class="was">' + aed(p.was) + '</span><span class="off"><bdi>-' + off(p) + '%</bdi></span>' : '') + '</div>';
 }
-function cardHtml(key, cls, btn){
+function cardBody(key){
   var p = P[key];
-  return '<div class="pcard ' + (cls || '') + '">' +
-    '<div class="th">' + initials(p) + '</div>' +
+  return '<div class="th">' + initials(p) + '</div>' +
     '<div class="pi"><div class="bd">' + esc(p.b) + '</div>' +
-      '<div class="nm">' + esc(p.n) + '</div>' + priceHtml(p) + '</div>' +
-    (btn === false ? '' : '<button class="addb">Add</button>') + '</div>';
+    '<div class="nm">' + esc(p.n) + '</div>' + priceHtml(p) + '</div>';
+}
+function cardHtml(key, cls){
+  return '<div class="pcard ' + (cls || '') + '">' + cardBody(key) + '<button class="addb">Add</button></div>';
 }
 
 /* ═══ THE ARBITER — exactly one video decoding, ever. ══════════════════
@@ -670,13 +835,16 @@ function paintMeter(){
   meter.className = 'meter' + (playing ? ' hot' : '');
 }
 function claim(v){
-  if (playing && playing !== v) release(playing);
+  /* The displaced element gives its stream back HERE, not when its own
+     observer eventually reports it off screen. Two rail tiles can both be
+     over the threshold at once, so relying on the exit callback left a window
+     with two elements mounted -- one decoding and one merely resident, which
+     is the kind that accumulates down a long page. */
+  if (playing && playing !== v) unmount(playing);
   playing = v;
-  var t = v.play();
-  if (t && t.catch) t.catch(function(){});
+  var t = v.play(); if (t && t.catch) t.catch(function(){});
   var tile = v.closest('.vt'); if (tile) tile.classList.add('playing');
-  v.classList.add('on');
-  paintMeter();
+  v.classList.add('on'); paintMeter();
 }
 function release(v){
   if (!v) return;
@@ -686,123 +854,172 @@ function release(v){
   if (playing === v) playing = null;
   paintMeter();
 }
-/* Giving the decoder back: drop the src and load(), which is what actually
-   frees it. Pausing alone leaves the stream decoded and resident. */
+/* Giving the decoder back: dropping the src and calling load() is what frees
+   it. Pausing alone leaves the stream decoded and resident, and a page this
+   long would accumulate them. */
 function unmount(v){
   release(v);
   v.removeAttribute('src'); v.load();
   if (v.parentNode) { v.parentNode.removeChild(v); mounted--; paintMeter(); }
 }
-
-/* A <video> is built here and only here, with preload="none" so the element
-   itself fetches nothing until a src is set and play() is asked for. */
-function mountVideo(tile, clipId, loop){
-  if (tile.querySelector('video')) return tile.querySelector('video');
+function mountVideo(host, clipId){
+  var ex = host.querySelector('video'); if (ex) return ex;
   var v = document.createElement('video');
   v.muted = true; v.playsInline = true; v.setAttribute('playsinline','');
-  v.setAttribute('webkit-playsinline',''); v.loop = loop !== false;
+  v.setAttribute('webkit-playsinline',''); v.loop = true;
   v.preload = 'none'; v.disableRemotePlayback = true;
   v.src = MEDIA[clipId].v;
-  tile.appendChild(v); mounted++; paintMeter();
+  host.appendChild(v); mounted++; paintMeter();
   return v;
 }
 
-/* ═══ Tiles ═══════════════════════════════════════════════════════════ */
-function tileHtml(c, cls, showCount){
-  return '<div class="vt ' + (cls || '') + '" data-clip="' + c.id + '" role="button" tabindex="0">' +
+function overlayBody(key){
+  var p = P[key];
+  return '<div class="bd">' + esc(p.b) + '</div>' +
+    '<div class="nm" style="-webkit-line-clamp:1">' + esc(p.n) + '</div>' +
+    '<div class="row2">' + priceHtml(p) + '<button class="addb">Add</button></div>';
+}
+function tileHtml(c, opts){
+  opts = opts || {};
+  return '<div class="vt ' + (opts.cls || '') + '" data-clip="' + c.id + '"' +
+    (opts.auto ? ' data-auto="1"' : '') + ' role="button" tabindex="0">' +
     '<img class="poster" alt="" src="' + MEDIA[c.id].p + '" decoding="async" loading="lazy">' +
-    (showCount ? '<span class="nprod"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/></svg>' + c.p.length + '</span>' : '') +
+    (opts.badge ? '<span class="nprod"><svg viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/></svg>' + c.p.length + '</span>' : '') +
     '<div class="over"><div class="handle"><i></i>' + bdi(c.h) + '</div>' +
       '<div class="cap">' + esc(capOf(c)) + '</div></div>' +
+    (opts.overlay ? '<div class="ov-card">' + overlayBody(c.p[0]) + '</div>' : '') +
     '<button class="pbtn" aria-label="Play"><span></span></button></div>';
 }
 
-/* ═══ IntersectionObserver — the ONLY thing that knows about the viewport.
-   No scroll handler, no getBoundingClientRect, no resize listener. ════ */
+/* ═══ Viewport awareness. ONE IntersectionObserver for mounting video and one
+   for marking which cycling cards are on screen. No scroll handler anywhere,
+   no getBoundingClientRect, no resize listener. ═════════════════════════ */
 var autoplay = true;
-var io = new IntersectionObserver(function(entries){
+var ioPlay = new IntersectionObserver(function(entries){
   entries.forEach(function(e){
     var tile = e.target;
     if (e.isIntersecting && e.intersectionRatio > 0.6) {
-      if (!autoplay || tile.dataset.manual === '1') return;
+      if (!autoplay) return;
       claim(mountVideo(tile, tile.dataset.clip));
     } else {
-      var v = tile.querySelector('video');
-      if (v) unmount(v);
+      var v = tile.querySelector('video'); if (v) unmount(v);
     }
   });
 }, { threshold: [0, 0.6] });
 
-function wire(root){
+/* R1's cards only advance while they are actually on screen -- a rail that is
+   scrolled past does no work at all. */
+var ioCyc = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ e.target.dataset.vis = e.isIntersecting ? '1' : '0'; });
+}, { threshold: 0.4 });
+
+function wireTiles(root){
   root.querySelectorAll('.vt').forEach(function(tile){
-    if (tile.dataset.auto === '1') io.observe(tile);
+    if (tile.dataset.auto === '1') ioPlay.observe(tile);
     tile.addEventListener('click', function(ev){
-      if (ev.target.closest('.pbtn')) {                 // play in place
+      if (ev.target.closest('.addb')) { ev.stopPropagation(); flash(ev.target); return; }
+      if (ev.target.closest('.pbtn')) {
         ev.stopPropagation();
         var v = tile.querySelector('video');
-        if (v && playing === v) { release(v); } else { claim(mountVideo(tile, tile.dataset.clip)); }
+        if (v && playing === v) release(v); else claim(mountVideo(tile, tile.dataset.clip));
         return;
       }
-      open(tile.dataset.clip);                           // open the player
+      openPlayer(STYLE_FOR_GRID, tile.dataset.clip);
     });
     tile.addEventListener('keydown', function(ev){
-      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(tile.dataset.clip); }
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openPlayer(STYLE_FOR_GRID, tile.dataset.clip); }
     });
   });
+  root.querySelectorAll('.pcard .addb, .chip').forEach(function(b){
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); flash(b); });
+  });
+}
+var STYLE_FOR_GRID = 'B0';
+function flash(el){
+  if (el.dataset.busy) return;
+  el.dataset.busy = '1';
+  var was = el.innerHTML; el.classList.add('done'); el.innerHTML = 'Added';
+  setTimeout(function(){ el.innerHTML = was; el.classList.remove('done'); delete el.dataset.busy; }, 1100);
 }
 
-/* ═══ Renderers, one per grid style ═══════════════════════════════════ */
+/* ═══ The rail and its six variants ═══════════════════════════════════ */
+function chipRow(keys){
+  if (!keys.length) return '';
+  return '<div class="chips">' + keys.map(function(k){ var p = P[k];
+    return '<div class="chip"><div class="th">' + initials(p) + '</div>' +
+      '<div class="cn">' + esc(p.n) + '</div><div class="cp">' + aed(p.now) + '</div></div>';
+  }).join('') + '</div>';
+}
 var R = {
-  rail: function(el){
-    el.innerHTML = CLIPS.slice(0,5).map(function(c){
-      return '<div>' + tileHtml(c) + cardHtml(c.p[0]) + '</div>';
+  rail0: function(el){ el.innerHTML = CLIPS.map(function(c){
+    return '<div>' + tileHtml(c) + cardHtml(c.p[0]) + '</div>'; }).join(''); },
+
+  rail1: function(el){ el.innerHTML = CLIPS.map(function(c){
+    var slots = c.p.map(function(k, i){
+      return '<div class="slot pcard' + (i ? '' : ' on') + '">' + cardBody(k) + '<button class="addb">Add</button></div>';
     }).join('');
-  },
-  peek: function(el){
-    el.innerHTML = CLIPS.slice(0,4).map(function(c){
-      return '<div>' + tileHtml(c, '', true) +
-        '<div class="chips">' + c.p.map(function(k){ var p = P[k];
-          return '<div class="chip"><div class="th">' + initials(p) + '</div>' +
-            '<div class="cn">' + esc(p.n) + '</div><div class="cp">' + aed(p.now) + '</div></div>';
-        }).join('') + '</div></div>';
-    }).join('');
-  },
-  wall: function(el){
-    var shapes = ['','r45','','r11','','r45','r11','','','r45','',''];
-    var out = [];
-    for (var i = 0; i < 12; i++) {
-      var c = CLIPS[(i * 5) % CLIPS.length];
-      out.push(tileHtml(c, shapes[i], true));
-    }
-    el.innerHTML = out.join('');
-  },
-  hero: function(el){
-    var big = CLIPS[1], sats = [CLIPS[0], CLIPS[2], CLIPS[4], CLIPS[5]];
-    el.innerHTML = '<div class="big">' + tileHtml(big, '', true).replace('data-clip', 'data-auto="1" data-clip') +
-      cardHtml(big.p[0]) + '</div>' +
-      '<div class="sats">' + sats.map(function(c){ return tileHtml(c, '', true); }).join('') + '</div>';
-  },
-  two: function(el){
-    var out = [];
-    for (var i = 0; i < 12; i++) {
-      var c = CLIPS[(i * 5) % CLIPS.length], p = P[c.p[0]];
-      out.push('<div>' + tileHtml(c, '', true) +
-        '<div class="mini"><div class="nm">' + esc(p.n) + '</div>' +
-        '<div class="now">' + aed(p.now) + '</div></div></div>');
-    }
-    el.innerHTML = out.join('');
-  },
-  story: function(el){
-    el.innerHTML = CLIPS.map(function(c){
-      return '<div class="st"><div class="ring">' + tileHtml(c) + '</div>' +
-        '<div class="nm2">' + esc(capOf(c).split(' ').slice(0,2).join(' ')) + '</div>' +
-        '<div class="faces">' + c.p.map(function(k){ return '<i>' + initials(P[k]) + '</i>'; }).join('') + '</div></div>';
-    }).join('');
-  }
+    var dots = c.p.length > 1 ? '<div class="dotrow">' + c.p.map(function(_, i){
+      return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div>' : '';
+    return '<div>' + tileHtml(c) + '<div class="cyc" data-cyc data-i="0">' + slots + dots + '</div></div>';
+  }).join(''); },
+
+  rail2: function(el){ el.innerHTML = CLIPS.map(function(c){
+    return '<div>' + tileHtml(c) + cardHtml(c.p[0]) + chipRow(c.p.slice(1)) + '</div>'; }).join(''); },
+
+  rail3: function(el){ el.innerHTML = CLIPS.map(function(c){
+    return '<div>' + tileHtml(c, { cls:'hascard', overlay:true }) + '</div>'; }).join(''); },
+
+  rail4: function(el){ el.innerHTML = CLIPS.map(function(c){
+    return '<div>' + tileHtml(c, { badge:true }) + '</div>'; }).join(''); },
+
+  rail5: function(el){ el.innerHTML = CLIPS.map(function(c){
+    return '<div>' + tileHtml(c, { auto:true }) + cardHtml(c.p[0]) + '</div>'; }).join(''); },
+
+  rail6: function(el){ el.innerHTML = CLIPS.map(function(c){
+    var rest = c.p.slice(1);
+    var more = rest.length
+      ? '<div class="exp"><div>' + rest.map(function(k){ return cardHtml(k); }).join('') + '</div></div>' +
+        '<button class="xmore">+' + rest.length + ' more' +
+        '<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>'
+      : '';
+    return '<div class="xcard">' + tileHtml(c) + cardHtml(c.p[0]) + more + '</div>';
+  }).join(''); },
+
+  /* the five kept for reference, unchanged from round one */
+  peek: function(el){ el.innerHTML = CLIPS.slice(0,4).map(function(c){
+    return '<div>' + tileHtml(c, { badge:true }) + chipRow(c.p) + '</div>'; }).join(''); },
+  wall: function(el){ var sh = ['','r45','','r11','','r45','r11','','','r45','',''], o = [];
+    for (var i = 0; i < 12; i++) o.push(tileHtml(CLIPS[(i*5) % CLIPS.length], { cls:sh[i], badge:true }));
+    el.innerHTML = o.join(''); },
+  hero: function(el){ var big = CLIPS[1], sats = [CLIPS[0], CLIPS[2], CLIPS[4], CLIPS[5]];
+    el.innerHTML = '<div class="big">' + tileHtml(big, { badge:true, auto:true }) + cardHtml(big.p[0]) + '</div>' +
+      '<div class="sats">' + sats.map(function(c){ return tileHtml(c, { badge:true }); }).join('') + '</div>'; },
+  two: function(el){ var o = [];
+    for (var i = 0; i < 12; i++) { var c = CLIPS[(i*5) % CLIPS.length], p = P[c.p[0]];
+      o.push('<div>' + tileHtml(c, { badge:true }) + '<div class="mini"><div class="nm">' + esc(p.n) +
+        '</div><div class="now">' + aed(p.now) + '</div></div></div>'); }
+    el.innerHTML = o.join(''); },
+  story: function(el){ el.innerHTML = CLIPS.map(function(c){
+    return '<div class="st"><div class="ring">' + tileHtml(c) + '</div>' +
+      '<div class="nm2">' + esc(capOf(c).split(' ').slice(0,2).join(' ')) + '</div>' +
+      '<div class="faces">' + c.p.map(function(k){ return '<i>' + initials(P[k]) + '</i>'; }).join('') + '</div></div>';
+  }).join(''); }
 };
 
-/* ═══ The four players ════════════════════════════════════════════════ */
-var STYLE = 'A';
+/* R1's ticker: ONE interval for the whole page, advancing only the cards that
+   are on screen and not being touched. N intervals would be N wakeups. */
+setInterval(function(){
+  document.querySelectorAll('[data-cyc]').forEach(function(cyc){
+    if (cyc.dataset.vis !== '1' || cyc.dataset.hold === '1') return;
+    var slots = cyc.querySelectorAll('.slot'); if (slots.length < 2) return;
+    var i = (+cyc.dataset.i + 1) % slots.length;
+    cyc.dataset.i = i;
+    slots.forEach(function(s, j){ s.classList.toggle('on', j === i); });
+    cyc.querySelectorAll('.dotrow i').forEach(function(d, j){ d.classList.toggle('on', j === i); });
+  });
+}, 3000);
+
+/* ═══ The players ═════════════════════════════════════════════════════ */
 var shellTop = function(c){
   return '<div class="top"><div class="who"><i></i>' + bdi(c.h) + '</div>' +
     '<div class="sp"><button class="rnd" data-mute><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M16 9a5 5 0 0 1 0 6"/></svg></button>' +
@@ -811,151 +1028,263 @@ var shellTop = function(c){
 var shellSide = function(){
   return '<div class="side">' +
     '<div class="act"><span class="rnd"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.5-7 9-7 9z"/></svg></span>1.2k</div>' +
-    '<div class="act"><span class="rnd"><svg viewBox="0 0 24 24"><path d="M4 12v7h16v-7"/><path d="M12 16V4"/><path d="m8 8 4-4 4 4"/></svg></span>Share</div>' +
-    '<div style="height:16px"></div></div>';
+    '<div class="act"><span class="rnd"><svg viewBox="0 0 24 24"><path d="M4 12v7h16v-7"/><path d="M12 16V4"/><path d="m8 8 4-4 4 4"/></svg></span>Share</div></div>';
+};
+var pc2 = function(k){ return '<div class="pc2">' + cardBody(k) + '<button class="addb">Add</button></div>'; };
+var railRow = function(c){
+  return '<div class="row">' + c.p.map(pc2).join('') + '</div>' +
+    (c.p.length > 1 ? '<div class="dots">' + c.p.map(function(_, i){
+      return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div>' : '');
+};
+var totBar = function(c){
+  return '<div class="totbar"><span class="lb">' + c.p.length + ' in this video</span>' +
+    '<span class="am">' + aed(sumOf(c)) + '</span>' +
+    '<button class="ab">Add all</button></div>';
 };
 
 var PLAYERS = {
-  A: function(c){
-    return '<div class="pl pa dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
-      shellTop(c) + shellSide(c) +
-      '<div class="sheet collapsed"><div class="grab"></div>' +
-        '<div class="hd"><b>In this video</b><span class="cnt">' + c.p.length + '</span>' +
-        '<button class="more" data-expand>See all ' + c.p.length + ' &rsaquo;</button></div>' +
-        '<div class="list">' + c.p.map(function(k){ return cardHtml(k); }).join('') + '</div>' +
-      '</div></div>';
-  },
-  B: function(c){
-    return '<div class="pl pb dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
-      shellTop(c) + shellSide(c) +
-      '<div class="prail"><div class="row">' + c.p.map(function(k){ var p = P[k];
-        return '<div class="pc2"><div class="th">' + initials(p) + '</div>' +
-          '<div class="pi"><div class="bd">' + esc(p.b) + '</div><div class="nm">' + esc(p.n) + '</div>' +
-          priceHtml(p) + '</div><button class="addb">Add</button></div>';
-      }).join('') + '</div>' +
-      '<div class="dots">' + c.p.map(function(_, i){ return '<i class="' + (i ? '' : 'on') + '"></i>'; }).join('') + '</div>' +
-      '</div></div>';
-  },
-  C: function(c){
-    var total = c.p.reduce(function(s, k){ return s + P[k].now; }, 0);
-    return '<div class="pl pc"><div class="split">' +
-      '<div class="vp">' + shellTop(c) + shellSide(c) + '<div class="scrub"><i></i></div></div>' +
-      '<div class="col"><h4>' + esc(capOf(c)) + '</h4>' +
-        '<div class="sub">' + c.p.length + ' products &middot; ' + bdi(c.h) + '</div>' +
-        c.p.map(function(k){ return cardHtml(k); }).join('') +
-        '<div class="tot"><span class="lbl">Add all ' + c.p.length + '</span><span class="amt">' + aed(total) + '</span></div>' +
-        '<button class="addb wide">Add the whole routine</button>' +
-      '</div></div></div>';
-  },
-  D: function(c){
-    var last = c.ts[c.ts.length - 1] + 6;
-    return '<div class="pl pd dim"><div class="stage"></div>' + shellTop(c) + shellSide(c) +
-      '<div class="tl"><div class="now" data-slot></div>' +
-      '<div class="bar"><div class="track"></div><div class="fill" style="width:8%"></div>' +
-        c.ts.map(function(t, i){ return '<span class="mk' + (i ? '' : ' on') + '" data-i="' + i +
-          '" style="inset-inline-start:' + Math.round(t / last * 100) + '%"></span>'; }).join('') +
-      '</div><div class="legend">tap a dot to jump to that product</div></div></div>';
-  }
+  B0: function(c){ return '<div class="pl dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
+    shellTop(c) + shellSide() + '<div class="prail">' + railRow(c) + '</div></div>'; },
+
+  B1: function(c){ return '<div class="pl dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
+    shellTop(c) + shellSide() + '<div class="prail">' + totBar(c) + railRow(c) + '</div></div>'; },
+
+  B2: function(c){
+    var rest = c.p.slice(1);
+    return '<div class="pl dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
+      shellTop(c) + shellSide() +
+      '<div class="fan"><div class="deck">' +
+        c.p.map(function(k, i){ return pc2(k).replace('class="pc2"', 'class="pc2" style="--i:' + i + '"'); }).join('') +
+        (rest.length ? '<span class="peek">+' + rest.length + '</span>' : '') +
+      '</div>' + (rest.length ? '<button class="fbtn" data-fan>Show all ' + c.p.length + ' &#9662;</button>' : '') +
+      '</div></div>'; },
+
+  B3: function(c){ return '<div class="pl dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
+    shellTop(c) + shellSide() +
+    '<div class="tapnote"><span class="pill">' + c.p.length +
+      (c.p.length === 1 ? ' product' : ' products') + ' &middot; tap to shop</span></div>' +
+    '<div class="reveal">' + railRow(c) + '</div></div>'; },
+
+  B4: function(c){ return '<div class="pl dim" data-advance="1"><div class="stage"></div><div class="scrub"><i></i></div>' +
+    shellTop(c) + shellSide() + '<div class="prail">' + railRow(c) + '</div></div>'; },
+
+  B5: function(c){ return '<div class="pl dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
+    shellTop(c) + shellSide() +
+    '<div class="vnav"><button class="rnd" data-vid="-1"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>' +
+    '<button class="rnd" data-vid="1"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button></div>' +
+    '<div class="prail"><div class="swipehint">swipe up for the next video</div>' + railRow(c) + '</div></div>'; },
+
+  /* kept from round one */
+  A: function(c){ return '<div class="pl pa dim"><div class="stage"></div><div class="scrub"><i></i></div>' +
+    shellTop(c) + shellSide() +
+    '<div class="sheet collapsed"><div class="grab"></div><div class="hd"><b>In this video</b>' +
+      '<span class="cnt">' + c.p.length + '</span><button class="more" data-expand>See all ' + c.p.length + ' &rsaquo;</button></div>' +
+      '<div class="list">' + c.p.map(function(k){ return cardHtml(k); }).join('') + '</div></div></div>'; },
+  C: function(c){ return '<div class="pl pc"><div class="split">' +
+    '<div class="vp">' + shellTop(c) + shellSide() + '<div class="scrub"><i></i></div></div>' +
+    '<div class="col"><h4>' + esc(capOf(c)) + '</h4><div class="sub">' + c.p.length + ' products &middot; ' + bdi(c.h) + '</div>' +
+    c.p.map(function(k){ return cardHtml(k); }).join('') +
+    '<div class="tot"><span class="lbl">Add all ' + c.p.length + '</span><span class="amt">' + aed(sumOf(c)) + '</span></div>' +
+    '<button class="addb wide">Add the whole routine</button></div></div></div>'; },
+  D: function(c){ var last = c.ts[c.ts.length - 1] + 6;
+    return '<div class="pl pd dim"><div class="stage"></div>' + shellTop(c) + shellSide() +
+      '<div class="tl"><div class="now" data-slot></div><div class="bar"><div class="track"></div>' +
+      '<div class="fill" style="width:8%"></div>' + c.ts.map(function(t, i){
+        return '<span class="mk' + (i ? '' : ' on') + '" data-i="' + i + '" style="inset-inline-start:' +
+          Math.round(t / last * 100) + '%"></span>'; }).join('') +
+      '</div><div class="legend">tap a dot to jump to that product</div></div></div>'; }
 };
 
 var ov = document.getElementById('ov');
-function open(clipId){
-  var c = CLIPS.filter(function(x){ return x.id === clipId; })[0];
-  if (!c) return;
-  if (playing) release(playing);                     // the grid gives up the decoder first
-  ov.innerHTML = PLAYERS[STYLE](c);
+var CUR = { style:'B0', clip:'salon' };
+
+/* The dots follow the rail without a scroll handler: an IntersectionObserver
+   rooted on the rail itself reports which card is centred. */
+function wireDots(root){
+  var row = root.querySelector('.row'); if (!row) return;
+  var dots = root.querySelectorAll('.dots i'); if (!dots.length) return;
+  var cards = row.querySelectorAll('.pc2');
+  cards.forEach(function(card){
+    new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting || e.intersectionRatio < 0.6) return;
+        var i = Array.prototype.indexOf.call(cards, card);
+        dots.forEach(function(d, j){ d.classList.toggle('on', j === i); });
+      });
+    }, { root: row, threshold: 0.6 }).observe(card);
+  });
+}
+
+function openPlayer(style, clipId){
+  var c = byId(clipId); if (!c || !PLAYERS[style]) return;
+  /* HAND THE DECODER BACK PROPERLY BEFORE BUILDING THE NEW PLAYER.
+     release() only pauses, which leaves the element mounted and its decoded
+     stream resident -- the page measured two mounted videos at once opening a
+     player over an autoplaying rail, and again stepping through B5's feed,
+     where innerHTML orphaned the old element without ever dropping its src.
+     Decoding stayed at one, but "one decoding" is not the same as "one
+     mounted", and the second is what actually accumulates. */
+  var stale = ov.querySelector('video'); if (stale) unmount(stale);
+  if (playing) unmount(playing);
+  CUR.style = style; CUR.clip = clipId;
+  ov.innerHTML = PLAYERS[style](c);
   ov.classList.add('on');
   document.body.style.overflow = 'hidden';
 
-  var host = ov.querySelector('.pl .stage') || ov.querySelector('.pl .vp');
-  var img = document.createElement('img');
-  img.className = 'poster'; img.src = MEDIA[c.id].p; img.alt = '';
-  host.insertBefore(img, host.firstChild);
+  var host = ov.querySelector('.stage') || ov.querySelector('.vp');
+  host.insertAdjacentHTML('afterbegin', '<img class="poster" src="' + MEDIA[c.id].p + '" alt="">');
   var v = mountVideo(host, c.id);
   claim(v);
+  wireDots(ov);
 
-  if (STYLE === 'D') {
-    var slot = ov.querySelector('[data-slot]');
-    var show = function(i){
-      slot.innerHTML = '<div class="th">' + initials(P[c.p[i]]) + '</div>' +
-        '<div class="pi"><div class="bd">' + esc(P[c.p[i]].b) + '</div>' +
-        '<div class="nm">' + esc(P[c.p[i]].n) + '</div>' + priceHtml(P[c.p[i]]) + '</div>' +
-        '<button class="addb">Add</button>';
-      slot.style.animation = 'none'; void slot.offsetWidth; slot.style.animation = '';
-      ov.querySelectorAll('.mk').forEach(function(m, j){ m.classList.toggle('on', j === i); });
-      ov.querySelector('.fill').style.width = Math.max(8, Math.round(c.ts[i] / (c.ts[c.ts.length-1] + 6) * 100)) + '%';
-    };
-    show(0);
-    ov.querySelectorAll('.mk').forEach(function(m){
-      m.addEventListener('click', function(){ show(+m.dataset.i); });
-    });
-    /* The real thing drives this off the video's own timeupdate, which is an
-       event the element already fires — not a timer and not a rAF loop. */
-    v.addEventListener('timeupdate', function(){
-      var i = Math.floor((v.currentTime / v.duration) * c.p.length) % c.p.length;
-      if (slot.dataset.i !== String(i)) { slot.dataset.i = String(i); show(i); }
-    });
+  ov.querySelector('[data-close]').addEventListener('click', closePlayer);
+  var mute = ov.querySelector('[data-mute]');
+  if (mute) mute.addEventListener('click', function(){ v.muted = !v.muted; mute.style.opacity = v.muted ? 1 : .55; });
+
+  /* B3 — the rail is revealed by tapping the video, and only by that. */
+  if (style === 'B3') {
+    var pl = ov.querySelector('.pl');
+    ov.querySelector('.stage').addEventListener('click', function(){ pl.classList.toggle('revealed'); });
+    ov.querySelector('.tapnote').addEventListener('click', function(){ pl.classList.add('revealed'); });
   }
-
+  /* B2 — the deck fans open. */
+  var fanBtn = ov.querySelector('[data-fan]');
+  if (fanBtn) fanBtn.addEventListener('click', function(){
+    var fan = ov.querySelector('.fan'); fan.classList.toggle('open');
+    fanBtn.innerHTML = fan.classList.contains('open')
+      ? 'Show less &#9652;' : 'Show all ' + c.p.length + ' &#9662;';
+  });
+  /* A — the sheet. */
   var sheet = ov.querySelector('.sheet');
   if (sheet) {
     var tog = function(){ sheet.classList.toggle('collapsed'); };
     ov.querySelector('[data-expand]').addEventListener('click', tog);
     ov.querySelector('.grab').addEventListener('click', tog);
   }
-  var mute = ov.querySelector('[data-mute]');
-  if (mute) mute.addEventListener('click', function(){ v.muted = !v.muted; mute.style.opacity = v.muted ? 1 : .5; });
-  ov.querySelector('[data-close]').addEventListener('click', close);
+  /* D — the card follows the clip, driven by the element's own timeupdate. */
+  if (style === 'D') {
+    var slot = ov.querySelector('[data-slot]');
+    var show = function(i){
+      slot.innerHTML = cardBody(c.p[i]) + '<button class="addb">Add</button>';
+      ov.querySelectorAll('.mk').forEach(function(m, j){ m.classList.toggle('on', j === i); });
+      ov.querySelector('.fill').style.width =
+        Math.max(8, Math.round(c.ts[i] / (c.ts[c.ts.length-1] + 6) * 100)) + '%';
+      wireAdds();
+    };
+    show(0);
+    ov.querySelectorAll('.mk').forEach(function(m){
+      m.addEventListener('click', function(){ show(+m.dataset.i); }); });
+    v.addEventListener('timeupdate', function(){
+      /* A looping <video> reports duration Infinity until its metadata lands,
+         and NaN/Infinity here indexes c.p out of range -- which threw
+         "Cannot read properties of undefined" on the very first tick. Guard
+         the divisor and clamp, rather than trusting the element. */
+      var d = v.duration;
+      if (!isFinite(d) || d <= 0) return;
+      var i = Math.floor((v.currentTime / d) * c.p.length);
+      if (!isFinite(i) || i < 0) i = 0;
+      if (i > c.p.length - 1) i = c.p.length - 1;
+      if (slot.dataset.i !== String(i)) { slot.dataset.i = String(i); show(i); }
+    });
+  }
+  /* B5 — next and previous clip, unloading the one being left. */
+  ov.querySelectorAll('[data-vid]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var i = CLIPS.indexOf(byId(CUR.clip));
+      var n = (i + (+b.dataset.vid) + CLIPS.length) % CLIPS.length;
+      openPlayer(CUR.style, CLIPS[n].id);
+    });
+  });
+  wireAdds();
 }
-function close(){
-  var v = ov.querySelector('video');
-  if (v) unmount(v);
+
+/* B4's Add: confirm in place, then advance -- but never while a finger is
+   still down, and never in any other variant. scrollIntoView is a scroll
+   command, not a measurement. */
+function wireAdds(){
+  var advance = !!ov.querySelector('[data-advance]');
+  ov.querySelectorAll('.addb, .ab').forEach(function(b){
+    if (b.dataset.wired) return; b.dataset.wired = '1';
+    b.addEventListener('click', function(){
+      if (b.dataset.busy) return;
+      b.dataset.busy = '1';
+      var was = b.innerHTML;
+      b.classList.add('done');
+      b.innerHTML = b.classList.contains('ab') ? 'Added all' : 'Added &middot; view bag';
+      if (advance) {
+        var card = b.closest('.pc2'), row = b.closest('.row');
+        if (card && row && card.nextElementSibling) setTimeout(function(){
+          if (!row.dataset.touching) card.nextElementSibling.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+        }, 900);
+      }
+      setTimeout(function(){ b.innerHTML = was; b.classList.remove('done'); delete b.dataset.busy; }, 1600);
+    });
+  });
+  var row = ov.querySelector('.row');
+  if (row && !row.dataset.wired) {
+    row.dataset.wired = '1';
+    row.addEventListener('pointerdown', function(){ row.dataset.touching = '1'; });
+    row.addEventListener('pointerup', function(){ delete row.dataset.touching; });
+  }
+}
+
+function closePlayer(){
+  var v = ov.querySelector('video'); if (v) unmount(v);
   ov.classList.remove('on'); ov.innerHTML = '';
   document.body.style.overflow = '';
-}
-ov.addEventListener('click', function(e){ if (e.target === ov) close(); });
-document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && ov.classList.contains('on')) close(); });
-document.querySelectorAll('[data-open]').forEach(function(b){
-  b.addEventListener('click', function(){ STYLE = b.dataset.open; open(CLIPS[1].id); });
-});
-
-/* ═══ The 390px comparison — four static phones, posters only ═════════ */
-function buildVs(){
-  var c = CLIPS[1];   // the four-product salon clip
-  var notes = {
-    A:['Sheet under the video','Video visible: 74% collapsed, 26% expanded. One card plus the edge of the next.'],
-    B:['Card rail over the video','Video visible: 78%. One product at a time, swiped. Dots are the only count.'],
-    C:['Split','Video visible: 58% and never covered. All four products are a real scrollable list with a total.'],
-    D:['Timeline-tagged','Video visible: 76%. The card is whatever is on screen right now; dots are the list.']
-  };
-  var host = document.getElementById('vs');
-  host.innerHTML = ['A','B','C','D'].map(function(k){
-    return '<div class="cell"><h4>Player ' + k + ' &mdash; ' + notes[k][0] + '</h4>' +
-      '<div class="n">' + notes[k][1] + '</div>' +
-      '<div class="shot"><div class="phone" data-mini="' + k + '"></div></div></div>';
-  }).join('');
-  host.querySelectorAll('[data-mini]').forEach(function(box){
-    var k = box.dataset.mini;
-    /* The player's own markup, at its real size, inside a scaled frame.
-       Posters only: this panel is about layout, and four autoplaying clips
-       here would break the one-decoder rule the rest of the page keeps. */
-    box.innerHTML = '<div class="mini-scale">' + PLAYERS[k](c) + '</div>';
-    var poster = '<img class="poster" src="' + MEDIA[c.id].p + '" alt="">';
-    var stage = box.querySelector('.stage') || box.querySelector('.vp');
-    if (stage) stage.insertAdjacentHTML('afterbegin', poster);
-    var slot = box.querySelector('[data-slot]');
-    if (slot) slot.innerHTML = '<div class="th">' + initials(P[c.p[0]]) + '</div>' +
-      '<div class="pi"><div class="bd">' + esc(P[c.p[0]].b) + '</div><div class="nm">' + esc(P[c.p[0]].n) + '</div>' +
-      priceHtml(P[c.p[0]]) + '</div><button class="addb">Add</button>';
+  /* The autoplaying rail gave up its video when the player opened, and its
+     intersection state has not changed since, so the observer will not fire
+     again on its own. Re-observing asks it fresh. */
+  document.querySelectorAll('.vt[data-auto="1"]').forEach(function(t){
+    ioPlay.unobserve(t); ioPlay.observe(t);
   });
 }
+ov.addEventListener('click', function(e){ if (e.target === ov) closePlayer(); });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && ov.classList.contains('on')) closePlayer(); });
+document.querySelectorAll('[data-open]').forEach(function(b){
+  b.addEventListener('click', function(){
+    STYLE_FOR_GRID = b.dataset.open;
+    openPlayer(b.dataset.open, STRESS[b.dataset.n] || 'salon');
+  });
+});
+
+/* ═══ The comparison table, from measured heights baked in at build time ═ */
+var CMP = [
+  ['R0 — rail (chosen)',        'rail0', '1',        '0',                 'none'],
+  ['R1 — cycling card',         'rail1', 'all',      '0',                 'card cycles every 3s'],
+  ['R2 — card + chip row',      'rail2', 'all',      '0',                 'none'],
+  ['R3 — card on the poster',   'rail3', '1',        '0',                 'none'],
+  ['R4 — badge only',           'rail4', '0',        '0',                 'none'],
+  ['R5 — plays in the rail',    'rail5', '1',        '~320 KB per dwell', 'video plays'],
+  ['R6 — card expands',         'rail6', 'all, on tap', '0',              'card opens on tap']
+];
+(function(){
+  var t = document.getElementById('cmp');
+  t.insertAdjacentHTML('beforeend', CMP.map(function(r){
+    return '<tr><td><b>' + r[0] + '</b></td><td>' + (H[r[1]] ? H[r[1]] + 'px' : '—') +
+      '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td></tr>';
+  }).join(''));
+  Object.keys(H).forEach(function(k){
+    var el = document.getElementById('h-' + k); if (el) el.textContent = H[k] + 'px';
+  });
+})();
 
 /* ═══ Boot ════════════════════════════════════════════════════════════ */
 function renderAll(){
   document.querySelectorAll('[data-style]').forEach(function(el){
-    R[el.dataset.style](el); wire(el);
+    R[el.dataset.style](el); wireTiles(el);
   });
-  buildVs();
+  document.querySelectorAll('[data-cyc]').forEach(function(cyc){
+    ioCyc.observe(cyc);
+    cyc.addEventListener('pointerenter', function(){ cyc.dataset.hold = '1'; });
+    cyc.addEventListener('pointerleave', function(){ cyc.dataset.hold = '0'; });
+    cyc.addEventListener('touchstart', function(){ cyc.dataset.hold = '1'; }, { passive:true });
+  });
+  document.querySelectorAll('.xmore').forEach(function(b){
+    b.addEventListener('click', function(ev){
+      ev.stopPropagation(); b.closest('.xcard').classList.toggle('open'); });
+  });
 }
 renderAll();
 

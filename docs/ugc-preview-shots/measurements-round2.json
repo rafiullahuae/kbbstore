@@ -1,0 +1,48 @@
+[
+  {
+    "at": "390",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "390 RTL",
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "1280",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "at": "1280 RTL",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "overflow": 0,
+    "errors": []
+  },
+  {
+    "invariant": "full-page scroll at 390px, then five clips through B5’s feed",
+    "samples": 96,
+    "maxDecoding": 1,
+    "maxMountedVideoElements": 1,
+    "pageHeight": 18088
+  },
+  {
+    "railHeightsAt390px": {
+      "rail0": 440,
+      "rail1": 474,
+      "rail2": 480,
+      "rail3": 295,
+      "rail4": 249,
+      "rail5": 440,
+      "rail6": 458
+    }
+  }
+]

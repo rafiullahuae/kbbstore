@@ -22,12 +22,87 @@ pills. Pictures of every one at 390px and 1280px are in
 | `compare-390-problem-*.png` | **all four players side by side at true 390px** — the picture to look at first |
 | `rtl-s1/s2/s6-*.png`, `rtl-player-A-*.png` | the same, flipped to Arabic and RTL |
 | `budget-table-*.png` | the performance budget as the owner sees it on the page |
-| `measurements.json` | `scrollWidth`, overflow and the decoder-count run, machine-readable |
+| `measurements.json` | round one's `scrollWidth`, overflow and decoder-count run |
+| `v2-grid-r0..r6-*.png` | the chosen rail and its six variants, at both widths |
+| `v2-player-B0..B5-6p-*.png` / `-1p-*.png` | each player variant against a six-product and a one-product video |
+| `v2-player-B2-fanned-*`, `v2-player-B3-revealed-*` | the two variants that have a second state |
+| `v2-rtl-*.png` | the rails and B1, flipped to Arabic and RTL |
+| `measurements-round2.json` | round two's overflow, decoder run and the measured rail heights |
 
 Captured in Chromium at deviceScaleFactor 2, except the two twelve-tile grids
 (`grid-s3-wall-*`, `grid-s5-two-*`) at 1× — they are judged on density and
 rhythm rather than on reading a price off a tile, and at 2× they were half the
 weight of the whole directory.
+
+---
+
+## 0. Round two — the two you chose, and variants of each
+
+**Chosen: the horizontal rail (R0) and the card rail over the video (B0).**
+Round two derives variants from those two and changes nothing else. Both parents
+sit at the top of their section in `docs/UGC-VIDEO-PREVIEWS.html`, marked
+*chosen* and unchanged, with the variants underneath; the four grids and three
+players that were not chosen are kept at the foot of the page rather than
+deleted.
+
+### Six rails, each changing one decision
+
+| | Variant | The single decision changed from R0 | Height at 390px |
+|---|---|---|---|
+| R0 | **Horizontal rail** *(chosen, unchanged)* | — | **440px** |
+| R1 | Cycling card | The card is no longer fixed to the first product — it cycles through all of them | 474px |
+| R2 | Card + chip row | A second row was added below the card for the products the card does not show | 480px |
+| R3 | Card overlaid | Where the card sits — on the poster rather than below it | **295px** |
+| R4 | Badge only | The card was removed entirely; products live in the player | **249px** |
+| R5 | Plays in the rail | Video autoplays in the rail instead of waiting for a tap | 440px |
+| R6 | Card expands | The card can open in place to show every product | 458px (closed) |
+
+Heights are measured in Chromium at 390px and baked into the page at build time
+— the page itself never measures layout, because the design it is previewing is
+not allowed to.
+
+### Five players, each changing one decision
+
+| | Variant | The single decision changed from B0 |
+|---|---|---|
+| B0 | **Card rail over the video** *(chosen, unchanged)* | — |
+| B1 | Running total and add-all | A total bar and an add-all above the rail |
+| B2 | One card, fan to open | Products are a stack you open, not a rail you swipe |
+| B3 | Hidden until you tap | The rail starts hidden and is revealed by tapping the video |
+| B4 | Confirm and advance | What happens when a product is added |
+| B5 | Swipe up for the next | How you reach the next video from inside the player |
+
+Every player can be opened against a **one-product**, **three-product** or
+**six-product** video from buttons on its own card, because six is where a card
+rail stops being easy and one is where a total bar starts looking silly. The
+demo library is deliberately ragged for the same reason: one clip has a single
+product and no discount at all, one has six.
+
+### Where "stunning" and "easy to use" actually conflict
+
+Two places, and the previews say so in their own captions rather than picking
+silently. **B3** is the best-looking thing on the page and the weakest at
+selling — a shopper who never taps the video sees no product at all. **R5** is
+the one that most resembles the app in the benchmark screenshots and is the only
+variant that costs video bytes to scroll past. Both are worth choosing; neither
+should be chosen by accident.
+
+### Two defects the round found
+
+- **A rail card is not a player card.** At 158px the shared card layout left
+  about 55px of text width: "Advanced Snail 96 Mucin Power Essence" truncated to
+  "Adva Sn…" and the price broke across three lines. It was also what made R0
+  measure 467px. In a rail the poster above *is* the product picture, so the
+  thumbnail is dropped and name, price and a full-width Add are stacked — R0
+  came down to 440px and became readable.
+- **"One decoding" is not "one mounted".** `claim()` paused the element it
+  displaced instead of unloading it, so two `<video>` elements were resident at
+  once whenever two rail tiles were both over the observer threshold, and again
+  when a player opened over an autoplaying rail. Decoding never exceeded one, so
+  the round-one meter never caught it. The displaced element now gives its
+  stream back at the moment it loses the decoder. Measured over 96 samples of a
+  full-page scroll plus five clips stepped through B5's feed:
+  **maxDecoding 1, maxMountedVideoElements 1.**
 
 ---
 
