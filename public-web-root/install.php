@@ -520,34 +520,316 @@ function kbb_db_reason(Throwable $e): string
 
 /* ───────────────────────────────────────────────────────────────── .env writing */
 
+/**
+ * One .env value, quoted.
+ *
+ * ▲ THIS USED TO QUOTE ONLY WHEN THE VALUE CONTAINED A SPACE, A `"` OR A `#`,
+ * AND THAT WAS A CONFIGURATION-INJECTION HOLE. A NEWLINE is none of those three,
+ * and the address check in front of it -- `preg_match('#^https?://[^\s/]+#i')` --
+ * is anchored only at the START, so it is satisfied by the first line of a
+ * multi-line value. So:
+ *
+ *     app_url = "https://real-shop.example\nAPP_DEBUG=true\nAPP_ENV=local"
+ *
+ * passed validation, was written unquoted, and landed in .env as THREE LINES.
+ * Anything the form could reach -- the shop name, the database password, the
+ * admin's email -- could add arbitrary configuration to a shop at install time,
+ * including turning the debug page on for a production site. Found by reading
+ * this function next to the regex above it, not by an install going wrong.
+ *
+ * Two changes close it, and both are deliberately blunt:
+ *
+ *   EVERYTHING IS QUOTED. A value that does not need quoting costs nothing by
+ *   being quoted, and the question "does this one need it" stops existing.
+ *
+ *   A CONTROL CHARACTER IS REFUSED, NOT ENCODED. kbb_env_value() below returns
+ *   null and the caller refuses the whole write. There is no shop name,
+ *   password or address that contains a NUL or a newline, so this costs a real
+ *   install nothing.
+ *
+ * The four escapes are the ones phpdotenv reads back byte for byte inside
+ * double quotes: backslash, double quote, dollar and backtick.
+ *
+ * Kept as a separate function from kbb_env_value() because the string form is
+ * what the file has always called; App\Support\SiteUrl::envLine() is the same
+ * rule inside the application, and InstallerWritesEnvSafelyTest asserts the two
+ * agree rather than letting them drift.
+ */
 function kbb_env_escape(string $v): string
 {
-    return str_contains($v, ' ') || str_contains($v, '"') || str_contains($v, '#') || $v === ''
-        ? '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $v).'"'
-        : $v;
+    return '"'.str_replace(
+        ['\\', '"', '$', '`'],
+        ['\\\\', '\\"', '\\$', '\\`'],
+        $v
+    ).'"';
+}
+
+/** `KEY="value"`, or null when the value has no business in a config file. */
+function kbb_env_value(string $key, string $v): ?string
+{
+    if (preg_match('/[\x00-\x1F\x7F]/', $v) === 1) {
+        return null;
+    }
+
+    return $key.'='.kbb_env_escape($v);
+}
+
+/**
+ * The address this installer is being reached at.
+ *
+ * =============================================================================
+ * WHY THE INSTALLER DERIVES THIS INSTEAD OF ASKING FOR IT
+ * =============================================================================
+ *
+ * Because the person running the installer is STANDING ON THE ANSWER. They
+ * typed the address into their own browser to get here; asking them to type it
+ * again into a text box is a step whose only possible outcomes are "the same
+ * thing" and "a typo". And a typo in APP_URL is not cosmetic: every absolute
+ * URL this shop ever builds comes from it -- password-reset links, order
+ * confirmation emails, the canonical tag, the sitemap, payment callbacks.
+ *
+ * ▲ AND THIS IS NOT THE HOST-HEADER HOLE IT LOOKS LIKE. The distinction is who
+ * is on the other end. Here the person whose Host header this is, is the person
+ * installing the shop -- they are about to be handed the owner account. They
+ * cannot attack themselves, and there is nobody else to attack yet: no
+ * customers, no emails, no database. The field is still shown, still editable
+ * and still validated, so what this changes is the DEFAULT, not the trust.
+ *
+ * Once the shop exists, that stops being true, and nothing afterwards derives
+ * an out-of-band address from a request header -- App\Support\SiteUrl carries
+ * the whole argument and the admin banner is the confirmed-by-a-human path.
+ *
+ * =============================================================================
+ * THE TWO THINGS THE OLD ONE-LINER GOT WRONG
+ * =============================================================================
+ *
+ * IT READ $_SERVER['HTTPS'] ONLY. Cloudways, Hostinger and every other host
+ * that terminates TLS at a proxy leave that unset on the PHP request and say so
+ * in X-Forwarded-Proto instead. So an install on a site with a perfectly good
+ * certificate defaulted to `http://`, and unless the owner noticed and edited
+ * the box, the shop spent its life emailing http:// links and printing an
+ * http:// canonical on an https:// page.
+ *
+ * X-Forwarded-Proto is a header a visitor can forge, and here that is
+ * acceptable for the reason above -- they would be forging their own install.
+ * It is read ONLY here, in this file, which deletes itself when it finishes.
+ *
+ * IT DROPPED THE SUB-FOLDER. A shop installed at example.com/shop/ got
+ * `https://example.com`, and KBB_BASE_PATH was written empty to match. The
+ * folder is in SCRIPT_NAME -- the one part of the request the SERVER fills in
+ * rather than the client -- so it costs nothing to get right.
+ */
+function kbb_guess_site_url(): string
+{
+    $https = false;
+
+    if (isset($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off' && $_SERVER['HTTPS'] !== '') {
+        $https = true;
+    } elseif (strtolower(trim((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))) === 'https') {
+        $https = true;
+    } elseif (strtolower(trim((string) ($_SERVER['HTTP_X_FORWARDED_SSL'] ?? ''))) === 'on') {
+        $https = true;
+    } elseif ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443) {
+        $https = true;
+    }
+
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost');
+
+    // dirname() of /shop/install.php is /shop; of /install.php it is / or \ on
+    // Windows, both of which mean "no sub-folder".
+    $dir = str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/install.php')));
+    $dir = $dir === '/' || $dir === '.' ? '' : '/'.trim($dir, '/');
+
+    return kbb_normalise_site_url(($https ? 'https' : 'http').'://'.$host.$dir) ?? 'https://localhost';
+}
+
+/**
+ * A site address, normalised, or null if it is not one.
+ *
+ * ── SCHEME, NO TRAILING SLASH, NO PAGE ─────────────────────────────────────
+ *
+ * A bare `example.com` becomes `https://example.com`, because that is what
+ * somebody types when a box asks for their domain and http would be the wrong
+ * guess on a host that has just been given a certificate. A trailing slash, a
+ * query string, a fragment, `/index.php`, `https://` in capitals and a
+ * redundant `:443` all normalise away, so two people typing the same address
+ * three different ways get the same APP_URL.
+ *
+ * ── THE ONE THING IT KEEPS THAT PEOPLE EXPECT IT TO DROP ───────────────────
+ *
+ * The sub-folder. `env.staging.txt` ships APP_URL=https://easywebsol.com/kbb-upgrade
+ * with KBB_BASE_PATH=/kbb-upgrade beside it: a shop under a folder has that
+ * folder as part of its address, and stripping it would break every install
+ * that is not at a domain root. Only a TRAILING slash goes.
+ *
+ * ── AND IT REFUSES CREDENTIALS ─────────────────────────────────────────────
+ *
+ * `https://admin:hunter2@shop.example` is a valid URL and is never what anybody
+ * meant. Left in, it would be reprinted in every order email this shop sends,
+ * which is a phishing lesson nobody should learn from their own receipts.
+ *
+ * This is deliberately a COPY of App\Support\SiteUrl::normalise(). install.php
+ * may have no dependencies -- there may be no vendor/ when it runs, and the
+ * class it would import lives behind an autoloader that does not exist yet.
+ * InstallerWritesEnvSafelyTest runs the two over the same table of inputs and
+ * fails when they disagree, which is how the duplication is kept honest --
+ * exactly the arrangement InstallerAndFrontControllerAgreeTest already uses for
+ * the folder-name lists.
+ */
+function kbb_normalise_site_url(string $raw): ?string
+{
+    $raw = trim($raw);
+
+    if ($raw === '' || strlen($raw) > 255) {
+        return null;
+    }
+
+    // A control character is how a form field becomes a second .env line. There
+    // is no address that needs one.
+    if (preg_match('/[\x00-\x1F\x7F]/', $raw) === 1) {
+        return null;
+    }
+
+    if (! preg_match('#^[a-z][a-z0-9+.-]*://#i', $raw)) {
+        $raw = 'https://'.ltrim($raw, '/');
+    }
+
+    $parts = parse_url($raw);
+
+    if (! is_array($parts) || ! isset($parts['scheme'], $parts['host'])) {
+        return null;
+    }
+
+    $scheme = strtolower((string) $parts['scheme']);
+
+    if ($scheme !== 'http' && $scheme !== 'https') {
+        return null;
+    }
+
+    if (isset($parts['user']) || isset($parts['pass'])) {
+        return null;
+    }
+
+    $host = strtolower(rtrim(trim((string) $parts['host']), '.'));
+
+    if ($host === '' || strlen($host) > 253) {
+        return null;
+    }
+
+    if (str_starts_with($host, '[')) {
+        if (preg_match('/^\[[0-9a-f:.]{2,45}\]$/', $host) !== 1) {
+            return null;
+        }
+    } elseif (preg_match('/^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/', $host) !== 1) {
+        return null;
+    }
+
+    $port = '';
+
+    if (isset($parts['port'])) {
+        $p = (int) $parts['port'];
+
+        if ($p < 1 || $p > 65535) {
+            return null;
+        }
+
+        if (! ($scheme === 'http' && $p === 80) && ! ($scheme === 'https' && $p === 443)) {
+            $port = ':'.$p;
+        }
+    }
+
+    $path = trim((string) ($parts['path'] ?? ''));
+    $path = preg_replace('#/(index\.php|install\.php)$#i', '/', $path) ?? $path;
+    $path = $path === '' ? '' : '/'.trim($path, '/');
+
+    if ($path === '/') {
+        $path = '';
+    }
+
+    foreach ($path === '' ? [] : explode('/', trim($path, '/')) as $segment) {
+        if ($segment === '' || $segment === '.' || $segment === '..') {
+            $path = '';
+            break;
+        }
+    }
+
+    return $scheme.'://'.$host.$port.$path;
+}
+
+/** The sub-folder half of a normalised site address: `/shop`, or `''`. */
+function kbb_base_path_of(string $siteUrl): string
+{
+    $path = (string) parse_url($siteUrl, PHP_URL_PATH);
+
+    return $path === '' || $path === '/' ? '' : '/'.trim($path, '/');
 }
 
 function kbb_write_env(string $file, array $s, string $publicPath): bool
 {
+    /*
+     * EVERY VALUE THAT CAME FROM THE FORM GOES THROUGH kbb_env_value(), which
+     * returns null rather than writing a control character. One null and this
+     * function refuses the whole write: a .env assembled out of some of what
+     * was asked for is worse than no .env, because the install continues on top
+     * of it. See kbb_env_escape() for what used to get through.
+     *
+     * APP_KEY is NOT escaped, and that is deliberate rather than an omission:
+     * it is either a base64: string this file just generated or one the form
+     * validated against /^base64:[A-Za-z0-9+\/=]{20,}$/, so it carries nothing
+     * to escape -- and quoting it would be a change to the one line in this
+     * file that must keep reading back byte for byte, forever, on pain of
+     * unreadable Stripe keys.
+     */
+    $basePath = kbb_base_path_of((string) $s['app_url']);
+
+    $values = [
+        'APP_NAME' => (string) $s['shop_name'],
+        'APP_URL' => (string) $s['app_url'],
+        'KBB_BASE_PATH' => $basePath,
+        'DB_HOST' => (string) $s['db']['host'],
+        'DB_DATABASE' => (string) $s['db']['name'],
+        'DB_USERNAME' => (string) $s['db']['user'],
+        'DB_PASSWORD' => (string) $s['db']['pass'],
+        'MAIL_FROM_ADDRESS' => (string) $s['admin_email'],
+        'MAIL_FROM_NAME' => (string) $s['shop_name'],
+    ];
+
+    $line = [];
+
+    foreach ($values as $key => $value) {
+        $rendered = kbb_env_value($key, $value);
+
+        if ($rendered === null) {
+            return false;
+        }
+
+        $line[$key] = $rendered;
+    }
+
     $lines = [
-        'APP_NAME='.kbb_env_escape($s['shop_name']),
+        $line['APP_NAME'],
         'APP_ENV=production',
         'APP_KEY='.$s['app_key'],
         'APP_DEBUG=false',
-        'APP_URL='.kbb_env_escape($s['app_url']),
+        $line['APP_URL'],
         '',
-        '# Empty unless the shop is served from a sub-folder.',
-        'KBB_BASE_PATH=',
+        '# Empty unless the shop is served from a sub-folder. Written from the',
+        '# address the installer was reached at, so a shop at example.com/shop/',
+        '# gets /shop here and at the end of APP_URL, and one at a domain root',
+        '# gets nothing -- which is every install that is not this project\'s',
+        '# own staging copy. Leaving it set when it should be empty is the',
+        '# single most likely cause of "every link on my site is wrong".',
+        $line['KBB_BASE_PATH'],
         '',
         'LOG_CHANNEL=stack',
         'LOG_LEVEL=error',
         '',
         'DB_CONNECTION=mysql',
-        'DB_HOST='.kbb_env_escape($s['db']['host']),
+        $line['DB_HOST'],
         'DB_PORT='.(int) $s['db']['port'],
-        'DB_DATABASE='.kbb_env_escape($s['db']['name']),
-        'DB_USERNAME='.kbb_env_escape($s['db']['user']),
-        'DB_PASSWORD='.kbb_env_escape($s['db']['pass']),
+        $line['DB_DATABASE'],
+        $line['DB_USERNAME'],
+        $line['DB_PASSWORD'],
         '',
         'SESSION_DRIVER=file',
         'SESSION_LIFETIME=120',
@@ -555,18 +837,68 @@ function kbb_write_env(string $file, array $s, string $publicPath): bool
         'QUEUE_CONNECTION=sync',
         '',
         'MAIL_MAILER=log',
-        'MAIL_FROM_ADDRESS='.kbb_env_escape($s['admin_email']),
-        'MAIL_FROM_NAME='.kbb_env_escape($s['shop_name']),
+        $line['MAIL_FROM_ADDRESS'],
+        $line['MAIL_FROM_NAME'],
         '',
         '# Set this before you need it — it is the way back in if an update breaks the site.',
         'KBB_HEALTH_TOKEN='.bin2hex(random_bytes(16)),
         '',
     ];
 
-    $ok = @file_put_contents($file, implode("\n", $lines)."\n", LOCK_EX) !== false;
+    /*
+     * ATOMIC, AND THIS IS THE ONE THAT COULD NOT BE RECOVERED FROM.
+     *
+     * file_put_contents() TRUNCATES AND THEN WRITES. Between those two the file
+     * exists and is empty. A disk that fills, a request the host kills at 30
+     * seconds, a PHP fatal -- any of them at that instant leaves a .env with no
+     * APP_KEY, and an application with no APP_KEY does not boot at all. On a
+     * shared host with no shell, the only repair tool is the admin panel, which
+     * is inside the application that will not boot. There is no way back except
+     * kbb-recover.php.
+     *
+     * So: a temporary file in the SAME DIRECTORY (rename() is only atomic
+     * within one filesystem), flushed to disk, then renamed over the target.
+     * The old .env is whole until the instant the new one is whole, and there
+     * is no moment at which a reader can see a half-written one.
+     *
+     * On the FIRST install there is no old .env to protect, so this buys
+     * nothing -- it buys everything on the second and every one after it, and a
+     * write that is safe only the first time is not a safe write.
+     */
+    $tmp = $file.'.'.bin2hex(random_bytes(6)).'.tmp';
+    $body = implode("\n", $lines)."\n";
 
-    if ($ok) {
-        @chmod($file, 0640);
+    $handle = @fopen($tmp, 'wb');
+    $ok = false;
+
+    if ($handle !== false) {
+        $written = @fwrite($handle, $body);
+
+        if ($written !== false) {
+            @fflush($handle);
+
+            // fsync only exists from PHP 8.1 and only on some builds; without
+            // it the rename can still land ahead of the bytes, which is why it
+            // is attempted rather than assumed.
+            if (function_exists('fsync')) {
+                @fsync($handle);
+            }
+        }
+
+        @fclose($handle);
+
+        if ($written !== false && $written === strlen($body)) {
+            @chmod($tmp, 0640);
+            $ok = @rename($tmp, $file);
+        }
+
+        if (! $ok) {
+            @unlink($tmp);
+        }
+    }
+
+    if (! $ok) {
+        return false;
     }
 
     /*
@@ -820,7 +1152,18 @@ if ($action !== '') {
         $adminName = trim((string) ($_POST['admin_name'] ?? ''));
         $adminEmail = trim((string) ($_POST['admin_email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
-        $appUrl = rtrim(trim((string) ($_POST['app_url'] ?? '')), '/');
+        /*
+         * NORMALISED, NOT MERELY TRIMMED. What arrives here is what the box
+         * contained when Continue was pressed -- which is the derived default
+         * nine times in ten, and the tenth is somebody correcting it by hand.
+         * Either way it goes through the same normaliser, so `HTTPS://Shop.example/`,
+         * `shop.example` and `https://shop.example:443/index.php` all become
+         * one string and APP_URL cannot come out of this installer in three
+         * different spellings of the same address.
+         *
+         * null means "not an address", which is the check below.
+         */
+        $appUrl = kbb_normalise_site_url((string) ($_POST['app_url'] ?? ''));
         $existingKey = trim((string) ($_POST['app_key'] ?? ''));
 
         $errors = [];
@@ -841,8 +1184,19 @@ if ($action !== '') {
             $errors['password'] = 'Use at least 10 characters.';
         }
 
-        if (! preg_match('#^https?://[^\s/]+#i', $appUrl)) {
-            $errors['app_url'] = 'Include https:// at the front.';
+        /*
+         * ▲ THE CHECK THIS REPLACES WAS ANCHORED ONLY AT THE START.
+         * `^https?://[^\s/]+` is satisfied by the FIRST LINE of a multi-line
+         * value, so `https://real.example\nAPP_DEBUG=true` passed it -- and the
+         * .env writer then wrote both lines, because a newline was not one of
+         * the three characters it quoted for. kbb_normalise_site_url() refuses
+         * any control character outright and returns a rebuilt string rather
+         * than the one it was handed, so nothing that was not parsed can
+         * survive into .env. InstallerWritesEnvSafelyTest is the proof.
+         */
+        if ($appUrl === null) {
+            $errors['app_url'] = 'That is not an address. It should look like https://your-shop.com — '
+                .'no page, no login details, and nothing after the domain except a folder name.';
         }
 
         /*
@@ -874,7 +1228,7 @@ if ($action !== '') {
             'admin_name' => $adminName,
             'admin_email' => $adminEmail,
             'admin_password' => $password,
-            'app_url' => $appUrl,
+            'app_url' => (string) $appUrl,
             'app_key' => $fresh ? 'base64:'.base64_encode(random_bytes(32)) : $existingKey,
         ];
 
@@ -948,8 +1302,7 @@ if ($action !== '') {
 
 $TOKEN_EXISTS = is_file($TOKEN_FILE);
 kbb_token($TOKEN_FILE);   // create it on first sight
-$guessUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http')
-    .'://'.($_SERVER['HTTP_HOST'] ?? 'localhost');
+$guessUrl = kbb_guess_site_url();
 $tokenPathForHumans = $STORAGE.'/INSTALL-TOKEN.txt';
 
 ?><!DOCTYPE html>
@@ -1190,8 +1543,11 @@ function paneShop(errs,probe){
     +'<label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password">'
     +'<p class="hint">At least 10 characters.</p>'
     +(e.password?'<div class="err">'+esc(e.password)+'</div>':'')
-    +'<label for="au">Shop address</label><input id="au" value="<?= htmlspecialchars($guessUrl, ENT_QUOTES) ?>">'
-    +'<p class="hint">Include https://. Everything the shop links to is built from this.</p>'
+    +'<label for="au">Shop address</label><input id="au" spellcheck="false" autocapitalize="off" '
+      +'autocomplete="off" inputmode="url" value="<?= htmlspecialchars($guessUrl, ENT_QUOTES) ?>">'
+    +'<p class="hint">Filled in from the address you opened this page at, so there is nothing to type '
+      +'unless it is wrong. Correct it if your shop will be reached at a different one &mdash; every link '
+      +'this shop ever sends, in an email, a receipt or a search result, is built from it.</p>'
     +(e.app_url?'<div class="err">'+esc(e.app_url)+'</div>':'')
     +(restoring
       ?'<label for="ak">Original security key (APP_KEY)</label>'
