@@ -413,10 +413,27 @@ class Seo
              * knows it. So the caller supplies it under `title_token`.
              *
              * ABSENT, THE BEHAVIOUR IS EXACTLY WHAT IT WAS: the token is
-             * deleted. Only Store\ProductController passes it today, so no
-             * other page's title can move. App\Support\ProductSeo::metaTitle()
-             * passes the same value, because the editor's preview promises to
-             * show the bytes the page will publish.
+             * deleted. App\Support\ProductSeo::metaTitle() passes the same
+             * value the product page does, because the editor's preview
+             * promises to show the bytes the page will publish.
+             *
+             * FOUR CALLERS PASS IT, one per overridable thing, and each names
+             * the row `%%title%%` stands for on its own page:
+             *
+             *   Store\ProductController::show()   the product's name
+             *   Store\BrandController::seoCtx()   the brand's name
+             *   Store\ShopController::index()     the category's name
+             *   Store\PageController::post()      the article's headline
+             *
+             * The other three were added after the product fix, on the same
+             * argument and against the same branch. Nothing IMPORTS a Yoast
+             * template into `brands.seo`, `categories.seo` or `posts.seo` — the
+             * only way one gets there is an operator typing it into the SEO box
+             * on that screen, which is precisely why it had to be fixed: a box
+             * that silently deletes what you type into it is worse than a box
+             * that refuses it. Every one of those four sets the key ONLY
+             * alongside `title_is_final`, so a thing with an empty SEO title
+             * cannot move.
              */
             $finalTokens = ['sep' => $sep, 'sitename' => $siteName, 'page' => ''];
 

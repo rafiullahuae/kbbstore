@@ -238,6 +238,33 @@ class ShopController extends Controller
                  */
                 'title' => trim((string) ($catSeo['title'] ?? '')) !== '' ? $catSeo['title'] : null,
                 'title_is_final' => (trim((string) ($catSeo['title'] ?? '')) !== '') ?: null,
+                /*
+                 * AND THE ONE TOKEN THAT BRANCH CANNOT RESOLVE ON ITS OWN.
+                 *
+                 * `title_is_final` sends the typed title through
+                 * Seo::titleOf()'s template branch, and
+                 * TitleTemplate::render() DELETES every token it was not
+                 * handed. `%%title%%` is Yoast's word for the post title —
+                 * here the CATEGORY's own name — and Seo cannot work it out
+                 * from `title`, which is the template itself. Left out, an
+                 * owner typing Yoast's shipped default `%%title%% %%sep%%
+                 * %%sitename%%` into Store → Catalog → Categories → SEO →
+                 * Page title publishes the site name alone, exactly as all 671
+                 * imported product pages did before the same key was added to
+                 * Store\ProductController.
+                 *
+                 * t(), like every other string on this page: an Arabic archive
+                 * whose tab reads the English category name advertises itself
+                 * as untranslated where a shopper decides whether to click.
+                 *
+                 * NULL WHENEVER THE BOX IS EMPTY — and null for /shop/ and for
+                 * a search, which have no category at all. array_filter below
+                 * drops it, so an un-overridden archive hands Seo exactly the
+                 * keys it handed before and is byte-for-byte the page it was.
+                 */
+                'title_token' => trim((string) ($catSeo['title'] ?? '')) !== ''
+                    ? $category?->t('name')
+                    : null,
                 'description' => trim((string) ($catSeo['desc'] ?? '')) !== ''
                     ? $catSeo['desc']
                     : $this->seoDescription($category, (string) $request->query('s', ''), $total),
