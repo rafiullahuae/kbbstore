@@ -520,6 +520,18 @@ header.app{position:sticky;top:0;z-index:60;background:rgba(251,246,240,.82);
 .bnav button.on{color:var(--rose-deep)}
 .bnav svg{width:22px;height:22px}
 .bnav .count{top:0;inset-inline-end:50%;margin-inline-end:-22px}
+/* AND THE INLINE STYLE THAT OVERRIDES THE RULE ABOVE. syncBottomNav() writes
+   the badge with a style="" attribute, so this rule has never applied: an
+   inline declaration beats an author one of any specificity. It was written
+   physically -- right:50%;margin-right:-24px -- which docs/rtl-audit.md
+   Sec. 13.5 recorded and could not act on, because this document hard-coded
+   <html lang="en"> with no dir and no [dir="rtl"] rule could match in it. It
+   carries a real lang and dir now (Lane FK, docs/rtl-standalone-documents.md),
+   so the inline pair is logical too and the cart badge sits on the reading
+   edge in both directions. The VALUES are left exactly as they were -- top:2px
+   and -24px, not this rule's 0 and -22px -- because in a left-to-right
+   document the two spellings compute identically and the English page must not
+   move. */
 body{padding-bottom:0}
 @media(max-width:979px){body{padding-bottom:64px}}
 
@@ -1298,7 +1310,7 @@ function syncBottomNav(){
   ];
   $('#bnav').innerHTML=items.map(i=>`<button class="${v===i[0]?'on':''}" onclick="(${i[3]})()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${i[2]}</svg>${i[1]}
-    ${i[4]&&cq>0?`<span class="count on" style="position:absolute;top:2px;right:50%;margin-right:-24px">${cq}</span>`:''}</button>`).join('');
+    ${i[4]&&cq>0?`<span class="count on" style="position:absolute;top:2px;inset-inline-end:50%;margin-inline-end:-24px">${cq}</span>`:''}</button>`).join('');
 }
 
 /* =====================================================================

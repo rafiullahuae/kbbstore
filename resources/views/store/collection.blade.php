@@ -31,7 +31,18 @@
         @include('partials.home.grid', [
             'items' => $products,
             'skin' => $settings->get('grid_skin', 'classic'),
-            'catLabel' => $title,
+            {{-- The small line above each product's name. It is the page title
+                 for the four curated listings, whose titles are two words
+                 ("New In", "Super Sale") and read well there.
+
+                 A concern page's title is a SENTENCE aimed at a search result
+                 ("Korean skincare for acne-prone skin"), which wraps to two
+                 lines on every card and repeats the heading twenty-four times
+                 down the page. So a caller may pass a shorter one. Nothing
+                 passes it today except CollectionController::concern(), and
+                 the four listings render byte-for-byte what they rendered
+                 before this line existed. --}}
+            'catLabel' => $cardLabel ?? $title,
         ])
 
         <div class="pager">{!! $products->links() !!}</div>

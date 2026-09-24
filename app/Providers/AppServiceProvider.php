@@ -49,6 +49,22 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(SettingsService::class);
 
         /*
+         * The variable-product price range the tiles print, memoised for one
+         * request. App\Services\VariantPricing carries the argument in full;
+         * the binding matters for two reasons and both are about the memo.
+         *
+         * `scoped`, like the two above, so a queue worker cannot serve a second
+         * job out of the first one's prices. And scoped rather than a plain
+         * static inside the class, because StorefrontQueryBudgetTest's
+         * budgetReset() clears scoped instances between its measured requests —
+         * a static would survive, the class's one query would run in the
+         * warm-up pass and never again, and the budget would be measuring a
+         * page that does not exist. A cache this test cannot reset is a cache
+         * that flatters every number in that file.
+         */
+        $this->app->scoped(\App\Services\VariantPricing::class);
+
+        /*
          * Bilingual foundation (Lane EP). Two bindings and nothing else.
          *
          * 1. __() READS THE DATABASE. Laravel's own translator is kept; only

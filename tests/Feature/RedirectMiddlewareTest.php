@@ -222,16 +222,40 @@ it('beats a 301 the application issues for itself', function () {
     expect($unredirected->getStatusCode())->toBe(301);
 
     /*
-     * Asserted without the trailing slash BECAUSE THAT IS WHAT IT SENDS, and
-     * that is a finding rather than a preference: CategoryArchiveController
-     * builds this hop through Laravel's own redirect() helper, which strips
-     * the slash, so it lands on an address whose <link rel="canonical"> points
-     * at the slashed one. It is the same defect docs/GP-ADDRESSES-LAND.md
-     * measured for the redirects TABLE and fixed there with Url::redirect().
-     * Pinned here as it is: this lane owns the middleware, not the category
-     * controller, and changing that hop is a separate, visible decision.
+     * ═══════════════════════════════════════════════════════════════════════
+     * PIN ADVANCED, DELIBERATELY — THE DEFECT THIS RECORDED IS FIXED
+     * ═══════════════════════════════════════════════════════════════════════
+     *
+     * This asserted the SLASH-LESS form, and said so in as many words, because
+     * that is what the shop sent. The note read:
+     *
+     *     Asserted without the trailing slash BECAUSE THAT IS WHAT IT SENDS,
+     *     and that is a finding rather than a preference:
+     *     CategoryArchiveController builds this hop through Laravel's own
+     *     redirect() helper, which strips the slash, so it lands on an address
+     *     whose <link rel="canonical"> points at the slashed one. It is the
+     *     same defect docs/GP-ADDRESSES-LAND.md measured for the redirects
+     *     TABLE and fixed there with Url::redirect(). Pinned here as it is:
+     *     this lane owns the middleware, not the category controller, and
+     *     changing that hop is a separate, visible decision.
+     *
+     *     expect((string) $unredirected->headers->get('Location'))
+     *         ->toEndWith('/product-category/rm-skincare/rm-toners');
+     *
+     * That decision has now been made and made visibly: `CategoryArchive-
+     * Controller::show()` issues its 301 through `CategoryPath::redirectUrl()`
+     * → `Url::redirect()`, so the slash survives and the hop lands on the
+     * address the destination page itself declares canonical. The pin is
+     * advanced rather than deleted because what it recorded was true, and only
+     * the controller moved.
+     *
+     * The assertion below is still the same claim about the SAME hop — where
+     * the shop sends this address with no row involved — so what this test
+     * exists to prove, that a row beats the application's own 301, is
+     * untouched. `tests/Feature/CategoryPathContractTest.php` owns the slash
+     * itself.
      */
-    expect((string) $unredirected->headers->get('Location'))->toEndWith('/product-category/rm-skincare/rm-toners');
+    expect((string) $unredirected->headers->get('Location'))->toEndWith('/product-category/rm-skincare/rm-toners/');
 
     rmRow('/product-category/rm-toners/', '/product-category/rm-skincare/');
 

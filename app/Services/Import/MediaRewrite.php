@@ -9,6 +9,8 @@ use App\Models\Category;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Product;
+use App\Models\Setting;
+use App\Services\Seo\SeoSettings;
 use App\Support\MediaUsage;
 use Illuminate\Support\Facades\DB;
 
@@ -126,7 +128,14 @@ final class MediaRewrite
      *
      * `posts.body` is NOT here, and that is the other half of the same fix. It
      * is a document, not a cell: see App\Services\Import\DocumentMediaRewrite,
-     * which does to the `<img>` tags inside it what this does to a column.
+     * which does to the `<img>` and `<a href>` tags inside it what this does to
+     * a column.
+     *
+     * NEITHER ARE THE SETTINGS, and for a third reason: `og_default_image` and
+     * `org_logo` are not columns at all but rows in `settings`, keyed by name.
+     * references() yields them alongside these and replace() has a branch for
+     * them, because the alternative — a fourth class for two strings — is more
+     * moving parts than the thing it would hold.
      */
     private const COLUMNS = [
         [Product::class, 'products', 'image', false],
@@ -366,8 +375,13 @@ final class MediaRewrite
                 $relative = $this->uploadsRelative($current);
 
                 if ($relative === null || Media::urlFor($relative) !== $current) {
-                    $kept[] = $reference['table'].' '.$reference['id'].'.'.$reference['field'].' — "'.$current
-                        .'" is not the shape this writes, so somebody else set it';
+                    // "settings.og_default_image", not "settings 0.og_…": a
+                    // setting has no row id and printing a zero for one is a
+                    // number the owner would try to look up.
+                    $kept[] = ($reference['id'] === 0
+                        ? $reference['table'].'.'.$reference['field']
+                        : $reference['table'].' '.$reference['id'].'.'.$reference['field'])
+                        .' — "'.$current.'" is not the shape this writes, so somebody else set it';
 
                     continue;
                 }
@@ -468,6 +482,35 @@ final class MediaRewrite
      */
     private function replace(string $model, int $id, string $field, string $from, string $to): bool
     {
+        /*
+         * A SETTING IS NOT A ROW WITH AN id, so it cannot go through the find()
+         * below: `settings` is keyed by its `key` column and the value lives in
+         * `value`. Same two guarantees as every other write here — the current
+         * value must still be byte-identical to what the proposal was built
+         * from, and nothing is written when it is not.
+         *
+         * THE READ IS THE TABLE, NOT THE MAP. `Setting::map()` memoises in a
+         * process-level static as well as the cache (CLAUDE.md), so inside one
+         * `apply()` the second setting would be compared against a snapshot
+         * taken before the first was written. The row is read directly and the
+         * memo is dropped afterwards, so the storefront serves the new value on
+         * the next request rather than up to five minutes later.
+         */
+        if ($model === Setting::class) {
+            $setting = Setting::query()->find($field);
+
+            if ($setting === null || (string) $setting->value !== $from) {
+                return false;
+            }
+
+            $setting->value = $to;
+            $setting->save();
+
+            Setting::flushMap();
+
+            return true;
+        }
+
         /** @var Product|Brand|Category|null $row */
         $row = $model::query()->find($id);
 
@@ -513,6 +556,44 @@ final class MediaRewrite
      */
     private function references(): iterable
     {
+        /*
+         * THE SETTINGS FIRST, because they are the ones that were missing.
+         *
+         * `og_default_image` and `org_logo` are pictures with no owning ROW:
+         * the storefront publishes both on every page (Seo.php), and nothing in
+         * this class could re-point either, so a share image left on the old
+         * host stayed there through every "bring these across" the owner ever
+         * pressed. `MediaAudit` could not see them either — the pair is fixed
+         * together, from the one list, because a picture this can rewrite and
+         * the audit cannot see is a rewrite nobody is ever told to make.
+         *
+         * `App\Support\MediaUsage::SITE_KEYS` is that list. The Media Library's
+         * delete guard reads it too, so "which settings hold a picture" has one
+         * answer on this shop rather than three.
+         *
+         * `id` is 0 and is never looked up — settings have no row id, and
+         * `MediaUsage` already uses zero for exactly this, consistently. The
+         * KEY is the field, which is what replace() writes back to.
+         */
+        $settings = SeoSettings::map();
+
+        foreach (MediaUsage::SITE_KEYS as $key => $label) {
+            $value = $settings[$key] ?? null;
+
+            if (! is_string($value) || trim($value) === '') {
+                continue;
+            }
+
+            yield [
+                'owner_type' => Setting::class,
+                'table' => 'settings',
+                'id' => 0,
+                'field' => $key,
+                'from' => $value,
+                'url' => trim($value),
+            ];
+        }
+
         foreach (self::COLUMNS as [$model, $table, $field, $isList]) {
             $column = $field === 'images' ? 'images' : $field;
 

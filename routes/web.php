@@ -23,9 +23,25 @@ if ($adminPath !== 'admin') {
 
 
 // Storefront — each page is your finalized design, served verbatim.
-Route::get('/sitemap.xml', [SeoFilesController::class, 'sitemap']);
-Route::get('/robots.txt',  [SeoFilesController::class, 'robots']);
-Route::get('/llms.txt',    [SeoFilesController::class, 'llms']);
+/*
+ * THE THREE CRAWL FILES, WITHOUT A SESSION.
+ *
+ * They carry no per-visitor content, yet the `web` group bound a session to
+ * each one and sent two Set-Cookie headers back, which makes them
+ * uncacheable by anything in front of this host. Dropping the five
+ * cookie/session classes is what lets SeoFilesController::publiclyCacheable()
+ * set its header -- it emits nothing while $request->hasSession(), so the
+ * header can never appear beside a Set-Cookie.
+ *
+ * NOT withoutMiddleware(['web']): that would take NoIndexStaging with it and
+ * strip X-Robots-Tag: noindex off a staging sitemap. SecurityHeaders,
+ * NoIndexStaging and CacheHeaders all stay.
+ */
+Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
+    Route::get('/sitemap.xml', [SeoFilesController::class, 'sitemap']);
+    Route::get('/robots.txt',  [SeoFilesController::class, 'robots']);
+    Route::get('/llms.txt',    [SeoFilesController::class, 'llms']);
+});
 Route::get('/{key}.txt', [SeoFilesController::class, 'indexNowKeyFile'])
     ->where('key', '[a-zA-Z0-9\-]{8,128}');
 // Home — server-rendered. The original page fetched /api/products from the
@@ -64,6 +80,11 @@ Route::get('/super-sale', [\App\Http\Controllers\Store\CollectionController::cla
     ->defaults('key', 'super-sale')->name('collection.sale');
 Route::get('/everything-under-54-aed', [\App\Http\Controllers\Store\CollectionController::class, 'show'])
     ->defaults('key', 'under-54')->name('collection.budget');
+
+// Concern-led listings -- /concern/{concern}/. One route for all eight, so a
+// ninth concern is a slug in ConcernCollections::ENABLED rather than another
+// signed package. The file's own header explains why.
+require __DIR__ . '/concern-collections.php';
 
 // Wishlist. Held in a cookie, so it works for guests.
 Route::get('/my-wishlist', [\App\Http\Controllers\Store\WishlistController::class, 'index'])->name('wishlist');

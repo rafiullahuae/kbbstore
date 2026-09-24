@@ -406,6 +406,29 @@ class PageController extends Controller
             // in the one place a shopper decides whether to click.
             'title' => $seoOverride['title'] ?? $post->t('title'),
             'title_is_final' => !empty($seoOverride['title']),
+            /*
+             * WHAT `%%title%%` MEANS INSIDE THE OVERRIDE ABOVE.
+             *
+             * An override sets `title_is_final`, which sends the typed string
+             * through Seo::titleOf()'s template branch — and
+             * TitleTemplate::render() DELETES any token it was not handed.
+             * `%%title%%` is Yoast's word for the POST title, which is this
+             * post's own; Seo cannot recover it from `title`, because in that
+             * branch `title` IS the template. Without this key, an editor
+             * typing Yoast's shipped default into Content → Journal → SEO →
+             * Page title publishes the site name alone, which is the defect
+             * that reached production on 671 product pages and was fixed there
+             * by adding exactly this key to Store\ProductController::show().
+             *
+             * t(), matching the two lines around it, so an Arabic article's tab
+             * is not the English headline.
+             *
+             * INERT WITHOUT AN OVERRIDE. Seo::titleOf() reads `title_token`
+             * only inside the `title_is_final` branch, so on the ordinary
+             * article — no override, no final title — this key is never looked
+             * at and the <head> is byte-for-byte what it was.
+             */
+            'title_token' => $post->t('title'),
             'description' => $seoOverride['desc'] ?? $post->t('excerpt') ?? '',
             /*
              * The cover only counts as an image when it IS one. `posts.cover`

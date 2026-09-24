@@ -8306,6 +8306,104 @@ function gpSourceLine(src){
   }).join('');
 }
 
+/* ------------------------------------------ the ask bucket, answerable (Lane A) */
+/*
+ * WHAT THIS REPLACED. A tile reading "312 need your decision" and nothing to
+ * press. The map re-derived the same 312 on every load, for ever, and the only
+ * way to act on one was to retype the address on Store -> Redirects. Phase 13's
+ * "Rafi approves any discard list" had been open since the map was written, not
+ * for want of a screen but for want of anywhere to PUT an approval —
+ * redirect_decisions is that place.
+ *
+ * GROUPED BY THE QUESTION, NOT LISTED BY THE ROW, and that is the whole design.
+ * Those 312 rows are not 312 questions; they are about eight questions asked a
+ * few hundred times each, and the answer to "this shop answers this address
+ * today — should the old one win?" is one answer for every category in the
+ * list. So each question gets a heading, a count, and two buttons that answer
+ * all of it — with the rows underneath, folded away, for when he wants to check
+ * one before saying yes to four hundred.
+ *
+ * A QUESTION THAT CANNOT BE ANSWERED YES DOES NOT DRAW A YES BUTTON. Three of
+ * them have no destination at all — a category stranded in a parent cycle, a
+ * permalink for a row that was never imported, an address whose identity is in
+ * its query string — and a loop has one that leads back to itself. The server
+ * refuses those too (RedirectMap::decidable); this is what stops him finding
+ * out by pressing.
+ *
+ * NOTHING HERE IS FINAL. "Undo" clears the answers and the rows go back to
+ * being questions, which is why an approval is stored rather than written
+ * straight into `redirects` and forgotten.
+ */
+function gpQuestions(u){
+  const qs=(u.questions||[]).filter(q=>q.asking||q.accepted||q.rejected);
+  if(!qs.length) return '';
+
+  return '<div style="margin-top:14px"><b style="font-size:13px">What this needs you to decide</b>'
+    +'<p style="font-size:12px;color:var(--ink-soft);margin:3px 0 0;max-width:680px">'
+    +'Each block is one question, asked about every address under it. Answer the block, or open it and '
+    +'answer a single address. Nothing is written to the shop until you press '
+    +'&ldquo;Write&nbsp;redirect(s)&rdquo; above.</p>'
+    +qs.map(gpQuestionBlock).join('')
+    +'</div>';
+}
+
+function gpQuestionBlock(q){
+  const answered=q.accepted+q.rejected;
+
+  return '<div class="impfile" style="margin-top:10px">'
+    +'<div class="between" style="align-items:flex-start;gap:10px">'
+      +'<b style="font-size:12.5px">'+impEsc(q.heading)+'</b>'
+      +'<span style="font-size:11.5px;color:var(--ink-soft);white-space:nowrap">'+impNum(q.asking)+' address(es)</span>'
+    +'</div>'
+    +(q.stale
+      ?'<p style="font-size:11.5px;color:#b45309;margin:0">'+impNum(q.stale)+' of these you had already answered — '
+        +'what they point at has changed since, so they are being asked again.</p>'
+      :'')
+    +(q.decidable
+      ?''
+      :'<p style="font-size:11.5px;color:var(--ink-soft);margin:0">There is nothing to say yes to here: these '
+        +'addresses have nowhere on this shop to go. Say no to stop being asked, and fix the cause '
+        +'(re-import, or correct the category tree) if you want them redirected.</p>')
+    +'<div class="impmeta" style="margin-top:2px">'
+      +(q.asking&&q.decidable
+        ?'<button class="btn primary sm gpQAll" data-q="'+impEsc(q.question)+'" data-a="accept" '
+          +'style="padding:3px 9px;font-size:11.5px">Yes to all '+impNum(q.asking)+'</button>':'')
+      // Ghost, not the same green pill as Yes. Two buttons that look identical
+      // beside a question is how somebody says no to four hundred addresses
+      // meaning to say yes.
+      +(q.asking
+        ?'<button class="btn ghost sm gpQAll" data-q="'+impEsc(q.question)+'" data-a="reject" '
+          +'style="padding:3px 9px;font-size:11.5px">No to all '+impNum(q.asking)+'</button>':'')
+      +(answered
+        ?'<span style="margin-left:auto">answered '+impNum(answered)+' ('+impNum(q.accepted)+' yes, '
+          +impNum(q.rejected)+' no) <button class="btn ghost sm gpQClear" data-q="'+impEsc(q.question)+'" '
+          +'style="padding:3px 9px;font-size:11px">Undo</button></span>':'')
+    +'</div>'
+    +(q.rows.length?gpQuestionRows(q):'')
+    // The closing tag is not optional and its absence is not a typo you get
+    // away with: the browser nests the next block inside this one, so eight
+    // questions render as eight levels of indentation on a phone.
+    +'</div>';
+}
+
+function gpQuestionRows(q){
+  return '<details style="margin-top:6px"><summary style="cursor:pointer;font-size:11.5px;color:#2563eb">'
+    +'Show '+(q.asking>q.rows.length?('the first '+impNum(q.rows.length)+' of '+impNum(q.asking)):impNum(q.rows.length))
+    +'</summary>'
+    +'<div class="impscroll" style="margin-top:8px"><table class="imptbl impstack">'
+    +'<thead><tr><th>What</th><th>Old address</th><th>Would go to</th><th>Why it is asking</th><th></th></tr></thead><tbody>'
+    +q.rows.map(r=>'<tr>'
+      +'<td data-l="What">'+impEsc(r.subject)+'</td>'
+      +'<td data-l="Old" style="font-family:var(--mono);font-size:11px">'+impEsc(r.source)+'</td>'
+      +'<td data-l="New" style="font-family:var(--mono);font-size:11px">'+(r.target?impEsc(r.target):'<span style="color:var(--ink-soft);font-family:inherit">nowhere</span>')+'</td>'
+      +'<td data-l="Why">'+impEsc(r.reason)+'</td>'
+      +'<td data-l="" style="white-space:nowrap">'
+        +(q.decidable&&r.target?'<button class="btn primary sm gpQOne" data-s="'+impEsc(r.source)+'" data-a="accept" style="padding:2px 8px;font-size:11px">Yes</button> ':'')
+        +'<button class="btn ghost sm gpQOne" data-s="'+impEsc(r.source)+'" data-a="reject" style="padding:2px 8px;font-size:11px">No</button>'
+      +'</td></tr>').join('')
+    +'</tbody></table></div></details>';
+}
+
 function gbUrlsMediaCard(){
   if(!gbUM) return '<div class="card pad">'
     +'<b style="font-size:14px">Addresses &amp; pictures</b>'
@@ -8326,7 +8424,11 @@ function gbUrlsMediaCard(){
     +gpSourceLine(gbUM.sources)
     +'<div class="impgrid" style="margin-top:8px">'
     +'<div class="impfile"><b>'+u.buckets.migrate.count+'</b><span>redirects to write</span></div>'
-    +'<div class="impfile"><b>'+u.buckets.ask.count+'</b><span>need your decision</span></div>'
+    +'<div class="impfile"><b>'+u.buckets.ask.count+'</b><span>still asking</span>'
+      +((u.answers&&(u.answers.accepted||u.answers.rejected))
+        ?'<span style="font-size:11px">you have answered '+impNum(u.answers.accepted+u.answers.rejected)
+          +' — '+impNum(u.answers.accepted)+' yes, '+impNum(u.answers.rejected)+' no</span>':'')
+      +'</div>'
     +'<div class="impfile"><b>'+u.buckets.discard.count+'</b><span>nothing to do</span></div>'
     +'</div>'
     +'<p style="font-size:12px;color:var(--ink-soft);margin:8px 0 0">'
@@ -8338,6 +8440,10 @@ function gbUrlsMediaCard(){
     +'<button class="btn primary" id="gbUMWrite"'+(gbUMBusy?' disabled':'')+'>Write '+u.diff.create+' redirect(s)</button>'
     +'<button class="btn" id="gbUMUndo"'+(gbUMBusy?' disabled':'')+'>Undo</button>'
     +'</div>'
+    /* UNDER the Write button, not above it. The panel's own copy says "until
+       you press Write redirect(s) above", and a screen whose words point the
+       wrong way is a screen somebody follows into the wrong order. */
+    +gpQuestions(u)
 
     +'<div style="margin-top:16px"><b>Pictures</b></div>'
     +'<div class="impgrid" style="margin-top:8px">'
@@ -8403,6 +8509,40 @@ function gbUMWire(){
     if(!hosts.length){ gbUMMsg='Tick the site to put the pictures back on.'; impPaint(); return; }
     gbUMPost('/urls-media/media',{action:'restore',hosts:hosts},d=>d.restored+' picture(s) put back.');
   };
+
+  /*
+   * The question buttons. Delegated over the rendered nodes rather than bound
+   * by id, because there is one per question and one per row and impPaint()
+   * rebuilds all of them on every answer.
+   *
+   * THE REQUEST NAMES ADDRESSES, NEVER DESTINATIONS. The server re-derives the
+   * map and refuses an address it is not asking about, so the worst this can do
+   * is approve something the shop was already proposing — see
+   * UrlsMediaApiController::decisions().
+   */
+  document.querySelectorAll('.gpQAll').forEach(b=>{
+    b.onclick=()=>{
+      const yes=b.dataset.a==='accept';
+      if(!confirm(yes
+        ?'Say yes to every address under this question?\n\nNothing is written yet — they move into "redirects to write", and you press Write when you are ready.'
+        :'Say no to every address under this question?\n\nThey stop being asked about. Undo puts them back.')) return;
+      gbUMPost('/urls-media/decisions',{action:b.dataset.a,question:b.dataset.q},
+        d=>d.recorded+' address(es) answered'+(d.refused.length?', '+d.refused.length+' could not be':'')+'.');
+    };
+  });
+
+  document.querySelectorAll('.gpQOne').forEach(b=>{
+    b.onclick=()=>gbUMPost('/urls-media/decisions',{action:b.dataset.a,sources:[b.dataset.s]},
+      d=>d.recorded?('Answered '+b.dataset.s+'.'):('That could not be answered.'+(d.refused[0]?' '+d.refused[0]:'')));
+  });
+
+  document.querySelectorAll('.gpQClear').forEach(b=>{
+    b.onclick=()=>{
+      if(!confirm('Undo your answers to this question?\n\nThe addresses go back to being asked about. Redirects already written stay until you press Undo on the redirects themselves.')) return;
+      gbUMPost('/urls-media/decisions',{action:'clear',question:b.dataset.q},
+        d=>d.cleared+' answer(s) undone.');
+    };
+  });
 
   const rebase=$('#gbUMRebase');
   if(rebase) rebase.onclick=()=>gbUMPost('/urls-media/media',{action:'rebase-apply'},
@@ -16331,6 +16471,60 @@ buildNav();
             'Printed on invoices when the Invoice tab has no address of its own.')+
         '</div>')+
 
+      /* ── WHERE THE SHOP IS — Lane S ─────────────────────────────────────
+         The SEO screen has offered an Organization type of "Store" and
+         "LocalBusiness" since it was built, and choosing either published
+         nothing that makes a business local: no address, no coordinates, no
+         hours. These are the boxes behind that choice. App\Support\
+         BusinessAddress decides what may be said and refuses to publish half
+         an address; App\Support\OpeningHours is the one parser that both this
+         screen's validator and the JSON-LD emitter call.
+
+         ON THIS TAB, beside the store name, the currency and the time zone,
+         because where a business trades is a fact about the business — the
+         same judgement Lane DI made putting the support phone here rather than
+         on Mail. It is not on SEO & Meta: that screen is where you say how
+         facts are presented to a search engine, not where the shop's street
+         lives.
+
+         THE PHONE IS NOT REPEATED HERE. The number published to Google is the
+         one in "How customers reach you" directly above, which is already the
+         number the site header and footer print. A second box would be a
+         second place for one fact.
+
+         Every box ships blank, so a shop that never opens this section emits
+         exactly the JSON-LD it emitted before the section existed. */
+      bdSec('Where the shop is',
+        'Your trading address, and — if you have a shop customers can walk into — its map pin and opening hours. This is what tells Google the business is in this city; it is published on every page as structured data, so leave it blank if you trade online only. Nothing here changes your invoices: the address printed on those is on the Invoice tab.',
+        '<div class="bd-grid">'+
+          bdField('set_store_street','Street address',
+            '<input id="set_store_street" value="'+sesc(SETTINGS.store_street)+'" placeholder="Shop 4, Al Wasl Road">',
+            'The building, unit and street, written as you would on a delivery note.')+
+          bdField('set_store_locality','City',
+            '<input id="set_store_locality" value="'+sesc(SETTINGS.store_locality)+'" placeholder="Dubai">',
+            'Required, along with the street and the country, before anything is published.')+
+          bdField('set_store_region','Emirate or region',
+            '<input id="set_store_region" value="'+sesc(SETTINGS.store_region)+'" placeholder="Dubai">',
+            'Optional.')+
+          bdField('set_store_postcode','Postal code',
+            '<input id="set_store_postcode" value="'+sesc(SETTINGS.store_postcode)+'" placeholder="">',
+            'Optional, and normally empty in the UAE — street addresses here do not carry one.')+
+          bdField('set_store_country','Country',
+            '<input id="set_store_country" value="'+sesc(SETTINGS.store_country)+'" placeholder="AE" maxlength="2" style="text-transform:uppercase">',
+            'Two letters, like AE for the United Arab Emirates.')+
+        '</div>'+
+        '<div class="bd-grid">'+
+          bdField('set_store_latitude','Latitude',
+            '<input id="set_store_latitude" value="'+sesc(SETTINGS.store_latitude)+'" placeholder="25.2048">',
+            'From the map pin. Both this and the longitude are needed, or neither is published.')+
+          bdField('set_store_longitude','Longitude',
+            '<input id="set_store_longitude" value="'+sesc(SETTINGS.store_longitude)+'" placeholder="55.2708">',
+            'Only published when the Organization type on SEO &amp; Meta is Store or LocalBusiness — those are the only two that can sit on a map.')+
+        '</div>'+
+        bdField('set_store_hours','Opening hours',
+          '<textarea id="set_store_hours" rows="4" placeholder="Mon-Sat 10:00-22:00&#10;Sun 12:00-20:00">'+sesc(SETTINGS.store_hours)+'</textarea>',
+          'One line per set of hours, like <b>Mon-Sat 10:00-22:00</b>. Use Mon, Tue, Wed, Thu, Fri, Sat, Sun — alone, in a range, or separated by commas. A day you do not list is treated as closed. Saving tells you which line it could not read.'))+
+
       /* YOUR BRAND COLOUR (Lane DN).
 
          `brand_accent` had a reader and no writer. App\View\Composers\Store-
@@ -16743,6 +16937,19 @@ buildNav();
         support_phone: sval('set_support_phone'),
         brand_whatsapp: sval('set_brand_whatsapp'),
         support_email: sval('set_support_email'),
+        /* Where the shop is (Lane S). Same reason as every block above: a key
+           with no line in AdminController::SETTING_RULES is dropped while this
+           endpoint still answers ok. All eight are sent every time, blank
+           included, so clearing a box is how an address is withdrawn — and
+           blank is the shipped state, in which nothing is published at all. */
+        store_street: sval('set_store_street'),
+        store_locality: sval('set_store_locality'),
+        store_region: sval('set_store_region'),
+        store_postcode: sval('set_store_postcode'),
+        store_country: sval('set_store_country'),
+        store_latitude: sval('set_store_latitude'),
+        store_longitude: sval('set_store_longitude'),
+        store_hours: sval('set_store_hours'),
         /* Your brand colour (Lane DN). The reader — StoreComposer, through
            layouts/store.blade.php — has existed since the baseline; this line
            and the `brand_accent` rule in AdminController::SETTING_RULES are the
@@ -17280,6 +17487,11 @@ buildNav();
         var res=await fetch(redirectsApiBase()+'/'+el.dataset.rdtoggle+'/toggle',{method:'POST',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
         var j=await res.json();
         if(j.ok){ el.classList.toggle('on', j.enabled); }
+        // A refusal has to SAY so. Without this the owner clicks the switch,
+        // nothing moves and nothing explains why -- which is the same "a row
+        // nobody can account for" complaint the refusal exists to end. The
+        // Resolve handler below already reads j.message; this one did not.
+        else{ toast(j.message||'Could not update that redirect.'); }
       }catch(e){ toast('Could not update \u2014 check your connection.'); }
     };});
     $$('#rd_list [data-rddel]').forEach(function(b){ b.onclick=async function(){
@@ -17437,11 +17649,19 @@ buildNav();
     var cards=Object.keys(findings).map(function(key){
       var f=findings[key], count=f.count|0, samples=f.samples||[];
       var rows=samples.map(function(s){
-        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px">'+
+        /* WRAPPING, AND A FLOOR UNDER THE NAME — round 2.
+           Six of the ten findings carry a `detail` ("3 of 3 shots", "62 chars"),
+           and on a 390px phone four inline-flex children on one unwrapped line
+           left the NAME column at nothing: the row read as a pill, a detail and
+           a URL running off the card, with the one thing identifying the row
+           squeezed to an ellipsis. The name is what an operator scans for.
+           Wrapping lets the address drop to its own line at narrow widths and
+           changes nothing at 1280, where all four still fit. */
+        return '<div class="row" style="gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;flex-wrap:wrap">'+
           '<span class="pill" style="flex:0 0 auto">'+sesc(s.kind||'')+'</span>'+
-          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(s.name||s.url||'')+'</span>'+
+          '<span style="flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sesc(s.name||s.url||'')+'</span>'+
           (s.detail?'<span style="color:var(--ink-soft);flex:0 0 auto">'+sesc(s.detail)+'</span>':'')+
-          '<span style="color:var(--ink-soft);flex:0 0 auto;font-size:11.5px">'+sesc(s.url||'')+'</span>'+
+          '<span style="color:var(--ink-soft);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px">'+sesc(s.url||'')+'</span>'+
         '</div>';
       }).join('');
       var more=count>samples.length?'<p class="description" style="margin:8px 0 0">+ '+(count-samples.length)+' more, not shown.</p>':'';

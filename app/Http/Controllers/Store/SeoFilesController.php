@@ -4,13 +4,149 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Services\Seo\SeoSettings;
+use App\Support\ConcernCollections;
 use App\Support\Locale;
 use App\Support\Url;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpFoundation\Response;
 
 class SeoFilesController extends Controller
 {
+    /**
+     * ── THE THREE CRAWL FILES, AND WHY THEY CARRIED NO CACHE HEADER ─────────
+     *
+     * /sitemap.xml, /robots.txt and /llms.txt are the only documents this
+     * application serves that are the SAME BYTES FOR EVERY VISITOR. No cart
+     * badge, no signed-in name, no CSRF token, nothing keyed to a person. They
+     * are also the three most-refetched URLs on the site: every crawler that
+     * visits asks for robots.txt first, and the sitemap is rebuilt from a walk
+     * of the whole catalogue — the expensive one to compute and the cheapest
+     * one to reuse.
+     *
+     * They left here with no Cache-Control at all, so Symfony computed
+     * `no-cache, private` for them exactly as it does for a product page, and
+     * every crawler hit paid for the full catalogue walk again.
+     *
+     * ▲ AND THE REASON THAT WAS NOT SIMPLY FIXED, WHICH IS THE WHOLE DESIGN OF
+     * THIS BLOCK. These routes are declared in routes/web.php and therefore run
+     * in the `web` middleware group, which starts a session and leaves a
+     * `Set-Cookie` on the way out — the session cookie from StartSession and,
+     * on a GET, the XSRF-TOKEN cookie from ValidateCsrfToken. A response that
+     * says `Cache-Control: public` AND carries a `Set-Cookie` is a shared-cache
+     * hazard of the exact kind CacheHeaders' docblock describes: one visitor's
+     * cookie handed to the next reader out of the cache. In practice most
+     * proxies refuse to store such a response at all, so the header would have
+     * been decoration; the ones that do store it are the ones that hurt.
+     *
+     * So the header is not the fix on its own. The fix is TWO halves:
+     *
+     *   1. the routes leave the stateful half of the `web` group — the one
+     *      line in routes/web.php this lane does not own, written out below in
+     *      self::STATELESS;
+     *   2. this controller marks the three documents publicly cacheable, but
+     *      ONLY on a request that has no session bound to it.
+     *
+     * Half 2 is what makes half 1 safe to apply at leisure. Until the route
+     * line lands, `$request->hasSession()` is true here, nothing is set, and
+     * these three files leave with exactly the bytes and exactly the headers
+     * they leave with today — so the package can ship first and change nothing.
+     * The day the route line lands, the header appears, and it CANNOT appear
+     * beside a Set-Cookie because the only thing that puts one there is the
+     * middleware whose absence is being tested for. Fail-closed by
+     * construction, not by remembering.
+     *
+     * ── THE LINE FOR routes/web.php ────────────────────────────────────────
+     *
+     * Wrap the three existing route declarations:
+     *
+     *     Route::withoutMiddleware(SeoFilesController::STATELESS)->group(function () {
+     *         Route::get('/sitemap.xml', [SeoFilesController::class, 'sitemap']);
+     *         Route::get('/robots.txt',  [SeoFilesController::class, 'robots']);
+     *         Route::get('/llms.txt',    [SeoFilesController::class, 'llms']);
+     *     });
+     *
+     * A route file change needs the compiled route cache cleared, so the
+     * package carries 2026_12_11_000002_clear_caches_seo_file_cache_headers.
+     *
+     * ── WHAT IS DELIBERATELY *NOT* DROPPED ─────────────────────────────────
+     *
+     * Not `web` wholesale. `$middleware->web(append: [...])` in bootstrap/app.php
+     * puts SecurityHeaders and NoIndexStaging in that group, and NoIndexStaging
+     * is what stamps `X-Robots-Tag: noindex` on a staging copy. Dropping the
+     * group would take a staging sitemap's noindex off with it — the precise
+     * accident robots() below spends thirty lines explaining it must not make.
+     * Only the five classes that touch cookies and the session go; everything
+     * else about these responses is what it was. (CanonicalHost is global, not
+     * grouped, so a private install's X-Robots-Tag is unaffected either way.)
+     */
+    public const STATELESS = [
+        \Illuminate\Cookie\Middleware\EncryptCookies::class,
+        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+    ];
+
+    /**
+     * One hour, shared caches included.
+     *
+     * A CONSTANT AND NOT A SETTING, said plainly because the alternative was
+     * considered. Platform → Cache governs the storefront's HTML, where the
+     * number is a real trade (a stale cart badge against a saving) and the
+     * screen is the right place to make it. There is no such trade here: these
+     * three documents have no per-visitor content to go stale, and an hour is
+     * shorter than the interval at which any crawler refetches them — Google
+     * holds robots.txt for up to twenty-four hours on its own account. A slider
+     * for it would be a control whose every position is equally correct.
+     *
+     * It is also NOT gated on CacheSettings::enabled(). That switch exists so
+     * that APPLYING A PACKAGE cannot silently change the headers of a live
+     * shop; here the route line is that gate, and it is applied by hand, once,
+     * by whoever is ready for it. Two gates would only mean the owner flips two
+     * things to get one effect and half-remembers which.
+     *
+     * `s-maxage` is stated as well as `max-age` rather than left to inherit,
+     * because the whole point of the route change above is that a SHARED cache
+     * may now hold these — so the number a shared cache reads should be in the
+     * header rather than implied by it.
+     */
+    public const PUBLIC_CACHE = 'public, max-age=3600, s-maxage=3600';
+
+    /**
+     * Mark a crawl file publicly cacheable — but only once it is really public.
+     *
+     * THE GUARD IS `hasSession()`, AND IT IS NOT A PROXY FOR THE THING, IT IS
+     * THE THING. Every `Set-Cookie` these responses could carry comes from the
+     * session middleware: StartSession writes the session cookie, and
+     * ValidateCsrfToken writes XSRF-TOKEN only after reading
+     * `$request->session()`. Laravel binds the session onto the request in
+     * StartSession::handle() and nowhere else, so "no session on this request"
+     * and "nothing will attach a cookie to this response" are one condition
+     * observed from one side. There is no window in which this returns false
+     * and a cookie still arrives.
+     *
+     * It cannot be checked on the RESPONSE instead, which is the obvious
+     * alternative and the wrong one: those cookies are added by middleware that
+     * runs after this controller returns, so a response inspected here is
+     * always cookie-free and the check would always pass.
+     *
+     * 200 ONLY. A disabled sitemap is a 404 and a private install's robots.txt
+     * is a different document from a public one's; neither is worth pinning
+     * into a shared cache for an hour, and a 404 that caches is a 404 that
+     * outlives the setting that caused it.
+     */
+    private function publiclyCacheable(Request $request, Response $response): Response
+    {
+        if ($request->hasSession() || $response->getStatusCode() !== 200) {
+            return $response;
+        }
+
+        $response->headers->set('Cache-Control', self::PUBLIC_CACHE);
+
+        return $response;
+    }
     /**
      * The per-visitor paths robots.txt keeps crawlers off.
      *
@@ -72,7 +208,7 @@ class SeoFilesController extends Controller
     }
 
     /** GET /sitemap.xml — dynamic sitemap of indexable URLs. */
-    public function sitemap()
+    public function sitemap(Request $request)
     {
         $s = SeoSettings::map();
         if (SeoSettings::from($s, 'sitemap_enabled') === '0') {
@@ -187,6 +323,30 @@ class SeoFilesController extends Controller
         // is served at /everything-under-54-aed.
         foreach (['new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed'] as $collection) {
             $add($base . '/' . $collection . '/', null, '0.6', 'daily');
+        }
+
+        /*
+         * The concern-led listings — /concern/acne/ and any other concern the
+         * owner has both written copy for and tagged enough products for.
+         *
+         * THE SAME QUESTION THE ROUTER ASKS, ASKED OF THE SAME CLASS.
+         * App\Support\ConcernCollections::live() is what
+         * CollectionController::concern() consults before it 404s, so this
+         * cannot advertise a URL the site then refuses -- a sitemap entry that
+         * 404s is a Search Console error, and the entry two blocks up was
+         * already corrected once for advertising a redirect.
+         *
+         * SO THIS LIST IS USUALLY EMPTY, and that is correct: until the owner
+         * has tagged MIN_PRODUCTS live products for a concern the page does not
+         * exist, and the sitemap says so by not mentioning it. Nothing about
+         * /sitemap.xml changes by a byte on a shop that has not tagged
+         * anything.
+         *
+         * `weekly` rather than the `daily` above: these listings change when an
+         * operator tags a product, not when the catalogue turns over.
+         */
+        foreach (ConcernCollections::live() as $concern) {
+            $add($base . ConcernCollections::path($concern), null, '0.6', 'weekly');
         }
 
         // The content pages behind the footer links. Only the seven slugs
@@ -532,7 +692,10 @@ class SeoFilesController extends Controller
         }
         $xml .= '</urlset>';
 
-        return response($xml, 200)->header('Content-Type', 'application/xml; charset=UTF-8');
+        return $this->publiclyCacheable(
+            $request,
+            response($xml, 200)->header('Content-Type', 'application/xml; charset=UTF-8')
+        );
     }
 
     /**
@@ -719,7 +882,7 @@ class SeoFilesController extends Controller
      * helper and sits forty lines away. tests/Feature/MachineFacingClaimsTest
      * now walks these links the way SeoCrawlSurfaceTest walks the sitemap's.
      */
-    public function llms()
+    public function llms(Request $request)
     {
         $s = SeoSettings::map();
 
@@ -787,12 +950,15 @@ class SeoFilesController extends Controller
             }
         }
 
-        return response(implode("\n", $lines) . "\n", 200)
-            ->header('Content-Type', 'text/plain; charset=UTF-8');
+        return $this->publiclyCacheable(
+            $request,
+            response(implode("\n", $lines) . "\n", 200)
+                ->header('Content-Type', 'text/plain; charset=UTF-8')
+        );
     }
 
 
-    public function robots()
+    public function robots(Request $request)
     {
         /*
          * ── A PRIVATE INSTALL, AND THE TRAP THAT MAKES `Disallow: /` WRONG ──
@@ -837,13 +1003,19 @@ class SeoFilesController extends Controller
                 ."User-agent: *\n"
                 ."Disallow:\n";
 
-            return response($body, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+            return $this->publiclyCacheable(
+                $request,
+                response($body, 200)->header('Content-Type', 'text/plain; charset=UTF-8')
+            );
         }
 
         $s = SeoSettings::map();
         $custom = SeoSettings::from($s, 'robots_txt', '');
         if ($custom !== '') {
-            return response($custom, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+            return $this->publiclyCacheable(
+                $request,
+                response($custom, 200)->header('Content-Type', 'text/plain; charset=UTF-8')
+            );
         }
         $base = $this->base();
 
@@ -915,6 +1087,9 @@ class SeoFilesController extends Controller
 
         $body .= "\nSitemap: {$base}/sitemap.xml\n";
 
-        return response($body, 200)->header('Content-Type', 'text/plain; charset=UTF-8');
+        return $this->publiclyCacheable(
+            $request,
+            response($body, 200)->header('Content-Type', 'text/plain; charset=UTF-8')
+        );
     }
 }

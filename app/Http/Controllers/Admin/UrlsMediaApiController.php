@@ -10,12 +10,14 @@ use App\Services\Import\DocumentMediaRewrite;
 use App\Services\Import\MediaAudit;
 use App\Services\Import\MediaIndex;
 use App\Services\Import\MediaRewrite;
+use App\Services\Import\RedirectDecisions;
 use App\Services\Import\RedirectMap;
 use App\Services\ImportConsole\ImportWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * Store → Import → "Addresses & pictures": the half of Phase 13 that has no
@@ -97,6 +99,12 @@ class UrlsMediaApiController extends Controller
          */
         private readonly DocumentMediaRewrite $journal = new DocumentMediaRewrite,
         private readonly ImportWorkspace $workspace = new ImportWorkspace,
+        /*
+         * The owner's answers to the map's questions. `RedirectMap::propose()`
+         * already folds them in — every caller of the map sees the same
+         * buckets — so this instance is only ever used to WRITE one.
+         */
+        private readonly RedirectDecisions $answers = new RedirectDecisions,
     ) {}
 
     /**
@@ -183,8 +191,19 @@ class UrlsMediaApiController extends Controller
                  * single fact that decides whether any of this does anything:
                  * the redirects table is read from the 404 handler alone.
                  */
-                'note' => 'A redirect only fires on an address that 404s. Rows whose address this shop already '
-                    .'answers are in the discard and ask buckets with the reason on each one.',
+                /*
+                 * THE ASK BUCKET, GROUPED INTO THE QUESTIONS IT IS ACTUALLY
+                 * ASKING. See questions() below: a few hundred rows are a
+                 * handful of questions asked a few hundred times, and this is
+                 * what lets the screen offer one button per question instead of
+                 * one checkbox per row.
+                 */
+                'questions' => $this->questions($proposals),
+                'answers' => $this->answers($proposals),
+                'note' => 'The redirects table is read before the router now, so a row here fires even on an '
+                    .'address this shop already answers — which is why those are questions rather than '
+                    .'discards. Every question below says what writing it would do; answer them in bulk or '
+                    .'one at a time, and Undo puts any of them back.',
             ],
             'media' => [
                 'summary' => $this->audit->summarise($media),
@@ -216,7 +235,14 @@ class UrlsMediaApiController extends Controller
 
         $handle = fopen('php://temp', 'w+b');
 
-        fputcsv($handle, ['decision', 'subject', 'old address', 'new address', 'rule', 'why']);
+        /*
+         * `question` and `your answer` are appended rather than inserted, so a
+         * spreadsheet somebody already has open against the old shape still
+         * reads every column it knew about at the position it knew it at.
+         */
+        fputcsv($handle, [
+            'decision', 'subject', 'old address', 'new address', 'rule', 'why', 'question', 'your answer',
+        ]);
 
         foreach ($proposals as $proposal) {
             fputcsv($handle, [
@@ -226,6 +252,8 @@ class UrlsMediaApiController extends Controller
                 $proposal['target'],
                 $proposal['rule'],
                 $proposal['reason'],
+                (string) ($proposal['question'] ?? ''),
+                (string) ($proposal['answered'] ?? ''),
             ]);
         }
 
@@ -496,6 +524,257 @@ class UrlsMediaApiController extends Controller
         });
 
         return ['removed' => $removed, 'kept' => $kept];
+    }
+
+    /**
+     * Answer a question the map is asking, one row or a whole question at a
+     * time.
+     *
+     * =========================================================================
+     * WHY THIS ENDPOINT EXISTS
+     * =========================================================================
+     *
+     * Phase 13's "Rafi approves any discard list" has been open since the map
+     * was written, and the reason is not that nobody built a screen: there was
+     * nowhere to PUT an approval. The ask bucket was re-derived on every load
+     * and came back identical for ever, so the only way to act on a row was to
+     * retype it on Store → Redirects. Then the bucket grew — see
+     * `RedirectDecisions`' class comment and docs/GP-ADDRESSES-LAND.md §13.7.
+     *
+     * =========================================================================
+     * EVERYTHING IT ACTS ON IS DERIVED HERE, NOT SENT
+     * =========================================================================
+     *
+     * The request names ADDRESSES, or a question code. It never names a
+     * destination. The map is re-derived on this request and an address that is
+     * not a question in it is refused by name, so the worst a caller can do is
+     * approve a redirect this shop was already proposing to write — which is
+     * what the button says it does. Taking a target from the body would make
+     * this an endpoint for pointing `/shop/` anywhere at all, behind a label
+     * that says "approve".
+     *
+     * `routes/urls-media-admin.php` mounts it inside the `admin-api` group, so
+     * it carries `auth:admin` and `NoStoreAdminApi`, and
+     * `AdminCapabilities::RULES` already covers `admin-api/urls-media/**` with
+     * `data.import` — the capability fails closed for anyone else.
+     *
+     * Store → Import → Addresses & pictures → Old addresses · Questions.
+     */
+    public function decisions(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'string', 'in:accept,reject,clear'],
+            'question' => ['nullable', 'string', Rule::in(array_keys(RedirectMap::QUESTIONS))],
+            /*
+             * 255 is `redirect_decisions.source`'s width, which is
+             * `redirects.source`'s. An address longer than either could not be
+             * stored in the map's own table, so it is refused here rather than
+             * silently truncated into an answer about a DIFFERENT address.
+             */
+            'sources' => ['nullable', 'array', 'max:5000'],
+            'sources.*' => ['string', 'max:255'],
+        ]);
+
+        $action = $request->string('action')->toString();
+        $question = trim((string) $request->input('question', ''));
+        /** @var list<string> $sources */
+        $sources = array_values(array_unique(array_map(strval(...), (array) $request->input('sources', []))));
+
+        if ($sources === [] && $question === '') {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Name either some addresses or one question. Answering everything at once is not a '
+                    .'thing this offers, because the questions are not all the same question.',
+            ], 422);
+        }
+
+        /*
+         * A CLEAR BY QUESTION IS READ OFF THE STORED ANSWERS, not off the map.
+         * "Undo all of these" has to reach an answer to a row the map has since
+         * stopped proposing — those are precisely the answers nothing else can
+         * get at.
+         */
+        if ($action === 'clear') {
+            $removed = $question !== ''
+                ? $this->answers->clearQuestion($question)
+                : 0;
+
+            $removed += $sources === [] ? 0 : $this->answers->clear($sources);
+
+            return response()->json(['ok' => true, 'cleared' => $removed, 'refused' => []]);
+        }
+
+        $proposals = $this->map->propose($this->permalinks());
+
+        if ($question !== '') {
+            /*
+             * The bulk path resolves to addresses HERE, off this request's map.
+             * An accept over a question whose rows cannot be accepted resolves
+             * to nothing rather than to a refusal per row: "accept all" on a
+             * question where that is not possible is a button the screen does
+             * not draw, and a refusal list three hundred lines long would be
+             * the noise this whole grouping exists to remove.
+             */
+            foreach ($proposals as $proposal) {
+                if ((string) ($proposal['question'] ?? '') !== $question) {
+                    continue;
+                }
+
+                if ($proposal['decision'] !== RedirectMap::ASK) {
+                    continue;
+                }
+
+                if ($action === RedirectDecisions::ACCEPT && ! RedirectMap::decidable($proposal)) {
+                    continue;
+                }
+
+                $sources[] = (string) $proposal['source'];
+            }
+
+            $sources = array_values(array_unique($sources));
+        }
+
+        $result = $this->answers->record($proposals, $action, $sources, $this->who($request));
+
+        return response()->json([
+            'ok' => true,
+            'recorded' => $result['recorded'],
+            'refused' => array_slice($result['refused'], 0, self::SHOW),
+        ]);
+    }
+
+    /**
+     * Who is answering, for the record kept beside the answer.
+     *
+     * The email as it is now, denormalised — `audit_events` states the
+     * reasoning and it holds here: the answer has to outlive the account, and
+     * an answer that renders blank because an admin was deleted is an answer
+     * nobody can trace.
+     */
+    private function who(Request $request): ?string
+    {
+        $admin = $request->user('admin');
+
+        return is_object($admin) && isset($admin->email) ? (string) $admin->email : null;
+    }
+
+    /**
+     * The ask bucket, grouped into the questions it is actually asking.
+     *
+     * =========================================================================
+     * WHY GROUPED, WHICH IS THE WHOLE POINT OF THIS SCREEN
+     * =========================================================================
+     *
+     * The bucket is a few hundred rows on a real export and they are NOT a few
+     * hundred different questions: they are a handful of questions asked a few
+     * hundred times, and the owner's answer to "this address still answers on
+     * this shop — should the old address win?" is the same answer for every
+     * category in the list. Grouping is what turns an unreadable list into
+     * eight decisions, and `docs/FV-IMPORT-AT-VOLUME.md` §10 is explicit that a
+     * question list which is mostly noise is one nobody finishes.
+     *
+     * The ORDER is `RedirectMap::QUESTIONS`' own, which puts the questions that
+     * are a decision first and the ones that are somebody else's job last — a
+     * count-descending order would move the work about between loads.
+     *
+     * A STALE ROW IS ASKING AGAIN and is counted in `asking`, as well as being
+     * counted in `stale` so the screen can say why it came back.
+     *
+     * @param  list<array<string, mixed>>  $proposals
+     * @return list<array<string, mixed>>
+     */
+    private function questions(array $proposals): array
+    {
+        $groups = [];
+
+        foreach ($proposals as $proposal) {
+            $code = (string) ($proposal['question'] ?? '');
+
+            if ($code === '' || ! isset(RedirectMap::QUESTIONS[$code])) {
+                continue;
+            }
+
+            $groups[$code] ??= [
+                'question' => $code,
+                'heading' => RedirectMap::QUESTIONS[$code]['heading'],
+                'decidable' => RedirectMap::QUESTIONS[$code]['decidable'],
+                'asking' => 0,
+                'accepted' => 0,
+                'rejected' => 0,
+                'stale' => 0,
+                'rows' => [],
+            ];
+
+            $answered = (string) ($proposal['answered'] ?? '');
+
+            if ($answered === RedirectDecisions::ACCEPT) {
+                $groups[$code]['accepted']++;
+
+                continue;
+            }
+
+            if ($answered === RedirectDecisions::REJECT) {
+                $groups[$code]['rejected']++;
+
+                continue;
+            }
+
+            if ($answered === RedirectDecisions::STALE) {
+                $groups[$code]['stale']++;
+            }
+
+            if ($proposal['decision'] !== RedirectMap::ASK) {
+                continue;
+            }
+
+            $groups[$code]['asking']++;
+
+            if (count($groups[$code]['rows']) < self::SHOW) {
+                $groups[$code]['rows'][] = $proposal;
+            }
+        }
+
+        $out = [];
+
+        foreach (array_keys(RedirectMap::QUESTIONS) as $code) {
+            if (isset($groups[$code])) {
+                $out[] = $groups[$code];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * How much of the ask bucket has been answered, over all of it.
+     *
+     * The number that says whether the work list is shrinking, which is the one
+     * thing a per-question count cannot say on its own.
+     *
+     * @param  list<array<string, mixed>>  $proposals
+     * @return array{accepted: int, rejected: int, stale: int, asking: int}
+     */
+    private function answers(array $proposals): array
+    {
+        $out = ['accepted' => 0, 'rejected' => 0, 'stale' => 0, 'asking' => 0];
+
+        foreach ($proposals as $proposal) {
+            $answered = (string) ($proposal['answered'] ?? '');
+
+            if ($answered === RedirectDecisions::ACCEPT) {
+                $out['accepted']++;
+            } elseif ($answered === RedirectDecisions::REJECT) {
+                $out['rejected']++;
+            } elseif ($answered === RedirectDecisions::STALE) {
+                $out['stale']++;
+            }
+
+            if ($proposal['decision'] === RedirectMap::ASK) {
+                $out['asking']++;
+            }
+        }
+
+        return $out;
     }
 
     /**

@@ -94,7 +94,7 @@ Nothing else is read.
             @foreach ($doc['items'] as $item)
                 <tr>
                     <td>
-                        <div class="it-name" dir="auto">{{ $item['name'] }}</div>
+                        <div class="it-name" dir="auto">{{ $item['nameForCustomer'] }}</div>{{-- nameForCustomer, and ONLY on this sheet of the four: the invoice is the customer's copy and Admin\InvoiceController renders it inside OrderLocale::render(), so the rest of it is already their language. The packing slip and the delivery note keep `name` -- they are not wrapped and render in the operator's, which is the split invoices/document.blade.php states. See InvoiceDocument::items(). One line, and at the END of this one, because Blade removes a comment and leaves the newline it sat on. --}}
                         @php
                             $sub = array_values(array_filter([
                                 $item['brand'],

@@ -589,6 +589,33 @@ class BrandController extends Controller
         if (! empty($override['title'])) {
             $ctx['title'] = $override['title'];
             $ctx['title_is_final'] = true;
+            /*
+             * WHAT `%%title%%` MEANS INSIDE THAT BOX, and why it has to be
+             * said here rather than worked out in App\Support\Seo.
+             *
+             * A final title is a TEMPLATE, and Seo::titleOf() resolves it with
+             * the tokens the caller hands over; TitleTemplate::render() DELETES
+             * any token it was not given. Products carried this defect into
+             * production — Yoast's shipped default `%%title%% %%sep%%
+             * %%sitename%%` rendered as the site name alone on all 671 imported
+             * pages — and the same branch serves this page. Nothing can import a
+             * Yoast template into `brands.seo` today, so the only way to get one
+             * in here is to type it into Catalog → Brands → SEO → Page title,
+             * and a box that silently deletes what is typed into it is worse
+             * than one that refuses it.
+             *
+             * `%%title%%` in Yoast is the POST title — for a brand archive, the
+             * brand's own name. Seo cannot derive it from $ctx['title'], which
+             * IS the template. Translated, like the crumb above: an Arabic page
+             * whose tab reads the English name advertises itself as
+             * untranslated in the one place a shopper decides whether to click.
+             *
+             * ABSENT, THE BRANCH IS BYTE-IDENTICAL TO BEFORE — the token is
+             * deleted, which is what every brand page does today. This key is
+             * set only inside this `if`, so a brand with an empty SEO title
+             * cannot move at all.
+             */
+            $ctx['title_token'] = $brand->t('name');
         }
 
         return $ctx;

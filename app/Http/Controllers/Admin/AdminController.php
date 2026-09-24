@@ -1745,6 +1745,91 @@ class AdminController extends Controller
          */
         'store_timezone' => ['tz', 'Time zone'],
 
+        /*
+         * ── WHERE THE SHOP PHYSICALLY IS — Lane S ───────────────────────────
+         *
+         * `org_type` on the SEO screen has offered `Store` and `LocalBusiness`
+         * since that screen was built, and picking either bought NOTHING,
+         * because the Organization node carried no address, no coordinates and
+         * no hours. These eight keys are what make that choice mean something;
+         * App\Support\BusinessAddress turns them into the node and carries the
+         * argument for when it refuses to.
+         *
+         * ON BUSINESS DETAILS AND NOT ON THE SEO SCREEN. This is the same
+         * judgement Lane DI made putting `support_phone` here rather than on
+         * Mail: where a business trades is a fact about the business, like its
+         * name, its currency and its time zone, and it belongs beside them. The
+         * SEO screen is where you say how facts are PRESENTED to a search
+         * engine; it is not where the shop's street lives. Filing an address
+         * under "SEO & Meta" would also mean a shop that later wants it on a
+         * contact page has to go to the SEO screen to change it.
+         *
+         * AND NOT A SECOND USE OF `invoice_address`, which is one free-text
+         * blob printed verbatim on a document. It cannot be decomposed into
+         * streetAddress / addressLocality / addressCountry without guessing,
+         * and guessing is what publishes "Dubai" as a street. The two are also
+         * genuinely allowed to differ: plenty of shops invoice from a trade
+         * licence address and trade from a mall unit. Nothing about invoices
+         * changes here.
+         *
+         * NO TELEPHONE KEY, deliberately — `support_phone`, eleven lines up, is
+         * already the number this shop prints in its own header and footer. A
+         * second "phone for search engines" box is a second place for one fact.
+         *
+         * EVERY ONE SHIPS BLANK, so a shop that never opens the section emits
+         * byte-for-byte the JSON-LD it emitted before they existed.
+         *
+         * ── WHY THESE RULES ────────────────────────────────────────────────
+         *
+         * The four address lines are `text` for the reason this list's header
+         * gives: a street is written a dozen defensible ways in this city
+         * ("Shop 4, Al Wasl Road", "Unit 12 — Gold Souk Extension") and any
+         * length or character rule would refuse a real one. `postalCode` is
+         * `text` and NOT required anywhere, because the UAE does not use postal
+         * codes for street addresses at all.
+         *
+         * `store_country` is `country` AND NOT `code` with 2, which is what it
+         * was first written as. Two reasons, and the first is a bug that rule
+         * would have shipped:
+         *
+         *   `code` HAS NO BLANK ESCAPE. It matches exactly N letters, so ''
+         *   is refused -- correct for `currency`, which a shop must always
+         *   have, and wrong here, where blank is the SHIPPED STATE and the only
+         *   way to withdraw an address once one has been published. An owner
+         *   who moved to an online-only model could clear the street and the
+         *   city and would then be unable to save the screen at all, because
+         *   the country box he had filled in once could never be emptied.
+         *
+         *   It is also read by Google as a claim about where the business is,
+         *   and "AR" typed for "AE" is Argentina. `country` checks membership
+         *   of App\Support\Countries::NAMES -- the same list checkRows() holds
+         *   the per-country delivery lines to -- so the typo is refused at the
+         *   box rather than published. BusinessAddress checks it again before
+         *   emitting, which costs nothing and covers a row written before this
+         *   rule existed.
+         *
+         * `geo` is a new rule and has to be: latitude and longitude are the
+         * only settings in this console with a NUMERIC RANGE that is not a
+         * money amount, and `int` cannot hold 25.2048. It refuses anything
+         * outside ±90 / ±180 rather than clamping, because a clamped
+         * coordinate is a confident wrong place on a map.
+         *
+         * `hours` is a new rule for the stronger reason: it is the only value
+         * here with a SYNTAX, and App\Support\OpeningHours::parse() is the one
+         * function that knows it — this rule and the JSON-LD emitter call the
+         * same parser, so a line the box accepted is a line the emitter can
+         * read. Without that, this screen would accept "monday-ish, 10ish" and
+         * answer "Saved" while nothing ever appeared on a page.
+         */
+        'store_street' => ['text', 'Street address'],
+        'store_locality' => ['text', 'City'],
+        'store_region' => ['text', 'Emirate or region'],
+        'store_postcode' => ['text', 'Postal code'],
+        'store_country' => ['country', 'Country'],
+        'store_latitude' => ['geo', 'Latitude', 90],
+        'store_longitude' => ['geo', 'Longitude', 180],
+        'store_hours' => ['hours', 'Opening hours'],
+
         // Currency display (Store -> Business Details -> Currency). Every one of
         // these has to be here or Save reports success and writes nothing.
         'currency' => ['code', 'Currency', 3],
@@ -2369,6 +2454,76 @@ class AdminController extends Controller
                 return StoreTime::isValidZone($value) && (str_contains($value, '/') || $value === 'UTC')
                     ? $ok($value)
                     : $no("“{$label}” must be a timezone name like Asia/Dubai.");
+
+            case 'geo':
+                /*
+                 * A latitude or a longitude. Blank is allowed and means "no
+                 * coordinates", which is the only way back once a pair has been
+                 * saved -- the same reason `hex` accepts blank.
+                 *
+                 * The shape test and the range test are App\Support\
+                 * BusinessAddress::isCoordinate()'s, not a second copy, so the
+                 * value this screen accepts is exactly the value the emitter
+                 * will publish. A number refused here can never reach a page,
+                 * and a number stored here can never be silently dropped by the
+                 * emitter -- which is the failure mode a separate validator
+                 * would reintroduce the first time one of the two was edited.
+                 *
+                 * REFUSED, NOT CLAMPED. A latitude of 200 is a typo or a
+                 * longitude in the wrong box; clamping it to 90 would publish
+                 * the North Pole as this shop's address and report "Saved".
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                return \App\Support\BusinessAddress::isCoordinate($value, (int) $extra)
+                    ? $ok($value)
+                    : $no("“{$label}” must be a number between -{$extra} and {$extra}, like 25.2048.");
+
+            case 'hours':
+                /*
+                 * Opening hours, checked by the parser that emits them.
+                 *
+                 * One function decides what a line means, and it is the one the
+                 * JSON-LD layer calls -- see App\Support\OpeningHours for why
+                 * that is the whole design. The message comes back naming the
+                 * offending LINE, because the owner is looking at a textarea
+                 * with several in it and "invalid" would not tell him which.
+                 *
+                 * Blank is allowed and means the shop publishes no hours.
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                $hours = \App\Support\OpeningHours::parse($value);
+
+                return $hours['ok'] ? $ok($value) : $no("“{$label}”: " . $hours['error']);
+
+            case 'country':
+                /*
+                 * A two-letter country code that is really a country.
+                 *
+                 * BLANK IS ALLOWED and means "no country", which is how an
+                 * address is withdrawn -- see the note beside `store_country`
+                 * in SETTING_RULES for why `code` could not be reused.
+                 *
+                 * Checked against App\Support\Countries::NAMES rather than
+                 * against a letter count, because the value is published to a
+                 * search engine as a fact about where the business trades.
+                 * Upper-cased on the way in, so the emitter's lookup and this
+                 * one agree without either normalising a second time.
+                 */
+                if ($value === '') {
+                    return $ok('');
+                }
+
+                $code = strtoupper($value);
+
+                return array_key_exists($code, \App\Support\Countries::NAMES)
+                    ? $ok($code)
+                    : $no("“{$label}” must be a two-letter country code, like AE.");
 
             case 'code':
                 $len = (int) $extra;

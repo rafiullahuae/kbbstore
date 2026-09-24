@@ -20,6 +20,7 @@ declare(strict_types=1);
 |     GET  /admin-api/urls-media/map.csv
 |     POST /admin-api/urls-media/redirects
 |     POST /admin-api/urls-media/media
+|     POST /admin-api/urls-media/decisions
 |
 | NOTHING IS CHAINED ONTO THEM. RouteRegistrar::middleware() REPLACES rather
 | than appends, so a `->middleware(...)` here would silently drop NoStoreAdminApi
@@ -42,6 +43,14 @@ declare(strict_types=1);
 |   GET  /urls-media/status     names the hosts the shop's images sit on and the
 |                               addresses it cannot serve — a map of the
 |                               migration's soft spots.
+|   POST /urls-media/decisions  RECORDS AN APPROVAL, and an approval is what
+|                               /urls-media/redirects then writes. It never takes
+|                               a destination from the body — the map is
+|                               re-derived on the request and an address it does
+|                               not propose anything for is refused by name — but
+|                               an anonymous caller who can approve the map is an
+|                               anonymous caller who can decide where this shop's
+|                               indexed addresses go.
 |
 | routes/api.php is unauthenticated by design in this application (CLAUDE.md),
 | so none of these may go there.
@@ -57,6 +66,14 @@ declare(strict_types=1);
 |     GET  /admin-api/urls-media/map.csv    every proposed row, all three buckets
 |     POST /admin-api/urls-media/redirects  {action: write|rollback}
 |     POST /admin-api/urls-media/media      {action: preview|apply|restore, hosts: []}
+|     POST /admin-api/urls-media/decisions  {action: accept|reject|clear,
+|                                            question?: <RedirectMap::QUESTIONS key>,
+|                                            sources?: []}
+|
+| THE NEW ROUTE STILL NEEDS THE ROUTE CACHE CLEARED even though this file was
+| already required: `route:cache` compiles the routes it found AT THE TIME, so a
+| route added to a file that is already wired is a route the server does not
+| have. 2026_12_12_000001_clear_caches_redirect_decisions.php does it.
 |
 | FLAT PATHS UNDER /urls-media/, never /urls-media on its own, and no route
 | parameters anywhere — the same rule import-admin.php states, for the same
@@ -79,3 +96,4 @@ Route::get('/urls-media/map.csv', [UrlsMediaApiController::class, 'map']);
 
 Route::post('/urls-media/redirects', [UrlsMediaApiController::class, 'redirects']);
 Route::post('/urls-media/media', [UrlsMediaApiController::class, 'media']);
+Route::post('/urls-media/decisions', [UrlsMediaApiController::class, 'decisions']);
