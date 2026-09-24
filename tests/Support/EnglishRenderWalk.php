@@ -645,6 +645,25 @@ final class EnglishRenderWalk
             'super-sale' => ['render' => true],
             'everything-under-54-aed' => ['render' => true],
 
+            /*
+             * The concern pages, which land in the same commit as the require
+             * in routes/web.php -- this walk checks the route table in BOTH
+             * directions, so neither half can go first.
+             *
+             * render => false because a concern page does not exist until the
+             * owner has both written its copy and tagged at least
+             * ConcernCollections::MIN_PRODUCTS live products for it, and this
+             * walk seeds a shop where nothing is tagged. Pinning it as
+             * render => true would pin a 404 body and go red the day he tags
+             * his third acne product. The page's own English is pinned by
+             * ConcernCollectionsTest, which builds the rows that make it exist.
+             */
+            'concern/{concern}' => [
+                'params' => ['concern' => 'acne'],
+                'render' => false,
+                'why' => 'a concern page does not exist until the owner has tagged products for it; see ConcernCollectionsTest',
+            ],
+
             // --- build my routine (Lane FM) ----------------------------------
             /*
              * BOTH 404 IN A SHOP'S DEFAULT STATE, and that is the point rather
