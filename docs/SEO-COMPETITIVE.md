@@ -364,3 +364,416 @@ egress open, all of it is roughly an hour's work.
 
 Items 1–13 and 15 are a fetch away. Item 14 is not answerable by this project at
 all and should not be promised.
+
+---
+
+# Part II — Lane S2 deep research
+
+Lane S2, 2026-09-24, branch `lane/seo-research-deep`. Reads on from Part I.
+**Research only — this lane changed no application code.**
+
+## 7. Egress re-tested, and still shut
+
+Re-tested at the start of this lane, because §6 is worth an hour the moment it
+opens:
+
+```
+curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://kbeautyarabia.com/   ->  000
+curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://www.google.com/       ->  000
+WebFetch https://kbeautyarabia.com/  ->  {"error_type":"EGRESS_BLOCKED"}
+```
+
+**Still shut, and shut for everything — not a competitor-specific block.**
+`example.com` and `google.com` fail identically, so this is the allow-list, not
+a WAF. §6 remains entirely unexecuted and every item in it is still open.
+
+`WebSearch` works. Everything in Part II comes from it. The same tagging
+discipline applies: **OBSERVED** with a source, or **UNVERIFIED**.
+
+---
+
+## 8. The correction that matters most: **they have an Arabic site**
+
+Part I §3 lists under UNVERIFIED: *"Whether they run Arabic at all… Every URL I
+found is English. **This may be their biggest weakness**."* The lane brief
+carried the same hypothesis and asked me to establish what I could.
+
+**It is wrong. They have a full Arabic layer on the `ar.` subdomain.**
+
+### OBSERVED — Arabic URLs, indexed, with Arabic SERP titles
+
+| Arabic URL | Indexed title |
+|---|---|
+| [`ar.kbeautyarabia.com/products`](https://ar.kbeautyarabia.com/products) | المجموعات - كيه بيوتي أرابيا - K-Beauty Arabia |
+| [`ar.kbeautyarabia.com/collections/kaja`](https://ar.kbeautyarabia.com/collections/kaja) | منتجات التجميل كاجا |
+| [`ar.kbeautyarabia.com/blogs/k-beauty-blog/top-5-korean-skincare-ingredients-and-their-benefits`](https://ar.kbeautyarabia.com/blogs/k-beauty-blog/top-5-korean-skincare-ingredients-and-their-benefits) | أفضل 5 مكونات كورية للعناية بالبشرة وفوائدها |
+| [`ar.kbeautyarabia.com/blogs/k-beauty-blog/trending-now-the-hottest-korean-skincare-products-of-2024`](https://ar.kbeautyarabia.com/blogs/k-beauty-blog/trending-now-the-hottest-korean-skincare-products-of-2024) | الأكثر رواجاً الآن: أفضل منتجات العناية بالبشرة الكورية لعام … |
+
+This is not a stray translated page. It is **the catalogue, the collections and
+the blog**, all three. The last two rows are the same articles as the English
+blog, translated — so their editorial is translated too, not just their product
+data.
+
+Separately, several **English-path** URLs surface with **Arabic titles** in
+results — [`/collections/face`](https://kbeautyarabia.com/collections/face)
+(منتجات تجميل الوجه), [`/collections/value-sets`](https://kbeautyarabia.com/collections/value-sets)
+(مجموعة منتجات تجميل قيّمة), [`/collections/goodal`](https://kbeautyarabia.com/collections/goodal)
+(منتجات جودال للتجميل), [`/collections/body-care`](https://kbeautyarabia.com/collections/body-care)
+(منتجات العناية بالجسم والتجميل), [`/collections/normal-skin`](https://kbeautyarabia.com/collections/normal-skin)
+(منتجات تجميل للبشرة العادية), [`/collections/frontpage`](https://kbeautyarabia.com/collections/frontpage)
+(الصفحة الرئيسية Beauty Products), [`/collections/kaine`](https://kbeautyarabia.com/collections/kaine)
+(منتجات كاين للتجميل).
+
+**Read that carefully, because it cuts two ways.** It is firm evidence the
+Arabic layer is real and indexed. It is *also* consistent with Google having
+trouble keeping the two language versions apart — an Arabic title rendered
+against an English URL is one of the shapes an hreflang problem takes. I cannot
+tell which from search results alone, and the difference is important, so:
+
+- **OBSERVED:** an Arabic layer exists at `ar.kbeautyarabia.com`, covering
+  products, collections and blog articles.
+- **OBSERVED:** English-path collection URLs surface with Arabic titles.
+- **UNVERIFIED:** whether they emit correct reciprocal `hreflang`, and whether
+  the mixed titles are an hreflang defect or ordinary SERP localisation.
+
+### Why the second half is worth chasing
+
+Shopify's own documentation splits here, and the split lands exactly on their
+configuration. Hreflang is **automatic for subfolder markets** (`/ar/`), but for
+**country-specific domains and subdomains it "require[s] manual implementation
+or a third-party app."**
+([help.shopify.com](https://help.shopify.com/en/manual/markets/customizations/domains-and-languages),
+[get-ryze.ai](https://www.get-ryze.ai/blog/how-to-implement-hreflang-on-shopify-multi-region-stores),
+[1digitalagency.com](https://www.1digitalagency.com/blog/how-to-correctly-implement-hreflang-with-shopify-markets-with-code-examples/))
+
+They are on a **subdomain**. So they are on the branch of Shopify's own
+behaviour where hreflang is *not* automatic and somebody has to have done it by
+hand or bought an app for it. That does not prove they got it wrong. It does
+mean **this is the highest-value single thing in §6 to check the moment egress
+opens**, and it moves to the top of that list.
+
+Two further things follow from the subdomain choice, both citable:
+
+- **Subfolders share domain authority with the primary domain; subdomains are
+  weaker on this point.** ([help.shopify.com](https://help.shopify.com/en/manual/markets/seo),
+  [analyzify.com](https://analyzify.com/hub/shopify-markets-seo))
+  **We serve Arabic at `/ar/`** — a subfolder — per `app/Support/Locale.php:12`.
+  So our URL shape for Arabic is the better of the two, by their platform
+  vendor's own guidance.
+- **Their Arabic URLs keep the English handle.** The Arabic article above is
+  `…/blogs/k-beauty-blog/top-5-korean-skincare-ingredients-and-their-benefits`
+  — Arabic title, English slug, English `/blogs/` and `/collections/` segments.
+  That is Part I §1.5's platform limitation showing up in production.
+
+### What this does to the "Arabic is our advantage" thesis
+
+It narrows it sharply, and it does not kill it. Stated precisely:
+
+| Claim | Status |
+|---|---|
+| "They have no Arabic, we would be alone" | **False.** Disproved above. |
+| "Our Arabic URL shape is better than theirs" | **Supported** — `/ar/` subfolder vs `ar.` subdomain, on Shopify's own guidance |
+| "We can serve Arabic slugs and they structurally cannot" | **Supported** — their live Arabic URLs carry English handles and fixed English path segments |
+| "Their hreflang may be hand-rolled and therefore may be broken" | **UNVERIFIED and worth one fetch** |
+
+**The honest version for the owner: Arabic is not a free win any more. It is
+still a winnable fight, on URL shape and slug language rather than on
+existence.** Anyone who was about to build on "the competitor has no Arabic"
+should stop and read this section first.
+
+---
+
+## 9. Their collection taxonomy, mapped
+
+Part I observed nine collection handles. Search surfaces far more. **Every row
+below appeared as an indexed URL in a search result**, except where the cell
+says otherwise.
+
+### 9.1 By skin type — a whole axis Part I did not see
+
+| Handle | Indexed title |
+|---|---|
+| [`/collections/oily-skin`](https://kbeautyarabia.com/collections/oily-skin) | Oily Skin Beauty Products |
+| [`/collections/sensitive-skin`](https://kbeautyarabia.com/collections/sensitive-skin) | Sensitive Skin Beauty Products |
+| [`/collections/combination-skin`](https://kbeautyarabia.com/collections/combination-skin) | Combination Skin Beauty Products |
+| [`/collections/normal-skin`](https://kbeautyarabia.com/collections/normal-skin) | منتجات تجميل للبشرة العادية |
+
+`/collections/dry-skin` is named in search-engine summaries of their collections
+index but I did not capture it as an indexed URL of its own.
+**Status: the skin-type axis is OBSERVED; `dry-skin` as a specific handle is
+UNVERIFIED.**
+
+### 9.2 By concern — the axis the whole gap analysis turns on
+
+| Handle | Indexed title |
+|---|---|
+| [`/collections/acne`](https://kbeautyarabia.com/collections/acne) | Acne Beauty Products |
+| [`/collections/anti-aging`](https://kbeautyarabia.com/collections/anti-aging) | Anti-aging Beauty Products |
+| [`/collections/hyperpigmentation`](https://kbeautyarabia.com/collections/hyperpigmentation) | Hyperpigmentation Beauty Products |
+
+Search summaries of their collections index consistently list a **seven-concern
+set**: *Acne, Anti-aging, Enlarged Pores/Congestion, Dry & Dehydrated,
+Pigment/Uneven Tone, Redness/Sensitivity, Oily & Blemishes*. That phrasing
+recurred across four independent searches, which is good evidence the nav labels
+are real — but **I captured indexed URLs for only three of the seven.**
+
+- **OBSERVED:** `acne`, `anti-aging`, `hyperpigmentation` exist as collections.
+- **UNVERIFIED:** the handles for the other four. Do not write them into a
+  redirect map or a competitive table as fact.
+
+**This is three times the concern surface Part I credited them with, and it sits
+alongside a parallel skin-type axis.** Part I's §4 conclusion — that
+concern-led collections are their real advantage — is not weakened by the deeper
+map. It is considerably strengthened.
+
+### 9.3 By product type
+
+[`/collections/cleansers`](https://kbeautyarabia.com/collections/cleansers),
+[`/collections/toners`](https://kbeautyarabia.com/collections/toners),
+[`/collections/sun-care`](https://kbeautyarabia.com/collections/sun-care),
+[`/collections/body-care`](https://kbeautyarabia.com/collections/body-care),
+[`/collections/face`](https://kbeautyarabia.com/collections/face),
+[`/collections/value-sets`](https://kbeautyarabia.com/collections/value-sets),
+[`/collections/makeup`](https://kbeautyarabia.com/collections/makeup),
+[`/collections/k-pharmacy-1`](https://kbeautyarabia.com/collections/k-pharmacy-1).
+
+Summaries name a longer list — essences/ampoules, moisturizers, serums, eye
+care, exfoliants, lip care, masks, mists/sprays — **UNVERIFIED as handles.**
+
+### 9.4 By brand
+
+Brands are collections (Part I got this right). Newly observed as indexed URLs:
+[`cosrx`](https://kbeautyarabia.com/collections/cosrx),
+[`kaine`](https://kbeautyarabia.com/collections/kaine),
+[`fully`](https://kbeautyarabia.com/collections/fully),
+[`sulwhasoo`](https://kbeautyarabia.com/collections/sulwhasoo),
+[`celimax`](https://kbeautyarabia.com/collections/celimax),
+[`abib`](https://kbeautyarabia.com/collections/abib),
+[`axis-y`](https://kbeautyarabia.com/collections/axis-y),
+[`roundlab`](https://kbeautyarabia.com/collections/roundlab),
+[`skin-1004`](https://kbeautyarabia.com/collections/skin-1004),
+[`i-m-from`](https://kbeautyarabia.com/collections/i-m-from),
+[`ongredients`](https://kbeautyarabia.com/collections/ongredients),
+[`medicube`](https://kbeautyarabia.com/collections/medicube),
+[`meditherapy`](https://kbeautyarabia.com/collections/meditherapy),
+[`goodal`](https://kbeautyarabia.com/collections/goodal),
+[`numbuzin`](https://kbeautyarabia.com/collections/numbuzin.atom) (see §10),
+[`kaja`](https://ar.kbeautyarabia.com/collections/kaja) (Arabic).
+
+Note the handle artifacts: `skin-1004` for "Skin1004", `i-m-from` for "I'm
+from", `k-pharmacy-1` with a collision suffix. Shopify handle generation,
+unproofread — consistent with Part I §3's reading of their title template.
+
+### 9.5 Other routes
+
+[`/pages/about-us`](https://kbeautyarabia.com/pages/about-us) ("Our Story"),
+[`/pages/brands`](https://kbeautyarabia.com/pages/brands),
+[`/pages/faqs`](https://kbeautyarabia.com/pages/faqs),
+[`/collections/frontpage`](https://kbeautyarabia.com/collections/frontpage),
+[`/collections/best-seller`](https://kbeautyarabia.com/collections/best-seller)
+and a separately-named "Best Sellers" both appear in their brand/collection
+listing — **two collections for one idea**, which is the kind of internal
+duplicate that splits link equity. **Status: the pair is OBSERVED in a
+collections listing; I did not capture two distinct indexed URLs, so treat the
+duplication as strongly indicated rather than proven.**
+
+---
+
+## 10. A genuine technical defect on their side: indexed `.atom` feeds
+
+A search returned this as an indexed result:
+
+> **K-Beauty Arabia** — [`https://kbeautyarabia.com/collections/numbuzin.atom`](https://kbeautyarabia.com/collections/numbuzin.atom)
+
+**OBSERVED, and it is a real finding.** Shopify serves an Atom feed at
+`<collection>.atom` for every collection. It is machine output: the same product
+set as the HTML collection, in XML, at a second address. Having one **in the
+index** means:
+
+- a duplicate of the collection's content at a URL nobody should land on;
+- crawl budget spent on feeds across (at minimum) every brand collection;
+- a result a user can actually reach, which renders as raw XML.
+
+The standard fix is a `robots.txt` rule, and Shopify's default `robots.txt`
+does **not** disallow `.atom` — which is why this is a known, recurring Shopify
+housekeeping item and why an override via `templates/robots.txt.liquid` exists
+(Part I §1.3). They evidently have not done it.
+
+**We do not have this class of defect**, because we do not serve a second
+machine-readable address per listing. Worth one line in the gap table and
+nothing more — it is their problem to fix, not a feature for us to build.
+
+---
+
+## 11. Their blog, article by article
+
+Part I found five article topics. Confirmed indexed article URLs:
+
+| URL | Title |
+|---|---|
+| [`/blogs/k-beauty-blog`](https://kbeautyarabia.com/blogs/k-beauty-blog) | K-Beauty Blog (index) |
+| [`…/trending-now-the-hottest-korean-skincare-products-of-2024`](https://kbeautyarabia.com/blogs/k-beauty-blog/trending-now-the-hottest-korean-skincare-products-of-2024) | Trending Now: The Hottest Korean Skincare Products of 2024 |
+| [`…/korean-beauty-secrets-tips-for-achieving-flawless-skin`](https://kbeautyarabia.com/blogs/k-beauty-blog/korean-beauty-secrets-tips-for-achieving-flawless-skin) | Korean Beauty Secrets: Tips for Achieving Flawless Skin |
+| [`…/effective-tips-for-treating-acne-scars-and-pigmentation-in-korean-skincare`](https://kbeautyarabia.com/blogs/k-beauty-blog/effective-tips-for-treating-acne-scars-and-pigmentation-in-korean-skincare) | Tips for Treating Acne Scars and Pigmentation Using Korean Skincare |
+| [`…/skin-type-guide`](https://kbeautyarabia.com/blogs/k-beauty-blog/skin-type-guide) | Skin Type Guide |
+| [`…/skincare-guide-by-skin-type`](https://kbeautyarabia.com/blogs/k-beauty-blog/skincare-guide-by-skin-type) | Skincare Guide by Skin Type |
+| [`…/top-5-korean-skincare-ingredients-and-their-benefits`](https://ar.kbeautyarabia.com/blogs/k-beauty-blog/top-5-korean-skincare-ingredients-and-their-benefits) | Top 5 Korean Skincare Ingredients and Their Benefits (captured on the **Arabic** host) |
+
+Also named in snippets, **UNVERIFIED as URLs**: "How to Build a Customized
+Korean Skincare Routine for Your Skin Type", "How to Choose the Right K-Beauty
+Moisturizer for Your Skin Type", "Achieving Clearer Skin: 6 Effective Tips for
+Those with Acne-Prone Skin".
+
+### The pattern worth copying
+
+Note **`skin-type-guide` and `skincare-guide-by-skin-type`** — two articles on
+one topic. Combined with `best-seller`/`Best Sellers` (§9.5), their content
+housekeeping is not tight.
+
+But the shape of the programme is the lesson, and it is a deliberate one:
+
+1. **Every article maps onto a collection axis they actually sell.** Skin-type
+   articles ↔ skin-type collections. Acne-scar and pigmentation articles ↔
+   `/collections/acne` and `/collections/hyperpigmentation`. Ingredient articles
+   ↔ the brands that lead on those ingredients.
+2. **Ingredient-led, not product-led.** "Top 5 Korean Skincare Ingredients",
+   Cica/Heartleaf, snail mucin. These answer a question rather than sell a SKU,
+   which is what earns the informational query.
+3. **Translated, not English-only** (§8).
+
+**That is a topical cluster in the textbook sense, and it is what Part I §4 item
+2 was pointing at.** Section 13 below establishes what the textbook actually
+says the cluster should look like.
+
+---
+
+## 12. Off-site: the competitive set is much larger than one competitor
+
+The brief framed this as us versus kbeautyarabia.com. Search does not support
+that framing. **OBSERVED** — UAE/Gulf sites ranking for Korean-skincare queries:
+
+**Specialist K-beauty retailers:**
+[koreanskincarearabia.com](https://koreanskincarearabia.com/) ("Authentic
+K-Beauty Direct from Seoul to UAE" — note the near-identical brand name),
+[crescitebeauty.com](https://crescitebeauty.com/collections/korean-beauty)
+(**bilingual — serves [`/ar/collections/…`](https://crescitebeauty.com/ar/collections/top-korean-skincare-beauty-brands-in-dubai-100-authentic-k-beauty-online?page=4)**),
+[lamisebeauty.com](https://www.lamisebeauty.com/),
+[beautykoreadubai.com](https://beautykoreadubai.com/),
+[8blissbeauty.com](https://8blissbeauty.com/),
+[morefromkorea.com](https://morefromkorea.com/),
+[glamsecret.ae](https://glamsecret.ae/blogs/buy-korean-skincare-in-uae-the-ultimate-2026-guide-to-glass-skin/buy-korean-skincare-in-uae-the-ultimate-2026-guide-to-glass-skin),
+[bloomha.com](https://bloomha.com/best-korean-skincare-brands-available-in-uae-2026-updated-list/).
+
+**Mass retailers with an Arabic K-beauty landing page — the real threat:**
+[Noon](https://www.noon.com/uae-ar/korean-beauty-store-ae/),
+[Centrepoint](https://www.centrepointstores.com/ae/ar/c/beautyandpersonalcare-kbeauty-skin),
+[Faces](https://www.faces.ae/ar/korean-skincare),
+[Bin Sina Pharmacy](https://www.binsina.ae/ar/brand/korean-beauty.html).
+
+**Two things follow.**
+
+First, **`crescitebeauty.com` is bilingual too.** So is every mass retailer in
+that list. §8's narrowing holds: Arabic is table stakes in this market, not a
+moat.
+
+Second, **the mass retailers are the ones with domain authority**, and they all
+have an Arabic K-beauty page. A specialist cannot out-authority Noon. It can
+out-*specific* it — which is the concern-collection argument again, and it is
+the only version of this fight a small shop wins.
+
+### Link targets, named
+
+The brief asked for UAE/Gulf publications and directories that actually link to
+beauty retailers. **OBSERVED, each one is a real page that lists retailers:**
+
+| Target | Evidence |
+|---|---|
+| [Time Out Dubai — "7 best K-Beauty shops in Dubai"](https://www.timeoutdubai.com/kids-shopping/best-k-beauty-stores-in-dubai-2026) | Already links the competitor (Part I). Highest-authority target found. |
+| [MyBayut (Bayut) — Arabic, "محلات مستحضرات تجميل كورية في دبي"](https://www.bayut.com/mybayut/ar/%D9%85%D8%AD%D9%84%D8%A7%D8%AA-%D9%85%D8%B3%D8%AA%D8%AD%D8%B6%D8%B1%D8%A7%D8%AA-%D8%AA%D8%AC%D9%85%D9%8A%D9%84-%D9%83%D9%88%D8%B1%D9%8A%D8%A9-%D8%AF%D8%A8%D9%8A/) | **Arabic-language** Dubai shop roundup. Bayut is a top-tier UAE property portal with a large editorial arm. Not currently listing us. |
+| [The Zenith Magazine — "Top 6 Korean Skincare Products in Dubai"](https://thezenithmagazine.com/6-korean-skincare-products-in-dubai/) | Product/retailer roundup |
+| [Health Magazine AE — press release section](https://healthmagazine.ae/press_release/dubai-welcomes-the-ultimate-k-beauty-experience-with-the-grand-opening-of-k-beauty-on-dubai/) | Accepts UAE beauty press releases |
+| [Publicity Marketplace](https://www.publicitymarketplace.com/K-Beauty%20Arabia) | Where the competitor's NAP is listed (§13) |
+| [Yello.ae](https://www.yello.ae/), [GetListedUAE](https://www.getlisteduae.com/), [LaunchDub directory](https://www.launchdub.ai/directory) | UAE business directories, free listings, NAP citations |
+
+General UAE-citation guidance: NAP consistency across directories, full address
+with emirate/street/area, `+971-4-xxxxxxx` phone format.
+([intersmart.ae](https://intersmart.ae/blog/best-business-directories-in-the-uae/),
+[digitalarabia.ae](https://www.digitalarabia.ae/local-business-listing-sites-in-uae),
+[seolinkworld.com](https://seolinkworld.com/uae-business-listing-sites/))
+
+**All of this is outreach, not code.** It belongs to the owner, and it is
+probably the highest-leverage unglamorous work available.
+
+---
+
+## 13. Their NAP, observed from a third party
+
+[Publicity Marketplace](https://www.publicitymarketplace.com/K-Beauty%20Arabia)
+lists K-Beauty Arabia at **Unit 7, DREC, Al Manara Road, Al Quoz 1, Dubai, UAE**,
+phone **058 534 4111**.
+
+**OBSERVED — but from a third-party directory, not from them.** Two readings,
+both useful:
+
+1. Al Quoz 1 is a warehouse/light-industrial district. Part I called this a
+   "physical Dubai shop" on the strength of the Time Out listing; the address is
+   more consistent with a **warehouse/fulfilment unit** than a mall storefront.
+   The distinction matters for how much `LocalBusiness` markup is really worth
+   to *them*, and it should not be overstated for us either.
+2. **They are in directories.** That is the citation-building behaviour §12
+   describes, visible in the wild.
+
+**UNVERIFIED:** whether that address is current, whether it is retail or
+fulfilment, and whether they emit `LocalBusiness` markup for it (§6 item 4).
+
+---
+
+## 14. What search says about our own site
+
+Not asked for, and it fell out of the searches, and it is actionable, so it is
+here. **OBSERVED** — `kbeautybliss.com` URLs indexed:
+
+[`/`](https://kbeautybliss.com/) ("K-Beauty Bliss UAE | #1 Shop Authentic Korean
+Beauty Products Online"), [`/about/`](https://kbeautybliss.com/about/),
+[`/shop/`](https://kbeautybliss.com/shop/),
+[`/skincare/`](https://kbeautybliss.com/skincare/),
+[`/korean-skincare-brands/`](https://kbeautybliss.com/korean-skincare-brands/),
+[`/skincare-sets/`](https://kbeautybliss.com/skincare-sets/) — *"Best Korean
+Skin Care Sets for Women in **2024**"* — and
+[`/product-category/skincare-sets/`](https://kbeautybliss.com/product-category/skincare-sets/)
+— *"Best Korean Skin Care Sets for Women in **2025**"*.
+
+**Two findings, and the second is a live defect.**
+
+1. **Our titles are already better than theirs.** "K-Beauty Bliss UAE | #1 Shop
+   Authentic Korean Beauty Products Online" against their "Products Beauty
+   Products". Part I §3's judgement that their template is beatable with
+   ordinary effort is confirmed from the other side.
+2. **`/skincare-sets/` and `/product-category/skincare-sets/` are both indexed,
+   with near-identical titles differing only by year.** That is our own
+   duplicate-content problem — the same *class* of problem Part I §1.1 credits
+   us with not having. It is on the legacy WooCommerce site rather than this
+   Laravel port, so it may already be answered by the port's routing or by the
+   redirects table; **I did not verify which, and it needs one person to look.**
+   It is in the build plan as a checked item, not a code change.
+
+Also observed on the live site: delivery *"1–3 days free delivery on orders over
+199 AED"*, *"free returns"*, Barsha Heights, `+971 58 505 2611`,
+`info@kbeautybliss.com`, 50+ brands, Instagram 53K followers
+([instagram.com/kbeauty.bliss](https://www.instagram.com/kbeauty.bliss/),
+[facebook.com/kbeautyblissuae](https://www.facebook.com/kbeautyblissuae/)).
+
+**The delivery and returns strings matter beyond trivia:** `Seo::jsonLd()`
+already supports `shippingDetails` and `hasMerchantReturnPolicy` behind
+`enable_merchant` (off by default), and those two sentences are most of what
+that markup needs. The owner must confirm them as current before anything is
+published as structured data — a wrong shipping threshold in a merchant listing
+is worse than no markup. See the build plan.
+
+---
+
+## 15. Sources for Part II
+
+All cited inline. Competitor URLs are cited as **indexed URLs observed in search
+results**; no page on any competitor domain was fetched, because egress is shut
+(§7).
