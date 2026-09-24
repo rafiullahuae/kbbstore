@@ -201,9 +201,11 @@ class UrlsMediaApiController extends Controller
                 'questions' => $this->questions($proposals),
                 'answers' => $this->answers($proposals),
                 'note' => 'The redirects table is read before the router now, so a row here fires even on an '
-                    .'address this shop already answers — which is why those are questions rather than '
-                    .'discards. Every question below says what writing it would do; answer them in bulk or '
-                    .'one at a time, and Undo puts any of them back.',
+                    .'address this shop already answers. Where this shop already sends an old address to '
+                    .'exactly the place the map would, there is nothing to decide and nothing is written — '
+                    .'the shop follows the category if you rename it and a stored row would not. A question '
+                    .'means the two disagree. Every question below says what writing it would do; answer them '
+                    .'in bulk or one at a time, and Undo puts any of them back.',
             ],
             'media' => [
                 'summary' => $this->audit->summarise($media),
