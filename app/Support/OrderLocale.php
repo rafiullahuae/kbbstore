@@ -10,6 +10,11 @@ use App\Models\OrderItem;
 /**
  * Records, and later restores, the language an order was placed in.
  *
+ * TWO HOOKS AND ONE READER. listen() registers `Order::creating`, which records
+ * the language, and `OrderItem::creating`, which snapshots each line's name in
+ * it -- both for the same stated reason, that a rule applied in some of the
+ * places that create these rows is not a rule. render() is the reader.
+ *
  * ── WRITING IT: A MODEL HOOK, NOT A LINE IN THE CHECKOUT ────────────────────
  *
  * Orders are created in five places in this application —

@@ -54,3 +54,31 @@ The invoice's furniture renders its English defaults in these shots because this
 fixture database has no `ui` translations seeded; those strings are `__()` calls
 and are the interface lane's data, not this change. What this change moved is
 the line name, and it is the only thing being claimed here.
+
+## 3. The Journal, verified rather than taken on trust — `journal-*`
+
+Item 1 of this lane's round-2 brief was "give these standalone layouts the real
+`lang` and `dir` the rest of the shop has". **That had already landed on the
+trunk** — Lane FK gave all five standalone documents
+`Locale::htmlLang()`/`Locale::direction()` and Lane FS gave them Cairo. Rather
+than cite those two documents, this round loaded the pages:
+
+| page | `<html>` | computed `direction` | Cairo on the `<h1>` | `<h1>` |
+| --- | --- | --- | :---: | --- |
+| `/skincare-guide/` | `lang="en" dir="ltr"` | `ltr` | no | Skincare tips & the K-beauty edit |
+| `/ar/skincare-guide/` | `lang="ar" dir="rtl"` | **rtl** | **yes** | Skincare tips & the K-beauty edit |
+| `/f2-journal/` | `lang="en" dir="ltr"` | `ltr` | no | How to layer a K-beauty routine |
+| `/ar/f2-journal/` | `lang="ar" dir="rtl"` | **rtl** | **yes** | **كيف ترتّب روتين العناية الكوري** |
+
+`scrollWidth == clientWidth` at 390 and at 1280 on all four — no horizontal
+page scroll in either direction.
+
+The article's own words are the Arabic row (`posts.title`, `posts.body` through
+`t()`), the header is mirrored and the mobile nav opens from the reading edge.
+
+**What is still English on the Arabic Journal page, and why it is not this
+change:** the breadcrumb ("Home / Journal"), the back link, the tag chip and the
+footer. Those are `__()` interface strings and this fixture database has no `ui`
+translations seeded, so they render their English defaults — which is the
+documented fallback, not a defect in these views. The same is true of the
+invoice furniture in §2.
