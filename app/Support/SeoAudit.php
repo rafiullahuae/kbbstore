@@ -101,6 +101,12 @@ final class SeoAudit
      *     verdict: string
      * }
      */
+    /**
+     * Findings that describe an opportunity rather than a fault, and so are
+     * left out of the one-line verdict. See verdict() for the argument.
+     */
+    private const ADVISORY = ['product_no_image_alt'];
+
     public static function run(): array
     {
         $scanned = [];
@@ -181,6 +187,10 @@ final class SeoAudit
                 'No image',
                 'No Product or CollectionPage image, nothing to share to social, and no entry in an image sitemap.',
             ],
+            'product_no_image_alt' => [
+                'Product image with no alt text',
+                'Alt text is what tells Google Image Search what is IN a photograph, and beauty is a category people shop by looking. These products fall back to their own name, which is accurate and says nothing about the shot — "texture on the back of a hand" is the sentence that wins an image result. Store → Catalogue → Products → the product → Media; every gallery row has its own box.',
+            ],
             'product_no_identifier' => [
                 'Product has neither SKU nor GTIN',
                 'Google Merchant listings and the free shopping surfaces match products on an identifier. Without one this product cannot appear there at all.',
@@ -220,11 +230,23 @@ final class SeoAudit
      */
     private static function override(mixed $seo): array
     {
-        if (is_string($seo)) {
-            $seo = json_decode($seo, true);
+        return self::jsonArray($seo);
+    }
+
+    /**
+     * A json column as an array, whichever database handed it over.
+     *
+     * MySQL gives back a string and SQLite may give back a string or a decoded
+     * value depending on the driver, so every json column in this file is
+     * decoded here rather than matched in SQL.
+     */
+    private static function jsonArray(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = json_decode($value, true);
         }
 
-        return is_array($seo) ? $seo : [];
+        return is_array($value) ? $value : [];
     }
 
     /**
@@ -350,12 +372,39 @@ final class SeoAudit
         $q = DB::table('products')
             ->select('id', 'slug', 'name', 'short_description', 'image', 'seo', 'sku', 'category_id');
 
-        // The GTIN column arrived with the product editor and is not on every
-        // install. One probe, outside the chunk loop.
-        $hasGtin = Schema::hasColumn('products', 'gtin');
+        /*
+         * GTIN, and the two columns the alt-text check needs, all arrived with
+         * the product editor and are not on every install.
+         *
+         * ONE COLUMN LISTING, not three `Schema::hasColumn()` calls. Each of
+         * those is a query, they run before a scan that is already the
+         * heaviest read in the console, and they all ask the same database the
+         * same question about the same table. Outside the chunk loop either
+         * way -- a probe per row would be a probe per product.
+         */
+        $columns = Schema::getColumnListing('products');
+
+        $hasGtin = in_array('gtin', $columns, true);
 
         if ($hasGtin) {
             $q->addSelect('gtin');
+        }
+
+        /*
+         * `images` and `image_alts` arrived with the product editor too, so
+         * they get the same treatment as `gtin`: probed ONCE, outside the chunk
+         * loop, never per row. A schema probe is a query, and this method is
+         * the one place in the audit that runs over the whole catalogue --
+         * StorefrontQueryBudgetTest is a budget, not a suggestion.
+         *
+         * Both are json columns, and MySQL and SQLite disagree about what comes
+         * back out of one, which is why they are decoded in PHP below rather
+         * than matched in SQL -- the same reason override() exists.
+         */
+        $hasAlts = in_array('image_alts', $columns, true) && in_array('images', $columns, true);
+
+        if ($hasAlts) {
+            $q->addSelect('images', 'image_alts');
         }
 
         // The same visibility predicate the sitemap and the shop apply, so the
@@ -364,7 +413,7 @@ final class SeoAudit
         ProductVisibility::raw($q, '');
 
         $q->orderBy('id')->chunk(self::CHUNK, function ($rows) use (
-            &$scanned, &$titles, &$descriptions, &$findings, &$count, $hasGtin
+            &$scanned, &$titles, &$descriptions, &$findings, &$count, $hasGtin, $hasAlts
         ) {
             foreach ($rows as $p) {
                 $override = self::override($p->seo ?? null);
@@ -395,6 +444,63 @@ final class SeoAudit
 
                 if (empty($p->image)) {
                     self::hit($findings, 'no_image', $row);
+                }
+
+                /*
+                 * ALT TEXT, AND WHY THIS IS NOT THE SAME CHECK AS no_image.
+                 *
+                 * A product with no photograph at all is already counted
+                 * above, and counting it twice would be noise -- there is no
+                 * alt to write for a shot that does not exist. So this only
+                 * looks at products that HAVE pictures.
+                 *
+                 * WHAT COUNTS AS MISSING. Product::altFor() never returns an
+                 * empty string: with no stored alt it falls back to
+                 * ProductTitle::alt(brand, name, ...), so every <img> on the
+                 * storefront already carries something and NO PAGE IS BROKEN.
+                 * What is missing is a sentence about the PHOTOGRAPH -- the
+                 * thing Google Image Search matches on, and the reason this is
+                 * a finding rather than a defect. The wording on the card says
+                 * so rather than implying the shop is emitting empty alts,
+                 * because an audit that overstates is an audit that gets
+                 * ignored.
+                 *
+                 * The main image is checked as well as the gallery: it is not
+                 * in `images` at all (Product::altFor()'s note records this),
+                 * and it is the shot that appears in the search result.
+                 */
+                if ($hasAlts) {
+                    $shots = [];
+
+                    foreach (array_merge([$p->image], self::jsonArray($p->images ?? null)) as $shot) {
+                        $shot = is_string($shot) ? trim($shot) : '';
+
+                        // De-duplicated, because the featured shot is often
+                        // repeated as the first gallery row and one photograph
+                        // with one missing sentence is one problem.
+                        if ($shot !== '' && ! in_array($shot, $shots, true)) {
+                            $shots[] = $shot;
+                        }
+                    }
+
+                    $alts = self::jsonArray($p->image_alts ?? null);
+
+                    $without = 0;
+
+                    foreach ($shots as $shot) {
+                        if (trim((string) ($alts[$shot] ?? '')) === '') {
+                            $without++;
+                        }
+                    }
+
+                    if ($without > 0) {
+                        self::hit($findings, 'product_no_image_alt', $row + [
+                            // The screen already prints `detail` beside the
+                            // name. "3 of 5" separates a product nobody has
+                            // described from one that is nearly done.
+                            'detail' => $without . ' of ' . count($shots) . ' shots',
+                        ]);
+                    }
                 }
 
                 $gtin = $hasGtin ? trim((string) ($p->gtin ?? '')) : '';
@@ -609,7 +715,30 @@ final class SeoAudit
         $worst = null;
         $worstCount = 0;
 
-        foreach ($findings as $finding) {
+        foreach ($findings as $key => $finding) {
+            /*
+             * ADVISORY FINDINGS DO NOT WIN THE HEADLINE.
+             *
+             * This line picks the biggest count and calls it "the biggest
+             * issue", which was a fair heuristic while every finding described
+             * something actually wrong. `product_no_image_alt` is not: no page
+             * is broken, every <img> already carries a usable alt from
+             * Product::altFor(), and it will be the largest number on this
+             * screen on any shop that has not yet written alt text -- which is
+             * every shop, the day the check ships. Letting it take the headline
+             * would bury "Canonical points somewhere unsafe (1)" behind "no alt
+             * text (671)", and a canonical handing this shop's ranking to
+             * another domain is worth more than six hundred missing sentences.
+             *
+             * The finding is still COUNTED, still listed, and still carries its
+             * samples. It just does not get to be the sentence at the top.
+             * Every finding that existed before this list did ranks exactly as
+             * it did before.
+             */
+            if (in_array($key, self::ADVISORY, true)) {
+                continue;
+            }
+
             if ($finding['count'] > $worstCount) {
                 $worstCount = $finding['count'];
                 $worst = $finding['label'];

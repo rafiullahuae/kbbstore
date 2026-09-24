@@ -130,8 +130,27 @@ class OrderEmailPresenter
                 static fn (string $v) => $v !== '',
             );
 
+            /*
+             * THE LANGUAGE THE ORDER WAS PLACED IN, NOT THE SHOP'S DEFAULT.
+             *
+             * Every mail this presenter feeds goes to the customer, and
+             * Services\Mail\OrderMailer sends each one inside
+             * OrderLocale::render() so its wording is their language. The line
+             * name was the last thing on those mails still arriving in English:
+             * a shopper who browsed /ar/shop saw the Arabic name on the card, in
+             * the basket drawer and in the checkout summary, and then got a
+             * confirmation calling it something else.
+             *
+             * `name_localised` is the snapshot OrderLocale::listen() took at
+             * checkout, so this is still a record of the day and still costs no
+             * query. NULL -- which is every row while this shop serves one
+             * language -- falls back to the English snapshot.
+             */
+            $name = trim((string) $item->name) !== '' ? trim((string) $item->name) : 'Item';
+            $localised = trim((string) ($item->name_localised ?? ''));
+
             $out[] = [
-                'name' => trim((string) $item->name) !== '' ? trim((string) $item->name) : 'Item',
+                'name' => $localised !== '' ? $localised : $name,
                 'brand' => trim((string) $item->brand),
                 'sku' => trim((string) $item->sku),
                 'variant' => implode(', ', $variant),

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\SettingsService;
+use App\Support\ConcernCollections;
 use Illuminate\Http\Request;
 
 /**
@@ -179,6 +180,113 @@ class CollectionController extends Controller
             'settings' => $this->settings,
             'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products),
         ]);
+    }
+
+    /**
+     * A concern-led listing: /concern/acne/.
+     *
+     * ── WHY THIS IS ITS OWN ACTION AND NOT A FIFTH ROW IN COLLECTIONS ──────
+     *
+     * The four listings above are QUERIES OVER THE WHOLE CATALOGUE with a
+     * hard-coded arm each -- newest, popular, on_sale, budget -- and every one
+     * of them always has products, so every one of them always exists. A
+     * concern listing is none of that: it selects on a column an operator
+     * fills in, it may be empty, and whether it exists at all is a decision
+     * (App\Support\ConcernCollections::isLive()) rather than a constant. Bolting
+     * it onto show() would mean a match arm that can 404 on a key show() has
+     * already promised is valid, and one route parameter meaning two different
+     * kinds of thing.
+     *
+     * It is also ONE ACTION FOR ALL EIGHT CONCERNS, which is the whole point:
+     * adding `dryness` later is copy plus a slug in ENABLED, and touches no
+     * route file. routes/web.php is not this lane's to edit and should not need
+     * editing again for the next seven.
+     *
+     * EVERYTHING BELOW THE SELECTION IS THE SAME CODE THE OTHER FOUR RUN --
+     * the same narrow select, the same paginate-with-$request-page, the same
+     * past-the-end 404, the same seoCtx. A concern page is a collection page;
+     * it should not differ from one by accident.
+     */
+    public function concern(Request $request, string $concern)
+    {
+        /*
+         * 404 UNTIL THE PAGE IS WORTH VISITING, and that is the feature.
+         *
+         * A concern with no copy, or with fewer than MIN_PRODUCTS live
+         * products, has no page: not an empty grid, not a "coming soon". See
+         * ConcernCollections' header for why a thin page here is worse than no
+         * page -- the sitemap asks the same class the same question, so it
+         * cannot advertise a URL this line refuses.
+         */
+        abort_unless(ConcernCollections::isLive($concern), 404);
+
+        [$title, $intro] = $this->concernWording($concern);
+
+        $query = ConcernCollections::query($concern, self::CARD_COLUMNS)
+            ->with('brand:id,name,slug');
+
+        /*
+         * Featured first, then the shop's own default order, then id.
+         *
+         * ENDING IN `id` FOR THE REASON THE FOUR ABOVE DO, which show()'s
+         * docblock sets out in full: paginate() is LIMIT/OFFSET over whatever
+         * order this leaves behind, and LIMIT/OFFSET only partitions the list
+         * when the order is TOTAL. `featured` is a boolean and `position` ties
+         * across most of this catalogue, so without a key that cannot tie a
+         * product can appear on two pages or on neither.
+         */
+        $query->orderByDesc('featured')->orderBy('position')->orderBy('id');
+
+        $page = max(1, (int) $request->query('page', 1));
+
+        $products = $query->paginate(self::PER_PAGE, ['*'], 'page', $page)->withQueryString();
+
+        if ($page > 1 && $page > $products->lastPage()) {
+            abort(404);
+        }
+
+        return view('store.collection', [
+            'key' => 'concern-' . $concern,
+            'title' => $title,
+            /*
+             * The short label for the card eyebrow, which is not the page's
+             * <h1>. RoutineConcerns' OWN shopper-facing key, not a second
+             * string: the concern already has a translated label and inventing
+             * a third wording for the same concept is the drift that class's
+             * header warns about.
+             */
+            'cardLabel' => __(\App\Support\RoutineConcerns::labelKey($concern)),
+            'intro' => $intro,
+            'products' => $products,
+            'settings' => $this->settings,
+            'seoCtx' => $this->seoCtx($request, $title, $intro, $products->total(), $page, $products),
+        ]);
+    }
+
+    /**
+     * A concern page's heading and its sentence, in the shopper's language.
+     *
+     * KEYED, exactly as wordingFor() is, and for the same reason: a const
+     * cannot call __(), and an English string compared against anything is a
+     * second English source that fails silently in one direction. The key is
+     * built from the concern slug, which is the same slug RoutineConcerns
+     * stores and the URL carries, so the page and its copy cannot be paired up
+     * by eye and got wrong.
+     *
+     * A CLOSED LIST AND NOT AN INTERPOLATION would be the rule here as it is
+     * there -- but concern() has already refused anything not in
+     * ConcernCollections::ENABLED before this is reached, and ENABLED is a
+     * constant in this application rather than anything a URL can reach. The
+     * slug is `[a-z-]+` by construction of RoutineConcerns::LIST.
+     *
+     * @return array{0:string,1:string}  [title, intro]
+     */
+    private function concernWording(string $concern): array
+    {
+        return [
+            __('store.concern.title_' . str_replace('-', '_', $concern)),
+            __('store.concern.intro_' . str_replace('-', '_', $concern)),
+        ];
     }
 
     /**

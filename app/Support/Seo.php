@@ -413,10 +413,27 @@ class Seo
              * knows it. So the caller supplies it under `title_token`.
              *
              * ABSENT, THE BEHAVIOUR IS EXACTLY WHAT IT WAS: the token is
-             * deleted. Only Store\ProductController passes it today, so no
-             * other page's title can move. App\Support\ProductSeo::metaTitle()
-             * passes the same value, because the editor's preview promises to
-             * show the bytes the page will publish.
+             * deleted. App\Support\ProductSeo::metaTitle() passes the same
+             * value the product page does, because the editor's preview
+             * promises to show the bytes the page will publish.
+             *
+             * FOUR CALLERS PASS IT, one per overridable thing, and each names
+             * the row `%%title%%` stands for on its own page:
+             *
+             *   Store\ProductController::show()   the product's name
+             *   Store\BrandController::seoCtx()   the brand's name
+             *   Store\ShopController::index()     the category's name
+             *   Store\PageController::post()      the article's headline
+             *
+             * The other three were added after the product fix, on the same
+             * argument and against the same branch. Nothing IMPORTS a Yoast
+             * template into `brands.seo`, `categories.seo` or `posts.seo` — the
+             * only way one gets there is an operator typing it into the SEO box
+             * on that screen, which is precisely why it had to be fixed: a box
+             * that silently deletes what you type into it is worse than a box
+             * that refuses it. Every one of those four sets the key ONLY
+             * alongside `title_is_final`, so a thing with an empty SEO title
+             * cannot move.
              */
             $finalTokens = ['sep' => $sep, 'sitename' => $siteName, 'page' => ''];
 
@@ -887,6 +904,31 @@ class Seo
             $s['social_youtube'] ?? null,
         ]));
         if (!empty($sameAs)) $org['sameAs'] = $sameAs;
+
+        /*
+         * WHERE THE SHOP IS -- address, telephone, and on a Place type the
+         * coordinates and the opening hours.
+         *
+         * MERGED INTO THE ORGANIZATION NODE, NOT EMITTED AS A SECOND ONE.
+         * The obvious shape -- a `LocalBusiness` node beside the `Organization`
+         * node -- would put two nodes on every page claiming to be the same
+         * business, which is the duplicate-schema defect docs/SEO-COMPETITIVE.md
+         * identifies as the classic Shopify review-app failure. It is also
+         * simply wrong: `Store` and `LocalBusiness` are SUBTYPES of
+         * Organization, so the address belongs on the node that already names
+         * the business, whose @type the owner has already chosen.
+         *
+         * App\Support\BusinessAddress decides what may be said -- see its
+         * class comment for why a half-filled address is worse than none, and
+         * why `geo` and `openingHoursSpecification` are gated on the type being
+         * a Place. A shop that has filled none of it in gets exactly the node
+         * it got before this existed, which is rule 1 of this project.
+         *
+         * The values are settings, so they are the same XSS vector `org_name`
+         * is, and they are safe by the same mechanism: encodeJsonLd()'s HEX
+         * flags, pinned by SeoRenderTest. Nothing here is printed unescaped.
+         */
+        $org += BusinessAddress::organizationFragment($s, (string) $org['@type']);
 
         $nodes[] = $org;
 

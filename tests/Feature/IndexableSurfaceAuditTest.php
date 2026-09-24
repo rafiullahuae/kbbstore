@@ -484,3 +484,187 @@ it('cannot be broken out of the XML by a hostile image URL', function () {
 
     expect($doc)->not->toBeFalse('the sitemap was not well-formed XML');
 });
+
+/* ------------------------------------------- alt text on product images (Lane S, round 2) */
+
+/*
+ * WHAT THIS LOOKS LIKE ON THE SHOP. `products.image_alts` and the alt box on
+ * every gallery row of the product editor exist, and the storefront reads them
+ * through Product::altFor(). Nothing anywhere told the owner WHICH products
+ * still had none — the audit reported "No image", which is a different and much
+ * smaller problem, and stopped there. On a beauty catalogue, where people shop
+ * by looking and Google Image Search is a real entry point, the photographs
+ * that nobody has described are the largest untapped surface in the shop and
+ * there was no way to find them.
+ *
+ * Admin path: Store → SEO & Meta → SEO Audit. The fix for each row is
+ * Store → Catalogue → Products → the product → Media.
+ *
+ * MUTATION NOTE: delete the `if ($hasAlts)` block from
+ * SeoAudit::scanProducts() and every test in this section goes red. Change it
+ * to count products with no alt ROW rather than no alt PER SHOT and "counts a
+ * product whose gallery is only half described" goes red.
+ */
+
+it('reports a product whose photographs nobody has described', function () {
+    isaMount();
+    isaSettings();
+
+    $before = isaScan();
+
+    isaProduct(['image' => '/media/alt-none.jpg', 'images' => ['/media/alt-none-2.jpg']]);
+
+    $after = isaScan();
+
+    expect(isaCount($after, 'product_no_image_alt') - isaCount($before, 'product_no_image_alt'))->toBe(1);
+});
+
+it('leaves a fully described product alone', function () {
+    isaMount();
+    isaSettings();
+
+    $before = isaScan();
+
+    isaProduct([
+        'image' => '/media/alt-all.jpg',
+        'images' => ['/media/alt-all-2.jpg'],
+        'image_alts' => [
+            '/media/alt-all.jpg' => 'Texture on the back of a hand',
+            '/media/alt-all-2.jpg' => 'The ingredient list on the box',
+        ],
+    ]);
+
+    $after = isaScan();
+
+    expect(isaCount($after, 'product_no_image_alt') - isaCount($before, 'product_no_image_alt'))->toBe(0);
+});
+
+it('counts a product whose gallery is only half described, and says how far off it is', function () {
+    isaMount();
+    isaSettings();
+
+    $before = isaScan();
+
+    isaProduct([
+        'slug' => 'isa-half-described',
+        'name' => 'ISA Half Described',
+        'image' => '/media/half-1.jpg',
+        'images' => ['/media/half-2.jpg', '/media/half-3.jpg'],
+        'image_alts' => ['/media/half-1.jpg' => 'Texture on the back of a hand'],
+    ]);
+
+    $after = isaScan();
+
+    expect(isaCount($after, 'product_no_image_alt') - isaCount($before, 'product_no_image_alt'))->toBe(1);
+
+    // The screen already prints `detail` beside the name, so "2 of 3 shots"
+    // separates a product nobody has touched from one that is nearly done.
+    $sample = collect($after['findings']['product_no_image_alt']['samples'])
+        ->firstWhere('name', 'ISA Half Described');
+
+    expect($sample['detail'])->toBe('2 of 3 shots');
+});
+
+it('does not count the featured shot twice when the gallery repeats it', function () {
+    // The featured image is very often the first gallery row as well. One
+    // photograph with one missing sentence is one problem, not two.
+    isaMount();
+    isaSettings();
+
+    isaProduct([
+        'slug' => 'isa-repeated-shot',
+        'name' => 'ISA Repeated Shot',
+        'image' => '/media/repeat.jpg',
+        'images' => ['/media/repeat.jpg'],
+    ]);
+
+    $sample = collect(isaScan()['findings']['product_no_image_alt']['samples'])
+        ->firstWhere('name', 'ISA Repeated Shot');
+
+    expect($sample['detail'])->toBe('1 of 1 shots');
+});
+
+it('does not report missing alt text on a product that has no photographs at all', function () {
+    // Already counted as "No image", and there is no alt to write for a shot
+    // that does not exist. Counting it twice is how an audit becomes noise.
+    isaMount();
+    isaSettings();
+
+    $before = isaScan();
+
+    isaProduct(['image' => null, 'images' => []]);
+
+    $after = isaScan();
+
+    expect(isaCount($after, 'no_image') - isaCount($before, 'no_image'))->toBe(1)
+        ->and(isaCount($after, 'product_no_image_alt') - isaCount($before, 'product_no_image_alt'))->toBe(0);
+});
+
+it('does not let missing alt text take the headline away from a real defect', function () {
+    /*
+     * The verdict names the biggest count and calls it "the biggest issue".
+     * That was fair while every finding described something wrong. Missing alt
+     * text is not: no page is broken, every <img> already carries a usable alt
+     * from Product::altFor(), and on the day this check ships it is the largest
+     * number on the screen for every shop. A canonical handing this shop's
+     * ranking to another domain is worth more than six hundred missing
+     * sentences.
+     *
+     * THE SETUP MAKES ALT THE STRICT MAXIMUM rather than hoping it is. The
+     * seeded demo catalogue already carries findings of its own, so a fixed
+     * number of products here would assert the size of that catalogue: the
+     * count is read off a baseline scan and beaten by five. Each product added
+     * has a real description, a SKU, a category and an image, so it lands in
+     * exactly ONE finding -- this one.
+     *
+     * MUTATION NOTE: remove 'product_no_image_alt' from SeoAudit::ADVISORY and
+     * this is red, because the verdict then names the finding with the biggest
+     * count and that finding is now this one.
+     */
+    isaMount();
+    isaSettings();
+
+    $category = Category::create(['slug' => 'isa-headline-cat', 'name' => 'Headline', 'path' => 'isa-headline-cat']);
+
+    $before = isaScan();
+
+    $beat = max($before['findings']
+        ? array_map(static fn (array $f): int => (int) $f['count'], $before['findings'])
+        : [0]) + 5;
+
+    foreach (range(1, $beat) as $i) {
+        isaProduct([
+            'slug' => 'isa-headline-' . $i,
+            'name' => 'ISA Headline Product Number ' . $i,
+            'image' => '/media/headline-' . $i . '.jpg',
+            'category_id' => $category->id,
+            // A DISTINCT description per row, or all of them land in
+            // `duplicate_description` as well and this stops being a product
+            // that has exactly one problem.
+            'short_description' => 'A long enough description to count as a real one, number ' . $i . '.',
+        ]);
+    }
+
+    // And one genuine defect, with a count of exactly one.
+    isaProduct([
+        'slug' => 'isa-off-site-canonical',
+        'name' => 'ISA Off Site Canonical',
+        'image' => '/media/off-site.jpg',
+        'category_id' => $category->id,
+        'short_description' => 'A long enough description to count as a real one, off-site canonical.',
+        'seo' => ['canonical' => 'https://someone-elses-shop.example/steal-this/'],
+    ]);
+
+    $scan = isaScan();
+
+    $counts = array_map(static fn (array $f): int => (int) $f['count'], $scan['findings']);
+
+    // Alt text really is the biggest number on the screen ...
+    expect($counts['product_no_image_alt'])->toBe(max($counts))
+        ->and($counts['product_no_image_alt'])->toBeGreaterThan($counts['bad_canonical'])
+        // ... and the headline still names something that is actually wrong.
+        ->and($scan['verdict'])->not->toContain('alt text')
+        // The finding is still counted and still listed; it just does not get
+        // to be the sentence at the top.
+        ->and($scan['findings']['product_no_image_alt']['samples'])->not->toBeEmpty();
+});

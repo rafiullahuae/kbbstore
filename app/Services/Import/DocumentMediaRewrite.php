@@ -41,11 +41,17 @@ use Illuminate\Support\Facades\DB;
  * so about the storefront, and the same rule applies one level down: a rewrite
  * that touches what it was not asked to touch cannot be reviewed.
  *
- * So the edit is made on the TEXT. `<img …>` tags are found, the `src`
- * attribute's value inside each one is compared against the address being
+ * So the edit is made on the TEXT. `<img …>` and `<a …>` tags are found, the
+ * `src` or `href` value inside each one is compared against the address being
  * re-pointed, and only that run of characters is replaced. Everything else in
  * the article — the whitespace, the entities, the attribute order, the tags
  * this class does not understand — is untouched because it is never rebuilt.
+ *
+ * `<a href>` IS READ AS WELL AS `<img src>`, and `sources()` sets out exactly
+ * which anchors are taken and which two kinds are deliberately left alone. In
+ * one line: an anchor that names a FILE under an uploads root is the same
+ * migration defect as the `<img>` and is fixed the same way; an anchor that
+ * names a PAGE is a redirect question and belongs to `RedirectMap`.
  *
  * `sources()` IS SHARED WITH `MediaAudit`, deliberately. The audit has to see
  * the same addresses this rewrites or the sideloader never fetches the files
@@ -70,8 +76,8 @@ use Illuminate\Support\Facades\DB;
  *      pass does not see it — the same argument `MediaRewrite`'s header makes
  *      about `propose()` versus `proposeRebase()`.
  *
- *   2. THE MATCH IS BY WHOLE VALUE. A `src` is replaced only when it is
- *      byte-identical to the address in the proposal, never by substring. A
+ *   2. THE MATCH IS BY WHOLE VALUE. A `src` or `href` is replaced only when it
+ *      is byte-identical to the address in the proposal, never by substring. A
  *      path that already contains `wp-content/uploads/` cannot be matched by a
  *      rule about `https://old-host/wp-content/uploads/`.
  *
@@ -105,7 +111,30 @@ final class DocumentMediaRewrite
     ];
 
     /**
-     * Every `<img>` source in a document, in the order they appear, once each.
+     * The tags that carry a media address, and the attribute each one uses.
+     *
+     * ONE LIST, read by `tags()`, `attributeOf()` and `addresses()`. It is the
+     * whole definition of "an address in a document" for this application, and
+     * `MediaAudit` reaches it through `sources()` rather than keeping its own.
+     *
+     * `<source srcset>` and `<img srcset>` ARE NOT HERE, and are a real gap
+     * rather than an oversight: a `srcset` is a comma-separated list of an
+     * address and a descriptor, so re-pointing one is a different edit from
+     * replacing an attribute's whole value and would need its own parser and
+     * its own idempotency argument. `RichText::clean()` does not produce them
+     * and no imported body in this shop's export carries one; if one ever
+     * arrives it will read as MISSING on the audit rather than being silently
+     * rewritten, which is the safe direction.
+     *
+     * @var array<string, string>
+     */
+    private const TAGS = [
+        'img' => 'src',
+        'a' => 'href',
+    ];
+
+    /**
+     * Every media address a document points at, in the order they appear.
      *
      * THE ONE PARSER. `MediaAudit` calls this to decide what is still served by
      * the old host, and this class calls it to decide what to re-point. Two
@@ -113,6 +142,51 @@ final class DocumentMediaRewrite
      * use", and the failure would be silent in the worst direction: an address
      * the audit cannot see is a file the sideloader never fetches, so the
      * rewrite that depends on it reports ABSENT for ever.
+     *
+     * =========================================================================
+     * `<a href>` IS IN HERE NOW, AND WHICH ANCHORS ARE NOT
+     * =========================================================================
+     *
+     * WordPress writes one every time a thumbnail links to its full-size image:
+     * `<a href="…/2021/a.jpg"><img src="…/2021/a-300x200.jpg"></a>`. The two
+     * addresses are DIFFERENT FILES, and while only the `<img>` was read the
+     * full-size one was never audited, never fetched and never re-pointed — so
+     * "remote → 0" was reached with every one of those anchors still hot-linked
+     * to a host about to go dark, and the picture a reader gets by clicking was
+     * the last thing on the shop still served by WordPress.
+     *
+     * That is the same migration defect as the `<img>` and it is fixed the same
+     * way. The objection this lane raised in round 1 — "rewriting anchors
+     * changes link behaviour" — is answered by WHICH anchors are taken, not by
+     * leaving them all alone. TWO KINDS ARE DELIBERATELY NOT TAKEN:
+     *
+     *   1. AN ANCHOR THAT IS NOT AN UPLOADS ADDRESS AT ALL. `<a href>` to a
+     *      page on the old site — an article, a category, the home page — is a
+     *      redirect question, not a media one. It belongs to `RedirectMap`,
+     *      whose answer is a row in `redirects` the owner approves, and
+     *      rewriting it here would silently make that decision for him with no
+     *      row to show for it and no way to take it back. `uploadsRelativeTo()`
+     *      returning null is exactly that test.
+     *
+     *   2. AN UPLOADS ADDRESS THAT DOES NOT NAME A FILE.
+     *      `…/wp-content/uploads/2021/` is a directory listing, and
+     *      `/blog/uploads/something/` matches the uploads root by accident
+     *      because the cut is made on a substring. Neither is a file this shop
+     *      can serve, so neither is a picture — and counting them would put
+     *      page addresses into the REMOTE number the whole migration is judged
+     *      by. The last path segment must carry an extension. `<img>` needs no
+     *      such rule: a `src` names a file or it is a broken frame either way.
+     *
+     * Everything else about an anchor is the `<img>` rule unchanged, and the
+     * two guards that matter apply to both: nothing is rewritten unless the
+     * file is already on disk, and the match is on the whole value so a second
+     * pass cannot double a path.
+     *
+     * WHAT IS DROPPED, for an anchor exactly as for an `<img>`: a query string
+     * and a fragment. `…/a.pdf?ver=3` is re-pointed to `/wp-content/uploads/…/
+     * a.pdf`, because `uploadsRelativeTo()` goes through
+     * `MediaUsage::normalise()`, which cuts both. On a static file under the
+     * web root a cache-buster is the only thing either can be.
      *
      * ENTITIES ARE DECODED. An imported body has been through
      * `RichText::clean()`, which serialises with DOMDocument and therefore
@@ -125,6 +199,29 @@ final class DocumentMediaRewrite
      */
     public static function sources(?string $html): array
     {
+        $out = [];
+
+        foreach (self::addresses($html) as $address) {
+            if (! in_array($address['url'], $out, true)) {
+                $out[] = $address['url'];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The same addresses, each with the attribute it was read from.
+     *
+     * Separate from `sources()` only because the audit wants to print "this is
+     * a link, not a picture" and the rewrite does not care. Duplicates are kept
+     * here — the same file linked twice is two places in the document — and
+     * collapsed by `sources()`.
+     *
+     * @return list<array{url: string, tag: string, attribute: string}>
+     */
+    public static function addresses(?string $html): array
+    {
         if (! is_string($html) || $html === '') {
             return [];
         }
@@ -132,20 +229,48 @@ final class DocumentMediaRewrite
         $out = [];
 
         foreach (self::tags($html) as $tag) {
-            $src = self::srcOf($tag);
+            $found = self::attributeOf($tag);
 
-            if ($src === null || trim($src['value']) === '') {
+            if ($found === null || trim($found['value']) === '') {
                 continue;
             }
 
-            $url = trim(html_entity_decode($src['value'], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            $url = trim(html_entity_decode($found['value'], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
-            if ($url !== '' && ! in_array($url, $out, true)) {
-                $out[] = $url;
+            if ($url === '' || ! self::carried($tag['name'], $url)) {
+                continue;
             }
+
+            $out[] = ['url' => $url, 'tag' => $tag['name'], 'attribute' => self::TAGS[$tag['name']]];
         }
 
         return $out;
+    }
+
+    /**
+     * Is this address one this class claims, for the tag it was found on?
+     *
+     * `<img src>` is claimed unconditionally: whatever it names, it is the
+     * document asking for a picture, and `MediaAudit` has to see it even when
+     * it is on a CDN this class will never rewrite.
+     *
+     * `<a href>` is claimed only when it names a FILE under an uploads root —
+     * the two carve-outs `sources()` sets out above, and the whole difference
+     * between re-pointing a picture and quietly re-routing a link.
+     */
+    private static function carried(string $tag, string $url): bool
+    {
+        if ($tag === 'img') {
+            return true;
+        }
+
+        $relative = MediaRewrite::uploadsRelativeTo($url);
+
+        if ($relative === null) {
+            return false;
+        }
+
+        return preg_match('/\.[A-Za-z0-9]{1,8}$/', $relative) === 1;
     }
 
     /**
@@ -170,7 +295,7 @@ final class DocumentMediaRewrite
         $out = [];
 
         foreach ($this->documents() as $document) {
-            foreach (self::sources($document['html']) as $url) {
+            foreach (self::carriers($document['html']) as $url => $tags) {
                 $host = parse_url($url, PHP_URL_HOST);
 
                 if (! is_string($host) || ! in_array(strtolower($host), $hosts, true)) {
@@ -184,6 +309,16 @@ final class DocumentMediaRewrite
                 }
 
                 $to = Media::urlFor($relative);
+
+                /*
+                 * WHICH TAGS POINT AT IT, said on the row rather than worked
+                 * out again by whoever reads the list. "A picture" and "a link
+                 * to a file" are the same defect and the same fix, but they are
+                 * not the same sentence to somebody deciding whether to press
+                 * the button, and the screen prints this.
+                 */
+                $written = self::wording($tags);
+
                 $row = [
                     'owner_type' => $document['model'],
                     'table' => $document['table'],
@@ -193,6 +328,8 @@ final class DocumentMediaRewrite
                     'to' => $to,
                     'path' => $relative,
                     'occurrences' => self::countOf($document['html'], $url),
+                    'tags' => $tags,
+                    'carried_by' => $written,
                 ];
 
                 if (! is_file(public_path($relative))) {
@@ -200,7 +337,8 @@ final class DocumentMediaRewrite
                         'decision' => self::ABSENT,
                         'reason' => 'nothing at '.public_path($relative).' yet. Copy wp-content/uploads across, or '
                             .'let the picture fetch finish, before this article stops depending on '.$host.'; '
-                            .'re-pointing the tag first would turn a picture that loads into one that does not.',
+                            .'re-pointing the '.$written.' first would turn something that works into something '
+                            .'that does not.',
                     ];
 
                     continue;
@@ -210,7 +348,8 @@ final class DocumentMediaRewrite
                     'decision' => $to === $url ? self::SAME : self::REWRITE,
                     'reason' => $to === $url
                         ? 'already exactly what this would write'
-                        : 'the file is under this shop\'s web root, so the <img> can stop depending on '.$host,
+                        : 'the file is under this shop\'s web root, so the '.$written.' can stop depending on '
+                            .$host,
                 ];
             }
         }
@@ -385,7 +524,7 @@ final class DocumentMediaRewrite
         $cursor = 0;
 
         foreach (self::tags($html) as $offset => $tag) {
-            $src = self::srcOf($tag);
+            $src = self::attributeOf($tag);
 
             if ($src === null) {
                 continue;
@@ -393,6 +532,13 @@ final class DocumentMediaRewrite
 
             $url = trim(html_entity_decode($src['value'], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
+            /*
+             * THE MAP IS THE ALLOWLIST, which is why there is no second copy of
+             * the anchor rules here. Every key in it came out of `propose()`,
+             * which only ever offers an address `addresses()` claimed — so an
+             * `<a href>` to a page, or to an uploads directory, is absent from
+             * the map and cannot be matched however this loop is called.
+             */
             if (! array_key_exists($url, $map)) {
                 continue;
             }
@@ -407,7 +553,8 @@ final class DocumentMediaRewrite
              * AN UNQUOTED ATTRIBUTE IS QUOTED IF THE NEW VALUE NEEDS IT.
              *
              * `<img src=https://old/wp-content/uploads/a%20b.jpg>` is legal
-             * HTML, and `MediaUsage::normalise()` rawurldecodes — so the path
+             * HTML — and so is the same thing on an `<a href>` — and
+             * `MediaUsage::normalise()` rawurldecodes, so the path
              * this writes back has a real space in it, and written unquoted the
              * space ENDS the attribute: `b.jpg` becomes a second attribute and
              * the picture is a broken frame. htmlspecialchars does not escape
@@ -432,33 +579,62 @@ final class DocumentMediaRewrite
     }
 
     /**
-     * Every `<img …>` tag in the document, keyed by its byte offset.
+     * Every tag this class reads, keyed by its byte offset in the document.
      *
-     * @return array<int, string>
+     * `<img>` and `<a>`, and the attribute each one carries its address in is
+     * the constant above rather than a second regular expression per tag — two
+     * lists of "which tags mean a picture" is how the audit and the rewrite
+     * start disagreeing.
+     *
+     * A `>` INSIDE AN ATTRIBUTE VALUE ends a match early here, because the tag
+     * is cut with `[^>]*`. That was already true of `<img>` and is left alone:
+     * the failure is a tag this class does not recognise, so the address is
+     * neither audited nor rewritten — it is skipped, never corrupted, which is
+     * the only direction a surgical rewriter is allowed to be wrong in.
+     *
+     * @return array<int, array{name: string, text: string}>
      */
     private static function tags(string $html): array
     {
-        if (preg_match_all('/<img\b[^>]*>/i', $html, $matches, PREG_OFFSET_CAPTURE) === false) {
+        $names = implode('|', array_keys(self::TAGS));
+
+        if (preg_match_all('/<('.$names.')\b[^>]*>/i', $html, $matches, PREG_OFFSET_CAPTURE) === false) {
             return [];
         }
 
         $out = [];
 
-        foreach ($matches[0] as $match) {
-            $out[(int) $match[1]] = (string) $match[0];
+        foreach ($matches[0] as $index => $match) {
+            $out[(int) $match[1]] = [
+                'name' => strtolower((string) $matches[1][$index][0]),
+                'text' => (string) $match[0],
+            ];
         }
 
         return $out;
     }
 
     /**
-     * The `src` attribute of one tag: its raw value and where in the tag it is.
+     * The address attribute of one tag: its raw value and where in the tag it
+     * is.
      *
+     * `src` on an `<img>`, `href` on an `<a>` — and never both, because a tag
+     * carrying the other one is not carrying an address this class understands.
+     *
+     * @param  array{name: string, text: string}  $tag
      * @return array{value: string, at: int, quote: string}|null
      */
-    private static function srcOf(string $tag): ?array
+    private static function attributeOf(array $tag): ?array
     {
-        if (preg_match('/\ssrc\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'>]+))/i', $tag, $m, PREG_OFFSET_CAPTURE) !== 1) {
+        $attribute = self::TAGS[$tag['name']] ?? null;
+
+        if ($attribute === null) {
+            return null;
+        }
+
+        $pattern = '/\s'.$attribute.'\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'>]+))/i';
+
+        if (preg_match($pattern, $tag['text'], $m, PREG_OFFSET_CAPTURE) !== 1) {
             return null;
         }
 
@@ -471,19 +647,67 @@ final class DocumentMediaRewrite
         return null;
     }
 
+    /**
+     * How many places in this document carry exactly this address.
+     *
+     * Counted over `addresses()` and not over the raw tags, so an `<a href>`
+     * this class does not claim is not counted as an occurrence of a file it
+     * would then refuse to rewrite.
+     */
     private static function countOf(string $html, string $url): int
     {
         $n = 0;
 
-        foreach (self::tags($html) as $tag) {
-            $src = self::srcOf($tag);
-
-            if ($src !== null && trim(html_entity_decode($src['value'], ENT_QUOTES | ENT_HTML5, 'UTF-8')) === $url) {
+        foreach (self::addresses($html) as $address) {
+            if ($address['url'] === $url) {
                 $n++;
             }
         }
 
         return $n;
+    }
+
+    /**
+     * Each distinct address in a document, and the tags that point at it.
+     *
+     * One row per (document, address) — the same photograph appearing three
+     * times in one article is ONE decision, and a list that reported it three
+     * times would be a list the owner reads as three problems. The tag names
+     * come along so the row can say whether it is a picture, a link, or the
+     * WordPress thumbnail-to-full-size pair that is both.
+     *
+     * @return array<string, list<string>>
+     */
+    private static function carriers(string $html): array
+    {
+        $out = [];
+
+        foreach (self::addresses($html) as $address) {
+            $out[$address['url']] ??= [];
+
+            if (! in_array($address['tag'], $out[$address['url']], true)) {
+                $out[$address['url']][] = $address['tag'];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * What to call a set of tags in a sentence the owner reads.
+     *
+     * @param  list<string>  $tags
+     */
+    private static function wording(array $tags): string
+    {
+        $picture = in_array('img', $tags, true);
+        $link = in_array('a', $tags, true);
+
+        if ($picture && $link) {
+            return 'picture and the link to it';
+        }
+
+        return $picture ? 'picture' : 'link to this file';
     }
 
     /**

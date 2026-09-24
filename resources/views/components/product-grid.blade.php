@@ -58,6 +58,47 @@
             $kbbDp = $onSale ? \App\Support\Money::decimalsToDistinguish((int) $p->price, $p->effectivePrice()) : null;
             $isNew = $p->created_at && $p->created_at->gt(now()->subDays(30));
             $rating = (int) round((float) $p->rating);
+            // See components/product-card.blade.php: a variable parent carries
+            // no price of its own, effectivePrice() answers 0 for it, and this
+            // skinned tile printed AED 0 exactly as the other one did. Null for
+            // every product that is not one, which is almost all of them.
+            $kbbRange = app(\App\Services\VariantPricing::class)->range($p);
+
+            /*
+             * THE WHOLE PRICE CELL, BUILT HERE AND NOT IN THE MARKUP, for two
+             * reasons that both cost a red suite before this shape was found.
+             *
+             * A Blade directive on a line of its own contributes its
+             * indentation and its newline to the rendered page, and
+             * StorefrontEnglishUnchangedTest compares BYTES: an `@php` line and
+             * a `{{-- --}}` line beside the markup moved /shop, a category
+             * archive and the product page's related rail without changing one
+             * visible character on any of them.
+             *
+             * And a nested `@else@if ... @endif @endif` inside one line does
+             * not compile at all -- "syntax error, unexpected token endif",
+             * which reaches the browser as a 500 on every brand page. One
+             * value, decided here, leaves the markup a flat @if/@elseif/@else.
+             */
+            $kbbRangeHtml = null;
+
+            if ($kbbRange !== null) {
+                // Both ends at ONE precision, and the precision that separates
+                // them -- the same rule as the sale pair beside it, and for the
+                // same reason: two figures the reader is invited to compare
+                // must not round into the same string.
+                $kbbRangeDp = \App\Support\Money::decimalsToDistinguish($kbbRange[0], $kbbRange[1]);
+
+                $kbbRangeHtml = \App\Services\VariantPricing::isSpread($kbbRange)
+                    ? __('store.product_card.price_range', [
+                        'low' => \App\Support\Money::format($kbbRange[0], $kbbRangeDp),
+                        'high' => \App\Support\Money::format($kbbRange[1], $kbbRangeDp),
+                    ])
+                    // Every option the same money is a single price, not a
+                    // range of one. Seo::aggregateOffer() declines to publish a
+                    // lowPrice equal to its highPrice for the same reason.
+                    : \App\Support\Money::format($kbbRange[0]);
+            }
         @endphp
         <a class="kbb-card" href="{{ $p->url() }}">
             <div class="kbb-card-thumb">
@@ -79,7 +120,7 @@
                 @if ($p->review_count)
                     <div class="kbb-card-rate"><span class="kbb-crate">@for ($i = 1; $i <= 5; $i++)<span class="kbb-cstar{{ $i <= $rating ? ' on' : '' }}">★</span>@endfor</span> <span class="kbb-card-rc">({{ $p->review_count }})</span></div>
                 @endif
-                <div class="cp">@if ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price, $kbbDp) !!}</span> @endif<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span></div>
+                <div class="cp">@if ($kbbRangeHtml !== null)<span class="kbb-card-price">{!! $kbbRangeHtml !!}</span>@elseif ($onSale)<span class="kbb-card-reg">{!! \App\Support\Money::format((int) $p->price, $kbbDp) !!}</span> <span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span>@else<span class="kbb-card-price">{!! \App\Support\Money::format($p->effectivePrice(), $kbbDp) !!}</span>@endif</div>
                 <span class="kbb-card-cart" data-kbb-add="{{ $p->id }}" data-price="{{ number_format($p->effectivePrice() / 100, 2, '.', '') }}" data-name="{{ $name }}">{{ __('store.product_card.add_to_cart') }}</span>
             </div>
         </a>

@@ -60,10 +60,41 @@ class CategoryArchiveController extends Controller
     {
         $verdict = CategoryPath::resolve($path);
 
-        // A stale or non-canonical path whose leaf still exists. 301, so the
-        // link equity on the old address consolidates onto the real one.
+        /*
+         * A stale or non-canonical path whose leaf still exists. 301, so the
+         * link equity on the old address consolidates onto the real one.
+         *
+         * ─── CategoryPath::redirectUrl(), NOT redirect($verdict['to']) ──────
+         *
+         * This line used to read `redirect($verdict['to'], …)`, and that handed
+         * a root-relative path to Laravel's UrlGenerator, WHICH STRIPS THE
+         * TRAILING SLASH. So `/product-category/toners/` 301'd to
+         * `/product-category/skincare/toners` — an address that answers 200 and
+         * whose own `<link rel="canonical">` points at the slashed form. The
+         * shop 301'd to an address that then declared a different one canonical,
+         * which costs a crawler a redirect hop and then a canonical hop and
+         * consolidates the link equity onto neither.
+         *
+         * Same defect, same fix as `docs/GP-ADDRESSES-LAND.md` §5.3 made for
+         * the redirects TABLE: `Url::redirect()`. That package left this
+         * controller as the last producer of a 301 in the application still
+         * doing it the other way, and `tests/Feature/RedirectMiddlewareTest.php`
+         * pinned the defect as-is with the reason written on it. This closes it;
+         * the pin is advanced there with the old assertion quoted.
+         *
+         * It also fixes the language. `Url::redirect()` goes through
+         * `Url::to()`, so an Arabic reader following a stale category link now
+         * lands on the Arabic archive rather than being dropped onto the
+         * English one.
+         *
+         * NOT A LOOP. The destination is `CategoryPath::canonicalPath()`, which
+         * is a fixed point — resolve() answers `ok` for it, never `redirect` —
+         * so this hop cannot bounce back here however many times a category is
+         * re-parented. `CategoryPathContractTest` asserts the second request
+         * answers 200 rather than another 301.
+         */
         if ($verdict['status'] === 'redirect') {
-            return redirect($verdict['to'], $verdict['code']);
+            return redirect(CategoryPath::redirectUrl($verdict['to_path']), $verdict['code']);
         }
 
         // No such category, and no record of one ever having been there.
