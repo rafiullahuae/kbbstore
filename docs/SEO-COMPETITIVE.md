@@ -777,3 +777,46 @@ is worse than no markup. See the build plan.
 All cited inline. Competitor URLs are cited as **indexed URLs observed in search
 results**; no page on any competitor domain was fetched, because egress is shut
 (§7).
+
+---
+
+## 16. Addendum to §6 — revised priority, and two items answered
+
+§6 is Lane S's checklist of what needs egress. It is left as written. Part II
+changes the order it should be worked in and retires two rows.
+
+**Work §6 in this order when egress opens:**
+
+1. **§6 item 3 — hreflang and the Arabic layer.** Promoted to first. §8
+   establishes they run `ar.kbeautyarabia.com`, which is the one Shopify
+   configuration where hreflang is **not** automatic, and several English-path
+   URLs surface with Arabic titles. Fetch `ar.kbeautyarabia.com/products` and its
+   English equivalent, read `rel="alternate" hreflang` on both, check
+   reciprocity and `x-default`. **This single answer decides how hard to push
+   the Arabic work** — see `SEO-BUILD-PLAN.md` item 5.
+2. **§6 items 8 and 9** — the `within: collection` question and the canonical on
+   a scoped product URL. Now higher value, because §9 shows they run four
+   collection axes, so a product sits in many collections and the scoped-URL
+   vote is multiplied.
+3. **§6 item 15 — the full collection taxonomy.** §9 maps most of it from search,
+   but four of the seven claimed concern handles are still UNVERIFIED and
+   `sitemap_collections_1.xml` settles them in one fetch.
+4. Everything else in §6, unchanged.
+
+**Two rows can be answered or retired now:**
+
+- **§6 item 3 is partly answered.** "Do they run Arabic?" — **yes, OBSERVED**
+  (§8). Only the hreflang half remains open.
+- **§6 item 4 (LocalBusiness) has a cheaper first step.** Their NAP is already
+  visible on a third-party directory (§13), so the address is known without a
+  fetch; only whether they *emit the markup* still needs one.
+
+**§6 item 14 (their true indexed page count) remains unanswerable** and Part II
+found nothing to change that. It needs a rank tracker or Search Console for
+their domain and this project has neither. It should stay off every list.
+
+**One new row for §6:**
+
+| # | Question | How to answer it |
+|---|---|---|
+| 16 | Is `.atom` disallowed in their `robots.txt`, and how many feeds are indexed? | `curl https://kbeautyarabia.com/robots.txt` and grep for `.atom`; see §10 |
