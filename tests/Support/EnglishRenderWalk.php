@@ -679,7 +679,6 @@ final class EnglishRenderWalk
             '_kbb-health' => ['query' => ['token' => 'walk-health-token']] + $json,
             'storage/{path}' => ['params' => ['path' => 'kbb/app.css']] + $file,
             // A developer preview, not a storefront page. See below.
-            '_design-check' => ['render' => false, 'why' => 'developer preview, not shopper-facing (see the exclusions list)'],
             'app' => ['render' => false, 'why' => '404 to a shopper; admin-only developer preview'],
 
             // --- catalogue ---------------------------------------------------

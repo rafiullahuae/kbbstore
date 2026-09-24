@@ -44,8 +44,6 @@ function keyedExcludedFiles(): array
     return [
         'welcome.blade.php'
             => "Laravel's own install page. No route renders it — checked against routes/*.php — and it talks about Laracasts.",
-        'design-check.blade.php'
-            => '/_design-check, a developer page for comparing the port against the theme. Not linked, not indexed, and it names the theme directory.',
         'store/app.blade.php'
             => '/app, served to an authenticated admin and 404 to everybody else (PublicPagesQuoteRealPricesTest pins both halves). It is a second, invented storefront with invented prices; translating it would be translating a fixture.',
         'invoices/partials/page-dispatch-label.blade.php'

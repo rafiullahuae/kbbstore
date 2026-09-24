@@ -175,7 +175,6 @@ function walkExpectations(array $seed): array
             'params' => ['key' => fn () => \App\Services\Seo\IndexNow::key()],
             'status' => 200,
         ],
-        '_design-check'            => ['status' => 200],
         '_kbb-health'              => ['query' => ['token' => 'walk-health-token'], 'status' => 200],
         'storage/{path}'           => [
             'params' => ['path' => 'kbb/app.css'],

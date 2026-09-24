@@ -826,10 +826,21 @@ Route::middleware('auth:admin')->group(function () use ($adminPath) {
 */
 
 use App\Http\Controllers\Store\CustomerAuthController;
-use App\Http\Controllers\Store\DesignCheckController;
-
-// Temporary: the Phase 1 design check. Delete when Phase 2 lands.
-Route::get('/_design-check', DesignCheckController::class);
+/*
+ * DELETED: /_design-check, the Phase 1 design check.
+ *
+ * Its own comment said "Delete when Phase 2 lands." This shop is at Phase 20.
+ * It answered 200 to anybody, carried `<meta name="robots" content="index,
+ * follow">` and a self-canonical, named the theme directory, rendered eight
+ * real products, and was mentioned in neither robots.txt nor the sitemap --
+ * so it was a developer page actively asking to be indexed.
+ *
+ * This is not a noindex job. docs/SEO-FEATURE-MATRIX.md lists crawl hygiene as
+ * something this shop WINS on against the competitor -- "we publish no second
+ * machine-readable address per listing", with a note that nobody should fix a
+ * problem we do not have. We had one. Noindexing a page marked for deletion
+ * eighteen phases ago would keep the page and the drift.
+ */
 
 // Customer accounts. Paths match the live site exactly so no existing link,
 // bookmark or email breaks at cutover.
