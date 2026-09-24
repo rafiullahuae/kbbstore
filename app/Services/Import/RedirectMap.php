@@ -40,9 +40,13 @@ use App\Support\LegacyCategoryUrls;
  *    router, so a row for an address this shop answers fires. `reachable()`
  *    below no longer discards on those grounds; it asks. The original note is
  *    kept because the reasoning it records is still how this file thinks, and
- *    only its conclusion moved. `reachable()` below now demotes
- *    these to `discard`, per row and with the reason, rather than the rule
- *    being deleted: the derivation is still how the two shapes are related.
+ *    only its conclusion moved.
+ *
+ *    (A sentence used to follow here saying `reachable()` "now demotes these to
+ *    `discard`, per row and with the reason". That was the behaviour BEFORE the
+ *    registration, it contradicted the four lines above it, and it is deleted
+ *    rather than annotated because there is no reading of the file in which it
+ *    is true.)
  *
  * 2. "WooCommerce commonly publishes a category at its leaf slug" — the default,
  *    but not what kbeautybliss.com ran. `App\Support\LegacyCategoryUrls` says in
@@ -461,38 +465,67 @@ final class RedirectMap
     }
 
     /**
-     * Drop every proposal that could not fire, and say why.
+     * Ask about every proposal this shop already answers, and say why.
      *
      * =========================================================================
-     * THE REDIRECT TABLE IS ONLY READ ON A 404
+     * THE REDIRECT TABLE IS READ BEFORE THE ROUTER, NOT ONLY ON A 404
      * =========================================================================
      *
-     * `CheckRedirects` is written as middleware and is not registered as one —
-     * its own comment records that a redirect on a matched route still returned
-     * 200 that way, from both boot() and register() — so the live check is the
-     * `NotFoundHttpException` closure in `AppServiceProvider`. An address that
-     * answers 200, or that the application already redirects by itself, never
-     * reaches it. The Master Plan names this as a limitation of the Redirects
-     * SCREEN for rows an admin types; nobody had applied it to the rows this
-     * map writes, which is the larger number by two orders of magnitude.
+     * This heading used to read "THE REDIRECT TABLE IS ONLY READ ON A 404" and
+     * the paragraph under it described `CheckRedirects` as written-but-not-
+     * registered, with the 404 closure in `AppServiceProvider` as the only live
+     * reader. That was true, and every verdict below was built on it.
      *
-     * THREE OUTCOMES, and only two of them are questions:
+     * IT IS NOT TRUE NOW. `CheckRedirects` is registered in the global pipeline
+     * and runs BEFORE the router, so a row for an address this shop answers
+     * fires. Measured by the lane that registered it: `/shop/` and
+     * `/product/tx-serum/` went 200 → 301. `docs/GP-ADDRESSES-LAND.md` §13 is
+     * the transcript, and §13.7 is the list of what that broke in this file.
      *
-     *  - MOVED. The shop already 301s this address on its own. DISCARD, with
-     *    the destination named — "the shop already does this" is an answer, not
-     *    a question, and `docs/FV-IMPORT-AT-VOLUME.md` §10 is explicit that a
-     *    question list which is mostly noise is one nobody finishes.
+     * The consequence for this method is the whole of it: a verdict here is no
+     * longer "can a row fire" — a row can always fire — it is **what a row
+     * would DO to the address**, which is a question with an owner.
      *
-     *  - SERVED. A real page answers here. ASK: pointing a live address
-     *    somewhere else is a change to this shop's routing and cannot be done
-     *    with a row at all.
+     * THREE OUTCOMES, AND ALL THREE ARE NOW QUESTIONS:
+     *
+     *  - MOVED. The shop already 301s this address on its own, from inside the
+     *    controller. ASK. This was DISCARD, and that is the dangerous one to
+     *    have left alone: it threw the proposal away silently, on the grounds
+     *    that a row could never be read, and a discard is not on the list the
+     *    owner approves. A row here now OVERRIDES the shop's own hop — worth
+     *    writing if the shop sends it to the wrong place, worth leaving alone
+     *    if it does not, and either way not this map's call.
+     *
+     *  - SERVED. A real page answers here. ASK, as before, but for the opposite
+     *    reason: it used to be "a row cannot move this", and it is now "a row
+     *    WILL move this" — the page that answers today would 301 away instead.
      *
      *  - UNKNOWN. A parameterised route claims it and this cannot say what its
      *    controller will find. ASK, stated as such rather than rounded off.
      *
-     * The TARGET is checked too, for the one failure that matters: a redirect
-     * whose destination 404s moves a visitor from one not-found page to another
-     * and tells a search engine the address was replaced by nothing.
+     * Only a source nothing answers stays MIGRATE.
+     *
+     * =========================================================================
+     * THE TARGET IS CHECKED ON EVERY PROPOSAL, NOT ONLY THE ONES THAT MIGRATE
+     * =========================================================================
+     *
+     * A redirect whose destination 404s moves a visitor from one not-found page
+     * to another and tells a search engine the address was replaced by nothing.
+     * That check used to run only after the three branches above had fallen
+     * through — so a proposal routed to ASK never had its destination checked
+     * at all.
+     *
+     * That was survivable while an ASK row was a dead end. It is not now:
+     * `RedirectDecisions` lets the owner APPROVE one, and "yes to all 312" over
+     * a question could have written a row pointing at a 404 with nothing on the
+     * screen saying so. So the destination is checked FIRST, and a dead one
+     * wins the question whatever the source's verdict is — because it is the
+     * reason NOT to approve, and it has to be the heading he reads rather than
+     * a sentence buried under a different one.
+     *
+     * A proposal with no destination at all is skipped: the three questions
+     * that have none already say so, and `SourceReachability` answers UNKNOWN
+     * for an empty path rather than NOT_FOUND, so checking would mislabel them.
      *
      * @param  list<array{source: string, target: string, rule: string, decision: string, reason: string, subject: string}>  $proposals
      * @return list<array{source: string, target: string, rule: string, decision: string, reason: string, subject: string}>
@@ -502,6 +535,25 @@ final class RedirectMap
         foreach ($proposals as $index => $proposal) {
             if ($proposal['decision'] !== self::MIGRATE) {
                 continue;
+            }
+
+            /*
+             * THE DESTINATION FIRST. See the docblock: an ASK row is approvable
+             * now, so "this would be a 301 to a 404" has to be the question the
+             * owner is asked rather than a check three branches never reached.
+             */
+            if (trim($proposal['target']) !== '') {
+                $target = $this->reachability->verdict($proposal['target']);
+
+                if ($target['status'] === SourceReachability::NOT_FOUND) {
+                    $proposals[$index]['decision'] = self::ASK;
+                    $proposals[$index]['question'] = self::Q_TARGET_MISSING;
+                    $proposals[$index]['reason'] = 'the destination "'.$proposal['target'].'" does not exist on '
+                        .'this shop — '.$target['why'].'. A 301 to a 404 is worse than the 404 it replaces: it '
+                        .'tells a search engine the address was replaced by nothing';
+
+                    continue;
+                }
             }
 
             $verdict = $this->reachability->verdict($proposal['source']);
@@ -558,16 +610,6 @@ final class RedirectMap
                     .'read whether it 404s or not — '.$verdict['why'];
 
                 continue;
-            }
-
-            $target = $this->reachability->verdict($proposal['target']);
-
-            if ($target['status'] === SourceReachability::NOT_FOUND) {
-                $proposals[$index]['decision'] = self::ASK;
-                $proposals[$index]['question'] = self::Q_TARGET_MISSING;
-                $proposals[$index]['reason'] = 'the destination "'.$proposal['target'].'" does not exist on this '
-                    .'shop — '.$target['why'].'. A 301 to a 404 is worse than the 404 it replaces: it tells a '
-                    .'search engine the address was replaced by nothing';
             }
         }
 

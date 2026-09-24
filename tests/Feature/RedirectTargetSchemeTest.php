@@ -86,10 +86,16 @@ it('states the rule once, so the two writers cannot drift apart', function () {
     );
 
     /*
-     * `store()` and `update()` each had their own copy of
+     * `store()` and `resolveNotFound()` each had their own copy of
      * `['required','string','max:2048']`. Two copies of a validation rule is
      * how one of them eventually stops matching the other — and the one that
      * stops matching is whichever the tests happen not to drive.
+     *
+     * NAMED CORRECTLY. This said `store()` and `update()`; there is no
+     * `update()` on RedirectsApiController. The second writer is
+     * `resolveNotFound()` — Store → Redirects → the 404 log, "send this
+     * somewhere" — which is precisely the one a reader would not have guessed
+     * and the one the count of 2 below is silently covering.
      */
     expect(RedirectsApiController::TARGET_RULES)->toBeArray()
         ->and(substr_count($source, 'self::TARGET_RULES'))->toBe(2)

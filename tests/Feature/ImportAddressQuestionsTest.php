@@ -633,3 +633,98 @@ it('puts the question and the answer in the spreadsheet the owner approves from'
         ->and($answered[0][6])->toBe(RedirectMap::Q_STILL_ANSWERS)
         ->and($answered[0][7])->toBe(RedirectDecisions::REJECT);
 });
+
+/* ========================================================================== */
+/*  THE DESTINATION IS CHECKED ON EVERY PROPOSAL, NOT ONLY THE MIGRATING ONES  */
+/* ========================================================================== */
+
+it('asks about a dead destination even when the shop already answers the old address', function () {
+    /*
+     * WHAT THE DEFECT LOOKED LIKE, and it is one this lane's own round-2 work
+     * created the exposure for.
+     *
+     * `RedirectMap::reachable()` checked the TARGET only after the MOVED,
+     * SERVED and UNKNOWN branches had fallen through — so a proposal routed to
+     * ASK by one of those three never had its destination checked at all. That
+     * was survivable while an ASK row was a dead end: nobody could act on it.
+     *
+     * It stopped being survivable the moment `RedirectDecisions` let the owner
+     * APPROVE one. "Yes to all 312" over the `still-answers` question would
+     * write a row pointing at an address that 404s — a 301 to a 404, which is
+     * worse than the 404 it replaces because it tells a search engine the
+     * address was replaced by nothing — with NOTHING on the screen saying so,
+     * because the row was filed under a heading about something else entirely.
+     *
+     * So the destination is checked FIRST and a dead one wins the question. It
+     * has to be the heading he reads, not a sentence buried under a different
+     * one, because it is the reason not to approve.
+     *
+     * MUTATION: move the target check back below the three verdict branches in
+     * reachable() and this row comes back as Q_STILL_ANSWERS — approvable, in
+     * the same bulk block as the sound ones, with its dead destination
+     * mentioned nowhere.
+     */
+    [$parent, , $collides] = qaTree();
+    UrlsMediaAdminRoutes::wire($this->app);
+
+    /*
+     * `/shop/` is an address this storefront answers — that is what makes it a
+     * `still-answers` question. Its destination is the nested archive of the
+     * category slugged `shop`; delete that category's computed path out from
+     * under it and the destination stops existing while the source goes on
+     * answering, which is exactly the combination the old order could not see.
+     */
+    $before = qaProposal('/shop/', (new RedirectMap)->propose());
+
+    expect($before['question'])->toBe(RedirectMap::Q_STILL_ANSWERS)
+        ->and($before['target'])->toBe('/product-category/qa-skincare/shop/');
+
+    $collides->forceFill(['path' => 'qa-skincare/gone-away'])->save();
+
+    $after = qaProposal('/shop/', (new RedirectMap)->propose());
+
+    expect($after['decision'])->toBe(RedirectMap::ASK)
+        ->and($after['question'])->toBe(RedirectMap::Q_TARGET_MISSING)
+        ->and(str_contains($after['reason'], 'does not exist on this shop'))->toBeTrue()
+        ->and(str_contains($after['reason'], 'A 301 to a 404 is worse than the 404 it replaces'))->toBeTrue();
+
+    /*
+     * AND THE SCREEN FILES IT UNDER THAT HEADING, which is the half that
+     * actually protects him: a bulk "yes" on `still-answers` cannot reach it,
+     * because it is no longer in that group.
+     */
+    $groups = collect(
+        $this->actingAs(qaAdmin(), 'admin')->getJson('/admin-api/urls-media/status')->json('urls.questions')
+    )->keyBy('question');
+
+    $stillAnswers = $groups[RedirectMap::Q_STILL_ANSWERS] ?? ['rows' => []];
+
+    expect(array_column($stillAnswers['rows'], 'source'))->toBe([])
+        ->and(array_column($groups[RedirectMap::Q_TARGET_MISSING]['rows'], 'source'))->toContain('/shop/');
+
+    expect($parent->slug)->toBe('qa-skincare');
+});
+
+it('does not mistake a question with no destination for one whose destination is gone', function () {
+    /*
+     * `SourceReachability::verdict('')` answers UNKNOWN — "this is not a
+     * root-relative path" — and not NOT_FOUND, so an empty target would not be
+     * caught by the check above by accident. The guard is explicit anyway,
+     * because relying on that would be relying on another class's answer to a
+     * question nobody asked it.
+     *
+     * The three questions that carry no destination keep their own headings;
+     * they are "fix something else first", not "your destination died".
+     *
+     * MUTATION: drop the `trim($proposal['target']) !== ''` guard in
+     * reachable() and this still passes today — which is the point of saying so
+     * here rather than trusting it.
+     */
+    qaTree();
+
+    $orphan = qaProposal('/product-category/qa-orphan/', (new RedirectMap)->propose());
+
+    expect($orphan['target'])->toBe('')
+        ->and($orphan['question'])->toBe(RedirectMap::Q_NO_TARGET)
+        ->and(RedirectMap::decidable($orphan))->toBeFalse();
+});

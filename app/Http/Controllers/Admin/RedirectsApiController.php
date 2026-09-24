@@ -47,8 +47,12 @@ class RedirectsApiController extends Controller
      * been applied here.
      *
      * `regex` and not a closure, so the same rule can be stated once and used
-     * by both writers; `store()` and `update()` had their own copies of the
-     * old one, which is how one of them would eventually have been missed.
+     * by both writers. THE TWO WRITERS ARE `store()` AND `resolveNotFound()` —
+     * there is no `update()` on this controller, and naming one sent a reader
+     * looking for a method that does not exist and, worse, away from the one
+     * that does: `resolveNotFound()` is the second place a target reaches the
+     * table, from Store → Redirects → the 404 log. Each had its own copy of the
+     * old rule, which is how one of them would eventually have been missed.
      *
      * Allowed: a site-relative path (`/a/b`, the overwhelming majority), and an
      * absolute http/https URL. Refused: `javascript:`, `data:`, `vbscript:`,
