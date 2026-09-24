@@ -3,6 +3,62 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.269
+FIFTEEN ADDRESSES GOOGLE HAS INDEXED STOPPED BEING 404s.
+
+The old shop served its category archives FLAT at the site root — /toners/,
+/sunscreens/, /skincare-sets/ — because that WooCommerce install had
+`category_base` set to the empty string. That is the old site's own exported
+setting, not an inference. This shop serves them nested, at
+/product-category/skincare/toners/. The cutover forwards the old domain
+PRESERVING the path, so every one of those fifteen has been landing on a 404 at
+the end of a 301 — its ranking dropped rather than inherited.
+
+Measured before: all fifteen 404. The `redirects` table ships ten rows and
+every one is a journal article; there was never a category row.
+
+Measured after, against a running server: all fifteen answer 301 to the correct
+NESTED path, `curl -L` reports num_redirects=1 and a final 200, and the landing
+page's own <link rel="canonical"> matches the Location byte for byte. The
+slashless spelling lands too.
+
+ARABIC WORKS, ON ALL FIFTEEN. /ar/toners/ 301s to
+/ar/product-category/skincare/toners/ and answers 200 with <html lang="ar"> and
+an Arabic canonical — one hop, the prefix kept exactly once. The middleware
+order was MEASURED on the live global stack rather than reasoned about:
+CanonicalHost, then SetLocaleFromPath, then CheckRedirects, so /ar is stripped
+BEFORE the redirect check and one list of paths serves both languages. That
+order is now pinned by reflecting on the real stack, so a future prepend that
+inverted it fails loudly instead of silently 404ing every Arabic old address.
+
+THE ROWS ARE DERIVED PER REQUEST, NOT SEEDED, and that is the design point
+rather than an implementation detail. On a fresh database the only categories
+are six seeded placeholders, so a migration resolving /cleansing-oils/ at apply
+time would bake in a destination the real import then contradicts —
+permanently, invisibly, and on a shop whose owner cannot easily inspect the
+table. Deriving is null until the category arrives and correct the moment it
+does, with nothing to apply. A stored row still wins if one exists.
+
+AND THE AUDIT CARD WAS ADVERTISING THE WRONG FIX. Shipped yesterday in
+2.60.266, it named the FLAT form as the destination — which is a second 301 for
+a nested category and a 404 for a missing one. Corrected: addresses the shop
+now lands are no longer reported at all, and the card reads 15 before this
+package and 0 after.
+
+Ruled out with evidence rather than left undone: /category/ and /tag/ prefixes
+(that install never used them — the same empty `category_base`), brand archives
+(the exporter records an empty permalink per brand, WordPress served none),
+products, articles and pages (same addresses on both sites), and feeds
+(301ing a feed reader onto an HTML page is worse than the 404). Attribute
+archives, product tags, paginated archives and attachment pages are deferred to
+the next round with the reason stated. `?p=123` is structurally impossible for
+any redirect row — the query string is not part of the path the router matches
+— and needs an .htaccess rule the owner has to add.
+
+No new route, no new setting, no new admin control, no migration. Zero queries
+added to a warm storefront page: the check is an in-memory list of fifteen
+literals and answers before the table is consulted.
+
 ## 2.60.268
 The quiz stops being a dead end, and the tagging job becomes visible.
 
