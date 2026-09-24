@@ -68,6 +68,34 @@ class CartController extends Controller
             }
         }
 
+        /*
+         * A VARIABLE PRODUCT IS BOUGHT BY ITS VARIATION, AND THIS ENDPOINT LET
+         * IT BE BOUGHT WITHOUT ONE — FOR NOTHING.
+         *
+         * `variant_id` is `nullable` above and that is right: a simple product
+         * has no variant to send. What was missing is the other half of the
+         * pair — that a VARIABLE product must send one. Left out, the parent
+         * row goes to CartService::add(), which prices it
+         * `$variant?->effectivePrice() ?? $product->effectivePrice()`; a
+         * variable parent's `price` column is NULL, effectivePrice() casts that
+         * to 0, and the basket took a line at AED 0 that the checkout would
+         * then collect. See Product::requiresVariant().
+         *
+         * BEFORE THE STOCK TEST, because the parent row's own `stock_status`
+         * is usually `instock` and would wave it straight through; and because
+         * "choose a size" is the truer sentence for a shopper who has not
+         * chosen one than "sold out" would be.
+         *
+         * The same refusal shape as the two guards around it — `ok`, a
+         * sentence, 422 — which is what cart.js already renders.
+         */
+        if (! $variant && $product->requiresVariant()) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Choose an option before adding this product to your bag.',
+            ], 422);
+        }
+
         if (($variant?->stock_status ?? $product->stock_status) !== 'instock') {
             return response()->json(['ok' => false, 'error' => 'That product is sold out.'], 422);
         }

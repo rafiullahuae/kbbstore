@@ -729,36 +729,51 @@ it('turns a variable product\'s structured data from one AED 0.00 offer into a r
         ->and($children['KBB-4023-100ml']['availability'])->toBe('https://schema.org/OutOfStock');
 });
 
-it('leaves a variable product\'s HEADLINE price at zero, which is the parent row and not the variants', function () {
+it('leaves a variable product\'s parent PRICE COLUMN at null, and the sort with it', function () {
     /*
-     * MEASURED AND NOT FIXED, DELIBERATELY, and stated here so it is a known
-     * gap rather than a surprise.
+     * ── WHAT THIS CASE USED TO SAY, AND WHICH HALF OF IT MOVED ──────────────
      *
-     * Importing the variations corrects the structured data, because
-     * Seo::aggregateOffer() replaces the parent's Offer entirely. It does NOT
-     * correct `products.price`, which is what the page's own .now span, the
-     * shop tile, the price sort and the price facet all read -- and WooCommerce
-     * genuinely has no price on the parent to import.
+     * It was `it leaves a variable product's HEADLINE price at zero`, and it
+     * pinned the literal bytes `<span class="now">… AED 0</span>` on the
+     * product page as a known gap: WooCommerce genuinely has no price on the
+     * parent, `products.price` is null, and Product::effectivePrice() ends
+     * `return (int) $this->price`, so the page quoted AED 0.
      *
-     * Backfilling it from the cheapest variant is one line here and would break
-     * the one property this import is judged on: ProductImporter writes
-     * `price => null` for this row out of the CSV on every pass, so the product
-     * would be rewritten every run, for ever, and the products bucket would
-     * never report "unchanged" again. The fix needs both halves and both lanes;
+     * THE HEADLINE IS NO LONGER ZERO. store/product.blade.php now draws the
+     * range the variations actually carry, through App\Services\VariantPricing
+     * — the same answer the shop tiles print — so the .now span reads
+     * `AED 12 – AED 18` for this import instead of `AED 0`. That was asked for
+     * and it is checked in tests/Feature/VariableProductCannotBeBoughtForNothing-
+     * Test.php, which owns the assertion now.
+     *
+     * ── AND THE HALF THAT HAS NOT MOVED, WHICH IS WHY THIS CASE REMAINS ─────
+     *
+     * `products.price` IS STILL NULL and the price SORT still orders on it, so
+     * a variable product still files below every priced one. Nothing here
+     * backfills the column: ProductImporter writes `price => null` for this row
+     * out of the CSV on every pass, so a backfill would rewrite the product
+     * every run for ever and the products bucket would never report "unchanged"
+     * again. The fix needs both halves and both lanes;
      * docs/GH-VARIATIONS-AND-ATTRIBUTES.md carries the shape of it.
+     *
+     * So the two assertions below are the ones that were always about the
+     * IMPORT rather than about the page, and they are unchanged. The page
+     * assertion is replaced with its opposite, deliberately, and stated here
+     * rather than deleted so the gap this case records stays readable.
      */
     ghImport();
 
     $html = ghProductPage('cleanser-4023');
 
     expect($html)->toContain('<span class="now">')
-        // The .now span quotes the PARENT row, which is null -> 0.
-        ->toContain('id="bbPrice"> <span class="now"><span class="woocommerce-Price-amount amount" dir="ltr"><span class="woocommerce-Price-currencySymbol" dir="auto">AED</span> 0</span></span>');
+        // Not AED 0 any more — and this is the assertion that changed.
+        ->not->toContain('<span class="woocommerce-Price-currencySymbol" dir="auto">AED</span> 0</span></span>');
 
     expect(Product::query()->where('wc_id', 4023)->value('price'))->toBeNull();
 
     // And the same null is what the price sort orders on, so the variable
-    // product sorts below every priced one.
+    // product sorts below every priced one. STILL TRUE, still not this lane's
+    // to change.
     $cheapest = Product::query()->visible()->orderBy('price')->value('slug');
 
     expect($cheapest)->toBe('cleanser-4023');

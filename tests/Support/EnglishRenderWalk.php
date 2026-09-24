@@ -401,7 +401,38 @@ final class EnglishRenderWalk
      * the same commit lives in resources/css/kbb/kbb-checkout.css, which this
      * walk does not read, so it is not in this diff by construction.
      */
-    public const BASE_COMMIT = '05339c99faaf0abe8af8dfc7f62b1733aa9142bf';
+    /*
+     * MOVED FORWARD for the skinned grid refusing to offer an Add to cart it
+     * cannot honour — and this one is a CHANGE THE OWNER ASKED FOR rather than
+     * a side effect, so it is called out here as well as in the commit.
+     *
+     * components/product-grid.blade.php drew `Add to cart` on every tile. It
+     * had no copy of the guard components/product-card.blade.php has carried
+     * since it was written, so the skinned grid armed the button for a VARIABLE
+     * product — which CartService::add() then priced at AED 0, because a
+     * variable parent has no price of its own — and for a SOLD-OUT one, which
+     * the server answered with "That product is sold out." Both tiles now read
+     * the one expression, Product::isDirectlyBuyable().
+     *
+     * The diff this test printed was ONE page, /korean-skincare-brands/{slug},
+     * at byte 27310, and one element on it:
+     *
+     *   before: <span class="kbb-card-cart" data-kbb-add="19"
+     *                 data-price="127.00" data-name="Zinc Sunscreen SPF50+">Add to cart</span>
+     *   after:  <span class="kbb-card-cart">View product</span>
+     *
+     * That product is the walk's sold-out one — DemoCatalogueSeeder marks every
+     * ninth `outofstock` — so the byte that moved is the second case above, not
+     * the first: this walk seeds no variable products at all. No other page in
+     * the walk moved a byte. `data-price` and `data-kbb-add` go with the label
+     * deliberately: the first carried the zero, and the second is what cart.js
+     * binds and what MarketingPixels counts an add on.
+     *
+     * The whole tile is already wrapped in a link to the product page, so
+     * nothing became unreachable; `View product` is the word product-card has
+     * always used for this case, so no new string was introduced either.
+     */
+    public const BASE_COMMIT = 'ec57966138d2b10009edf20e4209dc200e092324';
 
     /** resources/views as of $commit, materialised under a temp directory. */
     public static function baseViews(string $commit = self::BASE_COMMIT): string

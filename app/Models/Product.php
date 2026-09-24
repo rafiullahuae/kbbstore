@@ -337,6 +337,86 @@ class Product extends Model
         return $effective === (int) $this->price ? null : $effective;
     }
 
+    /**
+     * Must an option be chosen before this can go in a basket?
+     *
+     * ── WHAT THIS IS FOR, AND IT IS MONEY ───────────────────────────────────
+     *
+     * A WooCommerce variable product is bought by its VARIATION, never by the
+     * parent row: `products.price` is NULL on the parent and every real figure
+     * lives in `product_variants`. effectivePrice() ends `return (int)
+     * $this->price`, and `(int) null === 0`.
+     *
+     * So a variable parent reaching CartService::add() with no variant was
+     * priced at ZERO and the basket accepted it. Three ways in, all live:
+     * components/product-grid.blade.php drew an Add to cart button on every
+     * tile including those; the checkout's "you were looking at" strip did the
+     * same; and /api/cart/add takes a product_id with an optional variant_id
+     * and nothing said the pair was required. A shopper could check out for
+     * AED 0 and the shop would take the order.
+     *
+     * ── AND IT DOES NOT GUESS WHEN `type` IS NOT THERE ──────────────────────
+     *
+     * Half this application hydrates explicit column lists, because the
+     * endpoints are public — CartController::LINE_COLUMNS, five different
+     * CARD_COLUMNS, Api\ProductController's own. A model loaded without `type`
+     * answers null for it, and `null !== 'variable'` is TRUE, which would
+     * quietly mean "no option needed" for every product in a query that had
+     * simply not asked. That fails OPEN, on the one question in this class
+     * where failing open means selling something for nothing. It is the trap
+     * advertisedSalePrice() documents one method along, about its sale window.
+     *
+     * ▲ THE FIRST VERSION OF THIS ANSWERED `true` FOR AN ABSENT COLUMN AND THAT
+     * WAS WRONG, measured rather than argued: eight existing tests went red and
+     * the reason was not a narrowed SELECT at all. `Product::create([...])`
+     * without a `type` key leaves the attribute absent on the returned model
+     * too — it is a column the row never set, not a column the query declined
+     * to fetch — and the two are indistinguishable from in here. A blanket
+     * `true` therefore refused ordinary simple products, which is a shop that
+     * cannot sell anything: the safe-looking direction was its own outage.
+     *
+     * So an absent column is not guessed in either direction. It is LOOKED UP,
+     * in the only rows that can answer it: a product is sold by options when it
+     * HAS options. That costs one `exists()` — and only on the path that did
+     * not fetch the column, which is no storefront path today (the case below
+     * pins that every list reaching a tile or the cart selects `type`). A
+     * product with variations is refused however it was loaded, and a product
+     * with none is buyable however it was loaded. Nothing is assumed.
+     */
+    public function requiresVariant(): bool
+    {
+        $attributes = $this->getAttributes();
+
+        if (array_key_exists('type', $attributes)) {
+            return $attributes['type'] === 'variable';
+        }
+
+        // Already loaded (the product page eager-loads them) costs nothing;
+        // otherwise one exists(), on a path no tile takes.
+        return $this->relationLoaded('variants')
+            ? $this->variants->isNotEmpty()
+            : $this->variants()->exists();
+    }
+
+    /**
+     * Can a tile put this in the basket on its own, with nothing to choose?
+     *
+     * ONE EXPRESSION, AND EVERY TILE READS IT. components/product-card.blade.php
+     * had this inline as `$canAdd` and was right; components/product-grid.blade.php
+     * did not have it at all and drew an Add to cart button on everything. Two
+     * copies of a rule is how one of them ends up wrong, and the one that was
+     * wrong is the one that sold a variable product for nothing.
+     *
+     * The stock half is the same test both templates already made. The variant
+     * half is requiresVariant() above, which is also what CartService::add()
+     * refuses on — so the button a shopper sees and the door the request goes
+     * through cannot disagree.
+     */
+    public function isDirectlyBuyable(): bool
+    {
+        return $this->stock_status === 'instock' && ! $this->requiresVariant();
+    }
+
     public function isOnSale(): bool
     {
         return $this->effectivePrice() < (int) $this->price;
