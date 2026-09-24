@@ -321,6 +321,13 @@ changed on import`.
 
 ## 5. `CheckRedirects`, re-established rather than trusted — and the defect taken
 
+> ▲ **§5.1 AND §5.2 BELOW ARE NO LONGER TRUE, AND ARE KEPT.** They were true
+> when they were written and they are the measurement the fix was built on, so
+> the refutation is attached to them rather than replacing them. `CheckRedirects`
+> IS registered as middleware now; the table is read before the router on every
+> storefront request. **§13 carries the fix, the before/after fetches and what
+> it changes for `RedirectMap`.**
+
 ### 5.1 The middleware is still not middleware
 
 Re-checked rather than read off GB's note, and the check was made stronger:
@@ -771,3 +778,178 @@ directory and set `SCRIPT_NAME` to `/kbb-upgrade/index.php` in the router, which
 is how the real host strips the prefix before `getPathInfo()` sees it. Serving
 it at the root with `KBB_BASE_PATH` set does **not** reproduce the host: the
 prefix is then part of `getPathInfo()` and no row matches at all.
+
+---
+
+## 13. ▲ The middleware is registered — the fix, and what it costs
+
+§5.1 established that the redirects table was read from the 404 handler and
+nowhere else, and §5.2 built the map's whole `reachable()` verdict on it. Both
+were correct. **The consequence was the defect, not a design:** a redirect row
+for an address the shop already answers could not fire, and the old shop has
+five years of URLs.
+
+### 13.1 Why the earlier registration failed, which is not why it looked like it did
+
+`CheckRedirects`' own comment recorded that "a redirect on an existing, matched
+route still returned 200 with that registration, both from `boot()` and from
+`register()`", and read as evidence that registration cannot work. It is
+evidence that **that** registration cannot work, and the reason is one line of
+Laravel:
+
+> Middleware in the `web` GROUP runs **after** the router has matched a route.
+
+Which route matches has already been decided by then, so a group registration
+can never pre-empt one. Only the global pipeline runs before routing.
+`bootstrap/app.php` says exactly this, in as many words, about
+`SetLocaleFromPath` — one file over, for the same reason.
+
+### 13.2 Where it is registered
+
+Two places, and the second is the one that reaches the server.
+
+| file | line | reaches the live host? |
+|---|---|---|
+| `app/Providers/AppServiceProvider.php` | `$kernel->prependMiddleware(CheckRedirects::class)` | **yes** — `app/` ships in a package |
+| `bootstrap/app.php` | `$middleware->append(CheckRedirects::class)` | no — `bootstrap/` is on `BuildPackage::NEVER_SHIP` |
+
+The second is kept anyway: a host that was hand-edited must not end up with two
+copies, and `Kernel::prependMiddleware()` does an `array_search` before it
+unshifts, so both together register one. This is the `/ar` story repeated
+deliberately — that feature 404'd on the owner's shop for a month because its
+only registration was in a file no package can ship.
+
+**Execution order is `CanonicalHost` → `SetLocaleFromPath` → `CheckRedirects`**,
+and both halves are load-bearing. `CanonicalHost` first, because there is no
+sense redirecting a path on a host the request is about to be forwarded off —
+it folds the path correction into its own hop instead, through
+`CheckRedirects::lookup()`. `SetLocaleFromPath` first, because
+`redirects.source` carries no locale segment: an Arabic visitor following an
+old link has to match the same row an English one does, and `Url::redirect()`
+puts `/ar` back on the way out.
+
+### 13.3 The before and after, fetched
+
+Same fixture both times: a product, a category nested one level, and four
+enabled rows pointing at `/PROOF-INERT/` — the same probe §5.1 used, one row
+per kind of address. `Location` is reproduced verbatim.
+
+**Before** — the registration lines removed, which is exactly the state this
+repository was in:
+
+| address | what it is | status | `Location` |
+|---|---|---|---|
+| `/shop/` | a page the shop serves | **200** | — |
+| `/product/tx-serum/` | a product page | **200** | — |
+| `/product-category/tx-toners/` | an address the shop 301s by itself | **301** | `/product-category/tx-skincare/tx-toners` |
+| `/tx-never-existed/` | nothing serves it | **301** | `/PROOF-INERT/` |
+| `/product-category/tx-skincare/` | a row pointing a page at itself | **200** | — |
+
+*Rows that fired: one of five. `SUM(hits)` = 1.*
+
+**After:**
+
+| address | what it is | status | `Location` |
+|---|---|---|---|
+| `/shop/` | a page the shop serves | **301** | `/PROOF-INERT/` |
+| `/product/tx-serum/` | a product page | **301** | `/PROOF-INERT/` |
+| `/product-category/tx-toners/` | an address the shop 301s by itself | **301** | `/PROOF-INERT/` |
+| `/tx-never-existed/` | nothing serves it | **301** | `/PROOF-INERT/` |
+| `/product-category/tx-skincare/` | a row pointing a page at itself | **200** | — |
+
+*Rows that fired: four of five. `SUM(hits)` = 4. The fifth is the loop, refused
+on purpose — see §13.5.*
+
+### 13.4 What it costs every page of the shop
+
+A middleware that queries on every request is exactly where a query budget gets
+blown, and the answer is "no row" on every address the shop actually serves. So
+the set of enabled `redirects.source` values is cached whole
+(`CheckRedirects::INDEX_KEY`) and consulted in memory; the table is only touched
+once the path is known to be claimed.
+
+| | queries against `redirects` |
+|---|---|
+| first storefront page after a package (cold index) | **1** |
+| three warm storefront pages no row claims | **0** |
+| a request that is actually redirected | **2** (the row, and the hit counter) |
+
+`StorefrontQueryBudgetTest` is unchanged and green. The eviction is not a TTL:
+`Redirect::saved` and `Redirect::deleted` are hooked in
+`AppServiceProvider::boot()`, so an edit on Store → Redirects is live on the
+next request exactly as it was before the index existed.
+
+**`Redirect::booted()` was tried first and does not hold**, and the reason is
+worth carrying: Eloquent runs `booted()` once per PROCESS (`Model::$booted` is
+static and keyed by class) while the event dispatcher is replaced with every
+application instance. `Redirect` is first booted by the Phase 9 seed migration,
+so in any process that outlives one application the listener is attached to a
+dispatcher nothing dispatches to. Measured: a row created after a page had been
+rendered was absent from the index and the address it named went on serving its
+own page. Under PHP-FPM it would have worked — invisible exactly where it is
+checked.
+
+### 13.5 The loop, which is what this change makes possible
+
+While the table was read only on a 404, a row pointing an address at itself
+turned one 404 into another. Registered as middleware it is a page the shop was
+serving a moment ago, now bouncing for ever. `RedirectMap` line 425 already
+refuses to WRITE one; rows from before it did are in the owner's database now,
+so the refusal happens at read time as well.
+
+`CheckRedirects::loops()` walks the chain and refuses a cycle of any length, not
+only a self-reference — `/a/ → /b/ → /a/` is reachable by hand on
+Store → Redirects and neither row points at itself. It is free in the case that
+matters: a self-pointing row is caught with no query at all, and a target no
+other row claims stops at the cached index, also with no query. Only a genuine
+chain costs a SELECT per hop, and only on a request that is being redirected
+rather than rendered. An honest chain still resolves — the guard refuses cycles
+and nothing else.
+
+### 13.6 The two readers cannot drift
+
+`CanonicalHost` consulted the same table on the same column with its own copy of
+the query, which was survivable only while `CheckRedirects` was dead code. Both
+now run on every request, and a difference between them is a redirect that fires
+on the canonical host and not on an alias — or a loop guarded on one and not the
+other. `CanonicalHost::targetFor()` calls `CheckRedirects::lookup()`;
+`RedirectMiddlewareTest` asserts the two against **each other** rather than
+against a literal.
+
+Not `findMatch()`: that gates on `isMethod('GET')` and `CanonicalHost` forwards
+HEAD as well, so going through it would silently stop folding the path
+correction into a HEAD request's one hop.
+
+### 13.7 What this changes for `RedirectMap` — for Lane A
+
+`app/Services/Import/**` is another lane's this round, so this is reported and
+not done. The premise under these has moved:
+
+- **`RedirectMap` lines 36, 239 and 277, and `SourceReachability`'s whole class
+  comment** say the table is 404-only and that an address which does not 404 can
+  never be redirected by a row. That is no longer true.
+- **`reachable()` demotes every `served` proposal to `discard`** with "the shop
+  already does this". Those rows are now perfectly capable of firing, so the
+  demotion is throwing away exactly the redirects this fix was for — the
+  category-nesting rule Lane GB called INERT is the whole `migrate` bucket of
+  that rule. This is the one that needs a decision, not just an edit: some of
+  those discards are still right (an address the shop already 301s to the same
+  destination needs no row), and some are now wrong.
+- **`RedirectMap` line 425 and line 536** — the two `source === target`
+  discards — are still right, and are now the *write-time* half of a guard that
+  also exists at read time.
+- **Line 84 and line 495** — query-string permalinks are still unreachable.
+  `getPathInfo()` excludes the query string wherever it is read from, and that
+  has not changed.
+
+### 13.8 The `clear_caches` migration, and why it is not optional here
+
+`database/migrations/2026_12_11_000000_clear_caches_redirect_middleware.php`.
+No new route — and it still has to run. `route:cache` compiles the router's
+**middleware stack** into `bootstrap/cache/routes-*.php`, and `config:cache`
+freezes the rest of the boot; `warm_caches_2_60_4` writes both from inside the
+migration set, so any host that has ever run the set has them. A package adding
+a global middleware to such a host adds it to a file nothing reads: the code
+lands, the class is never called, and nothing in any log says so. The migration
+also forgets `CheckRedirects::INDEX_KEY`, so applying a package can never leave
+a stale index behind.

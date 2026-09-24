@@ -60,6 +60,47 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->prepend(\App\Http\Middleware\SetLocaleFromPath::class);
 
+        /*
+         * THE REDIRECT TABLE, AND THE SECOND HALF OF THE SAME STORY.
+         *
+         * CheckRedirects was written as middleware and registered as middleware
+         * nowhere, so the only live reader of the `redirects` table was the
+         * 404 handler in AppServiceProvider — which means a redirect row for an
+         * address the shop already answers could never fire. Measured, not
+         * assumed: rows pointing /shop/, a category archive and a product
+         * address at /PROOF-INERT/ changed nothing. docs/GP-ADDRESSES-LAND.md
+         * has the transcript.
+         *
+         * APPENDED TO THE GLOBAL STACK, NOT TO THE `web` GROUP, and that is
+         * the whole correction. The earlier attempt this class's comment
+         * records went into the web group, which runs AFTER the router has
+         * matched a route — far too late to change WHICH route matches. Only
+         * the global pipeline runs before routing, exactly as the block above
+         * says for SetLocaleFromPath.
+         *
+         * append(), so it runs after SetLocaleFromPath rather than before it:
+         * /ar has to be off the path before the row is matched, because
+         * `redirects.source` carries no locale segment.
+         *
+         * THE ONE DIFFERENCE BETWEEN THE TWO REGISTRATIONS, named because it is
+         * real and because it is not worth restructuring this file for: append()
+         * puts this AFTER Laravel's own global middleware, while the provider's
+         * prepend puts it before them. Nothing in that set reads or rewrites the
+         * path -- TrustProxies, HandleCors, ValidatePostSize, TrimStrings and
+         * ConvertEmptyStringsToNull all leave getPathInfo() alone -- so the two
+         * orders answer identically for every request except one: under
+         * `artisan down`, a host carrying only the provider registration serves
+         * the 301 and a host carrying both serves the 503. A redirect to a page
+         * that is itself down is not a defect worth a second ordering rule.
+         *
+         * AND LIKE THE LINE ABOVE IT, THIS ONE CANNOT SHIP. bootstrap/ is on
+         * BuildPackage::NEVER_SHIP. AppServiceProvider::boot() prepends the
+         * same class, from a file that does ship; both together register one
+         * copy, because prependMiddleware() array_searches before it unshifts.
+         * tests/Feature/RedirectMiddlewareTest.php pins both halves.
+         */
+        $middleware->append(\App\Http\Middleware\CheckRedirects::class);
+
         // Unauthenticated back-office requests go to the admin login, not /login.
         $middleware->redirectGuestsTo(fn () => route('admin.login'));
 

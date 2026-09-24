@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\CartService;
+use App\Models\Redirect;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\ShippingZoneLocation;
@@ -129,6 +130,53 @@ class AppServiceProvider extends ServiceProvider
         $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
 
         if (method_exists($kernel, 'prependMiddleware')) {
+            /*
+             * ── THE REDIRECT TABLE, FINALLY WIRED TO SOMETHING ──────────────
+             *
+             * CheckRedirects has been written as middleware since the day it
+             * was created and was registered as middleware nowhere. The only
+             * live reader of the `redirects` table was the
+             * NotFoundHttpException closure further down this method, and that
+             * has one absolute consequence, measured rather than assumed:
+             * AN ADDRESS THAT DOES NOT 404 COULD NEVER BE REDIRECTED BY A ROW.
+             * Rows written for `/shop/`, a category archive and a product
+             * address, all enabled and all matching byte for byte, changed
+             * nothing at all. The old shop has five years of URLs and every one
+             * of them that collides with a slug this app serves kept serving
+             * the wrong page. See the class's own comment and
+             * docs/GP-ADDRESSES-LAND.md.
+             *
+             * PREPENDED FIRST, WHICH MAKES IT RUN LAST OF THE THREE.
+             * prependMiddleware() puts each new entry at the front, so the
+             * order of these three calls is the reverse of their execution
+             * order, and both ends of that matter:
+             *
+             *   CanonicalHost runs before it — no sense redirecting a path on
+             *   a host the request is about to be forwarded off. It folds the
+             *   path correction into its own hop through
+             *   CheckRedirects::lookup(), so the visitor still makes one.
+             *
+             *   SetLocaleFromPath runs before it — /ar is stripped before the
+             *   router sees the request and `redirects.source` carries no
+             *   locale segment, so an Arabic visitor following an old link
+             *   matches the same row an English one does. Url::redirect() puts
+             *   the segment back on the way out.
+             *
+             * HERE AND NOT ONLY IN bootstrap/app.php, for the reason the block
+             * above gives: bootstrap/ is on BuildPackage::NEVER_SHIP and
+             * UpdateGuard's forbidden list, so a registration written only
+             * there can never reach the live server. The bootstrap line exists
+             * too and the two are safe together — prependMiddleware()
+             * array_searches before it unshifts.
+             *
+             * INERT ON A SHOP WITH NO ROWS, which is what makes applying this
+             * safe: it reads a cached set of `redirects.source` values and
+             * steps aside when the incoming path is not one of them, at a cost
+             * of zero queries. Nothing a shopper can see moves until a row
+             * exists for an address the shop serves — which is the whole point.
+             */
+            $kernel->prependMiddleware(\App\Http\Middleware\CheckRedirects::class);
+
             $kernel->prependMiddleware(\App\Http\Middleware\SetLocaleFromPath::class);
 
             /*
@@ -238,14 +286,56 @@ class AppServiceProvider extends ServiceProvider
             $shippingModel::deleted(fn () => ShippingService::flushZones());
         }
 
-        // Redirects & 404 manager. Both checks live here, in the exception
-        // handler, rather than as real middleware — see CheckRedirects'
-        // own doc comment for why that approach didn't actually work for
-        // most requests despite looking correct. The exception handler
-        // reliably catches every 404 regardless of source (an unmatched
-        // path via the fallback route, or a controller's own 404 for a
-        // renamed slug), so the redirect check happens first here; only
-        // when nothing matches does this fall through to logging it.
+        /*
+         * Redirects — the same shape, one line down, and for the same reason.
+         *
+         * CheckRedirects runs on every storefront request now, and answers "no
+         * redirect for this path" out of a cached set of `redirects.source`
+         * values rather than a query. That is what keeps a page that redirects
+         * nothing at zero queries against the table; these two hooks are what
+         * make the cache safe to keep forever rather than on a TTL. A row
+         * added, switched off or deleted on Store → Redirects is live on the
+         * next request, exactly as it was before the index existed.
+         *
+         * HERE AND NOT IN Redirect::booted(), which was tried first and does
+         * not hold. Eloquent runs booted() ONCE PER PROCESS — Model::$booted is
+         * static and keyed by class — while the event dispatcher is replaced
+         * with every application instance. `Redirect` is first booted by the
+         * Phase 9 seed migration, so in any process that outlives one
+         * application (the suite, a queue worker, `artisan migrate`) the
+         * listener booted() registered is attached to a dispatcher nothing
+         * dispatches to, and the index silently stops being evicted. Measured
+         * rather than reasoned about: a row created after a page had been
+         * rendered was absent from the index, and the address it named went on
+         * serving its own page. This method runs per application instance.
+         *
+         * `saved` AND `deleted`: switching a redirect off is a save, and a row
+         * that no longer exists has to stop claiming its address.
+         */
+        Redirect::saved(fn () => \App\Http\Middleware\CheckRedirects::flushIndex());
+        Redirect::deleted(fn () => \App\Http\Middleware\CheckRedirects::flushIndex());
+
+        /*
+         * Redirects & 404 manager.
+         *
+         * ▲ THIS IS NO LONGER THE ONLY READER OF THE TABLE, and the comment
+         * that used to stand here said it was. CheckRedirects is registered as
+         * global middleware at the top of this method, so it answers first for
+         * every path a row claims — including the ones this closure could never
+         * see, which was the defect: a redirect for an address the shop already
+         * served could not fire at all.
+         *
+         * THE CHECK STAYS HERE ANYWAY, and it is belt and braces rather than
+         * duplication. A host whose provider registration somehow did not land
+         * keeps redirecting 404s exactly as it did before, which is the failure
+         * mode that has to stay boring. It calls the same static findMatch(),
+         * so the two cannot answer differently.
+         *
+         * The exception handler reliably catches every 404 regardless of source
+         * (an unmatched path via the fallback route, or a controller's own 404
+         * for a renamed slug), so the redirect check happens first here; only
+         * when nothing matches does this fall through to logging it.
+         */
         $this->app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->renderable(
             function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, \Illuminate\Http\Request $request) {
                 $redirect = \App\Http\Middleware\CheckRedirects::findMatch($request);
