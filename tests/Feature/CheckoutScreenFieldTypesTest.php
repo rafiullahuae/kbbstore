@@ -109,7 +109,7 @@ it('lines the phone header band up with the page, and centres it only on request
      * The default is the page's edges and the CLASS restores the centring, so
      * the default emits no class and `class="kbb-checkout"` is unchanged.
      */
-    expect($css)->toContain('.kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-padx)}')
+    expect($css)->toContain('.kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-m-headpadx,var(--cop-padx))}')
         ->and($css)->toContain('.kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto;padding-inline:var(--cop-headpadx)}')
         ->and($css)->toContain('.kbb-checkout.cop-dhead-page .co-head .in{max-width:none;margin-inline:0}');
 });
@@ -161,19 +161,30 @@ it('takes the page\'s own side padding, so the header and the page cannot disagr
      *
      * MUTATION: put --cop-headpadx back in the first rule. Red.
      */
-    expect($css)->toContain('.kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-padx)}')
+    expect($css)->toContain('.kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-m-headpadx,var(--cop-padx))}')
         // And the centred mode keeps its own padding, because there the band is
         // deliberately not the page's width and lining the padding up would
         // mean nothing.
         ->and($css)->toContain('.kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto;padding-inline:var(--cop-headpadx)}');
 });
 
-it('hides the header side padding while it is not the number being read', function () {
+it('does NOT hide the header side padding — that was the wrong call', function () {
     $screen = (string) file_get_contents(resource_path('views/admin/partials/checkout-page-screen.blade.php'));
 
-    // A slider that moves nothing is worse than no slider: the owner drags it,
-    // watches nothing happen, and reports the control as broken.
-    expect($screen)->toContain("if (f.key === 'm_head_pad_x') return String(values.m_head_align) !== 'center';");
+    /*
+     * SUPERSEDED, AND THE OLD REASONING IS KEPT because it was not silly, it
+     * was incomplete. It read:
+     *
+     *     "A slider that moves nothing is worse than no slider: the owner
+     *      drags it, watches nothing happen, and reports the control as
+     *      broken."
+     *
+     * True — but hiding it meant the header's side padding could not be set at
+     * all in the mode that ships, and that is what the owner reported instead.
+     * The stylesheet now makes the slider mean something in both modes, so
+     * there is nothing left to hide. See the test above for the measurement.
+     */
+    expect($screen)->not->toContain("if (f.key === 'm_head_pad_x') return");
 });
 
 /* ------------------------------------------------------------------------
@@ -287,4 +298,39 @@ it('hides the arrow until the page has been scrolled, and hides it by default', 
         ->and($partial)->toContain("bar.classList.toggle('sf-up-on', !entries[entries.length - 1].isIntersecting);")
         ->and($partial)->not->toContain('window.addEventListener(\'scroll\'')
         ->and($partial)->toContain('@media(prefers-reduced-motion:reduce){');
+});
+
+/* ------------------------------------------------------------------------
+ | The header's side padding, which I had hidden
+ |------------------------------------------------------------------------*/
+
+it('keeps the header side-padding slider, and lets the page be its default', function () {
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/checkout-page-screen.blade.php'));
+
+    /*
+     * I hid this slider when "lined up with the page" became the phone's
+     * default, reasoning that the header read the page's padding there so the
+     * slider would move nothing — and that a slider which moves nothing is
+     * worse than no slider. The reasoning was fine; the outcome was that the
+     * owner had no way to set the header's side padding at all in the mode
+     * that ships, which is what he reported.
+     *
+     * `--cop-m-headpadx` is the RAW source property and cssVariables() emits it
+     * only when it differs from its default, so the fallback chain does both
+     * jobs with one declaration: untouched, the header takes the page's
+     * padding; moved, it wins.
+     *
+     * Measured at 390px:
+     *   untouched            glyph 20, page 20          (aligned)
+     *   page padding -> 8    glyph  8, page  8          (still aligned)
+     *   header slider -> 34  glyph 34, page  8          (the slider wins)
+     *
+     * MUTATION: put the bare `padding-inline:var(--cop-padx)` back and the
+     * third row goes back to 8 — the slider stops doing anything.
+     */
+    expect($css)->toContain('padding-inline:var(--cop-m-headpadx,var(--cop-padx))')
+        ->and($screen)->not->toContain("if (f.key === 'm_head_pad_x') return")
+        // And it is still on the tab it belongs to.
+        ->and(CheckoutPage::TABS['mobile_head'][2])->toContain('m_head_pad_x');
 });
