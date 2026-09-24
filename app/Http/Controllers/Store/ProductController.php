@@ -271,6 +271,19 @@ class ProductController extends Controller
                 if (!empty($override['title'])) {
                     $ctx['title'] = $override['title'];
                     $ctx['title_is_final'] = true;
+                    /*
+                     * What `%%title%%` means inside that override. In Yoast it
+                     * is the post title — for a product, the product's own
+                     * name — and an imported title is overwhelmingly likely to
+                     * contain it: `%%title%% %%sep%% %%sitename%%` is Yoast's
+                     * shipped default. App\Support\Seo cannot work it out from
+                     * $ctx['title'], which is the template itself. Translated,
+                     * for the same reason the structured data above is: an
+                     * Arabic page whose tab reads the English name advertises
+                     * itself as untranslated in the one place a shopper
+                     * decides whether to click.
+                     */
+                    $ctx['title_token'] = $product->t('name');
                 }
 
                 return $ctx;
