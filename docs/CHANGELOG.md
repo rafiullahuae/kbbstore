@@ -3,6 +3,68 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.268
+The quiz stops being a dead end, and the tagging job becomes visible.
+
+THE QUIZ ANSWERED EVERY SHOPPER WITH THE SAME ONE LINK. Measured on a default
+shop before this: /skin-quiz answers 200 in 46,136 bytes, `window.KBB_ROUTINES`
+is ABSENT from that document, `QuizRoutineLink::map()` returns null, /routines
+is 404, and the results screen offers exactly ONE distinct URL — `/shop/`. A
+shopper names up to three concerns and gets three chips, three routine shapes
+holding no products, and four buttons to the whole catalogue. The concern
+reached a chip and a row in `quiz_leads` and went nowhere else.
+
+The hand-off itself had been built some time ago and the master plan still
+carried it as outstanding — but ticking that box alone would have recorded the
+opposite of the truth, because every URL it can produce is a `/routines/`
+address and those sit behind `build_my_routine`, which ships OFF. So the
+hand-off existed and could never fire on a shipped shop.
+
+THE RUNG THAT WAS MISSING is `/concern/{slug}/`, the other page per concern and
+the one NOT behind that switch: it publishes itself the day a concern has copy
+and three live tagged products. The quiz now emits that table separately and
+falls back to it, and the plan email gets the same middle rung instead of
+dropping from a routine straight to `/shop/`. Separate rather than merged,
+because "Build my acne routine" over a collection URL describes a page the
+shopper is not about to see.
+
+THE TAGGING JOB IS SMALLER. Catalog -> Build my routine searched `name` and
+`sku` only, while `products.ingredients` has existed since October — so most of
+the sensitivity signal (`fragrance-free`, `centella`) was unreachable from the
+one screen the owner is meant to tag from. It now searches ingredients too and
+shows a snippet when that is what matched, at the same 2 queries.
+
+AND THE JOB IS NOW VISIBLE. Catalog -> Build my routine -> "Concern landing
+pages — N of 8 live": per concern, live tagged products against the floor, how
+many more are needed, whether copy exists, and the address once live. It ships
+reading 0 of 8. It counts what the PAGE counts and not what a ROUTINE counts —
+an untagged product suits every routine and no concern page, so the routine
+tally would have reported 400 products for acne over an address that still
+404s.
+
+AN N+1 FOUND WHILE MEASURING: `BuildMyRoutine::coverage()` ran
+`Routine::overrides()` inside its per-concern loop — eight identical SELECTs
+over one table that cannot change between them, invisible to any budget because
+it scales with the CONCERN list rather than the catalogue. 10 queries to 3.
+
+NOTHING MOVES ON APPLYING THIS. `ENABLED` is still `['acne']`, the floor is
+still 3, nothing in the repo is tagged, so the concern list is empty, the quiz
+emits no second table, and the shipped page contains neither
+`window.KBB_CONCERN_PAGES` nor the string `/concern/`. The English pin moved
+for the quiz page and the diff was read rather than waved through: every changed
+byte is inside the inline <script>, and with script blocks stripped the two
+documents are identical at 15,349 bytes on both sides.
+
+THE REMAINING BLOCKER, stated on the screen rather than left to be wondered
+about: only `acne` has page copy. The other seven need a string in the code, so
+a concern can sit at 5 tagged products against a floor of 3 and still be dark.
+The countdown row now says so. Both SEO lanes refused to generate that copy and
+were right to.
+
+No new route, no new endpoint, no new capability, no migration: the countdown
+rides GET /admin-api/routines and the search rides GET /admin-api/routine-
+products, both already behind `catalog.view`.
+
 ## 2.60.267
 Ed25519 package signing, ENFORCING NOTHING — and a fix for the page that was
 supposed to save you when the admin console breaks.
