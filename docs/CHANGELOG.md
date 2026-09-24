@@ -3,6 +3,67 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.261
+Two changes, both visible on the shop, both fixing something rather than
+preferring something.
+
+▲ THE NAV BAR DRAGGED THE WHOLE SHOP SIDEWAYS, and this is a RULE 1 EXCEPTION
+that will change at least five pages the day it is applied. `.mbar .wrap` was
+`flex-wrap:nowrap` with `overflow-x:visible`: flex items shrink only to their
+min-content width, and past that floor the bar stopped shrinking and pushed the
+PAGE wider, because nothing clipped it, scrolled it or wrapped it. Measured on
+a sixteen-entry menu, identically on /, /shop/, /new-in/, /best-sellers/ and
+/super-sale/: `document.documentElement.scrollWidth` 1459 against a 1280
+viewport, +339 at 1120, +435 at 1024. The mobile nav does not take over until
+~1000px, so there was a band where the desktop bar took the storefront with it.
+
+NEITHER OBVIOUS ANSWER WORKED, and both were built and measured before one was
+picked. `overflow-x:auto` contains the page and leaves the bar one row -- but a
+scroll container cannot keep `overflow-y:visible`, the other axis computes to
+auto with it, and the mega panels are `position:absolute` children INSIDE the
+bar, 319.2px tall under a 45.5px bar: 1px of 319.2 visible, 0.3%, at every
+width. Hovering "Brands" drew the underline and no panel. `flex-wrap:wrap`
+alone put the SHIPPED twelve-entry menu on THREE rows, 93px against 45.5px, at
+every width from 1024 to 1920.
+
+The reason was a two-part defect in nav-fit.js that had been cancelling itself
+out. It asked `scrollWidth > clientWidth`; `scrollWidth` is CLAMPED to
+`clientWidth`, so that can never be true, and `clientWidth` includes the bar's
+padding while flex wraps against the CONTENT box. On the shipped menu at 1280,
+with wrapping suspended for the reading: scrollWidth 1280 vs clientWidth 1280 --
+"it fits" -- while items and gaps came to 1242.3 against a content box of 1236.
+Six pixels over, invisible because they bled into the 22px gutter, and under
+wrapping those six pixels cost a whole row.
+
+ON A MENU THAT ALREADY FITS, NOTHING MOVES: bar height 45.5px before and after
+at every width, one row before and after, no vertical shift. The only change is
+`--nav-scale` 0.936 to 0.919 at 1280 -- 12.17px to 11.95px, a fifth of a pixel,
+and it is the correct size. At 390 the bar is hidden and the before and after
+screenshots are byte-identical.
+
+HOW MANY TOP-LEVEL ENTRIES, and how long their labels, is still the owner's
+question at Appearance -> Header. This only decides what happens when the menu
+is too wide: a nav bar that handles its own overflow, rather than a shop that
+scrolls sideways.
+
+THE DELIVERY NOTE now prints in the customer's language. Before this, an Arabic
+customer's handover sheet was byte-for-byte the English customer's --
+`lang="en"`, "Delivery Note", "Rice Daily Moisturizing Toner 150ml". It now
+reads `lang="ar"`, "إشعار التسليم" and the Arabic product names. THE PACKING
+SLIP IS UNCHANGED and stays in the operator's language, deliberately: the
+distinction is not whether a document leaves the building -- the dispatch label
+leaves too, on the outside of the box, and a courier reads it -- but who reads
+it. A packing slip is a picking list read at the bench. The delivery note goes
+IN THE PARCEL and is opened by the person who ordered.
+
+A third file the same argument required: `BulkDocumentController::sheets()`
+decided whether to enter the order's language by asking
+`allocatesInvoiceNumbers()`, which was right only while the invoice was the one
+customer-facing document. Left alone, a batch of twenty would have printed
+Arabic product names inside English headings, and nothing would have failed.
+
+No migration: no route and no new setting.
+
 ## 2.60.260
 Two lanes: the variable-product basket, and the content-security policy in
 report-only.
