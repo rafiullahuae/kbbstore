@@ -198,12 +198,21 @@ class CheckRedirects
      */
     public static function lookup(string $path): ?Redirect
     {
-        if (!self::claimed($path)) {
-            return null;
-        }
+        $row = self::step($path);
 
-        $row = self::row($path);
-
+        /*
+         * THE TABLE FIRST, ALWAYS, AND THE DERIVED RULE ONLY AFTER IT.
+         *
+         * A row is a decision somebody made and can see on Store -> SEO & Meta
+         * -> Redirects & 404s. A derived answer is one this application worked
+         * out for itself. When the two disagree the visible one has to win, or
+         * the owner switching a row off would change nothing and there would be
+         * no screen anywhere that explained why.
+         *
+         * It also means this cannot regress what already works: on every path
+         * a row claims, this method returns exactly the row it returned before
+         * derived() existed.
+         */
         if ($row === null || self::loops($path, $row)) {
             return null;
         }
@@ -211,8 +220,112 @@ class CheckRedirects
         return $row;
     }
 
+    /**
+     * The one redirect that claims this path — from the table, or derived.
+     *
+     * Factored out because loops() has to walk the SAME answer lookup() acts
+     * on. A walk that saw only stored rows would step straight past a derived
+     * hop and call a cycle running through one "no loop", which is the failure
+     * this middleware introduced when it started running before the router:
+     * an address the shop was serving a moment ago, bouncing for ever.
+     */
+    private static function step(string $path): ?Redirect
+    {
+        $row = self::claimed($path) ? self::row($path) : null;
+
+        return $row ?? self::derived($path);
+    }
+
+    /**
+     * A redirect this application can work out for itself, or null.
+     *
+     * ── WHY THIS RETURNS AN UNSAVED MODEL RATHER THAN A STRING ──────────────
+     *
+     * Three callers need this answer and they must not be able to drift:
+     * handle() above, the NotFoundHttpException closure in AppServiceProvider,
+     * and CanonicalHost::targetFor(), which folds the path correction into the
+     * hop off a retired domain so an old address arriving at kbeautybliss.com
+     * still costs the visitor exactly ONE 301 rather than two. That last one
+     * reads `$mapped->target`, so answering here in the currency lookup()
+     * already speaks gives all three the derived rule with no edit to either of
+     * the other two files -- and, more to the point, with no second copy of
+     * this decision to fall out of step. docs/GP-ADDRESSES-LAND.md §13.6 is the
+     * incident that argument comes from.
+     *
+     * The model is deliberately NOT saved. There is no row to write: the answer
+     * is derived from the categories table on every request and is correct the
+     * moment a category is renamed, which a written row would not be. `exists`
+     * is therefore false and recordHit() steps aside -- a derived redirect has
+     * no hit counter, because it has nothing to count on. That is named on the
+     * Redirects screen rather than hidden; see docs/SEO-URL-MAP.md.
+     *
+     * 301, like every row this shop writes. These addresses are not coming
+     * back: kbeautybliss.com is being retired (docs/CUTOVER-EXTRABEAUTY.md
+     * §4.1) and the whole point is to pass the ranking on permanently. A 302
+     * would ask Google to keep the old address indexed, which is the opposite
+     * of what a change of address is for.
+     */
+    private static function derived(string $path): ?Redirect
+    {
+        /*
+         * THE OWNER'S ROW GOVERNS BOTH SPELLINGS OF ITS OWN ADDRESS.
+         *
+         * lookup() has already asked the table for THIS path and been told no.
+         * That is not the same as the table having nothing to say: `/toners/`
+         * and `/toners` are one address, and getPathInfo() reports whichever
+         * one the client sent, verbatim. A row written for the slashed
+         * spelling and a visitor arriving on the slashless one would otherwise
+         * get the DERIVED answer — so the same old address would land in two
+         * different places depending on a character nobody typed on purpose,
+         * and the decision the owner made on Store → SEO & Meta → Redirects &
+         * 404s would be the one that lost.
+         *
+         * So: if the table claims either spelling, derive nothing. This can
+         * only ever SUPPRESS a derived redirect where a human has already
+         * spoken. It deliberately does NOT widen what the table itself matches
+         * — the slashless variant of an owner-written row still 404s exactly as
+         * it does today, which is a separate gap and is reported rather than
+         * fixed here. (Both shipped seeds write both spellings for this reason;
+         * see 2026_09_14_160000_seed_phase9_post_url_redirects and
+         * RedirectMap::fromLegacyRootCategories.)
+         */
+        $other = str_ends_with($path, '/') ? rtrim($path, '/') : $path . '/';
+
+        if ($other !== '' && $other !== $path && self::claimed($other) && self::row($other) !== null) {
+            return null;
+        }
+
+        $target = \App\Support\LegacyCategoryUrls::landingPath($path);
+
+        if ($target === null) {
+            return null;
+        }
+
+        return (new Redirect())->forceFill([
+            'source' => $path,
+            'target' => $target,
+            'code' => 301,
+            'enabled' => true,
+        ]);
+    }
+
     public static function recordHit(Redirect $redirect): void
     {
+        /*
+         * A DERIVED REDIRECT HAS NOTHING TO COUNT AGAINST.
+         *
+         * derived() answers with an unsaved model — there is no row, by design
+         * — so its `id` is null. Without this line the UPDATE below would run
+         * `where('id', null)`, which matches no row in MySQL and in SQLite
+         * alike, so nothing would break visibly; it would simply spend a write
+         * query on every hit of an old address forever. Worse, `id` is the only
+         * thing between that statement and a WHERE clause somebody later
+         * relaxes. Refusing it here is cheaper and says why.
+         */
+        if (! $redirect->exists || $redirect->getKey() === null) {
+            return;
+        }
+
         // Best-effort — a failure here must never block the actual
         // redirect from happening.
         try {
@@ -348,9 +461,10 @@ class CheckRedirects
      * CHEAP IN THE CASE THAT MATTERS. A self-pointing row is caught with no
      * query at all, by the first `isset($seen[$next])`. A row pointing at an
      * address no other row claims — which is every honest redirect, because a
-     * redirect points at a page — stops at `claimed()`, also with no query.
-     * Only a genuine chain costs a SELECT per hop, and only on a request that
-     * is being redirected rather than rendered.
+     * redirect points at a page — stops inside step(), at `claimed()` and then
+     * at the fifteen literals in LegacyCategoryUrls::PATHS, both of which
+     * answer in memory. Only a genuine chain costs a query per hop, and only on
+     * a request that is being redirected rather than rendered.
      *
      * A target on another host cannot loop back into this application's path
      * space, so `targetPath()` answers '' for it and the walk stops.
@@ -376,11 +490,7 @@ class CheckRedirects
 
             $seen[$next] = true;
 
-            if (!self::claimed($next)) {
-                return false;
-            }
-
-            $step = self::row($next);
+            $step = self::step($next);
 
             if ($step === null) {
                 return false;

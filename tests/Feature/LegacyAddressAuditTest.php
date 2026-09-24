@@ -115,6 +115,40 @@ function laaDetail(array $report, string $path): string
     return '';
 }
 
+/**
+ * The legacy addresses this shop CANNOT land by itself, which is what the
+ * finding now counts.
+ *
+ * ▲ WHY THIS IS NOT `count(LegacyCategoryUrls::PATHS)` ANY MORE, and it is a
+ * deliberate change rather than a drift. Lane SEO round 1 taught
+ * CheckRedirects to derive a 301 for any of the fifteen whose category this
+ * shop actually carries (App\Support\LegacyCategoryUrls::landingPath), so
+ * those addresses land with no row and are no longer a finding. On the seeded
+ * demo catalogue that is `toners` and `sunscreens` — the two of the six
+ * DemoCatalogueSeeder placeholders whose slugs are on the list — so the
+ * fifteen is thirteen here and would be zero on a fully imported shop.
+ *
+ * Derived from landingPaths() rather than written out, so this file does not
+ * have to be edited again the day the placeholder catalogue changes, and so a
+ * test cannot quietly pass by agreeing with a stale literal.
+ *
+ * @return list<string> sorted
+ */
+function laaUncovered(): array
+{
+    $out = [];
+
+    foreach (LegacyCategoryUrls::landingPaths() as $path => $lands) {
+        if ($lands === null) {
+            $out[] = $path;
+        }
+    }
+
+    sort($out);
+
+    return $out;
+}
+
 /** A redirect row of the shape the WordPress import writes. */
 function laaRow(string $source, bool $enabled = true): Redirect
 {
@@ -140,12 +174,26 @@ it('reports every legacy category address that has no redirect row', function ()
      */
     $report = laaScan();
 
-    $expected = LegacyCategoryUrls::PATHS;
-    sort($expected);
+    expect(laaReported($report))->toBe(laaUncovered());
+    expect(laaFinding($report)['count'])->toBe(count(laaUncovered()));
 
-    expect(laaReported($report))->toBe($expected);
-    expect(laaFinding($report)['count'])->toBe(count(LegacyCategoryUrls::PATHS));
-    expect(laaDetail($report, '/skincare-sets/'))->toBe('no redirect set');
+    /*
+     * ▲ THE DETAIL SENTENCE CHANGED, AND THE OLD ONE IS NOW FALSE.
+     *
+     * It used to read "no redirect set", because a missing row WAS why the
+     * address failed. Since Lane SEO round 1 a missing row is no longer why —
+     * the shop derives the redirect — so the only way to reach this line is
+     * that nothing in the shop answers to the name, which is a different job
+     * for the owner and is the only honest thing to put on the screen. A row
+     * whose reason is false is worse than a row missing
+     * (docs/GP-ADDRESSES-LAND.md §4, the same mistake found the same way).
+     */
+    expect(laaDetail($report, '/skincare-sets/'))
+        ->toBe('no category, page or article in this shop answers to "/skincare-sets"');
+
+    // And the two the shop CAN land are absent, which is the new half of this.
+    expect(laaReported($report))->not->toContain('/toners/');
+    expect(laaReported($report))->not->toContain('/sunscreens/');
 });
 
 it('stops reporting an address once an enabled redirect covers it', function () {
@@ -163,7 +211,7 @@ it('stops reporting an address once an enabled redirect covers it', function () 
     $report = laaScan();
 
     expect(laaReported($report))->not->toContain('/skincare-sets/');
-    expect(laaFinding($report)['count'])->toBe(count(LegacyCategoryUrls::PATHS) - 1);
+    expect(laaFinding($report)['count'])->toBe(count(laaUncovered()) - 1);
 
     // And the row it points at is the one the URL contract says it should be.
     expect(LegacyCategoryUrls::toCategoryPath('/skincare-sets/'))
@@ -184,12 +232,25 @@ it('still reports an address whose redirect row is switched off', function () {
      * MUTATION NOTE, run: change the `($state[$path] ?? false) === true` guard
      * to `array_key_exists($path, $state)` and this is red.
      */
-    laaRow('/toners/', enabled: false);
+    /*
+     * ▲ /lip-care/ AND NOT /toners/, WHICH THIS USED TO USE.
+     *
+     * The demo catalogue carries a `toners` category, so since Lane SEO round
+     * 1 that address lands by derivation whatever the row says — correctly, and
+     * it is therefore no longer a finding at all, which made this block assert
+     * the opposite of what it is named for. `lip-care` is on the list of
+     * fifteen and no category answers to it, so a switched-off row is still the
+     * whole of that address's coverage and the branch under test is still
+     * reachable. Asserted through laaUncovered() so the premise cannot rot.
+     */
+    expect(laaUncovered())->toContain('/lip-care/');
+
+    laaRow('/lip-care/', enabled: false);
 
     $report = laaScan();
 
-    expect(laaReported($report))->toContain('/toners/');
-    expect(laaDetail($report, '/toners/'))->toBe('redirect is switched off');
+    expect(laaReported($report))->toContain('/lip-care/');
+    expect(laaDetail($report, '/lip-care/'))->toBe('redirect is switched off');
 });
 
 it('still reports an address covered only in the spelling with no trailing slash', function () {
@@ -235,7 +296,7 @@ it('leaves the scanned total and the verdict line exactly as they were', functio
 
     // The card still exists and still carries its count -- advisory is about
     // the headline, not about hiding the finding.
-    expect(laaFinding($report)['count'])->toBe(count(LegacyCategoryUrls::PATHS));
+    expect(laaFinding($report)['count'])->toBe(count(laaUncovered()));
 });
 
 it('never takes the verdict headline, even when it is the biggest number on the screen', function () {
@@ -286,17 +347,25 @@ it('never takes the verdict headline, even when it is the biggest number on the 
 
     $report = laaScan();
 
-    // The premise: it really is the biggest non-advisory number here.
+    /*
+     * ▲ MEASURED AGAINST laaUncovered() RATHER THAN THE FIFTEEN. Since Lane
+     * SEO round 1 the finding counts the addresses this shop cannot land by
+     * itself, which on this fixture is thirteen. The premise below is what
+     * makes this test assert anything at all, so it is checked against the
+     * number actually reported rather than a literal that has moved.
+     */
+    $legacy = count(laaUncovered());
+
     foreach ($report['findings'] as $key => $finding) {
         if ($key !== 'legacy_url_no_redirect' && $key !== 'product_no_image_alt') {
             expect($finding['count'])->toBeLessThan(
-                count(\App\Support\LegacyCategoryUrls::PATHS),
+                $legacy,
                 $key.' is not smaller than the legacy count, so this test asserts nothing'
             );
         }
     }
 
-    expect(laaFinding($report)['count'])->toBe(count(LegacyCategoryUrls::PATHS));
+    expect(laaFinding($report)['count'])->toBe($legacy);
 
     // And it still does not get to be the sentence at the top.
     expect($report['verdict'])->not->toContain('Old shop address');
@@ -358,7 +427,19 @@ it('asks the redirects table exactly one question, whatever the list grows to', 
             return;
         }
 
-        if (str_contains($sql, 'redirects')) {
+        /*
+         * ▲ `"redirects"` AND NOT `redirects`, AND THE DIFFERENCE IS A REAL
+         * TABLE.
+         *
+         * `category_redirects` contains the substring `redirects`, so the
+         * looser match counted a read of a DIFFERENT table as a read of this
+         * one. That was harmless while nothing in this pass touched
+         * category_redirects and stopped being harmless the moment something
+         * did (Lane SEO round 1, LegacyCategoryUrls::landingPaths, which asks
+         * it whether a category has moved). Matching the quoted table name is
+         * what this test always meant.
+         */
+        if (str_contains($sql, '"redirects"') || str_contains($sql, '`redirects`')) {
             $queries++;
         }
     });
@@ -366,4 +447,28 @@ it('asks the redirects table exactly one question, whatever the list grows to', 
     test()->actingAs($user, 'admin')->getJson('/admin-api/seo-audit')->assertOk();
 
     expect($queries)->toBe(1);
+});
+
+it('keeps the whole legacy pass to a bounded number of queries, not one per path', function () {
+    /*
+     * ▲ THE OTHER HALF OF THE BUDGET ABOVE, ADDED BY LANE SEO ROUND 1.
+     *
+     * The check above counts reads of `redirects` and would stay green at one
+     * while the pass asked the CATEGORIES table fifteen times — which is what
+     * calling LegacyCategoryUrls::landingPath() per path would have done, on a
+     * screen whose own comment says "not one query per path". The batched
+     * resolver is three queries for the whole list, and this is the line that
+     * notices if it stops being.
+     *
+     * MUTATION NOTE, RUN: rewriting landingPaths() as a loop over
+     * landingPath() takes this from 3 to 41 and it is red.
+     */
+    $queries = 0;
+    DB::listen(function () use (&$queries) {
+        $queries++;
+    });
+
+    LegacyCategoryUrls::landingPaths();
+
+    expect($queries)->toBeLessThanOrEqual(4);
 });
