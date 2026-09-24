@@ -190,8 +190,19 @@ final class AdminCapabilities
         //   cache.manage        clears the compiled config, routes and views
         //                       of a running shop, and decides what every
         //                       visitor's browser is allowed to keep.
+        //   security.view       the administrative audit trail, the failed
+        //                       sign-ins and the rate-limit trips -- every row
+        //                       of which names an operator, their role and an
+        //                       IP address. Its own capability and NOT
+        //                       system.diagnostics, although both are
+        //                       owner-only as this ships: the day somebody
+        //                       widens diagnostics to a manager, which is a
+        //                       reasonable thing to want, this must not widen
+        //                       with it in a different file with nothing to
+        //                       notice.
         'store.settings' => ['owner'],
         'cache.manage' => ['owner'],
+        'security.view' => ['owner'],
         'payments.manage' => ['owner'],
         'users.manage' => ['owner'],
         'updates.manage' => ['owner'],
@@ -355,6 +366,24 @@ final class AdminCapabilities
         ['*', 'admin-api/pay-ship-rules', 'store.shipping'],
 
         // ------------------------------------------------------------- diagnostics
+        /*
+         * Store -> Security (Lane C). The audit trail and the report over it.
+         *
+         * A `*` rule covering both verbs, which is what CLAUDE.md's
+         * write-before-read ordering asks for: there is no reading half here
+         * that a narrower role should reach without the writing half, and the
+         * write is only the screen's own switches. The '/**' line is a SIBLING
+         * of the exact one above it and neither can shadow the other -- both
+         * are needed, because 'admin-api/security' does not match
+         * 'admin-api/security/anything' and this screen will grow.
+         *
+         * Mapped although the route file is not required from routes/web.php
+         * yet: the integrator wires it, and a rule that lands before the route
+         * is the harmless order of the two.
+         */
+        ['*', 'admin-api/security', 'security.view'],
+        ['*', 'admin-api/security/**', 'security.view'],
+
         ['GET', 'admin-api/schema-inspect', 'system.diagnostics'],
         ['GET', 'admin-api/catalogue-audit', 'system.diagnostics'],
         /*

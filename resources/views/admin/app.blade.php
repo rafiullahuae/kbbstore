@@ -21011,6 +21011,22 @@ buildNav();
      CHECKOUT gains the bar, which is what was asked for. --}}
 @include('admin.partials.slim-footer-screen')
 
+{{-- Store → Security (Lane C, Phase 18 items 6 and 7). The administrative
+     audit trail and the report over it: one verdict sentence, the failed
+     sign-ins, the rate-limit trips that vanish silently today, and every
+     administrative change with what the value said before.
+
+     It registers its own sidebar entry inside the Store group and wraps
+     window.go, exactly as the screens above do, so this include is the whole
+     of the change to this file.
+
+     IT BLOCKS NOTHING, and that is Phase 18's sequencing rather than an
+     unfinished feature: report before enforce, so that no request the shop
+     answered yesterday is refused today. Applying it refuses nothing, changes
+     no storefront page and moves no existing setting — it begins writing rows
+     to a new table that only this screen reads. --}}
+@include('admin.partials.security-screen')
+
 @verbatim
 <script>
 /* ---------------------------------------------------------------------------
