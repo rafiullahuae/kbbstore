@@ -390,7 +390,7 @@ final class MediaSideloader
      *
      * @param  list<string>|null  $hosts
      * @return array{total: int, present: int, remaining: int, failed: int, refused: int,
-     *               bytes_on_disk: int, bytes_fetched: int, estimated_bytes: int,
+     *               repointed: int, bytes_on_disk: int, bytes_fetched: int, estimated_bytes: int,
      *               free_bytes: int|null, hosts: list<string>, enough_room: bool}
      */
     public function plan(?array $hosts = null): array
@@ -436,6 +436,16 @@ final class MediaSideloader
             $remaining++;
         }
 
+        /*
+         * THE BYTES COME WITH THE COUNT, and they have to. A re-pointed row
+         * leaves `references()`, so the file it named stopped being added to
+         * `bytes_on_disk` at the same moment it stopped being counted — and the
+         * screen read "4 of 10 fetched … on disk 0 B" with four photographs
+         * plainly on the disk. Same walk, same is_file() check, one filesize()
+         * more.
+         */
+        $repointed = $this->repointed($hosts, $references);
+
         $free = $this->freeBytes();
         $estimate = $remaining * self::ESTIMATED_BYTES_PER_FILE;
 
@@ -445,7 +455,25 @@ final class MediaSideloader
             'remaining' => $remaining,
             'failed' => $failed,
             'refused' => $refused,
-            'bytes_on_disk' => $bytesOnDisk,
+            /*
+             * WORK THAT IS DONE AND IS NO LONGER VISIBLE FROM THE CATALOGUE.
+             *
+             * Every count above is recomputed from the catalogue and the disk,
+             * which is this class's whole resume story — and it stopped being
+             * able to see its own finished work the moment a batch began
+             * re-pointing the rows it landed. A re-pointed row is not remote
+             * any more, so it leaves `references()` entirely: `total` shrinks
+             * by one at the same moment `present` would have grown by one, and
+             * a bar drawn from the two sits at zero all the way through a run
+             * that is going perfectly.
+             *
+             * This is the one number the ledger has to answer, and it is still
+             * not taken on trust: a row counts only when the FILE IT NAMES IS
+             * ON DISK. So it is "fetched, landed, and the catalogue has stopped
+             * mentioning the old host" — which is exactly what it claims.
+             */
+            'repointed' => $repointed['files'],
+            'bytes_on_disk' => $bytesOnDisk + $repointed['bytes'],
             'bytes_fetched' => (int) DB::table(self::ITEMS)->where('state', self::FETCHED)->sum('bytes'),
             'estimated_bytes' => $estimate,
             'free_bytes' => $free,
@@ -458,6 +486,51 @@ final class MediaSideloader
              */
             'enough_room' => self::hasRoom($free, $estimate),
         ];
+    }
+
+    /**
+     * Ledger rows that were fetched, are still on disk, and have since been
+     * re-pointed out of the catalogue's remote set.
+     *
+     * The host filter follows the caller's: a narrowed `hosts` narrows this
+     * too. An EMPTY host list means the catalogue names no remote host at all
+     * any more — which is the finished state, not an empty question — so every
+     * landed file counts and the page can say "N of N" instead of "0 of 0".
+     *
+     * @param  list<string>  $hosts
+     * @param  list<array{url: string, host: string, path: string|null, refusal: string|null, owners: list<string>}>  $references
+     * @return array{files: int, bytes: int}
+     */
+    private function repointed(array $hosts, array $references): array
+    {
+        $stillReferenced = [];
+
+        foreach ($references as $reference) {
+            $stillReferenced[self::hash($reference['url'])] = true;
+        }
+
+        $files = 0;
+        $bytes = 0;
+
+        foreach (DB::table(self::ITEMS)->where('state', self::FETCHED)
+            ->select(['url_hash', 'host', 'target_path'])->cursor() as $row) {
+            if (isset($stillReferenced[(string) $row->url_hash])) {
+                continue;
+            }
+
+            if ($hosts !== [] && ! in_array(strtolower((string) $row->host), $hosts, true)) {
+                continue;
+            }
+
+            $full = $this->absolute((string) $row->target_path);
+
+            if ($full !== null && is_file($full)) {
+                $files++;
+                $bytes += (int) (@filesize($full) ?: 0);
+            }
+        }
+
+        return ['files' => $files, 'bytes' => $bytes];
     }
 
     /**
@@ -602,6 +675,7 @@ final class MediaSideloader
         $refused = 0;
         $bytes = 0;
         $results = [];
+        $landed = [];
         $stopped = 'nothing left to fetch';
 
         $ledger = $this->ledger();
@@ -693,6 +767,7 @@ final class MediaSideloader
             if ($outcome['state'] === self::FETCHED) {
                 $fetched++;
                 $bytes += $outcome['bytes'];
+                $landed[] = $reference['url'];
             } elseif ($outcome['state'] === self::REFUSED) {
                 $refused++;
             } else {
@@ -703,6 +778,14 @@ final class MediaSideloader
             $results[] = $this->result($reference, $outcome['state'], $outcome['reason'], $outcome['bytes'], $outcome['status']);
         }
 
+        /*
+         * AND THE ROWS ARE RE-POINTED IN THE SAME REQUEST THAT LANDED THE FILE.
+         * See repoint(). This is before plan() deliberately: the plan the
+         * caller gets back must describe the shop as it is when the response is
+         * written, not as it was one statement earlier.
+         */
+        $repointed = $this->repoint($landed);
+
         $after = $this->plan($hosts);
         $run = $this->endBatch($fetched, $failed, $bytes, $after['remaining'] === 0 ? 'nothing left to fetch' : null);
 
@@ -712,11 +795,99 @@ final class MediaSideloader
             'failed' => $failed,
             'refused' => $refused,
             'bytes' => $bytes,
+            'repointed' => $repointed,
             'stopped' => $stopped,
             'results' => $results,
             'plan' => $after,
             'ignored_hosts' => $resolved['ignored'],
             'run' => $run,
+        ];
+    }
+
+    /**
+     * Take the rows that named the addresses THIS BATCH just landed off the
+     * old host.
+     *
+     * =========================================================================
+     * THE DEFECT THIS CLOSES, WHICH WAS A PROCEDURE AND NOT A BUG
+     * =========================================================================
+     *
+     * Fetching and re-pointing were two steps with a gap between them, and the
+     * gap had a property nobody could see from the shop: the photograph was on
+     * this server's disk and the product row still said `https://<old
+     * host>/…`. Everything rendered perfectly, from the old site. The whole
+     * instruction that came out of that was **"do not switch the old site off
+     * between the two steps"** — which is a sentence in a runbook standing in
+     * for a fix, on a migration whose entire point is that the old site gets
+     * switched off.
+     *
+     * So the step that lands the bytes re-points the rows that referenced them,
+     * in the same request, before it answers. After a batch there is no state
+     * in which the file is here and the row points there.
+     *
+     * =========================================================================
+     * ONLY WHAT THIS BATCH FETCHED, AND WHY THAT RESTRAINT IS DELIBERATE
+     * =========================================================================
+     *
+     * `MediaRewrite::propose()` would happily offer every row on those hosts
+     * whose file is on disk — including files that arrived by FTP months ago,
+     * which is a job the owner starts himself from Store → Import → Addresses &
+     * pictures → apply. Re-pointing those as a side effect of pressing Fetch
+     * would be this step doing something nobody asked it for, so the proposals
+     * are filtered down to the addresses this batch actually wrote. The manual
+     * apply still exists and still does the rest.
+     *
+     * IT INHERITS EVERY GUARD `MediaRewrite` ALREADY HAS, because it goes
+     * through `propose()` rather than around it: only a file that is really on
+     * disk, only a path under one of the two upload roots, only a value that is
+     * still byte-identical to what the proposal was built from, and the whole
+     * set in one transaction.
+     *
+     * BOTH SHAPES. A cell (`products.image`, `posts.cover`) goes through
+     * `MediaRewrite`; an `<img>` inside `posts.body` goes through
+     * `DocumentMediaRewrite`. The Journal's pictures are fetched by this class
+     * exactly like a product's, and leaving the document half out would land
+     * the file and leave the article hot-linked — the same gap one level down.
+     *
+     * @param  list<string>  $urls  the addresses this batch wrote to disk
+     * @return array{rows: int, documents: int}
+     */
+    private function repoint(array $urls): array
+    {
+        $none = ['rows' => 0, 'documents' => 0];
+
+        if ($urls === []) {
+            return $none;
+        }
+
+        $hosts = [];
+        $wanted = [];
+
+        foreach ($urls as $url) {
+            $host = parse_url($url, PHP_URL_HOST);
+
+            if (is_string($host) && $host !== '') {
+                $hosts[strtolower($host)] = true;
+            }
+
+            $wanted[$url] = true;
+        }
+
+        if ($hosts === []) {
+            return $none;
+        }
+
+        $hosts = array_keys($hosts);
+
+        $mine = static fn (array $proposal): bool => $proposal['decision'] === MediaRewrite::REWRITE
+            && isset($wanted[$proposal['from']]);
+
+        $cells = new MediaRewrite;
+        $documents = new DocumentMediaRewrite;
+
+        return [
+            'rows' => $cells->apply(array_values(array_filter($cells->propose($hosts), $mine))),
+            'documents' => $documents->apply(array_values(array_filter($documents->propose($hosts), $mine))),
         ];
     }
 

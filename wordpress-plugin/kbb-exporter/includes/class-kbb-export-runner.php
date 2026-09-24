@@ -35,6 +35,31 @@ defined( 'ABSPATH' ) || exit;
 class KBB_Export_Runner {
 
 	const STATE_OPTION = 'kbb_exporter_state';
+
+	/**
+	 * What the owner has to type before anything is deleted.
+	 *
+	 * A word rather than a tick box, and an upper-case one, because the action
+	 * it confirms cannot be undone: the export is the only copy of a several-
+	 * minute run, and on cutover day it is the only copy of the shop's data
+	 * that is not on the old site. A tick box is one mis-click; this is not.
+	 * Checked on the server in purge(), not only by the page.
+	 */
+	const PURGE_PHRASE = 'DELETE';
+
+	/** Recursion ceiling for the delete and for the measure that checks it. */
+	const PURGE_MAX_DEPTH = 8;
+
+	/**
+	 * The files that are the reason the folder must not be left on the server.
+	 *
+	 * Named rather than counted, on the screen and in the answer, because "12
+	 * files" is not a reason to press a destructive button and "customers.csv,
+	 * which holds every shopper's address and password hash" is.
+	 *
+	 * @var array<int,string>
+	 */
+	const SENSITIVE_FILES = array( 'customers.csv', 'reviews.csv', 'orders.csv' );
 	const FORMAT       = 'kbb-export/1';
 	const PLUGIN_VERSION = '1.0.0';
 
@@ -974,9 +999,417 @@ class KBB_Export_Runner {
 		update_option( self::STATE_OPTION, $this->state );
 	}
 
+	/**
+	 * Forget where the export got to. THIS DELETES NO FILE.
+	 *
+	 * Named and commented so that nobody wires it to a Delete button again.
+	 * `ajax_start()` calls it to begin a new export from row one, which is the
+	 * whole of its job. `customers.csv` and its password hashes are exactly
+	 * where they were when this returns; see purge() for the one that removes
+	 * them, and KBB_Export_Admin::ajax_purge() for the door it is behind.
+	 */
 	public function reset() {
 		delete_option( self::STATE_OPTION );
 
 		$this->state = array();
+	}
+
+	/* ====================================================================== */
+	/*  THE REAL DELETE                                                        */
+	/* ====================================================================== */
+
+	/**
+	 * The folder every export is written under. Computed, never received.
+	 *
+	 * NOTHING A BROWSER SENDS REACHES THIS. The uploads base comes from
+	 * WordPress and the last segment is a literal, so there is no path to
+	 * sanitise because there is no path from the request. That is the same
+	 * property KBB_Export_Admin::download() relies on, and it matters more here
+	 * -- a traversal into a download hands over one file it should not, and a
+	 * traversal into a recursive delete takes the site with it.
+	 */
+	public function exports_root() {
+		return KBB_Export_Wp::uploads_dir() . '/kbb-export';
+	}
+
+	/**
+	 * What is on the server right now: one entry per export, with its size.
+	 *
+	 * READ FROM THE DISK, never from the state option. The option knows about
+	 * the export this plugin is part-way through; the disk knows about the four
+	 * from last week that were downloaded and left there, which are the ones
+	 * this screen exists to get rid of. An export whose state was reset is
+	 * invisible to the option and is still every shopper's address on a public
+	 * web server.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function exports() {
+		$root = $this->exports_root();
+		$out  = array();
+
+		if ( ! is_dir( $root ) ) {
+			return $out;
+		}
+
+		$entries = scandir( $root );
+
+		if ( false === $entries ) {
+			return $out;
+		}
+
+		$current = isset( $this->state['export_id'] ) ? (string) $this->state['export_id'] : '';
+
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			$path = $root . '/' . $entry;
+
+			if ( ! is_dir( $path ) || is_link( $path ) ) {
+				continue;
+			}
+
+			$measured = $this->measure( $path );
+
+			$out[] = array(
+				'id'      => $entry,
+				'files'   => $measured['files'],
+				'bytes'   => $measured['bytes'],
+				'size'    => self::human( $measured['bytes'] ),
+				'created' => gmdate( 'Y-m-d H:i', (int) filemtime( $path ) ),
+				'current' => ( '' !== $current && $entry === $current ),
+				/*
+				 * Said per export and not once at the top, because it is the
+				 * sentence that makes the button worth pressing: these two
+				 * files are why the folder is not something to leave lying
+				 * about.
+				 */
+				'sensitive' => $this->sensitive_files( $path ),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * DELETE EVERY EXPORT FROM THE SERVER, for real.
+	 *
+	 * ==========================================================================
+	 * WHAT THIS IS FOR, AND WHY reset() IS NOT IT
+	 * ==========================================================================
+	 *
+	 * The screen has always told the owner, correctly, to delete the export
+	 * folder once he has downloaded it: `customers.csv` holds every shopper's
+	 * address and their WordPress password hash, and `reviews.csv` holds
+	 * reviewers' emails and the IPs they posted from. He has no shell and no
+	 * FTP -- the paragraph two lines above that instruction says so itself --
+	 * so there was no way for him to follow it.
+	 *
+	 * `wp_ajax_kbb_export_reset` was already registered and reachable, and it
+	 * would have made a perfectly convincing Delete button: it answers `ok`, the
+	 * progress bar goes back to zero, and the screen looks exactly as it does
+	 * after a real delete. It calls reset(), which calls delete_option(). THE
+	 * HASHES STAY ON DISK, now with nothing in the admin screen referring to
+	 * them and no download link left to reach them -- worse than before,
+	 * because the owner has been told they are gone.
+	 *
+	 * So this is a new destructive path rather than a wire-up, and it answers
+	 * with what it can still SEE rather than with what it did.
+	 *
+	 * ==========================================================================
+	 * THE ANSWER IS A RE-SCAN, NOT A COUNTER
+	 * ==========================================================================
+	 *
+	 * `ok` is true when a fresh walk of the folder finds no file left, and
+	 * `remaining` names what is still there when it is not. A count of
+	 * successful unlink() calls would report success for a folder half of which
+	 * could not be removed -- exactly the failure this whole feature exists to
+	 * stop reporting. On shared hosting the thing that actually happens is a
+	 * file owned by a different UID than PHP runs as, and the owner has to be
+	 * told its name.
+	 *
+	 * ==========================================================================
+	 * EVERY DELETE IS INSIDE THE ROOT, PROVED PER ENTRY
+	 * ==========================================================================
+	 *
+	 *  1. The root is computed (exports_root()), so no request supplies a path.
+	 *  2. Each entry's realpath() must still be under the root's realpath()
+	 *     before anything happens to it. A string check alone has been wrong
+	 *     before, in this repository and everywhere else.
+	 *  3. A SYMLINK IS UNLINKED AND NEVER FOLLOWED. `is_link()` is tested
+	 *     before `is_dir()`, because a symlink to a directory answers true to
+	 *     both -- and recursing into one is how a delete inside uploads
+	 *     becomes a delete of wp-config.php.
+	 *  4. Depth is bounded. A recursive delete with no ceiling is a stack
+	 *     overflow away from a half-deleted folder.
+	 *
+	 * ==========================================================================
+	 * THE FOLDER'S OWN GUARDS SURVIVE
+	 * ==========================================================================
+	 *
+	 * `kbb-export/index.php` and `kbb-export/.htaccess` are left in place. They
+	 * hold no data, they are what stops the folder being listed or served, and
+	 * removing them to leave things tidy would open a window: if anything
+	 * recreated the folder before write_index_guard() next ran, a directory
+	 * listing of an unguarded uploads folder is the whole breach. Everything
+	 * INSIDE each export folder goes, the export folders themselves go, and the
+	 * two guards stay.
+	 *
+	 * @param string $confirmation what the owner typed. Must equal PURGE_PHRASE.
+	 * @return array<string,mixed>
+	 */
+	public function purge( $confirmation ) {
+		$typed = is_string( $confirmation ) ? trim( $confirmation ) : '';
+
+		/*
+		 * THE TYPED CONFIRMATION IS CHECKED HERE, not only on the screen. A
+		 * disabled button is a courtesy to the person using the page; it is not
+		 * a guard, because the endpoint is reachable without the page. Compared
+		 * case-sensitively and in full: "delete" is a word somebody types by
+		 * habit, and the point of the phrase is that it cannot be typed by
+		 * habit.
+		 */
+		if ( self::PURGE_PHRASE !== $typed ) {
+			return array(
+				'ok'        => false,
+				'error'     => 'Type ' . self::PURGE_PHRASE . ' in the box to confirm. Nothing was deleted.',
+				'deleted'   => 0,
+				'bytes'     => 0,
+				'remaining' => array(),
+			);
+		}
+
+		$root = $this->exports_root();
+
+		if ( ! is_dir( $root ) ) {
+			return array(
+				'ok'        => true,
+				'error'     => '',
+				'deleted'   => 0,
+				'bytes'     => 0,
+				'remaining' => array(),
+				'note'      => 'There is no export folder on this server.',
+			);
+		}
+
+		$real = realpath( $root );
+
+		if ( false === $real ) {
+			return array(
+				'ok'        => false,
+				'error'     => 'The export folder could not be resolved on disk. Nothing was deleted.',
+				'deleted'   => 0,
+				'bytes'     => 0,
+				'remaining' => array(),
+			);
+		}
+
+		$before  = $this->measure( $root, true );
+		$deleted = 0;
+
+		$entries = scandir( $root );
+		$entries = ( false === $entries ) ? array() : $entries;
+
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			// The two guards stay. See the block above.
+			if ( 'index.php' === $entry || '.htaccess' === $entry ) {
+				continue;
+			}
+
+			$deleted += $this->remove( $root . '/' . $entry, $real, 0 );
+		}
+
+		/*
+		 * The state option goes too, and AFTER the files rather than before.
+		 * It names the folder that has just been deleted, so leaving it would
+		 * leave Resume pointing at nothing; removing it first would have left
+		 * the only record of where the files are gone while the files were
+		 * still there.
+		 */
+		$this->reset();
+
+		$after = $this->measure( $root, true );
+
+		return array(
+			'ok'        => 0 === count( $after['sensitive'] ) && 0 === $after['files'],
+			'error'     => '',
+			'deleted'   => $deleted,
+			'bytes'     => $before['bytes'] - $after['bytes'],
+			'size'      => self::human( $before['bytes'] - $after['bytes'] ),
+			/*
+			 * WHAT IS STILL THERE, read off the disk after the fact. This is
+			 * the field that makes the answer checkable: `ok` is computed from
+			 * it and not from how many unlink() calls returned true.
+			 */
+			'remaining' => $after['names'],
+			'note'      => 0 === $after['files']
+				? 'Every export file is gone from this server. The folder guards (index.php and .htaccess) '
+					. 'were left in place; they hold nothing.'
+				: 'Some files could not be removed and are named above. They are usually owned by a different '
+					. 'user than PHP runs as -- your host can delete them.',
+		);
+	}
+
+	/**
+	 * Delete one entry, recursively, refusing anything outside $root.
+	 *
+	 * @param string $path  the entry
+	 * @param string $root  realpath of the exports root
+	 * @param int    $depth recursion guard
+	 * @return int files and directories actually removed
+	 */
+	private function remove( $path, $root, $depth ) {
+		if ( $depth > self::PURGE_MAX_DEPTH ) {
+			return 0;
+		}
+
+		/*
+		 * A SYMLINK IS TESTED FOR FIRST. is_dir() answers true for a symlink
+		 * pointing at a directory, so a check in the other order would recurse
+		 * through the link and delete whatever it points at -- which on a
+		 * shared host is anything PHP can write.
+		 */
+		if ( is_link( $path ) ) {
+			return @unlink( $path ) ? 1 : 0; // phpcs:ignore
+		}
+
+		$real = realpath( $path );
+
+		/*
+		 * INSIDE THE ROOT, PROVED, and proved on the resolved path rather than
+		 * on the one that was built. The separator is appended to both sides so
+		 * that a sibling folder whose name merely begins with the root's cannot
+		 * pass -- `/uploads/kbb-export-old` is not inside `/uploads/kbb-export`.
+		 */
+		if ( false === $real || 0 !== strpos( $real . '/', rtrim( $root, '/' ) . '/' ) ) {
+			return 0;
+		}
+
+		if ( ! is_dir( $real ) ) {
+			return @unlink( $real ) ? 1 : 0; // phpcs:ignore
+		}
+
+		$removed = 0;
+		$entries = scandir( $real );
+		$entries = ( false === $entries ) ? array() : $entries;
+
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			$removed += $this->remove( $real . '/' . $entry, $root, $depth + 1 );
+		}
+
+		return @rmdir( $real ) ? $removed + 1 : $removed; // phpcs:ignore
+	}
+
+	/**
+	 * Walk a folder and say how much is in it, and what of it is sensitive.
+	 *
+	 * @return array{files:int,bytes:int,names:array<int,string>,sensitive:array<int,string>}
+	 */
+	private function measure( $path, $skip_guards = false, $depth = 0 ) {
+		$out = array(
+			'files'     => 0,
+			'bytes'     => 0,
+			'names'     => array(),
+			'sensitive' => array(),
+		);
+
+		if ( $depth > self::PURGE_MAX_DEPTH || ! is_dir( $path ) || is_link( $path ) ) {
+			return $out;
+		}
+
+		$entries = scandir( $path );
+		$entries = ( false === $entries ) ? array() : $entries;
+
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			/*
+			 * THE ROOT'S OWN GUARDS ARE NOT EXPORT DATA and are never counted
+			 * as something left behind; purge() leaves them there on purpose.
+			 *
+			 * Asked for by the caller rather than inferred from $depth === 0.
+			 * An export folder carries an index.php of its own, and measuring
+			 * one of those from exports() starts at depth 0 too -- so a depth
+			 * test would have quietly under-counted every export by one file
+			 * while looking exactly right.
+			 */
+			if ( $skip_guards && 0 === $depth && ( 'index.php' === $entry || '.htaccess' === $entry ) ) {
+				continue;
+			}
+
+			$full = $path . '/' . $entry;
+
+			if ( is_dir( $full ) && ! is_link( $full ) ) {
+				$inner = $this->measure( $full, false, $depth + 1 );
+
+				$out['files']    += $inner['files'];
+				$out['bytes']    += $inner['bytes'];
+				$out['names']     = array_merge( $out['names'], $inner['names'] );
+				$out['sensitive'] = array_merge( $out['sensitive'], $inner['sensitive'] );
+
+				continue;
+			}
+
+			$out['files']++;
+			$out['bytes'] += (int) @filesize( $full ); // phpcs:ignore
+			$out['names'][] = $entry;
+
+			if ( in_array( $entry, self::SENSITIVE_FILES, true ) ) {
+				$out['sensitive'][] = $entry;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * The files in one export that carry personal data, by name.
+	 *
+	 * @return array<int,string>
+	 */
+	private function sensitive_files( $path ) {
+		$out = array();
+
+		foreach ( self::SENSITIVE_FILES as $name ) {
+			if ( is_file( $path . '/' . $name ) ) {
+				$out[] = $name;
+			}
+		}
+
+		return $out;
+	}
+
+	/** Bytes as something a person reads. */
+	public static function human( $bytes ) {
+		$bytes = (int) $bytes;
+
+		if ( $bytes < 1024 ) {
+			return $bytes . ' B';
+		}
+
+		$units = array( 'KB', 'MB', 'GB' );
+		$value = $bytes;
+
+		foreach ( $units as $unit ) {
+			$value = $value / 1024;
+
+			if ( $value < 1024 || 'GB' === $unit ) {
+				return ( $value < 10 ? number_format( $value, 1 ) : number_format( $value, 0 ) ) . ' ' . $unit;
+			}
+		}
+
+		return $bytes . ' B';
 	}
 }

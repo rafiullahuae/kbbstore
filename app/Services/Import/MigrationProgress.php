@@ -97,9 +97,24 @@ final class MigrationProgress
     private function pictures(array $plan, array $run): array
     {
         $remaining = (int) $plan['remaining'];
-        $present = (int) $plan['present'];
-        $total = (int) $plan['total'];
         $state = (string) $run['state'];
+
+        /*
+         * PICTURES THAT ARE DONE STAY IN THE NUMERATOR AND THE DENOMINATOR.
+         *
+         * A batch now re-points the rows it landed, so a finished picture stops
+         * being a remote reference the moment it lands — it leaves `total` and
+         * never joins `present`. Counting only what is still outstanding would
+         * draw a bar that is at 0% for the whole run and then vanishes, which
+         * is a worse lie than the one this page was built to stop telling.
+         *
+         * `repointed` is the finished work, checked against the disk and not
+         * against a tally. Added to both halves, the fraction reads exactly as
+         * it did before the re-pointing landed: done over everything there was.
+         */
+        $repointed = (int) ($plan['repointed'] ?? 0);
+        $present = (int) $plan['present'] + $repointed;
+        $total = (int) $plan['total'] + $repointed;
 
         /*
          * The sentence the whole page is for. IDLE with work left and RUNNING
@@ -127,6 +142,7 @@ final class MigrationProgress
             'remaining' => $remaining,
             'failed' => (int) $plan['failed'],
             'refused' => (int) $plan['refused'],
+            'repointed' => $repointed,
             'bytes' => (int) $plan['bytes_on_disk'],
             'bytes_label' => $this->sideloader->bytes((int) $plan['bytes_on_disk']),
             'estimate_label' => $this->sideloader->bytes((int) $plan['estimated_bytes']),
@@ -154,9 +170,10 @@ final class MigrationProgress
                 : ($counts['missing'] > 0
                     ? $counts['missing'].' image references point at a file that is not on this shop\'s disk.'
                     : 'Every image reference resolves to a file under this shop\'s web root.'),
-            'note' => 'Fetching a picture puts the file on disk; it does not change the row. Re-point the rows on '
-                .'the Addresses & pictures screen once the fetch is finished, and "still on the old site" goes to '
-                .'zero.',
+            'note' => 'Fetching a picture now re-points the rows that named it, in the same step, so this number '
+                .'falls as the fetch runs. What is left is what the fetch could not land: a picture the old site '
+                .'no longer has, or one under no uploads folder. Store → Import → Addresses & pictures → apply '
+                .'is still there for files copied across by hand rather than fetched.',
             'done' => $counts['present'],
             'total' => $total,
             'remaining' => $counts['missing'] + $counts['remote'],

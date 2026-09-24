@@ -261,37 +261,19 @@ final class PostImporter extends EntityImporter
      */
     private function settleSlug(Row $row, string $title, \App\Services\Import\EntityReport $report): string
     {
-        $given = $row->text('slug', 'post_name');
+        $address = self::address($row->text('slug', 'post_name'), $title);
+        $candidate = $address['given'];
+        $slug = (string) $address['slug'];
 
-        /*
-         * WordPress percent-encodes the slug of a non-Latin title, so the raw
-         * cell for an Arabic article is `%d8%a7%d9%84…`. Decoding first means
-         * the normalisation below has letters to work with instead of hex.
-         */
-        $candidate = $given === null ? '' : trim(rawurldecode($given));
-        $slug = mb_strtolower($candidate);
+        if ($address['slug'] === null) {
+            throw RowRejected::because(
+                'no usable slug: '.($candidate === '' ? 'this row carries none' : "'".$candidate."'")
+                .' and the title reduces to nothing a URL can carry. An article is served from '
+                .'/{slug}/ and there is no address to serve this one from.'
+            );
+        }
 
-        if (! $this->isWellShaped($slug)) {
-            /*
-             * NORMALISE FROM THE TITLE WHEN THE SLUG HAS NO LATIN IN IT AT ALL.
-             * Str::slug() transliterates, so the percent-encoded Arabic slug
-             * of a real article comes back as `alaanay-balbshr` -- a valid
-             * address, and one no human will ever recognise. The title is the
-             * better basis exactly then, and only then: `SPF_50_Every_Day`
-             * carries information the title may not, so a slug with letters or
-             * digits in it stays the basis.
-             */
-            $basis = preg_match('/[a-z0-9]/i', $candidate) === 1 ? $candidate : $title;
-            $normalised = Str::slug($basis !== '' ? $basis : $title);
-
-            if (! $this->isWellShaped($normalised)) {
-                throw RowRejected::because(
-                    'no usable slug: '.($candidate === '' ? 'this row carries none' : "'".$candidate."'")
-                    .' and the title reduces to nothing a URL can carry. An article is served from '
-                    .'/{slug}/ and there is no address to serve this one from.'
-                );
-            }
-
+        if ($address['normalised']) {
             $report->adjusted(
                 'a slug this application cannot serve, normalised -- the article is published at the new '
                 .'address and the old one will 404 until a redirect row is added for it',
@@ -299,17 +281,11 @@ final class PostImporter extends EntityImporter
                 $this->identify($row),
                 'slug',
                 $candidate === '' ? '(none; derived from the title)' : $candidate,
-                $normalised,
+                $slug,
             );
-
-            $slug = $normalised;
         }
 
-        /*
-         * THE ROUTER'S OWN PATTERN, not a second copy of RESERVED_SLUGS. A slug
-         * that is well shaped and still fails this is one the storefront owns.
-         */
-        if (preg_match('/^(?:'.PageController::slugPattern().')$/', $slug) !== 1) {
+        if ($address['reserved']) {
             /*
              * ONE KIND FOR THE WHOLE CLASS OF LOSS, with the address in the
              * SAMPLE and not in the headline. A kind is the recurring
@@ -340,8 +316,80 @@ final class PostImporter extends EntityImporter
         return $slug;
     }
 
+    /**
+     * The address a `posts.csv` row wants, decided and nothing else.
+     *
+     * =========================================================================
+     * WHY THIS IS A PURE STATIC AND NOT LEFT INSIDE settleSlug()
+     * =========================================================================
+     *
+     * The three outcomes below are also the question Store → Import's preview
+     * has to answer for the owner without importing anything:
+     * `App\Services\Import\ReservedArticleReport` runs over `posts.csv` and
+     * lists every article whose address this storefront already owns, with its
+     * title and the URL it wanted, because each one is a rename-and-redirect in
+     * WordPress and only he can do it.
+     *
+     * That list HAS to agree with what the importer would actually do, and the
+     * only way to guarantee that is for both to run the same code. CLAUDE.md
+     * has the general form of this already — "two implementations of an import
+     * mapping means two answers to what a row meant" — and a discard list that
+     * disagreed with the import would be the worst possible version of it: the
+     * owner renames nine articles in WordPress and the tenth still vanishes.
+     *
+     * So the DECISION lives here and takes no report, no context and no row:
+     * given what the export says and the article's title, what address would
+     * this be served at, and is that address one the shop already owns.
+     * settleSlug() adds the reporting; the preview adds the listing.
+     *
+     * @return array{given: string, slug: string|null, normalised: bool, reserved: bool}
+     */
+    public static function address(?string $given, string $title): array
+    {
+        /*
+         * WordPress percent-encodes the slug of a non-Latin title, so the raw
+         * cell for an Arabic article is `%d8%a7%d9%84…`. Decoding first means
+         * the normalisation below has letters to work with instead of hex.
+         */
+        $candidate = $given === null ? '' : trim(rawurldecode($given));
+        $slug = mb_strtolower($candidate);
+        $normalised = false;
+
+        if (! self::wellShaped($slug)) {
+            /*
+             * NORMALISE FROM THE TITLE WHEN THE SLUG HAS NO LATIN IN IT AT ALL.
+             * Str::slug() transliterates, so the percent-encoded Arabic slug
+             * of a real article comes back as `alaanay-balbshr` -- a valid
+             * address, and one no human will ever recognise. The title is the
+             * better basis exactly then, and only then: `SPF_50_Every_Day`
+             * carries information the title may not, so a slug with letters or
+             * digits in it stays the basis.
+             */
+            $basis = preg_match('/[a-z0-9]/i', $candidate) === 1 ? $candidate : $title;
+            $slug = Str::slug($basis !== '' ? $basis : $title);
+
+            if (! self::wellShaped($slug)) {
+                return ['given' => $candidate, 'slug' => null, 'normalised' => false, 'reserved' => false];
+            }
+
+            $normalised = true;
+        }
+
+        return [
+            'given' => $candidate,
+            'slug' => $slug,
+            'normalised' => $normalised,
+            /*
+             * THE ROUTER'S OWN PATTERN, not a second copy of RESERVED_SLUGS. A
+             * slug that is well shaped and still fails this is one the
+             * storefront owns.
+             */
+            'reserved' => preg_match('/^(?:'.PageController::slugPattern().')$/', $slug) !== 1,
+        ];
+    }
+
     /** Lowercase letters, digits and single hyphens — what slugPattern()'s character class allows. */
-    private function isWellShaped(string $slug): bool
+    private static function wellShaped(string $slug): bool
     {
         return preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug) === 1;
     }

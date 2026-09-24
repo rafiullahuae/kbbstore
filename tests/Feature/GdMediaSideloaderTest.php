@@ -405,10 +405,35 @@ it('tells the truth about how many are left at every point of a multi-batch run'
     expect($third['plan']['remaining'])->toBe(0)
         ->and($third['stopped'])->toBe('nothing left to fetch');
 
-    // And the plan is recomputed, not remembered: delete one file behind its
-    // back and "remaining" tells the truth about the disk immediately.
+    /*
+     * PIN ADVANCED (Lane A, Phase 13 item 1 — "fetching does not re-point the
+     * rows"). This used to read:
+     *
+     *     unlink(gdPublic('wp-content/uploads/2019/p3.jpg'));
+     *     expect((new MediaSideloader)->plan()['remaining'])->toBe(1);
+     *
+     * and it was asserting the right property through what is now the wrong
+     * instrument. A batch re-points the rows it landed, so once p3 is fetched
+     * the catalogue no longer names the old host for it: it is not a REMOTE
+     * reference any more, so deleting the file cannot put it back in
+     * `remaining`. It shows up one class over, in the audit, as a local path
+     * with no file — which is what a deleted picture actually is.
+     *
+     * The property under test is unchanged and is asserted twice as hard:
+     * every number here is recomputed from the disk, and none of them is a
+     * tally this class kept. `repointed` in particular is read out of the
+     * ledger, so it is the one that COULD have drifted — and it drops the
+     * moment the file goes, because the ledger row only counts while the file
+     * it names is really there.
+     */
+    expect((new MediaSideloader)->plan()['repointed'])->toBe(5);
+
     unlink(gdPublic('wp-content/uploads/2019/p3.jpg'));
-    expect((new MediaSideloader)->plan()['remaining'])->toBe(1);
+
+    expect((new MediaSideloader)->plan()['repointed'])->toBe(4)
+        ->and((new MediaSideloader)->plan()['remaining'])->toBe(0)
+        ->and((new MediaAudit)->summarise((new MediaAudit)->audit()))
+        ->toBe(['present' => 4, 'missing' => 1, 'remote' => 0]);
 });
 
 it('fetches a photograph used by two rows exactly once', function () {
@@ -1183,10 +1208,27 @@ it('hands the failures over as a spreadsheet he can open', function () {
 /*  THE AUDIT AND THE SIDELOADER AGREE                                         */
 /* ========================================================================== */
 
-it('drives the audit\'s "still on the old site" count to zero when paired with a rewrite', function () {
-    // The end-to-end promise, in the two steps it really takes: this lane puts
-    // the file on disk, Lane GB re-points the row. Neither one alone finishes
-    // the migration and the progress page says so in the paths stage.
+it('drives the audit\'s "still on the old site" count to zero in the fetch itself', function () {
+    /*
+     * PIN ADVANCED (Lane A, Phase 13 item 1). This test used to assert the
+     * middle state as a FEATURE:
+     *
+     *     // Fetched, but the ROW still names the old host. This is the honest
+     *     // middle state and the reason the paths stage keeps its own number.
+     *     expect(...)->toBe(['present' => 0, 'missing' => 0, 'remote' => 1]);
+     *
+     * Honest it was; a state to be in, it was not. In that state the
+     * photograph is on this server's disk and the product row still says
+     * `https://old-shop.test/…`, so the shop renders perfectly FROM THE OLD
+     * SITE and the whole instruction that came out of it was "do not switch
+     * the old site off between the two steps" — a sentence in a runbook doing
+     * the job of a fix, on a migration whose entire point is switching the old
+     * site off.
+     *
+     * MUTATION: delete the `$this->repoint($landed)` call in
+     * MediaSideloader::batch() and the middle assertion below goes red with
+     * remote => 1, which is the defect exactly as it was.
+     */
     $url = GD_OLD.'/wp-content/uploads/2019/03/end.jpg';
     gdProduct($url);
 
@@ -1195,16 +1237,18 @@ it('drives the audit\'s "still on the old site" count to zero when paired with a
     expect((new MediaAudit)->summarise((new MediaAudit)->audit()))
         ->toBe(['present' => 0, 'missing' => 0, 'remote' => 1]);
 
-    (new MediaSideloader)->batch();
+    $result = (new MediaSideloader)->batch();
 
-    // Fetched, but the ROW still names the old host. This is the honest middle
-    // state and the reason the paths stage keeps its own number.
-    expect((new MediaAudit)->summarise((new MediaAudit)->audit()))
-        ->toBe(['present' => 0, 'missing' => 0, 'remote' => 1]);
+    // One step. The file is here AND the row says so.
+    expect($result['repointed'])->toBe(['rows' => 1, 'documents' => 0])
+        ->and((new MediaAudit)->summarise((new MediaAudit)->audit()))
+        ->toBe(['present' => 1, 'missing' => 0, 'remote' => 0]);
 
+    // And the manual apply is still there and is now a no-op, which is the
+    // property that makes running both safe: it finds nothing left to do.
     $rewrite = new MediaRewrite;
-    $rewrite->apply($rewrite->propose(['old-shop.test']));
 
-    expect((new MediaAudit)->summarise((new MediaAudit)->audit()))
+    expect($rewrite->apply($rewrite->propose(['old-shop.test'])))->toBe(0)
+        ->and((new MediaAudit)->summarise((new MediaAudit)->audit()))
         ->toBe(['present' => 1, 'missing' => 0, 'remote' => 0]);
 });

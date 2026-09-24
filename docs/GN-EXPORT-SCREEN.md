@@ -302,3 +302,160 @@ and the fix would be to abandon a part-finished export and start again from zero
 on the one host where finishing is already the problem.
 
 Left as it is, and no test was written asserting the opposite.
+
+---
+
+# 10. The export can now be deleted from the browser (Lane A, Phase 13 item 4)
+
+## 10.1 The defect was two defects on top of each other
+
+The screen has always said, correctly:
+
+> When you have downloaded them all, **delete the folder from the server** —
+> `customers.csv` holds every shopper's address and password hash and
+> `reviews.csv` holds reviewers' email addresses and IPs.
+
+**The owner has no shell and no FTP**, and the paragraph two lines above that one
+says so itself. There was no control that did it.
+
+**And the obvious fix was a trap.** `wp_ajax_kbb_export_reset` is registered and
+reachable. Wired to a button labelled Delete it would answer `ok: true`, the bar
+would go back to zero, and the screen would look exactly as it does after a real
+delete — because `KBB_Export_Runner::reset()` calls `delete_option()` and nothing
+else. The hashes stay on disk, now with nothing in the admin referring to them
+and no download link left to reach them: **worse than before**, because the owner
+has been told they are gone.
+
+That trap is pinned as a test — `it proves that the endpoint which already
+existed deletes nothing` — which calls `reset()` and then asserts every file is
+still on disk. It passes before and after this change, deliberately: it is not
+asserting a fix, it is recording why the fix could not be a wire-up.
+
+## 10.2 What was built
+
+`KBB_Export_Runner::purge( $confirmation )`, behind
+`KBB_Export_Admin::ajax_purge()`, with three things in front of it and no one of
+them sufficient alone.
+
+**1. A capability of its own, narrower than the screen's.**
+`manage_woocommerce` is right for *running and downloading* an export — it is
+what a shop manager has. It is wrong for *destroying* one: the export is the only
+copy of a several-minute run, and on cutover day the only copy of the shop's data
+that is not on the site being switched off.
+
+```php
+const DELETE_CAPABILITY          = 'kbb_export_delete';
+const DELETE_FALLBACK_CAPABILITY = 'delete_users';   // administrator-only in core
+```
+
+A site can grant `kbb_export_delete` to exactly one person and nothing else. The
+fallback is `delete_users` and deliberately not `manage_options`: a shop manager
+does not have `delete_users`, which is the line being drawn. It fails closed —
+403 from the endpoint, not a hidden button, because `add_management_page()`
+decides what is in a menu and not what answers a URL.
+
+**2. Its own nonce**, `kbb_export_purge`. `DOWNLOAD_NONCE`'s reasoning one step
+further: a leaked or replayed body that could *start* an export is a nuisance;
+one that could *delete* one is the incident.
+
+**3. A typed confirmation**, `DELETE`, compared case-sensitively **on the
+server**. The page's disabled button is a courtesy to the person using it; the
+endpoint is reachable without the page.
+
+## 10.3 The answer is a re-scan, not a counter
+
+`ok` is true when a **fresh walk of the folder finds no file left**, and
+`remaining` names what is still there when it is not. A count of successful
+`unlink()` calls would report success for a folder half of which could not be
+removed — which is the exact failure this whole feature exists to stop reporting.
+On shared hosting the thing that actually happens is a file owned by a different
+UID than PHP runs as, and the owner has to be told its name.
+
+## 10.4 It cannot be steered out of the folder
+
+* The root is **computed** (`exports_root()` = uploads base + a literal). Nothing
+  a browser sends is concatenated into a path, so there is no traversal to
+  sanitise because there is no path from the request.
+* Every entry's `realpath()` must still be under the root's `realpath()`, with a
+  separator appended to both sides so `/uploads/kbb-export-old` cannot pass as
+  inside `/uploads/kbb-export`.
+* **A symlink is unlinked and never followed.** `is_link()` is tested *before*
+  `is_dir()`, because a symlink to a directory answers true to both — and
+  recursing through one turns a delete inside uploads into a delete of
+  `wp-config.php`.
+* Depth is bounded (`PURGE_MAX_DEPTH = 8`).
+
+**The folder's guards survive.** `kbb-export/index.php` and `kbb-export/.htaccess`
+hold nothing and are what stop the folder being listed or served. Removing them
+to tidy up would open a window if anything recreated the folder before
+`write_index_guard()` next ran.
+
+## 10.5 What the screen shows, and what it is read from
+
+*Tools → KBB Export*, a new section at the bottom: **"Delete the export from this
+server"**. The table is read off the **disk**, not out of the state option — the
+option knows about the export this plugin is part-way through, and the disk knows
+about the four from last week that were downloaded and left there, which are the
+ones this section exists for. Each row names the sensitive files rather than
+counting them: "12 files" is not a reason to press a destructive button and
+"customers.csv, which holds every shopper's address and password hash" is.
+
+The paragraph at the top of the screen now ends *"There is a button for it at the
+bottom of this page … you do not need FTP or a shell."*
+
+## 10.6 Driven in Chromium, before and after, against real files
+
+Two export folders, 14 files, 5.0 MB, served by a stand-in WordPress
+(`KBB_Export_Admin::screen()` and `admin-ajax.php` are the real plugin code; only
+WordPress's own functions are stubbed). Measured, not asserted:
+
+| | 390 px | 1280 px |
+|---|---|---|
+| `document.documentElement.scrollWidth` | 390 | 1280 |
+| `clientWidth` | 390 | 1280 |
+| horizontal overflow | none | none |
+| exports listed before | 2 | 2 |
+| button state with the box empty | disabled | disabled |
+| button state after typing `delete` | **disabled** | **disabled** |
+| button state after typing `DELETE` | enabled | enabled |
+
+Then the button was pressed at 1280:
+
+```
+files on disk before                     14
+customers.csv present before             yes
+
+files on disk after                       2   (index.php and .htaccess)
+customers.csv present after              no
+folder guards kept                       yes / yes
+exports listed after                      0
+what the screen says                     "Deleted 14 item(s), 5.0 MB freed.
+                                          Every export file is gone from this
+                                          server. The folder guards (index.php
+                                          and .htaccess) were left in place;
+                                          they hold nothing."
+```
+
+## 10.7 The tests, and the mutations that prove they assert something
+
+`tests/Feature/GnExportPurgeTest.php`, 8 tests. The plugin is WordPress code, so
+each call runs in a **separate PHP process** with WordPress reduced to the
+functions it uses — the same shape `GnExportScreenTest`'s settings probe uses,
+and for the same reason. No MySQL is needed: everything this feature does happens
+on a filesystem, which is real.
+
+**Every assertion about deletion is `is_file()`, never a status code.** The brief
+is explicit that a test asserting the endpoint answered 200 asserts the bug.
+
+| Mutation | Goes red |
+|---|---|
+| remove the `self::PURGE_PHRASE !== $typed` branch from `purge()` | `it deletes nothing without the typed confirmation` |
+| move the `is_link()` branch below the `is_dir()` branch in `remove()` | `it unlinks a symlink instead of following it out of the uploads folder` — the file outside the folder disappears |
+| `can_delete()` returns `current_user_can( self::CAPABILITY )` | `it fails closed for a user who can run the export but not destroy it` |
+
+## 10.8 One behaviour change to be aware of
+
+`measure()` no longer decides which files are guards from its recursion depth; it
+is told. An export folder carries an `index.php` of its own, and measuring one of
+those from `exports()` also starts at depth 0 — so the depth test quietly
+under-counted every export by one file while looking exactly right.
