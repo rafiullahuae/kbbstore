@@ -696,3 +696,61 @@ it('carries the brand column with the alignment rather than leaving it left in a
     expect($partial)->toContain('.kbb-slimfoot.sf-links-brand.sf-a-center .sf-brand{align-items:center}')
         ->and($partial)->toContain('.kbb-slimfoot.sf-links-brand.sf-a-end .sf-brand{align-items:flex-end}');
 });
+
+/* ------------------------------------------------------------------------
+ | 9. Top and bottom padding, separately
+ |------------------------------------------------------------------------*/
+
+it('lets the top padding be set without moving the bottom', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * The owner's report: "there's no control for inside footer block top
+     * padding". There was one symmetric `pad_y`, so a bar that wants to sit
+     * close to the Place order box above it and still breathe underneath had
+     * no way to say so.
+     *
+     * Measured at 390px with only the top moved: `padding: 36px 20px 10px`.
+     *
+     * MUTATION: put `padding:var(--sf-pady) var(--sf-padx)` back and the
+     * bottom follows the top.
+     */
+    expect($partial)->toContain('padding:var(--sf-padt) var(--sf-padx) var(--sf-padb);')
+        ->and($partial)->toContain('--sf-padt:var(--sf-pady); --sf-padb:var(--sf-pady);')
+        ->and($partial)->toContain('--sf-padt:var(--sf-m-padt,var(--sf-pady));');
+});
+
+it('keeps a bar whose height was already set exactly as it was', function () {
+    /*
+     * `pad_y` is KEPT rather than replaced, and is the fallback for both new
+     * keys. The case this exists for is a shop that had already moved it:
+     * without the fallback its saved value would go on being stored while the
+     * bar rendered from the new keys' shipped defaults instead — a silent
+     * reset, which is the kind of quiet loss this project has a rule about.
+     *
+     * Keyed on the ROW being absent, not on the value equalling the default:
+     * an owner who deliberately sets the top to the same number as the height
+     * has a row, and must keep winning when he later changes the height.
+     *
+     * MUTATION: delete the fallback loop in all() and the first expectation is
+     * red — the bar silently reverts to 12/10.
+     */
+    sf()->save(['pad_y' => 30, 'm_pad_y' => 26]);
+
+    $c = sf()->all();
+
+    expect($c['pad_top'])->toBe(30)
+        ->and($c['pad_bottom'])->toBe(30)
+        ->and($c['m_pad_top'])->toBe(26)
+        ->and($c['m_pad_bottom'])->toBe(26);
+
+    // Now one side is moved on purpose: it wins, and stays winning when the
+    // symmetric control moves again underneath it.
+    sf()->save(['m_pad_top' => 36]);
+    expect(sf()->all()['m_pad_top'])->toBe(36)
+        ->and(sf()->all()['m_pad_bottom'])->toBe(26);
+
+    sf()->save(['m_pad_y' => 4]);
+    expect(sf()->all()['m_pad_top'])->toBe(36)
+        ->and(sf()->all()['m_pad_bottom'])->toBe(4);
+});

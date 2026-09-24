@@ -495,7 +495,7 @@ class CheckoutPage
                            'Together with the logo size below, this is the height of the bar.',
                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
         'm_head_pad_x' => ['range', 'Header padding — sides', 20,
-                           'How far the logo sits from the screen edge, and the badge from the other one.',
+                           'How far the logo sits from the screen edge, and the badge from the other one. Left where it is, it follows the page\'s own side padding so the logo lines up with everything below it; move it and it wins.',
                            ['min' => 0, 'max' => 40, 'step' => 1, 'unit' => 'px']],
         /*
          * THE MINIMUM IS 280 AND NOT 880, and that is the whole fix.
