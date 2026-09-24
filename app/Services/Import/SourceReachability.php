@@ -17,33 +17,52 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Will a stored redirect for this address ever actually fire?
  *
  * =============================================================================
- * THE ONE FACT THIS WHOLE CLASS RESTS ON
+ * THE ONE FACT THIS WHOLE CLASS RESTS ON — REWRITTEN, AND THE OLD ONE NAMED
  * =============================================================================
  *
- * In this application the redirect table is consulted **only from the 404
- * handler**. `CheckRedirects` is written as middleware and is NOT registered as
- * middleware — its own doc comment records that a redirect on a matched route
- * still returned 200 with that registration, from both boot() and register() —
- * so the live check is the `renderable(NotFoundHttpException …)` closure in
- * `AppServiceProvider`.
+ * THIS CLASS DOES NOT ANSWER "will a row fire". It answers **what this shop
+ * does at this address today**, which is a different and more durable question,
+ * and it is the question the four verdicts below actually describe.
  *
- * The consequence is absolute and is not written down anywhere the map could
- * see it: **an address that does not 404 cannot be redirected by a row.** The
- * row is stored, the admin screen lists it, its `hits` counter stays at zero
- * forever, and nobody finds out. `KBB-Master-Plan.md` names this as a known
- * limitation of the Redirects screen for manual rows; nothing applied it to the
- * map the migration builds.
+ * WHAT IT USED TO REST ON, in as many words: "the redirect table is consulted
+ * only from the 404 handler, so an address that does not 404 cannot be
+ * redirected by a row." That was true and **it is no longer true.**
+ * `CheckRedirects` is registered in the global pipeline now and runs BEFORE the
+ * router, so a row for an address this shop answers 200 for does fire. The
+ * whole premise is recorded here rather than deleted, because it is what a
+ * reader will reach for next time, and `docs/GP-ADDRESSES-LAND.md` §13 is the
+ * transcript of it being disproved against a running server.
  *
- * MEASURED, NOT INFERRED. Against a running server, with a category `toners`
- * nested under `skincare`:
+ * WHAT DID NOT CHANGE, AND THE MEASUREMENT THAT STILL HOLDS. Against a running
+ * server, with a category `toners` nested under `skincare`:
  *
  *     GET /product-category/toners/   → 301 → /product-category/skincare/toners
  *
  * with NO redirect row at all — `CategoryArchiveController` → `CategoryPath::
  * resolve()` does that itself. A row was then written for that exact source
  * pointing at `/PROOF-INERT/`, and the same request still answered 301 to
- * `/product-category/skincare/toners`. The row changed nothing. See
- * `docs/GB-MEDIA-AND-REDIRECTS.md` for the transcript.
+ * `/product-category/skincare/toners`. See `docs/GB-MEDIA-AND-REDIRECTS.md`.
+ *
+ * THAT MEASUREMENT IS STILL VALID, and it is worth being exact about which half
+ * of it survived:
+ *
+ *   - STILL TRUE — THE APPLICATION'S OWN REDIRECT WINS. The 301 above is made
+ *     by `CategoryPath::resolve()` INSIDE the controller, on a path the
+ *     controller reaches, and nothing in this change moved that. `MOVED` is
+ *     still "the shop moves this address by itself".
+ *
+ *   - NO LONGER TRUE — THE 200 CASE. "A row for an address the shop answers is
+ *     inert" was the general rule that transcript was read as proving, and it
+ *     is exactly what the global registration undid. A row for a `SERVED`
+ *     address now fires from the pipeline before the router ever picks the
+ *     route, so it does not merely fail to help: IT REPLACES A WORKING PAGE.
+ *
+ * WHICH IS WHY THE `why` STRINGS BELOW STATE THE OBSERVATION AND NOT THE
+ * CONSEQUENCE. What a row would DO about a verdict is `RedirectMap::reachable()`'s
+ * sentence, because that is the thing that changed and the thing that can change
+ * again. A verdict that carried its own conclusion put "a stored redirect is
+ * never reached" and "a row here WILL move it" into one sentence on the screen
+ * the owner approves rows from.
  *
  * =============================================================================
  * HOW THE VERDICT IS REACHED
@@ -80,13 +99,25 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 final class SourceReachability
 {
-    /** Nothing serves this address: a redirect row here will fire. */
+    /**
+     * Nothing serves this address: a redirect row here will fire.
+     *
+     * The one verdict the registration change did not touch. An address that
+     * 404s was reached by the table from the 404 handler before and is reached
+     * from the global pipeline now — it fires either way.
+     */
     public const NOT_FOUND = 'notfound';
 
-    /** The application already moves this address on its own. A row is inert. */
+    /**
+     * The application already moves this address on its own.
+     *
+     * "A row is inert", which this used to say, is the premise the class
+     * comment records as gone: a row here now fires from the global pipeline
+     * and OVERRIDES the shop's own hop rather than being ignored by it.
+     */
     public const MOVED = 'moved';
 
-    /** A real page answers here. A row is inert, and pointing it away is a decision. */
+    /** A real page answers here. Pointing it away is a change to a working page. */
     public const SERVED = 'served';
 
     /** A parameterised route claims it and this cannot say what it answers. */
@@ -194,8 +225,19 @@ final class SourceReachability
 
             return [
                 'status' => self::SERVED,
+                /*
+                 * THE OBSERVATION ONLY — the consequence is `reachable()`'s to
+                 * state, and it changed. This used to end "and a stored
+                 * redirect is never reached", which was true while the table
+                 * was read from the 404 handler alone. `CheckRedirects` runs in
+                 * the global pipeline now, BEFORE the router, so a row for this
+                 * address fires — and `reachable()` appends exactly that to the
+                 * reason the owner reads. Leaving the old ending here put both
+                 * halves of a contradiction in one sentence on the screen he
+                 * approves rows from.
+                 */
                 'why' => 'the route "'.($route->uri() === '' ? '/' : $route->uri()).'" claims this address with no '
-                    .'parameters of its own, so the storefront answers it and a stored redirect is never reached',
+                    .'parameters of its own, so the storefront answers it',
             ];
         }
 
@@ -238,9 +280,14 @@ final class SourceReachability
         return $exists
             ? [
                 'status' => self::SERVED,
-                'why' => 'this address is '.$noun.' on this shop today, so it answers 200 and the redirect is '
-                    .'never reached',
+                // The observation only, for routeVerdict()'s reason above: what
+                // a row here would DO is reachable()'s sentence, not this one.
+                'why' => 'this address is '.$noun.' on this shop today, so it answers 200',
             ]
+            // $whenMissing is a NOT_FOUND reason and still ends "so the
+            // redirect is reached", which is as true as it ever was: an address
+            // that 404s is reached by the table from the 404 handler AND from
+            // the global pipeline. Nothing about this half moved.
             : ['status' => self::NOT_FOUND, 'why' => $whenMissing];
     }
 
