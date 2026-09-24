@@ -60,6 +60,18 @@ class PageController extends Controller
         // Catalogue
         'shop', 'product', 'product-category', 'cart', 'checkout', 'quick-view',
         'new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed',
+        /*
+         * `concern` is the first segment of /concern/{concern}/ (Lane S), and
+         * it is reserved for the same reason `routines` above it is: a concern
+         * page 404s until the owner has written its copy AND tagged
+         * ConcernCollections::MIN_PRODUCTS live products for it. An article
+         * published at the slug "concern" would be reachable today and would
+         * silently stop being reachable on the day he tagged his third acne
+         * product -- a page disappearing because of a chip ticked on another
+         * screen. RootSlugCollisionTest caught this the moment the route was
+         * mounted, which is the guard doing its job a second time.
+         */
+        'concern',
         // Brands: the directory, plus the two addresses that now 301 to it
         'korean-skincare-brands', 'brands', 'brand',
         // The Journal: the index, plus the prefixes posts used to sit under

@@ -198,6 +198,14 @@ function walkExpectations(array $seed): array
         'best-sellers'             => ['status' => 200],
         'super-sale'               => ['status' => 200],
         'everything-under-54-aed'  => ['status' => 200],
+        /*
+         * 404 rather than 200, and that is the shipped state: a concern page
+         * exists only once it has copy AND at least
+         * ConcernCollections::MIN_PRODUCTS live tagged products, and this walk
+         * seeds a shop where nothing is tagged. ConcernCollectionsTest builds
+         * the rows that make it exist and pins the 200 there.
+         */
+        'concern/{concern}'        => ['params' => ['concern' => 'acne'], 'status' => 404],
 
         // --- Brands -----------------------------------------------------
         'korean-skincare-brands'         => ['status' => 200],
