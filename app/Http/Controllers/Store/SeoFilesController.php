@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Services\Seo\SeoSettings;
+use App\Support\ConcernCollections;
 use App\Support\Locale;
 use App\Support\Url;
 use Illuminate\Support\Facades\DB;
@@ -187,6 +188,30 @@ class SeoFilesController extends Controller
         // is served at /everything-under-54-aed.
         foreach (['new-in', 'best-sellers', 'super-sale', 'everything-under-54-aed'] as $collection) {
             $add($base . '/' . $collection . '/', null, '0.6', 'daily');
+        }
+
+        /*
+         * The concern-led listings — /concern/acne/ and any other concern the
+         * owner has both written copy for and tagged enough products for.
+         *
+         * THE SAME QUESTION THE ROUTER ASKS, ASKED OF THE SAME CLASS.
+         * App\Support\ConcernCollections::live() is what
+         * CollectionController::concern() consults before it 404s, so this
+         * cannot advertise a URL the site then refuses -- a sitemap entry that
+         * 404s is a Search Console error, and the entry two blocks up was
+         * already corrected once for advertising a redirect.
+         *
+         * SO THIS LIST IS USUALLY EMPTY, and that is correct: until the owner
+         * has tagged MIN_PRODUCTS live products for a concern the page does not
+         * exist, and the sitemap says so by not mentioning it. Nothing about
+         * /sitemap.xml changes by a byte on a shop that has not tagged
+         * anything.
+         *
+         * `weekly` rather than the `daily` above: these listings change when an
+         * operator tags a product, not when the catalogue turns over.
+         */
+        foreach (ConcernCollections::live() as $concern) {
+            $add($base . ConcernCollections::path($concern), null, '0.6', 'weekly');
         }
 
         // The content pages behind the footer links. Only the seven slugs
