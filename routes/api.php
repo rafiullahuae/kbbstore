@@ -52,4 +52,13 @@ Route::post('/checkout/session', [CheckoutController::class, 'session'])
  */
 require __DIR__.'/payments-webhooks.php';
 
+/*
+ * The content-security-policy violation endpoint. In the api group for the
+ * same reason the webhooks above are: a browser posting a violation carries
+ * no session and no CSRF token, so in the web group every report would be a
+ * 419 and Store -> Security would stay empty for ever with nothing to notice.
+ * It inherits the SecurityHeaders this group applies.
+ */
+require __DIR__.'/security-csp.php';
+
 });
