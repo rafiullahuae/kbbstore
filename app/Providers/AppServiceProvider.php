@@ -235,6 +235,41 @@ class AppServiceProvider extends ServiceProvider
             && method_exists($kernel, 'getMiddlewareGroups')
             && isset($kernel->getMiddlewareGroups()['web'])) {
             $kernel->appendMiddlewareToGroup('web', \App\Http\Middleware\CacheHeaders::class);
+
+            /*
+             * THE REPORT-ONLY CONTENT-SECURITY POLICY (Lane C, Phase 18 item 5).
+             *
+             * Beside CacheHeaders, appended to the `web` group, and for the
+             * same two reasons that one is here rather than in bootstrap/
+             * app.php: that file cannot ship in a package, and this sets a
+             * header on a finished response so it wants to run last. The `web`
+             * group is also what keeps it off /api/* entirely.
+             *
+             * IT IS A MIDDLEWARE, WHICH NOTHING ELSE IN THIS MODULE IS. The
+             * rest of the security module is model events, auth events and one
+             * listener on RequestHandled, because a listener holds a finished
+             * response and has nothing to return; a header has to be SET on the
+             * response, so this one piece cannot be a listener. It still cannot
+             * refuse anything: handle() has one return and it returns
+             * $next($request)'s own response, the header it adds is the
+             * REPORT-ONLY one by construction — the enforcing header's name is
+             * not in this application's source at all — and
+             * tests/Feature/SecurityCspTest.php walks the storefront with the
+             * switch on and with it off against named absolute status codes.
+             *
+             * INERT UNTIL SWITCHED ON. `sec_csp_on` ships OFF, because this
+             * shop sends no policy header today and a new setting ships at the
+             * value the page already has. Applying the package changes no
+             * response header anywhere until somebody moves the switch on
+             * Store -> Security -> Content security policy.
+             *
+             * ITS OWN CLASS AND NOT app/Http/Middleware/, which is another
+             * lane's directory this round. That is why the class sits under
+             * app/Services/Security/ beside the policy it serves; a middleware
+             * is a class with a handle() method and the group does not care
+             * where it lives.
+             */
+            $kernel->appendMiddlewareToGroup('web', \App\Services\Security\CspHeaders::class);
         }
 
         /*

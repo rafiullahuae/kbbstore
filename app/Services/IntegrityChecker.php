@@ -167,7 +167,8 @@ final class IntegrityChecker
     public function scan(): array
     {
         $started = microtime(true);
-        $expected = $this->expected();
+        $survey = $this->survey();
+        $expected = $survey['expected'];
 
         $checked = 0;
         $skipped = 0;
@@ -242,7 +243,8 @@ final class IntegrityChecker
             // The first few paths, for the verdict sentence. Capped so the
             // cached blob cannot grow with a catastrophe.
             'paths' => array_slice(array_column($findings, 'path'), 0, 8),
-            'releases' => $this->sourceCount(),
+            'releases' => $survey['sources'],
+            'applied' => $survey['applied'],
             'took_ms' => (int) round((microtime(true) - $started) * 1000),
             'action' => (string) $this->security->get('integrity_action'),
         ];
@@ -329,10 +331,49 @@ final class IntegrityChecker
      */
     public function expected(): array
     {
+        return $this->survey()['expected'];
+    }
+
+    /**
+     * The effective manifest, and the two counts that say how complete it is.
+     *
+     * ── WHY ONE PASS AND NOT THREE ──────────────────────────────────────────
+     *
+     * expected() and sourceCount() each walked the applied releases and each
+     * decoded every manifest, which is one query and one json_decode per
+     * release more than the job needs — on a shop with sixty applied packages
+     * that is sixty redundant decodes of a manifest that was just decoded.
+     * Folding them costs nothing and gains the third number below.
+     *
+     * ── AND WHY `applied` IS WORTH REPORTING ────────────────────────────────
+     *
+     * Round two left a conditional on this screen: "older releases are read
+     * from the archived zip when there is one". Whether there is one is not
+     * something the owner should have to find out by reading a lane report, so
+     * the screen now states it. `applied` is every release this shop has
+     * installed; `sources` is how many of them it can actually speak about. A
+     * gap between the two is the honest number, and on this shop it is small
+     * and known — see docs/LC-SECURITY-MODULE.md.
+     *
+     * @return array{expected: array<string, string>, sources: int, applied: int}
+     */
+    public function survey(): array
+    {
         $out = [];
+        $sources = 0;
+        $applied = 0;
 
         foreach ($this->appliedReleases() as $release) {
-            foreach ($this->manifestOf($release) as $path => $hash) {
+            $applied++;
+            $manifest = $this->manifestOf($release);
+
+            if ($manifest === []) {
+                continue;
+            }
+
+            $sources++;
+
+            foreach ($manifest as $path => $hash) {
                 if (! is_string($path) || ! is_string($hash) || $hash === '') {
                     continue;
                 }
@@ -341,7 +382,7 @@ final class IntegrityChecker
             }
         }
 
-        return $out;
+        return ['expected' => $out, 'sources' => $sources, 'applied' => $applied];
     }
 
     /**
@@ -368,19 +409,6 @@ final class IntegrityChecker
         });
 
         return $releases;
-    }
-
-    private function sourceCount(): int
-    {
-        $n = 0;
-
-        foreach ($this->appliedReleases() as $release) {
-            if ($this->manifestOf($release) !== []) {
-                $n++;
-            }
-        }
-
-        return $n;
     }
 
     /**

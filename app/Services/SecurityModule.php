@@ -9,6 +9,7 @@ use App\Models\AuditEvent;
 use App\Models\ModuleToggle;
 use App\Models\Setting;
 use App\Models\UpdateRelease;
+use App\Services\Security\ContentSecurityPolicy;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -64,6 +65,8 @@ use Illuminate\Support\Facades\Event;
  * | module.toggled       | ModuleToggle::saved / ::deleted| module, on -> off |
  * | integrity.changed    | IntegrityChecker, from the    | the path, the two  |
  * | integrity.missing    | Security screen only          | hashes, no actor   |
+ * | csp.violation        | CspViolations, from a public  | directive, blocked |
+ * |                      | endpoint a browser posts to   | thing, page, no by |
  *
  * MODEL EVENTS AND NOT CALLS IN EACH CONTROLLER. Every setting this console
  * writes goes through SettingsService::set() and lands in ONE table, so one
@@ -120,6 +123,21 @@ class SecurityModule
     public const E_SIGNIN_BLOCKED = 'signin.blocked';
 
     public const E_RATE_LIMIT = 'ratelimit.trip';
+
+    /**
+     * A content-security-policy violation, reported by somebody's browser.
+     *
+     * Declared on App\Services\Security\CspViolations, restated here for the
+     * same reason INTEGRITY is: report() has to keep these out of the
+     * administrative list, and a `str_starts_with('csp.')` would quietly
+     * swallow an event a later round adds under the same prefix.
+     *
+     * IT IS THE ONLY EVENT IN THIS TABLE A STRANGER CAN CAUSE. Everything else
+     * needs a signed-in admin, or is the shop's own throttle answering, or is
+     * the integrity check reading its own disk. That is why it is bounded
+     * separately — see CspViolations::enforceCspCap().
+     */
+    public const E_CSP = \App\Services\Security\CspViolations::EVENT;
 
     /**
      * A module switched on or off from Store → Modules.
@@ -284,6 +302,46 @@ class SecurityModule
         'integrity_action' => ['select', 'When a file does not match', 'alert',
                                'Today there is one answer and it is the recommended one: tell you, and change nothing. Restoring the file from the package that installed it is genuinely possible — the package is still on this server — but it is a WRITE, and it would also silently undo a legitimate hand-edit. That decision is yours to take, and the second option appears here when you have taken it.',
                                IntegrityChecker::ACTIONS],
+        // ── Content-Security-Policy, report-only ──
+        /*
+         * SHIPS OFF, and this one is the rule rather than a departure from it.
+         *
+         * Round one shipped three switches on and round two shipped a fourth,
+         * each time with the owner's own words in Phase 18 behind it and each
+         * time called out in the commit. This is not that case. The shop sends
+         * no content-security-policy header today, so "a new setting ships at
+         * the value the page already has" means OFF, and applying the package
+         * changes not one byte of any response until somebody moves this.
+         *
+         * It is also the honest default on its own merits, and the help text
+         * below says so rather than leaving the owner to find out: a
+         * report-only policy this shop cannot satisfy yet turns one page view
+         * into one page view plus a handful of violation POSTs from every
+         * visitor's browser. That is a real cost on a shared plan, it is
+         * measured in docs/LC-SECURITY-MODULE.md, and it is his to spend when
+         * he wants the measurement.
+         */
+        'csp_on' => ['bool', 'Send the report-only content-security policy', false,
+                     'Tells every visitor\'s browser what this shop is allowed to load — and asks it to REPORT anything outside that rather than block it. Nothing is refused, no page changes, and no shopper sees anything different. While it is on, browsers post a short report for each thing the policy would have stopped, and those land in the list above. Turn it on for a week when you want to know what switching enforcement on would cost; the list fills up in minutes.'],
+        /*
+         * ONE OPTION, ON PURPOSE, and the same seam IntegrityChecker::ACTIONS
+         * is. Phase 18's sequencing puts enforcement after the request gate,
+         * with real traffic observed, one rule at a time — so a lane at the
+         * CSP-report-only step does not ship an enforce branch, and cast()
+         * stores a select value only when it is one of that field's own
+         * options. The stronger half is in ContentSecurityPolicy: the enforcing
+         * header's name is not in this application's source at all.
+         */
+        'csp_mode' => ['select', 'What the policy does', 'report',
+                       'There is one answer today and it is the one the plan calls for: report, and refuse nothing. Enforcing comes after the request gate has watched real traffic, and it comes one rule at a time — a policy switched to enforce in one step is how a working checkout stops taking cards. The second option appears here when that round arrives.',
+                       ContentSecurityPolicy::MODES],
+        'csp_window' => ['range', 'Collapse repeat violations within', 3600,
+                         'The same violation on the same page lands on one row with a count, for this many seconds, instead of one row per visitor. Without it a single inline script would write one row for every page view on the shop.',
+                         ['min' => 300, 'max' => 86400, 'step' => 300, 'unit' => 's']],
+        'csp_rows' => ['range', 'Never keep more than', 200,
+                       'The ceiling on violation rows, separately from the one on everything else. It matters because this is the only thing in this table a stranger can cause: without a ceiling of its own, enough posted violations would push your sign-ins and setting changes out of the trail to make room. Violations can never take more than this many rows.',
+                       ['min' => 20, 'max' => 2000, 'step' => 10, 'unit' => ' rows']],
+
         'ip_mask' => ['bool', 'Store addresses with the last part masked', false,
                       'Records 203.0.113.x instead of the whole address. It costs you the ability to tell two visitors on one network apart, which is usually the thing you wanted the address for — so it ships off, and is here for a shop that would rather not hold the last part at all.'],
     ];
@@ -302,6 +360,8 @@ class SecurityModule
                       ['window_hours', 'fail_threshold', 'trip_threshold']],
         'integrity' => ['File integrity', 'Whether the shop checks that the files its packages installed are still the files those packages contained — and what it does when one is not. It reports; it changes nothing on disk.',
                         ['integrity_on', 'integrity_hours', 'integrity_action']],
+        'csp' => ['Content security policy', 'Whether the shop tells browsers what it is allowed to load, and collects what falls outside that. It reports; it refuses nothing, and there is no setting on this screen that can make it refuse.',
+                  ['csp_on', 'csp_mode', 'csp_window', 'csp_rows']],
         'evidence' => ['Evidence & retention', 'How much of the trail this screen draws, how long any of it is kept, and the ceiling that holds when nobody opens this screen.',
                        ['list_rows', 'keep_days', 'max_rows', 'ip_mask']],
     ];
@@ -323,9 +383,32 @@ class SecurityModule
         return $out;
     }
 
+    /**
+     * One value, read on its own.
+     *
+     * NOT `$this->all()[$key]`, which is what this was. all() walks the whole
+     * schema and asks SettingsService for every key in it, so a caller that
+     * wanted one switch paid twenty-odd cached reads for it. That was
+     * invisible while every caller was an admin screen or a write that had
+     * already happened — and it stopped being invisible the moment
+     * App\Services\Security\CspHeaders began asking for `csp_on` on every
+     * storefront response.
+     *
+     * Same answer as before, key for key: all() builds exactly this per key,
+     * and SecurityCspTest pins the two against each other across the whole
+     * schema so they cannot drift.
+     */
     public function get(string $key): mixed
     {
-        return $this->all()[$key] ?? null;
+        $def = self::SCHEMA[$key] ?? null;
+
+        if ($def === null) {
+            return null;
+        }
+
+        $saved = $this->settings->get(self::PREFIX.$key, null);
+
+        return $saved === null ? $def[2] : $this->cast($key, $saved);
     }
 
     /** @param array<string, mixed> $values */
@@ -682,8 +765,8 @@ class SecurityModule
     /**
      * Write one row, or do nothing at all.
      *
-     * $opts: group (audit|signin|ratelimit|integrity), subject, before, after,
-     * severity, actor_label, anonymous.
+     * $opts: group (audit|signin|ratelimit|integrity|csp), subject, before,
+     * after, severity, actor_label, anonymous, no_actor, path, method.
      *
      * `anonymous` writes the row with NO actor, NO address and NO request
      * path. It exists for integrity findings, where the admin who opened the
@@ -731,6 +814,7 @@ class SecurityModule
                 'signin' => 'signin_on',
                 'ratelimit' => 'rl_on',
                 'integrity' => 'integrity_on',
+                'csp' => 'csp_on',
                 default => 'audit_on',
             };
 
@@ -748,18 +832,50 @@ class SecurityModule
              */
             $anonymous = (bool) ($opts['anonymous'] ?? false);
 
+            /*
+             * `no_actor` is the weaker half of `anonymous`, and it exists for
+             * exactly one caller: a content-security-policy violation.
+             *
+             * A violation has no actor for the same reason an integrity
+             * finding has none — nobody was signed in, and the one name within
+             * reach is the owner, who on the day he browses his own shop
+             * signed in would find his email in the "by" column of a row a
+             * stranger's browser wrote. But unlike an integrity finding it
+             * does know WHERE from and ON WHAT PAGE, and those two are the
+             * whole evidence. So: drop the actor, keep the address and the
+             * page. What is known goes in the row, what is not stays null.
+             */
+            $noActor = $anonymous || (bool) ($opts['no_actor'] ?? false);
+
             $row = AuditEvent::create([
                 'occurred_at' => Carbon::now(),
                 'last_seen_at' => Carbon::now(),
                 'hits' => 1,
                 'event' => $event,
                 'severity' => (string) ($opts['severity'] ?? 'info'),
-                'actor_id' => $anonymous ? null : $admin?->getKey(),
-                'actor_label' => $anonymous ? null : $this->clip($opts['actor_label'] ?? $admin?->email, 191),
-                'actor_role' => ($anonymous || $admin?->role === null) ? null : $this->clip((string) $admin->role, 32),
+                'actor_id' => $noActor ? null : $admin?->getKey(),
+                'actor_label' => $noActor ? null : $this->clip($opts['actor_label'] ?? $admin?->email, 191),
+                'actor_role' => ($noActor || $admin?->role === null) ? null : $this->clip((string) $admin->role, 32),
                 'ip' => $anonymous ? null : $this->address($request?->ip()),
-                'method' => ($anonymous || $request === null) ? null : $this->clip($request->method(), 10),
-                'path' => ($anonymous || $request === null) ? null : $this->clip('/'.ltrim($request->path(), '/'), 191),
+                /*
+                 * The caller may name the method and the path instead of the
+                 * request naming them, and one caller does. A violation is
+                 * posted to /api/csp-report by a browser, so the request's own
+                 * path is this module's endpoint on every single row — which
+                 * says nothing. The page the violation happened on is the
+                 * useful answer, and it comes out of the report body, bounded
+                 * and stripped by CspViolations before it gets here.
+                 *
+                 * array_key_exists rather than ??, so a caller can pass null to
+                 * mean "there is no method here" — which is true of a report
+                 * that names a page it did not itself request.
+                 */
+                'method' => array_key_exists('method', $opts)
+                    ? $this->clip($opts['method'], 10)
+                    : (($anonymous || $request === null) ? null : $this->clip($request->method(), 10)),
+                'path' => array_key_exists('path', $opts)
+                    ? $this->clip($opts['path'], 191)
+                    : (($anonymous || $request === null) ? null : $this->clip('/'.ltrim($request->path(), '/'), 191)),
                 'subject' => $this->clip($opts['subject'] ?? null, 191),
                 'summary' => (string) $this->clip($summary, 255),
                 'before' => $this->clip($opts['before'] ?? null, self::VALUE_CAP),
@@ -827,6 +943,9 @@ class SecurityModule
         $integrity = AuditEvent::query()->whereIn('event', self::INTEGRITY)
             ->orderByDesc('occurred_at')->orderByDesc('id')->limit($rows)->get();
 
+        $violations = AuditEvent::query()->where('event', self::E_CSP)
+            ->orderByDesc('occurred_at')->orderByDesc('id')->limit($rows)->get();
+
         /*
          * Integrity findings are excluded here as well as the other two. They
          * are not administrative changes — nobody signed in did them, which is
@@ -834,7 +953,7 @@ class SecurityModule
          * this list would file an intrusion under "who changed what".
          */
         $changes = AuditEvent::query()
-            ->whereNotIn('event', array_merge(self::SIGNIN_TROUBLE, self::INTEGRITY, [self::E_RATE_LIMIT]))
+            ->whereNotIn('event', array_merge(self::SIGNIN_TROUBLE, self::INTEGRITY, [self::E_RATE_LIMIT, self::E_CSP]))
             ->orderByDesc('occurred_at')->orderByDesc('id')->limit($rows)->get();
 
         /*
@@ -864,13 +983,23 @@ class SecurityModule
             $found += $windowed[$event] ?? 0;
         }
 
-        $changed = array_sum($windowed) - $failed - $tripped - $found;
+        /*
+         * AND CSP VIOLATIONS COME OUT OF IT TOO. `changed` is "administrative
+         * changes" and the verdict prints it as such. A violation is written
+         * by a stranger's browser with nobody signed in; letting it fall
+         * through to this subtraction would have the verdict line report a
+         * flood of them as the owner's own work.
+         */
+        $violated = $windowed[self::E_CSP] ?? 0;
+
+        $changed = array_sum($windowed) - $failed - $tripped - $found - $violated;
 
         $counts = [
             'failed' => $failed,
             'tripped' => $tripped,
             'changed' => $changed,
             'integrity' => $found,
+            'violations' => $violated,
             'total' => (int) AuditEvent::query()->count(),
         ];
 
@@ -898,9 +1027,40 @@ class SecurityModule
             'skipped' => (int) ($state['skipped'] ?? 0),
             'findings' => (int) ($state['findings'] ?? 0),
             'releases' => (int) ($state['releases'] ?? 0),
+            'applied' => (int) ($state['applied'] ?? 0),
             'truncated' => (bool) ($state['truncated'] ?? false),
             'took_ms' => (int) ($state['took_ms'] ?? 0),
             'paths' => array_values(array_map('strval', (array) ($state['paths'] ?? []))),
+        ];
+
+        /*
+         * The CSP block. No query: every number in it is either a setting or
+         * already counted above, and the policy itself is built from constants.
+         * `sent` is the one thing the screen cannot work out for itself — a
+         * page carries the header only when the switch is on, and a screen
+         * that showed a policy without saying whether it is being sent would
+         * be the most misleading thing on it.
+         */
+        $policy = app(ContentSecurityPolicy::class);
+
+        $cspBlock = [
+            'on' => (bool) $config['csp_on'],
+            'mode' => (string) $config['csp_mode'],
+            'header' => ContentSecurityPolicy::HEADER,
+            'policy' => $policy->header(),
+            'report_uri' => $policy->reportUri(),
+            'window' => (int) $config['csp_window'],
+            'max_rows' => (int) $config['csp_rows'],
+            /*
+             * ONE COUNT QUERY, added deliberately rather than derived from the
+             * list above — the list is LIMITed to `list_rows` (40) and the
+             * ceiling is 200, so counting the rows drawn would understate what
+             * is kept by a factor of five and make the sentence about the
+             * ceiling meaningless. It is a constant cost: one aggregate,
+             * whatever the table holds, which is what the report's own query
+             * budget measures.
+             */
+            'kept' => (int) AuditEvent::query()->where('event', self::E_CSP)->count(),
         ];
 
         return [
@@ -915,6 +1075,8 @@ class SecurityModule
                 'trips' => (bool) $config['rl_on'],
             ],
             'integrity' => $integrityBlock,
+            'csp' => $cspBlock,
+            'csp_rows' => $violations->map(fn (AuditEvent $r) => $this->row($r))->all(),
             'signin_trouble' => $signInTrouble->map(fn (AuditEvent $r) => $this->row($r))->all(),
             'trips' => $trips->map(fn (AuditEvent $r) => $this->row($r))->all(),
             'integrity_rows' => $integrity->map(fn (AuditEvent $r) => $this->row($r))->all(),
