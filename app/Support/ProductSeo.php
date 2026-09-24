@@ -213,6 +213,14 @@ final class ProductSeo
             // Set only when there IS a custom title, exactly as
             // Store\ProductController::show() sets it.
             'title_is_final' => $custom !== '',
+            /*
+             * And the token that title may contain, from the same source the
+             * controller uses. Without it the editor's preview would show the
+             * operator a title with `%%title%%` silently deleted while the page
+             * published it resolved — the exact class of drift this method was
+             * extracted to stop.
+             */
+            'title_token' => $product->t('name'),
         ]);
     }
 

@@ -389,7 +389,44 @@ class Seo
                 $sep
             );
         } elseif (!empty($ctx['title_is_final']) && $rawTitle !== '') {
-            $title = TitleTemplate::render($rawTitle, ['sep' => $sep, 'sitename' => $siteName, 'page' => ''], $sep);
+            /*
+             * `%%title%%` INSIDE A FINAL TITLE, which is the one token this
+             * branch could not resolve and the one every real Yoast export
+             * carries.
+             *
+             * Yoast's default product title template is
+             * `%%title%% %%sep%% %%sitename%%`, so it is what most of an
+             * imported catalogue holds in `products.seo.title`. This branch
+             * used to pass `sep`, `sitename` and `page` and NOT `title` —
+             * and TitleTemplate::render() deletes a token it is not given.
+             * The default template therefore rendered as the site name alone:
+             * every imported product published `<title>K-Beauty Bliss</title>`,
+             * the same six words on all 671 pages, while the import reported
+             * every row successfully imported. It is silent on the shop
+             * because the page itself renders perfectly.
+             *
+             * It could not simply be added to the array either. In this branch
+             * $rawTitle IS the template, so `'title' => $rawTitle` substitutes
+             * the template into itself. `%%title%%` in Yoast means the POST
+             * title — here the product's own name — which is a different
+             * string from the SEO title being rendered, and only the caller
+             * knows it. So the caller supplies it under `title_token`.
+             *
+             * ABSENT, THE BEHAVIOUR IS EXACTLY WHAT IT WAS: the token is
+             * deleted. Only Store\ProductController passes it today, so no
+             * other page's title can move. App\Support\ProductSeo::metaTitle()
+             * passes the same value, because the editor's preview promises to
+             * show the bytes the page will publish.
+             */
+            $finalTokens = ['sep' => $sep, 'sitename' => $siteName, 'page' => ''];
+
+            $titleToken = trim((string) ($ctx['title_token'] ?? ''));
+
+            if ($titleToken !== '') {
+                $finalTokens['title'] = $titleToken;
+            }
+
+            $title = TitleTemplate::render($rawTitle, $finalTokens, $sep);
         } else {
             // The "already carries the brand" rule that used to live here is
             // now in self::tokens(), because it reaches the DESCRIPTION too:
