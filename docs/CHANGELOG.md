@@ -3,6 +3,96 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.259
+Six lanes, merged with no conflicts, and ONE package for the reason 2.60.258
+gives: `routes/web.php` carries both route changes in this round and a file
+ships whole, so splitting by lane would mean hand-editing a partial version of
+it -- which is how 2.60.102-.106 were withdrawn.
+
+NOTHING ON THE SHOP MOVES ON APPLYING THIS, with two named exceptions below.
+Every new setting ships at the value the page already had, and the one new
+storefront address answers 404 until the owner fills it.
+
+THE TWO BEHAVIOUR CHANGES TO WATCH:
+
+1. `/sitemap.xml`, `/robots.txt` and `/llms.txt` now leave with
+   `Cache-Control: public, max-age=3600, s-maxage=3600` and NO `Set-Cookie`.
+   Measured before: `no-cache, private` plus two cookies on each, which made
+   them uncacheable by anything in front of this host. They keep
+   `X-Robots-Tag: noindex` on staging -- the five classes dropped are the
+   cookie and session ones, deliberately not the whole `web` group.
+2. `/product-category/<leaf>/` now 301s to the canonical NESTED path. It always
+   301'd; it named a different address as canonical than the one the page
+   itself declares, which is a self-contradiction a crawler reads.
+
+FIXES THAT WERE LIVE DEFECTS: brand, category and article pages published
+`<title>KBB</title>` -- Yoast's shipped template is `%%title%% %%sep%%
+%%sitename%%` and the renderer deleted the token rather than resolving it, so
+the page name was simply absent (the product half of this shipped in .258, the
+other three callers are here); a redirect row could point at itself, at all
+three writers; the Arabic cart badge sat stretched across the bag icon because
+an inline `style` attribute was setting `right` while the stylesheet set
+`inset-inline-end`, and an inline declaration beats an author rule of any
+specificity; a variable product's tile printed AED 0 instead of its price
+range; article `<a href>` links to the old host's uploads were never migrated,
+so a thumbnail's full-size image broke on the day that host went dark; the
+share image and organisation logo held in `settings` were invisible to the
+media audit entirely, so "remote: 0" could be reached with the shop's own
+WhatsApp preview still hot-linked.
+
+NEW CONTROLS, each shipping at today's value:
+  Appearance -> Checkout page -> Mobile . Header       Header padding -- sides
+  Appearance -> Footer -> On a phone                   Padding inside the top / bottom
+  Appearance -> Footer -> Shape & size                 Padding inside the top / bottom
+
+NEW SCREENS AND CARDS:
+  Store -> Import -> Addresses & pictures -> Old addresses
+      "What this needs you to decide" -- the ask bucket became answerable.
+      An answer is to a QUESTION, not an address: approving /x/ -> /a/ is not
+      approval of /x/ -> /b/, and a re-parented category makes the answer stale
+      and asks again naming both. A destination that 404s wins the question
+      whatever the source's verdict, so a bulk yes cannot write a 301 to a 404.
+  Store -> Business Details -> Business -> "Where the shop is"
+      Address and opening hours for the Organization node. Half an address is
+      never published -- street AND city AND a recognised country, or nothing.
+      `postalCode` is NOT required: the UAE does not use one for street
+      addresses.
+  Store -> SEO & Meta -> SEO Audit -> "Product image with no alt text"
+      Advisory, so it cannot take the headline from a finding that breaks a
+      page. A product with no photograph is not reported -- there is no alt to
+      write for a shot that does not exist.
+
+NEW ADDRESS: `/concern/{slug}/`. It 404s, and stays 404, until the owner has
+written the page's copy AND tagged at least three live products for that
+concern under Catalog -> Build my routine. The sitemap asks the same class the
+router asks, so it can never advertise an address the site refuses. `concern`
+is reserved against the root-level article slug for the same reason `routines`
+is: otherwise an article published there would be reachable today and would
+silently stop being reachable on the day the third product was tagged.
+
+ORDER LINES now snapshot the customer's language beside the operator's.
+`order_items.name` keeps its exact meaning and value; a new nullable
+`name_localised` is read by the invoice, both invoice emails and /my-account,
+while the packing slip and delivery note keep the operator's. The hook returns
+before touching anything while one language is live, so this ships inert.
+
+Five migrations, four of them cache clears -- `route:cache` compiled the route
+table as it was, so a route change that ships without one lands and is never
+read.
+
+RTL: the Arabic homepage hero now travels the way Arabic is read. The sign
+comes from `document.documentElement.dir` in the slider itself; both CSS rules
+that had tried to do it are deleted with the fix, because keeping them would
+cancel it and restore the blank hero. Measured at 390px: slide 2 used to queue
+at 378..744 -- the RIGHT, exactly as in English -- and now queues at -354..12.
+
+Also: the built bundle stopped renaming itself on every unrelated edit.
+`app.js` imported `kbb.css` while kbb.css was also its own Vite entry, and
+Rollup folds a dependency into the chunk hash, so a stylesheet edit renamed the
+JavaScript. `app-DSE-434-.js` and `app-iyd4z9xL.js` are byte-identical -- same
+45,971 bytes, same md5 -- which is what a renamed-for-nothing bundle looks
+like. Every stale name is a file the server keeps forever.
+
 ## 2.60.258
 Seven lanes, merged. ONE package and not three, for a reason worth stating:
 `routes/web.php` mounts all three new route files and `AppServiceProvider.php`
