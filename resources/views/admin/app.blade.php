@@ -17280,6 +17280,11 @@ buildNav();
         var res=await fetch(redirectsApiBase()+'/'+el.dataset.rdtoggle+'/toggle',{method:'POST',credentials:'same-origin',headers:{'X-XSRF-TOKEN':uToken(),Accept:'application/json'}});
         var j=await res.json();
         if(j.ok){ el.classList.toggle('on', j.enabled); }
+        // A refusal has to SAY so. Without this the owner clicks the switch,
+        // nothing moves and nothing explains why -- which is the same "a row
+        // nobody can account for" complaint the refusal exists to end. The
+        // Resolve handler below already reads j.message; this one did not.
+        else{ toast(j.message||'Could not update that redirect.'); }
       }catch(e){ toast('Could not update \u2014 check your connection.'); }
     };});
     $$('#rd_list [data-rddel]').forEach(function(b){ b.onclick=async function(){

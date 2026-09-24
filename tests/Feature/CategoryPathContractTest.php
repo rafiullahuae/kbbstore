@@ -51,6 +51,51 @@ function aqProduct(string $slug, Category $cat, string $status = 'publish', bool
     return $p;
 }
 
+/**
+ * Assert WHERE a 301 from the archive actually points, slash included.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PIN ADVANCED, DELIBERATELY — AND THE OLD SPELLING COULD NOT SEE THE CHANGE
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Seven assertions in this file read:
+ *
+ *     ->assertRedirect(CategoryPath::url('aq-skincare/aq-cleansers'));
+ *
+ * and every one of them PASSED against a Location of
+ * `http://localhost/product-category/aq-skincare/aq-cleansers` — no trailing
+ * slash — while `CategoryPath::url()` returns the slashed form. That is not a
+ * tolerance, it is blindness: `assertRedirect()` puts BOTH sides through the
+ * same `UrlGenerator`, which strips a trailing slash off a relative path, so
+ * the expectation was stripped to match the defect. `docs/GP-ADDRESSES-LAND.md`
+ * §5.5 found the identical hole in `SeoEngineToolsTest` and fixed it the same
+ * way.
+ *
+ * What the defect was on the shop: `/product-category/aq-cleansers/` 301'd to
+ * `/product-category/aq-skincare/aq-cleansers`, an address that answers 200 and
+ * whose own `<link rel="canonical">` points at the slashed form. The shop
+ * redirected to an address that then declared a different one canonical, so
+ * every stale category URL cost a crawler a 301 and then a canonical hop and
+ * consolidated its link equity onto neither.
+ *
+ * MUTATION NOTE: put `CategoryArchiveController::show()` back to
+ * `redirect($verdict['to'], …)` and all seven go red on the missing slash.
+ * Swap this helper back to `assertRedirect(CategoryPath::url(...))` and all
+ * seven go green again WITH the defect in place, which is why the raw header is
+ * the only spelling worth writing here.
+ */
+function aqAssertLands(\Illuminate\Testing\TestResponse $response, string $path): void
+{
+    $location = (string) $response->headers->get('Location');
+
+    // The raw header, not assertRedirect(): see above.
+    expect($location)->toBe(CategoryPath::redirectUrl($path));
+
+    // Stated separately so a future change to redirectUrl() cannot make both
+    // sides agree on a slash-less answer the way assertRedirect() did.
+    expect($location)->toEndWith('/');
+}
+
 /* ------------------------------------------------- the bug, as it ships today */
 
 it('404s an unknown archive path on the SHIPPED route, not just the lane one', function () {
@@ -113,14 +158,61 @@ it('serves a real nested path and 301s a path with the wrong ancestry', function
     $this->get('/product-category/aq-skincare/aq-cleansers/')->assertStatus(200);
 
     // The leaf is real, the ancestry is invented: one page, one address.
-    $this->get('/product-category/made-up/aq-cleansers/')
-        ->assertStatus(301)
-        ->assertRedirect(CategoryPath::url('aq-skincare/aq-cleansers'));
+    aqAssertLands(
+        $this->get('/product-category/made-up/aq-cleansers/')->assertStatus(301),
+        'aq-skincare/aq-cleansers',
+    );
 
     // The bare leaf of a nested category is also non-canonical.
-    $this->get('/product-category/aq-cleansers/')
-        ->assertStatus(301)
-        ->assertRedirect(CategoryPath::url('aq-skincare/aq-cleansers'));
+    aqAssertLands(
+        $this->get('/product-category/aq-cleansers/')->assertStatus(301),
+        'aq-skincare/aq-cleansers',
+    );
+});
+
+it('301s to an address that serves, rather than to one that 301s again', function () {
+    /*
+     * THE DEFECT THIS FILE SHIPPED WITH, stated as the visitor experiences it.
+     *
+     * `/product-category/aq-cleansers/` 301'd to
+     * `/product-category/aq-skincare/aq-cleansers` — no trailing slash. That
+     * address answers 200, so nothing looked broken, and its own
+     * `<link rel="canonical">` points at the slashed form. One 301 and then a
+     * canonical hop, to an address the shop does not consider its own, for
+     * every stale or non-canonical category URL on the site. It is the same
+     * defect `docs/GP-ADDRESSES-LAND.md` §5.3 measured for the redirects TABLE
+     * and fixed there with `Url::redirect()`, which left this controller as the
+     * last producer of a 301 in the application still doing it the other way.
+     *
+     * AND THE HOP IS BOUNDED, which is the property worth asserting separately:
+     * the destination is `canonicalPath()`, a fixed point — `resolve()` answers
+     * `ok` for it, never `redirect` — so following the Location cannot come
+     * back here. A 301 whose destination 301s is how a redirect loop starts.
+     *
+     * MUTATION NOTE: restore `redirect($verdict['to'], $verdict['code'])` in
+     * CategoryArchiveController::show() and the first expectation goes red on
+     * the missing slash.
+     */
+    CategoryLaneRoutes::wireStorefront($this->app);
+
+    $parent = aqCategory('aq-hop-parent', 'AQ Hop Parent');
+    aqCategory('aq-hop-leaf', 'AQ Hop Leaf', (int) $parent->id);
+
+    $first = $this->get('/product-category/aq-hop-leaf/')->assertStatus(301);
+
+    $location = (string) $first->headers->get('Location');
+
+    expect($location)->toBe(CategoryPath::redirectUrl('aq-hop-parent/aq-hop-leaf'))
+        ->and($location)->toEndWith('/product-category/aq-hop-parent/aq-hop-leaf/');
+
+    /*
+     * Follow it. The path is taken out of the absolute URL the header carries,
+     * which is exactly what a browser does with it, so this exercises the
+     * spelling that actually went over the wire rather than a re-derived one.
+     */
+    $next = (string) parse_url($location, PHP_URL_PATH);
+
+    $this->get($next)->assertStatus(200);
 });
 
 /* ------------------------------------------------------------------ renames */
@@ -162,9 +254,10 @@ it('301s the old path when the slug really changes, instead of breaking it', fun
 
     // The indexed address survives as a 301 rather than 404ing — and, more to
     // the point, rather than going on answering 200 with "Shop all".
-    $this->get('/product-category/aq-old-slug/')
-        ->assertStatus(301)
-        ->assertRedirect(CategoryPath::url('aq-new-slug'));
+    aqAssertLands(
+        $this->get('/product-category/aq-old-slug/')->assertStatus(301),
+        'aq-new-slug',
+    );
 });
 
 it('redirects every descendant URL when a parent is re-parented', function () {
@@ -187,13 +280,15 @@ it('redirects every descendant URL when a parent is re-parented', function () {
     // The child's old URL is the one that is easy to forget, so it is the one
     // asserted hardest: a whole branch of indexed URLs moved, not just the row
     // the operator edited.
-    $this->get('/product-category/aq-root/aq-mid/aq-leaf/')
-        ->assertStatus(301)
-        ->assertRedirect(CategoryPath::url('aq-mid/aq-leaf'));
+    aqAssertLands(
+        $this->get('/product-category/aq-root/aq-mid/aq-leaf/')->assertStatus(301),
+        'aq-mid/aq-leaf',
+    );
 
-    $this->get('/product-category/aq-root/aq-mid/')
-        ->assertStatus(301)
-        ->assertRedirect(CategoryPath::url('aq-mid'));
+    aqAssertLands(
+        $this->get('/product-category/aq-root/aq-mid/')->assertStatus(301),
+        'aq-mid',
+    );
 
     $this->get('/product-category/aq-mid/aq-leaf/')->assertStatus(200);
 });
@@ -227,9 +322,10 @@ it('points a deleted category at its parent, and 404s one deleted from the top l
         ->deleteJson('/admin-api/categories/' . $child->id . '?force=1')
         ->assertOk();
 
-    $this->get('/product-category/aq-keep/aq-goes/')
-        ->assertStatus(301)
-        ->assertRedirect(CategoryPath::url('aq-keep'));
+    aqAssertLands(
+        $this->get('/product-category/aq-keep/aq-goes/')->assertStatus(301),
+        'aq-keep',
+    );
 
     $this->actingAs(aqAdmin(), 'admin')
         ->deleteJson('/admin-api/categories/' . $lonely->id . '?force=1')
@@ -264,9 +360,10 @@ it('merges a category into another, moving its products and 301ing its URL', fun
     $inTarget = DB::table('category_product')->where('category_id', $to->id)->count();
     expect($inTarget)->toBe(2);
 
-    $this->get('/product-category/aq-from/')
-        ->assertStatus(301)
-        ->assertRedirect(CategoryPath::url('aq-to'));
+    aqAssertLands(
+        $this->get('/product-category/aq-from/')->assertStatus(301),
+        'aq-to',
+    );
 });
 
 it('refuses to merge a category into itself or into its own descendant', function () {
