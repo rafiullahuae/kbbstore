@@ -585,7 +585,10 @@ it('gives the ruled rows their own padding and a height floor', function () {
         ->and($partial)->not->toContain('padding-top:calc(var(--sf-gap) * .5);margin-top:calc(var(--sf-gap) * .5);')
         // THE FLOOR APPLIES TO EVERY ROW INCLUDING THE FIRST, which has no top
         // border and so never matched the `* + *` rule the padding lives on.
-        ->and($partial)->toContain('.kbb-slimfoot.sf-rows .sf-in > *{min-height:var(--sf-rowh)');
+        // :not(.sf-top) — the arrow is a control at the end of the bar, not a
+        // row of content, and treating it as one knocked its glyph off centre.
+        // CheckoutScreenFieldTypesTest holds the measurement.
+        ->and($partial)->toContain('.kbb-slimfoot.sf-rows .sf-in > *:not(.sf-top){min-height:var(--sf-rowh)');
 });
 
 it('hands the screen a squeeze list rather than letting it keep its own copy', function () {

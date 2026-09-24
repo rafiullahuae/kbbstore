@@ -803,7 +803,15 @@ class CheckoutPage
     ];
 
     /**
-     * The keys "Squeeze everything" drives to their minimum.
+     * The keys the Squeeze preset drives to their minimum.
+     *
+     * SCOPED TO THE OPEN TAB, not to the whole screen. It used to walk every
+     * tab, and the owner's report was exact: "when i click squeezed, it applies
+     * on all tabs all checkout page settings, which is not correct." A preset
+     * that reaches past the screen changes numbers nobody can see, so the only
+     * way to learn what it did is to visit nine tabs. The list below is still
+     * the whole set of keys that MAY be squeezed; the screen intersects it with
+     * the fields of the tab in front of you.
      *
      * "make overal option Squeeze and upon selection all rows squeezed and
      * font sizes etc to minimum set."

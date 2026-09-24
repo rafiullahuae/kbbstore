@@ -385,11 +385,12 @@
          in front of you, nothing is stored until Save, and Reload undoes
          either. A stored "squeezed" mode would leave every slider on this
          screen showing a number the bar was not using. */
-      + '<button class="sfs-btn" data-sfs-squeeze' + (busy ? ' disabled' : '') + '>Squeeze the bar</button>'
+      + '<button class="sfs-btn" data-sfs-squeeze' + (busy ? ' disabled' : '') + '>Squeeze this tab</button>'
       + '<button class="sfs-btn" data-sfs-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
       + '</div>'
-      + '<p class="sfs-help" style="margin-top:8px">Both presets move the sliders in front of you across '
-      + '<b>every tab</b>, on desktop and on a phone. Nothing is stored until you press Save.</p>'
+      + '<p class="sfs-help" style="margin-top:8px">Both presets move only the sliders on '
+      + '<b>this tab</b> \u2014 the other tabs are left exactly as you set them. Nothing is stored until '
+      + 'you press Save.</p>'
       + '</div>'
       + previewHTML()
       + '</div>';
@@ -548,22 +549,25 @@
    * Back to defaults undoes it after one, and either can be nudged afterwards
    * because both only WRITE THE SLIDERS.
    */
+  /* THE TAB YOU ARE LOOKING AT, for the reason the checkout screen states: a
+     preset that reaches past the screen changes numbers nobody can see. Fixed
+     here in the same round rather than waiting for the same report twice. */
   function preset(which) {
     if (!tabs) return;
 
-    tabs.forEach(function (t) {
-      t.fields.forEach(function (f) {
-        if (which === 'default') { values[f.key] = f['default']; return; }
-        if (f.type !== 'range') return;
-        if (squeezeKeys.indexOf(f.key) === -1) return;
-        values[f.key] = Number((f.options || {}).min);
-      });
+    var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+
+    current.fields.forEach(function (f) {
+      if (which === 'default') { values[f.key] = f['default']; return; }
+      if (f.type !== 'range') return;
+      if (squeezeKeys.indexOf(f.key) === -1) return;
+      values[f.key] = Number((f.options || {}).min);
     });
 
     render();
     say(which === 'min'
-      ? 'Squeezed. Nothing is saved until you press Save.'
-      : 'Back to the shipped values. Nothing is saved until you press Save.');
+      ? 'Squeezed \u2014 ' + current.label + ' only. Nothing is saved until you press Save.'
+      : current.label + ' is back to its shipped values. Nothing is saved until you press Save.');
   }
 
   if (document.readyState === 'loading') {

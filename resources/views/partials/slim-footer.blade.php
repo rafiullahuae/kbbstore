@@ -264,6 +264,29 @@
   cursor:pointer;transition:.15s;
 }
 .kbb-slimfoot .sf-top:hover{background:var(--sf-line)}
+/* ── THE ARROW WAITS UNTIL THERE IS SOMETHING TO GO BACK TO ────────────────
+   "it should only appear and scroll to down": at the very top of the page a
+   back-to-top control is a button whose job is already done. The script below
+   adds .sf-up-on once the top of the document has left the viewport.
+
+   The RESTING state is hidden and the class is what shows it, so a page whose
+   script never runs draws no arrow rather than a dead one. Width and margin
+   collapse too, not just opacity -- an invisible 30px box at the end of a
+   one-line bar would still push everything before it. */
+.kbb-slimfoot .sf-top{
+  opacity:0;visibility:hidden;pointer-events:none;
+  width:0;border-width:0;margin-inline-start:0;
+  transition:opacity .18s linear,visibility 0s linear .18s;
+}
+.kbb-slimfoot.sf-up-on .sf-top{
+  opacity:1;visibility:visible;pointer-events:auto;
+  width:calc(30px * var(--sf-f));border-width:1px;margin-inline-start:auto;
+  transition:opacity .18s linear;
+}
+.kbb-slimfoot.sf-up-on:is(.sf-a-center,.sf-a-end,.sf-a-between) .sf-top{margin-inline-start:0}
+@media(prefers-reduced-motion:reduce){
+  .kbb-slimfoot .sf-top,.kbb-slimfoot.sf-up-on .sf-top{transition:none}
+}
 .kbb-slimfoot .sf-top svg{width:calc(15px * var(--sf-f));height:calc(15px * var(--sf-f))}
 
 /* ── ALIGNMENT ─────────────────────────────────────────────────────────────
@@ -346,14 +369,21 @@
    reads as a footer rather than as a bar. The rule is on the CHILD and not on
    a divider element, so a block that draws nothing takes its line with it. */
 .kbb-slimfoot.sf-rows .sf-in{flex-direction:column;align-items:stretch;gap:0}
-.kbb-slimfoot.sf-rows .sf-in > * + *{
+/* NOT THE ARROW. It is a direct child of .sf-in, so it matched both this rule
+   and the row-height rule below -- which gave a 30x30 button `display:flex`
+   over its own `place-items:center`, and 7px of row padding on top of that.
+   Measured at 390: the button's centre was x 355, y 2312.6 and the glyph's was
+   x 348.5, y 2316.1 -- off in both axes, which is the "not aligned centered" in
+   the report. The arrow is a control that sits at the end of the bar, not a row
+   of content, and never wanted either rule. */
+.kbb-slimfoot.sf-rows .sf-in > *:not(.sf-top) + *:not(.sf-top){
   border-top:1px solid var(--sf-line);
   padding-top:var(--sf-rowp);margin-top:var(--sf-rowp);
 }
 /* The floor applies to EVERY row including the first, which has no top border
    and so never matched the rule above. align-items keeps the words centred in
    a row taller than they are rather than sitting them on its top edge. */
-.kbb-slimfoot.sf-rows .sf-in > *{min-height:var(--sf-rowh);display:flex;align-items:center;flex-wrap:wrap}
+.kbb-slimfoot.sf-rows .sf-in > *:not(.sf-top){min-height:var(--sf-rowh);display:flex;align-items:center;flex-wrap:wrap}
 .kbb-slimfoot.sf-rows .sf-in > .sf-brand{display:block}
 .kbb-slimfoot.sf-rows .sf-top{margin-inline-start:0;align-self:flex-end}
 .kbb-slimfoot.sf-rows.sf-a-center .sf-in{align-items:center}
@@ -426,14 +456,14 @@
   .kbb-slimfoot.sf-msplit.sf-m-stack .sf-help{flex-direction:column;align-items:flex-start;gap:1px}
 
   .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in{flex-direction:column;align-items:stretch;gap:0}
-  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > * + *{
+  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > *:not(.sf-top) + *:not(.sf-top){
     border-top:1px solid var(--sf-line);
     padding-top:var(--sf-rowp);margin-top:var(--sf-rowp);
   }
   /* The floor on every row including the first, which the `* + *` rule above
      cannot reach. --sf-rowp and --sf-rowh are already the phone's own values
      here: the .sf-msplit block at the top of this media query reassigns both. */
-  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > *{min-height:var(--sf-rowh);display:flex;align-items:center;flex-wrap:wrap}
+  .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > *:not(.sf-top){min-height:var(--sf-rowh);display:flex;align-items:center;flex-wrap:wrap}
   .kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > .sf-brand{display:block}
   .kbb-slimfoot.sf-msplit.sf-m-rows .sf-top{margin-inline-start:0;align-self:flex-end}
   .kbb-slimfoot.sf-msplit.sf-m-rows.sf-ma-center .sf-in{align-items:center}
@@ -462,6 +492,40 @@ document.addEventListener('click', function (e) {
     if (!e.target.closest('[data-sf-top]')) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 });
+
+/*
+ * THE ARROW WAITS UNTIL THERE IS SOMETHING TO GO BACK TO.
+ *
+ * A 1px sentinel pinned to the very top of the document, watched by an
+ * IntersectionObserver: while it is on screen the page is at the top and the
+ * arrow is a button whose job is already done, so the bar draws none.
+ *
+ * AN OBSERVER AND NOT A SCROLL HANDLER, for the reason this project gives
+ * everywhere else: a scroll handler would have to read scrollY or an element's
+ * box on every frame, which is the layout-measuring JavaScript we do not write.
+ * The observer is told an element and the browser answers from layout it has
+ * already done.
+ *
+ * The sentinel is added by script rather than rendered in the markup, so the
+ * server's bytes are unchanged and a page whose script never runs simply keeps
+ * its resting state -- which is the arrow hidden, not an arrow that does
+ * nothing.
+ */
+(function () {
+    var bar = document.querySelector('.kbb-slimfoot');
+
+    if (!bar || !('IntersectionObserver' in window)) { return; }
+
+    var mark = document.createElement('div');
+
+    mark.setAttribute('aria-hidden', 'true');
+    mark.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:1px;pointer-events:none';
+    document.body.appendChild(mark);
+
+    new IntersectionObserver(function (entries) {
+        bar.classList.toggle('sf-up-on', !entries[entries.length - 1].isIntersecting);
+    }).observe(mark);
+})();
 </script>
 @endpush
 @endonce

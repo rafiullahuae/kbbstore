@@ -96,6 +96,29 @@ body.woocommerce-checkout main#content>p:empty{display:none}
    * nothing is worse than no slider.
    */
   .kbb-checkout .co-head .in{max-width:none;margin-inline:0;padding-inline:var(--cop-padx)}
+  /*
+   * THE THIRD CAUSE, AND THE ONE THE OWNER FOUND IN DEVTOOLS.
+   *
+   * kbb.css:1612 carries a BARE `.logo` rule inside its own
+   * `@media(max-width:900px)` block:
+   *
+   *     .logo{font-size:18px;flex:1;text-align:center}
+   *
+   * It is the SITE header's mobile layout, where the wordmark is meant to
+   * centre itself between the burger and the cart icons. The checkout's own
+   * logo carries the same class, so it inherited both declarations. The
+   * font-size we already beat with --cop-headlogo; flex and text-align nobody
+   * had touched.
+   *
+   * WHY TWO ROUNDS OF MEASURING MISSED IT. `flex:1` stretches the element to
+   * fill the bar and `text-align:center` centres the TEXT inside that box, so
+   * the element's left edge is correct and only the glyphs move. Measured at
+   * 390px: .logo box left 20 (the same 20 as the page's own content) while the
+   * first letter sat at 47.2. A getBoundingClientRect() on the element -- which
+   * is what the 36-combination sweep read -- reports 20 and calls it aligned.
+   * A Range over its contents reports 47.2 and does not. Measure the glyphs.
+   */
+  .kbb-checkout .co-head .logo{flex:0 0 auto;text-align:start}
   .kbb-checkout.cop-mhead-center .co-head .in{max-width:var(--cop-headmax);margin-inline:auto;padding-inline:var(--cop-headpadx)}
 }
 @media(min-width:901px){

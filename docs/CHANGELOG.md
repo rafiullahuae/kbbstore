@@ -3,6 +3,29 @@
 Versions are the numbers used by the Core Updates screen. Each entry lists the
 files it touched, so a diff can be checked against it.
 
+## 2.60.257
+The third and last cause of the notch beside the phone logo, found by the owner
+in DevTools: `kbb.css:1612` carries a bare `.logo{flex:1;text-align:center}`
+inside its own 900px media query -- the site header's mobile centring, which the
+checkout's logo inherited. It is also why two rounds of measuring said "fixed":
+`flex:1` stretches the ELEMENT and `text-align:center` moves the GLYPHS inside
+it, so the box's left edge stayed correct. Measured at 390: box left 20, first
+letter 47.2. After: letters at 20, and at 140 at 1280 -- both equal to the
+page's own edge.
+
+The back-to-top arrow was knocked off centre by a rule shipped in 2.60.255: the
+ruled-rows shape treated it as a row. Button centre x 355 y 2312.6 against glyph
+centre x 348.5 y 2316.1; now the same point. It also waits until the page has
+been scrolled, via a sentinel and an observer rather than a scroll handler.
+
+And both presets now move only the tab in front of you, on the checkout screen
+and on the footer screen -- a preset that reaches past the screen changes numbers
+nobody can see.
+`css/kbb/kbb-checkout.css`, `partials/slim-footer.blade.php`,
+`admin/partials/checkout-page-screen.blade.php`,
+`admin/partials/slim-footer-screen.blade.php`, `Services/CheckoutPage.php`,
+`2026_12_11_000000_clear_caches_logo_arrow_and_per_tab_presets.php`
+
 ## 2.60.256
 The floating Place order bar now waits for an order that can actually be placed:
 it asks `form.querySelector(':invalid')` -- the same test the button itself uses

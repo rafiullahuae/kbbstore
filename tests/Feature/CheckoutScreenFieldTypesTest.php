@@ -175,3 +175,116 @@ it('hides the header side padding while it is not the number being read', functi
     // watches nothing happen, and reports the control as broken.
     expect($screen)->toContain("if (f.key === 'm_head_pad_x') return String(values.m_head_align) !== 'center';");
 });
+
+/* ------------------------------------------------------------------------
+ | The presets, and the tab they belong to
+ |------------------------------------------------------------------------*/
+
+it('squeezes the tab you are looking at and leaves the other eight alone', function () {
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/checkout-page-screen.blade.php'));
+
+    /*
+     * The owner's report, exactly: "when i click squeezed, it applies on all
+     * tabs all checkout page settings, which is not correct". He is right, and
+     * the reason is worth keeping: a preset that reaches past the screen
+     * changes numbers nobody can see, so the only way to learn what it did is
+     * to visit nine tabs.
+     *
+     * Driven in Chromium: on Mobile · Product rows, Squeeze took m_row_gap
+     * 11 → 2 and m_tab_pad 9 → 2, while d_pad_x stayed 20 and d_max stayed
+     * 1040 on the Desktop · Layout tab.
+     *
+     * MUTATION: put `tabs.forEach` back in place of `current.fields.forEach`
+     * and the first assertion is red.
+     */
+    expect($screen)->toContain("var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];")
+        ->and($screen)->toContain('current.fields.forEach(function (f) {')
+        // The label has to say so too: a button called "Squeeze everything"
+        // that squeezes one tab is the same defect wearing the other face.
+        ->and($screen)->toContain('>Squeeze this tab<')
+        ->and($screen)->not->toContain('>Squeeze everything<')
+        ->and($screen)->toContain('<b>this tab</b>');
+});
+
+it('scopes the footer screen\'s presets the same way, without waiting for the same report twice', function () {
+    $screen = (string) file_get_contents(resource_path('views/admin/partials/slim-footer-screen.blade.php'));
+
+    expect($screen)->toContain("var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];")
+        ->and($screen)->toContain('>Squeeze this tab<')
+        ->and($screen)->toContain('<b>this tab</b>');
+});
+
+/* ------------------------------------------------------------------------
+ | The third cause of the notch beside the logo
+ |------------------------------------------------------------------------*/
+
+it('beats the site header\'s bare .logo rule, which stretched the box and centred the text', function () {
+    $css = (string) file_get_contents(resource_path('css/kbb/kbb-checkout.css'));
+    $base = (string) file_get_contents(resource_path('css/kbb/kbb.css'));
+
+    /*
+     * kbb.css:1612 carries `.logo{font-size:18px;flex:1;text-align:center}`
+     * inside its own @media(max-width:900px). It is the SITE header's mobile
+     * layout — the wordmark centring itself between the burger and the cart —
+     * and the checkout's logo carries the same class.
+     *
+     * WHY TWO ROUNDS OF MEASURING MISSED IT, which is the part worth keeping:
+     * `flex:1` stretches the ELEMENT and `text-align:center` moves the GLYPHS
+     * inside it, so the box's left edge stays correct. Measured at 390px
+     * before: .logo box left 20 — the same 20 as the page's own content — and
+     * the first letter at 47.2. A getBoundingClientRect() reports 20 and calls
+     * it aligned; a Range over the contents reports 47.2 and does not.
+     * After: glyphs at 20 at 390px, and at 140 at 1280px, both equal to the
+     * page's own left edge.
+     *
+     * MUTATION: remove the rule below and the glyph offset returns.
+     */
+    expect($base)->toContain('.logo{font-size:18px;flex:1;text-align:center}')
+        ->and($css)->toContain('.kbb-checkout .co-head .logo{flex:0 0 auto;text-align:start}');
+});
+
+it('does not treat the back-to-top arrow as a ruled row', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * A regression I shipped in 2.60.255. The `rows` shape gave every direct
+     * child of .sf-in a min-height and `display:flex`, and a top border plus
+     * row padding to every child after the first — and .sf-top is a direct
+     * child. That overrode the button's own `place-items:center` and added 7px
+     * above it. Measured at 390 before: button centre x 355 y 2312.6, glyph
+     * centre x 348.5 y 2316.1 — off in both axes, which is the report.
+     * After: button centre and glyph centre equal.
+     *
+     * MUTATION: drop either `:not(.sf-top)` and the glyph goes off centre again.
+     */
+    expect($partial)->toContain('.kbb-slimfoot.sf-rows .sf-in > *:not(.sf-top){min-height:var(--sf-rowh)')
+        ->and($partial)->toContain('.kbb-slimfoot.sf-rows .sf-in > *:not(.sf-top) + *:not(.sf-top){')
+        ->and($partial)->toContain('.kbb-slimfoot.sf-msplit.sf-m-rows .sf-in > *:not(.sf-top){min-height:var(--sf-rowh)');
+});
+
+it('hides the arrow until the page has been scrolled, and hides it by default', function () {
+    $partial = (string) file_get_contents(resource_path('views/partials/slim-footer.blade.php'));
+
+    /*
+     * The RESTING state is hidden and the class is what shows it, so a page
+     * whose script never runs draws no arrow rather than a dead one. Width and
+     * border collapse too: an invisible 30px box at the end of a one-line bar
+     * would still push everything before it.
+     *
+     * An observer on a 1px sentinel at the top of the document, not a scroll
+     * handler — this project does not write layout-measuring JavaScript, and a
+     * scroll handler would read scrollY on every frame to answer a question the
+     * browser already knows.
+     *
+     * Measured at 390: at the top, sf-up-on absent and visibility hidden; after
+     * scrolling 1200px, present and visible.
+     *
+     * MUTATION: flip the two rules so .sf-top is visible by default and the
+     * "hidden at the top" assertion is red.
+     */
+    expect($partial)->toContain('opacity:0;visibility:hidden;pointer-events:none;')
+        ->and($partial)->toContain('.kbb-slimfoot.sf-up-on .sf-top{')
+        ->and($partial)->toContain("bar.classList.toggle('sf-up-on', !entries[entries.length - 1].isIntersecting);")
+        ->and($partial)->not->toContain('window.addEventListener(\'scroll\'')
+        ->and($partial)->toContain('@media(prefers-reduced-motion:reduce){');
+});

@@ -624,12 +624,12 @@
          on screen; nothing is stored until Save, so both are undone by
          Reload and either can be nudged afterwards. A stored "squeezed" mode
          would leave every slider showing a number the page was not using. */
-      + '<button class="chp-btn" data-chp-squeeze' + (busy ? ' disabled' : '') + '>Squeeze everything</button>'
+      + '<button class="chp-btn" data-chp-squeeze' + (busy ? ' disabled' : '') + '>Squeeze this tab</button>'
       + '<button class="chp-btn" data-chp-defaults' + (busy ? ' disabled' : '') + '>Back to defaults</button>'
       + '</div>'
-      + '<p class="chp-help" style="margin-top:9px">Both presets move the sliders in front of you across '
-      + '<b>every tab</b>, on desktop and mobile. Nothing is stored until you press Save, and Reload puts '
-      + 'them back.</p>'
+      + '<p class="chp-help" style="margin-top:9px">Both presets move only the sliders on '
+      + '<b>this tab</b> \u2014 the other tabs are left exactly as you set them. Nothing is stored until '
+      + 'you press Save, and Reload puts them back.</p>'
       + '</div>'
       + (side ? '</div>' : '')
       + previewHTML()
@@ -644,22 +644,37 @@
    * that make a page denser, while "back to defaults" has to be able to undo
    * anything at all or it is not a way out.
    */
+  /*
+   * THE TAB YOU ARE LOOKING AT, AND NOT THE OTHER EIGHT.
+   *
+   * This used to walk every tab. The owner's report: "when i click squeezed, it
+   * applies on all tabs all checkout page settings, which is not correct". He
+   * is right, and the reason is worth writing down rather than just fixing: a
+   * preset that reaches past the screen changes numbers the person cannot see,
+   * so the only way to find out what it did is to visit nine tabs. A button
+   * whose effect is off screen is a button nobody can use with confidence.
+   *
+   * Both presets are now scoped to the open tab. That also makes them
+   * recoverable in the small: squeeze the rows, dislike it, press Back to
+   * defaults, and the header and the type sizes you had already tuned are
+   * exactly where you left them.
+   */
   function preset(which) {
     if (!tabs) return;
 
-    tabs.forEach(function (t) {
-      t.fields.forEach(function (f) {
-        if (which === 'default') { values[f.key] = f['default']; return; }
-        if (f.type !== 'range') return;
-        if (squeezeKeys.indexOf(f.key) === -1) return;
-        values[f.key] = Number((f.options || {}).min);
-      });
+    var current = tabs.filter(function (t) { return t.key === open; })[0] || tabs[0];
+
+    current.fields.forEach(function (f) {
+      if (which === 'default') { values[f.key] = f['default']; return; }
+      if (f.type !== 'range') return;
+      if (squeezeKeys.indexOf(f.key) === -1) return;
+      values[f.key] = Number((f.options || {}).min);
     });
 
     render();
     say(which === 'min'
-      ? 'Squeezed. Nothing is saved until you press Save.'
-      : 'Back to the shipped values. Nothing is saved until you press Save.');
+      ? 'Squeezed \u2014 ' + current.label + ' only. Nothing is saved until you press Save.'
+      : current.label + ' is back to its shipped values. Nothing is saved until you press Save.');
   }
 
   /* -------------------------------------------------------------- preview */
