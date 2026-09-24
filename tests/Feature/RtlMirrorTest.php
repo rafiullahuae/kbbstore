@@ -332,3 +332,196 @@ it('keeps the country select chevron and its padding on the same side', function
 
     expect($wrong)->toBe([], implode("\n", $wrong));
 });
+
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LANE G · THE FOUR THINGS A DECLARATION READER COULD NOT SEE
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * Everything above pins the stylesheets against themselves. These four pin the
+ * stylesheets against things that are NOT in them and that outrank them:
+ *
+ *   - an inline `style` attribute in a Blade view (beats every rule, including
+ *     one inside a media query — only `!important` gets past it);
+ *   - an inline `style.transform` written by JavaScript (same, and it is
+ *     rewritten on every click);
+ *   - a shorter selector in the same file that still matches, and carries a
+ *     `transform` the longer rule never asked for.
+ *
+ * Each was measured in Chromium 1194 at 390 and 1280 before the rule was
+ * written; the numbers are in docs/rtl-audit.md §13.
+ */
+
+/** Inline `style="…"` declarations in the storefront views, as [file, line, css]. */
+function rtlInlineStyleAttributes(): array
+{
+    $out = [];
+
+    foreach (['resources/views/partials', 'resources/views/store', 'resources/views/layouts'] as $dir) {
+        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(base_path($dir)));
+
+        foreach ($it as $f) {
+            if (! $f->isFile() || ! str_ends_with($f->getFilename(), '.blade.php')) {
+                continue;
+            }
+
+            $rel = str_replace(base_path().'/', '', $f->getPathname());
+
+            foreach (file($f->getPathname()) as $i => $line) {
+                if (preg_match_all('/\bstyle="([^"]*)"/', $line, $m)) {
+                    foreach ($m[1] as $css) {
+                        $out[] = [$rel, $i + 1, $css];
+                    }
+                }
+            }
+        }
+    }
+
+    return $out;
+}
+
+it('answers every inline physical inset in a storefront view with an !important RTL rule', function () {
+    /*
+     * THE DEFECT: the product page's discount badge is placed by
+     * `style="top:14px;left:14px"` in partials/product-gallery.blade.php. T6
+     * converted every inset around it — `.gwish` next to it is
+     * `inset-inline-end:14px` — but an inline declaration outranks a stylesheet
+     * rule, so the badge alone stayed on the physical left. Measured on
+     * /ar/product/… at 390px: `.gwish` mirrored 311..355 → 35..79 and the badge
+     * stayed at 35..85.9, i.e. printed ON TOP OF the wishlist heart. After:
+     * 304.1..355, the exact mirror of its English position.
+     *
+     * The second one is partials/drawers.blade.php's `style="margin-left:auto"`
+     * on the mobile nav's ✕. `margin-left` is physical, so in RTL it absorbs
+     * the free space on the wrong side. At 390 there is no free space to absorb
+     * (191.2 + 10 + 32 + 32 = 265.2 = the panel), which is why nothing looked
+     * wrong; at 1280 the same button measured 94.44px from its mirror position.
+     *
+     * This is written as a SWEEP rather than two assertions so that the next
+     * inline physical inset added to a storefront view has to declare itself.
+     *
+     * MUTATION: delete either `[dir="rtl"]` rule — or just its `!important` —
+     * and this goes red naming the view that outranks it.
+     */
+    $answered = [
+        // inline declaration => the [dir="rtl"] rule that has to outrank it
+        'resources/views/partials/product-gallery.blade.php' => ['resources/css/kbb/kbb-product.css', '[dir="rtl"] .gmain .lbl', ['inset-inline-start' => '14px!important', 'inset-inline-end' => 'auto!important']],
+        'resources/views/partials/drawers.blade.php' => ['resources/css/kbb/kbb.css', '[dir="rtl"] .mnav-h .x', ['margin-inline-start' => 'auto!important', 'margin-inline-end' => '0!important']],
+    ];
+
+    // Views that hard-code <html lang="en"> with no dir attribute: a
+    // [dir="rtl"] rule can never match inside them, so an inline physical
+    // declaration there is not answerable from CSS. docs/rtl-audit.md §9.5.
+    $notBilingual = ['resources/views/store/app.blade.php'];
+
+    // Only declarations that carry a READING DIRECTION. `text-align:center`,
+    // `margin:0 auto` and `border-radius` do not, and a sweep that flags them
+    // gets switched off within a week.
+    $physical = '/(?:^|[;\s])(?:(?:margin|padding|border|scroll-margin|scroll-padding)-)?(?:left|right)\s*:'
+        .'|(?:^|[;\s])text-align\s*:\s*(?:left|right)'
+        .'|(?:^|[;\s])float\s*:\s*(?:left|right)/i';
+
+    $found = [];
+    $unanswered = [];
+
+    foreach (rtlInlineStyleAttributes() as [$file, $line, $css]) {
+        if (! preg_match($physical, $css) || in_array($file, $notBilingual, true)) {
+            continue;
+        }
+
+        $found[$file] = true;
+
+        if (! isset($answered[$file])) {
+            $unanswered[] = "$file:$line writes an inline physical direction declaration (`$css`). An inline style beats every stylesheet rule, so the T6 conversion cannot reach it: either move it into CSS as a logical property, or add a [dir=\"rtl\"] … !important rule and list it here.";
+        }
+    }
+
+    // The sweep has to still see the two it knows about, or it is guarding air.
+    foreach (array_keys($answered) as $file) {
+        if (! isset($found[$file])) {
+            $unanswered[] = "$file no longer carries an inline physical direction declaration. If it was moved into CSS, drop its !important override here — it is only there to outrank the inline style.";
+        }
+    }
+
+    foreach ($answered as $view => [$css, $selector, $pairs]) {
+        foreach ($pairs as $property => $value) {
+            if (! in_array($value, rtlMirrorLookup($css, $selector, $property), true)) {
+                $unanswered[] = "$css | $selector must set $property:$value to outrank the inline style in $view.";
+            }
+        }
+    }
+
+    expect($unanswered)->toBe([], implode("\n", $unanswered));
+});
+
+it('keeps the home slider advancing in Arabic, because its transform is written by JavaScript', function () {
+    /*
+     * THE DEFECT: resources/js/kbb/home.js advances the hero with
+     * `track.style.transform = translateX(-index*100%)`. In an RTL flex row the
+     * slides queue to the LEFT of the first one, so that same negative
+     * translation carries them further away instead of into the frame.
+     * Measured at 390px on /ar/: after one click of ▸, 0% of every slide was
+     * inside the frame — the hero went blank — against 100% of slide 2 in
+     * English. After the rule below: 100%, at the same coordinates as English.
+     *
+     * The track keeps the coordinate system the arithmetic assumes and each
+     * slide gets its own direction back, which is the same trick §11.2 used on
+     * the free-shipping track. Both halves are required: `direction:ltr` alone
+     * would lay the slide's own headline, paragraph and button out
+     * left-to-right.
+     *
+     * MUTATION: delete either declaration and this goes red. Change home.js to
+     * flip the sign itself and the first assertion goes red instead, which is
+     * the signal to delete the CSS rather than keep both.
+     */
+    $js = (string) file_get_contents(base_path('resources/js/kbb/home.js'));
+
+    $wrong = [];
+
+    if (! str_contains($js, 'translateX(-')) {
+        $wrong[] = 'resources/js/kbb/home.js no longer positions the slider with a negative inline translateX. If it now picks the sign from the direction, remove [dir="rtl"] .kbb-home .slides — two fixes for one defect is worse than either.';
+    }
+
+    if (! in_array('ltr', rtlMirrorLookup('resources/css/kbb/kbb.css', '[dir="rtl"] .kbb-home .slides', 'direction'), true)) {
+        $wrong[] = 'Without direction:ltr on the track, the Arabic hero goes blank on the first ▸: the slides queue on the other side and the inline translateX walks away from them.';
+    }
+
+    if (! in_array('rtl', rtlMirrorLookup('resources/css/kbb/kbb.css', '[dir="rtl"] .kbb-home .sl', 'direction'), true)) {
+        $wrong[] = 'The track is forced to ltr, so each slide has to be given rtl back or the Arabic headline, paragraph and button lay out left-to-right inside it.';
+    }
+
+    expect($wrong)->toBe([], implode("\n", $wrong));
+});
+
+it('does not let the centring idiom leak onto a rail that centres itself with insets', function () {
+    /*
+     * THE DEFECT, and it was live in ENGLISH as well as Arabic. `.sdots` — the
+     * theme's dot rail, whose dots are <button> — centres with the idiom this
+     * file's earlier test protects: `left:50%` + `transform:translateX(-50%)`.
+     * `.kbb-home .sdots` is a different component (its dots are <i>) that
+     * centres the other way, with both insets 0 and justify-content, and it
+     * never declared a transform — so the shorter selector's translateX still
+     * matched and moved the rail half its own width. Measured on the English
+     * home page: the rail spanned -171..195 in a 390px viewport instead of
+     * 12..378, with the first dot at -14..8, half of it off the phone's left
+     * edge; at 1280 the dots sat at x≈12..65 rather than centred on 640. After:
+     * 12..378 and dots centred on 195 and on 640.
+     *
+     * MUTATION: delete `transform:none` from `.kbb-home .sdots` and this goes
+     * red; the browser numbers above come back with it.
+     */
+    $file = 'resources/css/kbb/kbb.css';
+
+    $wrong = [];
+
+    // The premise: the short selector really does carry the idiom's transform.
+    if (! in_array('translateX(-50%)', rtlMirrorLookup($file, '.sdots', 'transform'), true)) {
+        $wrong[] = '.sdots no longer centres with translateX(-50%). If that component was restyled, `transform:none` on .kbb-home .sdots may no longer be needed — check before deleting it.';
+    }
+
+    if (! in_array('none', rtlMirrorLookup($file, '.kbb-home .sdots', 'transform'), true)) {
+        $wrong[] = '.kbb-home .sdots centres itself with inset-inline-start:0 + inset-inline-end:0 + justify-content:center, so it must neutralise the translateX(-50%) it inherits from the shorter .sdots selector — otherwise the rail is displaced by half its width in BOTH directions.';
+    }
+
+    expect($wrong)->toBe([], implode("\n", $wrong));
+});

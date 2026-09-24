@@ -412,6 +412,17 @@
   [dir="rtl"] .mnav{transform:translateX(105%);box-shadow:-14px 0 40px rgba(60,20,40,.18)}
   .mnav.on{transform:translateX(0)}
   .mnav-h{display:flex;align-items:center;gap:10px;padding:15px 16px;border-bottom:1px solid var(--line-2);flex:none}
+  /* The close button is pushed to the far end by an INLINE style="margin-left:auto"
+     in partials/drawers.blade.php, which no stylesheet rule can outrank without
+     !important — and `margin-left` is physical, so in RTL it absorbs the free
+     space on the wrong side and the ✕ clumps against the wordmark instead of
+     sitting at the panel's inline end. It is invisible at 390px only because
+     the wordmark, the gap, the button and the padding add up to the panel width
+     exactly (191.2 + 10 + 32 + 32 = 265.2), so there is no free space for the
+     auto margin to take; at 1280 the same panel measured the ✕ 94.44px away
+     from its mirror position. Logical spelling, so no physical declaration is
+     added back to the file. */
+  [dir="rtl"] .mnav-h .x{margin-inline-start:auto!important;margin-inline-end:0!important}
   .mnav-h .logo{font-size:18px}
   .mnav-search{padding:11px 14px;border-bottom:1px solid var(--line-2);flex:none}
   .mnav-search input{width:100%;border:1px solid var(--line);border-radius:99px;padding:10px 14px;font:inherit;font-size:13.5px;background:var(--cream);outline:none}
@@ -788,6 +799,22 @@ body{margin:0;background:#fff;color:var(--ink);font:400 14px/1.6 Poppins,system-
 .kbb-home .pay span{background:rgba(255,255,255,.1);border-radius:5px;padding:3px 9px;font-size:11px}
 .kbb-home .slider{position:relative;border-radius:18px;overflow:hidden}
 .kbb-home .slides{display:flex;transition:transform .55s cubic-bezier(.4,0,.2,1)}
+/* THE TRACK KEEPS ITS OWN COORDINATE SYSTEM, THE WAY .ftrack DOES (rtl-audit §11.2).
+   The slider is advanced from JavaScript with an INLINE
+   `style.transform = translateX(-n*100%)` (resources/js/kbb/home.js:29), which
+   has no logical form and which no stylesheet can override. In an RTL flex row
+   the slides are laid out leading-edge-right, so slide 2 sits to the LEFT of
+   slide 1 and that same negative translation carries it further away: measured
+   at 390px, clicking ▸ on /ar/ left 0% of every slide inside the frame — the
+   hero simply went blank — against 100% of slide 2 in English.
+   `direction:ltr` on the track alone puts the slides back in the order the
+   arithmetic assumes; each slide gets `direction:rtl` back, so headline,
+   paragraph and button still lay out right-to-left. Safe here and not on
+   .freebar, because the text lives one level down.
+   Travel still runs left-to-right in Arabic; reversing it is a sign flip in
+   home.js, which is not this lane's file. */
+[dir="rtl"] .kbb-home .slides{direction:ltr}
+[dir="rtl"] .kbb-home .sl{direction:rtl}
 .kbb-home .sl{flex:0 0 100%;display:grid;grid-template-columns:1.15fr .85fr;align-items:center;gap:20px;
     padding:clamp(24px,3.4vw,52px);color:#fff;min-height:clamp(230px,26vw,330px)}
 .kbb-home .sl .k{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.92}
@@ -802,7 +829,21 @@ body{margin:0;background:#fff;color:var(--ink);font:400 14px/1.6 Poppins,system-
 .kbb-home .sarr:hover{background:#fff}
 .kbb-home .sarr.prev{inset-inline-start:14px}
 .kbb-home .sarr.next{inset-inline-end:14px}
-.kbb-home .sdots{position:absolute;bottom:14px;inset-inline-start:0;inset-inline-end:0;display:flex;justify-content:center;gap:7px;z-index:4}
+/* `transform:none` IS THE FIX, AND IT IS A LEAK FROM THE OTHER .sdots.
+   The theme's own dot rail (`.sdots`, further up this file) centres itself with
+   `left:50%` + `transform:translateX(-50%)` — the centring idiom T6 kept
+   physical on purpose. This rail is a DIFFERENT component (its dots are <i>,
+   not <button>) and centres itself the other way, with both insets 0 and
+   justify-content, so it never wanted the transform. It inherited it anyway:
+   the shorter selector still matches, `transform` is declared nowhere here, and
+   the rail was therefore translated by half its own width. Measured on the
+   English home page before this line: the rail spanned -171..195 in a 390px
+   viewport instead of 12..378, and the first dot sat at -14..8 — half of it off
+   the left edge of the phone. At 1280 the dots sat at x≈12..65 instead of
+   centred on 640. This predates T6 (the same leak worked against `left:0;
+   right:0`) and it is wrong in both directions, so the fix is not scoped to
+   one. */
+.kbb-home .sdots{position:absolute;bottom:14px;inset-inline-start:0;inset-inline-end:0;transform:none;display:flex;justify-content:center;gap:7px;z-index:4}
 .kbb-home .sdots i{width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.5);cursor:pointer;transition:.25s;display:block}
 .kbb-home .sdots i.on{background:#fff;width:22px}
 .kbb-home .delivery{margin-top:12px;border:1px solid var(--line);border-radius:12px;background:var(--cream);
